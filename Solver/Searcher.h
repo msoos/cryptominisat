@@ -480,10 +480,10 @@ class Searcher : public PropEngine
 
         //SQL
         void printRestartSQL();
-        void printLearntStatsSQL();
-        void printPropStatsSQL();
         void printConflStatsSQL();
         void printVarStatsSQL();
+        void printLearntStatsSQL();
+        void printPropStatsSQL();
         void printClauseDistribSQL();
         void clearPolarData();
         PropStats lastSQLPropStats;

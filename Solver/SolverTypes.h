@@ -410,8 +410,15 @@ struct PropStats
         , propsTri(0)
         , propsLongIrred(0)
         , propsLongRed(0)
+
+        //LHBR
         , triLHBR(0)
         , longLHBR(0)
+
+        //Var setsing
+        , varSetPos(0)
+        , varSetNeg(0)
+        , varFlipped(0)
     {
     }
 
@@ -436,6 +443,11 @@ struct PropStats
         longLHBR += other.longLHBR;
         triLHBR += other.triLHBR;
 
+        //Var settings
+        varSetPos += other.varSetPos;
+        varSetNeg += other.varSetNeg;
+        varFlipped += other.varFlipped;
+
         return *this;
     }
 
@@ -453,6 +465,11 @@ struct PropStats
         //LHBR
         longLHBR -= other.longLHBR;
         triLHBR -= other.triLHBR;
+
+        //Var settings
+        varSetPos -= other.varSetPos;
+        varSetNeg -= other.varSetNeg;
+        varFlipped -= other.varFlipped;
 
         return *this;
     }
@@ -539,6 +556,11 @@ struct PropStats
     //Lazy hyper-binary clause added
     uint64_t triLHBR; //LHBR by 3-long clauses
     uint64_t longLHBR; //LHBR by 3+-long clauses
+
+    //Var settings
+    uint64_t varSetPos;
+    uint64_t varSetNeg;
+    uint64_t varFlipped;
 };
 
 enum ConflCausedBy {

@@ -49,7 +49,7 @@ var myDataTypes=new Array();
 var myDataLabels=new Array();*/
 </script>
 <?
-$runID = 343548584;
+$runID = 3882006010;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -112,14 +112,15 @@ function printOneThing(
 
         //Print for each
         foreach ($datanames as $dataname) {
-            $tmp = floatval(mysql_result($data, $i, $dataname));
+            $tmp = mysql_result($data, $i, $dataname);
             if (sizeof($datanames) > 1) {
-                $tmp /= floatval($local_sum)*100.0;
+                $tmp /= $local_sum;
+                $tmp *= 100.0;
                 echo ", $tmp";
             } else {
                 $total_sum += $tmp*($confl-$last_confl);
                 $last_confl = $confl;
-                $sliding_avg = floatval($total_sum) / floatval($confl);
+                $sliding_avg = $total_sum / $confl;
                 echo ", $tmp";
                 if ($doSlideAvg) {
                     echo ", $sliding_avg";
@@ -186,6 +187,18 @@ printOneThing("size", array("size")
 printOneThing("resolutions", array("resolutions")
     , array("avg. no. resolutions of conflicts"), $result, $nrows);
 
+printOneThing("flippedPercent", array("flippedPercent")
+    , array("var polarity flipped %"), $result, $nrows);
+
+printOneThing("polarity", array("varSetPos", "varSetNeg")
+    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows);
+    
+printOneThing("set", array("set")
+    , array("vars set"), $result, $nrows);
+
+printOneThing("replaced", array("replaced")
+    , array("vars replaced"), $result, $nrows);
+
 printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
     ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows);
 
@@ -194,12 +207,6 @@ printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLong
 
 printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
     ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows);
-
-printOneThing("set", array("set")
-    , array("vars set"), $result, $nrows);
-
-printOneThing("replaced", array("replaced")
-    , array("vars replaced"), $result, $nrows);
 echo "</table>";
 
 function fillSimplificationPoints($runID)

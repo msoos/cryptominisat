@@ -1206,6 +1206,7 @@ void Searcher::printRestartSQL()
     << " , `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Var stats
+    << " , `flippedPercent`, `varSetPos`, `varSetNeg`"
     << " , `free`, `replaced`, `eliminated`, `set`"
     << ")"
     << " values ("
@@ -1251,6 +1252,10 @@ void Searcher::printRestartSQL()
     
 
     //Var stats
+    << ", " << ((double)thisPropStats.varFlipped
+        /(double)(thisPropStats.varSetNeg + thisPropStats.varSetPos))*100.0
+    << ", " << thisPropStats.varSetPos
+    << ", " << thisPropStats.varSetNeg
     << ", " << solver->getNumFreeVarsAdv(trail.size())
     << ", " << solver->varReplacer->getNumReplacedVars()
     << ", " << solver->subsumer->getStats().numVarsElimed
@@ -1280,7 +1285,6 @@ void Searcher::printLearntStatsSQL()
     << ", " << stats.learntTris
     << ", " << stats.learntLongs
     << " );" << endl;
-    ;
 }
 
 void Searcher::printPropStatsSQL()
@@ -1304,7 +1308,6 @@ void Searcher::printPropStatsSQL()
     << ", " << propStats.propsLongIrred
     << ", " << propStats.propsLongRed
     << " );" << endl;
-    ;
 }
 
 void Searcher::printConflStatsSQL()
@@ -1327,7 +1330,6 @@ void Searcher::printConflStatsSQL()
     << ", " << stats.conflStats.conflsLongIrred
     << ", " << stats.conflStats.conflsLongRed
     << " );" << endl;
-    ;
 }
 
 struct MyInvSorter {
@@ -1344,7 +1346,7 @@ struct MyPolarData
         , neg(_neg)
         , flipped(_flipped)
     {}
-        
+
     size_t pos;
     size_t neg;
     size_t flipped;
@@ -1390,6 +1392,7 @@ void Searcher::printVarStatsSQL()
         << " );" << endl;
     }
 }
+
 
 void Searcher::printClauseDistribSQL()
 {
@@ -1578,10 +1581,11 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     }
 
     if (conf.doSQL) {
+        printVarStatsSQL();
         printPropStatsSQL();
         printLearntStatsSQL();
         printConflStatsSQL();
-        printVarStatsSQL();
+
     }
 
     if (conf.verbosity >= 3) {

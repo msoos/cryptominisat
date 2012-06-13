@@ -404,14 +404,18 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 
     varData[v].reason = from;
     varData[v].level = decisionLevel();
-    if (p.sign())
+    if (p.sign()) {
         varData[v].negPolarSet++;
-    else
+        propStats.varSetNeg++;
+    } else {
         varData[v].posPolarSet++;
+        propStats.varSetPos++;
+    }
 
     if (varData[v].polarity != !p.sign()) {
         agility.update(true);
         varData[v].flippedPolarity++;
+        propStats.varFlipped++;
     } else {
         agility.update(false);
     }
