@@ -40,7 +40,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Time jumps during search sessions. The angle of the "restart no." graph indicates how often restarts were made.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Simplification sessions are not detailed, only the time jumps -- and the solver behaviour changes. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -84,7 +84,7 @@ if (!$result) {
     die('Invalid query: ' . mysql_error());
 }
 $nrows=mysql_numrows($result);
-
+ 
 /*function printOneThing($name, $nicename, $data, $nrows)
 {
     $fullname = $name."Data";
@@ -540,12 +540,7 @@ for(i = 0; i < varPolarsData.length; i++) {
 
 
 <h2>Search session statistics</h2>
-<p>Here are some pie charts detailing propagations and other stats for each search. "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt". Terminology shamelessly taken from A. Biere.</p>
-
-<?
-
-
-?>
+<p>Here are some pie charts detailing propagations and other stats for each search session. Note that these are just per-session summary graphs of (learnt clause/propagation by/conflict by) data that is already present above.</p>
 
 <?
 function getLearntData($runID)
