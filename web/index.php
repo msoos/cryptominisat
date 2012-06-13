@@ -272,7 +272,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
             stackedGraph: myDataTypes[i],
             labels: myDataLabels[i],
             underlayCallback: function(canvas, area, g) {
-                canvas.fillStyle = "rgba(185, 185, 245, 245)";
+                canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 canvas.fillRect(0, area.y, 2, area.h);
                 for(var k = 0; k <= simplificationPoints.length; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
@@ -304,6 +304,9 @@ for (var i = 0; i <= myDataNames.length; i++) {
             drawXGrid: false,
             drawYGrid: false,
             drawYAxis: false,
+            strokeStyle: "black",
+            colors: ['#000000', '#002322', '#664400', '#886666', '#ff8888'],
+            fillAlpha: 0.8,
             //errorBars: false,
             drawCallback: function(me, initial) {
                 if (blockRedraw || initial)
