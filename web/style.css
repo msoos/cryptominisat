@@ -9,9 +9,14 @@ div.myPlotLabel {
 }
 
 div.myPlotData {
- width:700px;
- height:100px;
- margin:0;
+    /*position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  bottom: 10px;*/
+  width:700px;
+  height:100px;
+  margin:0;
 }
 
 div.myPlotData2 {
@@ -31,7 +36,6 @@ body {
   margin: 0;
   margin-top: 20px;
   margin-bottom: 4em;
-/*   width: 960px; */
 }
 
 footer {
@@ -39,15 +43,15 @@ footer {
   margin-top: 8em;
 }
 
-aside {
+/*aside {
   font-size: small;
   left: 780px;
   position: absolute;
   width: 180px;
-}
+}*/
 
 li {
-  width: 680px;
+/*   width: 680px; */
 }
 
 a {
@@ -241,7 +245,8 @@ h1, h2, p {
 p {
     font-size: 16px;
     margin-left: 50px;
-    width: 600px;
+    width: 70%;
+    max-width: 500px;
     font-weight: 200;
 }
 

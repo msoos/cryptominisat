@@ -32,7 +32,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work and motivated by Parachute to Eternity. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work  while others in the office were dazzled by a PowerPoint professional, in German. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
