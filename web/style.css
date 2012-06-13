@@ -34,7 +34,7 @@ div.piechart {
 }
 
 body {
-  font-family: "Helvetica Neue", Helvetica, sans-serif;
+  /*font-family: "Helvetica Neue", Helvetica, sans-serif;*/
   margin: 0;
   margin-top: 20px;
   margin-bottom: 4em;
@@ -65,7 +65,7 @@ a:not(:hover) {
 }
 
 pre, code, textarea {
-  font-family: "Menlo", monospace;
+  /*font-family: "Menlo", monospace;*/
 }
 
 code {
@@ -168,7 +168,7 @@ h2 {
   font-size: 28px;
 }
 
-h1, h2, p {
+h1, h2 {
   font-family: "Yanone Kaffeesatz";
   text-rendering: optimizeLegibility;
 }
@@ -247,9 +247,11 @@ h1, h2, p {
 p {
     font-size: 16px;
     margin-left: 20px;
-    width: 70%;
+   /* width: 70%;*/
     max-width: 500px;
     font-weight: 200;
+    /*font-family: Century Gothic, sans-serif;*/
+    /*font-family: Tahoma, Geneva, sans-serif;*/
 }
 
 
@@ -265,3 +267,45 @@ p {
   font-weight: 700;
   src: local('Yanone Kaffeesatz Bold'), local('YanoneKaffeesatz-Bold'), url('We_iSDqttE3etzfdfhuPRWwXwFHHZlCwprwJOQ-Se7k.woff') format('woff');
 }
+
+table.box-table-a
+{
+    margin-left: 29px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    width: 750px;
+    border: 0px;
+    border-color: black;
+    border-spacing: 0px;
+}
+
+table.box-table-a th
+{
+    font-size: 20px;
+    font-weight: bold;
+    padding: 0px;
+    border-bottom: 1px solid black;
+}
+
+table.box-table-a td
+{
+    padding: 0px;
+    border-bottom: 1px solid #999999;
+    text-align: right;
+    font-size: 30px;
+}
+
+#plot-table-a
+{
+    margin-left: 20px;
+    margin-top: 0;
+    border: 0;
+    border-collapse: collapse;
+    width: 100%;
+/*     width: 800px; */
+}
+
+#plot-table-a td
+{
+    padding: 0 0 0 0;
+}
+

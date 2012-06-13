@@ -480,7 +480,6 @@ class Searcher : public PropEngine
 
         //SQL
         void printRestartSQL();
-        void printDecLevel0SQL();
         void printLearntStatsSQL();
         void printPropStatsSQL();
         void printConflStatsSQL();

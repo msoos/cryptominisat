@@ -4,18 +4,8 @@
     <meta charset="utf-8">
     <title>Cryptominisat</title>
     <style>
-
     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
     @import url(style.css);
-    @import url(tables/style.css);
-    #example1         { min-height: 155px; }
-
-    </style>
-    <style type="text/css">
-        .jqplot-data-label {
-          /*color: #444;*/
-    /*      font-size: 1.1em;*/
-        }
     </style>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
@@ -40,7 +30,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Simplification sessions are not detailed, only the time jumps -- and the solver behaviour changes. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -52,18 +42,21 @@ function showValue(newValue)
 
 
 <script type="text/javascript">
-var myDataFuncs=new Array();
+var myData=new Array();
+/*var myDataFuncs=new Array();
 var myDataNames=new Array();
 var myDataTypes=new Array();
-var myDataLabels=new Array();
+var myDataLabels=new Array();*/
 </script>
 <?
-$runID = 1628198452;
+$runID = 343548584;
+//$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
 //$runID = 657697659;
 //$runID = 3348265795;
 error_reporting(E_ALL);
+error_reporting(E_STRICT);
 //error_reporting(E_STRICT);
 
 $username="presenter";
@@ -84,41 +77,15 @@ if (!$result) {
     die('Invalid query: ' . mysql_error());
 }
 $nrows=mysql_numrows($result);
- 
-/*function printOneThing($name, $nicename, $data, $nrows)
-{
-    $fullname = $name."Data";
-    $nameLabel = $name."Label";
-    echo "<tr><td>
-    <div id=\"$name\" class=\"myPlotData\"></div>
-    </td><td valign=top>
-    <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
-    </td></tr>";
-    echo "<script type=\"text/javascript\">
-    $fullname = [";
 
-    $i=0;
-    while ($i < $nrows) {
-        $conf=mysql_result($data, $i, "conflicts");
-        $b=mysql_result($data, $i, $name);
-        echo "[$conf, $b]\n";
-
-        $i++;
-        if ($i < $nrows) {
-            echo ",";
-        }
-    }
-    echo "];";
-
-    echo "myDataFuncs.push($fullname);\n";
-    echo "myDataNames.push(\"$name\");\n";
-    echo "myDataLabels.push([\"Conflicts\", \"$nicename\"]);\n";
-    echo "myDataTypes.push(0);\n";
-    echo "</script>\n";
-}*/
-
-function printOneThing($name, $datanames, $nicedatanames, $data, $nrows)
-{
+function printOneThing(
+    $name
+    , $datanames
+    , $nicedatanames
+    , $data
+    , $nrows
+    , $doSlideAvg = 0
+) {
     $fullname = $name."Data";
     $nameLabel = $name."Label";
     echo "<tr><td>
@@ -130,22 +97,34 @@ function printOneThing($name, $datanames, $nicedatanames, $data, $nrows)
     echo "$fullname = [";
 
     $i=0;
+    $total_sum = 0.0;
+    $last_confl = 0.0;
     while ($i < $nrows) {
-        $conf=mysql_result($data, $i, "conflicts");
-        echo "[$conf";
-        $sum = 0;
-        $num = 0;
+        //Print conflicts
+        $confl=mysql_result($data, $i, "conflicts");
+        echo "[$confl";
+
+        //Calc local sum
+        $local_sum = 0;
         foreach ($datanames as $dataname) {
-            $sum += mysql_result($data, $i, $dataname);
-            $num++;
+            $local_sum += mysql_result($data, $i, $dataname);
         }
+
+        //Print for each
         foreach ($datanames as $dataname) {
-            if ($num > 1) {
-                $tmp=mysql_result($data, $i, $dataname)/$sum*100.0;
+            $tmp = floatval(mysql_result($data, $i, $dataname));
+            if (sizeof($datanames) > 1) {
+                $tmp /= floatval($local_sum)*100.0;
+                echo ", $tmp";
             } else {
-                $tmp=mysql_result($data, $i, $dataname);
+                $total_sum += $tmp*($confl-$last_confl);
+                $last_confl = $confl;
+                $sliding_avg = floatval($total_sum) / floatval($confl);
+                echo ", $tmp";
+                if ($doSlideAvg) {
+                    echo ", $sliding_avg";
+                }
             }
-            echo ", $tmp";
         }
         echo "]\n";
 
@@ -155,32 +134,43 @@ function printOneThing($name, $datanames, $nicedatanames, $data, $nrows)
         }
     }
     echo "];\n";
-    echo "myDataFuncs.push($fullname);\n";
-    echo "myDataNames.push(\"$name\");\n";
-    echo "myDataLabels.push([\"Conflicts\"";
-    $num = 0;
+
+    //Add name & data
+    echo "myData.push({data: $fullname, name: \"$name\"";
+
+    //Calculate labels
+    echo ", labels: [\"Conflicts\"";
     foreach ($nicedatanames as $dataname) {
-        $num++;
         echo ", \"$dataname\"";
     }
-    echo "]);\n";
-    echo "myDataTypes.push(".(int)($num > 1).");\n";
+    if (sizeof($datanames) == 1) {
+        echo ", \"$fullname (sliding avg.)\"";
+    }
+    echo "]";
+
+    //Stacked?
+    echo ", stacked : ".(int)(sizeof($datanames) > 1);
+    echo " });\n";
+
     echo "</script>\n";
 }
 
 echo "<table id=\"plot-table-a\">";
 printOneThing("time", array("time")
     , array("time"), $result, $nrows);
-    
+
 printOneThing("restarts" , array("restarts")
     , array("restart no."), $result, $nrows);
+
+printOneThing("agility", array("agility")
+    , array("avg. agility"), $result, $nrows);
 
 printOneThing("branchDepth", array("branchDepth")
     , array("avg. branch depth"), $result, $nrows);
 
 printOneThing("branchDepthDelta", array("branchDepthDelta")
     , array("avg. branch depth delta"), $result, $nrows);
-    
+
 printOneThing("trailDepth", array("trailDepth")
     , array("avg. trail depth"), $result, $nrows);
 
@@ -188,16 +178,16 @@ printOneThing("trailDepthDelta", array("trailDepthDelta")
     , array("avg. trail depth delta"), $result, $nrows);
 
 printOneThing("glue", array("glue")
-    , array("avg. glue"), $result, $nrows);
+    , array("avg. glue of newly learnt clauses"), $result, $nrows);
 
 printOneThing("size", array("size")
-    , array("avg. size"), $result, $nrows);
+    , array("avg. size of newly learnt clauses"), $result, $nrows);
 
 printOneThing("resolutions", array("resolutions")
-    , array("avg. no. resolutions"), $result, $nrows);
+    , array("avg. no. resolutions of conflicts"), $result, $nrows);
 
 printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
-    ,array("unit learnts %", "bin learnts %", "tri learnts %", "long learnts %"), $result, $nrows);
+    ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows);
 
 printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
     ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows);
@@ -205,16 +195,6 @@ printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLong
 printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
     ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows);
 
-$query="
-SELECT `conflicts`, `replaced`, `set`
-from `vars`
-where `runID` = $runID
-order by `conflicts`";
-$result=mysql_query($query);
-if (!$result) {
-    die('Invalid query: ' . mysql_error());
-}
-$nrows=mysql_numrows($result);
 printOneThing("set", array("set")
     , array("vars set"), $result, $nrows);
 
@@ -264,13 +244,13 @@ else
 
 gs = [];
 var blockRedraw = false;
-for (var i = 0; i <= myDataNames.length; i++) {
+for (var i = 0; i < myData.length; i++) {
     gs.push(new Dygraph(
-        document.getElementById(myDataNames[i]),
-        myDataFuncs[i]
+        document.getElementById(myData[i].name),
+        myData[i].data
         , {
-            stackedGraph: myDataTypes[i],
-            labels: myDataLabels[i],
+            stackedGraph: myData[i].stacked,
+            labels: myData[i].labels,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 canvas.fillRect(0, area.y, 2, area.h);
@@ -293,10 +273,10 @@ for (var i = 0; i <= myDataNames.length; i++) {
             strokeWidth: 2,
             highlightCircleSize: 3,
             rollPeriod: 1,
-            drawXAxis: i == myDataNames.length-1,
+            drawXAxis: i == myData.length-1,
             legend: 'always',
-            xlabel: todisplay(i, myDataNames.length),
-            labelsDiv: document.getElementById(myDataNames[i]+"Label"),
+            xlabel: todisplay(i, myData.length),
+            labelsDiv: document.getElementById(myData[i].name+"Label"),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
@@ -315,7 +295,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
                 blockRedraw = true;
                 var xrange = me.xAxisRange();
                 //var yrange = me.yAxisRange();
-                for (var j = 0; j < myDataNames.length; j++) {
+                for (var j = 0; j < myData.length; j++) {
                     if (gs[j] == me)
                         continue;
 
@@ -543,7 +523,7 @@ for(i = 0; i < varPolarsData.length; i++) {
 
 
 <h2>Search session statistics</h2>
-<p>Here are some pie charts detailing propagations and other stats for each search session. Note that these are just per-session summary graphs of (learnt clause/propagation by/conflict by) data that is already present above.</p>
+<p>Here are some pie charts detailing learnt clause types learnt, propagations, and conflicting clause types for each search session. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
 
 <?
 function getLearntData($runID)
@@ -672,7 +652,7 @@ getConflData($runID);
 function createTable($nrows)
 {
     $i = 0;
-    echo "<table id=\"box-table-a\">\n";
+    echo "<table class=\"box-table-a\">\n";
     echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
         echo "<tr>\n";
@@ -790,6 +770,9 @@ for(i = 0; i < conflData.length; i++) {
 
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
+
+<h2>Acknowledgements</h2>
+<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for the huge amount of discussions we had about visualization, George Katsirelos for improvement ideas and Edward Tufte for all his wonderful books.</p>
 
 
 <!--<div id="fig" style="width:20px; height:20px"></div>

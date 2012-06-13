@@ -16,6 +16,21 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `clauseSizeDistrib`
+--
+
+DROP TABLE IF EXISTS `clauseSizeDistrib`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `clauseSizeDistrib` (
+  `runID` bigint(20) unsigned NOT NULL,
+  `conflicts` bigint(20) unsigned NOT NULL,
+  `size` int(10) unsigned NOT NULL,
+  `num` bigint(20) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `clauseStats`
 --
 
@@ -127,7 +142,25 @@ CREATE TABLE `restart` (
   `branchDepthDelta` double unsigned NOT NULL,
   `trailDepth` double unsigned NOT NULL,
   `trailDepthDelta` double unsigned NOT NULL,
-  `agility` double unsigned NOT NULL
+  `agility` double unsigned NOT NULL,
+  `propBinIrred` bigint(20) unsigned NOT NULL,
+  `propBinRed` bigint(20) unsigned NOT NULL,
+  `propTri` bigint(20) unsigned NOT NULL,
+  `propLongIrred` bigint(20) unsigned NOT NULL,
+  `propLongRed` bigint(20) unsigned NOT NULL,
+  `conflBinIrred` bigint(20) unsigned NOT NULL,
+  `conflBinRed` bigint(20) unsigned NOT NULL,
+  `conflTri` bigint(20) unsigned NOT NULL,
+  `conflLongIrred` bigint(20) unsigned NOT NULL,
+  `conflLongRed` bigint(20) unsigned NOT NULL,
+  `learntUnits` bigint(20) unsigned NOT NULL,
+  `learntBins` bigint(20) unsigned NOT NULL,
+  `learntTris` bigint(20) unsigned NOT NULL,
+  `learntLongs` bigint(20) unsigned NOT NULL,
+  `free` bigint(20) unsigned NOT NULL,
+  `replaced` bigint(20) unsigned NOT NULL,
+  `eliminated` bigint(20) unsigned NOT NULL,
+  `set` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -157,4 +190,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-06-12 16:20:02
+-- Dump completed on 2012-06-13 15:14:51

@@ -1187,28 +1187,6 @@ void Searcher::printSearchStats()
     cout << std::right;
 }
 
-void Searcher::printDecLevel0SQL()
-{
-    assert(decisionLevel() == 0);
-
-    solver->sqlFile
-    << "insert into `vars`"
-    << "("
-    << " `runID`, `conflicts`"
-    << ", `free`, `replaced`, `eliminated`, `set`"
-    << ") values ("
-    << "  " << solver->getSolveStats().runID
-    << ", " << sumConflicts()
-
-    //Var data
-    << ", " << solver->getNumFreeVarsAdv(trail.size())
-    << ", " << solver->varReplacer->getNumReplacedVars()
-    << ", " << solver->subsumer->getStats().numVarsElimed
-    << ", " << trail.size()
-    << ");" << endl;
-
-}
-
 void Searcher::printRestartSQL()
 {
     PropStats thisPropStats = propStats - lastSQLPropStats;
@@ -1221,11 +1199,17 @@ void Searcher::printRestartSQL()
     << " , `glue`, `size`, `resolutions`"
     << " , `branchDepth`, `branchDepthDelta`, `trailDepth`, `trailDepthDelta`"
     << " , `agility`"
+
+    //Prop&confl&lerant
     << " , `propBinIrred` , `propBinRed` , `propTri` , `propLongIrred` , `propLongRed`"
     << " , `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
     << " , `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
+
+    //Var stats
+    << " , `free`, `replaced`, `eliminated`, `set`"
     << ")"
     << " values ("
+
     //Position
     << "  " << solver->getSolveStats().runID
     << ", " << solver->getSolveStats().numSimplify
@@ -1266,7 +1250,11 @@ void Searcher::printRestartSQL()
     << ", " << thisStats.learntLongs
     
 
-    //Variable stats
+    //Var stats
+    << ", " << solver->getNumFreeVarsAdv(trail.size())
+    << ", " << solver->varReplacer->getNumReplacedVars()
+    << ", " << solver->subsumer->getStats().numVarsElimed
+    << ", " << trail.size()
     << " );" << endl;
 
     lastSQLPropStats = propStats;
@@ -1490,7 +1478,6 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
         if (conf.doSQL) {
             printRestartSQL();
-            printDecLevel0SQL();
         }
         //Print restart stat
         if (conf.verbosity >= 1
