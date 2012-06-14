@@ -14,9 +14,6 @@
     <style>
     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
     @import url(style.css);
-/*     @import url(dragdrop/css/portal.css); */
-/*     @import url(dragdrop/css/style.css); */
-
     </style>
 </head>
 
@@ -32,7 +29,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt".</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -854,8 +851,9 @@ for(i = 0; i < conflData.length; i++) {
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 <h2>Acknowledgements</h2>
-<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for the huge amount of discussions we had about visualization, George Katsirelos for improvement ideas and Edward Tufte for all his wonderful books.</p>
+<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for discussions we had about visualization, George Katsirelos for improvement ideas and Edward Tufte for all his wonderful books.</p>
 
+</body>
 
 </html>
 
