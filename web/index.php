@@ -46,8 +46,15 @@ function showValue(newValue)
 var myData=new Array();
 </script>
 
+<div id="columns">
+<div id="column-0" class="column menu"></div>
+<div id="column-1" class="column menu"></div>
+</div>
+<p style="clear:both">
+
 <?
 $runID = 1472309933;
+$runID2 = 3962017339;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -64,19 +71,6 @@ $database="cryptoms";
 mysql_connect(localhost, $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
-$query="
-SELECT *
-FROM `restart`
-where `runID` = $runID
-order by `conflicts`";
-
-$result=mysql_query($query);
-if (!$result) {
-    die('Invalid query: ' . mysql_error());
-}
-$nrows=mysql_numrows($result);
-
-$orderNum = 0;
 function printOneThing(
     $name
     , $datanames
@@ -84,24 +78,25 @@ function printOneThing(
     , $data
     , $nrows
     , &$orderNum
+    , $colnum
     , $doSlideAvg = 0
 ) {
     $fullname = $name."Data";
     $nameLabel = $name."Label";
 
     echo "
-    <div class=\"block\" id=\"block-$orderNum\">
+    <div class=\"block\" id=\"block".$orderNum."AT".$colnum."\">
     <table id=\"plot-table-a\">
     <tr>
-    <td><div id=\"$name\" class=\"myPlotData\"></div></td>
-    <td><div id=\"$nameLabel\" class=\"draghandle\"></div></td>
+    <td><div id=\"$name$colnum\" class=\"myPlotData\"></div></td>
+    <td><div id=\"$nameLabel$colnum\" class=\"draghandle\"></div></td>
     </tr>
     </table>
     </div>";
     $orderNum++;
 
     echo "<script type=\"text/javascript\">";
-    echo "$fullname = [";
+    echo "$fullname$colnum = [";
 
     $i=0;
     $total_sum = 0.0;
@@ -144,131 +139,139 @@ function printOneThing(
     echo "];\n";
 
     //Add name & data
-    echo "myData.push({data: $fullname, name: \"$name\"";
+    echo "myData.push({data: $fullname$colnum, name: \"$name$colnum\"";
 
     //Calculate labels
     echo ", labels: [\"Conflicts\"";
     foreach ($nicedatanames as $dataname) {
-        echo ", \"$dataname\"";
+        echo ", \"($colnum) $dataname\"";
     }
     if (sizeof($datanames) == 1) {
-        echo ", \"$fullname (sliding avg.)\"";
+        echo ", \"$fullname$colnum (sliding avg.)\"";
     }
     echo "]";
 
     //Stacked?
     echo ", stacked : ".(int)(sizeof($datanames) > 1);
+    echo ", labeldiv: \"".$nameLabel.$colnum."\"";
     echo " });\n";
 
     echo "</script>\n";
 }
-echo "
-<div id=\"columns\">
-<div id=\"column-1\" class=\"column menu\"></div>
-<div id=\"column-2\" class=\"column menu\"></div>
-</div>
-<p style=\"clear:both\">
-";
 
-printOneThing("time", array("time")
-    , array("time"), $result, $nrows, $orderNum);
+function printOneSolve($runID, $colnum) {
+    $query="
+    SELECT *
+    FROM `restart`
+    where `runID` = $runID
+    order by `conflicts`";
+    $result=mysql_query($query);
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    $nrows=mysql_numrows($result);
 
-printOneThing("restarts" , array("restarts")
-    , array("restart no."), $result, $nrows, $orderNum);
+    $orderNum = 0;
+    printOneThing("time", array("time")
+        , array("time"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("propsPerDec", array("propsPerDec")
-    , array("avg. no. propagations per decision"), $result, $nrows, $orderNum);
+    printOneThing("restarts" , array("restarts")
+        , array("restart no."), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("branchDepth", array("branchDepth")
-    , array("avg. branch depth"), $result, $nrows, $orderNum);
+    printOneThing("propsPerDec", array("propsPerDec")
+        , array("avg. no. propagations per decision"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("branchDepthDelta", array("branchDepthDelta")
-    , array("avg. branch depth delta"), $result, $nrows, $orderNum);
+    printOneThing("branchDepth", array("branchDepth")
+        , array("avg. branch depth"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("trailDepth", array("trailDepth")
-    , array("avg. trail depth"), $result, $nrows, $orderNum);
+    printOneThing("branchDepthDelta", array("branchDepthDelta")
+        , array("avg. branch depth delta"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("trailDepthDelta", array("trailDepthDelta")
-    , array("avg. trail depth delta"), $result, $nrows, $orderNum);
+    printOneThing("trailDepth", array("trailDepth")
+        , array("avg. trail depth"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("glue", array("glue")
-    , array("newly learnt clauses avg. glue"), $result, $nrows, $orderNum);
+    printOneThing("trailDepthDelta", array("trailDepthDelta")
+        , array("avg. trail depth delta"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("size", array("size")
-    , array("newly learnt clauses avg. size"), $result, $nrows, $orderNum);
+    printOneThing("glue", array("glue")
+        , array("newly learnt clauses avg. glue"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("resolutions", array("resolutions")
-    , array("avg. no. resolutions for 1UIP"), $result, $nrows, $orderNum);
+    printOneThing("size", array("size")
+        , array("newly learnt clauses avg. size"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("agility", array("agility")
-    , array("avg. agility"), $result, $nrows, $orderNum);
+    printOneThing("resolutions", array("resolutions")
+        , array("avg. no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("flippedPercent", array("flippedPercent")
-    , array("var polarity flipped %"), $result, $nrows, $orderNum);
+    printOneThing("agility", array("agility")
+        , array("avg. agility"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("replaced", array("replaced")
-    , array("vars replaced"), $result, $nrows, $orderNum);
+    printOneThing("flippedPercent", array("flippedPercent")
+        , array("var polarity flipped %"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("set", array("set")
-    , array("vars set"), $result, $nrows, $orderNum);
+    printOneThing("replaced", array("replaced")
+        , array("vars replaced"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("polarity", array("varSetPos", "varSetNeg")
-    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows, $orderNum);
+    printOneThing("set", array("set")
+        , array("vars set"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
-    ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows, $orderNum);
+    printOneThing("polarity", array("varSetPos", "varSetNeg")
+        , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
-    ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows, $orderNum);
+    printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
+        ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
-    ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows, $orderNum);
+    printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
+        ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("branchDepthSD", array("branchDepthSD")
-    , array("branch depth std dev"), $result, $nrows, $orderNum);
+    printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
+        ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
-    , array("branch depth delta std dev"), $result, $nrows, $orderNum);
+    printOneThing("branchDepthSD", array("branchDepthSD")
+        , array("branch depth std dev"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("trailDepthSD", array("trailDepthSD")
-    , array("trail depth std dev"), $result, $nrows, $orderNum);
+    printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
+        , array("branch depth delta std dev"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
-    , array("trail depth delta std dev"), $result, $nrows, $orderNum);
+    printOneThing("trailDepthSD", array("trailDepthSD")
+        , array("trail depth std dev"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("glueSD", array("glueSD")
-    , array("newly learnt clause glue std dev"), $result, $nrows, $orderNum);
+    printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
+        , array("trail depth delta std dev"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("sizeSD", array("sizeSD")
-    , array("newly learnt clause size std dev"), $result, $nrows, $orderNum);
+    printOneThing("glueSD", array("glueSD")
+        , array("newly learnt clause glue std dev"), $result, $nrows, $orderNum, $colnum);
 
-printOneThing("resolutionsSD", array("resolutionsSD")
-    , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum);
+    printOneThing("sizeSD", array("sizeSD")
+        , array("newly learnt clause size std dev"), $result, $nrows, $orderNum, $colnum);
 
+    printOneThing("resolutionsSD", array("resolutionsSD")
+        , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);
+
+    return $orderNum;
+}
+
+$orderNum = printOneSolve($runID, 0);
+$orderNum = printOneSolve($runID2, 1);
 
 //Move-around
 echo "<script type=\"text/javascript\">";
 echo "var settings = {";
-echo "'column-1' : [";
-$numtodo = 6;
-for($i = 0; $i < $numtodo; $i++) {
-    echo "'block-$i'";
+for($i2 = 0; $i2 < 2; $i2++) {
+    echo "'column-$i2' : [";
+    for($i = 0; $i < $orderNum; $i++) {
+        echo "'block".$i."AT".$i2."'";
 
-    if ($i+1 < $numtodo)
-        echo ", ";
-};
-echo "]";
-echo ",";
-echo "'column-2' : [";
-for($i = $numtodo; $i < $orderNum; $i++) {
-    echo "'block-$i'";
+        if ($i+1 < $orderNum)
+            echo ", ";
+    };
+    echo "]";
 
-    if ($i+1 < $orderNum)
-        echo ", ";
-};
-echo "]";
-
+    if ($i2+1 < 2) {
+        echo ",";
+    }
+}
 echo "};";
+
 echo "var options = { portal : 'columns', editorEnabled : true};
     var data = {};
     var portal;
@@ -351,7 +354,7 @@ for (var i = 0; i < myData.length; i++) {
             drawXAxis: false, //i == myData.length-1,
             legend: 'always',
             xlabel: false, //todisplay(i, myData.length),
-            labelsDiv: document.getElementById(myData[i].name+"Label"),
+            labelsDiv: document.getElementById(myData[i].labeldiv),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
