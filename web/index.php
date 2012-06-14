@@ -165,6 +165,7 @@ function printOneThing(
 echo "
 <div id=\"columns\">
 <div id=\"column-1\" class=\"column menu\"></div>
+<div id=\"column-2\" class=\"column menu\"></div>
 </div>";
 
 printOneThing("time", array("time")
@@ -247,7 +248,7 @@ printOneThing("resolutionsSD", array("resolutionsSD")
 echo "<script type=\"text/javascript\">";
 echo "var settings = {";
 echo "'column-1' : [";
-$numtodo = $orderNum;
+$numtodo = 6;
 for($i = 0; $i < $numtodo; $i++) {
     echo "'block-$i'";
 
@@ -255,7 +256,7 @@ for($i = 0; $i < $numtodo; $i++) {
         echo ", ";
 };
 echo "]";
-/*echo ",";
+echo ",";
 echo "'column-2' : [";
 for($i = $numtodo; $i < $orderNum; $i++) {
     echo "'block-$i'";
@@ -263,7 +264,7 @@ for($i = $numtodo; $i < $orderNum; $i++) {
     if ($i+1 < $orderNum)
         echo ", ";
 };
-echo "]";*/
+echo "]";
 
 echo "};";
 echo "var options = { portal : 'columns', editorEnabled : true};
