@@ -12,17 +12,13 @@
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
     <script type="text/javascript">
-            var settings    = {'column-1' : ['block-1','block-2', 'block-3', 'block-4']};
-
-            var options     = { portal          : 'columns',
-                                editorEnabled   : true};
-            var data        = {};
-
-            var portal;
-
-            Event.observe(window, 'load', function() {
-                portal = new Portal(settings, options, data);
-            });
+        var settings    = {'column-1' : ['block-1','block-2', 'block-3', 'block-4']};
+        var options     = { portal : 'columns', editorEnabled : true};
+        var data        = {};
+        var portal;
+        Event.observe(window, 'load', function() {
+            portal = new Portal(settings, options, data);
+        });
     </script>
     <link rel="stylesheet" href="dragdrop/css/portal.css"  type="text/css" media="screen" />
 <!--     <link rel="stylesheet" href="dragdrop/css/style.css"  type="text/css" media="screen" /> -->
@@ -57,45 +53,35 @@ function showValue(newValue)
 <div id="columns">
     <div id="column-1" class="column menu"></div>
 
-    <div id="column-2" class="column menu"></div>
-
     <div class="portal-column" id="portal-column-block-list" style="display: none;">
         <div class="block" id="block-1">
-            <p class="draghandle">Block 1</p>
-            <tr><td>
             <table id="plot-table-a">
             <tr><td><div id="nameSDD11" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG11" class="myPlotLabel"></div></td>
+            <td><div id="nameLabelDGFDFG11" class="myPlotLabel" class="draghandle"></div></td>
             </td></tr>
             </table>
         </div>
 
         <div class="block" id="block-2">
-            <p class="draghandle">Block 1</p>
-            <tr><td>
             <table id="plot-table-a">
             <tr><td><div id="nameSDD22" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG22" class="myPlotLabel"></div></td>
+            <td><div id="nameLabelDGFDFG22" class="myPlotLabel" class="draghandle"></div></td>
             </td></tr>
             </table>
         </div>
 
         <div class="block" id="block-3">
-            <p class="draghandle">Block 1</p>
-            <tr><td>
             <table id="plot-table-a">
             <tr><td><div id="nameSDD33" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG33" class="myPlotLabel"></div></td>
+            <td><div id="nameLabelDGFDFG33" class="myPlotLabel" class="draghandle"></div></td>
             </td></tr>
             </table>
         </div>
 
         <div class="block" id="block-4">
-            <p class="draghandle">Block 1</p>
-            <tr><td>
             <table id="plot-table-a">
             <tr><td><div id="nameSDD44" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG44" class="myPlotLabel"></div></td>
+            <td><div id="nameLabelDGFDFG44" class="myPlotLabel" class="draghandle"></div></td>
             </td></tr>
             </table>
         </div>
