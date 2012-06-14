@@ -360,7 +360,7 @@ for (var i = 0; i < myData.length; i++) {
             drawYGrid: false,
             drawYAxis: false,
             strokeStyle: "black",
-            colors: ['#000000', '05fa03', '#d03332', '#4e4ea8', '#689696'],
+            colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             //errorBars: false,
             drawCallback: function(me, initial) {

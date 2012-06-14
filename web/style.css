@@ -11,6 +11,10 @@ div.draghandle {
  padding-bottom:10px;
 }
 
+div.draghandle.dygraph-label {
+ font-family: Arial, Helvetica, sans-serif;
+}
+
 div.myPlotData {
     /*position: absolute;
   left: 10px;
