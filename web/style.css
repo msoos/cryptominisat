@@ -2,20 +2,12 @@ html {
 
 }
 
-div.myPlotLabel {
- font-family: sans-serif;
- width:150px;
- font-size:0.7em;
- padding-top:10px;
- padding-bottom:10px;
-}
-
 div.draghandle {
  cursor: move;
  font-family: sans-serif;
- width:80px;
- font-size:0.6em;
- padding-top:10px;
+ width:140px;
+ font-size:0.55em;
+ padding-top:0px;
  padding-bottom:10px;
 }
 
@@ -138,7 +130,7 @@ table.box-table-a td
 
 #plot-table-a
 {
-    margin-left: 20px;
+    margin-left: 10px;
     margin-top: 0;
     border: 0;
     border-collapse: collapse;
@@ -152,7 +144,7 @@ table.box-table-a td
 
 #columns .column{
 
-    margin: 0 5px 0 5px;
+    margin: 0 0px 0 0px;
 
 }
 

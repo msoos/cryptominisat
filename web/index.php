@@ -508,71 +508,71 @@ var varPolarsData = new Array();
 </script>
 
 
-<p/>
+<!--<p/>
 <h2>Variable polarity statistics</h2>
-<p> These graphs show how often the most propagated variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
+<p> These graphs show how often the most propagated variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>-->
 <?
-function createDataVarPolars($simpnum, $runID)
-{
-    $query="
-    SELECT *
-    FROM `polarSet`
-    where `runID` = $runID and `simplifications`= $simpnum
-    order by `order`
-    limit 200";
-
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
-
-    echo "varPolarsData.push([\n";
-    $i=0;
-    while ($i < $nrows) {
-        $order=mysql_result($result, $i, "order");
-        $pos=mysql_result($result, $i, "pos");
-        $neg=mysql_result($result, $i, "neg");
-        $total=mysql_result($result, $i, "total");
-        $flipped=mysql_result($result, $i, "flipped");
-
-        echo "[$order, $pos, $neg, $total, $flipped]\n";
-
-        $i++;
-        if ($i < $nrows) {
-            echo ",";
-        }
-    }
-    echo "]);\n";
-}
-
-//Get maximum number of simplifications
-$query="
-SELECT max(simplifications) as mymax
-FROM `polarSet`
-where `runID` = $runID";
-$result=mysql_query($query);
-if (!$result) {
-    die('Invalid query: ' . mysql_error());
-}
-$maxNumSimp = mysql_result($result, 0, "mymax");
-
-echo "<script type=\"text/javascript\">\n";
-for($i = 1; $i <= $maxNumSimp; $i++) {
-    createDataVarPolars($i, $runID);
-}
-echo "</script>\n";
-
-echo "<table class=\"box-table-a\">";
-echo "<tr><th>Search session</th><th>Variable polarities</th><th>Labels</th></tr>\n";
-for($i = 1; $i <= $maxNumSimp; $i++) {
-    echo "<tr>
-    <td style=\"text-align: right;\">$i</td>
-    <td><div id=\"varPolarsPlot$i\" class=\"myPlotData3\"></div></td>
-    <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size: 10px;\"></div></td>
-    </tr>";
-}
-echo "</table>";
+// function createDataVarPolars($simpnum, $runID)
+// {
+//     $query="
+//     SELECT *
+//     FROM `polarSet`
+//     where `runID` = $runID and `simplifications`= $simpnum
+//     order by `order`
+//     limit 200";
+//
+//     $result=mysql_query($query);
+//     if (!$result) {
+//         die('Invalid query: ' . mysql_error());
+//     }
+//     $nrows=mysql_numrows($result);
+//
+//     echo "varPolarsData.push([\n";
+//     $i=0;
+//     while ($i < $nrows) {
+//         $order=mysql_result($result, $i, "order");
+//         $pos=mysql_result($result, $i, "pos");
+//         $neg=mysql_result($result, $i, "neg");
+//         $total=mysql_result($result, $i, "total");
+//         $flipped=mysql_result($result, $i, "flipped");
+//
+//         echo "[$order, $pos, $neg, $total, $flipped]\n";
+//
+//         $i++;
+//         if ($i < $nrows) {
+//             echo ",";
+//         }
+//     }
+//     echo "]);\n";
+// }
+//
+// //Get maximum number of simplifications
+// $query="
+// SELECT max(simplifications) as mymax
+// FROM `polarSet`
+// where `runID` = $runID";
+// $result=mysql_query($query);
+// if (!$result) {
+//     die('Invalid query: ' . mysql_error());
+// }
+// $maxNumSimp = mysql_result($result, 0, "mymax");
+//
+// echo "<script type=\"text/javascript\">\n";
+// for($i = 1; $i <= $maxNumSimp; $i++) {
+//     createDataVarPolars($i, $runID);
+// }
+// echo "</script>\n";
+//
+// echo "<table class=\"box-table-a\">";
+// echo "<tr><th>Search session</th><th>Variable polarities</th><th>Labels</th></tr>\n";
+// for($i = 1; $i <= $maxNumSimp; $i++) {
+//     echo "<tr>
+//     <td style=\"text-align: right;\">$i</td>
+//     <td><div id=\"varPolarsPlot$i\" class=\"myPlotData3\"></div></td>
+//     <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size: 10px;\"></div></td>
+//     </tr>";
+// }
+// echo "</table>";
 ?>
 
 <script type="text/javascript">
@@ -593,8 +593,6 @@ for(i = 0; i < varPolarsData.length; i++) {
             labelsDiv: document.getElementById('varPolarsPlotLabel'+ i2),
             labelsSeparateLines: true,
             labelsKMB: true
-//             ,xlabel: "Top 200 most set variables",
-            //,title: "Most set variables during search session " + i
         }
     );
 }
@@ -857,99 +855,6 @@ for(i = 0; i < conflData.length; i++) {
 
 <h2>Acknowledgements</h2>
 <p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for the huge amount of discussions we had about visualization, George Katsirelos for improvement ideas and Edward Tufte for all his wonderful books.</p>
-
-
-<!--<div id="fig" style="width:20px; height:20px"></div>
-<script type="text/javascript" src="mbostock-protovis-1a61bac/protovis.min.js"></script>
-<script type="text/javascript+protovis">
-
-// Sizing and scales
-var data = pv.range(5).map(Math.random);
-var w = 200,
-    h = 200,
-    r = w / 2,
-    a = pv.Scale.linear(0, pv.sum(data)).range(0, 2 * Math.PI);
-
-// The root panel.
-var vis = new pv.Panel()
-    .width(w)
-    .height(h);
-
-// The wedge, with centered label.
-vis.add(pv.Wedge)
-    .data(data.sort(pv.reverseOrder))
-    .bottom(w / 2)
-    .left(w / 2)
-    .innerRadius(r - 40)
-    .outerRadius(r)
-    .angle(a)
-    .event("mouseover", function() this.innerRadius(0))
-    .event("mouseout", function() this.innerRadius(r - 40))
-    .anchor("center").add(pv.Label)
-    .visible(function(d) d > .15)
-    .textAngle(0)
-    .text(function(d) d.toFixed(2));
-
-vis.render();
-</script>-->
-
-<!--<div id="example1"></div>
-
-<script src="d3/d3.v2.js"></script>
-<script src="cubism/cubism.v1.js"></script>
-<script>
-function myvalues(name) {
-  var value = 0,
-      values = [],
-      i = 0,
-      last;
-  return context.metric(function(start, stop, step, callback) {
-    start = +start;
-    stop = +stop;
-    if (isNaN(last))
-        last = start;
-
-    while (last < stop) {
-      last += step;
-      //value = Math.max(-10, Math.min(10, value + .8 * Math.random() - .4 + .2 * Math.cos(i += .2)));
-      values.push(10);
-    }
-    callback(null, values = values.slice((start - stop) / step));
-  }, name);
-}
-
-var context = cubism.context()
-    .serverDelay(0)
-    .clientDelay(0)
-    //.step(10)
-    .size(800);
-
-//    var foo = random("glue");
-var foo = myvalues("glue");
-
-d3.select("#example1").call(function(div) {
-
-  div.append("div")
-      .attr("class", "axis")
-      .call(context.axis().orient("top"));
-
-  div.selectAll(".horizon")
-      .data([foo])
-    .enter().append("div")
-      .attr("class", "horizon")
-      .call(context.horizon().extent([-20, 20]));
-
-  div.append("div")
-      .attr("class", "rule")
-      .call(context.rule());
-
-});
-
-// On mousemove, reposition the chart values to match the rule.
-context.on("focus", function(i) {
-  d3.selectAll(".value").style("right", i == null ? null : context.size() - i + "px");
-});
-</script>-->
 
 
 </html>
