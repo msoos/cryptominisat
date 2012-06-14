@@ -143,6 +143,14 @@ CREATE TABLE `restart` (
   `trailDepth` double unsigned NOT NULL,
   `trailDepthDelta` double unsigned NOT NULL,
   `agility` double unsigned NOT NULL,
+  `glueSD` double unsigned NOT NULL,
+  `sizeSD` double unsigned NOT NULL,
+  `resolutionsSD` double unsigned NOT NULL,
+  `branchDepthSD` double unsigned NOT NULL,
+  `branchDepthDeltaSD` double unsigned NOT NULL,
+  `trailDepthSD` double unsigned NOT NULL,
+  `trailDepthDeltaSD` double unsigned NOT NULL,
+  `agilitySD` double unsigned NOT NULL,
   `propBinIrred` bigint(20) unsigned NOT NULL,
   `propBinRed` bigint(20) unsigned NOT NULL,
   `propTri` bigint(20) unsigned NOT NULL,
@@ -157,6 +165,10 @@ CREATE TABLE `restart` (
   `learntBins` bigint(20) unsigned NOT NULL,
   `learntTris` bigint(20) unsigned NOT NULL,
   `learntLongs` bigint(20) unsigned NOT NULL,
+  `propsPerDec` double unsigned NOT NULL,
+  `flippedPercent` double unsigned NOT NULL,
+  `varSetPos` bigint(20) unsigned NOT NULL,
+  `varSetNeg` bigint(20) unsigned NOT NULL,
   `free` bigint(20) unsigned NOT NULL,
   `replaced` bigint(20) unsigned NOT NULL,
   `eliminated` bigint(20) unsigned NOT NULL,
@@ -190,4 +202,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-06-13 15:14:51
+-- Dump completed on 2012-06-14 15:23:02
