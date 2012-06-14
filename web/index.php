@@ -521,9 +521,9 @@ echo "<table class=\"box-table-a\">";
 echo "<tr><th>Search session</th><th>Variable polarities</th><th>Labels</th></tr>\n";
 for($i = 1; $i <= $maxNumSimp; $i++) {
     echo "<tr>
-    <td>$i</td>
+    <td style=\"text-align: right;\">$i</td>
     <td><div id=\"varPolarsPlot$i\" class=\"myPlotData3\"></div></td>
-    <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size:0.4em;\"></div></td>
+    <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size: 10px;\"></div></td>
     </tr>";
 }
 echo "</table>";
@@ -689,7 +689,7 @@ function createTable($nrows)
     echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
         echo "<tr>\n";
-        echo "<td width=\"1%\">".($i+1)."</td>\n";
+        echo "<td width=\"1%\" style=\"text-align:right;\">".($i+1)."</td>\n";
         echo " <td width=\"30%\"><div id=\"learnt$i\" class=\"piechart\"></div></td>\n";
         echo " <td width=\"30%\"><div id=\"prop$i\" class=\"piechart\"></div></td>\n";
         echo " <td width=\"30%\"><div id=\"confl$i\" class=\"piechart\"></div></td>\n";

@@ -298,9 +298,9 @@ table.box-table-a td
 {
     padding: 0px;
     border-bottom: 1px solid #999999;
-    text-align: right;
     font-size: 30px;
 }
+
 
 #plot-table-a
 {
@@ -309,7 +309,6 @@ table.box-table-a td
     border: 0;
     border-collapse: collapse;
     width: 100%;
-/*     width: 800px; */
 }
 
 #plot-table-a td
