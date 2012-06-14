@@ -1,21 +1,35 @@
-<DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
     <title>Cryptominisat</title>
+
+    <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
+    <script type="text/javascript" src="jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
+    <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script>
+    <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
+    <script type="text/javascript" src="dragdrop/js/portal.js"></script>
+    <script type="text/javascript">
+            var settings    = {'column-1' : ['block-1','block-2', 'block-3', 'block-4']};
+
+            var options     = { portal          : 'columns',
+                                editorEnabled   : true};
+            var data        = {};
+
+            var portal;
+
+            Event.observe(window, 'load', function() {
+                portal = new Portal(settings, options, data);
+            });
+    </script>
+    <link rel="stylesheet" href="dragdrop/css/portal.css"  type="text/css" media="screen" />
+<!--     <link rel="stylesheet" href="dragdrop/css/style.css"  type="text/css" media="screen" /> -->
     <style>
     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
     @import url(style.css);
     </style>
-
-    <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
-    <script type="text/javascript" src="jquery/jquery.min.js"></script>
-<!--     <script type="text/javascript" src="jquery/jquery.jqplot.min.js"></script> -->
-<!--     <script type="text/javascript" src="jquery/plugins/jqplot.pieRenderer.min.js"></script> -->
-<!--     <script type="text/javascript" src="jquery/plugins/jqplot.donutRenderer.min.js"></script> -->
-    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
-    <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
-<!--     <script type="text/javascript" src="highcharts/js/modules/exporting.js"></script> -->
 </head>
 
 <body>
@@ -40,14 +54,59 @@ function showValue(newValue)
 }
 </script>
 
+<div id="columns">
+    <div id="column-1" class="column menu"></div>
+
+    <div id="column-2" class="column menu"></div>
+
+    <div class="portal-column" id="portal-column-block-list" style="display: none;">
+        <div class="block" id="block-1">
+            <p class="draghandle">Block 1</p>
+            <tr><td>
+            <table id="plot-table-a">
+            <tr><td><div id="nameSDD11" class="myPlotData"></div></td>
+            <td><div id="nameLabelDGFDFG11" class="myPlotLabel"></div></td>
+            </td></tr>
+            </table>
+        </div>
+
+        <div class="block" id="block-2">
+            <p class="draghandle">Block 1</p>
+            <tr><td>
+            <table id="plot-table-a">
+            <tr><td><div id="nameSDD22" class="myPlotData"></div></td>
+            <td><div id="nameLabelDGFDFG22" class="myPlotLabel"></div></td>
+            </td></tr>
+            </table>
+        </div>
+
+        <div class="block" id="block-3">
+            <p class="draghandle">Block 1</p>
+            <tr><td>
+            <table id="plot-table-a">
+            <tr><td><div id="nameSDD33" class="myPlotData"></div></td>
+            <td><div id="nameLabelDGFDFG33" class="myPlotLabel"></div></td>
+            </td></tr>
+            </table>
+        </div>
+
+        <div class="block" id="block-4">
+            <p class="draghandle">Block 1</p>
+            <tr><td>
+            <table id="plot-table-a">
+            <tr><td><div id="nameSDD44" class="myPlotData"></div></td>
+            <td><div id="nameLabelDGFDFG44" class="myPlotLabel"></div></td>
+            </td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
 
 <script type="text/javascript">
 var myData=new Array();
-/*var myDataFuncs=new Array();
-var myDataNames=new Array();
-var myDataTypes=new Array();
-var myDataLabels=new Array();*/
 </script>
+
 <?
 $runID = 1472309933;
 //$runID = 1628198452;
@@ -93,6 +152,8 @@ function printOneThing(
     </td><td valign=top>
     <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
     </td></tr>";
+
+
     echo "<script type=\"text/javascript\">";
     echo "$fullname = [";
 
