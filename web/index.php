@@ -11,20 +11,12 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
-    <script type="text/javascript">
-        var settings    = {'column-1' : ['block-1','block-2', 'block-3', 'block-4']};
-        var options     = { portal : 'columns', editorEnabled : true};
-        var data        = {};
-        var portal;
-        Event.observe(window, 'load', function() {
-            portal = new Portal(settings, options, data);
-        });
-    </script>
-    <link rel="stylesheet" href="dragdrop/css/portal.css"  type="text/css" media="screen" />
-<!--     <link rel="stylesheet" href="dragdrop/css/style.css"  type="text/css" media="screen" /> -->
     <style>
     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
     @import url(style.css);
+/*     @import url(dragdrop/css/portal.css); */
+/*     @import url(dragdrop/css/style.css); */
+
     </style>
 </head>
 
@@ -49,45 +41,6 @@ function showValue(newValue)
     setRollPeriod(newValue);
 }
 </script>
-
-<div id="columns">
-    <div id="column-1" class="column menu"></div>
-
-    <div class="portal-column" id="portal-column-block-list" style="display: none;">
-        <div class="block" id="block-1">
-            <table id="plot-table-a">
-            <tr><td><div id="nameSDD11" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG11" class="myPlotLabel" class="draghandle"></div></td>
-            </td></tr>
-            </table>
-        </div>
-
-        <div class="block" id="block-2">
-            <table id="plot-table-a">
-            <tr><td><div id="nameSDD22" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG22" class="myPlotLabel" class="draghandle"></div></td>
-            </td></tr>
-            </table>
-        </div>
-
-        <div class="block" id="block-3">
-            <table id="plot-table-a">
-            <tr><td><div id="nameSDD33" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG33" class="myPlotLabel" class="draghandle"></div></td>
-            </td></tr>
-            </table>
-        </div>
-
-        <div class="block" id="block-4">
-            <table id="plot-table-a">
-            <tr><td><div id="nameSDD44" class="myPlotData"></div></td>
-            <td><div id="nameLabelDGFDFG44" class="myPlotLabel" class="draghandle"></div></td>
-            </td></tr>
-            </table>
-        </div>
-    </div>
-</div>
-
 
 <script type="text/javascript">
 var myData=new Array();
@@ -123,22 +76,29 @@ if (!$result) {
 }
 $nrows=mysql_numrows($result);
 
+$orderNum = 0;
 function printOneThing(
     $name
     , $datanames
     , $nicedatanames
     , $data
     , $nrows
+    , &$orderNum
     , $doSlideAvg = 0
 ) {
     $fullname = $name."Data";
     $nameLabel = $name."Label";
-    echo "<tr><td>
-    <div id=\"$name\" class=\"myPlotData\"></div>
-    </td><td valign=top>
-    <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
-    </td></tr>";
 
+    echo "
+    <div class=\"block\" id=\"block-$orderNum\">
+    <table id=\"plot-table-a\">
+    <tr>
+    <td><div id=\"$name\" class=\"myPlotData\"></div></td>
+    <td><div id=\"$nameLabel\" class=\"draghandle\"></div></td>
+    </tr>
+    </table>
+    </div>";
+    $orderNum++;
 
     echo "<script type=\"text/javascript\">";
     echo "$fullname = [";
@@ -202,84 +162,117 @@ function printOneThing(
 
     echo "</script>\n";
 }
+echo "
+<div id=\"columns\">
+<div id=\"column-1\" class=\"column menu\"></div>
+</div>";
 
-echo "<table id=\"plot-table-a\">";
 printOneThing("time", array("time")
-    , array("time"), $result, $nrows);
+    , array("time"), $result, $nrows, $orderNum);
 
 printOneThing("restarts" , array("restarts")
-    , array("restart no."), $result, $nrows);
+    , array("restart no."), $result, $nrows, $orderNum);
 
 printOneThing("propsPerDec", array("propsPerDec")
-    , array("avg. no. propagations per decision"), $result, $nrows);
+    , array("avg. no. propagations per decision"), $result, $nrows, $orderNum);
 
 printOneThing("branchDepth", array("branchDepth")
-    , array("avg. branch depth"), $result, $nrows);
+    , array("avg. branch depth"), $result, $nrows, $orderNum);
 
 printOneThing("branchDepthDelta", array("branchDepthDelta")
-    , array("avg. branch depth delta"), $result, $nrows);
+    , array("avg. branch depth delta"), $result, $nrows, $orderNum);
 
 printOneThing("trailDepth", array("trailDepth")
-    , array("avg. trail depth"), $result, $nrows);
+    , array("avg. trail depth"), $result, $nrows, $orderNum);
 
 printOneThing("trailDepthDelta", array("trailDepthDelta")
-    , array("avg. trail depth delta"), $result, $nrows);
+    , array("avg. trail depth delta"), $result, $nrows, $orderNum);
 
 printOneThing("glue", array("glue")
-    , array("newly learnt clauses avg. glue"), $result, $nrows);
+    , array("newly learnt clauses avg. glue"), $result, $nrows, $orderNum);
 
 printOneThing("size", array("size")
-    , array("newly learnt clauses avg. size"), $result, $nrows);
+    , array("newly learnt clauses avg. size"), $result, $nrows, $orderNum);
 
 printOneThing("resolutions", array("resolutions")
-    , array("avg. no. resolutions for 1UIP"), $result, $nrows);
+    , array("avg. no. resolutions for 1UIP"), $result, $nrows, $orderNum);
 
 printOneThing("agility", array("agility")
-    , array("avg. agility"), $result, $nrows);
+    , array("avg. agility"), $result, $nrows, $orderNum);
 
 printOneThing("flippedPercent", array("flippedPercent")
-    , array("var polarity flipped %"), $result, $nrows);
+    , array("var polarity flipped %"), $result, $nrows, $orderNum);
 
 printOneThing("replaced", array("replaced")
-    , array("vars replaced"), $result, $nrows);
+    , array("vars replaced"), $result, $nrows, $orderNum);
 
 printOneThing("set", array("set")
-    , array("vars set"), $result, $nrows);
+    , array("vars set"), $result, $nrows, $orderNum);
 
 printOneThing("polarity", array("varSetPos", "varSetNeg")
-    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows);
+    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows, $orderNum);
 
 printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
-    ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows);
+    ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows, $orderNum);
 
 printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
-    ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows);
+    ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows, $orderNum);
 
 printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
-    ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows);
+    ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows, $orderNum);
 
 printOneThing("branchDepthSD", array("branchDepthSD")
-    , array("branch depth std dev"), $result, $nrows);
+    , array("branch depth std dev"), $result, $nrows, $orderNum);
 
 printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
-    , array("branch depth delta std dev"), $result, $nrows);
+    , array("branch depth delta std dev"), $result, $nrows, $orderNum);
 
 printOneThing("trailDepthSD", array("trailDepthSD")
-    , array("trail depth std dev"), $result, $nrows);
+    , array("trail depth std dev"), $result, $nrows, $orderNum);
 
 printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
-    , array("trail depth delta std dev"), $result, $nrows);
+    , array("trail depth delta std dev"), $result, $nrows, $orderNum);
 
 printOneThing("glueSD", array("glueSD")
-    , array("newly learnt clause glue std dev"), $result, $nrows);
+    , array("newly learnt clause glue std dev"), $result, $nrows, $orderNum);
 
 printOneThing("sizeSD", array("sizeSD")
-    , array("newly learnt clause size std dev"), $result, $nrows);
+    , array("newly learnt clause size std dev"), $result, $nrows, $orderNum);
 
 printOneThing("resolutionsSD", array("resolutionsSD")
-    , array("std dev no. resolutions for 1UIP"), $result, $nrows);
+    , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum);
 
-echo "</table>";
+
+//Move-around
+echo "<script type=\"text/javascript\">";
+echo "var settings = {";
+echo "'column-1' : [";
+$numtodo = $orderNum;
+for($i = 0; $i < $numtodo; $i++) {
+    echo "'block-$i'";
+
+    if ($i+1 < $numtodo)
+        echo ", ";
+};
+echo "]";
+/*echo ",";
+echo "'column-2' : [";
+for($i = $numtodo; $i < $orderNum; $i++) {
+    echo "'block-$i'";
+
+    if ($i+1 < $orderNum)
+        echo ", ";
+};
+echo "]";*/
+
+echo "};";
+echo "var options = { portal : 'columns', editorEnabled : true};
+    var data = {};
+    var portal;
+    Event.observe(window, 'load', function() {
+        portal = new Portal(settings, options, data);
+    });
+</script>";
 
 function fillSimplificationPoints($runID)
 {
@@ -352,9 +345,9 @@ for (var i = 0; i < myData.length; i++) {
             strokeWidth: 2,
             highlightCircleSize: 3,
             rollPeriod: 1,
-            drawXAxis: i == myData.length-1,
+            drawXAxis: false, //i == myData.length-1,
             legend: 'always',
-            xlabel: todisplay(i, myData.length),
+            xlabel: false, //todisplay(i, myData.length),
             labelsDiv: document.getElementById(myData[i].name+"Label"),
             labelsSeparateLines: true,
             labelsKMB: true,
@@ -509,7 +502,7 @@ var varPolarsData = new Array();
 </script>
 
 
-
+<p/>
 <h2>Variable polarity statistics</h2>
 <p> These graphs show how often the most propagated variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
 <?
