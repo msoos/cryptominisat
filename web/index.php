@@ -193,14 +193,14 @@ printOneThing("agility", array("agility")
 printOneThing("flippedPercent", array("flippedPercent")
     , array("var polarity flipped %"), $result, $nrows);
 
-printOneThing("polarity", array("varSetPos", "varSetNeg")
-    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows);
-
 printOneThing("replaced", array("replaced")
     , array("vars replaced"), $result, $nrows);
 
 printOneThing("set", array("set")
     , array("vars set"), $result, $nrows);
+
+printOneThing("polarity", array("varSetPos", "varSetNeg")
+    , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows);
 
 printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
     ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows);
@@ -317,7 +317,7 @@ for (var i = 0; i < myData.length; i++) {
             drawYGrid: false,
             drawYAxis: false,
             strokeStyle: "black",
-            colors: ['#000000', '#002322', '#664400', '#886666', '#ff8888'],
+            colors: ['#000000', '05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             //errorBars: false,
             drawCallback: function(me, initial) {
@@ -463,8 +463,8 @@ var varPolarsData = new Array();
 
 
 
-<h2>Variable statistics per search session</h2>
-<p> These graphs show how many times the topmost set variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
+<h2>Variable polarity statistics</h2>
+<p> These graphs show how often the most propagated variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
 <?
 function createDataVarPolars($simpnum, $runID)
 {
@@ -517,15 +517,16 @@ for($i = 1; $i <= $maxNumSimp; $i++) {
 }
 echo "</script>\n";
 
-echo "<table id=\"plot-table-a\">";
+echo "<table class=\"box-table-a\">";
+echo "<tr><th>Search session</th><th>Variable polarities</th><th>Labels</th></tr>\n";
 for($i = 1; $i <= $maxNumSimp; $i++) {
-    echo "<tr><td>
-    <div id=\"varPolarsPlot$i\" class=\"myPlotData2\"></div>
-    </td><td valign=top>
-    <div id=\"varPolarsPlotLabel$i\" class=\"myPlotLabel\"></div>
-    </td></tr>";
+    echo "<tr>
+    <td>$i</td>
+    <td><div id=\"varPolarsPlot$i\" class=\"myPlotData3\"></div></td>
+    <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size:0.4em;\"></div></td>
+    </tr>";
 }
-echo "</tr></table>";
+echo "</table>";
 ?>
 
 <script type="text/javascript">
@@ -688,7 +689,7 @@ function createTable($nrows)
     echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
         echo "<tr>\n";
-        echo "<td width=\"1%\">$i</td>\n";
+        echo "<td width=\"1%\">".($i+1)."</td>\n";
         echo " <td width=\"30%\"><div id=\"learnt$i\" class=\"piechart\"></div></td>\n";
         echo " <td width=\"30%\"><div id=\"prop$i\" class=\"piechart\"></div></td>\n";
         echo " <td width=\"30%\"><div id=\"confl$i\" class=\"piechart\"></div></td>\n";

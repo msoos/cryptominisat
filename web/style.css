@@ -4,7 +4,7 @@ html {
 
 div.myPlotLabel {
  font-family: sans-serif;
- width:200px;
+ width:150px;
  font-size:0.7em;
  padding-top:10px;
  padding-bottom:10px;
@@ -23,6 +23,13 @@ div.myPlotData {
 
 div.myPlotData2 {
  width:700px;
+ height:200px;
+ margin:0;
+ margin-top:30px;
+}
+
+div.myPlotData3 {
+ width:650px;
  height:200px;
  margin:0;
  margin-top:30px;
@@ -280,7 +287,8 @@ table.box-table-a
 
 table.box-table-a th
 {
-    font-size: 20px;
+    font-size: 15px;
+    margin: 0;
     font-weight: bold;
     padding: 0px;
     border-bottom: 1px solid black;
