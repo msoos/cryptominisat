@@ -84,7 +84,7 @@ Solver::Solver(const SolverConf& _conf) :
         cout << "Error reading from /dev/random !" << endl;
         exit(-1);
     }
-    read(randomData, &solveStats.runID, 4);
+    read(randomData, &solveStats.runID, sizeof(solveStats.runID));
     close(randomData);
     cout << "c runID: " << solveStats.runID << endl;
 }

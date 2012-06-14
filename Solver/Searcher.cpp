@@ -1195,19 +1195,25 @@ void Searcher::printRestartSQL()
     solver->sqlFile
     << "insert into `restart`"
     << "("
-    << " `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
-    << " , `glue`, `size`, `resolutions`"
-    << " , `branchDepth`, `branchDepthDelta`, `trailDepth`, `trailDepthDelta`"
-    << " , `agility`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
+    << ", `glue`, `size`, `resolutions`"
+    << ", `branchDepth`, `branchDepthDelta`"
+    << ", `trailDepth`, `trailDepthDelta`, `agility`"
+
+    //SDs
+    << ", `glueSD`, `sizeSD`, `resolutionsSD`"
+    << ", `branchDepthSD`, `branchDepthDeltaSD`"
+    << ", `trailDepthSD`, `trailDepthDeltaSD`" //, `agilitySD`"
 
     //Prop&confl&lerant
-    << " , `propBinIrred` , `propBinRed` , `propTri` , `propLongIrred` , `propLongRed`"
-    << " , `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
-    << " , `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
+    << ", `propBinIrred` , `propBinRed` , `propTri` , `propLongIrred` , `propLongRed`"
+    << ", `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
+    << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Var stats
-    << " , `flippedPercent`, `varSetPos`, `varSetNeg`"
-    << " , `free`, `replaced`, `eliminated`, `set`"
+    << ", `propsPerDec`"
+    << ", `flippedPercent`, `varSetPos`, `varSetNeg`"
+    << ", `free`, `replaced`, `eliminated`, `set`"
     << ")"
     << " values ("
 
@@ -1229,6 +1235,17 @@ void Searcher::printRestartSQL()
     << ", " << trailDepthHist.getAvgMidLong()
     << ", " << trailDepthDeltaHist.getAvgMidLong()
     << ", " << agilityHist.getAvgMidLong()
+
+
+    //SDs
+    << ", " << sqrt(glueHist.getVarMidLong())
+    << ", " << sqrt(conflSizeHist.getVarMidLong())
+    << ", " << sqrt(numResolutionsHist.getVarMidLong())
+    << ", " << sqrt(branchDepthHist.getVarMidLong())
+    << ", " << sqrt(branchDepthDeltaHist.getVarMidLong())
+    << ", " << sqrt(trailDepthHist.getVarMidLong())
+    << ", " << sqrt(trailDepthDeltaHist.getVarMidLong())
+    //<< ", " << sqrt(agilityHist.getVarMidLong())
 
     //Prop
     << ", " << thisPropStats.propsBinIrred
@@ -1252,6 +1269,7 @@ void Searcher::printRestartSQL()
     
 
     //Var stats
+    << ", " << (double)thisPropStats.propagations/(double)thisStats.decisions
     << ", " << ((double)thisPropStats.varFlipped
         /(double)(thisPropStats.varSetNeg + thisPropStats.varSetPos))*100.0
     << ", " << thisPropStats.varSetPos

@@ -106,7 +106,7 @@ class Solver : public Searcher
 
             uint64_t numSimplify;
             uint64_t nbReduceDB;
-            uint64_t runID;
+            uint32_t runID;
         };
         const SolveStats& getSolveStats() const;
 

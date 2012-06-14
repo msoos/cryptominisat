@@ -29,6 +29,7 @@ class bqueue {
 
     //for mid-term history size
     T2  sumOfElemsMidLong;
+    double  sumOfElemsMidLongSqare;
     size_t totalNumElemsMidLong;
 
     T2  sumOfElemsLong;
@@ -62,6 +63,7 @@ public:
 
         //Update mid
         sumOfElemsMidLong += x;
+        sumOfElemsMidLongSqare += (uint64_t)x*(uint64_t)x;
         totalNumElemsMidLong++;
 
         //Update long
@@ -87,6 +89,19 @@ public:
             return 0;
 
         return (double)sumOfElemsMidLong/(double)totalNumElemsMidLong;
+    }
+
+    double getVarMidLong() const
+    {
+        if (totalNumElemsMidLong == 0)
+            return 0;
+
+        const double avg = getAvgMidLong();
+        return
+            (((double)sumOfElemsMidLongSqare
+                - 2.0*avg*(double)sumOfElemsMidLong
+            ))/(double)totalNumElemsMidLong
+             + avg*avg;
     }
 
     double getAvgLong() const
@@ -158,6 +173,7 @@ public:
 
         totalNumElemsMidLong = 0;
         sumOfElemsMidLong = 0;
+        sumOfElemsMidLongSqare = 0;
     }
 
     int  size(void)
@@ -176,6 +192,7 @@ public:
 
         totalNumElemsMidLong = 0;
         sumOfElemsMidLong = 0;
+        sumOfElemsMidLongSqare = 0;
 
         totalNumElemsLong = 0;
         sumOfElemsLong = 0;

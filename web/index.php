@@ -30,7 +30,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt" - terminology shamelessly taken from A. Biere.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -49,7 +49,7 @@ var myDataTypes=new Array();
 var myDataLabels=new Array();*/
 </script>
 <?
-$runID = 3882006010;
+$runID = 1472309933;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -163,8 +163,8 @@ printOneThing("time", array("time")
 printOneThing("restarts" , array("restarts")
     , array("restart no."), $result, $nrows);
 
-printOneThing("agility", array("agility")
-    , array("avg. agility"), $result, $nrows);
+printOneThing("propsPerDec", array("propsPerDec")
+    , array("avg. no. propagations per decision"), $result, $nrows);
 
 printOneThing("branchDepth", array("branchDepth")
     , array("avg. branch depth"), $result, $nrows);
@@ -179,25 +179,28 @@ printOneThing("trailDepthDelta", array("trailDepthDelta")
     , array("avg. trail depth delta"), $result, $nrows);
 
 printOneThing("glue", array("glue")
-    , array("avg. glue of newly learnt clauses"), $result, $nrows);
+    , array("newly learnt clauses avg. glue"), $result, $nrows);
 
 printOneThing("size", array("size")
-    , array("avg. size of newly learnt clauses"), $result, $nrows);
+    , array("newly learnt clauses avg. size"), $result, $nrows);
 
 printOneThing("resolutions", array("resolutions")
-    , array("avg. no. resolutions of conflicts"), $result, $nrows);
+    , array("avg. no. resolutions for 1UIP"), $result, $nrows);
+
+printOneThing("agility", array("agility")
+    , array("avg. agility"), $result, $nrows);
 
 printOneThing("flippedPercent", array("flippedPercent")
     , array("var polarity flipped %"), $result, $nrows);
 
 printOneThing("polarity", array("varSetPos", "varSetNeg")
     , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows);
-    
-printOneThing("set", array("set")
-    , array("vars set"), $result, $nrows);
 
 printOneThing("replaced", array("replaced")
     , array("vars replaced"), $result, $nrows);
+
+printOneThing("set", array("set")
+    , array("vars set"), $result, $nrows);
 
 printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
     ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows);
@@ -207,6 +210,28 @@ printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLong
 
 printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
     ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows);
+
+printOneThing("branchDepthSD", array("branchDepthSD")
+    , array("branch depth std dev"), $result, $nrows);
+
+printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
+    , array("branch depth delta std dev"), $result, $nrows);
+
+printOneThing("trailDepthSD", array("trailDepthSD")
+    , array("trail depth std dev"), $result, $nrows);
+
+printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
+    , array("trail depth delta std dev"), $result, $nrows);
+
+printOneThing("glueSD", array("glueSD")
+    , array("newly learnt clause glue std dev"), $result, $nrows);
+
+printOneThing("sizeSD", array("sizeSD")
+    , array("newly learnt clause size std dev"), $result, $nrows);
+
+printOneThing("resolutionsSD", array("resolutionsSD")
+    , array("std dev no. resolutions for 1UIP"), $result, $nrows);
+
 echo "</table>";
 
 function fillSimplificationPoints($runID)
@@ -487,13 +512,13 @@ if (!$result) {
 $maxNumSimp = mysql_result($result, 0, "mymax");
 
 echo "<script type=\"text/javascript\">\n";
-for($i = 1; $i < $maxNumSimp; $i++) {
+for($i = 1; $i <= $maxNumSimp; $i++) {
     createDataVarPolars($i, $runID);
 }
 echo "</script>\n";
 
 echo "<table id=\"plot-table-a\">";
-for($i = 1; $i < $maxNumSimp; $i++) {
+for($i = 1; $i <= $maxNumSimp; $i++) {
     echo "<tr><td>
     <div id=\"varPolarsPlot$i\" class=\"myPlotData2\"></div>
     </td><td valign=top>
@@ -530,7 +555,7 @@ for(i = 0; i < varPolarsData.length; i++) {
 
 
 <h2>Search session statistics</h2>
-<p>Here are some pie charts detailing learnt clause types learnt, propagations, and conflicting clause types for each search session. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
+<p>Here are some pie charts detailing clause types learnt, propagations made, and conflicting clause types for each search session. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
 
 <?
 function getLearntData($runID)
@@ -774,6 +799,11 @@ for(i = 0; i < conflData.length; i++) {
     drawChart("confl", i, conflData);
 }
 </script>
+
+<h2>Why did I do this?</h2>
+<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think (believe/have a <i>vision</i> that) we could speed up SAT solving by feeding this live data to a data mining engine which could then tell us the optimal heuristics to use. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly.</p>
+
+<p>The idea is to run many instances hundreds of times with different options, feed the output to some kind of data mining/AI system, then generate a ruleset from this system. Finally, distribute the ruleset along with the solver, and use it during solving - not only at the start of solving, but <i>during</i> solving, as problems tend to evolve into different problems once we do all the simplication and solving steps.</p>
 
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
