@@ -166,7 +166,9 @@ echo "
 <div id=\"columns\">
 <div id=\"column-1\" class=\"column menu\"></div>
 <div id=\"column-2\" class=\"column menu\"></div>
-</div>";
+</div>
+<p style=\"clear:both\">
+";
 
 printOneThing("time", array("time")
     , array("time"), $result, $nrows, $orderNum);
