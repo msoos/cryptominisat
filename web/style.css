@@ -10,6 +10,15 @@ div.myPlotLabel {
  padding-bottom:10px;
 }
 
+div.draghandle {
+ cursor: move;
+ font-family: sans-serif;
+ width:150px;
+ font-size:0.6em;
+ padding-top:10px;
+ padding-bottom:10px;
+}
+
 div.myPlotData {
     /*position: absolute;
   left: 10px;
