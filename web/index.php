@@ -8,7 +8,8 @@
     <script type="text/javascript" src="jquery/jquery.min.js"></script>
     <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
     <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script>
+<!--     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script> -->
+    <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
     <style>
@@ -43,10 +44,16 @@ function showValue(newValue)
 var myData=new Array();
 </script>
 
-<div id="columns">
-<div id="column-0" class="column menu"></div>
-<div id="column-1" class="column menu"></div>
-</div>
+<table class="doubleSize">
+<tr><td>
+    <div id="columns">
+    <div id="column-0" class="column menu"></div>
+    <div id="column-1" class="column menu"></div>
+    </div>
+</td></tr>
+</table>
+
+
 <p style="clear:both">
 
 <?
@@ -249,9 +256,101 @@ function printOneSolve($runID, $colnum) {
 
 $orderNum = printOneSolve($runID, 0);
 $orderNum = printOneSolve($runID2, 1);
+?>
 
-//Move-around
-echo "<script type=\"text/javascript\">";
+<div class="block" id="blockSpecial0">
+    <table id="plot-table-a">
+    <tr>
+    <td><div id="drawingPad0" class="myPlotData"></div></td>
+    <td><div class="draghandle">Learnt clause size distrib</div></td>
+    </tr>
+    </table>
+</div>
+
+<div class="block" id="blockSpecial1">
+    <table id="plot-table-a">
+    <tr>
+    <td><div id="drawingPad1" class="myPlotData"></div></td>
+    <td><div class="draghandle">Learnt clause size distrib</div></td>
+    </tr>
+    </table>
+</div>
+
+<script type="text/javascript">
+<?
+function getMaxSize($runID, $runID2)
+{
+    $query="
+    SELECT max(size) as mymax FROM clauseSizeDistrib
+    where (runID = $runID or  runID = $runID2)
+    and num > 10";
+    $result=mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    return mysql_result($result, 0, "mymax");
+}
+
+function getMaxConfl($runID, $runID2)
+{
+    $query="
+    SELECT max(conflicts) as mymax FROM clauseSizeDistrib
+    where (runID = $runID or  runID = $runID2)
+    and num > 0";
+    $result=mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    return mysql_result($result, 0, "mymax");
+}
+
+$maxSize = getMaxSize($runID, $runID2) - 1; //Because no use for size 0
+echo "var maxSize = $maxSize;\n";
+$maxConfl = getMaxConfl($runID, $runID2);
+echo "var maxConfl = $maxConfl;\n";
+$statPer = 1000;
+echo "var statPer = $statPer;\n";
+
+
+function fillClauseDistrib($num, $runID, $maxConfl, $maxSize, $statPer)
+{
+    echo "clauseDistrib.push([]);";
+    for($i = $statPer; $i <= $maxConfl; $i += $statPer) {
+        echo "tmp = [";
+
+        $query = "
+        SELECT num FROM clauseSizeDistrib
+        where runID = $runID
+        and conflicts = $i
+        and size <= $maxSize
+        and size > 0
+        order by conflicts,size";
+        $result=mysql_query($query);
+        if (!$result) {
+            die('Invalid query: ' . mysql_error());
+        }
+        $nrows=mysql_numrows($result);
+
+        $i2=0;
+        while ($i2 < $nrows) {
+            $numberOfCl = mysql_result($result, $i2, "num");
+            echo $numberOfCl;
+
+            $i2++;
+            if ($i2 < $nrows)
+                echo ",";
+        }
+        echo "];";
+        echo "clauseDistrib[$num].push(tmp);\n";
+    }
+}
+
+echo "var clauseDistrib = [];\n";
+fillClauseDistrib(0, $runID, $maxConfl, $maxSize, $statPer);
+fillClauseDistrib(1, $runID2, $maxConfl, $maxSize, $statPer);
+
 echo "var settings = {";
 for($i2 = 0; $i2 < 2; $i2++) {
     echo "'column-$i2' : [";
@@ -261,7 +360,7 @@ for($i2 = 0; $i2 < 2; $i2++) {
         if ($i+1 < $orderNum)
             echo ", ";
     };
-    echo "]";
+    echo ",blockSpecial$i2]";
 
     if ($i2+1 < 2) {
         echo ",";
@@ -274,8 +373,7 @@ echo "var options = { portal : 'columns', editorEnabled : true};
     var portal;
     Event.observe(window, 'load', function() {
         portal = new Portal(settings, options, data);
-    });
-</script>";
+    });";
 
 function fillSimplificationPoints($runID)
 {
@@ -303,10 +401,9 @@ function fillSimplificationPoints($runID)
     }
     echo "];";
 }
-echo "<script type=\"text/javascript\">";
 fillSimplificationPoints($runID);
-echo "</script>\n";
 ?>
+</script>
 
 <script type="text/javascript">
 function todisplay(i,len)
@@ -317,6 +414,8 @@ else
     return "";
 };
 
+
+//Draw graphs
 gs = [];
 var blockRedraw = false;
 for (var i = 0; i < myData.length; i++) {
@@ -384,9 +483,83 @@ for (var i = 0; i < myData.length; i++) {
     ));
 }
 
-/*for (i = 0; i <= myDataAnnotations.length; i++)  {
-    gs[i].setAnnotations(myDataAnnotations[i]);
-}*/
+var xhtmlNS = "http://www.w3.org/1999/xhtml";
+var svgNS = "http://www.w3.org/2000/svg";
+var xlinkNS ="http://www.w3.org/1999/xlink";
+
+//For SVG pattern, a rectangle
+function makeRect(x1, x2, y1, y2, relHeight){
+    num = relHeight*255.0;
+    //document.write("<p>" + num+ "</p>");
+
+    type = "fill:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
+    type += "stroke-width:0;stroke:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
+    //document.write("<p>" + type+ "</p>");
+    var vRect = document.createElementNS(svgNS, "svg:rect");
+    vRect.setAttributeNS( null, "x", new String( x1  ) + "px");
+    vRect.setAttributeNS( null, "y", new String( y1  ) + "px");
+    vRect.setAttributeNS( null, "width", new String( x2-x1  ) + "px");
+    vRect.setAttributeNS( null, "height", new String( y2-y1  ) + "px");
+    vRect.setAttributeNS( null, "style", type);
+
+    return vRect;
+}
+
+//SVG pattern
+function drawPattern(data, num){
+    var vSVGElem = document.createElementNS(svgNS, "svg:svg");
+
+    var vPad = document.getElementById( "drawingPad" + num);
+    var width = 420;//vPad.style.width; // removes the "px" at the end
+    var height = 100;vPad.style.height;
+    var i;
+
+    var vAX = new Array();
+    num = maxConfl/statPer;
+    for(i = 0; i < num; i++) {
+        vAX.push(i*(width/num));
+    }
+    vAX.push(width);
+
+    var vAY = new Array();
+    for(i = maxSize; i >= 0; i--) {
+        vAY.push(i*(height/maxSize));
+    }
+    vAY.push(0);
+
+    var vRect = makeRect(0, width, 0, height, 0);
+    vSVGElem.appendChild( vRect );
+
+    for( i = 0 ; i < data.length ; i ++ ){
+        maxHeight = 0;
+        for(i2 = 0; i2 < data[i].length; i2++) {
+            maxHeight = Math.max(maxHeight, data[i][i2]);
+        }
+        //maxHeight = Math.log(maxHeight);
+
+        xStart = vAX[i];
+        xEnd = vAX[i+1];
+
+        for(i2 = 0; i2 < data[i].length; i2++) {
+            yStart = vAY[i2+1];
+            yEnd = vAY[i2];
+
+            if (data[i][i2] != 0) {
+                //relHeight = Math.log(data[i][i2])/maxHeight;
+                relHeight = data[i][i2]/maxHeight;
+            } else {
+                relHeight  = 0;
+            }
+
+            var vRect = makeRect(xStart, xEnd, yStart, yEnd, relHeight);
+            vSVGElem.appendChild( vRect );
+        }
+    }
+
+    vPad.appendChild(vSVGElem)
+}
+drawPattern(clauseDistrib[0], 0);
+drawPattern(clauseDistrib[1], 1);
 
 function setRollPeriod(num)
 {
@@ -843,9 +1016,7 @@ for(i = 0; i < conflData.length; i++) {
 </script>
 
 <h2>Why did I do this?</h2>
-<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think (believe/have a <i>vision</i> that) we could speed up SAT solving by feeding this live data to a data mining engine which could then tell us the optimal heuristics to use. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly.</p>
-
-<p>The idea is to run many instances hundreds of times with different options, feed the output to some kind of data mining/AI system, then generate a ruleset from this system. Finally, distribute the ruleset along with the solver, and use it during solving - not only at the start of solving, but <i>during</i> solving, as problems tend to evolve into different problems once we do all the simplication and solving steps.</p>
+<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current portifolio solvers. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so the heuristics should evolve with the problem.</p>
 
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
