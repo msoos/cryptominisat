@@ -36,7 +36,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the partial solving of two SAT instances, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the partial solving of two SAT instances, visually. I was amazed by <a href="http://www.edwardtufte.com/tufte/">Edward Tufte</a>'s work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
@@ -44,7 +44,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving mizh-md5-47-3.cnf, the right column is solving mizh-md5-47-4.cnf - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a>, the right column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69611">mizh-md5-47-4.cnf</a> - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -486,6 +486,7 @@ else
 
 //Draw graphs
 gs = [];
+origSizes = [];
 var blockRedraw = false;
 for (var i = 0; i < myData.length; i++) {
     gs.push(new Dygraph(
@@ -533,19 +534,38 @@ for (var i = 0; i < myData.length; i++) {
             fillAlpha: 0.8,
             //errorBars: false,
             drawCallback: function(me, initial) {
+                if (initial) {
+                    origSizes.push(me.xAxisRange());
+                }
                 if (blockRedraw || initial)
                     return;
 
                 blockRedraw = true;
                 var xrange = me.xAxisRange();
-                //var yrange = me.yAxisRange();
+                fullreset = false;
+                for (var j = 0; j < myData.length; j++) {
+                    if (gs[j] == me) {
+                        if (origSizes[j][0] == xrange[0]
+                            &&origSizes[j][1] == xrange[1]
+                        ) {
+                            fullreset = true;
+                        }
+                    }
+                }
+
                 for (var j = 0; j < myData.length; j++) {
                     if (gs[j] == me)
                         continue;
 
-                    gs[j].updateOptions( {
-                        dateWindow: xrange
-                    } );
+                    if (fullreset) {
+                        gs[j].updateOptions( {
+                            dateWindow: origSizes[j]
+                        } );
+                    } else {
+                        gs[j].updateOptions( {
+                            dateWindow: xrange
+                        } );
+                    }
                 }
                 blockRedraw = false;
             }
@@ -874,22 +894,23 @@ for(i = 0; i < varPolarsData.length; i++) {
 <tr><td>red.</td><td>reducible, also called learnt</td></tr>
 <tr><td>irred.</td><td>irreducible, also called non-learnt</td></tr>
 <tr><td>confl</td><td>conflict reached by the solver</td></tr>
-<tr><td>lerant</td><td>clause learnt during 1UIP conflict analysis</td></tr>
+<tr><td>learnt</td><td>clause learnt during 1UIP conflict analysis</td></tr>
 <tr><td>trail depth</td><td>depth of serach i.e. the number of variables set when the solver reached a conflict</td></tr>
 <tr><td>brach depth</td><td>the number of branches made before conflict was encountered</td></tr>
 <tr><td>trail depth delta</td><td>the number of variables we jumped back when doing conflict-directed backjumping</td></tr>
 <tr><td>branch depth delta</td><td>the number of branches jumped back during conflict-directed backjumping</td></tr>
 <tr><td>propagations/decision</td><td>number of variables set due to the propagation of a decision (note that there is always at least one, the variable itself)</td></tr>
 <tr><td>vars replaced</td><td>the number or variables replaced due to equivalent literal simplfication</td></tr>
-<tr><td>polarity flipped</td><td>polarities of variables are saved and then used if branching is needed, but if propagation takes place, they are sometimes flipped</td></tr>
+<tr><td>polarity flipped</td><td>polarities of variables are <a href="http://dx.doi.org/10.1007/978-3-540-72788-0_28">saved</a> and then used if branching is needed, but if propagation takes place, they are sometimes flipped</td></tr>
 <tr><td>std dev</td><td>standard deviation, the square root of variance</td></tr>
 <tr><td>confl by</td><td>the clause that caused the conflict</td></tr>
-<tr><td>glue</td><td>the number of different decision levels of the literals found in newly learnt clauses</td></tr>
+<tr><td>agility</td><td>See <a href="http://www.inf.ucv.cl/~bcrawford/PapersAutonomousSearch_julio2008/BRODERICK_CRAWFORD_AGO_01_X.pdf">here</a>.</td></tr>
+<tr><td>glue</td><td>the number of different decision levels of the literals found in newly learnt clauses. See <a href = "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.150.1911">here</a></td></tr>
 </table>
 
 
 <h2>Search session statistics</h2>
-<p>These charts show clause types learnt, propagations made, and conflicting clause types for each search session of mizh-md5-47-3.cnf, i.e. the problem on the left column. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
+<p>These charts show clause types learnt, propagations made, and conflicting clause types for each search session of <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a>, i.e. the problem on the left column. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
 
 <?
 function getLearntData($runID)
@@ -1135,20 +1156,18 @@ for(i = 0; i < conflData.length; i++) {
 </script>
 
 <h2>Why did I do this?</h2>
-<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current portifolio solvers. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so search heuristics should evolve with the problem.</p>
+<p>There has been some <a href="http://www-sr.informatik.uni-tuebingen.de/~sinz/DPvis/">past work</a> on statically visualizing SAT problems by <a href="http://www.carstensinz.de/">Carsten Sinz</a>, but not much on dynamic solving visualization - in fact, nothing comes to my mind that is comparable to what is above. However, the point of this excercise was not only to visually display dynamic solver behaviour. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current <a href="http://www.jair.org/media/2490/live-2490-3923-jair.pdf">portifolio solvers</a>. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so search heuristics should evolve with the problem.</p>
 
 <h2>Future work</h2>
-<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~40 seconds of solving time. Time-out for SAT competition is on the order of 50x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either send me a mail if you have an idea, or implement it yourself - all is up in the GIT, including SQL, PHP, HTML, CSS and more.</p>
+<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~40 seconds of solving time. Time-out for SAT competition is on the order of 50x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either <a href="mailto:mate@srlabs.de">send me a mail</a> if you have an idea, or implement it yourself - all is up in the <a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL, PHP, HTML, CSS and more.</p>
 
 <h2>The End</h2>
-<p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
+<p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions  <a href="http://www.msoos.org/">here</a> and send the link to a friend. Second, you can <a href="http://www.srlabs.de">contact my employer</a>, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 <h2>Acknowledgements</h2>
-<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for the many discussions we had about visualization, George Katsirelos for improvement ideas, Dygraphs for the visually pleasing graphs, Portal for the drag-and-drop feature, Highcharts for the pie charts and Edward Tufte for all his wonderful books.</p>
+<p>I would like to thank my employer for letting me play with SAT, my collegue <a href="http://www.flickr.com/photos/lucamelette/">Luca Melette</a> for helping me with ideas and coding, <a href="http://folk.uio.no/vegardno/">Vegard Nossum</a> for the many discussions we had about visualization, <a href="http://www.inra.fr/mia/T/katsirelos/">George Katsirelos</a> for improvement ideas, <a href="http://dygraphs.com/">Dygraphs</a> for the visually pleasing graphs, <a href="http://www.michelhiemstra.nl/blog/igoogle-like-drag-drop-portal-v20/">Portal</a> for the drag-and-drop feature, <a href="http://www.highcharts.com/">Highcharts</a> for the pie charts and Edward Tufte for all his wonderful <a href="http://www.edwardtufte.com/tufte/books_vdqi">books</a>.</p>
 
 <br/>
-<p><small>Copyright Mate Soos, 2012. Licensed under CC-share-alike-attribution-nocommercial</small></p>
+<p><small>Copyright <a href="http://www.msoos.org">Mate Soos</a>, 2012. Licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">CC BY-NC-SA 2.5</a></small></p>
 </body>
 </html>
-
-
