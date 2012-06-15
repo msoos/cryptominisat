@@ -22,7 +22,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the solving of two SAT instances, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the partial solving of two SAT instances, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
@@ -30,7 +30,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving mizh-md5-47-3.cnf, the right column is solving mizh-md5-47-4.cnf. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving mizh-md5-47-3.cnf, the right column is solving mizh-md5-47-4.cnf - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -158,6 +158,7 @@ function printOneThing(
     //Stacked?
     echo ", stacked : ".(int)(sizeof($datanames) > 1);
     echo ", labeldiv: \"".$nameLabel.$colnum."\"";
+    echo ", colnum: \"$colnum\"";
     echo " });\n";
 
     echo "</script>\n";
@@ -292,7 +293,7 @@ function getMaxSize($runID, $runID2)
     return mysql_result($result, 0, "mymax");
 }
 
-function getMaxConfl($runID, $runID2)
+function getMaxConflDistrib($runID, $runID2)
 {
     $query="
     SELECT max(conflicts) as mymax FROM clauseSizeDistrib
@@ -306,18 +307,53 @@ function getMaxConfl($runID, $runID2)
     return mysql_result($result, 0, "mymax");
 }
 
+function getMaxConflRestart($runID)
+{
+    $query="
+    SELECT max(conflicts) as mymax FROM `restart`
+    where runID = $runID";
+    $result=mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    return mysql_result($result, 0, "mymax");
+}
+
+function getMinConflRestart($runID)
+{
+    $query="
+    SELECT min(conflicts) as mymin FROM `restart`
+    where runID = $runID";
+    $result=mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    return mysql_result($result, 0, "mymin");
+}
+
 $maxSize = getMaxSize($runID, $runID2) - 1; //Because no use for size 0
 echo "var maxSize = $maxSize;\n";
-$maxConfl = getMaxConfl($runID, $runID2);
-echo "var maxConfl = $maxConfl;\n";
+$maxConflDistrib = getMaxConflDistrib($runID, $runID2);
+echo "var maxConflDistrib = $maxConflDistrib;\n";
+
+$maxConflRestart = getMaxConflRestart($runID);
+$maxConflRestart2 = getMaxConflRestart($runID2);
+echo "var maxConflRestart = [$maxConflRestart, $maxConflRestart2];";
+
+$minConflRestart = getMinConflRestart($runID);
+$minConflRestart2 = getMinConflRestart($runID2);
+echo "var minConflRestart = [$minConflRestart, $minConflRestart2];";
+
 $statPer = 1000;
 echo "var statPer = $statPer;\n";
 
 
-function fillClauseDistrib($num, $runID, $maxConfl, $maxSize, $statPer)
+function fillClauseDistrib($num, $runID, $maxConflDistrib, $maxSize, $statPer)
 {
     echo "clauseDistrib.push([]);";
-    for($i = $statPer; $i <= $maxConfl; $i += $statPer) {
+    for($i = $statPer; $i <= $maxConflDistrib; $i += $statPer) {
         echo "tmp = [";
 
         $query = "
@@ -348,8 +384,8 @@ function fillClauseDistrib($num, $runID, $maxConfl, $maxSize, $statPer)
 }
 
 echo "var clauseDistrib = [];\n";
-fillClauseDistrib(0, $runID, $maxConfl, $maxSize, $statPer);
-fillClauseDistrib(1, $runID2, $maxConfl, $maxSize, $statPer);
+fillClauseDistrib(0, $runID, $maxConflDistrib, $maxSize, $statPer);
+fillClauseDistrib(1, $runID2, $maxConflDistrib, $maxSize, $statPer);
 
 echo "var settings = {";
 for($i2 = 0; $i2 < 2; $i2++) {
@@ -381,7 +417,8 @@ function fillSimplificationPoints($runID)
     SELECT max(conflicts) as confl, simplifications as simpl
     FROM restart
     where runID = $runID
-    group by simplifications";
+    group by simplifications
+    order by simplifications";
 
     $result=mysql_query($query);
     if (!$result) {
@@ -389,7 +426,7 @@ function fillSimplificationPoints($runID)
     }
     $nrows=mysql_numrows($result);
 
-    echo "simplificationPoints = [";
+    echo "tmp = [";
     $i=0;
     while ($i < $nrows) {
         $conf=mysql_result($result, $i, "confl");
@@ -400,8 +437,11 @@ function fillSimplificationPoints($runID)
         }
     }
     echo "];";
+    echo "simplificationPoints.push(tmp);\n";
 }
+echo "var simplificationPoints = [];\n";
 fillSimplificationPoints($runID);
+fillSimplificationPoints($runID2);
 ?>
 </script>
 
@@ -428,8 +468,8 @@ for (var i = 0; i < myData.length; i++) {
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 canvas.fillRect(0, area.y, 2, area.h);
-                for(var k = 0; k <= simplificationPoints.length; k++) {
-                    var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
+                for(var k = 0; k < simplificationPoints[myData[i].colnum].length-1; k++) {
+                    var bottom_left = g.toDomCoords(simplificationPoints[myData[i].colnum][k], -20);
                     var left = bottom_left[0];
                     canvas.fillRect(left, area.y, 2, area.h);
                 }
@@ -488,13 +528,25 @@ var svgNS = "http://www.w3.org/2000/svg";
 var xlinkNS ="http://www.w3.org/1999/xlink";
 
 //For SVG pattern, a rectangle
-function makeRect(x1, x2, y1, y2, relHeight){
+function makeRect(x1, x2, y1, y2, relHeight)
+{
     num = 255-relHeight*255.0;
-    //document.write("<p>" + num+ "</p>");
-
     type = "fill:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
     type += "stroke-width:0;stroke:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
-    //document.write("<p>" + type+ "</p>");
+
+    return subRect(x1, x2, y1, y2, type);
+}
+
+function makeRect2(x1, x2, y1, y2, mycolor)
+{
+    type = "fill:" + mycolor + ";";
+    type += "stroke-width:0;stroke:" + mycolor + ";";
+
+    return subRect(x1, x2, y1, y2, type);
+}
+
+function subRect(x1, x2, y1, y2, type)
+{
     var vRect = document.createElementNS(svgNS, "svg:rect");
     vRect.setAttributeNS( null, "x", new String( x1  ) + "px");
     vRect.setAttributeNS( null, "y", new String( y1  ) + "px");
@@ -506,29 +558,30 @@ function makeRect(x1, x2, y1, y2, relHeight){
 }
 
 //SVG pattern
-function drawPattern(data, num){
+function drawPattern(data, num)
+{
     var vSVGElem = document.createElementNS(svgNS, "svg:svg");
 
     var vPad = document.getElementById( "drawingPad" + num);
-    var width = 420;//vPad.style.width; // removes the "px" at the end
-    var height = 100;vPad.style.height;
+    var origWidth = 419;
+    var width = origWidth - ((maxConflRestart[num]-maxConflDistrib)/maxConflRestart[num])*origWidth;
+    var height = 100;
     var i;
 
     var vAX = new Array();
-    num = maxConfl/statPer;
-    for(i = 0; i < num; i++) {
-        vAX.push(i*(width/num));
+    divnum = maxConflDistrib/statPer;
+    for(i = 0; i < divnum+1; i++) {
+        thisdata = i*(width/divnum);
+        thisdata -= (minConflRestart[num]/maxConflRestart[num])*origWidth;
+        thisdata = Math.max(0, thisdata);
+        vAX.push(thisdata);
     }
-    vAX.push(width);
 
     var vAY = new Array();
     for(i = maxSize; i >= 0; i--) {
         vAY.push(i*(height/maxSize));
     }
     vAY.push(0);
-
-    var vRect = makeRect(0, width, 0, height, 0);
-    vSVGElem.appendChild( vRect );
 
     for( i = 0 ; i < data.length ; i ++ ){
         maxHeight = 0;
@@ -557,6 +610,16 @@ function drawPattern(data, num){
             vSVGElem.appendChild( vRect );
         }
     }
+
+    for(var k = 0; k < simplificationPoints[num].length-1; k++) {
+        var point = simplificationPoints[num][k];
+        var at = (width/maxConflDistrib)*point;
+        at -= (minConflRestart[num]/maxConflRestart[num])*420;
+        var vRect = makeRect2(at, at+1, 0, height, "rgba(105, 105, 185, 185)");
+        vSVGElem.appendChild( vRect );
+    }
+    var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
+    vSVGElem.appendChild( vRect );
 
     vPad.appendChild(vSVGElem)
 }
@@ -791,7 +854,7 @@ for(i = 0; i < varPolarsData.length; i++) {
 
 
 <h2>Search session statistics</h2>
-<p>Here are some pie charts detailing clause types learnt, propagations made, and conflicting clause types for each search session. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
+<p>These charts show clause types learnt, propagations made, and conflicting clause types for each search session of mizh-md5-47-3.cnf, i.e. the problem on the left column. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
 
 <?
 function getLearntData($runID)
