@@ -289,7 +289,7 @@ $orderNum = printOneSolve($runID2, 1);
 <div class="block" id="blockSpecial0">
     <table id="plot-table-a">
     <tr>
-    <td><div id="drawingPad0" class="myPlotData"></div></td>
+    <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad0" width="420" height="100">no support for canvas</canvas></div></td>
     <td><div class="draghandle"><b>(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
     </tr>
     </table>
@@ -298,7 +298,7 @@ $orderNum = printOneSolve($runID2, 1);
 <div class="block" id="blockSpecial1">
     <table id="plot-table-a">
     <tr>
-    <td><div id="drawingPad1" class="myPlotData"></div></td>
+    <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad1" width="420" height="100">no support for canvas</canvas></div></td>
     <td><div class="draghandle"><b>(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
     </tr>
     </table>
@@ -514,8 +514,8 @@ for (var i = 0; i < myData.length; i++) {
               }
             },
             //stepPlot: true,
-            strokePattern: [0.1, 0, 0, 0.5],
-            strokeWidth: 2,
+            //strokePattern: [0.1, 0, 0, 0.5],
+            strokeWidth: 0.3,
             highlightCircleSize: 3,
             rollPeriod: 1,
             drawXAxis: false, //i == myData.length-1,
@@ -552,16 +552,17 @@ for (var i = 0; i < myData.length; i++) {
                         }
                     }
                 }
+                if (fullreset) {
+                    drawPattern(clauseDistrib[0], 0, origSizes[0][0], origSizes[0][1]);
+                    drawPattern(clauseDistrib[1], 1, origSizes[1][0], origSizes[1][1]);
+                } else {
+                    drawPattern(clauseDistrib[0], 0, xrange[0], xrange[1]);
+                    drawPattern(clauseDistrib[1], 1, xrange[0], xrange[1]);
+                }
 
                 for (var j = 0; j < myData.length; j++) {
+                //for (var j = 0; j < 5; j++) {
                     if (gs[j] == me) {
-                        if (fullreset) {
-                            //drawPattern(clauseDistrib[0], 0, origSizes[0][0], origSizes[0][1]);
-                            //drawPattern(clauseDistrib[1], 1, origSizes[1][0], origSizes[1][1]);
-                        } else {
-                            //drawPattern(clauseDistrib[0], 0, xrange[0], xrange[1]);
-                            //drawPattern(clauseDistrib[1], 1, xrange[0], xrange[1]);
-                        }
                         continue;
                     }
 
@@ -583,51 +584,34 @@ for (var i = 0; i < myData.length; i++) {
     ));
 }
 
-var xhtmlNS = "http://www.w3.org/1999/xhtml";
-var svgNS = "http://www.w3.org/2000/svg";
-var xlinkNS ="http://www.w3.org/1999/xlink";
-
 //For SVG pattern, a rectangle
-function makeRect(x1, x2, y1, y2, relHeight)
+function makeRect(x1, x2, y1, y2, relHeight, imgData)
 {
     num = 255-relHeight*255.0;
-    type = "fill:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
-    type += "stroke-width:0;stroke:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
-
-    return subRect(x1, x2, y1, y2, type);
+    type = "rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ")";
+    imgData.fillStyle = type;
+    imgData.strokeStyle = type;
+    //imgData.strokeRect(x1, y1, (x2-x1), (y2-y1));
+    imgData.fillRect(x1, y1, x2-x1, y2-y1);
 }
 
-function makeRect2(x1, x2, y1, y2, mycolor)
+function makeRect2(x1, x2, y1, y2, imgData)
 {
-    type = "fill:" + mycolor + ";";
-    type += "stroke-width:0;stroke:" + mycolor + ";";
-
-    return subRect(x1, x2, y1, y2, type);
-}
-
-function subRect(x1, x2, y1, y2, type)
-{
-    var vRect = document.createElementNS(svgNS, "svg:rect");
-    vRect.setAttributeNS( null, "x", new String( x1  ) + "px");
-    vRect.setAttributeNS( null, "y", new String( y1  ) + "px");
-    vRect.setAttributeNS( null, "width", new String( x2-x1  ) + "px");
-    vRect.setAttributeNS( null, "height", new String( y2-y1  ) + "px");
-    vRect.setAttributeNS( null, "style", type);
-
-    return vRect;
+    imgData.strokeStyle = "rgba(105, 105, 185, 185)";
+    imgData.fillStyle = "rgba(105, 105, 185, 185)";
+    imgData.strokeRect(x1, y1, (x2-x1), (y2-y1));
 }
 
 //SVG pattern
 function drawPattern(data, num, from , to)
 {
-    var vSVGElem = document.createElementNS(svgNS, "svg:svg");
-    //var vSVGElem = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    vSVGElem.setAttribute("version", "1.2");
-    vSVGElem.setAttribute("baseProfile", "tiny");
+    var myDiv = document.getElementById( "MYdrawingPad" + num);
+    myDiv.style.height = 100;
+    myDiv.style.width= 420;
 
-    var vPad = document.getElementById( "drawingPad" + num);
     var width = 415;
     var height = 100;
+    ctx = myDiv.getContext("2d");
     Xdelta = 0.5;
     var i;
 
@@ -635,33 +619,34 @@ function drawPattern(data, num, from , to)
     var vAY = new Array();
     numElementsVertical = data[0].height.length;
     for(i = numElementsVertical; i >= 0; i--) {
-        vAY.push(i*(height/numElementsVertical));
+        vAY.push(Math.round(i*(height/numElementsVertical)));
     }
     vAY.push(0);
 
+    lastXEnd = 0;
     for( i = 0 ; i < data.length ; i ++ ){
-
         maxHeight = 0;
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             maxHeight = Math.max(maxHeight, data[i].height[i2]);
         }
 
-        xStart = data[i].conflStart - from;
+        /*xStart = data[i].conflStart - from;
         xStart *= onePixelisConf;
         xStart += Xdelta;
         xStart = Math.max(0, xStart);
         xStart = Math.min(xStart, width);
-        //document.write(data[i].conflStart + ", " + xStart +  "...");
-
+        //document.write(data[i].conflStart + ", " + xStart +  "...");*/
+        xStart = lastXEnd;
 
         xEnd = data[i].conflEnd - from;
         xEnd *= onePixelisConf;
         xEnd += Xdelta;
         xEnd = Math.max(0, xEnd);
         xEnd = Math.min(xEnd, width);
+        xEnd = Math.round(xEnd);
+        lastXEnd = xEnd;
         //document.write(data[i].conflEnd + ", " + xEnd + " || ");
 
-        //var vSVGElem = document.createElementNS(svgNS, "svg:svg");
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             yStart = vAY[i2+1];
             yEnd = vAY[i2];
@@ -674,29 +659,22 @@ function drawPattern(data, num, from , to)
                 relHeight  = 0;
             }
 
-            var vRect = makeRect(xStart, xEnd, yStart, yEnd, relHeight);
-            vSVGElem.appendChild( vRect );
+            makeRect(xStart, xEnd, yStart, yEnd, relHeight, ctx);
         }
     }
 
+    points = [];
     for(var k = 0; k < simplificationPoints[num].length-1; k++) {
         var point = simplificationPoints[num][k] - from;
         point *= onePixelisConf;
         point += Xdelta;
         if (point > 0) {
-            var vRect = makeRect2(point, point+1, 0, height, "rgba(105, 105, 185, 185)");
-            vSVGElem.appendChild( vRect );
+            points.push(point);
+            makeRect2(point, point+1, 0, height, ctx);
         }
     }
-    /*var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
-    vSVGElem.appendChild( vRect );*/
-
-    if (vPad.childNodes.length == 0) {
-        vPad.appendChild(vSVGElem);
-    } else {
-        vPad.removeChild(vPad.childNodes[0]);
-        vPad.appendChild(vSVGElem);
-    }
+    //alert(points);
+    //alert(width + " , " + height);
 }
 drawPattern(clauseDistrib[0], 0, minConflRestart[0], maxConflRestart[0]);
 drawPattern(clauseDistrib[1], 1, minConflRestart[1], maxConflRestart[1]);

@@ -16,14 +16,16 @@ div.draghandle.dygraph-label {
 }
 
 div.myPlotData {
-    /*position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 10px;
-  bottom: 10px;*/
   width:420px;
   height:100px;
   margin:0;
+}
+
+canvas.myPlotData {
+  width:420px;
+  height:100px;
+  margin:0;
+  border: 1px solid #9C9898;
 }
 
 div.myPlotData2 {
