@@ -353,16 +353,16 @@ echo "var statPer = $statPer;\n";
 function fillClauseDistrib($num, $runID, $maxConflDistrib, $maxSize, $statPer)
 {
     echo "clauseDistrib.push([]);";
+    $lastConflicts = 0;
     for($i = $statPer; $i <= $maxConflDistrib; $i += $statPer) {
-        echo "tmp = [";
 
         $query = "
-        SELECT num FROM clauseSizeDistrib
+        SELECT conflicts, num FROM clauseSizeDistrib
         where runID = $runID
         and conflicts = $i
         and size <= $maxSize
         and size > 0
-        order by conflicts,size";
+        order by size";
         $result=mysql_query($query);
         if (!$result) {
             die('Invalid query: ' . mysql_error());
@@ -370,16 +370,18 @@ function fillClauseDistrib($num, $runID, $maxConflDistrib, $maxSize, $statPer)
         $nrows=mysql_numrows($result);
 
         $i2=0;
+        echo "tmp = {conflStart: $lastConflicts, conflEnd : $i, height: [";
         while ($i2 < $nrows) {
             $numberOfCl = mysql_result($result, $i2, "num");
-            echo $numberOfCl;
+            echo "$numberOfCl";
 
             $i2++;
             if ($i2 < $nrows)
                 echo ",";
         }
-        echo "];";
+        echo "]};";
         echo "clauseDistrib[$num].push(tmp);\n";
+        $lastConflicts = $i;
     }
 }
 
@@ -570,15 +572,6 @@ function drawPattern(data, num)
 
     var vAX = new Array();
     var onePixelisConf = width/(maxConflRestart[num]-minConflRestart[num]);
-    for(i = 0; i < data.length+1; i++) {
-        thisdata = statPer*i - minConflRestart[num];
-        thisdata *= onePixelisConf;
-        thisdata += Xdelta;
-        thisdata = Math.max(0, thisdata);
-        thisdata = Math.min(thisdata, width);
-        vAX.push(thisdata);
-    }
-
     var vAY = new Array();
     for(i = maxSize; i >= 0; i--) {
         vAY.push(i*(height/maxSize));
@@ -587,23 +580,36 @@ function drawPattern(data, num)
 
     for( i = 0 ; i < data.length ; i ++ ){
         maxHeight = 0;
-        for(i2 = 0; i2 < data[i].length; i2++) {
-            maxHeight = Math.max(maxHeight, data[i][i2]);
+        for(i2 = 0; i2 < data[i].height.length; i2++) {
+            maxHeight = Math.max(maxHeight, data[i].height[i2]);
         }
         //maxHeight = Math.log(maxHeight);
-        maxHeight = maxHeight*maxHeight;
+        //maxHeight = maxHeight*maxHeight;
 
-        xStart = vAX[i];
-        xEnd = vAX[i+1];
+        //xStart = vAX[i];
+        xStart = data[i].conflStart - minConflRestart[num];
+        xStart *= onePixelisConf;
+        xStart += Xdelta;
+        xStart = Math.max(0, xStart);
+        xStart = Math.min(xStart, width);
+        //document.write(data[i].conflStart + ", " + xStart +  "...");
 
-        for(i2 = 0; i2 < data[i].length; i2++) {
+
+        xEnd = data[i].conflEnd - minConflRestart[num];
+        xEnd *= onePixelisConf;
+        xEnd += Xdelta;
+        xEnd = Math.max(0, xEnd);
+        xEnd = Math.min(xEnd, width);
+        //document.write(data[i].conflEnd + ", " + xEnd + " || ");
+
+        for(i2 = 0; i2 < data[i].height.length; i2++) {
             yStart = vAY[i2+1];
             yEnd = vAY[i2];
 
-            if (data[i][i2] != 0) {
+            if (data[i].height[i2] != 0) {
                 //relHeight = Math.log(data[i][i2])/maxHeight;
-                //relHeight = data[i][i2]/maxHeight;
-                relHeight = (data[i][i2]*data[i][i2])/maxHeight;
+                relHeight = data[i].height[i2]/maxHeight;
+                //relHeight = (data[i].height[i2]*data[i].height[i2])/maxHeight;
             } else {
                 relHeight  = 0;
             }
