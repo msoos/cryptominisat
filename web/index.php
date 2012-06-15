@@ -535,7 +535,7 @@ for (var i = 0; i < myData.length; i++) {
             //errorBars: false,
             drawCallback: function(me, initial) {
                 if (initial) {
-                    origSizes.push(me.xAxisRange());
+                    origSizes[myData[i].colnum] = me.xAxisRange();
                 }
                 if (blockRedraw || initial)
                     return;
@@ -545,8 +545,8 @@ for (var i = 0; i < myData.length; i++) {
                 fullreset = false;
                 for (var j = 0; j < myData.length; j++) {
                     if (gs[j] == me) {
-                        if (origSizes[j][0] == xrange[0]
-                            &&origSizes[j][1] == xrange[1]
+                        if (origSizes[myData[j].colnum][0] == xrange[0]
+                            &&origSizes[myData[j].colnum][1] == xrange[1]
                         ) {
                             fullreset = true;
                         }
@@ -554,12 +554,20 @@ for (var i = 0; i < myData.length; i++) {
                 }
 
                 for (var j = 0; j < myData.length; j++) {
-                    if (gs[j] == me)
+                    if (gs[j] == me) {
+                        if (fullreset) {
+                            //drawPattern(clauseDistrib[0], 0, origSizes[0][0], origSizes[0][1]);
+                            //drawPattern(clauseDistrib[1], 1, origSizes[1][0], origSizes[1][1]);
+                        } else {
+                            //drawPattern(clauseDistrib[0], 0, xrange[0], xrange[1]);
+                            //drawPattern(clauseDistrib[1], 1, xrange[0], xrange[1]);
+                        }
                         continue;
+                    }
 
                     if (fullreset) {
                         gs[j].updateOptions( {
-                            dateWindow: origSizes[j]
+                            dateWindow: origSizes[myData[j].colnum]
                         } );
                     } else {
                         gs[j].updateOptions( {
@@ -567,6 +575,8 @@ for (var i = 0; i < myData.length; i++) {
                         } );
                     }
                 }
+
+
                 blockRedraw = false;
             }
         }
@@ -608,9 +618,12 @@ function subRect(x1, x2, y1, y2, type)
 }
 
 //SVG pattern
-function drawPattern(data, num)
+function drawPattern(data, num, from , to)
 {
     var vSVGElem = document.createElementNS(svgNS, "svg:svg");
+    //var vSVGElem = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    vSVGElem.setAttribute("version", "1.2");
+    vSVGElem.setAttribute("baseProfile", "tiny");
 
     var vPad = document.getElementById( "drawingPad" + num);
     var width = 415;
@@ -618,7 +631,7 @@ function drawPattern(data, num)
     Xdelta = 0.5;
     var i;
 
-    var onePixelisConf = width/(maxConflRestart[num]-minConflRestart[num]);
+    var onePixelisConf = width/(to-from);
     var vAY = new Array();
     numElementsVertical = data[0].height.length;
     for(i = numElementsVertical; i >= 0; i--) {
@@ -633,7 +646,7 @@ function drawPattern(data, num)
             maxHeight = Math.max(maxHeight, data[i].height[i2]);
         }
 
-        xStart = data[i].conflStart - minConflRestart[num];
+        xStart = data[i].conflStart - from;
         xStart *= onePixelisConf;
         xStart += Xdelta;
         xStart = Math.max(0, xStart);
@@ -641,13 +654,14 @@ function drawPattern(data, num)
         //document.write(data[i].conflStart + ", " + xStart +  "...");
 
 
-        xEnd = data[i].conflEnd - minConflRestart[num];
+        xEnd = data[i].conflEnd - from;
         xEnd *= onePixelisConf;
         xEnd += Xdelta;
         xEnd = Math.max(0, xEnd);
         xEnd = Math.min(xEnd, width);
         //document.write(data[i].conflEnd + ", " + xEnd + " || ");
 
+        //var vSVGElem = document.createElementNS(svgNS, "svg:svg");
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             yStart = vAY[i2+1];
             yEnd = vAY[i2];
@@ -666,7 +680,7 @@ function drawPattern(data, num)
     }
 
     for(var k = 0; k < simplificationPoints[num].length-1; k++) {
-        var point = simplificationPoints[num][k] - minConflRestart[num];
+        var point = simplificationPoints[num][k] - from;
         point *= onePixelisConf;
         point += Xdelta;
         if (point > 0) {
@@ -677,10 +691,15 @@ function drawPattern(data, num)
     /*var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
     vSVGElem.appendChild( vRect );*/
 
-    vPad.appendChild(vSVGElem)
+    if (vPad.childNodes.length == 0) {
+        vPad.appendChild(vSVGElem);
+    } else {
+        vPad.removeChild(vPad.childNodes[0]);
+        vPad.appendChild(vSVGElem);
+    }
 }
-drawPattern(clauseDistrib[0], 0);
-drawPattern(clauseDistrib[1], 1);
+drawPattern(clauseDistrib[0], 0, minConflRestart[0], maxConflRestart[0]);
+drawPattern(clauseDistrib[1], 1, minConflRestart[1], maxConflRestart[1]);
 
 function setRollPeriod(num)
 {
@@ -689,203 +708,6 @@ function setRollPeriod(num)
             rollPeriod: num
         } );
     }
-}
-</script>
-
-<script type="text/javascript">
-var clauseStatsData=new Array();
-</script>
-
-<!-- <h2>Clause statistics before each clause database cleaning</h2> -->
-<?
-/*function createDataClauseStats($reduceDB, $runID)
-{
-    $query="
-    SELECT
-        sum(`numPropAndConfl`) as mysum
-        , avg(`numPropAndConfl`) as myavg
-        , count(`numPropAndConfl`) as mycnt
-        , `size`
-    FROM `clauseStats`
-    where `runID` = $runID and `reduceDB`= $reduceDB and `learnt` = 1
-    group by `size`
-    order by `size`
-    limit 200";
-    //and `numPropAndConfl` > 0
-
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
-
-    echo "clauseStatsData.push([\n";
-    $i=0;
-    $numprinted = 0;
-    while ($i < $nrows) {
-        $myavg=mysql_result($result, $i, "myavg");
-        $mysum=mysql_result($result, $i, "mysum");
-        $mycnt=mysql_result($result, $i, "mycnt");
-        $size=mysql_result($result, $i, "size");
-        if ($mycnt < 10 || $mycnt == 0 || $size <= 3) {
-            $i++;
-            continue;
-        }
-        $numprinted++;
-        if ($numprinted > 1) {
-            echo ",";
-        }
-
-        echo "[$size, $myavg]\n";
-
-        $i++;
-    }
-    echo "]);\n";
-}
-
-//Get maximum number of simplifications
-$query="
-SELECT max(reduceDB) as mymax
-FROM `clauseStats`
-where `runID` = $runID";
-$result=mysql_query($query);
-if (!$result) {
-    die('Invalid query: ' . mysql_error());
-}
-$maxNumReduceDB = mysql_result($result, 0, "mymax");
-
-echo "<script type=\"text/javascript\">\n";
-for($i = 1; $i < $maxNumReduceDB; $i++) {
-    createDataClauseStats($i, $runID);
-}
-echo "</script>\n";
-
-echo "<table id=\"plot-table-a\">";
-for($i = 1; $i < $maxNumReduceDB; $i++) {
-    echo "<tr><td>
-    <div id=\"clauseStatsPlot$i\" class=\"myPlotData\"></div>
-    </td><td valign=top>
-    <div id=\"clauseStatsPlotLabel$i\" class=\"myPlotLabel\"></div>
-    </td></tr>";
-}
-echo "</tr></table>";
-*/
-?>
-
-<script type="text/javascript">
-for(i = 0; i < clauseStatsData.length; i++) {
-    var i2 = i+1;
-    var gzz = new Dygraph(
-        document.getElementById('clauseStatsPlot' + i2),
-        clauseStatsData[i],
-        {
-            drawXAxis: i == clauseStatsData.length-1,
-            legend: 'always',
-            labels: ['size', 'num prop&confl'],
-            connectSeparatedPoints: true,
-            drawPoints: true,
-            labelsDivStyles: {
-                'text-align': 'right',
-                'background': 'none'
-            },
-            labelsDiv: document.getElementById('clauseStatsPlotLabel'+ i2),
-            labelsSeparateLines: true,
-            labelsKMB: true
-            //,title: "Most propagating&conflicting clauses before clause clean " + i
-        }
-    );
-}
-var varPolarsData = new Array();
-</script>
-
-
-<!--<p/>
-<h2>Variable polarity statistics</h2>
-<p> These graphs show how often the most propagated variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>-->
-<?
-// function createDataVarPolars($simpnum, $runID)
-// {
-//     $query="
-//     SELECT *
-//     FROM `polarSet`
-//     where `runID` = $runID and `simplifications`= $simpnum
-//     order by `order`
-//     limit 200";
-//
-//     $result=mysql_query($query);
-//     if (!$result) {
-//         die('Invalid query: ' . mysql_error());
-//     }
-//     $nrows=mysql_numrows($result);
-//
-//     echo "varPolarsData.push([\n";
-//     $i=0;
-//     while ($i < $nrows) {
-//         $order=mysql_result($result, $i, "order");
-//         $pos=mysql_result($result, $i, "pos");
-//         $neg=mysql_result($result, $i, "neg");
-//         $total=mysql_result($result, $i, "total");
-//         $flipped=mysql_result($result, $i, "flipped");
-//
-//         echo "[$order, $pos, $neg, $total, $flipped]\n";
-//
-//         $i++;
-//         if ($i < $nrows) {
-//             echo ",";
-//         }
-//     }
-//     echo "]);\n";
-// }
-//
-// //Get maximum number of simplifications
-// $query="
-// SELECT max(simplifications) as mymax
-// FROM `polarSet`
-// where `runID` = $runID";
-// $result=mysql_query($query);
-// if (!$result) {
-//     die('Invalid query: ' . mysql_error());
-// }
-// $maxNumSimp = mysql_result($result, 0, "mymax");
-//
-// echo "<script type=\"text/javascript\">\n";
-// for($i = 1; $i <= $maxNumSimp; $i++) {
-//     createDataVarPolars($i, $runID);
-// }
-// echo "</script>\n";
-//
-// echo "<table class=\"box-table-a\">";
-// echo "<tr><th>Search session</th><th>Variable polarities</th><th>Labels</th></tr>\n";
-// for($i = 1; $i <= $maxNumSimp; $i++) {
-//     echo "<tr>
-//     <td style=\"text-align: right;\">$i</td>
-//     <td><div id=\"varPolarsPlot$i\" class=\"myPlotData3\"></div></td>
-//     <td><div id=\"varPolarsPlotLabel$i\" style=\"font-size: 10px;\"></div></td>
-//     </tr>";
-// }
-// echo "</table>";
-?>
-
-<script type="text/javascript">
-for(i = 0; i < varPolarsData.length; i++) {
-    var i2 = i+1;
-    var gzz = new Dygraph(
-        document.getElementById('varPolarsPlot' + i2),
-        varPolarsData[i],
-        {
-            legend: 'always',
-            labels: ['no.', 'pos polar', 'neg polar', 'total set', 'flipped polar' ],
-            connectSeparatedPoints: true,
-            drawPoints: true,
-            labelsDivStyles: {
-                'text-align': 'right',
-                'background': 'none'
-            },
-            labelsDiv: document.getElementById('varPolarsPlotLabel'+ i2),
-            labelsSeparateLines: true,
-            labelsKMB: true
-        }
-    );
 }
 </script>
 
