@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
-    <title>Cryptominisat</title>
+    <title>Cryptominisat 3 visualization</title>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.min.js"></script>
@@ -13,7 +13,7 @@
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
     <style>
-    @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
+/*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
 </head>
@@ -22,7 +22,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the solving of two SAT instances, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
@@ -30,7 +30,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, the time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. The shorthand "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt".</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving mizh-md5-47-3.cnf, the right column is solving mizh-md5-47-4.cnf. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -47,7 +47,7 @@ var myData=new Array();
 <table class="doubleSize">
 <tr><td>
     <div id="columns">
-    <div id="column-0" class="column menu"></div>
+    <div id="column-0" class="column menu"><b></div>
     <div id="column-1" class="column menu"></div>
     </div>
 </td></tr>
@@ -262,7 +262,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad0" class="myPlotData"></div></td>
-    <td><div class="draghandle">Learnt clause size distrib</div></td>
+    <td><div class="draghandle">(0) Newly earnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
     </tr>
     </table>
 </div>
@@ -271,7 +271,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad1" class="myPlotData"></div></td>
-    <td><div class="draghandle">Learnt clause size distrib</div></td>
+    <td><div class="draghandle">(1) Newly earnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
     </tr>
     </table>
 </div>
@@ -489,7 +489,7 @@ var xlinkNS ="http://www.w3.org/1999/xlink";
 
 //For SVG pattern, a rectangle
 function makeRect(x1, x2, y1, y2, relHeight){
-    num = relHeight*255.0;
+    num = 255-relHeight*255.0;
     //document.write("<p>" + num+ "</p>");
 
     type = "fill:rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ");";
@@ -536,6 +536,7 @@ function drawPattern(data, num){
             maxHeight = Math.max(maxHeight, data[i][i2]);
         }
         //maxHeight = Math.log(maxHeight);
+        maxHeight = maxHeight*maxHeight;
 
         xStart = vAX[i];
         xEnd = vAX[i+1];
@@ -546,7 +547,8 @@ function drawPattern(data, num){
 
             if (data[i][i2] != 0) {
                 //relHeight = Math.log(data[i][i2])/maxHeight;
-                relHeight = data[i][i2]/maxHeight;
+                //relHeight = data[i][i2]/maxHeight;
+                relHeight = (data[i][i2]*data[i][i2])/maxHeight;
             } else {
                 relHeight  = 0;
             }
@@ -767,6 +769,25 @@ for(i = 0; i < varPolarsData.length; i++) {
     );
 }
 </script>
+
+<h2>Terms used<h2>
+<table class="box-table-b">
+<tr><th>Abbreviation</th><th>Explanation</th></tr>
+<tr><td>red.</td><td>reducible, also called learnt</td></tr>
+<tr><td>irred.</td><td>irreducible, also called non-learnt</td></tr>
+<tr><td>confl</td><td>conflict reached by the solver</td></tr>
+<tr><td>lerant</td><td>clause learnt during 1UIP conflict analysis</td></tr>
+<tr><td>trail depth</td><td>depth of serach i.e. the number of variables set when the solver reached a conflict</td></tr>
+<tr><td>brach depth</td><td>the number of branches made before conflict was encountered</td></tr>
+<tr><td>trail depth delta</td><td>the number of variables we jumped back when doing conflict-directed backjumping</td></tr>
+<tr><td>branch depth delta</td><td>the number of branches jumped back during conflict-directed backjumping</td></tr>
+<tr><td>propagations/decision</td><td>number of variables set due to the propagation of a decision (note that there is always at least one, the variable itself)</td></tr>
+<tr><td>vars replaced</td><td>the number or variables replaced due to equivalent literal simplfication</td></tr>
+<tr><td>polarity flipped</td><td>polarities of variables are saved and then used if branching is needed, but if propagation takes place, they are sometimes flipped</td></tr>
+<tr><td>std dev</td><td>standard deviation, the square root of variance</td></tr>
+<tr><td>confl by</td><td>the clause that caused the conflict</td></tr>
+<tr><td>glue</td><td>the number of different decision levels of the literals found in newly learnt clauses</td></tr>
+</table>
 
 
 <h2>Search session statistics</h2>
@@ -1016,7 +1037,10 @@ for(i = 0; i < conflData.length; i++) {
 </script>
 
 <h2>Why did I do this?</h2>
-<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current portifolio solvers. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so the heuristics should evolve with the problem.</p>
+<p>The point of this excercise was not only to generate beautiful graphics. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current portifolio solvers. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so search heuristics should evolve with the problem.</p>
+
+<h2>Future work</h2>
+<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~44 seconds of solving time. Time-out for SAT competition is on the order of 50x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either send me a mail if you have an idea, or implement it yourself - all is up in the GIT, including SQL, PHP, HTML, CSS and more.</p>
 
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>

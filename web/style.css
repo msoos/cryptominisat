@@ -108,6 +108,7 @@ p {
 
 table.box-table-a
 {
+    font-size: 12px;
     margin-left: 29px;
     font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     width: 750px;
@@ -129,8 +130,34 @@ table.box-table-a td
 {
     padding: 0px;
     border-bottom: 1px solid #999999;
-    font-size: 30px;
 }
+
+table.box-table-b
+{
+    font-size: 14px;
+    margin-left: 0px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    width: 500px;
+    border: 0px;
+    border-color: black;
+    border-spacing: 0px;
+}
+
+table.box-table-b th
+{
+    font-size: 15px;
+    margin: 0;
+    font-weight: bold;
+    padding: 0px;
+    border-bottom: 1px solid black;
+}
+
+table.box-table-b td
+{
+    padding: 5px;
+/*     border-bottom: 1px solid #999999; */
+}
+
 
 table.doubleSize
 {
