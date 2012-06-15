@@ -16,6 +16,20 @@
 /*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
+
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-15197329-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+
 </head>
 
 <body>
@@ -101,6 +115,19 @@ function printOneThing(
 
     echo "<script type=\"text/javascript\">";
     echo "$fullname$colnum = [";
+
+    echo "[0, ";
+
+    $i = 0;
+    while($i < sizeof($datanames)) {
+        echo "null";
+
+        $i++;
+        if ($i < sizeof($datanames)) {
+            echo ", ";
+        }
+    }
+    echo "],";
 
     $i=0;
     $total_sum = 0.0;
@@ -342,8 +369,8 @@ $maxConflRestart = getMaxConflRestart($runID);
 $maxConflRestart2 = getMaxConflRestart($runID2);
 echo "var maxConflRestart = [$maxConflRestart, $maxConflRestart2];";
 
-$minConflRestart = getMinConflRestart($runID);
-$minConflRestart2 = getMinConflRestart($runID2);
+$minConflRestart = 0; //getMinConflRestart($runID);
+$minConflRestart2 = 0; //getMinConflRestart($runID2);
 echo "var minConflRestart = [$minConflRestart, $minConflRestart2];";
 
 $statPer = 1000;
@@ -398,7 +425,7 @@ for($i2 = 0; $i2 < 2; $i2++) {
         if ($i+1 < $orderNum)
             echo ", ";
     };
-    echo ",blockSpecial$i2]";
+    echo ",'blockSpecial$i2' ]";
 
     if ($i2+1 < 2) {
         echo ",";
@@ -428,11 +455,11 @@ function fillSimplificationPoints($runID)
     }
     $nrows=mysql_numrows($result);
 
-    echo "tmp = [";
+    echo "tmp = [0,";
     $i=0;
     while ($i < $nrows) {
-        $conf=mysql_result($result, $i, "confl");
-        echo "$conf";
+        $confl = mysql_result($result, $i, "confl");
+        echo "$confl";
         $i++;
         if ($i < $nrows) {
             echo ", ";
@@ -469,7 +496,7 @@ for (var i = 0; i < myData.length; i++) {
             labels: myData[i].labels,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
-                canvas.fillRect(0, area.y, 2, area.h);
+                //canvas.fillRect(0, area.y, 2, area.h);
                 for(var k = 0; k < simplificationPoints[myData[i].colnum].length-1; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[myData[i].colnum][k], -20);
                     var left = bottom_left[0];
@@ -482,6 +509,7 @@ for (var i = 0; i < myData.length; i++) {
                   return 'Conflicts: ' + d;
                 },
                 pixelsPerLabel: 100,
+                includeZero: true
               }
             },
             //stepPlot: true,
@@ -572,18 +600,18 @@ function drawPattern(data, num)
 
     var onePixelisConf = width/(maxConflRestart[num]-minConflRestart[num]);
     var vAY = new Array();
-    for(i = maxSize; i >= 0; i--) {
-        vAY.push(i*(height/maxSize));
+    numElementsVertical = data[0].height.length;
+    for(i = numElementsVertical; i >= 0; i--) {
+        vAY.push(i*(height/numElementsVertical));
     }
     vAY.push(0);
 
     for( i = 0 ; i < data.length ; i ++ ){
+
         maxHeight = 0;
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             maxHeight = Math.max(maxHeight, data[i].height[i2]);
         }
-        //maxHeight = Math.log(maxHeight);
-        //maxHeight = maxHeight*maxHeight;
 
         xStart = data[i].conflStart - minConflRestart[num];
         xStart *= onePixelisConf;
@@ -621,11 +649,13 @@ function drawPattern(data, num)
         var point = simplificationPoints[num][k] - minConflRestart[num];
         point *= onePixelisConf;
         point += Xdelta;
-        var vRect = makeRect2(point, point+1, 0, height, "rgba(105, 105, 185, 185)");
-        vSVGElem.appendChild( vRect );
+        if (point > 0) {
+            var vRect = makeRect2(point, point+1, 0, height, "rgba(105, 105, 185, 185)");
+            vSVGElem.appendChild( vRect );
+        }
     }
-    var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
-    vSVGElem.appendChild( vRect );
+    /*var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
+    vSVGElem.appendChild( vRect );*/
 
     vPad.appendChild(vSVGElem)
 }
