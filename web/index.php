@@ -54,7 +54,7 @@ var myData=new Array();
 </table>
 
 
-<p style="clear:both">
+<p style="clear:both"></p>
 
 <?
 $runID = 1472309933;
@@ -570,7 +570,6 @@ function drawPattern(data, num)
     Xdelta = 0.5;
     var i;
 
-    var vAX = new Array();
     var onePixelisConf = width/(maxConflRestart[num]-minConflRestart[num]);
     var vAY = new Array();
     for(i = maxSize; i >= 0; i--) {
@@ -586,7 +585,6 @@ function drawPattern(data, num)
         //maxHeight = Math.log(maxHeight);
         //maxHeight = maxHeight*maxHeight;
 
-        //xStart = vAX[i];
         xStart = data[i].conflStart - minConflRestart[num];
         xStart *= onePixelisConf;
         xStart += Xdelta;
@@ -841,8 +839,7 @@ for(i = 0; i < varPolarsData.length; i++) {
 }
 </script>
 
-<h2>Terms used<h2>
-<table class="box-table-b">
+<h2>Terms used</h2><p style="clear:both"></p><table class="box-table-b">
 <tr><th>Abbreviation</th><th>Explanation</th></tr>
 <tr><td>red.</td><td>reducible, also called learnt</td></tr>
 <tr><td>irred.</td><td>irreducible, also called non-learnt</td></tr>
@@ -1117,10 +1114,11 @@ for(i = 0; i < conflData.length; i++) {
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 <h2>Acknowledgements</h2>
-<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for discussions we had about visualization, George Katsirelos for improvement ideas and Edward Tufte for all his wonderful books.</p>
+<p>I would like to thank my employer for letting me play with SAT, my collegue Luca Melette for helping me with ideas and coding, Vegard Nossum for the many discussions we had about visualization, George Katsirelos for improvement ideas, Dygraphs for the visually pleasing graphs, Portal for the drag-and-drop feature, Highcharts for the pie charts and Edward Tufte for all his wonderful books.</p>
 
+<br/>
+<p><small>Copyright Mate Soos, 2012. Licensed under CC-share-alike-attribution-nocommercial</small></p>
 </body>
-
 </html>
 
 

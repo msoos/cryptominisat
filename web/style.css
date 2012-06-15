@@ -46,33 +46,32 @@ div.piechart {
 }
 
 body {
-  /*font-family: "Helvetica Neue", Helvetica, sans-serif;*/
-  margin: 0;
-  margin-top: 20px;
-  margin-bottom: 4em;
+  margin: 0px;
+  padding: 0px;
 }
 
 h1 {
-  margin: 20px;
+  margin-left: 20px;
   font-size: 96px;
-  margin-top: .3em;
   margin-bottom: 0;
 }
 
-h1 + h2 + h3{
-  margin-top: 0;
+h1 , h2,  h3{
+  margin-top: 0px;
 }
 
 h3 {
     margin: 0;
     margin-top: 0px;
     margin-left: 20px;
+    margin-bottom: 20px;
     font-size: 13px;
 }
 
 h2 {
   margin-top: 50px;
   margin-left: 20px;
+  margin-bottom: 5px;
   font-weight: 400;
   font-size: 28px;
 }
@@ -88,6 +87,7 @@ p {
    /* width: 70%;*/
     max-width: 500px;
     font-weight: 200;
+    margin-top: 2px;
     /*font-family: Century Gothic, sans-serif;*/
     /*font-family: Tahoma, Geneva, sans-serif;*/
 }
@@ -135,7 +135,7 @@ table.box-table-a td
 table.box-table-b
 {
     font-size: 14px;
-    margin-left: 0px;
+    margin-left: 20px;
     font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     width: 500px;
     border: 0px;
@@ -148,7 +148,7 @@ table.box-table-b th
     font-size: 15px;
     margin: 0;
     font-weight: bold;
-    padding: 0px;
+    padding: 5px;
     border-bottom: 1px solid black;
 }
 
@@ -163,7 +163,7 @@ table.doubleSize
 {
     padding: 0px;
     margin: 0px;
-    margin-left: 0px;
+    margin-left: 10px;
     margin-top: 0;
     border: 0;
     width: 1160px;
@@ -193,4 +193,9 @@ table.doubleSize
 #columns .menu{
     float: left;
 }
+
+/*div.block {
+    margin-left: 0px;
+    padding-left: 0px;
+}*/
 
