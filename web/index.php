@@ -290,7 +290,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad0" class="myPlotData"></div></td>
-    <td><div class="draghandle">(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
+    <td><div class="draghandle"><b>(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
     </tr>
     </table>
 </div>
@@ -299,7 +299,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad1" class="myPlotData"></div></td>
-    <td><div class="draghandle">(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
+    <td><div class="draghandle"><b>(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
     </tr>
     </table>
 </div>
