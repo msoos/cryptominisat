@@ -263,7 +263,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad0" class="myPlotData"></div></td>
-    <td><div class="draghandle">(0) Newly earnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
+    <td><div class="draghandle">(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
     </tr>
     </table>
 </div>
@@ -272,7 +272,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="drawingPad1" class="myPlotData"></div></td>
-    <td><div class="draghandle">(1) Newly earnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
+    <td><div class="draghandle">(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</div></td>
     </tr>
     </table>
 </div>
@@ -563,17 +563,19 @@ function drawPattern(data, num)
     var vSVGElem = document.createElementNS(svgNS, "svg:svg");
 
     var vPad = document.getElementById( "drawingPad" + num);
-    var origWidth = 419;
-    var width = origWidth - ((maxConflRestart[num]-maxConflDistrib)/maxConflRestart[num])*origWidth;
+    var width = 415;
     var height = 100;
+    Xdelta = 0.5;
     var i;
 
     var vAX = new Array();
-    divnum = maxConflDistrib/statPer;
-    for(i = 0; i < divnum+1; i++) {
-        thisdata = i*(width/divnum);
-        thisdata -= (minConflRestart[num]/maxConflRestart[num])*origWidth;
+    var onePixelisConf = width/(maxConflRestart[num]-minConflRestart[num]);
+    for(i = 0; i < data.length+1; i++) {
+        thisdata = statPer*i - minConflRestart[num];
+        thisdata *= onePixelisConf;
+        thisdata += Xdelta;
         thisdata = Math.max(0, thisdata);
+        thisdata = Math.min(thisdata, width);
         vAX.push(thisdata);
     }
 
@@ -612,10 +614,10 @@ function drawPattern(data, num)
     }
 
     for(var k = 0; k < simplificationPoints[num].length-1; k++) {
-        var point = simplificationPoints[num][k];
-        var at = (width/maxConflDistrib)*point;
-        at -= (minConflRestart[num]/maxConflRestart[num])*420;
-        var vRect = makeRect2(at, at+1, 0, height, "rgba(105, 105, 185, 185)");
+        var point = simplificationPoints[num][k] - minConflRestart[num];
+        point *= onePixelisConf;
+        point += Xdelta;
+        var vRect = makeRect2(point, point+1, 0, height, "rgba(105, 105, 185, 185)");
         vSVGElem.appendChild( vRect );
     }
     var vRect = makeRect2(0, 1, 0, height, "rgba(105, 105, 185, 185)");
