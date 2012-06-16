@@ -6,7 +6,7 @@
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.min.js"></script>
-    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
+    <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
     <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
 <!--     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script> -->
     <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
@@ -44,7 +44,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a>, the right column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69611">mizh-md5-47-4.cnf</a> - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a> (a crypto problem), the right column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=71037">UTI-20-10-p0.cnf</a> (a diagnosis problem) - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -61,7 +61,7 @@ var myData=new Array();
 <table class="doubleSize">
 <tr><td>
     <div id="columns">
-    <div id="column-0" class="column menu"><b></div>
+    <div id="column-0" class="column menu"></div>
     <div id="column-1" class="column menu"></div>
     </div>
 </td></tr>
@@ -72,7 +72,7 @@ var myData=new Array();
 
 <?
 $runID = 1472309933;
-$runID2 = 3962017339;
+$runID2 = 4237482017;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -290,7 +290,7 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad0" width="420" height="100">no support for canvas</canvas></div></td>
-    <td><div class="draghandle"><b>(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
+    <td><div class="draghandle"><b>(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts. Vertical resolution: 1 literal</b></div></td>
     </tr>
     </table>
 </div>
@@ -299,18 +299,18 @@ $orderNum = printOneSolve($runID2, 1);
     <table id="plot-table-a">
     <tr>
     <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad1" width="420" height="100">no support for canvas</canvas></div></td>
-    <td><div class="draghandle"><b>(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts.</b></div></td>
+    <td><div class="draghandle"><b>(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts. Vertical resolution: 1 literal</b></div></td>
     </tr>
     </table>
 </div>
 
 <script type="text/javascript">
 <?
-function getMaxSize($runID, $runID2)
+function getMaxSize($runID)
 {
     $query="
     SELECT max(size) as mymax FROM clauseSizeDistrib
-    where (runID = $runID or  runID = $runID2)
+    where (runID = $runID)
     and num > 10";
     $result=mysql_query($query);
 
@@ -360,8 +360,9 @@ function getMinConflRestart($runID)
     return mysql_result($result, 0, "mymin");
 }
 
-$maxSize = getMaxSize($runID, $runID2) - 1; //Because no use for size 0
-echo "var maxSize = $maxSize;\n";
+$maxSize1 = getMaxSize($runID) - 1; //Because no use for size 0
+$maxSize2 = getMaxSize($runID2) - 1; //Because no use for size 0
+echo "var maxSize = [$maxSize1, $maxSize2];\n";
 $maxConflDistrib = getMaxConflDistrib($runID, $runID2);
 echo "var maxConflDistrib = $maxConflDistrib;\n";
 
@@ -413,8 +414,8 @@ function fillClauseDistrib($num, $runID, $maxConflDistrib, $maxSize, $statPer)
 }
 
 echo "var clauseDistrib = [];\n";
-fillClauseDistrib(0, $runID, $maxConflDistrib, $maxSize, $statPer);
-fillClauseDistrib(1, $runID2, $maxConflDistrib, $maxSize, $statPer);
+fillClauseDistrib(0, $runID, $maxConflDistrib, $maxSize1, $statPer);
+fillClauseDistrib(1, $runID2, $maxConflDistrib, $maxSize2, $statPer);
 
 echo "var settings = {";
 for($i2 = 0; $i2 < 2; $i2++) {
