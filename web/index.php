@@ -71,8 +71,9 @@ var myData=new Array();
 <p style="clear:both"></p>
 
 <?
-$runID = 1472309933;
-$runID2 = 4237482017;
+$runID = 2427843192;
+$runID2 = 2941286659;
+$maxconfl = 60000;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -191,11 +192,12 @@ function printOneThing(
     echo "</script>\n";
 }
 
-function printOneSolve($runID, $colnum) {
+function printOneSolve($runID, $colnum, $maxconfl) {
     $query="
     SELECT *
     FROM `restart`
     where `runID` = $runID
+    and conflicts < $maxconfl
     order by `conflicts`";
     $result=mysql_query($query);
     if (!$result) {
@@ -282,8 +284,8 @@ function printOneSolve($runID, $colnum) {
     return $orderNum;
 }
 
-$orderNum = printOneSolve($runID, 0);
-$orderNum = printOneSolve($runID2, 1);
+$orderNum = printOneSolve($runID, 0, $maxconfl);
+$orderNum = printOneSolve($runID2, 1, $maxconfl);
 ?>
 
 <div class="block" id="blockSpecial0">
@@ -334,11 +336,12 @@ function getMaxConflDistrib($runID, $runID2)
     return mysql_result($result, 0, "mymax");
 }
 
-function getMaxConflRestart($runID)
+function getMaxConflRestart($runID, $maxconfl)
 {
     $query="
     SELECT max(conflicts) as mymax FROM `restart`
-    where runID = $runID";
+    where conflicts < $maxconfl
+    and runID = $runID";
     $result=mysql_query($query);
 
     if (!$result) {
@@ -347,11 +350,12 @@ function getMaxConflRestart($runID)
     return mysql_result($result, 0, "mymax");
 }
 
-function getMinConflRestart($runID)
+function getMinConflRestart($runID, $maxconfl)
 {
     $query="
     SELECT min(conflicts) as mymin FROM `restart`
-    where runID = $runID";
+    where conflicts < $maxconfl
+    and runID = $runID";
     $result=mysql_query($query);
 
     if (!$result) {
@@ -366,12 +370,12 @@ echo "var maxSize = [$maxSize1, $maxSize2];\n";
 $maxConflDistrib = getMaxConflDistrib($runID, $runID2);
 echo "var maxConflDistrib = $maxConflDistrib;\n";
 
-$maxConflRestart = getMaxConflRestart($runID);
-$maxConflRestart2 = getMaxConflRestart($runID2);
+$maxConflRestart = getMaxConflRestart($runID, $maxconfl);
+$maxConflRestart2 = getMaxConflRestart($runID2, $maxconfl);
 echo "var maxConflRestart = [$maxConflRestart, $maxConflRestart2];";
 
-$minConflRestart = 0; //getMinConflRestart($runID);
-$minConflRestart2 = 0; //getMinConflRestart($runID2);
+$minConflRestart = 0; //getMinConflRestart($runID, $maxconfl);
+$minConflRestart2 = 0; //getMinConflRestart($runID2, $maxconfl);
 echo "var minConflRestart = [$minConflRestart, $minConflRestart2];";
 
 $statPer = 1000;
