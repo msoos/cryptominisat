@@ -51,41 +51,6 @@ CREATE TABLE `clauseStats` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `confls`
---
-
-DROP TABLE IF EXISTS `confls`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `confls` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `binIrred` bigint(20) unsigned NOT NULL,
-  `binRed` bigint(20) unsigned NOT NULL,
-  `tri` bigint(20) unsigned NOT NULL,
-  `longIrred` bigint(20) unsigned NOT NULL,
-  `longRed` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `learnts`
---
-
-DROP TABLE IF EXISTS `learnts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `learnts` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `units` bigint(20) unsigned NOT NULL,
-  `bins` bigint(20) unsigned NOT NULL,
-  `tris` bigint(20) unsigned NOT NULL,
-  `longs` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `polarSet`
 --
 
@@ -100,25 +65,6 @@ CREATE TABLE `polarSet` (
   `neg` bigint(20) unsigned NOT NULL,
   `total` bigint(20) unsigned NOT NULL,
   `flipped` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `props`
---
-
-DROP TABLE IF EXISTS `props`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `props` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `unit` bigint(20) unsigned NOT NULL,
-  `binIrred` bigint(20) unsigned NOT NULL,
-  `binRed` bigint(20) unsigned NOT NULL,
-  `tri` bigint(20) unsigned NOT NULL,
-  `longIrred` bigint(20) unsigned NOT NULL,
-  `longRed` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -165,6 +111,12 @@ CREATE TABLE `restart` (
   `learntBins` bigint(20) unsigned NOT NULL,
   `learntTris` bigint(20) unsigned NOT NULL,
   `learntLongs` bigint(20) unsigned NOT NULL,
+  `conflAfterConfl` double unsigned NOT NULL,
+  `conflAfterConflVar` double unsigned NOT NULL,
+  `watchListSizeTraversed` double unsigned NOT NULL,
+  `watchListSizeTraversedVar` double unsigned NOT NULL,
+  `litPropagatedSomething` double unsigned NOT NULL,
+  `litPropagatedSomethingVar` double unsigned NOT NULL,
   `propsPerDec` double unsigned NOT NULL,
   `flippedPercent` double unsigned NOT NULL,
   `varSetPos` bigint(20) unsigned NOT NULL,
@@ -202,4 +154,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-06-17 14:26:26
+-- Dump completed on 2012-06-19 13:04:06

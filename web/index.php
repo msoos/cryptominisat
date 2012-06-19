@@ -71,9 +71,11 @@ var myData=new Array();
 <p style="clear:both"></p>
 
 <?
-$runID = 2427843192;
-$runID2 = 2941286659;
-$maxconfl = 60000;
+$runID = 2923895824;
+$runID2 = 840192416;
+//$runID = 2427843192;
+//$runID2 = 2941286659;
+$maxconfl = 100000;
 //$runID = 1628198452;
 //$runID = 3097911473;
 //$runID = 456297562;
@@ -219,7 +221,7 @@ function printOneSolve($runID, $colnum, $maxconfl) {
         , array("avg. branch depth"), $result, $nrows, $orderNum, $colnum);
 
     printOneThing("branchDepthDelta", array("branchDepthDelta")
-        , array("avg. branch depth delta"), $result, $nrows, $orderNum, $colnum);
+        , array("avg. no. of levels backjumped"), $result, $nrows, $orderNum, $colnum);
 
     printOneThing("trailDepth", array("trailDepth")
         , array("avg. trail depth"), $result, $nrows, $orderNum, $colnum);
@@ -241,6 +243,21 @@ function printOneSolve($runID, $colnum, $maxconfl) {
 
     printOneThing("flippedPercent", array("flippedPercent")
         , array("var polarity flipped %"), $result, $nrows, $orderNum, $colnum);
+
+    printOneThing("conflAfterConfl", array("conflAfterConfl")
+        , array("conflict after conflict %"), $result, $nrows, $orderNum, $colnum);
+
+    /*printOneThing("conflAfterConflVar", array("conflAfterConfl")
+        , array("conflict after conflict std dev %"), $result, $nrows, $orderNum, $colnum);*/
+
+    printOneThing("watchListSizeTraversed", array("watchListSizeTraversed")
+        , array("avg. traversed watchlist size"), $result, $nrows, $orderNum, $colnum);
+
+    printOneThing("watchListSizeTraversedVar", array("watchListSizeTraversedVar")
+        , array("avg. traversed watchlist size std dev"), $result, $nrows, $orderNum, $colnum);
+
+    /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
+        , array("literal propagated something with binary clauses %"), $result, $nrows, $orderNum, $colnum);*/
 
     printOneThing("replaced", array("replaced")
         , array("vars replaced"), $result, $nrows, $orderNum, $colnum);
@@ -711,6 +728,7 @@ function setRollPeriod(num)
 <tr><td>confl by</td><td>the clause that caused the conflict</td></tr>
 <tr><td>agility</td><td>See <a href="http://www.inf.ucv.cl/~bcrawford/PapersAutonomousSearch_julio2008/BRODERICK_CRAWFORD_AGO_01_X.pdf">here</a>.</td></tr>
 <tr><td>glue</td><td>the number of different decision levels of the literals found in newly learnt clauses. See <a href = "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.150.1911">here</a></td></tr>
+<tr><td>conflict after conflict %</td><td>How often does it happen that a conflict, after backtracking and propagating immeediately (i.e. without branching) leads to a conflict. This is displayed because it's extremely high percentage relative to what most would expect. Thanks to <a href="http://www.cril.univ-artois.fr/~jabbour/">Said Jabbour</a> for this.</td></tr>
 </table>
 
 
@@ -723,9 +741,10 @@ function getLearntData($runID)
     print "<script type=\"text/javascript\">";
     //Get data for learnts
     $query="
-    SELECT *
-    FROM `learnts`
+    SELECT sum(learntUnits) as `unit`, sum(learntBins) as `bin`, sum(learntTris) as `tri`, sum(learntLongs) as `long`
+    FROM `restart`
     where `runID` = $runID
+    group by `simplifications`
     order by `simplifications`";
 
     //Gather results
@@ -742,10 +761,10 @@ function getLearntData($runID)
     //echo "var learntDataStacked = [];";
     while ($i < $nrows) {
         $simplifications=mysql_result($result, $i, "simplifications");
-        $units=mysql_result($result, $i, "units");
-        $bins=mysql_result($result, $i, "bins");
-        $tris=mysql_result($result, $i, "tris");
-        $longs=mysql_result($result, $i, "longs");
+        $units=mysql_result($result, $i, "unit");
+        $bins=mysql_result($result, $i, "bin");
+        $tris=mysql_result($result, $i, "tri");
+        $longs=mysql_result($result, $i, "long");
 
         echo "learntData.push([ ['unit', $units],['bin', $bins],['tri', $tris],['long', $longs] ]);\n";
         //echo "learntDataStacked.push([$simplifications, $units, $bins, $tris, $longs]);";
@@ -761,9 +780,10 @@ function getPropData($runID)
     print "<script type=\"text/javascript\">";
     //Get data for learnts
     $query="
-    SELECT *
-    FROM `props`
+    SELECT sum(propBinIrred) as `binIrred`, sum(propBinRed) as `binRed`, sum(propTri) as `tri`, sum(propLongIrred) as `longIrred`, sum(propLongRed) as `longRed`
+    FROM `restart`
     where `runID` = $runID
+    group by `simplifications`
     order by `simplifications`";
 
     //Gather results
@@ -779,14 +799,13 @@ function getPropData($runID)
     echo "var propData = new Array();";
     $divplacement = "";
     while ($i < $nrows) {
-        $unit=mysql_result($result, $i, "unit");
         $binIrred=mysql_result($result, $i, "binIrred");
         $binRed=mysql_result($result, $i, "binRed");
         $tri=mysql_result($result, $i, "tri");
         $longIrred=mysql_result($result, $i, "longIrred");
         $longRed=mysql_result($result, $i, "longRed");
 
-        echo "propData.push([ ['unit', $unit],['bin irred.', $binIrred],['bin red.', $binRed]
+        echo "propData.push([ ['bin irred.', $binIrred],['bin red.', $binRed]
         , ['tri', $tri],['long irred.', $longIrred],['long red.', $longRed] ]);\n";
 
         $i++;
@@ -801,9 +820,10 @@ function getConflData($runID)
     print "<script type=\"text/javascript\">";
     //Get data for learnts
     $query="
-    SELECT *
-    FROM `confls`
+    SELECT sum(conflBinIrred) as `binIrred`, sum(conflBinRed) as `binRed`, sum(conflTri) as `tri`, sum(conflLongIrred) as `longIrred`, sum(conflLongRed) as `longRed`
+    FROM `restart`
     where `runID` = $runID
+    group by `simplifications`
     order by `simplifications`";
 
     //Gather results
@@ -964,13 +984,13 @@ for(i = 0; i < conflData.length; i++) {
 <p>There has been some <a href="http://www-sr.informatik.uni-tuebingen.de/~sinz/DPvis/">past work</a> on statically visualizing SAT problems by <a href="http://www.carstensinz.de/">Carsten Sinz</a>, but not much on dynamic solving visualization - in fact, nothing comes to my mind that is comparable to what is above. However, the point of this excercise was not only to visually display dynamic solver behaviour. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current <a href="http://www.jair.org/media/2490/live-2490-3923-jair.pdf">portifolio solvers</a>. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so search heuristics should evolve with the problem.</p>
 
 <h2>Future work</h2>
-<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~40 seconds of solving time. Time-out for SAT competition is on the order of 50x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either <a href="mailto:mate@srlabs.de">send me a mail</a> if you have an idea, or implement it yourself - all is up in the <a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL, PHP, HTML, CSS and more.</p>
+<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~40/400 seconds of solving time on a <i>very</i> slow machine. Time-out for SAT competition, considering computing speed, is on the order of 20x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either <a href="mailto:mate@srlabs.de">send me a mail</a> if you have an idea, or implement it yourself - all is up in the <a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL, PHP, HTML, CSS and more.</p>
 
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions  <a href="http://www.msoos.org/">here</a> and send the link to a friend. Second, you can <a href="http://www.srlabs.de">contact my employer</a>, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 <h2>Acknowledgements</h2>
-<p>I would like to thank my employer for letting me play with SAT, my collegue <a href="http://www.flickr.com/photos/lucamelette/">Luca Melette</a> for helping me with ideas and coding, <a href="http://folk.uio.no/vegardno/">Vegard Nossum</a> for the many discussions we had about visualization, <a href="http://www.inra.fr/mia/T/katsirelos/">George Katsirelos</a> for improvement ideas, <a href="http://dygraphs.com/">Dygraphs</a> for the visually pleasing graphs, <a href="http://www.michelhiemstra.nl/blog/igoogle-like-drag-drop-portal-v20/">Portal</a> for the drag-and-drop feature, <a href="http://www.highcharts.com/">Highcharts</a> for the pie charts and Edward Tufte for all his wonderful <a href="http://www.edwardtufte.com/tufte/books_vdqi">books</a>.</p>
+<p>I would like to thank my employer for letting me play with SAT, my collegue <a href="http://www.flickr.com/photos/lucamelette/">Luca Melette</a> for helping me with ideas and coding, <a href="http://folk.uio.no/vegardno/">Vegard Nossum</a> for the many discussions we had about visualization, <a href="http://www.inra.fr/mia/T/katsirelos/">George Katsirelos</a> for improvement ideas, <a href="http://www.cril.univ-artois.fr/~jabbour/">Said Jabbour</a> for further improvement ideas, <a href="http://dygraphs.com/">Dygraphs</a> for the visually pleasing graphs, <a href="http://www.michelhiemstra.nl/blog/igoogle-like-drag-drop-portal-v20/">Portal</a> for the drag-and-drop feature, <a href="http://www.highcharts.com/">Highcharts</a> for the pie charts and Edward Tufte for all his wonderful <a href="http://www.edwardtufte.com/tufte/books_vdqi">books</a>.</p>
 
 <br/>
 <p><small>Copyright <a href="http://www.msoos.org">Mate Soos</a>, 2012. Licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">CC BY-NC-SA 2.5</a></small></p>

@@ -446,8 +446,11 @@ bool PropEngine::propTriHelper(
     return false;
 }
 
-PropBy PropEngine::propagate(Solver* solver)
-{
+PropBy PropEngine::propagate(
+    Solver* solver
+    , bqueue<size_t>* watchListSizeTraversed
+    , bqueue<bool>* litPropagatedSomething
+) {
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
@@ -461,9 +464,13 @@ PropBy PropEngine::propagate(Solver* solver)
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         const vec<Watched>& ws = watches[p.toInt()];
+        if (watchListSizeTraversed)
+            watchListSizeTraversed->push(ws.size());
+
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;
+        size_t lastTrailSize = trail.size();
         for (; i != end; i++) {
 
             //Propagate binary clause
@@ -485,6 +492,8 @@ PropBy PropEngine::propagate(Solver* solver)
                 continue;
             } //end CLAUSE
         }
+        if (litPropagatedSomething)
+            litPropagatedSomething->push(trail.size() > lastTrailSize);
     }
 
     PropResult ret = PROP_NOTHING;
@@ -566,8 +575,10 @@ PropBy PropEngine::propagateNonLearntBin()
     return PropBy();
 }
 
-Lit PropEngine::propagateFull()
-{
+Lit PropEngine::propagateFull(
+    bqueue<size_t>* watchListSizeTraversed
+    , bqueue<bool>* litPropagatedSomething
+) {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
     #endif
@@ -597,7 +608,10 @@ Lit PropEngine::propagateFull()
     //Propagate binary non-learnt
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
+        size_t lastTrailSize = trail.size();
         const vec<Watched>& ws = watches[p.toInt()];
+        if (watchListSizeTraversed)
+            watchListSizeTraversed->push(ws.size());
         propStats.bogoProps += 1;
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
@@ -609,6 +623,8 @@ Lit PropEngine::propagateFull()
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
         }
+        if (litPropagatedSomething)
+            litPropagatedSomething->push(trail.size() > lastTrailSize);
     }
 
     //Propagate binary learnt

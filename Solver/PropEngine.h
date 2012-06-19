@@ -248,7 +248,11 @@ protected:
     void         newDecisionLevel();                       ///<Begins a new decision level.
 
     ///Perform BCP
-    PropBy       propagate(Solver* solver = NULL);
+    PropBy       propagate(
+        Solver* solver = NULL
+        ,  bqueue<size_t>* watchListSizeTraversed = NULL
+        , bqueue<bool>* litPropagatedSomething = NULL
+    );
 
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
 
@@ -287,7 +291,10 @@ protected:
         , vec<Watched>::const_iterator k
         , PropBy& confl
     );
-    Lit               propagateFull();
+    Lit propagateFull(
+        bqueue<size_t>* watchListSizeTraversed = NULL
+        , bqueue<bool>* litPropagatedSomething = NULL
+    );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal

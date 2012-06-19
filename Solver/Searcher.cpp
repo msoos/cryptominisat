@@ -671,6 +671,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
     branchDepthDeltaHist.fastclear();
     trailDepthHist.fastclear();
     trailDepthDeltaHist.fastclear();
+    conflictAfterConflict.fastclear();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -678,6 +679,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
     #endif //VERBOSE_DEBUG
 
     //Loop until restart or finish (SAT/UNSAT)
+    bool lastWasConflict = false;
     while (true) {
         assert(ok);
         Lit failed;
@@ -688,10 +690,13 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
             stats.advancedPropCalled++;
             failed = propagateFull();
             if (failed != lit_Undef) {
+
                 //Update conflict stats
                 stats.learntUnits++;
                 stats.conflStats.numConflicts++;
                 stats.conflStats.update(lastConflictCausedBy);
+                conflictAfterConflict.push(lastWasConflict);
+                lastWasConflict = true;
 
                 cancelUntil(0);
                 solver->enqueue(~failed);
@@ -739,7 +744,10 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
             stats.transRedRemoved += removeUselessBins();
         } else {
             //Decision level is higher than 1, so must do normal propagation
-            confl = propagate(solver);
+            confl = propagate(solver
+                , &watchListSizeTraversed
+                , &litPropagatedSomething
+            );
         }
 
         #ifdef VERBOSE_DEBUG
@@ -752,12 +760,15 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
             //If restart is needed, set it as so
             checkNeedRestart(params, rest);
+            conflictAfterConflict.push(lastWasConflict);
+            lastWasConflict = true;
 
             if (!handle_conflict(params, confl))
                 return l_False;
 
         } else {
             assert(ok);
+            lastWasConflict = false;
 
             //If restart is needed, restart here
             if (params.needToStopSearch
@@ -1065,6 +1076,14 @@ void Searcher::resetStats()
     clearPolarData();
     clauseSizeDistrib.resize(300);
 
+    //Misc
+    watchListSizeTraversed.clear();
+    watchListSizeTraversed.resize(100);
+    conflictAfterConflict.clear();
+    conflictAfterConflict.resize(100);;
+    litPropagatedSomething.clear();
+    litPropagatedSomething.resize(100);
+
     //Rest solving stats
     stats.clear();
     propStats.clear();
@@ -1210,6 +1229,11 @@ void Searcher::printRestartSQL()
     << ", `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
+    //Misc
+    << ", `conflAfterConfl`, `conflAfterConflVar`"
+    << ", `watchListSizeTraversed`, `watchListSizeTraversedVar`"
+    << ", `litPropagatedSomething`, `litPropagatedSomethingVar`"
+
     //Var stats
     << ", `propsPerDec`"
     << ", `flippedPercent`, `varSetPos`, `varSetNeg`"
@@ -1266,7 +1290,14 @@ void Searcher::printRestartSQL()
     << ", " << thisStats.learntBins
     << ", " << thisStats.learntTris
     << ", " << thisStats.learntLongs
-    
+
+    //Misc
+    << ", " << conflictAfterConflict.getAvgMidLong()*100.0
+    << ", " << sqrt(conflictAfterConflict.getVarMidLong())*100.0
+    << ", " << watchListSizeTraversed.getAvgMidLong()
+    << ", " << sqrt(watchListSizeTraversed.getVarMidLong())
+    << ", " << litPropagatedSomething.getAvgMidLong()*100.0
+    << ", " << sqrt(litPropagatedSomething.getVarMidLong())*100.0
 
     //Var stats
     << ", " << (double)thisPropStats.propagations/(double)thisStats.decisions
@@ -1282,72 +1313,6 @@ void Searcher::printRestartSQL()
 
     lastSQLPropStats = propStats;
     lastSQLGlobalStats = stats;
-}
-
-void Searcher::printLearntStatsSQL()
-{
-    solver->sqlFile
-    << "insert into `learnts`"
-    << "("
-    << " `runID`, `simplifications`"
-    << " , `units`, `bins`, `tris`, `longs`"
-    << ")"
-    << " values ("
-    //Position
-    << "  " << solver->getSolveStats().runID
-    << ", " << solver->getSolveStats().numSimplify
-
-    //Learnt stats
-    << ", " << stats.learntUnits
-    << ", " << stats.learntBins
-    << ", " << stats.learntTris
-    << ", " << stats.learntLongs
-    << " );" << endl;
-}
-
-void Searcher::printPropStatsSQL()
-{
-    solver->sqlFile
-    << "insert into `props`"
-    << "("
-    << " `runID`, `simplifications`"
-    << " , `unit`, `binIrred`, `binRed`, `tri`, `longIrred`, `longRed`"
-    << ")"
-    << " values ("
-    //Position
-    << "  " << solver->getSolveStats().runID
-    << ", " << solver->getSolveStats().numSimplify
-
-    //Learnt stats
-    << ", " << propStats.propsUnit
-    << ", " << propStats.propsBinIrred
-    << ", " << propStats.propsBinRed
-    << ", " << propStats.propsTri
-    << ", " << propStats.propsLongIrred
-    << ", " << propStats.propsLongRed
-    << " );" << endl;
-}
-
-void Searcher::printConflStatsSQL()
-{
-    solver->sqlFile
-    << "insert into `confls`"
-    << "("
-    << " `runID`, `simplifications`"
-    << " , `binIrred`, `binRed`, `tri`, `longIrred`, `longRed`"
-    << ")"
-    << " values ("
-    //Position
-    << "  " << solver->getSolveStats().runID
-    << ", " << solver->getSolveStats().numSimplify
-
-    //Learnt stats
-    << ", " << stats.conflStats.conflsBinIrred
-    << ", " << stats.conflStats.conflsBinRed
-    << ", " << stats.conflStats.conflsTri
-    << ", " << stats.conflStats.conflsLongIrred
-    << ", " << stats.conflStats.conflsLongRed
-    << " );" << endl;
 }
 
 struct MyInvSorter {
@@ -1600,10 +1565,6 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
     if (conf.doSQL) {
         printVarStatsSQL();
-        printPropStatsSQL();
-        printLearntStatsSQL();
-        printConflStatsSQL();
-
     }
 
     if (conf.verbosity >= 3) {

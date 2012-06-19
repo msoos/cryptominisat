@@ -373,6 +373,9 @@ class Searcher : public PropEngine
         bqueue<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
         bqueue<double, double>  agilityHist;
         vector<uint32_t> clauseSizeDistrib;
+        bqueue<size_t> watchListSizeTraversed;
+        bqueue<bool> conflictAfterConflict;
+        bqueue<bool> litPropagatedSomething;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
 
@@ -480,10 +483,7 @@ class Searcher : public PropEngine
 
         //SQL
         void printRestartSQL();
-        void printConflStatsSQL();
         void printVarStatsSQL();
-        void printLearntStatsSQL();
-        void printPropStatsSQL();
         void printClauseDistribSQL();
         void clearPolarData();
         PropStats lastSQLPropStats;
