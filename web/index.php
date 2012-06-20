@@ -82,14 +82,14 @@ $maxconfl = 100000;
 //$runID = 657697659;
 //$runID = 3348265795;
 error_reporting(E_ALL);
-error_reporting(E_STRICT);
+//error_reporting(E_STRICT);
 //error_reporting(E_STRICT);
 
 $username="presenter";
 $password="presenter";
 $database="cryptoms";
 
-mysql_connect(localhost, $username, $password);
+mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
 function printOneThing(
@@ -735,15 +735,27 @@ function setRollPeriod(num)
 <h2>Search session statistics</h2>
 <p>These charts show clause types learnt, propagations made, and conflicting clause types for each search session of <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a>, i.e. the problem on the left column. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
 
+
+<script type="text/javascript">
+var sumData = new Array();
+</script>
+
 <?
-function getLearntData($runID)
+function getSumData($runID, $maxconfl, $toSelect, $toPrint)
 {
-    print "<script type=\"text/javascript\">";
-    //Get data for learnts
+    print "<script type=\"text/javascript\">\n";
     $query="
-    SELECT sum(learntUnits) as `unit`, sum(learntBins) as `bin`, sum(learntTris) as `tri`, sum(learntLongs) as `long`
+    SELECT ";
+    for($i = 0;  $i < sizeof($toPrint); $i++) {
+        $query.="sum(`".$toSelect[$i]."`) as `".$toSelect[$i]."sum`";
+
+        if ($i+1 < sizeof($toSelect))
+            $query.=",";
+    }
+    $query.="
     FROM `restart`
     where `runID` = $runID
+    and conflicts < $maxconfl
     group by `simplifications`
     order by `simplifications`";
 
@@ -757,108 +769,45 @@ function getLearntData($runID)
 
     //Write learnt data to 'learntData'
     $i=0;
-    echo "var learntData = new Array();";
-    //echo "var learntDataStacked = [];";
+    echo "var tmp = new Array();\n";
     while ($i < $nrows) {
-        $simplifications=mysql_result($result, $i, "simplifications");
-        $units=mysql_result($result, $i, "unit");
-        $bins=mysql_result($result, $i, "bin");
-        $tris=mysql_result($result, $i, "tri");
-        $longs=mysql_result($result, $i, "long");
+        //$simplifications=mysql_result($result, $i, "simplifications");
 
-        echo "learntData.push([ ['unit', $units],['bin', $bins],['tri', $tris],['long', $longs] ]);\n";
-        //echo "learntDataStacked.push([$simplifications, $units, $bins, $tris, $longs]);";
+        echo "tmp.push([ ";
+        for($i2 = 0;  $i2 < sizeof($toSelect); $i2++) {
+            $toGet = $toSelect[$i2]."sum";
+            $data = mysql_result($result, $i, $toGet);
+
+            $name = $toPrint[$i2];
+            echo "['".$name."' , ".$data."]";
+
+            if ($i2+1 < sizeof($toSelect)) {
+                echo ",";
+            }
+        }
+        echo "]);\n";
         $i++;
     }
-    echo "</script>";
+    echo "sumData.push( tmp);\n";
+    echo "</script>\n";
 
     return $nrows;
 }
 
-function getPropData($runID)
-{
-    print "<script type=\"text/javascript\">";
-    //Get data for learnts
-    $query="
-    SELECT sum(propBinIrred) as `binIrred`, sum(propBinRed) as `binRed`, sum(propTri) as `tri`, sum(propLongIrred) as `longIrred`, sum(propLongRed) as `longRed`
-    FROM `restart`
-    where `runID` = $runID
-    group by `simplifications`
-    order by `simplifications`";
+$nrows = getSumData($runID, $maxconfl
+    , array("learntUnits", "learntBins", "learntTris", "learntLongs")
+    , array("units", "bins", "tris", "longs")
+);
 
-    //Gather results
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
+getSumData($runID, $maxconfl
+    , array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
+    , array("irred. bin", "red. bin", "tri", "irred. long", "red. long")
+);
 
-
-    //Write prop data to 'propData'
-    $i=0;
-    echo "var propData = new Array();";
-    $divplacement = "";
-    while ($i < $nrows) {
-        $binIrred=mysql_result($result, $i, "binIrred");
-        $binRed=mysql_result($result, $i, "binRed");
-        $tri=mysql_result($result, $i, "tri");
-        $longIrred=mysql_result($result, $i, "longIrred");
-        $longRed=mysql_result($result, $i, "longRed");
-
-        echo "propData.push([ ['bin irred.', $binIrred],['bin red.', $binRed]
-        , ['tri', $tri],['long irred.', $longIrred],['long red.', $longRed] ]);\n";
-
-        $i++;
-    }
-    echo "</script>";
-
-    return $nrows;
-}
-
-function getConflData($runID)
-{
-    print "<script type=\"text/javascript\">";
-    //Get data for learnts
-    $query="
-    SELECT sum(conflBinIrred) as `binIrred`, sum(conflBinRed) as `binRed`, sum(conflTri) as `tri`, sum(conflLongIrred) as `longIrred`, sum(conflLongRed) as `longRed`
-    FROM `restart`
-    where `runID` = $runID
-    group by `simplifications`
-    order by `simplifications`";
-
-    //Gather results
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
-
-
-    //Write prop data to 'propData'
-    $i=0;
-    echo "var conflData = new Array();";
-    $divplacement = "";
-    while ($i < $nrows) {
-        $binIrred=mysql_result($result, $i, "binIrred");
-        $binRed=mysql_result($result, $i, "binRed");
-        $tri=mysql_result($result, $i, "tri");
-        $longIrred=mysql_result($result, $i, "longIrred");
-        $longRed=mysql_result($result, $i, "longRed");
-
-        echo "conflData.push([ ['bin irred.', $binIrred] ,['bin red.', $binRed],['tri', $tri]
-        ,['long irred.', $longIrred],['long red.', $longRed] ]);\n";
-
-        $i++;
-    }
-    echo "</script>";
-
-    return $nrows;
-}
-
-$nrows = getLearntData($runID);
-getPropData($runID);
-getConflData($runID);
-
+getSumData($runID, $maxconfl
+    , array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
+    , array("irred. bin", "red. bin", "trii", "irred long", "red. long")
+);
 
 //End script, create tables
 function createTable($nrows)
@@ -877,44 +826,13 @@ function createTable($nrows)
     };
     echo "</table>\n";
 }
-/*echo "<table id=\"plot-table-a\">";
-echo "<tr><td>
-    <div id=\"learntStatsStacked\" class=\"myPlotData2\"></div>
-    </td><td valign=top>
-    <div id=\"learntStatsStackedLabel\" class=\"myPlotLabel\"></div>
-    </td></tr>";
-echo "</table>";*/
+
 createTable($nrows);
 mysql_close();
 ?>
 </script>
 
 <script type="text/javascript">
-/*var g = new Dygraph(
-    document.getElementById("learntStatsStacked")
-    , learntDataStacked
-    , {
-        labels: ['x', 'unit', 'bin', 'tri', 'long']
-        , stackedGraph: true
-
-        , highlightCircleSize: 2
-        , strokeWidth: 1
-        , strokeBorderWidth: 1
-        , legend: 'always'
-        , labelsDivStyles: {
-            'text-align': 'right',
-            'background': 'none'
-        }
-        , labelsDiv: document.getElementById("learntStatsStackedLabel")
-        , labelsSeparateLines: true
-        , labelsKMB: true
-        , drawPoints: true
-        , pointSize: 1.5
-        , highlightCircleSize: 4
-        , title: "Learnt Clause type"
-    }
-);*/
-
 function drawChart(name, num, data) {
     chart = new Highcharts.Chart(
     {
@@ -948,9 +866,6 @@ function drawChart(name, num, data) {
                     color: '#000000',
                     distance: 30,
                     connectorColor: '#000000',
-                    /*formatter: function() {
-                        return '<b>'+ this.point.name +'</b>: '+ this.percentage +' %';
-                    },*/
                     overflow: "justify"
                 }
             }
@@ -967,16 +882,16 @@ function drawChart(name, num, data) {
 };
 
 var chart;
-for(i = 0; i < learntData.length; i++) {
-    drawChart("learnt", i, learntData);
+for(i = 0; i < sumData[0].length; i++) {
+    drawChart("learnt", i, sumData[0]);
 }
 
-for(i = 0; i < propData.length; i++) {
-    drawChart("prop", i, propData);
+for(i = 0; i < sumData[1].length; i++) {
+    drawChart("prop", i, sumData[1]);
 }
 
-for(i = 0; i < conflData.length; i++) {
-    drawChart("confl", i, conflData);
+for(i = 0; i < sumData[2].length; i++) {
+    drawChart("confl", i, sumData[2]);
 }
 </script>
 
