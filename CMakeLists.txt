@@ -29,17 +29,17 @@ link_directories(${MySQL_LIB_DIR})
 
 #find_package(Perftools)
 
-add_definitions(-DVERSION="2.9.4")
+add_definitions(-DVERSION="2.9.5")
 add_definitions(-DUSE_GAUSS)
 
-add_subdirectory(Solver)
+add_subdirectory(cmsat)
 
 add_custom_target(copy ALL
     COMMENT "Copying binaries from subdirs to build directory")
 
 add_custom_command(
     TARGET copy
-    COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
+    COMMAND ${CMAKE_COMMAND} -E copy cmsat/cryptominisat .
 )
 
 add_dependencies(copy cryptominisat)
