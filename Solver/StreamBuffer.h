@@ -1,19 +1,23 @@
-/*
-This file is part of CryptoMiniSat2.
+/***************************************************************************************[Solver.cc]
+Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
+Copyright (c) 2007-2009, Niklas Sorensson
+Copyright (c) 2009-2012, Mate Soos
 
-CryptoMiniSat2 is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-CryptoMiniSat2 is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
-You should have received a copy of the GNU General Public License
-along with CryptoMiniSat2.  If not, see <http://www.gnu.org/licenses/>.
-*/
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+**************************************************************************************************/
 
 #ifndef STREAMBUFFER_H
 #define STREAMBUFFER_H
@@ -32,24 +36,19 @@ namespace CMSat
 class StreamBuffer
 {
     #ifndef DISABLE_ZLIB
-    gzFile  gzin;
-    void assureLookaheadZip() {
+    gzFile  in;
+    void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
             #ifdef VERBOSE_DEBUG
             printf("buf = %08X\n", buf);
             printf("sizeof(buf) = %u\n", sizeof(buf));
             #endif //VERBOSE_DEBUG
-            size = gzread(gzin, buf, sizeof(buf));
+            size = gzread(in, buf, sizeof(buf));
         }
     }
-    #endif
-
+    #else
     FILE *  in;
-    char    buf[CHUNK_LIMIT];
-    int     pos;
-    int     size;
-
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
@@ -60,45 +59,37 @@ class StreamBuffer
             size = fread(buf, 1, sizeof(buf), in);
         }
     }
+    #endif
+
+    char    buf[CHUNK_LIMIT];
+    int     pos;
+    int     size;
 
 public:
     #ifndef DISABLE_ZLIB
     StreamBuffer(gzFile i) :
-        gzin(i)
-        , in(NULL)
-        , pos(0)
-        , size(0)
-    {
-        assureLookaheadZip();
-    }
-    #endif
-
-    StreamBuffer(FILE * i) :
-        #ifndef DISABLE_ZLIB
-        gzin(NULL)
-        , in(i)
-        #else
         in(i)
-        #endif
         , pos(0)
         , size(0)
     {
         assureLookahead();
     }
+    #else
+    StreamBuffer(FILE * i) :
+        in(i)
+        , pos(0)
+        , size(0)
+    {
+        assureLookahead();
+    }
+    #endif
 
     int  operator *  () {
         return (pos >= size) ? EOF : buf[pos];
     }
     void operator ++ () {
         pos++;
-        #ifndef DISABLE_ZLIB
-        if (in == NULL)
-            assureLookaheadZip();
-        else
-            assureLookahead();
-        #else
         assureLookahead();
-        #endif
     }
 };
 
