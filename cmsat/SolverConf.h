@@ -25,7 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "cmsat/SolverTypes.h"
 #include "cmsat/constants.h"
 
-#ifdef HAVE_MYSQL
+#ifdef CMSAT_HAVE_MYSQL
 #include <mysql/mysql.h>
 #endif
 
@@ -104,7 +104,7 @@ class SolverConf
 
         uint32_t origSeed;
 
-        #ifdef HAVE_MYSQL
+        #ifdef CMSAT_HAVE_MYSQL
         MYSQL   *serverConn;
         #endif
 };

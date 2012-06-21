@@ -627,7 +627,13 @@ void Solver::printStats()
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
 
-    int numThreads = omp_get_num_threads();
+    int numThreads;
+#ifdef _OPENMP
+    numThreads = omp_get_num_threads();
+#else
+    numThreads = 1;
+#endif
+
     if (numThreads > 1) {
         std::cout << "c Following stats are for *FIRST FINISHED THREAD ONLY*" << std::endl;
         #if !defined(_MSC_VER) && !defined(RUSAGE_THREAD)

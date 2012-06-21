@@ -27,9 +27,5 @@ libcryptominisat_la_SOURCES = \
 
 bin_PROGRAMS = cryptominisat
 cryptominisat_LDADD = libcryptominisat.la
-#if HAVE_MYSQL
-cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS) $(MYSQL_LIBS)
-#else
-#  cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS)
-#endif
+cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS) $(LIBS)
 cryptominisat_SOURCES = Main.cpp

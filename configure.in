@@ -180,7 +180,7 @@ if test "x$MYSQL_CONFIG" != "x"; then
         LIBS="$LIBS $MYSQL_LIBS"
 
         # set that we have mysql
-        AC_DEFINE(HAVE_MYSQL, 1,
+        AC_DEFINE(CMSAT_HAVE_MYSQL, 1,
         [Define if your system has mysql libs (dev package) installed.])
 
         ## Determine MySQL include path
