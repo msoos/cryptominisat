@@ -64,6 +64,7 @@ using std::endl;
 
 Subsumer::Subsumer(Solver* _solver):
     solver(_solver)
+    , varElimOrder(VarOrderLt(varElimComplexity))
     , numCalls(0)
 {
     xorFinder = new XorFinder(this, solver);
@@ -910,18 +911,18 @@ bool Subsumer::eliminateVars()
     uint32_t vars_elimed = 0;
     uint32_t numtry = 0;
     toDecrease = &numMaxElim;
-    vector<Var> order = orderVarsForElim();
+    orderVarsForElimInit();
 
     #ifdef BIT_MORE_VERBOSITY
     cout << "c #order size:" << order.size() << endl;
     #endif
 
     //Go through the ordered list of variables to eliminate
-    for (size_t i = 0
-        ; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0
-        ; i++
+    while(!varElimOrder.empty()
+        && numMaxElim > 0
+        && numMaxElimVars > 0
     ) {
-        Var var = order[i];
+        Var var = varElimOrder.removeMin();
 
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
@@ -933,7 +934,7 @@ bool Subsumer::eliminateVars()
 
         //Try to eliminate
         numtry++;
-        if (maybeEliminate(order[i])) {
+        if (maybeEliminate(var)) {
             vars_elimed++;
             numMaxElimVars--;
         }
@@ -2055,17 +2056,67 @@ int Subsumer::testVarElim(Var var)
     return before_long-after_long;
 }
 
+void Subsumer::varElimCheckUpdate(
+    const vector<ClAndBin>& gothrough
+    , vector<Var>& varElimToCheck
+    , vector<char>& varElimToCheckHelper
+) {
+    for (vector<ClAndBin>::const_iterator
+        it = gothrough.begin(), end = gothrough.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->isBin) {
+            const Var var1 = it->lit1.var();
+            if (!varElimToCheckHelper[var1]) {
+                varElimToCheck.push_back(var1);
+                varElimToCheckHelper[var1] = 1;
+            }
+
+            const Var var2 = it->lit2.var();
+            if (!varElimToCheckHelper[var2]) {
+                varElimToCheck.push_back(var2);
+                varElimToCheckHelper[var2] = 1;
+            }
+        } else {
+            Clause& cl = *clauses[it->clsimp.index];
+            if (cl.learnt())
+                continue;
+
+            for(size_t i = 0; i < cl.size(); i++) {
+                const Var var = cl[i].var();
+                if (!varElimToCheckHelper[var]) {
+                    varElimToCheck.push_back(var);
+                    varElimToCheckHelper[var] = 1;
+                }
+            }
+        }
+    }
+}
+
+void Subsumer::varElimCheckUpdate(
+    const vector<Lit>& cl
+    , vector<Var>& varElimToCheck
+    , vector<char>& varElimToCheckHelper
+) {
+   for(size_t i = 0; i < cl.size(); i++) {
+        const Var var = cl[i].var();
+        if (!varElimToCheckHelper[var]) {
+            varElimToCheck.push_back(var);
+            varElimToCheckHelper[var] = 1;
+        }
+    }
+}
+
 /**
 @brief Tries to eliminate variable
-
-Tries to eliminate a variable. It uses heuristics to decide whether it's a good
-idea to eliminate a variable or not.
-
-@param[in] var The variable that is being eliminated
-@return TRUE if variable was eliminated
 */
 bool Subsumer::maybeEliminate(const Var var)
 {
+    cout << "trying comlexity: "
+    << varElimComplexity[var].first
+    << ", " << varElimComplexity[var].second
+    << endl;
     //Update stats
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
     if (agressiveCheck)
@@ -2082,6 +2133,12 @@ bool Subsumer::maybeEliminate(const Var var)
     if (solver->conf.verbosity >= 5) {
         cout << "Eliminating var " << lit << endl;
     }
+
+    //Re-examine later the elimination complexity of these variables
+    vector<Var> varElimToCheck;
+    vector<char> varElimToCheckHelper(solver->nVars(), 0);
+    varElimCheckUpdate(posAll, varElimToCheck, varElimToCheckHelper);
+    varElimCheckUpdate(negAll, varElimToCheck, varElimToCheckHelper);
 
     //put clauses into blocked status, remove from occur[], but DON'T free&set to NULL
     occur[lit.toInt()].clear();
@@ -2139,6 +2196,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 , false //Should clause be attached?
                 , &finalLits //Return final set of literals here
             );
+            varElimCheckUpdate(finalLits, varElimToCheck, varElimToCheckHelper);
 
             if (!solver->ok)
                 goto end;
@@ -2179,6 +2237,21 @@ bool Subsumer::maybeEliminate(const Var var)
 
     //removeBinsAndTris(var);
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
+
+    //cout << "varElimToCheck size: " << varElimToCheck.size() << endl;
+    for(vector<Var>::const_iterator
+        it = varElimToCheck.begin(), end = varElimToCheck.end()
+        ; it != end
+        ; it++
+    ) {
+        //No point in updating the score of this var, it's eliminated already
+        if (*it == var)
+            continue;
+
+        std::pair<int, int> cost = heuristicCalcVarElimScore(Lit(*it, false));
+        varElimComplexity[*it] = cost;
+        varElimOrder.update(*it);
+    }
 
 end:
     if (solver->conf.verbosity >= 5) {
@@ -2457,20 +2530,54 @@ bool Subsumer::merge(
     return retval;
 }
 
-/**
-@brief Orders variables for elimination
 
-Variables are ordered according to their occurrances. If a variable occurs far
-less than others, it should be prioritised for elimination. The more difficult
-variables are OK to try later.
-
-@note: Will untouch all variables.
-
-@param[out] order The order to try to eliminate the variables
-*/
-vector<Var> Subsumer::orderVarsForElim()
+std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Lit lit)
 {
-    vector<pair<int, Var> > cost_var;
+    //Count number of non-learnt long clauses with X inside
+    size_t pos = 0;
+    size_t posLit = 0;
+    const Occur& poss = occur[lit.toInt()];
+    *toDecrease -= poss.size();
+    for (Occur::const_iterator it = poss.begin(), end = poss.end(); it != end; it++)
+        if (!clauses[it->index]->learnt()) {
+            posLit += clauses[it->index]->size();
+            pos++;
+        }
+
+    //Count number of non-learnt long clauses with ~X inside
+    size_t neg = 0;
+    size_t negLit = 0;
+    const Occur& negs = occur[(~lit).toInt()];
+    *toDecrease -= negs.size();
+    for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
+        if (!clauses[it->index]->learnt()) {
+            negLit += clauses[it->index]->size();
+            neg++;
+        }
+
+    uint32_t nNonLBinPos = numNonLearntBins(lit);
+    uint32_t nNonLBinNeg = numNonLearntBins(~lit);
+
+    int normCost = pos * neg //long clauses have a good chance of being tautologies
+        + nNonLBinPos * neg * 2 //lower chance of tautology because of binary clause
+        + nNonLBinNeg * pos * 2 //lower chance of tautology because of binary clause
+        + nNonLBinPos * nNonLBinNeg * 5; //Very low chance of tautology
+
+
+    if ((pos + nNonLBinPos) <= 2 && (neg + nNonLBinNeg) <= 2) {
+        normCost = 0;
+    }
+
+    int litCost = posLit * negLit;
+
+    return std::make_pair(normCost, litCost);
+}
+
+void Subsumer::orderVarsForElimInit()
+{
+    varElimOrder.clear();
+    varElimComplexity.clear();
+    varElimComplexity.resize(solver->nVars(), std::make_pair<int, int>(1000, 1000));
 
     //Go through all vars that have been touched
     for (vector<Var>::const_iterator
@@ -2488,29 +2595,12 @@ vector<Var> Subsumer::orderVarsForElim()
             continue;
         }
 
+        assert(!varElimOrder.inHeap(*it));
+
         if (solver->conf.varelimStrategy == 0) {
-            //Count number of non-learnt long clauses with X inside
-            uint32_t pos = 0;
-            const Occur& poss = occur[x.toInt()];
-            *toDecrease -= poss.size();
-            for (Occur::const_iterator it = poss.begin(), end = poss.end(); it != end; it++)
-                if (!clauses[it->index]->learnt()) pos++;
-
-            //Count number of non-learnt long clauses with ~X inside
-            uint32_t neg = 0;
-            const Occur& negs = occur[(~x).toInt()];
-            *toDecrease -= negs.size();
-            for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
-                if (!clauses[it->index]->learnt()) neg++;
-
-            uint32_t nNonLBinPos = numNonLearntBins(x);
-            uint32_t nNonLBinNeg = numNonLearntBins(~x);
-
-            uint32_t cost = (pos * neg)/2 //long clauses have a good chance of being tautologies
-                + nNonLBinPos * neg * 2 //lower chance of tautology because of binary clause
-                + nNonLBinNeg * pos * 2 //lower chance of tautology because of binary clause
-                + nNonLBinPos * nNonLBinNeg * 5; //Very low chance of tautology
-            cost_var.push_back(std::make_pair(cost, x.var()));
+            std::pair<int, int> cost = heuristicCalcVarElimScore(x);
+            varElimComplexity[*it] = cost;             
+            varElimOrder.insert(*it);
         } else {
             int ret = testVarElim(*it);
 
@@ -2518,29 +2608,24 @@ vector<Var> Subsumer::orderVarsForElim()
             if (ret == -1000)
                 continue;
 
-            cost_var.push_back(std::make_pair(1000-ret, x.var()));
+            varElimComplexity[*it].first = 1000-ret;
+            varElimOrder.insert(*it);
         }
     }
     touchedVars.clear();
-
-    //Sort "cost_var" according to lowest cost first
-    std::sort(cost_var.begin(), cost_var.end(), myComp());
+    assert(varElimOrder.heapProperty());
 
     //Print sorted listed list
     #ifdef VERBOSE_DEBUG_VARELIM
     cout << "-----------" << endl;
-    for(size_t i = 0; i < cost_var.size(); i++) {
-        cout << "cost_var[" << i << "]: LIT: " << cost_var[i].second << " val: " << cost_var[i].first << endl;
+    for(size_t i = 0; i < varElimOrder.size(); i++) {
+        cout
+        << "varElimOrder[" << i << "]: "
+        << " var: " << varElimOrder[i]+1
+        << " val: " << varElimComplexity[varElimOrder[i]]
+        << endl;
     }
     #endif
-
-    //Put sorted list's vars as output
-    vector<Var> order;
-    for (uint32_t x = 0; x < cost_var.size(); x++) {
-        order.push_back(cost_var[x].second);
-    }
-
-    return order;
 }
 
 /**

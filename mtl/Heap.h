@@ -31,10 +31,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
-//=================================================================================================
+
 // A heap implementation with support for decrease/increase key.
-
-
 template<class Comp>
 class Heap {
     Comp     lt;

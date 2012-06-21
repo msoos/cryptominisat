@@ -33,6 +33,7 @@
 #include <set>
 #include <iomanip>
 #include <fstream>
+#include "Heap.h"
 
 using std::vector;
 using std::list;
@@ -547,18 +548,29 @@ private:
 
     /////////////////////
     //Variable elimination
-    /**
-    @brief Struct used to compare variable elimination difficulties
 
-    Used to order variables according to their difficulty of elimination. Used by
-    the std::sort() function. in \function orderVarsForElim()
-    */
-    struct myComp {
-        bool operator () (const std::pair<int, Var>& x, const std::pair<int, Var>& y) {
-            return x.first < y.first;
+    vector<std::pair<int, int> > varElimComplexity;
+    ///Order variables according to their complexity of elimination
+    struct VarOrderLt {
+        const vector<std::pair<int, int> >&  varElimComplexity;
+        bool operator () (const uint32_t x, const uint32_t y) const
+        {
+            //Of the FIRST, the smallest is best
+            if (varElimComplexity[x].first != varElimComplexity[y].first)
+                return varElimComplexity[x].first < varElimComplexity[y].first;
+
+            //Of the SECOND, the largest is best
+            return varElimComplexity[x].second > varElimComplexity[y].second;
         }
+
+        VarOrderLt(
+            const vector<std::pair<int,int> >& _varElimComplexity
+        ) :
+            varElimComplexity(_varElimComplexity)
+        {}
     };
-    vector<Var> orderVarsForElim();
+    void        orderVarsForElimInit();
+    Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
     void        freeAfterVarelim(const vector<ClAndBin>& myset);
     void        addLearntBinaries(const Var var);
@@ -567,6 +579,7 @@ private:
     vector<ClAndBin> posAll, negAll;
     bool        maybeEliminate(const Var x);
     int         testVarElim(Var var);
+    std::pair<int, int>  heuristicCalcVarElimScore(const Lit lit);
     bool        merge(
         const ClAndBin& ps
         , const ClAndBin& qs
@@ -574,6 +587,16 @@ private:
         , const Lit without_q
         , const bool useCache
         , const bool final
+    );
+    void varElimCheckUpdate(
+        const vector<ClAndBin>& gothrough
+        , vector<Var>& varElimToCheck
+        , vector<char>& varElimToCheckHelper
+    );
+    void varElimCheckUpdate(
+        const vector<Lit>& cl
+        , vector<Var>& varElimToCheck
+        , vector<char>& varElimToCheckHelper
     );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
