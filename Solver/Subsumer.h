@@ -593,11 +593,6 @@ private:
         , vector<Var>& varElimToCheck
         , vector<char>& varElimToCheckHelper
     );
-    void varElimCheckUpdate(
-        const vector<Lit>& cl
-        , vector<Var>& varElimToCheck
-        , vector<char>& varElimToCheckHelper
-    );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
     void        fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit lit);

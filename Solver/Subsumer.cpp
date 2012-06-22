@@ -2094,20 +2094,6 @@ void Subsumer::varElimCheckUpdate(
     }
 }
 
-void Subsumer::varElimCheckUpdate(
-    const vector<Lit>& cl
-    , vector<Var>& varElimToCheck
-    , vector<char>& varElimToCheckHelper
-) {
-   for(size_t i = 0; i < cl.size(); i++) {
-        const Var var = cl[i].var();
-        if (!varElimToCheckHelper[var]) {
-            varElimToCheck.push_back(var);
-            varElimToCheckHelper[var] = 1;
-        }
-    }
-}
-
 /**
 @brief Tries to eliminate variable
 */
@@ -2200,7 +2186,6 @@ bool Subsumer::maybeEliminate(const Var var)
                 , false //Should clause be attached?
                 , &finalLits //Return final set of literals here
             );
-            varElimCheckUpdate(finalLits, varElimToCheck, varElimToCheckHelper);
 
             if (!solver->ok)
                 goto end;
