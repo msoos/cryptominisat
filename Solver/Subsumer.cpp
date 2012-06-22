@@ -139,21 +139,13 @@ bool Subsumer::unEliminate(const Var, Solver*)
 }
 
 /**
-@brief Backward-subsumption using given clause: helper function
-
-Checks all clauses in the occurrence lists if they are subsumed by ps or not.
-
-The input clause can be learnt. In that case, if it subsumes non-learnt clauses,
-it will become non-learnt.
-
-Handles it well if the subsumed clause has a higher activity than the subsuming
-clause (will take the max() of the two)
+@brief Backward-subsumption using given clause
 
 @p c The clause to use
 @p cl The clause to use
 
 */
-void Subsumer::subsume0(ClauseIndex c, Clause& cl)
+uint32_t Subsumer::subsume0(ClauseIndex c, Clause& cl)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: " << cl << endl;
@@ -169,6 +161,8 @@ void Subsumer::subsume0(ClauseIndex c, Clause& cl)
 
     //Combine stats
     cl.combineStats(ret.stats);
+
+    return ret.numSubsumed;
 }
 
 /**
@@ -280,9 +274,15 @@ is saved in elimedOutVar[] before it is fully removed.
 @param[in] elim If the clause is removed because of variable elmination, this
 parameter is different from var_Undef.
 */
-void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
+void Subsumer::unlinkClause(ClauseIndex c)
 {
     Clause& cl = *clauses[c.index];
+
+    // Remove from sets
+    strengthenWith.exclude(c);
+    subsumeWith.exclude(c);
+
+    //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
         *toDecrease -= 2*occur[cl[i].toInt()].size();
 
@@ -290,26 +290,9 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
         touchedVars.touch(cl[i], cl.learnt());
     }
 
-    // Remove from sets:
-    strengthenWith.exclude(c);
-    subsumeWith.exclude(c);
-
-    //If elimed and non-learnt, we need to save it to stack
-    if (elim != lit_Undef
-        && !cl.learnt()
-    ) {
-        #ifdef VERBOSE_DEBUG
-        cout << "Eliminating non-bin clause: " << *clauses[c.index] << endl;
-        cout << "On variable: " << elim.unsign() << endl;
-        #endif //VERBOSE_DEBUG
-
-        vector<Lit> lits(cl.size());
-        std::copy(cl.begin(), cl.end(), lits.begin());
-        blockedClauses.push_back(BlockedClause(elim, lits));
-    } else {
-        solver->clAllocator->clauseFree(&cl);
-        clauses[c.index] = NULL;
-    }
+    //Free and set to NULL
+    solver->clAllocator->clauseFree(&cl);
+    clauses[c.index] = NULL;
 }
 
 lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
@@ -1859,9 +1842,12 @@ void Subsumer::removeClausesHelper(
             } else {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += clauses[c.clsimp.index]->size();
-            }
 
-            unlinkClause(c.clsimp, lit);
+                Clause& cl = *clauses[c.clsimp.index];
+                vector<Lit> lits(cl.size());
+                std::copy(cl.begin(), cl.end(), lits.begin());
+                blockedClauses.push_back(BlockedClause(lit, lits));
+            }
 
         } else {
             #ifdef VERBOSE_DEBUG_VARELIM
@@ -2193,7 +2179,8 @@ bool Subsumer::maybeEliminate(const Var var)
 
             if (newCl != NULL) {
                 ClauseIndex newClSimp = linkInClause(*newCl);
-                subsume0(newClSimp, *newCl);
+                size_t num = subsume0(newClSimp, *newCl);
+                //if (num > 1) cout << "Num subs: " << num << endl;
             } else if (finalLits.size() == 2) {
                 Sub0Ret ret = subsume0(
                     std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
@@ -2209,9 +2196,9 @@ bool Subsumer::maybeEliminate(const Var var)
         }
     }
 
-    //Free & NULL clauses
-    freeAfterVarelim(posAll);
-    freeAfterVarelim(negAll);
+    //Remove non-learnt clauses
+    removeAfterVarelim(posAll);
+    removeAfterVarelim(negAll);
 
     #ifndef NDEBUG
     //Check that no eliminated non-learnt binary clauses are left inside
@@ -2256,7 +2243,7 @@ end:
     return solver->ok;
 }
 
-void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
+void Subsumer::removeAfterVarelim(const vector<ClAndBin>& myset)
 {
     for(uint32_t i = 0; i < myset.size(); i++) {
         //If binary, or has been removed due to subsume0 of merged clauses
@@ -2265,7 +2252,19 @@ void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
             || clauses[myset[i].clsimp.index] == NULL
         ) continue;
 
+        //What we will be using
         uint32_t index = myset[i].clsimp.index;
+        Clause& cl = *clauses[index];
+
+        //Remove from occur
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            *toDecrease -= 2*occur[cl[i].toInt()].size();
+
+            occur[cl[i].toInt()].remove(index);
+            touchedVars.touch(cl[i], cl.learnt());
+        }
+
+
         #ifdef VERBOSE_DEBUG_VARELIM
         cout << "Freeing clause due to varelim: " << *clauses[index] << endl;
         #endif
@@ -2554,6 +2553,8 @@ std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Lit lit)
         + nNonLBinNeg * pos * 2 //lower chance of tautology because of binary clause
         + nNonLBinPos * nNonLBinNeg * 5; //Very low chance of tautology
 
+    normCost = pos + neg + nNonLBinNeg + nNonLBinPos;
+
 
     if ((pos + nNonLBinPos) <= 2 && (neg + nNonLBinNeg) <= 2) {
         normCost = 0;
@@ -2590,7 +2591,7 @@ void Subsumer::orderVarsForElimInit()
 
         if (solver->conf.varelimStrategy == 0) {
             std::pair<int, int> cost = heuristicCalcVarElimScore(x);
-            varElimComplexity[*it] = cost;             
+            varElimComplexity[*it] = cost;
             varElimOrder.insert(*it);
         } else {
             int ret = testVarElim(*it);

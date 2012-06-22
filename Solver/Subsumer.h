@@ -482,7 +482,7 @@ private:
     //Clause update
     void        strengthen(ClauseIndex& c, const Lit toRemoveLit);
     lbool       cleanClause(ClauseIndex c, Clause& cl);
-    void        unlinkClause(ClauseIndex cc, const Lit elim = lit_Undef);
+    void        unlinkClause(ClauseIndex cc);
     ClauseIndex linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClauseIndex& c, Clause& cl);
 
@@ -539,7 +539,7 @@ private:
         ClauseStats stats;
         uint32_t numSubsumed;
     };
-    void subsume0(ClauseIndex c, Clause& ps);
+    uint32_t subsume0(ClauseIndex c, Clause& ps);
     template<class T> Sub0Ret subsume0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs);
 
     /////////////////////
@@ -572,7 +572,7 @@ private:
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
-    void        freeAfterVarelim(const vector<ClAndBin>& myset);
+    void        removeAfterVarelim(const vector<ClAndBin>& myset);
     void        addLearntBinaries(const Var var);
     void        removeClauses(const Var var);
     void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
