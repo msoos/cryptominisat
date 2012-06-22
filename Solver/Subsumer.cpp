@@ -2130,12 +2130,13 @@ bool Subsumer::maybeEliminate(const Var var)
     varElimCheckUpdate(posAll, varElimToCheck, varElimToCheckHelper);
     varElimCheckUpdate(negAll, varElimToCheck, varElimToCheckHelper);
 
-    //put clauses into blocked status, remove from occur[], but DON'T free&set to NULL
+    //put clauses into blocked status, remove from occur[]
+    //but DON'T free&set to NULL the non-learnt clauses, only the learnt ones
     occur[lit.toInt()].clear();
     occur[(~lit).toInt()].clear();
     removeClauses(var);
 
-    //add newly dot-producted clauses
+    //Add all resolvents
     for (vector<ClAndBin>::const_iterator
         it = posAll.begin(), end = posAll.end()
         ; it != end
@@ -2153,10 +2154,10 @@ bool Subsumer::maybeEliminate(const Var var)
             //Decrement available time
             *toDecrease -= 2;
 
-            //Create dot-product
+            //Resolve the two clauses
             bool ok = merge(*it, *it2, lit, ~lit, true, true);
 
-            //The merge resulted in a tautological clause
+            //The resolvent is tautological
             if (!ok)
                 continue;
 
