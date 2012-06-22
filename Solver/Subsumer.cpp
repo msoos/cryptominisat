@@ -2244,8 +2244,9 @@ bool Subsumer::maybeEliminate(const Var var)
         ; it != end
         ; it++
     ) {
-        //No point in updating the score of this var, it's eliminated already
-        if (*it == var)
+        //No point in updating the score of this var
+        //it's eliminated already, or not to be eliminated at all
+        if (*it == var || !varElimOrder.inHeap(*it))
             continue;
 
         std::pair<int, int> cost = heuristicCalcVarElimScore(Lit(*it, false));
