@@ -2113,10 +2113,14 @@ void Subsumer::varElimCheckUpdate(
 */
 bool Subsumer::maybeEliminate(const Var var)
 {
-    cout << "trying comlexity: "
-    << varElimComplexity[var].first
-    << ", " << varElimComplexity[var].second
-    << endl;
+    //Print complexity stat for this var
+    if (solver->conf.verbosity >= 5) {
+        cout << "trying comlexity: "
+        << varElimComplexity[var].first
+        << ", " << varElimComplexity[var].second
+        << endl;
+    }
+
     //Update stats
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
     if (agressiveCheck)
