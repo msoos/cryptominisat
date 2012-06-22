@@ -13,6 +13,9 @@ Libraries needed
 -----------
 You will need the following libraries to compile the sources:
 * libz
+* libboost
+* libboost-program-options
+* m4ri from GITHUB
 
 -----------------
 Building the source
