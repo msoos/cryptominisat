@@ -942,11 +942,12 @@ lbool Solver::simplifyProblem()
     assert(ok);
     testAllClauseAttach();
     checkStats();
-    solveStats.numSimplify++;
     reArrangeClauses();
 
     //SCC&VAR-REPL
-    if (conf.doFindAndReplaceEqLits) {
+    if (solveStats.numSimplify > 0
+        && conf.doFindAndReplaceEqLits
+    ) {
         if (!sCCFinder->find2LongXors())
             goto end;
 
@@ -971,7 +972,9 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //SCC&VAR-REPL
-    if (conf.doFindAndReplaceEqLits) {
+    if (solveStats.numSimplify > 0
+        && conf.doFindAndReplaceEqLits
+    ) {
         if (!sCCFinder->find2LongXors())
             goto end;
 
@@ -986,8 +989,11 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify(true))
+    if (solveStats.numSimplify > 1
+        && conf.doClausVivif && !clauseVivifier->vivify(true)
+    ) {
         goto end;
+    }
 
     //Search & replace 2-long XORs
     if (conf.doFindAndReplaceEqLits) {
@@ -1033,6 +1039,8 @@ end:
         clearPropConfl(clauses);
         clearPropConfl(learnts);
     }
+
+    solveStats.numSimplify++;
 
     if (!ok) {
         return l_False;

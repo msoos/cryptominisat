@@ -1174,7 +1174,6 @@ bool Subsumer::simplifyBySubsumption()
     //Setup
     double myTime = cpuTime();
     clearAll();
-    numCalls++;
 
     //touch all variables
     for (Var var = 0; var < solver->nVars(); var++) {
@@ -1273,6 +1272,8 @@ end:
     //Sanity checks
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
+
+    numCalls++;
     return solver->ok;
 }
 
@@ -1692,6 +1693,7 @@ void Subsumer::setLimits()
     }
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
+    numMaxElimVars = (double)numMaxElimVars * sqrt(numCalls+1);
     runStats.origNumMaxElimVars = numMaxElimVars;
 
     if (!solver->conf.doSubsume1) {
