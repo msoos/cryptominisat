@@ -13,135 +13,13 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 using std::vector;
 
 /**
-@brief A class to hold a clause and a related index
-
-This class is used in Subsumer. Basically, the index could be added to the
-Clause class, but it would take space, and that would slow down the solving.
-
-NOTE: On 64-bit systems, this datastructure needs 128 bits :O
-*/
-class ClauseIndex
-{
-public:
-    ClauseIndex() :
-        index(std::numeric_limits< uint32_t >::max())
-        {};
-    ClauseIndex(const uint32_t _index) :
-        index(_index)
-    {}
-
-    uint32_t index; ///<The index of the clause in Subsumer::clauses
-
-    bool operator<(const ClauseIndex& other) const
-    {
-        return index<other.index;
-    }
-
-    bool operator!=(const ClauseIndex& other) const
-    {
-        return index != other.index;
-    }
-};
-
-#define CL_ABST_TYPE uint64_t
-#define CLAUSE_ABST_SIZE 64
-
-template <class T> CL_ABST_TYPE calcAbstraction(const T& ps) {
-    CL_ABST_TYPE abstraction = 0;
-    for (uint16_t i = 0; i != ps.size(); i++)
-        abstraction |= 1UL << (ps[i].var() % CLAUSE_ABST_SIZE);
-    return abstraction;
-}
-
-struct AbstData
-{
-    AbstData(Clause& c, const bool _defOfOrGate) :
-        abst(calcAbstraction(c))
-        , size(c.size())
-        , defOfOrGate(_defOfOrGate)
-    {}
-
-    //Data about clause
-    CL_ABST_TYPE abst;
-    uint16_t     size;
-    bool         defOfOrGate;
-};
-
-/**
- * occur[index(lit)]' is a list of constraints containing 'lit'.
- */
-class Occur
-{
-public:
-    typedef vector<ClauseIndex>::iterator iterator;
-    typedef vector<ClauseIndex>::const_iterator const_iterator;
-
-    //Normal iterator
-    iterator begin()
-    {
-        return occ.begin();
-    }
-
-    iterator end()
-    {
-        return occ.end();
-    }
-
-    //Constant iterator
-    const_iterator begin() const
-    {
-        return occ.begin();
-    }
-
-    const_iterator end() const
-    {
-        return occ.end();
-    }
-
-    size_t size() const
-    {
-        return occ.size();
-    }
-
-    size_t empty() const
-    {
-        return occ.size();
-    }
-
-    void add(ClauseIndex c)
-    {
-        occ.push_back(c);
-    }
-
-    void freeMem()
-    {
-        vector<ClauseIndex> tmp;
-        occ.swap(tmp);
-    }
-
-    void clear()
-    {
-        occ.clear();
-    }
-
-    void remove(const ClauseIndex c)
-    {
-        if (occ.size() > 0)
-            removeW(occ, c);
-    }
-
-private:
-    vector<ClauseIndex>  occ;
-};
-
-/**
 @brief Used to quicky add, remove and iterate through a clause set
 
 Used in Subsumer to put into a set all clauses that need to be treated
 */
 class CSet {
     vector<uint32_t>       where;  ///<Map clause ID to position in 'which'.
-    vector<ClauseIndex>     which;  ///< List of clauses (for fast iteration). May contain 'Clause_NULL'.
+    vector<ClauseOffset>   which;  ///< List of clauses (for fast iteration). May contain 'Clause_NULL'.
     vector<uint32_t>       free;   ///<List of positions holding 'Clause_NULL'.
 
     public:
@@ -157,31 +35,36 @@ class CSet {
         /**
         @brief Add a clause to the set
         */
-        bool add(const ClauseIndex& c) {
-            assert(c.index != std::numeric_limits< uint32_t >::max());
-            if (where.size() < c.index+1)
-                where.resize(c.index+1, std::numeric_limits<uint32_t>::max());
+        bool add(const ClauseOffset offs) {
+            //Don't check for special value
+            assert(offs != std::numeric_limits< uint32_t >::max());
 
-            if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
+            if (where.size() < offs+1)
+                where.resize(offs+1, std::numeric_limits<uint32_t>::max());
+
+            if (where[offs] != std::numeric_limits<uint32_t>::max()) {
                 return false;
             }
             if (free.size() > 0){
-                where[c.index] = free.back();
-                which[free.back()] = c;
+                where[offs] = free.back();
+                which[free.back()] = offs;
                 free.pop_back();
             }else{
-                where[c.index] = which.size();
-                which.push_back(c);
+                where[offs] = which.size();
+                which.push_back(offs);
             }
             return true;
         }
 
-        bool alreadyIn(const ClauseIndex& c) const {
-            assert(c.index != std::numeric_limits< uint32_t >::max());
-            if (where.size() < c.index+1) return false;
-            if (where[c.index] != std::numeric_limits<uint32_t>::max())
-                return true;
-            return false;
+        bool alreadyIn(const ClauseOffset offs) const
+        {
+            //Don't check for special value
+            assert(offs != std::numeric_limits< uint32_t >::max());
+
+            if (where.size() < offs+1)
+                return false;
+
+            return where[offs] != std::numeric_limits<uint32_t>::max();
         }
 
         /**
@@ -189,15 +72,21 @@ class CSet {
 
         Handles it correctly if the clause was not in the set anyway
         */
-        bool exclude(const ClauseIndex& c) {
-            assert(c.index != std::numeric_limits< uint32_t >::max());
-            if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max()) {
-                //not inside
+        bool exclude(const ClauseOffset offs) {
+            //Don't check for special value
+            assert(offs != std::numeric_limits< uint32_t >::max());
+
+            //not inside
+            if (offs >= where.size()
+                || where[offs] == std::numeric_limits<uint32_t>::max()
+            ) {
                 return false;
             }
-            free.push_back(where[c.index]);
-            which[where[c.index]].index =std::numeric_limits< uint32_t >::max();
-            where[c.index] = std::numeric_limits<uint32_t>::max();
+
+            free.push_back(where[offs]);
+            which[where[offs]] = std::numeric_limits< uint32_t >::max();
+            where[offs] = std::numeric_limits<uint32_t>::max();
+
             return true;
         }
 
@@ -218,7 +107,7 @@ class CSet {
         class iterator
         {
             public:
-                iterator(vector<ClauseIndex>::iterator _it) :
+                iterator(vector<ClauseOffset>::iterator _it) :
                 it(_it)
                 {}
 
@@ -232,15 +121,15 @@ class CSet {
                     return (it != iter.it);;
                 }
 
-                ClauseIndex& operator*() {
+                ClauseOffset& operator*() {
                     return *it;
                 }
 
-                vector<ClauseIndex>::iterator& operator->() {
+                vector<ClauseOffset>::iterator& operator->() {
                     return it;
                 }
             private:
-                vector<ClauseIndex>::iterator it;
+                vector<ClauseOffset>::iterator it;
         };
 
         /**
@@ -251,7 +140,7 @@ class CSet {
         class const_iterator
         {
             public:
-                const_iterator(vector<ClauseIndex>::const_iterator _it) :
+                const_iterator(vector<ClauseOffset>::const_iterator _it) :
                 it(_it)
                 {}
 
@@ -265,15 +154,15 @@ class CSet {
                     return (it != iter.it);;
                 }
 
-                const ClauseIndex& operator*() {
+                const ClauseOffset& operator*() {
                     return *it;
                 }
 
-                vector<ClauseIndex>::const_iterator& operator->() {
+                vector<ClauseOffset>::const_iterator& operator->() {
                     return it;
                 }
             private:
-                vector<ClauseIndex>::const_iterator it;
+                vector<ClauseOffset>::const_iterator it;
         };
 
         ///@brief Get starting iterator
@@ -298,61 +187,6 @@ class CSet {
         const_iterator end() const
         {
             return const_iterator(which.begin() + which.size());
-        }
-};
-
-class ClAndBin {
-    public:
-        ClAndBin();
-        ClAndBin(ClauseIndex cl, const bool _learnt) :
-            clsimp(cl)
-            , lit1(lit_Undef)
-            , lit2(lit_Undef)
-            , isBin(false)
-            , learnt(_learnt)
-        {}
-
-        ClAndBin(const Lit _lit1, const Lit _lit2, const bool _learnt) :
-            clsimp(std::numeric_limits< uint32_t >::max())
-            , lit1(_lit1)
-            , lit2(_lit2)
-            , isBin(true)
-            , learnt(_learnt)
-        {}
-
-        ClauseIndex clsimp;
-        Lit lit1;
-        Lit lit2;
-        bool isBin;
-        bool learnt;
-
-        std::string print(const vector<Clause*>&clauses) const
-        {
-            std::stringstream ss;
-            if (isBin) {
-                ss << lit1 << " , " << lit2;
-            } else {
-                if (clauses[clsimp.index])
-                    ss << *clauses[clsimp.index];
-                else
-                    ss << "NULL";
-            }
-            return ss.str();
-        }
-
-        bool operator==(const ClAndBin& other) const
-        {
-            if (isBin) {
-                if (clsimp != other.clsimp
-                    || learnt != other.learnt)
-                    return false;
-            } else {
-                if (lit1 != other.lit1
-                    || lit2 != other.lit2)
-                    return false;
-            }
-
-            return true;
         }
 };
 

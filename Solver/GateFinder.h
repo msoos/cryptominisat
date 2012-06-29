@@ -351,18 +351,47 @@ private:
 
     //Helpers to find
     void findOrGates(const bool learntGatesToo);
-    void findOrGate(const Lit eqLit, const ClauseIndex& c, const bool learntGatesToo, bool wasLearnt);
+    void findOrGate(
+        const Lit eqLit
+        , const ClauseOffset offset
+        , const bool learntGatesToo
+        , bool wasLearnt
+    );
 
     bool doAllOptimisationWithGates();
     bool shortenWithOrGate(const OrGate& gate);
     size_t findEqOrGates();
 
     //And gate treatment
-    bool    treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
-    CL_ABST_TYPE  calculateSortedOcc(const OrGate& gate, uint16_t& maxSize, vector<size_t>& seen2Set, uint64_t& numOp);
-    bool    treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl);
-    bool    findAndGateOtherCl(const vector<ClauseIndex>& sizeSortedOcc, const Lit lit, const CL_ABST_TYPE abst2, ClauseIndex& other);
-    vector<vector<ClauseIndex> > sizeSortedOcc; ///<temporary for and-gate treatment. Cleared at every treatAndGate() call
+    bool    treatAndGate(
+        const OrGate& gate
+        , const bool reallyRemove
+        , uint32_t& foundPotential
+        , uint64_t& numOp
+    );
+
+    CL_ABST_TYPE  calculateSortedOcc(
+        const OrGate& gate
+        , uint16_t& maxSize
+        , vector<size_t>& seen2Set
+        , uint64_t& numOp
+    );
+
+    bool treatAndGateClause(
+        const ClauseOffset offset
+        , const OrGate& gate
+        , const Clause& cl
+    );
+
+    bool findAndGateOtherCl(
+        const vector<ClauseOffset>& sizeSortedOcc
+        , const Lit lit
+        , const CL_ABST_TYPE abst2
+        , ClauseOffset& other
+    );
+
+    ///temporary for and-gate treatment. Cleared at every treatAndGate() call
+    vector<vector<ClauseOffset> > sizeSortedOcc; 
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates

@@ -88,7 +88,7 @@ uint32_t GateFinder::createNewVars()
     double myTime = cpuTime();
     vector<NewGateData> newGates;
     vector<Lit> tmp;
-    vector<ClauseIndex> subs;
+    vector<ClauseOffset> subs;
     uint64_t numOp = 0;
     subsumer->toDecrease = &numMaxCreateNewVars;
 
@@ -196,8 +196,8 @@ uint32_t GateFinder::createNewVars()
         assert(cl != NULL);
         assert(solver->ok);
         cl->stats.conflictNumIntroduced = solver->sumStats.conflStats.numConflicts;
-        ClauseIndex c = subsumer->linkInClause(*cl);
-        subsumer->clauseData[c.index].defOfOrGate = true;
+        ClauseOffset offset = subsumer->linkInClause(*cl);
+        solver->clAllocator->getPointer(offset)->defOfOrGate = true;
 
         addedVars++;
     }
@@ -279,8 +279,8 @@ void GateFinder::clearIndexes()
 {
     //Clear gate definitions -- this will let us do more, because essentially
     //the other gates are not fully forgotten, so they don't bother us at all
-    for (uint32_t i = 0; i < subsumer->clauseData.size(); i++) {
-        subsumer->clauseData[i].defOfOrGate = false;
+    for (uint32_t i = 0; i < solver->clauses.size(); i++) {
+        solver->clauses[i]->defOfOrGate = false;
     }
 
     //Clear gate statistics

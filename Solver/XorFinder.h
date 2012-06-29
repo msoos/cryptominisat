@@ -77,9 +77,9 @@ class FoundXors
                 std::swap(lit1, lit2);
         }
 
-        MyClAndBin(ClauseIndex index) :
+        MyClAndBin(ClauseOffset _offset) :
             isBin(false)
-            , clsimp(index)
+            , offset(_offset)
         {
         }
 
@@ -94,7 +94,7 @@ class FoundXors
                 if (lit2 < other.lit2) return true;
                 return false;
             } else {
-                if (clsimp.index < other.clsimp.index) return true;
+                if (offset < other.offset) return true;
                 return false;
             }
         }
@@ -107,21 +107,25 @@ class FoundXors
             if (isBin) {
                 return (lit1 == other.lit1 && lit2 == other.lit2);
             } else {
-                return (clsimp.index == other.clsimp.index);
+                return (offset == other.offset);
             }
         }
 
         bool isBin;
         Lit lit1;
         Lit lit2;
-        ClauseIndex clsimp;
+        ClauseOffset offset;
     };
 
     public:
-        FoundXors(const Clause& cl, const AbstData& clData, const bool _rhs, const uint32_t whichOne) :
+        FoundXors(
+            const Clause& cl
+            , const bool _rhs
+            , const uint32_t whichOne
+        ) :
             origCl(cl)
-            , abst(clData.abst)
-            , size(clData.size)
+            , abst(cl.abst)
+            , size(cl.size())
             , rhs(_rhs)
         {
             assert(size == cl.size() && "Abst data is out of sync of the clause?");
@@ -297,9 +301,19 @@ public:
 
 private:
     //Find XORs
-    void findXor(ClauseIndex c);
-    void findXorMatch(const Occur& occ, FoundXors& foundCls); ///<Normal finding of matching clause for XOR
-    void findXorMatchExt(const Occur& occ, FoundXors& foundCls); ///<Finding of matching clause for XOR with the twist that cache can be used to replace lits
+    void findXor(ClauseOffset offset);
+
+    ///Normal finding of matching clause for XOR
+    void findXorMatch(
+        const vec<Watched>& occ
+        , FoundXors& foundCls);
+
+    ///Finding of matching clause for XOR with the twist that cache can be used to replace lits
+    void findXorMatchExt(
+        const vec<Watched>& occ
+        , FoundXors& foundCls
+    );
+    
     void findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
     void findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const;
 

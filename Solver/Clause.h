@@ -34,6 +34,16 @@
 #include "Alg.h"
 #include "constants.h"
 
+#define CL_ABST_TYPE uint64_t
+#define CLAUSE_ABST_SIZE 64
+
+template <class T> CL_ABST_TYPE calcAbstraction(const T& ps) {
+    CL_ABST_TYPE abstraction = 0;
+    for (uint16_t i = 0; i != ps.size(); i++)
+        abstraction |= 1UL << (ps[i].var() % CLAUSE_ABST_SIZE);
+    return abstraction;
+}
+
 class ClauseAllocator;
 
 struct ClauseStats
@@ -100,6 +110,7 @@ protected:
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t mySize; ///<The current size of the clause
+    
 
     Lit* getData()
     {
@@ -112,6 +123,8 @@ protected:
     }
 
 public:
+    char defOfOrGate; //TODO make it into a bitfield above
+    CL_ABST_TYPE abst;
     ClauseStats stats;
 
     template<class V>
@@ -121,6 +134,7 @@ public:
 
         stats.conflictNumIntroduced = _conflictNumIntroduced;
         stats.glue = std::min<uint16_t>(stats.glue, ps.size());
+        defOfOrGate = false;
         isFreed = false;
         mySize = ps.size();
         isLearnt = false;
@@ -186,6 +200,7 @@ public:
 
     void setStrenghtened()
     {
+        abst = calcAbstraction(*this);
         strenghtened = true;
     }
 

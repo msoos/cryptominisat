@@ -425,11 +425,6 @@ private:
 
     bool subsumeWithBinaries();
 
-    //Indexes
-    vector<Clause*>    clauses;  ///<ClauseSimp::index refers to the index of the clause here
-    vector<AbstData>   clauseData;
-    vector<Occur>      occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
-
     //Touched, elimed, etc.
     TouchList    touchedVars; ///<A list of the true elements in 'touched'.
     CSet         strengthenWith;  ///<Clauses strengthened/added
@@ -480,33 +475,66 @@ private:
     void removeAssignedVarsFromEliminated();
 
     //Clause update
-    void        strengthen(ClauseIndex& c, const Lit toRemoveLit);
-    lbool       cleanClause(ClauseIndex c, Clause& cl);
-    void        unlinkClause(ClauseIndex cc);
-    ClauseIndex linkInClause(Clause& cl);
-    bool        handleUpdatedClause(ClauseIndex& c, Clause& cl);
+    void        strengthen(ClauseOffset c, const Lit toRemoveLit);
+    lbool       cleanClause(ClauseOffset c);
+    void        unlinkClause(ClauseOffset cc);
+    ClauseOffset linkInClause(Clause& cl);
+    bool        handleUpdatedClause(ClauseOffset c);
 
     //Findsubsumed
-    template<class T> void findSubsumed0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed);
-    template<class T> void findSubsumed1(const uint32_t index, const T& ps, const CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed, vector<Lit>& out_lits);
-    template<class T> void fillSubs(const T& ps, const uint32_t index, CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed, vector<Lit>& out_lits, const Lit lit);
-    template<class T1, class T2> bool subset(const T1& A, const T2& B);
+    template<class T>
+    void findSubsumed0(
+        const ClauseOffset offset
+        , const T& ps
+        , const CL_ABST_TYPE abs
+        , vector<ClauseOffset>& out_subsumed
+    );
+
+    template<class T>
+    void findSubsumed1(
+        const ClauseOffset offset
+        , const T& ps
+        , const CL_ABST_TYPE abs
+        , vector<ClauseOffset>& out_subsumed
+        , vector<Lit>& out_lits
+    );
+
+    template<class T>
+    void fillSubs(
+        const ClauseOffset offset
+        , const T& ps
+        , CL_ABST_TYPE abs
+        , vector<ClauseOffset>& out_subsumed
+        , vector<Lit>& out_lits
+        , const Lit lit
+    );
+
+    template<class T1, class T2>
+    bool subset(const T1& A, const T2& B);
     bool subsetReverse(const Clause& B) const;
-    template<class T1, class T2> Lit subset1(const T1& A, const T2& B);
+
+    template<class T1, class T2>
+    Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
 
     //binary clause-subsumption
     struct BinSorter {
         bool operator()(const Watched& first, const Watched& second)
         {
-            assert(first.isBinary() || first.isTriClause());
-            assert(second.isBinary() || second.isTriClause());
+            assert(!first.isTriClause());
+            assert(!second.isTriClause());
 
-            if (first.isTriClause() && second.isTriClause()) return false;
-            if (first.isBinary() && second.isTriClause()) return true;
-            if (second.isBinary() && first.isTriClause()) return false;
+            if (first.isBinary() && !second.isBinary())
+                return true;
+
+            if (!first.isBinary() && second.isBinary())
+                return false;
+
+            if (!first.isBinary() && !second.isBinary())
+                return false;
 
             assert(first.isBinary() && second.isBinary());
+
             if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
             if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
             if (first.getLearnt() == second.getLearnt()) return false;
@@ -539,12 +567,18 @@ private:
         ClauseStats stats;
         uint32_t numSubsumed;
     };
-    uint32_t subsume0(ClauseIndex c, Clause& ps);
-    template<class T> Sub0Ret subsume0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs);
+    uint32_t subsume0(ClauseOffset offhset);
+
+    template<class T>
+    Sub0Ret subsume0(
+        const ClauseOffset offset
+        , const T& ps
+        , const CL_ABST_TYPE abs
+    );
 
     /////////////////////
     //subsume1
-    void subsume1(ClauseIndex c, Clause& ps);
+    void subsume1(ClauseOffset offset);
 
     /////////////////////
     //Variable elimination
@@ -572,32 +606,28 @@ private:
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
-    void        removeAfterVarelim(const vector<ClAndBin>& myset);
+    void        removeAfterVarelim(const Watched& myset);
     void        addLearntBinaries(const Var var);
     void        removeClauses(const Var var);
-    void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
-    vector<ClAndBin> posAll, negAll;
+    void        removeClausesHelper(vector<Watched>& todo, const Lit lit);
     bool        maybeEliminate(const Var x);
     int         testVarElim(Var var);
     std::pair<int, int>  heuristicCalcVarElimScore(const Lit lit);
     bool        merge(
-        const ClAndBin& ps
-        , const ClAndBin& qs
+        const Watched& ps
+        , const Watched& qs
         , const Lit without_p
         , const Lit without_q
         , const bool useCache
         , const bool final
     );
     void varElimCheckUpdate(
-        const vector<ClAndBin>& gothrough
+        const vector<Watched>& gothrough
         , vector<Var>& varElimToCheck
         , vector<char>& varElimToCheckHelper
     );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
-    void        fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit lit);
-    void        removeBinsAndTris(const Var var);
-    uint32_t    removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
 
     /////////////////////
     //XOR finding
@@ -744,57 +774,6 @@ inline const vector<BlockedClause>& Subsumer::getBlockedClauses() const
 inline const vector<char>& Subsumer::getVarElimed() const
 {
     return var_elimed;
-}
-
-/**
-@brief Finds clauses that are backward-subsumed by given clause
-
-Only handles backward-subsumption. Uses occurrence lists
-
-@param[in] ps The clause to backward-subsume with.
-@param[in] abs Abstraction of the clause ps
-@param[out] out_subsumed The set of clauses subsumed by this clause
-*/
-template<class T> void Subsumer::findSubsumed0(
-    const uint32_t index //Will not match with index of the name value
-    , const T& ps //Literals in clause
-    , const CL_ABST_TYPE abs //Abstraction of literals in clause
-    , vector<ClauseIndex>& out_subsumed //List of clause indexes subsumed
-) {
-    #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        cout << ps[i] << " , ";
-    }
-    cout << endl;
-    #endif
-
-    //Which literal in the clause has the smallest occur list? -- that will be picked to go through
-    uint32_t min_i = 0;
-    for (uint32_t i = 1; i < ps.size(); i++){
-        if (occur[ps[i].toInt()].size() < occur[ps[min_i].toInt()].size())
-            min_i = i;
-    }
-    *toDecrease -= ps.size();
-
-    //Go through the occur list of the literal that has the smallest occur list
-    Occur& cs = occur[ps[min_i].toInt()];
-    *toDecrease -= cs.size()*15 + 40;
-    for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++){
-        //Check if this clause is subsumed by the clause given
-        if (it->index != index
-            && subsetAbst(abs, clauseData[it->index].abst)
-            && ps.size() <= clauseData[it->index].size
-        ) {
-            *toDecrease -= 50;
-            if (subset(ps, *clauses[it->index])) {
-                out_subsumed.push_back(*it);
-                #ifdef VERBOSE_DEBUG
-                cout << "subsumed: " << *clauses[it->index] << endl;
-                #endif
-            }
-        }
-    }
 }
 
 inline const Subsumer::Stats& Subsumer::getStats() const
