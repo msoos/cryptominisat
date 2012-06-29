@@ -91,6 +91,9 @@ SolverConf::SolverConf() :
         #endif //ENABLE_UNWIND_GLUE
         , fixRestartType   (auto_restart)
         , origSeed(0)
+
+        #ifdef CMSAT_HAVE_MYSQL
         , serverConn(NULL)
+        #endif
 {
 }

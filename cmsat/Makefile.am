@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir)/../ $(OPENMP_CXXFLAGS) $(MYSQL_INCLUDE)
+AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir)/../ $(OPENMP_CXXFLAGS)
 
 pkginclude_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h Solver.h Subsumer.h Watched.h \
 	BoundedQueue.h ClauseOffset.h DimacsParser.h GaussianConfig.h OnlyNonLearntBins.h SolverTypes.h \

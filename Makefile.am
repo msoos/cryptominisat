@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = cmsat man
 EXTRA_DIST = HOWTO_VisualCpp HOWTO_MinGW32 \
-	       LICENSE-GPL LICENSE-MIT TODO
+	       LICENSE-MIT TODO
 
 all-local: cmsat
 	cp cmsat/cryptominisat .
