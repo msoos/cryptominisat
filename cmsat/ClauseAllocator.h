@@ -32,7 +32,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "cmsat/Watched.h"
 
 #define NUM_BITS_OUTER_OFFSET 4
-#define BASE_DATA_TYPE char
+#define BASE_DATA_TYPE uint32_t
 
 namespace CMSat {
 

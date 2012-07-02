@@ -126,7 +126,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
 
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
-    const uint32_t needed = sizeof(Clause) + sizeof(Lit)*size;
+    const uint32_t needed = (sizeof(Clause) + sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -252,7 +252,7 @@ void ClauseAllocator::clauseFree(Clause* c)
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
-    currentlyUsedSizes[outerOffset] -= sizeof(Clause) + c->size()*sizeof(Lit);
+    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
     //above should be
     //origClauseSizes[outerOffset][interOffset]
     //but it cannot be :(
@@ -266,7 +266,10 @@ small compared to the problem size. If it is small, it does nothing. If it is
 large, then it allocates new stacks, copies the non-freed clauses to these new
 stacks, updates all pointers and offsets, and frees the original stacks.
 */
-void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::bad_alloc)
+void ClauseAllocator::consolidate(
+    Solver* solver
+    , const bool force
+) throw (std::bad_alloc)
 {
     double myTime = cpuTime();
     #ifdef DEBUG_PROPAGATEFROM
@@ -350,7 +353,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
         newSizes.push(0);
         newOrigClauseSizes.push();
         BASE_DATA_TYPE* pointer;
-        pointer = (BASE_DATA_TYPE*)malloc(newMaxSizes[i]);
+        pointer = (BASE_DATA_TYPE*)malloc(newMaxSizes[i]*sizeof(BASE_DATA_TYPE));
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
@@ -381,7 +384,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
         //Next line is needed, because in case of isRemoved()
         //, the size of the clause could become 0, thus having less
         // than enough space to carry the NewPointerAndOffset info
-        sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(BASE_DATA_TYPE)));
+        sizeNeeded = std::max<uint32_t>(sizeNeeded, ((sizeof(Clause) + 2*sizeof(Lit))/sizeof(BASE_DATA_TYPE)));
 
         if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
             outerPart++;
