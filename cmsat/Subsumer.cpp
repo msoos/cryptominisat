@@ -2554,7 +2554,13 @@ std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Var var)
     normCost = pos + neg + nNonLBinNeg + nNonLBinPos;
 
 
-    if ((pos + nNonLBinPos) <= 2 && (neg + nNonLBinNeg) <= 2) {
+    if (((pos + nNonLBinPos) <= 2 && (neg + nNonLBinNeg) <= 2)) {
+        normCost /= 2;
+    }
+
+    if ((pos + nNonLBinPos) == 0
+        || (neg + nNonLBinNeg) == 0
+    ) {
         normCost = 0;
     }
 
