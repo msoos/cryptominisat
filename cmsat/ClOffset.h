@@ -3,6 +3,6 @@
 
 #include "constants.h"
 
-typedef uint32_t ClauseOffset;
+typedef uint32_t ClOffset;
 
 #endif //CLAUSEOFFSET_H

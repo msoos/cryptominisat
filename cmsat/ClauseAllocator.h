@@ -24,7 +24,7 @@
 
 
 #include "constants.h"
-#include "ClauseOffset.h"
+#include "ClOffset.h"
 #include <stdlib.h>
 #include "Vec.h"
 #include <map>
@@ -58,7 +58,7 @@ class ClauseAllocator {
         template<class T> Clause* Clause_new(const T& ps, uint32_t conflictNum);
         Clause* Clause_new(Clause& c);
 
-        ClauseOffset getOffset(const Clause* ptr) const;
+        ClOffset getOffset(const Clause* ptr) const;
 
         /**
         @brief Returns the pointer of a clause given its offset
@@ -83,7 +83,7 @@ class ClauseAllocator {
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
-        ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        ClOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
         void updateAllOffsetsAndPointers(PropEngine* control);
         template<class T>

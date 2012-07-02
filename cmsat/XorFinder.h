@@ -66,57 +66,6 @@ inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
 
 class FoundXors
 {
-    struct MyClAndBin {
-        MyClAndBin(Lit _lit1, Lit _lit2) :
-            isBin(true)
-            , lit1(_lit1)
-            , lit2(_lit2)
-        {
-            //keep them in order
-            if (lit2 < lit1)
-                std::swap(lit1, lit2);
-        }
-
-        MyClAndBin(ClauseOffset _offset) :
-            isBin(false)
-            , offset(_offset)
-        {
-        }
-
-        bool operator<(const MyClAndBin& other) const
-        {
-            if (isBin && !other.isBin) return true;
-            if (!isBin && other.isBin) return false;
-
-            if (isBin) {
-                if (lit1 < other.lit1) return true;
-                if (lit1 > other.lit1) return false;
-                if (lit2 < other.lit2) return true;
-                return false;
-            } else {
-                if (offset < other.offset) return true;
-                return false;
-            }
-        }
-
-        bool operator==(const MyClAndBin& other) const
-        {
-            if (isBin != other.isBin)
-                return false;
-
-            if (isBin) {
-                return (lit1 == other.lit1 && lit2 == other.lit2);
-            } else {
-                return (offset == other.offset);
-            }
-        }
-
-        bool isBin;
-        Lit lit1;
-        Lit lit2;
-        ClauseOffset offset;
-    };
-
     public:
         FoundXors(
             const Clause& cl
@@ -301,7 +250,7 @@ public:
 
 private:
     //Find XORs
-    void findXor(ClauseOffset offset);
+    void findXor(ClOffset offset);
 
     ///Normal finding of matching clause for XOR
     void findXorMatch(
@@ -313,7 +262,7 @@ private:
         const vec<Watched>& occ
         , FoundXors& foundCls
     );
-    
+
     void findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
     void findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const;
 

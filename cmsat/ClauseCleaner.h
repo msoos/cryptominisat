@@ -34,21 +34,16 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver* solver);
 
-        enum ClauseSetType {clauses, binaryClauses, learnts};
-
-        void cleanClauses(vector<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        void cleanClauses(vector<Clause*>& cs);
 
 
-        void removeSatisfiedBins(const uint32_t limit = 0);
+        void removeSatisfiedBins();
         void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
 
     private:
         bool satisfied(const Watched& watched, Lit lit);
         bool cleanClause(Clause*& c);
-
-        uint32_t lastNumUnitarySat[6]; ///<Last time we cleaned from satisfied clauses, this many unitary clauses were known
-        uint32_t lastNumUnitaryClean[6]; ///<Last time we cleaned from satisfied clauses&false literals, this many unitary clauses were known
 
         Solver* solver;
 };
@@ -64,9 +59,9 @@ state is needed, which is important for certain algorithms
 inline void ClauseCleaner::removeAndCleanAll()
 {
     double myTime = cpuTime();
-    removeSatisfiedBins(0);
-    cleanClauses(solver->clauses, ClauseCleaner::clauses, 0);
-    cleanClauses(solver->learnts, ClauseCleaner::learnts, 0);
+    removeSatisfiedBins();
+    cleanClauses(solver->clauses);
+    cleanClauses(solver->learnts);
 
     if (solver->conf.verbosity >= 1) {
         cout

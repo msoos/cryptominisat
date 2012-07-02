@@ -184,7 +184,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 Calculates the stack frame and the position of the pointer in the stack, and
 rerturns a 32-bit value that is a concatenation of these two
 */
-ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
+ClOffset ClauseAllocator::getOffset(const Clause* ptr) const
 {
     uint32_t outerOffset = getOuterOffset(ptr);
     uint32_t interOffset = getInterOffset(ptr, outerOffset);
@@ -194,7 +194,7 @@ ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 /**
 @brief Combines the stack number and the internal offset into one 32-bit number
 */
-inline ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
+inline ClOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
     return (outerOffset | (interOffset << NUM_BITS_OUTER_OFFSET));
 }
@@ -589,7 +589,7 @@ void ClauseAllocator::updateOffsets(vector<vec<Watched> >& watches)
         vec<Watched>& list = watches[i];
         for (vec<Watched>::iterator it = list.begin(), end = list.end(); it != end; it++) {
             if (it->isClause())
-                it->setNormOffset(((NewPointerAndOffset*)(getPointer(it->getNormOffset())))->newOffset);
+                it->setNormOffset(((NewPointerAndOffset*)(getPointer(it->getOffset())))->newOffset);
         }
     }
 }

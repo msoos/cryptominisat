@@ -22,9 +22,7 @@
 #ifndef SIMPLIFIER_H
 #define SIMPLIFIER_H
 
-#include "Queue.h"
-#include "CSet.h"
-#include "BitArray.h"
+
 #include <map>
 #include <vector>
 #include <list>
@@ -33,7 +31,12 @@
 #include <set>
 #include <iomanip>
 #include <fstream>
-#include "Heap.h"
+
+#include "cmsat/Clause.h"
+#include "cmsat/Queue.h"
+#include "cmsat/BitArray.h"
+#include "cmsat/SolverTypes.h"
+#include "cmsat/Heap.h"
 
 using std::vector;
 using std::list;
@@ -43,62 +46,8 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-class GateFinder;
-class XorFinder;
-
-class TouchList
-{
-    public:
-        void resize(uint32_t size)
-        {
-            touched.resize(size, 0);
-        }
-
-        void addOne(Var var)
-        {
-            assert(touched.size() == var);
-            touched.push_back(1);
-            touchedList.push_back(var);
-        }
-
-        void touch(Lit lit, const bool learnt)
-        {
-            if (!learnt) touch(lit.var());
-        }
-
-        void touch(Var var)
-        {
-            if (!touched[var]) {
-                touchedList.push_back(var);
-                touched[var]= 1;
-            }
-        }
-
-        void clear()
-        {
-            touchedList.clear();
-            std::fill(touched.begin(), touched.end(), 0);
-        }
-
-        uint32_t size() const
-        {
-            return touchedList.size();
-        }
-
-        vector<Var>::const_iterator begin() const
-        {
-            return touchedList.begin();
-        }
-
-        vector<Var>::const_iterator end() const
-        {
-            return touchedList.end();
-        }
-
-    private:
-        vector<Var> touchedList;
-        vector<char> touched;
-};
+//class GateFinder;
+//class XorFinder;
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -127,7 +76,6 @@ public:
 
     //UnElimination
     void extendModel(SolutionExtender* extender) const;
-    bool unEliminate(const Var var, Solver* tcontrol);
 
     //Get-functions
     struct Stats
@@ -416,22 +364,14 @@ public:
     const vector<char>& getVarElimed() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
-    const GateFinder* getGateFinder() const;
+    //const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
-    const XorFinder* getXorFinder() const;
+    //const XorFinder* getXorFinder() const;
     void checkElimedUnassignedAndStats() const;
 
 private:
 
     bool subsumeWithBinaries();
-
-    //Touched, elimed, etc.
-    TouchList    touchedVars; ///<A list of the true elements in 'touched'.
-    CSet         strengthenWith;  ///<Clauses strengthened/added
-    CSet         subsumeWith;
-    vector<char> ol_seenNeg;
-    vector<char> ol_seenPos;
-    vector<char> alreadyAdded;
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
@@ -455,56 +395,54 @@ private:
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
     uint32_t clTouchedTodo;
-    void     printLimits();
 
     //Propagation&handling of stuff
     bool propagate();
 
     //Start-up
     uint64_t addFromSolver(vector<Clause*>& cs);
-    void clearAll();
     void setLimits();
-    void performSubsume0();
-    bool performSubsume1();
+    void performSubsumption();
+    bool performStrengthening();
 
     //Finish-up
-    void freeMemory();
-    void addBackToSolver();
-    void removeWrongBins();
-    void removeAllTris();
+    void addBackToSolver(vector<Clause*>& clauses);
+    bool propBins(vec<Watched>& ws, const Lit lit);
+    void removeAllTrisAndLonger();
     void removeAssignedVarsFromEliminated();
+    bool completeCleanClause(Clause& ps);
 
     //Clause update
-    void        strengthen(ClauseOffset c, const Lit toRemoveLit);
-    lbool       cleanClause(ClauseOffset c);
-    void        unlinkClause(ClauseOffset cc);
-    ClauseOffset linkInClause(Clause& cl);
-    bool        handleUpdatedClause(ClauseOffset c);
+    void        strengthen(ClOffset c, const Lit toRemoveLit);
+    lbool       cleanClause(ClOffset c);
+    void        unlinkClause(ClOffset cc);
+    void        linkInClause(Clause& cl);
+    bool        handleUpdatedClause(ClOffset c);
 
     //Findsubsumed
     template<class T>
     void findSubsumed0(
-        const ClauseOffset offset
+        const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
-        , vector<ClauseOffset>& out_subsumed
+        , vector<ClOffset>& out_subsumed
     );
 
     template<class T>
-    void findSubsumed1(
-        const ClauseOffset offset
+    void findStrengthened(
+        const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
-        , vector<ClauseOffset>& out_subsumed
+        , vector<ClOffset>& out_subsumed
         , vector<Lit>& out_lits
     );
 
     template<class T>
     void fillSubs(
-        const ClauseOffset offset
+        const ClOffset offset
         , const T& ps
         , CL_ABST_TYPE abs
-        , vector<ClauseOffset>& out_subsumed
+        , vector<ClOffset>& out_subsumed
         , vector<Lit>& out_lits
         , const Lit lit
     );
@@ -567,18 +505,18 @@ private:
         ClauseStats stats;
         uint32_t numSubsumed;
     };
-    uint32_t subsume0(ClauseOffset offhset);
+    uint32_t subsume0(ClOffset offset);
 
     template<class T>
     Sub0Ret subsume0(
-        const ClauseOffset offset
+        const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
     );
 
     /////////////////////
     //subsume1
-    void subsume1(ClauseOffset offset);
+    void subsume1(ClOffset offset);
 
     /////////////////////
     //Variable elimination
@@ -606,13 +544,15 @@ private:
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
-    void        removeAfterVarelim(const Watched& myset);
     void        addLearntBinaries(const Var var);
-    void        removeClauses(const Var var);
-    void        removeClausesHelper(vector<Watched>& todo, const Lit lit);
+    void        removeClausesHelper(vec<Watched>& todo, const Lit lit);
+
+
+    vector<Var>  varElimToCheck;
+    vector<char> varElimToCheckHelper;
     bool        maybeEliminate(const Var x);
     int         testVarElim(Var var);
-    std::pair<int, int>  heuristicCalcVarElimScore(const Lit lit);
+    std::pair<int, int>  heuristicCalcVarElimScore(const Var var);
     bool        merge(
         const Watched& ps
         , const Watched& qs
@@ -622,7 +562,8 @@ private:
         , const bool final
     );
     void varElimCheckUpdate(
-        const vector<Watched>& gothrough
+        const vec<Watched>& gothrough
+        , const Lit lit
         , vector<Var>& varElimToCheck
         , vector<char>& varElimToCheckHelper
     );
@@ -631,8 +572,8 @@ private:
 
     /////////////////////
     //XOR finding
-    friend class XorFinder;
-    XorFinder *xorFinder;
+    /*friend class XorFinder;
+    XorFinder *xorFinder;*/
 
     /////////////////////
     //Blocked clause elimination
@@ -643,11 +584,10 @@ private:
 
     /////////////////////
     //Gate extraction
-    friend class GateFinder;
-    GateFinder *gateFinder;
+    //friend class GateFinder;
+    //GateFinder *gateFinder;
 
     //validity checking
-    bool verifyIntegrity();
     void checkForElimedVars();
 
     ///Number of times simplifyBySubsumption() has been called
@@ -781,9 +721,9 @@ inline const Subsumer::Stats& Subsumer::getStats() const
     return globalStats;
 }
 
-inline const XorFinder* Subsumer::getXorFinder() const
+/*inline const XorFinder* Subsumer::getXorFinder() const
 {
     return xorFinder;
-}
+}*/
 
 #endif //SIMPLIFIER_H

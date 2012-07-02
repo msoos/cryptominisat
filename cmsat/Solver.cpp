@@ -347,9 +347,10 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
 
         //Uneliminate var if need be
-        if (subsumer->getVarElimed()[ps[i].var()]
-            && !subsumer->unEliminate(ps[i].var(), this)
-        ) return false;
+        if (subsumer->getVarElimed()[ps[i].var()]) {
+            //if (!subsumer->unEliminate(ps[i].var(), this) return false
+            assert(false);
+        }
     }
 
     //Randomise
@@ -1514,7 +1515,7 @@ void Solver::printFullStats()
     subsumer->getStats().print(solver->nVars());
 
     //GateFinder stats
-    printStatsLine("c gatefinder time"
+    /*printStatsLine("c gatefinder time"
                     , subsumer->getGateFinder()->getStats().totalTime()
                     , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
                     , "% time");
@@ -1528,7 +1529,7 @@ void Solver::printFullStats()
     );
     subsumer->getXorFinder()->getStats().print(
         subsumer->getXorFinder()->getNumCalls()
-    );
+    );*/
 
     //VarReplacer stats
     printStatsLine("c SCC time"
@@ -1825,7 +1826,7 @@ void Solver::printAllClauses() const
             if (it2->isBinary()) {
                 cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << endl;
             } else if (it2->isClause()) {
-                cout << "Normal clause num " << it2->getNormOffset() << endl;
+                cout << "Normal clause num " << it2->getOffset() << endl;
             } else if (it2->isTriClause()) {
                 cout << "Tri clause:"
                 << lit << " , "
@@ -1944,7 +1945,7 @@ bool Solver::normClauseIsAttached(const Clause& c) const
     bool attached = true;
     assert(c.size() > 2);
 
-    ClauseOffset offset = clAllocator->getOffset(&c);
+    ClOffset offset = clAllocator->getOffset(&c);
     if (c.size() == 3) {
         //The clause might have been longer, and has only recently
         //became 3-long. Check, and detach accordingly
@@ -1975,7 +1976,7 @@ void Solver::findAllAttach() const
                 continue;
 
             //Get clause
-            Clause* cl = clAllocator->getPointer(w.getNormOffset());
+            Clause* cl = clAllocator->getPointer(w.getOffset());
             assert(!cl->getFreed());
             cout << (*cl) << endl;
 

@@ -353,7 +353,7 @@ private:
     void findOrGates(const bool learntGatesToo);
     void findOrGate(
         const Lit eqLit
-        , const ClauseOffset offset
+        , const ClOffset offset
         , const bool learntGatesToo
         , bool wasLearnt
     );
@@ -378,20 +378,20 @@ private:
     );
 
     bool treatAndGateClause(
-        const ClauseOffset offset
+        const ClOffset offset
         , const OrGate& gate
         , const Clause& cl
     );
 
     bool findAndGateOtherCl(
-        const vector<ClauseOffset>& sizeSortedOcc
+        const vector<ClOffset>& sizeSortedOcc
         , const Lit lit
         , const CL_ABST_TYPE abst2
-        , ClauseOffset& other
+        , ClOffset& other
     );
 
     ///temporary for and-gate treatment. Cleared at every treatAndGate() call
-    vector<vector<ClauseOffset> > sizeSortedOcc; 
+    vector<vector<ClOffset> > sizeSortedOcc; 
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates

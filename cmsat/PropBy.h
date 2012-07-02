@@ -28,7 +28,7 @@
 
 //#define DEBUG_PROPAGATEFROM
 
-#include "ClauseOffset.h"
+#include "ClOffset.h"
 
 enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 
@@ -50,7 +50,7 @@ class PropBy
             , data2(0)
         {}
 
-        PropBy(ClauseOffset offset) :
+        PropBy(ClOffset offset) :
             data1(offset)
             , type(clause_t)
         {
@@ -153,7 +153,7 @@ class PropBy
             return Lit::toLit(data2);
         }
 
-        ClauseOffset getClause() const
+        ClOffset getClause() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());

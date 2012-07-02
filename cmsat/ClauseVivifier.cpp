@@ -53,7 +53,7 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     #endif //VERBOSE_DEBUG
     numCalls++;
 
-    solver->clauseCleaner->cleanClauses(solver->clauses, ClauseCleaner::clauses);
+    solver->clauseCleaner->cleanClauses(solver->clauses);
 
     if (!vivifyClausesCache(solver->clauses, false, alsoStrengthen))
         goto end;

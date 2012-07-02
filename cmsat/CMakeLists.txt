@@ -1,9 +1,10 @@
-include_directories( ${ZLIB_INCLUDE_DIR} )
-include_directories(${PROJECT_SOURCE_DIR}/mtl)
-include_directories(${PROJECT_SOURCE_DIR}/Solver)
-include_directories(${PROJECT_SOURCE_DIR}/MTRand)
-include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${M4RI_INCLUDE_DIRS})
+include_directories(
+    ${ZLIB_INCLUDE_DIR} 
+    ${PROJECT_SOURCE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${M4RI_INCLUDE_DIRS}
+)
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
@@ -25,8 +26,8 @@ add_library(cryptoms
     ImplCache.cpp
     Searcher.cpp
     Solver.cpp
-    XorFinder.cpp
-    GateFinder.cpp
+    #    XorFinder.cpp
+    #    GateFinder.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

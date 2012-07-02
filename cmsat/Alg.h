@@ -24,14 +24,9 @@
 
 #include <iostream>
 #include "Vec.h"
-#include "../Solver/SolverTypes.h"
-#include "../Solver/Watched.h"
-
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
+#include "cmsat/SolverTypes.h"
+#include "cmsat/Watched.h"
+#include "cmsat/constants.h"
 
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
@@ -88,17 +83,17 @@ static inline bool findW(V& ts, const T& t)
 //////////////////
 // NORMAL Clause
 //////////////////
-static inline bool findWCl(const vec<Watched>& ws, const ClauseOffset c)
+static inline bool findWCl(const vec<Watched>& ws, const ClOffset c)
 {
     vec<Watched>::const_iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isClause() || i->getNormOffset() != c); i++);
+    for (; i != end && (!i->isClause() || i->getOffset() != c); i++);
     return i != end;
 }
 
-static inline void removeWCl(vec<Watched> &ws, const ClauseOffset c)
+static inline void removeWCl(vec<Watched> &ws, const ClOffset c)
 {
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isClause() || i->getNormOffset() != c); i++);
+    for (; i != end && (!i->isClause() || i->getOffset() != c); i++);
     assert(i != end);
     vec<Watched>::iterator j = i;
     i++;

@@ -27,10 +27,6 @@
 ClauseCleaner::ClauseCleaner(Solver* _solver) :
     solver(_solver)
 {
-    for (uint32_t i = 0; i < 6; i++) {
-        lastNumUnitarySat[i] = solver->getNumUnitaries();
-        lastNumUnitaryClean[i] = solver->getNumUnitaries();
-    }
 }
 
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
@@ -41,14 +37,11 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
     return false;
 }
 
-void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
+void ClauseCleaner::removeSatisfiedBins()
 {
     #ifdef DEBUG_CLEAN
     assert(solver->decisionLevel() == 0);
     #endif
-
-    if (lastNumUnitarySat[binaryClauses] + limit >= solver->getNumUnitaries())
-        return;
 
     uint32_t numRemovedHalfNonLearnt = 0;
     uint32_t numRemovedHalfLearnt = 0;
@@ -80,17 +73,12 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
     solver->learntsLits -= numRemovedHalfLearnt;
     solver->numBinsLearnt -= numRemovedHalfLearnt/2;
     solver->numBinsNonLearnt -= numRemovedHalfNonLearnt/2;
-
-    lastNumUnitarySat[binaryClauses] = solver->getNumUnitaries();
 }
 
-void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const uint32_t limit)
+void ClauseCleaner::cleanClauses(vector<Clause*>& cs)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->qhead == solver->trail.size());
-
-    if (lastNumUnitaryClean[type] + limit >= solver->getNumUnitaries())
-        return;
 
     #ifdef VERBOSE_DEBUG
     cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << endl;
@@ -108,8 +96,6 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const 
         }
     }
     cs.resize(cs.size() - (s-ss));
-
-    lastNumUnitaryClean[type] = solver->getNumUnitaries();
 
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;

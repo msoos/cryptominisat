@@ -24,8 +24,9 @@
 
 //#define DEBUG_WATCHED
 
+#include "ClAbstraction.h"
 #include "constants.h"
-#include "ClauseOffset.h"
+#include "ClOffset.h"
 #include "SolverTypes.h"
 #include <limits>
 
@@ -49,8 +50,18 @@ class Watched {
         /**
         @brief Constructor for a long (>3) clause
         */
-        Watched(const ClauseOffset offset, Lit blockedLit) :
+        Watched(const ClOffset offset, Lit blockedLit) :
             data1(blockedLit.toInt())
+            , type(watch_clause_t)
+            , data2(offset)
+        {
+        }
+
+        /**
+        @brief Constructor for a long (>3) clause
+        */
+        Watched(const ClOffset offset, CL_ABST_TYPE abst) :
+            data1(abst)
             , type(watch_clause_t)
             , data2(offset)
         {
@@ -81,7 +92,7 @@ class Watched {
         {
         }
 
-        void setNormOffset(const ClauseOffset offset)
+        void setNormOffset(const ClOffset offset)
         {
             #ifdef DEBUG_WATCHED
             assert(type == watch_clause_t);
@@ -189,10 +200,18 @@ class Watched {
             return Lit::toLit(data1);
         }
 
+        CL_ABST_TYPE getAbst() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isClause());
+            #endif
+            return data1;
+        }
+
         /**
         @brief Get offset of a >3-long normal clause or of an xor clause (which may be 3-long)
         */
-        ClauseOffset getNormOffset() const
+        ClOffset getOffset() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());

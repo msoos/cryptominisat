@@ -32,17 +32,8 @@
 #include "constants.h"
 #include "Watched.h"
 #include "Alg.h"
+#include "cmsat/ClAbstraction.h"
 #include "constants.h"
-
-#define CL_ABST_TYPE uint64_t
-#define CLAUSE_ABST_SIZE 64
-
-template <class T> CL_ABST_TYPE calcAbstraction(const T& ps) {
-    CL_ABST_TYPE abstraction = 0;
-    for (uint16_t i = 0; i != ps.size(); i++)
-        abstraction |= 1UL << (ps[i].var() % CLAUSE_ABST_SIZE);
-    return abstraction;
-}
 
 class ClauseAllocator;
 
@@ -110,7 +101,7 @@ protected:
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t mySize; ///<The current size of the clause
-    
+
 
     Lit* getData()
     {
@@ -191,6 +182,11 @@ public:
     bool learnt() const
     {
         return isLearnt;
+    }
+
+    bool freed() const
+    {
+        return isFreed;
     }
 
     bool getStrenghtened() const

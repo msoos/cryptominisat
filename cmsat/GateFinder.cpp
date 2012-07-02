@@ -46,7 +46,7 @@ GateFinder::GateFinder(Subsumer *_subsumer, Solver *_solver) :
 bool GateFinder::doAll()
 {
     runStats.clear();
-    findOrGates();
+    //findOrGates();
     if (!doAllOptimisationWithGates())
         goto end;
 
@@ -88,7 +88,7 @@ uint32_t GateFinder::createNewVars()
     double myTime = cpuTime();
     vector<NewGateData> newGates;
     vector<Lit> tmp;
-    vector<ClauseOffset> subs;
+    vector<ClOffset> subs;
     uint64_t numOp = 0;
     subsumer->toDecrease = &numMaxCreateNewVars;
 
@@ -196,8 +196,8 @@ uint32_t GateFinder::createNewVars()
         assert(cl != NULL);
         assert(solver->ok);
         cl->stats.conflictNumIntroduced = solver->sumStats.conflStats.numConflicts;
-        ClauseOffset offset = subsumer->linkInClause(*cl);
-        solver->clAllocator->getPointer(offset)->defOfOrGate = true;
+        subsumer->linkInClause(*cl);
+        cl->defOfOrGate = true;
 
         addedVars++;
     }
@@ -421,14 +421,13 @@ size_t GateFinder::findEqOrGates()
     return foundRep;
 }
 
-void GateFinder::findOrGates(const bool learntGatesToo)
+/*void GateFinder::findOrGates(const bool learntGatesToo)
 {
     //Goi through each clause
-    size_t index = 0;
-    for (vector<Clause*>::iterator
-        it = subsumer->clauses.begin(), end = subsumer->clauses.end()
+    for (vec<Clause*>::iterator
+        it = solver->clauses.begin(), end = solver->clauses.end()
         ; it != end
-        ; it++, index++
+        ; it++
     ) {
         //Clause removed
         if (*it == NULL)
@@ -472,9 +471,9 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         //Try to find a gate with eqlit (~*l)
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
-            findOrGate(~*l, ClauseIndex(index), learntGatesToo, wasLearnt);
+            findOrGate(~*l, learntGatesToo, wasLearnt);
     }
-}
+}*/
 
 void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool learntGatesToo, bool wasLearnt)
 {

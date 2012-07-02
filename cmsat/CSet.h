@@ -19,7 +19,7 @@ Used in Subsumer to put into a set all clauses that need to be treated
 */
 class CSet {
     vector<uint32_t>       where;  ///<Map clause ID to position in 'which'.
-    vector<ClauseOffset>   which;  ///< List of clauses (for fast iteration). May contain 'Clause_NULL'.
+    vector<ClOffset>   which;  ///< List of clauses (for fast iteration). May contain 'Clause_NULL'.
     vector<uint32_t>       free;   ///<List of positions holding 'Clause_NULL'.
 
     public:
@@ -35,7 +35,7 @@ class CSet {
         /**
         @brief Add a clause to the set
         */
-        bool add(const ClauseOffset offs) {
+        bool add(const ClOffset offs) {
             //Don't check for special value
             assert(offs != std::numeric_limits< uint32_t >::max());
 
@@ -56,7 +56,7 @@ class CSet {
             return true;
         }
 
-        bool alreadyIn(const ClauseOffset offs) const
+        bool alreadyIn(const ClOffset offs) const
         {
             //Don't check for special value
             assert(offs != std::numeric_limits< uint32_t >::max());
@@ -72,7 +72,7 @@ class CSet {
 
         Handles it correctly if the clause was not in the set anyway
         */
-        bool exclude(const ClauseOffset offs) {
+        bool exclude(const ClOffset offs) {
             //Don't check for special value
             assert(offs != std::numeric_limits< uint32_t >::max());
 
@@ -107,7 +107,7 @@ class CSet {
         class iterator
         {
             public:
-                iterator(vector<ClauseOffset>::iterator _it) :
+                iterator(vector<ClOffset>::iterator _it) :
                 it(_it)
                 {}
 
@@ -121,15 +121,15 @@ class CSet {
                     return (it != iter.it);;
                 }
 
-                ClauseOffset& operator*() {
+                ClOffset& operator*() {
                     return *it;
                 }
 
-                vector<ClauseOffset>::iterator& operator->() {
+                vector<ClOffset>::iterator& operator->() {
                     return it;
                 }
             private:
-                vector<ClauseOffset>::iterator it;
+                vector<ClOffset>::iterator it;
         };
 
         /**
@@ -140,7 +140,7 @@ class CSet {
         class const_iterator
         {
             public:
-                const_iterator(vector<ClauseOffset>::const_iterator _it) :
+                const_iterator(vector<ClOffset>::const_iterator _it) :
                 it(_it)
                 {}
 
@@ -154,15 +154,15 @@ class CSet {
                     return (it != iter.it);;
                 }
 
-                const ClauseOffset& operator*() {
+                const ClOffset& operator*() {
                     return *it;
                 }
 
-                vector<ClauseOffset>::const_iterator& operator->() {
+                vector<ClOffset>::const_iterator& operator->() {
                     return it;
                 }
             private:
-                vector<ClauseOffset>::const_iterator it;
+                vector<ClOffset>::const_iterator it;
         };
 
         ///@brief Get starting iterator

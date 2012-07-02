@@ -143,7 +143,7 @@ void PropEngine::attachClause(
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
-        const ClauseOffset offset = clAllocator->getOffset(&c);
+        const ClOffset offset = clAllocator->getOffset(&c);
 
         //blocked literal is the lit in the middle (c.size()/2). For no reason.
         watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
@@ -167,7 +167,7 @@ void PropEngine::detachModifiedClause(
 ) {
     assert(origSize > 2);
 
-    ClauseOffset offset = clAllocator->getOffset(address);
+    ClOffset offset = clAllocator->getOffset(address);
     if (origSize == 3
         //The clause might have been longer, and has only recently
         //became 3-long. Check!
@@ -239,7 +239,7 @@ PropResult PropEngine::propNormalClause(
         return PROP_NOTHING;
     }
     propStats.bogoProps += 4;
-    const uint32_t offset = i->getNormOffset();
+    const uint32_t offset = i->getOffset();
     Clause& c = *clAllocator->getPointer(offset);
     c.stats.numLookedAt++;
     c.stats.numLitVisited++;
@@ -485,7 +485,7 @@ PropBy PropEngine::propagate(
             //Pre-fetch long clause
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
-                    const uint32_t offset = i->getNormOffset();
+                    const uint32_t offset = i->getOffset();
                     __builtin_prefetch(clAllocator->getPointer(offset));
                 }
 
@@ -851,7 +851,7 @@ void PropEngine::printWatchList(const Lit lit) const
         } else if (it2->isTriClause()) {
             cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << endl;
         } else if (it2->isClause()) {
-            cout << "cla:" << it2->getNormOffset() << endl;
+            cout << "cla:" << it2->getOffset() << endl;
         } else {
             assert(false);
         }

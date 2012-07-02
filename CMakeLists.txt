@@ -64,9 +64,6 @@ add_definitions(-DVERSION="3.0.0")
 # Look for Boost program options
 # -----------------------------------------------------------------------------
 find_package( Boost 1.34 REQUIRED COMPONENTS program_options)
-link_directories ( ${Boost_LIBRARY_DIRS} )
-include_directories ( ${Boost_INCLUDE_DIRS} )
-
 find_package(M4RI REQUIRED)
 
 # ---------------
@@ -87,8 +84,7 @@ find_package(M4RI REQUIRED)
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
-#add_subdirectory(m4ri)
-add_subdirectory(Solver)
+add_subdirectory(cmsat)
 
 # -----------------------------------------------------------------------------
 # Copy built binaries to root (build) dir
@@ -96,8 +92,7 @@ add_subdirectory(Solver)
 add_custom_target(copy ALL COMMENT "Copying binaries from subdirs to build directory")
 add_custom_command(
     TARGET copy
-    COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
-    #COMMAND ${CMAKE_COMMAND} -E copy scripts/fuzzers/fuzzSat/fuzzSat ../scripts/
+    COMMAND ${CMAKE_COMMAND} -E copy cmsat/cryptominisat .
 )
 add_dependencies(copy
     cryptominisat
