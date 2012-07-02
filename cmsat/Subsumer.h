@@ -183,14 +183,6 @@ public:
 
         void printShort() const
         {
-            //Subs bin-w-bin
-            cout
-            << "c bin-w-bin subsume "
-            << "rem " << subsBinWithBin
-            << " time: " << std::fixed << std::setprecision(2)
-            << subsBinWithBinTime
-            << endl;
-
             //STRENGTH + SUBSUME
             cout << "c"
             << " lits-rem: " << litsRemStrengthen

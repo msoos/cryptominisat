@@ -391,7 +391,9 @@ void Subsumer::performSubsumption()
     double myTime = cpuTime();
     size_t wenThrough = 0;
     toDecrease = &numMaxSubsume0;
-    while (*toDecrease > 0) {
+    while (*toDecrease > 0
+        && wenThrough < 2*solver->clauses.size()
+    ) {
         *toDecrease -= 20;
         wenThrough++;
 
@@ -423,7 +425,9 @@ bool Subsumer::performStrengthening()
     double myTime = cpuTime();
     size_t wenThrough = 0;
     toDecrease = &numMaxSubsume1;
-    while(*toDecrease > 0) {
+    while(*toDecrease > 0
+        && wenThrough < 2*solver->clauses.size()
+    ) {
         *toDecrease -= 20;
         wenThrough++;
 
@@ -825,10 +829,6 @@ bool Subsumer::loopSubsumeVarelim()
         //Carry out subsume0
         performSubsumption();
 
-        //Carry out strengthening
-        if (!performStrengthening())
-            goto end;
-
         //If no var elimination is needed, this IS fixedpoint
         if (!solver->conf.doVarElim)
             break;
@@ -837,13 +837,15 @@ bool Subsumer::loopSubsumeVarelim()
         if (!eliminateVars())
             goto end;
 
-        //Clean clauses as much as possible
-        //solver->clauseCleaner->removeSatisfiedBins();
-
-        numMaxElim -= 200000;
+        numMaxElim -= 50UL*1000UL*1000UL;
 
         if (solver->conf.verbosity >= 5)
             cout << "numMaxElim: " << numMaxElim << endl;
+
+        //Carry out strengthening
+        if (!performStrengthening())
+            goto end;
+
     } while (
         numMaxSubsume0 > 0
         || numMaxSubsume1 > 0
@@ -923,7 +925,7 @@ bool Subsumer::simplifyBySubsumption()
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
 
-    //Do stuff with binaries
+    //Subsume binaries with binaries
     subsumeBinsWithBins();
 
     #ifdef DEBUG_VAR_ELIM
@@ -1284,7 +1286,9 @@ void Subsumer::blockClauses()
     size_t blockedLits = 0;
     size_t wenThrough = 0;
     toDecrease = &numMaxBlocked;
-    while(*toDecrease > 0) {
+    while(*toDecrease > 0
+        && wenThrough < 2*solver->clauses.size()
+    ) {
         wenThrough++;
         *toDecrease -= 2;
 
@@ -1370,7 +1374,9 @@ void Subsumer::asymmTE()
 
     vector<Lit> tmpCl;
     toDecrease = &numMaxAsymm;
-    while(*toDecrease > 0) {
+    while(*toDecrease > 0
+        && wenThrough < 2*solver->clauses.size()
+    ) {
         *toDecrease -= 2;
         wenThrough++;
 
