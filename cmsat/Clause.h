@@ -194,6 +194,11 @@ public:
         return strenghtened;
     }
 
+    void reCalcAbstraction()
+    {
+        abst = calcAbstraction(*this);
+    }
+
     void setStrenghtened()
     {
         abst = calcAbstraction(*this);

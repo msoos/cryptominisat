@@ -407,7 +407,7 @@ private:
 
     //Finish-up
     void addBackToSolver(vector<Clause*>& clauses);
-    bool propBins(vec<Watched>& ws, const Lit lit);
+    bool propBins();
     void removeAllTrisAndLonger();
     void removeAssignedVarsFromEliminated();
     bool completeCleanClause(Clause& ps);
@@ -545,7 +545,7 @@ private:
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
     void        addLearntBinaries(const Var var);
-    void        removeClausesHelper(vec<Watched>& todo, const Lit lit);
+    void        removeClausesHelper(const vec<Watched>& todo, const Lit lit);
 
 
     vector<Var>  varElimToCheck;
@@ -589,6 +589,7 @@ private:
 
     //validity checking
     void checkForElimedVars();
+    void printOccur(const Lit lit) const;
 
     ///Number of times simplifyBySubsumption() has been called
     size_t numCalls;

@@ -277,7 +277,7 @@ void Subsumer::unlinkClause(const ClOffset offset)
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
+        *toDecrease -= 2*solver->watches[(~cl[i]).toInt()].size();
 
         removeWCl(solver->watches[(~cl[i]).toInt()], offset);
         //touchedVars.touch(cl[i], cl.learnt());
@@ -394,8 +394,13 @@ void Subsumer::performSubsumption()
     while (*toDecrease > 0) {
         *toDecrease -= 20;
         wenThrough++;
-        if (wenThrough % 10000 == 0)
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 10000 == 0
+        ) {
             cout << "toDecrease: " << *toDecrease << endl;
+        }
 
         size_t num = solver->mtrand.randInt(solver->clauses.size()-1);
         Clause* cl = solver->clauses[num];
@@ -421,8 +426,13 @@ bool Subsumer::performStrengthening()
     while(*toDecrease > 0) {
         *toDecrease -= 20;
         wenThrough++;
-        if (wenThrough % 10000 == 0)
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 10000 == 0
+        ) {
             cout << "toDecrease: " << *toDecrease << endl;
+        }
 
         size_t num = solver->mtrand.randInt(solver->clauses.size()-1);
         Clause* cl = solver->clauses[num];
@@ -498,11 +508,22 @@ void Subsumer::addBackToSolver(vector<Clause*>& clauses)
             ; it != end
             ; it++
         ) {
-            assert(solver->varData[it->var()].elimed == ELIMED_NONE
-                || solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER);
+            if (solver->varData[it->var()].elimed != ELIMED_NONE
+                && solver->varData[it->var()].elimed != ELIMED_QUEUED_VARREPLACER
+            ) {
+                cout
+                << "ERROR! Clause " << *cl
+                << " learnt: " << cl->learnt()
+                << " contains lit " << *it
+                << " which has elimed status" << solver->varData[it->var()].elimed
+                << endl;
+
+                assert(false);
+            }
         }
 
         if (completeCleanClause(*cl)) {
+            solver->attachClause(*cl);
             clauses[j++] = cl;
         }
     }
@@ -574,8 +595,8 @@ void Subsumer::removeAllTrisAndLonger()
 bool Subsumer::eliminateVars()
 {
     double myTime = cpuTime();
-    uint32_t vars_elimed = 0;
-    uint32_t numtry = 0;
+    size_t vars_elimed = 0;
+    size_t wenThrough = 0;
     toDecrease = &numMaxElim;
     orderVarsForElimInit();
 
@@ -588,7 +609,19 @@ bool Subsumer::eliminateVars()
         && numMaxElim > 0
         && numMaxElimVars > 0
     ) {
+        assert(toDecrease == &numMaxElim);
         Var var = varElimOrder.removeMin();
+
+        //Stats
+        *toDecrease -= 2000;
+        wenThrough++;
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 200 == 0
+        ) {
+            cout << "toDecrease: " << *toDecrease << endl;
+        }
 
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
@@ -599,7 +632,6 @@ bool Subsumer::eliminateVars()
         }
 
         //Try to eliminate
-        numtry++;
         if (maybeEliminate(var)) {
             vars_elimed++;
             numMaxElimVars--;
@@ -611,7 +643,7 @@ bool Subsumer::eliminateVars()
     }
 
     #ifdef BIT_MORE_VERBOSITY
-    cout << "c  #try to eliminate: " << numtry << endl;
+    cout << "c  #try to eliminate: " << wenThrough << endl;
     cout << "c  #var-elim: " << vars_elimed << endl;
     #endif
 end:
@@ -788,6 +820,8 @@ bool Subsumer::loopSubsumeVarelim()
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     const size_t origTrailSize = solver->trail.size();
     do {
+        solver->checkBinStats();
+
         //Carry out subsume0
         performSubsumption();
 
@@ -804,12 +838,17 @@ bool Subsumer::loopSubsumeVarelim()
             goto end;
 
         //Clean clauses as much as possible
-        solver->clauseCleaner->removeSatisfiedBins();
+        //solver->clauseCleaner->removeSatisfiedBins();
+
+        numMaxElim -= 200000;
+
+        if (solver->conf.verbosity >= 5)
+            cout << "numMaxElim: " << numMaxElim << endl;
     } while (
         numMaxSubsume0 > 0
         || numMaxSubsume1 > 0
         || (//touchedVars.size() > 0 &&
-            numMaxElim > 0)
+            numMaxElim > 0 && numMaxElimVars <= 0)
     );
 
     assert(solver->ok);
@@ -877,6 +916,9 @@ bool Subsumer::simplifyBySubsumption()
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
 
+    //Check if all is OK in terms of stats
+    solver->checkBinStats();
+
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
@@ -909,25 +951,21 @@ bool Subsumer::simplifyBySubsumption()
         asymmTE();
 
     //Do subsumption & var-elim in loop
+    solver->checkBinStats();
     if (!loopSubsumeVarelim())
         goto end;
 
 end:
+    solver->checkBinStats();
     myTime = cpuTime();
 
     //Add back clauses to solver
     removeAllTrisAndLonger();
+    solver->clausesLits = solver->numBinsNonLearnt*2;
     addBackToSolver(solver->clauses);
+    solver->learntsLits = solver->numBinsLearnt*2;
     addBackToSolver(solver->learnts);
-    size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
-    ) {
-        Lit lit = ~Lit::toLit(wsLit);
-        propBins(*it, lit);
-    }
+    propBins();
     if (solver->ok) {
         solver->ok = solver->propagate().isNULL();
     }
@@ -955,75 +993,113 @@ end:
     return solver->ok;
 }
 
-bool Subsumer::propBins(vec<Watched>& ws, const Lit lit)
+bool Subsumer::propBins()
 {
-    uint32_t numRemovedHalfNonLearnt = 0;
-    uint32_t numRemovedHalfLearnt = 0;
+    size_t numRemovedHalfNonLearnt = 0;
+    size_t numRemovedHalfLearnt = 0;
 
-    size_t i, j;
-    for(i = 0, j = 0
-        ; i < ws.size()
-        ; i++
+    //Delayed enqueue for correct binary clause removal
+    vector<Lit> toEnqueue;
+
+    size_t wsLit = 0;
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
     ) {
-        if (!ws[i].isBinary()) {
-            ws[j++] = ws[i];
-            continue;
+        const Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+
+        size_t i, j;
+        for(i = 0, j = 0
+            ; i < ws.size()
+            ; i++
+        ) {
+            if (!ws[i].isBinary()) {
+                ws[j++] = ws[i];
+                continue;
+            }
+
+            assert(ws[i].isBinary());
+
+            const Lit lit2 = ws[i].getOtherLit();
+
+            //Satisfied, remove
+            if (solver->value(lit) == l_True
+                || solver->value(lit2) == l_True)
+            {
+                if (ws[i].getLearnt())
+                    numRemovedHalfLearnt++;
+                else
+                    numRemovedHalfNonLearnt++;
+
+                continue;
+            }
+
+            //UNSAT
+            if (solver->value(lit) == l_False
+                && solver->value(lit2) == l_False)
+            {
+                solver->ok = false;
+                ws[j++] = ws[i];
+                continue;
+            }
+
+            //Propagate lit1
+            if (solver->value(lit) == l_Undef
+                && solver->value(lit2) == l_False)
+            {
+                toEnqueue.push_back(lit);
+
+                //Remove binary clause
+                if (ws[i].getLearnt())
+                    numRemovedHalfLearnt++;
+                else
+                    numRemovedHalfNonLearnt++;
+
+                continue;
+            }
+
+            //Propagate lit2
+            if (solver->value(lit) == l_False
+                && solver->value(lit2) == l_Undef)
+            {
+                toEnqueue.push_back(lit2);
+
+                //Remove binary clause
+                if (ws[i].getLearnt())
+                    numRemovedHalfLearnt++;
+                else
+                    numRemovedHalfNonLearnt++;
+
+                continue;
+            }
+
+            if (solver->value(lit) == l_Undef
+                && solver->value(lit2) == l_Undef)
+            {
+                ws[j++] = ws[i];
+                continue;
+            }
+
+            assert(false);
         }
-
-        assert(ws[i].isBinary());
-
-        //Satisfied, remove
-        if (solver->value(lit) == l_True
-            || solver->value(ws[i].getOtherLit()) == l_True)
-        {
-            if (ws[i].getLearnt())
-                numRemovedHalfLearnt++;
-            else
-                numRemovedHalfNonLearnt++;
-
-            continue;
-        }
-
-        //UNSAT
-        if (solver->value(lit) == l_False
-            && solver->value(ws[i].getOtherLit()) == l_False)
-        {
-            solver->ok = false;
-            ws[j++] = ws[i];
-            continue;
-        }
-
-        //Propagate lit1
-        if (solver->value(lit) == l_Undef
-            && solver->value(ws[i].getOtherLit()) == l_False)
-        {
-            solver->enqueue(lit);
-
-            //Remove binary clause
-            if (ws[i].getLearnt())
-                numRemovedHalfLearnt++;
-            else
-                numRemovedHalfNonLearnt++;
-
-            continue;
-        }
-
-        //Propagate lit2
-        if (solver->value(lit) == l_False
-            && solver->value(ws[i].getOtherLit()) == l_Undef)
-        {
-            solver->enqueue(ws[i].getOtherLit());
-
-            //Remove binary clause
-            if (ws[i].getLearnt())
-                numRemovedHalfLearnt++;
-            else
-                numRemovedHalfNonLearnt++;
-
-            continue;
-        }
+        ws.shrink(i-j);
     }
-    ws.shrink(i-j);
+
+    //Enqueue in delayed mode
+    //Otherwise the
+    for(vector<Lit>::const_iterator
+        it = toEnqueue.begin(), end = toEnqueue.end()
+        ; it != end
+        ; it++
+    ) {
+        lbool val = solver->value(*it);
+        if (val == l_Undef)
+            solver->enqueue(*it);
+        else if (val == l_False)
+            solver->ok = false;
+    }
 
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
@@ -1211,8 +1287,13 @@ void Subsumer::blockClauses()
     while(*toDecrease > 0) {
         wenThrough++;
         *toDecrease -= 2;
-        if (wenThrough % 10000 == 0)
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 10000 == 0
+        ) {
             cout << "toDecrease: " << *toDecrease << endl;
+        }
 
         size_t num = solver->mtrand.randInt(solver->clauses.size()-1);
         Clause& cl = *solver->clauses[num];
@@ -1292,8 +1373,13 @@ void Subsumer::asymmTE()
     while(*toDecrease > 0) {
         *toDecrease -= 2;
         wenThrough++;
-        if (wenThrough % 10000 == 0)
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 10000 == 0
+        ) {
             cout << "toDecrease: " << *toDecrease << endl;
+        }
 
         size_t num = solver->mtrand.randInt(solver->clauses.size()-1);
         Clause& cl = *solver->clauses[num];
@@ -1612,11 +1698,11 @@ void inline Subsumer::fillSubs(
 }
 
 void Subsumer::removeClausesHelper(
-    vec<Watched>& todo
+    const vec<Watched>& todo
     , const Lit lit
 ) {
     for (uint32_t i = 0; i < todo.size(); i++) {
-        Watched& watch = todo[i];
+        const Watched& watch = todo[i];
 
         #ifdef VERBOSE_DEBUG_VARELIM
         cout << "Removing clause due to var-elim on " << lit << " : ";
@@ -1640,7 +1726,7 @@ void Subsumer::removeClausesHelper(
             //Remove from occur -- except current lit, it will be clean()-ed
             for (uint32_t i = 0; i < cl.size(); i++) {
 
-                //Don't manipulate the list we are going through
+                //This will get clear()-ed, so skip
                 if (cl[i].var() == lit.var())
                     continue;
 
@@ -1656,11 +1742,12 @@ void Subsumer::removeClausesHelper(
             #endif
 
             //Remove binary clause -- only half
-            //the other half will be clean()-ed
+            //the other half will be clean()-ed directly from watchlist
             removeWBin(
                 solver->watches
                 , watch.getOtherLit()
-                , ~lit, watch.getLearnt()
+                , lit
+                , watch.getLearnt()
             );
 
             //Update stats
@@ -1688,8 +1775,6 @@ void Subsumer::removeClausesHelper(
             //touchedVars.touch(c.lit2, false);
         }
     }
-
-    todo.clear();
 }
 
 uint32_t Subsumer::numNonLearntBins(const Lit lit) const
@@ -1876,11 +1961,37 @@ void Subsumer::varElimCheckUpdate(
     }
 }
 
+void Subsumer::printOccur(const Lit lit) const
+{
+    for(size_t i = 0; i < solver->watches[(~lit).toInt()].size(); i++) {
+        const Watched& w = solver->watches[(~lit).toInt()][i];
+        if (w.isBinary()) {
+            cout
+            << "Bin   --> "
+            << w.getOtherLit()
+            << "(learnt: " << w.getLearnt()
+            << ")"
+            << endl;
+        }
+
+        if (w.isClause()) {
+            cout
+            << "Clause--> "
+            << *solver->clAllocator->getPointer(w.getOffset())
+            << "(learnt: " << solver->clAllocator->getPointer(w.getOffset())->learnt()
+            << ")"
+            << endl;
+        }
+    }
+}
+
 /**
 @brief Tries to eliminate variable
 */
 bool Subsumer::maybeEliminate(const Var var)
 {
+    assert(solver->ok);
+
     //Print complexity stat for this var
     if (solver->conf.verbosity >= 5) {
         cout << "trying comlexity: "
@@ -1905,7 +2016,17 @@ bool Subsumer::maybeEliminate(const Var var)
 
     //Eliminate:
     if (solver->conf.verbosity >= 5) {
-        cout << "Eliminating var " << lit << endl;
+        cout
+        << "Eliminating var " << lit
+        << " with occur sizes "
+        << solver->watches[(~lit).toInt()].size() << " , "
+        << solver->watches[lit.toInt()].size()
+        << endl;
+
+        cout << "POS: " << endl;
+        printOccur(lit);
+        cout << "NEG: " << endl;
+        printOccur(~lit);
     }
 
     //Re-examine later the elimination complexity of these variables
@@ -1918,25 +2039,19 @@ bool Subsumer::maybeEliminate(const Var var)
         , varElimToCheckHelper
     );
     varElimCheckUpdate(
-        solver->watches[(~lit).toInt()]
+        solver->watches[lit.toInt()]
         , ~lit
         , varElimToCheck
         , varElimToCheckHelper
     );
 
     //Save original state
-    vec<Watched> poss = solver->watches[(~lit).toInt()];
-    vec<Watched> negs = solver->watches[lit.toInt()];
+    const vec<Watched> poss = solver->watches[(~lit).toInt()];
+    const vec<Watched> negs = solver->watches[lit.toInt()];
 
     //Remove clauses
-    removeClausesHelper(
-        poss
-        , lit
-    );
-    removeClausesHelper(
-        negs
-        , ~lit
-    );
+    removeClausesHelper(poss, lit);
+    removeClausesHelper(negs, ~lit);
 
     //Clear occur
     solver->watches[(~lit).toInt()].clear();
@@ -2031,6 +2146,14 @@ bool Subsumer::maybeEliminate(const Var var)
             continue;
 
         Clause* cl = solver->clAllocator->getPointer(it->getOffset());
+
+        if (solver->conf.verbosity >= 5)
+            cout
+            << "Removing clause " << *cl
+            << " (learnt: " << cl->learnt() << ")"
+            << " because of var-elim"
+            << endl;
+
         solver->clAllocator->clauseFree(cl);
     }
     for(vec<Watched>::const_iterator
@@ -2042,6 +2165,14 @@ bool Subsumer::maybeEliminate(const Var var)
             continue;
 
         Clause* cl = solver->clAllocator->getPointer(it->getOffset());
+
+        if (solver->conf.verbosity >= 5)
+            cout
+            << "Removing clause " << *cl
+            << " (learnt: " << cl->learnt() << ")"
+            << " because of var-elim"
+            << endl;
+
         solver->clAllocator->clauseFree(cl);
     }
 
@@ -2150,7 +2281,7 @@ bool Subsumer::merge(
 
     bool retval = true;
     bool fancyRemove = false;
-    if (qs.isBinary()) {
+    if (ps.isBinary()) {
         assert(ps.getOtherLit() != without_p);
 
         seen[ps.getOtherLit().toInt()] = 1;
@@ -2338,7 +2469,7 @@ std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Var var)
     size_t posLit = 0;
     size_t nNonLBinPos = 0;
     const vec<Watched>& poss = solver->watches[(~lit).toInt()];
-    *toDecrease -= poss.size();
+    *toDecrease -= poss.size() + 100;
     for (vec<Watched>::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
@@ -2375,7 +2506,7 @@ std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Var var)
     size_t negLit = 0;
     size_t nNonLBinNeg = 0;
     const vec<Watched>& negs = solver->watches[lit.toInt()];
-    *toDecrease -= negs.size();
+    *toDecrease -= negs.size() + 100;
     for (vec<Watched>::const_iterator
         it = negs.begin(), end = negs.end()
         ; it != end
@@ -2432,8 +2563,13 @@ void Subsumer::orderVarsForElimInit()
     varElimComplexity.clear();
     varElimComplexity.resize(solver->nVars(), std::make_pair<int, int>(1000, 1000));
 
-    //Go through all vars that have been touched
-    for (size_t var = 0; var < solver->nVars(); var++) {
+    //Go through all vars
+    for (
+        size_t var = 0
+        ; var < solver->nVars()
+        ; var++
+    ) {
+        *toDecrease -= 50;
 
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef

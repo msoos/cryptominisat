@@ -181,7 +181,7 @@ Clause* Solver::addClauseInt(
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
-    assert(qhead == trail.size());
+    assert(!attach || qhead == trail.size());
     #ifdef VERBOSE_DEBUG
     cout << "addClauseInt clause " << lits << endl;
     #endif //VERBOSE_DEBUG
@@ -227,7 +227,9 @@ Clause* Solver::addClauseInt(
         case 1:
             enqueue(ps[0]);
             propStats.propsUnit++;
-            ok = (propagate().isNULL());
+            if (attach)
+                ok = (propagate().isNULL());
+
             return NULL;
         case 2:
             attachBinClause(ps[0], ps[1], learnt);
@@ -569,12 +571,15 @@ void Solver::renumberVariables()
     }
 
     //Update clauses
+    //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < clauses.size(); i++) {
         updateLitsMap(*clauses[i], outerToInter);
+        (*clauses[i]).reCalcAbstraction();
     }
 
     for(size_t i = 0; i < learnts.size(); i++) {
         updateLitsMap(*learnts[i], outerToInter);
+        (*learnts[i]).reCalcAbstraction();
     }
 
     //Update sub-elements' vars
@@ -610,7 +615,6 @@ void Solver::renumberVariables()
         }
     }
     assert(!problem && "We renumbered the variables in the wrong order!");
-
 
     //Print results
     if (conf.verbosity >= 3) {
@@ -2066,13 +2070,8 @@ void Solver::printClauseStats()
     ;
 }
 
-void Solver::checkStats() const
+void Solver::checkBinStats() const
 {
-    //If in crazy mode, don't check
-    #ifdef NDEBUG
-    return;
-    #endif
-
     //Check number of learnt & non-learnt binary clauses
     uint64_t thisNumLearntBins = 0;
     uint64_t thisNumNonLearntBins = 0;
@@ -2096,8 +2095,35 @@ void Solver::checkStats() const
         }
     }
 
-    assert(thisNumLearntBins/2 == numBinsLearnt);
-    assert(thisNumNonLearntBins/2 == numBinsNonLearnt);
+    if (thisNumNonLearntBins/2 != numBinsNonLearnt) {
+        cout
+        << "ERROR:"
+        << " thisNumNonLearntBins/2: " << thisNumNonLearntBins/2
+        << " numBinsNonLearnt: " << numBinsNonLearnt
+        << endl;
+
+        assert(thisNumNonLearntBins/2 == numBinsNonLearnt);
+    }
+
+    if (thisNumLearntBins/2 != numBinsLearnt) {
+        cout
+        << "ERROR:"
+        << " thisNumLearntBins/2: " << thisNumLearntBins/2
+        << " numBinsLearnt: " << numBinsLearnt
+        << endl;
+
+        assert(thisNumLearntBins/2 == numBinsLearnt);
+    }
+}
+
+void Solver::checkStats() const
+{
+    //If in crazy mode, don't check
+    #ifdef NDEBUG
+    return;
+    #endif
+
+    checkBinStats();
 
     //Check number of non-learnt literals
     uint64_t numLitsNonLearnt = numBinsNonLearnt*2;

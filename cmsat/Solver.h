@@ -385,6 +385,7 @@ class Solver : public Searcher
 
         //Checks
         void checkStats() const;
+        void checkBinStats() const;
 
     protected:
 
