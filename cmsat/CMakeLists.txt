@@ -1,6 +1,6 @@
-include_directories(${cryptoms_SOURCE_DIR}/mtl)
-include_directories(${cryptoms_SOURCE_DIR}/Solver)
-include_directories(${cryptoms_SOURCE_DIR}/MTRand)
+include_directories(
+    ${PROJECT_SOURCE_DIR}
+)
 
 add_executable(cryptominisat
     Main.cpp
