@@ -865,8 +865,10 @@ bool Subsumer::simplifyBySubsumption()
     }*/
 
     //Do asymtotic tautology elimination
-    if (solver->conf.doBlockedClause)
+    if (solver->conf.doBlockedClause) {
         blockClauses();
+        //blockBinaries();
+    }
 
     if (solver->conf.doAsymmTE)
         asymmTE();
@@ -1195,6 +1197,100 @@ void Subsumer::checkForElimedVars()
     return solver->ok;
 }*/
 
+void Subsumer::blockBinaries()
+{
+    const double myTime = cpuTime();
+    size_t wenThrough = 0;
+    size_t blocked = 0;
+    size_t wsLit = 0;
+    toDecrease = &numMaxBlockedBin;
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        *toDecrease -= 2;
+
+        //Print status
+        if (solver->conf.verbosity >= 5
+            && wenThrough % 10000 == 0
+        ) {
+            cout << "toDecrease: " << *toDecrease << endl;
+        }
+
+        if (*toDecrease < numMaxBlockedBin)
+            break;
+
+        const Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+
+        size_t i, j;
+        for(i = 0, j = 0
+            ; i < ws.size()
+            ; i++
+        ) {
+            if (!ws[i].isBinary()
+                //Don't go through the same binary twice
+                || (ws[i].isBinary() && lit < ws[i].getOtherLit())
+            ) {
+                ws[j++] = ws[i];
+                continue;
+            }
+
+            wenThrough++;
+            const Lit lit2 = ws[i].getOtherLit();
+
+            *toDecrease -= 2;
+            seen[lit.toInt()] = 1;
+            seen[lit2.toInt()] = 1;
+
+            Lit tautOn = lit;
+            bool taut = allTautologySlim(lit);
+            bool taut2 = false;
+            if (!taut) {
+                tautOn = lit2;
+                taut2 = allTautologySlim(lit2);
+            }
+
+            if (taut || taut2) {
+                vector<Lit> remCl(2);
+                remCl[0] = lit;
+                remCl[1] = lit2;
+                blockedClauses.push_back(BlockedClause(tautOn, remCl));
+
+                blocked++;
+                removeWBin(solver->watches, lit2, lit, ws[i].getLearnt());
+                if (ws[i].getLearnt()) {
+                    solver->learntsLits -= 2;
+                    solver->numBinsLearnt--;
+                } else {
+                    solver->clausesLits -= 2;
+                    solver->numBinsNonLearnt--;
+                }
+            } else {
+                ws[j++] = ws[i];
+            }
+
+            seen[lit.toInt()] = 0;
+            seen[lit2.toInt()] = 0;
+        }
+        ws.shrink(i-j);
+    }
+
+    if (solver->conf.verbosity >= 1) {
+        cout
+        << "c blocking bins"
+        << " through: " << wenThrough
+        << " blocked: " << blocked
+        << " finished: " << (wsLit == solver->watches.size())
+        << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
+        << endl;
+    }
+    runStats.blocked += blocked;
+    runStats.blockedSumLits += blocked*2;
+    runStats.blockTime += cpuTime() - myTime;
+}
+
 void Subsumer::blockClauses()
 {
     if (solver->clauses.empty())
@@ -1444,11 +1540,12 @@ from the beginning.
 */
 void Subsumer::setLimits()
 {
-    numMaxSubsume0 = 170L*1000L*1000L;
-    numMaxSubsume1 = 80L*1000L*1000L;
-    numMaxElim     = 400L*1000L*1000L;
-    numMaxAsymm    = 40L *1000L*1000L;
-    numMaxBlocked  = 40L *1000L*1000L;
+    numMaxSubsume0    = 60L*1000L*1000L;
+    numMaxSubsume1    = 30L*1000L*1000L;
+    numMaxElim        = 400L*1000L*1000L;
+    numMaxAsymm       = 40L *1000L*1000L;
+    numMaxBlocked     = 40L *1000L*1000L;
+    numMaxBlockedBin  = 40L *1000L*1000L;
     numMaxVarElimAgressiveCheck  = 400L *1000L*1000L;
 
     //numMaxElim = 0;
@@ -2545,7 +2642,7 @@ void Subsumer::orderVarsForElimInit()
 
 inline bool Subsumer::allTautologySlim(const Lit lit)
 {
-    //Binary clauses which contain '~lit'
+    //clauses which contain '~lit'
     const vec<Watched>& ws = solver->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
