@@ -751,8 +751,6 @@ bool Subsumer::loopSubsumeVarelim()
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     const size_t origTrailSize = solver->trail.size();
     do {
-        solver->checkBinStats();
-
         //Carry out subsume0
         performSubsumption();
 
@@ -844,9 +842,6 @@ bool Subsumer::simplifyBySubsumption()
     addedClauseLits += addFromSolver(solver->learnts);
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
-
-    //Check if all is OK in terms of stats
-    solver->checkBinStats();
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
