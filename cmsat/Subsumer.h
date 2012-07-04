@@ -85,7 +85,6 @@ public:
             linkInTime(0)
             , blockTime(0)
             , asymmTime(0)
-            , subsBinWithBinTime(0)
             , subsumeTime(0)
             , strengthenTime(0)
             , varElimTime(0)
@@ -98,7 +97,6 @@ public:
             , origNumRedLongClauses(0)
 
             //Each algo
-            , subsBinWithBin(0)
             , blocked(0)
             , blockedSumLits(0)
             , asymmSubs(0)
@@ -126,7 +124,7 @@ public:
         double totalTime() const
         {
             return linkInTime + blockTime + asymmTime
-                + subsBinWithBinTime + subsumeTime + strengthenTime
+                + subsumeTime + strengthenTime
                 + varElimTime + finalCleanupTime;
         }
 
@@ -142,7 +140,6 @@ public:
             linkInTime += other.linkInTime;
             blockTime += other.blockTime;
             asymmTime += other.asymmTime;
-            subsBinWithBinTime += other.subsBinWithBinTime;
             subsumeTime += other.subsumeTime;
             strengthenTime += other.strengthenTime;
             varElimTime += other.varElimTime;
@@ -155,7 +152,6 @@ public:
             origNumRedLongClauses += other.origNumRedLongClauses;
 
             //Each algo
-            subsBinWithBin += other.subsBinWithBin;
             blocked += other.blocked;
             blockedSumLits += other.blockedSumLits;
             asymmSubs += other.asymmSubs;
@@ -276,10 +272,6 @@ public:
                 , "% clauses"
             );
 
-            printStatsLine("c subs bin-w-bin"
-                , subsBinWithBin
-            );
-
             printStatsLine("c blocked"
                 , blocked
                 , (double)blocked/(double)origNumIrredLongClauses
@@ -315,7 +307,6 @@ public:
         double linkInTime;
         double blockTime;
         double asymmTime;
-        double subsBinWithBinTime;
         double subsumeTime;
         double strengthenTime;
         double varElimTime;
@@ -328,7 +319,6 @@ public:
         uint64_t origNumRedLongClauses;
 
         //Each algorithm
-        uint64_t subsBinWithBin;
         uint64_t blocked;
         uint64_t blockedSumLits;
         uint64_t asymmSubs;
@@ -446,33 +436,6 @@ private:
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
-
-    //binary clause-subsumption
-    struct BinSorter {
-        bool operator()(const Watched& first, const Watched& second)
-        {
-            assert(!first.isTriClause());
-            assert(!second.isTriClause());
-
-            if (first.isBinary() && !second.isBinary())
-                return true;
-
-            if (!first.isBinary() && second.isBinary())
-                return false;
-
-            if (!first.isBinary() && !second.isBinary())
-                return false;
-
-            assert(first.isBinary() && second.isBinary());
-
-            if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
-            if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
-            if (first.getLearnt() == second.getLearnt()) return false;
-            if (!first.getLearnt()) return true;
-            return false;
-        };
-    };
-    void subsumeBinsWithBins();
 
     /**
     @brief Sort clauses according to size

@@ -102,11 +102,32 @@ class Solver : public Searcher
             SolveStats() :
                 numSimplify(0)
                 , nbReduceDB(0)
+                , subsBinWithBinTime(0)
+                , subsBinWithBin(0)
             {}
+
+            SolveStats& operator+=(const SolveStats& other)
+            {
+                numSimplify += other.numSimplify;
+                nbReduceDB += other.nbReduceDB;
+                subsBinWithBinTime += other.subsBinWithBinTime;
+                subsBinWithBin += other.subsBinWithBin;
+
+                return *this;
+            }
+
+            void printShort() const
+            {
+                printStatsLine("c subs bin-w-bin"
+                    , subsBinWithBin
+                );
+            }
 
             uint64_t numSimplify;
             uint64_t nbReduceDB;
             uint32_t runID;
+            double subsBinWithBinTime;
+            uint64_t subsBinWithBin;
         };
         const SolveStats& getSolveStats() const;
 
@@ -536,6 +557,31 @@ class Solver : public Searcher
         void                checkLiteralCount() const;
         void                printAllClauses() const;
         void                consolidateMem();
+
+
+        //Subsumtion of bin with bin
+        struct BinSorter {
+            bool operator()(const Watched& first, const Watched& second)
+            {
+                if (first.isBinary() && !second.isBinary())
+                    return true;
+
+                if (!first.isBinary() && second.isBinary())
+                    return false;
+
+                if (!first.isBinary() && !second.isBinary())
+                    return false;
+
+                assert(first.isBinary() && second.isBinary());
+
+                if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
+                if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
+                if (first.getLearnt() == second.getLearnt()) return false;
+                if (!first.getLearnt()) return true;
+                return false;
+            };
+        };
+        void subsumeBinsWithBins();
 
         /////////////////
         // Debug

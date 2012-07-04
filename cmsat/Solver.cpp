@@ -972,6 +972,9 @@ lbool Solver::simplifyProblem()
     /*if (conf.doBothProp && !bothProp->tryBothProp())
         goto end;*/
 
+    //Remove redundant binary clauses
+    subsumeBinsWithBins();
+
     //PROBE
     if (conf.doProbe && !prober->probe())
         goto end;
@@ -988,6 +991,9 @@ lbool Solver::simplifyProblem()
     }
 
     if (needToInterrupt) return l_Undef;
+
+    //Remove redundant binary clauses
+    subsumeBinsWithBins();
 
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSatELite && !subsumer->simplifyBySubsumption())
@@ -2157,4 +2163,76 @@ uint32_t Solver::getNewToReplaceVars() const
 const char* Solver::getVersion()
 {
     return get_git_version();
+}
+
+
+void Solver::subsumeBinsWithBins()
+{
+    const double myTime = cpuTime();
+    uint64_t numBinsBefore = numBinsLearnt + numBinsNonLearnt;
+
+    uint32_t wsLit = 0;
+    for (vector<vec<Watched> >::iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        vec<Watched>& ws = *it;
+        Lit lit = ~Lit::toLit(wsLit);
+        if (ws.size() < 2) continue;
+
+        std::sort(ws.begin(), ws.end(), BinSorter());
+
+        vec<Watched>::iterator i = ws.begin();
+        vec<Watched>::iterator j = i;
+
+        Lit lastLit = lit_Undef;
+        bool lastLearnt = false;
+        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+
+            //Only care about binary clauses
+            if (!i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
+
+            if (i->getOtherLit() == lastLit) {
+                //The sorting algorithm prefers non-learnt to learnt, so it is
+                //impossible to have non-learnt before learnt
+                assert(!(i->getLearnt() == false && lastLearnt == true));
+
+                assert(i->getOtherLit().var() != lit.var());
+                removeWBin(watches, i->getOtherLit(), lit, i->getLearnt());
+                if (i->getLearnt()) {
+                    learntsLits -= 2;
+                    numBinsLearnt--;
+                } else {
+                    clausesLits -= 2;
+                    numBinsNonLearnt--;
+                    //touchedVars.touch(lit, i->getLearnt());
+                    //touchedVars.touch(i->getOtherLit(), i->getLearnt());
+                }
+            } else {
+                lastLit = i->getOtherLit();
+                lastLearnt = i->getLearnt();
+                *j++ = *i;
+            }
+        }
+        ws.shrink(i-j);
+    }
+
+    if (conf.verbosity  >= 1) {
+        cout
+        << "c bin-w-bin subsume "
+        << "rem " << std::setw(10)
+        << (numBinsBefore - numBinsLearnt - numBinsNonLearnt)
+
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << (cpuTime() - myTime)
+        << " s" << endl;
+    }
+
+    //Update stats
+    solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    solveStats.subsBinWithBin += (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt);
 }

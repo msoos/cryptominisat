@@ -656,79 +656,6 @@ end:
     return solver->ok;
 }
 
-void Subsumer::subsumeBinsWithBins()
-{
-    const double myTime = cpuTime();
-    uint64_t numBinsBefore = solver->numBinsLearnt + solver->numBinsNonLearnt;
-    toDecrease = &numMaxSubsume0;
-
-    uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
-    ) {
-        vec<Watched>& ws = *it;
-        Lit lit = ~Lit::toLit(wsLit);
-        if (ws.size() < 2) continue;
-
-        std::sort(ws.begin(), ws.end(), BinSorter());
-        *toDecrease -= ws.size();
-
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = i;
-
-        Lit lastLit = lit_Undef;
-        bool lastLearnt = false;
-        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
-
-            //Only care about binary clauses
-            if (!i->isBinary()) {
-                *j++ = *i;
-                continue;
-            }
-
-            if (i->getOtherLit() == lastLit) {
-                //The sorting algorithm prefers non-learnt to learnt, so it is
-                //impossible to have non-learnt before learnt
-                assert(!(i->getLearnt() == false && lastLearnt == true));
-
-                assert(i->getOtherLit().var() != lit.var());
-                removeWBin(solver->watches, i->getOtherLit(), lit, i->getLearnt());
-                if (i->getLearnt()) {
-                    solver->learntsLits -= 2;
-                    solver->numBinsLearnt--;
-                } else {
-                    solver->clausesLits -= 2;
-                    solver->numBinsNonLearnt--;
-                    //touchedVars.touch(lit, i->getLearnt());
-                    //touchedVars.touch(i->getOtherLit(), i->getLearnt());
-                }
-            } else {
-                lastLit = i->getOtherLit();
-                lastLearnt = i->getLearnt();
-                *j++ = *i;
-            }
-        }
-        ws.shrink(i-j);
-    }
-
-    if (solver->conf.verbosity  >= 1) {
-        cout
-        << "c bin-w-bin subsume "
-        << "rem " << std::setw(10)
-        << (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt)
-
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
-        << (cpuTime() - myTime)
-        << " s" << endl;
-    }
-
-    //Update global stats
-    runStats.subsBinWithBinTime += cpuTime() - myTime;
-    runStats.subsBinWithBin += (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt);
-}
-
 bool Subsumer::propagate()
 {
     assert(solver->ok);
@@ -924,9 +851,6 @@ bool Subsumer::simplifyBySubsumption()
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
-
-    //Subsume binaries with binaries
-    subsumeBinsWithBins();
 
     #ifdef DEBUG_VAR_ELIM
     checkForElimedVars();
