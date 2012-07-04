@@ -84,7 +84,11 @@ Solver::Solver(const SolverConf& _conf) :
         cout << "Error reading from /dev/random !" << endl;
         exit(-1);
     }
-    read(randomData, &solveStats.runID, sizeof(solveStats.runID));
+    ssize_t ret = read(randomData, &solveStats.runID, sizeof(solveStats.runID));
+    if (ret != sizeof(solveStats.runID)) {
+        cout << "Couldn't read from /dev/random!" << endl;
+        exit(-1);
+    }
     close(randomData);
     cout << "c runID: " << solveStats.runID << endl;
 }
