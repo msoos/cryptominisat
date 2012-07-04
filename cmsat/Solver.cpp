@@ -1479,7 +1479,7 @@ void Solver::printFullStats()
     printStatsLine("c props/conflict"
         , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
     );
-    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
 
     printStatsLine("c clause clean time"
         , cleaningStats.cpu_time
