@@ -22,7 +22,7 @@
 #include "GateFinder.h"
 #include "time_mem.h"
 #include "Solver.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 
 #ifdef USE_VTK
 #include "vtkGraphLayoutView.h"
@@ -35,7 +35,7 @@
 using std::cout;
 using std::endl;
 
-GateFinder::GateFinder(Subsumer *_subsumer, Solver *_solver) :
+GateFinder::GateFinder(Simplifier *_subsumer, Solver *_solver) :
     numDotPrinted(0)
     , subsumer(_subsumer)
     , solver(_solver)

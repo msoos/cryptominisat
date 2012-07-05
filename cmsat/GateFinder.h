@@ -26,7 +26,7 @@
 #include "CSet.h"
 
 class Solver;
-class Subsumer;
+class Simplifier;
 
 class NewGateData
 {
@@ -120,7 +120,7 @@ struct OrGateSorter2 {
 class GateFinder
 {
 public:
-    GateFinder(Subsumer *subsumer, Solver *control);
+    GateFinder(Simplifier *subsumer, Solver *control);
 
     void newVar();
     bool doAll();
@@ -418,7 +418,7 @@ private:
     uint64_t numDotPrinted;
 
     //Main data
-    Subsumer *subsumer;
+    Simplifier *subsumer;
     Solver *solver;
     vector<char>& seen;
     vector<char>& seen2;

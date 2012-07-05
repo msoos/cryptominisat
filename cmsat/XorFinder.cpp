@@ -23,13 +23,13 @@
 #include "time_mem.h"
 #include "Solver.h"
 #include "VarReplacer.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 #include <limits>
 #include "m4ri.h"
 using std::cout;
 using std::endl;
 
-XorFinder::XorFinder(Subsumer* _subsumer, Solver* _solver) :
+XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     subsumer(_subsumer)
     , solver(_solver)
     , numCalls(0)

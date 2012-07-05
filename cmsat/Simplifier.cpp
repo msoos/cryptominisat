@@ -33,7 +33,7 @@ using std::cout;
 using std::endl;
 
 
-#include "cmsat/Subsumer.h"
+#include "cmsat/Simplifier.h"
 #include "cmsat/Clause.h"
 #include "cmsat/Solver.h"
 #include "cmsat/ClauseCleaner.h"
@@ -64,7 +64,7 @@ using std::endl;
 //#define VERBOSE_GATE_REMOVAL
 //#define VERBOSE_XORGATE_MIX
 
-Subsumer::Subsumer(Solver* _solver):
+Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
     , varElimOrder(VarOrderLt(varElimComplexity))
     , numCalls(0)
@@ -73,7 +73,7 @@ Subsumer::Subsumer(Solver* _solver):
     //gateFinder = new GateFinder(this, solver);
 }
 
-Subsumer::~Subsumer()
+Simplifier::~Simplifier()
 {
     //delete xorFinder;
     //delete gateFinder;
@@ -86,7 +86,7 @@ Subsumer::~Subsumer()
 
 Adds occurrence list places, increments seen, etc.
 */
-void Subsumer::newVar()
+void Simplifier::newVar()
 {
     seen    .push_back(0);       // (one for each polarity)
     seen    .push_back(0);
@@ -99,7 +99,7 @@ void Subsumer::newVar()
     var_elimed .push_back(0);
 }
 
-void Subsumer::updateVars(
+void Simplifier::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
@@ -117,7 +117,7 @@ void Subsumer::updateVars(
     }
 }
 
-void Subsumer::extendModel(SolutionExtender* extender) const
+void Simplifier::extendModel(SolutionExtender* extender) const
 {
     //go through in reverse order
     for (vector<BlockedClause>::const_reverse_iterator
@@ -136,7 +136,7 @@ void Subsumer::extendModel(SolutionExtender* extender) const
 @p cl The clause to use
 
 */
-uint32_t Subsumer::subsume0(ClOffset offset)
+uint32_t Simplifier::subsume0(ClOffset offset)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: " << cl << endl;
@@ -172,7 +172,7 @@ uint32_t Subsumer::subsume0(ClOffset offset)
 @return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
 template<class T>
-Subsumer::Sub0Ret Subsumer::subsume0(
+Simplifier::Sub0Ret Simplifier::subsume0(
     const ClOffset offset
     , const T& ps
     , CL_ABST_TYPE abs
@@ -221,7 +221,7 @@ self-subsuming resolution using backward-subsumption
 
 @param[in] ps The clause to use for backw-subsumption and self-subs. resolution
 */
-void Subsumer::subsume1(ClOffset offset)
+void Simplifier::subsume1(ClOffset offset)
 {
     vector<ClOffset> subs;
     vector<Lit> subsLits;
@@ -271,7 +271,7 @@ void Subsumer::subsume1(ClOffset offset)
 /**
 @brief Removes&free-s a clause from everywhere
 */
-void Subsumer::unlinkClause(const ClOffset offset)
+void Simplifier::unlinkClause(const ClOffset offset)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
 
@@ -287,7 +287,7 @@ void Subsumer::unlinkClause(const ClOffset offset)
     solver->clAllocator->clauseFree(&cl);
 }
 
-lbool Subsumer::cleanClause(ClOffset offset)
+lbool Simplifier::cleanClause(ClOffset offset)
 {
     assert(solver->ok);
     #ifdef VERBOSE_DEBUG
@@ -365,7 +365,7 @@ May return with solver->ok being FALSE, and may set&propagate variable values.
 @param c Clause to be cleaned of the literal
 @param[in] toRemoveLit The literal to be removed from the clause
 */
-void Subsumer::strengthen(ClOffset offset, const Lit toRemoveLit)
+void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :" << *clauses[c.index];
@@ -383,7 +383,7 @@ void Subsumer::strengthen(ClOffset offset, const Lit toRemoveLit)
 }
 
 
-void Subsumer::performSubsumption()
+void Simplifier::performSubsumption()
 {
     if (solver->clauses.empty())
         return;
@@ -418,7 +418,7 @@ void Subsumer::performSubsumption()
     runStats.subsumeTime += cpuTime() - myTime;
 }
 
-bool Subsumer::performStrengthening()
+bool Simplifier::performStrengthening()
 {
     assert(solver->ok);
 
@@ -455,7 +455,7 @@ bool Subsumer::performStrengthening()
     return solver->ok;
 }
 
-void Subsumer::linkInClause(Clause& cl)
+void Simplifier::linkInClause(Clause& cl)
 {
     ClOffset offset = solver->clAllocator->getOffset(&cl);
     std::sort(cl.begin(), cl.end());
@@ -472,7 +472,7 @@ void Subsumer::linkInClause(Clause& cl)
 /**
 @brief Adds clauses from the solver to the occur
 */
-uint64_t Subsumer::addFromSolver(vector<Clause*>& cs)
+uint64_t Simplifier::addFromSolver(vector<Clause*>& cs)
 {
     uint64_t numLitsAdded = 0;
     vector<Clause*>::iterator i = cs.begin();
@@ -490,7 +490,7 @@ uint64_t Subsumer::addFromSolver(vector<Clause*>& cs)
 /**
 @brief Adds clauses from here, back to the solver
 */
-void Subsumer::addBackToSolver(vector<Clause*>& clauses)
+void Simplifier::addBackToSolver(vector<Clause*>& clauses)
 {
     size_t i,j;
     for (i = 0, j = 0
@@ -534,7 +534,7 @@ void Subsumer::addBackToSolver(vector<Clause*>& clauses)
     clauses.resize(clauses.size() - (i-j));
 }
 
-bool Subsumer::completeCleanClause(Clause& ps)
+bool Simplifier::completeCleanClause(Clause& ps)
 {
     assert(ps.size() > 2);
 
@@ -573,7 +573,7 @@ bool Subsumer::completeCleanClause(Clause& ps)
     return true;
 }
 
-void Subsumer::removeAllTrisAndLonger()
+void Simplifier::removeAllTrisAndLonger()
 {
     for (vector<vec<Watched> >::iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -596,7 +596,7 @@ void Subsumer::removeAllTrisAndLonger()
     }
 }
 
-bool Subsumer::eliminateVars()
+bool Simplifier::eliminateVars()
 {
     double myTime = cpuTime();
     size_t vars_elimed = 0;
@@ -656,7 +656,7 @@ end:
     return solver->ok;
 }
 
-bool Subsumer::propagate()
+bool Simplifier::propagate()
 {
     assert(solver->ok);
 
@@ -744,7 +744,7 @@ bool Subsumer::propagate()
     return true;
 }
 
-bool Subsumer::loopSubsumeVarelim()
+bool Simplifier::loopSubsumeVarelim()
 {
     assert(solver->ok);
 
@@ -799,7 +799,7 @@ Performs, recursively:
 * variable elimination
 
 */
-bool Subsumer::simplifyBySubsumption()
+bool Simplifier::simplifyBySubsumption()
 {
     //Test & debug
     solver->testAllClauseAttach();
@@ -916,7 +916,7 @@ end:
     return solver->ok;
 }
 
-bool Subsumer::propBins()
+bool Simplifier::propBins()
 {
     size_t numRemovedHalfNonLearnt = 0;
     size_t numRemovedHalfLearnt = 0;
@@ -1034,7 +1034,7 @@ bool Subsumer::propBins()
     return solver->ok;
 }
 
-void Subsumer::checkForElimedVars()
+void Simplifier::checkForElimedVars()
 {
     //First, sanity-check the long clauses
     for (size_t i = 0; i < solver->clauses.size(); i++) {
@@ -1081,7 +1081,7 @@ void Subsumer::checkForElimedVars()
     }
 }
 
-/*const bool Subsumer::mixXorAndGates()
+/*const bool Simplifier::mixXorAndGates()
 {
     assert(solver->ok);
     uint32_t fixed = 0;
@@ -1197,7 +1197,7 @@ void Subsumer::checkForElimedVars()
     return solver->ok;
 }*/
 
-void Subsumer::blockBinaries()
+void Simplifier::blockBinaries()
 {
     const double myTime = cpuTime();
     size_t wenThrough = 0;
@@ -1291,7 +1291,7 @@ void Subsumer::blockBinaries()
     runStats.blockTime += cpuTime() - myTime;
 }
 
-void Subsumer::blockClauses()
+void Simplifier::blockClauses()
 {
     if (solver->clauses.empty())
         return;
@@ -1374,7 +1374,7 @@ void Subsumer::blockClauses()
     runStats.blockTime += cpuTime() - myTime;
 }
 
-void Subsumer::asymmTE()
+void Simplifier::asymmTE()
 {
     //Random system would die here
     if (solver->clauses.empty())
@@ -1538,7 +1538,7 @@ could be huge. Furthermore, it seems that there is a benefit in doing these
 simplifications slowly, instead of trying to use them as much as possible
 from the beginning.
 */
-void Subsumer::setLimits()
+void Simplifier::setLimits()
 {
     numMaxSubsume0    = 60L*1000L*1000L;
     numMaxSubsume1    = 30L*1000L*1000L;
@@ -1600,7 +1600,7 @@ Therefore, we must check at the very end if any variables that we eliminated
 got set, and if so, the clauses linked to these variables can be fully removed
 from elimedOutVar[].
 */
-void Subsumer::removeAssignedVarsFromEliminated()
+void Simplifier::removeAssignedVarsFromEliminated()
 {
     vector<BlockedClause>::iterator i = blockedClauses.begin();
     vector<BlockedClause>::iterator j = blockedClauses.begin();
@@ -1637,7 +1637,7 @@ Only takes into consideration clauses that are in the occurrence lists.
 literal, or by subsumption (in this case, there is lit_Undef here)
 */
 template<class T>
-void Subsumer::findStrengthened(
+void Simplifier::findStrengthened(
     ClOffset offset
     , const T& cl
     , const CL_ABST_TYPE abs
@@ -1674,7 +1674,7 @@ void Subsumer::findStrengthened(
 Used to avoid duplication of code
 */
 template<class T>
-void inline Subsumer::fillSubs(
+void inline Simplifier::fillSubs(
     const ClOffset offset
     , const T& cl
     , const CL_ABST_TYPE abs
@@ -1719,7 +1719,7 @@ void inline Subsumer::fillSubs(
     }
 }
 
-void Subsumer::removeClausesHelper(
+void Simplifier::removeClausesHelper(
     const vec<Watched>& todo
     , const Lit lit
 ) {
@@ -1799,7 +1799,7 @@ void Subsumer::removeClausesHelper(
     }
 }
 
-uint32_t Subsumer::numNonLearntBins(const Lit lit) const
+uint32_t Simplifier::numNonLearntBins(const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = solver->watches[(~lit).toInt()];
@@ -1810,7 +1810,7 @@ uint32_t Subsumer::numNonLearntBins(const Lit lit) const
     return num;
 }
 
-int Subsumer::testVarElim(const Var var)
+int Simplifier::testVarElim(const Var var)
 {
     assert(solver->ok);
     assert(!var_elimed[var]);
@@ -1943,7 +1943,7 @@ int Subsumer::testVarElim(const Var var)
     return before_long-after_long;
 }
 
-void Subsumer::varElimCheckUpdate(
+void Simplifier::varElimCheckUpdate(
     const vec<Watched>& gothrough
     , const Lit lit
     , vector<Var>& varElimToCheck
@@ -1983,7 +1983,7 @@ void Subsumer::varElimCheckUpdate(
     }
 }
 
-void Subsumer::printOccur(const Lit lit) const
+void Simplifier::printOccur(const Lit lit) const
 {
     for(size_t i = 0; i < solver->watches[(~lit).toInt()].size(); i++) {
         const Watched& w = solver->watches[(~lit).toInt()][i];
@@ -2010,7 +2010,7 @@ void Subsumer::printOccur(const Lit lit) const
 /**
 @brief Tries to eliminate variable
 */
-bool Subsumer::maybeEliminate(const Var var)
+bool Simplifier::maybeEliminate(const Var var)
 {
     assert(solver->ok);
 
@@ -2230,7 +2230,7 @@ end:
     return solver->ok;
 }
 
-void Subsumer::addLearntBinaries(const Var var)
+void Simplifier::addLearntBinaries(const Var var)
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
@@ -2278,7 +2278,7 @@ And without_p = ~without_q
 @param useCache Use the cache to try to find that the resulting clause is a tautology
 @return FALSE if clause is always satisfied ('out_clause' should not be used)
 */
-bool Subsumer::merge(
+bool Simplifier::merge(
     const Watched& ps
     , const Watched& qs
     , const Lit without_p
@@ -2482,7 +2482,7 @@ bool Subsumer::merge(
 }
 
 
-std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Var var)
+std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 {
     const Lit lit(var, false);
 
@@ -2585,7 +2585,7 @@ std::pair<int, int> Subsumer::heuristicCalcVarElimScore(const Var var)
     return std::make_pair(normCost, litCost);
 }
 
-void Subsumer::orderVarsForElimInit()
+void Simplifier::orderVarsForElimInit()
 {
     varElimOrder.clear();
     varElimComplexity.clear();
@@ -2640,7 +2640,7 @@ void Subsumer::orderVarsForElimInit()
     #endif
 }
 
-inline bool Subsumer::allTautologySlim(const Lit lit)
+inline bool Simplifier::allTautologySlim(const Lit lit)
 {
     //clauses which contain '~lit'
     const vec<Watched>& ws = solver->watches[lit.toInt()];
@@ -2679,7 +2679,7 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
     return true;
 }
 
-void Subsumer::checkElimedUnassignedAndStats() const
+void Simplifier::checkElimedUnassignedAndStats() const
 {
     assert(solver->ok);
     uint64_t checkNumElimed = 0;
@@ -2692,7 +2692,7 @@ void Subsumer::checkElimedUnassignedAndStats() const
     assert(globalStats.numVarsElimed == checkNumElimed);
 }
 
-/*const GateFinder* Subsumer::getGateFinder() const
+/*const GateFinder* Simplifier::getGateFinder() const
 {
     return gateFinder;
 }*/
@@ -2707,7 +2707,7 @@ Only handles backward-subsumption. Uses occurrence lists
 @param[in] abs Abstraction of the clause ps
 @param[out] out_subsumed The set of clauses subsumed by this clause
 */
-template<class T> void Subsumer::findSubsumed0(
+template<class T> void Simplifier::findSubsumed0(
     const ClOffset offset //Will not match with index of the name value
     , const T& ps //Literals in clause
     , const CL_ABST_TYPE abs //Abstraction of literals in clause

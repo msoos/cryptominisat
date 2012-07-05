@@ -24,7 +24,7 @@
 #include "time_mem.h"
 #include "Searcher.h"
 #include "SCCFinder.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 #include "Prober.h"
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
@@ -59,7 +59,7 @@ Solver::Solver(const SolverConf& _conf) :
     , numBinsLearnt(0)
 {
     prober = new Prober(this);
-    subsumer = new Subsumer(this);
+    subsumer = new Simplifier(this);
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -244,7 +244,7 @@ Clause* Solver::addClauseInt(
                 c->makeLearnt(stats.glue);
             c->stats = stats;
 
-            //In class 'Subsumer' we don't need to attach normall
+            //In class 'Simplifier' we don't need to attach normall
             if (attach)
                 attachClause(*c);
 
@@ -1519,7 +1519,7 @@ void Solver::printFullStats()
 
     prober->getStats().print(nVars());
 
-    //Subsumer stats
+    //Simplifier stats
     printStatsLine("c SatELite time"
         , subsumer->getStats().totalTime()
         , subsumer->getStats().totalTime()/cpu_time*100.0

@@ -64,11 +64,11 @@ respectively
 3) It tries to subsume XOR clauses with other XOR clauses (making 2 XOR clauses
 in the process, but one of them is going to be much smaller than it was originally)
 */
-class XorSubsumer
+class XorSimplifier
 {
 public:
 
-    XorSubsumer(Solver& S2);
+    XorSimplifier(Solver& S2);
     const bool simplifyBySubsumption();
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(XorClause& cl);
@@ -142,14 +142,14 @@ private:
     uint32_t origNClauses;
 };
 
-inline bool XorSubsumer::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
+inline bool XorSimplifier::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
 {
     return !(A & ~B);
 }
 
 // Assumes 'seen' is cleared (will leave it cleared)
 template<class T1, class T2>
-bool XorSubsumer::subset(const T1& A, const T2& B)
+bool XorSimplifier::subset(const T1& A, const T2& B)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 1;
@@ -165,7 +165,7 @@ bool XorSubsumer::subset(const T1& A, const T2& B)
     return true;
 }
 
-inline void XorSubsumer::newVar()
+inline void XorSimplifier::newVar()
 {
     occur.resize(occur.size()+1);
     seen_tmp    .push_back(0);
@@ -173,22 +173,22 @@ inline void XorSubsumer::newVar()
     var_elimed.push_back(0);
 }
 
-inline const vector<char>& XorSubsumer::getVarElimed() const
+inline const vector<char>& XorSimplifier::getVarElimed() const
 {
     return var_elimed;
 }
 
-inline const uint32_t XorSubsumer::getNumElimed() const
+inline const uint32_t XorSimplifier::getNumElimed() const
 {
     return numElimed;
 }
 
-inline const double XorSubsumer::getTotalTime() const
+inline const double XorSimplifier::getTotalTime() const
 {
     return totalTime;
 }
 
-inline const map<Var, vector<XorElimedClause> >& XorSubsumer::getElimedOutVar() const
+inline const map<Var, vector<XorElimedClause> >& XorSimplifier::getElimedOutVar() const
 {
     return elimedOutVar;
 }

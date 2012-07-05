@@ -14,7 +14,7 @@ add_library(cryptoms
     VarReplacer.cpp
     ClauseCleaner.cpp
     Prober.cpp
-    Subsumer.cpp
+    Simplifier.cpp
     ClauseAllocator.cpp
     CompleteDetachReattacher.cpp
     DimacsParser.cpp

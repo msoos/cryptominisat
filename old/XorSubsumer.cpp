@@ -20,7 +20,7 @@
 */
 
 #include "Solver.h"
-#include "XorSubsumer.h"
+#include "XorSimplifier.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include "assert.h"
@@ -35,7 +35,7 @@
 #define BIT_MORE_VERBOSITY
 #endif
 
-XorSubsumer::XorSubsumer(Solver& s):
+XorSimplifier::XorSimplifier(Solver& s):
     solver(s)
     , totalTime(0.0)
     , numElimed(0)
@@ -44,7 +44,7 @@ XorSubsumer::XorSubsumer(Solver& s):
 }
 
 // Will put NULL in 'cs' if clause removed.
-void XorSubsumer::subsume0(ClauseSimp ps, XorClause& cl)
+void XorSimplifier::subsume0(ClauseSimp ps, XorClause& cl)
 {
     #ifdef VERBOSE_DEBUGSUBSUME0
     cout << "subsume0 orig clause:" << *clauses[ps.index] << endl;
@@ -89,7 +89,7 @@ void XorSubsumer::subsume0(ClauseSimp ps, XorClause& cl)
 }
 
 template<class T>
-void XorSubsumer::findUnMatched(const T& A, const T& B, vector<Lit>& unmatchedPart)
+void XorSimplifier::findUnMatched(const T& A, const T& B, vector<Lit>& unmatchedPart)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 1;
@@ -103,7 +103,7 @@ void XorSubsumer::findUnMatched(const T& A, const T& B, vector<Lit>& unmatchedPa
     }
 }
 
-void XorSubsumer::unlinkClause(ClauseSimp c, const Var elim)
+void XorSimplifier::unlinkClause(ClauseSimp c, const Var elim)
 {
     XorClause& cl = *clauses[c.index];
 
@@ -123,7 +123,7 @@ void XorSubsumer::unlinkClause(ClauseSimp c, const Var elim)
     clauses[c.index] = NULL;
 }
 
-ClauseSimp XorSubsumer::linkInClause(XorClause& cl)
+ClauseSimp XorSimplifier::linkInClause(XorClause& cl)
 {
     ClauseSimp c(clauses.size());
     clauses.push_back(&cl);
@@ -135,7 +135,7 @@ ClauseSimp XorSubsumer::linkInClause(XorClause& cl)
     return c;
 }
 
-void XorSubsumer::linkInAlreadyClause(ClauseSimp& c)
+void XorSimplifier::linkInAlreadyClause(ClauseSimp& c)
 {
     XorClause& cl = *clauses[c.index];
 
@@ -144,7 +144,7 @@ void XorSubsumer::linkInAlreadyClause(ClauseSimp& c)
     }
 }
 
-void XorSubsumer::addFromSolver(vector<XorClause*>& cs)
+void XorSimplifier::addFromSolver(vector<XorClause*>& cs)
 {
     clauses.clear();
     clauseData.clear();
@@ -157,7 +157,7 @@ void XorSubsumer::addFromSolver(vector<XorClause*>& cs)
     cs.clear();
 }
 
-void XorSubsumer::addBackToSolver()
+void XorSimplifier::addBackToSolver()
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] != NULL) {
@@ -170,7 +170,7 @@ void XorSubsumer::addBackToSolver()
     }
 }
 
-void XorSubsumer::fillCannotEliminate()
+void XorSimplifier::fillCannotEliminate()
 {
     std::fill(cannot_eliminate.begin(), cannot_eliminate.end(), false);
     for (uint32_t i = 0; i < solver.clauses.size(); i++)
@@ -197,10 +197,10 @@ void XorSubsumer::fillCannotEliminate()
     #endif
 }
 
-void XorSubsumer::extendModel(SolutionExtender* extender)
+void XorSimplifier::extendModel(SolutionExtender* extender)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "XorSubsumer::extendModel(Solver& solver2) called" << endl;
+    cout << "XorSimplifier::extendModel(Solver& solver2) called" << endl;
     #endif
 
     assert(checkElimedUnassigned());
@@ -226,7 +226,7 @@ void XorSubsumer::extendModel(SolutionExtender* extender)
     }
 }
 
-const bool XorSubsumer::localSubstitute()
+const bool XorSimplifier::localSubstitute()
 {
     vector<Lit> tmp;
     for (Var var = 0; var < occur.size(); var++) {
@@ -262,7 +262,7 @@ const bool XorSubsumer::localSubstitute()
 }
 
 template<class T>
-void XorSubsumer::xorTwoClauses(const T& c1, const T& c2, vector<Lit>& xored)
+void XorSimplifier::xorTwoClauses(const T& c1, const T& c2, vector<Lit>& xored)
 {
     for (uint32_t i = 0; i != c1.size(); i++)
         seen_tmp[c1[i].var()] = 1;
@@ -283,7 +283,7 @@ void XorSubsumer::xorTwoClauses(const T& c1, const T& c2, vector<Lit>& xored)
     }
 }
 
-void XorSubsumer::removeWrong(vector<Clause*>& cs)
+void XorSimplifier::removeWrong(vector<Clause*>& cs)
 {
     vector<Clause*>::iterator i = cs.begin();
     vector<Clause*>::iterator j = i;
@@ -308,7 +308,7 @@ void XorSubsumer::removeWrong(vector<Clause*>& cs)
     cs.resize(cs.size() - (i-j));
 }
 
-void XorSubsumer::removeWrongBins()
+void XorSimplifier::removeWrongBins()
 {
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
@@ -338,7 +338,7 @@ void XorSubsumer::removeWrongBins()
 }
 
 
-const bool XorSubsumer::removeDependent()
+const bool XorSimplifier::removeDependent()
 {
     for (Var var = 0; var < solver.nVars(); var++) {
         if (cannot_eliminate[var]
@@ -407,14 +407,14 @@ const bool XorSubsumer::removeDependent()
     return true;
 }
 
-inline void XorSubsumer::addToCannotEliminate(Clause* it)
+inline void XorSimplifier::addToCannotEliminate(Clause* it)
 {
     const Clause& c = *it;
     for (uint32_t i2 = 0; i2 < c.size(); i2++)
         cannot_eliminate[c[i2].var()] = true;
 }
 
-const bool XorSubsumer::unEliminate(const Var var, CommandControl* ccsolver)
+const bool XorSimplifier::unEliminate(const Var var, CommandControl* ccsolver)
 {
     assert(var_elimed[var]);
     assert(solver.varData[var].elimed == ELIMED_XORVARELIM);
@@ -446,7 +446,7 @@ const bool XorSubsumer::unEliminate(const Var var, CommandControl* ccsolver)
 }
 
 
-const bool XorSubsumer::simplifyBySubsumption()
+const bool XorSimplifier::simplifyBySubsumption()
 {
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
@@ -525,7 +525,7 @@ const bool XorSubsumer::simplifyBySubsumption()
     return true;
 }
 
-void XorSubsumer::findSubsumed(XorClause& ps, uint32_t index, vector<ClauseSimp>& out_subsumed)
+void XorSimplifier::findSubsumed(XorClause& ps, uint32_t index, vector<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUGSUBSUME0
     cout << "findSubsumed: ";
@@ -557,7 +557,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, uint32_t index, vector<ClauseSimp>
     }
 }
 
-const bool XorSubsumer::checkElimedUnassigned() const
+const bool XorSimplifier::checkElimedUnassigned() const
 {
     uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
@@ -572,7 +572,7 @@ const bool XorSubsumer::checkElimedUnassigned() const
     return true;
 }
 
-void XorSubsumer::removeAssignedVarsFromEliminated()
+void XorSimplifier::removeAssignedVarsFromEliminated()
 {
     for (Var var = 0; var < var_elimed.size(); var++) {
         if (var_elimed[var] && solver.assigns[var] != l_Undef) {

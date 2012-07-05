@@ -20,7 +20,7 @@
 */
 
 #include "Searcher.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 #include "CalcDefPolars.h"
 #include "time_mem.h"
 #include "Solver.h"

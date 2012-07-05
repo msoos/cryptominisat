@@ -15,7 +15,7 @@ using std::vector;
 /**
 @brief Used to quicky add, remove and iterate through a clause set
 
-Used in Subsumer to put into a set all clauses that need to be treated
+Used in Simplifier to put into a set all clauses that need to be treated
 */
 class CSet {
     vector<uint32_t>       where;  ///<Map clause ID to position in 'which'.

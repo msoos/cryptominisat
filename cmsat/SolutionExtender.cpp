@@ -21,7 +21,7 @@
 
 #include "SolutionExtender.h"
 #include "VarReplacer.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 #include "Solver.h"
 using std::cout;
 using std::endl;

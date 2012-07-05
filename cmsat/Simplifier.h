@@ -58,13 +58,13 @@ with non-existing binary clauses. The second does self-subsuming resolution with
 clauses, and then does self-subsuming resolution and subsumption with binary clauses that don't exist
 and never will exist: they are temporarily "created" (memorised), and used by subsume0BIN().
 */
-class Subsumer
+class Simplifier
 {
 public:
 
     //Construct-destruct
-    Subsumer(Solver* solver);
-    ~Subsumer();
+    Simplifier(Solver* solver);
+    ~Simplifier();
 
     //Called from main
     bool simplifyBySubsumption();
@@ -567,14 +567,14 @@ For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
 contains even one bit, it means that A contains something that B doesn't. So
 A may be a subset of B only if (A & ~B) == 0
 */
-inline bool Subsumer::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
+inline bool Simplifier::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
 {
     return ((A & ~B) == 0);
 }
 
 //A subsumes B (A <= B)
 template<class T1, class T2>
-bool Subsumer::subset(const T1& A, const T2& B)
+bool Simplifier::subset(const T1& A, const T2& B)
 {
     bool ret;
     uint16_t i = 0;
@@ -606,7 +606,7 @@ bool Subsumer::subset(const T1& A, const T2& B)
     return ret;
 }
 
-inline bool Subsumer::subsetReverse(const Clause& B) const
+inline bool Simplifier::subsetReverse(const Clause& B) const
 {
     for (uint32_t i = 0; i != B.size(); i++) {
         if (!seen[B[i].toInt()]) return false;
@@ -628,7 +628,7 @@ clause B
 and returns the literal to remove if (2) is true
 */
 template<class T1, class T2>
-Lit Subsumer::subset1(const T1& A, const T2& B)
+Lit Simplifier::subset1(const T1& A, const T2& B)
 {
     Lit retLit = lit_Undef;
 
@@ -664,22 +664,22 @@ Lit Subsumer::subset1(const T1& A, const T2& B)
     return retLit;
 }
 
-inline const vector<BlockedClause>& Subsumer::getBlockedClauses() const
+inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
 {
     return blockedClauses;
 }
 
-inline const vector<char>& Subsumer::getVarElimed() const
+inline const vector<char>& Simplifier::getVarElimed() const
 {
     return var_elimed;
 }
 
-inline const Subsumer::Stats& Subsumer::getStats() const
+inline const Simplifier::Stats& Simplifier::getStats() const
 {
     return globalStats;
 }
 
-/*inline const XorFinder* Subsumer::getXorFinder() const
+/*inline const XorFinder* Simplifier::getXorFinder() const
 {
     return xorFinder;
 }*/

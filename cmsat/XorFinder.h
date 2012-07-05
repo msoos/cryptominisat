@@ -32,7 +32,7 @@ using std::vector;
 using std::set;
 
 class Solver;
-class Subsumer;
+class Simplifier;
 
 class Xor
 {
@@ -119,7 +119,7 @@ class FoundXors
 class XorFinder
 {
 public:
-    XorFinder(Subsumer* subsumer, Solver* solver);
+    XorFinder(Simplifier* subsumer, Solver* solver);
     bool findXors();
 
     struct Stats
@@ -282,7 +282,7 @@ private:
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<size_t> varToBlock; ///<variable-> block index map
 
-    Subsumer* subsumer;
+    Simplifier* subsumer;
     Solver *solver;
 
     //Stats

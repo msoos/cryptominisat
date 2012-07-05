@@ -29,7 +29,7 @@
 #include "Solver.h"
 #include "Searcher.h"
 #include "time_mem.h"
-#include "Subsumer.h"
+#include "Simplifier.h"
 #define BASE_DATA_TYPE char
 
 using std::pair;

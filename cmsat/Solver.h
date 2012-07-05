@@ -41,7 +41,7 @@ using std::string;
 class VarReplacer;
 class ClauseCleaner;
 class Prober;
-class Subsumer;
+class Simplifier;
 class SCCFinder;
 class ClauseVivifier;
 class CalcDefPolars;
@@ -452,7 +452,7 @@ class Solver : public Searcher
         friend class SCCFinder;
         friend class Prober;
         friend class ClauseVivifier;
-        friend class Subsumer;
+        friend class Simplifier;
         friend class ClauseCleaner;
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;
@@ -462,7 +462,7 @@ class Solver : public Searcher
         friend class GateFinder;
         friend class PropEngine;
         Prober              *prober;
-        Subsumer            *subsumer;
+        Simplifier            *subsumer;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;
         ClauseCleaner       *clauseCleaner;
