@@ -40,7 +40,7 @@ using std::endl;
 #include "cmsat/constants.h"
 #include "cmsat/SolutionExtender.h"
 #include "cmsat/XorFinder.h"
-//#include "cmsat/GateFinder.h"
+#include "cmsat/GateFinder.h"
 #include "cmsat/VarReplacer.h"
 #include "cmsat/VarUpdateHelper.h"
 
@@ -70,13 +70,13 @@ Simplifier::Simplifier(Solver* _solver):
     , numCalls(0)
 {
     xorFinder = new XorFinder(this, solver);
-    //gateFinder = new GateFinder(this, solver);
+    gateFinder = new GateFinder(this, solver);
 }
 
 Simplifier::~Simplifier()
 {
     delete xorFinder;
-    //delete gateFinder;
+    delete gateFinder;
 }
 
 /**
@@ -92,7 +92,7 @@ void Simplifier::newVar()
     seen    .push_back(0);
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
-    //gateFinder->newVar();
+    gateFinder->newVar();
     varElimToCheckHelper.push_back(0);
 
     //variable status
@@ -655,7 +655,7 @@ bool Simplifier::eliminateVars()
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
             || solver->varData[var].elimed != ELIMED_NONE
-            //|| !gateFinder->canElim(var)
+            || !gateFinder->canElim(var)
         ) {
             continue;
         }
@@ -828,22 +828,26 @@ bool Simplifier::simplifyBySubsumption()
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
 
+    //stats later
+    size_t origTrailSize = solver->trail.size();
+
     #ifdef DEBUG_VAR_ELIM
     checkForElimedVars();
     #endif
 
-    /*//Gate-finding
+    //Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
-    }*/
+    }
+    toDecrease = &numMaxBlocked;
+
+    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
+    origTrailSize = solver->trail.size();
 
     //Do subsumption & var-elim in loop
     solver->checkBinStats();
     assert(solver->ok);
-
-    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
-    const size_t origTrailSize = solver->trail.size();
 
     //Carry out subsume0
     performSubsumption();

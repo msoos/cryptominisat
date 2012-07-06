@@ -37,7 +37,6 @@
 #include "cmsat/BitArray.h"
 #include "cmsat/SolverTypes.h"
 #include "cmsat/Heap.h"
-#include "XorFinder.h"
 
 using std::vector;
 using std::list;
@@ -47,8 +46,8 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-//class GateFinder;
-//class XorFinder;
+class GateFinder;
+class XorFinder;
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -356,7 +355,7 @@ public:
     const vector<char>& getVarElimed() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
-    //const GateFinder* getGateFinder() const;
+    const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     //const XorFinder* getXorFinder() const;
     void checkElimedUnassignedAndStats() const;
@@ -568,8 +567,8 @@ private:
 
     /////////////////////
     //Gate extraction
-    //friend class GateFinder;
-    //GateFinder *gateFinder;
+    friend class GateFinder;
+    GateFinder *gateFinder;
 
     //validity checking
     void checkForElimedVars();

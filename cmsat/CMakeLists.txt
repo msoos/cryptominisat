@@ -32,7 +32,7 @@ add_library(cryptoms SHARED
     Searcher.cpp
     Solver.cpp
     XorFinder.cpp
-    #    GateFinder.cpp
+    GateFinder.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

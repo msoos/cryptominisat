@@ -377,7 +377,7 @@ private:
         , uint64_t& numOp
     );
 
-    bool treatAndGateClause(
+    void treatAndGateClause(
         const ClOffset offset
         , const OrGate& gate
         , const Clause& cl
@@ -391,7 +391,7 @@ private:
     );
 
     ///temporary for and-gate treatment. Cleared at every treatAndGate() call
-    vector<vector<ClOffset> > sizeSortedOcc; 
+    vector<vector<ClOffset> > sizeSortedOcc;
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
