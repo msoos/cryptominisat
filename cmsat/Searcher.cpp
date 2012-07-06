@@ -1210,7 +1210,7 @@ void Searcher::printRestartSQL()
 {
     PropStats thisPropStats = propStats - lastSQLPropStats;
     Stats thisStats = stats - lastSQLGlobalStats;
-    
+
     solver->sqlFile
     << "insert into `restart`"
     << "("
@@ -1394,7 +1394,7 @@ void Searcher::printClauseDistribSQL()
         << ", " << clauseSizeDistrib[i]
         << ");" << endl;
     }
-    
+
 }
 
 void Searcher::clearPolarData()
@@ -1734,7 +1734,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         }
 
         //Watchlist-based minimisation
-        const vec<Watched>& ws = watches[(~lit).toInt()];
+        const vec<Watched>& ws = watches[lit.toInt()];
         for (vec<Watched>::const_iterator
             i = ws.begin()
             , end = ws.end()

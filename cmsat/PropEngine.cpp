@@ -106,11 +106,11 @@ void PropEngine::attachBinClause(
 
     Watched last;
     //Pust to the begining
-    vec<Watched>& ws1 = watches[(~lit1).toInt()];
+    vec<Watched>& ws1 = watches[lit1.toInt()];
     ws1.push(Watched(lit2, learnt));
 
     //Push to the beginning
-    vec<Watched>& ws2 = watches[(~lit2).toInt()];
+    vec<Watched>& ws2 = watches[lit2.toInt()];
     ws2.push(Watched(lit1, learnt));
 }
 
@@ -139,15 +139,15 @@ void PropEngine::attachClause(
 
     //Tri-clauses are attached specially
     if (c.size() == 3) {
-        watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
-        watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
-        watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
+        watches[c[0].toInt()].push(Watched(c[1], c[2]));
+        watches[c[1].toInt()].push(Watched(c[0], c[2]));
+        watches[c[2].toInt()].push(Watched(c[0], c[1]));
     } else {
         const ClOffset offset = clAllocator->getOffset(&c);
 
         //blocked literal is the lit in the middle (c.size()/2). For no reason.
-        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
-        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[c[1].toInt()].push(Watched(offset, c[c.size()/2]));
     }
 }
 
@@ -171,14 +171,14 @@ void PropEngine::detachModifiedClause(
     if (origSize == 3
         //The clause might have been longer, and has only recently
         //became 3-long. Check!
-        && !findWCl(watches[(~lit1).toInt()], offset)
+        && !findWCl(watches[lit1.toInt()], offset)
     ) {
-        removeWTri(watches[(~lit1).toInt()], lit2, lit3);
-        removeWTri(watches[(~lit2).toInt()], lit1, lit3);
-        removeWTri(watches[(~lit3).toInt()], lit1, lit2);
+        removeWTri(watches[lit1.toInt()], lit2, lit3);
+        removeWTri(watches[lit2.toInt()], lit1, lit3);
+        removeWTri(watches[lit3.toInt()], lit1, lit2);
     } else {
-        removeWCl(watches[(~lit1).toInt()], offset);
-        removeWCl(watches[(~lit2).toInt()], offset);
+        removeWCl(watches[lit1.toInt()], offset);
+        removeWCl(watches[lit2.toInt()], offset);
     }
 }
 
@@ -270,7 +270,7 @@ PropResult PropEngine::propNormalClause(
             propStats.bogoProps += numLitVisited/10;
             c.stats.numLitVisited+= numLitVisited;
             *k = ~p;
-            watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
+            watches[c[1].toInt()].push(Watched(offset, c[0]));
             return PROP_NOTHING;
         }
     }
@@ -463,7 +463,7 @@ PropBy PropEngine::propagate(
     //Propagate binary clauses first
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        const vec<Watched>& ws = watches[p.toInt()];
+        const vec<Watched>& ws = watches[(~p).toInt()];
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
 
@@ -499,7 +499,7 @@ PropBy PropEngine::propagate(
     PropResult ret = PROP_NOTHING;
     while (qheadlong < qhead && confl.isNULL()) {
         const Lit p = trail[qheadlong];     // 'p' is enqueued fact to propagate.
-        vec<Watched>& ws = watches[p.toInt()];
+        vec<Watched>& ws = watches[(~p).toInt()];
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
@@ -564,7 +564,7 @@ PropBy PropEngine::propagateNonLearntBin()
     PropBy confl;
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
-        vec<Watched> & ws = watches[p.toInt()];
+        vec<Watched> & ws = watches[(~p).toInt()];
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
             if (!k->isBinary() || k->getLearnt()) continue;
 
@@ -609,7 +609,7 @@ Lit PropEngine::propagateFull(
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
         size_t lastTrailSize = trail.size();
-        const vec<Watched>& ws = watches[p.toInt()];
+        const vec<Watched>& ws = watches[(~p).toInt()];
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
         propStats.bogoProps += 1;
@@ -631,7 +631,7 @@ Lit PropEngine::propagateFull(
     ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
-        const vec<Watched>& ws = watches[p.toInt()];
+        const vec<Watched>& ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
@@ -655,7 +655,7 @@ Lit PropEngine::propagateFull(
     ret = PROP_NOTHING;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead];
-        vec<Watched> & ws = watches[p.toInt()];
+        vec<Watched> & ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
         vec<Watched>::iterator i = ws.begin();
@@ -809,7 +809,11 @@ void PropEngine::sortWatched()
     #endif
 
     //double myTime = cpuTime();
-    for (vector<vec<Watched> >::iterator i = watches.begin(), end = watches.end(); i != end; i++) {
+    for (vector<vec<Watched> >::iterator
+        i = watches.begin(), end = watches.end()
+        ; i != end
+        ; i++
+    ) {
         if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;
@@ -844,8 +848,12 @@ void PropEngine::sortWatched()
 
 void PropEngine::printWatchList(const Lit lit) const
 {
-    const vec<Watched>& ws = watches[(~lit).toInt()];
-    for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+    const vec<Watched>& ws = watches[lit.toInt()];
+    for (vec<Watched>::const_iterator
+        it2 = ws.begin(), end2 = ws.end()
+        ; it2 != end2
+        ; it2++
+    ) {
         if (it2->isBinary()) {
             cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << endl;
         } else if (it2->isTriClause()) {
@@ -856,19 +864,6 @@ void PropEngine::printWatchList(const Lit lit) const
             assert(false);
         }
     }
-}
-
-uint32_t PropEngine::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
-{
-    uint32_t num = 0;
-    const vec<Watched>& ws = watches[lit.toInt()];
-    for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
-        if (it2->isBinary() && (alsoLearnt || !it2->getLearnt())) {
-            num++;
-        }
-    }
-
-    return num;
 }
 
 vector<Lit> PropEngine::getUnitaries() const
@@ -888,7 +883,8 @@ uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNo
     uint32_t num = 0;
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {

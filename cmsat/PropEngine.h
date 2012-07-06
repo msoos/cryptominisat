@@ -196,7 +196,7 @@ protected:
     vector<Lit>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
-    Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
+    Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is

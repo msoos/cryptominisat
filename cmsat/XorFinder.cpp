@@ -383,8 +383,8 @@ void XorFinder::findXor(ClauseIndex c)
         findXorMatch(subsumer->occur[(*l).toInt()], foundCls);
         findXorMatch(subsumer->occur[(~*l).toInt()], foundCls);
 
-        findXorMatch(solver->watches[(~(*l)).toInt()], *l, foundCls);
-        findXorMatch(solver->watches[(*l).toInt()], ~(*l), foundCls);
+        findXorMatch(solver->watches[(*l).toInt()], *l, foundCls);
+        findXorMatch(solver->watches[(~(*l)).toInt()], ~(*l), foundCls);
 
         if (solver->conf.useCacheWhenFindingXors) {
             findXorMatch(solver->implCache[(*l).toInt()].lits, *l, foundCls);

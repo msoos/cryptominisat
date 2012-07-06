@@ -38,7 +38,11 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
     uint64_t oldNumBinsNonLearnt = solver->numBinsNonLearnt;
     ClausesStay stay;
 
-    for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++) {
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++
+    ) {
         stay += clearWatchNotBinNotTri(*it, removeTri);
     }
 
@@ -53,8 +57,10 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 /**
 @brief Helper function for detachPointerUsingClauses()
 */
-CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri)
-{
+CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(
+    vec<Watched>& ws
+    , const bool removeTri
+) {
     ClausesStay stay;
 
     vec<Watched>::iterator i = ws.begin();

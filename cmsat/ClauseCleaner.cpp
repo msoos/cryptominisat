@@ -46,8 +46,12 @@ void ClauseCleaner::removeSatisfiedBins()
     uint32_t numRemovedHalfNonLearnt = 0;
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         vec<Watched>::iterator i = ws.begin();

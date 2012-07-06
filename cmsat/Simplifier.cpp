@@ -277,9 +277,9 @@ void Simplifier::unlinkClause(const ClOffset offset)
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *toDecrease -= 2*solver->watches[(~cl[i]).toInt()].size();
+        *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
 
-        removeWCl(solver->watches[(~cl[i]).toInt()], offset);
+        removeWCl(solver->watches[cl[i].toInt()], offset);
         //touchedVars.touch(cl[i], cl.learnt());
     }
 
@@ -316,7 +316,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
         if (solver->value(*i) == l_True
             || solver->value(*i) == l_False
         ) {
-            removeWCl(solver->watches[(~*i).toInt()], offset);
+            removeWCl(solver->watches[i->toInt()], offset);
             //touchedVars.touch(*i, cl.learnt());
         }
     }
@@ -377,7 +377,7 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     cl.strengthen(toRemoveLit);
     runStats.litsRemStrengthen++;
     //touchedVars.touch(toRemoveLit, cl.learnt());
-    removeWCl(solver->watches[(~toRemoveLit).toInt()], offset);
+    removeWCl(solver->watches[toRemoveLit.toInt()], offset);
 
     cleanClause(offset);
 }
@@ -460,7 +460,7 @@ void Simplifier::linkInClause(Clause& cl)
     ClOffset offset = solver->clAllocator->getOffset(&cl);
     std::sort(cl.begin(), cl.end());
     for (uint32_t i = 0; i < cl.size(); i++) {
-        vec<Watched>& ws = solver->watches[(~cl[i]).toInt()];
+        vec<Watched>& ws = solver->watches[cl[i].toInt()];
         *toDecrease -= ws.size();
 
         assert(cl.abst == calcAbstraction(cl));
@@ -663,7 +663,7 @@ bool Simplifier::propagate()
     while (solver->qhead < solver->trail.size()) {
         Lit p = solver->trail[solver->qhead];
         solver->qhead++;
-        vec<Watched>& ws = solver->watches[p.toInt()];
+        vec<Watched>& ws = solver->watches[(~p).toInt()];
 
         //Go through each occur
         for (vec<Watched>::const_iterator
@@ -930,7 +930,7 @@ bool Simplifier::propBins()
         ; it != end
         ; it++, wsLit++
     ) {
-        const Lit lit = ~Lit::toLit(wsLit);
+        const Lit lit = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         size_t i, j;
@@ -1064,7 +1064,7 @@ void Simplifier::checkForElimedVars()
         ; it != end
         ; it++, wsLit++
     ) {
-        Lit lit = ~Lit::toLit(wsLit);
+        Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
@@ -1221,7 +1221,7 @@ void Simplifier::blockBinaries()
         if (*toDecrease < numMaxBlockedBin)
             break;
 
-        const Lit lit = ~Lit::toLit(wsLit);
+        const Lit lit = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         size_t i, j;
@@ -1653,8 +1653,8 @@ void Simplifier::findStrengthened(
     uint32_t bestSize = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < cl.size(); i++){
         uint32_t newSize =
-            solver->watches[(~cl[i]).toInt()].size()
-                + solver->watches[cl[i].toInt()].size();
+            solver->watches[cl[i].toInt()].size()
+                + solver->watches[(~cl[i]).toInt()].size();
 
         if (newSize < bestSize) {
             minVar = cl[i].var();
@@ -1683,7 +1683,7 @@ void inline Simplifier::fillSubs(
     , const Lit lit
 ) {
     Lit litSub;
-    const vec<Watched>& cs = solver->watches[(~lit).toInt()];
+    const vec<Watched>& cs = solver->watches[lit.toInt()];
     *toDecrease -= cs.size()*15 + 40;
     for (vec<Watched>::const_iterator
         it = cs.begin(), end = cs.end()
@@ -1752,9 +1752,9 @@ void Simplifier::removeClausesHelper(
                 if (cl[i].var() == lit.var())
                     continue;
 
-                *toDecrease -= 2*solver->watches[(~cl[i]).toInt()].size();
+                *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
 
-                removeWCl(solver->watches[(~cl[i]).toInt()], offset);
+                removeWCl(solver->watches[cl[i].toInt()], offset);
                 //touchedVars.touch(cl[i], cl.learnt());
             }
         } else {
@@ -1802,7 +1802,7 @@ void Simplifier::removeClausesHelper(
 uint32_t Simplifier::numNonLearntBins(const Lit lit) const
 {
     uint32_t num = 0;
-    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         if (it->isBinary() && !it->getLearnt()) num++;
     }
@@ -1821,8 +1821,8 @@ int Simplifier::testVarElim(const Var var)
 
     //set-up
     const Lit lit = Lit(var, false);
-    const vec<Watched>& poss = solver->watches[(~lit).toInt()];
-    const vec<Watched>& negs = solver->watches[(lit).toInt()];
+    const vec<Watched>& poss = solver->watches[lit.toInt()];
+    const vec<Watched>& negs = solver->watches[(~lit).toInt()];
 
     //Count statistic to help in doing heuristic cut-offs
     uint32_t before_3long = 0;
@@ -1985,8 +1985,8 @@ void Simplifier::varElimCheckUpdate(
 
 void Simplifier::printOccur(const Lit lit) const
 {
-    for(size_t i = 0; i < solver->watches[(~lit).toInt()].size(); i++) {
-        const Watched& w = solver->watches[(~lit).toInt()][i];
+    for(size_t i = 0; i < solver->watches[lit.toInt()].size(); i++) {
+        const Watched& w = solver->watches[lit.toInt()][i];
         if (w.isBinary()) {
             cout
             << "Bin   --> "
@@ -2041,8 +2041,8 @@ bool Simplifier::maybeEliminate(const Var var)
         cout
         << "Eliminating var " << lit
         << " with occur sizes "
-        << solver->watches[(~lit).toInt()].size() << " , "
-        << solver->watches[lit.toInt()].size()
+        << solver->watches[lit.toInt()].size() << " , "
+        << solver->watches[(~lit).toInt()].size()
         << endl;
 
         cout << "POS: " << endl;
@@ -2055,29 +2055,29 @@ bool Simplifier::maybeEliminate(const Var var)
     varElimToCheck.clear();
     std::fill(varElimToCheckHelper.begin(), varElimToCheckHelper.end(), 0);
     varElimCheckUpdate(
-        solver->watches[(~lit).toInt()]
+        solver->watches[lit.toInt()]
         , lit
         , varElimToCheck
         , varElimToCheckHelper
     );
     varElimCheckUpdate(
-        solver->watches[lit.toInt()]
+        solver->watches[(~lit).toInt()]
         , ~lit
         , varElimToCheck
         , varElimToCheckHelper
     );
 
     //Save original state
-    const vec<Watched> poss = solver->watches[(~lit).toInt()];
-    const vec<Watched> negs = solver->watches[lit.toInt()];
+    const vec<Watched> poss = solver->watches[lit.toInt()];
+    const vec<Watched> negs = solver->watches[(~lit).toInt()];
 
     //Remove clauses
     removeClausesHelper(poss, lit);
     removeClausesHelper(negs, ~lit);
 
     //Clear occur
-    solver->watches[(~lit).toInt()].clear();
     solver->watches[lit.toInt()].clear();
+    solver->watches[(~lit).toInt()].clear();
 
     //Add all resolvents
     for (vec<Watched>::const_iterator
@@ -2199,8 +2199,8 @@ bool Simplifier::maybeEliminate(const Var var)
     }
 
     //This should now be empty
-    assert(solver->watches[(~lit).toInt()].size() == 0
-            &&  solver->watches[lit.toInt()].size() == 0);
+    assert(solver->watches[lit.toInt()].size() == 0
+            &&  solver->watches[(~lit).toInt()].size() == 0);
 
     //cout << "varElimToCheck size: " << varElimToCheck.size() << endl;
     for(vector<Var>::const_iterator
@@ -2234,8 +2234,8 @@ void Simplifier::addLearntBinaries(const Var var)
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
-    const vec<Watched>& ws2 = solver->watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
+    const vec<Watched>& ws2 = solver->watches[lit.toInt()];
 
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
@@ -2402,7 +2402,7 @@ bool Simplifier::merge(
 
             //Use watchlists
             //(~lit) because watches are inverted...... this is CONFUSING
-            const vec<Watched>& ws = solver->watches[(~lit).toInt()];
+            const vec<Watched>& ws = solver->watches[lit.toInt()];
             numMaxVarElimAgressiveCheck -= ws.size()/3;
             for(vec<Watched>::const_iterator it =
                 ws.begin(), end = ws.end()
@@ -2490,7 +2490,7 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     size_t pos = 0;
     size_t posLit = 0;
     size_t nNonLBinPos = 0;
-    const vec<Watched>& poss = solver->watches[(~lit).toInt()];
+    const vec<Watched>& poss = solver->watches[lit.toInt()];
     *toDecrease -= poss.size() + 100;
     for (vec<Watched>::const_iterator
         it = poss.begin(), end = poss.end()
@@ -2527,7 +2527,7 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     size_t neg = 0;
     size_t negLit = 0;
     size_t nNonLBinNeg = 0;
-    const vec<Watched>& negs = solver->watches[lit.toInt()];
+    const vec<Watched>& negs = solver->watches[(~lit).toInt()];
     *toDecrease -= negs.size() + 100;
     for (vec<Watched>::const_iterator
         it = negs.begin(), end = negs.end()
@@ -2643,7 +2643,7 @@ void Simplifier::orderVarsForElimInit()
 inline bool Simplifier::allTautologySlim(const Lit lit)
 {
     //clauses which contain '~lit'
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
         if (it->isBinary() && !it->getLearnt()) {
@@ -2724,13 +2724,13 @@ template<class T> void Simplifier::findSubsumed0(
     //Which literal in the clause has the smallest occur list? -- that will be picked to go through
     size_t min_i = 0;
     for (uint32_t i = 1; i < ps.size(); i++){
-        if (solver->watches[(~ps[i]).toInt()].size() < solver->watches[(~ps[min_i]).toInt()].size())
+        if (solver->watches[ps[i].toInt()].size() < solver->watches[ps[min_i].toInt()].size())
             min_i = i;
     }
     *toDecrease -= ps.size();
 
     //Go through the occur list of the literal that has the smallest occur list
-    const vec<Watched>& occ = solver->watches[(~ps[min_i]).toInt()];
+    const vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
     *toDecrease -= occ.size()*15 + 40;
     for (vec<Watched>::const_iterator
         it = occ.begin(), end = occ.end()

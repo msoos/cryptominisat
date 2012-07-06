@@ -458,7 +458,7 @@ size_t GateFinder::findEqOrGates()
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
             Lit lit = *l;
             const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
-            const vec<Watched>& ws = solver->watches[lit.toInt()];
+            const vec<Watched>& ws = solver->watches[(~lit).toInt()];
 
             if (cache.size() == 0 && ws.size() == 0) {
                 numSizeZero++;
@@ -506,7 +506,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
         }
 
         //Try to find corresponding binary clause in watchlist
-        const vec<Watched>& ws = solver->watches[otherLit.toInt()];
+        const vec<Watched>& ws = solver->watches[(~otherLit).toInt()];
         *subsumer->toDecrease -= ws.size();
         for (vec<Watched>::const_iterator
             wsIt = ws.begin(), endWS = ws.end()

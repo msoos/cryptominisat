@@ -70,8 +70,12 @@ void SolutionExtender::extend()
     }
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::const_iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isNonLearntBinary()) {

@@ -282,7 +282,7 @@ bool ClauseVivifier::vivifyClausesCache(
             const Lit lit = *l;
 
             //Go through the watchlist
-            const vec<Watched>& thisW = solver->watches[(~lit).toInt()];
+            const vec<Watched>& thisW = solver->watches[lit.toInt()];
             countTime += thisW.size();
             for(vec<Watched>::const_iterator
                 wit = thisW.begin(), wend = thisW.end()

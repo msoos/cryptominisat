@@ -172,7 +172,7 @@ bool VarReplacer::replaceBins()
     uint32_t removedNonLearnt = 0;
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
-        Lit lit1 = ~Lit::toLit(wsLit);
+        Lit lit1 = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         vec<Watched>::iterator i = ws.begin();
@@ -239,7 +239,7 @@ bool VarReplacer::replaceBins()
             }
 
             if (changedMain) {
-                solver->watches[(~thisLit1).toInt()].push(*i);
+                solver->watches[thisLit1.toInt()].push(*i);
             } else {
                 *j++ = *i;
             }

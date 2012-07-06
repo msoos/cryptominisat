@@ -16,13 +16,14 @@ add_library(cryptoms
     Prober.cpp
     Simplifier.cpp
     ClauseAllocator.cpp
-    CompleteDetachReattacher.cpp
+    #CompleteDetachReattacher.cpp
     DimacsParser.cpp
     SCCFinder.cpp
     SolverConf.cpp
     ClauseVivifier.cpp
     CalcDefPolars.cpp
     SolutionExtender.cpp
+    CompleteDetachReattacher.cpp
     ImplCache.cpp
     Searcher.cpp
     Solver.cpp

@@ -666,7 +666,7 @@ int Main::solve()
                 cout << (solver->model[i] == l_True ? "" : "-") << i+1 << " 0" << endl;
             }
         } else {
-            solver->dumpOrigClauses(conf.origFilename);
+            solver->dumpIrredClauses(conf.origFilename);
             if (conf.verbosity >= 1)
                 cout << "c Simplified original clauses dumped to file '"
                 << conf.origFilename << "'" << endl;

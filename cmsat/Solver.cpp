@@ -1615,8 +1615,12 @@ void Solver::printFullStats()
 void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
 {
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary() && lit < it2->getOtherLit()) {
@@ -1740,7 +1744,7 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     }
 }
 
-void Solver::dumpOrigClauses(std::ostream& os) const
+void Solver::dumpIrredClauses(std::ostream& os) const
 {
     uint32_t numClauses = 0;
     //unitary clauses
@@ -1832,8 +1836,12 @@ void Solver::printAllClauses() const
     }
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         cout << "watches[" << lit << "]" << endl;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
@@ -1854,8 +1862,12 @@ void Solver::printAllClauses() const
 bool Solver::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
 
         for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end() ; i != end; i++) {
@@ -1963,18 +1975,18 @@ bool Solver::normClauseIsAttached(const Clause& c) const
     if (c.size() == 3) {
         //The clause might have been longer, and has only recently
         //became 3-long. Check, and detach accordingly
-        if (findWCl(watches[(~c[0]).toInt()], offset)) goto fullClause;
+        if (findWCl(watches[c[0].toInt()], offset)) goto fullClause;
 
         Lit lit1 = c[0];
         Lit lit2 = c[1];
         Lit lit3 = c[2];
-        attached &= findWTri(watches[(~lit1).toInt()], lit2, lit3);
-        attached &= findWTri(watches[(~lit2).toInt()], lit1, lit3);
-        attached &= findWTri(watches[(~lit3).toInt()], lit1, lit2);
+        attached &= findWTri(watches[lit1.toInt()], lit2, lit3);
+        attached &= findWTri(watches[lit2.toInt()], lit1, lit3);
+        attached &= findWTri(watches[lit3.toInt()], lit1, lit2);
     } else {
         fullClause:
-        attached &= findWCl(watches[(~c[0]).toInt()], offset);
-        attached &= findWCl(watches[(~c[1]).toInt()], offset);
+        attached &= findWCl(watches[c[0].toInt()], offset);
+        attached &= findWCl(watches[c[1].toInt()], offset);
     }
 
     return attached;
@@ -1983,7 +1995,7 @@ bool Solver::normClauseIsAttached(const Clause& c) const
 void Solver::findAllAttach() const
 {
     for (uint32_t i = 0; i < watches.size(); i++) {
-        const Lit lit = ~Lit::toLit(i);
+        const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
             const Watched& w = watches[i][i2];
             if (!w.isClause())
@@ -2182,7 +2194,7 @@ void Solver::subsumeBinsWithBins()
         ; it++, wsLit++
     ) {
         vec<Watched>& ws = *it;
-        Lit lit = ~Lit::toLit(wsLit);
+        Lit lit = Lit::toLit(wsLit);
         if (ws.size() < 2) continue;
 
         std::sort(ws.begin(), ws.end(), BinSorter());

@@ -137,8 +137,8 @@ static inline bool findWBin(
     , const Lit lit1
     , const Lit impliedLit
 ) {
-    vec<Watched>::const_iterator i = wsFull[(~lit1).toInt()].begin();
-    vec<Watched>::const_iterator end = wsFull[(~lit1).toInt()].end();
+    vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
+    vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
     for (; i != end && (!i->isBinary() || i->getOtherLit() != impliedLit); i++);
     return i != end;
 }
@@ -149,8 +149,8 @@ static inline bool findWBin(
     , const Lit impliedLit
     , const bool learnt
 ) {
-    vec<Watched>::const_iterator i = wsFull[(~lit1).toInt()].begin();
-    vec<Watched>::const_iterator end = wsFull[(~lit1).toInt()].end();
+    vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
+    vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
     for (; i != end && (!i->isBinary() || i->getOtherLit() != impliedLit || i->getLearnt() != learnt); i++);
     return i != end;
 }
@@ -161,7 +161,7 @@ static inline void removeWBin(
     , const Lit impliedLit
     , const bool learnt
 ) {
-    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    vec<Watched>& ws = wsFull[lit1.toInt()];
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (!i->isBinary() || i->getOtherLit() != impliedLit || i->getLearnt() != learnt); i++);
     assert(i != end);
@@ -171,37 +171,13 @@ static inline void removeWBin(
     ws.shrink_(1);
 }
 
-static inline const std::pair<uint32_t, uint32_t>  removeWBinAll(
-    vec<Watched> &ws
-    , const Lit impliedLit
-) {
-    uint32_t removedLearnt = 0;
-    uint32_t removedNonLearnt = 0;
-
-    vec<Watched>::iterator i = ws.begin();
-    vec<Watched>::iterator j = i;
-    for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
-        if (!i->isBinary() || i->getOtherLit() != impliedLit)
-            *j++ = *i;
-        else {
-            if (i->getLearnt())
-                removedLearnt++;
-            else
-                removedNonLearnt++;
-        }
-    }
-    ws.shrink_(i-j);
-
-    return std::make_pair(removedLearnt, removedNonLearnt);
-}
-
 static inline Watched& findWatchedOfBin(
     vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
     , const bool learnt
 ) {
-    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isBinary() && i->getOtherLit() == lit2 && i->getLearnt() == learnt)
             return *i;
@@ -216,7 +192,7 @@ static inline Watched& findWatchedOfBin(
     , const Lit lit1
     , const Lit lit2
 ) {
-    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isBinary() && i->getOtherLit() == lit2)
             return *i;

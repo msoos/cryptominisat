@@ -78,7 +78,7 @@ void Prober::sortAndResetCandidates()
         //Calculate approx number of literals propagated for positive polarity
         size_t posPolar =
             std::max<size_t>(
-                solver->watches[lit.toInt()].size()
+                solver->watches[(~lit).toInt()].size()
                 , solver->candidateForBothProp[i].posLit
             );
         posPolar = std::max<size_t>(posPolar
@@ -87,7 +87,7 @@ void Prober::sortAndResetCandidates()
         //Calculate approx number of literals propagated for negative polarity
         size_t negPolar =
             std::max<size_t>(
-                solver->watches[(~lit).toInt()].size()
+                solver->watches[lit.toInt()].size()
                 , solver->candidateForBothProp[i].negLit
             );
         negPolar = std::max<size_t>(negPolar

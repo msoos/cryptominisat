@@ -98,7 +98,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         ) __builtin_prefetch(&transCache[0]);
 
         //Go through the watch
-        const vec<Watched>& ws = solver->watches[vertex];
+        const vec<Watched>& ws = solver->watches[(~vertLit).toInt()];
         for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
             //Only binary clauses matter
             if (!it->isBinary())

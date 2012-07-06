@@ -301,10 +301,10 @@ void ImplCache::tryVar(
     Lit lit = Lit(var, false);
 
     const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
-    assert(solver->watches.size() > ((~lit).toInt()));
-    const vec<Watched>& ws1 = solver->watches[(~lit).toInt()];
+    assert(solver->watches.size() > (lit.toInt()));
+    const vec<Watched>& ws1 = solver->watches[lit.toInt()];
     const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
-    const vec<Watched>& ws2 = solver->watches[(lit).toInt()];
+    const vec<Watched>& ws2 = solver->watches[(~lit).toInt()];
 
     //Fill 'seen' and 'val' from cache
     for (vector<LitExtra>::const_iterator
