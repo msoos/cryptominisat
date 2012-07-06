@@ -201,7 +201,6 @@ Simplifier::Sub0Ret Simplifier::subsume0(
         if (!tmp->learnt())
             ret.subsumedNonLearnt = true;
 
-        runStats.clauses_subsumed++;
         unlinkClause(*it);
         ret.numSubsumed++;
 
@@ -221,10 +220,12 @@ self-subsuming resolution using backward-subsumption
 
 @param[in] ps The clause to use for backw-subsumption and self-subs. resolution
 */
-void Simplifier::subsume1(ClOffset offset)
+Simplifier::Sub1Ret Simplifier::subsume1(ClOffset offset)
 {
     vector<ClOffset> subs;
     vector<Lit> subsLits;
+
+    Sub1Ret ret;
 
     #ifdef VERBOSE_DEBUG
     cout << "subsume1-ing with clause:" << ps << endl;
@@ -243,7 +244,6 @@ void Simplifier::subsume1(ClOffset offset)
         ClOffset offset2 = subs[j];
         Clause& cl2 = *solver->clAllocator->getPointer(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
-            runStats.clauses_subsumed++;
 
             //If subsumes a non-learnt, and is learnt, make it non-learnt
             if (cl.learnt()
@@ -256,16 +256,20 @@ void Simplifier::subsume1(ClOffset offset)
             cl.combineStats(cl2.stats);
 
             unlinkClause(offset2);
+            ret.sub++;
         } else { //Strengthen
             strengthen(offset2, subsLits[j]);
+            ret.str++;
             if (!solver->ok)
-                return;
+                return ret;
 
             //If we are waaay over time, just exit
             if (*toDecrease < -20L*1000L*1000L)
                 break;
         }
     }
+
+    return ret;
 }
 
 /**
@@ -390,9 +394,10 @@ void Simplifier::performSubsumption()
 
     double myTime = cpuTime();
     size_t wenThrough = 0;
+    size_t subsumed = 0;
     toDecrease = &numMaxSubsume0;
     while (*toDecrease > 0
-        && wenThrough < 2*solver->clauses.size()
+        && wenThrough < 1.5*(double)solver->clauses.size()
     ) {
         *toDecrease -= 20;
         wenThrough++;
@@ -411,10 +416,19 @@ void Simplifier::performSubsumption()
         if (cl->getFreed())
             continue;
 
-        subsume0(solver->clAllocator->getOffset(cl));
+        subsumed += subsume0(solver->clAllocator->getOffset(cl));
+    }
+
+    if (solver->conf.verbosity >= 3) {
+        cout
+        << "c subs: " << subsumed
+        << " tried: " << wenThrough
+        << " T: " << cpuTime() - myTime
+        << endl;
     }
 
     //Update time used
+    runStats.subsumedBySub += subsumed;
     runStats.subsumeTime += cpuTime() - myTime;
 }
 
@@ -425,8 +439,9 @@ bool Simplifier::performStrengthening()
     double myTime = cpuTime();
     size_t wenThrough = 0;
     toDecrease = &numMaxSubsume1;
+    Sub1Ret ret;
     while(*toDecrease > 0
-        && wenThrough < 2*solver->clauses.size()
+        && wenThrough < 1.5*(double)2*solver->clauses.size()
     ) {
         *toDecrease -= 20;
         wenThrough++;
@@ -445,11 +460,22 @@ bool Simplifier::performStrengthening()
         if (cl->getFreed())
             continue;
 
-        subsume1(solver->clAllocator->getOffset(cl));
+        ret += subsume1(solver->clAllocator->getOffset(cl));
 
-    };
+    }
+
+    if (solver->conf.verbosity >= 3) {
+        cout
+        << "c streng sub: " << ret.sub
+        << " str: " << ret.str
+        << " tried: " << wenThrough
+        << " T: " << cpuTime() - myTime
+        << endl;
+    }
 
     //Update time used
+    runStats.subsumedByStr += ret.sub;
+    runStats.litsRemStrengthen += ret.str;
     runStats.strengthenTime += cpuTime() - myTime;
 
     return solver->ok;
@@ -604,9 +630,8 @@ bool Simplifier::eliminateVars()
     toDecrease = &numMaxElim;
     orderVarsForElimInit();
 
-    #ifdef BIT_MORE_VERBOSITY
-    cout << "c #order size:" << order.size() << endl;
-    #endif
+    if (solver->conf.verbosity >= 5)
+        cout << "c #order size:" << varElimOrder.size() << endl;
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
@@ -617,7 +642,7 @@ bool Simplifier::eliminateVars()
         Var var = varElimOrder.removeMin();
 
         //Stats
-        *toDecrease -= 2000;
+        *toDecrease -= 20;
         wenThrough++;
 
         //Print status
@@ -646,11 +671,13 @@ bool Simplifier::eliminateVars()
             goto end;
     }
 
-    #ifdef BIT_MORE_VERBOSITY
-    cout << "c  #try to eliminate: " << wenThrough << endl;
-    cout << "c  #var-elim: " << vars_elimed << endl;
-    #endif
 end:
+    if (solver->conf.verbosity >= 5) {
+        cout << "c  #try to eliminate: " << wenThrough << endl;
+        cout << "c  #var-elim: " << vars_elimed << endl;
+        cout << "   #time: " << (cpuTime() - myTime) << endl;
+    }
+
     runStats.varElimTime += cpuTime() - myTime;
 
     return solver->ok;
@@ -750,33 +777,16 @@ bool Simplifier::loopSubsumeVarelim()
 
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     const size_t origTrailSize = solver->trail.size();
-    do {
-        //Carry out subsume0
-        performSubsumption();
+    //Carry out subsume0
+    performSubsumption();
 
-        //If no var elimination is needed, this IS fixedpoint
-        if (!solver->conf.doVarElim)
-            break;
+    //Carry out strengthening
+    if (!performStrengthening())
+        goto end;
 
-        //Eliminate variables
-        if (!eliminateVars())
-            goto end;
-
-        numMaxElim -= 50UL*1000UL*1000UL;
-
-        if (solver->conf.verbosity >= 5)
-            cout << "numMaxElim: " << numMaxElim << endl;
-
-        //Carry out strengthening
-        if (!performStrengthening())
-            goto end;
-
-    } while (
-        numMaxSubsume0 > 0
-        || numMaxSubsume1 > 0
-        || (//touchedVars.size() > 0 &&
-            numMaxElim > 0 && numMaxElimVars <= 0)
-    );
+    //If no var elimination is needed, this IS fixedpoint
+    if (solver->conf.doVarElim &&!eliminateVars())
+        goto end;
 
     assert(solver->ok);
 
@@ -2142,13 +2152,14 @@ bool Simplifier::maybeEliminate(const Var var)
                 linkInClause(*newCl);
                 solver->clauses.push_back(newCl);
                 ClOffset offset = solver->clAllocator->getOffset(newCl);
-                size_t num = subsume0(offset);
+                runStats.subsumedByVE += subsume0(offset);
             } else if (finalLits.size() == 2) {
                 Sub0Ret ret = subsume0(
                     std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
                     , finalLits //Literals in this binary clause
                     , calcAbstraction(finalLits) //Abstraction of literals
                 );
+                runStats.subsumedByVE += ret.numSubsumed;
                 if (ret.numSubsumed > 0) {
                     if (solver->conf.verbosity >= 5) {
                         cout << "Subsumed: " << ret.numSubsumed << endl;

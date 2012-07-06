@@ -100,7 +100,9 @@ public:
             , blocked(0)
             , blockedSumLits(0)
             , asymmSubs(0)
-            , clauses_subsumed(0)
+            , subsumedBySub(0)
+            , subsumedByStr(0)
+            , subsumedByVE(0)
             , litsRemStrengthen(0)
 
             //Elimination
@@ -155,7 +157,9 @@ public:
             blocked += other.blocked;
             blockedSumLits += other.blockedSumLits;
             asymmSubs += other.asymmSubs;
-            clauses_subsumed += other.clauses_subsumed;
+            subsumedBySub += other.subsumedBySub;
+            subsumedByStr += other.subsumedByStr;
+            subsumedByVE  += other.subsumedByVE;
             litsRemStrengthen += other.litsRemStrengthen;
 
             //Elim
@@ -182,7 +186,8 @@ public:
             //STRENGTH + SUBSUME
             cout << "c"
             << " lits-rem: " << litsRemStrengthen
-            << " cl-subs: " << clauses_subsumed
+            << " subsSUB: " << subsumedBySub
+            << " subsSTR: " << subsumedByStr
             << " time: " << std::fixed << std::setprecision(2)
             << (subsumeTime+strengthenTime) << " s"
             << endl;
@@ -215,6 +220,7 @@ public:
 
             cout
             << "c [v-elim]"
+            << " subs: "  << subsumedByVE
             << " learnt-bin rem: " << binLearntClRemThroughElim
             << " learnt-long rem: " << longLearntClRemThroughElim
             << " v-fix: " << std::setw(4) << zeroDepthAssings
@@ -267,8 +273,9 @@ public:
             );
 
             printStatsLine("c cl-subs"
-                , clauses_subsumed
-                , (double)clauses_subsumed/(double)(origNumIrredLongClauses+origNumRedLongClauses)
+                , subsumedBySub + subsumedByStr + subsumedByVE
+                , (double)(subsumedBySub + subsumedByStr + subsumedByVE)
+                /(double)(origNumIrredLongClauses+origNumRedLongClauses)
                 , "% clauses"
             );
 
@@ -322,7 +329,9 @@ public:
         uint64_t blocked;
         uint64_t blockedSumLits;
         uint64_t asymmSubs;
-        uint64_t clauses_subsumed;     ///<Number of clauses subsumed in this run
+        uint64_t subsumedBySub;
+        uint64_t subsumedByStr;
+        uint64_t subsumedByVE;
         uint64_t litsRemStrengthen;
 
         //Stats for var-elim
@@ -472,7 +481,24 @@ private:
 
     /////////////////////
     //subsume1
-    void subsume1(ClOffset offset);
+    struct Sub1Ret {
+        Sub1Ret() :
+            sub(0)
+            , str(0)
+        {};
+
+        Sub1Ret& operator+=(const Sub1Ret& other)
+        {
+            sub += other.sub;
+            str += other.str;
+
+            return *this;
+        }
+
+        size_t sub;
+        size_t str;
+    };
+    Sub1Ret subsume1(ClOffset offset);
 
     /////////////////////
     //Variable elimination
