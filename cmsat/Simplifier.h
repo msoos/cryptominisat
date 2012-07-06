@@ -37,6 +37,7 @@
 #include "cmsat/BitArray.h"
 #include "cmsat/SolverTypes.h"
 #include "cmsat/Heap.h"
+#include "XorFinder.h"
 
 using std::vector;
 using std::list;
@@ -554,8 +555,8 @@ private:
 
     /////////////////////
     //XOR finding
-    /*friend class XorFinder;
-    XorFinder *xorFinder;*/
+    friend class XorFinder;
+    XorFinder *xorFinder;
 
     /////////////////////
     //Blocked clause elimination

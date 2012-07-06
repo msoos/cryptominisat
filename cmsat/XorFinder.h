@@ -26,6 +26,7 @@
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include <set>
 #include "ImplCache.h"
 #include "CSet.h"
 using std::vector;
@@ -258,13 +259,21 @@ private:
         , FoundXors& foundCls);
 
     ///Finding of matching clause for XOR with the twist that cache can be used to replace lits
-    void findXorMatchExt(
-        const vec<Watched>& occ
+    void findXorMatch(
+        const vec<Watched>& ws
+        , const Lit lit
         , FoundXors& foundCls
     );
-
-    void findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
-    void findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const;
+    void findXorMatchExt(
+        const vec<Watched>& occ
+        , const Lit lit
+        , FoundXors& foundCls
+    );
+    void findXorMatch(
+        const vector<LitExtra>& lits
+        , const Lit lit
+        , FoundXors& foundCls
+    ) const;
 
     //const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
     bool mixXorAndGates();
@@ -278,7 +287,7 @@ private:
     //Major calculated data and indexes to this data
     vector<Xor> xors; ///<Recovered XORs
     vector<vector<uint32_t> > xorOcc;
-    vector<char> triedAlready; ///<These clauses have been tried to be made into an XOR. No point in tryin again
+    std::set<ClOffset> triedAlready; ///<These clauses have been tried to be made into an XOR. No point in tryin again
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<size_t> varToBlock; ///<variable-> block index map
 

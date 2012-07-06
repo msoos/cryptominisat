@@ -46,21 +46,28 @@ bool XorFinder::findXors()
     xorOcc.clear();
     xorOcc.resize(solver->nVars());
     triedAlready.clear();
-    triedAlready.resize(subsumer->clauses.size());
 
     size_t i = 0;
     for (vector<Clause*>::iterator
-        it = subsumer->clauses.begin()
-        , end = subsumer->clauses.end()
+        it = solver->clauses.begin()
+        , end = solver->clauses.end()
         ; it != end
         ; it++, i++
     ) {
-        if (*it == NULL)
+        //Already freed
+        if ((*it)->freed())
             continue;
 
-        if (!triedAlready[i]) {
-            triedAlready[i] = 1;
-            findXor(i);
+        //Too large -> too expensive
+        if ((*it)->size() > solver->conf.maxXorToFind)
+            return solver->ok;
+
+        ClOffset offset = solver->clAllocator->getOffset(*it);
+
+        //If not tried already, find an XOR with it
+        if (triedAlready.find(offset) == triedAlready.end()) {
+            triedAlready.insert(offset);
+            findXor(offset);
         }
     }
 
@@ -77,7 +84,7 @@ bool XorFinder::findXors()
 
     globalStats += runStats;
 
-    return solver->okay();
+    return solver->ok;
 }
 
 bool XorFinder::extractInfo()
@@ -359,11 +366,9 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     //cout << "Sum vars in blocks: " << numVarsInBlocks << endl;
 }
 
-void XorFinder::findXor(ClauseIndex c)
+void XorFinder::findXor(ClOffset offset)
 {
-    const Clause& cl = *subsumer->clauses[c.index];
-    if (cl.size() >= 6)
-        return; //for speed
+    const Clause& cl = *solver->clAllocator->getPointer(offset);
 
     //Calculate parameters of base clause. Also set 'seen' for easy check in 'findXorMatch()'
     bool rhs = true;
@@ -376,13 +381,10 @@ void XorFinder::findXor(ClauseIndex c)
     }
 
     //Set this clause as the base for the FoundXors
-    FoundXors foundCls(cl, subsumer->clauseData[c.index], rhs, whichOne);
+    FoundXors foundCls(cl, rhs, whichOne);
 
     const Lit *l = cl.begin();
     for (const Lit *end = cl.end(); l != end; l++) {
-        findXorMatch(subsumer->occur[(*l).toInt()], foundCls);
-        findXorMatch(subsumer->occur[(~*l).toInt()], foundCls);
-
         findXorMatch(solver->watches[(*l).toInt()], *l, foundCls);
         findXorMatch(solver->watches[(~(*l)).toInt()], ~(*l), foundCls);
 
@@ -432,44 +434,59 @@ void XorFinder::findXor(ClauseIndex c)
     }
 }
 
-void XorFinder::findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& foundCls) const
-{
-    for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++)  {
-        if (it->isBinary()
-            && seen[it->getOtherLit().var()]
-            )
-        {
-            foundCls.add(lit, it->getOtherLit());
-        }
-    }
-}
+void XorFinder::findXorMatch(
+    const vector<LitExtra>& lits
+    , const Lit lit
+    , FoundXors& foundCls
+) const {
 
-void XorFinder::findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const
-{
-    for (vector<LitExtra>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)  {
+    for (vector<LitExtra>::const_iterator
+        it = lits.begin(), end = lits.end()
+        ; it != end
+        ; it++
+    )  {
         if (seen[it->getLit().var()]) {
             foundCls.add(lit, it->getLit());
         }
     }
 }
 
-void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
-{
+void XorFinder::findXorMatchExt(
+    const vec<Watched>& ws
+    , Lit lit
+    , FoundXors& foundCls
+) {
     vector<Lit> tmpClause;
     //seen2 is clear
 
-    for (Occur::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
-        const uint32_t index = it->index;
-        if (subsumer->clauseData[index].size <= foundCls.getSize()) { //Must not be larger than the original clauses
-            Clause& cl = *subsumer->clauses[index];
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        //Deal with binary
+        if (it->isBinary()) {
+            if (seen[it->getOtherLit().var()])
+                foundCls.add(lit, it->getOtherLit());
+
+            continue;
+        }
+
+        //Dear with clause
+        const ClOffset offset = it->getOffset();
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+
+        if (cl.size() <= foundCls.getSize()) { //Must not be larger than the original clauses
             tmpClause.clear();
             //cout << "Orig clause: " << foundCls.getOrigCl() << endl;
 
             bool rhs = true;
             uint32_t i = 0;
             for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
+
+                //If this literal is not meant to be inside the XOR
+                //then try to find a replacement for it from the cache
                 if (!seen[l->var()]) {
-                    //If this literal is not meant to be inside the XOR, then try to find a replacement for it from the cache
                     bool found = false;
                     const vector<LitExtra>& cache = solver->implCache[Lit(l->var(), true).toInt()].lits;
                     for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end(); it2 != end2 && !found; it2++) {
@@ -485,8 +502,11 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
                     //Didn't find replacement
                     if (!found)
                         goto end;
-                } else {
-                    if (!seen2[l->var()]) { //Fine, it's inside the orig clause, but we might have already added this lit
+                }
+                else
+                //Fine, it's inside the orig clause, but we might have already added this lit
+                {
+                    if (!seen2[l->var()]) {
                         seen2[l->var()] = true;
                         rhs ^= l->sign();
                         tmpClause.push_back(*l);
@@ -504,7 +524,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
             //there is no point in using this clause as a base for another XOR
             //because exactly the same things will be found.
             if (cl.size() == foundCls.getSize())
-                triedAlready[index] = 1;
+                triedAlready.insert(offset);
 
             std::sort(tmpClause.begin(), tmpClause.end());
             //cout << "OK!" << endl;
@@ -520,15 +540,35 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
     }
 }
 
-void XorFinder::findXorMatch(const Occur& occ, FoundXors& foundCls)
-{
-    for (Occur::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
-        const uint32_t index = it->index;
-        if (subsumer->clauseData[index].size <= foundCls.getSize() //Must not be larger than the original clause
-            && ((subsumer->clauseData[index].abst | foundCls.getAbst()) == foundCls.getAbst()) //Doesn't contain literals not in the original clause
-        ) {
-            const Clause& cl = *subsumer->clauses[index];
+void XorFinder::findXorMatch(
+    const vec<Watched>& ws
+    , const Lit lit
+    , FoundXors& foundCls
+) {
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        //Deal with binary
+        if (it->isBinary()) {
+            if (seen[it->getOtherLit().var()])
+                foundCls.add(lit, it->getOtherLit());
 
+            continue;
+        }
+
+        //Dear with clause
+        const ClOffset offset = it->getOffset();
+        const Clause& cl = *solver->clAllocator->getPointer(offset);
+
+        if (
+            //Must not be larger than the original clause
+            cl.size() <= foundCls.getSize()
+
+            //Doesn't contain literals not in the original clause
+            && ((cl.abst | foundCls.getAbst()) == foundCls.getAbst())
+        ) {
             bool rhs = true;
             uint32_t i = 0;
             for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
@@ -544,7 +584,7 @@ void XorFinder::findXorMatch(const Occur& occ, FoundXors& foundCls)
             //there is no point in using this clause as a base for another XOR
             //because exactly the same things will be found.
             if (cl.size() == foundCls.getSize())
-                triedAlready[index] = 1;
+                triedAlready.insert(offset);
 
             foundCls.add(cl);
             end:;

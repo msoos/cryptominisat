@@ -39,7 +39,7 @@ using std::endl;
 #include "cmsat/ClauseCleaner.h"
 #include "cmsat/constants.h"
 #include "cmsat/SolutionExtender.h"
-//#include "cmsat/XorFinder.h"
+#include "cmsat/XorFinder.h"
 //#include "cmsat/GateFinder.h"
 #include "cmsat/VarReplacer.h"
 #include "cmsat/VarUpdateHelper.h"
@@ -69,13 +69,13 @@ Simplifier::Simplifier(Solver* _solver):
     , varElimOrder(VarOrderLt(varElimComplexity))
     , numCalls(0)
 {
-    //xorFinder = new XorFinder(this, solver);
+    xorFinder = new XorFinder(this, solver);
     //gateFinder = new GateFinder(this, solver);
 }
 
 Simplifier::~Simplifier()
 {
-    //delete xorFinder;
+    delete xorFinder;
     //delete gateFinder;
 }
 
@@ -771,35 +771,6 @@ bool Simplifier::propagate()
     return true;
 }
 
-bool Simplifier::loopSubsumeVarelim()
-{
-    assert(solver->ok);
-
-    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
-    const size_t origTrailSize = solver->trail.size();
-    //Carry out subsume0
-    performSubsumption();
-
-    //Carry out strengthening
-    if (!performStrengthening())
-        goto end;
-
-    //If no var elimination is needed, this IS fixedpoint
-    if (solver->conf.doVarElim &&!eliminateVars())
-        goto end;
-
-    assert(solver->ok);
-
-    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
-    removeAssignedVarsFromEliminated();
-
-end:
-    //Update global stats
-    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
-
-    return solver->ok;
-}
-
 /**
 @brief Main function in this class
 
@@ -861,18 +832,32 @@ bool Simplifier::simplifyBySubsumption()
     checkForElimedVars();
     #endif
 
-    //XOR-finding
-    /*if (solver->conf.doFindXors
-        && !xorFinder->findXors()
-    ) {
-        goto end;
-    }
-
-    //Gate-finding
+    /*//Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
     }*/
+
+    //Do subsumption & var-elim in loop
+    solver->checkBinStats();
+    assert(solver->ok);
+
+    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
+    const size_t origTrailSize = solver->trail.size();
+
+    //Carry out subsume0
+    performSubsumption();
+
+    //Carry out strengthening
+    if (!performStrengthening())
+        goto end;
+
+    //XOR-finding
+    if (solver->conf.doFindXors
+        && !xorFinder->findXors()
+    ) {
+        goto end;
+    }
 
     //Do asymtotic tautology elimination
     if (solver->conf.doBlockedClause) {
@@ -883,12 +868,17 @@ bool Simplifier::simplifyBySubsumption()
     if (solver->conf.doAsymmTE)
         asymmTE();
 
-    //Do subsumption & var-elim in loop
-    solver->checkBinStats();
-    if (!loopSubsumeVarelim())
+    //If no var elimination is needed, this IS fixedpoint
+    if (solver->conf.doVarElim &&!eliminateVars())
         goto end;
 
+    assert(solver->ok);
+
+    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
+    removeAssignedVarsFromEliminated();
+
 end:
+    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
     solver->checkBinStats();
     myTime = cpuTime();
 
