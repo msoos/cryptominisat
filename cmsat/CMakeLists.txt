@@ -8,7 +8,12 @@ include_directories(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
-add_library(cryptoms
+add_library(m4ri SHARED IMPORTED
+)
+
+set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
+
+add_library(cryptoms SHARED
     PropEngine.cpp
     PackedRow.cpp
     VarReplacer.cpp
@@ -17,7 +22,6 @@ add_library(cryptoms
     Simplifier.cpp
     ClauseAllocator.cpp
     #CompleteDetachReattacher.cpp
-    DimacsParser.cpp
     SCCFinder.cpp
     SolverConf.cpp
     ClauseVivifier.cpp
@@ -32,15 +36,18 @@ add_library(cryptoms
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
+target_link_libraries(cryptoms
+    m4ri
+)
+
 add_executable(cryptominisat
+    DimacsParser.cpp
     Main.cpp
 )
 
 target_link_libraries(cryptominisat
     ${ZLIB_LIBRARY}
-    ${Perftools_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${M4RI_LIBRARIES}
     cryptoms
 #    vtkViews
 #    vtkInfovis
