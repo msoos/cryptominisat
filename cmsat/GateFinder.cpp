@@ -522,10 +522,10 @@ void GateFinder::findOrGate(
             if (!wsIt->isBinary())
                 continue;
 
-            if ((learntGatesToo || !wsIt->getLearnt())
+            if ((learntGatesToo || !wsIt->learnt())
                  && wsIt->getOtherLit() == eqLit
             ) {
-                wasLearnt |= wsIt->getLearnt();
+                wasLearnt |= wsIt->learnt();
                 OK = true;
             }
         }

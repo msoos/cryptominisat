@@ -576,8 +576,8 @@ class Solver : public Searcher
 
                 if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
                 if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
-                if (first.getLearnt() == second.getLearnt()) return false;
-                if (!first.getLearnt()) return true;
+                if (first.learnt() == second.learnt()) return false;
+                if (!first.learnt()) return true;
                 return false;
             };
         };

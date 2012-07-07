@@ -759,7 +759,7 @@ bool Simplifier::propagate()
                 //Propagation
                 if (val == l_Undef) {
                     solver->enqueue(it->getOtherLit());
-                    if (it->getLearnt())
+                    if (it->learnt())
                         solver->propStats.propsBinRed++;
                     else
                         solver->propStats.propsBinIrred++;
@@ -955,7 +955,7 @@ bool Simplifier::propBins()
             if (solver->value(lit) == l_True
                 || solver->value(lit2) == l_True)
             {
-                if (ws[i].getLearnt())
+                if (ws[i].learnt())
                     numRemovedHalfLearnt++;
                 else
                     numRemovedHalfNonLearnt++;
@@ -979,7 +979,7 @@ bool Simplifier::propBins()
                 toEnqueue.push_back(lit);
 
                 //Remove binary clause
-                if (ws[i].getLearnt())
+                if (ws[i].learnt())
                     numRemovedHalfLearnt++;
                 else
                     numRemovedHalfNonLearnt++;
@@ -994,7 +994,7 @@ bool Simplifier::propBins()
                 toEnqueue.push_back(lit2);
 
                 //Remove binary clause
-                if (ws[i].getLearnt())
+                if (ws[i].learnt())
                     numRemovedHalfLearnt++;
                 else
                     numRemovedHalfNonLearnt++;
@@ -1263,8 +1263,8 @@ void Simplifier::blockBinaries()
                 blockedClauses.push_back(BlockedClause(tautOn, remCl));
 
                 blocked++;
-                removeWBin(solver->watches, lit2, lit, ws[i].getLearnt());
-                if (ws[i].getLearnt()) {
+                removeWBin(solver->watches, lit2, lit, ws[i].learnt());
+                if (ws[i].learnt()) {
                     solver->learntsLits -= 2;
                     solver->numBinsLearnt--;
                 } else {
@@ -1773,11 +1773,11 @@ void Simplifier::removeClausesHelper(
                 solver->watches
                 , watch.getOtherLit()
                 , lit
-                , watch.getLearnt()
+                , watch.learnt()
             );
 
             //Update stats
-            if (!watch.getLearnt()) {
+            if (!watch.learnt()) {
                 solver->clausesLits -= 2;
                 runStats.clauses_elimed_bin++;
                 runStats.clauses_elimed_sumsize += 2;
@@ -1789,7 +1789,7 @@ void Simplifier::removeClausesHelper(
             }
 
             //Put clause into blocked status
-            if (!watch.getLearnt()) {
+            if (!watch.learnt()) {
                 vector<Lit> lits;
                 lits.push_back(lit);
                 lits.push_back(watch.getOtherLit());
@@ -1808,7 +1808,7 @@ uint32_t Simplifier::numNonLearntBins(const Lit lit) const
     uint32_t num = 0;
     const vec<Watched>& ws = solver->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-        if (it->isBinary() && !it->getLearnt()) num++;
+        if (it->isBinary() && !it->learnt()) num++;
     }
 
     return num;
@@ -1840,7 +1840,7 @@ int Simplifier::testVarElim(const Var var)
         ; it != end
         ; it++
     ) {
-        if (it->isBinary() && !it->getLearnt()) {
+        if (it->isBinary() && !it->learnt()) {
             posSize++;
             before_literals += 2;
         }
@@ -1870,7 +1870,7 @@ int Simplifier::testVarElim(const Var var)
         ; it != end
         ; it++
     ) {
-        if (it->isBinary() && !it->getLearnt()) {
+        if (it->isBinary() && !it->learnt()) {
             negSize++;
             before_literals += 2;
         }
@@ -1915,8 +1915,8 @@ int Simplifier::testVarElim(const Var var)
             ; it2++
         ) {
             //If any of the two is learnt, skip
-            if ((it->isBinary() && it->getLearnt())
-                || (it2->isBinary() && it2->getLearnt())
+            if ((it->isBinary() && it->learnt())
+                || (it2->isBinary() && it2->learnt())
                 || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
                 || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
@@ -1995,7 +1995,7 @@ void Simplifier::printOccur(const Lit lit) const
             cout
             << "Bin   --> "
             << w.getOtherLit()
-            << "(learnt: " << w.getLearnt()
+            << "(learnt: " << w.learnt()
             << ")"
             << endl;
         }
@@ -2095,8 +2095,8 @@ bool Simplifier::maybeEliminate(const Var var)
             ; it2++
         ) {
             //If any of the two is learnt, skip
-            if ((it->isBinary() && it->getLearnt())
-                || (it2->isBinary() && it2->getLearnt())
+            if ((it->isBinary() && it->learnt())
+                || (it2->isBinary() && it2->learnt())
                 || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
                 || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
@@ -2244,13 +2244,13 @@ void Simplifier::addLearntBinaries(const Var var)
 
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
-        const bool numOneIsLearnt = w1->getLearnt();
+        const bool numOneIsLearnt = w1->learnt();
         const Lit lit1 = w1->getOtherLit();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
             if (!w2->isBinary()) continue;
-            const bool numTwoIsLearnt = w2->getLearnt();
+            const bool numTwoIsLearnt = w2->learnt();
             if (!numOneIsLearnt && !numTwoIsLearnt) {
                 //At least one must be learnt
                 continue;
@@ -2506,7 +2506,7 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
         if (it->isBinary())
         {
             //Only count non-learnt binary
-            if (!it->getLearnt())
+            if (!it->learnt())
                 nNonLBinPos++;
 
             continue;
@@ -2543,7 +2543,7 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
         if (it->isBinary())
         {
             //Only count non-learnt binary
-            if (!it->getLearnt())
+            if (!it->learnt())
                 nNonLBinNeg++;
 
             continue;
@@ -2651,7 +2651,7 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
     const vec<Watched>& ws = solver->watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
-        if (it->isBinary() && !it->getLearnt()) {
+        if (it->isBinary() && !it->learnt()) {
             if (seen[(~it->getOtherLit()).toInt()]) {
                 assert(it->getOtherLit() != ~lit);
                 continue;

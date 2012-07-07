@@ -58,7 +58,7 @@ void ClauseCleaner::removeSatisfiedBins()
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
             if (i->isBinary() && satisfied(*i, lit)) {
-                if (i->getLearnt())
+                if (i->learnt())
                     numRemovedHalfLearnt++;
                 else
                     numRemovedHalfNonLearnt++;

@@ -153,7 +153,7 @@ class Watched {
             data1 = lit.toInt();
         }
 
-        bool getLearnt() const
+        bool learnt() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary());

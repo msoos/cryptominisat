@@ -66,7 +66,7 @@ void CalcDefPolars::tallyVotesBin(vector<double>& votes, const vector<vec<Watche
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
-                if (!it2->getLearnt()) {
+                if (!it2->learnt()) {
                     if (lit.sign()) votes[lit.var()] += 0.5;
                     else votes[lit.var()] -= 0.5;
 

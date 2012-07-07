@@ -196,7 +196,7 @@ inline bool PropEngine::propBinaryClause(
 ) {
     const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        if (i->getLearnt())
+        if (i->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
@@ -204,7 +204,7 @@ inline bool PropEngine::propBinaryClause(
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
         //Update stats
-        if (i->getLearnt())
+        if (i->learnt())
             lastConflictCausedBy = CONFL_BY_BIN_RED_CLAUSE;
         else
             lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
@@ -566,7 +566,7 @@ PropBy PropEngine::propagateNonLearntBin()
         Lit p = trail[qhead++];
         vec<Watched> & ws = watches[(~p).toInt()];
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
-            if (!k->isBinary() || k->getLearnt()) continue;
+            if (!k->isBinary() || k->learnt()) continue;
 
             if (!propBinaryClause(k, p, confl)) return confl;
         }
@@ -616,7 +616,7 @@ Lit PropEngine::propagateFull(
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
             //If something other than non-learnt binary, skip
-            if (!k->isBinary() || k->getLearnt())
+            if (!k->isBinary() || k->learnt())
                 continue;
 
             ret = propBin(p, k, confl);
@@ -637,7 +637,7 @@ Lit PropEngine::propagateFull(
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
             //If something other than learnt binary, skip
-            if (!k->isBinary() || !k->getLearnt())
+            if (!k->isBinary() || !k->learnt())
                 continue;
 
             ret = propBin(p, k, confl);
@@ -714,13 +714,13 @@ PropResult PropEngine::propBin(
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
-        if (k->getLearnt())
+        if (k->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
 
         //Never propagated before
-        enqueueComplex(lit, p, k->getLearnt());
+        enqueueComplex(lit, p, k->learnt());
         return PROP_SOMETHING;
 
     } else if (val == l_False) {
@@ -730,7 +730,7 @@ PropResult PropEngine::propBin(
         #endif //VERBOSE_DEBUG_FULLPROP
 
         //Update stats
-        if (k->getLearnt())
+        if (k->learnt())
             lastConflictCausedBy = CONFL_BY_BIN_RED_CLAUSE;
         else
             lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
@@ -746,7 +746,7 @@ PropResult PropEngine::propBin(
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Lit " << p << " also wants to propagate " << lit << endl;
         #endif
-        Lit remove = removeWhich(lit, p, k->getLearnt());
+        Lit remove = removeWhich(lit, p, k->learnt());
 
         //Remove this one
         if (remove == p) {
@@ -786,7 +786,7 @@ PropResult PropEngine::propBin(
             }
 
             //Update data indicating what lead to lit
-            varData[lit.var()].reason = PropBy(~p, k->getLearnt(), false, false);
+            varData[lit.var()].reason = PropBy(~p, k->learnt(), false, false);
 
             //for correctness, we would need this, but that would need re-writing of history :S
             //if (!onlyNonLearnt) return PropBy();
@@ -795,7 +795,7 @@ PropResult PropEngine::propBin(
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removing this bin clause" << endl;
             #endif
-            uselessBin.insert(BinaryClause(~p, lit, k->getLearnt()));
+            uselessBin.insert(BinaryClause(~p, lit, k->learnt()));
         }
     }
 
@@ -855,7 +855,7 @@ void PropEngine::printWatchList(const Lit lit) const
         ; it2++
     ) {
         if (it2->isBinary()) {
-            cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << endl;
+            cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->learnt()) << endl;
         } else if (it2->isTri()) {
             cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << endl;
         } else if (it2->isClause()) {
@@ -888,7 +888,7 @@ uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNo
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (it2->getLearnt()) num += alsoLearnt;
+                if (it2->learnt()) num += alsoLearnt;
                 else num+= alsoNonLearnt;
             }
         }

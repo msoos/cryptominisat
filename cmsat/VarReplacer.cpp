@@ -216,7 +216,7 @@ bool VarReplacer::replaceBins()
                 #endif
 
                 //Update function-internal stats
-                if (i->getLearnt())
+                if (i->learnt())
                     removedLearnt++;
                 else
                     removedNonLearnt++;
@@ -230,7 +230,7 @@ bool VarReplacer::replaceBins()
                 removed[origLit2.toInt()]++;
                 #endif
 
-                if (i->getLearnt())
+                if (i->learnt())
                     removedLearnt++;
                 else
                     removedNonLearnt++;

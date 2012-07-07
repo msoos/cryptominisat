@@ -84,8 +84,8 @@ struct BinSorter2 {
         if (first.isBinary() && !second.isBinary()) return true;
         if (second.isBinary() && !first.isBinary()) return false;
 
-        if (!first.getLearnt() && second.getLearnt()) return true;
-        if (first.getLearnt() && !second.getLearnt()) return false;
+        if (!first.learnt() && second.learnt()) return true;
+        if (first.learnt() && !second.learnt()) return false;
         return false;
     };
 };
@@ -315,7 +315,7 @@ bool ClauseVivifier::vivifyClausesCache(
                 ) {
                     isSubsumed = true;
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
-                    if (wit->getLearnt() && !cl.learnt()) {
+                    if (wit->learnt() && !cl.learnt()) {
                         makeNonLearntBin(lit, wit->getOtherLit());
                         solver->numBinsLearnt--;
                         solver->numBinsNonLearnt++;

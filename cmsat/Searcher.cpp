@@ -1875,7 +1875,7 @@ size_t Searcher::removeUselessBins()
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
             << it->getLit1() << " , " << it->getLit2()
-            << " , learnt: " << it->getLearnt() << endl;
+            << " , learnt: " << it->learnt() << endl;
             #endif
         }
     }

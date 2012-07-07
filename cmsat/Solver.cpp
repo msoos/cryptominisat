@@ -1625,8 +1625,8 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary() && lit < it2->getOtherLit()) {
                 bool toDump = false;
-                if (it2->getLearnt() && alsoLearnt) toDump = true;
-                if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
+                if (it2->learnt() && alsoLearnt) toDump = true;
+                if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump)
                     outfile << it2->getOtherLit() << " " << lit << " 0" << endl;
@@ -2109,7 +2109,7 @@ void Solver::checkBinStats() const
             ; it2++
         ) {
             if (it2->isBinary()) {
-                if (it2->getLearnt())
+                if (it2->learnt())
                     thisNumLearntBins++;
                 else
                     thisNumNonLearntBins++;
@@ -2215,22 +2215,22 @@ void Solver::subsumeBinsWithBins()
             if (i->getOtherLit() == lastLit) {
                 //The sorting algorithm prefers non-learnt to learnt, so it is
                 //impossible to have non-learnt before learnt
-                assert(!(i->getLearnt() == false && lastLearnt == true));
+                assert(!(i->learnt() == false && lastLearnt == true));
 
                 assert(i->getOtherLit().var() != lit.var());
-                removeWBin(watches, i->getOtherLit(), lit, i->getLearnt());
-                if (i->getLearnt()) {
+                removeWBin(watches, i->getOtherLit(), lit, i->learnt());
+                if (i->learnt()) {
                     learntsLits -= 2;
                     numBinsLearnt--;
                 } else {
                     clausesLits -= 2;
                     numBinsNonLearnt--;
-                    //touchedVars.touch(lit, i->getLearnt());
-                    //touchedVars.touch(i->getOtherLit(), i->getLearnt());
+                    //touchedVars.touch(lit, i->learnt());
+                    //touchedVars.touch(i->getOtherLit(), i->learnt());
                 }
             } else {
                 lastLit = i->getOtherLit();
-                lastLearnt = i->getLearnt();
+                lastLearnt = i->learnt();
                 *j++ = *i;
             }
         }

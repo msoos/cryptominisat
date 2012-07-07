@@ -67,7 +67,7 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     vec<Watched>::iterator j = i;
     for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
         if (i->isBinary()) {
-            if (i->getLearnt())
+            if (i->learnt())
                 stay.learntBins++;
             else
                 stay.nonLearntBins++;
