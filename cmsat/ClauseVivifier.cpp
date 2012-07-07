@@ -299,7 +299,7 @@ bool ClauseVivifier::vivifyClausesCache(
                     }
 
                     //Strengthening w/ tri
-                    if (wit->isTriClause()
+                    if (wit->isTri()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
                         if (seen[(wit->getOtherLit()).toInt()])
@@ -326,7 +326,7 @@ bool ClauseVivifier::vivifyClausesCache(
                 }
 
                 //Subsumption w/ tri
-                if (wit->isTriClause()
+                if (wit->isTri()
                     && cl.size() > 3 //Don't subsume clause with itself
                     && cl.learnt() //We cannot distinguish between learnt and non-learnt, so we have to do with only learnt here
                     && seen_subs[wit->getOtherLit().toInt()]

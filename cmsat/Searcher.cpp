@@ -1746,7 +1746,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
                 continue;
             }
 
-            if (i->isTriClause()) {
+            if (i->isTri()) {
                 if (seen[i->getOtherLit2().toInt()]) {
                     seen[(~i->getOtherLit()).toInt()] = 0;
                 }

@@ -611,7 +611,7 @@ void Simplifier::removeAllTrisAndLonger()
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
-            if (i->isTriClause() || i->isClause()) {
+            if (i->isTri() || i->isClause()) {
                 continue;
             } else {
                 assert(i->isBinary());

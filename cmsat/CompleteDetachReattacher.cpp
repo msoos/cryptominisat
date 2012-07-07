@@ -73,7 +73,7 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
                 stay.nonLearntBins++;
 
             *j++ = *i;
-        } else if (!removeTri && i->isTriClause()) {
+        } else if (!removeTri && i->isTri()) {
             stay.tris++;
             *j++ = *i;
         }

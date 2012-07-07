@@ -511,7 +511,7 @@ PropBy PropEngine::propagate(
                 continue;
             }
 
-            if (i->isTriClause()) {
+            if (i->isTri()) {
                 *j++ = *i;
                 //Propagate tri clause
                 ret = propTriClause<true>(i, p, confl, solver);
@@ -667,7 +667,7 @@ Lit PropEngine::propagateFull(
                 continue;
             }
 
-            if (i->isTriClause()) {
+            if (i->isTri()) {
                 *j++ = *i;
                 ret = propTriClause<false>(i, p, confl, NULL);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
@@ -820,7 +820,7 @@ void PropEngine::sortWatched()
         cout << "Before sorting:" << endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) cout << "Binary,";
-            if (ws[i2].isTriClause()) cout << "Tri,";
+            if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
         cout << endl;
@@ -832,7 +832,7 @@ void PropEngine::sortWatched()
         cout << "After sorting:" << endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) cout << "Binary,";
-            if (ws[i2].isTriClause()) cout << "Tri,";
+            if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
         cout << endl;
@@ -856,7 +856,7 @@ void PropEngine::printWatchList(const Lit lit) const
     ) {
         if (it2->isBinary()) {
             cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << endl;
-        } else if (it2->isTriClause()) {
+        } else if (it2->isTri()) {
             cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << endl;
         } else if (it2->isClause()) {
             cout << "cla:" << it2->getOffset() << endl;
@@ -924,7 +924,7 @@ inline void PropEngine::updateWatch(vec<Watched>& ws, const vector<uint32_t>& ou
         ; it != end
         ; it++
     ) {
-        if (it->isBinary() || it->isTriClause()) {
+        if (it->isBinary() || it->isTri()) {
             it->setOtherLit(
                 getUpdatedLit(it->getOtherLit(), outerToInter)
             );
@@ -932,7 +932,7 @@ inline void PropEngine::updateWatch(vec<Watched>& ws, const vector<uint32_t>& ou
                 continue;
         }
 
-        if (it->isTriClause()) {
+        if (it->isTri()) {
             it->setOtherLit2(
                 getUpdatedLit(it->getOtherLit2(), outerToInter)
             );

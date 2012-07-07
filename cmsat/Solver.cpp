@@ -1849,7 +1849,7 @@ void Solver::printAllClauses() const
                 cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << endl;
             } else if (it2->isClause()) {
                 cout << "Normal clause num " << it2->getOffset() << endl;
-            } else if (it2->isTriClause()) {
+            } else if (it2->isTri()) {
                 cout << "Tri clause:"
                 << lit << " , "
                 << it2->getOtherLit() << " , "

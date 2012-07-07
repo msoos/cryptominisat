@@ -126,7 +126,7 @@ class Watched {
             return (type == watch_clause_t);
         }
 
-        bool isTriClause() const
+        bool isTri() const
         {
             return (type == watch_tertiary_t);
         }
@@ -137,7 +137,7 @@ class Watched {
         Lit getOtherLit() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTriClause());
+            assert(isBinary() || isTri());
             #endif
             return Lit::toLit(data1);
         }
@@ -148,7 +148,7 @@ class Watched {
         void setOtherLit(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTriClause());
+            assert(isBinary() || isTri());
             #endif
             data1 = lit.toInt();
         }
@@ -176,7 +176,7 @@ class Watched {
         Lit getOtherLit2() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isTriClause());
+            assert(isTri());
             #endif
             return Lit::toLit(data2);
         }
@@ -184,7 +184,7 @@ class Watched {
         void setOtherLit2(const Lit lit2)
         {
             #ifdef DEBUG_WATCHED
-            assert(isTriClause());
+            assert(isTri());
             #endif
             data2 = lit2.toInt();
         }
@@ -241,8 +241,8 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
     if (x.isBinary()) return true;
 
     //from now on, none is binary.
-    if (y.isTriClause()) return false;
-    if (x.isTriClause()) return true;
+    if (y.isTri()) return false;
+    if (x.isTri()) return true;
 
     //from now on, none is binary or tertiary
     //don't bother sorting these

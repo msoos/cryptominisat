@@ -111,7 +111,7 @@ static inline bool findWTri(
     , const Lit lit2
 ) {
     vec<Watched>::const_iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isTriClause() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);
+    for (; i != end && (!i->isTri() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);
     return i != end;
 }
 
@@ -121,7 +121,7 @@ static inline void removeWTri(
     , const Lit lit2
 ) {
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isTriClause() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);
+    for (; i != end && (!i->isTri() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);
     assert(i != end);
     vec<Watched>::iterator j = i;
     i++;
