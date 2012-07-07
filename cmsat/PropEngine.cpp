@@ -917,8 +917,10 @@ void PropEngine::updateVars(
     }
 }
 
-inline void PropEngine::updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter)
-{
+inline void PropEngine::updateWatch(
+    vec<Watched>& ws
+    , const vector<uint32_t>& outerToInter
+) {
     for(vec<Watched>::iterator
         it = ws.begin(), end = ws.end()
         ; it != end
