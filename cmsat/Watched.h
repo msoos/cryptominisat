@@ -88,7 +88,7 @@ class Watched {
         Watched(const Lit lit1, const Lit lit2) :
             data1(lit1.toInt())
             , type(watch_tertiary_t)
-            , data2(lit2.toInt())
+            , data2(lit2.toInt() << 1)
         {
         }
 
@@ -158,7 +158,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBinary());
             #endif
-            return data2;
+            return data2 & 1;
         }
 
         void setLearnt(const bool learnt)
@@ -178,7 +178,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isTri());
             #endif
-            return Lit::toLit(data2);
+            return Lit::toLit(data2>>1);
         }
 
         void setOtherLit2(const Lit lit2)
@@ -186,7 +186,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isTri());
             #endif
-            data2 = lit2.toInt();
+            data2 = (lit2.toInt()<<1) | (data2&1);
         }
 
         /**
