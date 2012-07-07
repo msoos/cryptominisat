@@ -194,14 +194,14 @@ inline bool PropEngine::propBinaryClause(
     , const Lit p
     , PropBy& confl
 ) {
-    const lbool val = value(i->getOtherLit());
+    const lbool val = value(i->lit1());
     if (val.isUndef()) {
         if (i->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
 
-        enqueue(i->getOtherLit(), PropBy(~p));
+        enqueue(i->lit1(), PropBy(~p));
     } else if (val == l_False) {
         //Update stats
         if (i->learnt())
@@ -210,7 +210,7 @@ inline bool PropEngine::propBinaryClause(
             lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
 
         confl = PropBy(~p);
-        failBinLit = i->getOtherLit();
+        failBinLit = i->lit1();
         qhead = trail.size();
         return false;
     }
@@ -312,11 +312,11 @@ PropResult PropEngine::propNormalClause(
                 && solver != NULL
                 && varData[c[1].var()].reason.getType() == binary_t
             ) {
-                Lit other = varData[c[1].var()].reason.getOtherLit();
+                Lit other = varData[c[1].var()].reason.lit1();
                 bool OK = true;
                 for(uint32_t i = 2; i < c.size(); i++) {
                     if (varData[c[i].var()].reason.getType() != binary_t
-                        || other != varData[c[i].var()].reason.getOtherLit()
+                        || other != varData[c[i].var()].reason.lit1()
                     ) {
                         OK = false;
                         break;
@@ -368,14 +368,14 @@ PropResult PropEngine::propTriClause(
     , PropBy& confl
     , Solver* solver
 ) {
-    Lit otherLit = i->getOtherLit();
+    Lit otherLit = i->lit1();
     lbool val = value(otherLit);
 
     //literal is already satisfied, nothing to do
     if (val == l_True)
         return PROP_NOTHING;
 
-    Lit otherLit2 = i->getOtherLit2();
+    Lit otherLit2 = i->lit2();
     lbool val2 = value(otherLit2);
 
     //literal is already satisfied, nothing to do
@@ -386,15 +386,15 @@ PropResult PropEngine::propTriClause(
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from "
             << p << " , "
-            << i->getOtherLit() << " , "
-            << i->getOtherLit2() << endl;
+            << i->lit1() << " , "
+            << i->lit2() << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
-        confl = PropBy(~p, i->getOtherLit2());
+        confl = PropBy(~p, i->lit2());
 
         //Update stats
         lastConflictCausedBy = CONFL_BY_TRI_CLAUSE;
 
-        failBinLit = i->getOtherLit();
+        failBinLit = i->lit1();
         qhead = trail.size();
         return PROP_FAIL;
     }
@@ -424,11 +424,11 @@ bool PropEngine::propTriHelper(
                 && solver != NULL
                 && varData[p.var()].reason.getType() == binary_t
                 && ((varData[otherLit2.var()].reason.getType() == binary_t
-                    && varData[otherLit2.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit())
-                    || (varData[p.var()].reason.getOtherLit().var() == otherLit2.var())
+                    && varData[otherLit2.var()].reason.lit1() == varData[p.var()].reason.lit1())
+                    || (varData[p.var()].reason.lit1().var() == otherLit2.var())
                 )
             ) {
-                Lit lit= varData[p.var()].reason.getOtherLit();
+                Lit lit= varData[p.var()].reason.lit1();
 
                 solver->attachBinClause(lit, otherLit, true, false);
                 enqueue(otherLit, PropBy(lit));
@@ -711,7 +711,7 @@ PropResult PropEngine::propBin(
     , vec<Watched>::const_iterator k
     , PropBy& confl
 ) {
-    const Lit lit = k->getOtherLit();
+    const Lit lit = k->lit1();
     const lbool val = value(lit);
     if (val.isUndef()) {
         if (k->learnt())
@@ -855,9 +855,9 @@ void PropEngine::printWatchList(const Lit lit) const
         ; it2++
     ) {
         if (it2->isBinary()) {
-            cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->learnt()) << endl;
+            cout << "bin: " << lit << " , " << it2->lit1() << " learnt : " <<  (it2->learnt()) << endl;
         } else if (it2->isTri()) {
-            cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << endl;
+            cout << "tri: " << lit << " , " << it2->lit1() << " , " <<  (it2->lit2()) << endl;
         } else if (it2->isClause()) {
             cout << "cla:" << it2->getOffset() << endl;
         } else {
@@ -927,16 +927,16 @@ inline void PropEngine::updateWatch(
         ; it++
     ) {
         if (it->isBinary() || it->isTri()) {
-            it->setOtherLit(
-                getUpdatedLit(it->getOtherLit(), outerToInter)
+            it->setLit1(
+                getUpdatedLit(it->lit1(), outerToInter)
             );
             if (it->isBinary())
                 continue;
         }
 
         if (it->isTri()) {
-            it->setOtherLit2(
-                getUpdatedLit(it->getOtherLit2(), outerToInter)
+            it->setLit2(
+                getUpdatedLit(it->lit2(), outerToInter)
             );
             continue;
         }

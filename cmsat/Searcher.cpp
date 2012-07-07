@@ -192,7 +192,7 @@ Clause* Searcher::analyze(
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
-                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt, true);
+                analyzeHelper(confl.lit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
@@ -200,7 +200,7 @@ Clause* Searcher::analyze(
                 if (p == lit_Undef)
                     analyzeHelper(failBinLit, pathC, out_learnt, true);
 
-                analyzeHelper(confl.getOtherLit(), pathC, out_learnt, true);
+                analyzeHelper(confl.lit1(), pathC, out_learnt, true);
                 break;
             }
 
@@ -432,7 +432,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
     const PropBy rp = varData[p.var()].reason;
     switch (rp.getType()) {
         case tertiary_t : {
-            const Lit q = rp.getOtherLit2();
+            const Lit q = rp.lit2();
             if (varData[q.var()].level > 0) {
                 if ((seen[q.var()] & (2|4|8)) == 0) {
                     found_some |= dfs_removable(q, abstract_level);
@@ -448,7 +448,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
         }
 
         case binary_t: {
-            const Lit q = rp.getOtherLit();
+            const Lit q = rp.lit1();
             if (varData[q.var()].level > 0) {
                 if ((seen[q.var()] & (2|4|8)) == 0) {
                     found_some |= dfs_removable(q, abstract_level);
@@ -507,7 +507,7 @@ void Searcher::mark_needed_removable(const Lit p)
     const PropBy rp = varData[p.var()].reason;
     switch (rp.getType()) {
         case tertiary_t : {
-            const Lit q = rp.getOtherLit2();
+            const Lit q = rp.lit2();
             if (varData[q.var()].level > 0) {
                 const int qseen = seen[q.var()];
                 if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
@@ -519,7 +519,7 @@ void Searcher::mark_needed_removable(const Lit p)
         }
 
         case binary_t : {
-            const Lit q  = rp.getOtherLit();
+            const Lit q  = rp.lit1();
             if (varData[q.var()].level > 0) {
                 const int qseen = seen[q.var()];
                 if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
@@ -603,7 +603,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
             PropBy confl = varData[x].reason;
             switch(confl.getType()) {
                 case tertiary_t : {
-                    const Lit lit2 = confl.getOtherLit2();
+                    const Lit lit2 = confl.lit2();
                     if (varData[lit2.var()].level > 0)
                         seen[lit2.var()] = 1;
 
@@ -611,7 +611,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
                 }
 
                 case binary_t : {
-                    const Lit lit1 = confl.getOtherLit();
+                    const Lit lit1 = confl.lit1();
                     if (varData[lit1.var()].level > 0)
                         seen[lit1.var()] = 1;
                     break;
@@ -1742,16 +1742,16 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
             ; i++
         ) {
             if (i->isBinary()) {
-                seen[(~i->getOtherLit()).toInt()] = 0;
+                seen[(~i->lit1()).toInt()] = 0;
                 continue;
             }
 
             if (i->isTri()) {
-                if (seen[i->getOtherLit2().toInt()]) {
-                    seen[(~i->getOtherLit()).toInt()] = 0;
+                if (seen[i->lit2().toInt()]) {
+                    seen[(~i->lit1()).toInt()] = 0;
                 }
-                if (seen[i->getOtherLit().toInt()]) {
-                    seen[(~i->getOtherLit2()).toInt()] = 0;
+                if (seen[i->lit1().toInt()]) {
+                    seen[(~i->lit2()).toInt()] = 0;
                 }
             }
         }

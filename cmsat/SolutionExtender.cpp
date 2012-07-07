@@ -81,7 +81,7 @@ void SolutionExtender::extend()
             if (it2->isNonLearntBinary()) {
                 vector<Lit> tmp;
                 tmp.push_back(lit);
-                tmp.push_back(it2->getOtherLit());
+                tmp.push_back(it2->lit1());
                 const bool OK = addClause(tmp);
                 assert(OK);
             }

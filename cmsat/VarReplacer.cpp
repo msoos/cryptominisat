@@ -182,14 +182,14 @@ bool VarReplacer::replaceBins()
                 *j++ = *i;
                 continue;
             }
-            //cout << "bin: " << lit1 << " , " << i->getOtherLit() << " learnt : " <<  (i->isLearnt()) << endl;
+            //cout << "bin: " << lit1 << " , " << i->lit1() << " learnt : " <<  (i->isLearnt()) << endl;
             Lit thisLit1 = lit1;
-            Lit lit2 = i->getOtherLit();
+            Lit lit2 = i->lit1();
             assert(thisLit1.var() != lit2.var());
 
             if (table[lit2.var()].var() != lit2.var()) {
                 lit2 = table[lit2.var()] ^ lit2.sign();
-                i->setOtherLit(lit2);
+                i->setLit1(lit2);
                 runStats.replacedLits++;
             }
 

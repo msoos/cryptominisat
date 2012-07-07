@@ -1623,13 +1623,13 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit < it2->getOtherLit()) {
+            if (it2->isBinary() && lit < it2->lit1()) {
                 bool toDump = false;
                 if (it2->learnt() && alsoLearnt) toDump = true;
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump)
-                    outfile << it2->getOtherLit() << " " << lit << " 0" << endl;
+                    outfile << it2->lit1() << " " << lit << " 0" << endl;
             }
         }
     }
@@ -1846,14 +1846,14 @@ void Solver::printAllClauses() const
         cout << "watches[" << lit << "]" << endl;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << endl;
+                cout << "Binary clause part: " << lit << " , " << it2->lit1() << endl;
             } else if (it2->isClause()) {
                 cout << "Normal clause num " << it2->getOffset() << endl;
             } else if (it2->isTri()) {
                 cout << "Tri clause:"
                 << lit << " , "
-                << it2->getOtherLit() << " , "
-                << it2->getOtherLit2() << endl;
+                << it2->lit1() << " , "
+                << it2->lit2() << endl;
             }
         }
     }
@@ -1873,10 +1873,10 @@ bool Solver::verifyBinClauses() const
         for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end() ; i != end; i++) {
             if (i->isBinary()
                 && modelValue(lit) != l_True
-                && modelValue(i->getOtherLit()) != l_True
+                && modelValue(i->lit1()) != l_True
             ) {
-                cout << "bin clause: " << lit << " , " << i->getOtherLit() << " not satisfied!" << endl;
-                cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->getOtherLit()) << endl;
+                cout << "bin clause: " << lit << " , " << i->lit1() << " not satisfied!" << endl;
+                cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->lit1()) << endl;
                 return false;
             }
         }
@@ -2212,13 +2212,13 @@ void Solver::subsumeBinsWithBins()
                 continue;
             }
 
-            if (i->getOtherLit() == lastLit) {
+            if (i->lit1() == lastLit) {
                 //The sorting algorithm prefers non-learnt to learnt, so it is
                 //impossible to have non-learnt before learnt
                 assert(!(i->learnt() == false && lastLearnt == true));
 
-                assert(i->getOtherLit().var() != lit.var());
-                removeWBin(watches, i->getOtherLit(), lit, i->learnt());
+                assert(i->lit1().var() != lit.var());
+                removeWBin(watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
                     learntsLits -= 2;
                     numBinsLearnt--;
@@ -2226,10 +2226,10 @@ void Solver::subsumeBinsWithBins()
                     clausesLits -= 2;
                     numBinsNonLearnt--;
                     //touchedVars.touch(lit, i->learnt());
-                    //touchedVars.touch(i->getOtherLit(), i->learnt());
+                    //touchedVars.touch(i->lit1(), i->learnt());
                 }
             } else {
-                lastLit = i->getOtherLit();
+                lastLit = i->lit1();
                 lastLearnt = i->learnt();
                 *j++ = *i;
             }

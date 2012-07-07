@@ -466,8 +466,8 @@ void XorFinder::findXorMatchExt(
     ) {
         //Deal with binary
         if (it->isBinary()) {
-            if (seen[it->getOtherLit().var()])
-                foundCls.add(lit, it->getOtherLit());
+            if (seen[it->lit1().var()])
+                foundCls.add(lit, it->lit1());
 
             continue;
         }
@@ -552,8 +552,8 @@ void XorFinder::findXorMatch(
     ) {
         //Deal with binary
         if (it->isBinary()) {
-            if (seen[it->getOtherLit().var()])
-                foundCls.add(lit, it->getOtherLit());
+            if (seen[it->lit1().var()])
+                foundCls.add(lit, it->lit1());
 
             continue;
         }

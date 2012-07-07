@@ -574,8 +574,8 @@ class Solver : public Searcher
 
                 assert(first.isBinary() && second.isBinary());
 
-                if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
-                if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
+                if (first.lit1().toInt() < second.lit1().toInt()) return true;
+                if (first.lit1().toInt() > second.lit1().toInt()) return false;
                 if (first.learnt() == second.learnt()) return false;
                 if (!first.learnt()) return true;
                 return false;

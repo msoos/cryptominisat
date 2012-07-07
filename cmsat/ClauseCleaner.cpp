@@ -33,7 +33,7 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBinary());
     if (solver->value(lit) == l_True) return true;
-    if (solver->value(watched.getOtherLit()) == l_True) return true;
+    if (solver->value(watched.lit1()) == l_True) return true;
     return false;
 }
 

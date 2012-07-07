@@ -295,28 +295,28 @@ bool ClauseVivifier::vivifyClausesCache(
                     if (wit->isBinary()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        seen[(~wit->getOtherLit()).toInt()] = 0;
+                        seen[(~wit->lit1()).toInt()] = 0;
                     }
 
                     //Strengthening w/ tri
                     if (wit->isTri()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        if (seen[(wit->getOtherLit()).toInt()])
-                            seen[(~wit->getOtherLit2()).toInt()] = 0;
-                        else if (seen[wit->getOtherLit2().toInt()])
-                            seen[(~wit->getOtherLit()).toInt()] = 0;
+                        if (seen[(wit->lit1()).toInt()])
+                            seen[(~wit->lit2()).toInt()] = 0;
+                        else if (seen[wit->lit2().toInt()])
+                            seen[(~wit->lit1()).toInt()] = 0;
                     }
                 }
 
                 //Subsumption w/ bin
                 if (wit->isBinary() &&
-                    seen_subs[wit->getOtherLit().toInt()]
+                    seen_subs[wit->lit1().toInt()]
                 ) {
                     isSubsumed = true;
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (wit->learnt() && !cl.learnt()) {
-                        makeNonLearntBin(lit, wit->getOtherLit());
+                        makeNonLearntBin(lit, wit->lit1());
                         solver->numBinsLearnt--;
                         solver->numBinsNonLearnt++;
                         solver->learntsLits -= 2;
@@ -329,8 +329,8 @@ bool ClauseVivifier::vivifyClausesCache(
                 if (wit->isTri()
                     && cl.size() > 3 //Don't subsume clause with itself
                     && cl.learnt() //We cannot distinguish between learnt and non-learnt, so we have to do with only learnt here
-                    && seen_subs[wit->getOtherLit().toInt()]
-                    && seen_subs[wit->getOtherLit2().toInt()]
+                    && seen_subs[wit->lit1().toInt()]
+                    && seen_subs[wit->lit2().toInt()]
                 ) {
                     isSubsumed = true;
                     break;

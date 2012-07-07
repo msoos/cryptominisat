@@ -748,7 +748,7 @@ bool Simplifier::propagate()
             }
 
             if (it->isBinary()) {
-                const lbool val = solver->value(it->getOtherLit());
+                const lbool val = solver->value(it->lit1());
 
                 //UNSAT
                 if (val == l_False) {
@@ -758,7 +758,7 @@ bool Simplifier::propagate()
 
                 //Propagation
                 if (val == l_Undef) {
-                    solver->enqueue(it->getOtherLit());
+                    solver->enqueue(it->lit1());
                     if (it->learnt())
                         solver->propStats.propsBinRed++;
                     else
@@ -949,7 +949,7 @@ bool Simplifier::propBins()
 
             assert(ws[i].isBinary());
 
-            const Lit lit2 = ws[i].getOtherLit();
+            const Lit lit2 = ws[i].lit1();
 
             //Satisfied, remove
             if (solver->value(lit) == l_True
@@ -1072,10 +1072,10 @@ void Simplifier::checkForElimedVars()
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (var_elimed[lit.var()] || var_elimed[it2->getOtherLit().var()]) {
+                if (var_elimed[lit.var()] || var_elimed[it2->lit1().var()]) {
                     cout
                     << "Error: A var is elimed in a binary clause: "
-                    << lit << " , " << it2->getOtherLit()
+                    << lit << " , " << it2->lit1()
                     << endl;
 
                     exit(-1);
@@ -1235,14 +1235,14 @@ void Simplifier::blockBinaries()
         ) {
             if (!ws[i].isBinary()
                 //Don't go through the same binary twice
-                || (ws[i].isBinary() && lit < ws[i].getOtherLit())
+                || (ws[i].isBinary() && lit < ws[i].lit1())
             ) {
                 ws[j++] = ws[i];
                 continue;
             }
 
             wenThrough++;
-            const Lit lit2 = ws[i].getOtherLit();
+            const Lit lit2 = ws[i].lit1();
 
             *toDecrease -= 2;
             seen[lit.toInt()] = 1;
@@ -1771,7 +1771,7 @@ void Simplifier::removeClausesHelper(
             //the other half will be clean()-ed directly from watchlist
             removeWBin(
                 solver->watches
-                , watch.getOtherLit()
+                , watch.lit1()
                 , lit
                 , watch.learnt()
             );
@@ -1792,7 +1792,7 @@ void Simplifier::removeClausesHelper(
             if (!watch.learnt()) {
                 vector<Lit> lits;
                 lits.push_back(lit);
-                lits.push_back(watch.getOtherLit());
+                lits.push_back(watch.lit1());
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
@@ -1965,7 +1965,7 @@ void Simplifier::varElimCheckUpdate(
                 varElimToCheckHelper[var1] = 1;
             }
 
-            const Var var2 = it->getOtherLit().var();
+            const Var var2 = it->lit1().var();
             if (!varElimToCheckHelper[var2]) {
                 varElimToCheck.push_back(var2);
                 varElimToCheckHelper[var2] = 1;
@@ -1994,7 +1994,7 @@ void Simplifier::printOccur(const Lit lit) const
         if (w.isBinary()) {
             cout
             << "Bin   --> "
-            << w.getOtherLit()
+            << w.lit1()
             << "(learnt: " << w.learnt()
             << ")"
             << endl;
@@ -2245,7 +2245,7 @@ void Simplifier::addLearntBinaries(const Var var)
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
         const bool numOneIsLearnt = w1->learnt();
-        const Lit lit1 = w1->getOtherLit();
+        const Lit lit1 = w1->lit1();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
@@ -2256,7 +2256,7 @@ void Simplifier::addLearntBinaries(const Var var)
                 continue;
             }
 
-            const Lit lit2 = w2->getOtherLit();
+            const Lit lit2 = w2->lit1();
             if (solver->value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
 
             tmp[0] = lit1;
@@ -2309,10 +2309,10 @@ bool Simplifier::merge(
     bool retval = true;
     bool fancyRemove = false;
     if (ps.isBinary()) {
-        assert(ps.getOtherLit() != without_p);
+        assert(ps.lit1() != without_p);
 
-        seen[ps.getOtherLit().toInt()] = 1;
-        dummy.push_back(ps.getOtherLit());
+        seen[ps.lit1().toInt()] = 1;
+        dummy.push_back(ps.lit1());
     } else {
         Clause& cl = *solver->clAllocator->getPointer(ps.getOffset());
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
@@ -2328,16 +2328,16 @@ bool Simplifier::merge(
     }
 
     if (qs.isBinary()) {
-        assert(qs.getOtherLit() != without_q);
+        assert(qs.lit1() != without_q);
 
-        if (seen[(~qs.getOtherLit()).toInt()]) {
+        if (seen[(~qs.lit1()).toInt()]) {
             retval = false;
             dummy2 = dummy;
             goto end;
         }
-        if (!seen[qs.getOtherLit().toInt()]) {
-            dummy.push_back(qs.getOtherLit());
-            seen[qs.getOtherLit().toInt()] = 1;
+        if (!seen[qs.lit1().toInt()]) {
+            dummy.push_back(qs.lit1());
+            seen[qs.lit1().toInt()] = 1;
         }
     } else {
         Clause& cl = *solver->clAllocator->getPointer(qs.getOffset());
@@ -2419,7 +2419,7 @@ bool Simplifier::merge(
                     continue;
 
                 if (!it->isNonLearntBinary()) {
-                    const Lit otherLit = it->getOtherLit();
+                    const Lit otherLit = it->lit1();
 
                     //If (a V b) is learnt, make it non-learnt and we are done
                     if (seen[otherLit.toInt()]) {
@@ -2445,7 +2445,7 @@ bool Simplifier::merge(
                 //It's surely a non-learnt binary now
                 assert(it->isNonLearntBinary());
 
-                const Lit otherLit = it->getOtherLit();
+                const Lit otherLit = it->lit1();
 
                 //If (a) is in clause
                 //then (a V b) means -b can be put inside
@@ -2652,8 +2652,8 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
         if (it->isBinary() && !it->learnt()) {
-            if (seen[(~it->getOtherLit()).toInt()]) {
-                assert(it->getOtherLit() != ~lit);
+            if (seen[(~it->lit1()).toInt()]) {
+                assert(it->lit1() != ~lit);
                 continue;
             }
             return false;

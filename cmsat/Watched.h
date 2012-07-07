@@ -134,7 +134,7 @@ class Watched {
         /**
         @brief Get the sole other lit of the binary clause, or get lit2 of the tertiary clause
         */
-        Lit getOtherLit() const
+        Lit lit1() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
@@ -145,7 +145,7 @@ class Watched {
         /**
         @brief Set the sole other lit of the binary clause
         */
-        void setOtherLit(const Lit lit)
+        void setLit1(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
@@ -173,7 +173,7 @@ class Watched {
         /**
         @brief Get the 3rd literal of a 3-long clause
         */
-        Lit getOtherLit2() const
+        Lit lit2() const
         {
             #ifdef DEBUG_WATCHED
             assert(isTri());
@@ -181,7 +181,7 @@ class Watched {
             return Lit::toLit(data2>>1);
         }
 
-        void setOtherLit2(const Lit lit2)
+        void setLit2(const Lit lit2)
         {
             #ifdef DEBUG_WATCHED
             assert(isTri());
