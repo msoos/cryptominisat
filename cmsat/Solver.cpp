@@ -2246,7 +2246,7 @@ void Solver::subsumeImplicit()
                         assert(lastBin->lit1() == i->lit1());
 
                         lastBin->setLearnt(false);
-                        findWatchedOfBin(watches, lastBin->lit1(), lit, i->learnt()).setLearnt(false);
+                        findWatchedOfBin(watches, lastBin->lit1(), lit, true).setLearnt(false);
                         learntsLits -= 2;
                         clausesLits += 2;
                         numBinsLearnt--;
