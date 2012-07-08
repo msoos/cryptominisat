@@ -59,7 +59,6 @@ static inline void removeWCl(vec<Watched> &ws, const ClOffset c)
     ws.shrink_(1);
 }
 
-//////////////////
 // TRI Clause
 //////////////////
 
@@ -106,7 +105,6 @@ static inline void removeWTri(
     ws.shrink_(1);
 }
 
-//////////////////
 // BINARY Clause
 //////////////////
 static inline bool findWBin(
@@ -174,15 +172,22 @@ static inline Watched& findWatchedOfBin(
     return *ws.begin();
 }
 
-static inline Watched& findWatchedOfBin(
+static inline Watched& findWatchedOfTri(
     vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isBinary() && i->lit1() == lit2)
+        if (i->isTri()
+            && i->lit1() == lit2
+            && i->lit2() == lit3
+            && i->learnt() == learnt
+        ) {
             return *i;
+        }
     }
 
     assert(false);

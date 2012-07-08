@@ -2209,7 +2209,7 @@ void Solver::subsumeImplicit()
 
         Watched* i = ws.begin();
         Watched* j = i;
-        Watched* lastBin;
+        Watched* lastBin = NULL;
 
         Lit lastLit = lit_Undef;
         Lit lastLit2 = lit_Undef;
@@ -2246,7 +2246,7 @@ void Solver::subsumeImplicit()
                         assert(lastBin->lit1() == i->lit1());
 
                         lastBin->setLearnt(false);
-                        findWatchedOfBin(watches, lastBin->lit1(), lit).setLearnt(false);
+                        findWatchedOfBin(watches, lastBin->lit1(), lit, i->learnt()).setLearnt(false);
                         learntsLits -= 2;
                         clausesLits += 2;
                         numBinsLearnt--;

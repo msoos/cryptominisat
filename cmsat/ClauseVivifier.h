@@ -235,7 +235,6 @@ class ClauseVivifier {
             , bool learnt
             , bool alsoStrengthen
         );
-        void makeNonLearntBin(const Lit lit1, const Lit lit2);
 
         ///Sort clauses according to size
         struct SortBySize

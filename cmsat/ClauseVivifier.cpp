@@ -77,12 +77,6 @@ end:
     return solver->ok;
 }
 
-void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2)
-{
-    findWatchedOfBin(solver->watches, lit1 ,lit2, true).setLearnt(false);
-    findWatchedOfBin(solver->watches, lit2 ,lit1, true).setLearnt(false);
-}
-
 /**
 @brief Performs clause vivification (by Hamadi et al.)
 
@@ -269,9 +263,9 @@ bool ClauseVivifier::vivifyClausesCache(
             const Lit lit = *l;
 
             //Go through the watchlist
-            const vec<Watched>& thisW = solver->watches[lit.toInt()];
+            vec<Watched>& thisW = solver->watches[lit.toInt()];
             countTime += thisW.size();
-            for(vec<Watched>::const_iterator
+            for(vec<Watched>::iterator
                 wit = thisW.begin(), wend = thisW.end()
                 ; wit != wend
                 ; wit++
@@ -300,25 +294,35 @@ bool ClauseVivifier::vivifyClausesCache(
                 if (wit->isBinary() &&
                     seen_subs[wit->lit1().toInt()]
                 ) {
-                    isSubsumed = true;
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (wit->learnt() && !cl.learnt()) {
-                        makeNonLearntBin(lit, wit->lit1());
+                        wit->setLearnt(false);
+                        findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
                         solver->numBinsLearnt--;
                         solver->numBinsNonLearnt++;
                         solver->learntsLits -= 2;
                         solver->clausesLits += 2;
                     }
+                    isSubsumed = true;
                     break;
                 }
 
                 //Subsumption w/ tri
                 if (wit->isTri()
-                    && cl.size() > 3 //Don't subsume clause with itself
-                    && cl.learnt() //We cannot distinguish between learnt and non-learnt, so we have to do with only learnt here
+                    && lit < wit->lit1() //Check only one instance of the TRI clause
                     && seen_subs[wit->lit1().toInt()]
                     && seen_subs[wit->lit2().toInt()]
                 ) {
+                    //If subsuming non-learnt with learnt, make the learnt into non-learnt
+                    if (!cl.learnt() && wit->learnt()) {
+                        wit->setLearnt(false);
+                        findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), wit->learnt()).setLearnt(false);
+                        findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), wit->learnt()).setLearnt(false);
+                        solver->numTrisLearnt--;
+                        solver->numTrisNonLearnt++;
+                        solver->learntsLits -= 3;
+                        solver->clausesLits += 3;
+                    }
                     isSubsumed = true;
                     break;
                 }
