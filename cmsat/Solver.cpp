@@ -2192,7 +2192,7 @@ void Solver::subsumeImplicit()
     uint64_t numBinsBefore = numBinsLearnt + numBinsNonLearnt;
     uint64_t numTrisBefore = numTrisLearnt + numTrisNonLearnt;
 
-    uint32_t wsLit = 0;
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
         it = watches.begin(), end = watches.end()
         ; it != end
