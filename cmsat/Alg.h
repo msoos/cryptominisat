@@ -122,35 +122,45 @@ static inline void removeWTri(
 static inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
-    , const Lit impliedLit
+    , const Lit lit2
 ) {
     vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
     vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
-    for (; i != end && (!i->isBinary() || i->lit1() != impliedLit); i++);
+    for (; i != end && (!i->isBinary() || i->lit1() != lit2); i++);
     return i != end;
 }
 
 static inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
-    , const Lit impliedLit
+    , const Lit lit2
     , const bool learnt
 ) {
     vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
     vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
-    for (; i != end && (!i->isBinary() || i->lit1() != impliedLit || i->learnt() != learnt); i++);
+    for (; i != end && (
+        !i->isBinary()
+        || i->lit1() != lit2
+        || i->learnt() != learnt
+    ); i++);
+
     return i != end;
 }
 
 static inline void removeWBin(
     vector<vec<Watched> > &wsFull
     , const Lit lit1
-    , const Lit impliedLit
+    , const Lit lit2
     , const bool learnt
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isBinary() || i->lit1() != impliedLit || i->learnt() != learnt); i++);
+    for (; i != end && (
+        !i->isBinary()
+        || i->lit1() != lit2
+        || i->learnt() != learnt
+    ); i++);
+
     assert(i != end);
     vec<Watched>::iterator j = i;
     i++;
