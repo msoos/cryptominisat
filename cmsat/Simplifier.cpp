@@ -1062,7 +1062,7 @@ void Simplifier::checkForElimedVars()
     }
 
     //Then, sanity-check the binary clauses
-    uint32_t wsLit = 0;
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end

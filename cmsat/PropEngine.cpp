@@ -894,7 +894,7 @@ uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNo
 {
     uint32_t num = 0;
 
-    uint32_t wsLit = 0;
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
         const vec<Watched>& ws = *it;

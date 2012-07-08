@@ -170,7 +170,7 @@ bool VarReplacer::replaceBins()
 
     uint32_t removedLearnt = 0;
     uint32_t removedNonLearnt = 0;
-    uint32_t wsLit = 0;
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
         Lit lit1 = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;

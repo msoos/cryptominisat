@@ -56,7 +56,7 @@ void CalcDefPolars::tallyVotes(const vector<Clause*>& cs, vector<double>& votes)
 
 void CalcDefPolars::tallyVotesBin(vector<double>& votes, const vector<vec<Watched> >& watches) const
 {
-    uint32_t wsLit = 0;
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
