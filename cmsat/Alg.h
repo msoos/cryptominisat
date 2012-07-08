@@ -38,22 +38,6 @@ static inline void remove(V& ts, const T& t)
     ts.resize(ts.size() -1);
 }
 
-template<class V>
-static inline uint32_t removeAll(V& ts, const Var t)
-{
-    typedef typename V::iterator myiter;
-    myiter i = ts.begin();
-    myiter j = i;
-    for (myiter end = ts.end(); i != end; i++) {
-        if (i->var() != t) {
-            *j++ = *i;
-        }
-    }
-    ts.resize(ts.size() - (i-j));
-
-    return (i-j);
-}
-
 template<class V, class T>
 static inline void removeW(V& ts, const T& t)
 {
@@ -62,22 +46,6 @@ static inline void removeW(V& ts, const T& t)
     assert(j < ts.size());
     for (; j < ts.size()-1; j++) ts[j] = ts[j+1];
     ts.pop_back();
-}
-
-template<class V, class T>
-static inline bool find(V& ts, const T& t)
-{
-    uint32_t j = 0;
-    for (; j < ts.size() && ts[j] != t; j++);
-    return j < ts.size();
-}
-
-template<class V, class T>
-static inline bool findW(V& ts, const T& t)
-{
-    uint32_t j = 0;
-    for (; j < ts.size() && ts[j].clause != t; j++);
-    return j < ts.size();
 }
 
 //////////////////
