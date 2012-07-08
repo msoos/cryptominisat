@@ -846,7 +846,7 @@ bool Simplifier::simplifyBySubsumption()
     origTrailSize = solver->trail.size();
 
     //Do subsumption & var-elim in loop
-    solver->checkBinStats();
+    solver->checkImplicitStats();
     assert(solver->ok);
 
     //Carry out subsume0
@@ -883,7 +883,6 @@ bool Simplifier::simplifyBySubsumption()
 
 end:
     runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
-    solver->checkBinStats();
     myTime = cpuTime();
 
     //Add back clauses to solver
@@ -915,6 +914,7 @@ end:
     //Sanity checks
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
+    solver->checkStats();
 
     numCalls++;
     return solver->ok;

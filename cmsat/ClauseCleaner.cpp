@@ -39,9 +39,7 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 
 void ClauseCleaner::treatImplicitClauses()
 {
-    #ifdef DEBUG_CLEAN
     assert(solver->decisionLevel() == 0);
-    #endif
 
     uint64_t remNonLBin = 0;
     uint64_t remLBin = 0;
@@ -150,6 +148,7 @@ void ClauseCleaner::treatImplicitClauses()
     solver->numBinsLearnt -= remLBin/2;
     solver->numTrisNonLearnt -= remNonLTri/3;
     solver->numTrisLearnt -= remLTri/3;
+    solver->checkImplicitStats();
 }
 
 void ClauseCleaner::cleanClauses(vector<Clause*>& cs)

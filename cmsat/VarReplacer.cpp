@@ -24,6 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
+#include <boost/type_traits/detail/is_mem_fun_pointer_impl.hpp>
 using std::cout;
 using std::endl;
 
@@ -137,12 +138,37 @@ bool VarReplacer::performReplace()
     solver->countNumBinClauses(false, true);
 #endif
 
-    if (!replaceBins()) goto end;
+    if (!replaceImplicit())
+        goto end;
+
+    //While replacing the implicit clauses
+    //We cannot enqueue literals, so we do it now
+    for(vector<Lit>::const_iterator
+        it = delayedEnqueue.begin(), end = delayedEnqueue.end()
+        ; it != end
+        ; it++
+    ) {
+        if (solver->value(*it) == l_Undef) {
+            solver->enqueue(*it);
+            solver->propStats.propsUnit++;
+        } else if (solver->value(*it) == l_False) {
+            solver->ok = false;
+            break;
+        }
+    }
+    delayedEnqueue.clear();
+    if (!solver->ok)
+        goto end;
+    solver->ok = solver->propagate().isNULL();
+    if (!solver->ok)
+        goto end;
+
     if (!replace_set(solver->clauses)) goto end;
     if (!replace_set(solver->learnts)) goto end;
 
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
+    solver->checkStats();
 
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
@@ -161,90 +187,211 @@ end:
     return solver->ok;
 }
 
-bool VarReplacer::replaceBins()
+bool VarReplacer::replaceImplicit()
 {
-    #ifdef DEBUG_BIN_REPLACER
-    vector<uint32_t> removed(solver->nVars()*2, 0);
-    uint32_t replacedLitsBefore = replacedLits;
-    #endif
+    size_t removedLearntBin = 0;
+    size_t removedNonLearntBin = 0;
+    size_t removedLearntTri = 0;
+    size_t removedNonLearntTri = 0;
 
-    uint32_t removedLearnt = 0;
-    uint32_t removedNonLearnt = 0;
+    vector<BinaryClause> delayedAttach;
+
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
-        Lit lit1 = Lit::toLit(wsLit);
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        const Lit origLit1 = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
-            if (!i->isBinary()) {
+            //Don't bother clauses
+            if (i->isClause()) {
                 *j++ = *i;
                 continue;
             }
-            //cout << "bin: " << lit1 << " , " << i->lit1() << " learnt : " <<  (i->isLearnt()) << endl;
-            Lit thisLit1 = lit1;
-            Lit lit2 = i->lit1();
-            assert(thisLit1.var() != lit2.var());
 
+            assert(solver->value(origLit1) == l_Undef);
+            Lit lit1 = origLit1;
+            Lit lit2 = i->lit1();
+            const Lit origLit2 = lit2;
+            assert(solver->value(origLit2) == l_Undef);
+            assert(origLit1.var() != origLit2.var());
+
+            //Update lit2
             if (table[lit2.var()].var() != lit2.var()) {
                 lit2 = table[lit2.var()] ^ lit2.sign();
                 i->setLit1(lit2);
                 runStats.replacedLits++;
             }
 
-            bool changedMain = false;
-            if (table[thisLit1.var()].var() != thisLit1.var()) {
-                thisLit1 = table[thisLit1.var()] ^ thisLit1.sign();
+            //Update main lit
+            if (table[lit1.var()].var() != lit1.var()) {
+                lit1 = table[lit1.var()] ^ lit1.sign();
                 runStats.replacedLits++;
-                changedMain = true;
             }
 
-            if (thisLit1 == lit2) {
-                if (solver->value(lit2) == l_Undef) {
-                    solver->enqueue(lit2);
-                    solver->propStats.propsUnit++;
-                } else if (solver->value(lit2) == l_False) {
-                    #ifdef VERBOSE_DEBUG
-                    cout << "Contradiction during replacement of lits in binary clause" << endl;
-                    #endif
-                    solver->ok = false;
-                }
-                #ifdef DEBUG_BIN_REPLACER
-                removed[lit1.toInt()]++;
-                removed[origLit2.toInt()]++;
-                #endif
+            if (i->isTri()) {
+                Lit lit3 = i->lit2();
+                Lit origLit3 = lit3;
+                assert(origLit1.var() != origLit3.var());
+                assert(origLit2.var() != origLit3.var());
+                assert(origLit2 < origLit3);
+                assert(solver->value(origLit3) == l_Undef);
 
+                //Update lit3
+                if (table[lit3.var()].var() != lit3.var()) {
+                    lit3 = table[lit3.var()] ^ lit3.sign();
+                    i->setLit2(lit3);
+                    runStats.replacedLits++;
+                }
+
+                bool remove = false;
+
+                //Tautology, remove
+                if (lit1 == ~lit2
+                    || lit1 == ~lit3
+                    || lit2 == ~lit3
+                ) {
+                    /*cout << "Tautological 3-long: "
+                    << lit1 << ", " << lit2 << ", " << lit3 << endl;*/
+                    remove = true;
+                }
+
+                //All 3 lits are the same
+                if (!remove
+                    && lit1 == lit2
+                    && lit2 == lit3
+                ) {
+                    //cout << "All 3 lits equal: " << lit1 << endl;
+                    delayedEnqueue.push_back(lit1);
+                    remove = true;
+                }
+
+                //1st and 2nd lits are the same
+                if (!remove
+                    && lit1 == lit2
+                ) {
+                    /*cout
+                    << "1st & 2nd the same: "
+                    << lit1 << ", " << lit2
+                    << " l: " << i->learnt()
+                    << endl;*/
+
+                    //Only attach once
+                    if (origLit1 < origLit2
+                        && origLit2 < origLit3
+                    ){
+                        delayedAttach.push_back(BinaryClause(lit1, lit3, i->learnt()));
+                    }
+                    remove = true;
+                }
+
+                //1st and 3rd lits  OR 2nd and 3rd lits are the same
+                if (!remove
+                    && (lit1 == lit3 || (lit2 == lit3))
+                ) {
+                    /*cout
+                    << "1st&2nd OR 2nd&3rd the same: "
+                    << lit1 << ", " << lit2
+                    << " l: " << i->learnt()
+                    << endl;*/
+
+                    //Only attach once
+                    if (origLit1 < origLit2
+                        && origLit2 < origLit3
+                    ){
+                        delayedAttach.push_back(BinaryClause(lit1, lit2, i->learnt()));
+                    }
+                    remove = true;
+                }
+
+                if (remove) {
+                    //Update function-internal stats
+                    if (i->learnt())
+                        removedLearntTri++;
+                    else
+                        removedNonLearntTri++;
+
+                    continue;
+                }
+
+                //Order literals
+                if (lit1 > lit3) {
+                    std::swap(lit1, lit3);
+                }
+                if (lit1 > lit2) {
+                    std::swap(lit1, lit2);
+                }
+                if (lit2 > lit3)
+                    std::swap(lit2, lit3);
+
+                //Now make into the order this TRI was in
+                if (origLit1 > origLit2
+                    && origLit1 < origLit3
+                ) {
+                    std::swap(lit1, lit2);
+                }
+                if (origLit1 > origLit2
+                    && origLit1 > origLit3
+                ) {
+                    std::swap(lit1, lit3);
+                    std::swap(lit2, lit3);
+                }
+                i->setLit1(lit2);
+                i->setLit2(lit3);
+
+                if (lit1 != origLit1) {
+                    solver->watches[lit1.toInt()].push(*i);
+                } else {
+                    *j++ = *i;
+                }
+
+                continue;
+            }
+
+            //Only binary are here
+            assert(i->isBinary());
+            bool remove = false;
+
+            //Two lits are the same in BIN
+            if (lit1 == lit2) {
+                delayedEnqueue.push_back(lit2);
+                remove = true;
+            }
+
+            //Tautology
+            if (lit1 == ~lit2)
+                remove = true;
+
+            if (remove) {
                 //Update function-internal stats
                 if (i->learnt())
-                    removedLearnt++;
+                    removedLearntBin++;
                 else
-                    removedNonLearnt++;
+                    removedNonLearntBin++;
 
                 continue;
             }
 
-            if (thisLit1 == ~lit2) {
-                #ifdef DEBUG_BIN_REPLACER
-                removed[lit1.toInt()]++;
-                removed[origLit2.toInt()]++;
-                #endif
-
-                if (i->learnt())
-                    removedLearnt++;
-                else
-                    removedNonLearnt++;
-
-                continue;
-            }
-
-            if (changedMain) {
-                solver->watches[thisLit1.toInt()].push(*i);
+            if (lit1 != origLit1) {
+                solver->watches[lit1.toInt()].push(*i);
             } else {
                 *j++ = *i;
             }
         }
         ws.shrink_(i-j);
+    }
+
+    for(vector<BinaryClause>::const_iterator
+        it = delayedAttach.begin(), end = delayedAttach.end()
+        ; it != end
+        ; it++
+    ) {
+        solver->attachBinClause(it->getLit1(), it->getLit2(), it->getLearnt());
     }
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
@@ -254,17 +401,22 @@ bool VarReplacer::replaceBins()
     cout << "c debug bin replacer end" << endl;
     #endif
 
-    assert(removedLearnt % 2 == 0);
-    assert(removedNonLearnt % 2 == 0);
-    solver->learntsLits -= removedLearnt;
-    solver->clausesLits -= removedNonLearnt;
-    solver->numBinsLearnt -= removedLearnt/2;
-    solver->numBinsNonLearnt -= removedNonLearnt/2;
+    assert(removedLearntBin % 2 == 0);
+    assert(removedNonLearntBin % 2 == 0);
+    assert(removedLearntTri % 3 == 0);
+    assert(removedNonLearntTri % 3 == 0);
+    solver->learntsLits -= removedLearntBin + removedLearntTri;
+    solver->clausesLits -= removedNonLearntBin + removedNonLearntTri;
+    solver->numBinsLearnt -= removedLearntBin/2;
+    solver->numBinsNonLearnt -= removedNonLearntBin/2;
+    solver->numTrisLearnt -= removedLearntTri/3;
+    solver->numTrisNonLearnt -= removedNonLearntTri/3;
+    solver->checkImplicitStats();
 
     //Global stats update
-    runStats.removedBinClauses += removedLearnt/2 + removedNonLearnt/2;
+    runStats.removedBinClauses += removedLearntBin/2 + removedNonLearntBin/2;
+    runStats.removedTriClauses += removedLearntTri/3 + removedNonLearntTri/3;
 
-    if (solver->ok) solver->ok = (solver->propagate().isNULL());
     return solver->ok;
 }
 
@@ -321,7 +473,7 @@ bool VarReplacer::handleUpdatedClause(
     , const Lit origLit2
 ) {
     bool satisfied = false;
-    std::sort(c.begin(), c.begin() + c.size());
+    std::sort(c.begin(), c.end());
     Lit p;
     uint32_t i, j;
     const uint32_t origSize = c.size();
@@ -359,6 +511,12 @@ bool VarReplacer::handleUpdatedClause(
         solver->attachBinClause(c[0], c[1], c.learnt());
         runStats.removedLongLits += origSize;
         return true;
+
+    case 3:
+        solver->attachTriClause(c[0], c[1], c[2], c.learnt());
+        runStats.removedLongLits += origSize;
+        return true;
+
     default:
         solver->attachClause(c);
         runStats.removedLongLits += origSize - c.size();
@@ -376,7 +534,11 @@ vector<Var> VarReplacer::getReplacingVars() const
 {
     vector<Var> replacingVars;
 
-    for(map<Var, vector<Var> >::const_iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
+    for(map<Var, vector<Var> >::const_iterator
+        it = reverseTable.begin(), end = reverseTable.end()
+        ; it != end
+        ; it++
+    ) {
         replacingVars.push_back(it->first);
     }
 

@@ -938,18 +938,25 @@ inline void PropEngine::updateWatch(
         ; it != end
         ; it++
     ) {
-        if (it->isBinary() || it->isTri()) {
+        if (it->isBinary()) {
             it->setLit1(
                 getUpdatedLit(it->lit1(), outerToInter)
             );
-            if (it->isBinary())
-                continue;
+
+            continue;
         }
 
         if (it->isTri()) {
-            it->setLit2(
-                getUpdatedLit(it->lit2(), outerToInter)
-            );
+            Lit lit1 = it->lit1();
+            Lit lit2 = it->lit2();
+            lit1 = getUpdatedLit(lit1, outerToInter);
+            lit2 = getUpdatedLit(lit2, outerToInter);
+            if (lit1 > lit2)
+                std::swap(lit1, lit2);
+
+            it->setLit1(lit1);
+            it->setLit2(lit2);
+
             continue;
         }
 

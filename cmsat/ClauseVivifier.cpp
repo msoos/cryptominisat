@@ -307,6 +307,10 @@ bool ClauseVivifier::vivifyClausesCache(
                     break;
                 }
 
+                if (wit->isTri()) {
+                    assert(wit->lit1() < wit->lit2());
+                }
+
                 //Subsumption w/ tri
                 if (wit->isTri()
                     && lit < wit->lit1() //Check only one instance of the TRI clause
@@ -316,8 +320,8 @@ bool ClauseVivifier::vivifyClausesCache(
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (!cl.learnt() && wit->learnt()) {
                         wit->setLearnt(false);
-                        findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), wit->learnt()).setLearnt(false);
-                        findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), wit->learnt()).setLearnt(false);
+                        findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), true).setLearnt(false);
+                        findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
                         solver->numTrisLearnt--;
                         solver->numTrisNonLearnt++;
                         solver->learntsLits -= 3;
@@ -381,6 +385,7 @@ bool ClauseVivifier::vivifyClausesCache(
         }
     }
     clauses.resize(clauses.size() - (i-j));
+    solver->checkImplicitStats();
 
     //Set stats
     tmpStats.cpu_time = cpuTime() - myTime;

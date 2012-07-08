@@ -161,16 +161,18 @@ class Watched {
             return data2 & 1;
         }
 
-        void setLearnt(const bool learnt)
+        void setLearnt(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
-            assert(learnt == false);
+            assert(toSet == false);
+            assert(learnt());
             #endif
-            if (learnt)
-                data2 = data2 | (uint32_t)1;
-            else
-                data2 = data2 & (~((uint32_t)1));
+            if (toSet) {
+                data2 |= (uint32_t)1;
+            } else {
+                data2 &= (~((uint32_t)1));
+            }
         }
 
         /**
@@ -286,6 +288,28 @@ static inline Watched& findWatchedOfTri(
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+        if (i->isTri()
+            && i->lit1() == lit2
+            && i->lit2() == lit3
+            && i->learnt() == learnt
+        ) {
+            return *i;
+        }
+    }
+
+    assert(false);
+    return *ws.begin();
+}
+
+static inline const Watched& findWatchedOfTri(
+    const vector<vec<Watched> >& wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
+) {
+    const vec<Watched>& ws = wsFull[lit1.toInt()];
+    for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isTri()
             && i->lit1() == lit2
             && i->lit2() == lit3

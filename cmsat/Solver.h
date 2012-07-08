@@ -406,7 +406,7 @@ class Solver : public Searcher
 
         //Checks
         void checkStats() const;
-        void checkBinStats() const;
+        void checkImplicitStats() const;
 
     protected:
 
@@ -586,17 +586,12 @@ class Solver : public Searcher
                     return false;
                 if (second.isClause())
                     return true;
-
-                //Fist is binary
-                /*if (first.isBinary() && second.isTri())
-                    return true;
-                if (first.isTri() && second.isBinary())
-                    return false;*/
+                //Now nothing is clause
 
                 if (first.lit1().toInt() < second.lit1().toInt()) return true;
                 if (first.lit1().toInt() > second.lit1().toInt()) return false;
                 if (first.isBinary() && second.isTri()) return true;
-                if (first.isTri() && second.isTri()) return false;
+                if (first.isTri() && second.isBinary()) return false;
                 //At this point either both are BIN or both are TRI
 
 
@@ -650,6 +645,7 @@ class Solver : public Searcher
         void findAllAttach() const;
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
+        void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
         void printClauseSizeDistrib();
         UsageStats sumClauseData(
             const vector<Clause*>& toprint

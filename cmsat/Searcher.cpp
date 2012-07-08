@@ -993,9 +993,9 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             break;
 
         case 3:
-            //3-long almost-normal learnt
+            //3-long learnt
             stats.learntTris++;
-            solver->attachClause(*cl);
+            solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);

@@ -93,6 +93,7 @@ class VarReplacer
                 , zeroDepthAssigns(0)
                 , actuallyReplacedVars(0)
                 , removedBinClauses(0)
+                , removedTriClauses(0)
                 , removedLongClauses(0)
                 , removedLongLits(0)
             {}
@@ -111,6 +112,7 @@ class VarReplacer
                 zeroDepthAssigns += other.zeroDepthAssigns;
                 actuallyReplacedVars += other.actuallyReplacedVars;
                 removedBinClauses += other.removedBinClauses;
+                removedTriClauses += other.removedTriClauses;
                 removedLongClauses += other.removedLongClauses;
                 removedLongLits += other.removedLongLits;
 
@@ -146,6 +148,10 @@ class VarReplacer
                     , removedBinClauses
                 );
 
+                printStatsLine("c tri cls removed"
+                    , removedBinClauses
+                );
+
                 printStatsLine("c long cls removed"
                     , removedLongClauses
                 );
@@ -163,6 +169,7 @@ class VarReplacer
                 << " vars " << actuallyReplacedVars
                 << " lits " << replacedLits
                 << " rem-bin-cls " << removedBinClauses
+                << " rem-tri-cls " << removedTriClauses
                 << " rem-long-cls " << removedLongClauses
                 << " T: " << std::fixed << std::setprecision(2)
                 << cpu_time << " s "
@@ -175,6 +182,7 @@ class VarReplacer
             uint64_t zeroDepthAssigns;
             uint64_t actuallyReplacedVars;
             uint64_t removedBinClauses;
+            uint64_t removedTriClauses;
             uint64_t removedLongClauses;
             uint64_t removedLongLits;
         };
@@ -184,12 +192,15 @@ class VarReplacer
         Solver* solver; ///<The solver we are working with
 
         bool replace_set(vector<Clause*>& cs);
-        bool replaceBins();
+        bool replaceImplicit();
         bool handleUpdatedClause(
             Clause& c
             , const Lit origLit1
             , const Lit origLit2
         );
+
+         //While replacing the implicit clauses we cannot enqeue
+        vector<Lit> delayedEnqueue;
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
