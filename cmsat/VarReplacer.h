@@ -185,7 +185,11 @@ class VarReplacer
 
         bool replace_set(vector<Clause*>& cs);
         bool replaceBins();
-        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
+        bool handleUpdatedClause(
+            Clause& c
+            , const Lit origLit1
+            , const Lit origLit2
+        );
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);

@@ -277,12 +277,11 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
     vector<Clause*>::iterator r = a;
     for (vector<Clause*>::iterator end = a + cs.size(); r != end; r++) {
         Clause& c = **r;
-        assert(c.size() > 2);
+        assert(c.size() > 3);
 
         bool changed = false;
         Lit origLit1 = c[0];
         Lit origLit2 = c[1];
-        Lit origLit3 = c[2];
 
         for (Lit *l = c.begin(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
@@ -292,7 +291,7 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
             }
         }
 
-        if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
+        if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             solver->clAllocator->clauseFree(*r);
             runStats.removedLongClauses++;
             if (!solver->ok) {
@@ -316,8 +315,11 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
 /**
 @brief Helper function for replace_set()
 */
-bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
-{
+bool VarReplacer::handleUpdatedClause(
+    Clause& c
+    , const Lit origLit1
+    , const Lit origLit2
+) {
     bool satisfied = false;
     std::sort(c.begin(), c.begin() + c.size());
     Lit p;
@@ -335,7 +337,7 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
     c.shrink(i - j);
     c.setChanged();
 
-    solver->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
+    solver->detachModifiedClause(origLit1, origLit2, origSize, &c);
 
     #ifdef VERBOSE_DEBUG
     cout << "clause after replacing: " << c << endl;

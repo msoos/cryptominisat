@@ -77,19 +77,6 @@ end:
     return solver->ok;
 }
 
-struct BinSorter2 {
-    bool operator()(const Watched& first, const Watched& second)
-    {
-        if (!first.isBinary() && !second.isBinary()) return false;
-        if (first.isBinary() && !second.isBinary()) return true;
-        if (second.isBinary() && !first.isBinary()) return false;
-
-        if (!first.learnt() && second.learnt()) return true;
-        if (first.learnt() && !second.learnt()) return false;
-        return false;
-    };
-};
-
 void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2)
 {
     findWatchedOfBin(solver->watches, lit1 ,lit2, true).setLearnt(false);
@@ -156,7 +143,7 @@ bool ClauseVivifier::vivifyClausesNormal()
         extraDiff += c.size();
         runStats.checkedClauses++;
 
-        assert(c.size() > 2);
+        assert(c.size() > 3);
         assert(!c.learnt());
 
         unused.clear();
@@ -266,7 +253,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Setup
         Clause& cl = **i;
-        assert(cl.size() > 2);
+        assert(cl.size() > 3);
         countTime += cl.size()*2;
         tmpStats.tried++;
         bool isSubsumed = false;

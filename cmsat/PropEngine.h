@@ -302,9 +302,28 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
-    virtual void       attachClause        (const Clause& c, const bool checkAttach = true);
-    virtual void       attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
-    virtual void       detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
+    virtual void attachClause(
+        const Clause& c
+        , const bool checkAttach = true
+    );
+    virtual void attachBinClause(
+        const Lit lit1
+        , const Lit lit2
+        , const bool learnt
+        , const bool checkUnassignedFirst = true
+    );
+    virtual void attachTriClause(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+        , const bool learnt
+    );
+    virtual void detachModifiedClause(
+        const Lit lit1
+        , const Lit lit2
+        , const uint32_t origSize
+        , const Clause* address
+    );
 
     /////////////////////////
     //Classes that must be friends, since they accomplish things on our datastructures

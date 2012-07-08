@@ -76,7 +76,7 @@ ClauseAllocator::~ClauseAllocator()
 template<class T>
 Clause* ClauseAllocator::Clause_new(const T& ps, const uint32_t conflictNum)
 {
-    assert(ps.size() > 2);
+    assert(ps.size() > 3);
     void* mem = allocEnough(ps.size());
     Clause* real= new (mem) Clause(ps, conflictNum);
 
@@ -91,7 +91,7 @@ template Clause* ClauseAllocator::Clause_new(const Clause& ps, uint32_t conflict
 */
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
-    assert(c.size() > 2);
+    assert(c.size() > 3);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
 

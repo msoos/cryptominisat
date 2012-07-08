@@ -57,6 +57,8 @@ Solver::Solver(const SolverConf& _conf) :
     , learntsLits(0)
     , numBinsNonLearnt(0)
     , numBinsLearnt(0)
+    , numTrisNonLearnt(0)
+    , numTrisLearnt(0)
 {
     prober = new Prober(this);
     subsumer = new Simplifier(this);
@@ -238,6 +240,11 @@ Clause* Solver::addClauseInt(
         case 2:
             attachBinClause(ps[0], ps[1], learnt);
             return NULL;
+
+        case 3:
+            attachTriClause(ps[0], ps[1], ps[2], learnt);
+            return NULL;
+
         default:
             Clause* c = clAllocator->Clause_new(ps, sumStats.conflStats.numConflicts);
             if (learnt)
@@ -280,6 +287,25 @@ void Solver::attachClause(const Clause& c)
     PropEngine::attachClause(c);
 }
 
+void Solver::attachTriClause(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
+) {
+    //Update stats
+    if (learnt) {
+        learntsLits += 3;
+        numTrisLearnt++;
+    } else {
+        clausesLits += 3;
+        numTrisNonLearnt++;
+    }
+
+    //Call Solver's function for heavy-lifting
+    PropEngine::attachTriClause(lit1, lit2, lit3, learnt);
+}
+
 void Solver::attachBinClause(
     const Lit lit1
     , const Lit lit2
@@ -302,24 +328,16 @@ void Solver::attachBinClause(
 
 void Solver::detachClause(const Clause& c)
 {
-   if (c.size() > 3) {
-       detachModifiedClause(
-            c[0], c[1]
-            , (c.size() == 3) ? c[2] : lit_Undef
-            ,  c.size()
-            , &c
-        );
-    } else {
-        detachModifiedClause(c[0], c[1], c[2], c.size(), &c);
-    }
+    assert(c.size() > 3);
+    detachModifiedClause(c[0], c[1], c.size(), &c);
 }
 
 void Solver::detachModifiedClause(
     const Lit lit1
     , const Lit lit2
-    , const Lit lit3
-    , const uint32_t origSize, const Clause* address)
-{
+    , const uint32_t origSize
+    , const Clause* address
+) {
     //Update stats
     if (address->learnt())
         learntsLits -= origSize;
@@ -327,7 +345,7 @@ void Solver::detachModifiedClause(
         clausesLits -= origSize;
 
     //Call heavy-lifter
-    PropEngine::detachModifiedClause(lit1, lit2, lit3, origSize, address);
+    PropEngine::detachModifiedClause(lit1, lit2, origSize, address);
 }
 
 bool Solver::addClauseHelper(vector<Lit>& ps)
@@ -414,7 +432,7 @@ bool Solver::addLearntClause(
 void Solver::reArrangeClause(Clause* clause)
 {
     Clause& c = *clause;
-    assert(c.size() > 2);
+    assert(c.size() > 3);
     if (c.size() == 3) return;
 
     //Change anything, but find the first two and assign them
@@ -815,7 +833,7 @@ void Solver::reduceDB()
             __builtin_prefetch(learnts[i+1], 0);
 
         Clause *cl = learnts[i];
-        assert(cl->size() > 2);
+        assert(cl->size() > 3);
         if (learnts[i]->stats.glue > 2
             && cl->size() > 3 //we cannot update activity of 3-longs because of watchlists
             && cl->stats.numPropAndConfl < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
@@ -977,7 +995,7 @@ lbool Solver::simplifyProblem()
         goto end;*/
 
     //Remove redundant binary clauses
-    subsumeBinsWithBins();
+    subsumeImplicit();
 
     //PROBE
     if (conf.doProbe && !prober->probe())
@@ -997,7 +1015,7 @@ lbool Solver::simplifyProblem()
     if (needToInterrupt) return l_Undef;
 
     //Remove redundant binary clauses
-    subsumeBinsWithBins();
+    subsumeImplicit();
 
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSatELite && !subsumer->simplifyBySubsumption())
@@ -1969,25 +1987,11 @@ void Solver::testAllClauseAttach() const
 bool Solver::normClauseIsAttached(const Clause& c) const
 {
     bool attached = true;
-    assert(c.size() > 2);
+    assert(c.size() > 3);
 
     ClOffset offset = clAllocator->getOffset(&c);
-    if (c.size() == 3) {
-        //The clause might have been longer, and has only recently
-        //became 3-long. Check, and detach accordingly
-        if (findWCl(watches[c[0].toInt()], offset)) goto fullClause;
-
-        Lit lit1 = c[0];
-        Lit lit2 = c[1];
-        Lit lit3 = c[2];
-        attached &= findWTri(watches[lit1.toInt()], lit2, lit3);
-        attached &= findWTri(watches[lit2.toInt()], lit1, lit3);
-        attached &= findWTri(watches[lit3.toInt()], lit1, lit2);
-    } else {
-        fullClause:
-        attached &= findWCl(watches[c[0].toInt()], offset);
-        attached &= findWCl(watches[c[1].toInt()], offset);
-    }
+    attached &= findWCl(watches[c[0].toInt()], offset);
+    attached &= findWCl(watches[c[1].toInt()], offset);
 
     return attached;
 }
@@ -2148,7 +2152,7 @@ void Solver::checkStats() const
     checkBinStats();
 
     //Check number of non-learnt literals
-    uint64_t numLitsNonLearnt = numBinsNonLearnt*2;
+    uint64_t numLitsNonLearnt = numBinsNonLearnt*2 + numTrisNonLearnt*3;
     for(vector<Clause*>::const_iterator
         it = clauses.begin(), end = clauses.end()
         ; it != end
@@ -2159,7 +2163,7 @@ void Solver::checkStats() const
     assert(numLitsNonLearnt == clausesLits);
 
     //Check number of learnt literals
-    uint64_t numLitsLearnt = numBinsLearnt*2;
+    uint64_t numLitsLearnt = numBinsLearnt*2 + numTrisLearnt*3;
     for(vector<Clause*>::const_iterator
         it = learnts.begin(), end = learnts.end()
         ; it != end
@@ -2182,10 +2186,11 @@ const char* Solver::getVersion()
 }
 
 
-void Solver::subsumeBinsWithBins()
+void Solver::subsumeImplicit()
 {
     const double myTime = cpuTime();
     uint64_t numBinsBefore = numBinsLearnt + numBinsNonLearnt;
+    uint64_t numTrisBefore = numTrisLearnt + numTrisNonLearnt;
 
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
@@ -2195,24 +2200,107 @@ void Solver::subsumeBinsWithBins()
     ) {
         vec<Watched>& ws = *it;
         Lit lit = Lit::toLit(wsLit);
-        if (ws.size() < 2) continue;
 
-        std::sort(ws.begin(), ws.end(), BinSorter());
+        //We can't do much when there is nothing, or only one
+        if (ws.size() < 2)
+            continue;
 
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = i;
+        std::sort(ws.begin(), ws.end(), WatchSorter());
+
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* lastBin;
 
         Lit lastLit = lit_Undef;
+        Lit lastLit2 = lit_Undef;
         bool lastLearnt = false;
         for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
 
-            //Only care about binary clauses
-            if (!i->isBinary()) {
+            //Don't care about long clauses
+            if (i->isClause()) {
                 *j++ = *i;
                 continue;
             }
 
-            if (i->lit1() == lastLit) {
+            if (i->isTri()) {
+
+                //Only treat one of the TRI's instances
+                if (lit > i->lit1()) {
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Brand new TRI
+                if (lastLit != i->lit1()) {
+                    lastLit2 = i->lit2();
+                    lastLearnt = i->learnt();
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Subsumed by bin
+                if (lastLit == i->lit1() && lastLit2 == lit_Undef) {
+                    if (lastLearnt && !i->learnt()) {
+                        assert(lastBin->isBinary());
+                        assert(lastBin->learnt());
+                        assert(lastBin->lit1() == i->lit1());
+
+                        lastBin->setLearnt(false);
+                        findWatchedOfBin(watches, lastBin->lit1(), lit).setLearnt(false);
+                        learntsLits -= 2;
+                        clausesLits += 2;
+                        numBinsLearnt--;
+                        numBinsNonLearnt++;
+                        lastLearnt = false;
+                    }
+
+                    //Remove Tri
+                    if (i->learnt()) {
+                        learntsLits -= 3;
+                        numTrisLearnt--;
+                    } else {
+                        clausesLits -= 3;
+                        numTrisNonLearnt--;
+                    }
+                    removeWTri(watches, i->lit1(), lit, i->lit2(), i->learnt());
+                    removeWTri(watches, i->lit2(), lit, i->lit1(), i->learnt());
+
+                    continue;
+                }
+
+                //Subsumed by Tri
+                if (lastLit == i->lit1() && lastLit2 == i->lit2()) {
+                    //The sorting algorithm prefers non-learnt to learnt, so it is
+                    //impossible to have non-learnt before learnt
+                    assert(!(i->learnt() == false && lastLearnt == true));
+
+                    //Remove Tri
+                    if (i->learnt()) {
+                        learntsLits -= 3;
+                        numTrisLearnt--;
+                    } else {
+                        clausesLits -= 3;
+                        numTrisNonLearnt--;
+                    }
+                    removeWTri(watches, i->lit1(), lit, i->lit2(), i->learnt());
+                    removeWTri(watches, i->lit2(), lit, i->lit1(), i->learnt());
+
+                    continue;
+                }
+
+                //Don't remove
+                lastLit = i->lit1();
+                lastLit2 = i->lit2();
+                lastLearnt = i->learnt();
+                *j++ = *i;
+                continue;
+            }
+
+            //Binary from here on
+            assert(i->isBinary());
+
+            //Subsume bin with bin
+            if (i->lit1() == lastLit && lastLit2 == lit_Undef) {
                 //The sorting algorithm prefers non-learnt to learnt, so it is
                 //impossible to have non-learnt before learnt
                 assert(!(i->learnt() == false && lastLearnt == true));
@@ -2229,7 +2317,9 @@ void Solver::subsumeBinsWithBins()
                     //touchedVars.touch(i->lit1(), i->learnt());
                 }
             } else {
+                lastBin = i;
                 lastLit = i->lit1();
+                lastLit2 = lit_Undef;
                 lastLearnt = i->learnt();
                 *j++ = *i;
             }
@@ -2239,9 +2329,11 @@ void Solver::subsumeBinsWithBins()
 
     if (conf.verbosity  >= 1) {
         cout
-        << "c bin-w-bin subsume "
-        << "rem " << std::setw(10)
+        << "c implicit sub"
+        << " rem bin " << std::setw(10)
         << (numBinsBefore - numBinsLearnt - numBinsNonLearnt)
+        << " rem tri " << std::setw(10)
+        << (numTrisBefore - numTrisLearnt - numTrisNonLearnt)
 
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
         << (cpuTime() - myTime)

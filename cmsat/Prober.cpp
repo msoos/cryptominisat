@@ -210,8 +210,8 @@ end:
             //Advanced cleanup
             advancedCleanup = true;
             CompleteDetachReatacher reattacher(solver);
-            reattacher.detachNonBinsNonTris(true);
-            const bool ret = reattacher.reattachNonBins();
+            reattacher.detachNonBinsNonTris();
+            const bool ret = reattacher.reattachLongs();
             release_assert(ret == true);
         } else {
             //Standard cleanup

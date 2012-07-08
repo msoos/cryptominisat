@@ -32,10 +32,8 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 /**
 @brief Completely detach all non-binary clauses
 */
-void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
+void CompleteDetachReatacher::detachNonBinsNonTris()
 {
-    uint64_t oldNumBinsLearnt = solver->numBinsLearnt;
-    uint64_t oldNumBinsNonLearnt = solver->numBinsNonLearnt;
     ClausesStay stay;
 
     for (vector<vec<Watched> >::iterator
@@ -43,15 +41,15 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
         ; it != end
         ; it++
     ) {
-        stay += clearWatchNotBinNotTri(*it, removeTri);
+        stay += clearWatchNotBinNotTri(*it);
     }
 
     solver->learntsLits = stay.learntBins;
     solver->clausesLits = stay.nonLearntBins;
     solver->numBinsLearnt = stay.learntBins/2;
     solver->numBinsNonLearnt = stay.nonLearntBins/2;
-    release_assert(solver->numBinsLearnt == oldNumBinsLearnt);
-    release_assert(solver->numBinsNonLearnt == oldNumBinsNonLearnt);
+    solver->numTrisLearnt = stay.learntTris/3;
+    solver->numTrisNonLearnt = stay.nonLearntTris/3;
 }
 
 /**
@@ -59,7 +57,6 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 */
 CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(
     vec<Watched>& ws
-    , const bool removeTri
 ) {
     ClausesStay stay;
 
@@ -73,8 +70,12 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
                 stay.nonLearntBins++;
 
             *j++ = *i;
-        } else if (!removeTri && i->isTri()) {
-            stay.tris++;
+        } else if (i->isTri()) {
+            if (i->learnt())
+                stay.learntTris++;
+            else
+                stay.nonLearntTris++;
+
             *j++ = *i;
         }
     }
@@ -86,11 +87,11 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 /**
 @brief Completely attach all clauses
 */
-bool CompleteDetachReatacher::reattachNonBins()
+bool CompleteDetachReatacher::reattachLongs()
 {
     cleanAndAttachClauses(solver->clauses);
     cleanAndAttachClauses(solver->learnts);
-    solver->clauseCleaner->removeSatisfiedBins();
+    solver->clauseCleaner->treatImplicitClauses();
 
     if (solver->ok)
         solver->ok = (solver->propagate().isNULL());
@@ -124,7 +125,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
 bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
-    assert(ps.size() > 2);
+    assert(ps.size() > 3);
 
     Lit *i = ps.begin();
     Lit *j = i;
@@ -148,6 +149,11 @@ bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 
         case 2: {
             solver->attachBinClause(ps[0], ps[1], ps.learnt());
+            return false;
+        }
+
+        case 3: {
+            solver->attachTriClause(ps[0], ps[1], ps[2], ps.learnt());
             return false;
         }
 

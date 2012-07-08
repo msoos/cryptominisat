@@ -85,10 +85,10 @@ class Watched {
         /**
         @brief Constructor for a 3-long clause
         */
-        Watched(const Lit lit1, const Lit lit2) :
+        Watched(const Lit lit1, const Lit lit2, const bool learnt) :
             data1(lit1.toInt())
             , type(watch_tertiary_t)
-            , data2(lit2.toInt() << 1)
+            , data2((lit2.toInt() << 1) | (uint32_t)learnt)
         {
         }
 
@@ -156,7 +156,7 @@ class Watched {
         bool learnt() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary());
+            assert(isBinary() || isTri());
             #endif
             return data2 & 1;
         }
@@ -164,10 +164,13 @@ class Watched {
         void setLearnt(const bool learnt)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary());
+            assert(isBinary() || isTri());
             assert(learnt == false);
             #endif
-            data2 = learnt;
+            if (learnt)
+                data2 = data2 | (uint32_t)1;
+            else
+                data2 = data2 & (~((uint32_t)1));
         }
 
         /**

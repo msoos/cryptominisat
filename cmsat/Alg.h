@@ -106,22 +106,41 @@ static inline void removeWCl(vec<Watched> &ws, const ClOffset c)
 //////////////////
 
 static inline bool findWTri(
-    const vec<Watched> &ws
+    vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
 ) {
+    vec<Watched>& ws = wsFull[lit1.toInt()];
     vec<Watched>::const_iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isTri() || i->lit1() != lit1 || i->lit2() != lit2); i++);
+    for (; i != end && (
+        !i->isTri()
+        || i->lit1() != lit2
+        || i->lit2() != lit3
+        || i->learnt() != learnt
+    ); i++);
     return i != end;
 }
 
 static inline void removeWTri(
-    vec<Watched> &ws
+    vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
 ) {
+    assert(lit2 < lit3);
+
+    vec<Watched>& ws = wsFull[lit1.toInt()];
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isTri() || i->lit1() != lit1 || i->lit2() != lit2); i++);
+    for (; i != end && (
+        !i->isTri()
+        || i->lit1() != lit2
+        || i->lit2() != lit3
+        || i->learnt() != learnt
+    ); i++);
+
     assert(i != end);
     vec<Watched>::iterator j = i;
     i++;

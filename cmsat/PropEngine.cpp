@@ -85,6 +85,42 @@ Var PropEngine::newVar(const bool)
     return v;
 }
 
+void PropEngine::attachTriClause(
+    Lit lit1
+    , Lit lit2
+    , Lit lit3
+    , const bool learnt
+) {
+    #ifdef DEBUG_ATTACH
+    assert(lit1.var() != lit2.var());
+    assert(value(lit1.var()) == l_Undef);
+    assert(value(lit2) == l_Undef || value(lit2) == l_False);
+
+    assert(varData[lit1.var()].elimed == ELIMED_NONE
+            || varData[lit1.var()].elimed == ELIMED_QUEUED_VARREPLACER);
+    assert(varData[lit2.var()].elimed == ELIMED_NONE
+            || varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
+    #endif //DEBUG_ATTACH
+
+    //Order them
+    if (lit1 > lit3)
+        std::swap(lit1, lit3);
+    if (lit1 > lit2)
+        std::swap(lit1, lit2);
+    if (lit2 > lit3)
+        std::swap(lit2, lit3);
+
+    //They are now ordered
+    assert(lit1 < lit2);
+    assert(lit2 < lit3);
+
+    //And now they are attached, ordered
+    watches[lit1.toInt()].push(Watched(lit2, lit3, learnt));
+    watches[lit2.toInt()].push(Watched(lit1, lit3, learnt));
+    watches[lit3.toInt()].push(Watched(lit1, lit2, learnt));
+}
+
+
 void PropEngine::attachBinClause(
     const Lit lit1
     , const Lit lit2
@@ -104,14 +140,8 @@ void PropEngine::attachBinClause(
             || varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
     #endif //DEBUG_ATTACH
 
-    Watched last;
-    //Pust to the begining
-    vec<Watched>& ws1 = watches[lit1.toInt()];
-    ws1.push(Watched(lit2, learnt));
-
-    //Push to the beginning
-    vec<Watched>& ws2 = watches[lit2.toInt()];
-    ws2.push(Watched(lit1, learnt));
+    watches[lit1.toInt()].push(Watched(lit2, learnt));
+    watches[lit2.toInt()].push(Watched(lit1, learnt));
 }
 
 /**
@@ -124,7 +154,7 @@ void PropEngine::attachClause(
     const Clause& c
     , const bool checkAttach
 ) {
-    assert(c.size() > 2);
+    assert(c.size() > 3);
     if (checkAttach) {
         assert(value(c[0].var()) == l_Undef);
         assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
@@ -137,18 +167,11 @@ void PropEngine::attachClause(
     }
     #endif //DEBUG_ATTACH
 
-    //Tri-clauses are attached specially
-    if (c.size() == 3) {
-        watches[c[0].toInt()].push(Watched(c[1], c[2]));
-        watches[c[1].toInt()].push(Watched(c[0], c[2]));
-        watches[c[2].toInt()].push(Watched(c[0], c[1]));
-    } else {
-        const ClOffset offset = clAllocator->getOffset(&c);
+    const ClOffset offset = clAllocator->getOffset(&c);
 
-        //blocked literal is the lit in the middle (c.size()/2). For no reason.
-        watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
-        watches[c[1].toInt()].push(Watched(offset, c[c.size()/2]));
-    }
+    //blocked literal is the lit in the middle (c.size()/2). For no reason.
+    watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
+    watches[c[1].toInt()].push(Watched(offset, c[c.size()/2]));
 }
 
 /**
@@ -161,25 +184,14 @@ the clause is
 void PropEngine::detachModifiedClause(
     const Lit lit1
     , const Lit lit2
-    , const Lit lit3
     , const uint32_t origSize
     , const Clause* address
 ) {
-    assert(origSize > 2);
+    assert(origSize > 3);
 
     ClOffset offset = clAllocator->getOffset(address);
-    if (origSize == 3
-        //The clause might have been longer, and has only recently
-        //became 3-long. Check!
-        && !findWCl(watches[lit1.toInt()], offset)
-    ) {
-        removeWTri(watches[lit1.toInt()], lit2, lit3);
-        removeWTri(watches[lit2.toInt()], lit1, lit3);
-        removeWTri(watches[lit3.toInt()], lit1, lit2);
-    } else {
-        removeWCl(watches[lit1.toInt()], offset);
-        removeWCl(watches[lit2.toInt()], offset);
-    }
+    removeWCl(watches[lit1.toInt()], offset);
+    removeWCl(watches[lit2.toInt()], offset);
 }
 
 /**

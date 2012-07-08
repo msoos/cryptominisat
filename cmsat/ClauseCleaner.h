@@ -37,7 +37,7 @@ class ClauseCleaner
         void cleanClauses(vector<Clause*>& cs);
 
 
-        void removeSatisfiedBins();
+        void treatImplicitClauses();
         void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
 
@@ -59,7 +59,7 @@ state is needed, which is important for certain algorithms
 inline void ClauseCleaner::removeAndCleanAll()
 {
     double myTime = cpuTime();
-    removeSatisfiedBins();
+    treatImplicitClauses();
     cleanClauses(solver->clauses);
     cleanClauses(solver->learnts);
 

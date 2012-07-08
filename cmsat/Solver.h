@@ -417,10 +417,26 @@ class Solver : public Searcher
         );
 
         //Attaching-detaching clauses
-        virtual void  attachClause        (const Clause& c);
-        virtual void  attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
-        virtual void  detachClause        (const Clause& c);
-        virtual void  detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
+        virtual void attachClause(const Clause& c);
+        virtual void attachBinClause(
+            const Lit lit1
+            , const Lit lit2
+            , const bool learnt
+            , const bool checkUnassignedFirst = true
+        );
+        virtual void attachTriClause(
+            const Lit lit1
+            , const Lit lit2
+            , const Lit lit3
+            , const bool learnt
+         );
+        virtual void  detachClause(const Clause& c);
+        virtual void  detachModifiedClause(
+            const Lit lit1
+            , const Lit lit2
+            , const uint32_t origSize
+            , const Clause* address
+        );
         template<class T> Clause* addClauseInt(
             const T& ps
             , const bool learnt = false
@@ -550,6 +566,8 @@ class Solver : public Searcher
         uint64_t            learntsLits;  ///< Number of literals in learnt clauses
         uint64_t            numBinsNonLearnt;
         uint64_t            numBinsLearnt;
+        uint64_t            numTrisNonLearnt;
+        uint64_t            numTrisLearnt;
         uint64_t            numNewBinsSinceSCC;
         vector<char>        locked; ///<Before reduceDB, threads fill this up (index by clause num)
         void                reArrangeClauses();
@@ -560,28 +578,46 @@ class Solver : public Searcher
 
 
         //Subsumtion of bin with bin
-        struct BinSorter {
+        struct WatchSorter {
             bool operator()(const Watched& first, const Watched& second)
             {
-                if (first.isBinary() && !second.isBinary())
+                //Anything but clause!
+                if (first.isClause())
+                    return false;
+                if (second.isClause())
                     return true;
 
-                if (!first.isBinary() && second.isBinary())
-                    return false;
-
-                if (!first.isBinary() && !second.isBinary())
-                    return false;
-
-                assert(first.isBinary() && second.isBinary());
+                //Fist is binary
+                /*if (first.isBinary() && second.isTri())
+                    return true;
+                if (first.isTri() && second.isBinary())
+                    return false;*/
 
                 if (first.lit1().toInt() < second.lit1().toInt()) return true;
                 if (first.lit1().toInt() > second.lit1().toInt()) return false;
+                if (first.isBinary() && second.isTri()) return true;
+                if (first.isTri() && second.isTri()) return false;
+                //At this point either both are BIN or both are TRI
+
+
+                //Both are BIN
+                if (first.isBinary()) {
+                    assert(second.isBinary());
+                    if (first.learnt() == second.learnt()) return false;
+                    if (!first.learnt()) return true;
+                    return false;
+                }
+
+                //Both are Tri
+                assert(first.isTri() && second.isTri());
+                if (first.lit2().toInt() < second.lit2().toInt()) return true;
+                if (first.lit2().toInt() > second.lit2().toInt()) return false;
                 if (first.learnt() == second.learnt()) return false;
                 if (!first.learnt()) return true;
                 return false;
-            };
+            }
         };
-        void subsumeBinsWithBins();
+        void subsumeImplicit();
 
         /////////////////
         // Debug

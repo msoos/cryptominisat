@@ -530,7 +530,7 @@ void Simplifier::addBackToSolver(vector<Clause*>& clauses)
             continue;
 
         //All clauses are larger than 2-long
-        assert(cl->size() > 2);
+        assert(cl->size() > 3);
 
         //Go through each literal
         for (Clause::const_iterator
@@ -562,7 +562,7 @@ void Simplifier::addBackToSolver(vector<Clause*>& clauses)
 
 bool Simplifier::completeCleanClause(Clause& ps)
 {
-    assert(ps.size() > 2);
+    assert(ps.size() > 3);
 
     Lit *i = ps.begin();
     Lit *j = i;
