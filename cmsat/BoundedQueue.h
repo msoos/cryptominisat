@@ -1,11 +1,11 @@
-/*****************************************************************************************[Queue.h]
+/***************************************************************************
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 2008 - Gilles Audemard, Laurent Simon
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
-Original code by MiniSat and glucose authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
-**************************************************************************************************/
+Original code by MiniSat and glucose authors are under an MIT licence
+Modifications also under MIT
+****************************************************************************/
 
 #ifndef BOUNDEDQUEUE_H
 #define BOUNDEDQUEUE_H
