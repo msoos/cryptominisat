@@ -1080,6 +1080,7 @@ end:
         return l_False;
     } else {
         checkStats();
+        checkImplicitPropagated();
         return l_Undef;
     }
 }
@@ -2440,3 +2441,70 @@ void Solver::subsumeImplicit()
     solveStats.subsBinWithBinTime += cpuTime() - myTime;
     solveStats.subsBinWithBin += (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt);
 }
+
+void Solver::checkImplicitPropagated() const
+{
+    size_t wsLit = 0;
+    for(vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        const Lit lit = Lit::toLit(wsLit);
+        for(vec<Watched>::const_iterator
+            it2 = it->begin(), end2 = it->end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            //Satisfied, or not implicit, skip
+            if (value(lit) == l_True
+                || it2->isClause()
+            ) {
+                continue;
+            }
+
+            const lbool val1 = value(lit);
+            const lbool val2 = value(it2->lit1());
+
+            //Handle binary
+            if (it2->isBinary()) {
+                if (val1 == l_False) {
+                    if (val2 != l_True) {
+                        cout << "not prop BIN: "
+                        << lit << ", " << it2->lit1()
+                        << " (learnt: " << it2->learnt()
+                        << endl;
+                    }
+                    assert(val2 == l_True);
+                }
+
+                if (val2 == l_False)
+                    assert(val1 == l_True);
+            }
+
+            //Handle 3-long clause
+            if (it2->isTri()) {
+                const lbool val3 = value(it2->lit2());
+
+                if (val1 == l_False
+                    && val2 == l_False
+                ) {
+                    assert(val3 == l_True);
+                }
+
+                if (val2 == l_False
+                    && val3 == l_False
+                ) {
+                    assert(val1 == l_True);
+                }
+
+                if (val1 == l_False
+                    && val3 == l_False
+                ) {
+                    assert(val2 == l_True);
+                }
+            }
+        }
+    }
+}
+

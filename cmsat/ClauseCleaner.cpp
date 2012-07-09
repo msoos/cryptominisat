@@ -77,6 +77,8 @@ void ClauseCleaner::treatImplicitClauses()
                     else
                         remNonLBin++;
                 } else {
+                    assert(solver->value(i->lit1()) == l_Undef);
+                    assert(solver->value(lit) == l_Undef);
                     *j++ = *i;
                 }
                 continue;
@@ -135,6 +137,8 @@ void ClauseCleaner::treatImplicitClauses()
         ; it != end
         ; it++
     ) {
+        assert(solver->value(it->getLit1()) == l_Undef);
+        assert(solver->value(it->getLit2()) == l_Undef);
         solver->attachBinClause(it->getLit1(), it->getLit2(), it->getLearnt());
     }
 

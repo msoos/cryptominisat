@@ -231,6 +231,26 @@ class Watched {
         uint32_t data2:30;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
+{
+
+    if (ws.isClause()) {
+        os << "Clause, offset: " << ws.getOffset();
+    }
+
+    if (ws.isBinary()) {
+        os << "Bin: " << ws.lit1() << " (learnt: " << ws.learnt() << " )";
+    }
+
+    if (ws.isTri()) {
+        os << "Tri: "
+        << ws.lit1() << ", " << ws.lit1()
+        << " (learnt: " << ws.learnt() << " )";
+    }
+
+    return os;
+}
+
 /**
 @brief Orders the watchlists such that the order is binary, tertiary, normal, xor
 */

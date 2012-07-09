@@ -405,6 +405,7 @@ class Solver : public Searcher
         };
 
         //Checks
+        void checkImplicitPropagated() const;
         void checkStats() const;
         void checkImplicitStats() const;
 

@@ -208,6 +208,8 @@ end:
             && solver->getNumLongClauses() > 200000
         ) {
             //Advanced cleanup
+            if (solver->conf.verbosity >= 5)
+                cout << "c Advanced cleanup after probing" << endl;
             advancedCleanup = true;
             CompleteDetachReatacher reattacher(solver);
             reattacher.detachNonBinsNonTris();
@@ -215,6 +217,8 @@ end:
             release_assert(ret == true);
         } else {
             //Standard cleanup
+            if (solver->conf.verbosity >= 5)
+                cout << "c Standard cleanup after probing" << endl;
             solver->clauseCleaner->removeAndCleanAll();
         }
 
@@ -271,22 +275,29 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     solver->newDecisionLevel();
     solver->enqueue(lit);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Trying " << lit << endl;
-    #endif
+
+    if (solver->conf.verbosity >= 6)
+        cout << "c Probing lit " << lit << endl;
+
     const Lit failed = solver->propagateFull();
     if (failed != lit_Undef) {
-        //Update conflict stats
-        runStats.conflStats.update(solver->lastConflictCausedBy);
-        runStats.conflStats.numConflicts++;
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Failed on lit " << lit << endl;
+        }
 
         solver->cancelZeroLight();
+
+        //Update conflict stats
         runStats.numFailed++;
+        runStats.conflStats.update(solver->lastConflictCausedBy);
+        runStats.conflStats.numConflicts++;
+        runStats.addedBin += solver->hyperBinResAll();
+        runStats.removedBin += solver->removeUselessBins();
+
         vector<Lit> lits;
         lits.push_back(~failed);
         solver->addClauseInt(lits, true);
-        runStats.addedBin += solver->hyperBinResAll();
-        runStats.removedBin += solver->removeUselessBins();
+
         return solver->ok;
     }
 

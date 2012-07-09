@@ -63,6 +63,22 @@ inline void ClauseCleaner::removeAndCleanAll()
     cleanClauses(solver->clauses);
     cleanClauses(solver->learnts);
 
+#ifndef NDEBUG
+    //Once we have cleaned the watchlists
+    //no watchlist whose lit is set may be non-empty
+    size_t wsLit = 0;
+    for(vector<vec<Watched> >::const_iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        const Lit lit = Lit::toLit(wsLit);
+        if (solver->value(lit) != l_Undef) {
+            assert(it->empty());
+        }
+    }
+#endif
+
     if (solver->conf.verbosity >= 1) {
         cout
         << "c [clean] T: "

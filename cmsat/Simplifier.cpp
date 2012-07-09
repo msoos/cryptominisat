@@ -483,6 +483,7 @@ bool Simplifier::performStrengthening()
 
 void Simplifier::linkInClause(Clause& cl)
 {
+    assert(cl.size() > 3);
     ClOffset offset = solver->clAllocator->getOffset(&cl);
     std::sort(cl.begin(), cl.end());
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -900,8 +901,14 @@ end:
     runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
 
-    if (solver->ok)
+    //Sanity checks
+    if (solver->ok) {
         checkElimedUnassignedAndStats();
+        solver->testAllClauseAttach();
+        solver->checkNoWrongAttach();
+        solver->checkStats();
+        solver->checkImplicitPropagated();
+    }
 
     //Print stats
     if (solver->conf.verbosity >= 1) {
@@ -910,11 +917,6 @@ end:
         else
             runStats.printShort();
     }
-
-    //Sanity checks
-    solver->testAllClauseAttach();
-    solver->checkNoWrongAttach();
-    solver->checkStats();
 
     numCalls++;
     return solver->ok;

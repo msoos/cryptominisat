@@ -699,13 +699,13 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 lastWasConflict = true;
 
                 cancelUntil(0);
-                solver->enqueue(~failed);
                 stats.litsLearntNonMin += 1;
                 stats.litsLearntRecMin += 1;
                 stats.litsLearntFinal += 1;
                 propStats.propsUnit++;
                 stats.hyperBinAdded += hyperBinResAll();
                 stats.transRedRemoved += removeUselessBins();
+                solver->enqueue(~failed);
 
                 if (!ok)
                     return l_False;
@@ -1841,6 +1841,21 @@ size_t Searcher::hyperBinResAll()
         ; it != end
         ; it++
     ) {
+        lbool val1 = value(it->getLit1());
+        lbool val2 = value(it->getLit2());
+
+        if (solver->conf.verbosity >= 6)
+            cout
+            << "c Attached hyper-bin: "
+            << it->getLit1() << "(val: " << val1 << " )"
+            << ", " << it->getLit2() << "(val: " << val2 << " )"
+            << endl;
+
+        //If binary is satisfied, skip
+        if (val1 == l_True || val2 == l_True)
+            continue;
+
+        assert(val1 == l_Undef && val2 == l_Undef);
         solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
         added++;
     }
