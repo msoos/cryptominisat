@@ -199,6 +199,7 @@ bool Prober::probe()
 
 end:
 
+    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
         double time = cpuTime();
         bool advancedCleanup = false;
@@ -239,7 +240,6 @@ end:
         if (visitedAlready[i])
             runStats.numVisited++;
     }
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     runStats.cpu_time = cpuTime() - myTime;
     runStats.propStats = solver->propStats;
