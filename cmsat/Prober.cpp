@@ -252,7 +252,6 @@ end:
         else
             runStats.printShort();
     }
-
     solver->testAllClauseAttach();
     return solver->ok;
 }
