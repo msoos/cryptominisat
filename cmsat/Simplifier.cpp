@@ -154,6 +154,8 @@ uint32_t Simplifier::subsume0(ClOffset offset)
         && ret.subsumedNonLearnt
     ) {
         cl.makeNonLearnt();
+        solver->learntsLits -= cl.size();
+        solver->clausesLits += cl.size();
     }
 
     //Combine stats
@@ -220,18 +222,16 @@ self-subsuming resolution using backward-subsumption
 
 @param[in] ps The clause to use for backw-subsumption and self-subs. resolution
 */
-Simplifier::Sub1Ret Simplifier::subsume1(ClOffset offset)
+Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
 {
     vector<ClOffset> subs;
     vector<Lit> subsLits;
-
     Sub1Ret ret;
-
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume1-ing with clause:" << ps << endl;
-    #endif
-
     Clause& cl = *solver->clAllocator->getPointer(offset);
+
+    if (solver->conf.verbosity >= 6)
+        cout << "subsume1-ing with clause:" << cl << endl;
+
     findStrengthened(
         offset
         , cl
@@ -245,11 +245,16 @@ Simplifier::Sub1Ret Simplifier::subsume1(ClOffset offset)
         Clause& cl2 = *solver->clAllocator->getPointer(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
 
+            if (solver->conf.verbosity >= 6)
+                cout << "subsumed clause " << cl2 << endl;
+
             //If subsumes a non-learnt, and is learnt, make it non-learnt
             if (cl.learnt()
                 && !cl2.learnt()
             ) {
                 cl.makeNonLearnt();
+                solver->learntsLits -= cl.size();
+                solver->clausesLits += cl.size();
             }
 
             //Update stats
@@ -258,6 +263,9 @@ Simplifier::Sub1Ret Simplifier::subsume1(ClOffset offset)
             unlinkClause(offset2);
             ret.sub++;
         } else { //Strengthen
+            if (solver->conf.verbosity >= 6)
+                cout << "strenghtened clause " << cl2 << endl;
+
             strengthen(offset2, subsLits[j]);
             ret.str++;
             if (!solver->ok)
@@ -285,6 +293,12 @@ void Simplifier::unlinkClause(const ClOffset offset)
 
         removeWCl(solver->watches[cl[i].toInt()], offset);
         //touchedVars.touch(cl[i], cl.learnt());
+    }
+
+    if (cl.learnt()) {
+        solver->learntsLits -= cl.size();
+    } else {
+        solver->clausesLits -= cl.size();
     }
 
     //Free and set to NULL
@@ -321,7 +335,6 @@ lbool Simplifier::cleanClause(ClOffset offset)
             || solver->value(*i) == l_False
         ) {
             removeWCl(solver->watches[i->toInt()], offset);
-            //touchedVars.touch(*i, cl.learnt());
         }
     }
     cl.shrink(i-j);
@@ -334,12 +347,18 @@ lbool Simplifier::cleanClause(ClOffset offset)
         return l_True;
     }
 
-    #ifdef VERBOSE_DEBUG
-    cout << "-> Clause became after cleaning:" << *clauses[c.index] << endl;
-    #endif
+    //Update lits stat
+    if (cl.learnt())
+        solver->learntsLits -= i-j;
+    else
+        solver->clausesLits -= i-j;
+
+    if (solver->conf.verbosity >= 6)
+        cout << "-> Clause became after cleaning:" << cl << endl;
 
     switch(cl.size()) {
         case 0:
+            unlinkClause(offset);
             solver->ok = false;
             return l_False;
 
@@ -347,11 +366,15 @@ lbool Simplifier::cleanClause(ClOffset offset)
             solver->enqueue(cl[0]);
             solver->propStats.propsUnit++;
             unlinkClause(offset);
-            solver->ok = solver->propagate().isNULL();
-            return (solver->ok ? l_True : l_False);
+            return l_True;
 
         case 2:
             solver->attachBinClause(cl[0], cl[1], cl.learnt());
+            unlinkClause(offset);
+            return l_True;
+
+        case 3:
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
             unlinkClause(offset);
             return l_True;
 
@@ -380,8 +403,11 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     *toDecrease -= 5;
     cl.strengthen(toRemoveLit);
     runStats.litsRemStrengthen++;
-    //touchedVars.touch(toRemoveLit, cl.learnt());
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
+    if (cl.learnt())
+        solver->learntsLits--;
+    else
+        solver->clausesLits--;
 
     cleanClause(offset);
 }
@@ -561,13 +587,20 @@ void Simplifier::addBackToSolver(vector<Clause*>& clauses)
     clauses.resize(clauses.size() - (i-j));
 }
 
-bool Simplifier::completeCleanClause(Clause& ps)
+bool Simplifier::completeCleanClause(Clause& cl)
 {
-    assert(ps.size() > 3);
+    assert(cl.size() > 3);
 
-    Lit *i = ps.begin();
+    //Remove all lits from stats
+    //we will re-attach the clause either way
+    if (cl.learnt())
+        solver->learntsLits -= cl.size();
+    else
+        solver->clausesLits -= cl.size();
+
+    Lit *i = cl.begin();
     Lit *j = i;
-    for (Lit *end = ps.end(); i != end; i++) {
+    for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True)
             return false;
 
@@ -575,32 +608,34 @@ bool Simplifier::completeCleanClause(Clause& ps)
             *j++ = *i;
         }
     }
-    ps.shrink(i-j);
+    cl.shrink(i-j);
 
-    switch (ps.size()) {
+    switch (cl.size()) {
         case 0:
             solver->ok = false;
             return false;
 
         case 1:
-            solver->enqueue(ps[0]);
+            solver->enqueue(cl[0]);
             solver->propStats.propsUnit++;
             return false;
 
-        case 2: {
-            solver->attachBinClause(ps[0], ps[1], ps.learnt());
+        case 2:
+            solver->attachBinClause(cl[0], cl[1], cl.learnt());
             return false;
-        }
 
-        default: {
-            break;
-        }
+        case 3:
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
+            return false;
+
+        default:
+            return true;
     }
 
     return true;
 }
 
-void Simplifier::removeAllTrisAndLonger()
+void Simplifier::removeAllLongs()
 {
     for (vector<vec<Watched> >::iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -612,10 +647,10 @@ void Simplifier::removeAllTrisAndLonger()
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
-            if (i->isTri() || i->isClause()) {
+            if (i->isClause()) {
                 continue;
             } else {
-                assert(i->isBinary());
+                assert(i->isBinary() || i->isTri());
                 *j++ = *i;
             }
         }
@@ -802,28 +837,20 @@ bool Simplifier::simplifyBySubsumption()
     addedClauseLits = 0;
     runStats.clear();
 
-    //touch all variables
-    /*for (Var var = 0; var < solver->nVars(); var++) {
-        if (solver->decision_var[var] && solver->assigns[var] == l_Undef)
-            touchedVars.touch(var);
-    }*/
-
     //Remove all tris&longer clauses from watches
-    removeAllTrisAndLonger();
+    removeAllLongs();
 
-    //Add non-learnt and learnt clauses to occur lists, touch lists, etc.
+    //Add non-learnt to occur
     toDecrease = &numMaxSubsume1;
-    /*if (solver->clauses.size() < 10000000)
-        std::sort(solver->clauses.begin(), solver->clauses.end(), sortBySize());*/
     runStats.origNumIrredLongClauses = solver->clauses.size();
     addedClauseLits += addFromSolver(solver->clauses);
 
-    /*if (solver->learnts.size() < 300000)
-        std::sort(solver->learnts.begin(), solver->learnts.end(), sortBySize());*/
+    //Add learnt to occur
     runStats.origNumRedLongClauses = solver->learnts.size();
     addedClauseLits += addFromSolver(solver->learnts);
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
+    solver->checkStats(true);
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
@@ -837,17 +864,16 @@ bool Simplifier::simplifyBySubsumption()
     #endif
 
     //Gate-finding
-    if (solver->conf.doCache && solver->conf.doGateFind) {
+    /*if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
-    }
+    }*/
     toDecrease = &numMaxBlocked;
 
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     origTrailSize = solver->trail.size();
 
     //Do subsumption & var-elim in loop
-    solver->checkImplicitStats();
     assert(solver->ok);
 
     //Carry out subsume0
@@ -858,11 +884,11 @@ bool Simplifier::simplifyBySubsumption()
         goto end;
 
     //XOR-finding
-    if (solver->conf.doFindXors
+    /*if (solver->conf.doFindXors
         && !xorFinder->findXors()
     ) {
         goto end;
-    }
+    }*/
 
     //Do asymtotic tautology elimination
     if (solver->conf.doBlockedClause) {
@@ -887,12 +913,13 @@ end:
     myTime = cpuTime();
 
     //Add back clauses to solver
-    removeAllTrisAndLonger();
-    solver->clausesLits = solver->numBinsNonLearnt*2;
+    removeAllLongs();
     addBackToSolver(solver->clauses);
-    solver->learntsLits = solver->numBinsLearnt*2;
     addBackToSolver(solver->learnts);
-    propBins();
+    propImplicits();
+
+    //We can now propagate from solver
+    //since the clauses are now back normally
     if (solver->ok) {
         solver->ok = solver->propagate().isNULL();
     }
@@ -922,7 +949,7 @@ end:
     return solver->ok;
 }
 
-bool Simplifier::propBins()
+bool Simplifier::propImplicits()
 {
     size_t numRemovedHalfNonLearnt = 0;
     size_t numRemovedHalfLearnt = 0;
@@ -1742,9 +1769,11 @@ void Simplifier::removeClausesHelper(
             //Update stats
             if (cl.learnt()) {
                 runStats.longLearntClRemThroughElim++;
+                solver->learntsLits -= cl.size();
             } else {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
+                solver->clausesLits -= cl.size();
 
                 vector<Lit> lits(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
@@ -1759,16 +1788,11 @@ void Simplifier::removeClausesHelper(
                     continue;
 
                 *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
-
                 removeWCl(solver->watches[cl[i].toInt()], offset);
-                //touchedVars.touch(cl[i], cl.learnt());
             }
-        } else {
-            assert(watch.isBinary());
-            #ifdef VERBOSE_DEBUG_VARELIM
-            cout << c.lit1 << " , " << c.lit2 << endl;
-            #endif
+        }
 
+        if (watch.isBinary()) {
             //Remove binary clause -- only half
             //the other half will be clean()-ed directly from watchlist
             removeWBin(
@@ -1799,8 +1823,65 @@ void Simplifier::removeClausesHelper(
             }
 
             //Touch literals
-            //touchedVars.touch(c.lit1, false);
-            //touchedVars.touch(c.lit2, false);
+            //touchedVars.touch(watch.lit, false);
+        }
+
+        if (watch.isTri()) {
+            //Remove tri clause
+            vector<Lit> lits;
+            lits.push_back(lit);
+            lits.push_back(watch.lit1());
+            lits.push_back(watch.lit2());
+            std::sort(lits.begin(), lits.end());
+
+            //Remove 2 of the 3 -- the 3rd is cleared when clearing occur
+            if (lits[0] != lit) {
+                removeWTri(solver->watches
+                    , lits[0]
+                    , lits[1]
+                    , lits[2]
+                    , watch.learnt()
+                );
+            }
+
+            if (lits[1] != lit) {
+                removeWTri(solver->watches
+                    , lits[1]
+                    , lits[0]
+                    , lits[2]
+                    , watch.learnt()
+                );
+            }
+
+            if (lits[2] != lit) {
+                removeWTri(solver->watches
+                    , lits[2]
+                    , lits[0]
+                    , lits[1]
+                    , watch.learnt()
+                );
+            }
+
+            //Update stats
+            if (!watch.learnt()) {
+                solver->clausesLits -= 3;
+                runStats.clauses_elimed_tri++;
+                runStats.clauses_elimed_sumsize += 3;
+                solver->numTrisNonLearnt--;
+            } else {
+                solver->learntsLits -= 3;
+                runStats.triLearntClRemThroughElim++;
+                solver->numTrisLearnt--;
+            }
+
+            //Put clause into blocked status
+            if (!watch.learnt()) {
+                blockedClauses.push_back(BlockedClause(lit, lits));
+            }
+
+            //Touch literals
+            //touchedVars.touch(watch.lit1(), false);
+            //touchedVars.touch(watch.lit2() false);
         }
     }
 }
@@ -1917,8 +1998,8 @@ int Simplifier::testVarElim(const Var var)
             ; it2++
         ) {
             //If any of the two is learnt, skip
-            if ((it->isBinary() && it->learnt())
-                || (it2->isBinary() && it2->learnt())
+            if (((it->isBinary() || it->isTri()) && it->learnt())
+                || ((it2->isBinary() || it2->isTri()) && it2->learnt())
                 || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
                 || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
@@ -1960,7 +2041,7 @@ void Simplifier::varElimCheckUpdate(
         ; it != end
         ; it++
     ) {
-        if (it->isBinary()) {
+        if (it->isBinary() || it->isTri()) {
             const Var var1 = lit.var();
             if (!varElimToCheckHelper[var1]) {
                 varElimToCheck.push_back(var1);
@@ -1972,7 +2053,17 @@ void Simplifier::varElimCheckUpdate(
                 varElimToCheck.push_back(var2);
                 varElimToCheckHelper[var2] = 1;
             }
-        } else {
+        }
+
+        if (it->isTri()) {
+            const Var var3 = it->lit2().var();
+            if (!varElimToCheckHelper[var3]) {
+                varElimToCheck.push_back(var3);
+                varElimToCheckHelper[var3] = 1;
+            }
+        }
+
+        if (it->isClause()) {
             assert(it->isClause());
             Clause& cl = *solver->clAllocator->getPointer(it->getOffset());
             if (cl.learnt())
@@ -1996,7 +2087,18 @@ void Simplifier::printOccur(const Lit lit) const
         if (w.isBinary()) {
             cout
             << "Bin   --> "
+            << lit << ", "
             << w.lit1()
+            << "(learnt: " << w.learnt()
+            << ")"
+            << endl;
+        }
+
+        if (w.isTri()) {
+            cout
+            << "Tri   --> "
+            << lit << ", "
+            << w.lit1() << " , " << w.lit2()
             << "(learnt: " << w.learnt()
             << ")"
             << endl;
@@ -2097,8 +2199,8 @@ bool Simplifier::maybeEliminate(const Var var)
             ; it2++
         ) {
             //If any of the two is learnt, skip
-            if ((it->isBinary() && it->learnt())
-                || (it2->isBinary() && it2->learnt())
+            if (((it->isBinary() || it->isTri()) && it->learnt())
+                || ((it2->isBinary() || it2->isTri()) && it2->learnt())
                 || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
                 || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
@@ -2121,9 +2223,9 @@ bool Simplifier::maybeEliminate(const Var var)
 
             //Calculate stats
             ClauseStats stats;
-            if (it->isBinary() && it2->isClause())
+            if ((it->isBinary() || it->isTri()) && it2->isClause())
                 stats = solver->clAllocator->getPointer(it2->getOffset())->stats;
-            else if (it2->isBinary() && it->isClause())
+            else if ((it2->isBinary() || it2->isTri()) && it->isClause())
                 stats = solver->clAllocator->getPointer(it->getOffset())->stats;
             else if (it->isClause() && it2->isClause())
                 stats = ClauseStats::combineStats(
@@ -2149,7 +2251,7 @@ bool Simplifier::maybeEliminate(const Var var)
                 solver->clauses.push_back(newCl);
                 ClOffset offset = solver->clAllocator->getOffset(newCl);
                 runStats.subsumedByVE += subsume0(offset);
-            } else if (finalLits.size() == 2) {
+            } else if (finalLits.size() == 3 || finalLits.size() == 2) {
                 Sub0Ret ret = subsume0(
                     std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
                     , finalLits //Literals in this binary clause
@@ -2165,7 +2267,7 @@ bool Simplifier::maybeEliminate(const Var var)
         }
     }
 
-    //Remove clauses
+    //Free clauses
     for(vec<Watched>::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
@@ -2209,7 +2311,7 @@ bool Simplifier::maybeEliminate(const Var var)
     assert(solver->watches[lit.toInt()].size() == 0
             &&  solver->watches[(~lit).toInt()].size() == 0);
 
-    //cout << "varElimToCheck size: " << varElimToCheck.size() << endl;
+    //Update var elim complexity heap
     for(vector<Var>::const_iterator
         it = varElimToCheck.begin(), end = varElimToCheck.end()
         ; it != end
@@ -2294,12 +2396,12 @@ bool Simplifier::merge(
     , const bool final
 ) {
     //If clause has already been freed, skip
-    if (!ps.isBinary()
+    if (ps.isClause()
         && solver->clAllocator->getPointer(ps.getOffset())->freed()
     ) {
         return false;
     }
-    if (!qs.isBinary()
+    if (qs.isClause()
         && solver->clAllocator->getPointer(qs.getOffset())->freed()
     ) {
         return false;
@@ -2310,12 +2412,21 @@ bool Simplifier::merge(
 
     bool retval = true;
     bool fancyRemove = false;
-    if (ps.isBinary()) {
+    if (ps.isBinary() || ps.isTri()) {
         assert(ps.lit1() != without_p);
 
         seen[ps.lit1().toInt()] = 1;
         dummy.push_back(ps.lit1());
-    } else {
+    }
+
+    if (ps.isTri()) {
+        assert(ps.lit1() < ps.lit2());
+
+        seen[ps.lit2().toInt()] = 1;
+        dummy.push_back(ps.lit2());
+    }
+
+    if (ps.isClause()) {
         Clause& cl = *solver->clAllocator->getPointer(ps.getOffset());
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
         *toDecrease -= cl.size();
@@ -2329,7 +2440,7 @@ bool Simplifier::merge(
         }
     }
 
-    if (qs.isBinary()) {
+    if (qs.isBinary() || qs.isTri()) {
         assert(qs.lit1() != without_q);
 
         if (seen[(~qs.lit1()).toInt()]) {
@@ -2341,7 +2452,23 @@ bool Simplifier::merge(
             dummy.push_back(qs.lit1());
             seen[qs.lit1().toInt()] = 1;
         }
-    } else {
+    }
+
+    if (qs.isTri()) {
+        assert(qs.lit1() < qs.lit2());
+
+        if (seen[(~qs.lit2()).toInt()]) {
+            retval = false;
+            dummy2 = dummy;
+            goto end;
+        }
+        if (!seen[qs.lit2().toInt()]) {
+            dummy.push_back(qs.lit2());
+            seen[qs.lit2().toInt()] = 1;
+        }
+    }
+
+    if (qs.isClause()) {
         Clause& cl = *solver->clAllocator->getPointer(qs.getOffset());
         //assert(!clauseData[qs.clsimp.index].defOfOrGate);
         *toDecrease -= cl.size();
@@ -2488,15 +2615,10 @@ bool Simplifier::merge(
     return retval;
 }
 
-
-std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
+Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
 {
-    const Lit lit(var, false);
+    HeuristicData ret;
 
-    //Count number of non-learnt long clauses with X inside
-    size_t pos = 0;
-    size_t posLit = 0;
-    size_t nNonLBinPos = 0;
     const vec<Watched>& poss = solver->watches[lit.toInt()];
     *toDecrease -= poss.size() + 100;
     for (vec<Watched>::const_iterator
@@ -2504,12 +2626,24 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
         ; it != end
         ; it++
     ) {
-        //If binary
+        //Handle binary
         if (it->isBinary())
         {
-            //Only count non-learnt binary
+            //Only count non-learnt
             if (!it->learnt())
-                nNonLBinPos++;
+                ret.bin++;
+
+            continue;
+        }
+
+        //Handle tertiary
+        if (it->isTri())
+        {
+            //Only count non-learnt
+            if (!it->learnt()) {
+                ret.lit += 2;
+                ret.longer++;
+            }
 
             continue;
         }
@@ -2518,48 +2652,11 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
             const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
 
             //Only non-learnt is of relevance
-            if (cl->learnt())
-                continue;
+            if (!cl->learnt()) {
+                ret.lit += cl->size();
+                ret.longer++;
+            }
 
-            posLit += cl->size();
-            pos++;
-            continue;
-        }
-
-        //Only the two above types are there
-        assert(false);
-    }
-
-    //Count number of non-learnt long clauses with ~X inside
-    size_t neg = 0;
-    size_t negLit = 0;
-    size_t nNonLBinNeg = 0;
-    const vec<Watched>& negs = solver->watches[(~lit).toInt()];
-    *toDecrease -= negs.size() + 100;
-    for (vec<Watched>::const_iterator
-        it = negs.begin(), end = negs.end()
-        ; it != end
-        ; it++
-    ) {
-        //If binary
-        if (it->isBinary())
-        {
-            //Only count non-learnt binary
-            if (!it->learnt())
-                nNonLBinNeg++;
-
-            continue;
-        }
-
-        if (it->isClause()) {
-            const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-
-            //Only non-learnt is of relevance
-            if (cl->learnt())
-                continue;
-
-            negLit += cl->size();
-            neg++;
             continue;
         }
 
@@ -2568,26 +2665,35 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     }
 
 
-
-    int normCost = pos * neg //long clauses have a good chance of being tautologies
-        + nNonLBinPos * neg * 2 //lower chance of tautology because of binary clause
-        + nNonLBinNeg * pos * 2 //lower chance of tautology because of binary clause
-        + nNonLBinPos * nNonLBinNeg * 5; //Very low chance of tautology
-
-    normCost = pos + neg + nNonLBinNeg + nNonLBinPos;
+    return ret;
+}
 
 
-    if (((pos + nNonLBinPos) <= 2 && (neg + nNonLBinNeg) <= 2)) {
+std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
+{
+    const Lit lit(var, false);
+    HeuristicData pos = calcDataForHeuristic(Lit(var, false));
+    HeuristicData neg = calcDataForHeuristic(Lit(var, true));
+
+    int normCost = pos.longer * neg.longer //long clauses have a good chance of being tautologies
+        + pos.longer * neg.bin * 2 //lower chance of tautology because of binary clause
+        + neg.bin * pos.longer * 2 //lower chance of tautology because of binary clause
+        + pos.bin * neg.bin * 5; //Very low chance of tautology
+
+    normCost = pos.longer + neg.longer + pos.bin + neg.bin;
+
+
+    if (((pos.longer + pos.bin) <= 2 && (neg.longer + neg.bin) <= 2)) {
         normCost /= 2;
     }
 
-    if ((pos + nNonLBinPos) == 0
-        || (neg + nNonLBinNeg) == 0
+    if ((pos.longer + pos.bin) == 0
+        || (neg.longer + neg.bin) == 0
     ) {
         normCost = 0;
     }
 
-    int litCost = posLit * negLit;
+    int litCost = pos.lit * neg.lit;
 
     return std::make_pair(normCost, litCost);
 }
@@ -2653,6 +2759,8 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
     const vec<Watched>& ws = solver->watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
+
+        //Handle binary
         if (it->isBinary() && !it->learnt()) {
             if (seen[(~it->lit1()).toInt()]) {
                 assert(it->lit1() != ~lit);
@@ -2661,6 +2769,18 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
             return false;
         }
 
+        //Handle tertiary
+        if (it->isTri() && !it->learnt()) {
+            assert(it->lit1() < it->lit2());
+            if (seen[(~it->lit1()).toInt()]
+                || seen[(~it->lit2()).toInt()]
+            ) {
+                continue;
+            }
+            return false;
+        }
+
+        //Handle long clause
         if (it->isClause()) {
             const Clause& cl = *solver->clAllocator->getPointer(it->getOffset());
 

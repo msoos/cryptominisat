@@ -256,6 +256,12 @@ Clause* Solver::addClauseInt(
             //In class 'Simplifier' we don't need to attach normall
             if (attach)
                 attachClause(*c);
+            else {
+                if (learnt)
+                    learntsLits += ps.size();
+                else
+                    clausesLits += ps.size();
+            }
 
             return c;
     }
@@ -277,16 +283,16 @@ template Clause* Solver::addClauseInt(
     , vector<Lit>* finalLits
 );
 
-void Solver::attachClause(const Clause& c)
+void Solver::attachClause(const Clause& cl)
 {
     //Update stats
-    if (c.learnt())
-        learntsLits += c.size();
+    if (cl.learnt())
+        learntsLits += cl.size();
     else
-        clausesLits += c.size();
+        clausesLits += cl.size();
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachClause(c);
+    PropEngine::attachClause(cl);
 }
 
 void Solver::attachTriClause(
@@ -2198,7 +2204,7 @@ void Solver::checkImplicitStats() const
     assert(thisNumLearntTris/3 == numTrisLearnt);
 }
 
-void Solver::checkStats() const
+void Solver::checkStats(const bool allowFreed) const
 {
     //If in crazy mode, don't check
     #ifdef NDEBUG
@@ -2214,7 +2220,12 @@ void Solver::checkStats() const
         ; it != end
         ; it++
     ) {
-        numLitsNonLearnt += (*it)->size();
+        const Clause& cl = **it;
+        if (cl.freed()) {
+            assert(allowFreed);
+        } else {
+            numLitsNonLearnt += cl.size();
+        }
     }
     if (numLitsNonLearnt != clausesLits) {
         cout << "ERROR: " << endl;
@@ -2230,7 +2241,12 @@ void Solver::checkStats() const
         ; it != end
         ; it++
     ) {
-        numLitsLearnt += (*it)->size();
+        const Clause& cl = **it;
+        if (cl.freed()) {
+            assert(allowFreed);
+        } else {
+            numLitsLearnt += cl.size();
+        }
     }
     if (numLitsLearnt != learntsLits) {
         cout << "ERROR: " << endl;

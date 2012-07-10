@@ -108,9 +108,11 @@ public:
             //Elimination
             , numVarsElimed(0)
             , clauses_elimed_long(0)
+            , clauses_elimed_tri(0)
             , clauses_elimed_bin(0)
             , clauses_elimed_sumsize(0)
             , longLearntClRemThroughElim(0)
+            , triLearntClRemThroughElim(0)
             , binLearntClRemThroughElim(0)
             , numLearntBinVarRemAdded(0)
             , triedToElimVars(0)
@@ -164,10 +166,12 @@ public:
 
             //Elim
             numVarsElimed += other.numVarsElimed;
-            clauses_elimed_long += other.clauses_elimed_bin;
-            clauses_elimed_bin += other.clauses_elimed_long;
+            clauses_elimed_long += other.clauses_elimed_long;
+            clauses_elimed_tri += other.clauses_elimed_tri;
+            clauses_elimed_bin += other.clauses_elimed_bin;
             clauses_elimed_sumsize += other.clauses_elimed_sumsize;
             longLearntClRemThroughElim += other.longLearntClRemThroughElim;
+            triLearntClRemThroughElim += other.triLearntClRemThroughElim;
             binLearntClRemThroughElim += other.binLearntClRemThroughElim;
             numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
             triedToElimVars += other.triedToElimVars;
@@ -222,6 +226,7 @@ public:
             << "c [v-elim]"
             << " subs: "  << subsumedByVE
             << " learnt-bin rem: " << binLearntClRemThroughElim
+            << " learnt-tri rem: " << triLearntClRemThroughElim
             << " learnt-long rem: " << longLearntClRemThroughElim
             << " v-fix: " << std::setw(4) << zeroDepthAssings
             << endl;
@@ -291,6 +296,9 @@ public:
             printStatsLine("c elim-bin-lt-cl"
                 , binLearntClRemThroughElim);
 
+            printStatsLine("c elim-tri-lt-cl"
+                , triLearntClRemThroughElim);
+
             printStatsLine("c elim-long-lt-cl"
                 , longLearntClRemThroughElim);
 
@@ -300,12 +308,15 @@ public:
             printStatsLine("c cl-elim-bin"
                 , clauses_elimed_bin);
 
+            printStatsLine("c cl-elim-tri"
+                , clauses_elimed_tri);
+
             printStatsLine("c cl-elim-long"
                 , clauses_elimed_long);
 
             printStatsLine("c cl-elim-avg-s",
                 ((double)clauses_elimed_sumsize
-                /(double)(clauses_elimed_bin + clauses_elimed_long))
+                /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
             );
             cout << "c -------- SatELite STATS END ----------" << endl;
         }
@@ -337,9 +348,11 @@ public:
         //Stats for var-elim
         uint64_t numVarsElimed;
         uint64_t clauses_elimed_long;
+        uint64_t clauses_elimed_tri;
         uint64_t clauses_elimed_bin;
         uint64_t clauses_elimed_sumsize;
         uint64_t longLearntClRemThroughElim;
+        uint64_t triLearntClRemThroughElim;
         uint64_t binLearntClRemThroughElim;
         uint64_t numLearntBinVarRemAdded;
         uint64_t triedToElimVars;
@@ -399,8 +412,8 @@ private:
 
     //Finish-up
     void addBackToSolver(vector<Clause*>& clauses);
-    bool propBins();
-    void removeAllTrisAndLonger();
+    bool propImplicits();
+    void removeAllLongs();
     void removeAssignedVarsFromEliminated();
     bool completeCleanClause(Clause& ps);
 
@@ -534,6 +547,22 @@ private:
     vector<char> varElimToCheckHelper;
     bool        maybeEliminate(const Var x);
     int         testVarElim(Var var);
+
+    struct HeuristicData
+    {
+        HeuristicData() :
+            bin(0)
+            , longer(0)
+            , lit(0)
+
+        {};
+
+        size_t bin;
+        size_t longer;
+        size_t lit;
+    };
+    HeuristicData calcDataForHeuristic(const Lit lit) const;
+
     std::pair<int, int>  heuristicCalcVarElimScore(const Var var);
     bool        merge(
         const Watched& ps

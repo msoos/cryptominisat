@@ -406,7 +406,7 @@ class Solver : public Searcher
 
         //Checks
         void checkImplicitPropagated() const;
-        void checkStats() const;
+        void checkStats(const bool allowFreed = false) const;
         void checkImplicitStats() const;
 
     protected:
