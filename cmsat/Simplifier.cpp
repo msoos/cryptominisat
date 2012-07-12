@@ -1985,7 +1985,7 @@ int Simplifier::testVarElim(const Var var)
             *toDecrease -= 2;
 
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-            bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck, false);
+            bool ok = merge(*it, *it2, lit, agressiveCheck, false);
             if (ok) {
                 //Update after-stats
                 if (dummy.size() > 3)
@@ -2186,7 +2186,7 @@ bool Simplifier::maybeEliminate(const Var var)
             *toDecrease -= 2;
 
             //Resolve the two clauses
-            bool ok = merge(*it, *it2, lit, ~lit, true, true);
+            bool ok = merge(*it, *it2, lit, true, true);
 
             //The resolvent is tautological
             if (!ok)
@@ -2365,8 +2365,7 @@ And without_p = ~without_q
 bool Simplifier::merge(
     const Watched& ps
     , const Watched& qs
-    , const Lit without_p
-    , const Lit without_q
+    , const Lit noPosLit
     , const bool useCache
     , const bool final
 ) {
@@ -2388,7 +2387,7 @@ bool Simplifier::merge(
     bool retval = true;
     bool fancyRemove = false;
     if (ps.isBinary() || ps.isTri()) {
-        assert(ps.lit1() != without_p);
+        assert(ps.lit1() != noPosLit);
 
         seen[ps.lit1().toInt()] = 1;
         dummy.push_back(ps.lit1());
@@ -2406,8 +2405,8 @@ bool Simplifier::merge(
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
         *toDecrease -= cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
-            //Skip without_p
-            if (cl[i] == without_p)
+            //Skip noPosLit
+            if (cl[i] == noPosLit)
                 continue;
 
             seen[cl[i].toInt()] = 1;
@@ -2416,7 +2415,7 @@ bool Simplifier::merge(
     }
 
     if (qs.isBinary() || qs.isTri()) {
-        assert(qs.lit1() != without_q);
+        assert(qs.lit1() != ~noPosLit);
 
         if (seen[(~qs.lit1()).toInt()]) {
             retval = false;
@@ -2449,8 +2448,8 @@ bool Simplifier::merge(
         *toDecrease -= cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
 
-            //Skip without_q
-            if (cl[i] == without_q)
+            //Skip ~noPosLit
+            if (cl[i] == ~noPosLit)
                 continue;
 
             //Opposite is inside, nothing to add
@@ -2474,6 +2473,7 @@ bool Simplifier::merge(
     if (useCache && solver->conf.doAsymmTE) {
         for (size_t i = 0; i < dummy.size(); i++) {
             const Lit lit = dummy2[i];
+            assert(lit.var() != noPosLit.var());
 
             //Use cache -- but only if none of the clauses were binary
             //Otherwise we cannot tell if the value in the cache is dependent
@@ -2492,6 +2492,8 @@ bool Simplifier::merge(
                         continue;
 
                     const Lit otherLit = it->getLit();
+                    if (otherLit.var() == noPosLit.var())
+                        continue;
 
                     //If (a) was in original clause
                     //then (a V b) means -b can be put inside
@@ -2510,7 +2512,6 @@ bool Simplifier::merge(
             }
 
             //Use watchlists
-            //(~lit) because watches are inverted...... this is CONFUSING
             const vec<Watched>& ws = solver->watches[lit.toInt()];
             numMaxVarElimAgressiveCheck -= ws.size()/3;
             for(vec<Watched>::const_iterator it =
@@ -2522,9 +2523,14 @@ bool Simplifier::merge(
                 if (!it->isBinary())
                     continue;
 
-                if (!it->isNonLearntBinary()) {
-                    const Lit otherLit = it->lit1();
+                //Only binary remains
+                assert(it->isBinary());
+                const Lit otherLit = it->lit1();
+                if (otherLit.var() == noPosLit.var())
+                    continue;
 
+                //If learnt we can make it non-learnt!
+                if (it->learnt()) {
                     //If (a V b) is learnt, make it non-learnt and we are done
                     if (seen[otherLit.toInt()]) {
                         //Only actually make the binary clause non-learnt if
@@ -2547,22 +2553,20 @@ bool Simplifier::merge(
                     continue;
                 }
                 //It's surely a non-learnt binary now
-                assert(it->isNonLearntBinary());
-
-                const Lit otherLit = it->lit1();
-
-                //If (a) is in clause
-                //then (a V b) means -b can be put inside
-                if (!seen[(~otherLit).toInt()]) {
-                    dummy2.push_back(~otherLit);
-                    seen[(~otherLit).toInt()] = 1;
-                }
+                assert(!it->learnt());
 
                 //If (a V b) is non-learnt, and in the clause, then we can remove
                 if (seen[otherLit.toInt()]) {
                     retval = false;
                     fancyRemove = true;
                     goto end;
+                }
+
+                //If (a) is in clause
+                //then (a V b) means -b can be put inside
+                if (!seen[(~otherLit).toInt()]) {
+                    dummy2.push_back(~otherLit);
+                    seen[(~otherLit).toInt()] = 1;
                 }
             }
         }

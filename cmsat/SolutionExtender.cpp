@@ -78,7 +78,7 @@ void SolutionExtender::extend()
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
-            if (it2->isNonLearntBinary()) {
+            if (it2->isBinary() && !it2->learnt()) {
                 vector<Lit> tmp;
                 tmp.push_back(lit);
                 tmp.push_back(it2->lit1());

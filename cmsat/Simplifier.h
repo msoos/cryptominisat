@@ -567,8 +567,7 @@ private:
     bool        merge(
         const Watched& ps
         , const Watched& qs
-        , const Lit without_p
-        , const Lit without_q
+        , const Lit noPosLit
         , const bool useCache
         , const bool final
     );
