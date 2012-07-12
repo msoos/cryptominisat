@@ -2650,8 +2650,10 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         if (it->isBinary())
         {
             //Only count non-learnt
-            if (!it->learnt())
+            if (!it->learnt()) {
                 ret.bin++;
+                ret.lit += 2;
+            }
 
             continue;
         }
@@ -2661,7 +2663,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         {
             //Only count non-learnt
             if (!it->learnt()) {
-                ret.lit += 2;
+                ret.lit += 3;
                 ret.longer++;
             }
 
@@ -2695,12 +2697,12 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
-    int normCost = pos.longer * neg.longer //long clauses have a good chance of being tautologies
+    /*int normCost = pos.longer * neg.longer //long clauses have a good chance of being tautologies
         + pos.longer * neg.bin * 2 //lower chance of tautology because of binary clause
         + neg.bin * pos.longer * 2 //lower chance of tautology because of binary clause
-        + pos.bin * neg.bin * 5; //Very low chance of tautology
+        + pos.bin * neg.bin * 5; //Very low chance of tautology*/
 
-    normCost = pos.longer + neg.longer + pos.bin + neg.bin;
+    int normCost = pos.longer + neg.longer + pos.bin + neg.bin;
 
 
     if (((pos.longer + pos.bin) <= 2 && (neg.longer + neg.bin) <= 2)) {
