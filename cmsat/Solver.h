@@ -613,7 +613,7 @@ class Solver : public Searcher
                 return false;
             }
         };
-        void subsumeImplicit();
+        bool subsumeAndStrengthenImplicit();
 
         /////////////////
         // Debug

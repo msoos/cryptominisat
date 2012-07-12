@@ -1001,8 +1001,9 @@ lbool Solver::simplifyProblem()
     /*if (conf.doBothProp && !bothProp->tryBothProp())
         goto end;*/
 
-    //Remove redundant binary clauses
-    subsumeImplicit();
+    //Treat implicits
+    if (!subsumeAndStrengthenImplicit())
+        goto end;
 
     //PROBE
     if (conf.doProbe && !prober->probe())
@@ -2297,11 +2298,21 @@ void Solver::printWatchlist(const vec<Watched>& ws, const Lit lit) const
     cout << endl;
 }
 
-void Solver::subsumeImplicit()
+bool Solver::subsumeAndStrengthenImplicit()
 {
+    assert(ok);
     const double myTime = cpuTime();
-    uint64_t numBinsBefore = numBinsLearnt + numBinsNonLearnt;
-    uint64_t numTrisBefore = numTrisLearnt + numTrisNonLearnt;
+    uint64_t remBins = 0;
+    uint64_t remTris = 0;
+    uint64_t remLitFromBin = 0;
+    uint64_t remLitFromTri = 0;
+    const size_t origTrailSize = trail.size();
+
+    //For delayed enqueue and binary adding
+    //Used for strengthening
+    vector<Lit> bin(2);
+    vector<BinaryClause> binsToAdd;
+    vector<Lit> toEnqueue;
 
     size_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
@@ -2385,6 +2396,7 @@ void Solver::subsumeImplicit()
 
                 if (remove) {
                     //Remove Tri
+                    remTris++;
                     removeWTri(watches, i->lit1(), lit, i->lit2(), i->learnt());
                     removeWTri(watches, i->lit2(), lit, i->lit1(), i->learnt());
 
@@ -2415,6 +2427,7 @@ void Solver::subsumeImplicit()
                 //impossible to have non-learnt before learnt
                 assert(!(i->learnt() == false && lastLearnt == true));
 
+                remBins++;
                 assert(i->lit1().var() != lit.var());
                 removeWBin(watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
@@ -2437,15 +2450,123 @@ void Solver::subsumeImplicit()
 
         /*cout << "---> After" << endl;
         printWatchlist(ws, lit);*/
+
+
+        //Now strengthen
+        i = ws.begin();
+        j = i;
+        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+            //Can't do much with clause, will treat them during vivification
+            if (i->isClause()) {
+                *j++ = *i;
+                continue;
+            }
+
+            //Strengthen bin with bin -- effectively setting literal
+            if (i->isBinary()) {
+                /*if (findWBin(watches, lit, ~i->lit1())) {
+                    remLitFromBin++;
+                    toEnqueue.push_back(lit);
+                }*/
+                *j++ = *i;
+                continue;
+            }
+
+            //Strengthen tri with bin
+            if (i->isTri()) {
+                bool firstRem = findWBin(watches, lit, ~i->lit1());
+                bool secondRem = findWBin(watches, lit, ~i->lit2());
+
+                //Nothing to do
+                if (!firstRem && !secondRem) {
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Remove tri
+                Lit lits[3];
+                lits[0] = lit;
+                lits[1] = i->lit1();
+                lits[2] = i->lit2();
+                std::sort(lits, lits+3);
+                removeTriAllButOne(watches, lit, lits, i->learnt());
+
+                //Update stats for tri
+                if (i->learnt()) {
+                    learntsLits -= 3;
+                    numTrisLearnt--;
+                } else {
+                    clausesLits -= 3;
+                    numTrisNonLearnt--;
+                }
+
+                //If both are to be removed, then only one lit left -> enqueue
+                if (firstRem && secondRem) {
+                    remLitFromTri += 2;
+                    toEnqueue.push_back(lit);
+                    continue;
+                }
+
+                //Exaclty one will be removed
+                remLitFromTri++;
+
+                if (firstRem) {
+                    binsToAdd.push_back(BinaryClause(lit, i->lit2(), i->learnt()));
+                    continue;
+                }
+
+                if (secondRem) {
+                    binsToAdd.push_back(BinaryClause(lit, i->lit1(), i->learnt()));
+                    continue;
+                }
+            }
+
+            //Only bin, tri and clause in watchlist
+            assert(false);
+        }
+        ws.shrink(i-j);
     }
 
+    //Enqueue delayed values
+    for(vector<Lit>::const_iterator
+        it = toEnqueue.begin(), end = toEnqueue.end()
+        ; it != end
+        ; it++
+    ) {
+        if (value(*it) == l_False) {
+            ok = false;
+            break;
+        }
+
+        if (value(*it) == l_Undef)
+            enqueue(*it);
+    }
+    ok = propagate().isNULL();
+    if (!ok)
+        goto end;
+
+    //Add delayed binary clauses
+    for(vector<BinaryClause>::const_iterator
+        it = binsToAdd.begin(), end = binsToAdd.end()
+        ; it != end
+        ; it++
+    ) {
+        bin[0] = it->getLit1();
+        bin[1] = it->getLit2();
+        addClauseInt(bin, it->getLearnt());
+        if (!ok)
+            goto end;
+    }
+
+end:
     if (conf.verbosity  >= 1) {
         cout
-        << "c implicit sub"
-        << " rem bin " << std::setw(10)
-        << (numBinsBefore - numBinsLearnt - numBinsNonLearnt)
-        << " rem tri " << std::setw(10)
-        << (numTrisBefore - numTrisLearnt - numTrisNonLearnt)
+        << "c [implicit]"
+        << " rem-bin " << remBins
+        << " rem-tri " << remTris
+        << " rem-litBin: " << remLitFromBin
+        << " rem-litTri: " << remLitFromTri
+        << " set-var: " << trail.size() - origTrailSize
 
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
         << (cpuTime() - myTime)
@@ -2455,7 +2576,9 @@ void Solver::subsumeImplicit()
 
     //Update stats
     solveStats.subsBinWithBinTime += cpuTime() - myTime;
-    solveStats.subsBinWithBin += (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt);
+    solveStats.subsBinWithBin += remBins;
+
+    return solver->ok;
 }
 
 void Solver::checkImplicitPropagated() const
