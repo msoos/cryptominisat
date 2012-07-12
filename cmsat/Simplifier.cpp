@@ -1828,39 +1828,14 @@ void Simplifier::removeClausesHelper(
 
         if (watch.isTri()) {
             //Remove tri clause
-            vector<Lit> lits;
-            lits.push_back(lit);
-            lits.push_back(watch.lit1());
-            lits.push_back(watch.lit2());
+            vector<Lit> lits(3);
+            lits[0] = lit;
+            lits[1] = watch.lit1();
+            lits[2] = watch.lit2();
             std::sort(lits.begin(), lits.end());
 
             //Remove 2 of the 3 -- the 3rd is cleared when clearing occur
-            if (lits[0] != lit) {
-                removeWTri(solver->watches
-                    , lits[0]
-                    , lits[1]
-                    , lits[2]
-                    , watch.learnt()
-                );
-            }
-
-            if (lits[1] != lit) {
-                removeWTri(solver->watches
-                    , lits[1]
-                    , lits[0]
-                    , lits[2]
-                    , watch.learnt()
-                );
-            }
-
-            if (lits[2] != lit) {
-                removeWTri(solver->watches
-                    , lits[2]
-                    , lits[0]
-                    , lits[1]
-                    , watch.learnt()
-                );
-            }
+            removeTriAllButOne(solver->watches, lit, lits.data(), watch.learnt());
 
             //Update stats
             if (!watch.learnt()) {
