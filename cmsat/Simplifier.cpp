@@ -2519,9 +2519,50 @@ bool Simplifier::merge(
                 ; it != end
                 ; it++
             ) {
-                //Only care about binary clauses
-                if (!it->isBinary())
+                //Can't do much with clauses, too expensive
+                if (it->isClause())
                     continue;
+
+                //handle tri
+                if (it->isTri()) {
+                    if (it->learnt())
+                        continue;
+
+                    //See if any of the literals is in
+                    Lit otherLit = lit_Undef;
+                    unsigned inside = 0;
+                    if (seen[it->lit1().toInt()]) {
+                        otherLit = it->lit2();
+                        inside++;
+                    }
+
+                    if (seen[it->lit2().toInt()]) {
+                        otherLit = it->lit1();
+                        inside++;
+                    }
+
+                    //Could subsume
+                    if (inside == 2) {
+                        retval = false;
+                        fancyRemove = true;
+                        goto end;
+                    }
+
+                    //None is in, skip
+                    if (inside == 0)
+                        continue;
+
+                    if (otherLit.var() == noPosLit.var())
+                        continue;
+
+                    //Extend clause
+                    if (!seen[(~otherLit).toInt()]) {
+                        dummy2.push_back(~otherLit);
+                        seen[(~otherLit).toInt()] = 1;
+                    }
+
+                    continue;
+                }
 
                 //Only binary remains
                 assert(it->isBinary());
