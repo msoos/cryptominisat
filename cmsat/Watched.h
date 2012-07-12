@@ -116,11 +116,6 @@ class Watched {
             return (type == watch_binary_t);
         }
 
-        bool isNonLearntBinary() const
-        {
-            return (type == watch_binary_t && !data2);
-        }
-
         bool isClause() const
         {
             return (type == watch_clause_t);
@@ -366,6 +361,20 @@ static inline void removeWTri(
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
+}
+
+inline void removeTriAllButOne(
+    vector<vec<Watched> >& wsFull
+    , const Lit lit
+    , const Lit* lits
+    , const bool learnt
+) {
+    if (lit != lits[0])
+        removeWTri(wsFull, lits[0], lits[1], lits[2], learnt);
+    if (lit != lits[1])
+        removeWTri(wsFull, lits[1], lits[0], lits[2], learnt);
+    if (lit != lits[2])
+        removeWTri(wsFull, lits[2], lits[0], lits[1], learnt);
 }
 
 //////////////////
