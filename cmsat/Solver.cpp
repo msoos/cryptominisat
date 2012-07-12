@@ -2102,19 +2102,50 @@ uint32_t Solver::getNumFreeVarsAdv(size_t trail_size_of_thread) const
 
 void Solver::printClauseStats()
 {
+    if (clauses.size() > 20000) {
+        cout
+        << " " << std::setw(4) << clauses.size()/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(7) << clauses.size();
+    }
+
+    if (numTrisNonLearnt > 20000) {
+        cout
+        << " " << std::setw(4) << numTrisNonLearnt/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(7) << numTrisNonLearnt;
+    }
+
+    if (numBinsNonLearnt > 20000) {
+        cout
+        << " " << std::setw(4) << numBinsNonLearnt/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(6) << numBinsNonLearnt;
+    }
+
     cout
-    << " " << std::setw(7) << clauses.size()
-    << " " << std::setw(7) << numTrisNonLearnt
-    << " " << std::setw(4) << std::fixed << std::setprecision(1)
+    << " " << std::setw(4) << std::fixed << std::setprecision(1);
+
+    cout
     << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt)
 
-    << " " << std::setw(7) << learnts.size()
-    << " " << std::setw(7) << numTrisLearnt
+    << " " << std::setw(6) << learnts.size()
+    << " " << std::setw(6) << numTrisLearnt;
+
+    if (numBinsLearnt > 20000) {
+        cout
+        << " " << std::setw(4) << numBinsLearnt/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(6) << numBinsLearnt;
+    }
+
+    cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
     << (double)(learntsLits - numBinsLearnt*2)/(double)(learnts.size() + numTrisLearnt)
-
-    << " " << std::setw(6) << numBinsNonLearnt
-    << " " << std::setw(6) << numBinsLearnt
     ;
 }
 
