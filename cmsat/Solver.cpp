@@ -2104,10 +2104,12 @@ void Solver::printClauseStats()
 {
     cout
     << " " << std::setw(7) << clauses.size()
+    << " " << std::setw(7) << numTrisNonLearnt
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
     << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt)
 
     << " " << std::setw(7) << learnts.size()
+    << " " << std::setw(7) << numTrisLearnt
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
     << (double)(learntsLits - numBinsLearnt*2)/(double)(learnts.size() + numTrisLearnt)
 
