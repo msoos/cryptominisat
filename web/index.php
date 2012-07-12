@@ -547,7 +547,7 @@ for (var i = 0; i < myData.length; i++) {
             labelsDiv: document.getElementById(myData[i].labeldiv),
             labelsSeparateLines: true,
             labelsKMB: true,
-            drawPoints: true,
+            drawPoints: false,
             pointSize: 1,
             drawXGrid: false,
             drawYGrid: false,
