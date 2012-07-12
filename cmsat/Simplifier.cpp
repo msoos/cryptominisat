@@ -1881,84 +1881,21 @@ int Simplifier::testVarElim(const Var var)
     assert(solver->value(var) == l_Undef);
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
+    //Gather data
+    HeuristicData pos = calcDataForHeuristic(Lit(var, false));
+    HeuristicData neg = calcDataForHeuristic(Lit(var, true));
+
     //set-up
     const Lit lit = Lit(var, false);
     const vec<Watched>& poss = solver->watches[lit.toInt()];
     const vec<Watched>& negs = solver->watches[(~lit).toInt()];
-
-    //Count statistic to help in doing heuristic cut-offs
-    uint32_t before_3long = 0;
-    uint32_t before_long = 0;
-    size_t before_literals = 0;
-
-    //stats on positive
-    uint32_t posSize = 0;
-    for (vec<Watched>::const_iterator
-        it = poss.begin(), end = poss.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->isBinary() && !it->learnt()) {
-            posSize++;
-            before_literals += 2;
-        }
-
-        if (it->isClause()) {
-            Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-            if (cl->learnt())
-                continue;
-
-            posSize++;
-            before_literals += cl->size();
-            switch(cl->size())
-            {
-                case 3:
-                    before_3long++;
-                    break;
-                default:
-                    before_long++;
-            }
-        }
-    }
-
-    //Stats on negative
-    uint32_t negSize = 0;
-    for (vec<Watched>::const_iterator
-        it = negs.begin(), end = negs.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->isBinary() && !it->learnt()) {
-            negSize++;
-            before_literals += 2;
-        }
-
-        if (it->isClause()) {
-            Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-            if (cl->learnt())
-                continue;
-
-            negSize++;
-            before_literals += cl->size();
-            switch(cl->size())
-            {
-                case 3:
-                    before_3long++;
-                    break;
-                default:
-                    before_long++;
-            }
-        }
-    }
-
-    *toDecrease -= (posSize + negSize)/2;
 
     /*// Heuristic CUT OFF:
     if (posSize >= 15 && negSize >= 15)
         return -1000;*/
 
     // Count clauses/literals after elimination:
-    uint32_t before_clauses = posSize + negSize;
+    uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
     int after_literals = 0;
@@ -2002,7 +1939,7 @@ int Simplifier::testVarElim(const Var var)
     }
 
     //return before_literals-after_literals;
-    return before_long-after_long;
+    return (pos.longer + neg.longer)-after_long;
 }
 
 void Simplifier::varElimCheckUpdate(
