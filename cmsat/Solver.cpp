@@ -1022,18 +1022,29 @@ lbool Solver::simplifyProblem()
 
     if (needToInterrupt) return l_Undef;
 
-    //Remove redundant binary clauses
-    subsumeImplicit();
+    //Treat implicits
+    if (!subsumeAndStrengthenImplicit())
+        goto end;
+
+    //Subsume only
+    if (conf.doClausVivif && !clauseVivifier->vivify(false)) {
+        goto end;
+    }
 
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSatELite && !subsumer->simplifyBySubsumption())
         goto end;
 
     //Vivify clauses
-    if (solveStats.numSimplify > 1
-        && conf.doClausVivif && !clauseVivifier->vivify(true)
-    ) {
-        goto end;
+    if (solveStats.numSimplify > 1) {
+        if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
+            goto end;
+        }
+    } else {
+        //Subsume only
+        if (conf.doClausVivif && !clauseVivifier->vivify(false)) {
+            goto end;
+        }
     }
 
     //Search & replace 2-long XORs

@@ -61,7 +61,7 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     if (!vivifyClausesCache(solver->learnts, true, alsoStrengthen))
         goto end;
 
-    if (!vivifyClausesNormal())
+    if (alsoStrengthen && !vivifyClausesNormal())
         goto end;
 
 end:
