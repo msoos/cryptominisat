@@ -2510,7 +2510,7 @@ bool Simplifier::merge(
                 //If learnt we can make it non-learnt!
                 if (it->learnt()) {
                     //If (a V b) is learnt, make it non-learnt and we are done
-                    if (seen[otherLit.toInt()]) {
+                    /*if (seen[otherLit.toInt()]) {
                         //Only actually make the binary clause non-learnt if
                         //we are *actually* eliminating the variable
                         if (final) {
@@ -2526,7 +2526,7 @@ bool Simplifier::merge(
                         retval = false;
                         fancyRemove = true;
                         goto end;
-                    }
+                    }*/
 
                     continue;
                 }
