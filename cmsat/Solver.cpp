@@ -2521,7 +2521,7 @@ bool Solver::subsumeAndStrengthenImplicit()
                 vec<Watched>::const_iterator i2 = i;
                 bool rem = false;
                 while(i2 != end
-                    && i2->isBinary() || i2->isTri()
+                    && (i2->isBinary() || i2->isTri())
                     && i2->lit1().var() == i2->lit1().var()
                 ) {
                     //Yay, we have found what we needed!
