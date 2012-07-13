@@ -2508,21 +2508,62 @@ bool Solver::subsumeAndStrengthenImplicit()
 
             //Strengthen bin with bin -- effectively setting literal
             if (i->isBinary()) {
-                /*if (findWBin(watches, lit, ~i->lit1())) {
+                //If inverted, then the inverse will never be found, because
+                //watches are sorted
+                if (i->lit1().sign()) {
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Try to look for a binary in this same watchlist
+                //that has ~i->lit1() inside. Everything is sorted, so we are
+                //lucky, this is speedy
+                vec<Watched>::const_iterator i2 = i;
+                bool rem = false;
+                while(i2 != end
+                    && i2->isBinary() || i2->isTri()
+                    && i2->lit1().var() == i2->lit1().var()
+                ) {
+                    //Yay, we have found what we needed!
+                    if (i2->isBinary() && i2->lit1() == ~i->lit1()) {
+                        rem = true;
+                        break;
+                    }
+
+                    i2++;
+                }
+
+                //Enqeue literal
+                if (rem) {
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
-                }*/
+                }
                 *j++ = *i;
                 continue;
             }
 
             //Strengthen tri with bin
             if (i->isTri()) {
-                bool firstRem = findWBin(watches, lit, ~i->lit1());
-                bool secondRem = findWBin(watches, lit, ~i->lit2());
+                seen[i->lit1().toInt()] = 1;
+                seen[i->lit2().toInt()] = 1;
+                bool rem = false;
+                for(vec<Watched>::const_iterator
+                    it2 = watches[(~lit).toInt()].begin(), end2 = watches[(~lit).toInt()].end()
+                    ; it2 != end2
+                    ; it2++
+                ) {
+                    if (it2->isBinary()
+                        && seen[it2->lit1().toInt()]
+                    ) {
+                        rem = true;
+                        break;
+                    }
+                }
+                seen[i->lit1().toInt()] = 0;
+                seen[i->lit2().toInt()] = 0;
 
                 //Nothing to do
-                if (!firstRem && !secondRem) {
+                if (!rem) {
                     *j++ = *i;
                     continue;
                 }
@@ -2544,25 +2585,11 @@ bool Solver::subsumeAndStrengthenImplicit()
                     numTrisNonLearnt--;
                 }
 
-                //If both are to be removed, then only one lit left -> enqueue
-                if (firstRem && secondRem) {
-                    remLitFromTri += 2;
-                    toEnqueue.push_back(lit);
-                    continue;
-                }
-
                 //Exaclty one will be removed
                 remLitFromTri++;
 
-                if (firstRem) {
-                    binsToAdd.push_back(BinaryClause(lit, i->lit2(), i->learnt()));
-                    continue;
-                }
-
-                if (secondRem) {
-                    binsToAdd.push_back(BinaryClause(lit, i->lit1(), i->learnt()));
-                    continue;
-                }
+                binsToAdd.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
+                continue;
             }
 
             //Only bin, tri and clause in watchlist

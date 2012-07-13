@@ -589,8 +589,8 @@ class Solver : public Searcher
                     return true;
                 //Now nothing is clause
 
-                if (first.lit1().toInt() < second.lit1().toInt()) return true;
-                if (first.lit1().toInt() > second.lit1().toInt()) return false;
+                if (first.lit1() < second.lit1()) return true;
+                if (first.lit1() > second.lit1()) return false;
                 if (first.isBinary() && second.isTri()) return true;
                 if (first.isTri() && second.isBinary()) return false;
                 //At this point either both are BIN or both are TRI
@@ -606,8 +606,8 @@ class Solver : public Searcher
 
                 //Both are Tri
                 assert(first.isTri() && second.isTri());
-                if (first.lit2().toInt() < second.lit2().toInt()) return true;
-                if (first.lit2().toInt() > second.lit2().toInt()) return false;
+                if (first.lit2() < second.lit2()) return true;
+                if (first.lit2() > second.lit2()) return false;
                 if (first.learnt() == second.learnt()) return false;
                 if (!first.learnt()) return true;
                 return false;
