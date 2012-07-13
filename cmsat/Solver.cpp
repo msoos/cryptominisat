@@ -334,6 +334,23 @@ void Solver::attachBinClause(
     PropEngine::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
 }
 
+void Solver::detachTriClause(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
+) {
+    if (learnt) {
+        learntsLits -= 3;
+        numTrisLearnt--;
+    } else {
+        clausesLits -= 3;
+        numTrisNonLearnt--;
+    }
+
+    PropEngine::detachTriClause(lit1, lit2, lit3, learnt);
+}
+
 void Solver::detachClause(const Clause& c)
 {
     assert(c.size() > 3);

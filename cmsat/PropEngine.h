@@ -306,6 +306,12 @@ protected:
         const Clause& c
         , const bool checkAttach = true
     );
+    virtual void detachTriClause(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+        , const bool learnt
+    );
     virtual void attachBinClause(
         const Lit lit1
         , const Lit lit2

@@ -1879,7 +1879,7 @@ int Simplifier::testVarElim(const Var var)
     assert(solver->varData[var].elimed == ELIMED_NONE);
     assert(solver->decision_var[var]);
     assert(solver->value(var) == l_Undef);
-    const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
+    //const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
     //Gather data
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
@@ -1894,25 +1894,31 @@ int Simplifier::testVarElim(const Var var)
     if (posSize >= 15 && negSize >= 15)
         return -1000;*/
 
-    // Count clauses/literals after elimination:
+    // Count clauses/literals after elimination
+    resolvents.clear();
     uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
-    int after_literals = 0;
+    uint32_t after_literals = 0;
     for (vec<Watched>::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
         ; it++
     ) {
+        //Ignore learnt
+        if (((it->isBinary() || it->isTri()) && it->learnt())
+            || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
+        ) {
+            continue;
+        }
+
         for (vec<Watched>::const_iterator
             it2 = negs.begin(), end2 = negs.end()
             ; it2 != end2
             ; it2++
         ) {
-            //If any of the two is learnt, skip
-            if (((it->isBinary() || it->isTri()) && it->learnt())
-                || ((it2->isBinary() || it2->isTri()) && it2->learnt())
-                || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
+            //Ignore learnt
+            if (((it2->isBinary() || it2->isTri()) && it2->learnt())
                 || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
                 continue;
@@ -1921,20 +1927,40 @@ int Simplifier::testVarElim(const Var var)
             //Decrement available time
             *toDecrease -= 2;
 
-            // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-            bool ok = merge(*it, *it2, lit, agressiveCheck, false);
-            if (ok) {
-                //Update after-stats
-                if (dummy.size() > 3)
-                    after_long++;
+            //Resolve the two clauses
+            bool ok = merge(*it, *it2, lit, true);
 
-                after_clauses++;
-                after_literals += dummy.size();
+            //The resolvent is tautological
+            if (!ok)
+                continue;
 
-                //Early-abort
-                if (after_clauses > before_clauses)
-                    return -1000;
-            }
+            #ifdef VERBOSE_DEBUG_VARELIM
+            cout << "Adding new clause due to varelim: " << dummy << endl;
+            #endif
+
+            //Update after-stats
+            after_clauses++;
+            after_literals += dummy.size();
+            if (dummy.size() > 3)
+                after_long++;
+
+            //Early-abort
+            if (after_clauses > before_clauses)
+                return -1000;
+
+            //Calculate new clause stats
+            ClauseStats stats;
+            if ((it->isBinary() || it->isTri()) && it2->isClause())
+                stats = solver->clAllocator->getPointer(it2->getOffset())->stats;
+            else if ((it2->isBinary() || it2->isTri()) && it->isClause())
+                stats = solver->clAllocator->getPointer(it->getOffset())->stats;
+            else if (it->isClause() && it2->isClause())
+                stats = ClauseStats::combineStats(
+                    solver->clAllocator->getPointer(it->getOffset())->stats
+                    , solver->clAllocator->getPointer(it2->getOffset())->stats
+            );
+
+            resolvents.push_back(std::make_pair(dummy, stats));
         }
     }
 
@@ -2099,81 +2125,80 @@ bool Simplifier::maybeEliminate(const Var var)
     solver->watches[lit.toInt()].clear();
     solver->watches[(~lit).toInt()].clear();
 
-    //Add all resolvents
-    for (vec<Watched>::const_iterator
-        it = poss.begin(), end = poss.end()
+    for(vector<pair<vector<Lit>, ClauseStats> >::const_iterator
+        it = resolvents.begin(), end = resolvents.end()
         ; it != end
         ; it++
     ) {
-        for (vec<Watched>::const_iterator
-            it2 = negs.begin(), end2 = negs.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //If any of the two is learnt, skip
-            if (((it->isBinary() || it->isTri()) && it->learnt())
-                || ((it2->isBinary() || it2->isTri()) && it2->learnt())
-                || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
-                || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
+        runStats.newClauses++;
+
+        finalLits = it->first;
+
+        //Check if a new 2-long would subsume a 3-long
+        if (finalLits.size() == 2) {
+            for(vec<Watched>::const_iterator
+                it2 = solver->watches[finalLits[0].toInt()].begin()
+                , end2 = solver->watches[finalLits[0].toInt()].end()
+                ; it2 != end2
+                ; it2++
             ) {
-                continue;
-            }
-
-            //Decrement available time
-            *toDecrease -= 2;
-
-            //Resolve the two clauses
-            bool ok = merge(*it, *it2, lit, true, true);
-
-            //The resolvent is tautological
-            if (!ok)
-                continue;
-
-            #ifdef VERBOSE_DEBUG_VARELIM
-            cout << "Adding new clause due to varelim: " << dummy << endl;
-            #endif
-
-            //Calculate stats
-            ClauseStats stats;
-            if ((it->isBinary() || it->isTri()) && it2->isClause())
-                stats = solver->clAllocator->getPointer(it2->getOffset())->stats;
-            else if ((it2->isBinary() || it2->isTri()) && it->isClause())
-                stats = solver->clAllocator->getPointer(it->getOffset())->stats;
-            else if (it->isClause() && it2->isClause())
-                stats = ClauseStats::combineStats(
-                    solver->clAllocator->getPointer(it->getOffset())->stats
-                    , solver->clAllocator->getPointer(it2->getOffset())->stats
-            );
-
-            //Add clause and do subsumption
-            *toDecrease -= dummy.size();
-            Clause* newCl = solver->addClauseInt(
-                dummy //Literals in new clause
-                , false //Is the new clause learnt?
-                , stats //Statistics for this new clause (usage, etc.)
-                , false //Should clause be attached?
-                , &finalLits //Return final set of literals here
-            );
-
-            if (!solver->ok)
-                goto end;
-
-            if (newCl != NULL) {
-                linkInClause(*newCl);
-                solver->clauses.push_back(newCl);
-                ClOffset offset = solver->clAllocator->getOffset(newCl);
-                runStats.subsumedByVE += subsume0(offset);
-            } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-                Sub0Ret ret = subsume0(
-                    std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
-                    , finalLits //Literals in this binary clause
-                    , calcAbstraction(finalLits) //Abstraction of literals
-                );
-                runStats.subsumedByVE += ret.numSubsumed;
-                if (ret.numSubsumed > 0) {
-                    if (solver->conf.verbosity >= 5) {
-                        cout << "Subsumed: " << ret.numSubsumed << endl;
+                if (it2->isTri() && !it2->learnt()
+                    && (it2->lit1() == finalLits[1]
+                        || it2->lit2() == finalLits[1])
+                ) {
+                    if (solver->conf.verbosity >= 6) {
+                        cout
+                        << "Removing non-learnt tri-clause due to addition of"
+                        << " non-learnt bin: "
+                        << finalLits[0]
+                        << ", " << it2->lit1()
+                        << ", " << it2->lit2()
+                        << endl;
                     }
+
+                    runStats.subsumedByVE++;
+                    solver->detachTriClause(
+                        finalLits[0]
+                        , it2->lit1()
+                        , it2->lit2()
+                        , it2->learnt()
+                    );
+
+                    //We have to break: we just modified the stuff we are
+                    //going through...
+                    break;
+                }
+            }
+        }
+
+        //Add clause and do subsumption
+        Clause* newCl = solver->addClauseInt(
+            it->first //Literals in new clause
+            , false //Is the new clause learnt?
+            , it->second //Statistics for this new clause (usage, etc.)
+            , false //Should clause be attached?
+            , &finalLits //Return final set of literals here
+        );
+
+        if (!solver->ok)
+            goto end;
+
+        if (newCl != NULL) {
+            linkInClause(*newCl);
+            solver->clauses.push_back(newCl);
+            ClOffset offset = solver->clAllocator->getOffset(newCl);
+            runStats.subsumedByVE += subsume0(offset);
+        } else if (finalLits.size() == 3 || finalLits.size() == 2) {
+            //Subsume long
+            Sub0Ret ret = subsume0(
+                std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
+                , finalLits //Literals in this binary clause
+                , calcAbstraction(finalLits) //Abstraction of literals
+            );
+            runStats.subsumedByVE += ret.numSubsumed;
+            if (ret.numSubsumed > 0) {
+                if (solver->conf.verbosity >= 5) {
+                    cout << "Subsumed: " << ret.numSubsumed << endl;
                 }
             }
         }
@@ -2304,7 +2329,6 @@ bool Simplifier::merge(
     , const Watched& qs
     , const Lit noPosLit
     , const bool useCache
-    , const bool final
 ) {
     //If clause has already been freed, skip
     if (ps.isClause()
@@ -2322,7 +2346,6 @@ bool Simplifier::merge(
     dummy2.clear(); //Used to clear 'seen'
 
     bool retval = true;
-    bool fancyRemove = false;
     if (ps.isBinary() || ps.isTri()) {
         assert(ps.lit1() != noPosLit);
 
@@ -2442,7 +2465,6 @@ bool Simplifier::merge(
                     //If (a V b) is non-learnt in the clause, then done
                     if (seen[otherLit.toInt()]) {
                         retval = false;
-                        fancyRemove = true;
                         goto end;
                     }
                 }
@@ -2461,9 +2483,7 @@ bool Simplifier::merge(
                     continue;
 
                 //handle tri
-                if (it->isTri()) {
-                    if (it->learnt())
-                        continue;
+                if (it->isTri() && !it->learnt()) {
 
                     //See if any of the literals is in
                     Lit otherLit = lit_Undef;
@@ -2481,7 +2501,6 @@ bool Simplifier::merge(
                     //Could subsume
                     if (inside == 2) {
                         retval = false;
-                        fancyRemove = true;
                         goto end;
                     }
 
@@ -2501,50 +2520,28 @@ bool Simplifier::merge(
                     continue;
                 }
 
-                //Only binary remains
-                assert(it->isBinary());
-                const Lit otherLit = it->lit1();
-                if (otherLit.var() == noPosLit.var())
-                    continue;
+                if (it->isBinary() && !it->learnt()) {
+                    const Lit otherLit = it->lit1();
+                    if (otherLit.var() == noPosLit.var())
+                        continue;
 
-                //If learnt we can make it non-learnt!
-                if (it->learnt()) {
-                    //If (a V b) is learnt, make it non-learnt and we are done
-                    /*if (seen[otherLit.toInt()]) {
-                        //Only actually make the binary clause non-learnt if
-                        //we are *actually* eliminating the variable
-                        if (final) {
-                            findWatchedOfBin(solver->watches, lit, otherLit, true).setLearnt(false);
-                            findWatchedOfBin(solver->watches, otherLit, lit, true).setLearnt(false);
-                            solver->numBinsLearnt--;
-                            solver->numBinsNonLearnt++;
-                            solver->learntsLits -= 2;
-                            solver->clausesLits += 2;
-                            //cout << "Removed using new technique!!" << endl;
-                        }
+                    //learnt is useless
+                    if (it->learnt()) {
+                        continue;
+                    }
 
+                    //If (a V b) is non-learnt, and in the clause, then we can remove
+                    if (seen[otherLit.toInt()]) {
                         retval = false;
-                        fancyRemove = true;
                         goto end;
-                    }*/
+                    }
 
-                    continue;
-                }
-                //It's surely a non-learnt binary now
-                assert(!it->learnt());
-
-                //If (a V b) is non-learnt, and in the clause, then we can remove
-                if (seen[otherLit.toInt()]) {
-                    retval = false;
-                    fancyRemove = true;
-                    goto end;
-                }
-
-                //If (a) is in clause
-                //then (a V b) means -b can be put inside
-                if (!seen[(~otherLit).toInt()]) {
-                    dummy2.push_back(~otherLit);
-                    seen[(~otherLit).toInt()] = 1;
+                    //If (a) is in clause
+                    //then (a V b) means -b can be put inside
+                    if (!seen[(~otherLit).toInt()]) {
+                        dummy2.push_back(~otherLit);
+                        seen[(~otherLit).toInt()] = 1;
+                    }
                 }
             }
         }
@@ -2558,15 +2555,6 @@ bool Simplifier::merge(
         ; it++
     ) {
         seen[it->toInt()] = 0;
-    }
-
-    //If we are *really* eliminating, update the stats
-    if (final) {
-        runStats.newClauses++;
-        if (fancyRemove)
-            runStats.newClauseNotAddedFancy++;
-        if (!retval)
-            runStats.newClauseNotAdded++;
     }
 
     return retval;

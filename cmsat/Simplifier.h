@@ -41,6 +41,7 @@
 using std::vector;
 using std::list;
 using std::map;
+using std::pair;
 using std::priority_queue;
 
 class ClauseCleaner;
@@ -118,8 +119,6 @@ public:
             , triedToElimVars(0)
             , usedAgressiveCheckToELim(0)
             , newClauses(0)
-            , newClauseNotAdded(0)
-            , newClauseNotAddedFancy(0)
 
             , zeroDepthAssings(0)
         {
@@ -177,8 +176,6 @@ public:
             triedToElimVars += other.triedToElimVars;
             usedAgressiveCheckToELim += other.usedAgressiveCheckToELim;
             newClauses += other.newClauses;
-            newClauseNotAdded += other.newClauseNotAdded;
-            newClauseNotAddedFancy += other.newClauseNotAddedFancy;
 
             zeroDepthAssings += other.zeroDepthAssings;
 
@@ -210,12 +207,6 @@ public:
             cout
             << "c [v-elim]"
             << " cl-new: " << newClauses
-            << " ( "
-            << (double)newClauseNotAdded/(double)newClauses*100.0
-            << " % not add, "
-            << " "
-            << (double)newClauseNotAddedFancy/(double)newClauses*100.0
-            << "% complic)"
             << " tried: " << triedToElimVars
             << " ("
             << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
@@ -261,14 +252,6 @@ public:
 
             printStatsLine("c cl-new"
                 , newClauses
-                , (double)newClauseNotAdded/(double)newClauses*100.0
-                , "% not added"
-            );
-
-            printStatsLine("c cl-new"
-                , newClauses
-                , (double)newClauseNotAddedFancy/(double)newClauses*100.0
-                , "% not added due to asymm algo"
             );
 
             printStatsLine("c tried to elim"
@@ -358,8 +341,6 @@ public:
         uint64_t triedToElimVars;
         uint64_t usedAgressiveCheckToELim;
         uint64_t newClauses;
-        uint64_t newClauseNotAdded;
-        uint64_t newClauseNotAddedFancy;
 
         //General stat
         uint64_t zeroDepthAssings;
@@ -516,10 +497,10 @@ private:
     /////////////////////
     //Variable elimination
 
-    vector<std::pair<int, int> > varElimComplexity;
+    vector<pair<int, int> > varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
-        const vector<std::pair<int, int> >&  varElimComplexity;
+        const vector<pair<int, int> >&  varElimComplexity;
         bool operator () (const uint32_t x, const uint32_t y) const
         {
             //Of the FIRST, the smallest is best
@@ -531,7 +512,7 @@ private:
         }
 
         VarOrderLt(
-            const vector<std::pair<int,int> >& _varElimComplexity
+            const vector<pair<int,int> >& _varElimComplexity
         ) :
             varElimComplexity(_varElimComplexity)
         {}
@@ -547,6 +528,7 @@ private:
     vector<char> varElimToCheckHelper;
     bool        maybeEliminate(const Var x);
     int         testVarElim(Var var);
+    vector<pair<vector<Lit>, ClauseStats> > resolvents;
 
     struct HeuristicData
     {
@@ -563,13 +545,12 @@ private:
     };
     HeuristicData calcDataForHeuristic(const Lit lit) const;
 
-    std::pair<int, int>  heuristicCalcVarElimScore(const Var var);
+    pair<int, int>  heuristicCalcVarElimScore(const Var var);
     bool        merge(
         const Watched& ps
         , const Watched& qs
         , const Lit noPosLit
         , const bool useCache
-        , const bool final
     );
     void varElimCheckUpdate(
         const vec<Watched>& gothrough

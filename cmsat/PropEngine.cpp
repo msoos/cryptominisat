@@ -120,6 +120,21 @@ void PropEngine::attachTriClause(
     watches[lit3.toInt()].push(Watched(lit1, lit2, learnt));
 }
 
+void PropEngine::detachTriClause(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
+) {
+    Lit lits[3];
+    lits[0] = lit1;
+    lits[1] = lit2;
+    lits[2] = lit3;
+    std::sort(lits, lits+3);
+    removeWTri(watches, lits[0], lits[1], lits[2], learnt);
+    removeWTri(watches, lits[1], lits[0], lits[2], learnt);
+    removeWTri(watches, lits[2], lits[0], lits[1], learnt);
+}
 
 void PropEngine::attachBinClause(
     const Lit lit1

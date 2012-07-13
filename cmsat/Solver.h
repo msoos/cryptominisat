@@ -430,7 +430,13 @@ class Solver : public Searcher
             , const Lit lit2
             , const Lit lit3
             , const bool learnt
-         );
+        );
+        virtual void detachTriClause(
+            const Lit lit1
+            , const Lit lit2
+            , const Lit lit3
+            , const bool learnt
+        );
         virtual void  detachClause(const Clause& c);
         virtual void  detachModifiedClause(
             const Lit lit1
