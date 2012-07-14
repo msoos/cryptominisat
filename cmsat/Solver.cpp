@@ -2299,7 +2299,7 @@ void Solver::checkStats(const bool allowFreed) const
 
     checkImplicitStats();
 
-    //Check number of non-learnt literals
+    //Count number of non-learnt literals
     uint64_t numLitsNonLearnt = numBinsNonLearnt*2 + numTrisNonLearnt*3;
     for(vector<Clause*>::const_iterator
         it = clauses.begin(), end = clauses.end()
@@ -2313,14 +2313,8 @@ void Solver::checkStats(const bool allowFreed) const
             numLitsNonLearnt += cl.size();
         }
     }
-    if (numLitsNonLearnt != clausesLits) {
-        cout << "ERROR: " << endl;
-        cout << "->numLitsNonLearnt: " << numLitsNonLearnt << endl;
-        cout << "->clausesLits: " << clausesLits << endl;
-    }
-    assert(numLitsNonLearnt == clausesLits);
 
-    //Check number of learnt literals
+    //Count number of learnt literals
     uint64_t numLitsLearnt = numBinsLearnt*2 + numTrisLearnt*3;
     for(vector<Clause*>::const_iterator
         it = learnts.begin(), end = learnts.end()
@@ -2334,13 +2328,20 @@ void Solver::checkStats(const bool allowFreed) const
             numLitsLearnt += cl.size();
         }
     }
+
+    //Check counts
+    if (numLitsNonLearnt != clausesLits) {
+        cout << "ERROR: " << endl;
+        cout << "->numLitsNonLearnt: " << numLitsNonLearnt << endl;
+        cout << "->clausesLits: " << clausesLits << endl;
+    }
     if (numLitsLearnt != learntsLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsLearnt: " << numLitsLearnt << endl;
         cout << "->learntsLits: " << learntsLits << endl;
     }
+    assert(numLitsNonLearnt == clausesLits);
     assert(numLitsLearnt == learntsLits);
-
 }
 
 uint32_t Solver::getNewToReplaceVars() const
