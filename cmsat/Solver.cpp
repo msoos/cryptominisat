@@ -44,7 +44,6 @@ using std::endl;
 
 Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
-    , sqlStats(_conf.verbosity)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
     , conf(_conf)
@@ -899,6 +898,9 @@ void Solver::reduceDB()
 
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
+    //Set up SQL writer
+    sqlStats.setup(this);
+
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
@@ -2735,5 +2737,10 @@ void Solver::checkImplicitPropagated() const
             }
         }
     }
+}
+
+void Solver::fileAdded(const string& filename)
+{
+    fileNamesUsed.push_back(filename);
 }
 

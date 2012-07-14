@@ -56,6 +56,10 @@ class Solver : public Searcher
         Solver(const SolverConf& _conf);
         ~Solver();
 
+        //////////
+        //External stats
+        void fileAdded(const string& filename);
+
         //////////////////////////////
         //Solving
         lbool solve(const vector<Lit>* _assumptions = NULL);
@@ -414,6 +418,7 @@ class Solver : public Searcher
 
         friend class SQLStats;
         SQLStats sqlStats;
+        vector<string> fileNamesUsed;
 
         //Control
         Clause*  newClauseByThread(

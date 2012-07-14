@@ -8,18 +8,19 @@ class Solver;
 class SQLStats
 {
 public:
-    SQLStats(const uint64_t verbosity);
+    SQLStats();
     void printRestartSQL(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
         , const Solver* solver
         , const Searcher* searcher
     );
+    void setup(const Solver* solver);
 
 private:
     void connectServer();
-    void randomID();
     void getID();
+    void addFiles(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
 
     void bindTo(uint64_t& data);

@@ -9,30 +9,42 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string>
+#include <time.h>
 
 using std::cout;
 using std::endl;
 using std::string;
 
-SQLStats::SQLStats(uint64_t verbosity) :
+SQLStats::SQLStats() :
     bindAt(0)
 {
-    connectServer();
+}
 
-    randomID();
-    initRestartSTMT(verbosity);
+void SQLStats::setup(const Solver* solver)
+{
+    connectServer();
+    getID();
+    addFiles(solver);
+    initRestartSTMT(solver->conf.verbosity);
 }
 
 void SQLStats::connectServer()
 {
     //Connection parameters
     string server = "localhost";
-    string user = "root";
+    string user = "cryptomsuser";
     string password = "";
-    string database = "cmsat";
+    string database = "cryptoms";
 
     //Init MySQL library
     serverConn = mysql_init(NULL);
+    if (!serverConn) {
+        cout
+        << "Insufficient memory to allocate server connection"
+        << endl;
+
+        exit(-1);
+    }
 
     //Connect to server
     if (!mysql_real_connect(
@@ -54,33 +66,45 @@ void SQLStats::connectServer()
     }
 }
 
-void SQLStats::randomID()
-{
-    //Generate random ID for SQL
-    int randomData = open("/dev/urandom", O_RDONLY);
-    if (randomData == -1) {
-        cout << "Error reading from /dev/urandom !" << endl;
-        exit(-1);
-    }
-    ssize_t ret = read(randomData, &runID, sizeof(runID));
-    if (ret != sizeof(runID)) {
-        cout << "Couldn't read from /dev/urandom!" << endl;
-        exit(-1);
-    }
-    close(randomData);
-    cout << "c runID: " << runID << endl;
-}
-
 void SQLStats::getID()
 {
+
+    std::stringstream ss;
+    ss
+    << "INSERT INTO solverRun (version, time) values ("
+    << "\"" << Solver::getVersion() << "\""
+    << ", " << time(NULL)
+    << ");";
+
     //Inserting element into solverruns to get unique ID
-    if (mysql_query(serverConn, "INSERT INTO solverruns VALUES()")) {
+    if (mysql_query(serverConn, ss.str().c_str())) {
         cout << "Couldn't insert into table 'solverruns'" << endl;
         exit(1);
     }
 
     runID = mysql_insert_id(serverConn);
     cout << "This run number is: " << runID << endl;
+}
+
+void SQLStats::addFiles(const Solver* solver)
+{
+    for(vector<string>::const_iterator
+        it = solver->fileNamesUsed.begin(), end = solver->fileNamesUsed.end()
+        ; it != end
+        ; it++
+    ) {
+
+        std::stringstream ss;
+        ss
+        << "INSERT INTO fileNamesUsed (runID, fileName) VALUES"
+        <<"(" << runID << ", \"" << *it << "\");";
+
+        //Inserting element into solverruns to get unique ID
+        if (mysql_query(serverConn, ss.str().c_str())) {
+            cout << "Couldn't insert into table 'solverruns'" << endl;
+            exit(1);
+        }
+    }
 }
 
 void SQLStats::bindTo(uint64_t& data)
@@ -140,18 +164,24 @@ void SQLStats::initRestartSTMT(
     << ", `litPropagatedSomething`, `litPropagatedSomethingSD`"
 
     //Var stats
-    << ", `propagations"
+    << ", `propagations`"
     << ", `decisions`"
-    << ", `flipped, `varSetPos`, `varSetNeg`"
+    << ", `flipped`, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
     << ")"
-    << " values ("
-    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-    << ");";
+    << " values (";
+
+    const size_t num = sizeof(stmtRst.bind)/sizeof(MYSQL_BIND);
+    for(size_t i = 0
+        ; i < num
+        ; i++
+    ) {
+        if (i < num-1)
+            ss << "?,";
+        else
+            ss << "?";
+    }
+    ss << ");";
 
     stmtRst.STMT = mysql_stmt_init(serverConn);
     if (!stmtRst.STMT) {
@@ -174,7 +204,7 @@ void SQLStats::initRestartSTMT(
 
     // validate parameter count
     unsigned long param_count = mysql_stmt_param_count(stmtRst.STMT);
-    if (param_count != 3) {
+    if (param_count != sizeof(stmtRst.bind)/sizeof(MYSQL_BIND)) {
         cout
         << "invalid parameter count returned by MySQL"
         << endl;
@@ -186,7 +216,7 @@ void SQLStats::initRestartSTMT(
 
 
     //Position of solving
-    assert(bindAt = 0);
+    assert(bindAt == 0);
     bindTo(runID);
     bindTo(stmtRst.numSimplify);
     bindTo(stmtRst.sumRestarts);
@@ -292,7 +322,7 @@ void SQLStats::printRestartSQL(
     stmtRst.branchDepthHistSD       = sqrt(search->branchDepthHist.getVarMidLong());
     stmtRst.branchDepthDeltaHist    = search->branchDepthDeltaHist.getAvgMidLong();
     stmtRst.branchDepthDeltaHistSD  = sqrt(search->branchDepthDeltaHist.getVarMidLong());
-    stmtRst.trailDepthHist          =  search->trailDepthHist.getAvgMidLong();
+    stmtRst.trailDepthHist          = search->trailDepthHist.getAvgMidLong();
     stmtRst.trailDepthHistSD        = sqrt(search->trailDepthHist.getVarMidLong());
     stmtRst.trailDepthDeltaHist     = search->trailDepthDeltaHist.getAvgMidLong();
     stmtRst.trailDepthDeltaHistSD   = sqrt(search->trailDepthDeltaHist.getVarMidLong());
@@ -335,5 +365,17 @@ void SQLStats::printRestartSQL(
     stmtRst.numReplacedVars = solver->varReplacer->getNumReplacedVars();
     stmtRst.numVarsElimed   = solver->subsumer->getStats().numVarsElimed;
     stmtRst.trailSize       = search->trail.size();
+
+    if (mysql_stmt_execute(stmtRst.STMT)) {
+        cout
+        << "ERROR: while executing restart insertion MySQL prepared statement"
+        << endl;
+
+        cout << "Error from mysql: "
+        << mysql_stmt_error(stmtRst.STMT)
+        << endl;
+
+        exit(-1);
+    }
 }
 

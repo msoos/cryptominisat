@@ -97,6 +97,7 @@ void SIGINT_handler(int)
 
 void Main::readInAFile(const std::string& filename)
 {
+    solver->fileAdded(filename);
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
@@ -155,7 +156,9 @@ void Main::parseInAllFiles()
         exit(-1);
     }
 
-    for (vector<string>::const_iterator it = filesToRead.begin(), end = filesToRead.end(); it != end; it++) {
+    for (vector<string>::const_iterator
+        it = filesToRead.begin(), end = filesToRead.end(); it != end; it++
+    ) {
         readInAFile(it->c_str());
     }
 
