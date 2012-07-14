@@ -136,6 +136,15 @@ void PropEngine::detachTriClause(
     removeWTri(watches, lits[2], lits[0], lits[1], learnt);
 }
 
+void PropEngine::detachBinClause(
+    const Lit lit1
+    , const Lit lit2
+    , const bool learnt
+) {
+    removeWBin(watches, lit1, lit2, learnt);
+    removeWBin(watches, lit2, lit1, learnt);
+}
+
 void PropEngine::attachBinClause(
     const Lit lit1
     , const Lit lit2
