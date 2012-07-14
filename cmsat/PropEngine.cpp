@@ -428,7 +428,10 @@ PropResult PropEngine::propTriClause(
         confl = PropBy(~lit1, i->lit2());
 
         //Update stats
-        lastConflictCausedBy = CONFL_BY_TRI_CLAUSE;
+        if (i->learnt())
+            lastConflictCausedBy = CONFL_BY_TRI_RED_CLAUSE;
+        else
+            lastConflictCausedBy = CONFL_BY_TRI_IRRED_CLAUSE;
 
         failBinLit = i->lit1();
         qhead = trail.size();

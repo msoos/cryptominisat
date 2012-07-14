@@ -94,9 +94,9 @@ var myData=new Array();
 <p style="clear:both"></p>
 
 <?
-$runID  = 40;
-$runID2 = 41;
-$maxconfl = 100000;
+$runID  = 44;
+$runID2 = 44;
+$maxconfl = 1000000;
 error_reporting(E_ALL);
 //error_reporting(E_STRICT);
 //error_reporting(E_STRICT);
@@ -299,10 +299,26 @@ function printOneSolve($runID, $colnum, $maxconfl) {
         , "prop by long irred %", "prop by long red %"
         ), $result, $nrows, $orderNum, $colnum);
 
-    /*printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
-        ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows, $orderNum, $colnum);
+    printOneThing(array(
+        "conflBinIrred"
+        , "conflBinRed"
+        , "conflTriIrred"
+        , "conflTriRed"
+        , "conflLongIrred"
+        , "conflLongRed"
+        )
+        ,array(
+        "confl by bin irred %"
+        , "confl by bin red %"
+        , "confl by tri irred %"
+        , "confl by tri red %"
+        , "confl by long irred %"
+        , "confl by long red %"
+        )
+        , $result, $nrows, $orderNum, $colnum
+    );
 
-    printOneThing("branchDepthSD", array("branchDepthSD")
+    /*printOneThing("branchDepthSD", array("branchDepthSD")
         , array("branch depth std dev"), $result, $nrows, $orderNum, $colnum);
 
     printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
@@ -373,7 +389,7 @@ function getMaxSize($runID)
 {
     $query="
     SELECT max(size) as mymax FROM clauseSizeDistrib
-    where (runID = $runID)
+    where runID = $runID
     and num > 10";
     $result=mysql_query($query);
 
@@ -414,7 +430,7 @@ function getMaxConflRestart($runID, $maxconfl)
 $maxSize = [];
 $maxSize[0] = getMaxSize($runID) - 1; //Because no use for size 0
 $maxSize[1] = getMaxSize($runID2) - 1; //Because no use for size 0
-echo "var maxSize = [$maxSize1, $maxSize2];\n";
+echo "var maxSize = [$maxSize[0], $maxSize[1]];\n";
 $maxConflDistrib = getMaxConflDistrib($runID, $runID2);
 echo "var maxConflDistrib = $maxConflDistrib;\n";
 

@@ -573,7 +573,8 @@ enum ConflCausedBy {
     , CONFL_BY_LONG_RED_CLAUSE
     , CONFL_BY_BIN_RED_CLAUSE
     , CONFL_BY_BIN_IRRED_CLAUSE
-    , CONFL_BY_TRI_CLAUSE
+    , CONFL_BY_TRI_IRRED_CLAUSE
+    , CONFL_BY_TRI_RED_CLAUSE
 };
 
 struct ConflStats
@@ -581,7 +582,8 @@ struct ConflStats
     ConflStats() :
         conflsBinIrred(0)
         , conflsBinRed(0)
-        , conflsTri(0)
+        , conflsTriIrred(0)
+        , conflsTriRed(0)
         , conflsLongIrred(0)
         , conflsLongRed(0)
         , numConflicts(0)
@@ -597,7 +599,8 @@ struct ConflStats
     {
         conflsBinIrred += other.conflsBinIrred;
         conflsBinRed += other.conflsBinRed;
-        conflsTri += other.conflsTri;
+        conflsTriIrred += other.conflsTriIrred;
+        conflsTriRed += other.conflsTriRed;
         conflsLongIrred += other.conflsLongIrred;
         conflsLongRed += other.conflsLongRed;
 
@@ -610,7 +613,8 @@ struct ConflStats
     {
         conflsBinIrred -= other.conflsBinIrred;
         conflsBinRed -= other.conflsBinRed;
-        conflsTri -= other.conflsTri;
+        conflsTriIrred -= other.conflsTriIrred;
+        conflsTriRed -= other.conflsTriRed;
         conflsLongIrred -= other.conflsLongIrred;
         conflsLongRed -= other.conflsLongRed;
 
@@ -628,8 +632,11 @@ struct ConflStats
             case CONFL_BY_BIN_RED_CLAUSE :
                 conflsBinRed++;
                 break;
-            case CONFL_BY_TRI_CLAUSE :
-                conflsTri++;
+            case CONFL_BY_TRI_IRRED_CLAUSE :
+                conflsTriIrred++;
+                break;
+            case CONFL_BY_TRI_RED_CLAUSE :
+                conflsTriRed++;
                 break;
             case CONFL_BY_LONG_IRRED_CLAUSE :
                 conflsLongIrred++;
@@ -661,8 +668,13 @@ struct ConflStats
             , "%"
         );
 
-        printStatsLine("c conflsTri", conflsTri
-            , 100.0*(double)conflsTri/(double)numConflicts
+        printStatsLine("c conflsTriIrred", conflsTriIrred
+            , 100.0*(double)conflsTriIrred/(double)numConflicts
+            , "%"
+        );
+
+        printStatsLine("c conflsTriIrred", conflsTriRed
+            , 100.0*(double)conflsTriRed/(double)numConflicts
             , "%"
         );
 
@@ -678,10 +690,10 @@ struct ConflStats
 
         cout
         << "c DEBUG"
-        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed)"
+        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
         << " = " << (((int)numConflicts -
             (int)(conflsBinIrred + conflsBinRed
-                    + conflsTri + conflsLongIrred + conflsLongRed)))
+                    + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
         << endl;
 
         /*assert(((int)numConflicts -
@@ -692,7 +704,8 @@ struct ConflStats
 
     uint64_t conflsBinIrred;
     uint64_t conflsBinRed;
-    uint64_t conflsTri;
+    uint64_t conflsTriIrred;
+    uint64_t conflsTriRed;
     uint64_t conflsLongIrred;
     uint64_t conflsLongRed;
 

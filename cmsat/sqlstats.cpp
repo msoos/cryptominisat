@@ -226,7 +226,8 @@ void SQLStats::initRestartSTMT(
     << ", `propLongIrred` , `propLongRed`"
 
     //Conflicts
-    << ", `conflBinIrred`, `conflBinRed`, `conflTri`"
+    << ", `conflBinIrred`, `conflBinRed`"
+    << ", `conflTriIrred`, `conflTriRed`"
     << ", `conflLongIrred`, `conflLongRed`"
 
     //Learnts
@@ -321,7 +322,8 @@ void SQLStats::initRestartSTMT(
     //Confl
     bindTo(stmtRst, stmtRst.conflsBinIrred);
     bindTo(stmtRst, stmtRst.conflsBinRed);
-    bindTo(stmtRst, stmtRst.conflsTri);
+    bindTo(stmtRst, stmtRst.conflsTriIrred);
+    bindTo(stmtRst, stmtRst.conflsTriRed);
     bindTo(stmtRst, stmtRst.conflsLongIrred);
     bindTo(stmtRst, stmtRst.conflsLongRed);
 
@@ -431,7 +433,8 @@ void SQLStats::restart(
     //Confl
     stmtRst.conflsBinIrred  =  thisStats.conflStats.conflsBinIrred;
     stmtRst.conflsBinRed    = thisStats.conflStats.conflsBinRed;
-    stmtRst.conflsTri       = thisStats.conflStats.conflsTri;
+    stmtRst.conflsTriIrred  = thisStats.conflStats.conflsTriIrred;
+    stmtRst.conflsTriRed    = thisStats.conflStats.conflsTriRed;
     stmtRst.conflsLongIrred = thisStats.conflStats.conflsLongIrred;
     stmtRst.conflsLongRed   = thisStats.conflStats.conflsLongRed;
 

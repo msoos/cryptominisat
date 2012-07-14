@@ -58,7 +58,7 @@ private:
     uint64_t runID;
     size_t bindAt;
     struct StmtRst {
-        MYSQL_BIND  bind[50];
+        MYSQL_BIND  bind[51];
         MYSQL_STMT  *STMT;
 
         //Variables
@@ -99,7 +99,8 @@ private:
         //Confl
         uint64_t conflsBinIrred;
         uint64_t conflsBinRed;
-        uint64_t conflsTri;
+        uint64_t conflsTriIrred;
+        uint64_t conflsTriRed;
         uint64_t conflsLongIrred;
         uint64_t conflsLongRed;
 
