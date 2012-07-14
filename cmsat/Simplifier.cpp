@@ -1769,94 +1769,67 @@ void Simplifier::removeClausesHelper(
             //Update stats
             if (cl.learnt()) {
                 runStats.longLearntClRemThroughElim++;
-                solver->learntsLits -= cl.size();
             } else {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
-                solver->clausesLits -= cl.size();
 
                 vector<Lit> lits(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
-            //Remove from occur -- except current lit, it will be clean()-ed
-            for (uint32_t i = 0; i < cl.size(); i++) {
-
-                //This will get clear()-ed, so skip
-                if (cl[i].var() == lit.var())
-                    continue;
-
-                *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
-                removeWCl(solver->watches[cl[i].toInt()], offset);
-            }
+            //Remove
+            unlinkClause(offset);
+            continue;
         }
 
         if (watch.isBinary()) {
-            //Remove binary clause -- only half
-            //the other half will be clean()-ed directly from watchlist
-            removeWBin(
-                solver->watches
-                , watch.lit1()
-                , lit
-                , watch.learnt()
-            );
 
             //Update stats
             if (!watch.learnt()) {
-                solver->clausesLits -= 2;
                 runStats.clauses_elimed_bin++;
                 runStats.clauses_elimed_sumsize += 2;
-                solver->numBinsNonLearnt--;
             } else {
-                solver->learntsLits -= 2;
                 runStats.binLearntClRemThroughElim++;
-                solver->numBinsLearnt--;
             }
 
             //Put clause into blocked status
             if (!watch.learnt()) {
-                vector<Lit> lits;
-                lits.push_back(lit);
-                lits.push_back(watch.lit1());
+                vector<Lit> lits(2);
+                lits[0] = lit;
+                lits[1] = watch.lit1();
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
-            //Touch literals
-            //touchedVars.touch(watch.lit, false);
+            //Remove
+            solver->detachBinClause(lit, watch.lit1(), watch.learnt());
+            continue;
         }
 
         if (watch.isTri()) {
-            //Remove tri clause
-            vector<Lit> lits(3);
-            lits[0] = lit;
-            lits[1] = watch.lit1();
-            lits[2] = watch.lit2();
-            std::sort(lits.begin(), lits.end());
-
-            //Remove 2 of the 3 -- the 3rd is cleared when clearing occur
-            removeTriAllButOne(solver->watches, lit, lits.data(), watch.learnt());
 
             //Update stats
             if (!watch.learnt()) {
-                solver->clausesLits -= 3;
                 runStats.clauses_elimed_tri++;
                 runStats.clauses_elimed_sumsize += 3;
-                solver->numTrisNonLearnt--;
             } else {
-                solver->learntsLits -= 3;
                 runStats.triLearntClRemThroughElim++;
-                solver->numTrisLearnt--;
             }
 
             //Put clause into blocked status
             if (!watch.learnt()) {
+                vector<Lit> lits(3);
+                lits[0] = lit;
+                lits[1] = watch.lit1();
+                lits[2] = watch.lit2();
+
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
-            //Touch literals
-            //touchedVars.touch(watch.lit1(), false);
-            //touchedVars.touch(watch.lit2() false);
+            //Remove
+            solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
+
+            continue;
         }
     }
 }
@@ -2097,22 +2070,6 @@ bool Simplifier::maybeEliminate(const Var var)
         printOccur(~lit);
     }
 
-    //Re-examine later the elimination complexity of these variables
-    varElimToCheck.clear();
-    std::fill(varElimToCheckHelper.begin(), varElimToCheckHelper.end(), 0);
-    varElimCheckUpdate(
-        solver->watches[lit.toInt()]
-        , lit
-        , varElimToCheck
-        , varElimToCheckHelper
-    );
-    varElimCheckUpdate(
-        solver->watches[(~lit).toInt()]
-        , ~lit
-        , varElimToCheck
-        , varElimToCheckHelper
-    );
-
     //Save original state
     const vec<Watched> poss = solver->watches[lit.toInt()];
     const vec<Watched> negs = solver->watches[(~lit).toInt()];
@@ -2121,10 +2078,11 @@ bool Simplifier::maybeEliminate(const Var var)
     removeClausesHelper(poss, lit);
     removeClausesHelper(negs, ~lit);
 
-    //Clear occur
-    solver->watches[lit.toInt()].clear();
-    solver->watches[(~lit).toInt()].clear();
+    //Occur is cleared
+    assert(solver->watches[lit.toInt()].empty());
+    assert(solver->watches[(~lit).toInt()].empty());
 
+    //Add resolvents calculated in testVarElim()
     for(vector<pair<vector<Lit>, ClauseStats> >::const_iterator
         it = resolvents.begin(), end = resolvents.end()
         ; it != end
@@ -2203,50 +2161,6 @@ bool Simplifier::maybeEliminate(const Var var)
             }
         }
     }
-
-    //Free clauses
-    for(vec<Watched>::const_iterator
-        it = poss.begin(), end = poss.end()
-        ; it != end
-        ; it++
-    ) {
-        if (!it->isClause())
-            continue;
-
-        Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-
-        if (solver->conf.verbosity >= 5)
-            cout
-            << "Removing clause " << *cl
-            << " (learnt: " << cl->learnt() << ")"
-            << " because of var-elim"
-            << endl;
-
-        solver->clAllocator->clauseFree(cl);
-    }
-    for(vec<Watched>::const_iterator
-        it = negs.begin(), end = negs.end()
-        ; it != end
-        ; it++
-    ) {
-        if (!it->isClause())
-            continue;
-
-        Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-
-        if (solver->conf.verbosity >= 5)
-            cout
-            << "Removing clause " << *cl
-            << " (learnt: " << cl->learnt() << ")"
-            << " because of var-elim"
-            << endl;
-
-        solver->clAllocator->clauseFree(cl);
-    }
-
-    //This should now be empty
-    assert(solver->watches[lit.toInt()].size() == 0
-            &&  solver->watches[(~lit).toInt()].size() == 0);
 
     //Update var elim complexity heap
     for(vector<Var>::const_iterator

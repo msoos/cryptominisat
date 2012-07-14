@@ -552,12 +552,6 @@ private:
         , const Lit noPosLit
         , const bool useCache
     );
-    void varElimCheckUpdate(
-        const vec<Watched>& gothrough
-        , const Lit lit
-        , vector<Var>& varElimToCheck
-        , vector<char>& varElimToCheckHelper
-    );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
 
