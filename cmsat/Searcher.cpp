@@ -1165,8 +1165,17 @@ void Searcher::printBaseStats()
     cout
     << "c"
     //<< omp_get_thread_num()
-    << " " << std::setw(5) << sumRestarts()
-    << " " << std::setw(7) << sumConflicts()
+    << " " << std::setw(5) << sumRestarts();
+
+    if (sumConflicts() >  20000) {
+        cout
+        << " " << std::setw(5) << sumConflicts();
+    } else {
+        cout
+        << " " << std::setw(4) << sumConflicts()/1000 << "K";
+    }
+
+    cout
     << " " << std::setw(7) << solver->getNumFreeVarsAdv(trail.size())
     ;
 }
