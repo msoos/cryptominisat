@@ -774,7 +774,10 @@ bool Simplifier::propagate()
 
                     //Update stats
                     if (cl.size() == 3)
-                        solver->propStats.propsTri++;
+                        if (cl.learnt())
+                            solver->propStats.propsTriRed++;
+                        else
+                            solver->propStats.propsTriIrred++;
                     else {
                         if (cl.learnt())
                             solver->propStats.propsLongRed++;

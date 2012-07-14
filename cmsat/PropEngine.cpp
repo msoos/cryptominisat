@@ -400,32 +400,32 @@ sets failBinLit
 template<bool simple>
 PropResult PropEngine::propTriClause(
     const vec<Watched>::const_iterator i
-    , const Lit p
+    , const Lit lit1
     , PropBy& confl
     , Solver* solver
 ) {
-    Lit otherLit = i->lit1();
-    lbool val = value(otherLit);
-
-    //literal is already satisfied, nothing to do
-    if (val == l_True)
-        return PROP_NOTHING;
-
-    Lit otherLit2 = i->lit2();
-    lbool val2 = value(otherLit2);
+    const Lit lit2 = i->lit1();
+    lbool val2 = value(lit2);
 
     //literal is already satisfied, nothing to do
     if (val2 == l_True)
         return PROP_NOTHING;
 
-    if (val == l_False && val2 == l_False) {
+    const Lit lit3 = i->lit2();
+    lbool val3 = value(lit3);
+
+    //literal is already satisfied, nothing to do
+    if (val3 == l_True)
+        return PROP_NOTHING;
+
+    if (val2 == l_False && val3 == l_False) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from "
-            << p << " , "
+            << lit1 << " , "
             << i->lit1() << " , "
             << i->lit2() << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
-        confl = PropBy(~p, i->lit2());
+        confl = PropBy(~lit1, i->lit2());
 
         //Update stats
         lastConflictCausedBy = CONFL_BY_TRI_CLAUSE;
@@ -434,52 +434,54 @@ PropResult PropEngine::propTriClause(
         qhead = trail.size();
         return PROP_FAIL;
     }
-    if (propTriHelper<simple>(val, val2, otherLit, otherLit2, p, solver))
+    if (val2 == l_Undef && val3 == l_False) {
+        propTriHelper<simple>(lit1, lit2, lit3, i->learnt(), solver);
         return PROP_SOMETHING;
+    }
 
-    if (propTriHelper<simple>(val2, val, otherLit2, otherLit, p, solver))
+    if (val3 == l_Undef && val2 == l_False) {
+        propTriHelper<simple>(lit1, lit3, lit2, i->learnt(), solver);
         return PROP_SOMETHING;
+    }
 
     return PROP_NOTHING;
 }
 
 template<bool simple>
-bool PropEngine::propTriHelper(
-    const lbool val
-    , const lbool val2
-    , const Lit otherLit
-    , const Lit otherLit2
-    , const Lit p
+void PropEngine::propTriHelper(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool learnt
     , Solver* solver
 ) {
-    if (val.isUndef() && val2 == l_False) {
-        propStats.propsTri++;
-        if (simple) {
-            //Check if we could do lazy hyper-binary resoution
-            if (doLHBR
-                && solver != NULL
-                && varData[p.var()].reason.getType() == binary_t
-                && ((varData[otherLit2.var()].reason.getType() == binary_t
-                    && varData[otherLit2.var()].reason.lit1() == varData[p.var()].reason.lit1())
-                    || (varData[p.var()].reason.lit1().var() == otherLit2.var())
-                )
-            ) {
-                Lit lit= varData[p.var()].reason.lit1();
+    if (learnt)
+        propStats.propsTriRed++;
+    else
+        propStats.propsTriIrred++;
 
-                solver->attachBinClause(lit, otherLit, true, false);
-                enqueue(otherLit, PropBy(lit));
-                propStats.triLHBR++;
-            } else {
-                //Lazy hyper-bin is not possibe
-                enqueue(otherLit, PropBy(~p, otherLit2));
-            }
+    if (simple) {
+        //Check if we could do lazy hyper-binary resoution
+        if (doLHBR
+            && solver != NULL
+            && varData[lit1.var()].reason.getType() == binary_t
+            && ((varData[lit3.var()].reason.getType() == binary_t
+                && varData[lit3.var()].reason.lit1() == varData[lit1.var()].reason.lit1())
+                || (varData[lit1.var()].reason.lit1().var() == lit3.var())
+            )
+        ) {
+            Lit lit= varData[lit1.var()].reason.lit1();
+
+            solver->attachBinClause(lit, lit2, true, false);
+            enqueue(lit2, PropBy(lit));
+            propStats.triLHBR++;
         } else {
-            addHyperBin(otherLit, ~p, otherLit2);
+            //Lazy hyper-bin is not possibe
+            enqueue(lit2, PropBy(~lit1, lit3));
         }
-        return true;
+    } else {
+        addHyperBin(lit2, ~lit1, lit3);
     }
-
-    return false;
 }
 
 PropBy PropEngine::propagate(

@@ -402,7 +402,8 @@ struct PropStats
         , propsUnit(0)
         , propsBinIrred(0)
         , propsBinRed(0)
-        , propsTri(0)
+        , propsTriIrred(0)
+        , propsTriRed(0)
         , propsLongIrred(0)
         , propsLongRed(0)
 
@@ -430,7 +431,8 @@ struct PropStats
         propsUnit += other.propsUnit;
         propsBinIrred += other.propsBinIrred;
         propsBinRed += other.propsBinRed;
-        propsTri += other.propsTri;
+        propsTriIrred += other.propsTriIrred;
+        propsTriRed += other.propsTriRed;
         propsLongIrred += other.propsLongIrred;
         propsLongRed += other.propsLongRed;
 
@@ -453,7 +455,8 @@ struct PropStats
         propsUnit -= other.propsUnit;
         propsBinIrred -= other.propsBinIrred;
         propsBinRed -= other.propsBinRed;
-        propsTri -= other.propsTri;
+        propsTriIrred -= other.propsTriIrred;
+        propsTriRed -= other.propsTriRed;
         propsLongIrred -= other.propsLongIrred;
         propsLongRed -= other.propsLongRed;
 
@@ -511,8 +514,13 @@ struct PropStats
             , "% of propagations"
         );
 
-        printStatsLine("c propsTri", propsTri
-            , 100.0*(double)propsTri/(double)propagations
+        printStatsLine("c propsTri", propsTriIrred
+            , 100.0*(double)propsTriIrred/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsTri", propsTriRed
+            , 100.0*(double)propsTriRed/(double)propagations
             , "% of propagations"
         );
 
@@ -527,7 +535,8 @@ struct PropStats
         );
 
         printStatsLine("c LHBR", (triLHBR + longLHBR)
-            , 100.0*(double)(triLHBR + longLHBR)/(double)(propsLongIrred + propsLongRed + propsTri)
+            , 100.0*(double)(triLHBR + longLHBR)/(double)(
+                propsLongIrred + propsLongRed + propsTriIrred + propsTriRed)
             , "% of long propagations"
         );
 
@@ -544,7 +553,8 @@ struct PropStats
     uint64_t propsUnit;
     uint64_t propsBinIrred;
     uint64_t propsBinRed;
-    uint64_t propsTri;
+    uint64_t propsTriIrred;
+    uint64_t propsTriRed;
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
 

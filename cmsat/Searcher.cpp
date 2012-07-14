@@ -1002,7 +1002,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
-            propStats.propsTri++;
+            propStats.propsTriRed++;
             break;
 
         default:
@@ -1234,8 +1234,10 @@ void Searcher::printRestartSQL()
     << ", `trailDepthSD`, `trailDepthDeltaSD`" //, `agilitySD`"
 
     //Prop&confl&lerant
-    << ", `propBinIrred` , `propBinRed` , `propTri` , `propLongIrred` , `propLongRed`"
-    << ", `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
+    << ", `propBinIrred` , `propBinRed` , `propTriIrred` , `propTriRed`"
+    << ", `propLongIrred` , `propLongRed`"
+    << ", `conflBinIrred`, `conflBinRed`, `conflTri`"
+    << ", `conflLongIrred`, `conflLongRed`"
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Misc
@@ -1283,7 +1285,8 @@ void Searcher::printRestartSQL()
     //Prop
     << ", " << thisPropStats.propsBinIrred
     << ", " << thisPropStats.propsBinRed
-    << ", " << thisPropStats.propsTri
+    << ", " << thisPropStats.propsTriIrred
+    << ", " << thisPropStats.propsTriRed
     << ", " << thisPropStats.propsLongIrred
     << ", " << thisPropStats.propsLongRed
 

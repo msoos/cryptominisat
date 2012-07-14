@@ -258,12 +258,11 @@ protected:
 
     ///Propagate 3-long clause
     template<bool simple>
-    bool propTriHelper(
-        const lbool val
-        , const lbool val2
-        , const Lit otherLit
-        , const Lit otherLit2
-        , const Lit p
+    void propTriHelper(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+        , const bool learnt
         , Solver* solver
     );
 
