@@ -1516,7 +1516,7 @@ void Solver::fullReduce()
         //printClauseStatsSQL(learnts);
     }
     reduceDB();
-    solver->consolidateMem();
+    consolidateMem();
 
     if (conf.doClearPropConfEveryClauseCleaning) {
         clearPropConfl(clauses);
@@ -1597,14 +1597,14 @@ void Solver::printFullStats()
         , "% time"
     );
 
-    subsumer->getStats().print(solver->nVars());
+    subsumer->getStats().print(nVars());
 
     //GateFinder stats
     /*printStatsLine("c gatefinder time"
                     , subsumer->getGateFinder()->getStats().totalTime()
                     , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
                     , "% time");
-    subsumer->getGateFinder()->getStats().print(solver->nVars());
+    subsumer->getGateFinder()->getStats().print(nVars());
 
     //XOR stats
     printStatsLine("c XOR time"
@@ -1672,7 +1672,7 @@ void Solver::printFullStats()
                     , clauseVivifier->getStats().redCacheBased.cpu_time
                     , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    clauseVivifier->getStats().print(solver->nVars());
+    clauseVivifier->getStats().print(nVars());
 
     //Other stats
     printStatsLine("c Conflicts in UIP"
