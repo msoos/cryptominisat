@@ -128,7 +128,7 @@ void SQLStats::writeQuestionMarks(
 void SQLStats::initClauseSizeDistribSTMT(
     const Solver* solver
 ) {
-    const size_t numInserts = solver->conf.dumpClauseDistribDataMax;
+    const size_t numInserts = solver->conf.dumpClauseDistribMax;
     const size_t numElems = 4;
     stmtClsDistrib.bind.resize(numElems*numInserts);
 

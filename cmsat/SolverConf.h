@@ -82,8 +82,8 @@ class SolverConf
 
         //Optimisations to do
         int       doSQL;
-        int       dumpClauseDistribDataPer;
-        int       dumpClauseDistribDataMax;
+        int       dumpClauseDistribPer;
+        int       dumpClauseDistribMax;
         int       doOTFSubsume;
         int       rewardShortenedClauseWithPropConfl; //Shortened through OTF subsumption
         int       printFullStats;

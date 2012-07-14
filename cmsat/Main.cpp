@@ -238,8 +238,6 @@ void Main::parseCommandLine()
         , "Print assignment if solution is SAT")
     ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
         , "Perform regular simplification rounds")
-    ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
-        , "Write to SQL")
     ("nclbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -420,6 +418,16 @@ void Main::parseCommandLine()
         , "Perform lazy hyper-binary resolution while propagating")
     ;
 
+    po::options_description sqlOptions("SQL options");
+    sqlOptions.add_options()
+    ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
+        , "Write to SQL")
+    ("cldistribper", po::value<int>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
+        , "Dump learnt clause size distribution every N conflicts")
+    ("cldistribmax", po::value<int>(&conf.dumpClauseDistribMax)->default_value(conf.dumpClauseDistribMax)
+        , "Dumped learnt clause size maximum -- longer will be 'truncated' in the statistics output")
+    ;
+
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
     ("presimp", po::value<int>(&conf.doPerformPreSimp)->default_value(conf.doPerformPreSimp)
@@ -463,6 +471,7 @@ void Main::parseCommandLine()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    .add(sqlOptions)
     .add(miscOptions)
     ;
 

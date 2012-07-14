@@ -927,7 +927,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         numResolutionsHist.push(numResolutions);
 
         if (solver->conf.doSQL) {
-            if (sumConflicts() % solver->conf.dumpClauseDistribDataPer == 0) {
+            if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
                 printClauseDistribSQL();
                 std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
             }
@@ -1080,7 +1080,7 @@ void Searcher::resetStats()
     agilityHist.clear();
     agilityHist.resize(100);
     clearPolarData();
-    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribDataMax);
+    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMax);
 
     //Misc
     watchListSizeTraversed.clear();
