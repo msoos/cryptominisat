@@ -93,7 +93,6 @@ void Simplifier::newVar()
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
     gateFinder->newVar();
-    varElimToCheckHelper.push_back(0);
 
     //variable status
     var_elimed .push_back(0);
@@ -292,7 +291,9 @@ void Simplifier::unlinkClause(const ClOffset offset)
         *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
 
         removeWCl(solver->watches[cl[i].toInt()], offset);
-        //touchedVars.touch(cl[i], cl.learnt());
+
+        if (!cl.learnt())
+            touched.touch(cl[i]);
     }
 
     if (cl.learnt()) {
@@ -1803,6 +1804,9 @@ void Simplifier::removeClausesHelper(
 
             //Remove
             solver->detachBinClause(lit, watch.lit1(), watch.learnt());
+            if (!watch.learnt()) {
+                touched.touch(watch.lit1());
+            }
             continue;
         }
 
@@ -1828,6 +1832,10 @@ void Simplifier::removeClausesHelper(
 
             //Remove
             solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
+            if (!watch.learnt()) {
+                touched.touch(watch.lit1());
+                touched.touch(watch.lit2());
+            }
 
             continue;
         }
@@ -1941,56 +1949,6 @@ int Simplifier::testVarElim(const Var var)
     return (pos.longer + neg.longer)-after_long;
 }
 
-void Simplifier::varElimCheckUpdate(
-    const vec<Watched>& gothrough
-    , const Lit lit
-    , vector<Var>& varElimToCheck
-    , vector<char>& varElimToCheckHelper
-) {
-    for (vec<Watched>::const_iterator
-        it = gothrough.begin(), end = gothrough.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->isBinary() || it->isTri()) {
-            const Var var1 = lit.var();
-            if (!varElimToCheckHelper[var1]) {
-                varElimToCheck.push_back(var1);
-                varElimToCheckHelper[var1] = 1;
-            }
-
-            const Var var2 = it->lit1().var();
-            if (!varElimToCheckHelper[var2]) {
-                varElimToCheck.push_back(var2);
-                varElimToCheckHelper[var2] = 1;
-            }
-        }
-
-        if (it->isTri()) {
-            const Var var3 = it->lit2().var();
-            if (!varElimToCheckHelper[var3]) {
-                varElimToCheck.push_back(var3);
-                varElimToCheckHelper[var3] = 1;
-            }
-        }
-
-        if (it->isClause()) {
-            assert(it->isClause());
-            Clause& cl = *solver->clAllocator->getPointer(it->getOffset());
-            if (cl.learnt())
-                continue;
-
-            for(size_t i = 0; i < cl.size(); i++) {
-                const Var var = cl[i].var();
-                if (!varElimToCheckHelper[var]) {
-                    varElimToCheck.push_back(var);
-                    varElimToCheckHelper[var] = 1;
-                }
-            }
-        }
-    }
-}
-
 void Simplifier::printOccur(const Lit lit) const
 {
     for(size_t i = 0; i < solver->watches[lit.toInt()].size(); i++) {
@@ -2075,6 +2033,7 @@ bool Simplifier::maybeEliminate(const Var var)
     const vec<Watched> negs = solver->watches[(~lit).toInt()];
 
     //Remove clauses
+    touched.clear();
     removeClausesHelper(poss, lit);
     removeClausesHelper(negs, ~lit);
 
@@ -2113,6 +2072,9 @@ bool Simplifier::maybeEliminate(const Var var)
                         << ", " << it2->lit2()
                         << endl;
                     }
+
+                    touched.touch(it2->lit1());
+                    touched.touch(it2->lit2());
 
                     runStats.subsumedByVE++;
                     solver->detachTriClause(
@@ -2164,7 +2126,8 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //Update var elim complexity heap
     for(vector<Var>::const_iterator
-        it = varElimToCheck.begin(), end = varElimToCheck.end()
+        it = touched.getTouchedList().begin()
+        , end = touched.getTouchedList().end()
         ; it != end
         ; it++
     ) {
