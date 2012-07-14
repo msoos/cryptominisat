@@ -2648,7 +2648,7 @@ bool Solver::subsumeAndStrengthenImplicit()
     ) {
         if (value(*it) == l_False) {
             ok = false;
-            break;
+            goto end;
         }
 
         if (value(*it) == l_Undef)
