@@ -44,6 +44,7 @@ using std::set;
 #include "ImplCache.h"
 #include "ClauseAllocator.h"
 class Solver;
+class SQLStats;
 
 //#define VERBOSE_DEBUG_FULLPROP
 
@@ -181,6 +182,7 @@ protected:
     template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
     bool updateGlues;
     bool doLHBR;
+    friend class SQLStats;
     PropStats propStats;
 
 

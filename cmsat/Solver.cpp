@@ -44,6 +44,7 @@ using std::endl;
 
 Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
+    , sqlStats(_conf.verbosity)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
     , conf(_conf)
@@ -55,6 +56,8 @@ Solver::Solver(const SolverConf& _conf) :
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
     , numCallReachCalc(0)
+
+    //Stats on implicit clauses and all literal
     , clausesLits(0)
     , learntsLits(0)
     , numBinsNonLearnt(0)
@@ -69,32 +72,6 @@ Solver::Solver(const SolverConf& _conf) :
     clauseCleaner = new ClauseCleaner(this);
     clAllocator = new ClauseAllocator;
     varReplacer = new VarReplacer(this);
-
-    //Open SQL file for writing
-    PropEngine::clAllocator = clAllocator;
-    std::string sqlFilename = "data.sql";
-    sqlFile.open(sqlFilename.c_str());
-    if (!sqlFile) {
-        cout
-        << "ERROR: Couldn't open file '" << sqlFilename << "' for writing!"
-        << endl;
-
-        exit(-1);
-    }
-
-    //Generate random ID for SQL
-    int randomData = open("/dev/urandom", O_RDONLY);
-    if (randomData == -1) {
-        cout << "Error reading from /dev/urandom !" << endl;
-        exit(-1);
-    }
-    ssize_t ret = read(randomData, &solveStats.runID, sizeof(solveStats.runID));
-    if (ret != sizeof(solveStats.runID)) {
-        cout << "Couldn't read from /dev/urandom!" << endl;
-        exit(-1);
-    }
-    close(randomData);
-    cout << "c runID: " << solveStats.runID << endl;
 }
 
 Solver::~Solver()
@@ -1455,7 +1432,7 @@ void Solver::clearPropConfl(vector<Clause*>& clauseset)
     }
 }
 
-void Solver::printClauseStatsSQL(vector<Clause*> cls)
+/*void Solver::printClauseStatsSQL(vector<Clause*> cls)
 {
     for(vector<Clause*>::const_iterator
         it = cls.begin(), end = cls.end()
@@ -1485,7 +1462,7 @@ void Solver::printClauseStatsSQL(vector<Clause*> cls)
         //finish
         << " );" << endl;
     }
-}
+}*/
 
 void Solver::fullReduce()
 {

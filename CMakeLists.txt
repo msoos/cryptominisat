@@ -54,6 +54,10 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 # -----------------------------------------------------------------------------
 #find_package(Perftools)
 
+find_package(MySQL REQUIRED)
+include_directories(${MySQL_INCLUDE_DIR})
+link_directories(${MySQL_LIB_DIR})
+
 # -----------------------------------------------------------------------------
 # Some awful definitiions
 # -----------------------------------------------------------------------------

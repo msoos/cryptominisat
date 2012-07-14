@@ -927,7 +927,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         numResolutionsHist.push(numResolutions);
 
         if (sumConflicts() % 1000 == 0) {
-            printClauseDistribSQL();
+            //printClauseDistribSQL();
             std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
         }
 
@@ -1215,118 +1215,6 @@ void Searcher::printSearchStats()
     cout << std::right;
 }
 
-void Searcher::printRestartSQL()
-{
-    PropStats thisPropStats = propStats - lastSQLPropStats;
-    Stats thisStats = stats - lastSQLGlobalStats;
-
-    solver->sqlFile
-    << "insert into `restart`"
-    << "("
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
-    << ", `glue`, `size`, `resolutions`"
-    << ", `branchDepth`, `branchDepthDelta`"
-    << ", `trailDepth`, `trailDepthDelta`, `agility`"
-
-    //SDs
-    << ", `glueSD`, `sizeSD`, `resolutionsSD`"
-    << ", `branchDepthSD`, `branchDepthDeltaSD`"
-    << ", `trailDepthSD`, `trailDepthDeltaSD`" //, `agilitySD`"
-
-    //Prop&confl&lerant
-    << ", `propBinIrred` , `propBinRed` , `propTriIrred` , `propTriRed`"
-    << ", `propLongIrred` , `propLongRed`"
-    << ", `conflBinIrred`, `conflBinRed`, `conflTri`"
-    << ", `conflLongIrred`, `conflLongRed`"
-    << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
-
-    //Misc
-    << ", `conflAfterConfl`, `conflAfterConflVar`"
-    << ", `watchListSizeTraversed`, `watchListSizeTraversedVar`"
-    << ", `litPropagatedSomething`, `litPropagatedSomethingVar`"
-
-    //Var stats
-    << ", `propsPerDec`"
-    << ", `flippedPercent`, `varSetPos`, `varSetNeg`"
-    << ", `free`, `replaced`, `eliminated`, `set`"
-    << ")"
-    << " values ("
-
-    //Position
-    << "  " << solver->getSolveStats().runID
-    << ", " << solver->getSolveStats().numSimplify
-    << ", " << sumRestarts()
-    << ", " << sumConflicts()
-    << ", " << cpuTime()
-
-    //Conflict stats
-    << ", " << glueHist.getAvgMidLong()
-    << ", " << conflSizeHist.getAvgMidLong()
-    << ", " << numResolutionsHist.getAvgMidLong()
-
-    //Search stats
-    << ", " << branchDepthHist.getAvgMidLong()
-    << ", " << branchDepthDeltaHist.getAvgMidLong()
-    << ", " << trailDepthHist.getAvgMidLong()
-    << ", " << trailDepthDeltaHist.getAvgMidLong()
-    << ", " << agilityHist.getAvgMidLong()
-
-
-    //SDs
-    << ", " << sqrt(glueHist.getVarMidLong())
-    << ", " << sqrt(conflSizeHist.getVarMidLong())
-    << ", " << sqrt(numResolutionsHist.getVarMidLong())
-    << ", " << sqrt(branchDepthHist.getVarMidLong())
-    << ", " << sqrt(branchDepthDeltaHist.getVarMidLong())
-    << ", " << sqrt(trailDepthHist.getVarMidLong())
-    << ", " << sqrt(trailDepthDeltaHist.getVarMidLong())
-    //<< ", " << sqrt(agilityHist.getVarMidLong())
-
-    //Prop
-    << ", " << thisPropStats.propsBinIrred
-    << ", " << thisPropStats.propsBinRed
-    << ", " << thisPropStats.propsTriIrred
-    << ", " << thisPropStats.propsTriRed
-    << ", " << thisPropStats.propsLongIrred
-    << ", " << thisPropStats.propsLongRed
-
-    //Confl
-    << ", " << thisStats.conflStats.conflsBinIrred
-    << ", " << thisStats.conflStats.conflsBinRed
-    << ", " << thisStats.conflStats.conflsTri
-    << ", " << thisStats.conflStats.conflsLongIrred
-    << ", " << thisStats.conflStats.conflsLongRed
-
-    //Learnt
-    << ", " << thisStats.learntUnits
-    << ", " << thisStats.learntBins
-    << ", " << thisStats.learntTris
-    << ", " << thisStats.learntLongs
-
-    //Misc
-    << ", " << conflictAfterConflict.getAvgMidLong()*100.0
-    << ", " << sqrt(conflictAfterConflict.getVarMidLong())*100.0
-    << ", " << watchListSizeTraversed.getAvgMidLong()
-    << ", " << sqrt(watchListSizeTraversed.getVarMidLong())
-    << ", " << litPropagatedSomething.getAvgMidLong()*100.0
-    << ", " << sqrt(litPropagatedSomething.getVarMidLong())*100.0
-
-    //Var stats
-    << ", " << (double)thisPropStats.propagations/(double)thisStats.decisions
-    << ", " << ((double)thisPropStats.varFlipped
-        /(double)(thisPropStats.varSetNeg + thisPropStats.varSetPos))*100.0
-    << ", " << thisPropStats.varSetPos
-    << ", " << thisPropStats.varSetNeg
-    << ", " << solver->getNumFreeVarsAdv(trail.size())
-    << ", " << solver->varReplacer->getNumReplacedVars()
-    << ", " << solver->subsumer->getStats().numVarsElimed
-    << ", " << trail.size()
-    << " );" << endl;
-
-    lastSQLPropStats = propStats;
-    lastSQLGlobalStats = stats;
-}
-
 struct MyInvSorter {
     bool operator()(size_t num, size_t num2)
     {
@@ -1352,7 +1240,7 @@ struct MyPolarData
     }
 };
 
-void Searcher::printVarStatsSQL()
+/*void Searcher::printVarStatsSQL()
 {
     vector<MyPolarData> polarData;
     for(size_t i = 0; i < varData.size(); i++) {
@@ -1386,10 +1274,26 @@ void Searcher::printVarStatsSQL()
         << ", " << polarData[i].flipped
         << " );" << endl;
     }
+}*/
+
+void Searcher::printRestartSQL()
+{
+    PropStats thisPropStats = propStats - lastSQLPropStats;
+    Stats thisStats = stats - lastSQLGlobalStats;
+
+    solver->sqlStats.printRestartSQL(
+        thisPropStats
+        , thisStats
+        , solver
+        , this
+    );
+
+    lastSQLPropStats = propStats;
+    lastSQLGlobalStats = stats;
 }
 
 
-void Searcher::printClauseDistribSQL()
+/*void Searcher::printClauseDistribSQL()
 {
     for(size_t i = 0; i < clauseSizeDistrib.size(); i++) {
         solver->sqlFile
@@ -1407,7 +1311,7 @@ void Searcher::printClauseDistribSQL()
         << ");" << endl;
     }
 
-}
+}*/
 
 void Searcher::clearPolarData()
 {
@@ -1576,7 +1480,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     }
 
     if (conf.doSQL) {
-        printVarStatsSQL();
+        //printVarStatsSQL();
     }
 
     if (conf.verbosity >= 3) {

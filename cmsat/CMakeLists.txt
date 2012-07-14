@@ -33,11 +33,13 @@ add_library(cryptoms SHARED
     Solver.cpp
     XorFinder.cpp
     GateFinder.cpp
+    sqlstats.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
 target_link_libraries(cryptoms
     m4ri
+    ${MYSQL_LIB}
 )
 
 add_executable(cryptominisat

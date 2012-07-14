@@ -32,6 +32,7 @@
 #include "PropEngine.h"
 #include "Searcher.h"
 #include "GitSHA1.h"
+#include "sqlstats.h"
 #include <fstream>
 
 using std::vector;
@@ -47,6 +48,7 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class ImplCache;
+class SQLStats;
 
 class Solver : public Searcher
 {
@@ -125,7 +127,6 @@ class Solver : public Searcher
 
             uint64_t numSimplify;
             uint64_t nbReduceDB;
-            uint32_t runID;
             double subsBinWithBinTime;
             uint64_t subsBinWithBin;
         };
@@ -411,6 +412,9 @@ class Solver : public Searcher
 
     protected:
 
+        friend class SQLStats;
+        SQLStats sqlStats;
+
         //Control
         Clause*  newClauseByThread(
             const vector<Lit>& lits
@@ -461,7 +465,6 @@ class Solver : public Searcher
 
         bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
         lbool simplifyProblem();
-        std::ofstream sqlFile;
         SolveStats solveStats;
 
         /////////////////////

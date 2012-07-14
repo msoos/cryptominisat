@@ -26,6 +26,7 @@
 #include "SolverTypes.h"
 #include "time_mem.h"
 class Solver;
+class SQLStats;
 
 using std::string;
 using std::cout;
@@ -482,6 +483,7 @@ class Searcher : public PropEngine
         Heap<VarOrderLt>  order_heap;
 
         //SQL
+        friend class SQLStats;
         void printRestartSQL();
         void printVarStatsSQL();
         void printClauseDistribSQL();

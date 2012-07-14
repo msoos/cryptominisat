@@ -692,7 +692,7 @@ bool Simplifier::eliminateVars()
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
             || solver->varData[var].elimed != ELIMED_NONE
-            || !gateFinder->canElim(var)
+            //|| !gateFinder->canElim(var)
         ) {
             continue;
         }
