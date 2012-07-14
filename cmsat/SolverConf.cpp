@@ -85,7 +85,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doVarElim        (true)
         , varelimStrategy  (0)
-        , varElimRatioPerIter(0.15)
+        , varElimRatioPerIter(0.30)
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
