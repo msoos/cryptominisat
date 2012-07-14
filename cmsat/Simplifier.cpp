@@ -2475,6 +2475,9 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         if (it->isClause()) {
             const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
 
+            //If in occur then it cannot be freed
+            assert(!cl->freed());
+
             //Only non-learnt is of relevance
             if (!cl->learnt()) {
                 ret.lit += cl->size();
