@@ -5,9 +5,8 @@
     <title>Cryptominisat 3 visualization</title>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
-    <script type="text/javascript" src="jquery/jquery.min.js"></script>
-    <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
-    <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
+    <script type="text/javascript" src="jquery/jquery.js"></script>
+    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
 <!--     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script> -->
     <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
@@ -19,17 +18,22 @@
 
 
     <!-- Start of StatCounter Code -->
-    <script type="text/javascript">
+    <!--<script type="text/javascript">
     var sc_project=6140803;
     var sc_invisible=1;
     var sc_security="26273f9f";
     </script>
 
-    <script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
-    <noscript><div class="statcounter"><a title="tumblr page counter" href="http://statcounter.com/tumblr/" target="_blank">
-    <img class="statcounter" src="http://c.statcounter.com/6140803/0/26273f9f/1/" alt="tumblr page counter"></a></div>
-    </noscript>
-    <!-- End of StatCounter Code for Default Guide -->
+    <script type="text/javascript"
+    src="http://www.statcounter.com/counter/counter.js">
+    </script>
+
+    <noscript><div class="statcounter"><a title="tumblr page counter"
+    href="http://statcounter.com/tumblr/" target="_blank">
+    <img class="statcounter" src="http://c.statcounter.com/6140803/0/26273f9f/1/"
+    alt="tumblr page counter"></a></div>
+    </noscript>-->
+    <!-- End of StatCounter Code -->
 
 </head>
 
@@ -37,7 +41,13 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the partial solving of two SAT instances, visually. I was amazed by <a href="http://www.edwardtufte.com/tufte/">Edward Tufte</a>'s work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the partial solving of two SAT instances, visually.
+I was amazed by <a href="http://www.edwardtufte.com/tufte/">Edward Tufte</a>'s
+work (hence the subtitle) and this came out of it. Tufte would probably not
+approve, as some of the layout is terrible. However, it might allow you to
+understand SAT better, and may offer inspiration... or, rather, <i>vision</i>.
+Enjoy.
+</p>
 
 
 <!--<p>Please select averaging level:
@@ -45,7 +55,19 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. There are two columns, the left column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a> (a crypto problem), the right column is solving <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=71037">UTI-20-10-p0.cnf</a> (a diagnosis problem) - both were aborted at 60'000 conflicts. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. You can rearrange the order and layout by dragging the labels on the right. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are <i>search sessions</i>. The angle of the "time" graph indicates conflicts/second. Simplification sessions are not detailed. However, time jumps during simplifcaition, and the solver behaviour changes afterwards. The angle of the "restart no." graph indicates how often restarts were made. You can find a full list of terms below.</p>
+<p>Below you will find conflicts in the X axis and several interesting data
+on the Y axis. There are two columns, each selectable what to show.
+Every datapoint corresponds to a restart. You may zoom in by
+clicking on an interesting point and dragging the cursor along the X axis.
+Double-click to unzoom. You can rearrange the order and layout by dragging the
+labels on the right. Blue vertical lines indicate the positions of
+<i>simplification sessions</i>. Between the blue lines are <i>search
+sessions</i>. The angle of the "time" graph indicates conflicts/second.
+Simplification sessions are not detailed. However, time jumps during
+simplifcaition, and the solver behaviour changes afterwards. The angle
+of the "restart no." graph indicates how often restarts were made. You can
+find a full list of terms below.
+</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -72,16 +94,9 @@ var myData=new Array();
 <p style="clear:both"></p>
 
 <?
-$runID = 2923895824;
-$runID2 = 840192416;
-//$runID = 2427843192;
-//$runID2 = 2941286659;
+$runID  = 40;
+$runID2 = 41;
 $maxconfl = 100000;
-//$runID = 1628198452;
-//$runID = 3097911473;
-//$runID = 456297562;
-//$runID = 657697659;
-//$runID = 3348265795;
 error_reporting(E_ALL);
 //error_reporting(E_STRICT);
 //error_reporting(E_STRICT);
@@ -93,9 +108,9 @@ $database="cryptoms";
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
+$numberingScheme = 0;
 function printOneThing(
-    $name
-    , $datanames
+    $datanames
     , $nicedatanames
     , $data
     , $nrows
@@ -103,22 +118,23 @@ function printOneThing(
     , $colnum
     , $doSlideAvg = 0
 ) {
-    $fullname = $name."Data";
-    $nameLabel = $name."Label";
+    global $numberingScheme;
+    $fullname = "toplot_".$numberingScheme."_".$colnum;
+    //$nameLabel = "Label-$numberingScheme-$colnum";
 
     echo "
     <div class=\"block\" id=\"block".$orderNum."AT".$colnum."\">
     <table id=\"plot-table-a\">
     <tr>
-    <td><div id=\"$name$colnum\" class=\"myPlotData\"></div></td>
-    <td><div id=\"$nameLabel$colnum\" class=\"draghandle\"></div></td>
+    <td><div id=\"$fullname"."_datadiv\" class=\"myPlotData\"></div></td>
+    <td><div id=\"$fullname"."_labeldiv\" class=\"draghandle\"></div></td>
     </tr>
     </table>
     </div>";
     $orderNum++;
 
     echo "<script type=\"text/javascript\">";
-    echo "$fullname$colnum = [";
+    echo $fullname."_data = [";
 
     echo "[0, ";
 
@@ -174,7 +190,7 @@ function printOneThing(
     echo "];\n";
 
     //Add name & data
-    echo "myData.push({data: $fullname$colnum, name: \"$name$colnum\"";
+    echo "myData.push({data: $fullname"."_data, div: \"$fullname"."_datadiv\"";
 
     //Calculate labels
     echo ", labels: [\"Conflicts\"";
@@ -187,12 +203,13 @@ function printOneThing(
     echo "]";
 
     //Stacked?
-    echo ", stacked : ".(int)(sizeof($datanames) > 1);
-    echo ", labeldiv: \"".$nameLabel.$colnum."\"";
+    echo ", stacked: ".(int)(sizeof($datanames) > 1);
+    echo ", labeldiv: \"$fullname"."_labeldiv\"";
     echo ", colnum: \"$colnum\"";
     echo " });\n";
 
     echo "</script>\n";
+    $numberingScheme++;
 }
 
 function printOneSolve($runID, $colnum, $maxconfl) {
@@ -209,73 +226,80 @@ function printOneSolve($runID, $colnum, $maxconfl) {
     $nrows=mysql_numrows($result);
 
     $orderNum = 0;
-    printOneThing("time", array("time")
+    printOneThing(array("time")
         , array("time"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("restarts" , array("restarts")
+    printOneThing(array("restarts")
         , array("restart no."), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("propsPerDec", array("propsPerDec")
-        , array("avg. no. propagations per decision"), $result, $nrows, $orderNum, $colnum);
+    /*printOneThing(array("propsPerDec")
+        , array("avg. no. propagations per decision"), $result, $nrows, $orderNum, $colnum);*/
 
-    printOneThing("branchDepth", array("branchDepth")
+    printOneThing(array("branchDepth")
         , array("avg. branch depth"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("branchDepthDelta", array("branchDepthDelta")
+    printOneThing(array("branchDepthDelta")
         , array("avg. no. of levels backjumped"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("trailDepth", array("trailDepth")
+    printOneThing(array("trailDepth")
         , array("avg. trail depth"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("trailDepthDelta", array("trailDepthDelta")
+    printOneThing(array("trailDepthDelta")
         , array("avg. trail depth delta"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("glue", array("glue")
+    printOneThing(array("glue")
         , array("newly learnt clauses avg. glue"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("size", array("size")
+    printOneThing(array("size")
         , array("newly learnt clauses avg. size"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("resolutions", array("resolutions")
+    printOneThing(array("resolutions")
         , array("avg. no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("agility", array("agility")
+    printOneThing(array("agility")
         , array("avg. agility"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("flippedPercent", array("flippedPercent")
-        , array("var polarity flipped %"), $result, $nrows, $orderNum, $colnum);
+    /*printOneThing(array("flippedPercent")
+        , array("var polarity flipped %"), $result, $nrows, $orderNum, $colnum);*/
 
-    printOneThing("conflAfterConfl", array("conflAfterConfl")
+    printOneThing(array("conflAfterConfl")
         , array("conflict after conflict %"), $result, $nrows, $orderNum, $colnum);
 
-    /*printOneThing("conflAfterConflVar", array("conflAfterConfl")
+    /*printOneThing("conflAfterConflSD", array("conflAfterConfl")
         , array("conflict after conflict std dev %"), $result, $nrows, $orderNum, $colnum);*/
 
-    printOneThing("watchListSizeTraversed", array("watchListSizeTraversed")
+    printOneThing(array("watchListSizeTraversed")
         , array("avg. traversed watchlist size"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("watchListSizeTraversedVar", array("watchListSizeTraversedVar")
+    printOneThing(array("watchListSizeTraversedSD")
         , array("avg. traversed watchlist size std dev"), $result, $nrows, $orderNum, $colnum);
 
     /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
         , array("literal propagated something with binary clauses %"), $result, $nrows, $orderNum, $colnum);*/
 
-    printOneThing("replaced", array("replaced")
+    printOneThing(array("replaced")
         , array("vars replaced"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("set", array("set")
+    printOneThing(array("set")
         , array("vars set"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("polarity", array("varSetPos", "varSetNeg")
+    printOneThing(array("varSetPos", "varSetNeg")
         , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
+    printOneThing(array("learntUnits", "learntBins", "learntTris", "learntLongs")
         ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
-        ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows, $orderNum, $colnum);
+    printOneThing(array(
+        "propBinIrred", "propBinRed"
+        , "propTriIrred", "propTriRed"
+        , "propLongIrred", "propLongRed"
+        )
+        ,array("prop by bin irred %", "prop by bin red %"
+        , "prop by tri irred %", "prop by tri red %"
+        , "prop by long irred %", "prop by long red %"
+        ), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
+    /*printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
         ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows, $orderNum, $colnum);
 
     printOneThing("branchDepthSD", array("branchDepthSD")
@@ -297,7 +321,7 @@ function printOneSolve($runID, $colnum, $maxconfl) {
         , array("newly learnt clause size std dev"), $result, $nrows, $orderNum, $colnum);
 
     printOneThing("resolutionsSD", array("resolutionsSD")
-        , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);
+        , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);*/
 
     return $orderNum;
 }
@@ -309,8 +333,17 @@ $orderNum = printOneSolve($runID2, 1, $maxconfl);
 <div class="block" id="blockSpecial0">
     <table id="plot-table-a">
     <tr>
-    <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad0" width="420" height="100">no support for canvas</canvas></div></td>
-    <td><div class="draghandle"><b>(0) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts. Vertical resolution: 1 literal</b></div></td>
+    <td><div id="MYdrawingPad0Parent" class="myPlotData">
+    <canvas id="MYdrawingPad0" width="420" height="100">no support for canvas</canvas>
+    </div></td>
+
+    <td><div class="draghandle"><b>
+    (0) Newly learnt clause size distribution.
+    Bottom: unitary clause. Top: largest clause.
+    Black: Many learnt. White: None learnt.
+    Horizontal resolution: 1000 conflicts.
+    Vertical resolution: 1 literal
+    </b></div></td>
     </tr>
     </table>
 </div>
@@ -318,8 +351,18 @@ $orderNum = printOneSolve($runID2, 1, $maxconfl);
 <div class="block" id="blockSpecial1">
     <table id="plot-table-a">
     <tr>
-    <td><div id="MYdrawingPad0Parent" class="myPlotData"><canvas id="MYdrawingPad1" width="420" height="100">no support for canvas</canvas></div></td>
-    <td><div class="draghandle"><b>(1) Newly learnt clause size distribution. Bottom: unitary clause. Top: largest clause. Black: Many learnt. White: None learnt. Horizontal resolution: 1000 conflicts. Vertical resolution: 1 literal</b></div></td>
+    <td><div id="MYdrawingPad0Parent" class="myPlotData">
+    <canvas id="MYdrawingPad1" width="420" height="100">no support for canvas
+    </canvas>
+    </div></td>
+
+    <td><div class="draghandle"><b>
+    (1) Newly learnt clause size distribution.
+    Bottom: unitary clause. Top: largest clause.
+    Black: Many learnt. White: None learnt.
+    Horizontal resolution: 1000 conflicts.
+    Vertical resolution: 1 literal
+    </b></div></td>
     </tr>
     </table>
 </div>
@@ -368,76 +411,73 @@ function getMaxConflRestart($runID, $maxconfl)
     return mysql_result($result, 0, "mymax");
 }
 
-function getMinConflRestart($runID, $maxconfl)
-{
-    $query="
-    SELECT min(conflicts) as mymin FROM `restart`
-    where conflicts < $maxconfl
-    and runID = $runID";
-    $result=mysql_query($query);
-
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    return mysql_result($result, 0, "mymin");
-}
-
-$maxSize1 = getMaxSize($runID) - 1; //Because no use for size 0
-$maxSize2 = getMaxSize($runID2) - 1; //Because no use for size 0
+$maxSize = [];
+$maxSize[0] = getMaxSize($runID) - 1; //Because no use for size 0
+$maxSize[1] = getMaxSize($runID2) - 1; //Because no use for size 0
 echo "var maxSize = [$maxSize1, $maxSize2];\n";
 $maxConflDistrib = getMaxConflDistrib($runID, $runID2);
 echo "var maxConflDistrib = $maxConflDistrib;\n";
 
-$maxConflRestart = getMaxConflRestart($runID, $maxconfl);
-$maxConflRestart2 = getMaxConflRestart($runID2, $maxconfl);
-echo "var maxConflRestart = [$maxConflRestart, $maxConflRestart2];";
+$maxConflRestart = [];
+$maxConflRestart[0] = getMaxConflRestart($runID, $maxconfl);
+$maxConflRestart[1] = getMaxConflRestart($runID2, $maxconfl);
+echo "var maxConflRestart = [$maxConflRestart[0], $maxConflRestart[1]];\n";
 
-$minConflRestart = 0; //getMinConflRestart($runID, $maxconfl);
-$minConflRestart2 = 0; //getMinConflRestart($runID2, $maxconfl);
-echo "var minConflRestart = [$minConflRestart, $minConflRestart2];";
+$minConflRestart = [];
+$minConflRestart[0] = 0;
+$minConflRestart[1] = 0;
+echo "var minConflRestart = [$minConflRestart[0], $minConflRestart[1]];\n";
 
-$statPer = 1000;
-echo "var statPer = $statPer;\n";
+//$statPer = 1000;
+//echo "var statPer = $statPer;\n";
 
-
-function fillClauseDistrib($num, $runID, $maxConflDistrib, $maxSize, $statPer)
+function fillClauseDistrib($num, $runID)
 {
-    echo "clauseDistrib.push([]);";
+    global $maxSize;
+    global $maxConflDistrib;
+
+    echo "clauseDistrib.push([]);\n";
     $lastConflicts = 0;
-    for($i = $statPer; $i <= $maxConflDistrib; $i += $statPer) {
+    $query = "
+    SELECT conflicts, num FROM clauseSizeDistrib
+    where runID = $runID
+    and size <= $maxSize[$num]
+    and size > 0
+    order by conflicts, size";
+    $result=mysql_query($query);
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    $nrows=mysql_numrows($result);
 
-        $query = "
-        SELECT conflicts, num FROM clauseSizeDistrib
-        where runID = $runID
-        and conflicts = $i
-        and size <= $maxSize
-        and size > 0
-        order by size";
-        $result=mysql_query($query);
-        if (!$result) {
-            die('Invalid query: ' . mysql_error());
-        }
-        $nrows=mysql_numrows($result);
-
-        $i2=0;
-        echo "tmp = {conflStart: $lastConflicts, conflEnd : $i, height: [";
-        while ($i2 < $nrows) {
-            $numberOfCl = mysql_result($result, $i2, "num");
+    $rownum = 0;
+    $lastConfl = 0;
+    while($rownum < $nrows) {
+        $confl = mysql_result($result, $rownum, "conflicts");
+        echo "tmp = {conflStart: $lastConfl, conflEnd: $confl, height: [";
+        $lastConfl = $confl;
+        while($rownum < $nrows) {
+            $numberOfCl = mysql_result($result, $rownum, "num");
             echo "$numberOfCl";
 
-            $i2++;
-            if ($i2 < $nrows)
-                echo ",";
+            //More in this bracket?
+            $rownum++;
+            if ($rownum >= $nrows
+                || mysql_result($result, $rownum, "conflicts") != $confl
+            ) {
+                break;
+            }
+
+            echo ",";
         }
-        echo "]};";
+        echo "]};\n";
         echo "clauseDistrib[$num].push(tmp);\n";
-        $lastConflicts = $i;
     }
 }
 
 echo "var clauseDistrib = [];\n";
-fillClauseDistrib(0, $runID, $maxConflDistrib, $maxSize1, $statPer);
-fillClauseDistrib(1, $runID2, $maxConflDistrib, $maxSize2, $statPer);
+fillClauseDistrib(0, $runID, $maxConflDistrib);
+fillClauseDistrib(1, $runID2, $maxConflDistrib);
 
 echo "var settings = {";
 for($i2 = 0; $i2 < 2; $i2++) {
@@ -498,31 +538,28 @@ fillSimplificationPoints($runID2);
 </script>
 
 <script type="text/javascript">
-function todisplay(i,len)
-{
-if (i == len-1)
-    return "Conflicts";
-else
-    return "";
-};
-
+//Stores the original X sizes of the graphs
+//Used when zooming out fully
+origSizes = [];
 
 //Draw graphs
 gs = [];
-origSizes = [];
 var blockRedraw = false;
 for (var i = 0; i < myData.length; i++) {
     gs.push(new Dygraph(
-        document.getElementById(myData[i].name),
+        document.getElementById(myData[i].div),
         myData[i].data
         , {
             stackedGraph: myData[i].stacked,
             labels: myData[i].labels,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
-                //canvas.fillRect(0, area.y, 2, area.h);
-                for(var k = 0; k < simplificationPoints[myData[i].colnum].length-1; k++) {
-                    var bottom_left = g.toDomCoords(simplificationPoints[myData[i].colnum][k], -20);
+                //Draw simplification points
+                //colnum = myData[i].colnum;
+                colnum = 0;
+
+                for(var k = 0; k < simplificationPoints[colnum].length-1; k++) {
+                    var bottom_left = g.toDomCoords(simplificationPoints[colnum][k], -20);
                     var left = bottom_left[0];
                     canvas.fillRect(left, area.y, 2, area.h);
                 }
@@ -541,13 +578,13 @@ for (var i = 0; i < myData.length; i++) {
             strokeWidth: 0.3,
             highlightCircleSize: 3,
             rollPeriod: 1,
-            drawXAxis: false, //i == myData.length-1,
+            drawXAxis: false,
             legend: 'always',
-            xlabel: false, //todisplay(i, myData.length),
+            xlabel: false,
             labelsDiv: document.getElementById(myData[i].labeldiv),
             labelsSeparateLines: true,
             labelsKMB: true,
-            drawPoints: false,
+            drawPoints: true,
             pointSize: 1,
             drawXGrid: false,
             drawYGrid: false,
@@ -608,17 +645,16 @@ for (var i = 0; i < myData.length; i++) {
 }
 
 //For SVG pattern, a rectangle
-function makeRect(x1, x2, y1, y2, relHeight, imgData)
+function drawDistribBox(x1, x2, y1, y2, relHeight, imgData)
 {
     num = 255-relHeight*255.0;
     type = "rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ")";
     imgData.fillStyle = type;
     imgData.strokeStyle = type;
-    //imgData.strokeRect(x1, y1, (x2-x1), (y2-y1));
     imgData.fillRect(x1, y1, x2-x1, y2-y1);
 }
 
-function makeRect2(x1, x2, y1, y2, imgData)
+function drawSimpLine(x1, x2, y1, y2, imgData)
 {
     imgData.strokeStyle = "rgba(105, 105, 185, 185)";
     imgData.fillStyle = "rgba(105, 105, 185, 185)";
@@ -639,6 +675,8 @@ function drawPattern(data, num, from , to)
     var i;
 
     var onePixelisConf = width/(to-from);
+
+    //Y components' limits are here
     var vAY = new Array();
     numElementsVertical = data[0].height.length;
     for(i = numElementsVertical; i >= 0; i--) {
@@ -646,19 +684,16 @@ function drawPattern(data, num, from , to)
     }
     vAY.push(0);
 
+    //Start drawing from X origin
     lastXEnd = 0;
     for( i = 0 ; i < data.length ; i ++ ){
+
+        //Calculate maximum height
         maxHeight = 0;
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             maxHeight = Math.max(maxHeight, data[i].height[i2]);
         }
 
-        /*xStart = data[i].conflStart - from;
-        xStart *= onePixelisConf;
-        xStart += Xdelta;
-        xStart = Math.max(0, xStart);
-        xStart = Math.min(xStart, width);
-        //document.write(data[i].conflStart + ", " + xStart +  "...");*/
         xStart = lastXEnd;
 
         xEnd = data[i].conflEnd - from;
@@ -668,36 +703,35 @@ function drawPattern(data, num, from , to)
         xEnd = Math.min(xEnd, width);
         xEnd = Math.round(xEnd);
         lastXEnd = xEnd;
-        //document.write(data[i].conflEnd + ", " + xEnd + " || ");
 
+        //Go through each Y component now
         for(i2 = 0; i2 < data[i].height.length; i2++) {
             yStart = vAY[i2+1];
-            yEnd = vAY[i2];
+            yEnd   = vAY[i2];
 
+            //How dark should it be?
             if (data[i].height[i2] != 0) {
-                //relHeight = Math.log(data[i][i2])/maxHeight;
                 relHeight = data[i].height[i2]/maxHeight;
-                //relHeight = (data[i].height[i2]*data[i].height[i2])/maxHeight;
             } else {
                 relHeight  = 0;
             }
 
-            makeRect(xStart, xEnd, yStart, yEnd, relHeight, ctx);
+            //Create the rectangle
+            drawDistribBox(xStart, xEnd, yStart, yEnd, relHeight, ctx);
         }
     }
 
-    points = [];
+    //Handle simplification lines
     for(var k = 0; k < simplificationPoints[num].length-1; k++) {
         var point = simplificationPoints[num][k] - from;
         point *= onePixelisConf;
         point += Xdelta;
+
+        //Draw blue line
         if (point > 0) {
-            points.push(point);
-            makeRect2(point, point+1, 0, height, ctx);
+            drawSimpLine(point, point+1, 0, height, ctx);
         }
     }
-    //alert(points);
-    //alert(width + " , " + height);
 }
 drawPattern(clauseDistrib[0], 0, minConflRestart[0], maxConflRestart[0]);
 drawPattern(clauseDistrib[1], 1, minConflRestart[1], maxConflRestart[1]);
@@ -732,183 +766,58 @@ function setRollPeriod(num)
 <tr><td>conflict after conflict %</td><td>How often does it happen that a conflict, after backtracking and propagating immeediately (i.e. without branching) leads to a conflict. This is displayed because it's extremely high percentage relative to what most would expect. Thanks to <a href="http://www.cril.univ-artois.fr/~jabbour/">Said Jabbour</a> for this.</td></tr>
 </table>
 
-
-<h2>Search session statistics</h2>
-<p>These charts show clause types learnt, propagations made, and conflicting clause types for each search session of <a href="http://www.cril.univ-artois.fr/SAT09/results/bench.php?idev=29&idbench=69562">mizh-md5-47-3.cnf</a>, i.e. the problem on the left column. Note that these are just per-session summary graphs of learnt clause/propagation by/conflict by data that is already present above.</p>
-
-
-<script type="text/javascript">
-var sumData = new Array();
-</script>
-
-<?
-function getSumData($runID, $maxconfl, $toSelect, $toPrint)
-{
-    print "<script type=\"text/javascript\">\n";
-    $query="
-    SELECT ";
-    for($i = 0;  $i < sizeof($toPrint); $i++) {
-        $query.="sum(`".$toSelect[$i]."`) as `".$toSelect[$i]."sum`";
-
-        if ($i+1 < sizeof($toSelect))
-            $query.=",";
-    }
-    $query.="
-    FROM `restart`
-    where `runID` = $runID
-    and conflicts < $maxconfl
-    group by `simplifications`
-    order by `simplifications`";
-
-    //Gather results
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
-
-
-    //Write learnt data to 'learntData'
-    $i=0;
-    echo "var tmp = new Array();\n";
-    while ($i < $nrows) {
-        //$simplifications=mysql_result($result, $i, "simplifications");
-
-        echo "tmp.push([ ";
-        for($i2 = 0;  $i2 < sizeof($toSelect); $i2++) {
-            $toGet = $toSelect[$i2]."sum";
-            $data = mysql_result($result, $i, $toGet);
-
-            $name = $toPrint[$i2];
-            echo "['".$name."' , ".$data."]";
-
-            if ($i2+1 < sizeof($toSelect)) {
-                echo ",";
-            }
-        }
-        echo "]);\n";
-        $i++;
-    }
-    echo "sumData.push( tmp);\n";
-    echo "</script>\n";
-
-    return $nrows;
-}
-
-$nrows = getSumData($runID, $maxconfl
-    , array("learntUnits", "learntBins", "learntTris", "learntLongs")
-    , array("units", "bins", "tris", "longs")
-);
-
-getSumData($runID, $maxconfl
-    , array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
-    , array("irred. bin", "red. bin", "tri", "irred. long", "red. long")
-);
-
-getSumData($runID, $maxconfl
-    , array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
-    , array("irred. bin", "red. bin", "trii", "irred long", "red. long")
-);
-
-//End script, create tables
-function createTable($nrows)
-{
-    $i = 0;
-    echo "<table class=\"box-table-a\">\n";
-    echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
-    while ($i < $nrows) {
-        echo "<tr>\n";
-        echo "<td width=\"1%\" style=\"text-align:right;\">".($i+1)."</td>\n";
-        echo " <td width=\"30%\"><div id=\"learnt$i\" class=\"piechart\"></div></td>\n";
-        echo " <td width=\"30%\"><div id=\"prop$i\" class=\"piechart\"></div></td>\n";
-        echo " <td width=\"30%\"><div id=\"confl$i\" class=\"piechart\"></div></td>\n";
-        echo "</tr>\n";
-        $i++;
-    };
-    echo "</table>\n";
-}
-
-createTable($nrows);
-mysql_close();
-?>
-</script>
-
-<script type="text/javascript">
-function drawChart(name, num, data) {
-    chart = new Highcharts.Chart(
-    {
-        chart: {
-            renderTo: name + num,
-            plotBackgroundColor: null,
-            plotBorderWidth: null,
-            plotShadow: false,
-            spacingTop: 30,
-            spacingRight: 30,
-            spacingBottom: 30,
-            spacingLeft: 30
-        },
-        title: {
-            text: ''
-        },
-        tooltip: {
-            formatter: function() {
-                return '<b>'+ this.point.name +'</b>: '+ this.y + '(' + this.percentage.toFixed(1) + '%)';
-            }
-        },
-        credits: {
-            enabled: false
-        },
-        plotOptions: {
-            pie: {
-                allowPointSelect: true,
-                cursor: 'pointer',
-                dataLabels: {
-                    enabled: true,
-                    color: '#000000',
-                    distance: 30,
-                    connectorColor: '#000000',
-                    overflow: "justify"
-                }
-            }
-        },
-        series: [{
-            type: 'pie',
-            name: 'Learnt clause types',
-            data: data[num]
-        }],
-        exporting: {
-            enabled: false
-        }
-    });
-};
-
-var chart;
-for(i = 0; i < sumData[0].length; i++) {
-    drawChart("learnt", i, sumData[0]);
-}
-
-for(i = 0; i < sumData[1].length; i++) {
-    drawChart("prop", i, sumData[1]);
-}
-
-for(i = 0; i < sumData[2].length; i++) {
-    drawChart("confl", i, sumData[2]);
-}
-</script>
-
 <h2>Why did I do this?</h2>
-<p>There has been some <a href="http://www-sr.informatik.uni-tuebingen.de/~sinz/DPvis/">past work</a> on statically visualizing SAT problems by <a href="http://www.carstensinz.de/">Carsten Sinz</a>, but not much on dynamic solving visualization - in fact, nothing comes to my mind that is comparable to what is above. However, the point of this excercise was not only to visually display dynamic solver behaviour. Rather, I think we could do dynamic analysis and heuristic adjustment instead of the static analysis and static heuristic selection as done by current <a href="http://www.jair.org/media/2490/live-2490-3923-jair.pdf">portifolio solvers</a>. Accordingly, CryptoMiniSat 3 has an extremely large set of options - e.g. swithcing between cleaning using glues, activities, clause sizes, or number of propagations+conflicts made by a clause is only a matter of setting a variable, and can be done on-the-fly. Problems tend to evolve as simplication and solving steps are made, so search heuristics should evolve with the problem.</p>
+<p>There has been some
+<a href="http://www-sr.informatik.uni-tuebingen.de/~sinz/DPvis/">
+past work</a> on statically visualizing SAT problems by
+<a href="http://www.carstensinz.de/">Carsten Sinz</a>, but not much on
+dynamic solving visualization - in fact, nothing comes to my mind that
+is comparable to what is above. However, the point of this excercise was
+not only to visually display dynamic solver behaviour. Rather, I
+think we could do dynamic analysis and heuristic adjustment instead
+of the static analysis and static heuristic selection as done by current
+<a href="http://www.jair.org/media/2490/live-2490-3923-jair.pdf">
+portifolio solvers</a>. Accordingly, CryptoMiniSat 3 has an extremely
+large set of options - e.g. swithcing between cleaning using glues,
+activities, clause sizes, or number of propagations+conflicts made by
+a clause is only a matter of setting a variable, and can be done on-the-fly.
+Problems tend to evolve as simplication and solving steps are made,
+so search heuristics should evolve with the problem.
+</p>
 
-<h2>Future work</h2>
-<p>Data displayed above is nothing but a very small percentage of data that is gathered during solving. In particular, no data at all is shown about simplifcations. Also, note that the data above displays only ~40/400 seconds of solving time on a <i>very</i> slow machine. Time-out for SAT competition, considering computing speed, is on the order of 20x more. Futhermore, there are probably better ways to present the data that is displayed. Future work should try to fix these shortcomings. You can either <a href="mailto:mate@srlabs.de">send me a mail</a> if you have an idea, or implement it yourself - all is up in the <a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL, PHP, HTML, CSS and more.</p>
+
+<!--all is up in the
+<a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL,
+PHP, HTML, CSS and more.-->
 
 <h2>The End</h2>
-<p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions  <a href="http://www.msoos.org/">here</a> and send the link to a friend. Second, you can <a href="http://www.srlabs.de">contact my employer</a>, and he will be happy to find a way for us to help you with your SAT problems.</p>
+<p>If you enjoyed this visualization, there are three things you can do.
+First, tell me about your impressions  <a href="http://www.msoos.org/">
+here</a> and send the link to a friend. Second, you can
+<a href="http://www.srlabs.de">contact my employer</a>, and he will be happy
+to find a way for us to help you with your SAT problems.
+</p>
 
 <h2>Acknowledgements</h2>
-<p>I would like to thank my employer for letting me play with SAT, my collegue <a href="http://www.flickr.com/photos/lucamelette/">Luca Melette</a> for helping me with ideas and coding, <a href="http://folk.uio.no/vegardno/">Vegard Nossum</a> for the many discussions we had about visualization, <a href="http://www.inra.fr/mia/T/katsirelos/">George Katsirelos</a> for improvement ideas, <a href="http://www.cril.univ-artois.fr/~jabbour/">Said Jabbour</a> for further improvement ideas, <a href="http://dygraphs.com/">Dygraphs</a> for the visually pleasing graphs, <a href="http://www.michelhiemstra.nl/blog/igoogle-like-drag-drop-portal-v20/">Portal</a> for the drag-and-drop feature, <a href="http://www.highcharts.com/">Highcharts</a> for the pie charts and Edward Tufte for all his wonderful <a href="http://www.edwardtufte.com/tufte/books_vdqi">books</a>.</p>
+<p>I would like to thank my employer for letting me play with SAT,
+my collegue <a href="http://www.flickr.com/photos/lucamelette/">
+Luca Melette</a> for helping me with ideas and coding,
+<a href="http://folk.uio.no/vegardno/">Vegard Nossum</a> for the many
+discussions we had about visualization,
+<a href="http://www.inra.fr/mia/T/katsirelos/">George Katsirelos</a> for
+improvement ideas, <a href="http://www.cril.univ-artois.fr/~jabbour/">
+Said Jabbour</a> for further improvement ideas,
+<a href="http://dygraphs.com/">Dygraphs</a> for the visually pleasing graphs,
+<a href="http://www.michelhiemstra.nl/blog/igoogle-like-drag-drop-portal-v20/">
+Portal</a> for the drag-and-drop feature and Edward Tufte for all his wonderful
+<a href="http://www.edwardtufte.com/tufte/books_vdqi">books</a>.
+</p>
 
 <br/>
-<p><small>Copyright <a href="http://www.msoos.org">Mate Soos</a>, 2012. Licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">CC BY-NC-SA 2.5</a></small></p>
+<p><small>Copyright <a href="http://www.msoos.org">Mate Soos</a>, 2012.
+Licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/2.5/">
+CC BY-NC-SA 2.5</a></small>
+</p>
+
 </body>
 </html>
