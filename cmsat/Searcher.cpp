@@ -926,13 +926,19 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         agilityHist.push(agility.getAgility());
         numResolutionsHist.push(numResolutions);
 
-        if (sumConflicts() % 1000 == 0) {
-            //printClauseDistribSQL();
-            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
-        }
+        if (solver->conf.doSQL) {
+            if (sumConflicts() % solver->conf.dumpClauseDistribDataPer == 0) {
+                printClauseDistribSQL();
+                std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+            }
 
-        if (learnt_clause.size() < clauseSizeDistrib.size()) {
-            clauseSizeDistrib[learnt_clause.size()]++;
+            //Add this new clause to clause distribution
+            if (learnt_clause.size() < clauseSizeDistrib.size()) {
+                clauseSizeDistrib[learnt_clause.size()]++;
+            } else {
+                //Too large, add it to the end
+                clauseSizeDistrib[clauseSizeDistrib.size()-1]++;
+            }
         }
     }
     cancelUntil(backtrack_level);
@@ -1074,7 +1080,7 @@ void Searcher::resetStats()
     agilityHist.clear();
     agilityHist.resize(100);
     clearPolarData();
-    clauseSizeDistrib.resize(300);
+    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribDataMax);
 
     //Misc
     watchListSizeTraversed.clear();
@@ -1281,7 +1287,7 @@ void Searcher::printRestartSQL()
     PropStats thisPropStats = propStats - lastSQLPropStats;
     Stats thisStats = stats - lastSQLGlobalStats;
 
-    solver->sqlStats.printRestartSQL(
+    solver->sqlStats.restart(
         thisPropStats
         , thisStats
         , solver
@@ -1293,25 +1299,13 @@ void Searcher::printRestartSQL()
 }
 
 
-/*void Searcher::printClauseDistribSQL()
+void Searcher::printClauseDistribSQL()
 {
-    for(size_t i = 0; i < clauseSizeDistrib.size(); i++) {
-        solver->sqlFile
-        << "insert into `clauseSizeDistrib`"
-        << "("
-        << " `runID`, `conflicts`"
-        << ", `size`, `num`"
-        << ") values ("
-        << "  " << solver->getSolveStats().runID
-        << ", " << sumConflicts()
-
-        //Var data
-        << ", " << i
-        << ", " << clauseSizeDistrib[i]
-        << ");" << endl;
-    }
-
-}*/
+    solver->sqlStats.clauseSizeDistrib(
+        sumConflicts()
+        , clauseSizeDistrib
+    );
+}
 
 void Searcher::clearPolarData()
 {
@@ -1481,6 +1475,10 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
     if (conf.doSQL) {
         //printVarStatsSQL();
+
+        //Print clause distib SQL until here
+        printClauseDistribSQL();
+        std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
     }
 
     if (conf.verbosity >= 3) {

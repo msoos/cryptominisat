@@ -9,11 +9,15 @@ class SQLStats
 {
 public:
     SQLStats();
-    void printRestartSQL(
+    void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
         , const Solver* solver
         , const Searcher* searcher
+    );
+    void clauseSizeDistrib(
+        uint64_t sumConflicts
+        , const vector<uint32_t>& sizes
     );
     void setup(const Solver* solver);
 
@@ -22,9 +26,34 @@ private:
     void getID();
     void addFiles(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
+    void initClauseSizeDistribSTMT(const Solver* solver);
+    void writeQuestionMarks(size_t num, std::stringstream& ss);
 
-    void bindTo(uint64_t& data);
-    void bindTo(double& data);
+    template<typename T>
+    void bindTo(
+        T& t
+        , uint64_t& data
+    ) {
+        t.bind[bindAt].buffer_type= MYSQL_TYPE_LONG;
+        t.bind[bindAt].buffer= (char *)&data;
+        t.bind[bindAt].is_null= 0;
+        t.bind[bindAt].length= 0;
+
+        bindAt++;
+    }
+
+    template<typename T>
+    void bindTo(
+        T& t
+        , double& data
+    ) {
+        t.bind[bindAt].buffer_type= MYSQL_TYPE_DOUBLE;
+        t.bind[bindAt].buffer= (char *)&data;
+        t.bind[bindAt].is_null= 0;
+        t.bind[bindAt].length= 0;
+
+        bindAt++;
+    }
 
     uint64_t runID;
     size_t bindAt;
@@ -99,6 +128,19 @@ private:
 
     };
     StmtRst stmtRst;
+
+
+    struct StmtClsDistrib {
+        vector<MYSQL_BIND>  bind;
+        MYSQL_STMT  *STMT;
+
+        //Variables
+        uint64_t sumConflicts;
+        vector<uint64_t> size;
+        vector<uint64_t> num;
+    };
+    StmtClsDistrib stmtClsDistrib;
+
     MYSQL *serverConn;
 };
 

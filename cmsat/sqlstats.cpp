@@ -26,6 +26,7 @@ void SQLStats::setup(const Solver* solver)
     getID();
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
+    initClauseSizeDistribSTMT(solver);
 }
 
 void SQLStats::connectServer()
@@ -107,30 +108,102 @@ void SQLStats::addFiles(const Solver* solver)
     }
 }
 
-void SQLStats::bindTo(uint64_t& data)
-{
-    stmtRst.bind[bindAt].buffer_type= MYSQL_TYPE_LONG;
-    stmtRst.bind[bindAt].buffer= (char *)&data;
-    stmtRst.bind[bindAt].is_null= 0;
-    stmtRst.bind[bindAt].length= 0;
-
-    bindAt++;
+void SQLStats::writeQuestionMarks(
+    size_t num
+    , std::stringstream& ss
+) {
+    ss << "(";
+    for(size_t i = 0
+        ; i < num
+        ; i++
+    ) {
+        if (i < num-1)
+            ss << "?,";
+        else
+            ss << "?";
+    }
+    ss << ")";
 }
 
-void SQLStats::bindTo(double& data)
-{
-    stmtRst.bind[bindAt].buffer_type= MYSQL_TYPE_DOUBLE;
-    stmtRst.bind[bindAt].buffer= (char *)&data;
-    stmtRst.bind[bindAt].is_null= 0;
-    stmtRst.bind[bindAt].length= 0;
+void SQLStats::initClauseSizeDistribSTMT(
+    const Solver* solver
+) {
+    const size_t numInserts = solver->conf.dumpClauseDistribDataMax;
+    const size_t numElems = 4;
+    stmtClsDistrib.bind.resize(numElems*numInserts);
 
-    bindAt++;
+    std::stringstream ss;
+    ss << "insert into `clauseSizeDistrib`"
+    << "("
+    << " `runID`, `conflicts`, `size`, `num`"
+    << ") values ";
+    for(size_t i = 0; i < numInserts; i++) {
+        writeQuestionMarks(numElems, ss);
+
+        if (i != numInserts-1)
+            ss << " , ";
+    }
+    ss << ";";
+
+    //Get memory for statement
+    stmtClsDistrib.STMT = mysql_stmt_init(serverConn);
+    if (!stmtClsDistrib.STMT) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        exit(1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtClsDistrib.STMT, ss.str().c_str(), ss.str().length())) {
+        cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
+        << mysql_stmt_error(stmtClsDistrib.STMT) << endl;
+        exit(0);
+    }
+
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "prepare INSERT successful"
+        << endl;
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtClsDistrib.STMT);
+    if (param_count != numElems*numInserts) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        exit(1);
+    }
+
+    //Clear mem of bind, get enough mem for vars
+    memset(stmtClsDistrib.bind.data(), 0, stmtClsDistrib.bind.size());
+    stmtClsDistrib.size.resize(numInserts);
+    stmtClsDistrib.num.resize(numInserts);
+
+    //Bind the local variables to the statement
+    bindAt = 0;
+    for(size_t i = 0; i < numInserts; i++) {
+        bindTo(stmtClsDistrib, runID);
+        bindTo(stmtClsDistrib, stmtClsDistrib.sumConflicts);
+        bindTo(stmtClsDistrib, stmtClsDistrib.size[i]);
+        bindTo(stmtClsDistrib, stmtClsDistrib.num[i]);
+    }
+    assert(bindAt == numElems*numInserts);
+
+    //Bind the buffers
+    if (mysql_stmt_bind_param(stmtClsDistrib.STMT, stmtClsDistrib.bind.data())) {
+        cout << "mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtClsDistrib.STMT) << endl;
+        exit(1);
+    }
 }
 
 //Prepare statement for restart
 void SQLStats::initRestartSTMT(
     uint64_t verbosity
 ) {
+    const size_t numElems = sizeof(stmtRst.bind)/sizeof(MYSQL_BIND);
+
     std::stringstream ss;
     ss << "insert into `restart`"
     << "("
@@ -168,28 +241,21 @@ void SQLStats::initRestartSTMT(
     << ", `decisions`"
     << ", `flipped`, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
-    << ")"
-    << " values (";
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
 
-    const size_t num = sizeof(stmtRst.bind)/sizeof(MYSQL_BIND);
-    for(size_t i = 0
-        ; i < num
-        ; i++
-    ) {
-        if (i < num-1)
-            ss << "?,";
-        else
-            ss << "?";
-    }
-    ss << ");";
-
+    //Get memory for statement
     stmtRst.STMT = mysql_stmt_init(serverConn);
     if (!stmtRst.STMT) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
         exit(1);
     }
 
-    //const char* STMTTxt = "insert into literals(clindex,var,inv) values(?,?,?)";
+    //Prepare the statement
     if (mysql_stmt_prepare(stmtRst.STMT, ss.str().c_str(), ss.str().length())) {
         cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
         << mysql_stmt_error(stmtRst.STMT) << endl;
@@ -202,9 +268,9 @@ void SQLStats::initRestartSTMT(
         << endl;
     }
 
-    // validate parameter count
+    //Validate parameter count
     unsigned long param_count = mysql_stmt_param_count(stmtRst.STMT);
-    if (param_count != sizeof(stmtRst.bind)/sizeof(MYSQL_BIND)) {
+    if (param_count != numElems) {
         cout
         << "invalid parameter count returned by MySQL"
         << endl;
@@ -215,73 +281,73 @@ void SQLStats::initRestartSTMT(
     memset(stmtRst.bind, 0, sizeof(stmtRst.bind));
 
 
-    //Position of solving
-    assert(bindAt == 0);
-    bindTo(runID);
-    bindTo(stmtRst.numSimplify);
-    bindTo(stmtRst.sumRestarts);
-    bindTo(stmtRst.sumConflicts);
-    bindTo(stmtRst.cpuTime);
+    //Bind the local variables to the statement
+    bindAt =0;
+    bindTo(stmtRst, runID);
+    bindTo(stmtRst, stmtRst.numSimplify);
+    bindTo(stmtRst, stmtRst.sumRestarts);
+    bindTo(stmtRst, stmtRst.sumConflicts);
+    bindTo(stmtRst, stmtRst.cpuTime);
 
     //Conflict stats
-    bindTo(stmtRst.glueHist);
-    bindTo(stmtRst.glueHistSD);
-    bindTo(stmtRst.conflSizeHist);
-    bindTo(stmtRst.conflSizeHistSD);
-    bindTo(stmtRst.numResolutionsHist);
-    bindTo(stmtRst.numResolutionsHistSD);
-    bindTo(stmtRst.conflictAfterConflict);
-    bindTo(stmtRst.conflictAfterConflictSD);
+    bindTo(stmtRst, stmtRst.glueHist);
+    bindTo(stmtRst, stmtRst.glueHistSD);
+    bindTo(stmtRst, stmtRst.conflSizeHist);
+    bindTo(stmtRst, stmtRst.conflSizeHistSD);
+    bindTo(stmtRst, stmtRst.numResolutionsHist);
+    bindTo(stmtRst, stmtRst.numResolutionsHistSD);
+    bindTo(stmtRst, stmtRst.conflictAfterConflict);
+    bindTo(stmtRst, stmtRst.conflictAfterConflictSD);
 
     //Search stats
-    bindTo(stmtRst.branchDepthHist);
-    bindTo(stmtRst.branchDepthHistSD);
-    bindTo(stmtRst.branchDepthDeltaHist);
-    bindTo(stmtRst.branchDepthDeltaHistSD);
-    bindTo(stmtRst.trailDepthHist);
-    bindTo(stmtRst.trailDepthHistSD);
-    bindTo(stmtRst.trailDepthDeltaHist);
-    bindTo(stmtRst.trailDepthDeltaHistSD);
-    bindTo(stmtRst.agilityHist);
+    bindTo(stmtRst, stmtRst.branchDepthHist);
+    bindTo(stmtRst, stmtRst.branchDepthHistSD);
+    bindTo(stmtRst, stmtRst.branchDepthDeltaHist);
+    bindTo(stmtRst, stmtRst.branchDepthDeltaHistSD);
+    bindTo(stmtRst, stmtRst.trailDepthHist);
+    bindTo(stmtRst, stmtRst.trailDepthHistSD);
+    bindTo(stmtRst, stmtRst.trailDepthDeltaHist);
+    bindTo(stmtRst, stmtRst.trailDepthDeltaHistSD);
+    bindTo(stmtRst, stmtRst.agilityHist);
 
     //Prop
-    bindTo(stmtRst.propsBinIrred);
-    bindTo(stmtRst.propsBinRed);
-    bindTo(stmtRst.propsTriIrred);
-    bindTo(stmtRst.propsTriRed);
-    bindTo(stmtRst.propsLongIrred);
-    bindTo(stmtRst.propsLongRed);
+    bindTo(stmtRst, stmtRst.propsBinIrred);
+    bindTo(stmtRst, stmtRst.propsBinRed);
+    bindTo(stmtRst, stmtRst.propsTriIrred);
+    bindTo(stmtRst, stmtRst.propsTriRed);
+    bindTo(stmtRst, stmtRst.propsLongIrred);
+    bindTo(stmtRst, stmtRst.propsLongRed);
 
     //Confl
-    bindTo(stmtRst.conflsBinIrred);
-    bindTo(stmtRst.conflsBinRed);
-    bindTo(stmtRst.conflsTri);
-    bindTo(stmtRst.conflsLongIrred);
-    bindTo(stmtRst.conflsLongRed);
+    bindTo(stmtRst, stmtRst.conflsBinIrred);
+    bindTo(stmtRst, stmtRst.conflsBinRed);
+    bindTo(stmtRst, stmtRst.conflsTri);
+    bindTo(stmtRst, stmtRst.conflsLongIrred);
+    bindTo(stmtRst, stmtRst.conflsLongRed);
 
     //Learnt
-    bindTo(stmtRst.learntUnits);
-    bindTo(stmtRst.learntBins);
-    bindTo(stmtRst.learntTris);
-    bindTo(stmtRst.learntLongs);
+    bindTo(stmtRst, stmtRst.learntUnits);
+    bindTo(stmtRst, stmtRst.learntBins);
+    bindTo(stmtRst, stmtRst.learntTris);
+    bindTo(stmtRst, stmtRst.learntLongs);
 
     //Misc
-    bindTo(stmtRst.watchListSizeTraversed);
-    bindTo(stmtRst.watchListSizeTraversedSD);
-    bindTo(stmtRst.litPropagatedSomething);
-    bindTo(stmtRst.litPropagatedSomethingSD);
+    bindTo(stmtRst, stmtRst.watchListSizeTraversed);
+    bindTo(stmtRst, stmtRst.watchListSizeTraversedSD);
+    bindTo(stmtRst, stmtRst.litPropagatedSomething);
+    bindTo(stmtRst, stmtRst.litPropagatedSomethingSD);
 
     //Var stats
-    bindTo(stmtRst.propagations);
-    bindTo(stmtRst.decisions);
-    bindTo(stmtRst.varFlipped);
-    bindTo(stmtRst.varSetPos);
-    bindTo(stmtRst.varSetNeg);
-    bindTo(stmtRst.numFreeVars);
-    bindTo(stmtRst.numReplacedVars);
-    bindTo(stmtRst.numVarsElimed);
-    bindTo(stmtRst.trailSize);
-    assert(bindAt == sizeof(stmtRst.bind)/sizeof(MYSQL_BIND));
+    bindTo(stmtRst, stmtRst.propagations);
+    bindTo(stmtRst, stmtRst.decisions);
+    bindTo(stmtRst, stmtRst.varFlipped);
+    bindTo(stmtRst, stmtRst.varSetPos);
+    bindTo(stmtRst, stmtRst.varSetNeg);
+    bindTo(stmtRst, stmtRst.numFreeVars);
+    bindTo(stmtRst, stmtRst.numReplacedVars);
+    bindTo(stmtRst, stmtRst.numVarsElimed);
+    bindTo(stmtRst, stmtRst.trailSize);
+    assert(bindAt == numElems);
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtRst.STMT, stmtRst.bind)) {
@@ -291,7 +357,33 @@ void SQLStats::initRestartSTMT(
     }
 }
 
-void SQLStats::printRestartSQL(
+void SQLStats::clauseSizeDistrib(
+    uint64_t sumConflicts
+    , const vector<uint32_t>& sizes
+) {
+    assert(sizes.size() == stmtClsDistrib.size.size());
+    assert(sizes.size() == stmtClsDistrib.num.size());
+
+    stmtClsDistrib.sumConflicts = sumConflicts;
+    for(size_t i = 0; i < sizes.size(); i++) {
+        stmtClsDistrib.size[i] = i;
+        stmtClsDistrib.num[i]  = sizes[i];
+    }
+
+    if (mysql_stmt_execute(stmtClsDistrib.STMT)) {
+        cout
+        << "ERROR: while executing restart insertion MySQL prepared statement"
+        << endl;
+
+        cout << "Error from mysql: "
+        << mysql_stmt_error(stmtClsDistrib.STMT)
+        << endl;
+
+        exit(-1);
+    }
+}
+
+void SQLStats::restart(
     const PropStats& thisPropStats
     , const Searcher::Stats& thisStats
     , const Solver* solver
