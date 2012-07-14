@@ -8,10 +8,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <string>
 
 using std::cout;
 using std::endl;
+using std::string;
 
 SQLStats::SQLStats(uint64_t verbosity) :
     bindAt(0)
@@ -25,10 +26,10 @@ SQLStats::SQLStats(uint64_t verbosity) :
 void SQLStats::connectServer()
 {
     //Connection parameters
-    char *server = "localhost";
-    char *user = "root";
-    char *password = "";
-    char *database = "mysql";
+    string server = "localhost";
+    string user = "root";
+    string password = "";
+    string database = "cmsat";
 
     //Init MySQL library
     serverConn = mysql_init(NULL);
@@ -36,10 +37,10 @@ void SQLStats::connectServer()
     //Connect to server
     if (!mysql_real_connect(
         serverConn
-        , server
-        , user
-        , password
-        , database
+        , server.c_str()
+        , user.c_str()
+        , password.c_str()
+        , database.c_str()
         , 0
         , NULL
         , 0)
@@ -123,11 +124,15 @@ void SQLStats::initRestartSTMT(
     << ", `trailDepth`, `trailDepthSD`"
     << ", `trailDepthDelta`, `trailDepthDeltaSD`, `agility`"
 
-    //Prop&confl&lerant
+    //Propagations
     << ", `propBinIrred` , `propBinRed` , `propTriIrred` , `propTriRed`"
     << ", `propLongIrred` , `propLongRed`"
+
+    //Conflicts
     << ", `conflBinIrred`, `conflBinRed`, `conflTri`"
     << ", `conflLongIrred`, `conflLongRed`"
+
+    //Learnts
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Misc
@@ -135,12 +140,18 @@ void SQLStats::initRestartSTMT(
     << ", `litPropagatedSomething`, `litPropagatedSomethingSD`"
 
     //Var stats
-    << ", `propsPerDec`"
-    << ", `flippedPercent`, `varSetPos`, `varSetNeg`"
+    << ", `propagations"
+    << ", `decisions`"
+    << ", `flipped, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
     << ")"
-    << " values "
-    << "(?, ?, );";
+    << " values ("
+    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+    << "?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+    << ");";
 
     stmtRst.STMT = mysql_stmt_init(serverConn);
     if (!stmtRst.STMT) {
@@ -175,6 +186,7 @@ void SQLStats::initRestartSTMT(
 
 
     //Position of solving
+    assert(bindAt = 0);
     bindTo(runID);
     bindTo(stmtRst.numSimplify);
     bindTo(stmtRst.sumRestarts);
@@ -233,12 +245,13 @@ void SQLStats::initRestartSTMT(
     bindTo(stmtRst.propagations);
     bindTo(stmtRst.decisions);
     bindTo(stmtRst.varFlipped);
-    bindTo(stmtRst.varSetNeg);
     bindTo(stmtRst.varSetPos);
+    bindTo(stmtRst.varSetNeg);
     bindTo(stmtRst.numFreeVars);
     bindTo(stmtRst.numReplacedVars);
     bindTo(stmtRst.numVarsElimed);
     bindTo(stmtRst.trailSize);
+    assert(bindAt == sizeof(stmtRst.bind)/sizeof(MYSQL_BIND));
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtRst.STMT, stmtRst.bind)) {
@@ -246,41 +259,6 @@ void SQLStats::initRestartSTMT(
         << mysql_stmt_error(stmtRst.STMT) << endl;
         exit(1);
     }
-
-
-    //ANOTHER
-/*
-    insSTMTCl.STMT = mysql_stmt_init(conf.serverConn);
-    if (!insSTMTCl.STMT) {
-        cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
-    }
-
-    const char* STMTTxt2 = "insert into clauses(runno, declevel, traillevel, glue, size, num, learnt) values(?,?,?,?,?,?,?)";
-    if (mysql_stmt_prepare(insSTMTCl.STMT, STMTTxt2, strlen(STMTTxt2))) {
-        cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
-        << mysql_stmt_error(insSTMTCl.STMT) << endl;
-        exit(0);
-    }
-    cout << "prepare INSERT successful" << endl;
-
-    // Get the parameter count from the statement
-    param_count = mysql_stmt_param_count(insSTMTCl.STMT);
-    if (param_count != 7) { // validate parameter count
-        cout << "invalid parameter count returned by MySQL" << endl;
-        exit(1);
-    }
-
-
-    //RUNNO
-
-    // Bind the buffers
-    if (mysql_stmt_bind_param(insSTMTCl.STMT, insSTMTCl.bind)) {
-        cout << "mysql_stmt_bind_param() failed" << endl
-        << mysql_stmt_error(insSTMTCl.STMT) << endl;
-        exit(1);
-    }
-    */
 }
 
 void SQLStats::printRestartSQL(
