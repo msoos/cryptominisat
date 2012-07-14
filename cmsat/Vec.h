@@ -163,11 +163,14 @@ void vec<T>::growTo(uint32_t size) {
     sz = size; }
 
 template<class T>
-void vec<T>::myCopy(const vec<T>& other) {
+void vec<T>::myCopy(const vec<T>& other)
+{
     assert(sz == 0);
     grow(other.size());
-    for (uint32_t i = sz; i != other.size(); i++) new (&data[i]) T(other[i]);
-    sz = other.size(); }
+    sz = other.size();
+    memcpy(data, other.data, sz*sizeof(T));
+    //for (uint32_t i = 0; i != other.size(); i++) new (&data[i]) T(other[i]);
+}
 
 template<class T>
 void vec<T>::clear(bool dealloc) {
