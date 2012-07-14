@@ -2140,7 +2140,7 @@ void Solver::printClauseStats()
         << " " << std::setw(4) << clauses.size()/1000 << "K";
     } else {
         cout
-        << " " << std::setw(7) << clauses.size();
+        << " " << std::setw(5) << clauses.size();
     }
 
     if (numTrisNonLearnt > 20000) {
@@ -2148,7 +2148,7 @@ void Solver::printClauseStats()
         << " " << std::setw(4) << numTrisNonLearnt/1000 << "K";
     } else {
         cout
-        << " " << std::setw(7) << numTrisNonLearnt;
+        << " " << std::setw(5) << numTrisNonLearnt;
     }
 
     if (numBinsNonLearnt > 20000) {
@@ -2156,16 +2156,24 @@ void Solver::printClauseStats()
         << " " << std::setw(4) << numBinsNonLearnt/1000 << "K";
     } else {
         cout
-        << " " << std::setw(6) << numBinsNonLearnt;
+        << " " << std::setw(5) << numBinsNonLearnt;
     }
 
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1);
 
     cout
-    << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt)
+    << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt);
 
-    << " " << std::setw(6) << learnts.size()
+    if (learnts.size() > 20000) {
+        cout
+        << " " << std::setw(4) << learnts.size()/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(5) << learnts.size();
+    }
+
+    cout
     << " " << std::setw(6) << numTrisLearnt;
 
     if (numBinsLearnt > 20000) {
@@ -2173,7 +2181,7 @@ void Solver::printClauseStats()
         << " " << std::setw(4) << numBinsLearnt/1000 << "K";
     } else {
         cout
-        << " " << std::setw(6) << numBinsLearnt;
+        << " " << std::setw(5) << numBinsLearnt;
     }
 
     cout
