@@ -1169,10 +1169,10 @@ void Searcher::printBaseStats()
 
     if (sumConflicts() >  20000) {
         cout
-        << " " << std::setw(5) << sumConflicts();
+        << " " << std::setw(4) << sumConflicts()/1000 << "K";
     } else {
         cout
-        << " " << std::setw(4) << sumConflicts()/1000 << "K";
+        << " " << std::setw(5) << sumConflicts();
     }
 
     cout
