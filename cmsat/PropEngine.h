@@ -431,7 +431,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     #endif
 
     const Var v = p.var();
-    assert(value(v).isUndef());
+    assert(value(v) == l_Undef);
     if (watches[p.toInt()].size() > 0)
         __builtin_prefetch(watches[p.toInt()].begin());
 

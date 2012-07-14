@@ -231,7 +231,7 @@ inline bool PropEngine::propBinaryClause(
     , PropBy& confl
 ) {
     const lbool val = value(i->lit1());
-    if (val.isUndef()) {
+    if (val == l_Undef) {
         if (i->learnt())
             propStats.propsBinRed++;
         else
@@ -749,7 +749,7 @@ PropResult PropEngine::propBin(
 ) {
     const Lit lit = k->lit1();
     const lbool val = value(lit);
-    if (val.isUndef()) {
+    if (val == l_Undef) {
         if (k->learnt())
             propStats.propsBinRed++;
         else

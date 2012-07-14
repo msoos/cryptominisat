@@ -100,7 +100,7 @@ bool PackedRow::fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, cons
             const bool val_bool = val.getBool();
             tmp_clause.push_back(Lit(var, val_bool));
             final ^= val_bool;
-            if (val.isUndef()) {
+            if (val == l_Undef) {
                 assert(!wasundef);
                 std::swap(tmp_clause[0], tmp_clause.back());
                 wasundef = true;

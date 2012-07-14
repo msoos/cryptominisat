@@ -141,11 +141,6 @@ public:
         return value;
     }
 
-    bool isUndef() const
-    {
-        return !value;
-    }
-
     bool isDef() const
     {
         return value;

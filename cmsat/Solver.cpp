@@ -130,13 +130,13 @@ bool Solver::addXorClauseInt(const vector< Lit >& lits, bool rhs)
             //added, but easily removed
             j--;
             p = lit_Undef;
-            if (!assigns[ps[i].var()].isUndef())
-                rhs ^= assigns[ps[i].var()].getBool();
-        } else if (assigns[ps[i].var()].isUndef()) { //just add
+            if (value(ps[i]) != l_Undef)
+                rhs ^= value(ps[i].var()).getBool();
+        } else if (value(ps[i]) == l_Undef) { //just add
             ps[j++] = p = ps[i];
             assert(!subsumer->getVarElimed()[p.var()]);
         } else //modify rhs instead of adding
-            rhs ^= (assigns[ps[i].var()].getBool());
+            rhs ^= (value(ps[i].var()).getBool());
     }
     ps.resize(ps.size() - (i - j));
 
