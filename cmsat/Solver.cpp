@@ -83,14 +83,14 @@ Solver::Solver(const SolverConf& _conf) :
     }
 
     //Generate random ID for SQL
-    int randomData = open("/dev/random", O_RDONLY);
+    int randomData = open("/dev/urandom", O_RDONLY);
     if (randomData == -1) {
-        cout << "Error reading from /dev/random !" << endl;
+        cout << "Error reading from /dev/urandom !" << endl;
         exit(-1);
     }
     ssize_t ret = read(randomData, &solveStats.runID, sizeof(solveStats.runID));
     if (ret != sizeof(solveStats.runID)) {
-        cout << "Couldn't read from /dev/random!" << endl;
+        cout << "Couldn't read from /dev/urandom!" << endl;
         exit(-1);
     }
     close(randomData);
