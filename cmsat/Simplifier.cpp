@@ -2441,10 +2441,10 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
 {
     HeuristicData ret;
 
-    const vec<Watched>& poss = solver->watches[lit.toInt()];
-    *toDecrease -= poss.size() + 100;
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    *toDecrease -= ws.size() + 100;
     for (vec<Watched>::const_iterator
-        it = poss.begin(), end = poss.end()
+        it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
     ) {
