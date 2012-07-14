@@ -2685,13 +2685,13 @@ end:
         << (cpuTime() - myTime)
         << " s" << endl;
     }
-    solver->checkStats();
+    checkStats();
 
     //Update stats
     solveStats.subsBinWithBinTime += cpuTime() - myTime;
     solveStats.subsBinWithBin += remBins;
 
-    return solver->ok;
+    return ok;
 }
 
 void Solver::checkImplicitPropagated() const
