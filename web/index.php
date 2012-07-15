@@ -271,8 +271,8 @@ function printOneSolve($runID, $colnum, $maxconfl) {
     printOneThing(array("watchListSizeTraversed")
         , array("avg. traversed watchlist size"), $result, $nrows, $orderNum, $colnum);
 
-    printOneThing(array("watchListSizeTraversedSD")
-        , array("avg. traversed watchlist size std dev"), $result, $nrows, $orderNum, $colnum);
+    /*printOneThing(array("watchListSizeTraversedSD")
+        , array("avg. traversed watchlist size std dev"), $result, $nrows, $orderNum, $colnum);*/
 
     /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
         , array("literal propagated something with binary clauses %"), $result, $nrows, $orderNum, $colnum);*/
