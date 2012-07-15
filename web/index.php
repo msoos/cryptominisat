@@ -692,9 +692,29 @@ function drawPattern(data, num, from , to)
 
     var onePixelisConf = width/(to-from);
 
-    //Y components' limits are here
+    //Calculate highest point for this range
+    numElementsVertical = 0;
+    for( i = 0 ; i < data.length ; i ++ ){
+        //out of range, ignore
+        if (data[i].conflEnd < from) {
+            continue;
+        }
+        if (data[i].conflStart > to) {
+            break;
+        }
+
+        //Check which is the highest
+        for(i2 = data[i].height.length-1; i2 >= 0 ; i2--) {
+            if (data[i].height[i2] > 20) {
+                numElementsVertical = Math.max(numElementsVertical, i2);
+                break;
+            }
+        }
+    }
+    //alert(from + " " + to + " " + numElementsVertical + " " + i);
+
+    //Cut-off lines for Y
     var vAY = new Array();
-    numElementsVertical = data[0].height.length;
     for(i = numElementsVertical; i >= 0; i--) {
         vAY.push(Math.round(i*(height/numElementsVertical)));
     }
@@ -702,7 +722,13 @@ function drawPattern(data, num, from , to)
 
     //Start drawing from X origin
     lastXEnd = 0;
+    startFound = 0;
     for( i = 0 ; i < data.length ; i ++ ){
+        if (startFound == 0 && data[i].conflEnd < from)
+            continue;
+
+        if (startFound == 1 && data[i].conflStart > to)
+            continue;
 
         //Calculate maximum height
         maxHeight = 0;
