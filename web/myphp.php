@@ -1,6 +1,6 @@
 <?
-$runIDs = array(45, 44);
-$maxConfl = 30000;
+$runIDs = array(48, 49);
+$maxConfl = 80000;
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 //display_startup_errors(1);
@@ -420,8 +420,8 @@ class ClauseSizeDistrib
         echo'
         </td>
         <td>
-            <div class="draghandle"><b>
-            (0) Newly learnt clause size distribution.
+            <div class="draghandle"><b>';
+            echo "(".$this->colnum.") Newly learnt clause size distribution.
             Bottom: unitary clause. Top: largest clause.
             Black: Many learnt. White: None learnt.
             Horizontal resolution: 1000 conflicts.
@@ -430,7 +430,7 @@ class ClauseSizeDistrib
         </td>
         </tr>
         </table>
-        </div>';
+        </div>";
 
         echo "
         <script type=\"text/javascript\">

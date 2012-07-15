@@ -1,7 +1,7 @@
 // Stores the original X sizes of the graphs
 // used when zooming out fully
-origSizes = new Array();
-gs = new Array();
+var origSizes = new Array();
+var gs = new Array();
 var blockRedraw = false;
 
 //Draw all graphs
@@ -129,14 +129,14 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     var data = _data;
     var divID = _divID;
     var simpPoints = _simpPoints;
-    var width = 415;
-    var height = 100;
+    var mywidth = 415;
+    var myheight = 100;
 
     //For SVG pattern, a rectangle
     function drawDistribBox(x1, x2, y1, y2, relHeight, imgData)
     {
-        num = 255-relHeight*255.0;
-        type = "rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ")";
+        var num = 255-relHeight*255.0;
+        var type = "rgb(" + Math.floor(num) + "," + Math.floor(num) + "," + Math.floor(num) + ")";
         imgData.fillStyle = type;
         imgData.strokeStyle = type;
         imgData.fillRect(x1, y1, x2-x1, y2-y1);
@@ -152,7 +152,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     function calcNumElemsVertical(from, to)
     {
         //Calculate highest point for this range
-        numElementsVertical = 0;
+        var numElementsVertical = 0;
         for(var i = 0 ; i < data.length ; i ++ ){
             //out of range, ignore
             if (data[i].conflEnd < from) {
@@ -177,27 +177,26 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 
     this.drawPattern = function(from , to)
     {
-        alert("drawing between " + from + " , " + to);
-        myDiv = document.getElementById(divID);
-        myDiv.style.height = 100;
-        myDiv.style.width= 420;
-        ctx = myDiv.getContext("2d");
-        Xdelta = 0.5;
+        var myDiv = document.getElementById(divID);
+        //myDiv.style.height = 100;
+        //myDiv.style.width= 420;
+        var ctx = myDiv.getContext("2d");
+        var Xdelta = 0.5;
 
-        onePixelisConf = width/(to-from);
-        numElementsVertical = calcNumElemsVertical(from, to);
+        var onePixelisConf = mywidth/(to-from);
+        var numElementsVertical = calcNumElemsVertical(from, to);
 
         //Cut-off lines for Y
         var vAY = new Array();
         for(i = numElementsVertical; i >= 0; i--) {
-            vAY.push(Math.round(i*(height/numElementsVertical)));
+            vAY.push(Math.round(i*(myheight/numElementsVertical)));
         }
         vAY.push(0);
 
         //Start drawing from X origin
-        lastXEnd = 0;
-        startFound = 0;
-        for( i = 0 ; i < data.length ; i ++) {
+        var lastXEnd = 0;
+        var startFound = 0;
+        for(var i = 0 ; i < data.length ; i ++) {
             if (startFound == 0 && data[i].conflEnd < from)
                 continue;
 
@@ -210,13 +209,13 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
                 maxDark = Math.max(maxDark, data[i].darkness[i2]);
             }
 
-            xStart = lastXEnd;
+            var xStart = lastXEnd;
 
-            xEnd = data[i].conflEnd - from;
+            var xEnd = data[i].conflEnd - from;
             xEnd *= onePixelisConf;
             xEnd += Xdelta;
             xEnd = Math.max(0, xEnd);
-            xEnd = Math.min(xEnd, width);
+            xEnd = Math.min(xEnd, mywidth);
             xEnd = Math.round(xEnd);
             lastXEnd = xEnd;
 
@@ -226,10 +225,9 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
                 yEnd   = vAY[i2];
 
                 //How dark should it be?
+                var darkness = 0;
                 if (data[i].darkness[i2] != 0) {
                     darkness = data[i].darkness[i2]/maxDark;
-                } else {
-                    darkness = 0;
                 }
 
                 //Draw the rectangle
@@ -245,7 +243,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 
             //Draw blue line
             if (point > 0) {
-                drawSimpLine(point, point+1, 0, height, ctx);
+                drawSimpLine(point, point+1, 0, myheight, ctx);
             }
         }
     }
@@ -254,7 +252,6 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 drawAllGraphs();
 var dists = [];
 for(i = 0; i < 2; i++) {
-    //alert("drawing now..." + i);
     a = new DrawClauseDistrib(
             clDistrib[i]
             , "MYdrawingPad" + i
@@ -263,7 +260,6 @@ for(i = 0; i < 2; i++) {
     a.drawPattern(0, maxConflRestart[i]);
     dists.push(a);
 }
-
 
 var settings = {'column-0': columnDivs[0], 'column-1': columnDivs[1]};
 var options = { portal : 'columns', editorEnabled : true};
