@@ -96,8 +96,10 @@ var myData=new Array();
 <?
 $runID  = 44;
 $runID2 = 44;
-$maxconfl = 1000000;
+$maxConfl = 30000;
 error_reporting(E_ALL);
+//display_errors(1);
+//display_startup_errors(1);
 //error_reporting(E_STRICT);
 //error_reporting(E_STRICT);
 
@@ -108,242 +110,277 @@ $database="cryptoms";
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
-$numberingScheme = 0;
-function printOneThing(
-    $datanames
-    , $nicedatanames
-    , $data
-    , $nrows
-    , &$orderNum
-    , $colnum
-    , $doSlideAvg = 0
-) {
-    global $numberingScheme;
-    $fullname = "toplot_".$numberingScheme."_".$colnum;
-    //$nameLabel = "Label-$numberingScheme-$colnum";
+class DataPrinter
+{
+    protected $numberingScheme;
+    protected $data;
+    protected $nrows;
+    protected $colnum;
+    protected $runID;
+    protected $maxConfl;
 
-    echo "
-    <div class=\"block\" id=\"block".$orderNum."AT".$colnum."\">
-    <table id=\"plot-table-a\">
-    <tr>
-    <td><div id=\"$fullname"."_datadiv\" class=\"myPlotData\"></div></td>
-    <td><div id=\"$fullname"."_labeldiv\" class=\"draghandle\"></div></td>
-    </tr>
-    </table>
-    </div>";
-    $orderNum++;
-
-    echo "<script type=\"text/javascript\">";
-    echo $fullname."_data = [";
-
-    echo "[0, ";
-
-    $i = 0;
-    while($i < sizeof($datanames)) {
-        echo "null";
-
-        $i++;
-        if ($i < sizeof($datanames)) {
-            echo ", ";
-        }
+    public function __construct($mycolnum, $myRunID, $myMaxConfl)
+    {
+        $this->colnum = $mycolnum;
+        $this->runID = $myRunID;
+        $this->maxConfl = $myMaxConfl;
+        $this->numberingScheme = 0;
+        $this->runQuery();
     }
-    echo "],";
 
-    $i=0;
-    $total_sum = 0.0;
-    $last_confl = 0.0;
-    while ($i < $nrows) {
-        //Print conflicts
-        $confl=mysql_result($data, $i, "conflicts");
-        echo "[$confl";
+    protected function printOneThing(
+        $datanames
+        , $nicedatanames
+        , $doSlideAvg = 0
+    ) {
+        $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
-        //Calc local sum
-        $local_sum = 0;
-        foreach ($datanames as $dataname) {
-            $local_sum += mysql_result($data, $i, $dataname);
-        }
+        echo "
+        <div class=\"block\" id=\"block".$this->numberingScheme."AT".$this->colnum."\">
+        <table id=\"plot-table-a\">
+        <tr>
+        <td><div id=\"$fullname"."_datadiv\" class=\"myPlotData\"></div></td>
+        <td><div id=\"$fullname"."_labeldiv\" class=\"draghandle\"></div></td>
+        </tr>
+        </table>
+        </div>";
 
-        //Print for each
-        foreach ($datanames as $dataname) {
-            $tmp = mysql_result($data, $i, $dataname);
-            if (sizeof($datanames) > 1) {
-                $tmp /= $local_sum;
-                $tmp *= 100.0;
-                echo ", $tmp";
-            } else {
-                $total_sum += $tmp*($confl-$last_confl);
-                $last_confl = $confl;
-                $sliding_avg = $total_sum / $confl;
-                echo ", $tmp";
-                if ($doSlideAvg) {
-                    echo ", $sliding_avg";
-                }
+        echo "<script type=\"text/javascript\">";
+        echo $fullname."_data = [";
+
+        echo "[0, ";
+
+        $i = 0;
+        while($i < sizeof($datanames)) {
+            echo "null";
+
+            $i++;
+            if ($i < sizeof($datanames)) {
+                echo ", ";
             }
         }
-        echo "]\n";
+        echo "],";
 
-        $i++;
-        if ($i < $nrows) {
-            echo ",";
+        $i=0;
+        $total_sum = 0.0;
+        $last_confl = 0.0;
+        while ($i < $this->nrows) {
+            //Print conflicts
+            $confl=mysql_result($this->data, $i, "conflicts");
+            echo "[$confl";
+
+            //Calc local sum
+            $local_sum = 0;
+            foreach ($datanames as $dataname) {
+                $local_sum += mysql_result($this->data, $i, $dataname);
+            }
+
+            //Print for each
+            foreach ($datanames as $dataname) {
+                $tmp = mysql_result($this->data, $i, $dataname);
+                if (sizeof($datanames) > 1) {
+                    $tmp /= $local_sum;
+                    $tmp *= 100.0;
+                    echo ", $tmp";
+                } else {
+                    $total_sum += $tmp*($confl-$last_confl);
+                    $last_confl = $confl;
+                    $sliding_avg = $total_sum / $confl;
+                    echo ", $tmp";
+                    if ($doSlideAvg) {
+                        echo ", $sliding_avg";
+                    }
+                }
+            }
+            echo "]\n";
+
+            $i++;
+            if ($i < $this->nrows) {
+                echo ",";
+            }
         }
+        echo "];\n";
+
+        //Add name & data
+        echo "myData.push({data: $fullname"."_data, div: \"$fullname"."_datadiv\"";
+
+        //Calculate labels
+        echo ", labels: [\"Conflicts\"";
+        foreach ($nicedatanames as $dataname) {
+            echo ", \"(".$this->colnum.") $dataname\"";
+        }
+        if (sizeof($datanames) == 1) {
+            echo ", \"".$fullname.$this->colnum." (sliding avg.)\"";
+        }
+        echo "]";
+
+        //Stacked?
+        echo ", stacked: ".(int)(sizeof($datanames) > 1);
+        echo ", labeldiv: \"$fullname"."_labeldiv\"";
+        echo ", colnum: \"".$this->colnum."\"";
+        echo " });\n";
+
+        echo "</script>\n";
+        $this->numberingScheme++;
     }
-    echo "];\n";
 
-    //Add name & data
-    echo "myData.push({data: $fullname"."_data, div: \"$fullname"."_datadiv\"";
+    public function runQuery()
+    {
+        $query="
+        SELECT *
+        FROM `restart`
+        where `runID` = ".$this->runID."
+        and conflicts < ".$this->maxConfl."
+        order by `conflicts`";
 
-    //Calculate labels
-    echo ", labels: [\"Conflicts\"";
-    foreach ($nicedatanames as $dataname) {
-        echo ", \"($colnum) $dataname\"";
+        $this->data = mysql_query($query);
+        if (!$this->data) {
+            die('Invalid query: ' . mysql_error());
+        }
+
+        $this->nrows = mysql_numrows($this->data);
     }
-    if (sizeof($datanames) == 1) {
-        echo ", \"$fullname$colnum (sliding avg.)\"";
+
+    public function printOneSolve()
+    {
+        $this->printOneThing(array("time")
+            , array("time"));
+
+        $this->printOneThing(array("restarts")
+            , array("restart no."));
+
+        /*printOneThing(array("propsPerDec")
+            , array("avg. no. propagations per decision"));*/
+
+        $this->printOneThing(array("branchDepth")
+            , array("avg. branch depth"));
+
+        $this->printOneThing(array("branchDepthDelta")
+            , array("avg. no. of levels backjumped"));
+
+        $this->printOneThing(array("trailDepth")
+            , array("avg. trail depth"));
+
+        $this->printOneThing(array("trailDepthDelta")
+            , array("avg. trail depth delta"));
+
+        $this->printOneThing(array("glue")
+            , array("newly learnt clauses avg. glue"));
+
+        $this->printOneThing(array("size")
+            , array("newly learnt clauses avg. size"));
+
+        $this->printOneThing(array("resolutions")
+            , array("avg. no. resolutions for 1UIP"));
+
+        $this->printOneThing(array("agility")
+            , array("avg. agility"));
+
+        /*printOneThing(array("flippedPercent")
+            , array("var polarity flipped %"));*/
+
+        $this->printOneThing(array("conflAfterConfl")
+            , array("conflict after conflict %"));
+
+        /*printOneThing("conflAfterConflSD", array("conflAfterConfl")
+            , array("conflict after conflict std dev %"));*/
+
+        $this->printOneThing(array("watchListSizeTraversed")
+            , array("avg. traversed watchlist size"));
+
+        /*printOneThing(array("watchListSizeTraversedSD")
+            , array("avg. traversed watchlist size std dev"));*/
+
+        /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
+            , array("literal propagated something with binary clauses %"));*/
+
+        $this->printOneThing(array("replaced")
+            , array("vars replaced"));
+
+        $this->printOneThing(array("set")
+            , array("vars set"));
+
+        $this->printOneThing(array(
+            "varSetPos"
+            , "varSetNeg"
+            )
+            , array(
+            "propagated polar pos %"
+            , "propagated polar neg %")
+        );
+
+        $this->printOneThing(array(
+            "learntUnits"
+            , "learntBins"
+            , "learntTris"
+            , "learntLongs"
+            )
+            ,array(
+            "new learnts unit %"
+            , "new learnts bin %"
+            , "new learnts tri %"
+            , "new learnts long %")
+        );
+
+        $this->printOneThing(array(
+            "propBinIrred", "propBinRed"
+            , "propTriIrred", "propTriRed"
+            , "propLongIrred", "propLongRed"
+            )
+            ,array("prop by bin irred %", "prop by bin red %"
+            , "prop by tri irred %", "prop by tri red %"
+            , "prop by long irred %", "prop by long red %"
+            )
+        );
+
+        $this->printOneThing(array(
+            "conflBinIrred"
+            , "conflBinRed"
+            , "conflTriIrred"
+            , "conflTriRed"
+            , "conflLongIrred"
+            , "conflLongRed"
+            )
+            ,array(
+            "confl by bin irred %"
+            , "confl by bin red %"
+            , "confl by tri irred %"
+            , "confl by tri red %"
+            , "confl by long irred %"
+            , "confl by long red %"
+            )
+        );
+
+        /*printOneThing("branchDepthSD", array("branchDepthSD")
+            , array("branch depth std dev"));
+
+        printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
+            , array("branch depth delta std dev"));
+
+        printOneThing("trailDepthSD", array("trailDepthSD")
+            , array("trail depth std dev"));
+
+        printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
+            , array("trail depth delta std dev"));
+
+        printOneThing("glueSD", array("glueSD")
+            , array("newly learnt clause glue std dev"));
+
+        printOneThing("sizeSD", array("sizeSD")
+            , array("newly learnt clause size std dev"));
+
+        printOneThing("resolutionsSD", array("resolutionsSD")
+            , array("std dev no. resolutions for 1UIP"));*/
+
+        return $this->numberingScheme;
     }
-    echo "]";
-
-    //Stacked?
-    echo ", stacked: ".(int)(sizeof($datanames) > 1);
-    echo ", labeldiv: \"$fullname"."_labeldiv\"";
-    echo ", colnum: \"$colnum\"";
-    echo " });\n";
-
-    echo "</script>\n";
-    $numberingScheme++;
 }
 
-function printOneSolve($runID, $colnum, $maxconfl) {
-    $query="
-    SELECT *
-    FROM `restart`
-    where `runID` = $runID
-    and conflicts < $maxconfl
-    order by `conflicts`";
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    $nrows=mysql_numrows($result);
+$printer1 = new DataPrinter(0, $runID, $maxConfl);
+$orderNum = $printer1->printOneSolve();
 
-    $orderNum = 0;
-    printOneThing(array("time")
-        , array("time"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("restarts")
-        , array("restart no."), $result, $nrows, $orderNum, $colnum);
-
-    /*printOneThing(array("propsPerDec")
-        , array("avg. no. propagations per decision"), $result, $nrows, $orderNum, $colnum);*/
-
-    printOneThing(array("branchDepth")
-        , array("avg. branch depth"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("branchDepthDelta")
-        , array("avg. no. of levels backjumped"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("trailDepth")
-        , array("avg. trail depth"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("trailDepthDelta")
-        , array("avg. trail depth delta"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("glue")
-        , array("newly learnt clauses avg. glue"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("size")
-        , array("newly learnt clauses avg. size"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("resolutions")
-        , array("avg. no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("agility")
-        , array("avg. agility"), $result, $nrows, $orderNum, $colnum);
-
-    /*printOneThing(array("flippedPercent")
-        , array("var polarity flipped %"), $result, $nrows, $orderNum, $colnum);*/
-
-    printOneThing(array("conflAfterConfl")
-        , array("conflict after conflict %"), $result, $nrows, $orderNum, $colnum);
-
-    /*printOneThing("conflAfterConflSD", array("conflAfterConfl")
-        , array("conflict after conflict std dev %"), $result, $nrows, $orderNum, $colnum);*/
-
-    printOneThing(array("watchListSizeTraversed")
-        , array("avg. traversed watchlist size"), $result, $nrows, $orderNum, $colnum);
-
-    /*printOneThing(array("watchListSizeTraversedSD")
-        , array("avg. traversed watchlist size std dev"), $result, $nrows, $orderNum, $colnum);*/
-
-    /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
-        , array("literal propagated something with binary clauses %"), $result, $nrows, $orderNum, $colnum);*/
-
-    printOneThing(array("replaced")
-        , array("vars replaced"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("set")
-        , array("vars set"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("varSetPos", "varSetNeg")
-        , array("propagated polar pos %", "propagated polar neg %"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array("learntUnits", "learntBins", "learntTris", "learntLongs")
-        ,array("new learnts unit %", "new learnts bin %", "new learnts tri %", "new learnts long %"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array(
-        "propBinIrred", "propBinRed"
-        , "propTriIrred", "propTriRed"
-        , "propLongIrred", "propLongRed"
-        )
-        ,array("prop by bin irred %", "prop by bin red %"
-        , "prop by tri irred %", "prop by tri red %"
-        , "prop by long irred %", "prop by long red %"
-        ), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing(array(
-        "conflBinIrred"
-        , "conflBinRed"
-        , "conflTriIrred"
-        , "conflTriRed"
-        , "conflLongIrred"
-        , "conflLongRed"
-        )
-        ,array(
-        "confl by bin irred %"
-        , "confl by bin red %"
-        , "confl by tri irred %"
-        , "confl by tri red %"
-        , "confl by long irred %"
-        , "confl by long red %"
-        )
-        , $result, $nrows, $orderNum, $colnum
-    );
-
-    /*printOneThing("branchDepthSD", array("branchDepthSD")
-        , array("branch depth std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
-        , array("branch depth delta std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("trailDepthSD", array("trailDepthSD")
-        , array("trail depth std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
-        , array("trail depth delta std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("glueSD", array("glueSD")
-        , array("newly learnt clause glue std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("sizeSD", array("sizeSD")
-        , array("newly learnt clause size std dev"), $result, $nrows, $orderNum, $colnum);
-
-    printOneThing("resolutionsSD", array("resolutionsSD")
-        , array("std dev no. resolutions for 1UIP"), $result, $nrows, $orderNum, $colnum);*/
-
-    return $orderNum;
-}
-
-$orderNum = printOneSolve($runID, 0, $maxconfl);
-$orderNum = printOneSolve($runID2, 1, $maxconfl);
+$printer2 = new DataPrinter(1, $runID2, $maxConfl);
+$orderNum = $printer2->printOneSolve();
 ?>
 
 <div class="block" id="blockSpecial0">
@@ -413,11 +450,11 @@ function getMaxConflDistrib($runID, $runID2)
     return mysql_result($result, 0, "mymax");
 }
 
-function getMaxConflRestart($runID, $maxconfl)
+function getMaxConflRestart($runID, $maxConfl)
 {
     $query="
     SELECT max(conflicts) as mymax FROM `restart`
-    where conflicts < $maxconfl
+    where conflicts < $maxConfl
     and runID = $runID";
     $result=mysql_query($query);
 
@@ -435,8 +472,8 @@ $maxConflDistrib = getMaxConflDistrib($runID, $runID2);
 echo "var maxConflDistrib = $maxConflDistrib;\n";
 
 $maxConflRestart = [];
-$maxConflRestart[0] = getMaxConflRestart($runID, $maxconfl);
-$maxConflRestart[1] = getMaxConflRestart($runID2, $maxconfl);
+$maxConflRestart[0] = getMaxConflRestart($runID, $maxConfl);
+$maxConflRestart[1] = getMaxConflRestart($runID2, $maxConfl);
 echo "var maxConflRestart = [$maxConflRestart[0], $maxConflRestart[1]];\n";
 
 $minConflRestart = [];
@@ -608,7 +645,7 @@ for (var i = 0; i < myData.length; i++) {
             strokeStyle: "black",
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
-            //errorBars: false,
+            errorBars: myData[i].noisy,
             drawCallback: function(me, initial) {
                 if (initial) {
                     origSizes[myData[i].colnum] = me.xAxisRange();
