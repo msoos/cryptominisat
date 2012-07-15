@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.1.58, for debian-linux-gnu (x86_64)
+-- MySQL dump 10.13  Distrib 5.5.24, for debian-linux-gnu (x86_64)
 --
 -- Host: localhost    Database: cryptoms
 -- ------------------------------------------------------
--- Server version	5.1.58-1
+-- Server version	5.5.24-3
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -51,21 +51,16 @@ CREATE TABLE `clauseStats` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `polarSet`
+-- Table structure for table `fileNamesUsed`
 --
 
-DROP TABLE IF EXISTS `polarSet`;
+DROP TABLE IF EXISTS `fileNamesUsed`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `polarSet` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `order` int(10) unsigned NOT NULL,
-  `pos` bigint(20) unsigned NOT NULL,
-  `neg` bigint(20) unsigned NOT NULL,
-  `total` bigint(20) unsigned NOT NULL,
-  `flipped` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+CREATE TABLE `fileNamesUsed` (
+  `runID` bigint(20) NOT NULL,
+  `filename` varchar(500) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -99,12 +94,14 @@ CREATE TABLE `restart` (
   `agilitySD` double unsigned NOT NULL,
   `propBinIrred` bigint(20) unsigned NOT NULL,
   `propBinRed` bigint(20) unsigned NOT NULL,
-  `propTri` bigint(20) unsigned NOT NULL,
+  `propTriIrred` bigint(20) unsigned NOT NULL,
+  `propTriRed` bigint(20) unsigned NOT NULL,
   `propLongIrred` bigint(20) unsigned NOT NULL,
   `propLongRed` bigint(20) unsigned NOT NULL,
   `conflBinIrred` bigint(20) unsigned NOT NULL,
   `conflBinRed` bigint(20) unsigned NOT NULL,
-  `conflTri` bigint(20) unsigned NOT NULL,
+  `conflTriIrred` bigint(20) unsigned NOT NULL,
+  `conflTriRed` bigint(20) unsigned NOT NULL,
   `conflLongIrred` bigint(20) unsigned NOT NULL,
   `conflLongRed` bigint(20) unsigned NOT NULL,
   `learntUnits` bigint(20) unsigned NOT NULL,
@@ -112,13 +109,14 @@ CREATE TABLE `restart` (
   `learntTris` bigint(20) unsigned NOT NULL,
   `learntLongs` bigint(20) unsigned NOT NULL,
   `conflAfterConfl` double unsigned NOT NULL,
-  `conflAfterConflVar` double unsigned NOT NULL,
+  `conflAfterConflSD` double unsigned NOT NULL,
   `watchListSizeTraversed` double unsigned NOT NULL,
-  `watchListSizeTraversedVar` double unsigned NOT NULL,
+  `watchListSizeTraversedSD` double unsigned NOT NULL,
   `litPropagatedSomething` double unsigned NOT NULL,
-  `litPropagatedSomethingVar` double unsigned NOT NULL,
-  `propsPerDec` double unsigned NOT NULL,
-  `flippedPercent` double unsigned NOT NULL,
+  `litPropagatedSomethingSD` double unsigned NOT NULL,
+  `propagations` bigint(20) unsigned NOT NULL,
+  `decisions` bigint(20) unsigned NOT NULL,
+  `flipped` bigint(20) unsigned NOT NULL,
   `varSetPos` bigint(20) unsigned NOT NULL,
   `varSetNeg` bigint(20) unsigned NOT NULL,
   `free` bigint(20) unsigned NOT NULL,
@@ -126,6 +124,21 @@ CREATE TABLE `restart` (
   `eliminated` bigint(20) unsigned NOT NULL,
   `set` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `solverRun`
+--
+
+DROP TABLE IF EXISTS `solverRun`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `solverRun` (
+  `runID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `version` varchar(255) NOT NULL,
+  `time` bigint(20) unsigned NOT NULL,
+  PRIMARY KEY (`runID`)
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,11 +150,12 @@ DROP TABLE IF EXISTS `vars`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `vars` (
   `runID` bigint(20) unsigned NOT NULL,
-  `conflicts` bigint(20) unsigned NOT NULL,
-  `free` bigint(20) unsigned NOT NULL,
-  `replaced` bigint(20) unsigned NOT NULL,
-  `eliminated` bigint(20) unsigned NOT NULL,
-  `set` bigint(20) unsigned NOT NULL
+  `simplifications` bigint(20) unsigned NOT NULL,
+  `order` int(10) unsigned NOT NULL,
+  `pos` bigint(20) unsigned NOT NULL,
+  `neg` bigint(20) unsigned NOT NULL,
+  `total` bigint(20) unsigned NOT NULL,
+  `flipped` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -154,4 +168,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-06-19 13:04:06
+-- Dump completed on 2012-07-15 16:26:08
