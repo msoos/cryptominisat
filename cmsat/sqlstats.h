@@ -65,7 +65,7 @@ private:
         uint64_t numSimplify;
         uint64_t sumRestarts;
         uint64_t sumConflicts;
-        uint64_t cpuTime;
+        double cpuTime;
 
         //Conflict stats
         double glueHist;
