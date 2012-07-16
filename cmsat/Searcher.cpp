@@ -1443,6 +1443,10 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
                 }
             }
         }
+
+        if (conf.doSQL) {
+            printRestartSQL();
+        }
     }
 
     #ifdef VERBOSE_DEBUG
