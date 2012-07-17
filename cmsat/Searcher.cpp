@@ -1372,9 +1372,6 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         if (status != l_Undef)
             break;
 
-        if (conf.doSQL) {
-            printRestartSQL();
-        }
         //Print restart stat
         if (conf.verbosity >= 1
             && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
@@ -1478,6 +1475,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     }
 
     if (conf.doSQL) {
+        printRestartSQL();
         //printVarStatsSQL();
 
         //Print clause distib SQL until here
