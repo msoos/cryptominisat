@@ -17,8 +17,9 @@ mysql_connect("localhost", $username, $password);
 echo '
 <script type="text/javascript">
 var columnDivs = new Array();
-var myData = new Array();
-</script>';
+var myData = new Array();';
+echo "var numColumns = ".count($runIDs).";";
+echo '</script>';
 
 class DataPrinter
 {
@@ -48,12 +49,14 @@ class DataPrinter
     protected function printHTML($fullname)
     {
         $blockDivName = "block".$this->numberingScheme."AT".$this->colnum;
+        $dataDiv = $fullname."_datadiv";
+        $labelDiv = $fullname."_labeldiv";
         echo "
         <div class=\"block\" id=\"$blockDivName\">
         <table id=\"plot-table-a\">
         <tr>
-        <td><div id=\"$fullname"."_datadiv\" class=\"myPlotData\"></div></td>
-        <td><div id=\"$fullname"."_labeldiv\" class=\"draghandle\"></div></td>
+        <td><div id=\"$dataDiv\" class=\"myPlotData\"></div></td>
+        <td><div id=\"$labelDiv\" class=\"draghandle\"></div></td>
         </tr>
         </table>
         </div>";
@@ -61,7 +64,10 @@ class DataPrinter
         //Add to columns to display
         echo "
         <script type=\"text/javascript\">
-        columnDivs[".$this->colnum."].push('$blockDivName');
+        tmp = {fullDiv:  '$blockDivName'
+            ,  dataDiv:  '$dataDiv'
+            ,  labelDiv: '$labelDiv'};
+        columnDivs[".$this->colnum."].push(tmp);
         </script>
         ";
     }
@@ -408,20 +414,21 @@ class ClauseSizeDistrib
     public function printHTML()
     {
         $blockDivName = "blockSpecial".$this->colnum;
-        echo "<div class=\"block\" id=\"$blockDivName\">";
-        echo '<table id="plot-table-a">
+        $dataDiv = "MYdrawingPad".$this->colnum."Parent";
+        $labelDiv = "$blockDivName"."_labeldiv";
+        echo "<div class=\"block\" id=\"$blockDivName\">
+        <table id=\"plot-table-a\">
         <tr>
-        <td>';
-            echo "
-            <div id=\"MYdrawingPad".$this->colnum."Parent\" class=\"myPlotData\">
+        <td>
+            <div id=\"$dataDiv\" class=\"myPlotData\">
             <canvas id=\"MYdrawingPad".$this->colnum."\" width=\"420\" height=\"100\">
             no support for canvas</canvas>
             </div>";
-        echo'
+        echo"
         </td>
-        <td>
-            <div class="draghandle"><b>';
-            echo "(".$this->colnum.") Newly learnt clause size distribution.
+        <td>'
+            <div id=\"$labelDiv\" class=\"draghandle\"><b>
+            (".$this->colnum.") Newly learnt clause size distribution.
             Bottom: unitary clause. Top: largest clause.
             Black: Many learnt. White: None learnt.
             Horizontal resolution: 1000 conflicts.
@@ -434,8 +441,12 @@ class ClauseSizeDistrib
 
         echo "
         <script type=\"text/javascript\">
-        columnDivs[".$this->colnum."].push('$blockDivName');
-        </script>";
+        tmp = {fullDiv:  '$blockDivName'
+            ,  dataDiv:  '$dataDiv'
+            ,  labelDiv: '$labelDiv'};
+        columnDivs[".$this->colnum."].push(tmp);
+        </script>
+        ";
     }
 
     public function fillClauseDistrib()

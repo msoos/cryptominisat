@@ -95,17 +95,6 @@ include('myphp.php');
 </script>
 
 <script type="text/javascript" src="myscripts.js"></script>
-<script type="text/javascript">
-
-function setRollPeriod(num)
-{
-    for (var j = 0; j < myDataNames.length; j++) {
-        gs[j].updateOptions( {
-            rollPeriod: num
-        } );
-    }
-}
-</script>
 
 <h2>Terms used</h2><p style="clear:both"></p><table class="box-table-b">
 <tr><th>Abbreviation</th><th>Explanation</th></tr>

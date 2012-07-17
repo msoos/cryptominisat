@@ -1,8 +1,14 @@
 // Stores the original X sizes of the graphs
 // used when zooming out fully
-var origSizes = new Array();
-var gs = new Array();
-var blockRedraw = false;
+
+function setRollPeriod(num)
+{
+    for (var j = 0; j < myData.length; j++) {
+        gs[j].updateOptions( {
+            rollPeriod: num
+        } );
+    }
+}
 
 //Draw all graphs
 function drawAllGraphs()
@@ -46,20 +52,20 @@ function drawOneGraph(i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            rollPeriod: 1,
+            //rollPeriod: 1,
             drawXAxis: false,
             legend: 'always',
             xlabel: false,
             labelsDiv: document.getElementById(myData[i].labeldiv),
             labelsSeparateLines: true,
             labelsKMB: true,
-            drawPoints: true,
+            drawPoints: false,
             pointSize: 1,
             drawXGrid: false,
             drawYGrid: false,
             drawYAxis: false,
             strokeStyle: "black",
-            colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
+            colors: ['#ffffff', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             errorBars: myData[i].noisy,
             drawCallback: function(me, initial) {
@@ -249,25 +255,52 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     }
 }
 
-drawAllGraphs();
-var dists = [];
-for(i = 0; i < 2; i++) {
-    a = new DrawClauseDistrib(
-            clDistrib[i]
-            , "MYdrawingPad" + i
-            , simplificationPoints[i]
-        );
-    a.drawPattern(0, maxConflRestart[i]);
-    dists.push(a);
+function drawAllDists()
+{
+    for(i = 0; i < 2; i++) {
+        a = new DrawClauseDistrib(
+                clDistrib[i]
+                , "MYdrawingPad" + i
+                , simplificationPoints[i]
+            );
+        a.drawPattern(0, maxConflRestart[i]);
+        dists.push(a);
+    }
 }
 
-var settings = {'column-0': columnDivs[0], 'column-1': columnDivs[1]};
-var options = { portal : 'columns', editorEnabled : true};
-var data = {};
+function createPortal()
+{
+    var settings = {};
+    for(i = 0; i < columnDivs.length; i++) {
+        tmp = Array();
+        for(i2 = 0; i2 < columnDivs[i].length; i2++) {
+            tmp.push(columnDivs[i][i2].fullDiv);
+        }
+        settings["column-" + i] = tmp;
+    }
+    var options = { portal : 'columns', editorEnabled : true};
+    var data = {};
+    Event.observe(window, 'load', function() {
+            portal = new Portal(settings, options, data);
+    });
+}
+
+//for graphs
+var origSizes = new Array();
+var blockRedraw = false;
+var gs = new Array();
+
+//For distibutions
+var dists = [];
+
+//For portal
 var portal;
-Event.observe(window, 'load', function() {
-        portal = new Portal(settings, options, data);
-});
+
+drawAllGraphs();
+drawAllDists();
+createPortal();
+
+
 
 
 
