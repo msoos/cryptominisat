@@ -6,7 +6,7 @@
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.js"></script>
-    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
+    <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
 <!--     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script> -->
     <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
