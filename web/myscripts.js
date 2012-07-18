@@ -26,6 +26,7 @@ function drawOneGraph(i)
         myData[i].data
         , {
             stackedGraph: myData[i].stacked,
+            includeZero: myData[i].stacked,
             labels: myData[i].labels,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
