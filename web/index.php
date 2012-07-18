@@ -66,7 +66,7 @@ find a full list of terms below.
 </p>
 
 <p>Please select averaging level:
-<input type="range" min="1" max="21" value="1" step="1" onchange="showValue(this.value)"/>
+<input type="range" min="1" max="21" value="1" step="5" onchange="showValue(this.value)"/>
 <span id="range">1</span>
 </p>
 <script type="text/javascript">
@@ -85,6 +85,9 @@ function showValue(newValue)
     </div>
 </td></tr>
 </table>
+
+<!--Here come all the datagraphs-->
+<div id="datagraphs"></div>
 
 
 <p style="clear:both"></p>

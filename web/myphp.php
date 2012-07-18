@@ -1,6 +1,6 @@
 <?
 $runIDs = array(48, 49);
-$maxConfl = 80000;
+$maxConfl = 40000;
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 //display_startup_errors(1);
@@ -46,32 +46,6 @@ class DataPrinter
         ";
     }
 
-    protected function printHTML($fullname)
-    {
-        $blockDivName = "block".$this->numberingScheme."AT".$this->colnum;
-        $dataDiv = $fullname."_datadiv";
-        $labelDiv = $fullname."_labeldiv";
-        echo "
-        <div class=\"block\" id=\"$blockDivName\">
-        <table id=\"plot-table-a\">
-        <tr>
-        <td><div id=\"$dataDiv\" class=\"myPlotData\"></div></td>
-        <td><div id=\"$labelDiv\" class=\"draghandle\"></div></td>
-        </tr>
-        </table>
-        </div>";
-
-        //Add to columns to display
-        echo "
-        <script type=\"text/javascript\">
-        tmp = {fullDiv:  '$blockDivName'
-            ,  dataDiv:  '$dataDiv'
-            ,  labelDiv: '$labelDiv'};
-        columnDivs[".$this->colnum."].push(tmp);
-        </script>
-        ";
-    }
-
     public function maxConflRestart()
     {
         $query="
@@ -96,8 +70,6 @@ class DataPrinter
         , $doSlideAvg = 0
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
-
-        $this->printHTML($fullname);
 
         echo "<script type=\"text/javascript\">\n";
         echo "tmp = [";
@@ -157,7 +129,7 @@ class DataPrinter
         echo "];\n";
 
         //Add name & data
-        echo "myData.push({data: tmp, div: \"$fullname"."_datadiv\"";
+        echo "myData.push({data: tmp ";
 
         //Calculate labels
         echo ", labels: [\"Conflicts\"";
@@ -171,9 +143,21 @@ class DataPrinter
 
         //Rest of the info
         echo ", stacked: ".(int)(sizeof($datanames) > 1);
-        echo ", labeldiv: \"$fullname"."_labeldiv\"";
         echo ", colnum: \"".$this->colnum."\"";
+
+        //DIVs
+        $blockDivID = "graphBlock".$this->numberingScheme."AT".$this->colnum;
+        $dataDivID = $fullname."_datadiv";
+        $labelDivID = $fullname."_labeldiv";
+        echo ", blockDivID:  '$blockDivID'";
+        echo ", dataDivID:  '$dataDivID'";
+        echo ", labelDivID: '$labelDivID'";
         echo " });\n";
+
+        //Put into columnDivs
+        echo "tmp = {blockDivID:  '$blockDivID'};";
+        echo "columnDivs[".$this->colnum."].push(tmp);";
+
 
         echo "</script>\n";
         $this->numberingScheme++;
@@ -413,10 +397,8 @@ class ClauseSizeDistrib
 
     public function printHTML()
     {
-        $blockDivName = "blockSpecial".$this->colnum;
-        $dataDiv = "MYdrawingPad".$this->colnum."Parent";
-        $labelDiv = "$blockDivName"."_labeldiv";
-        echo "<div class=\"block\" id=\"$blockDivName\">
+
+        /*echo "<div class=\"block\" id=\"$blockDivName\">
         <table id=\"plot-table-a\">
         <tr>
         <td>
@@ -437,16 +419,18 @@ class ClauseSizeDistrib
         </td>
         </tr>
         </table>
-        </div>";
+        </div>";*/
 
-        echo "
+        /*echo "
         <script type=\"text/javascript\">
         tmp = {fullDiv:  '$blockDivName'
             ,  dataDiv:  '$dataDiv'
-            ,  labelDiv: '$labelDiv'};
+            ,  labelDiv: '$labelDiv'
+            ,  canvasID: '$canvas'
+            };
         columnDivs[".$this->colnum."].push(tmp);
         </script>
-        ";
+        ";*/
     }
 
     public function fillClauseDistrib()
@@ -490,7 +474,22 @@ class ClauseSizeDistrib
             echo "tmpArray.push(tmp);\n";
         }
 
-        echo "clDistrib.push(tmpArray);\n";
+        echo "clDistrib.push({data: tmpArray";
+
+        $blockDivID = "distBlock".$this->colnum;
+        $dataDivID = "drawingPad".$this->colnum."Parent";
+        $canvasID = "drawingPad".$this->colnum;
+        $labelDivID = "$blockDivID"."_labeldiv";
+        echo ", blockDivID:  '$blockDivID'";
+        echo ", dataDivID:  '$dataDivID'";
+        echo ", canvasID: '$canvasID'";
+        echo ", labelDivID: '$labelDivID'";
+        echo "});\n";
+
+        //Put into columnDivs
+        echo "tmp = {blockDivID:  '$blockDivID'};";
+        echo "columnDivs[".$this->colnum."].push(tmp);";
+
         echo '</script>';
     }
 }

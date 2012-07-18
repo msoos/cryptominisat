@@ -1,6 +1,19 @@
 // Stores the original X sizes of the graphs
 // used when zooming out fully
 
+//for graphs
+var origSizes = new Array();
+var blockRedraw = false;
+var gs = new Array();
+
+//For distibutions
+var dists = [];
+
+//For portal
+var portal;
+
+
+
 function setRollPeriod(num)
 {
     for (var j = 0; j < myData.length; j++) {
@@ -10,7 +23,7 @@ function setRollPeriod(num)
     }
 }
 
-//Draw all graphs
+//Draws all graphs using dygraphs
 function drawAllGraphs()
 {
     for (var i = 0; i < myData.length; i++) {
@@ -22,7 +35,7 @@ function drawAllGraphs()
 function drawOneGraph(i)
 {
     graph = new Dygraph(
-        document.getElementById(myData[i].div),
+        document.getElementById(myData[i].dataDivID),
         myData[i].data
         , {
             stackedGraph: myData[i].stacked,
@@ -56,7 +69,7 @@ function drawOneGraph(i)
             drawXAxis: false,
             legend: 'always',
             xlabel: false,
-            labelsDiv: document.getElementById(myData[i].labeldiv),
+            labelsDiv: document.getElementById(myData[i].labelDivID),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: false,
@@ -128,6 +141,19 @@ function drawOneGraph(i)
     )
 
     return graph;
+}
+
+function drawAllDists()
+{
+    for(i = 0; i < 2; i++) {
+        a = new DrawClauseDistrib(
+                clDistrib[i].data
+                , clDistrib[i].canvasID
+                , simplificationPoints[i]
+            );
+        a.drawPattern(0, maxConflRestart[i]);
+        dists.push(a);
+    }
 }
 
 function DrawClauseDistrib(_data, _divID, _simpPoints)
@@ -255,16 +281,49 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     }
 }
 
-function drawAllDists()
+//Creates HTML for dygraphs
+function createHTMLforGraphs()
 {
-    for(i = 0; i < 2; i++) {
-        a = new DrawClauseDistrib(
-                clDistrib[i]
-                , "MYdrawingPad" + i
-                , simplificationPoints[i]
-            );
-        a.drawPattern(0, maxConflRestart[i]);
-        dists.push(a);
+    for (var i = 0; i < myData.length; i++) {
+        datagraphs = document.getElementById("datagraphs");
+        datagraphs.innerHTML += "\
+        <div class=\"block\" id=\"" + myData[i].blockDivID + "\">\
+        <table id=\"plot-table-a\">\
+        <tr>\
+        <td><div id=\"" + myData[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
+        <td><div id=\"" + myData[i].labelDivID + "\" class=\"draghandle\"></div></td>\
+        </tr>\
+        </table>\
+        </div>";
+    }
+}
+
+function createHTMLforDists()
+{
+    for(i = 0; i < clDistrib.length; i++) {
+        datagraphs = document.getElementById("datagraphs");
+        datagraphs.innerHTML += "\
+        <div class=\"block\" id=\"" + clDistrib[i].blockDivID +"\"> \
+        <table id=\"plot-table-a\"> \
+        <tr> \
+        <td> \
+            <div id=\""+ clDistrib[i].dataDivID + "\" class=\"myPlotData\"> \
+            <canvas id=\""+ clDistrib[i].canvasID + "\" width=\"420\" height=\"100\"> \
+            no support for canvas</canvas> \
+            </div> \
+        </td> \
+        <td> \
+            <div id=\"" + clDistrib[i].labelDivID + "\" class=\"draghandle\"><b> \
+            (" + i + ") Newly learnt clause size distribution. \
+            Bottom: unitary clause. Top: largest clause. \
+            Black: Many learnt. White: None learnt. \
+            Horizontal resolution: 1000 conflicts. \
+            Vertical resolution: 1 literal \
+            </b></div> \
+        </td> \
+        </tr> \
+        </table> \
+        </div>";
     }
 }
 
@@ -274,7 +333,7 @@ function createPortal()
     for(i = 0; i < columnDivs.length; i++) {
         tmp = Array();
         for(i2 = 0; i2 < columnDivs[i].length; i2++) {
-            tmp.push(columnDivs[i][i2].fullDiv);
+            tmp.push(columnDivs[i][i2].blockDivID);
         }
         settings["column-" + i] = tmp;
     }
@@ -285,23 +344,25 @@ function createPortal()
     });
 }
 
-//for graphs
-var origSizes = new Array();
-var blockRedraw = false;
-var gs = new Array();
+function doAll()
+{
+    //Clear vars
+    origSizes = new Array();
+    blockRedraw = false;
+    gs = new Array();
+    dists = [];
 
-//For distibutions
-var dists = [];
+    //Clear & create HTML
+    datagraphs = document.getElementById("datagraphs");
+    datagraphs.innerHTML = "";
+    createHTMLforGraphs();
+    createHTMLforDists();
 
-//For portal
-var portal;
+    //Draws the graphs
+    drawAllGraphs();
+    drawAllDists();
+    createPortal();
+}
 
-drawAllGraphs();
-drawAllDists();
-createPortal();
-
-
-
-
-
+doAll();
 
