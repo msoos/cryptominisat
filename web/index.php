@@ -15,6 +15,7 @@
 /*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
+    <script type="text/javascript" src="myajax.js"></script>
     <script type="text/javascript" src="myscripts.js"></script>
 
 
@@ -90,17 +91,9 @@ function showValue(newValue)
 </table>
 
 <!--Here come all the datagraphs-->
+<div id="myajaxStuff"></div>
 <div id="datagraphs"></div>
-
-<?
-include('myphp.php');
-?>
-
 <p style="clear:both"></p>
-
-<script type="text/javascript">
-doAll();
-</script>
 
 <h2>Terms used</h2><p style="clear:both"></p><table class="box-table-b">
 <tr><th>Abbreviation</th><th>Explanation</th></tr>

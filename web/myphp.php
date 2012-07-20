@@ -14,13 +14,6 @@ $database="cryptoms";
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
-echo '
-<script type="text/javascript">
-var columnDivs = new Array();
-var myData = new Array();';
-echo "var numColumns = ".count($runIDs).";";
-echo '</script>';
-
 class DataPrinter
 {
     protected $numberingScheme;
@@ -316,11 +309,6 @@ class DataPrinter
     }
 }
 
-echo '
-<script type="text/javascript">
-var maxConflRestart = new Array();
-</script>';
-
 for($i = 0; $i < count($runIDs); $i++) {
     $printer = new DataPrinter($i, $runIDs[$i], $maxConfl);
     $printer->maxConflRestart();
@@ -369,8 +357,6 @@ class Simplifications
     public function fill()
     {
         echo '<script type="text/javascript">';
-
-        echo "var simplificationPoints = new Array();\n";
         foreach ($this->runIDs as $thisRunID) {
             $this->fillSimplificationPoints($thisRunID);
         }
@@ -493,10 +479,6 @@ class ClauseSizeDistrib
         echo '</script>';
     }
 }
-
-echo '<script type="text/javascript">';
-echo "var clDistrib = new Array();\n";
-echo '</script>';
 
 for($i = 0; $i < count($runIDs); $i++) {
     $myDist = new ClauseSizeDistrib($i, $runIDs[$i], $maxConfl);

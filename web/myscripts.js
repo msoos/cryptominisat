@@ -12,8 +12,6 @@ var dists = [];
 //For portal
 var portal;
 
-
-
 function setRollPeriod(num)
 {
     for (var j = 0; j < myData.length; j++) {
