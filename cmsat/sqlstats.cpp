@@ -84,7 +84,7 @@ void SQLStats::getID()
     }
 
     runID = mysql_insert_id(serverConn);
-    cout << "This run number is: " << runID << endl;
+    cout << "c This run number is: " << runID << endl;
 }
 
 void SQLStats::addFiles(const Solver* solver)
