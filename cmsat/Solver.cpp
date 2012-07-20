@@ -899,7 +899,8 @@ void Solver::reduceDB()
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     //Set up SQL writer
-    sqlStats.setup(this);
+    if (conf.doSQL)
+        sqlStats.setup(this);
 
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
