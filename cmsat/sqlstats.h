@@ -23,7 +23,10 @@ public:
 
 private:
     void connectServer();
-    void getID();
+    void getID(const Solver* solver);
+    bool tryIDInSQL(const Solver* solver);
+    void getRandomID();
+
     void addFiles(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
     void initClauseSizeDistribSTMT(const Solver* solver);

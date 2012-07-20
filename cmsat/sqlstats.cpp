@@ -23,7 +23,7 @@ SQLStats::SQLStats() :
 void SQLStats::setup(const Solver* solver)
 {
     connectServer();
-    getID();
+    getID(solver);
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
     initClauseSizeDistribSTMT(solver);
@@ -67,24 +67,74 @@ void SQLStats::connectServer()
     }
 }
 
-void SQLStats::getID()
+bool SQLStats::tryIDInSQL(const Solver* solver)
 {
-
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (version, time) values ("
-    << "\"" << Solver::getVersion() << "\""
+    << "INSERT INTO solverRun (runID, version, time) values ("
+    << runID
+    << ", \"" << Solver::getVersion() << "\""
     << ", " << time(NULL)
     << ");";
 
     //Inserting element into solverruns to get unique ID
     if (mysql_query(serverConn, ss.str().c_str())) {
-        cout << "Couldn't insert into table 'solverruns'" << endl;
-        exit(1);
+
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Couldn't insert into table 'solverruns'" << endl;
+            cout << "c " << mysql_error(serverConn) << endl;
+        }
+
+        return false;
     }
 
-    runID = mysql_insert_id(serverConn);
-    cout << "c This run number is: " << runID << endl;
+    return true;
+}
+
+void SQLStats::getID(const Solver* solver)
+{
+    size_t numTries = 0;
+    getRandomID();
+    while(!tryIDInSQL(solver)) {
+        getRandomID();
+        numTries++;
+
+        //Check if we have been in this loop for too long
+        if (numTries > 10) {
+            cout
+            << "Database is full?"
+            << " Something is wrong while adding runID!" << endl
+            << " Exiting!"
+            << endl;
+
+            exit(-1);
+        }
+    }
+
+    if (solver->conf.verbosity >= 1) {
+        cout << "c SQL runID is " << runID << endl;
+    }
+}
+
+void SQLStats::getRandomID()
+{
+    //Generate random ID for SQL
+    int randomData = open("/dev/urandom", O_RDONLY);
+    if (randomData == -1) {
+        cout << "Error reading from /dev/urandom !" << endl;
+        exit(-1);
+    }
+    ssize_t ret = read(randomData, &runID, sizeof(runID));
+
+    //Can only be <8 bytes long, some PHP-related limit
+    //Make it 6-byte long then (good chance to collide after 2^24 entries)
+    runID &= 0xffffffffffffULL;
+
+    if (ret != sizeof(runID)) {
+        cout << "Couldn't read from /dev/urandom!" << endl;
+        exit(-1);
+    }
+    close(randomData);
 }
 
 void SQLStats::addFiles(const Solver* solver)
