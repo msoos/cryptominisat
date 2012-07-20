@@ -145,7 +145,7 @@ function drawOneGraph(i)
 
 function drawAllDists()
 {
-    for(i = 0; i < 2; i++) {
+    for(i = 0; i < columnDivs.length; i++) {
         a = new DrawClauseDistrib(
                 clDistrib[i].data
                 , clDistrib[i].canvasID
@@ -363,6 +363,4 @@ function doAll()
     drawAllDists();
     createPortal();
 }
-
-doAll();
 

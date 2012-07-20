@@ -15,6 +15,8 @@
 /*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
+    <script type="text/javascript" src="myscripts.js"></script>
+
 
 
     <!-- Start of StatCounter Code -->
@@ -65,10 +67,11 @@ of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
 
-<p>Please select averaging level:
+<!--<p>Please select averaging level:
 <input type="range" min="1" max="21" value="1" step="5" onchange="showValue(this.value)"/>
 <span id="range">1</span>
-</p>
+</p>-->
+
 <script type="text/javascript">
 function showValue(newValue)
 {
@@ -89,15 +92,15 @@ function showValue(newValue)
 <!--Here come all the datagraphs-->
 <div id="datagraphs"></div>
 
-
-<p style="clear:both"></p>
-
 <?
 include('myphp.php');
 ?>
-</script>
 
-<script type="text/javascript" src="myscripts.js"></script>
+<p style="clear:both"></p>
+
+<script type="text/javascript">
+doAll();
+</script>
 
 <h2>Terms used</h2><p style="clear:both"></p><table class="box-table-b">
 <tr><th>Abbreviation</th><th>Explanation</th></tr>

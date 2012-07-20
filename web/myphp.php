@@ -1,5 +1,5 @@
 <?
-$runIDs = array(48, 49);
+$runIDs = array(49);
 $maxConfl = 40000;
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
