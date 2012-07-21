@@ -75,8 +75,8 @@ function drawOneGraph(i)
             drawXGrid: false,
             drawYGrid: false,
             drawYAxis: false,
-            strokeStyle: "black",
-            colors: ['#ffffff', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
+            strokeStyle: "white",
+            colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             errorBars: myData[i].noisy,
             drawCallback: function(me, initial) {
@@ -159,8 +159,8 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     var data = _data;
     var divID = _divID;
     var simpPoints = _simpPoints;
-    var mywidth = 415;
-    var myheight = 100;
+    var mywidth = 415; //document.getElementById(divID).offsetWidth-5;
+    var myheight = 100; //document.getElementById(divID).offsetHeight;
 
     //For SVG pattern, a rectangle
     function drawDistribBox(x1, x2, y1, y2, relHeight, imgData)
@@ -208,8 +208,6 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     this.drawPattern = function(from , to)
     {
         var myDiv = document.getElementById(divID);
-        //myDiv.style.height = 100;
-        //myDiv.style.width= 420;
         var ctx = myDiv.getContext("2d");
         var Xdelta = 0.5;
 
@@ -298,16 +296,20 @@ function createHTMLforGraphs()
 
 function createHTMLforDists()
 {
+    var width = 900/clDistrib.length;
+    width = 420;
     for(i = 0; i < clDistrib.length; i++) {
         datagraphs = document.getElementById("datagraphs");
+
         datagraphs.innerHTML += "\
         <div class=\"block\" id=\"" + clDistrib[i].blockDivID +"\"> \
         <table id=\"plot-table-a\"> \
         <tr> \
         <td> \
             <div id=\""+ clDistrib[i].dataDivID + "\" class=\"myPlotData\"> \
-            <canvas id=\""+ clDistrib[i].canvasID + "\" width=\"420\" height=\"100\"> \
-            no support for canvas</canvas> \
+            <canvas id=\""+ clDistrib[i].canvasID + "\" class=\"canvasPlot\" width=\"420\"> \
+            no support for canvas \
+            </canvas> \
             </div> \
         </td> \
         <td> \
@@ -337,9 +339,9 @@ function createPortal()
     }
     var options = { portal : 'columns', editorEnabled : true};
     var data = {};
-    Event.observe(window, 'load', function() {
+    //Event.observe(window, 'load', function() {
             portal = new Portal(settings, options, data);
-    });
+    //});
 }
 
 function doAll()

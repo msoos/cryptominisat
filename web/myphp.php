@@ -1,6 +1,7 @@
 <?
-$runIDs = array(49);
-$maxConfl = 40000;
+$runIDs = array(1969178564);
+//$runIDs = array(49);
+$maxConfl = 500000;
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 //display_startup_errors(1);
@@ -381,44 +382,6 @@ class ClauseSizeDistrib
         $this->maxConfl = $myMaxConfl;
     }
 
-    public function printHTML()
-    {
-
-        /*echo "<div class=\"block\" id=\"$blockDivName\">
-        <table id=\"plot-table-a\">
-        <tr>
-        <td>
-            <div id=\"$dataDiv\" class=\"myPlotData\">
-            <canvas id=\"MYdrawingPad".$this->colnum."\" width=\"420\" height=\"100\">
-            no support for canvas</canvas>
-            </div>";
-        echo"
-        </td>
-        <td>'
-            <div id=\"$labelDiv\" class=\"draghandle\"><b>
-            (".$this->colnum.") Newly learnt clause size distribution.
-            Bottom: unitary clause. Top: largest clause.
-            Black: Many learnt. White: None learnt.
-            Horizontal resolution: 1000 conflicts.
-            Vertical resolution: 1 literal
-            </b></div>
-        </td>
-        </tr>
-        </table>
-        </div>";*/
-
-        /*echo "
-        <script type=\"text/javascript\">
-        tmp = {fullDiv:  '$blockDivName'
-            ,  dataDiv:  '$dataDiv'
-            ,  labelDiv: '$labelDiv'
-            ,  canvasID: '$canvas'
-            };
-        columnDivs[".$this->colnum."].push(tmp);
-        </script>
-        ";*/
-    }
-
     public function fillClauseDistrib()
     {
         echo '<script type="text/javascript">';
@@ -483,7 +446,6 @@ class ClauseSizeDistrib
 for($i = 0; $i < count($runIDs); $i++) {
     $myDist = new ClauseSizeDistrib($i, $runIDs[$i], $maxConfl);
     $myDist->fillClauseDistrib();
-    $myDist->printHTML();
 }
 
 ?>

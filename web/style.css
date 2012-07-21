@@ -21,35 +21,16 @@ div.myPlotData {
   margin:0;
 }
 
-canvas.myPlotData {
-  width:420px;
-  height:100px;
+canvas.canvasPlot {
+  /*width:420px;
+  height:100px;*/
   margin:0;
-  border: 1px solid #9C9898;
-}
-
-div.myPlotData2 {
- width:700px;
- height:200px;
- margin:0;
- margin-top:30px;
-}
-
-div.myPlotData3 {
- width:650px;
- height:200px;
- margin:0;
- margin-top:30px;
-}
-
-div.piechart {
-    min-height:150px;
-    min-width:150px;
+  /*border: 1px solid #9C9898;*/
 }
 
 body {
-    color: white;
-    background-color: black;
+    /*color: white;
+    background-color: black;*/
     margin: 0px;
     padding: 0px;
 }
@@ -119,7 +100,6 @@ table.box-table-a
     font-size: 12px;
     margin-left: 29px;
     font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    width: 750px;
     border: 0px;
     border-color: black;
     border-spacing: 0px;
@@ -138,43 +118,6 @@ table.box-table-a td
 {
     padding: 0px;
     border-bottom: 1px solid #999999;
-}
-
-table.box-table-b
-{
-    font-size: 14px;
-    margin-left: 20px;
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    width: 500px;
-    border: 0px;
-    border-color: black;
-    border-spacing: 0px;
-}
-
-table.box-table-b th
-{
-    font-size: 15px;
-    margin: 0;
-    font-weight: bold;
-    padding: 5px;
-    border-bottom: 1px solid black;
-}
-
-table.box-table-b td
-{
-    padding: 5px;
-/*     border-bottom: 1px solid #999999; */
-}
-
-
-table.doubleSize
-{
-    padding: 0px;
-    margin: 0px;
-    margin-left: 10px;
-    margin-top: 0;
-    border: 0;
-    width: 1160px;
 }
 
 #plot-table-a
