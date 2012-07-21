@@ -1100,7 +1100,7 @@ end:
 
     //The algorithms above probably have changed the propagation&usage data
     //so let's clear it
-    if (conf.doClearPropConfEveryClauseCleaning) {
+    if (conf.doClearStatEveryClauseCleaning) {
         clearClauseStats(clauses);
         clearClauseStats(learnts);
     }
@@ -1493,7 +1493,7 @@ void Solver::fullReduce()
     reduceDB();
     consolidateMem();
 
-    if (conf.doClearPropConfEveryClauseCleaning) {
+    if (conf.doClearStatEveryClauseCleaning) {
         clearClauseStats(clauses);
         clearClauseStats(learnts);
     }

@@ -34,7 +34,7 @@ SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(true)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
-        , doClearPropConfEveryClauseCleaning(true)
+        , doClearStatEveryClauseCleaning(true)
         , ratioRemoveClauses(1.0/2.0)
         , clauseCleanNeverCleanAtOrAboveThisPropConfl(10)
         , numCleanBetweenSimplify(1)
