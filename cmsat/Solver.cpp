@@ -740,8 +740,8 @@ bool Solver::reduceDBStructPropConfl::operator() (
 
     //First tie: numPropAndConfl -- notice the reversal of 1/0
     //Larger is better --> should be last in the sorted list
-    if (x->stats.numPropAndConfl > y->stats.numPropAndConfl) return 0;
-    if (x->stats.numPropAndConfl < y->stats.numPropAndConfl) return 1;
+    if (x->stats.numPropAndConfl() > y->stats.numPropAndConfl()) return 0;
+    if (x->stats.numPropAndConfl() < y->stats.numPropAndConfl()) return 1;
 
     //Second tie: size
     return xsize > ysize;
@@ -773,7 +773,7 @@ void Solver::reduceDB()
         for (i = j = 0; i < learnts.size(); i++) {
             Clause* cl = learnts[i];
             assert(learnts[i]->size() > 3);
-            if (cl->stats.numPropAndConfl < conf.preClauseCleanLimit
+            if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
             ) {
@@ -852,7 +852,7 @@ void Solver::reduceDB()
         Clause *cl = learnts[i];
         assert(cl->size() > 3);
         if (learnts[i]->stats.glue > 2
-            && cl->stats.numPropAndConfl < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
+            && cl->stats.numPropAndConfl() < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
         ) {
             //Stats
             tmpStats.removedClauses++;
@@ -1270,7 +1270,8 @@ Solver::UsageStats Solver::sumClauseData(
                 cout << " glue : " << std::setw(4) << cl.stats.glue;
             }
             cout
-            << " Props&confls: " << std::setw(10) << cl.stats.numPropAndConfl
+            << " Props: " << std::setw(10) << cl.stats.numProp
+            << " Confls: " << std::setw(10) << cl.stats.numConfl
             << " Lit visited: " << std::setw(10)<< cl.stats.numLitVisited
             << " Looked at: " << std::setw(10)<< cl.stats.numLookedAt
             << " UIP used: " << std::setw(10)<< cl.stats.numUsedUIP
@@ -1278,7 +1279,7 @@ Solver::UsageStats Solver::sumClauseData(
             if (cl.stats.numLitVisited > 0) {
                 cout
                 << std::setw(6) << std::fixed << std::setprecision(4)
-                << (10.0*(double)cl.stats.numPropAndConfl/(double)cl.stats.numLitVisited);
+                << (10.0*(double)cl.stats.numPropAndConfl()/(double)cl.stats.numLitVisited);
             }
             cout << endl;
         }
@@ -1292,24 +1293,29 @@ Solver::UsageStats Solver::sumClauseData(
             cout << "c irred";
         }
         cout
-        << " sum lits visit: "
+        << " lits visit: "
         << std::setw(8) << stats.sumLitVisited/1000UL
-        << " K";
+        << "K";
 
         cout
-        << " sum cls visit: "
+        << " cls visit: "
         << std::setw(7) << stats.sumLookedAt/1000UL
-        << " K";
+        << "K";
 
         cout
-        << " sum prop&conf: "
-        << std::setw(5) << stats.sumPropConfl/1000UL
-        << " K";
+        << " prop: "
+        << std::setw(5) << stats.sumProp/1000UL
+        << "K";
 
         cout
-        << " sum UIP used: "
+        << " conf: "
+        << std::setw(5) << stats.sumConfl/1000UL
+        << "K";
+
+        cout
+        << " UIP used: "
         << std::setw(5) << stats.sumUsedUIP/1000UL
-        << " K"
+        << "K"
         << endl;
     }
 
@@ -1336,13 +1342,18 @@ void Solver::printPropConflStats(
 
         cout
         << name << " : " << std::setw(4) << i
-        << " Avg. props&confls: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << ((double)stats[i].sumPropConfl/(double)stats[i].num);
+        << " Avg. props: " << std::setw(6) << std::fixed << std::setprecision(2)
+        << ((double)stats[i].sumProp/(double)stats[i].num);
+
+        cout
+        << name << " : " << std::setw(4) << i
+        << " Avg. confls: " << std::setw(6) << std::fixed << std::setprecision(2)
+        << ((double)stats[i].sumConfl/(double)stats[i].num);
 
         if (stats[i].sumLookedAt > 0) {
             cout
             << " Props&confls/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
-            << ((double)stats[i].sumPropConfl/(double)stats[i].sumLookedAt);
+            << ((double)stats[i].sumPropAndConfl()/(double)stats[i].sumLookedAt);
         }
 
         cout
@@ -1359,62 +1370,10 @@ void Solver::printPropConflStats(
             cout
             << " Props&confls/Litsvisited*10: "
             << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats[i].sumPropConfl/(double)stats[i].sumLitVisited);
+            << (10.0*(double)stats[i].sumPropAndConfl()/(double)stats[i].sumLitVisited);
         }
 
         cout << endl;
-    }
-}
-
-void Solver::dumpIndividualPropConflStats(
-    std::string name
-    , const vector<UsageStats>& stats
-    , const bool learnt
-) const {
-    //Generate file name
-    std::stringstream ss;
-    ss << "stats/propconflPERlitsvisited-stat-" << solveStats.nbReduceDB << "-"
-    << name << "-learnt-" << (int)learnt << ".txt";
-
-    //Open file
-    std::ofstream file(ss.str().c_str());
-    if (!file) {
-        cout << "Couldn't open file " << ss.str() << " for writing!" << endl;
-        exit(-1);
-    }
-
-    //Dump stats per-glue/size line-by-line
-    for(size_t i = 0; i < stats.size(); i++) {
-        if (stats[i].sumLitVisited == 0)
-            continue;
-
-        file
-        << i << "  "
-        << (double)stats[i].sumPropConfl/(double)stats[i].sumLitVisited
-        << endl;
-    }
-
-    //Generate file name
-    std::stringstream ss2;
-    ss2 << "stats/AVGpropconfl-stat-" << solveStats.nbReduceDB << "-"
-    << name << "-learnt-" << (int)learnt << ".txt";
-
-    //Open file
-    std::ofstream file2(ss2.str().c_str());
-    if (!file2) {
-        cout << "Couldn't open file " << ss2.str() << " for writing!" << endl;
-        exit(-1);
-    }
-
-    //Dump stats per glue/size line-by-line
-    for(size_t i = 0; i < stats.size(); i++) {
-        if (stats[i].num == 0)
-            continue;
-
-        file2
-        << i << "  "
-        << (double)stats[i].sumPropConfl/(double)stats[i].num
-        << endl;
     }
 }
 
@@ -1470,19 +1429,29 @@ void Solver::fullReduce()
         stats += sumClauseData(learnts, true);
 
         cout
-        << "c sum            lits visited: "
+        << "c sum   lits visit: "
         << std::setw(8) << stats.sumLitVisited/1000UL
-        << " K";
+        << "K";
 
         cout
-        << " sum cls visited: "
+        << " cls visit: "
         << std::setw(7) << stats.sumLookedAt/1000UL
-        << " K";
+        << "K";
 
         cout
-        << " sum prop&conf: "
-        << std::setw(6) << stats.sumPropConfl/1000UL
-        << " K"
+        << " prop: "
+        << std::setw(5) << stats.sumProp/1000UL
+        << "K";
+
+        cout
+        << " conf: "
+        << std::setw(5) << stats.sumConfl/1000UL
+        << "K";
+
+        cout
+        << " UIP used: "
+        << std::setw(5) << stats.sumUsedUIP/1000UL
+        << "K"
         << endl;
     }
 

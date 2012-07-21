@@ -974,7 +974,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         cl->shrink(origSize - learnt_clause.size());
         if (cl->learnt() && cl->stats.glue > glue)
             cl->stats.glue = glue;
-        cl->stats.numPropAndConfl += conf.rewardShortenedClauseWithPropConfl;
+        cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
     }
 
     //Attach new clause

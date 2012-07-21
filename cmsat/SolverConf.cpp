@@ -68,7 +68,7 @@ SolverConf::SolverConf() :
         , dumpClauseDistribPer(2000)
         , dumpClauseDistribMax(300)
         , doOTFSubsume     (true)
-        , rewardShortenedClauseWithPropConfl(10)
+        , rewardShortenedClauseWithConfl(10)
         , printFullStats   (false)
         , doRenumberVars   (true)
         , dominPickFreq    (5)

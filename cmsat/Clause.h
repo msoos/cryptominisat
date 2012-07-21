@@ -42,23 +42,31 @@ struct ClauseStats
     ClauseStats() :
         glue(std::numeric_limits<uint16_t>::max())
         , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
-        , numPropAndConfl(0)
+        , numProp(0)
+        , numConfl(0)
         , numLitVisited(0)
         , numLookedAt(0)
         , numUsedUIP(0)
     {}
 
+    uint32_t numPropAndConfl() const
+    {
+        return numProp + numConfl;
+    }
+
     //Stored data
     uint16_t glue;    ///<Clause glue
     uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
-    uint32_t numPropAndConfl; ///<Number of times caused propagation or conflict
+    uint32_t numProp; ///<Number of times caused propagation
+    uint32_t numConfl; ///<Number of times caused conflict
     uint32_t numLitVisited; ///<Number of literals visited
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
     uint32_t numUsedUIP; ///Number of times the claue was using during conflict generation
 
     void clearAfterReduceDB()
     {
-        numPropAndConfl = 0;
+        numProp = 0;
+        numConfl = 0;
         numLitVisited = 0;
         numLookedAt = 0;
         numUsedUIP = 0;
@@ -72,7 +80,8 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.conflictNumIntroduced = std::min(first.conflictNumIntroduced, second.conflictNumIntroduced);
-        ret.numPropAndConfl = first.numPropAndConfl + second.numPropAndConfl;
+        ret.numProp = first.numProp + second.numProp;
+        ret.numConfl = first.numConfl + second.numConfl;
         ret.numLitVisited = first.numLitVisited + second.numLitVisited;
         ret.numLookedAt = first.numLookedAt + second.numLookedAt;
         ret.numUsedUIP = first.numUsedUIP + second.numUsedUIP;
@@ -86,7 +95,8 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 
     os << "glue " << stats.glue << " ";
     os << "conflIntro " << stats.conflictNumIntroduced<< " ";
-    os << "numPropConfl " << stats.numPropAndConfl<< " ";
+    os << "numProp " << stats.numProp<< " ";
+    os << "numConfl " << stats.numConfl<< " ";
     os << "numLitVisit " << stats.numLitVisited<< " ";
     os << "numLook " << stats.numLookedAt<< " ";
     os << "numUsedUIP" << stats.numUsedUIP << " ";

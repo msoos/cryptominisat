@@ -85,7 +85,7 @@ class SolverConf
         int       dumpClauseDistribPer;
         int       dumpClauseDistribMax;
         int       doOTFSubsume;
-        int       rewardShortenedClauseWithPropConfl; //Shortened through OTF subsumption
+        int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
         int       printFullStats;
         bool      printAllRestarts;
         int       doRenumberVars;

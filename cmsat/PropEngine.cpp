@@ -315,8 +315,8 @@ PropResult PropEngine::propNormalClause(
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    c.stats.numPropAndConfl++;
     if (value(c[0]) == l_False) {
+
         confl = PropBy(offset);
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from ";
@@ -327,6 +327,7 @@ PropResult PropEngine::propNormalClause(
         #endif //VERBOSE_DEBUG_FULLPROP
 
         //Update stats
+        c.stats.numConfl++;
         if (c.learnt())
             lastConflictCausedBy = CONFL_BY_LONG_RED_CLAUSE;
         else
@@ -337,6 +338,7 @@ PropResult PropEngine::propNormalClause(
     } else {
 
         //Update stats
+        c.stats.numProp++;
         if (c.learnt())
             propStats.propsLongRed++;
         else

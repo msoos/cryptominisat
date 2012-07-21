@@ -640,14 +640,21 @@ class Solver : public Searcher
         {
             UsageStats() :
                 num(0)
-                , sumPropConfl(0)
+                , sumProp(0)
+                , sumConfl(0)
                 , sumLitVisited(0)
                 , sumLookedAt(0)
                 , sumUsedUIP(0)
             {}
 
+            uint64_t sumPropAndConfl() const
+            {
+                return sumProp + sumConfl;
+            }
+
             uint64_t num;
-            uint64_t sumPropConfl;
+            uint64_t sumProp;
+            uint64_t sumConfl;
             uint64_t sumLitVisited;
             uint64_t sumLookedAt;
             uint64_t sumUsedUIP;
@@ -655,7 +662,8 @@ class Solver : public Searcher
             UsageStats& operator+=(const UsageStats& other)
             {
                 num += other.num;
-                sumPropConfl += other.sumPropConfl;
+                sumProp += other.sumProp;
+                sumConfl += other.sumConfl;
                 sumLitVisited += other.sumLitVisited;
                 sumLookedAt += other.sumLookedAt;
                 sumUsedUIP += other.sumUsedUIP;
@@ -666,7 +674,8 @@ class Solver : public Searcher
             void addStat(const Clause& cl)
             {
                 num++;
-                sumPropConfl += cl.stats.numPropAndConfl;
+                sumProp += cl.stats.numProp;
+                sumConfl += cl.stats.numConfl;
                 sumLitVisited += cl.stats.numLitVisited;
                 sumLookedAt += cl.stats.numLookedAt;
                 sumUsedUIP += cl.stats.numUsedUIP;
@@ -686,12 +695,6 @@ class Solver : public Searcher
         void printPropConflStats(
             std::string name
             , const vector<UsageStats>& stats
-        ) const;
-
-        void dumpIndividualPropConflStats(
-            std::string name
-            , const vector<UsageStats>& stats
-            , const bool learnt
         ) const;
 
         vector<Lit> assumptions;
