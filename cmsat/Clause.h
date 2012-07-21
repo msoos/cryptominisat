@@ -45,6 +45,7 @@ struct ClauseStats
         , numPropAndConfl(0)
         , numLitVisited(0)
         , numLookedAt(0)
+        , numUsedUIP(0)
     {}
 
     //Stored data
@@ -53,6 +54,15 @@ struct ClauseStats
     uint32_t numPropAndConfl; ///<Number of times caused propagation or conflict
     uint32_t numLitVisited; ///<Number of literals visited
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
+    uint32_t numUsedUIP; ///Number of times the claue was using during conflict generation
+
+    void clearAfterReduceDB()
+    {
+        numPropAndConfl = 0;
+        numLitVisited = 0;
+        numLookedAt = 0;
+        numUsedUIP = 0;
+    }
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
     {

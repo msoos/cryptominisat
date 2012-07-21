@@ -538,9 +538,9 @@ class Solver : public Searcher
 
         ///////////////////////////
         // Clause cleaning
-        void        fullReduce();
-        void        clearPropConfl(vector<Clause*>& clauseset);
-        void        reduceDB();           ///<Reduce the set of learnt clauses.
+        void fullReduce();
+        void clearClauseStats(vector<Clause*>& clauseset);
+        void reduceDB();           ///<Reduce the set of learnt clauses.
         struct reduceDBStructGlue
         {
             bool operator () (const Clause* x, const Clause* y);
@@ -643,12 +643,14 @@ class Solver : public Searcher
                 , sumPropConfl(0)
                 , sumLitVisited(0)
                 , sumLookedAt(0)
+                , sumUsedUIP(0)
             {}
 
-            size_t num;
-            size_t sumPropConfl;
-            size_t sumLitVisited;
-            size_t sumLookedAt;
+            uint64_t num;
+            uint64_t sumPropConfl;
+            uint64_t sumLitVisited;
+            uint64_t sumLookedAt;
+            uint64_t sumUsedUIP;
 
             UsageStats& operator+=(const UsageStats& other)
             {
@@ -656,8 +658,18 @@ class Solver : public Searcher
                 sumPropConfl += other.sumPropConfl;
                 sumLitVisited += other.sumLitVisited;
                 sumLookedAt += other.sumLookedAt;
+                sumUsedUIP += other.sumUsedUIP;
 
                 return *this;
+            }
+
+            void addStat(const Clause& cl)
+            {
+                num++;
+                sumPropConfl += cl.stats.numPropAndConfl;
+                sumLitVisited += cl.stats.numLitVisited;
+                sumLookedAt += cl.stats.numLookedAt;
+                sumUsedUIP += cl.stats.numUsedUIP;
             }
         };
         void testAllClauseAttach() const;

@@ -738,7 +738,7 @@ bool Solver::reduceDBStructPropConfl::operator() (
     //No clause should be less than 3-long: 2&3-long are not removed
     assert(xsize > 2 && ysize > 2);
 
-    //First tie: numPropConfl -- notice the reversal of 1/0
+    //First tie: numPropAndConfl -- notice the reversal of 1/0
     //Larger is better --> should be last in the sorted list
     if (x->stats.numPropAndConfl > y->stats.numPropAndConfl) return 0;
     if (x->stats.numPropAndConfl < y->stats.numPropAndConfl) return 1;
@@ -1101,8 +1101,8 @@ end:
     //The algorithms above probably have changed the propagation&usage data
     //so let's clear it
     if (conf.doClearPropConfEveryClauseCleaning) {
-        clearPropConfl(clauses);
-        clearPropConfl(learnts);
+        clearClauseStats(clauses);
+        clearClauseStats(learnts);
     }
 
     solveStats.numSimplify++;
@@ -1221,8 +1221,8 @@ Solver::UsageStats Solver::sumClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
 ) const {
-    vector<UsageStats> usageStats;
-    vector<UsageStats> usageStatsGlue;
+    vector<UsageStats> perSizeStats;
+    vector<UsageStats> perGlueStats;
 
     //Reset stats
     UsageStats stats;
@@ -1242,32 +1242,23 @@ Solver::UsageStats Solver::sumClauseData(
             continue;
 
         //Sum stats
-        stats.num++;
-        stats.sumPropConfl += cl.stats.numPropAndConfl;
-        stats.sumLitVisited += cl.stats.numLitVisited;
-        stats.sumLookedAt += cl.stats.numLookedAt;
+        stats.addStat(cl);
 
         //Update size statistics
-        if (usageStats.size() < cl.size() + 1U)
-            usageStats.resize(cl.size()+1);
+        if (perSizeStats.size() < cl.size() + 1U)
+            perSizeStats.resize(cl.size()+1);
 
-        usageStats[clause_size].num++;
-        usageStats[clause_size].sumPropConfl += cl.stats.numPropAndConfl;
-        usageStats[clause_size].sumLitVisited += cl.stats.numLitVisited;
-        usageStats[clause_size].sumLookedAt += cl.stats.numLookedAt;
+        perSizeStats[clause_size].addStat(cl);
 
         //If learnt, sum up GLUE-based stats
         if (learnt) {
             const size_t glue = cl.stats.glue;
             assert(glue != std::numeric_limits<uint32_t>::max());
-            if (usageStatsGlue.size() < glue + 1) {
-                usageStatsGlue.resize(glue + 1);
+            if (perSizeStats.size() < glue + 1) {
+                perSizeStats.resize(glue + 1);
             }
 
-            usageStatsGlue[glue].num++;
-            usageStatsGlue[glue].sumPropConfl += cl.stats.numPropAndConfl;
-            usageStatsGlue[glue].sumLitVisited += cl.stats.numLitVisited;
-            usageStatsGlue[glue].sumLookedAt += cl.stats.numLookedAt;
+            perSizeStats[glue].addStat(cl);
         }
 
         //If lots of verbosity, print clause's individual stat
@@ -1282,6 +1273,7 @@ Solver::UsageStats Solver::sumClauseData(
             << " Props&confls: " << std::setw(10) << cl.stats.numPropAndConfl
             << " Lit visited: " << std::setw(10)<< cl.stats.numLitVisited
             << " Looked at: " << std::setw(10)<< cl.stats.numLookedAt
+            << " UIP used: " << std::setw(10)<< cl.stats.numUsedUIP
             << " Props&confls/Litsvisited*10: ";
             if (cl.stats.numLitVisited > 0) {
                 cout
@@ -1292,36 +1284,41 @@ Solver::UsageStats Solver::sumClauseData(
         }
     }
 
-    if (conf.verbosity >= 3) {
+    if (conf.verbosity >= 1) {
         //Print SUM stats
         if (learnt) {
-            cout << "c Learnt    ";
+            cout << "c red  ";
         } else {
-            cout << "c Non-learnt";
+            cout << "c irred";
         }
         cout
-        << " sum lits visited: "
+        << " sum lits visit: "
         << std::setw(8) << stats.sumLitVisited/1000UL
         << " K";
 
         cout
-        << " sum cls visited: "
+        << " sum cls visit: "
         << std::setw(7) << stats.sumLookedAt/1000UL
         << " K";
 
         cout
         << " sum prop&conf: "
-        << std::setw(6) << stats.sumPropConfl/1000UL
+        << std::setw(5) << stats.sumPropConfl/1000UL
+        << " K";
+
+        cout
+        << " sum UIP used: "
+        << std::setw(5) << stats.sumUsedUIP/1000UL
         << " K"
         << endl;
     }
 
     //Print more stats
     if (conf.verbosity >= 4) {
-        printPropConflStats("clause-len", usageStats);
+        printPropConflStats("clause-len", perSizeStats);
 
         if (learnt) {
-            printPropConflStats("clause-glue", usageStatsGlue);
+            printPropConflStats("clause-glue", perGlueStats);
         }
     }
 
@@ -1421,7 +1418,7 @@ void Solver::dumpIndividualPropConflStats(
     }
 }
 
-void Solver::clearPropConfl(vector<Clause*>& clauseset)
+void Solver::clearClauseStats(vector<Clause*>& clauseset)
 {
     //Clear prop&confl for normal clauses
     for(vector<Clause*>::iterator
@@ -1429,9 +1426,7 @@ void Solver::clearPropConfl(vector<Clause*>& clauseset)
         ; it != end
         ; it++
     ) {
-        (*it)->stats.numLitVisited = 0;
-        (*it)->stats.numPropAndConfl = 0;
-        (*it)->stats.numLookedAt = 0;
+        (*it)->stats.clearAfterReduceDB();
     }
 }
 
@@ -1499,8 +1494,8 @@ void Solver::fullReduce()
     consolidateMem();
 
     if (conf.doClearPropConfEveryClauseCleaning) {
-        clearPropConfl(clauses);
-        clearPropConfl(learnts);
+        clearClauseStats(clauses);
+        clearClauseStats(learnts);
     }
 
     nextCleanLimit += nextCleanLimitInc;

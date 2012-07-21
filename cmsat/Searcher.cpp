@@ -205,7 +205,8 @@ Clause* Searcher::analyze(
             }
 
             case clause_t : {
-                const Clause& cl = *clAllocator->getPointer(confl.getClause());
+                Clause& cl = *clAllocator->getPointer(confl.getClause());
+                cl.stats.numUsedUIP++;
                 for (size_t j = 0, size = cl.size(); j != size; j++) {
 
                     //This is the one that will be resolved out anyway, so just skip
