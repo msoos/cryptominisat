@@ -75,6 +75,7 @@ struct ClauseStats
         ret.numPropAndConfl = first.numPropAndConfl + second.numPropAndConfl;
         ret.numLitVisited = first.numLitVisited + second.numLitVisited;
         ret.numLookedAt = first.numLookedAt + second.numLookedAt;
+        ret.numUsedUIP = first.numUsedUIP + second.numUsedUIP;
 
         return ret;
     };
@@ -88,6 +89,7 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "numPropConfl " << stats.numPropAndConfl<< " ";
     os << "numLitVisit " << stats.numLitVisited<< " ";
     os << "numLook " << stats.numLookedAt<< " ";
+    os << "numUsedUIP" << stats.numUsedUIP << " ";
 
     return os;
 }
