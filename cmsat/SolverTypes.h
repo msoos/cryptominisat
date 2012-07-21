@@ -128,7 +128,7 @@ inline std::ostream& operator<<(std::ostream& cout, const std::vector<Lit>& lits
 class lbool
 {
     char     value;
-    explicit lbool(char v) : value(v) { }
+    explicit lbool(const char v) : value(v) { }
 
 public:
     lbool() :
