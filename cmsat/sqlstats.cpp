@@ -128,7 +128,7 @@ void SQLStats::getRandomID()
 
     //Can only be <8 bytes long, some PHP-related limit
     //Make it 6-byte long then (good chance to collide after 2^24 entries)
-    runID &= 0xffffffffffffULL;
+    runID &= 0xffffffffULL;
 
     if (ret != sizeof(runID)) {
         cout << "Couldn't read from /dev/urandom!" << endl;
