@@ -187,16 +187,32 @@ class Prober {
             void printShort() const
             {
                 cout
-                << "c"
+                << "c [probe]"
                 << " 0-depth assigns: " << zeroDepthAssigns
                 << " bsame: " << bothSameAdded
                 << " Flit: " << numFailed
-                << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
-                << "(" << std::setprecision(1) << (100.0*(double)numVisited/(double)(origNumFreeVars*2)) << "%)"
-                << " probed: " << numProbed
-                << " Bin:" << addedBin
-                << " RemBin:" << removedBin
 
+                // x2 because it's LITERAL visit
+                << " Visited: " << numVisited << "/" << (origNumFreeVars*2)
+                << "(" << std::setprecision(1)
+                << (100.0*(double)numVisited/(double)(origNumFreeVars*2))
+                << "%)"
+                << endl;
+
+                cout
+                << "c [probe]"
+                << " probed: " << numProbed
+                << "(" << std::setprecision(1)
+                // x2 because it's LITERAL probed
+                << (100.0*(double)numProbed/(double)(origNumFreeVars*2))
+                << "%)"
+
+                << " hyperBin:" << addedBin
+                << " transRed:" << removedBin
+                << endl;
+
+                cout
+                << "c [probe]"
                 << " P: " << std::fixed << std::setprecision(1)
                 << (double)(propStats.bogoProps)/1000000.0  << "M"
 

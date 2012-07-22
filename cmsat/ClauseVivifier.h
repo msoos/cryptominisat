@@ -168,9 +168,9 @@ class ClauseVivifier {
                     << std::setw(5) << type
                     << "-- "
                     << " cl tried " << std::setw(8) << tried
-                    << " cl-sh " << std::setw(7) << shrinked
-                    << " cl-rem " << std::setw(7) << numClSubsumed
-                    << " lit-rem " << std::setw(7) << numLitsRem
+                    << " cl-sh " << std::setw(5) << shrinked
+                    << " cl-rem " << std::setw(4) << numClSubsumed
+                    << " lit-rem " << std::setw(6) << numLitsRem
                     << " time-out " << (ranOutOfTime ? "Y" : "N")
                     << " time: " << cpu_time
                     << endl;
