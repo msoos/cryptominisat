@@ -250,6 +250,12 @@ void ClauseAllocator::clauseFree(Clause* c)
     //but it cannot be :(
 }
 
+void ClauseAllocator::clauseFree(ClOffset offset)
+{
+    Clause* cl = getPointer(offset);
+    clauseFree(cl);
+}
+
 struct ClauseSorter
 {
     bool operator()(const Clause* a, const Clause* b) {
@@ -414,8 +420,8 @@ void ClauseAllocator::consolidate(
         newDataStartsPointers[outerPart] += sizeNeeded;
     }
 
-    updatePointers(solver->longIrredCls);
-    updatePointers(solver->longRedCls);
+    updateOffsets(solver->longIrredCls);
+    updateOffsets(solver->longRedCls);
     updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
@@ -595,6 +601,16 @@ void ClauseAllocator::updateOffsets(vector<vec<Watched> >& watches)
 }
 
 /**
+@brief A dumb helper function to update offsets
+*/
+void ClauseAllocator::updateOffsets(vector<ClOffset>& clauses)
+{
+    for (uint32_t i = 0;  i < clauses.size(); i++) {
+        clauses[i] = ((NewPointerAndOffset*)(getPointer(clauses[i])))->newOffset;
+    }
+}
+
+/**
 @brief A dumb helper function to update pointers
 */
 template<class T>
@@ -604,16 +620,6 @@ void ClauseAllocator::updatePointers(vector<T*>& toUpdate)
         if (*it != NULL) {
             *it = (T*)(((NewPointerAndOffset*)(*it))->newPointer);
         }
-    }
-}
-
-/**
-@brief A dumb helper function to update pointers
-*/
-void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
-{
-    for (vector<Clause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
-        *it = (((NewPointerAndOffset*)(*it))->newPointer);
     }
 }
 

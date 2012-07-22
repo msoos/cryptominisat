@@ -35,11 +35,6 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
-{
-    return (x->size() > y->size());
-}
-
 ClauseVivifier::ClauseVivifier(Solver* _solver) :
     solver(_solver)
     , numCalls(0)
@@ -102,11 +97,7 @@ bool ClauseVivifier::vivifyClausesNormal()
     vector<Lit> lits;
     vector<Lit> unused;
 
-    if (solver->longIrredCls.size() < 1000000) {
-        //if too many clauses, random order will do perfectly well
-        std::sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), SortBySize());
-    }
-    //cout << "Time now: " << (cpuTime() - myTime) << endl;
+    cout << "c WARNING!! We didn't sort by clause size here" << endl;
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
@@ -114,9 +105,12 @@ bool ClauseVivifier::vivifyClausesNormal()
         && (solver->longIrredCls.size() < 50000))
         queueByBy = 1;
 
-    vector<Clause*>::iterator i, j;
+    vector<ClOffset>::iterator i, j;
     i = j = solver->longIrredCls.begin();
-    for (vector<Clause*>::iterator end = solver->longIrredCls.end(); i != end; i++) {
+    for (vector<ClOffset>::iterator end = solver->longIrredCls.end()
+        ; i != end
+        ; i++
+    ) {
         if (needToFinish) {
             *j++ = *i;
             continue;
@@ -133,16 +127,17 @@ bool ClauseVivifier::vivifyClausesNormal()
             needToFinish = true;
         }
 
-        Clause& c = **i;
-        extraDiff += c.size();
+        ClOffset offset = *i;
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+        extraDiff += cl.size();
         runStats.checkedClauses++;
 
-        assert(c.size() > 3);
-        assert(!c.learnt());
+        assert(cl.size() > 3);
+        assert(!cl.learnt());
 
         unused.clear();
-        lits.resize(c.size());
-        std::copy(c.begin(), c.end(), lits.begin());
+        lits.resize(cl.size());
+        std::copy(cl.begin(), cl.end(), lits.begin());
 
         bool failed = false;
         uint32_t done = 0;
@@ -170,9 +165,9 @@ bool ClauseVivifier::vivifyClausesNormal()
             uint32_t origSize = lits.size();
             #ifdef ASSYM_DEBUG
             cout << "Assym branch effective." << endl;
-            cout << "-- Orig clause:"; c.plainPrint();
+            cout << "-- Orig clause:"; cl.plainPrint();
             #endif
-            solver->detachClause(c);
+            solver->detachClause(cl);
 
             //Make 'lits' the size it should be
             lits.resize(done);
@@ -187,13 +182,13 @@ bool ClauseVivifier::vivifyClausesNormal()
             extraDiff += 20;
             //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
             runStats.numLitsRem += origSize - (c2 == NULL ? 0 : c2->size());
-            solver->clAllocator->clauseFree(&c);
+            solver->clAllocator->clauseFree(offset);
 
             if (c2 != NULL) {
                 #ifdef ASSYM_DEBUG
                 cout << "-- New clause:"; c2->plainPrint();
                 #endif
-                *j++ = c2;
+                *j++ = solver->clAllocator->getOffset(c2);
             }
 
             if (!solver->ok) needToFinish = true;
@@ -209,7 +204,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 }
 
 bool ClauseVivifier::vivifyClausesCache(
-    vector<Clause*>& clauses
+    vector<ClOffset>& clauses
     , bool learnt
     , bool alsoStrengthen
 ) {
@@ -232,9 +227,13 @@ bool ClauseVivifier::vivifyClausesCache(
     vector<char> seen_subs(solver->nVars()*2); //For subsumption
     bool needToFinish = false;
 
-    vector<Clause*>::iterator i = clauses.begin();
-    vector<Clause*>::iterator j = i;
-    for (vector<Clause*>::iterator end = clauses.end(); i != end; i++) {
+    vector<ClOffset>::iterator i = clauses.begin();
+    vector<ClOffset>::iterator j = i;
+    for (vector<ClOffset>::iterator
+        end = clauses.end()
+        ; i != end
+        ; i++
+    ) {
         //Check status
         if (needToFinish) {
             *j++ = *i;
@@ -246,7 +245,8 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Setup
-        Clause& cl = **i;
+        ClOffset offset = *i;
+        Clause& cl = *solver->clAllocator->getPointer(offset);
         assert(cl.size() > 3);
         countTime += cl.size()*2;
         tmpStats.tried++;
@@ -371,14 +371,14 @@ bool ClauseVivifier::vivifyClausesCache(
         solver->detachClause(cl);
         if (isSubsumed) {
             tmpStats.numClSubsumed++;
-            solver->clAllocator->clauseFree(&cl);
+            solver->clAllocator->clauseFree(offset);
         } else {
             tmpStats.shrinked++;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
-            solver->clAllocator->clauseFree(&cl);
+            solver->clAllocator->clauseFree(offset);
 
             if (c2 != NULL)
-                *j++ = c2;
+                *j++ = solver->clAllocator->getOffset(c2);
 
             if (!solver->ok)
                 needToFinish = true;

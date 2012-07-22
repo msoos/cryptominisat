@@ -25,6 +25,7 @@
 #include <vector>
 #include "constants.h"
 #include "SolverTypes.h"
+#include "ClOffset.h"
 using std::vector;
 
 class Solver;
@@ -231,16 +232,10 @@ class ClauseVivifier {
         //Actual algorithms used
         bool vivifyClausesNormal();
         bool vivifyClausesCache(
-            vector<Clause*>& clauses
+            vector<ClOffset>& clauses
             , bool learnt
             , bool alsoStrengthen
         );
-
-        ///Sort clauses according to size
-        struct SortBySize
-        {
-            bool operator () (const Clause* x, const Clause* y);
-        };
 
         //Working set
         Solver* solver;

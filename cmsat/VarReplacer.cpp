@@ -428,12 +428,12 @@ bool VarReplacer::replaceImplicit()
 /**
 @brief Replaces variables in normal clauses
 */
-bool VarReplacer::replace_set(vector<Clause*>& cs)
+bool VarReplacer::replace_set(vector<ClOffset>& cs)
 {
-    vector<Clause*>::iterator a = cs.begin();
-    vector<Clause*>::iterator r = a;
-    for (vector<Clause*>::iterator end = a + cs.size(); r != end; r++) {
-        Clause& c = **r;
+    vector<ClOffset>::iterator i = cs.begin();
+    vector<ClOffset>::iterator j = i;
+    for (vector<ClOffset>::iterator end = i + cs.size(); i != end; i++) {
+        Clause& c = *solver->clAllocator->getPointer(*i);
         assert(c.size() > 3);
 
         bool changed = false;
@@ -449,22 +449,22 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            solver->clAllocator->clauseFree(*r);
+            solver->clAllocator->clauseFree(*i);
             runStats.removedLongClauses++;
             if (!solver->ok) {
-                r++;
+                i++;
                 #ifdef VERBOSE_DEBUG
                 cout << "contradiction while replacing lits in normal clause" << endl;
                 #endif
-                for(;r != end; r++) solver->clAllocator->clauseFree(*r);
-                cs.resize(cs.size() - (r-a));
+                for(;i != end; i++) solver->clAllocator->clauseFree(*i);
+                cs.resize(cs.size() - (i-j));
                 return false;
             }
         } else {
-            *a++ = *r;
+            *j++ = *i;
         }
     }
-    cs.resize(cs.size() - (r-a));
+    cs.resize(cs.size() - (i-j));
 
     return solver->ok;
 }

@@ -191,7 +191,7 @@ class VarReplacer
     private:
         Solver* solver; ///<The solver we are working with
 
-        bool replace_set(vector<Clause*>& cs);
+        bool replace_set(vector<ClOffset>& cs);
         bool replaceImplicit();
         bool handleUpdatedClause(
             Clause& c

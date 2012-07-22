@@ -98,7 +98,6 @@ class Solver : public Searcher
 
         ///////////////////////////////////
         // State Dumping
-        const vector<Clause*>& getLongLearnts() const;  ///<Get all learnt clauses that are >2 long
         void  dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const;
         void  dumpLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
         void  dumpIrredClauses(std::ostream& os) const; ///<Dump (simplified) irredundant system
@@ -473,7 +472,6 @@ class Solver : public Searcher
         vector<uint32_t> backupActivity;
         vector<bool>     backupPolarity;
         uint32_t         backupActivityInc;
-        void printClauseStatsSQL(vector<Clause*> cls);
 
         /////////////////////
         // Objects that help us accomplish the task
@@ -530,24 +528,39 @@ class Solver : public Searcher
         // SAT solution verification
         bool verifyModel() const;                            ///<Verify model[]
         bool verifyBinClauses() const;                       ///<Verify model[] for binary clauses
-        bool verifyClauses(const vector<Clause*>& cs) const; ///<Verify model[] for normal clauses
+        bool verifyClauses(const vector<ClOffset>& cs) const; ///<Verify model[] for normal clauses
 
         ///////////////////////////
         // Clause cleaning
         void fullReduce();
-        void clearClauseStats(vector<Clause*>& clauseset);
+        void clearClauseStats(vector<ClOffset>& clauseset);
         void reduceDB();           ///<Reduce the set of learnt clauses.
         struct reduceDBStructGlue
         {
-            bool operator () (const Clause* x, const Clause* y);
+            reduceDBStructGlue(ClauseAllocator* _clAllocator) :
+                clAllocator(_clAllocator)
+            {}
+            ClauseAllocator* clAllocator;
+
+            bool operator () (const ClOffset x, const ClOffset y);
         };
         struct reduceDBStructSize
         {
-            bool operator () (const Clause* x, const Clause* y);
+            reduceDBStructSize(ClauseAllocator* _clAllocator) :
+                clAllocator(_clAllocator)
+            {}
+            ClauseAllocator* clAllocator;
+
+            bool operator () (const ClOffset x, const ClOffset y);
         };
         struct reduceDBStructPropConfl
         {
-            bool operator () (const Clause* x, const Clause* y);
+            reduceDBStructPropConfl(ClauseAllocator* _clAllocator) :
+                clAllocator(_clAllocator)
+            {}
+            ClauseAllocator* clAllocator;
+
+            bool operator () (const ClOffset x, const ClOffset y);
         };
 
         /////////////////////
@@ -575,8 +588,8 @@ class Solver : public Searcher
         // Clauses
         bool          addClauseHelper(vector<Lit>& ps);
         vector<char>        decisionVar;
-        vector<Clause*>     longIrredCls;          ///< List of problem clauses that are larger than 2
-        vector<Clause*>     longRedCls;          ///< List of learnt clauses.
+        vector<ClOffset>    longIrredCls;          ///< List of problem clauses that are larger than 2
+        vector<ClOffset>    longRedCls;          ///< List of learnt clauses.
         uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
         uint64_t            redLits;  ///< Number of literals in learnt clauses
         uint64_t            irredBins;
@@ -585,7 +598,7 @@ class Solver : public Searcher
         uint64_t            redTris;
         uint64_t            numNewBinsSinceSCC;
         void                reArrangeClauses();
-        void                reArrangeClause(Clause* clause);
+        void                reArrangeClause(ClOffset offset);
         void                checkLiteralCount() const;
         void                printAllClauses() const;
         void                consolidateMem();
@@ -676,14 +689,14 @@ class Solver : public Searcher
             }
         };
         void testAllClauseAttach() const;
-        bool normClauseIsAttached(const Clause& c) const;
+        bool normClauseIsAttached(const ClOffset offset) const;
         void findAllAttach() const;
-        bool findClause(const Clause* c) const;
+        bool findClause(const ClOffset offset) const;
         void checkNoWrongAttach() const;
         void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
         void printClauseSizeDistrib();
         UsageStats sumClauseData(
-            const vector<Clause*>& toprint
+            const vector<ClOffset>& toprint
             , bool learnt
         ) const;
         void printPropConflStats(
@@ -708,11 +721,6 @@ inline void Solver::unsetDecisionVar(const uint32_t var)
         numDecisionVars--;
         decisionVar[var] = false;
     }
-}
-
-inline const vector<Clause*>& Solver::getLongLearnts() const
-{
-    return longRedCls;
 }
 
 inline bool Solver::getNeedToDumpLearnts() const

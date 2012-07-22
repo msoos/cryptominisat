@@ -279,8 +279,13 @@ void GateFinder::clearIndexes()
 {
     //Clear gate definitions -- this will let us do more, because essentially
     //the other gates are not fully forgotten, so they don't bother us at all
-    for (uint32_t i = 0; i < solver->longIrredCls.size(); i++) {
-        solver->longIrredCls[i]->defOfOrGate = false;
+    for (vector<ClOffset>::iterator
+        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause* cl = solver->clAllocator->getPointer(*it);
+        cl->defOfOrGate = false;
     }
 
     //Clear gate statistics
@@ -424,7 +429,7 @@ size_t GateFinder::findEqOrGates()
 void GateFinder::findOrGates(const bool learntGatesToo)
 {
     //Goi through each clause
-    for (vector<Clause*>::iterator
+    for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
         ; it != end
         ; it++
@@ -437,11 +442,12 @@ void GateFinder::findOrGates(const bool learntGatesToo)
             break;
         }
 
+        const Clause& cl = *solver->clAllocator->getPointer(*it);
+
         //Clause removed
-        if ((*it)->freed())
+        if (cl.freed())
             continue;
 
-        const Clause& cl = **it;
         //If clause is larger than the cap on gate size, skip. Only for speed reasons.
         if (cl.size() > solver->conf.maxGateSize)
             continue;
@@ -670,10 +676,11 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             continue;
 
         subsumer->linkInClause(*cl2);
+        ClOffset offset2 = solver->clAllocator->getOffset(cl2);
         if (learnt)
-            solver->longRedCls.push_back(cl2);
+            solver->longRedCls.push_back(offset2);
         else
-            solver->longIrredCls.push_back(cl2);
+            solver->longIrredCls.push_back(offset2);
 
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -889,13 +896,14 @@ void GateFinder::treatAndGateClause(
     #endif
 
     //Create and link in new clause
-    Clause* c = solver->addClauseInt(lits, learnt, stats, false);
-    if (c != NULL) {
-        subsumer->linkInClause(*c);
+    Clause* clNew = solver->addClauseInt(lits, learnt, stats, false);
+    if (clNew != NULL) {
+        subsumer->linkInClause(*clNew);
+        ClOffset offsetNew = solver->clAllocator->getOffset(clNew);
         if (learnt)
-            solver->longRedCls.push_back(c);
+            solver->longRedCls.push_back(offsetNew);
         else
-            solver->longIrredCls.push_back(c);
+            solver->longIrredCls.push_back(offsetNew);
     }
 }
 

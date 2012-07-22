@@ -155,7 +155,7 @@ void ClauseCleaner::treatImplicitClauses()
     solver->checkImplicitStats();
 }
 
-void ClauseCleaner::cleanClauses(vector<Clause*>& cs)
+void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->qhead == solver->trail.size());
@@ -164,11 +164,8 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs)
     cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << endl;
     #endif //VERBOSE_DEBUG
 
-    vector<Clause*>::iterator s, ss, end;
+    vector<ClOffset>::iterator s, ss, end;
     for (s = ss = cs.begin(), end = cs.end();  s != end; s++) {
-        if (s+1 != end)
-            __builtin_prefetch(*(s+1));
-
         if (cleanClause(*s)) {
             solver->clAllocator->clauseFree(*s);
         } else {
@@ -182,18 +179,18 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs)
     #endif
 }
 
-inline bool ClauseCleaner::cleanClause(Clause*& cc)
+inline bool ClauseCleaner::cleanClause(ClOffset offset)
 {
-    Clause& c = *cc;
-    assert(c.size() > 3);
-    const uint32_t origSize = c.size();
+    Clause& cl = *solver->clAllocator->getPointer(offset);
+    assert(cl.size() > 3);
+    const uint32_t origSize = cl.size();
 
-    Lit origLit1 = c[0];
-    Lit origLit2 = c[1];
+    Lit origLit1 = cl[0];
+    Lit origLit2 = cl[1];
 
     Lit *i, *j, *end;
     uint32_t num = 0;
-    for (i = j = c.begin(), end = i + c.size();  i != end; i++, num++) {
+    for (i = j = cl.begin(), end = i + cl.size();  i != end; i++, num++) {
         lbool val = solver->value(*i);
         if (val == l_Undef) {
             *j++ = *i;
@@ -201,24 +198,24 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
         }
 
         if (val == l_True) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &c);
+            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
             return true;
         }
     }
-    c.shrink(i-j);
+    cl.shrink(i-j);
 
-    assert(c.size() > 1);
+    assert(cl.size() > 1);
     if (i != j) {
-        if (c.size() == 2) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &c);
-            solver->attachBinClause(c[0], c[1], c.learnt());
+        if (cl.size() == 2) {
+            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
+            solver->attachBinClause(cl[0], cl[1], cl.learnt());
             return true;
-        } else if (c.size() == 3) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &c);
-            solver->attachTriClause(c[0], c[1], c[2], c.learnt());
+        } else if (cl.size() == 3) {
+            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
             return true;
         } else {
-            if (c.learnt())
+            if (cl.learnt())
                 solver->redLits -= i-j;
             else
                 solver->irredLits -= i-j;
@@ -228,10 +225,10 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
     return false;
 }
 
-bool ClauseCleaner::satisfied(const Clause& c) const
+bool ClauseCleaner::satisfied(const Clause& cl) const
 {
-    for (uint32_t i = 0; i != c.size(); i++)
-        if (solver->value(c[i]) == l_True)
+    for (uint32_t i = 0; i != cl.size(); i++)
+        if (solver->value(cl[i]) == l_True)
             return true;
         return false;
 }

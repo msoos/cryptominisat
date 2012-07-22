@@ -420,9 +420,12 @@ bool Solver::addClause(const vector<Lit>& lits)
     if (!addClauseHelper(ps))
         return false;
 
-    Clause* c = addClauseInt(ps);
-    if (c != NULL)
-        longIrredCls.push_back(c);
+    Clause* cl = addClauseInt(ps);
+
+    if (cl != NULL) {
+        ClOffset offset = clAllocator->getOffset(cl);
+        longIrredCls.push_back(offset);
+    }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
     return ok;
@@ -438,38 +441,40 @@ bool Solver::addLearntClause(
     if (!addClauseHelper(ps))
         return false;
 
-    Clause* c = addClauseInt(ps, true, stats);
-    if (c != NULL)
-        longRedCls.push_back(c);
+    Clause* cl = addClauseInt(ps, true, stats);
+    if (cl != NULL) {
+        ClOffset offset = clAllocator->getOffset(cl);
+        longRedCls.push_back(offset);
+    }
 
     return ok;
 }
 
-void Solver::reArrangeClause(Clause* clause)
+void Solver::reArrangeClause(ClOffset offset)
 {
-    Clause& c = *clause;
-    assert(c.size() > 3);
-    if (c.size() == 3) return;
+    Clause& cl = *clAllocator->getPointer(offset);
+    assert(cl.size() > 3);
+    if (cl.size() == 3) return;
 
     //Change anything, but find the first two and assign them
     //accordingly at the ClauseData
-    const Lit lit1 = c[0];
-    const Lit lit2 = c[1];
+    const Lit lit1 = cl[0];
+    const Lit lit2 = cl[1];
     assert(lit1 != lit2);
 
-    std::sort(c.begin(), c.end(), PolaritySorter(varData));
+    std::sort(cl.begin(), cl.end(), PolaritySorter(varData));
 
     uint8_t foundDatas = 0;
-    for (uint16_t i = 0; i < c.size(); i++) {
-        if (c[i] == lit1) {
-            std::swap(c[i], c[0]);
+    for (uint16_t i = 0; i < cl.size(); i++) {
+        if (cl[i] == lit1) {
+            std::swap(cl[i], cl[0]);
             foundDatas++;
         }
     }
 
-    for (uint16_t i = 0; i < c.size(); i++) {
-        if (c[i] == lit2) {
-            std::swap(c[i], c[1]);
+    for (uint16_t i = 0; i < cl.size(); i++) {
+        if (cl[i] == lit2) {
+            std::swap(cl[i], cl[1]);
             foundDatas++;
         }
     }
@@ -611,13 +616,15 @@ void Solver::renumberVariables()
     //Update clauses
     //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < longIrredCls.size(); i++) {
-        updateLitsMap(*longIrredCls[i], outerToInter);
-        (*longIrredCls[i]).reCalcAbstraction();
+        Clause* cl = clAllocator->getPointer(longIrredCls[i]);
+        updateLitsMap(*cl, outerToInter);
+        cl->reCalcAbstraction();
     }
 
     for(size_t i = 0; i < longRedCls.size(); i++) {
-        updateLitsMap(*longRedCls[i], outerToInter);
-        (*longRedCls[i]).reCalcAbstraction();
+        Clause* cl = clAllocator->getPointer(longRedCls[i]);
+        updateLitsMap(*cl, outerToInter);
+        cl->reCalcAbstraction();
     }
 
     //Update sub-elements' vars
@@ -690,9 +697,13 @@ Var Solver::newVar(const bool dvar)
 
 /// @brief Sort clauses according to glues: large glues first
 bool Solver::reduceDBStructGlue::operator () (
-    const Clause* x
-    , const Clause* y
+    const ClOffset xOff
+    , const ClOffset yOff
 ) {
+    //Get their pointers
+    const Clause* x = clAllocator->getPointer(xOff);
+    const Clause* y = clAllocator->getPointer(yOff);
+
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
@@ -709,9 +720,13 @@ bool Solver::reduceDBStructGlue::operator () (
 
 /// @brief Sort clauses according to size: large sizes first
 bool Solver::reduceDBStructSize::operator () (
-    const Clause* x
-    , const Clause* y
+    const ClOffset xOff
+    , const ClOffset yOff
 ) {
+    //Get their pointers
+    const Clause* x = clAllocator->getPointer(xOff);
+    const Clause* y = clAllocator->getPointer(yOff);
+
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
@@ -728,9 +743,13 @@ bool Solver::reduceDBStructSize::operator () (
 
 /// @brief Sort clauses according to size: small prop+confl first
 bool Solver::reduceDBStructPropConfl::operator() (
-    const Clause* x
-    , const Clause* y
+    const ClOffset xOff
+    , const ClOffset yOff
 ) {
+    //Get their pointers
+    const Clause* x = clAllocator->getPointer(xOff);
+    const Clause* y = clAllocator->getPointer(yOff);
+
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
@@ -770,8 +789,9 @@ void Solver::reduceDB()
         //Reduce based on props&confls
         size_t i, j;
         for (i = j = 0; i < longRedCls.size(); i++) {
-            Clause* cl = longRedCls[i];
-            assert(longRedCls[i]->size() > 3);
+            ClOffset offset = longRedCls[i];
+            Clause* cl = clAllocator->getPointer(offset);
+            assert(cl->size() > 3);
             if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
@@ -790,10 +810,10 @@ void Solver::reduceDB()
 
                 //detach&free
                 detachClause(*cl);
-                clAllocator->clauseFree(cl);
+                clAllocator->clauseFree(offset);
 
             } else {
-                longRedCls[j++] = longRedCls[i];
+                longRedCls[j++] = offset;
             }
         }
         longRedCls.resize(longRedCls.size() -(i-j));
@@ -804,19 +824,19 @@ void Solver::reduceDB()
     switch (conf.clauseCleaningType) {
         case CLEAN_CLAUSES_GLUE_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructGlue());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructGlue(clAllocator));
             tmpStats.glueBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_SIZE_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructSize());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructSize(clAllocator));
             tmpStats.sizeBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_PROPCONFL_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructPropConfl());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructPropConfl(clAllocator));
             tmpStats.propConflBasedClean = 1;
             break;
     }
@@ -844,13 +864,10 @@ void Solver::reduceDB()
         ; i < longRedCls.size() && tmpStats.removedClauses < removeNum
         ; i++
     ) {
-        //Prefetch next clause
-        if (i+1 < longRedCls.size())
-            __builtin_prefetch(longRedCls[i+1], 0);
-
-        Clause *cl = longRedCls[i];
+        ClOffset offset = longRedCls[i];
+        Clause* cl = clAllocator->getPointer(offset);
         assert(cl->size() > 3);
-        if (longRedCls[i]->stats.glue > 2
+        if (cl->stats.glue > 2
             && cl->stats.numPropAndConfl() < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
         ) {
             //Stats
@@ -860,25 +877,27 @@ void Solver::reduceDB()
 
             //detach & free
             detachClause(*cl);
-            clAllocator->clauseFree(cl);
+            clAllocator->clauseFree(offset);
         } else {
             //Stats
             tmpStats.remainClauses++;
             tmpStats.remainClausesLits+= cl->size();
             tmpStats.remainClausesGlue += cl->stats.glue;
 
-            longRedCls[j++] = cl;
+            longRedCls[j++] = offset;
         }
     }
 
     //Count what is left
     for (; i < longRedCls.size(); i++) {
-        const Clause* cl = longRedCls[i];
+        ClOffset offset = longRedCls[i];
+        Clause* cl = clAllocator->getPointer(offset);
+
         tmpStats.remainClauses++;
         tmpStats.remainClausesLits+= cl->size();
         tmpStats.remainClausesGlue += cl->stats.glue;
 
-        longRedCls[j++] = longRedCls[i];
+        longRedCls[j++] = offset;
     }
 
     //Resize learnt datastruct
@@ -1209,7 +1228,8 @@ Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
         default:
             cl = clAllocator->Clause_new(lits, Searcher::sumConflicts());
             cl->makeLearnt(glue);
-            longRedCls.push_back(cl);
+            ClOffset offset = clAllocator->getOffset(cl);
+            longRedCls.push_back(offset);
             break;
     }
 
@@ -1217,7 +1237,7 @@ Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
 }
 
 Solver::UsageStats Solver::sumClauseData(
-    const vector<Clause*>& toprint
+    const vector<ClOffset>& toprint
     , const bool learnt
 ) const {
     vector<UsageStats> perSizeStats;
@@ -1226,14 +1246,15 @@ Solver::UsageStats Solver::sumClauseData(
     //Reset stats
     UsageStats stats;
 
-    for(vector<Clause*>::const_iterator
+    for(vector<ClOffset>::const_iterator
         it = toprint.begin()
         , end = toprint.end()
         ; it != end
         ; it++
     ) {
         //Clause data
-        const Clause& cl = **it;
+        ClOffset offset = *it;
+        Clause& cl = *clAllocator->getPointer(offset);
         const uint32_t clause_size = cl.size();
 
         //We have stats on this clause
@@ -1376,49 +1397,18 @@ void Solver::printPropConflStats(
     }
 }
 
-void Solver::clearClauseStats(vector<Clause*>& clauseset)
+void Solver::clearClauseStats(vector<ClOffset>& clauseset)
 {
     //Clear prop&confl for normal clauses
-    for(vector<Clause*>::iterator
+    for(vector<ClOffset>::iterator
         it = clauseset.begin(), end = clauseset.end()
         ; it != end
         ; it++
     ) {
-        (*it)->stats.clearAfterReduceDB();
+        Clause* cl = clAllocator->getPointer(*it);
+        cl->stats.clearAfterReduceDB();
     }
 }
-
-/*void Solver::printClauseStatsSQL(vector<Clause*> cls)
-{
-    for(vector<Clause*>::const_iterator
-        it = cls.begin(), end = cls.end()
-        ; it != end
-        ; it++
-    ) {
-        sqlFile
-        << "insert into `clauseStats`"
-        << "("
-        << " `runID`, `simplifications`, `reduceDB`"
-        << " , `learnt`, `size`, `glue`, `numPropAndConfl`, `numLitVisited`, `numLookedAt`"
-        << ")"
-        << " values ("
-        //Position
-        << "  " << getSolveStats().runID
-        << ", " << getSolveStats().numSimplify
-        << ", " << solveStats.nbReduceDB
-
-        //data
-        << ", " << (int)(*it)->learnt()
-        << ", " << (*it)->size()
-        << ", " << (*it)->stats.glue
-        << ", " << (*it)->stats.numPropAndConfl
-        << ", " << (*it)->stats.numLitVisited
-        << ", " << (*it)->stats.numLookedAt
-
-        //finish
-        << " );" << endl;
-    }
-}*/
 
 void Solver::fullReduce()
 {
@@ -1655,12 +1645,13 @@ void Solver::printClauseSizeDistrib()
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
-    for(vector<Clause*>::const_iterator
+    for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
         ; it++
     ) {
-        switch((*it)->size()) {
+        Clause* cl = clAllocator->getPointer(*it);
+        switch(cl->size()) {
             case 0:
             case 1:
             case 2:
@@ -1750,8 +1741,12 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     << "c --------------------" << endl
     << "c clauses from learnts" << endl
     << "c --------------------" << endl;
-    for (int i = longRedCls.size()-1; i >= 0 ; i--) {
-        Clause& cl = *longRedCls[i];
+    for (vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        const Clause& cl = *clAllocator->getPointer(*it);
         if (cl.size() <= maxSize) {
             os << cl << " 0" << endl;
             os
@@ -1829,13 +1824,14 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     << "c ---------------" << endl
     << "c normal clauses" << endl
     << "c ---------------" << endl;
-    for (vector<Clause*>::const_iterator
+    for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
         ; it++
     ) {
-        assert(!(*it)->learnt());
-        os << (**it) << " 0" << endl;
+        Clause* cl = clAllocator->getPointer(*it);
+        assert(!cl->learnt());
+        os << *cl << " 0" << endl;
     }
 
     os
@@ -1851,12 +1847,18 @@ void Solver::dumpIrredClauses(std::ostream& os) const
 
 void Solver::printAllClauses() const
 {
-    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
+    for(vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause* cl = clAllocator->getPointer(*it);
         cout
-        << "Normal clause offs " << clAllocator->getOffset(longIrredCls[i])
-        << " cl: " << *longIrredCls[i]
+        << "Normal clause offs " << *it
+        << " cl: " << *cl
         << endl;
     }
+
 
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
@@ -1908,7 +1910,7 @@ bool Solver::verifyBinClauses() const
     return true;
 }
 
-bool Solver::verifyClauses(const vector<Clause*>& cs) const
+bool Solver::verifyClauses(const vector<ClOffset>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking clauses whether they have been properly satisfied." << endl;;
@@ -1916,16 +1918,20 @@ bool Solver::verifyClauses(const vector<Clause*>& cs) const
 
     bool verificationOK = true;
 
-    for (uint32_t i = 0; i != cs.size(); i++) {
-        Clause& c = *cs[i];
-        for (uint32_t j = 0; j < c.size(); j++)
-            if (modelValue(c[j]) == l_True)
+    for (vector<ClOffset>::const_iterator
+        it = cs.begin(), end = cs.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *clAllocator->getPointer(*it);
+        for (uint32_t j = 0; j < cl.size(); j++)
+            if (modelValue(cl[j]) == l_True)
                 goto next;
 
-            cout << "unsatisfied clause: " << *cs[i] << endl;
+        cout << "unsatisfied clause: " << cl << endl;
         verificationOK = false;
         next:
-                ;
+        ;
     }
 
     return verificationOK;
@@ -1952,8 +1958,14 @@ void Solver::checkLiteralCount() const
 {
     // Check that sizes are calculated correctly:
     uint64_t cnt = 0;
-    for (uint32_t i = 0; i != longIrredCls.size(); i++)
-        cnt += longIrredCls[i]->size();
+    for(vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        const Clause* cl = clAllocator->getPointer(*it);
+        cnt += cl->size();
+    }
 
     if (irredLits != cnt) {
         cout << "c ERROR! literal count: " << irredLits << " , real value = " <<  cnt << endl;
@@ -1984,23 +1996,23 @@ void Solver::testAllClauseAttach() const
     return;
 #endif
 
-    for (vector<Clause*>::const_iterator
+    for (vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
         ; it++
     ) {
-        assert(normClauseIsAttached(**it));
+        assert(normClauseIsAttached(*it));
     }
 }
 
-bool Solver::normClauseIsAttached(const Clause& c) const
+bool Solver::normClauseIsAttached(const ClOffset offset) const
 {
     bool attached = true;
-    assert(c.size() > 3);
+    const Clause& cl = *clAllocator->getPointer(offset);
+    assert(cl.size() > 3);
 
-    ClOffset offset = clAllocator->getOffset(&c);
-    attached &= findWCl(watches[c[0].toInt()], offset);
-    attached &= findWCl(watches[c[1].toInt()], offset);
+    attached &= findWCl(watches[cl[0].toInt()], offset);
+    attached &= findWCl(watches[cl[1].toInt()], offset);
 
     return attached;
 }
@@ -2030,7 +2042,7 @@ void Solver::findAllAttach() const
             }
 
             //Clause in one of the lists
-            if (!findClause(cl)) {
+            if (!findClause(w.getOffset())) {
                 cout << "ERROR! did not find clause!" << endl;
             }
         }
@@ -2038,13 +2050,15 @@ void Solver::findAllAttach() const
 }
 
 
-bool Solver::findClause(const Clause* c) const
+bool Solver::findClause(const ClOffset offset) const
 {
     for (uint32_t i = 0; i < longIrredCls.size(); i++) {
-        if (longIrredCls[i] == c) return true;
+        if (longIrredCls[i] == offset)
+            return true;
     }
     for (uint32_t i = 0; i < longRedCls.size(); i++) {
-        if (longRedCls[i] == c) return true;
+        if (longRedCls[i] == offset)
+            return true;
     }
 
     return false;
@@ -2056,11 +2070,12 @@ void Solver::checkNoWrongAttach() const
     return;
     #endif //VERBOSE_DEBUG
 
-    for (vector<Clause*>::const_iterator
-        i = longRedCls.begin(), end = longRedCls.end()
-        ; i != end; i++
+    for (vector<ClOffset>::const_iterator
+        it = longRedCls.begin(), end = longRedCls.end()
+        ; it != end
+        ; it++
     ) {
-        const Clause& cl = **i;
+        const Clause& cl = *clAllocator->getPointer(*it);
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (i > 0) assert(cl[i-1].var() != cl[i].var());
         }
@@ -2257,12 +2272,12 @@ void Solver::checkStats(const bool allowFreed) const
 
     //Count number of non-learnt literals
     uint64_t numLitsNonLearnt = irredBins*2 + irredTris*3;
-    for(vector<Clause*>::const_iterator
+    for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
         ; it++
     ) {
-        const Clause& cl = **it;
+        const Clause& cl = *clAllocator->getPointer(*it);
         if (cl.freed()) {
             assert(allowFreed);
         } else {
@@ -2272,12 +2287,12 @@ void Solver::checkStats(const bool allowFreed) const
 
     //Count number of learnt literals
     uint64_t numLitsLearnt = redBins*2 + redTris*3;
-    for(vector<Clause*>::const_iterator
+    for(vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
         ; it++
     ) {
-        const Clause& cl = **it;
+        const Clause& cl = *clAllocator->getPointer(*it);
         if (cl.freed()) {
             assert(allowFreed);
         } else {

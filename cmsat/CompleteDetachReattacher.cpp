@@ -104,13 +104,14 @@ bool CompleteDetachReatacher::reattachLongs()
 
 May change solver->ok to FALSE (!)
 */
-void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
+void CompleteDetachReatacher::cleanAndAttachClauses(vector<ClOffset>& cs)
 {
-    vector<Clause*>::iterator i = cs.begin();
-    vector<Clause*>::iterator j = i;
-    for (vector<Clause*>::iterator end = cs.end(); i != end; i++) {
-        if (cleanClause(*i)) {
-            solver->attachClause(**i);
+    vector<ClOffset>::iterator i = cs.begin();
+    vector<ClOffset>::iterator j = i;
+    for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+        Clause* cl = solver->clAllocator->getPointer(*i);
+        if (cleanClause(cl)) {
+            solver->attachClause(*cl);
             *j++ = *i;
         } else {
             solver->clAllocator->clauseFree(*i);
@@ -122,7 +123,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
 /**
 @brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
 */
-bool CompleteDetachReatacher::cleanClause(Clause*& cl)
+bool CompleteDetachReatacher::cleanClause(Clause* cl)
 {
     Clause& ps = *cl;
     assert(ps.size() > 3);

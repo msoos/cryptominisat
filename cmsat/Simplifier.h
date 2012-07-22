@@ -432,13 +432,13 @@ private:
     bool propagate();
 
     //Start-up
-    uint64_t addFromSolver(vector<Clause*>& cs);
+    uint64_t addFromSolver(vector<ClOffset>& clauses);
     void setLimits();
     void performSubsumption();
     bool performStrengthening();
 
     //Finish-up
-    void addBackToSolver(vector<Clause*>& clauses);
+    void addBackToSolver(vector<ClOffset>& clauses);
     bool propImplicits();
     void removeAllLongs();
     void removeAssignedVarsFromEliminated();

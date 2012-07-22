@@ -34,8 +34,10 @@ class CalcDefPolars
         const vector<char> calculate();
 
     private:
-        void tallyVotes(const vector<Clause*>& cs, vector<double>& votes) const;
-        void tallyVotesBin(vector<double>& votes, const vector<vec<Watched> >& watched) const;
+        void tallyVotes(const vector<ClOffset>& cs);
+        void tallyVotesBinTri(const vector<vec<Watched> >& watched);
+
+        vector<double> votes;
 
         Solver* solver;
 };

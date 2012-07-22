@@ -46,8 +46,8 @@ class CompleteDetachReatacher
         void detachNonBinsNonTris();
 
     private:
-        void cleanAndAttachClauses(vector<Clause*>& cs);
-        bool cleanClause(Clause*& cl);
+        void cleanAndAttachClauses(vector<ClOffset>& cs);
+        bool cleanClause(Clause* cl);
 
         class ClausesStay {
             public:

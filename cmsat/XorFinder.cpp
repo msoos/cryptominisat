@@ -48,21 +48,24 @@ bool XorFinder::findXors()
     triedAlready.clear();
 
     size_t i = 0;
-    for (vector<Clause*>::iterator
+    for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin()
         , end = solver->longIrredCls.end()
         ; it != end
         ; it++, i++
     ) {
+        ClOffset offset = *it;
+        Clause* cl = solver->clAllocator->getPointer(offset);
+
         //Already freed
-        if ((*it)->freed())
+        if (cl->freed())
             continue;
 
         //Too large -> too expensive
-        if ((*it)->size() > solver->conf.maxXorToFind)
+        if (cl->size() > solver->conf.maxXorToFind)
             return solver->ok;
 
-        ClOffset offset = solver->clAllocator->getOffset(*it);
+
 
         //If not tried already, find an XOR with it
         if (triedAlready.find(offset) == triedAlready.end()) {

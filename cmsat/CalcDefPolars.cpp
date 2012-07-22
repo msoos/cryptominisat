@@ -37,24 +37,31 @@ CalcDefPolars::CalcDefPolars(Solver* _solver) :
 @p votes[inout] Votes are tallied at this place for each variable
 @p cs The clause to tally votes for
 */
-void CalcDefPolars::tallyVotes(const vector<Clause*>& cs, vector<double>& votes) const
+void CalcDefPolars::tallyVotes(const vector<ClOffset>& cs)
 {
-    for (vector<Clause*>::const_iterator it = cs.begin(), end = it + cs.size(); it != end; it++) {
-        const Clause& c = **it;
-        if (c.learnt()) continue;
+    for (vector<ClOffset>::const_iterator
+        it = cs.begin(), end = it + cs.size()
+        ; it != end
+        ; it++
+    ) {
+        const Clause& cl = *solver->clAllocator->getPointer(*it);
+
+        //Only count non-learnt
+        if (cl.learnt())
+            continue;
 
         double divider;
-        if (c.size() > 63) divider = 0.0;
-        else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
+        if (cl.size() > 63) divider = 0.0;
+        else divider = 1.0/(double)((uint64_t)1<<(cl.size()-1));
 
-        for (const Lit *it2 = c.begin(), *end2 = c.end(); it2 != end2; it2++) {
+        for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
             if (it2->sign()) votes[it2->var()] += divider;
             else votes[it2->var()] -= divider;
         }
     }
 }
 
-void CalcDefPolars::tallyVotesBin(vector<double>& votes, const vector<vec<Watched> >& watches) const
+void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
 {
     size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
@@ -65,15 +72,37 @@ void CalcDefPolars::tallyVotesBin(vector<double>& votes, const vector<vec<Watche
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->lit1().toInt()) {
-                if (!it2->learnt()) {
-                    if (lit.sign()) votes[lit.var()] += 0.5;
-                    else votes[lit.var()] -= 0.5;
 
-                    Lit lit2 = it2->lit1();
-                    if (lit2.sign()) votes[lit2.var()] += 0.5;
-                    else votes[lit2.var()] -= 0.5;
-                }
+            //Only count bins once
+            if (it2->isBinary()
+                && lit.toInt() < it2->lit1().toInt()
+                && !it2->learnt()
+            ) {
+
+                if (lit.sign()) votes[lit.var()] += 0.5;
+                else votes[lit.var()] -= 0.5;
+
+                Lit lit2 = it2->lit1();
+                if (lit2.sign()) votes[lit2.var()] += 0.5;
+                else votes[lit2.var()] -= 0.5;
+            }
+
+            //Only count TRI-s once
+            if (it2->isTri()
+                && lit.toInt() < it2->lit1().toInt()
+                && it2->lit1().toInt() < it2->lit2().toInt()
+                && it2->learnt()
+            ) {
+                if (lit.sign()) votes[lit.var()] += 0.3;
+                else votes[lit.var()] -= 0.3;
+
+                Lit lit2 = it2->lit1();
+                if (lit2.sign()) votes[lit2.var()] += 0.3;
+                else votes[lit2.var()] -= 0.3;
+
+                Lit lit3 = it2->lit2();
+                if (lit3.sign()) votes[lit3.var()] += 0.3;
+                else votes[lit3.var()] -= 0.3;
             }
         }
     }
@@ -90,13 +119,14 @@ const vector<char> CalcDefPolars::calculate()
     assert(solver->decisionLevel() == 0);
 
     //Setup
+    votes.clear();
+    votes.resize(solver->nVars(), 0.0);
     vector<char> ret(solver->nVars(), 0);
-    vector<double> votes(solver->nVars(), 0.0);
     const double myTime = cpuTime();
 
     //Tally votes
-    tallyVotes(solver->longIrredCls, votes);
-    tallyVotesBin(votes, solver->watches);
+    tallyVotes(solver->longIrredCls);
+    tallyVotesBinTri(solver->watches);
 
     //Set polarity according to tally
     uint32_t posPolars = 0;

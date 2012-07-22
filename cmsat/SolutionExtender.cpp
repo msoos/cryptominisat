@@ -60,11 +60,18 @@ void SolutionExtender::extend()
     //Sanity check
     solver->simplifier->checkElimedUnassignedAndStats();
 
-    for (vector<Clause*>::iterator it = solver->longIrredCls.begin(), end = solver->longIrredCls.end(); it != end; it++) {
-        Clause& cl = **it;
+    for (vector<ClOffset>::iterator
+        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *solver->clAllocator->getPointer(*it);
         assert(!cl.learnt());
+
+        //Add clause to our local system
         vector<Lit> tmp;
-        for (uint32_t i = 0; i < cl.size(); i++) tmp.push_back(cl[i]);
+        for (uint32_t i = 0; i < cl.size(); i++)
+            tmp.push_back(cl[i]);
         const bool OK = addClause(tmp);
         assert(OK);
     }

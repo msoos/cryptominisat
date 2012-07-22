@@ -74,6 +74,7 @@ class ClauseAllocator {
         }
 
         void clauseFree(Clause* c); ///Frees memory and associated clause number
+        void clauseFree(ClOffset offset);
 
         void consolidate(
             Solver* solver
@@ -91,6 +92,7 @@ class ClauseAllocator {
         void updatePointers(vector<Clause*>& toUpdate);
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
         void updateOffsets(vector<vec<Watched> >& watches);
+        void updateOffsets(vector<ClOffset>& clauses);
 
         void checkGoodPropBy(const Solver* solver);
 
