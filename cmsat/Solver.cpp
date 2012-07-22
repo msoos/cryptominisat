@@ -598,7 +598,7 @@ void Solver::renumberVariables()
     updateArray(backupActivity, interToOuter);
     updateArray(candidateForBothProp, interToOuter);
     updateArray(backupPolarity, interToOuter);
-    updateArray(decision_var, interToOuter);
+    updateArray(decisionVar, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     updateLitsMap(assumptions, outerToInter);
 
@@ -667,11 +667,11 @@ void Solver::renumberVariables()
 
 Var Solver::newVar(const bool dvar)
 {
-    const Var var = decision_var.size();
+    const Var var = decisionVar.size();
 
     outerToInterMain.push_back(var);
     interToOuterMain.push_back(var);
-    decision_var.push_back(dvar);
+    decisionVar.push_back(dvar);
     numDecisionVars += dvar;
 
     implCache.addNew();
@@ -686,7 +686,7 @@ Var Solver::newVar(const bool dvar)
     varReplacer->newVar();
     subsumer->newVar();
 
-    return decision_var.size()-1;
+    return decisionVar.size()-1;
 }
 
 /// @brief Sort clauses according to glues: large glues first
@@ -1131,7 +1131,7 @@ void Solver::calcReachability()
         const Var var = lit.var();
         if (value(var) != l_Undef
             || varData[var].elimed != ELIMED_NONE
-            || !decision_var[var]
+            || !decisionVar[var]
         ) continue;
 
         //See where setting this lit leads to
@@ -1180,7 +1180,7 @@ void Solver::calcReachability()
         //Variable is not used
         if (varData[var].elimed != ELIMED_NONE
             || value(var) != l_Undef
-            || !decision_var[var]
+            || !decisionVar[var]
         )
             continue;
 

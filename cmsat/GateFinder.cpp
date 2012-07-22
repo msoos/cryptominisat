@@ -108,12 +108,12 @@ end:
             continue;
 
         if (solver->value(var1) != l_Undef
-            || !solver->decision_var[var1]
+            || !solver->decisionVar[var1]
             || solver->varData[var1].elimed != ELIMED_NONE
             ) continue;
 
         if (solver->value(var2) != l_Undef
-            || !solver->decision_var[var2]
+            || !solver->decisionVar[var2]
             || solver->varData[var2].elimed != ELIMED_NONE
             ) continue;
 

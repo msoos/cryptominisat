@@ -579,7 +579,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool          addClauseHelper(vector<Lit>& ps);
-        vector<char>        decision_var;
+        vector<char>        decisionVar;
         vector<Clause*>     clauses;          ///< List of problem clauses that are larger than 2
         vector<Clause*>     learnts;          ///< List of learnt clauses.
         uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
@@ -702,17 +702,17 @@ class Solver : public Searcher
 
 inline void Solver::setDecisionVar(const uint32_t var)
 {
-    if (!decision_var[var]) {
+    if (!decisionVar[var]) {
         numDecisionVars++;
-        decision_var[var] = true;
+        decisionVar[var] = true;
     }
 }
 
 inline void Solver::unsetDecisionVar(const uint32_t var)
 {
-    if (decision_var[var]) {
+    if (decisionVar[var]) {
         numDecisionVars--;
-        decision_var[var] = false;
+        decisionVar[var] = false;
     }
 }
 

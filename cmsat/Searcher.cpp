@@ -1351,7 +1351,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
-        if (solver->decision_var[var]
+        if (solver->decisionVar[var]
             && value(var) == l_Undef
         ) {
             insertVarOrder(var);
@@ -1555,7 +1555,7 @@ Lit Searcher::pickBranchLit()
     ) {
         const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
         if (value(next_var) == l_Undef
-            && solver->decision_var[next_var]
+            && solver->decisionVar[next_var]
         ) {
             stats.decisionsRand++;
             next = Lit(next_var, !pickPolarity(next_var));
@@ -1565,7 +1565,7 @@ Lit Searcher::pickBranchLit()
     // Activity based decision:
     while (next == lit_Undef
       || value(next.var()) != l_Undef
-      || !solver->decision_var[next.var()]
+      || !solver->decisionVar[next.var()]
     ) {
         //There is no more to branch on. Satisfying assignment found.
         if (order_heap.empty()) {
@@ -1588,7 +1588,7 @@ Lit Searcher::pickBranchLit()
         const Lit lit2 = solver->litReachable[next.toInt()].lit;
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
-            && solver->decision_var[lit2.var()]
+            && solver->decisionVar[lit2.var()]
         ) {
             //insert this one back, just in case the litReachable isn't entirely correct
             //which would be a MAJOR bug, btw
@@ -1608,7 +1608,7 @@ Lit Searcher::pickBranchLit()
     }
     #endif
 
-    assert(next == lit_Undef || solver->decision_var[next.var()]);
+    assert(next == lit_Undef || solver->decisionVar[next.var()]);
     return next;
 }
 
@@ -1702,7 +1702,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 void Searcher::insertVarOrder(const Var x)
 {
     if (!order_heap.inHeap(x)
-        && solver->decision_var[x]
+        && solver->decisionVar[x]
     ) {
         order_heap.insert(x);
     }
@@ -1710,7 +1710,7 @@ void Searcher::insertVarOrder(const Var x)
 
 bool Searcher::VarFilter::operator()(uint32_t var) const
 {
-    return (cc->value(var) == l_Undef && solver->decision_var[var]);
+    return (cc->value(var) == l_Undef && solver->decisionVar[var]);
 }
 
 void Searcher::setNeedToInterrupt()

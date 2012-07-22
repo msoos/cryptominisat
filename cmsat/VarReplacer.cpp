@@ -117,8 +117,8 @@ bool VarReplacer::performReplace()
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
-        solver->decision_var[var] =  false;
-        solver->decision_var[it->var()] = true;
+        solver->decisionVar[var] =  false;
+        solver->decisionVar[it->var()] = true;
 
         //Update activities. Top receives activities of the ones below
         uint32_t& activity1 = solver->activities[var];
