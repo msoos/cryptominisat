@@ -60,7 +60,7 @@ void SolutionExtender::extend()
     //Sanity check
     solver->subsumer->checkElimedUnassignedAndStats();
 
-    for (vector<Clause*>::iterator it = solver->clauses.begin(), end = solver->clauses.end(); it != end; it++) {
+    for (vector<Clause*>::iterator it = solver->longIrredCls.begin(), end = solver->longIrredCls.end(); it != end; it++) {
         Clause& cl = **it;
         assert(!cl.learnt());
         vector<Lit> tmp;

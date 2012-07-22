@@ -279,8 +279,8 @@ void GateFinder::clearIndexes()
 {
     //Clear gate definitions -- this will let us do more, because essentially
     //the other gates are not fully forgotten, so they don't bother us at all
-    for (uint32_t i = 0; i < solver->clauses.size(); i++) {
-        solver->clauses[i]->defOfOrGate = false;
+    for (uint32_t i = 0; i < solver->longIrredCls.size(); i++) {
+        solver->longIrredCls[i]->defOfOrGate = false;
     }
 
     //Clear gate statistics
@@ -425,7 +425,7 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 {
     //Goi through each clause
     for (vector<Clause*>::iterator
-        it = solver->clauses.begin(), end = solver->clauses.end()
+        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
         ; it != end
         ; it++
     ) {
@@ -673,7 +673,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         if (learnt)
             solver->learnts.push_back(cl2);
         else
-            solver->clauses.push_back(cl2);
+            solver->longIrredCls.push_back(cl2);
 
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -895,7 +895,7 @@ void GateFinder::treatAndGateClause(
         if (learnt)
             solver->learnts.push_back(c);
         else
-            solver->clauses.push_back(c);
+            solver->longIrredCls.push_back(c);
     }
 }
 

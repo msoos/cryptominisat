@@ -414,7 +414,7 @@ void ClauseAllocator::consolidate(
         newDataStartsPointers[outerPart] += sizeNeeded;
     }
 
-    updatePointers(solver->clauses);
+    updatePointers(solver->longIrredCls);
     updatePointers(solver->learnts);
     updateAllOffsetsAndPointers(solver);
 

@@ -464,7 +464,7 @@ void SQLStats::restart(
     //Clause stats
     stmtRst.numIrredBins  = solver->irredBins;
     stmtRst.numIrredTris  = solver->irredTris;
-    stmtRst.numIrredLongs = solver->clauses.size();
+    stmtRst.numIrredLongs = solver->longIrredCls.size();
     stmtRst.numIrredLits  = solver->irredLits;
     stmtRst.numRedBins    = solver->redBins;
     stmtRst.numRedTris    = solver->redTris;

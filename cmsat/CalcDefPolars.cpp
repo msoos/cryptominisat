@@ -95,7 +95,7 @@ const vector<char> CalcDefPolars::calculate()
     const double myTime = cpuTime();
 
     //Tally votes
-    tallyVotes(solver->clauses, votes);
+    tallyVotes(solver->longIrredCls, votes);
     tallyVotesBin(votes, solver->watches);
 
     //Set polarity according to tally

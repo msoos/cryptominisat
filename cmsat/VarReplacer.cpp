@@ -163,7 +163,7 @@ bool VarReplacer::performReplace()
     if (!solver->ok)
         goto end;
 
-    if (!replace_set(solver->clauses)) goto end;
+    if (!replace_set(solver->longIrredCls)) goto end;
     if (!replace_set(solver->learnts)) goto end;
 
     solver->testAllClauseAttach();

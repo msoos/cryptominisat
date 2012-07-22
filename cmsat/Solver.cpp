@@ -54,7 +54,6 @@ Solver::Solver(const SolverConf& _conf) :
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
-    , numCallReachCalc(0)
 
     //Stats on implicit clauses and all literal
     , irredLits(0)
@@ -423,7 +422,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     Clause* c = addClauseInt(ps);
     if (c != NULL)
-        clauses.push_back(c);
+        longIrredCls.push_back(c);
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
     return ok;
@@ -484,8 +483,8 @@ void Solver::reArrangeClauses()
     assert(qhead == trail.size());
 
     double myTime = cpuTime();
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        reArrangeClause(clauses[i]);
+    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
+        reArrangeClause(longIrredCls[i]);
     }
     for (uint32_t i = 0; i < learnts.size(); i++) {
         reArrangeClause(learnts[i]);
@@ -611,9 +610,9 @@ void Solver::renumberVariables()
 
     //Update clauses
     //Clauses' abstractions have to be re-calculated
-    for(size_t i = 0; i < clauses.size(); i++) {
-        updateLitsMap(*clauses[i], outerToInter);
-        (*clauses[i]).reCalcAbstraction();
+    for(size_t i = 0; i < longIrredCls.size(); i++) {
+        updateLitsMap(*longIrredCls[i], outerToInter);
+        (*longIrredCls[i]).reCalcAbstraction();
     }
 
     for(size_t i = 0; i < learnts.size(); i++) {
@@ -1101,7 +1100,7 @@ end:
     //The algorithms above probably have changed the propagation&usage data
     //so let's clear it
     if (conf.doClearStatEveryClauseCleaning) {
-        clearClauseStats(clauses);
+        clearClauseStats(longIrredCls);
         clearClauseStats(learnts);
     }
 
@@ -1118,7 +1117,7 @@ end:
 
 void Solver::calcReachability()
 {
-    numCallReachCalc++;
+    solveStats.numCallReachCalc++;
     ReachabilityStats tmpStats;
     const double myTime = cpuTime();
 
@@ -1425,7 +1424,7 @@ void Solver::fullReduce()
 {
     if (conf.verbosity >= 1) {
         UsageStats stats;
-        stats += sumClauseData(clauses, false);
+        stats += sumClauseData(longIrredCls, false);
         stats += sumClauseData(learnts, true);
 
         cout
@@ -1463,7 +1462,7 @@ void Solver::fullReduce()
     consolidateMem();
 
     if (conf.doClearStatEveryClauseCleaning) {
-        clearClauseStats(clauses);
+        clearClauseStats(longIrredCls);
         clearClauseStats(learnts);
     }
 
@@ -1656,7 +1655,11 @@ void Solver::printClauseSizeDistrib()
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
-    for(vector<Clause*>::const_iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
+    for(vector<Clause*>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
         switch((*it)->size()) {
             case 0:
             case 1:
@@ -1779,7 +1782,7 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     numClauses += countNumBinClauses(false, true);
 
     //normal clauses
-    numClauses += clauses.size();
+    numClauses += longIrredCls.size();
 
     //previously eliminated clauses
     const vector<BlockedClause>& blockedClauses = subsumer->getBlockedClauses();
@@ -1826,9 +1829,13 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     << "c ---------------" << endl
     << "c normal clauses" << endl
     << "c ---------------" << endl;
-    for (vector<Clause*>::const_iterator i = clauses.begin(); i != clauses.end(); i++) {
-        assert(!(*i)->learnt());
-        os << (**i) << " 0" << endl;
+    for (vector<Clause*>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        assert(!(*it)->learnt());
+        os << (**it) << " 0" << endl;
     }
 
     os
@@ -1844,10 +1851,11 @@ void Solver::dumpIrredClauses(std::ostream& os) const
 
 void Solver::printAllClauses() const
 {
-    for (uint32_t i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
         cout
-                << "Normal clause num " << clAllocator->getOffset(clauses[i])
-                << " cl: " << *clauses[i] << endl;
+        << "Normal clause offs " << clAllocator->getOffset(longIrredCls[i])
+        << " cl: " << *longIrredCls[i]
+        << endl;
     }
 
     uint32_t wsLit = 0;
@@ -1863,7 +1871,7 @@ void Solver::printAllClauses() const
             if (it2->isBinary()) {
                 cout << "Binary clause part: " << lit << " , " << it2->lit1() << endl;
             } else if (it2->isClause()) {
-                cout << "Normal clause num " << it2->getOffset() << endl;
+                cout << "Normal clause offs " << it2->getOffset() << endl;
             } else if (it2->isTri()) {
                 cout << "Tri clause:"
                 << lit << " , "
@@ -1926,13 +1934,13 @@ bool Solver::verifyClauses(const vector<Clause*>& cs) const
 bool Solver::verifyModel() const
 {
     bool verificationOK = true;
-    verificationOK &= verifyClauses(clauses);
+    verificationOK &= verifyClauses(longIrredCls);
     verificationOK &= verifyClauses(learnts);
     verificationOK &= verifyBinClauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
         cout
-        << "c Verified " <<  clauses.size() << " clauses."
+        << "c Verified " << longIrredCls.size() << " clauses."
         << endl;
     }
 
@@ -1944,8 +1952,8 @@ void Solver::checkLiteralCount() const
 {
     // Check that sizes are calculated correctly:
     uint64_t cnt = 0;
-    for (uint32_t i = 0; i != clauses.size(); i++)
-        cnt += clauses[i]->size();
+    for (uint32_t i = 0; i != longIrredCls.size(); i++)
+        cnt += longIrredCls[i]->size();
 
     if (irredLits != cnt) {
         cout << "c ERROR! literal count: " << irredLits << " , real value = " <<  cnt << endl;
@@ -1976,7 +1984,11 @@ void Solver::testAllClauseAttach() const
     return;
 #endif
 
-    for (vector<Clause*>::const_iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
+    for (vector<Clause*>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
         assert(normClauseIsAttached(**it));
     }
 }
@@ -2028,8 +2040,8 @@ void Solver::findAllAttach() const
 
 bool Solver::findClause(const Clause* c) const
 {
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i] == c) return true;
+    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
+        if (longIrredCls[i] == c) return true;
     }
     for (uint32_t i = 0; i < learnts.size(); i++) {
         if (learnts[i] == c) return true;
@@ -2079,12 +2091,12 @@ uint32_t Solver::getNumFreeVarsAdv(size_t trail_size_of_thread) const
 
 void Solver::printClauseStats()
 {
-    if (clauses.size() > 20000) {
+    if (longIrredCls.size() > 20000) {
         cout
-        << " " << std::setw(4) << clauses.size()/1000 << "K";
+        << " " << std::setw(4) << longIrredCls.size()/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << clauses.size();
+        << " " << std::setw(5) << longIrredCls.size();
     }
 
     if (irredTris > 20000) {
@@ -2107,7 +2119,7 @@ void Solver::printClauseStats()
     << " " << std::setw(4) << std::fixed << std::setprecision(1);
 
     cout
-    << (double)(irredLits - irredBins*2)/(double)(clauses.size() + irredTris);
+    << (double)(irredLits - irredBins*2)/(double)(longIrredCls.size() + irredTris);
 
     if (learnts.size() > 20000) {
         cout
@@ -2246,7 +2258,7 @@ void Solver::checkStats(const bool allowFreed) const
     //Count number of non-learnt literals
     uint64_t numLitsNonLearnt = irredBins*2 + irredTris*3;
     for(vector<Clause*>::const_iterator
-        it = clauses.begin(), end = clauses.end()
+        it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
         ; it++
     ) {

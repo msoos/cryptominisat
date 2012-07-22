@@ -60,7 +60,7 @@ inline void ClauseCleaner::removeAndCleanAll()
 {
     double myTime = cpuTime();
     treatImplicitClauses();
-    cleanClauses(solver->clauses);
+    cleanClauses(solver->longIrredCls);
     cleanClauses(solver->learnts);
 
 #ifndef NDEBUG

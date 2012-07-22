@@ -49,8 +49,8 @@ bool XorFinder::findXors()
 
     size_t i = 0;
     for (vector<Clause*>::iterator
-        it = solver->clauses.begin()
-        , end = solver->clauses.end()
+        it = solver->longIrredCls.begin()
+        , end = solver->longIrredCls.end()
         ; it != end
         ; it++, i++
     ) {

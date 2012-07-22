@@ -53,9 +53,9 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     #endif //VERBOSE_DEBUG
     numCalls++;
 
-    solver->clauseCleaner->cleanClauses(solver->clauses);
+    solver->clauseCleaner->cleanClauses(solver->longIrredCls);
 
-    if (!vivifyClausesCache(solver->clauses, false, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longIrredCls, false, alsoStrengthen))
         goto end;
 
     if (!vivifyClausesCache(solver->learnts, true, alsoStrengthen))
@@ -97,26 +97,26 @@ bool ClauseVivifier::vivifyClausesNormal()
     uint64_t extraDiff = 0;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     bool needToFinish = false;
-    runStats.potentialClauses = solver->clauses.size();
+    runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
     vector<Lit> lits;
     vector<Lit> unused;
 
-    if (solver->clauses.size() < 1000000) {
+    if (solver->longIrredCls.size() < 1000000) {
         //if too many clauses, random order will do perfectly well
-        std::sort(solver->clauses.begin(), solver->clauses.end(), SortBySize());
+        std::sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), SortBySize());
     }
     //cout << "Time now: " << (cpuTime() - myTime) << endl;
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
         && (solver->irredLits + solver->redLits < 4000000)
-        && (solver->clauses.size() < 50000))
+        && (solver->longIrredCls.size() < 50000))
         queueByBy = 1;
 
     vector<Clause*>::iterator i, j;
-    i = j = solver->clauses.begin();
-    for (vector<Clause*>::iterator end = solver->clauses.end(); i != end; i++) {
+    i = j = solver->longIrredCls.begin();
+    for (vector<Clause*>::iterator end = solver->longIrredCls.end(); i != end; i++) {
         if (needToFinish) {
             *j++ = *i;
             continue;
@@ -201,7 +201,7 @@ bool ClauseVivifier::vivifyClausesNormal()
             *j++ = *i;
         }
     }
-    solver->clauses.resize(solver->clauses.size()- (i-j));
+    solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
     runStats.timeNorm = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
 

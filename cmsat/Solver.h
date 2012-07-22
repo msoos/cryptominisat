@@ -110,6 +110,7 @@ class Solver : public Searcher
                 , nbReduceDB(0)
                 , subsBinWithBinTime(0)
                 , subsBinWithBin(0)
+                , numCallReachCalc(0)
             {}
 
             SolveStats& operator+=(const SolveStats& other)
@@ -118,21 +119,16 @@ class Solver : public Searcher
                 nbReduceDB += other.nbReduceDB;
                 subsBinWithBinTime += other.subsBinWithBinTime;
                 subsBinWithBin += other.subsBinWithBin;
+                numCallReachCalc += other.numCallReachCalc;
 
                 return *this;
-            }
-
-            void printShort() const
-            {
-                printStatsLine("c subs bin-w-bin"
-                    , subsBinWithBin
-                );
             }
 
             uint64_t numSimplify;
             uint64_t nbReduceDB;
             double subsBinWithBinTime;
             uint64_t subsBinWithBin;
+            uint64_t numCallReachCalc;
         };
         const SolveStats& getSolveStats() const;
 
@@ -574,13 +570,12 @@ class Solver : public Searcher
         PropStats sumPropStats;
         CleaningStats cleaningStats;
         ReachabilityStats reachStats;
-        size_t numCallReachCalc;
 
         /////////////////////
         // Clauses
         bool          addClauseHelper(vector<Lit>& ps);
         vector<char>        decisionVar;
-        vector<Clause*>     clauses;          ///< List of problem clauses that are larger than 2
+        vector<Clause*>     longIrredCls;          ///< List of problem clauses that are larger than 2
         vector<Clause*>     learnts;          ///< List of learnt clauses.
         uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
         uint64_t            redLits;  ///< Number of literals in learnt clauses
@@ -732,7 +727,7 @@ inline bool Solver::getNeedToDumpOrig() const
 
 inline uint64_t Solver::getNumLongClauses() const
 {
-    return clauses.size() + learnts.size();
+    return longIrredCls.size() + learnts.size();
 }
 
 inline uint32_t Solver::getVerbosity() const

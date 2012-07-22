@@ -89,7 +89,7 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachLongs()
 {
-    cleanAndAttachClauses(solver->clauses);
+    cleanAndAttachClauses(solver->longIrredCls);
     cleanAndAttachClauses(solver->learnts);
     solver->clauseCleaner->treatImplicitClauses();
 
