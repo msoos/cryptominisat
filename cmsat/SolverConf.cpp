@@ -65,7 +65,7 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doSQL            (false)
-        , dumpClauseDistribPer(2000)
+        , dumpClauseDistribPer(20000)
         , dumpClauseDistribMax(300)
         , doOTFSubsume     (true)
         , rewardShortenedClauseWithConfl(10)

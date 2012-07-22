@@ -71,7 +71,7 @@ bool SQLStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, version, time) values ("
+    << "INSERT DELAYED INTO solverRun (runID, version, time) values ("
     << runID
     << ", \"" << Solver::getVersion() << "\""
     << ", " << time(NULL)
@@ -183,7 +183,7 @@ void SQLStats::initClauseSizeDistribSTMT(
     stmtClsDistrib.bind.resize(numElems*numInserts);
 
     std::stringstream ss;
-    ss << "insert into `clauseSizeDistrib`"
+    ss << "insert delayed into `clauseSizeDistrib`"
     << "("
     << " `runID`, `conflicts`, `size`, `num`"
     << ") values ";
