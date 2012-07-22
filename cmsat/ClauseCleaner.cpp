@@ -146,8 +146,8 @@ void ClauseCleaner::treatImplicitClauses()
     assert(remLBin % 2 == 0);
     assert(remNonLTri % 3 == 0);
     assert(remLTri % 3 == 0);
-    solver->clausesLits -= remNonLBin + remNonLTri;
-    solver->learntsLits -= remLBin + remLTri;
+    solver->irredLits -= remNonLBin + remNonLTri;
+    solver->redLits -= remLBin + remLTri;
     solver->numBinsNonLearnt -= remNonLBin/2;
     solver->numBinsLearnt -= remLBin/2;
     solver->numTrisNonLearnt -= remNonLTri/3;
@@ -219,9 +219,9 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
             return true;
         } else {
             if (c.learnt())
-                solver->learntsLits -= i-j;
+                solver->redLits -= i-j;
             else
-                solver->clausesLits -= i-j;
+                solver->irredLits -= i-j;
         }
     }
 

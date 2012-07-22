@@ -91,7 +91,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
     //Time-limiting
     uint64_t maxNumProps = 5L*1000L*1000L;
-    if (solver->clausesLits + solver->learntsLits < 500000)
+    if (solver->irredLits + solver->redLits < 500000)
         maxNumProps *=2;
 
     uint64_t extraDiff = 0;
@@ -110,7 +110,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
-        && (solver->clausesLits + solver->learntsLits < 4000000)
+        && (solver->irredLits + solver->redLits < 4000000)
         && (solver->clauses.size() < 50000))
         queueByBy = 1;
 
@@ -218,7 +218,7 @@ bool ClauseVivifier::vivifyClausesCache(
     //Stats
     uint64_t countTime = 0;
     uint64_t maxCountTime = 700000000;
-    if (solver->clausesLits + solver->learntsLits < 300000)
+    if (solver->irredLits + solver->redLits < 300000)
         maxCountTime *= 2;
     double myTime = cpuTime();
 
@@ -300,8 +300,8 @@ bool ClauseVivifier::vivifyClausesCache(
                         findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
                         solver->numBinsLearnt--;
                         solver->numBinsNonLearnt++;
-                        solver->learntsLits -= 2;
-                        solver->clausesLits += 2;
+                        solver->redLits -= 2;
+                        solver->irredLits += 2;
                     }
                     isSubsumed = true;
                     break;
@@ -324,8 +324,8 @@ bool ClauseVivifier::vivifyClausesCache(
                         findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
                         solver->numTrisLearnt--;
                         solver->numTrisNonLearnt++;
-                        solver->learntsLits -= 3;
-                        solver->clausesLits += 3;
+                        solver->redLits -= 3;
+                        solver->irredLits += 3;
                     }
                     isSubsumed = true;
                     break;

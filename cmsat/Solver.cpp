@@ -57,8 +57,8 @@ Solver::Solver(const SolverConf& _conf) :
     , numCallReachCalc(0)
 
     //Stats on implicit clauses and all literal
-    , clausesLits(0)
-    , learntsLits(0)
+    , irredLits(0)
+    , redLits(0)
     , numBinsNonLearnt(0)
     , numBinsLearnt(0)
     , numTrisNonLearnt(0)
@@ -234,9 +234,9 @@ Clause* Solver::addClauseInt(
                 attachClause(*c);
             else {
                 if (learnt)
-                    learntsLits += ps.size();
+                    redLits += ps.size();
                 else
-                    clausesLits += ps.size();
+                    irredLits += ps.size();
             }
 
             return c;
@@ -263,9 +263,9 @@ void Solver::attachClause(const Clause& cl)
 {
     //Update stats
     if (cl.learnt())
-        learntsLits += cl.size();
+        redLits += cl.size();
     else
-        clausesLits += cl.size();
+        irredLits += cl.size();
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachClause(cl);
@@ -279,10 +279,10 @@ void Solver::attachTriClause(
 ) {
     //Update stats
     if (learnt) {
-        learntsLits += 3;
+        redLits += 3;
         numTrisLearnt++;
     } else {
-        clausesLits += 3;
+        irredLits += 3;
         numTrisNonLearnt++;
     }
 
@@ -298,10 +298,10 @@ void Solver::attachBinClause(
 ) {
     //Update stats
     if (learnt) {
-        learntsLits += 2;
+        redLits += 2;
         numBinsLearnt++;
     } else {
-        clausesLits += 2;
+        irredLits += 2;
         numBinsNonLearnt++;
     }
     numNewBinsSinceSCC++;
@@ -317,10 +317,10 @@ void Solver::detachTriClause(
     , const bool learnt
 ) {
     if (learnt) {
-        learntsLits -= 3;
+        redLits -= 3;
         numTrisLearnt--;
     } else {
-        clausesLits -= 3;
+        irredLits -= 3;
         numTrisNonLearnt--;
     }
 
@@ -333,10 +333,10 @@ void Solver::detachBinClause(
     , const bool learnt
 ) {
     if (learnt) {
-        learntsLits -= 2;
+        redLits -= 2;
         numBinsLearnt--;
     } else {
-        clausesLits -= 2;
+        irredLits -= 2;
         numBinsNonLearnt--;
     }
 
@@ -357,9 +357,9 @@ void Solver::detachModifiedClause(
 ) {
     //Update stats
     if (address->learnt())
-        learntsLits -= origSize;
+        redLits -= origSize;
     else
-        clausesLits -= origSize;
+        irredLits -= origSize;
 
     //Call heavy-lifter
     PropEngine::detachModifiedClause(lit1, lit2, origSize, address);
@@ -762,7 +762,7 @@ void Solver::reduceDB()
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = learnts.size();
-    tmpStats.origNumLits = learntsLits - numBinsLearnt*2;
+    tmpStats.origNumLits = redLits - numBinsLearnt*2;
 
     //Calculate how much to remove
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
@@ -1947,9 +1947,9 @@ void Solver::checkLiteralCount() const
     for (uint32_t i = 0; i != clauses.size(); i++)
         cnt += clauses[i]->size();
 
-    if (clausesLits != cnt) {
-        cout << "c ERROR! literal count: " << clausesLits << " , real value = " <<  cnt << endl;
-        assert(clausesLits == cnt);
+    if (irredLits != cnt) {
+        cout << "c ERROR! literal count: " << irredLits << " , real value = " <<  cnt << endl;
+        assert(irredLits == cnt);
     }
 }
 
@@ -2107,7 +2107,7 @@ void Solver::printClauseStats()
     << " " << std::setw(4) << std::fixed << std::setprecision(1);
 
     cout
-    << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt);
+    << (double)(irredLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt);
 
     if (learnts.size() > 20000) {
         cout
@@ -2130,7 +2130,7 @@ void Solver::printClauseStats()
 
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(learntsLits - numBinsLearnt*2)/(double)(learnts.size() + numTrisLearnt)
+    << (double)(redLits - numBinsLearnt*2)/(double)(learnts.size() + numTrisLearnt)
     ;
 }
 
@@ -2274,18 +2274,18 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Check counts
-    if (numLitsNonLearnt != clausesLits) {
+    if (numLitsNonLearnt != irredLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsNonLearnt: " << numLitsNonLearnt << endl;
-        cout << "->clausesLits: " << clausesLits << endl;
+        cout << "->irredLits: " << irredLits << endl;
     }
-    if (numLitsLearnt != learntsLits) {
+    if (numLitsLearnt != redLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsLearnt: " << numLitsLearnt << endl;
-        cout << "->learntsLits: " << learntsLits << endl;
+        cout << "->redLits: " << redLits << endl;
     }
-    assert(numLitsNonLearnt == clausesLits);
-    assert(numLitsLearnt == learntsLits);
+    assert(numLitsNonLearnt == irredLits);
+    assert(numLitsLearnt == redLits);
 }
 
 uint32_t Solver::getNewToReplaceVars() const
@@ -2405,8 +2405,8 @@ bool Solver::subsumeAndStrengthenImplicit()
 
                         lastBin->setLearnt(false);
                         findWatchedOfBin(watches, lastLit, lit, true).setLearnt(false);
-                        learntsLits -= 2;
-                        clausesLits += 2;
+                        redLits -= 2;
+                        irredLits += 2;
                         numBinsLearnt--;
                         numBinsNonLearnt++;
                         lastLearnt = false;
@@ -2431,10 +2431,10 @@ bool Solver::subsumeAndStrengthenImplicit()
                     removeWTri(watches, i->lit2(), lit, i->lit1(), i->learnt());
 
                     if (i->learnt()) {
-                        learntsLits -= 3;
+                        redLits -= 3;
                         numTrisLearnt--;
                     } else {
-                        clausesLits -= 3;
+                        irredLits -= 3;
                         numTrisNonLearnt--;
                     }
                     continue;
@@ -2461,10 +2461,10 @@ bool Solver::subsumeAndStrengthenImplicit()
                 assert(i->lit1().var() != lit.var());
                 removeWBin(watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
-                    learntsLits -= 2;
+                    redLits -= 2;
                     numBinsLearnt--;
                 } else {
-                    clausesLits -= 2;
+                    irredLits -= 2;
                     numBinsNonLearnt--;
                 }
                 continue;
@@ -2564,10 +2564,10 @@ bool Solver::subsumeAndStrengthenImplicit()
 
                 //Update stats for tri
                 if (i->learnt()) {
-                    learntsLits -= 3;
+                    redLits -= 3;
                     numTrisLearnt--;
                 } else {
-                    clausesLits -= 3;
+                    irredLits -= 3;
                     numTrisNonLearnt--;
                 }
 

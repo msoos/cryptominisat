@@ -465,11 +465,11 @@ void SQLStats::restart(
     stmtRst.numIrredBins  = solver->numBinsNonLearnt;
     stmtRst.numIrredTris  = solver->numTrisNonLearnt;
     stmtRst.numIrredLongs = solver->clauses.size();
-    stmtRst.numIrredLits  = solver->clausesLits;
+    stmtRst.numIrredLits  = solver->irredLits;
     stmtRst.numRedBins    = solver->numBinsLearnt;
     stmtRst.numRedTris    = solver->numTrisLearnt;
     stmtRst.numRedLongs   = solver->learnts.size();
-    stmtRst.numRedLits    = solver->learntsLits;
+    stmtRst.numRedLits    = solver->redLits;
 
     //Conflict stats
     stmtRst.glueHist        = search->glueHist.getAvgMidLong();

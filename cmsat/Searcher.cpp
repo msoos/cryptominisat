@@ -1795,10 +1795,10 @@ size_t Searcher::removeUselessBins()
 
             //Update stats
             if (it->getLearnt()) {
-                solver->learntsLits -= 2;
+                solver->redLits -= 2;
                 solver->numBinsLearnt--;
             } else {
-                solver->clausesLits -= 2;
+                solver->irredLits -= 2;
                 solver->numBinsNonLearnt--;
             }
             removed++;

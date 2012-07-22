@@ -44,8 +44,8 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
         stay += clearWatchNotBinNotTri(*it);
     }
 
-    solver->learntsLits = stay.learntBins + stay.learntTris;
-    solver->clausesLits = stay.nonLearntBins + stay.nonLearntTris;
+    solver->redLits = stay.learntBins + stay.learntTris;
+    solver->irredLits = stay.nonLearntBins + stay.nonLearntTris;
     solver->numBinsLearnt = stay.learntBins/2;
     solver->numBinsNonLearnt = stay.nonLearntBins/2;
     solver->numTrisLearnt = stay.learntTris/3;

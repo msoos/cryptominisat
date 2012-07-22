@@ -303,7 +303,7 @@ bool GateFinder::doAllOptimisationWithGates()
         subsumer->toDecrease = &numMaxShortenWithGates;
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = solver->clausesLits + solver->learntsLits
+        runStats.numLongClsLits = solver->irredLits + solver->redLits
             - solver->numBinsLearnt*2 - solver->numBinsNonLearnt;
 
         //Go through each gate, see if we can do something with it

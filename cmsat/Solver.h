@@ -582,8 +582,8 @@ class Solver : public Searcher
         vector<char>        decision_var;
         vector<Clause*>     clauses;          ///< List of problem clauses that are larger than 2
         vector<Clause*>     learnts;          ///< List of learnt clauses.
-        uint64_t            clausesLits;  ///< Number of literals in non-learnt clauses
-        uint64_t            learntsLits;  ///< Number of literals in learnt clauses
+        uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
+        uint64_t            redLits;  ///< Number of literals in learnt clauses
         uint64_t            numBinsNonLearnt;
         uint64_t            numBinsLearnt;
         uint64_t            numTrisNonLearnt;

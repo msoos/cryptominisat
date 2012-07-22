@@ -410,8 +410,8 @@ bool VarReplacer::replaceImplicit()
     assert(removedNonLearntBin % 2 == 0);
     assert(removedLearntTri % 3 == 0);
     assert(removedNonLearntTri % 3 == 0);
-    solver->learntsLits -= removedLearntBin + removedLearntTri;
-    solver->clausesLits -= removedNonLearntBin + removedNonLearntTri;
+    solver->redLits -= removedLearntBin + removedLearntTri;
+    solver->irredLits -= removedNonLearntBin + removedNonLearntTri;
     solver->numBinsLearnt -= removedLearntBin/2;
     solver->numBinsNonLearnt -= removedNonLearntBin/2;
     solver->numTrisLearnt -= removedLearntTri/3;
