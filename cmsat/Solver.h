@@ -589,7 +589,6 @@ class Solver : public Searcher
         uint64_t            irredTris;
         uint64_t            redTris;
         uint64_t            numNewBinsSinceSCC;
-        vector<char>        locked; ///<Before reduceDB, threads fill this up (index by clause num)
         void                reArrangeClauses();
         void                reArrangeClause(Clause* clause);
         void                checkLiteralCount() const;
