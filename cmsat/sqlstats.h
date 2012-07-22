@@ -61,14 +61,24 @@ private:
     uint64_t runID;
     size_t bindAt;
     struct StmtRst {
-        MYSQL_BIND  bind[51];
+        MYSQL_BIND  bind[59];
         MYSQL_STMT  *STMT;
 
-        //Variables
+        //Position
         uint64_t numSimplify;
         uint64_t sumRestarts;
         uint64_t sumConflicts;
         double cpuTime;
+
+        //Clause stats
+        uint64_t numIrredBins;
+        uint64_t numIrredTris;
+        uint64_t numIrredLongs;
+        uint64_t numIrredLits;
+        uint64_t numRedBins;
+        uint64_t numRedTris;
+        uint64_t numRedLongs;
+        uint64_t numRedLits;
 
         //Conflict stats
         double glueHist;

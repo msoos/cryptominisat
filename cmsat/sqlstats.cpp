@@ -260,6 +260,10 @@ void SQLStats::initRestartSTMT(
     //Position
     << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
 
+    //Clause stats
+    << ", numIrredBins, numIrredTris, numIrredLongs, numIrredLits"
+    << ", numRedBins, numRedTris, numRedLongs, numRedLits"
+
     //Conflict stats
     << ", `glue`, `glueSD`, `size`, `sizeSD`"
     << ", `resolutions`, `resolutionsSD`"
@@ -339,6 +343,16 @@ void SQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.sumRestarts);
     bindTo(stmtRst, stmtRst.sumConflicts);
     bindTo(stmtRst, stmtRst.cpuTime);
+
+    //Clause stats
+    bindTo(stmtRst, stmtRst.numIrredBins);
+    bindTo(stmtRst, stmtRst.numIrredTris);
+    bindTo(stmtRst, stmtRst.numIrredLongs);
+    bindTo(stmtRst, stmtRst.numIrredLits);
+    bindTo(stmtRst, stmtRst.numRedBins);
+    bindTo(stmtRst, stmtRst.numRedTris);
+    bindTo(stmtRst, stmtRst.numRedLongs);
+    bindTo(stmtRst, stmtRst.numRedLits);
 
     //Conflict stats
     bindTo(stmtRst, stmtRst.glueHist);
@@ -446,6 +460,16 @@ void SQLStats::restart(
     stmtRst.sumRestarts     = search->sumRestarts();
     stmtRst.sumConflicts    = search->sumConflicts();
     stmtRst.cpuTime         = cpuTime();
+
+    //Clause stats
+    stmtRst.numIrredBins  = solver->numBinsNonLearnt;
+    stmtRst.numIrredTris  = solver->numTrisNonLearnt;
+    stmtRst.numIrredLongs = solver->clauses.size();
+    stmtRst.numIrredLits  = solver->clausesLits;
+    stmtRst.numRedBins    = solver->numBinsLearnt;
+    stmtRst.numRedTris    = solver->numTrisLearnt;
+    stmtRst.numRedLongs   = solver->learnts.size();
+    stmtRst.numRedLits    = solver->learntsLits;
 
     //Conflict stats
     stmtRst.glueHist        = search->glueHist.getAvgMidLong();

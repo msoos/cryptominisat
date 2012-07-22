@@ -122,7 +122,15 @@ CREATE TABLE `restart` (
   `free` bigint(20) unsigned NOT NULL,
   `replaced` bigint(20) unsigned NOT NULL,
   `eliminated` bigint(20) unsigned NOT NULL,
-  `set` bigint(20) unsigned NOT NULL
+  `set` bigint(20) unsigned NOT NULL,
+  `numIrredBins` bigint(20) unsigned NOT NULL,
+  `numIrredTris` bigint(20) unsigned NOT NULL,
+  `numIrredLongs` bigint(20) unsigned NOT NULL,
+  `numRedBins` bigint(20) unsigned NOT NULL,
+  `numRedTris` bigint(20) unsigned NOT NULL,
+  `numRedLongs` bigint(20) unsigned NOT NULL,
+  `numIrredLits` bigint(20) unsigned NOT NULL,
+  `numredLits` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -168,4 +176,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-07-15 16:26:08
+-- Dump completed on 2012-07-21 19:35:08
