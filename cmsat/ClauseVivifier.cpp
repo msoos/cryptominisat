@@ -298,8 +298,8 @@ bool ClauseVivifier::vivifyClausesCache(
                     if (wit->learnt() && !cl.learnt()) {
                         wit->setLearnt(false);
                         findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
-                        solver->numBinsLearnt--;
-                        solver->numBinsNonLearnt++;
+                        solver->redBins--;
+                        solver->irredBins++;
                         solver->redLits -= 2;
                         solver->irredLits += 2;
                     }
@@ -322,8 +322,8 @@ bool ClauseVivifier::vivifyClausesCache(
                         wit->setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), true).setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
-                        solver->numTrisLearnt--;
-                        solver->numTrisNonLearnt++;
+                        solver->redTris--;
+                        solver->irredTris++;
                         solver->redLits -= 3;
                         solver->irredLits += 3;
                     }

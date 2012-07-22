@@ -148,10 +148,10 @@ void ClauseCleaner::treatImplicitClauses()
     assert(remLTri % 3 == 0);
     solver->irredLits -= remNonLBin + remNonLTri;
     solver->redLits -= remLBin + remLTri;
-    solver->numBinsNonLearnt -= remNonLBin/2;
-    solver->numBinsLearnt -= remLBin/2;
-    solver->numTrisNonLearnt -= remNonLTri/3;
-    solver->numTrisLearnt -= remLTri/3;
+    solver->irredBins -= remNonLBin/2;
+    solver->redBins -= remLBin/2;
+    solver->irredTris -= remNonLTri/3;
+    solver->redTris -= remLTri/3;
     solver->checkImplicitStats();
 }
 

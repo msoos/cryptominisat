@@ -126,7 +126,7 @@ bool Prober::probe()
     solver->propStats.clear();
     runStats.clear();
     runStats.origNumFreeVars = solver->getNumFreeVars();
-    runStats.origNumBins = solver->numBinsLearnt + solver->numBinsNonLearnt;
+    runStats.origNumBins = solver->redBins + solver->irredBins;
     numCalls++;
 
     //State

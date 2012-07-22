@@ -584,10 +584,10 @@ class Solver : public Searcher
         vector<Clause*>     learnts;          ///< List of learnt clauses.
         uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
         uint64_t            redLits;  ///< Number of literals in learnt clauses
-        uint64_t            numBinsNonLearnt;
-        uint64_t            numBinsLearnt;
-        uint64_t            numTrisNonLearnt;
-        uint64_t            numTrisLearnt;
+        uint64_t            irredBins;
+        uint64_t            redBins;
+        uint64_t            irredTris;
+        uint64_t            redTris;
         uint64_t            numNewBinsSinceSCC;
         vector<char>        locked; ///<Before reduceDB, threads fill this up (index by clause num)
         void                reArrangeClauses();

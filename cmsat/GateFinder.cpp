@@ -304,7 +304,7 @@ bool GateFinder::doAllOptimisationWithGates()
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
         runStats.numLongClsLits = solver->irredLits + solver->redLits
-            - solver->numBinsLearnt*2 - solver->numBinsNonLearnt;
+            - solver->redBins*2 - solver->irredBins;
 
         //Go through each gate, see if we can do something with it
         for (vector<OrGate>::const_iterator

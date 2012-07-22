@@ -59,10 +59,10 @@ Solver::Solver(const SolverConf& _conf) :
     //Stats on implicit clauses and all literal
     , irredLits(0)
     , redLits(0)
-    , numBinsNonLearnt(0)
-    , numBinsLearnt(0)
-    , numTrisNonLearnt(0)
-    , numTrisLearnt(0)
+    , irredBins(0)
+    , redBins(0)
+    , irredTris(0)
+    , redTris(0)
 {
     prober = new Prober(this);
     subsumer = new Simplifier(this);
@@ -280,10 +280,10 @@ void Solver::attachTriClause(
     //Update stats
     if (learnt) {
         redLits += 3;
-        numTrisLearnt++;
+        redTris++;
     } else {
         irredLits += 3;
-        numTrisNonLearnt++;
+        irredTris++;
     }
 
     //Call Solver's function for heavy-lifting
@@ -299,10 +299,10 @@ void Solver::attachBinClause(
     //Update stats
     if (learnt) {
         redLits += 2;
-        numBinsLearnt++;
+        redBins++;
     } else {
         irredLits += 2;
-        numBinsNonLearnt++;
+        irredBins++;
     }
     numNewBinsSinceSCC++;
 
@@ -318,10 +318,10 @@ void Solver::detachTriClause(
 ) {
     if (learnt) {
         redLits -= 3;
-        numTrisLearnt--;
+        redTris--;
     } else {
         irredLits -= 3;
-        numTrisNonLearnt--;
+        irredTris--;
     }
 
     PropEngine::detachTriClause(lit1, lit2, lit3, learnt);
@@ -334,10 +334,10 @@ void Solver::detachBinClause(
 ) {
     if (learnt) {
         redLits -= 2;
-        numBinsLearnt--;
+        redBins--;
     } else {
         irredLits -= 2;
-        numBinsNonLearnt--;
+        irredBins--;
     }
 
     PropEngine::detachBinClause(lit1, lit2, learnt);
@@ -762,7 +762,7 @@ void Solver::reduceDB()
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = learnts.size();
-    tmpStats.origNumLits = redLits - numBinsLearnt*2;
+    tmpStats.origNumLits = redLits - redBins*2;
 
     //Calculate how much to remove
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
@@ -2087,27 +2087,27 @@ void Solver::printClauseStats()
         << " " << std::setw(5) << clauses.size();
     }
 
-    if (numTrisNonLearnt > 20000) {
+    if (irredTris > 20000) {
         cout
-        << " " << std::setw(4) << numTrisNonLearnt/1000 << "K";
+        << " " << std::setw(4) << irredTris/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << numTrisNonLearnt;
+        << " " << std::setw(5) << irredTris;
     }
 
-    if (numBinsNonLearnt > 20000) {
+    if (irredBins > 20000) {
         cout
-        << " " << std::setw(4) << numBinsNonLearnt/1000 << "K";
+        << " " << std::setw(4) << irredBins/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << numBinsNonLearnt;
+        << " " << std::setw(5) << irredBins;
     }
 
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1);
 
     cout
-    << (double)(irredLits - numBinsNonLearnt*2)/(double)(clauses.size() + numTrisNonLearnt);
+    << (double)(irredLits - irredBins*2)/(double)(clauses.size() + irredTris);
 
     if (learnts.size() > 20000) {
         cout
@@ -2118,19 +2118,19 @@ void Solver::printClauseStats()
     }
 
     cout
-    << " " << std::setw(6) << numTrisLearnt;
+    << " " << std::setw(6) << redTris;
 
-    if (numBinsLearnt > 20000) {
+    if (redBins > 20000) {
         cout
-        << " " << std::setw(4) << numBinsLearnt/1000 << "K";
+        << " " << std::setw(4) << redBins/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << numBinsLearnt;
+        << " " << std::setw(5) << redBins;
     }
 
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(redLits - numBinsLearnt*2)/(double)(learnts.size() + numTrisLearnt)
+    << (double)(redLits - redBins*2)/(double)(learnts.size() + redTris)
     ;
 }
 
@@ -2192,46 +2192,46 @@ void Solver::checkImplicitStats() const
         }
     }
 
-    if (thisNumNonLearntBins/2 != numBinsNonLearnt) {
+    if (thisNumNonLearntBins/2 != irredBins) {
         cout
         << "ERROR:"
         << " thisNumNonLearntBins/2: " << thisNumNonLearntBins/2
-        << " numBinsNonLearnt: " << numBinsNonLearnt
+        << " irredBins: " << irredBins
         << "thisNumNonLearntBins: " << thisNumNonLearntBins
         << "thisNumLearntBins: " << thisNumLearntBins << endl;
     }
     assert(thisNumNonLearntBins % 2 == 0);
-    assert(thisNumNonLearntBins/2 == numBinsNonLearnt);
+    assert(thisNumNonLearntBins/2 == irredBins);
 
-    if (thisNumLearntBins/2 != numBinsLearnt) {
+    if (thisNumLearntBins/2 != redBins) {
         cout
         << "ERROR:"
         << " thisNumLearntBins/2: " << thisNumLearntBins/2
-        << " numBinsLearnt: " << numBinsLearnt
+        << " redBins: " << redBins
         << endl;
     }
     assert(thisNumLearntBins % 2 == 0);
-    assert(thisNumLearntBins/2 == numBinsLearnt);
+    assert(thisNumLearntBins/2 == redBins);
 
-    if (thisNumNonLearntTris/3 != numTrisNonLearnt) {
+    if (thisNumNonLearntTris/3 != irredTris) {
         cout
         << "ERROR:"
         << " thisNumNonLearntTris/3: " << thisNumNonLearntTris/3
-        << " numTrisNonLearnt: " << numTrisNonLearnt
+        << " irredTris: " << irredTris
         << endl;
     }
     assert(thisNumNonLearntTris % 3 == 0);
-    assert(thisNumNonLearntTris/3 == numTrisNonLearnt);
+    assert(thisNumNonLearntTris/3 == irredTris);
 
-    if (thisNumLearntTris/3 != numTrisLearnt) {
+    if (thisNumLearntTris/3 != redTris) {
         cout
         << "ERROR:"
         << " thisNumLearntTris/3: " << thisNumLearntTris/3
-        << " numTrisLearnt: " << numTrisLearnt
+        << " redTris: " << redTris
         << endl;
     }
     assert(thisNumLearntTris % 3 == 0);
-    assert(thisNumLearntTris/3 == numTrisLearnt);
+    assert(thisNumLearntTris/3 == redTris);
 }
 
 void Solver::checkStats(const bool allowFreed) const
@@ -2244,7 +2244,7 @@ void Solver::checkStats(const bool allowFreed) const
     checkImplicitStats();
 
     //Count number of non-learnt literals
-    uint64_t numLitsNonLearnt = numBinsNonLearnt*2 + numTrisNonLearnt*3;
+    uint64_t numLitsNonLearnt = irredBins*2 + irredTris*3;
     for(vector<Clause*>::const_iterator
         it = clauses.begin(), end = clauses.end()
         ; it != end
@@ -2259,7 +2259,7 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Count number of learnt literals
-    uint64_t numLitsLearnt = numBinsLearnt*2 + numTrisLearnt*3;
+    uint64_t numLitsLearnt = redBins*2 + redTris*3;
     for(vector<Clause*>::const_iterator
         it = learnts.begin(), end = learnts.end()
         ; it != end
@@ -2407,8 +2407,8 @@ bool Solver::subsumeAndStrengthenImplicit()
                         findWatchedOfBin(watches, lastLit, lit, true).setLearnt(false);
                         redLits -= 2;
                         irredLits += 2;
-                        numBinsLearnt--;
-                        numBinsNonLearnt++;
+                        redBins--;
+                        irredBins++;
                         lastLearnt = false;
                     }
 
@@ -2432,10 +2432,10 @@ bool Solver::subsumeAndStrengthenImplicit()
 
                     if (i->learnt()) {
                         redLits -= 3;
-                        numTrisLearnt--;
+                        redTris--;
                     } else {
                         irredLits -= 3;
-                        numTrisNonLearnt--;
+                        irredTris--;
                     }
                     continue;
                 }
@@ -2462,10 +2462,10 @@ bool Solver::subsumeAndStrengthenImplicit()
                 removeWBin(watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
                     redLits -= 2;
-                    numBinsLearnt--;
+                    redBins--;
                 } else {
                     irredLits -= 2;
-                    numBinsNonLearnt--;
+                    irredBins--;
                 }
                 continue;
             } else {
@@ -2565,10 +2565,10 @@ bool Solver::subsumeAndStrengthenImplicit()
                 //Update stats for tri
                 if (i->learnt()) {
                     redLits -= 3;
-                    numTrisLearnt--;
+                    redTris--;
                 } else {
                     irredLits -= 3;
-                    numTrisNonLearnt--;
+                    irredTris--;
                 }
 
                 //Exaclty one will be removed

@@ -1065,8 +1065,8 @@ bool Simplifier::propImplicits()
     assert(numRemovedHalfNonLearnt % 2 == 0);
     solver->irredLits -= numRemovedHalfNonLearnt;
     solver->redLits -= numRemovedHalfLearnt;
-    solver->numBinsLearnt -= numRemovedHalfLearnt/2;
-    solver->numBinsNonLearnt -= numRemovedHalfNonLearnt/2;
+    solver->redBins -= numRemovedHalfLearnt/2;
+    solver->irredBins -= numRemovedHalfNonLearnt/2;
 
     return solver->ok;
 }
@@ -1299,10 +1299,10 @@ void Simplifier::blockBinaries()
                 removeWBin(solver->watches, lit2, lit, ws[i].learnt());
                 if (ws[i].learnt()) {
                     solver->redLits -= 2;
-                    solver->numBinsLearnt--;
+                    solver->redBins--;
                 } else {
                     solver->irredLits -= 2;
-                    solver->numBinsNonLearnt--;
+                    solver->irredBins--;
                 }
             } else {
                 ws[j++] = ws[i];

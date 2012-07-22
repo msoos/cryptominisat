@@ -462,12 +462,12 @@ void SQLStats::restart(
     stmtRst.cpuTime         = cpuTime();
 
     //Clause stats
-    stmtRst.numIrredBins  = solver->numBinsNonLearnt;
-    stmtRst.numIrredTris  = solver->numTrisNonLearnt;
+    stmtRst.numIrredBins  = solver->irredBins;
+    stmtRst.numIrredTris  = solver->irredTris;
     stmtRst.numIrredLongs = solver->clauses.size();
     stmtRst.numIrredLits  = solver->irredLits;
-    stmtRst.numRedBins    = solver->numBinsLearnt;
-    stmtRst.numRedTris    = solver->numTrisLearnt;
+    stmtRst.numRedBins    = solver->redBins;
+    stmtRst.numRedTris    = solver->redTris;
     stmtRst.numRedLongs   = solver->learnts.size();
     stmtRst.numRedLits    = solver->redLits;
 
