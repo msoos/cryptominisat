@@ -494,7 +494,7 @@ class Solver : public Searcher
         friend class GateFinder;
         friend class PropEngine;
         Prober              *prober;
-        Simplifier            *subsumer;
+        Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;
         ClauseCleaner       *clauseCleaner;

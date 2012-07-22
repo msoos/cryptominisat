@@ -64,7 +64,7 @@ Solver::Solver(const SolverConf& _conf) :
     , redTris(0)
 {
     prober = new Prober(this);
-    subsumer = new Simplifier(this);
+    simplifier = new Simplifier(this);
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -75,7 +75,7 @@ Solver::Solver(const SolverConf& _conf) :
 Solver::~Solver()
 {
     delete prober;
-    delete subsumer;
+    delete simplifier;
     delete sCCFinder;
     delete clauseVivifier;
     delete clauseCleaner;
@@ -109,7 +109,7 @@ bool Solver::addXorClauseInt(const vector< Lit >& lits, bool rhs)
                 rhs ^= value(ps[i].var()).getBool();
         } else if (value(ps[i]) == l_Undef) { //just add
             ps[j++] = p = ps[i];
-            assert(!subsumer->getVarElimed()[p.var()]);
+            assert(!simplifier->getVarElimed()[p.var()]);
         } else //modify rhs instead of adding
             rhs ^= (value(ps[i].var()).getBool());
     }
@@ -387,7 +387,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
 
         //Uneliminate var if need be
-        if (subsumer->getVarElimed()[ps[i].var()]) {
+        if (simplifier->getVarElimed()[ps[i].var()]) {
             //if (!subsumer->unEliminate(ps[i].var(), this) return false
             assert(false);
         }
@@ -621,7 +621,7 @@ void Solver::renumberVariables()
     }
 
     //Update sub-elements' vars
-    subsumer->updateVars(outerToInter, interToOuter);
+    simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
     implCache.updateVars(seen, outerToInter, interToOuter2);
 
@@ -683,7 +683,7 @@ Var Solver::newVar(const bool dvar)
     Searcher::newVar();
 
     varReplacer->newVar();
-    subsumer->newVar();
+    simplifier->newVar();
 
     return decisionVar.size()-1;
 }
@@ -1044,7 +1044,7 @@ lbool Solver::simplifyProblem()
     }
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption())
+    if (conf.doSatELite && !simplifier->simplifyBySubsumption())
         goto end;
 
     //Vivify clauses
@@ -1535,12 +1535,12 @@ void Solver::printFullStats()
 
     //Simplifier stats
     printStatsLine("c SatELite time"
-        , subsumer->getStats().totalTime()
-        , subsumer->getStats().totalTime()/cpu_time*100.0
+        , simplifier->getStats().totalTime()
+        , simplifier->getStats().totalTime()/cpu_time*100.0
         , "% time"
     );
 
-    subsumer->getStats().print(nVars());
+    simplifier->getStats().print(nVars());
 
     //GateFinder stats
     /*printStatsLine("c gatefinder time"
@@ -1785,7 +1785,7 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     numClauses += longIrredCls.size();
 
     //previously eliminated clauses
-    const vector<BlockedClause>& blockedClauses = subsumer->getBlockedClauses();
+    const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
     numClauses += blockedClauses.size();
 
     os << "p cnf " << nVars() << " " << numClauses << endl;
@@ -2072,7 +2072,7 @@ uint32_t Solver::getNumFreeVars() const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail.size();
-    freeVars -= subsumer->getStats().numVarsElimed;
+    freeVars -= simplifier->getStats().numVarsElimed;
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;
@@ -2083,7 +2083,7 @@ uint32_t Solver::getNumFreeVarsAdv(size_t trail_size_of_thread) const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail_size_of_thread;
-    freeVars -= subsumer->getStats().numVarsElimed;
+    freeVars -= simplifier->getStats().numVarsElimed;
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;

@@ -532,7 +532,7 @@ void SQLStats::restart(
     stmtRst.varSetNeg       = thisPropStats.varSetNeg;
     stmtRst.numFreeVars     = solver->getNumFreeVarsAdv(search->trail.size());
     stmtRst.numReplacedVars = solver->varReplacer->getNumReplacedVars();
-    stmtRst.numVarsElimed   = solver->subsumer->getStats().numVarsElimed;
+    stmtRst.numVarsElimed   = solver->simplifier->getStats().numVarsElimed;
     stmtRst.trailSize       = search->trail.size();
 
     if (mysql_stmt_execute(stmtRst.STMT)) {

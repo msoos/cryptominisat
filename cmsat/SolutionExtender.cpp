@@ -58,7 +58,7 @@ void SolutionExtender::extend()
     }*/
 
     //Sanity check
-    solver->subsumer->checkElimedUnassignedAndStats();
+    solver->simplifier->checkElimedUnassignedAndStats();
 
     for (vector<Clause*>::iterator it = solver->longIrredCls.begin(), end = solver->longIrredCls.end(); it != end; it++) {
         Clause& cl = **it;
@@ -107,7 +107,7 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
-    solver->subsumer->extendModel(this);
+    solver->simplifier->extendModel(this);
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);
