@@ -468,7 +468,7 @@ void SQLStats::restart(
     stmtRst.numIrredLits  = solver->irredLits;
     stmtRst.numRedBins    = solver->redBins;
     stmtRst.numRedTris    = solver->redTris;
-    stmtRst.numRedLongs   = solver->learnts.size();
+    stmtRst.numRedLongs   = solver->longRedCls.size();
     stmtRst.numRedLits    = solver->redLits;
 
     //Conflict stats

@@ -61,7 +61,7 @@ inline void ClauseCleaner::removeAndCleanAll()
     double myTime = cpuTime();
     treatImplicitClauses();
     cleanClauses(solver->longIrredCls);
-    cleanClauses(solver->learnts);
+    cleanClauses(solver->longRedCls);
 
 #ifndef NDEBUG
     //Once we have cleaned the watchlists

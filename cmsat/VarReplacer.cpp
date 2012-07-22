@@ -164,7 +164,7 @@ bool VarReplacer::performReplace()
         goto end;
 
     if (!replace_set(solver->longIrredCls)) goto end;
-    if (!replace_set(solver->learnts)) goto end;
+    if (!replace_set(solver->longRedCls)) goto end;
 
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();

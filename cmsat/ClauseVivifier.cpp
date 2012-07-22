@@ -58,7 +58,7 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     if (!vivifyClausesCache(solver->longIrredCls, false, alsoStrengthen))
         goto end;
 
-    if (!vivifyClausesCache(solver->learnts, true, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longRedCls, true, alsoStrengthen))
         goto end;
 
     if (alsoStrengthen && !vivifyClausesNormal())

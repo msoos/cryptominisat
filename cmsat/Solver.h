@@ -576,7 +576,7 @@ class Solver : public Searcher
         bool          addClauseHelper(vector<Lit>& ps);
         vector<char>        decisionVar;
         vector<Clause*>     longIrredCls;          ///< List of problem clauses that are larger than 2
-        vector<Clause*>     learnts;          ///< List of learnt clauses.
+        vector<Clause*>     longRedCls;          ///< List of learnt clauses.
         uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
         uint64_t            redLits;  ///< Number of literals in learnt clauses
         uint64_t            irredBins;
@@ -712,7 +712,7 @@ inline void Solver::unsetDecisionVar(const uint32_t var)
 
 inline const vector<Clause*>& Solver::getLongLearnts() const
 {
-    return learnts;
+    return longRedCls;
 }
 
 inline bool Solver::getNeedToDumpLearnts() const
@@ -727,7 +727,7 @@ inline bool Solver::getNeedToDumpOrig() const
 
 inline uint64_t Solver::getNumLongClauses() const
 {
-    return longIrredCls.size() + learnts.size();
+    return longIrredCls.size() + longRedCls.size();
 }
 
 inline uint32_t Solver::getVerbosity() const

@@ -440,7 +440,7 @@ bool Solver::addLearntClause(
 
     Clause* c = addClauseInt(ps, true, stats);
     if (c != NULL)
-        learnts.push_back(c);
+        longRedCls.push_back(c);
 
     return ok;
 }
@@ -486,8 +486,8 @@ void Solver::reArrangeClauses()
     for (uint32_t i = 0; i < longIrredCls.size(); i++) {
         reArrangeClause(longIrredCls[i]);
     }
-    for (uint32_t i = 0; i < learnts.size(); i++) {
-        reArrangeClause(learnts[i]);
+    for (uint32_t i = 0; i < longRedCls.size(); i++) {
+        reArrangeClause(longRedCls[i]);
     }
 
     if (conf.verbosity >= 3) {
@@ -615,9 +615,9 @@ void Solver::renumberVariables()
         (*longIrredCls[i]).reCalcAbstraction();
     }
 
-    for(size_t i = 0; i < learnts.size(); i++) {
-        updateLitsMap(*learnts[i], outerToInter);
-        (*learnts[i]).reCalcAbstraction();
+    for(size_t i = 0; i < longRedCls.size(); i++) {
+        updateLitsMap(*longRedCls[i], outerToInter);
+        (*longRedCls[i]).reCalcAbstraction();
     }
 
     //Update sub-elements' vars
@@ -760,18 +760,18 @@ void Solver::reduceDB()
     const double myTime = cpuTime();
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
-    tmpStats.origNumClauses = learnts.size();
+    tmpStats.origNumClauses = longRedCls.size();
     tmpStats.origNumLits = redLits - redBins*2;
 
     //Calculate how much to remove
-    uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
+    uint32_t removeNum = (double)longRedCls.size() * conf.ratioRemoveClauses;
 
     if (conf.doPreClauseCleanPropAndConfl) {
         //Reduce based on props&confls
         size_t i, j;
-        for (i = j = 0; i < learnts.size(); i++) {
-            Clause* cl = learnts[i];
-            assert(learnts[i]->size() > 3);
+        for (i = j = 0; i < longRedCls.size(); i++) {
+            Clause* cl = longRedCls[i];
+            assert(longRedCls[i]->size() > 3);
             if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
@@ -793,10 +793,10 @@ void Solver::reduceDB()
                 clAllocator->clauseFree(cl);
 
             } else {
-                learnts[j++] = learnts[i];
+                longRedCls[j++] = longRedCls[i];
             }
         }
-        learnts.resize(learnts.size() -(i-j));
+        longRedCls.resize(longRedCls.size() -(i-j));
     }
 
     //Clean according to type
@@ -804,19 +804,19 @@ void Solver::reduceDB()
     switch (conf.clauseCleaningType) {
         case CLEAN_CLAUSES_GLUE_BASED :
             //Sort for glue-based removal
-            std::sort(learnts.begin(), learnts.end(), reduceDBStructGlue());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructGlue());
             tmpStats.glueBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_SIZE_BASED :
             //Sort for glue-based removal
-            std::sort(learnts.begin(), learnts.end(), reduceDBStructSize());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructSize());
             tmpStats.sizeBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_PROPCONFL_BASED :
             //Sort for glue-based removal
-            std::sort(learnts.begin(), learnts.end(), reduceDBStructPropConfl());
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructPropConfl());
             tmpStats.propConflBasedClean = 1;
             break;
     }
@@ -841,16 +841,16 @@ void Solver::reduceDB()
     //Remove normally
     size_t i, j;
     for (i = j = 0
-        ; i < learnts.size() && tmpStats.removedClauses < removeNum
+        ; i < longRedCls.size() && tmpStats.removedClauses < removeNum
         ; i++
     ) {
         //Prefetch next clause
-        if (i+1 < learnts.size())
-            __builtin_prefetch(learnts[i+1], 0);
+        if (i+1 < longRedCls.size())
+            __builtin_prefetch(longRedCls[i+1], 0);
 
-        Clause *cl = learnts[i];
+        Clause *cl = longRedCls[i];
         assert(cl->size() > 3);
-        if (learnts[i]->stats.glue > 2
+        if (longRedCls[i]->stats.glue > 2
             && cl->stats.numPropAndConfl() < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
         ) {
             //Stats
@@ -867,22 +867,22 @@ void Solver::reduceDB()
             tmpStats.remainClausesLits+= cl->size();
             tmpStats.remainClausesGlue += cl->stats.glue;
 
-            learnts[j++] = cl;
+            longRedCls[j++] = cl;
         }
     }
 
     //Count what is left
-    for (; i < learnts.size(); i++) {
-        const Clause* cl = learnts[i];
+    for (; i < longRedCls.size(); i++) {
+        const Clause* cl = longRedCls[i];
         tmpStats.remainClauses++;
         tmpStats.remainClausesLits+= cl->size();
         tmpStats.remainClausesGlue += cl->stats.glue;
 
-        learnts[j++] = learnts[i];
+        longRedCls[j++] = longRedCls[i];
     }
 
     //Resize learnt datastruct
-    learnts.resize(learnts.size() - (i - j));
+    longRedCls.resize(longRedCls.size() - (i - j));
 
     //Print results
     tmpStats.cpu_time = cpuTime() - myTime;
@@ -1101,7 +1101,7 @@ end:
     //so let's clear it
     if (conf.doClearStatEveryClauseCleaning) {
         clearClauseStats(longIrredCls);
-        clearClauseStats(learnts);
+        clearClauseStats(longRedCls);
     }
 
     solveStats.numSimplify++;
@@ -1209,7 +1209,7 @@ Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
         default:
             cl = clAllocator->Clause_new(lits, Searcher::sumConflicts());
             cl->makeLearnt(glue);
-            learnts.push_back(cl);
+            longRedCls.push_back(cl);
             break;
     }
 
@@ -1425,7 +1425,7 @@ void Solver::fullReduce()
     if (conf.verbosity >= 1) {
         UsageStats stats;
         stats += sumClauseData(longIrredCls, false);
-        stats += sumClauseData(learnts, true);
+        stats += sumClauseData(longRedCls, true);
 
         cout
         << "c sum   lits visit: "
@@ -1463,7 +1463,7 @@ void Solver::fullReduce()
 
     if (conf.doClearStatEveryClauseCleaning) {
         clearClauseStats(longIrredCls);
-        clearClauseStats(learnts);
+        clearClauseStats(longRedCls);
     }
 
     nextCleanLimit += nextCleanLimitInc;
@@ -1750,8 +1750,8 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     << "c --------------------" << endl
     << "c clauses from learnts" << endl
     << "c --------------------" << endl;
-    for (int i = learnts.size()-1; i >= 0 ; i--) {
-        Clause& cl = *learnts[i];
+    for (int i = longRedCls.size()-1; i >= 0 ; i--) {
+        Clause& cl = *longRedCls[i];
         if (cl.size() <= maxSize) {
             os << cl << " 0" << endl;
             os
@@ -1935,7 +1935,7 @@ bool Solver::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(longIrredCls);
-    verificationOK &= verifyClauses(learnts);
+    verificationOK &= verifyClauses(longRedCls);
     verificationOK &= verifyBinClauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
@@ -2043,8 +2043,8 @@ bool Solver::findClause(const Clause* c) const
     for (uint32_t i = 0; i < longIrredCls.size(); i++) {
         if (longIrredCls[i] == c) return true;
     }
-    for (uint32_t i = 0; i < learnts.size(); i++) {
-        if (learnts[i] == c) return true;
+    for (uint32_t i = 0; i < longRedCls.size(); i++) {
+        if (longRedCls[i] == c) return true;
     }
 
     return false;
@@ -2057,7 +2057,7 @@ void Solver::checkNoWrongAttach() const
     #endif //VERBOSE_DEBUG
 
     for (vector<Clause*>::const_iterator
-        i = learnts.begin(), end = learnts.end()
+        i = longRedCls.begin(), end = longRedCls.end()
         ; i != end; i++
     ) {
         const Clause& cl = **i;
@@ -2121,12 +2121,12 @@ void Solver::printClauseStats()
     cout
     << (double)(irredLits - irredBins*2)/(double)(longIrredCls.size() + irredTris);
 
-    if (learnts.size() > 20000) {
+    if (longRedCls.size() > 20000) {
         cout
-        << " " << std::setw(4) << learnts.size()/1000 << "K";
+        << " " << std::setw(4) << longRedCls.size()/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << learnts.size();
+        << " " << std::setw(5) << longRedCls.size();
     }
 
     cout
@@ -2142,7 +2142,7 @@ void Solver::printClauseStats()
 
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(redLits - redBins*2)/(double)(learnts.size() + redTris)
+    << (double)(redLits - redBins*2)/(double)(longRedCls.size() + redTris)
     ;
 }
 
@@ -2273,7 +2273,7 @@ void Solver::checkStats(const bool allowFreed) const
     //Count number of learnt literals
     uint64_t numLitsLearnt = redBins*2 + redTris*3;
     for(vector<Clause*>::const_iterator
-        it = learnts.begin(), end = learnts.end()
+        it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
         ; it++
     ) {

@@ -415,7 +415,7 @@ void ClauseAllocator::consolidate(
     }
 
     updatePointers(solver->longIrredCls);
-    updatePointers(solver->learnts);
+    updatePointers(solver->longRedCls);
     updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++) {

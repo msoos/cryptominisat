@@ -850,8 +850,8 @@ bool Simplifier::simplifyBySubsumption()
     addedClauseLits += addFromSolver(solver->longIrredCls);
 
     //Add learnt to occur
-    runStats.origNumRedLongClauses = solver->learnts.size();
-    addedClauseLits += addFromSolver(solver->learnts);
+    runStats.origNumRedLongClauses = solver->longRedCls.size();
+    addedClauseLits += addFromSolver(solver->longRedCls);
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
     solver->checkStats(true);
@@ -919,7 +919,7 @@ end:
     //Add back clauses to solver
     removeAllLongs();
     addBackToSolver(solver->longIrredCls);
-    addBackToSolver(solver->learnts);
+    addBackToSolver(solver->longRedCls);
     propImplicits();
 
     //We can now propagate from solver

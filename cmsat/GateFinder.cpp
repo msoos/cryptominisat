@@ -671,7 +671,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         subsumer->linkInClause(*cl2);
         if (learnt)
-            solver->learnts.push_back(cl2);
+            solver->longRedCls.push_back(cl2);
         else
             solver->longIrredCls.push_back(cl2);
 
@@ -893,7 +893,7 @@ void GateFinder::treatAndGateClause(
     if (c != NULL) {
         subsumer->linkInClause(*c);
         if (learnt)
-            solver->learnts.push_back(c);
+            solver->longRedCls.push_back(c);
         else
             solver->longIrredCls.push_back(c);
     }
