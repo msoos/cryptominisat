@@ -32,7 +32,7 @@
 
 #include "Watched.h"
 
-#define NUM_BITS_OUTER_OFFSET 4
+#define BASE_DATA_TYPE uint32_t
 
 class Clause;
 class Solver;
@@ -69,8 +69,7 @@ class ClauseAllocator {
         */
         inline Clause* getPointer(const uint32_t offset) const
         {
-            return (Clause*)(dataStarts[offset&((1 << NUM_BITS_OUTER_OFFSET) - 1)]
-                            +(offset >> NUM_BITS_OUTER_OFFSET));
+            return (Clause*)(dataStart + offset);
         }
 
         void clauseFree(Clause* c); ///Frees memory and associated clause number
@@ -82,10 +81,6 @@ class ClauseAllocator {
         );
 
     private:
-        uint32_t getOuterOffset(const Clause* c) const;
-        uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
-        ClOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
-
         void updateAllOffsetsAndPointers(PropEngine* control);
         template<class T>
         void updatePointers(vector<T*>& toUpdate);
@@ -96,16 +91,16 @@ class ClauseAllocator {
 
         void checkGoodPropBy(const Solver* solver);
 
-        vector<char*> dataStarts; ///<Stacks start at these positions
-        vector<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
+        BASE_DATA_TYPE* dataStart; ///<Stacks start at these positions
+        size_t size; ///<The number of 32-bit datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
         This my NOT be their current size: the clauses may be shrinked during
         the running of the solver. Therefore, it is imperative that their orignal
         size is saved. This way, we can later move clauses around.
         */
-        vector<vector<uint32_t> > origClauseSizes;
-        vector<size_t> maxSizes; ///<The number of 32-bit datapieces allocated in each stack
+        vector<uint32_t> origClauseSizes;
+        size_t maxSize; ///<The number of 32-bit datapieces allocated
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
@@ -113,7 +108,7 @@ class ClauseAllocator {
         problem is, that clauses can shrink, and thus this value will be an
         overestimation almost all the time
         */
-        vector<size_t> currentlyUsedSizes;
+        size_t currentlyUsedSize;
 
         void* allocEnough(const uint32_t size);
 
@@ -130,8 +125,7 @@ class ClauseAllocator {
             Clause* newPointer; ///<The new place
         };
 
-        vector<Clause*> otherClauses;
-        vector<Clause*> threeLongClauses;
+        vector<Clause*> clauses;
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 };

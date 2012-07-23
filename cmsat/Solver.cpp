@@ -1614,6 +1614,7 @@ void Solver::printFullStats()
         , "confl/TOTAL_TIME_SEC"
     );
     printStatsLine("c Total time", cpu_time);
+    printStatsLine("c Mem used", memUsed()/(1024UL*1024UL), "MB");
 }
 
 void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
