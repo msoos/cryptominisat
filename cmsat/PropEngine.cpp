@@ -491,8 +491,8 @@ void PropEngine::propTriHelper(
 
 PropBy PropEngine::propagate(
     Solver* solver
-    , bqueue<size_t>* watchListSizeTraversed
-    , bqueue<bool>* litPropagatedSomething
+    , AvgCalc<size_t>* watchListSizeTraversed
+    , AvgCalc<bool>* litPropagatedSomething
 ) {
     PropBy confl;
 

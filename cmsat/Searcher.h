@@ -25,6 +25,7 @@
 #include "PropEngine.h"
 #include "SolverTypes.h"
 #include "time_mem.h"
+#include "avgcalc.h"
 class Solver;
 class SQLStats;
 
@@ -365,18 +366,18 @@ class Searcher : public PropEngine
         size_t removeUselessBins();
 
         //History statistics
-        bqueue<uint32_t> branchDepthHist;     ///< Avg branch depth in current restart
+        AvgCalc<uint32_t> branchDepthHist;     ///< Avg branch depth in current restart
         bqueue<uint32_t> branchDepthDeltaHist;
-        bqueue<uint32_t> trailDepthHist;
-        bqueue<uint32_t> trailDepthDeltaHist;
+        AvgCalc<uint32_t> trailDepthHist;
+        AvgCalc<uint32_t> trailDepthDeltaHist;
         bqueue<uint32_t> glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
         bqueue<uint32_t> conflSizeHist;       ///< Conflict size history
-        bqueue<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
-        bqueue<double, double>  agilityHist;
+        AvgCalc<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
+        AvgCalc<double, double>  agilityHist;
         vector<uint32_t> clauseSizeDistrib;
-        bqueue<size_t> watchListSizeTraversed;
-        bqueue<bool> conflictAfterConflict;
-        bqueue<bool> litPropagatedSomething;
+        AvgCalc<size_t> watchListSizeTraversed;
+        AvgCalc<bool> conflictAfterConflict;
+        AvgCalc<bool> litPropagatedSomething;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
 

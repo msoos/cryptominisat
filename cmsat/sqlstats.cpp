@@ -477,24 +477,24 @@ void SQLStats::restart(
     stmtRst.conflSizeHist   = search->conflSizeHist.getAvgMidLong();
     stmtRst.conflSizeHistSD = sqrt(search->conflSizeHist.getVarMidLong());
     stmtRst.numResolutionsHist =
-        search->numResolutionsHist.getAvgMidLong();
+        search->numResolutionsHist.avg();
     stmtRst.numResolutionsHistSD =
-        sqrt(search->numResolutionsHist.getVarMidLong());
+        sqrt(search->numResolutionsHist.var());
     stmtRst.conflictAfterConflict =
-        search->conflictAfterConflict.getAvgMidLong()*100.0;
+        search->conflictAfterConflict.avg()*100.0;
     stmtRst.conflictAfterConflictSD =
-        sqrt(search->conflictAfterConflict.getVarMidLong())*100.0;
+        sqrt(search->conflictAfterConflict.var())*100.0;
 
     //Search stats
-    stmtRst.branchDepthHist         = search->branchDepthHist.getAvgMidLong();
-    stmtRst.branchDepthHistSD       = sqrt(search->branchDepthHist.getVarMidLong());
+    stmtRst.branchDepthHist         = search->branchDepthHist.avg();
+    stmtRst.branchDepthHistSD       = sqrt(search->branchDepthHist.var());
     stmtRst.branchDepthDeltaHist    = search->branchDepthDeltaHist.getAvgMidLong();
     stmtRst.branchDepthDeltaHistSD  = sqrt(search->branchDepthDeltaHist.getVarMidLong());
-    stmtRst.trailDepthHist          = search->trailDepthHist.getAvgMidLong();
-    stmtRst.trailDepthHistSD        = sqrt(search->trailDepthHist.getVarMidLong());
-    stmtRst.trailDepthDeltaHist     = search->trailDepthDeltaHist.getAvgMidLong();
-    stmtRst.trailDepthDeltaHistSD   = sqrt(search->trailDepthDeltaHist.getVarMidLong());
-    stmtRst.agilityHist             = search->agilityHist.getAvgMidLong();
+    stmtRst.trailDepthHist          = search->trailDepthHist.avg();
+    stmtRst.trailDepthHistSD        = sqrt(search->trailDepthHist.var());
+    stmtRst.trailDepthDeltaHist     = search->trailDepthDeltaHist.avg();
+    stmtRst.trailDepthDeltaHistSD   = sqrt(search->trailDepthDeltaHist.var());
+    stmtRst.agilityHist             = search->agilityHist.avg();
 
     //Prop
     stmtRst.propsBinIrred    = thisPropStats.propsBinIrred;
@@ -519,10 +519,10 @@ void SQLStats::restart(
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Misc
-    stmtRst.watchListSizeTraversed   = search->watchListSizeTraversed.getAvgMidLong();
-    stmtRst.watchListSizeTraversedSD = sqrt(search->watchListSizeTraversed.getVarMidLong());
-    stmtRst.litPropagatedSomething   = search->litPropagatedSomething.getAvgMidLong()*100.0;
-    stmtRst.litPropagatedSomethingSD = sqrt(search->litPropagatedSomething.getVarMidLong())*100.0;
+    stmtRst.watchListSizeTraversed   = search->watchListSizeTraversed.avg();
+    stmtRst.watchListSizeTraversedSD = sqrt(search->watchListSizeTraversed.var());
+    stmtRst.litPropagatedSomething   = search->litPropagatedSomething.avg()*100.0;
+    stmtRst.litPropagatedSomethingSD = sqrt(search->litPropagatedSomething.var())*100.0;
 
     //Var stats
     stmtRst.decisions       = thisStats.decisions;

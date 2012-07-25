@@ -660,19 +660,19 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
     if (params.update)
         stats.numRestarts ++;
     agility.reset(conf.agilityLimit);
-    agilityHist.fastclear();
+    agilityHist.clear();
 
     //About the final conflict
     glueHist.fastclear();
     conflSizeHist.fastclear();
-    numResolutionsHist.fastclear();
+    numResolutionsHist.clear();
 
     //About the search
-    branchDepthHist.fastclear();
+    branchDepthHist.clear();
     branchDepthDeltaHist.fastclear();
-    trailDepthHist.fastclear();
-    trailDepthDeltaHist.fastclear();
-    conflictAfterConflict.fastclear();
+    trailDepthHist.clear();
+    trailDepthDeltaHist.clear();
+    conflictAfterConflict.clear();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -844,8 +844,7 @@ void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
             && glueHist.isvalid()
             && 0.95*glueHist.getAvg() > glueHist.getAvgLong()
         ) || (conf.restartType == agility_restart
-            && agilityHist.isvalid()
-            && agilityHist.getAvg() < conf.agilityLimit
+            && agility.getAgility() < conf.agilityLimit
         ) || (conf.restartType == branch_depth_delta_restart
             && branchDepthDeltaHist.isvalid()
             && 0.95*branchDepthDeltaHist.getAvg() > branchDepthDeltaHist.getAvgLong()
@@ -1060,7 +1059,6 @@ void Searcher::resetStats()
 
     //About the conflict generated
     numResolutionsHist.clear();
-    numResolutionsHist.resize(100);
     glueHist.clear();
     glueHist.resize(conf.shortTermGlueHistorySize);
     conflSizeHist.clear();
@@ -1069,27 +1067,20 @@ void Searcher::resetStats()
 
     //About the search tree
     branchDepthHist.clear();
-    branchDepthHist.resize(100);
     branchDepthDeltaHist.clear();
     branchDepthDeltaHist.resize(100);
     trailDepthHist.clear();
-    trailDepthHist.resize(100);
     trailDepthDeltaHist.clear();
-    trailDepthDeltaHist.resize(100);
 
     //About vars
     agilityHist.clear();
-    agilityHist.resize(100);
     clearPolarData();
     clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMax);
 
     //Misc
     watchListSizeTraversed.clear();
-    watchListSizeTraversed.resize(100);
     conflictAfterConflict.clear();
-    conflictAfterConflict.resize(100);;
     litPropagatedSomething.clear();
-    litPropagatedSomething.resize(100);
 
     //Rest solving stats
     stats.clear();
@@ -1189,35 +1180,35 @@ void Searcher::printBaseStats()
 
 void Searcher::printSearchStats()
 {
-    cout
+    /*cout
     << " glue"
     << " " << std::right << glueHist.getAvgMidPrint(1, 5)
     << "/" << std::left << glueHist.getAvgLongPrint(1, 5)
 
     << " agil"
-    << " " << std::right << agilityHist.getAvgMidPrint(3, 5)
-    << "/" << std::left<< agilityHist.getAvgLongPrint(3, 5)
+    << " " << std::right << agilityHist.avgPrint(3, 5)
+    << "/" << std::left<< agilityHist.avgLongPrint(3, 5)
 
     << " confllen"
     << " " << std::right << conflSizeHist.getAvgMidPrint(1, 5)
     << "/" << std::left << conflSizeHist.getAvgLongPrint(1, 5)
 
     << " branchd"
-    << " " << std::right << branchDepthHist.getAvgMidPrint(1, 5)
-    << "/" << std::left  << branchDepthHist.getAvgLongPrint(1, 5)
+    << " " << std::right << branchDepthHist.avgPrint(1, 5)
+    << "/" << std::left  << branchDepthHist.avgLongPrint(1, 5)
     << " branchdd"
 
     << " " << std::right << branchDepthDeltaHist.getAvgMidPrint(1, 4)
     << "/" << std::left << branchDepthDeltaHist.getAvgLongPrint(1, 4)
 
     << " traild"
-    << " " << std::right << trailDepthHist.getAvgMidPrint(0, 7)
-    << "/" << std::left << trailDepthHist.getAvgLongPrint(0, 7)
+    << " " << std::right << trailDepthHist.avgPrint(0, 7)
+    << "/" << std::left << trailDepthHist.avgLongPrint(0, 7)
 
     << " traildd"
-    << " " << std::right << trailDepthDeltaHist.getAvgMidPrint(0, 5)
-    << "/" << std::left << trailDepthDeltaHist.getAvgLongPrint(0, 5)
-    ;
+    << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
+    << "/" << std::left << trailDepthDeltaHist.avgLongPrint(0, 5)
+    ;*/
 
     cout << std::right;
 }
@@ -1730,10 +1721,10 @@ void Searcher::printAgilityStats()
     << conf.agilityLimit
 
     << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3)
-    << agilityHist.getAvg()
+    << agilityHist.avg()
 
-    << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
-    << agilityHist.getAvgLong()
+    /*<< ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
+    << agilityHist.avgLong()*/
     << endl;
 }
 

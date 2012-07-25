@@ -33,6 +33,7 @@ using std::set;
 #include "constants.h"
 #include "PropBy.h"
 
+#include "avgcalc.h"
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
@@ -252,8 +253,8 @@ protected:
     ///Perform BCP
     PropBy       propagate(
         Solver* solver = NULL
-        ,  bqueue<size_t>* watchListSizeTraversed = NULL
-        , bqueue<bool>* litPropagatedSomething = NULL
+        ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
+        , AvgCalc<bool>* litPropagatedSomething = NULL
     );
 
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
