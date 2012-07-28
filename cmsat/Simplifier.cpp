@@ -2476,8 +2476,8 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         {
             //Only count non-learnt
             if (!it->learnt()) {
-                ret.lit += 3;
                 ret.longer++;
+                ret.lit += 3;
             }
 
             continue;
@@ -2491,8 +2491,8 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
 
             //Only non-learnt is of relevance
             if (!cl->learnt()) {
-                ret.lit += cl->size();
                 ret.longer++;
+                ret.lit += cl->size();
             }
 
             continue;
