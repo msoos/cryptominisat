@@ -60,7 +60,7 @@ SolverConf::SolverConf() :
 
         //Glues
         , updateGlues(true)
-        , shortTermGlueHistorySize (100)
+        , shortTermHistorySize (100)
 
         //optimisations to do
         , doSQL            (false)
