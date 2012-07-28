@@ -453,10 +453,10 @@ class Solver : public Searcher
             , const uint32_t origSize
             , const Clause* address
         );
-        template<class T> Clause* addClauseInt(
-            const T& ps
+        Clause* addClauseInt(
+            const vector<Lit>& lits
             , const bool learnt = false
-            , const ClauseStats& stats = ClauseStats()
+            , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
         );

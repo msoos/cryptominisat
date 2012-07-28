@@ -154,11 +154,10 @@ This code is very specific in that it must NOT be called with varibles in
 when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
-template <class T>
 Clause* Solver::addClauseInt(
-    const T& lits
+    const vector<Lit>& lits
     , const bool learnt
-    , const ClauseStats& stats
+    , const ClauseStats stats
     , const bool attach
     , vector<Lit>* finalLits
 ) {
@@ -241,22 +240,6 @@ Clause* Solver::addClauseInt(
             return c;
     }
 }
-
-template Clause* Solver::addClauseInt(
-    const Clause& ps
-    , const bool learnt
-    , const ClauseStats& stats
-    , const bool attach
-    , vector<Lit>* finalLits
-);
-
-template Clause* Solver::addClauseInt(
-    const vector<Lit>& ps
-    , const bool learnt
-    , const ClauseStats& stats
-    , const bool attach
-    , vector<Lit>* finalLits
-);
 
 void Solver::attachClause(const Clause& cl)
 {
