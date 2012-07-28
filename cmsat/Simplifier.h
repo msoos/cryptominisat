@@ -547,7 +547,7 @@ private:
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
         const vector<pair<int, int> >&  varElimComplexity;
-        bool operator () (const uint32_t x, const uint32_t y) const
+        bool operator () (const size_t x, const size_t y) const
         {
             //Of the FIRST, the smallest is best
             if (varElimComplexity[x].first != varElimComplexity[y].first)
