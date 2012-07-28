@@ -234,6 +234,17 @@ class ImplCache  {
             return globalStats;
         }
 
+        void clear()
+        {
+            for(vector<TransCache>::iterator
+                it = implCache.begin(), end = implCache.end()
+                ; it != end
+                ; it++
+            ) {
+                it->lits.clear();
+            }
+        }
+
 private:
     void tryVar(Solver* solver, Var var);
 

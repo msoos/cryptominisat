@@ -50,7 +50,6 @@ class SolverConf
         uint32_t  preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
         double    ratioRemoveClauses; ///< Remove this percentage of clauses at every database reduction round
-        uint32_t  clauseCleanNeverCleanAtOrAboveThisPropConfl;
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;
         double    increaseClean;
@@ -78,7 +77,7 @@ class SolverConf
 
         //Glues
         int       updateGlues;
-        uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
+        uint32_t  shortTermHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do
         int       doSQL;

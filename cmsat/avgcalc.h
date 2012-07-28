@@ -36,17 +36,27 @@ class AvgCalc {
     double  sumSqare;
     size_t  num;
 
+    T2      longSum;
+    size_t  longNum;
+
 public:
     AvgCalc(void) :
         sum(0)
         , sumSqare(0)
         , num(0)
+
+        //Long
+        , longSum(0)
+        , longNum(0)
     {}
 
     void push(const T x) {
         sum += x;
         sumSqare += x*x;
         num++;
+
+        longSum += x;
+        longNum++;
     }
 
     double avg() const
@@ -55,6 +65,14 @@ public:
             return 0;
 
         return (double)sum/(double)num;
+    }
+
+    double longAvg() const
+    {
+        if (longNum == 0)
+            return 0;
+
+        return (double)longSum/(double)longNum;
     }
 
     double var() const
@@ -80,7 +98,31 @@ public:
         return ss.str();
     }
 
+    std::string avgLongPrint(size_t prec, size_t w) const
+    {
+        std::stringstream ss;
+        if (num > 0) {
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
+            << longAvg();
+        } else {
+            ss << std::setw(5) << "?";
+        }
+
+        return ss.str();
+    }
+
     void clear()
+    {
+        sum = 0;
+        sumSqare = 0;
+        num = 0;
+
+        //Long
+        longSum = 0;
+        longNum = 0;
+    }
+
+    void shortClear()
     {
         sum = 0;
         sumSqare = 0;

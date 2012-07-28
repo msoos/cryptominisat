@@ -850,25 +850,15 @@ void Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
         assert(cl->size() > 3);
-        if (cl->stats.glue > 2
-            && cl->stats.numPropAndConfl() < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
-        ) {
-            //Stats
-            tmpStats.removedClauses++;
-            tmpStats.removedClausesLits+= cl->size();
-            tmpStats.removedClausesGlue += cl->stats.glue;
 
-            //detach & free
-            detachClause(*cl);
-            clAllocator->clauseFree(offset);
-        } else {
-            //Stats
-            tmpStats.remainClauses++;
-            tmpStats.remainClausesLits+= cl->size();
-            tmpStats.remainClausesGlue += cl->stats.glue;
+        //Stats
+        tmpStats.removedClauses++;
+        tmpStats.removedClausesLits+= cl->size();
+        tmpStats.removedClausesGlue += cl->stats.glue;
 
-            longRedCls[j++] = offset;
-        }
+        //detach & free
+        detachClause(*cl);
+        clAllocator->clauseFree(offset);
     }
 
     //Count what is left

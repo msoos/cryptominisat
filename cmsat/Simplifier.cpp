@@ -1332,6 +1332,8 @@ void Simplifier::blockBinaries()
     runStats.blocked += blocked;
     runStats.blockedSumLits += blocked*2;
     runStats.blockTime += cpuTime() - myTime;
+
+    solver->implCache.clear();
 }
 
 void Simplifier::blockClauses()

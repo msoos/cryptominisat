@@ -660,19 +660,19 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
     if (params.update)
         stats.numRestarts ++;
     agility.reset(conf.agilityLimit);
-    agilityHist.clear();
+    agilityHist.shortClear();
 
     //About the final conflict
     glueHist.fastclear();
     conflSizeHist.fastclear();
-    numResolutionsHist.clear();
+    numResolutionsHist.shortClear();
 
     //About the search
-    branchDepthHist.clear();
+    branchDepthHist.shortClear();
     branchDepthDeltaHist.fastclear();
-    trailDepthHist.clear();
-    trailDepthDeltaHist.clear();
-    conflictAfterConflict.clear();
+    trailDepthHist.shortClear();
+    trailDepthDeltaHist.shortClear();
+    conflictAfterConflict.shortClear();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -1060,15 +1060,15 @@ void Searcher::resetStats()
     //About the conflict generated
     numResolutionsHist.clear();
     glueHist.clear();
-    glueHist.resize(conf.shortTermGlueHistorySize);
+    glueHist.resize(conf.shortTermHistorySize);
     conflSizeHist.clear();
-    conflSizeHist.resize(100);
+    conflSizeHist.resize(conf.shortTermHistorySize);
 
 
     //About the search tree
     branchDepthHist.clear();
     branchDepthDeltaHist.clear();
-    branchDepthDeltaHist.resize(100);
+    branchDepthDeltaHist.resize(conf.shortTermHistorySize);
     trailDepthHist.clear();
     trailDepthDeltaHist.clear();
 
@@ -1150,10 +1150,12 @@ lbool Searcher::burstSearch()
 void Searcher::printRestartStats()
 {
     printBaseStats();
-    if (conf.printFullStats)
-        printSearchStats();
-    else
+    if (conf.printFullStats) {
         solver->printClauseStats();
+        printSearchStats();
+    } else {
+        solver->printClauseStats();
+    }
 
     cout << endl;
 }
@@ -1180,7 +1182,7 @@ void Searcher::printBaseStats()
 
 void Searcher::printSearchStats()
 {
-    /*cout
+    cout
     << " glue"
     << " " << std::right << glueHist.getAvgMidPrint(1, 5)
     << "/" << std::left << glueHist.getAvgLongPrint(1, 5)
@@ -1208,7 +1210,7 @@ void Searcher::printSearchStats()
     << " traildd"
     << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
     << "/" << std::left << trailDepthDeltaHist.avgLongPrint(0, 5)
-    ;*/
+    ;
 
     cout << std::right;
 }
