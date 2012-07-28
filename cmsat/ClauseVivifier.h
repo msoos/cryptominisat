@@ -229,8 +229,16 @@ class ClauseVivifier {
 
     private:
 
+        ClOffset testVivify(
+            ClOffset offset
+            , Clause* cl
+            , const bool learnt
+            , const uint32_t queueByBy
+        );
+
         //Actual algorithms used
-        bool vivifyClausesNormal();
+        bool vivifyClausesLongIrred();
+        bool vivifyClausesTriIrred();
         bool vivifyClausesCache(
             vector<ClOffset>& clauses
             , bool learnt
@@ -239,6 +247,11 @@ class ClauseVivifier {
 
         //Working set
         Solver* solver;
+
+        //For vivify
+        vector<Lit> lits;
+        vector<Lit> uselessLits;
+        uint64_t extraTime;
 
         //Global status
         Stats runStats;

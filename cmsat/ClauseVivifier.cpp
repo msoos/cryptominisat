@@ -56,7 +56,10 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     if (!vivifyClausesCache(solver->longRedCls, true, alsoStrengthen))
         goto end;
 
-    if (alsoStrengthen && !vivifyClausesNormal())
+    if (!vivifyClausesLongIrred())
+        goto end;
+
+    if (!vivifyClausesTriIrred())
         goto end;
 
 end:
@@ -72,12 +75,72 @@ end:
     return solver->ok;
 }
 
+bool ClauseVivifier::vivifyClausesTriIrred()
+{
+    uint64_t origShorten = runStats.numClShorten;
+    double myTime = cpuTime();
+    uint64_t maxNumProps = 10L*1000L*1000L;
+    uint64_t oldBogoProps = solver->propStats.bogoProps;
+    size_t origTrailSize = solver->trail.size();
+
+    size_t upI;
+    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t numDone = 0;
+    for (; numDone < solver->watches.size()
+        ; upI = (upI +1) % solver->watches.size(), numDone++
+
+    ) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
+            break;
+        }
+
+        Lit lit = Lit::toLit(upI);
+        const vec<Watched>& ws = solver->watches[upI];
+        for (size_t i = 0; i < ws.size(); i++) {
+            if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
+                break;
+            }
+
+            //Only TRI and each TRI only once
+            if (ws[i].isTri()
+                && lit < ws[i].lit1()
+                && ws[i].lit1() < ws[i].lit2()
+            ) {
+                uselessLits.clear();
+                lits.resize(3);
+                lits[0] = lit;
+                lits[1] = ws[i].lit1();
+                lits[2] = ws[i].lit2();
+                testVivify(
+                    std::numeric_limits<ClOffset>::max()
+                    , NULL
+                    , ws[i].learnt()
+                    , 2
+                );
+
+                //We could have modified the watchlist, better exit now
+                break;
+            }
+        }
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c TRI vivified: " << runStats.numClShorten - origShorten
+        << " 0-detph ass: " << solver->trail.size() - origTrailSize
+        << " time: " << cpuTime() - myTime
+        << endl;
+    }
+
+    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+
+    return solver->ok;
+}
+
 /**
 @brief Performs clause vivification (by Hamadi et al.)
-
-Using normal propagation-based one and new cache-based one
 */
-bool ClauseVivifier::vivifyClausesNormal()
+bool ClauseVivifier::vivifyClausesLongIrred()
 {
     assert(solver->ok);
 
@@ -89,13 +152,11 @@ bool ClauseVivifier::vivifyClausesNormal()
     if (solver->irredLits + solver->redLits < 500000)
         maxNumProps *=2;
 
-    uint64_t extraDiff = 0;
+    extraTime = 0;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     bool needToFinish = false;
     runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
-    vector<Lit> lits;
-    vector<Lit> unused;
 
     cout << "c WARNING!! We didn't sort by clause size here" << endl;
 
@@ -111,14 +172,14 @@ bool ClauseVivifier::vivifyClausesNormal()
         ; i != end
         ; i++
     ) {
-        if (needToFinish) {
+        //Check if we are in state where we only copy offsets around
+        if (needToFinish || !solver->ok) {
             *j++ = *i;
             continue;
         }
 
         //if done enough, stop doing it
-        //cout << "Time now: " << (cpuTime() - myTime) << " todo: " << (solver->bogoProps-oldBogoProps + extraDiff)/1000000 << endl;
-        if (solver->propStats.bogoProps-oldBogoProps + extraDiff > maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
             if (solver->conf.verbosity >= 2) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
@@ -127,80 +188,121 @@ bool ClauseVivifier::vivifyClausesNormal()
             needToFinish = true;
         }
 
+        //Get pointer
         ClOffset offset = *i;
         Clause& cl = *solver->clAllocator->getPointer(offset);
-        extraDiff += cl.size();
+        extraTime += cl.size();
         runStats.checkedClauses++;
 
+        //Sanity check
         assert(cl.size() > 3);
         assert(!cl.learnt());
 
-        unused.clear();
+        //Copy literals
+        uselessLits.clear();
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
 
-        bool failed = false;
-        uint32_t done = 0;
-        solver->newDecisionLevel();
-        for (; done < lits.size();) {
-            uint32_t i2 = 0;
-            for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {
-                lbool val = solver->value(lits[done+i2]);
-                if (val == l_Undef) {
-                    solver->enqueue(~lits[done+i2]);
-                } else if (val == l_False) {
-                    unused.push_back(lits[done+i2]);
-                }
-            }
-            done += i2;
-            extraDiff += 5;
-            failed = (!solver->propagate().isNULL());
-            if (failed) break;
-        }
-        solver->cancelZeroLight();
-        assert(solver->ok);
-
-        if (unused.size() > 0 || (failed && done < lits.size())) {
-            runStats.numClShorten++;
-            uint32_t origSize = lits.size();
-            #ifdef ASSYM_DEBUG
-            cout << "Assym branch effective." << endl;
-            cout << "-- Orig clause:"; cl.plainPrint();
-            #endif
-            solver->detachClause(cl);
-
-            //Make 'lits' the size it should be
-            lits.resize(done);
-            for (uint32_t i2 = 0; i2 < unused.size(); i2++) {
-                remove(lits, unused[i2]);
-            }
-
-            Clause *c2 = solver->addClauseInt(lits);
-            #ifdef ASSYM_DEBUG
-            cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << endl;
-            #endif
-            extraDiff += 20;
-            //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
-            runStats.numLitsRem += origSize - (c2 == NULL ? 0 : c2->size());
-            solver->clAllocator->clauseFree(offset);
-
-            if (c2 != NULL) {
-                #ifdef ASSYM_DEBUG
-                cout << "-- New clause:"; c2->plainPrint();
-                #endif
-                *j++ = solver->clAllocator->getOffset(c2);
-            }
-
-            if (!solver->ok) needToFinish = true;
-        } else {
-            *j++ = *i;
+        //Try to vivify clause
+        ClOffset offset2 = testVivify(
+            offset
+            , &cl
+            , cl.learnt()
+            , queueByBy
+        );
+        if (offset2 != std::numeric_limits<ClOffset>::max()) {
+            *j++ = offset2;
         }
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
+
+    //Update stats
     runStats.timeNorm = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
 
     return solver->ok;
+}
+
+ClOffset ClauseVivifier::testVivify(
+    ClOffset offset
+    , Clause* cl
+    , const bool learnt
+    , const uint32_t queueByBy
+) {
+    //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
+    bool failed = false;
+    uint32_t done = 0;
+    solver->newDecisionLevel();
+    for (; done < lits.size();) {
+        uint32_t i2 = 0;
+        for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {
+            lbool val = solver->value(lits[done+i2]);
+            if (val == l_Undef) {
+                solver->enqueue(~lits[done+i2]);
+            } else if (val == l_False) {
+                //Record that there is no use for this literal
+                uselessLits.push_back(lits[done+i2]);
+            }
+        }
+        done += i2;
+        extraTime += 5;
+        failed = (!solver->propagate().isNULL());
+        if (failed) break;
+    }
+    solver->cancelZeroLight();
+    assert(solver->ok);
+
+    if (uselessLits.size() > 0 || (failed && done < lits.size())) {
+        //Stats
+        runStats.numClShorten++;
+        extraTime += 20;
+        const uint32_t origSize = lits.size();
+
+        //Remove useless literals from 'lits'
+        lits.resize(done);
+        for (uint32_t i2 = 0; i2 < uselessLits.size(); i2++) {
+            remove(lits, uselessLits[i2]);
+        }
+
+
+        //Detach and free clause if it's really a clause
+        if (cl) {
+            solver->detachClause(*cl);
+            solver->clAllocator->clauseFree(offset);
+        }
+
+        //Make new clause
+        Clause *cl2 = solver->addClauseInt(lits, learnt);
+
+        //Print results
+        if (solver->conf.verbosity >= 5) {
+            cout
+            << "c Assym branch effective." << endl;
+            if (cl)
+                cout
+                << "c --> orig clause:" << *cl << endl;
+            else
+                cout
+                << "c --> orig clause: TRI/BIN" << endl;
+            cout
+            << "c --> orig size:" << origSize << endl
+            << "c --> new size:" << (cl2 == NULL ? 0 : cl2->size()) << endl
+            << "c --> removing lits from end:" << origSize - done
+            << "c --> useless lits in middle:" << uselessLits.size()
+            << endl;
+        }
+
+        //TODO cheating here: we don't detect a NULL return that is in fact a 2/3-long clause
+        runStats.numLitsRem += origSize - (cl2 == NULL ? 0 : cl2->size());
+
+        if (cl2 != NULL) {
+            return solver->clAllocator->getOffset(cl2);
+        } else {
+            return std::numeric_limits<ClOffset>::max();
+        }
+    } else {
+        return offset;
+    }
 }
 
 bool ClauseVivifier::vivifyClausesCache(
