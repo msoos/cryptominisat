@@ -1933,7 +1933,7 @@ int Simplifier::testVarElim(const Var var)
             //Update after-stats
             after_clauses++;
             after_literals += dummy.size();
-            if (dummy.size() > 3)
+            if (dummy.size() >= 3)
                 after_long++;
 
             //Early-abort
