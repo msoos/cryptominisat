@@ -829,7 +829,7 @@ Performs, recursively:
 * variable elimination
 
 */
-bool Simplifier::simplifyBySubsumption()
+bool Simplifier::simplify()
 {
     //Test & debug
     solver->testAllClauseAttach();

@@ -98,12 +98,6 @@ private:
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
-
-There are two main functions in this class, simplifyBySubsumption() and subsumeWithBinaries().
-The first one is the most important of the two: it performs everything, except manipuation
-with non-existing binary clauses. The second does self-subsuming resolution with existing binary
-clauses, and then does self-subsuming resolution and subsumption with binary clauses that don't exist
-and never will exist: they are temporarily "created" (memorised), and used by subsume0BIN().
 */
 class Simplifier
 {
@@ -114,7 +108,7 @@ public:
     ~Simplifier();
 
     //Called from main
-    bool simplifyBySubsumption();
+    bool simplify();
     void newVar();
     void updateVars(
         const vector<uint32_t>& outerToInter

@@ -1027,7 +1027,7 @@ lbool Solver::simplifyProblem()
     }
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.doSatELite && !simplifier->simplifyBySubsumption())
+    if (conf.doSatELite && !simplifier->simplify())
         goto end;
 
     //Vivify clauses
