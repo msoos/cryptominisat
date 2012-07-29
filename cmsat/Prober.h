@@ -297,7 +297,8 @@ class Prober {
         };
 
         //For cancidate selection
-        struct TwoSignVar{
+        struct TwoSignVar
+        {
             size_t minOfPolarities;
             size_t var;
 
@@ -315,9 +316,6 @@ class Prober {
         BitArray propagated; ///<These lits have been propagated by propagating the lit picked
         BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> bothSame;
-
-        //Count how many times the cache has been updated for a specific literal
-        vector<uint32_t> cacheUpdated;
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN

@@ -90,12 +90,6 @@ void SCCFinder::tarjan(const uint32_t vertex)
         || solver->varData[vertexVar].elimed == ELIMED_QUEUED_VARREPLACER
     ) {
         Lit vertLit = Lit::toLit(vertex);
-        vector<LitExtra>& transCache = solver->implCache[(~vertLit).toInt()].lits;
-
-        //Prefetch cache in case we are doing extended SCC
-        if (solver->conf.doExtendedSCC
-            && transCache.size() > 0
-        ) __builtin_prefetch(&transCache[0]);
 
         //Go through the watch
         const vec<Watched>& ws = solver->watches[(~vertLit).toInt()];
@@ -109,13 +103,15 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        if (solver->conf.doExtendedSCC && solver->conf.doCache) {
+        //TODO stamping here was a cache stuff
+        /*if (solver->conf.doExtendedSCC && solver->conf.doCache) {
             vector<LitExtra>::iterator it = transCache.begin();
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
                 if (lit != ~vertLit) doit(lit, vertex);
             }
-        }
+        }*/
+
     }
 
     // Is v the root of an SCC?
@@ -148,7 +144,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                         lits[0]
                         , lits[1]
                         , xorEqualsFalse
-                        , solver->conf.doExtendedSCC && solver->conf.doCache
+                        , solver->conf.doExtendedSCC && solver->conf.doStamp
                     );
                 }
             }

@@ -583,7 +583,6 @@ void Solver::renumberVariables()
 
     //Update local data
     updateArray(backupActivity, interToOuter);
-    updateArray(candidateForBothProp, interToOuter);
     updateArray(backupPolarity, interToOuter);
     updateArray(decisionVar, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
@@ -613,7 +612,8 @@ void Solver::renumberVariables()
     //Update sub-elements' vars
     simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
-    implCache.updateVars(seen, outerToInter, interToOuter2);
+    //TODO stamping -- update stamp numbers here
+    //implCache.updateVars(seen, outerToInter, interToOuter2);
 
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
@@ -663,12 +663,10 @@ Var Solver::newVar(const bool dvar)
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
 
-    implCache.addNew();
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
-    candidateForBothProp.push_back(TwoSignAppearances());
 
     Searcher::newVar();
 
@@ -995,13 +993,6 @@ lbool Solver::simplifyProblem()
         }
     }
 
-    //Cache clean before failed lit (for speed)
-    if (conf.doCache)
-        implCache.clean(this);
-
-    if (!implCache.tryBoth(this))
-        goto end;
-
     /*if (conf.doBothProp && !bothProp->tryBothProp())
         goto end;*/
 
@@ -1062,14 +1053,11 @@ lbool Solver::simplifyProblem()
         }
     }
 
-    //Cleaning, stat counting, etc.
-    if (conf.doCache)
-        implCache.clean(this);
+    //TODO stamping
+    /*if (!implCache.tryBoth(this))
+        goto end;*/
 
-    if (!implCache.tryBoth(this))
-        goto end;
-
-    if (conf.doCache && conf.doCalcReach)
+    if (conf.doStamp && conf.doCalcReach)
         calcReachability();
 
     if (conf.doSortWatched)
@@ -1126,7 +1114,8 @@ void Solver::calcReachability()
         ) continue;
 
         //See where setting this lit leads to
-        const vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
+        //TODO stamping
+        /*const vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
         const size_t cacheSize = cache.size();
         for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
             //Cannot lead to itself
@@ -1144,7 +1133,7 @@ void Solver::calcReachability()
                 //NOTE: we actually MISREPRESENT this, as only non-learnt should be presented here
                 litReachable[it->getLit().toInt()].numInCache = cacheSize;
             }
-        }
+        }*/
     }
 
     vector<size_t> forEachSize(nVars()*2, 0);
@@ -1547,23 +1536,6 @@ void Solver::printFullStats()
         , "leafs/tree"
     );
     varReplacer->getStats().print(nVars());
-
-    printStatsLine("c cache bprop time"
-        , implCache.getStats().cpu_time
-        , implCache.getStats().cpu_time/cpu_time*100.0
-        , "% time"
-    );
-    printStatsLine("c cache bprop calls"
-        , implCache.getStats().numCalls
-        , implCache.getStats().cpu_time/implCache.getStats().numCalls
-        , "s/call"
-    );
-    printStatsLine("c cache bprop 0-depth ass"
-        , implCache.getStats().zeroDepthAssigns
-        , implCache.getStats().zeroDepthAssigns/implCache.getStats().numCalls
-        , "assign/call"
-    );
-
 
     //Vivifier-ASYMM stats
     printStatsLine("c vivif time"

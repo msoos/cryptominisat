@@ -27,7 +27,6 @@
 
 #include "constants.h"
 #include "SolverTypes.h"
-#include "ImplCache.h"
 #include "SolverConf.h"
 #include "PropEngine.h"
 #include "Searcher.h"
@@ -47,7 +46,6 @@ class SCCFinder;
 class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
-class ImplCache;
 class SQLStats;
 
 class Solver : public Searcher
@@ -486,7 +484,6 @@ class Solver : public Searcher
         friend class ClauseCleaner;
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;
-        friend class ImplCache;
         friend class Searcher;
         friend class XorFinder;
         friend class GateFinder;
@@ -498,25 +495,6 @@ class Solver : public Searcher
         ClauseCleaner       *clauseCleaner;
         VarReplacer         *varReplacer;
         MTRand              mtrand;           ///< random number generator
-
-        struct TwoSignAppearances
-        {
-            TwoSignAppearances() :
-                posLit(0)
-                , negLit(0)
-            {}
-
-            TwoSignAppearances(size_t _posLit, size_t _negLit) :
-                posLit(_posLit)
-                , negLit(_negLit)
-            {}
-
-            size_t posLit;
-            size_t negLit;
-        };
-
-        vector<TwoSignAppearances>    candidateForBothProp; ///< Variables that propagate a LOT of things
-
 
         /////////////////////////////
         //Renumberer
@@ -566,7 +544,6 @@ class Solver : public Searcher
         /////////////////////
         // Data
         SolverConf           conf;
-        ImplCache            implCache;
         vector<LitReachData> litReachable;
         void                 calcReachability();
         bool                 needToInterrupt;

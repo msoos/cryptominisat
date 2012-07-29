@@ -282,7 +282,7 @@ Clause* Searcher::analyze(
     stats.litsLearntRecMin += out_learnt.size();
 
     //Cache-based minimisation
-    if (conf.doCache
+    if (conf.doStamp
         && conf.doMinimLearntMore
         && out_learnt.size() > 1
         && (conf.doAlwaysFMinim
@@ -291,6 +291,7 @@ Clause* Searcher::analyze(
             || out_learnt.size() < 10
             )
     ) {
+        //TODO stamping
         minimiseLearntFurther(out_learnt);
     }
 
@@ -714,33 +715,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 continue;
             }
 
-            //Update cache
-            size_t numElems = trail.size() - trail_lim[0];
-            if (numElems <= solver->conf.cacheUpdateCutoff) {
-                //cout << "trail size: " << trail.size() - trail_lim[0] << endl;
-                for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
-                    const Lit thisLit = trail[c];
-                    const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
-                    if (solver->conf.doCache) {
-                        assert(thisLit != trail[trail_lim[0]]);
-                        const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
-
-                        assert(ancestor != lit_Undef);
-                        solver->implCache[(~ancestor).toInt()].merge(
-                            solver->implCache[(~thisLit).toInt()].lits
-                            , thisLit
-                            , learntStep
-                            , ancestor
-                            , solver->seen
-                        );
-                    }
-                }
-            }
             Lit lit = trail[trail_lim[0]];
-            if (lit.sign())
-                solver->candidateForBothProp[lit.var()].negLit = numElems;
-            else
-                solver->candidateForBothProp[lit.var()].posLit = numElems;
             stats.hyperBinAdded += hyperBinResAll();
             stats.transRedRemoved += removeUselessBins();
         } else {
@@ -1613,7 +1588,7 @@ form to carry out the forward-self-subsuming resolution
 */
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
-    assert(conf.doCache);
+    assert(conf.doStamp);
     stats.OTFShrinkAttempted++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
@@ -1637,10 +1612,11 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         Lit lit = *l;
 
         //Cache-based minimisation
-        const TransCache& cache1 = solver->implCache[l->toInt()];
+        //TODO stamping
+        /*const TransCache& cache1 = solver->implCache[l->toInt()];
         for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
             seen[(~(it->getLit())).toInt()] = 0;
-        }
+        }*/
 
         //Watchlist-based minimisation
         const vec<Watched>& ws = watches[lit.toInt()];

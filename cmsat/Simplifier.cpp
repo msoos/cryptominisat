@@ -1333,7 +1333,7 @@ void Simplifier::blockBinaries()
     runStats.blockedSumLits += blocked*2;
     runStats.blockTime += cpuTime() - myTime;
 
-    solver->implCache.clear();
+    //TODO stamping -- clear stamps
 }
 
 void Simplifier::blockClauses()
@@ -1468,7 +1468,8 @@ void Simplifier::asymmTE()
 
         //add to tmpCl literals that could be added through reverse strengthening
         //ONLY non-learnt
-        for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
+        //TODO stamping
+        /*for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
             const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
             *toDecrease -= cache.size();
             for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
@@ -1480,14 +1481,17 @@ void Simplifier::asymmTE()
                     seen[toAdd.toInt()] = true;
                 }
             }
-        }
+        }*/
+
 
         //subsumption with binary clauses
         bool toRemove = false;
         if (solver->conf.doExtBinSubs) {
             //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-                const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
+
+                //TODO stamping
+                /*const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
                 *toDecrease -= cache.size();
                 for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
                     if ((cacheLit->getOnlyNLBin() || cl.learnt()) //subsume non-learnt with non-learnt
@@ -1500,7 +1504,7 @@ void Simplifier::asymmTE()
                         #endif
                         goto next;
                     }
-                }
+                }*/
             }
         }
 
@@ -2329,8 +2333,10 @@ bool Simplifier::merge(
             //Otherwise we cannot tell if the value in the cache is dependent
             //on the binary clause itself, so that would cause a circular de-
             //pendency
+
+            //TODO stamping
             if (!ps.isBinary() && !qs.isBinary()) {
-                const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+                /*const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
                 numMaxVarElimAgressiveCheck -= cache.size()/3;
                 for(vector<LitExtra>::const_iterator
                     it = cache.begin(), end = cache.end()
@@ -2357,7 +2363,7 @@ bool Simplifier::merge(
                         retval = false;
                         goto end;
                     }
-                }
+                }*/
             }
 
             //Use watchlists

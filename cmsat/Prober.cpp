@@ -70,28 +70,26 @@ struct ActSorter
 void Prober::sortAndResetCandidates()
 {
     candidates.clear();
-    candidates.resize(solver->candidateForBothProp.size());
-    for(size_t i = 0; i < solver->candidateForBothProp.size(); i++) {
+    candidates.resize(solver->nVars());
+    for(size_t i = 0; i < solver->nVars(); i++) {
         Lit lit = Lit(i, false);
         candidates[i].var = lit.var();
 
         //Calculate approx number of literals propagated for positive polarity
+        //TODO stamping -- replace '0'
         size_t posPolar =
             std::max<size_t>(
                 solver->watches[(~lit).toInt()].size()
-                , solver->candidateForBothProp[i].posLit
+                , 0//solver->implCache[(~lit).toInt()].lits.size()
             );
-        posPolar = std::max<size_t>(posPolar
-            , solver->implCache[(~lit).toInt()].lits.size());
 
         //Calculate approx number of literals propagated for negative polarity
+        //TODO stamping -- replace '0'
         size_t negPolar =
             std::max<size_t>(
                 solver->watches[lit.toInt()].size()
-                , solver->candidateForBothProp[i].negLit
+                , 0 //solver->implCache[lit.toInt()].lits.size()
             );
-        negPolar = std::max<size_t>(negPolar
-            , solver->implCache[lit.toInt()].lits.size());
 
         //Minimim of the two polarities
         candidates[i].minOfPolarities = std::min(posPolar, negPolar);
@@ -100,12 +98,6 @@ void Prober::sortAndResetCandidates()
 
     //Sort candidates from MAX to MIN of 'minOfPolarities'
     std::sort(candidates.begin(), candidates.end());
-
-    //Reset candidates
-    std::fill(solver->candidateForBothProp.begin()
-        , solver->candidateForBothProp.end()
-        , Solver::TwoSignAppearances()
-    );
 }
 
 
@@ -132,8 +124,6 @@ bool Prober::probe()
     //State
     visitedAlready.clear();
     visitedAlready.resize(solver->nVars()*2, 0);
-    cacheUpdated.clear();
-    cacheUpdated.resize(solver->nVars()*2, 0);
     propagatedBitSet.clear();
     propagated.resize(solver->nVars(), 0);
     propValue.resize(solver->nVars(), 0);
@@ -302,7 +292,6 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
-    size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
     for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
@@ -335,37 +324,6 @@ bool Prober::tryThis(const Lit lit, const bool first)
         }
 
         visitedAlready[thisLit.toInt()] = 1;
-
-        //Update cache, if the trail was within limits (cacheUpdateCutoff)
-        const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
-        if (solver->conf.doCache
-            && thisLit != lit
-            && numElemsSet <= solver->conf.cacheUpdateCutoff
-            //&& cacheUpdated[(~ancestor).toInt()] == 0
-        ) {
-            //Update stats/markings
-            cacheUpdated[(~ancestor).toInt()]++;
-            extraTime += 1;
-            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/100;
-            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/100;
-
-            const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
-
-            //Update the cache now
-            assert(ancestor != lit_Undef);
-            solver->implCache[(~ancestor).toInt()].merge(
-                solver->implCache[(~thisLit).toInt()].lits
-                , thisLit
-                , learntStep
-                , ancestor
-                , solver->seen
-            );
-
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "The impl cache of " << (~ancestor) << " is now: ";
-            cout << solver->implCache[(~ancestor).toInt()] << endl;
-            #endif
-        }
     }
 
     solver->cancelZeroLight();

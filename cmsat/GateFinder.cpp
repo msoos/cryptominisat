@@ -463,10 +463,13 @@ void GateFinder::findOrGates(const bool learntGatesToo)
         uint8_t numSizeZero = 0;
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
             Lit lit = *l;
-            const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
+            //TODO stamping
+            //const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
             const vec<Watched>& ws = solver->watches[(~lit).toInt()];
 
-            if (cache.size() == 0 && ws.size() == 0) {
+            if (
+                //cache.size() == 0 &&
+                ws.size() == 0) {
                 numSizeZero++;
                 if (numSizeZero > 1)
                     break;
@@ -501,7 +504,8 @@ void GateFinder::findOrGate(
         bool OK = false;
 
         //Try to find corresponding binary clause in cache
-        const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
+        //TODO stamping
+        /*const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
         *subsumer->toDecrease -= cache.size();
         for (vector<LitExtra>::const_iterator
             cacheLit = cache.begin(), endCache = cache.end()
@@ -514,7 +518,7 @@ void GateFinder::findOrGate(
                 wasLearnt |= !cacheLit->getOnlyNLBin();
                 OK = true;
             }
-        }
+        }*/
 
         //Try to find corresponding binary clause in watchlist
         const vec<Watched>& ws = solver->watches[(~otherLit).toInt()];

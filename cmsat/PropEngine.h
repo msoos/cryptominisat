@@ -42,7 +42,6 @@ using std::set;
 #include "Clause.h"
 #include "BoundedQueue.h"
 #include "SolverConf.h"
-#include "ImplCache.h"
 #include "ClauseAllocator.h"
 class Solver;
 class SQLStats;
@@ -342,7 +341,6 @@ protected:
     //Classes that must be friends, since they accomplish things on our datastructures
     /////////////////////////
     friend class CompleteDetachReatacher;
-    friend class ImplCache;
     friend class ClauseAllocator;
 
     // Debug & etc:

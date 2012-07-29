@@ -112,9 +112,8 @@ class SolverConf
         int      doProbe;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
-        int      doCache; ///< Allow storing the cache
-        size_t   cacheUpdateCutoff; ///<The trail size of the propagated literal must be smaller than this to bother updating the cache of all the variables below
-        int      doExtendedSCC; ///< Allow extending SCC with the cache
+        int      doStamp;
+        int      doExtendedSCC;
         int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;
         int      doAlwaysFMinim; ///< Always try to minimise clause with cache&gates

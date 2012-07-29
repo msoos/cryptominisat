@@ -27,7 +27,6 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
-#include "ImplCache.h"
 #include "CSet.h"
 using std::vector;
 using std::set;
@@ -269,11 +268,13 @@ private:
         , const Lit lit
         , FoundXors& foundCls
     );
-    void findXorMatch(
+    //TODO stamping finXorMatch with stamp
+    /*void findXorMatch(
         const vector<LitExtra>& lits
         , const Lit lit
         , FoundXors& foundCls
-    ) const;
+    ) const;*/
+
 
     //const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
     bool mixXorAndGates();

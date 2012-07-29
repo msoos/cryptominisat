@@ -434,6 +434,8 @@ bool ClauseVivifier::vivifyClausesCache(
                 }
             }
 
+            //TODO stamping -- cache was here
+            /*
             if (alsoStrengthen //we need to strengthen
                 && seen[lit.toInt()] //We haven't yet removed it
             ) {
@@ -444,6 +446,8 @@ bool ClauseVivifier::vivifyClausesCache(
                     seen[(~(it2->getLit())).toInt()] = 0;
                 }
             }
+            */
+
         }
 
         //Clear 'seen' and fill new clause data

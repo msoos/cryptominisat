@@ -391,10 +391,11 @@ void XorFinder::findXor(ClOffset offset)
         findXorMatch(solver->watches[(*l).toInt()], *l, foundCls);
         findXorMatch(solver->watches[(~(*l)).toInt()], ~(*l), foundCls);
 
-        if (solver->conf.useCacheWhenFindingXors) {
+        //TODO stamping
+        /*if (solver->conf.useCacheWhenFindingXors) {
             findXorMatch(solver->implCache[(*l).toInt()].lits, *l, foundCls);
             findXorMatch(solver->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
-        }
+        }*/
 
         if (foundCls.foundAll())
             break;
@@ -437,7 +438,8 @@ void XorFinder::findXor(ClOffset offset)
     }
 }
 
-void XorFinder::findXorMatch(
+//TODO stamping
+/*void XorFinder::findXorMatch(
     const vector<LitExtra>& lits
     , const Lit lit
     , FoundXors& foundCls
@@ -452,7 +454,7 @@ void XorFinder::findXorMatch(
             foundCls.add(lit, it->getLit());
         }
     }
-}
+}*/
 
 void XorFinder::findXorMatchExt(
     const vec<Watched>& ws
@@ -491,7 +493,8 @@ void XorFinder::findXorMatchExt(
                 //then try to find a replacement for it from the cache
                 if (!seen[l->var()]) {
                     bool found = false;
-                    const vector<LitExtra>& cache = solver->implCache[Lit(l->var(), true).toInt()].lits;
+                    //TODO stamping
+                    /*const vector<LitExtra>& cache = solver->implCache[Lit(l->var(), true).toInt()].lits;
                     for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end(); it2 != end2 && !found; it2++) {
                         if (seen[l->var()] && !seen2[l->var()]) {
                             found = true;
@@ -500,7 +503,7 @@ void XorFinder::findXorMatchExt(
                             tmpClause.push_back(it2->getLit());
                             //cout << "Added trans lit: " << tmpClause.back() << endl;
                         }
-                    }
+                    }*/
 
                     //Didn't find replacement
                     if (!found)
