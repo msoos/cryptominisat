@@ -416,7 +416,8 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
 
 void Simplifier::performSubsumption()
 {
-    if (solver->longIrredCls.empty())
+    //If clauses are empty, the system below segfaults
+    if (clauses.empty())
         return;
 
     double myTime = cpuTime();
@@ -424,7 +425,7 @@ void Simplifier::performSubsumption()
     size_t subsumed = 0;
     toDecrease = &numMaxSubsume0;
     while (*toDecrease > 0
-        && wenThrough < 1.5*(double)solver->longIrredCls.size()
+        && wenThrough < 1.5*(double)clauses.size()
     ) {
         *toDecrease -= 20;
         wenThrough++;
@@ -436,8 +437,8 @@ void Simplifier::performSubsumption()
             cout << "toDecrease: " << *toDecrease << endl;
         }
 
-        size_t num = solver->mtrand.randInt(solver->longIrredCls.size()-1);
-        ClOffset offset = solver->longIrredCls[num];
+        size_t num = solver->mtrand.randInt(clauses.size()-1);
+        ClOffset offset = clauses[num];
         Clause* cl = solver->clAllocator->getPointer(offset);
 
         //Has already been removed
@@ -469,7 +470,7 @@ bool Simplifier::performStrengthening()
     toDecrease = &numMaxSubsume1;
     Sub1Ret ret;
     while(*toDecrease > 0
-        && wenThrough < 1.5*(double)2*solver->longIrredCls.size()
+        && wenThrough < 1.5*(double)2*clauses.size()
     ) {
         *toDecrease -= 20;
         wenThrough++;
@@ -481,8 +482,8 @@ bool Simplifier::performStrengthening()
             cout << "toDecrease: " << *toDecrease << endl;
         }
 
-        size_t num = solver->mtrand.randInt(solver->longIrredCls.size()-1);
-        ClOffset offset = solver->longIrredCls[num];
+        size_t num = solver->mtrand.randInt(clauses.size()-1);
+        ClOffset offset = clauses[num];
         Clause* cl = solver->clAllocator->getPointer(offset);
 
         //Has already been removed
@@ -528,17 +529,19 @@ void Simplifier::linkInClause(Clause& cl)
 /**
 @brief Adds clauses from the solver to the occur
 */
-uint64_t Simplifier::addFromSolver(vector<ClOffset>& cs)
+uint64_t Simplifier::addFromSolver(vector<ClOffset>& toAdd)
 {
     uint64_t numLitsAdded = 0;
-    for (vector<ClOffset>::iterator it = cs.begin(), end = cs.end()
+    for (vector<ClOffset>::iterator it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
         ; it++
     ) {
         Clause* cl = solver->clAllocator->getPointer(*it);
         linkInClause(*cl);
         numLitsAdded += cl->size();
+        clauses.push_back(*it);
     }
+    toAdd.clear();
 
     return numLitsAdded;
 }
@@ -546,14 +549,14 @@ uint64_t Simplifier::addFromSolver(vector<ClOffset>& cs)
 /**
 @brief Adds clauses from here, back to the solver
 */
-void Simplifier::addBackToSolver(vector<ClOffset>& clauses)
+void Simplifier::addBackToSolver()
 {
-    size_t i,j;
-    for (i = 0, j = 0
-        ; i < clauses.size()
-        ; i++
+    for (vector<ClOffset>::const_iterator
+        it = clauses.begin(), end = clauses.end()
+        ; it != end
+        ; it++
     ) {
-        Clause* cl = solver->clAllocator->getPointer(clauses[i]);
+        Clause* cl = solver->clAllocator->getPointer(*it);
 
         //Clause has been removed
         if (cl->getFreed())
@@ -562,32 +565,36 @@ void Simplifier::addBackToSolver(vector<ClOffset>& clauses)
         //All clauses are larger than 2-long
         assert(cl->size() > 3);
 
-        //Go through each literal
+        //Check variable elimination sanity
         for (Clause::const_iterator
-            it = cl->begin(), end = cl->end()
-            ; it != end
-            ; it++
+            it2 = cl->begin(), end2 = cl->end()
+            ; it2 != end2
+            ; it2++
         ) {
-            if (solver->varData[it->var()].elimed != ELIMED_NONE
-                && solver->varData[it->var()].elimed != ELIMED_QUEUED_VARREPLACER
+            if (solver->varData[it2->var()].elimed != ELIMED_NONE
+                && solver->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
             ) {
                 cout
                 << "ERROR! Clause " << *cl
                 << " learnt: " << cl->learnt()
-                << " contains lit " << *it
-                << " which has elimed status" << solver->varData[it->var()].elimed
+                << " contains lit " << *it2
+                << " which has elimed status" << solver->varData[it2->var()].elimed
                 << endl;
 
                 assert(false);
+                exit(-1);
             }
         }
 
         if (completeCleanClause(*cl)) {
             solver->attachClause(*cl);
-            clauses[j++] = clauses[i];
+            if (cl->learnt()) {
+                solver->longRedCls.push_back(*it);
+            } else {
+                solver->longIrredCls.push_back(*it);
+            }
         }
     }
-    clauses.resize(clauses.size() - (i-j));
 }
 
 bool Simplifier::completeCleanClause(Clause& cl)
@@ -842,6 +849,7 @@ bool Simplifier::simplifyBySubsumption()
     double myTime = cpuTime();
     addedClauseLits = 0;
     runStats.clear();
+    clauses.clear();
 
     //Remove all tris&longer clauses from watches
     removeAllLongs();
@@ -850,13 +858,14 @@ bool Simplifier::simplifyBySubsumption()
     toDecrease = &numMaxSubsume1;
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
     addedClauseLits += addFromSolver(solver->longIrredCls);
+    solver->longIrredCls.clear();
 
     //Add learnt to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
     addedClauseLits += addFromSolver(solver->longRedCls);
+    solver->longRedCls.clear();
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
-    solver->checkStats(true);
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
@@ -865,9 +874,8 @@ bool Simplifier::simplifyBySubsumption()
     //stats later
     size_t origTrailSize = solver->trail.size();
 
-    #ifdef DEBUG_VAR_ELIM
+    //Checking
     checkForElimedVars();
-    #endif
 
     //Gate-finding
     /*if (solver->conf.doCache && solver->conf.doGateFind) {
@@ -920,8 +928,7 @@ end:
 
     //Add back clauses to solver
     removeAllLongs();
-    addBackToSolver(solver->longIrredCls);
-    addBackToSolver(solver->longRedCls);
+    addBackToSolver();
     propImplicits();
 
     //We can now propagate from solver
@@ -1077,7 +1084,7 @@ void Simplifier::checkForElimedVars()
 {
     //First, sanity-check the long clauses
     for (vector<ClOffset>::const_iterator
-        it =  solver->longIrredCls.begin(), end = solver->longIrredCls.end()
+        it =  clauses.begin(), end = clauses.end()
         ; it != end
         ; it++
     ) {
@@ -1338,7 +1345,7 @@ void Simplifier::blockBinaries()
 
 void Simplifier::blockClauses()
 {
-    if (solver->longIrredCls.empty())
+    if (clauses.empty())
         return;
 
     const double myTime = cpuTime();
@@ -1347,7 +1354,7 @@ void Simplifier::blockClauses()
     size_t wenThrough = 0;
     toDecrease = &numMaxBlocked;
     while(*toDecrease > 0
-        && wenThrough < 2*solver->longIrredCls.size()
+        && wenThrough < 2*clauses.size()
     ) {
         wenThrough++;
         *toDecrease -= 2;
@@ -1359,12 +1366,12 @@ void Simplifier::blockClauses()
             cout << "toDecrease: " << *toDecrease << endl;
         }
 
-        size_t num = solver->mtrand.randInt(solver->longIrredCls.size()-1);
-        ClOffset offset = solver->longIrredCls[num];
+        size_t num = solver->mtrand.randInt(clauses.size()-1);
+        ClOffset offset = clauses[num];
         Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        //Already removed
-        if (cl.getFreed())
+        //Already removed or learnt
+        if (cl.getFreed() || cl.learnt())
             continue;
 
         //Cannot be learnt
@@ -1423,7 +1430,7 @@ void Simplifier::blockClauses()
 void Simplifier::asymmTE()
 {
     //Random system would die here
-    if (solver->longIrredCls.empty())
+    if (clauses.empty())
         return;
 
     const double myTime = cpuTime();
@@ -1436,7 +1443,7 @@ void Simplifier::asymmTE()
     vector<Lit> tmpCl;
     toDecrease = &numMaxAsymm;
     while(*toDecrease > 0
-        && wenThrough < 2*solver->longIrredCls.size()
+        && wenThrough < 2*clauses.size()
     ) {
         *toDecrease -= 2;
         wenThrough++;
@@ -1448,12 +1455,12 @@ void Simplifier::asymmTE()
             cout << "toDecrease: " << *toDecrease << endl;
         }
 
-        size_t num = solver->mtrand.randInt(solver->longIrredCls.size()-1);
-        ClOffset offset = solver->longIrredCls[num];
+        size_t num = solver->mtrand.randInt(clauses.size()-1);
+        ClOffset offset = clauses[num];
         Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        //Already removed
-        if (cl.getFreed())
+        //Already removed or learnt
+        if (cl.getFreed() || cl.learnt())
             continue;
 
 
@@ -2123,7 +2130,7 @@ bool Simplifier::maybeEliminate(const Var var)
         if (newCl != NULL) {
             linkInClause(*newCl);
             ClOffset offset = solver->clAllocator->getOffset(newCl);
-            solver->longIrredCls.push_back(offset);
+            clauses.push_back(offset);
             runStats.subsumedByVE += subsume0(offset);
         } else if (finalLits.size() == 3 || finalLits.size() == 2) {
             //Subsume long

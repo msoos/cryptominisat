@@ -402,6 +402,7 @@ public:
 
 private:
 
+    vector<ClOffset> clauses;
     bool subsumeWithBinaries();
 
     //Persistent data
@@ -432,13 +433,13 @@ private:
     bool propagate();
 
     //Start-up
-    uint64_t addFromSolver(vector<ClOffset>& clauses);
+    uint64_t addFromSolver(vector<ClOffset>& toAdd);
     void setLimits();
     void performSubsumption();
     bool performStrengthening();
 
     //Finish-up
-    void addBackToSolver(vector<ClOffset>& clauses);
+    void addBackToSolver();
     bool propImplicits();
     void removeAllLongs();
     void removeAssignedVarsFromEliminated();
