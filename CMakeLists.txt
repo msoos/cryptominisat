@@ -67,7 +67,7 @@ add_definitions(-DVERSION="3.0.0")
 # -----------------------------------------------------------------------------
 # Look for Boost program options
 # -----------------------------------------------------------------------------
-find_package( Boost 1.34 REQUIRED COMPONENTS program_options)
+find_package( Boost 1.30 REQUIRED COMPONENTS program_options)
 find_package(M4RI REQUIRED)
 
 # ---------------
