@@ -134,6 +134,11 @@ public:
         return *this;
     }
 
+    const T* getData()
+    {
+        return data;
+    }
+
 
     // Duplicatation (preferred instead):
     void copyTo(vec<T>& copy) const { copy.clear(); copy.growTo(sz); for (uint32_t i = 0; i != sz; i++) new (&copy[i]) T(data[i]); }
