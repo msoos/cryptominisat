@@ -520,10 +520,10 @@ void Simplifier::linkInClause(Clause& cl)
         vec<Watched>& ws = solver->watches[cl[i].toInt()];
         *toDecrease -= ws.size();
 
-        assert(cl.abst == calcAbstraction(cl));
         ws.push(Watched(offset, cl.abst));
         //touchedVars.touch(cl[i], cl.learnt());
     }
+    assert(cl.abst == calcAbstraction(cl));
 }
 
 /**
