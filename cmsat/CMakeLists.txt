@@ -8,11 +8,12 @@ include_directories(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
-add_library(m4ri SHARED IMPORTED
-)
+#add_library(m4ri STATIC IMPORTED)
+add_library(m4ri SHARED IMPORTED)
 
 set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
+#add_library(cryptoms STATIC
 add_library(cryptoms SHARED
     PropEngine.cpp
     PackedRow.cpp
