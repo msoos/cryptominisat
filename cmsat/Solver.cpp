@@ -755,6 +755,7 @@ sorted and then removed
 void Solver::reduceDB()
 {
     //Clean the clause database before doing cleaning
+    varReplacer->performReplace();
     clauseCleaner->removeAndCleanAll();
 
     const double myTime = cpuTime();
@@ -763,9 +764,14 @@ void Solver::reduceDB()
     tmpStats.origNumClauses = longRedCls.size();
     tmpStats.origNumLits = redLits - redBins*2;
 
-    //Calculate how much to remove
+    //Calculate how many to remove
     uint32_t removeNum = (double)longRedCls.size() * conf.ratioRemoveClauses;
 
+    //Subsume
+    simplifier->subsumeLearnts();
+    cout << "c Time wasted on clean&replace&sub: " << cpuTime()-myTime << endl;
+
+    //pre-remove
     if (conf.doPreClauseCleanPropAndConfl) {
         //Reduce based on props&confls
         size_t i, j;
@@ -829,15 +835,6 @@ void Solver::reduceDB()
         << " \tsize:" << learnts[i]->size() << endl;
     }
     #endif
-
-    /*if (conf.verbosity >= 2) {
-        cout << "c To remove (according to remove ratio): " << removeNum;
-        if (removeNum <= tmpStats.preRemovedClauses)
-            removeNum = 0;
-        else
-            removeNum -= tmpStats.preRemovedClauses;
-        cout << " -- still to be removed: " << removeNum << endl;
-    }*/
 
     //Remove normally
     size_t i, j;
@@ -2012,9 +2009,9 @@ bool Solver::findClause(const ClOffset offset) const
 
 void Solver::checkNoWrongAttach() const
 {
-    #ifndef VERBOSE_DEBUG
+    #ifndef MORE_DEBUG
     return;
-    #endif //VERBOSE_DEBUG
+    #endif
 
     for (vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()

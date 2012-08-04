@@ -529,15 +529,19 @@ void Simplifier::linkInClause(Clause& cl)
 /**
 @brief Adds clauses from the solver to the occur
 */
-uint64_t Simplifier::addFromSolver(vector<ClOffset>& toAdd)
-{
+uint64_t Simplifier::addFromSolver(
+    vector<ClOffset>& toAdd
+    , bool alsoOccur
+) {
     uint64_t numLitsAdded = 0;
     for (vector<ClOffset>::iterator it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
         ; it++
     ) {
         Clause* cl = solver->clAllocator->getPointer(*it);
-        linkInClause(*cl);
+        if (alsoOccur)
+            linkInClause(*cl);
+
         numLitsAdded += cl->size();
         clauses.push_back(*it);
     }
@@ -645,7 +649,7 @@ bool Simplifier::completeCleanClause(Clause& cl)
     return true;
 }
 
-void Simplifier::removeAllLongs()
+void Simplifier::removeAllLongsFromWatches()
 {
     for (vector<vec<Watched> >::iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -820,15 +824,59 @@ bool Simplifier::propagate()
     return true;
 }
 
-/**
-@brief Main function in this class
+void Simplifier::subsumeLearnts()
+{
+    double myTime = cpuTime();
 
-Performs, recursively:
-* backward-subsumption
-* self-subsuming resolution
-* variable elimination
+    //Test & debug
+    solver->testAllClauseAttach();
+    solver->checkNoWrongAttach();
+    assert(solver->varReplacer->getNewToReplaceVars() == 0
+            && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
-*/
+    //If too many clauses, don't do it
+    if (solver->getNumLongClauses() > 10000000UL
+        || solver->irredLits > 50000000UL
+    )  return;
+
+    //Setup
+    addedClauseLits = 0;
+    runStats.clear();
+    clauses.clear();
+    toDecrease = &numMaxSubsume1;
+    size_t origTrailSize = solver->trail.size();
+
+    //Remove all long clauses from watches
+    removeAllLongsFromWatches();
+
+    //Add red to occur
+    runStats.origNumRedLongClauses = solver->longRedCls.size();
+    addedClauseLits += addFromSolver(solver->longRedCls);
+    solver->longRedCls.clear();
+    runStats.origNumFreeVars = solver->getNumFreeVars();
+    setLimits();
+
+    //Print link-in and startup time
+    double linkInTime = cpuTime() - myTime;
+    runStats.linkInTime += linkInTime;
+
+    //Carry out subsume0
+    performSubsumption();
+
+    //Add irred to occur, but only temporarily
+    runStats.origNumIrredLongClauses = solver->longIrredCls.size();
+    addedClauseLits += addFromSolver(solver->longIrredCls, false);
+    solver->longIrredCls.clear();
+
+    //Add back clauses to solver etc
+    finishUp(origTrailSize);
+
+    if (solver->conf.verbosity >= 1) {
+        runStats.printShortSubStr();
+    }
+}
+
+
 bool Simplifier::simplify()
 {
     //Test & debug
@@ -850,12 +898,13 @@ bool Simplifier::simplify()
     addedClauseLits = 0;
     runStats.clear();
     clauses.clear();
+    toDecrease = &numMaxSubsume1;
+    size_t origTrailSize = solver->trail.size();
 
-    //Remove all tris&longer clauses from watches
-    removeAllLongs();
+    //Remove all long clauses from watches
+    removeAllLongsFromWatches();
 
     //Add non-learnt to occur
-    toDecrease = &numMaxSubsume1;
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
     addedClauseLits += addFromSolver(solver->longIrredCls);
     solver->longIrredCls.clear();
@@ -870,9 +919,6 @@ bool Simplifier::simplify()
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
-
-    //stats later
-    size_t origTrailSize = solver->trail.size();
 
     //Checking
     checkForElimedVars();
@@ -919,36 +965,9 @@ bool Simplifier::simplify()
 
     assert(solver->ok);
 
-    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
-    removeAssignedVarsFromEliminated();
-
 end:
-    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
-    myTime = cpuTime();
 
-    //Add back clauses to solver
-    removeAllLongs();
-    addBackToSolver();
-    propImplicits();
-
-    //We can now propagate from solver
-    //since the clauses are now back normally
-    if (solver->ok) {
-        solver->ok = solver->propagate().isNULL();
-    }
-
-    //Update global stats
-    runStats.finalCleanupTime += cpuTime() - myTime;
-    globalStats += runStats;
-
-    //Sanity checks
-    if (solver->ok) {
-        checkElimedUnassignedAndStats();
-        solver->testAllClauseAttach();
-        solver->checkNoWrongAttach();
-        solver->checkStats();
-        solver->checkImplicitPropagated();
-    }
+    finishUp(origTrailSize);
 
     //Print stats
     if (solver->conf.verbosity >= 1) {
@@ -960,6 +979,47 @@ end:
 
     numCalls++;
     return solver->ok;
+}
+
+void Simplifier::finishUp(
+    size_t origTrailSize
+) {
+    bool somethingSet = (solver->trail.size() - origTrailSize) > 0;
+
+    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
+    double myTime = cpuTime();
+
+    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
+    if (somethingSet)
+        removeAssignedVarsFromEliminated();
+
+    //Add back clauses to solver
+    removeAllLongsFromWatches();
+    addBackToSolver();
+    if (somethingSet)
+        propImplicits();
+
+    //We can now propagate from solver
+    //since the clauses are now back normally
+    if (solver->ok) {
+        solver->ok = solver->propagate().isNULL();
+    }
+
+    //Sanity checks
+    if (solver->ok && somethingSet) {
+        solver->testAllClauseAttach();
+        solver->checkNoWrongAttach();
+        solver->checkStats();
+        solver->checkImplicitPropagated();
+    }
+
+    //Update global stats
+    runStats.finalCleanupTime += cpuTime() - myTime;
+    globalStats += runStats;
+
+    if (solver->ok) {
+        checkElimedUnassignedAndStats();
+    }
 }
 
 bool Simplifier::propImplicits()
@@ -1667,6 +1727,7 @@ void Simplifier::removeAssignedVarsFromEliminated()
         if (solver->value(i->blockedOn) != l_Undef) {
             const Var var = i->blockedOn.var();
             if (solver->varData[var].elimed == ELIMED_VARELIM) {
+                assert(var_elimed[var] == true);
                 var_elimed[var] = false;
                 solver->varData[var].elimed = ELIMED_NONE;
                 solver->setDecisionVar(var);

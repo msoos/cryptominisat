@@ -109,6 +109,7 @@ public:
 
     //Called from main
     bool simplify();
+    void subsumeLearnts();
     void newVar();
     void updateVars(
         const vector<uint32_t>& outerToInter
@@ -222,16 +223,23 @@ public:
             return *this;
         }
 
-        void printShort() const
+        void printShortSubStr() const
         {
             //STRENGTH + SUBSUME
             cout << "c"
             << " lits-rem: " << litsRemStrengthen
             << " subsSUB: " << subsumedBySub
             << " subsSTR: " << subsumedByStr
-            << " time: " << std::fixed << std::setprecision(2)
-            << (subsumeTime+strengthenTime) << " s"
+            << " T: " << std::fixed << std::setprecision(2)
+            << (subsumeTime+strengthenTime+linkInTime+finalCleanupTime)
+            << "(" << linkInTime+finalCleanupTime << " is overhead)"
+            << " s"
             << endl;
+        }
+
+        void printShort() const
+        {
+            printShortSubStr();
 
             //ELIM
             cout
@@ -260,6 +268,11 @@ public:
             << " learnt-tri rem: " << triLearntClRemThroughElim
             << " learnt-long rem: " << longLearntClRemThroughElim
             << " v-fix: " << std::setw(4) << zeroDepthAssings
+            << endl;
+
+            cout
+            << "c [simp] link-in T: " << linkInTime
+            << " cleanup T: " << finalCleanupTime
             << endl;
         }
 
@@ -396,6 +409,7 @@ public:
 
 private:
 
+    void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;
     bool subsumeWithBinaries();
 
@@ -427,7 +441,7 @@ private:
     bool propagate();
 
     //Start-up
-    uint64_t addFromSolver(vector<ClOffset>& toAdd);
+    uint64_t addFromSolver(vector<ClOffset>& toAdd, bool alsoOccur = true);
     void setLimits();
     void performSubsumption();
     bool performStrengthening();
@@ -435,7 +449,7 @@ private:
     //Finish-up
     void addBackToSolver();
     bool propImplicits();
-    void removeAllLongs();
+    void removeAllLongsFromWatches();
     void removeAssignedVarsFromEliminated();
     bool completeCleanClause(Clause& ps);
 
