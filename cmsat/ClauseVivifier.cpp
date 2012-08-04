@@ -79,7 +79,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
 {
     uint64_t origShorten = runStats.numClShorten;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 10L*1000L*1000L;
+    uint64_t maxNumProps = 2L*1000L*1000L;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     size_t origTrailSize = solver->trail.size();
 

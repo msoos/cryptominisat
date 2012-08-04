@@ -1658,8 +1658,8 @@ from the beginning.
 */
 void Simplifier::setLimits()
 {
-    numMaxSubsume0    = 60L*1000L*1000L;
-    numMaxSubsume1    = 30L*1000L*1000L;
+    numMaxSubsume0    = 250L*1000L*1000L;
+    numMaxSubsume1    = 100L*1000L*1000L;
     numMaxElim        = 400L*1000L*1000L;
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
