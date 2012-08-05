@@ -1195,15 +1195,15 @@ Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
     return cl;
 }
 
-Solver::UsageStats Solver::sumClauseData(
+ClauseUsageStats Solver::sumClauseData(
     const vector<ClOffset>& toprint
     , const bool learnt
 ) const {
-    vector<UsageStats> perSizeStats;
-    vector<UsageStats> perGlueStats;
+    vector<ClauseUsageStats> perSizeStats;
+    vector<ClauseUsageStats> perGlueStats;
 
     //Reset stats
-    UsageStats stats;
+    ClauseUsageStats stats;
 
     for(vector<ClOffset>::const_iterator
         it = toprint.begin()
@@ -1312,7 +1312,7 @@ Solver::UsageStats Solver::sumClauseData(
 
 void Solver::printPropConflStats(
     std::string name
-    , const vector<UsageStats>& stats
+    , const vector<ClauseUsageStats>& stats
 ) const {
     for(size_t i = 0; i < stats.size(); i++) {
         //Nothing to do here, no stats really
@@ -1371,11 +1371,20 @@ void Solver::clearClauseStats(vector<ClOffset>& clauseset)
 
 void Solver::fullReduce()
 {
-    if (conf.verbosity >= 1) {
-        UsageStats stats;
-        stats += sumClauseData(longIrredCls, false);
-        stats += sumClauseData(longRedCls, true);
+    ClauseUsageStats irredStats = sumClauseData(longIrredCls, false);
+    ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
 
+    if (conf.doSQL) {
+        sqlStats.cleanDB(irredStats, solver, false);
+        sqlStats.cleanDB(redStats, solver, true);
+    }
+
+    //Calculating summary
+    ClauseUsageStats stats;
+    stats += irredStats;
+    stats += redStats;
+
+    if (conf.verbosity >= 1) {
         cout
         << "c sum   lits visit: "
         << std::setw(8) << stats.sumLitVisited/1000UL

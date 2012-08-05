@@ -19,9 +19,15 @@ public:
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
     );
+    void cleanDB(
+        ClauseUsageStats& stats
+        , const Solver* solver
+        , bool learnt
+    );
     void setup(const Solver* solver);
 
 private:
+
     void connectServer();
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
@@ -59,6 +65,29 @@ private:
     }
 
     uint64_t runID;
+
+    struct StmtCleanDB {
+        MYSQL_BIND  bind[12];
+        MYSQL_STMT  *STMT;
+
+        //Position
+        uint64_t numSimplify;
+        uint64_t sumRestarts;
+        uint64_t sumConflicts;
+        double cpuTime;
+        uint64_t reduceDBs;
+
+        //Actual data
+        uint64_t learnt;
+        uint64_t clsVisited;
+        uint64_t litsVisited;
+        uint64_t props;
+        uint64_t confls;
+        uint64_t UIP;
+    };
+    StmtCleanDB stmtCleanDB;
+    void initCleanDBSTMT(uint64_t verbosity);
+
     size_t bindAt;
     struct StmtRst {
         MYSQL_BIND  bind[59];

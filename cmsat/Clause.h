@@ -321,4 +321,50 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
     return os;
 }
 
+struct ClauseUsageStats
+{
+    ClauseUsageStats() :
+        num(0)
+        , sumProp(0)
+        , sumConfl(0)
+        , sumLitVisited(0)
+        , sumLookedAt(0)
+        , sumUsedUIP(0)
+    {}
+
+    uint64_t sumPropAndConfl() const
+    {
+        return sumProp + sumConfl;
+    }
+
+    uint64_t num;
+    uint64_t sumProp;
+    uint64_t sumConfl;
+    uint64_t sumLitVisited;
+    uint64_t sumLookedAt;
+    uint64_t sumUsedUIP;
+
+    ClauseUsageStats& operator+=(const ClauseUsageStats& other)
+    {
+        num += other.num;
+        sumProp += other.sumProp;
+        sumConfl += other.sumConfl;
+        sumLitVisited += other.sumLitVisited;
+        sumLookedAt += other.sumLookedAt;
+        sumUsedUIP += other.sumUsedUIP;
+
+        return *this;
+    }
+
+    void addStat(const Clause& cl)
+    {
+        num++;
+        sumProp += cl.stats.numProp;
+        sumConfl += cl.stats.numConfl;
+        sumLitVisited += cl.stats.numLitVisited;
+        sumLookedAt += cl.stats.numLookedAt;
+        sumUsedUIP += cl.stats.numUsedUIP;
+    }
+};
+
 #endif //CLAUSE_H

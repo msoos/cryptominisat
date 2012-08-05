@@ -620,51 +620,6 @@ class Solver : public Searcher
 
         /////////////////
         // Debug
-        struct UsageStats
-        {
-            UsageStats() :
-                num(0)
-                , sumProp(0)
-                , sumConfl(0)
-                , sumLitVisited(0)
-                , sumLookedAt(0)
-                , sumUsedUIP(0)
-            {}
-
-            uint64_t sumPropAndConfl() const
-            {
-                return sumProp + sumConfl;
-            }
-
-            uint64_t num;
-            uint64_t sumProp;
-            uint64_t sumConfl;
-            uint64_t sumLitVisited;
-            uint64_t sumLookedAt;
-            uint64_t sumUsedUIP;
-
-            UsageStats& operator+=(const UsageStats& other)
-            {
-                num += other.num;
-                sumProp += other.sumProp;
-                sumConfl += other.sumConfl;
-                sumLitVisited += other.sumLitVisited;
-                sumLookedAt += other.sumLookedAt;
-                sumUsedUIP += other.sumUsedUIP;
-
-                return *this;
-            }
-
-            void addStat(const Clause& cl)
-            {
-                num++;
-                sumProp += cl.stats.numProp;
-                sumConfl += cl.stats.numConfl;
-                sumLitVisited += cl.stats.numLitVisited;
-                sumLookedAt += cl.stats.numLookedAt;
-                sumUsedUIP += cl.stats.numUsedUIP;
-            }
-        };
         void testAllClauseAttach() const;
         bool normClauseIsAttached(const ClOffset offset) const;
         void findAllAttach() const;
@@ -672,13 +627,13 @@ class Solver : public Searcher
         void checkNoWrongAttach() const;
         void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
         void printClauseSizeDistrib();
-        UsageStats sumClauseData(
+        ClauseUsageStats sumClauseData(
             const vector<ClOffset>& toprint
             , bool learnt
         ) const;
         void printPropConflStats(
             std::string name
-            , const vector<UsageStats>& stats
+            , const vector<ClauseUsageStats>& stats
         ) const;
 
         vector<Lit> assumptions;

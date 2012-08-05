@@ -2,7 +2,7 @@
 --
 -- Host: localhost    Database: cryptoms
 -- ------------------------------------------------------
--- Server version	5.5.24-3
+-- Server version	5.5.24-0ubuntu0.12.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -31,23 +31,26 @@ CREATE TABLE `clauseSizeDistrib` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `clauseStats`
+-- Table structure for table `cleanDB`
 --
 
-DROP TABLE IF EXISTS `clauseStats`;
+DROP TABLE IF EXISTS `cleanDB`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `clauseStats` (
+CREATE TABLE `cleanDB` (
   `runID` bigint(20) unsigned NOT NULL,
   `simplifications` bigint(20) unsigned NOT NULL,
-  `reduceDB` bigint(20) unsigned NOT NULL,
+  `restarts` bigint(20) unsigned NOT NULL,
+  `conflicts` bigint(20) unsigned NOT NULL,
+  `time` double unsigned NOT NULL,
   `learnt` int(10) unsigned NOT NULL,
-  `size` bigint(20) unsigned NOT NULL,
-  `glue` bigint(20) unsigned NOT NULL,
-  `numPropAndConfl` bigint(20) unsigned NOT NULL,
-  `numLitVisited` bigint(20) unsigned NOT NULL,
-  `numLookedAt` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  `reduceDBs` bigint(20) unsigned NOT NULL,
+  `clsVisited` bigint(20) unsigned NOT NULL,
+  `litsVisited` bigint(20) unsigned NOT NULL,
+  `props` bigint(20) unsigned NOT NULL,
+  `confls` bigint(20) unsigned NOT NULL,
+  `UIP` bigint(20) unsigned NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -148,24 +151,6 @@ CREATE TABLE `solverRun` (
   PRIMARY KEY (`runID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `vars`
---
-
-DROP TABLE IF EXISTS `vars`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `vars` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `order` int(10) unsigned NOT NULL,
-  `pos` bigint(20) unsigned NOT NULL,
-  `neg` bigint(20) unsigned NOT NULL,
-  `total` bigint(20) unsigned NOT NULL,
-  `flipped` bigint(20) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -176,4 +161,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-07-21 19:35:08
+-- Dump completed on 2012-08-05 14:23:29

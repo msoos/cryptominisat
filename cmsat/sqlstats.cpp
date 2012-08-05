@@ -26,6 +26,7 @@ void SQLStats::setup(const Solver* solver)
     getID(solver);
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
+    initCleanDBSTMT(solver->conf.verbosity);
     initClauseSizeDistribSTMT(solver);
 }
 
@@ -423,6 +424,88 @@ void SQLStats::initRestartSTMT(
     }
 }
 
+//Prepare statement for restart
+void SQLStats::initCleanDBSTMT(
+    uint64_t verbosity
+) {
+    const size_t numElems = sizeof(stmtCleanDB.bind)/sizeof(MYSQL_BIND);
+
+    std::stringstream ss;
+    ss << "insert into `cleanDB`"
+    << "("
+    //Position
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
+    << ", `reduceDBs`"
+
+    //Actual data
+    << ", `learnt`, `clsVisited`, `litsVisited`, `props`, `confls`, `UIP`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Get memory for statement
+    stmtCleanDB.STMT = mysql_stmt_init(serverConn);
+    if (!stmtCleanDB.STMT) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        exit(1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtCleanDB.STMT, ss.str().c_str(), ss.str().length())) {
+        cout << "Error in mysql_stmt_prepare() of cleanDB, INSERT failed" << endl
+        << mysql_stmt_error(stmtCleanDB.STMT) << endl;
+        exit(0);
+    }
+
+    if (verbosity >= 6) {
+        cout
+        << "prepare INSERT successful"
+        << endl;
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtCleanDB.STMT);
+    if (param_count != numElems) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        exit(1);
+    }
+
+    memset(stmtCleanDB.bind, 0, sizeof(stmtCleanDB.bind));
+
+
+    //Bind the local variables to the statement
+    bindAt =0;
+    bindTo(stmtCleanDB, runID);
+    bindTo(stmtCleanDB, stmtCleanDB.numSimplify);
+    bindTo(stmtCleanDB, stmtCleanDB.sumRestarts);
+    bindTo(stmtCleanDB, stmtCleanDB.sumConflicts);
+    bindTo(stmtCleanDB, stmtCleanDB.cpuTime);
+    bindTo(stmtCleanDB, stmtCleanDB.reduceDBs);
+
+    //Clause stats
+    bindTo(stmtCleanDB, stmtCleanDB.learnt);
+    bindTo(stmtCleanDB, stmtCleanDB.clsVisited);
+    bindTo(stmtCleanDB, stmtCleanDB.litsVisited);
+    bindTo(stmtCleanDB, stmtCleanDB.props);
+    bindTo(stmtCleanDB, stmtCleanDB.confls);
+    bindTo(stmtCleanDB, stmtCleanDB.UIP);
+
+    assert(bindAt == numElems);
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(stmtCleanDB.STMT, stmtCleanDB.bind)) {
+        cout << "mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtCleanDB.STMT) << endl;
+        exit(1);
+    }
+}
+
 void SQLStats::clauseSizeDistrib(
     uint64_t sumConflicts
     , const vector<uint32_t>& sizes
@@ -448,6 +531,40 @@ void SQLStats::clauseSizeDistrib(
         exit(-1);
     }
 }
+
+void SQLStats::cleanDB(
+    ClauseUsageStats& stats
+    , const Solver* solver
+    , bool learnt
+) {
+    //Position of solving
+    stmtCleanDB.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtCleanDB.sumRestarts     = solver->sumRestarts();
+    stmtCleanDB.sumConflicts    = solver->sumConflicts();
+    stmtCleanDB.cpuTime         = cpuTime();
+    stmtCleanDB.reduceDBs       = solver->solveStats.nbReduceDB;
+
+    //Data
+    stmtCleanDB.litsVisited     = stats.sumLitVisited;
+    stmtCleanDB.clsVisited      = stats.sumLookedAt;
+    stmtCleanDB.props           = stats.sumProp;
+    stmtCleanDB.confls          = stats.sumConfl;
+    stmtCleanDB.UIP             = stats.sumUsedUIP;
+    stmtCleanDB.learnt          = learnt;
+
+    if (mysql_stmt_execute(stmtCleanDB.STMT)) {
+        cout
+        << "ERROR: while executing clause DB cleaning MySQL prepared statement"
+        << endl;
+
+        cout << "Error from mysql: "
+        << mysql_stmt_error(stmtCleanDB.STMT)
+        << endl;
+
+        exit(-1);
+    }
+}
+
 
 void SQLStats::restart(
     const PropStats& thisPropStats
