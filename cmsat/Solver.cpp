@@ -1593,7 +1593,6 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std
 
 void Solver::printClauseSizeDistrib()
 {
-    size_t size3 = 0;
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
@@ -1610,7 +1609,7 @@ void Solver::printClauseSizeDistrib()
                 assert(false);
                 break;
             case 3:
-                size3++;
+                assert(false);
                 break;
             case 4:
                 size4++;
@@ -1646,7 +1645,8 @@ void Solver::printClauseSizeDistrib()
         }
     }*/
 
-    cout << "c size3: " << size3
+    cout
+    << "c"
     << " size4: " << size4
     << " size5: " << size5
     << " larger: " << sizeLarge << endl;
