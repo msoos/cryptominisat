@@ -1151,7 +1151,7 @@ void Searcher::printBaseStats()
     }
 
     cout
-    << " " << std::setw(7) << solver->getNumFreeVarsAdv(trail.size())
+    << " " << std::setw(7) << solver->getNumFreeVars()
     ;
 }
 

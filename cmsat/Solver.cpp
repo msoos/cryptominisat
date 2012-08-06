@@ -1925,7 +1925,7 @@ void Solver::checkLiteralCount() const
     }
 }
 
-uint32_t Solver::getNumDecisionVars() const
+size_t Solver::getNumDecisionVars() const
 {
     return numDecisionVars;
 }
@@ -2034,22 +2034,11 @@ void Solver::checkNoWrongAttach() const
     }
 }
 
-uint32_t Solver::getNumFreeVars() const
+size_t Solver::getNumFreeVars() const
 {
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail.size();
-    freeVars -= simplifier->getStats().numVarsElimed;
-    freeVars -= varReplacer->getNumReplacedVars();
-
-    return freeVars;
-}
-
-uint32_t Solver::getNumFreeVarsAdv(size_t trail_size_of_thread) const
-{
-    assert(decisionLevel() == 0);
-    uint32_t freeVars = nVars();
-    freeVars -= trail_size_of_thread;
     freeVars -= simplifier->getStats().numVarsElimed;
     freeVars -= varReplacer->getNumReplacedVars();
 
@@ -2267,7 +2256,7 @@ void Solver::checkStats(const bool allowFreed) const
     assert(numLitsLearnt == redLits);
 }
 
-uint32_t Solver::getNewToReplaceVars() const
+size_t Solver::getNewToReplaceVars() const
 {
     return varReplacer->getNewToReplaceVars();
 }

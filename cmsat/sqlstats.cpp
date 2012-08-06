@@ -647,7 +647,7 @@ void SQLStats::restart(
     stmtRst.varFlipped      = thisPropStats.varFlipped;
     stmtRst.varSetPos       = thisPropStats.varSetPos;
     stmtRst.varSetNeg       = thisPropStats.varSetNeg;
-    stmtRst.numFreeVars     = solver->getNumFreeVarsAdv(search->trail.size());
+    stmtRst.numFreeVars     = solver->getNumFreeVars();
     stmtRst.numReplacedVars = solver->varReplacer->getNumReplacedVars();
     stmtRst.numVarsElimed   = solver->simplifier->getStats().numVarsElimed;
     stmtRst.trailSize       = search->trail.size();

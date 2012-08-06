@@ -77,17 +77,20 @@ class Solver : public Searcher
         //////////////////////////
         //Stats
         static const char* getVersion();
-        uint64_t getNumLongClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
+
+        ///Return number of ALL clauses: non-learnt, learnt, bin
+        uint64_t getNumLongClauses() const;
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpOrig() const;
-        uint32_t getVerbosity() const;                  ///<Return verbosity level
+        uint32_t getVerbosity() const;
         void     printFullStats();
         void     printClauseStats();
         void     addInPartialSolvingStat();
-        uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
-        uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
-        uint32_t getNumFreeVarsAdv(size_t tail_size_thread) const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
-        uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
+        size_t   getNumDecisionVars() const;
+        size_t   getNumFreeVars() const;
+
+        ///Return number of variables waiting to be replaced
+        size_t getNewToReplaceVars() const;
         const Stats& getStats() const;
         uint64_t getNextCleanLimit() const;
         bool     getSavedPolarity(Var var) const;
