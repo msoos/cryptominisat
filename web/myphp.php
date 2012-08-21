@@ -1,15 +1,14 @@
 <?
-$runIDs = array(1969178564);
-//$runIDs = array(49);
-$maxConfl = 500000;
+$runIDs = array(mysql_real_escape_string($_GET["id"]));
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
+$maxConfl = 200000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 //asfdasfdsf
 
 $username="presenter";
-$password="presenter";
+$password="";
 $database="cryptoms";
 
 mysql_connect("localhost", $username, $password);
@@ -24,13 +23,12 @@ class DataPrinter
     protected $runID;
     protected $maxConfl;
 
-    public function __construct($mycolnum, $myRunID, $myMaxConfl)
+    public function __construct($mycolnum, $runID, $maxConfl)
     {
         $this->colnum = $mycolnum;
-        $this->runID = $myRunID;
-        $this->maxConfl = $myMaxConfl;
+        $this->runID = $runID;
+        $this->maxConfl = $maxConfl;
         $this->numberingScheme = 0;
-        $this->runQuery();
 
         echo "
         <script type=\"text/javascript\">
@@ -61,7 +59,6 @@ class DataPrinter
     protected function printOneThing(
         $datanames
         , $nicedatanames
-        , $doSlideAvg = 0
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
@@ -106,11 +103,7 @@ class DataPrinter
                 } else {
                     $total_sum += $tmp*($confl-$last_confl);
                     $last_confl = $confl;
-                    $sliding_avg = $total_sum / $confl;
                     echo ", $tmp";
-                    if ($doSlideAvg) {
-                        echo ", $sliding_avg";
-                    }
                 }
             }
             echo "]\n";
@@ -129,9 +122,6 @@ class DataPrinter
         echo ", labels: [\"Conflicts\"";
         foreach ($nicedatanames as $dataname) {
             echo ", \"(".$this->colnum.") $dataname\"";
-        }
-        if (sizeof($datanames) == 1) {
-            echo ", \"".$fullname.$this->colnum." (sliding avg.)\"";
         }
         echo "]";
 
@@ -157,15 +147,14 @@ class DataPrinter
         $this->numberingScheme++;
     }
 
-    public function runQuery()
+    function runQuery($table, $extra = "")
     {
         $query="
         SELECT *
-        FROM `restart`
+        FROM `$table`
         where `runID` = ".$this->runID."
-        and conflicts < ".$this->maxConfl."
+        and conflicts < ".$this->maxConfl." $extra
         order by `conflicts`";
-        //echo "query was: $query";
 
         $this->data = mysql_query($query);
         if (!$this->data) {
@@ -177,6 +166,8 @@ class DataPrinter
 
     public function printOneSolve()
     {
+        $this->runQuery("restart");
+
         $this->printOneThing(array("time")
             , array("time"));
 
@@ -306,6 +297,39 @@ class DataPrinter
         printOneThing("resolutionsSD", array("resolutionsSD")
             , array("std dev no. resolutions for 1UIP"));*/
 
+
+        $this->runQuery("reduceDB");
+
+        $this->printOneThing(array(
+                  "irredUIP"
+                , "redUIP"
+            )
+            ,array(
+                  "irredUIP"
+                , "redUIP"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "irredProps"
+                , "redProps"
+            )
+            ,array(
+                  "irredProps"
+                , "redProps"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "irredConfls"
+                , "redConfls"
+            )
+            ,array(
+                  "irredConfls"
+                , "redConfls"
+            )
+        );
+
         return $this->numberingScheme;
     }
 }
@@ -321,9 +345,9 @@ class Simplifications
 {
     protected $runIDs;
 
-    public function __construct($myRunIDs)
+    public function __construct($runIDs)
     {
-        $this->runIDs = $myRunIDs;
+        $this->runIDs = $runIDs;
     }
 
     protected function fillSimplificationPoints($thisRunID)
@@ -375,11 +399,11 @@ class ClauseSizeDistrib
     protected $runID;
     protected $maxConfl;
 
-    public function __construct($mycolnum, $myRunID, $myMaxConfl)
+    public function __construct($mycolnum, $runID, $maxConfl)
     {
         $this->colnum = $mycolnum;
-        $this->runID = $myRunID;
-        $this->maxConfl = $myMaxConfl;
+        $this->runID = $runID;
+        $this->maxConfl = $maxConfl;
     }
 
     public function fillClauseDistrib()

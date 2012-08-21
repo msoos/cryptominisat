@@ -19,10 +19,10 @@ public:
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
     );
-    void cleanDB(
-        ClauseUsageStats& stats
+    void reduceDB(
+        const ClauseUsageStats& irredStats
+        , const ClauseUsageStats& redStats
         , const Solver* solver
-        , bool learnt
     );
     void setup(const Solver* solver);
 
@@ -66,8 +66,8 @@ private:
 
     uint64_t runID;
 
-    struct StmtCleanDB {
-        MYSQL_BIND  bind[12];
+    struct StmtReduceDB {
+        MYSQL_BIND  bind[16];
         MYSQL_STMT  *STMT;
 
         //Position
@@ -77,16 +77,21 @@ private:
         double cpuTime;
         uint64_t reduceDBs;
 
-        //Actual data
-        uint64_t learnt;
-        uint64_t clsVisited;
-        uint64_t litsVisited;
-        uint64_t props;
-        uint64_t confls;
-        uint64_t UIP;
+        //Actual data -- irred
+        uint64_t irredClsVisited;
+        uint64_t irredLitsVisited;
+        uint64_t irredProps;
+        uint64_t irredConfls;
+        uint64_t irredUIP;
+
+        uint64_t redClsVisited;
+        uint64_t redLitsVisited;
+        uint64_t redProps;
+        uint64_t redConfls;
+        uint64_t redUIP;
     };
-    StmtCleanDB stmtCleanDB;
-    void initCleanDBSTMT(uint64_t verbosity);
+    StmtReduceDB stmtReduceDB;
+    void initReduceDBSTMT(uint64_t verbosity);
 
     size_t bindAt;
     struct StmtRst {

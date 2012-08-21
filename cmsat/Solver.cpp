@@ -1375,8 +1375,7 @@ void Solver::fullReduce()
     ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
 
     if (conf.doSQL) {
-        sqlStats.cleanDB(irredStats, solver, false);
-        sqlStats.cleanDB(redStats, solver, true);
+        sqlStats.reduceDB(irredStats, redStats, solver);
     }
 
     //Calculating summary

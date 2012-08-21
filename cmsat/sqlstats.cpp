@@ -26,7 +26,7 @@ void SQLStats::setup(const Solver* solver)
     getID(solver);
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
-    initCleanDBSTMT(solver->conf.verbosity);
+    initReduceDBSTMT(solver->conf.verbosity);
     initClauseSizeDistribSTMT(solver);
 }
 
@@ -425,20 +425,21 @@ void SQLStats::initRestartSTMT(
 }
 
 //Prepare statement for restart
-void SQLStats::initCleanDBSTMT(
+void SQLStats::initReduceDBSTMT(
     uint64_t verbosity
 ) {
-    const size_t numElems = sizeof(stmtCleanDB.bind)/sizeof(MYSQL_BIND);
+    const size_t numElems = sizeof(stmtReduceDB.bind)/sizeof(MYSQL_BIND);
 
     std::stringstream ss;
-    ss << "insert into `cleanDB`"
+    ss << "insert into `reduceDB`"
     << "("
     //Position
     << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
     << ", `reduceDBs`"
 
     //Actual data
-    << ", `learnt`, `clsVisited`, `litsVisited`, `props`, `confls`, `UIP`"
+    << ", `irredClsVisited`, `irredLitsVisited`, `irredProps`, `irredConfls`, `irredUIP`"
+    << ", `redClsVisited`, `redLitsVisited`, `redProps`, `redConfls`, `redUIP`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -447,16 +448,16 @@ void SQLStats::initCleanDBSTMT(
     ss << ";";
 
     //Get memory for statement
-    stmtCleanDB.STMT = mysql_stmt_init(serverConn);
-    if (!stmtCleanDB.STMT) {
+    stmtReduceDB.STMT = mysql_stmt_init(serverConn);
+    if (!stmtReduceDB.STMT) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
         exit(1);
     }
 
     //Prepare the statement
-    if (mysql_stmt_prepare(stmtCleanDB.STMT, ss.str().c_str(), ss.str().length())) {
-        cout << "Error in mysql_stmt_prepare() of cleanDB, INSERT failed" << endl
-        << mysql_stmt_error(stmtCleanDB.STMT) << endl;
+    if (mysql_stmt_prepare(stmtReduceDB.STMT, ss.str().c_str(), ss.str().length())) {
+        cout << "Error in mysql_stmt_prepare() of reduceDB, INSERT failed" << endl
+        << mysql_stmt_error(stmtReduceDB.STMT) << endl;
         exit(0);
     }
 
@@ -467,7 +468,7 @@ void SQLStats::initCleanDBSTMT(
     }
 
     //Validate parameter count
-    unsigned long param_count = mysql_stmt_param_count(stmtCleanDB.STMT);
+    unsigned long param_count = mysql_stmt_param_count(stmtReduceDB.STMT);
     if (param_count != numElems) {
         cout
         << "invalid parameter count returned by MySQL"
@@ -476,32 +477,37 @@ void SQLStats::initCleanDBSTMT(
         exit(1);
     }
 
-    memset(stmtCleanDB.bind, 0, sizeof(stmtCleanDB.bind));
+    memset(stmtReduceDB.bind, 0, sizeof(stmtReduceDB.bind));
 
 
     //Bind the local variables to the statement
     bindAt =0;
-    bindTo(stmtCleanDB, runID);
-    bindTo(stmtCleanDB, stmtCleanDB.numSimplify);
-    bindTo(stmtCleanDB, stmtCleanDB.sumRestarts);
-    bindTo(stmtCleanDB, stmtCleanDB.sumConflicts);
-    bindTo(stmtCleanDB, stmtCleanDB.cpuTime);
-    bindTo(stmtCleanDB, stmtCleanDB.reduceDBs);
+    bindTo(stmtReduceDB, runID);
+    bindTo(stmtReduceDB, stmtReduceDB.numSimplify);
+    bindTo(stmtReduceDB, stmtReduceDB.sumRestarts);
+    bindTo(stmtReduceDB, stmtReduceDB.sumConflicts);
+    bindTo(stmtReduceDB, stmtReduceDB.cpuTime);
+    bindTo(stmtReduceDB, stmtReduceDB.reduceDBs);
 
-    //Clause stats
-    bindTo(stmtCleanDB, stmtCleanDB.learnt);
-    bindTo(stmtCleanDB, stmtCleanDB.clsVisited);
-    bindTo(stmtCleanDB, stmtCleanDB.litsVisited);
-    bindTo(stmtCleanDB, stmtCleanDB.props);
-    bindTo(stmtCleanDB, stmtCleanDB.confls);
-    bindTo(stmtCleanDB, stmtCleanDB.UIP);
+    //Clause stats -- irred
+    bindTo(stmtReduceDB, stmtReduceDB.irredClsVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.irredLitsVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.irredProps);
+    bindTo(stmtReduceDB, stmtReduceDB.irredConfls);
+    bindTo(stmtReduceDB, stmtReduceDB.irredUIP);
 
+    //Clause stats -- red
+    bindTo(stmtReduceDB, stmtReduceDB.redClsVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.redLitsVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.redProps);
+    bindTo(stmtReduceDB, stmtReduceDB.redConfls);
+    bindTo(stmtReduceDB, stmtReduceDB.redUIP);
     assert(bindAt == numElems);
 
     // Bind the buffers
-    if (mysql_stmt_bind_param(stmtCleanDB.STMT, stmtCleanDB.bind)) {
+    if (mysql_stmt_bind_param(stmtReduceDB.STMT, stmtReduceDB.bind)) {
         cout << "mysql_stmt_bind_param() failed" << endl
-        << mysql_stmt_error(stmtCleanDB.STMT) << endl;
+        << mysql_stmt_error(stmtReduceDB.STMT) << endl;
         exit(1);
     }
 }
@@ -532,33 +538,39 @@ void SQLStats::clauseSizeDistrib(
     }
 }
 
-void SQLStats::cleanDB(
-    ClauseUsageStats& stats
+void SQLStats::reduceDB(
+    const ClauseUsageStats& irredStats
+    , const ClauseUsageStats& redStats
     , const Solver* solver
-    , bool learnt
 ) {
     //Position of solving
-    stmtCleanDB.numSimplify     = solver->getSolveStats().numSimplify;
-    stmtCleanDB.sumRestarts     = solver->sumRestarts();
-    stmtCleanDB.sumConflicts    = solver->sumConflicts();
-    stmtCleanDB.cpuTime         = cpuTime();
-    stmtCleanDB.reduceDBs       = solver->solveStats.nbReduceDB;
+    stmtReduceDB.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtReduceDB.sumRestarts     = solver->sumRestarts();
+    stmtReduceDB.sumConflicts    = solver->sumConflicts();
+    stmtReduceDB.cpuTime         = cpuTime();
+    stmtReduceDB.reduceDBs       = solver->solveStats.nbReduceDB;
 
     //Data
-    stmtCleanDB.litsVisited     = stats.sumLitVisited;
-    stmtCleanDB.clsVisited      = stats.sumLookedAt;
-    stmtCleanDB.props           = stats.sumProp;
-    stmtCleanDB.confls          = stats.sumConfl;
-    stmtCleanDB.UIP             = stats.sumUsedUIP;
-    stmtCleanDB.learnt          = learnt;
+    stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
+    stmtReduceDB.irredClsVisited    = irredStats.sumLookedAt;
+    stmtReduceDB.irredProps         = irredStats.sumProp;
+    stmtReduceDB.irredConfls        = irredStats.sumConfl;
+    stmtReduceDB.irredUIP           = irredStats.sumUsedUIP;
 
-    if (mysql_stmt_execute(stmtCleanDB.STMT)) {
+    //Data
+    stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
+    stmtReduceDB.redClsVisited      = redStats.sumLookedAt;
+    stmtReduceDB.redProps           = redStats.sumProp;
+    stmtReduceDB.redConfls          = redStats.sumConfl;
+    stmtReduceDB.redUIP             = redStats.sumUsedUIP;
+
+    if (mysql_stmt_execute(stmtReduceDB.STMT)) {
         cout
         << "ERROR: while executing clause DB cleaning MySQL prepared statement"
         << endl;
 
         cout << "Error from mysql: "
-        << mysql_stmt_error(stmtCleanDB.STMT)
+        << mysql_stmt_error(stmtReduceDB.STMT)
         << endl;
 
         exit(-1);

@@ -74,6 +74,6 @@ function MyAjax() {
 myajax = new MyAjax();
 
 //while (true) {
-//setInterval(function(){myajax.makeGetRequest(251476569337848);}, 2000);
-myajax.makeGetRequest(53);
+//setInterval(function(){myajax.makeGetRequest(500005960);}, 2000);
+myajax.makeGetRequest(86533651);
 //}
