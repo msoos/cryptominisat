@@ -302,12 +302,10 @@ void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
         if (ret == l_True) {
             std::cout << "c SAT" << std::endl;
             fprintf(res, "SAT\n");
-            if (printResult) {
                 for (Var var = 0; var != S.nVars(); var++)
                     if (S.model[var] != l_Undef)
                         fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
                     fprintf(res, "0\n");
-            }
         } else if (ret == l_False) {
             std::cout << "c UNSAT" << std::endl;
             fprintf(res, "UNSAT\n");
