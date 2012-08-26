@@ -13,6 +13,7 @@ import sys
 import signal
 import resource
 import time
+import struct
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
@@ -407,13 +408,28 @@ class Tester:
                 None
 
     def fuzz_test(self) :
-        fuzzers = ["build/cnf-fuzz-biere", "build/cnf-fuzz-nossum", "cnf-fuzz-brummayer.py"]
+        fuzzers = [ \
+            ["build/cnf-fuzz-biere"]    \
+            , ["build/cnf-fuzz-nossum"] \
+            , ["cnf-fuzz-brummayer.py"] \
+            , ["build/sgen4 -unsat -n 50", "-s"]     \
+        ]
+
         directory = "../../cnf-utils/"
         for i in xrange(1,100000000):
             for fuzzer in fuzzers :
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                call = "{0}{1} > {2}".format(directory, fuzzer, file_name)
+
+                #how should the fuzzer be called?
+                if (len(fuzzer) == 1) :
+                    call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+                else :
+                    #seed given
+                    seed = struct.unpack("<L", os.urandom(4))[0]
+                    call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+                    print "calling:", call
+
                 out = commands.getstatusoutput(call)
                 print "fuzzer ", fuzzer, " : ", out
 
