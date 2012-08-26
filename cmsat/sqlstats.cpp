@@ -181,7 +181,7 @@ void SQLStats::initClauseSizeDistribSTMT(
 ) {
     const size_t numInserts = solver->conf.dumpClauseDistribMax;
     const size_t numElems = 4;
-    stmtClsDistrib.bind.resize(numElems*numInserts);
+    stmtClsSizeDistrib.bind.resize(numElems*numInserts);
 
     std::stringstream ss;
     ss << "insert into `clauseSizeDistrib`"
@@ -197,16 +197,16 @@ void SQLStats::initClauseSizeDistribSTMT(
     ss << ";";
 
     //Get memory for statement
-    stmtClsDistrib.STMT = mysql_stmt_init(serverConn);
-    if (!stmtClsDistrib.STMT) {
+    stmtClsSizeDistrib.STMT = mysql_stmt_init(serverConn);
+    if (!stmtClsSizeDistrib.STMT) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
         exit(1);
     }
 
     //Prepare the statement
-    if (mysql_stmt_prepare(stmtClsDistrib.STMT, ss.str().c_str(), ss.str().length())) {
+    if (mysql_stmt_prepare(stmtClsSizeDistrib.STMT, ss.str().c_str(), ss.str().length())) {
         cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
-        << mysql_stmt_error(stmtClsDistrib.STMT) << endl;
+        << mysql_stmt_error(stmtClsSizeDistrib.STMT) << endl;
         exit(0);
     }
 
@@ -217,7 +217,7 @@ void SQLStats::initClauseSizeDistribSTMT(
     }
 
     //Validate parameter count
-    unsigned long param_count = mysql_stmt_param_count(stmtClsDistrib.STMT);
+    unsigned long param_count = mysql_stmt_param_count(stmtClsSizeDistrib.STMT);
     if (param_count != numElems*numInserts) {
         cout
         << "invalid parameter count returned by MySQL"
@@ -227,24 +227,24 @@ void SQLStats::initClauseSizeDistribSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(stmtClsDistrib.bind.data(), 0, stmtClsDistrib.bind.size());
-    stmtClsDistrib.size.resize(numInserts);
-    stmtClsDistrib.num.resize(numInserts);
+    memset(stmtClsSizeDistrib.bind.data(), 0, stmtClsSizeDistrib.bind.size());
+    stmtClsSizeDistrib.size.resize(numInserts);
+    stmtClsSizeDistrib.num.resize(numInserts);
 
     //Bind the local variables to the statement
     bindAt = 0;
     for(size_t i = 0; i < numInserts; i++) {
-        bindTo(stmtClsDistrib, runID);
-        bindTo(stmtClsDistrib, stmtClsDistrib.sumConflicts);
-        bindTo(stmtClsDistrib, stmtClsDistrib.size[i]);
-        bindTo(stmtClsDistrib, stmtClsDistrib.num[i]);
+        bindTo(stmtClsSizeDistrib, runID);
+        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.sumConflicts);
+        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.size[i]);
+        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.num[i]);
     }
     assert(bindAt == numElems*numInserts);
 
     //Bind the buffers
-    if (mysql_stmt_bind_param(stmtClsDistrib.STMT, stmtClsDistrib.bind.data())) {
+    if (mysql_stmt_bind_param(stmtClsSizeDistrib.STMT, stmtClsSizeDistrib.bind.data())) {
         cout << "mysql_stmt_bind_param() failed" << endl
-        << mysql_stmt_error(stmtClsDistrib.STMT) << endl;
+        << mysql_stmt_error(stmtClsSizeDistrib.STMT) << endl;
         exit(1);
     }
 }
@@ -516,22 +516,22 @@ void SQLStats::clauseSizeDistrib(
     uint64_t sumConflicts
     , const vector<uint32_t>& sizes
 ) {
-    assert(sizes.size() == stmtClsDistrib.size.size());
-    assert(sizes.size() == stmtClsDistrib.num.size());
+    assert(sizes.size() == stmtClsSizeDistrib.size.size());
+    assert(sizes.size() == stmtClsSizeDistrib.num.size());
 
-    stmtClsDistrib.sumConflicts = sumConflicts;
+    stmtClsSizeDistrib.sumConflicts = sumConflicts;
     for(size_t i = 0; i < sizes.size(); i++) {
-        stmtClsDistrib.size[i] = i;
-        stmtClsDistrib.num[i]  = sizes[i];
+        stmtClsSizeDistrib.size[i] = i;
+        stmtClsSizeDistrib.num[i]  = sizes[i];
     }
 
-    if (mysql_stmt_execute(stmtClsDistrib.STMT)) {
+    if (mysql_stmt_execute(stmtClsSizeDistrib.STMT)) {
         cout
         << "ERROR: while executing restart insertion MySQL prepared statement"
         << endl;
 
         cout << "Error from mysql: "
-        << mysql_stmt_error(stmtClsDistrib.STMT)
+        << mysql_stmt_error(stmtClsSizeDistrib.STMT)
         << endl;
 
         exit(-1);

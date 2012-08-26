@@ -178,7 +178,7 @@ private:
     StmtRst stmtRst;
 
 
-    struct StmtClsDistrib {
+    struct StmtClsSizeDistrib {
         vector<MYSQL_BIND>  bind;
         MYSQL_STMT  *STMT;
 
@@ -187,7 +187,7 @@ private:
         vector<uint64_t> size;
         vector<uint64_t> num;
     };
-    StmtClsDistrib stmtClsDistrib;
+    StmtClsSizeDistrib stmtClsSizeDistrib;
 
     MYSQL *serverConn;
 };
