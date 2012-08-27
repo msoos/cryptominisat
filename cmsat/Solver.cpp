@@ -2927,6 +2927,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() called" << std::endl;
     #endif
+    assert(decisionLevel() == 0);
     if (!ok) return l_False;
     assert(qhead == trail.size());
     assert(subsumer->checkElimedUnassigned());
@@ -2946,7 +2947,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (conflicts == 0) {
         if (conf.doPerformPreSimp) performStepsBeforeSolve();
-        if (!ok) return l_False;
+        if (!ok) {
+            cancelUntil(0);
+            return l_False;
+        }
 
         calculateDefaultPolarities();
     }
@@ -2988,10 +2992,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
             nof_conflicts = (double)nof_conflicts * conf.restart_inc;
 
         if (status != l_Undef) break;
-        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
-            return l_False;
-        if (!chooseRestartType(lastFullRestart))
-            return l_False;
+        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart)) {
+            status = l_False;
+            break;
+        }
+        if (!chooseRestartType(lastFullRestart)) {
+            status = l_False;
+            break;
+        }
 
         if (conf.verbosity>=4) {
             std::cout
