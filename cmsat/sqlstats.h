@@ -3,6 +3,7 @@
 
 #include <mysql/mysql.h>
 #include "Searcher.h"
+#include "boost/multi_array.hpp"
 class Solver;
 
 class SQLStats
@@ -19,6 +20,11 @@ public:
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
     );
+    void clauseGlueDistrib(
+        uint64_t sumConflicts
+        , const vector<uint32_t>& glues
+    );
+
     void reduceDB(
         const ClauseUsageStats& irredStats
         , const ClauseUsageStats& redStats
@@ -35,7 +41,13 @@ private:
 
     void addFiles(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
-    void initClauseSizeDistribSTMT(const Solver* solver);
+    void initClauseDistribSTMT(
+        const Solver* solver
+        , MYSQL_STMT*& stmt
+        , const string& tableName
+        , const string& valueName
+    );
+    void initSizeGlueScatterSTMT(const Solver* solver);
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
     template<typename T>
@@ -67,6 +79,10 @@ private:
     uint64_t runID;
 
     struct StmtReduceDB {
+        StmtReduceDB() :
+            STMT(NULL)
+        {};
+
         MYSQL_BIND  bind[16];
         MYSQL_STMT  *STMT;
 
@@ -95,6 +111,10 @@ private:
 
     size_t bindAt;
     struct StmtRst {
+        StmtRst() :
+            STMT(NULL)
+        {};
+
         MYSQL_BIND  bind[59];
         MYSQL_STMT  *STMT;
 
@@ -178,16 +198,29 @@ private:
     StmtRst stmtRst;
 
 
-    struct StmtClsSizeDistrib {
+    struct StmtClsDistrib {
+        vector<MYSQL_BIND>  bind;
+
+        //Variables
+        uint64_t sumConflicts;
+        vector<uint64_t> value;
+        vector<uint64_t> num;
+    };
+    StmtClsDistrib stmtClsDistrib;
+    MYSQL_STMT  *clsSizeDistrib;
+    MYSQL_STMT  *clsGlueDistrib;
+
+    struct StmtSizeGlueScatter {
         vector<MYSQL_BIND>  bind;
         MYSQL_STMT  *STMT;
 
         //Variables
         uint64_t sumConflicts;
         vector<uint64_t> size;
+        vector<uint64_t> glue;
         vector<uint64_t> num;
     };
-    StmtClsSizeDistrib stmtClsSizeDistrib;
+    StmtSizeGlueScatter stmtSizeGlueScatter;
 
     MYSQL *serverConn;
 };

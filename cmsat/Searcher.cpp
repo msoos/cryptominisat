@@ -30,6 +30,7 @@
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 #include "PropByForGraph.h"
+#include <algorithm>
 using std::cout;
 using std::endl;
 
@@ -905,15 +906,20 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
                 printClauseDistribSQL();
                 std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+                std::fill(clauseGlueDistrib.begin(), clauseGlueDistrib.end(), 0);
+                for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
+                    for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
+                        sizeAndGlue[i][i2] = 0;
+                    }
+                }
             }
 
-            //Add this new clause to clause distribution
-            if (learnt_clause.size() < clauseSizeDistrib.size()) {
-                clauseSizeDistrib[learnt_clause.size()]++;
-            } else {
-                //Too large, add it to the end
-                clauseSizeDistrib[clauseSizeDistrib.size()-1]++;
-            }
+            //Add this new clause to distributions
+            uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), clauseSizeDistrib.size()-1);
+            uint32_t truncGlue = std::min<uint32_t>(glue, clauseGlueDistrib.size()-1);
+            clauseSizeDistrib[truncSize]++;
+            clauseGlueDistrib[truncGlue]++;
+            sizeAndGlue[truncSize][truncGlue]++;
         }
     }
     cancelUntil(backtrack_level);
@@ -1050,7 +1056,14 @@ void Searcher::resetStats()
     //About vars
     agilityHist.clear();
     clearPolarData();
-    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMax);
+    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMax, 0);
+    clauseGlueDistrib.resize(solver->conf.dumpClauseDistribMax, 0);
+    sizeAndGlue.resize(boost::extents[solver->conf.dumpClauseDistribMax][solver->conf.dumpClauseDistribMax]);
+    for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
+        for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
+            sizeAndGlue[i][i2] = 0;
+        }
+    }
 
     //Misc
     watchListSizeTraversed.clear();
@@ -1273,6 +1286,10 @@ void Searcher::printClauseDistribSQL()
     solver->sqlStats.clauseSizeDistrib(
         sumConflicts()
         , clauseSizeDistrib
+    );
+    solver->sqlStats.clauseGlueDistrib(
+        sumConflicts()
+        , clauseGlueDistrib
     );
 }
 

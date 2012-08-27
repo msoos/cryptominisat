@@ -24,6 +24,7 @@
 
 #include "PropEngine.h"
 #include "SolverTypes.h"
+#include "boost/multi_array.hpp"
 #include "time_mem.h"
 #include "avgcalc.h"
 class Solver;
@@ -375,6 +376,8 @@ class Searcher : public PropEngine
         AvgCalc<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
         AvgCalc<double, double>  agilityHist;
         vector<uint32_t> clauseSizeDistrib;
+        vector<uint32_t> clauseGlueDistrib;
+        boost::multi_array<uint32_t, 2> sizeAndGlue;
         AvgCalc<size_t> watchListSizeTraversed;
         AvgCalc<bool> conflictAfterConflict;
         AvgCalc<bool> litPropagatedSomething;

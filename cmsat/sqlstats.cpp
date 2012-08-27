@@ -17,6 +17,8 @@ using std::string;
 
 SQLStats::SQLStats() :
     bindAt(0)
+    , clsSizeDistrib(NULL)
+    , clsGlueDistrib(NULL)
 {
 }
 
@@ -27,7 +29,9 @@ void SQLStats::setup(const Solver* solver)
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
     initReduceDBSTMT(solver->conf.verbosity);
-    initClauseSizeDistribSTMT(solver);
+    initClauseDistribSTMT(solver, clsSizeDistrib, "clauseSizeDistrib", "size");
+    initClauseDistribSTMT(solver, clsGlueDistrib, "clauseGlueDistrib", "glue");
+    initSizeGlueScatterSTMT(solver);
 }
 
 void SQLStats::connectServer()
@@ -176,17 +180,20 @@ void SQLStats::writeQuestionMarks(
     ss << ")";
 }
 
-void SQLStats::initClauseSizeDistribSTMT(
+void SQLStats::initClauseDistribSTMT(
     const Solver* solver
+    , MYSQL_STMT*& stmt
+    , const string& tableName
+    , const string& valueName
 ) {
     const size_t numInserts = solver->conf.dumpClauseDistribMax;
     const size_t numElems = 4;
-    stmtClsSizeDistrib.bind.resize(numElems*numInserts);
+    stmtClsDistrib.bind.resize(numElems*numInserts);
 
     std::stringstream ss;
-    ss << "insert into `clauseSizeDistrib`"
+    ss << "insert into `" << tableName << "`"
     << "("
-    << " `runID`, `conflicts`, `size`, `num`"
+    << " `runID`, `conflicts`, `" << valueName << "`, `num`"
     << ") values ";
     for(size_t i = 0; i < numInserts; i++) {
         writeQuestionMarks(numElems, ss);
@@ -197,16 +204,16 @@ void SQLStats::initClauseSizeDistribSTMT(
     ss << ";";
 
     //Get memory for statement
-    stmtClsSizeDistrib.STMT = mysql_stmt_init(serverConn);
-    if (!stmtClsSizeDistrib.STMT) {
+    stmt = mysql_stmt_init(serverConn);
+    if (!stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
         exit(1);
     }
 
     //Prepare the statement
-    if (mysql_stmt_prepare(stmtClsSizeDistrib.STMT, ss.str().c_str(), ss.str().length())) {
+    if (mysql_stmt_prepare(stmt, ss.str().c_str(), ss.str().length())) {
         cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
-        << mysql_stmt_error(stmtClsSizeDistrib.STMT) << endl;
+        << mysql_stmt_error(stmt) << endl;
         exit(0);
     }
 
@@ -217,7 +224,7 @@ void SQLStats::initClauseSizeDistribSTMT(
     }
 
     //Validate parameter count
-    unsigned long param_count = mysql_stmt_param_count(stmtClsSizeDistrib.STMT);
+    unsigned long param_count = mysql_stmt_param_count(stmt);
     if (param_count != numElems*numInserts) {
         cout
         << "invalid parameter count returned by MySQL"
@@ -227,24 +234,99 @@ void SQLStats::initClauseSizeDistribSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(stmtClsSizeDistrib.bind.data(), 0, stmtClsSizeDistrib.bind.size());
-    stmtClsSizeDistrib.size.resize(numInserts);
-    stmtClsSizeDistrib.num.resize(numInserts);
+    memset(stmtClsDistrib.bind.data(), 0, stmtClsDistrib.bind.size());
+    stmtClsDistrib.value.resize(numInserts);
+    stmtClsDistrib.num.resize(numInserts);
 
     //Bind the local variables to the statement
     bindAt = 0;
     for(size_t i = 0; i < numInserts; i++) {
-        bindTo(stmtClsSizeDistrib, runID);
-        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.sumConflicts);
-        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.size[i]);
-        bindTo(stmtClsSizeDistrib, stmtClsSizeDistrib.num[i]);
+        bindTo(stmtClsDistrib, runID);
+        bindTo(stmtClsDistrib, stmtClsDistrib.sumConflicts);
+        bindTo(stmtClsDistrib, stmtClsDistrib.value[i]);
+        bindTo(stmtClsDistrib, stmtClsDistrib.num[i]);
     }
     assert(bindAt == numElems*numInserts);
 
     //Bind the buffers
-    if (mysql_stmt_bind_param(stmtClsSizeDistrib.STMT, stmtClsSizeDistrib.bind.data())) {
+    if (mysql_stmt_bind_param(stmt, stmtClsDistrib.bind.data())) {
         cout << "mysql_stmt_bind_param() failed" << endl
-        << mysql_stmt_error(stmtClsSizeDistrib.STMT) << endl;
+        << mysql_stmt_error(stmt) << endl;
+        exit(1);
+    }
+}
+
+void SQLStats::initSizeGlueScatterSTMT(
+    const Solver* solver
+) {
+    const size_t numInserts = 20;
+    const size_t numElems = 3;
+    stmtSizeGlueScatter.bind.resize(numElems*numInserts);
+
+    std::stringstream ss;
+    ss << "insert into `sizeGlue`"
+    << "("
+    << " `runID`, `conflicts`, `size`, `glue`, `num`"
+    << ") values ";
+    for(size_t i = 0; i < numInserts; i++) {
+        writeQuestionMarks(numElems, ss);
+
+        if (i != numInserts-1)
+            ss << " , ";
+    }
+    ss << ";";
+
+    //Get memory for statement
+    stmtSizeGlueScatter.STMT = mysql_stmt_init(serverConn);
+    if (!stmtSizeGlueScatter.STMT) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        exit(1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtSizeGlueScatter.STMT, ss.str().c_str(), ss.str().length())) {
+        cout << "Error in mysql_stmt_prepare(), INSERT failed" << endl
+        << mysql_stmt_error(stmtSizeGlueScatter.STMT) << endl;
+        exit(0);
+    }
+
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "prepare INSERT successful"
+        << endl;
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtSizeGlueScatter.STMT);
+    if (param_count != numElems*numInserts) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        exit(1);
+    }
+
+    //Clear mem of bind, get enough mem for vars
+    memset(stmtSizeGlueScatter.bind.data(), 0, stmtSizeGlueScatter.bind.size());
+    stmtSizeGlueScatter.size.resize(numInserts);
+    stmtSizeGlueScatter.glue.resize(numInserts);
+    stmtSizeGlueScatter.num.resize(numInserts);
+
+    //Bind the local variables to the statement
+    bindAt = 0;
+    for(size_t i = 0; i < numInserts; i++) {
+        bindTo(stmtSizeGlueScatter, runID);
+        bindTo(stmtSizeGlueScatter, stmtSizeGlueScatter.sumConflicts);
+        bindTo(stmtSizeGlueScatter, stmtSizeGlueScatter.size[i]);
+        bindTo(stmtSizeGlueScatter, stmtSizeGlueScatter.glue[i]);
+        bindTo(stmtSizeGlueScatter, stmtSizeGlueScatter.num[i]);
+    }
+    assert(bindAt == numElems*numInserts);
+
+    //Bind the buffers
+    if (mysql_stmt_bind_param(stmtSizeGlueScatter.STMT, stmtSizeGlueScatter.bind.data())) {
+        cout << "mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtSizeGlueScatter.STMT) << endl;
         exit(1);
     }
 }
@@ -516,26 +598,92 @@ void SQLStats::clauseSizeDistrib(
     uint64_t sumConflicts
     , const vector<uint32_t>& sizes
 ) {
-    assert(sizes.size() == stmtClsSizeDistrib.size.size());
-    assert(sizes.size() == stmtClsSizeDistrib.num.size());
+    assert(sizes.size() == stmtClsDistrib.value.size());
+    assert(sizes.size() == stmtClsDistrib.num.size());
 
-    stmtClsSizeDistrib.sumConflicts = sumConflicts;
+    stmtClsDistrib.sumConflicts = sumConflicts;
     for(size_t i = 0; i < sizes.size(); i++) {
-        stmtClsSizeDistrib.size[i] = i;
-        stmtClsSizeDistrib.num[i]  = sizes[i];
+        stmtClsDistrib.value[i] = i;
+        stmtClsDistrib.num[i]  = sizes[i];
     }
 
-    if (mysql_stmt_execute(stmtClsSizeDistrib.STMT)) {
+    if (mysql_stmt_execute(clsSizeDistrib)) {
         cout
         << "ERROR: while executing restart insertion MySQL prepared statement"
         << endl;
 
         cout << "Error from mysql: "
-        << mysql_stmt_error(stmtClsSizeDistrib.STMT)
+        << mysql_stmt_error(clsSizeDistrib)
         << endl;
 
         exit(-1);
     }
+}
+
+void SQLStats::clauseGlueDistrib(
+    uint64_t sumConflicts
+    , const vector<uint32_t>& glues
+) {
+    assert(glues.size() == stmtClsDistrib.value.size());
+    assert(glues.size() == stmtClsDistrib.num.size());
+
+    stmtClsDistrib.sumConflicts = sumConflicts;
+    for(size_t i = 0; i < glues.size(); i++) {
+        stmtClsDistrib.value[i] = i;
+        stmtClsDistrib.num[i]  = glues[i];
+    }
+
+    if (mysql_stmt_execute(clsGlueDistrib)) {
+        cout
+        << "ERROR: while executing restart insertion MySQL prepared statement"
+        << endl;
+
+        cout << "Error from mysql: "
+        << mysql_stmt_error(clsGlueDistrib)
+        << endl;
+
+        exit(-1);
+    }
+}
+
+void SQLStats::clauseSizeGlueScatter(
+    uint64_t sumConflicts
+    , boost::multi_array<uint32_t, 2>& sizeAndGlue
+) {
+    //assert(glues.size() == stmtClsDistrib.value.size());
+    //assert(glues.size() == stmtClsDistrib.num.size());
+
+    stmtSizeGlueScatter.sumConflicts = sumConflicts;
+
+    size_t at = 0;
+    for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
+        for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
+            stmtSizeGlueScatter.size[at] = i;
+            stmtSizeGlueScatter.glue[at] = i2;
+            stmtSizeGlueScatter.num[at]  = sizeAndGlue[i][i2];
+            at++;
+
+            //Execute
+            if (at == StmtSizeGlueScatter.glue.size()) {
+                if (mysql_stmt_execute(clsGlueDistrib)) {
+                    cout
+                    << "ERROR: while executing restart insertion MySQL prepared statement"
+                    << endl;
+
+                    cout << "Error from mysql: "
+                    << mysql_stmt_error(clsGlueDistrib)
+                    << endl;
+
+                    exit(-1);
+                }
+
+                //Reset counter
+                at = 0;
+            }
+        }
+    }
+
+
 }
 
 void SQLStats::reduceDB(
