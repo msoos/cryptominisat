@@ -1,10 +1,10 @@
 #include "sqlstats.h"
-#include "SolverTypes.h"
-#include "Solver.h"
+#include "solvertypes.h"
+#include "solver.h"
 #include "time_mem.h"
 #include <sstream>
-#include "VarReplacer.h"
-#include "Simplifier.h"
+#include "varreplacer.h"
+#include "simplifier.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

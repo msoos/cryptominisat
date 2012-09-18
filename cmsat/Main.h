@@ -17,8 +17,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-#include "SolverTypes.h"
-#include "SolverConf.h"
+#include "solvertypes.h"
+#include "solverconf.h"
 
 class Solver;
 

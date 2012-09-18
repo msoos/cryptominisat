@@ -15,24 +15,23 @@ set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
 #add_library(cryptoms STATIC
 add_library(cryptoms SHARED
-    PropEngine.cpp
-    PackedRow.cpp
-    VarReplacer.cpp
-    ClauseCleaner.cpp
-    Prober.cpp
-    Simplifier.cpp
-    ClauseAllocator.cpp
-    #CompleteDetachReattacher.cpp
-    SCCFinder.cpp
-    SolverConf.cpp
-    ClauseVivifier.cpp
-    CalcDefPolars.cpp
-    SolutionExtender.cpp
-    CompleteDetachReattacher.cpp
-    Searcher.cpp
-    Solver.cpp
-    XorFinder.cpp
-    GateFinder.cpp
+    propengine.cpp
+    packedrow.cpp
+    varreplacer.cpp
+    clausecleaner.cpp
+    prober.cpp
+    simplifier.cpp
+    clauseallocator.cpp
+    sccfinder.cpp
+    solverconf.cpp
+    clausevivifier.cpp
+    calcdefpolars.cpp
+    solutionextender.cpp
+    completedetachreattacher.cpp
+    searcher.cpp
+    solver.cpp
+    xorfinder.cpp
+    gatefinder.cpp
     sqlstats.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -43,8 +42,8 @@ target_link_libraries(cryptoms
 )
 
 add_executable(cryptominisat
-    DimacsParser.cpp
-    Main.cpp
+    dimacsparser.cpp
+    main.cpp
 )
 
 target_link_libraries(cryptominisat

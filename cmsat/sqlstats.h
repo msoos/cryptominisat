@@ -2,7 +2,7 @@
 #define __SQLSTATS_H__
 
 #include <mysql/mysql.h>
-#include "Searcher.h"
+#include "searcher.h"
 #include "boost/multi_array.hpp"
 class Solver;
 
