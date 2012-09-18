@@ -24,6 +24,10 @@ public:
         uint64_t sumConflicts
         , const vector<uint32_t>& glues
     );
+    void clauseSizeGlueScatter(
+        uint64_t sumConflicts
+        , boost::multi_array<uint32_t, 2>& sizeAndGlue
+    );
 
     void reduceDB(
         const ClauseUsageStats& irredStats
@@ -46,8 +50,12 @@ private:
         , MYSQL_STMT*& stmt
         , const string& tableName
         , const string& valueName
+        , const size_t numInserts
     );
-    void initSizeGlueScatterSTMT(const Solver* solver);
+    void initSizeGlueScatterSTMT(
+        const Solver* solver
+        , const size_t numInserts
+    );
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
     template<typename T>

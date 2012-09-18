@@ -29,9 +29,26 @@ void SQLStats::setup(const Solver* solver)
     addFiles(solver);
     initRestartSTMT(solver->conf.verbosity);
     initReduceDBSTMT(solver->conf.verbosity);
-    initClauseDistribSTMT(solver, clsSizeDistrib, "clauseSizeDistrib", "size");
-    initClauseDistribSTMT(solver, clsGlueDistrib, "clauseGlueDistrib", "glue");
-    initSizeGlueScatterSTMT(solver);
+    initClauseDistribSTMT(
+        solver
+        , clsSizeDistrib
+        , "clauseSizeDistrib"   //table name
+        , "size"                //property name
+        , solver->conf.dumpClauseDistribMaxSize //num inserts
+    );
+
+    initClauseDistribSTMT(
+        solver
+        , clsGlueDistrib
+        , "clauseGlueDistrib"   //table name
+        , "glue"                //property name
+        , solver->conf.dumpClauseDistribMaxGlue //num inserts
+    );
+    initSizeGlueScatterSTMT(
+        solver
+        , solver->conf.dumpClauseDistribMaxSize
+            * solver->conf.dumpClauseDistribMaxGlue //num inserts
+    );
 }
 
 void SQLStats::connectServer()
@@ -185,8 +202,8 @@ void SQLStats::initClauseDistribSTMT(
     , MYSQL_STMT*& stmt
     , const string& tableName
     , const string& valueName
+    , const size_t numInserts
 ) {
-    const size_t numInserts = solver->conf.dumpClauseDistribMax;
     const size_t numElems = 4;
     stmtClsDistrib.bind.resize(numElems*numInserts);
 
@@ -258,8 +275,8 @@ void SQLStats::initClauseDistribSTMT(
 
 void SQLStats::initSizeGlueScatterSTMT(
     const Solver* solver
+    , size_t numInserts
 ) {
-    const size_t numInserts = 20;
     const size_t numElems = 3;
     stmtSizeGlueScatter.bind.resize(numElems*numInserts);
 
@@ -662,28 +679,20 @@ void SQLStats::clauseSizeGlueScatter(
             stmtSizeGlueScatter.glue[at] = i2;
             stmtSizeGlueScatter.num[at]  = sizeAndGlue[i][i2];
             at++;
-
-            //Execute
-            if (at == StmtSizeGlueScatter.glue.size()) {
-                if (mysql_stmt_execute(clsGlueDistrib)) {
-                    cout
-                    << "ERROR: while executing restart insertion MySQL prepared statement"
-                    << endl;
-
-                    cout << "Error from mysql: "
-                    << mysql_stmt_error(clsGlueDistrib)
-                    << endl;
-
-                    exit(-1);
-                }
-
-                //Reset counter
-                at = 0;
-            }
         }
     }
+    if (mysql_stmt_execute(clsGlueDistrib)) {
+        cout
+        << "ERROR: while executing restart insertion MySQL prepared statement"
+        << endl;
 
+        cout << "Error from mysql: "
+        << mysql_stmt_error(clsGlueDistrib)
+        << endl;
 
+        exit(-1);
+    }
+    assert(at == stmtSizeGlueScatter.size.size());
 }
 
 void SQLStats::reduceDB(

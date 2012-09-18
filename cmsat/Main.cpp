@@ -422,8 +422,10 @@ void Main::parseCommandLine()
         , "Write to SQL")
     ("cldistribper", po::value<int>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump learnt clause size distribution every N conflicts")
-    ("cldistribmax", po::value<int>(&conf.dumpClauseDistribMax)->default_value(conf.dumpClauseDistribMax)
+    ("cldistribmaxsize", po::value<int>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
         , "Dumped learnt clause size maximum -- longer will be 'truncated' in the statistics output")
+    ("cldistribmaxglue", po::value<int>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
+        , "Dumped learnt clause glue maximum -- longer will be 'truncated' in the statistics output")
     ;
 
     po::options_description miscOptions("Misc options");

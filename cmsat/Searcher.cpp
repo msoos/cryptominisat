@@ -915,8 +915,8 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             }
 
             //Add this new clause to distributions
-            uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), clauseSizeDistrib.size()-1);
-            uint32_t truncGlue = std::min<uint32_t>(glue, clauseGlueDistrib.size()-1);
+            uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), conf.dumpClauseDistribMaxSize-1);
+            uint32_t truncGlue = std::min<uint32_t>(glue, conf.dumpClauseDistribMaxGlue-1);
             clauseSizeDistrib[truncSize]++;
             clauseGlueDistrib[truncGlue]++;
             sizeAndGlue[truncSize][truncGlue]++;
@@ -1056,9 +1056,9 @@ void Searcher::resetStats()
     //About vars
     agilityHist.clear();
     clearPolarData();
-    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMax, 0);
-    clauseGlueDistrib.resize(solver->conf.dumpClauseDistribMax, 0);
-    sizeAndGlue.resize(boost::extents[solver->conf.dumpClauseDistribMax][solver->conf.dumpClauseDistribMax]);
+    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMaxSize, 0);
+    clauseGlueDistrib.resize(solver->conf.dumpClauseDistribMaxGlue, 0);
+    sizeAndGlue.resize(boost::extents[solver->conf.dumpClauseDistribMaxSize][solver->conf.dumpClauseDistribMaxGlue]);
     for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
         for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
             sizeAndGlue[i][i2] = 0;
@@ -1290,6 +1290,11 @@ void Searcher::printClauseDistribSQL()
     solver->sqlStats.clauseGlueDistrib(
         sumConflicts()
         , clauseGlueDistrib
+    );
+
+    solver->sqlStats.clauseSizeGlueScatter(
+        sumConflicts()
+        , sizeAndGlue
     );
 }
 
