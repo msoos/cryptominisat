@@ -39,6 +39,7 @@ SolverConf::SolverConf() :
         , numCleanBetweenSimplify(1)
         , startClean(8000)
         , increaseClean(1.101)
+        , maxNumLearntsRatio(10)
 
         //var picking
         , random_var_freq(0)

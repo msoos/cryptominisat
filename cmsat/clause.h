@@ -47,6 +47,7 @@ struct ClauseStats
         , numLitVisited(0)
         , numLookedAt(0)
         , numUsedUIP(0)
+        , resolutions(0)
     {}
 
     uint32_t numPropAndConfl() const
@@ -62,6 +63,10 @@ struct ClauseStats
     uint32_t numLitVisited; ///<Number of literals visited
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
     uint32_t numUsedUIP; ///Number of times the claue was using during conflict generation
+
+    ///Number of resolutions it took to make the clause when it was
+    ///originally learnt. Only makes sense for learnt clauses
+    uint32_t resolutions;
 
     void clearAfterReduceDB()
     {
@@ -365,6 +370,230 @@ struct ClauseUsageStats
         sumLookedAt += cl.stats.numLookedAt;
         sumUsedUIP += cl.stats.numUsedUIP;
     }
+};
+
+enum clauseCleaningTypes {
+    CLEAN_CLAUSES_GLUE_BASED
+    , CLEAN_CLAUSES_SIZE_BASED
+    , CLEAN_CLAUSES_PROPCONFL_BASED
+};
+
+inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
+{
+    switch(clauseCleaningType) {
+        case CLEAN_CLAUSES_GLUE_BASED :
+            return "glue";
+
+        case CLEAN_CLAUSES_SIZE_BASED:
+            return "size";
+
+        case CLEAN_CLAUSES_PROPCONFL_BASED:
+            return "propconfl";
+
+        default:
+            assert(false && "Unknown clause cleaning type?");
+    };
+
+    return "";
+}
+
+struct CleaningStats
+{
+    struct Data
+    {
+        Data() :
+            num(0)
+            , lits(0)
+            , glue(0)
+            , resol(0)
+        {}
+
+        Data& operator+=(const Data& other)
+        {
+            num += other.num;
+            lits += other.lits;
+            glue += other.glue;
+            resol += other.resol;
+
+            return *this;
+        }
+
+        uint64_t num;
+        uint64_t lits;
+        uint64_t glue;
+        uint64_t resol;
+
+    };
+    CleaningStats() :
+        cpu_time(0)
+        //Before remove
+        , origNumClauses(0)
+        , origNumLits(0)
+
+        //Type of clean
+        , glueBasedClean(0)
+        , sizeBasedClean(0)
+        , propConflBasedClean(0)
+    {}
+
+    CleaningStats& operator+=(const CleaningStats& other)
+    {
+        //Time
+        cpu_time += other.cpu_time;
+
+        //Before remove
+        origNumClauses += other.origNumClauses;
+        origNumLits += other.origNumLits;
+
+        //Type of clean
+        glueBasedClean += other.glueBasedClean;
+        sizeBasedClean += other.sizeBasedClean;
+        propConflBasedClean += other.propConflBasedClean;
+
+        //Clause Cleaning data
+        preRemove += other.preRemove;
+        removed += other.removed;
+        remain += other.remain;
+
+        return *this;
+    }
+
+    void print(const size_t nbReduceDB) const
+    {
+        cout << "c ------ CLEANING STATS ---------" << endl;
+        //Pre-clean
+        printStatsLine("c pre-removed"
+            , preRemove.num
+            , (double)preRemove.num/(double)origNumClauses*100.0
+            , "% long learnt clauses"
+        );
+
+        printStatsLine("c pre-removed lits"
+            , preRemove.lits
+            , (double)preRemove.lits/(double)origNumLits*100.0
+            , "% long learnt lits"
+        );
+        printStatsLine("c pre-removed cl avg size"
+            , (double)preRemove.lits/(double)preRemove.num
+        );
+        printStatsLine("c pre-removed cl avg glue"
+            , (double)preRemove.glue/(double)preRemove.num
+        );
+        printStatsLine("c pre-removed cl avg num resolutions"
+            , (double)preRemove.resol/(double)preRemove.num
+        );
+
+        //Types of clean
+        printStatsLine("c clean by glue"
+            , glueBasedClean
+            , (double)glueBasedClean/(double)nbReduceDB*100.0
+            , "% cleans"
+        );
+        printStatsLine("c clean by size"
+            , sizeBasedClean
+            , (double)sizeBasedClean/(double)nbReduceDB*100.0
+            , "% cleans"
+        );
+        printStatsLine("c clean by prop&confl"
+            , propConflBasedClean
+            , (double)propConflBasedClean/(double)nbReduceDB*100.0
+            , "% cleans"
+        );
+
+        //--- Actual clean --
+
+        //-->CLEAN
+        printStatsLine("c cleaned cls"
+            , removed.num
+            , (double)removed.num/(double)origNumClauses*100.0
+            , "% long learnt clauses"
+        );
+        printStatsLine("c cleaned lits"
+            , removed.lits
+            , (double)removed.lits/(double)origNumLits*100.0
+            , "% long learnt lits"
+        );
+        printStatsLine("c cleaned cl avg size"
+            , (double)removed.lits/(double)removed.num
+        );
+        printStatsLine("c cleaned avg glue"
+            , (double)removed.glue/(double)removed.num
+        );
+
+        //--> REMAIN
+        printStatsLine("c remain cls"
+            , remain.num
+            , (double)remain.num/(double)origNumClauses*100.0
+            , "% long learnt clauses"
+        );
+        printStatsLine("c remain lits"
+            , remain.lits
+            , (double)remain.lits/(double)origNumLits*100.0
+            , "% long learnt lits"
+        );
+        printStatsLine("c remain cl avg size"
+            , (double)remain.lits/(double)remain.num
+        );
+        printStatsLine("c remain avg glue"
+            , (double)remain.glue/(double)remain.num
+        );
+
+        cout << "c ------ CLEANING STATS END ---------" << endl;
+    }
+
+    void printShort() const
+    {
+        //Pre-clean
+        cout
+        << "c [DBclean]"
+        << " Pre-removed: "
+        << preRemove.num
+        << " next by " << getNameOfCleanType(clauseCleaningType)
+        << endl;
+
+        cout
+        << "c [DBclean]"
+        << " rem " << removed.num
+
+        << " avgGlue " << std::fixed << std::setprecision(2)
+        << ((double)removed.glue/(double)removed.num)
+
+        << " avgSize "
+        << std::fixed << std::setprecision(2)
+        << ((double)removed.lits/(double)removed.num)
+        << endl;
+
+        cout
+        << "c [DBclean]"
+        << " remain " << remain.num
+
+        << " avgGlue " << std::fixed << std::setprecision(2)
+        << ((double)remain.glue/(double)remain.num)
+
+        << " avgSize " << std::fixed << std::setprecision(2)
+        << ((double)remain.lits/(double)remain.num)
+        << endl;
+    }
+
+    //Time
+    double cpu_time;
+
+    //Before remove
+    uint64_t origNumClauses;
+    uint64_t origNumLits;
+
+    //Clause Cleaning --pre-remove
+    Data preRemove;
+
+    //Clean type
+    clauseCleaningTypes clauseCleaningType;
+    size_t glueBasedClean;
+    size_t sizeBasedClean;
+    size_t propConflBasedClean;
+
+    //Clause Cleaning
+    Data removed;
+    Data remain;
 };
 
 #endif //CLAUSE_H

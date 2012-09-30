@@ -752,7 +752,7 @@ bool Solver::reduceDBStructPropConfl::operator() (
 Either based on glue or MiniSat-style learnt clause activities, the clauses are
 sorted and then removed
 */
-void Solver::reduceDB()
+CleaningStats Solver::reduceDB()
 {
     //Clean the clause database before doing cleaning
     varReplacer->performReplace();
@@ -765,7 +765,14 @@ void Solver::reduceDB()
     tmpStats.origNumLits = redLits - redBins*2;
 
     //Calculate how many to remove
-    uint32_t removeNum = (double)longRedCls.size() * conf.ratioRemoveClauses;
+    size_t removeNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
+    cout << "RemoveNum1: " << removeNum << endl;
+
+    //If there is a ratio limit, and we are over it
+    //then increase the removeNum accordingly
+    size_t maxToHave = (double)(longIrredCls.size() + irredTris) * conf.maxNumLearntsRatio;
+    removeNum = std::max<long>(removeNum, (long)longRedCls.size()-(long)maxToHave);
+    cout << "RemoveNum2: " << removeNum << endl;
 
     //Subsume
     simplifier->subsumeLearnts();
@@ -784,9 +791,11 @@ void Solver::reduceDB()
                     < sumStats.conflStats.numConflicts
             ) {
                 //Stat update
-                tmpStats.preRemovedClauses++;
-                tmpStats.preRemovedClausesLits += cl->size();
-                tmpStats.preRemovedClausesGlue += cl->stats.glue;
+                tmpStats.preRemove.num ++;
+                tmpStats.preRemove.lits += cl->size();
+                tmpStats.preRemove.glue += cl->stats.glue;
+                tmpStats.preRemove.resol += cl->stats.resolutions;
+
                 if (cl->stats.glue > cl->size() + 1000) {
                     cout
                     << "c DEBUG strangely large glue: " << *cl
@@ -839,7 +848,7 @@ void Solver::reduceDB()
     //Remove normally
     size_t i, j;
     for (i = j = 0
-        ; i < longRedCls.size() && tmpStats.removedClauses < removeNum
+        ; i < longRedCls.size() && tmpStats.removed.num < removeNum
         ; i++
     ) {
         ClOffset offset = longRedCls[i];
@@ -847,9 +856,10 @@ void Solver::reduceDB()
         assert(cl->size() > 3);
 
         //Stats
-        tmpStats.removedClauses++;
-        tmpStats.removedClausesLits+= cl->size();
-        tmpStats.removedClausesGlue += cl->stats.glue;
+        tmpStats.removed.num++;
+        tmpStats.removed.lits += cl->size();
+        tmpStats.removed.glue += cl->stats.glue;
+        tmpStats.removed.resol += cl->stats.resolutions;
 
         //detach & free
         detachClause(*cl);
@@ -861,9 +871,10 @@ void Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
 
-        tmpStats.remainClauses++;
-        tmpStats.remainClausesLits+= cl->size();
-        tmpStats.remainClausesGlue += cl->stats.glue;
+        tmpStats.remain.num++;
+        tmpStats.remain.lits+= cl->size();
+        tmpStats.remain.glue += cl->stats.glue;
+        tmpStats.remain.resol += cl->stats.resolutions;
 
         longRedCls[j++] = offset;
     }
@@ -880,6 +891,8 @@ void Solver::reduceDB()
             tmpStats.printShort();
     }
     cleaningStats += tmpStats;
+
+    return tmpStats;
 }
 
 lbool Solver::solve(const vector<Lit>* _assumptions)
@@ -914,6 +927,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
+        assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
@@ -1374,10 +1388,6 @@ void Solver::fullReduce()
     ClauseUsageStats irredStats = sumClauseData(longIrredCls, false);
     ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
 
-    if (conf.doSQL) {
-        sqlStats.reduceDB(irredStats, redStats, solver);
-    }
-
     //Calculating summary
     ClauseUsageStats stats;
     stats += irredStats;
@@ -1415,8 +1425,12 @@ void Solver::fullReduce()
         //printClauseStatsSQL(clauses);
         //printClauseStatsSQL(learnts);
     }
-    reduceDB();
+    CleaningStats iterCleanStat = reduceDB();
     consolidateMem();
+
+    if (conf.doSQL) {
+        sqlStats.reduceDB(irredStats, redStats, iterCleanStat, solver);
+    }
 
     if (conf.doClearStatEveryClauseCleaning) {
         clearClauseStats(longIrredCls);

@@ -24,12 +24,7 @@
 
 #include "solvertypes.h"
 #include "constants.h"
-
-enum clauseCleaningTypes {
-    CLEAN_CLAUSES_GLUE_BASED
-    , CLEAN_CLAUSES_SIZE_BASED
-    , CLEAN_CLAUSES_PROPCONFL_BASED
-};
+#include "clause.h"
 
 class SolverConf
 {
@@ -53,6 +48,7 @@ class SolverConf
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;
         double    increaseClean;
+        double    maxNumLearntsRatio; ///<Number of red clauses must not be more than red*maxNumLearntsRatio
 
 	//Branching
         double    random_var_freq;    ///<The frequency with which the decision heuristic tries to choose a random variable.        (default 0.02) NOTE: This is really strange. If the number of variables set is large, then the random chance is in fact _far_ lower than this value. This is because the algorithm tries to set one variable randomly, but if that variable is already set, then it _silently_ fails, and moves on (doing non-random flip)!
@@ -143,24 +139,5 @@ class SolverConf
 
         uint32_t origSeed;
 };
-
-inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
-{
-    switch(clauseCleaningType) {
-        case CLEAN_CLAUSES_GLUE_BASED :
-            return "glue";
-
-        case CLEAN_CLAUSES_SIZE_BASED:
-            return "size";
-
-        case CLEAN_CLAUSES_PROPCONFL_BASED:
-            return "propconfl";
-
-        default:
-            assert(false && "Unknown clause cleaning type?");
-    };
-
-    return "";
-}
 
 #endif //SOLVERCONF_H

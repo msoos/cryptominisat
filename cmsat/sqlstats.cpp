@@ -147,7 +147,7 @@ void SQLStats::getRandomID()
 
     //Can only be <8 bytes long, some PHP-related limit
     //Make it 6-byte long then (good chance to collide after 2^24 entries)
-    runID &= 0xffffffffULL;
+    runID &= 0xffffffULL;
 
     if (ret != sizeof(runID)) {
         cout << "Couldn't read from /dev/urandom!" << endl;
@@ -552,6 +552,11 @@ void SQLStats::initReduceDBSTMT(
     //Actual data
     << ", `irredClsVisited`, `irredLitsVisited`, `irredProps`, `irredConfls`, `irredUIP`"
     << ", `redClsVisited`, `redLitsVisited`, `redProps`, `redConfls`, `redUIP`"
+
+    //Clean data
+    << ", preRemoveNum, preRemoveLits, preRemoveGlue, preRemoveResol"
+    << ", removeNum, removeLits, removeGlue, removeResol"
+    << ", remainNum, remainLits, remainGlue, remainResol"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -619,6 +624,25 @@ void SQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.redProps);
     bindTo(stmtReduceDB, stmtReduceDB.redConfls);
     bindTo(stmtReduceDB, stmtReduceDB.redUIP);
+
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.glue);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol);
+
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.glue);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol);
+
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.glue);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol);
+
+
+
+
     assert(bindAt == numElems);
 
     // Bind the buffers
@@ -722,6 +746,8 @@ void SQLStats::clauseSizeGlueScatter(
 void SQLStats::reduceDB(
     const ClauseUsageStats& irredStats
     , const ClauseUsageStats& redStats
+    , const CleaningStats& clean
+
     , const Solver* solver
 ) {
     //Position of solving
@@ -731,19 +757,22 @@ void SQLStats::reduceDB(
     stmtReduceDB.cpuTime         = cpuTime();
     stmtReduceDB.reduceDBs       = solver->solveStats.nbReduceDB;
 
-    //Data
+    //Clause data for IRRED
     stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
     stmtReduceDB.irredClsVisited    = irredStats.sumLookedAt;
     stmtReduceDB.irredProps         = irredStats.sumProp;
     stmtReduceDB.irredConfls        = irredStats.sumConfl;
     stmtReduceDB.irredUIP           = irredStats.sumUsedUIP;
 
-    //Data
+    //Clause data for RED
     stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
     stmtReduceDB.redClsVisited      = redStats.sumLookedAt;
     stmtReduceDB.redProps           = redStats.sumProp;
     stmtReduceDB.redConfls          = redStats.sumConfl;
     stmtReduceDB.redUIP             = redStats.sumUsedUIP;
+
+    //Clean data
+    stmtReduceDB.clean              = clean;
 
     if (mysql_stmt_execute(stmtReduceDB.stmt)) {
         cout

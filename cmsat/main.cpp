@@ -262,6 +262,8 @@ void Main::parseCommandLine()
         , "Clean first time after this many conflicts")
     ("incClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
         , "Clean increment cleaning by this factor for next cleaning")
+    ("maxRedRatio", po::value<double>(&conf.maxNumLearntsRatio)->default_value(conf.maxNumLearntsRatio)
+        , "Don't ever have more than maxNumLearntsRatio*(irred_clauses) redundant clauses")
     ;
 
     po::options_description varPickOptions("Variable branching options");
