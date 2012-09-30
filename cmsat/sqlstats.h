@@ -38,6 +38,20 @@ public:
 
 private:
 
+    struct StmtClsDistrib {
+        StmtClsDistrib() :
+            stmt(NULL)
+        {}
+
+        vector<MYSQL_BIND>  bind;
+        MYSQL_STMT  *stmt;
+
+        //Variables
+        uint64_t sumConflicts;
+        vector<uint64_t> value;
+        vector<uint64_t> num;
+    };
+
     void connectServer();
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
@@ -47,7 +61,7 @@ private:
     void initRestartSTMT(uint64_t verbosity);
     void initClauseDistribSTMT(
         const Solver* solver
-        , MYSQL_STMT*& stmt
+        , StmtClsDistrib& stmt
         , const string& tableName
         , const string& valueName
         , const size_t numInserts
@@ -88,11 +102,11 @@ private:
 
     struct StmtReduceDB {
         StmtReduceDB() :
-            STMT(NULL)
+            stmt(NULL)
         {};
 
         MYSQL_BIND  bind[16];
-        MYSQL_STMT  *STMT;
+        MYSQL_STMT  *stmt;
 
         //Position
         uint64_t numSimplify;
@@ -120,11 +134,11 @@ private:
     size_t bindAt;
     struct StmtRst {
         StmtRst() :
-            STMT(NULL)
+            stmt(NULL)
         {};
 
         MYSQL_BIND  bind[59];
-        MYSQL_STMT  *STMT;
+        MYSQL_STMT  *stmt;
 
         //Position
         uint64_t numSimplify;
@@ -203,24 +217,13 @@ private:
         uint64_t trailSize;
 
     };
-    StmtRst stmtRst;
-
-
-    struct StmtClsDistrib {
-        vector<MYSQL_BIND>  bind;
-
-        //Variables
-        uint64_t sumConflicts;
-        vector<uint64_t> value;
-        vector<uint64_t> num;
-    };
-    StmtClsDistrib stmtClsDistrib;
-    MYSQL_STMT  *clsSizeDistrib;
-    MYSQL_STMT  *clsGlueDistrib;
 
     struct StmtSizeGlueScatter {
+        StmtSizeGlueScatter() :
+            stmt(NULL)
+        {}
         vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *STMT;
+        MYSQL_STMT  *stmt;
 
         //Variables
         uint64_t sumConflicts;
@@ -228,7 +231,11 @@ private:
         vector<uint64_t> glue;
         vector<uint64_t> num;
     };
+
+    StmtRst stmtRst;
     StmtSizeGlueScatter stmtSizeGlueScatter;
+    StmtClsDistrib stmtClsDistribSize;
+    StmtClsDistrib stmtClsDistribGlue;
 
     MYSQL *serverConn;
 };

@@ -420,12 +420,14 @@ void Main::parseCommandLine()
     sqlOptions.add_options()
     ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
         , "Write to SQL")
-    ("cldistribper", po::value<int>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
+    ("cldistribper", po::value<size_t>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump learnt clause size distribution every N conflicts")
-    ("cldistribmaxsize", po::value<int>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
+    ("cldistribmaxsize", po::value<size_t>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
         , "Dumped learnt clause size maximum -- longer will be 'truncated' in the statistics output")
-    ("cldistribmaxglue", po::value<int>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
+    ("cldistribmaxglue", po::value<size_t>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
         , "Dumped learnt clause glue maximum -- longer will be 'truncated' in the statistics output")
+    ("parparedstmtsize", po::value<size_t>(&conf.preparedDumpSize)->default_value(conf.preparedDumpSize)
+        , "When dumping scatter data, dump by this chunks")
     ;
 
     po::options_description miscOptions("Misc options");
