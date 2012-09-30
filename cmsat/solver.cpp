@@ -699,6 +699,29 @@ bool Solver::reduceDBStructGlue::operator () (
     return xsize > ysize;
 }
 
+bool Solver::reduceDBStructActivity::operator () (
+    const ClOffset xOff
+    , const ClOffset yOff
+) {
+    //Get their pointers
+    const Clause* x = clAllocator->getPointer(xOff);
+    const Clause* y = clAllocator->getPointer(yOff);
+
+    const uint32_t xsize = x->size();
+    const uint32_t ysize = y->size();
+
+    //No clause should be less than 3-long: 2&3-long are not removed
+    assert(xsize > 2 && ysize > 2);
+
+    //First tie: activity
+    if (x->stats.activity < y->stats.activity) return 1;
+    if (x->stats.activity > y->stats.activity) return 0;
+
+    //Second tie: size
+    return xsize > ysize;
+}
+
+
 /// @brief Sort clauses according to size: large sizes first
 bool Solver::reduceDBStructSize::operator () (
     const ClOffset xOff
@@ -795,6 +818,7 @@ CleaningStats Solver::reduceDB()
                 tmpStats.preRemove.lits += cl->size();
                 tmpStats.preRemove.glue += cl->stats.glue;
                 tmpStats.preRemove.resol += cl->stats.resolutions;
+                tmpStats.preRemove.act += cl->stats.activity;
 
                 if (cl->stats.glue > cl->size() + 1000) {
                     cout
@@ -830,6 +854,12 @@ CleaningStats Solver::reduceDB()
             tmpStats.sizeBasedClean = 1;
             break;
 
+        case CLEAN_CLAUSES_ACTIVITY_BASED :
+            //Sort for glue-based removal
+            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructActivity(clAllocator));
+            tmpStats.actBasedClean = 1;
+            break;
+
         case CLEAN_CLAUSES_PROPCONFL_BASED :
             //Sort for glue-based removal
             std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructPropConfl(clAllocator));
@@ -860,6 +890,7 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.lits += cl->size();
         tmpStats.removed.glue += cl->stats.glue;
         tmpStats.removed.resol += cl->stats.resolutions;
+        tmpStats.removed.act += cl->stats.activity;
 
         //detach & free
         detachClause(*cl);
@@ -875,6 +906,7 @@ CleaningStats Solver::reduceDB()
         tmpStats.remain.lits+= cl->size();
         tmpStats.remain.glue += cl->stats.glue;
         tmpStats.remain.resol += cl->stats.resolutions;
+        tmpStats.remain.act += cl->stats.activity;
 
         longRedCls[j++] = offset;
     }

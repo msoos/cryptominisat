@@ -333,6 +333,15 @@ class Solver : public Searcher
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
+        struct reduceDBStructActivity
+        {
+            reduceDBStructActivity(ClauseAllocator* _clAllocator) :
+                clAllocator(_clAllocator)
+            {}
+            ClauseAllocator* clAllocator;
+
+            bool operator () (const ClOffset x, const ClOffset y);
+        };
         struct reduceDBStructPropConfl
         {
             reduceDBStructPropConfl(ClauseAllocator* _clAllocator) :

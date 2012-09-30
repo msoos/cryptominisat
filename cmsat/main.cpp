@@ -249,7 +249,7 @@ void Main::parseCommandLine()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
     ("typeclean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
-        , "Metric to use to clean clauses: 'size', 'glue' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
+        , "Metric to use to clean clauses: 'size', 'glue', 'activity' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
     ("preclean", po::value<int>(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
         , "Before cleaning clauses with whatever sorting strategy, remove learnt clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
     ("precleanlimit", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
@@ -536,6 +536,8 @@ void Main::parseCommandLine()
         conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
     } else if (typeclean == "propconfl") {
         conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
+    } else if (typeclean == "activiy") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_ACTIVITY_BASED;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--cleantype'. It's '"

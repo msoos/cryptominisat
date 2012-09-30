@@ -41,6 +41,7 @@ struct ClauseStats
 {
     ClauseStats() :
         glue(std::numeric_limits<uint16_t>::max())
+        , activity(0)
         , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
         , numProp(0)
         , numConfl(0)
@@ -57,6 +58,7 @@ struct ClauseStats
 
     //Stored data
     uint16_t glue;    ///<Clause glue
+    double   activity;
     uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
     uint32_t numProp; ///<Number of times caused propagation
     uint32_t numConfl; ///<Number of times caused conflict
@@ -70,6 +72,7 @@ struct ClauseStats
 
     void clearAfterReduceDB()
     {
+        activity = 0;
         numProp = 0;
         numConfl = 0;
         numLitVisited = 0;
@@ -376,6 +379,7 @@ enum clauseCleaningTypes {
     CLEAN_CLAUSES_GLUE_BASED
     , CLEAN_CLAUSES_SIZE_BASED
     , CLEAN_CLAUSES_PROPCONFL_BASED
+    ,  CLEAN_CLAUSES_ACTIVITY_BASED
 };
 
 inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
@@ -389,6 +393,9 @@ inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
 
         case CLEAN_CLAUSES_PROPCONFL_BASED:
             return "propconfl";
+
+        case CLEAN_CLAUSES_ACTIVITY_BASED:
+            return "activity";
 
         default:
             assert(false && "Unknown clause cleaning type?");
@@ -406,6 +413,7 @@ struct CleaningStats
             , lits(0)
             , glue(0)
             , resol(0)
+            , act(0)
         {}
 
         Data& operator+=(const Data& other)
@@ -414,6 +422,7 @@ struct CleaningStats
             lits += other.lits;
             glue += other.glue;
             resol += other.resol;
+            act += other.act;
 
             return *this;
         }
@@ -422,6 +431,7 @@ struct CleaningStats
         uint64_t lits;
         uint64_t glue;
         uint64_t resol;
+        double   act;
 
     };
     CleaningStats() :
@@ -434,6 +444,7 @@ struct CleaningStats
         , glueBasedClean(0)
         , sizeBasedClean(0)
         , propConflBasedClean(0)
+        , actBasedClean(0)
     {}
 
     CleaningStats& operator+=(const CleaningStats& other)
@@ -449,6 +460,7 @@ struct CleaningStats
         glueBasedClean += other.glueBasedClean;
         sizeBasedClean += other.sizeBasedClean;
         propConflBasedClean += other.propConflBasedClean;
+        actBasedClean += other.actBasedClean;
 
         //Clause Cleaning data
         preRemove += other.preRemove;
@@ -590,6 +602,7 @@ struct CleaningStats
     size_t glueBasedClean;
     size_t sizeBasedClean;
     size_t propConflBasedClean;
+    size_t actBasedClean;
 
     //Clause Cleaning
     Data removed;

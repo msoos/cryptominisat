@@ -57,6 +57,7 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         , needToInterrupt(false)
         , var_inc(_conf.var_inc_start)
         , order_heap(VarOrderLt(activities))
+        , clauseActivityIncrease(1)
 {
     mtrand.seed(conf.origSeed);
 }
@@ -207,7 +208,12 @@ Clause* Searcher::analyze(
 
             case clause_t : {
                 Clause& cl = *clAllocator->getPointer(confl.getClause());
+
+                //Update stats
                 cl.stats.numUsedUIP++;
+                if (cl.learnt())
+                    bumpClauseAct(&cl);
+
                 for (size_t j = 0, size = cl.size(); j != size; j++) {
 
                     //This is the one that will be resolved out anyway, so just skip
@@ -994,6 +1000,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
 
         default:
             //Normal learnt
+            cl->stats.resolutions = numResolutions;
             stats.learntLongs++;
             solver->attachClause(*cl);
             if (decisionLevel() == 1)
@@ -1005,6 +1012,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     }
 
     varDecayActivity();
+    decayClauseAct();
 
     return true;
 }
@@ -2048,4 +2056,26 @@ void Searcher::genConfGraph(const PropBy conflPart)
 
     cout << "c Printed implication graph (with conflict clauses) to file "
     << filename << endl;
+}
+
+void Searcher::decayClauseAct()
+{
+    clauseActivityIncrease *= conf.clauseDecayActivity;
+}
+
+void Searcher::bumpClauseAct(Clause* cl)
+{
+    cl->stats.activity += clauseActivityIncrease;
+    if (cl->stats.activity > 1e20 ) {
+        // Rescale
+        for(vector<ClOffset>::iterator
+            it = solver->longRedCls.begin(), end = solver->longRedCls.end()
+            ; it != end
+            ; it++
+        ) {
+            clAllocator->getPointer(*it)->stats.activity *= 1e-20;
+        }
+        clauseActivityIncrease *= 1e-20;
+        clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
+    }
 }

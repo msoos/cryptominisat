@@ -40,6 +40,7 @@ SolverConf::SolverConf() :
         , startClean(8000)
         , increaseClean(1.101)
         , maxNumLearntsRatio(10)
+        , clauseDecayActivity(1.0/0.999)
 
         //var picking
         , random_var_freq(0)

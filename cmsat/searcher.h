@@ -486,6 +486,12 @@ class Searcher : public PropEngine
         ///activity-ordered heap of decision variables
         Heap<VarOrderLt>  order_heap;
 
+        //Clause activites
+        double clauseActivityIncrease;
+        void decayClauseAct();
+        void bumpClauseAct(Clause* cl);
+
+
         //SQL
         friend class SQLStats;
         void printRestartSQL();
