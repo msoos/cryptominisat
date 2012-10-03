@@ -95,31 +95,6 @@ a {
   src: local('Yanone Kaffeesatz Bold'), local('YanoneKaffeesatz-Bold'), url('We_iSDqttE3etzfdfhuPRWwXwFHHZlCwprwJOQ-Se7k.woff') format('woff');
 }
 
-table.box-table-a
-{
-    font-size: 12px;
-    margin-left: 29px;
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-    border: 0px;
-    border-color: black;
-    border-spacing: 0px;
-}
-
-table.box-table-a th
-{
-    font-size: 15px;
-    margin: 0;
-    font-weight: bold;
-    padding: 0px;
-    border-bottom: 1px solid black;
-}
-
-table.box-table-a td
-{
-    padding: 0px;
-    border-bottom: 1px solid #999999;
-}
-
 #plot-table-a
 {
     margin-left: 10px;
@@ -133,7 +108,7 @@ table.box-table-a td
     padding: 0 0 0 0;
 }
 
-#columns {
+/*#columns {
     display: block;
 }
 
@@ -143,10 +118,27 @@ table.box-table-a td
 
 #columns .menu{
     float: left;
-}
-
-/*div.block {
-    margin-left: 0px;
-    padding-left: 0px;
 }*/
 
+table.gridtable {
+    font-family: verdana,arial,sans-serif;
+    font-size:11px;
+    color:#333333;
+    border-width: 1px;
+    border-color: #666666;
+    border-collapse: collapse;
+}
+table.gridtable th {
+    border-width: 1px;
+    padding: 8px;
+    border-style: solid;
+    border-color: #666666;
+    background-color: #dedede;
+}
+table.gridtable td {
+    border-width: 1px;
+    padding: 8px;
+    border-style: solid;
+    border-color: #666666;
+    background-color: #ffffff;
+}
