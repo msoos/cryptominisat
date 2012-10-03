@@ -117,19 +117,21 @@ function drawOneGraph(i)
 
 function drawAllDists(from, to)
 {
-    for(i = 0; i < columnDivs.length; i++) {
-        a = new DrawClauseDistrib(
-                clDistrib[i].data
-                , clDistrib[i].canvasID
-                , simplificationPoints[i]
-            );
+    for(var i = 0; i < columnDivs.length; i++) {
+        for(var i2 = 0; i2 < clDistrib[i].length; i2++) {
+            a = new DrawClauseDistrib(
+                    clDistrib[i][i2].data
+                    , clDistrib[i][i2].canvasID
+                    , simplificationPoints[i]
+                );
 
-        if (from === undefined)
-            a.drawPattern(0, maxConflRestart[i]);
-        else
-            a.drawPattern(from, to);
+            if (from === undefined)
+                a.drawPattern(0, maxConflRestart[i]);
+            else
+                a.drawPattern(from, to);
 
-        dists.push(a);
+            dists.push(a);
+        }
     }
 }
 
@@ -172,7 +174,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
             }
 
             //Check which is the highest
-            for(i2 = data[i].darkness.length-1; i2 >= 0 ; i2--) {
+            for(var i2 = data[i].darkness.length-1; i2 >= 0 ; i2--) {
                 if (data[i].darkness[i2] > 20) {
                     numElementsVertical = Math.max(numElementsVertical, i2);
                     break;
@@ -195,7 +197,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 
         //Cut-off lines for Y
         var vAY = new Array();
-        for(i = numElementsVertical; i >= 0; i--) {
+        for(var i = numElementsVertical; i >= 0; i--) {
             vAY.push(Math.round(i*(myheight/numElementsVertical)));
         }
         vAY.push(0);
@@ -212,7 +214,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 
             //Calculate maximum darkness
             maxDark = 0;
-            for(i2 = 0; i2 < data[i].darkness.length; i2++) {
+            for(var i2 = 0; i2 < data[i].darkness.length; i2++) {
                 maxDark = Math.max(maxDark, data[i].darkness[i2]);
             }
 
@@ -227,7 +229,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
             lastXEnd = xEnd;
 
             //Go through each Y component
-            for(i2 = 0; i2 < data[i].darkness.length; i2++) {
+            for(var i2 = 0; i2 < data[i].darkness.length; i2++) {
                 yStart = vAY[i2+1];
                 yEnd   = vAY[i2];
 
@@ -277,41 +279,43 @@ function createHTMLforDists()
 {
     var width = 900/clDistrib.length;
     width = 420;
-    for(i = 0; i < clDistrib.length; i++) {
-        datagraphs = document.getElementById("datagraphs");
+    for(var i = 0; i < clDistrib.length; i++) {
+        for(var i2 = 0; i2 < clDistrib[i].length; i2++) {
+            datagraphs = document.getElementById("datagraphs");
 
-        datagraphs.innerHTML += "\
-        <div class=\"block\" id=\"" + clDistrib[i].blockDivID +"\"> \
-        <table id=\"plot-table-a\"> \
-        <tr> \
-        <td> \
-            <div id=\""+ clDistrib[i].dataDivID + "\" class=\"myPlotData\"> \
-            <canvas id=\""+ clDistrib[i].canvasID + "\" class=\"canvasPlot\" width=\"420\"> \
-            no support for canvas \
-            </canvas> \
-            </div> \
-        </td> \
-        <td> \
-            <div id=\"" + clDistrib[i].labelDivID + "\" class=\"draghandle\"><b> \
-            (" + i + ") Newly learnt clause size distribution. \
-            Bottom: unitary clause. Top: largest clause. \
-            Black: Many learnt. White: None learnt. \
-            Horizontal resolution: 1000 conflicts. \
-            Vertical resolution: 1 literal \
-            </b></div> \
-        </td> \
-        </tr> \
-        </table> \
-        </div>";
+            datagraphs.innerHTML += "\
+            <div class=\"block\" id=\"" + clDistrib[i][i2].blockDivID +"\"> \
+            <table id=\"plot-table-a\"> \
+            <tr> \
+            <td> \
+                <div id=\""+ clDistrib[i][i2].dataDivID + "\" class=\"myPlotData\"> \
+                <canvas id=\""+ clDistrib[i][i2].canvasID + "\" class=\"canvasPlot\" width=\"420\"> \
+                no support for canvas \
+                </canvas> \
+                </div> \
+            </td> \
+            <td> \
+                <div id=\"" + clDistrib[i][i2].labelDivID + "\" class=\"draghandle\"><b> \
+                (" + i + ") Newly learnt clause size distribution. \
+                Bottom: unitary clause. Top: largest clause. \
+                Black: Many learnt. White: None learnt. \
+                Horizontal resolution: 1000 conflicts. \
+                Vertical resolution: 1 literal \
+                </b></div> \
+            </td> \
+            </tr> \
+            </table> \
+            </div>";
+        }
     }
 }
 
 function createPortal()
 {
     var settings = {};
-    for(i = 0; i < columnDivs.length; i++) {
+    for(var i = 0; i < columnDivs.length; i++) {
         tmp = Array();
-        for(i2 = 0; i2 < columnDivs[i].length; i2++) {
+        for(var i2 = 0; i2 < columnDivs[i].length; i2++) {
             tmp.push(columnDivs[i][i2].blockDivID);
         }
         settings["column-" + i] = tmp;

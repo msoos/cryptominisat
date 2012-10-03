@@ -16,6 +16,7 @@ mysql_connect("localhost", $username, $password);
 #$runIDs = array(mysql_real_escape_string($_GET["id"]));
 $runIDs = array(getLatestID());
 
+echo "<script type=\"text/javascript\">";
 function getLatestID()
 {
     $query = "select runID from `startup` order by startTime desc limit 1;";
@@ -52,10 +53,8 @@ class DataPrinter
         $this->numberingScheme = 0;
 
         echo "
-        <script type=\"text/javascript\">
         if (columnDivs.length <= ".$this->colnum.")
             columnDivs.push(new Array());
-        </script>
         ";
     }
 
@@ -72,9 +71,7 @@ class DataPrinter
         }
 
         $max = mysql_result($result, 0, "mymax");
-        echo "<script type=\"text/javascript\">\n";
         echo "maxConflRestart.push($max);";
-        echo "</script>";
     }
 
     protected function printOneThing(
@@ -83,7 +80,6 @@ class DataPrinter
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
-        echo "<script type=\"text/javascript\">\n";
         echo "tmp = [";
 
         //Start with an empty one
@@ -163,8 +159,6 @@ class DataPrinter
         echo "tmp = {blockDivID:  '$blockDivID'};";
         echo "columnDivs[".$this->colnum."].push(tmp);";
 
-
-        echo "</script>\n";
         $this->numberingScheme++;
     }
 
@@ -402,42 +396,45 @@ class Simplifications
 
     public function fill()
     {
-        echo '<script type="text/javascript">';
         foreach ($this->runIDs as $thisRunID) {
             $this->fillSimplificationPoints($thisRunID);
         }
-
-        echo '</script>';
     }
 }
 
 $simps = new Simplifications($runIDs);
 $simps->fill();
 
-class ClauseSizeDistrib
+class ClauseDistrib
 {
     protected $colnum;
+    protected $rownum;
     protected $runID;
     protected $maxConfl;
+    protected $tablename;
+    protected $lookAt;
 
-    public function __construct($mycolnum, $runID, $maxConfl)
+
+    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt)
     {
         $this->colnum = $mycolnum;
+        $this->rownum = $myrownum;
         $this->runID = $runID;
         $this->maxConfl = $maxConfl;
+        $this->tablename = $tablename;
+        $this->lookAt = $lookAt;
     }
 
     public function fillClauseDistrib()
     {
-        echo '<script type="text/javascript">';
         echo "tmpArray = new Array();\n";
 
         $query = "
-        SELECT conflicts, num FROM clauseSizeDistrib
+        SELECT conflicts, num FROM ".$this->tablename."
         where runID = ".$this->runID."
         and conflicts < ".$this->maxConfl."
-        and size > 0
-        order by conflicts, size";
+        and ".$this->lookAt." > 0
+        order by conflicts, ".$this->lookAt;
         $result=mysql_query($query);
         if (!$result) {
             die('Invalid query: ' . mysql_error());
@@ -468,29 +465,34 @@ class ClauseSizeDistrib
             echo "tmpArray.push(tmp);\n";
         }
 
-        echo "clDistrib.push({data: tmpArray";
-
-        $blockDivID = "distBlock".$this->colnum;
-        $dataDivID = "drawingPad".$this->colnum."Parent";
-        $canvasID = "drawingPad".$this->colnum;
+        $blockDivID = "distBlock".$this->colnum."-".$this->rownum;
+        $dataDivID = "drawingPad".$this->colnum."-".$this->rownum."-Parent";
+        $canvasID = "drawingPad".$this->colnum."-".$this->rownum;
         $labelDivID = "$blockDivID"."_labeldiv";
+
+        //Put into data
+        echo "oneData = {data: tmpArray";
         echo ", blockDivID:  '$blockDivID'";
         echo ", dataDivID:  '$dataDivID'";
         echo ", canvasID: '$canvasID'";
         echo ", labelDivID: '$labelDivID'";
-        echo "});\n";
+        echo "};\n";
+        echo "clDistrib[".$this->colnum."].push(oneData);";
 
         //Put into columnDivs
         echo "tmp = {blockDivID:  '$blockDivID'};";
         echo "columnDivs[".$this->colnum."].push(tmp);";
-
-        echo '</script>';
     }
 }
 
 for($i = 0; $i < count($runIDs); $i++) {
-    $myDist = new ClauseSizeDistrib($i, $runIDs[$i], $maxConfl);
+    echo "clDistrib.push([]);";
+    $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue");
+    $myDist->fillClauseDistrib();
+
+    $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size");
     $myDist->fillClauseDistrib();
 }
+echo '</script>';
 
 ?>

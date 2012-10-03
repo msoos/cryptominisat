@@ -59,7 +59,9 @@ function MyAjax() {
             div.innerHTML = response;
             var x = div.getElementsByTagName("script");
             for(var i=0; i < x.length; i++) {
-                //alert(x[i].text);
+                //console.log(x[i].text);
+                //jQuery.parseJSON(x[i].text);
+                //json.parse (x[i].text);
                 eval(x[i].text);
             }
             doAll();
