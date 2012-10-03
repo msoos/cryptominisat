@@ -223,6 +223,20 @@ CREATE TABLE `solverRun` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `startup`
+--
+
+DROP TABLE IF EXISTS `startup`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `startup` (
+  `runID` bigint(20) unsigned NOT NULL,
+  `startTime` datetime NOT NULL,
+  `verbosity` bigint(20) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `vars`
 --
 
@@ -249,4 +263,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-10-01 18:03:11
+-- Dump completed on 2012-10-03 13:46:19

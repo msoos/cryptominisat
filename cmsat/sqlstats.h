@@ -60,6 +60,7 @@ private:
     void getRandomID();
 
     void addFiles(const Solver* solver);
+    void addStartupData(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
     void initClauseDistribSTMT(
         const Solver* solver

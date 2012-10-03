@@ -25,6 +25,7 @@ void SQLStats::setup(const Solver* solver)
     connectServer();
     getID(solver);
     addFiles(solver);
+    addStartupData(solver);
     initRestartSTMT(solver->conf.verbosity);
     initReduceDBSTMT(solver->conf.verbosity);
     initClauseDistribSTMT(
@@ -174,6 +175,23 @@ void SQLStats::addFiles(const Solver* solver)
             cout << "Couldn't insert into table 'solverruns'" << endl;
             exit(1);
         }
+    }
+}
+
+void SQLStats::addStartupData(const Solver* solver)
+{
+    std::stringstream ss;
+    ss
+    << "INSERT INTO startup (runID, startTime, verbosity) VALUES ("
+    << runID << ","
+    << "NOW() , "
+    << solver->conf.verbosity
+    << ");";
+
+    //Inserting element into solverruns to get unique ID
+    if (mysql_query(serverConn, ss.str().c_str())) {
+        cout << "Couldn't insert into table 'solverruns'" << endl;
+        exit(1);
     }
 }
 
