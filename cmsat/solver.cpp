@@ -788,14 +788,19 @@ CleaningStats Solver::reduceDB()
     tmpStats.origNumLits = redLits - redBins*2;
 
     //Calculate how many to remove
-    size_t removeNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
-    cout << "RemoveNum1: " << removeNum << endl;
+    size_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
     size_t maxToHave = (double)(longIrredCls.size() + irredTris) * conf.maxNumLearntsRatio;
-    removeNum = std::max<long>(removeNum, (long)longRedCls.size()-(long)maxToHave);
-    cout << "RemoveNum2: " << removeNum << endl;
+    size_t removeNum = std::max<long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
+
+    if (removeNum != origRemoveNum && conf.verbosity >= 2) {
+        cout
+        << "c Hard upper limit reached, removing more than normal: "
+        << origRemoveNum << " --> " << removeNum
+        << endl;
+    }
 
     //Subsume
     simplifier->subsumeLearnts();
