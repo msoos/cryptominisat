@@ -93,27 +93,7 @@ function drawOneGraph(i)
                 blockRedraw = true;
                 var xrange = me.xAxisRange();
 
-                //Is this full reset?
-                fullreset = false;
-                for (var j = 0; j < myData.length; j++) {
-                    if (gs[j] == me) {
-                        if (origSizes[myData[j].colnum][0] == xrange[0]
-                            &&origSizes[myData[j].colnum][1] == xrange[1]
-                        ) {
-                            fullreset = true;
-                        }
-                    }
-                }
-
-                /*
-                //Must zoom the clause distribution as well
-                if (fullreset) {
-                    drawPattern(clauseDistrib[0], 0, origSizes[0][0], origSizes[0][1]);
-                    drawPattern(clauseDistrib[1], 1, origSizes[1][0], origSizes[1][1]);
-                } else {
-                    drawPattern(clauseDistrib[0], 0, xrange[0], xrange[1]);
-                    drawPattern(clauseDistrib[1], 1, xrange[0], xrange[1]);
-                }*/
+                drawAllDists(xrange[0], xrange[1]);
 
                 //Zoom every one the same way
                 for (var j = 0; j < myData.length; j++) {
@@ -122,15 +102,9 @@ function drawOneGraph(i)
                         continue;
 
                     //If this is a full reset, then zoom out maximally
-                    if (fullreset) {
-                        gs[j].updateOptions( {
-                            dateWindow: origSizes[myData[j].colnum]
-                        } );
-                    } else {
-                        gs[j].updateOptions( {
-                            dateWindow: xrange
-                        } );
-                    }
+                    gs[j].updateOptions( {
+                        dateWindow: xrange
+                    } );
                 }
 
                 blockRedraw = false;
@@ -141,7 +115,7 @@ function drawOneGraph(i)
     return graph;
 }
 
-function drawAllDists()
+function drawAllDists(from, to)
 {
     for(i = 0; i < columnDivs.length; i++) {
         a = new DrawClauseDistrib(
@@ -149,7 +123,12 @@ function drawAllDists()
                 , clDistrib[i].canvasID
                 , simplificationPoints[i]
             );
-        a.drawPattern(0, maxConflRestart[i]);
+
+        if (from === undefined)
+            a.drawPattern(0, maxConflRestart[i]);
+        else
+            a.drawPattern(from, to);
+
         dists.push(a);
     }
 }
