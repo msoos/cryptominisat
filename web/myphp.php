@@ -1,5 +1,4 @@
 <?
-$runIDs = array(mysql_real_escape_string($_GET["id"]));
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 $maxConfl = 200000;
@@ -13,6 +12,28 @@ $database="cryptoms";
 
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
+
+#$runIDs = array(mysql_real_escape_string($_GET["id"]));
+$runIDs = array(getLatestID());
+
+function getLatestID()
+{
+    $query = "select runID from `startup` order by startTime desc limit 1;";
+    $result = mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+
+    $nrows = mysql_numrows($result);
+    if ($nrows < 1) {
+        return 7401737;
+    }
+
+    $runID = mysql_result($result, 0, "runID");
+
+    return $runID;
+}
 
 class DataPrinter
 {
