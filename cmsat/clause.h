@@ -413,6 +413,7 @@ struct CleaningStats
             , lits(0)
             , glue(0)
             , resol(0)
+            , age(0)
             , act(0)
         {}
 
@@ -422,6 +423,7 @@ struct CleaningStats
             lits += other.lits;
             glue += other.glue;
             resol += other.resol;
+            age += other.age;
             act += other.act;
 
             return *this;
@@ -431,6 +433,7 @@ struct CleaningStats
         uint64_t lits;
         uint64_t glue;
         uint64_t resol;
+        uint64_t age;
         double   act;
 
     };

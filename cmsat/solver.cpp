@@ -803,6 +803,7 @@ CleaningStats Solver::reduceDB()
     }
 
     //Subsume
+    uint64_t sumConfl = solver->sumConflicts();
     simplifier->subsumeLearnts();
     cout << "c Time wasted on clean&replace&sub: " << cpuTime()-myTime << endl;
 
@@ -824,6 +825,8 @@ CleaningStats Solver::reduceDB()
                 tmpStats.preRemove.glue += cl->stats.glue;
                 tmpStats.preRemove.resol += cl->stats.resolutions;
                 tmpStats.preRemove.act += cl->stats.activity;
+                assert(cl->stats.conflictNumIntroduced <= sumConfl);
+                tmpStats.preRemove.age += sumConfl - cl->stats.conflictNumIntroduced;
 
                 if (cl->stats.glue > cl->size() + 1000) {
                     cout
@@ -896,6 +899,8 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.glue += cl->stats.glue;
         tmpStats.removed.resol += cl->stats.resolutions;
         tmpStats.removed.act += cl->stats.activity;
+        assert(cl->stats.conflictNumIntroduced <= sumConfl);
+        tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
         //detach & free
         detachClause(*cl);
@@ -912,6 +917,8 @@ CleaningStats Solver::reduceDB()
         tmpStats.remain.glue += cl->stats.glue;
         tmpStats.remain.resol += cl->stats.resolutions;
         tmpStats.remain.act += cl->stats.activity;
+        assert(cl->stats.conflictNumIntroduced <= sumConfl);
+        tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
 
         longRedCls[j++] = offset;
     }
