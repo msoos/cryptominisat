@@ -16,6 +16,8 @@ mysql_connect("localhost", $username, $password);
 #$runIDs = array(mysql_real_escape_string($_GET["id"]));
 $runIDs = array(getLatestID());
 
+//$runIDs = array(2981893) ;
+
 echo "<script type=\"text/javascript\">";
 function getLatestID()
 {
