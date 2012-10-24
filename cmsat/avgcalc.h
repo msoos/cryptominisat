@@ -36,6 +36,10 @@ class AvgCalc {
     double  sumSqare;
     size_t  num;
 
+    //min, max
+    T       min;
+    T       max;
+
     T2      longSum;
     size_t  longNum;
 
@@ -44,6 +48,11 @@ public:
         sum(0)
         , sumSqare(0)
         , num(0)
+
+
+        //min, max
+        , min(std::numeric_limits<T>::max())
+        , max(std::numeric_limits<T>::min())
 
         //Long
         , longSum(0)
@@ -55,8 +64,21 @@ public:
         sumSqare += x*x;
         num++;
 
+        max = std::max(max, x);
+        min = std::min(min, x);
+
         longSum += x;
         longNum++;
+    }
+
+    T getMin() const
+    {
+        return min;
+    }
+
+    T getMax() const
+    {
+        return max;
     }
 
     double avg() const
@@ -113,13 +135,8 @@ public:
 
     void clear()
     {
-        sum = 0;
-        sumSqare = 0;
-        num = 0;
-
-        //Long
-        longSum = 0;
-        longNum = 0;
+        AvgCalc<T, T2> tmp;
+        *this = tmp;
     }
 
     void shortClear()
@@ -127,6 +144,8 @@ public:
         sum = 0;
         sumSqare = 0;
         num = 0;
+        min = 0;
+        max = 0;
     }
 };
 

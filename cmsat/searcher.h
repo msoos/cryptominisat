@@ -63,7 +63,6 @@ class Searcher : public PropEngine
         // Stats
         void     printRestartStats();
         void     printBaseStats();
-        void     printSearchStats();
         void     printClauseStats();
 
         void     setNeedToInterrupt();
@@ -366,21 +365,108 @@ class Searcher : public PropEngine
         size_t hyperBinResAll();
         size_t removeUselessBins();
 
-        //History statistics
-        AvgCalc<uint32_t> branchDepthHist;     ///< Avg branch depth in current restart
-        bqueue<uint32_t> branchDepthDeltaHist;
-        AvgCalc<uint32_t> trailDepthHist;
-        AvgCalc<uint32_t> trailDepthDeltaHist;
-        bqueue<uint32_t> glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
-        bqueue<uint32_t> conflSizeHist;       ///< Conflict size history
-        AvgCalc<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
-        AvgCalc<double, double>  agilityHist;
-        vector<uint32_t> clauseSizeDistrib;
-        vector<uint32_t> clauseGlueDistrib;
+        //History
+        struct Hist {
+            //About the search
+            AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
+            bqueue<uint32_t>    branchDepthDeltaHist;
+            AvgCalc<uint32_t>   trailDepthHist;
+            AvgCalc<uint32_t>   trailDepthDeltaHist;
+            AvgCalc<bool>       conflictAfterConflict;
+
+            //About the confl generated
+            bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
+            bqueue<uint32_t>    conflSizeHist;       ///< Conflict size history
+            AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
+
+            //lits, vars
+            AvgCalc<double, double>  agilityHist;
+            AvgCalc<size_t>     watchListSizeTraversed;
+            AvgCalc<bool>       litPropagatedSomething;
+
+            void clear()
+            {
+                //About the search
+                branchDepthHist.shortClear();
+                branchDepthDeltaHist.fastclear();
+                trailDepthHist.shortClear();
+                trailDepthDeltaHist.shortClear();
+                conflictAfterConflict.shortClear();
+
+                //conflict generated
+                glueHist.fastclear();
+                conflSizeHist.fastclear();
+                numResolutionsHist.shortClear();
+
+                //lits, vars
+                agilityHist.shortClear();
+                watchListSizeTraversed.shortClear();
+                litPropagatedSomething.shortClear();
+            }
+
+            void reset(const size_t shortTermHistorySize)
+            {
+                //About the search tree
+                branchDepthHist.clear();
+                branchDepthDeltaHist.clear();
+                branchDepthDeltaHist.resize(shortTermHistorySize);
+                trailDepthHist.clear();
+                trailDepthDeltaHist.clear();
+                conflictAfterConflict.clear();
+
+                //About the confl generated
+                glueHist.clear();
+                glueHist.resize(shortTermHistorySize);
+                conflSizeHist.clear();
+                conflSizeHist.resize(shortTermHistorySize);
+                numResolutionsHist.clear();
+
+                //Lits, vars
+                agilityHist.clear();
+                watchListSizeTraversed.clear();
+                litPropagatedSomething.clear();
+            }
+
+            void print()
+            {
+                cout
+                << " glue"
+                << " " << std::right << glueHist.getAvgMidPrint(1, 5)
+                << "/" << std::left << glueHist.getAvgLongPrint(1, 5)
+
+                << " agil"
+                << " " << std::right << agilityHist.avgPrint(3, 5)
+                << "/" << std::left<< agilityHist.avgLongPrint(3, 5)
+
+                << " confllen"
+                << " " << std::right << conflSizeHist.getAvgMidPrint(1, 5)
+                << "/" << std::left << conflSizeHist.getAvgLongPrint(1, 5)
+
+                << " branchd"
+                << " " << std::right << branchDepthHist.avgPrint(1, 5)
+                << "/" << std::left  << branchDepthHist.avgLongPrint(1, 5)
+                << " branchdd"
+
+                << " " << std::right << branchDepthDeltaHist.getAvgMidPrint(1, 4)
+                << "/" << std::left << branchDepthDeltaHist.getAvgLongPrint(1, 4)
+
+                << " traild"
+                << " " << std::right << trailDepthHist.avgPrint(0, 7)
+                << "/" << std::left << trailDepthHist.avgLongPrint(0, 7)
+
+                << " traildd"
+                << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
+                << "/" << std::left << trailDepthDeltaHist.avgLongPrint(0, 5)
+                ;
+
+                cout << std::right;
+            }
+        };
+        Hist hist;
+        vector<uint32_t>    clauseSizeDistrib;
+        vector<uint32_t>    clauseGlueDistrib;
         boost::multi_array<uint32_t, 2> sizeAndGlue;
-        AvgCalc<size_t> watchListSizeTraversed;
-        AvgCalc<bool> conflictAfterConflict;
-        AvgCalc<bool> litPropagatedSomething;
+
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
 
