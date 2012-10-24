@@ -20,6 +20,7 @@ using std::vector;
 
 template <class T, class T2 = uint64_t>
 class bqueue {
+    //Only stores info for N elements
     vector<T>  elems;
     size_t first;
     size_t last;
@@ -27,11 +28,14 @@ class bqueue {
     size_t queuesize; // Number of current elements (must be < maxsize !)
     T2  sumofqueue;
 
-    //for mid-term history size
+    //for each restart
     T2  sumOfElemsMidLong;
+    T   minMidLong;
+    T   maxMidLong;
     double  sumOfElemsMidLongSqare;
     size_t totalNumElemsMidLong;
 
+    //Data spanning over restarts
     T2  sumOfElemsLong;
     size_t totalNumElemsLong;
 
@@ -46,6 +50,8 @@ public:
         //Mid
         , sumOfElemsMidLong(0)
         , totalNumElemsMidLong(0)
+        , minMidLong(std::numeric_limits<T>::max())
+        , maxMidLong(std::numeric_limits<T>::min())
 
         //Full
         , sumOfElemsLong(0)
@@ -65,6 +71,8 @@ public:
         sumOfElemsMidLong += x;
         sumOfElemsMidLongSqare += (uint64_t)x*(uint64_t)x;
         totalNumElemsMidLong++;
+        minMidLong = std::min(minMidLong, x);
+        maxMidLong = std::max(maxMidLong, x);
 
         //Update long
         sumOfElemsLong += x;
@@ -89,6 +97,16 @@ public:
             return 0;
 
         return (double)sumOfElemsMidLong/(double)totalNumElemsMidLong;
+    }
+
+    T getMinMidLong() const
+    {
+        return minMidLong;
+    }
+
+    T getMaxMidLong() const
+    {
+        return maxMidLong;
     }
 
     double getVarMidLong() const
@@ -174,6 +192,8 @@ public:
         totalNumElemsMidLong = 0;
         sumOfElemsMidLong = 0;
         sumOfElemsMidLongSqare = 0;
+        minMidLong = 0;
+        maxMidLong = 0;
     }
 
     int  size(void)
@@ -193,6 +213,8 @@ public:
         totalNumElemsMidLong = 0;
         sumOfElemsMidLong = 0;
         sumOfElemsMidLongSqare = 0;
+        minMidLong = 0;
+        maxMidLong = 0;
 
         totalNumElemsLong = 0;
         sumOfElemsLong = 0;
