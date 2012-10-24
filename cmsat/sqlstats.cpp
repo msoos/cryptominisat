@@ -387,22 +387,26 @@ void SQLStats::initRestartSTMT(
     << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
 
     //Clause stats
-    << ", numIrredBins, numIrredTris, numIrredLongs, numIrredLits"
-    << ", numRedBins, numRedTris, numRedLongs, numRedLits"
+    << ", numIrredBins, numIrredTris, numIrredLongs"
+    << ", numRedBins, numRedTris, numRedLongs"
+    << ", numIrredLits, numRedLits"
 
     //Conflict stats
-    << ", `glue`, `glueSD`, `size`, `sizeSD`"
-    << ", `resolutions`, `resolutionsSD`"
-    << ", `conflAfterConfl`, `conflAfterConflSD`"
+    << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
+    << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
+    << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
+    << ", `conflAfterConfl`"
 
     //Search stats
-    << ", `branchDepth`, `branchDepthSD`"
-    << ", `branchDepthDelta`, `branchDepthDeltaSD`"
-    << ", `trailDepth`, `trailDepthSD`"
-    << ", `trailDepthDelta`, `trailDepthDeltaSD`, `agility`"
+    << ", `branchDepth`, `branchDepthSD`, `branchDepthMin`, `branchDepthMax`"
+    << ", `branchDepthDelta`, `branchDepthDeltaSD`, `branchDepthDeltaMin`, `branchDepthDeltaMax`"
+    << ", `trailDepth`, `trailDepthSD`, `trailDepthMin`, `trailDepthMax`"
+    << ", `trailDepthDelta`, `trailDepthDeltaSD`, `trailDepthDeltaMin`,`trailDepthDeltaMax`"
+    << ", `agility`"
 
     //Propagations
-    << ", `propBinIrred` , `propBinRed` , `propTriIrred` , `propTriRed`"
+    << ", `propBinIrred` , `propBinRed` "
+    << ", `propTriIrred` , `propTriRed`"
     << ", `propLongIrred` , `propLongRed`"
 
     //Conflicts
@@ -415,6 +419,7 @@ void SQLStats::initRestartSTMT(
 
     //Misc
     << ", `watchListSizeTraversed`, `watchListSizeTraversedSD`"
+    << ", `watchListSizeTraversedMin`, `watchListSizeTraversedMax`"
     << ", `litPropagatedSomething`, `litPropagatedSomethingSD`"
 
     //Var stats
@@ -479,31 +484,52 @@ void SQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.numIrredBins);
     bindTo(stmtRst, stmtRst.numIrredTris);
     bindTo(stmtRst, stmtRst.numIrredLongs);
-    bindTo(stmtRst, stmtRst.numIrredLits);
     bindTo(stmtRst, stmtRst.numRedBins);
     bindTo(stmtRst, stmtRst.numRedTris);
     bindTo(stmtRst, stmtRst.numRedLongs);
+
+    bindTo(stmtRst, stmtRst.numIrredLits);
     bindTo(stmtRst, stmtRst.numRedLits);
 
     //Conflict stats
     bindTo(stmtRst, stmtRst.glueHist);
     bindTo(stmtRst, stmtRst.glueHistSD);
+    bindTo(stmtRst, stmtRst.glueHistMin);
+    bindTo(stmtRst, stmtRst.glueHistMax);
+
     bindTo(stmtRst, stmtRst.conflSizeHist);
     bindTo(stmtRst, stmtRst.conflSizeHistSD);
+    bindTo(stmtRst, stmtRst.conflSizeHistMin);
+    bindTo(stmtRst, stmtRst.conflSizeHistMax);
+
     bindTo(stmtRst, stmtRst.numResolutionsHist);
     bindTo(stmtRst, stmtRst.numResolutionsHistSD);
+    bindTo(stmtRst, stmtRst.numResolutionsHistMin);
+    bindTo(stmtRst, stmtRst.numResolutionsHistMax);
+
     bindTo(stmtRst, stmtRst.conflictAfterConflict);
-    bindTo(stmtRst, stmtRst.conflictAfterConflictSD);
 
     //Search stats
     bindTo(stmtRst, stmtRst.branchDepthHist);
     bindTo(stmtRst, stmtRst.branchDepthHistSD);
+    bindTo(stmtRst, stmtRst.branchDepthHistMin);
+    bindTo(stmtRst, stmtRst.branchDepthHistMax);
+
     bindTo(stmtRst, stmtRst.branchDepthDeltaHist);
     bindTo(stmtRst, stmtRst.branchDepthDeltaHistSD);
+    bindTo(stmtRst, stmtRst.branchDepthDeltaHistMin);
+    bindTo(stmtRst, stmtRst.branchDepthDeltaHistMax);
+
     bindTo(stmtRst, stmtRst.trailDepthHist);
     bindTo(stmtRst, stmtRst.trailDepthHistSD);
+    bindTo(stmtRst, stmtRst.trailDepthHistMin);
+    bindTo(stmtRst, stmtRst.trailDepthHistMax);
+
     bindTo(stmtRst, stmtRst.trailDepthDeltaHist);
     bindTo(stmtRst, stmtRst.trailDepthDeltaHistSD);
+    bindTo(stmtRst, stmtRst.trailDepthDeltaHistMin);
+    bindTo(stmtRst, stmtRst.trailDepthDeltaHistMax);
+
     bindTo(stmtRst, stmtRst.agilityHist);
 
     //Prop
@@ -531,6 +557,9 @@ void SQLStats::initRestartSTMT(
     //Misc
     bindTo(stmtRst, stmtRst.watchListSizeTraversed);
     bindTo(stmtRst, stmtRst.watchListSizeTraversedSD);
+    bindTo(stmtRst, stmtRst.watchListSizeTraversedMin);
+    bindTo(stmtRst, stmtRst.watchListSizeTraversedMax);
+
     bindTo(stmtRst, stmtRst.litPropagatedSomething);
     bindTo(stmtRst, stmtRst.litPropagatedSomethingSD);
 
@@ -834,26 +863,48 @@ void SQLStats::restart(
     //Conflict stats
     stmtRst.glueHist        = search->hist.glueHist.getAvgMidLong();
     stmtRst.glueHistSD      = sqrt(search->hist.glueHist.getVarMidLong());
+    stmtRst.glueHistMin      = search->hist.glueHist.getMinMidLong();
+    stmtRst.glueHistMax      = search->hist.glueHist.getMaxMidLong();
+
     stmtRst.conflSizeHist   = search->hist.conflSizeHist.getAvgMidLong();
     stmtRst.conflSizeHistSD = sqrt(search->hist.conflSizeHist.getVarMidLong());
+    stmtRst.conflSizeHistMin = search->hist.conflSizeHist.getMinMidLong();
+    stmtRst.conflSizeHistMax = search->hist.conflSizeHist.getMaxMidLong();
+
     stmtRst.numResolutionsHist =
         search->hist.numResolutionsHist.avg();
     stmtRst.numResolutionsHistSD =
         sqrt(search->hist.numResolutionsHist.var());
+    stmtRst.numResolutionsHistMin =
+        search->hist.numResolutionsHist.getMin();
+    stmtRst.numResolutionsHistMax =
+        search->hist.numResolutionsHist.getMax();
+
     stmtRst.conflictAfterConflict =
         search->hist.conflictAfterConflict.avg()*100.0;
-    stmtRst.conflictAfterConflictSD =
-        sqrt(search->hist.conflictAfterConflict.var())*100.0;
 
     //Search stats
     stmtRst.branchDepthHist         = search->hist.branchDepthHist.avg();
     stmtRst.branchDepthHistSD       = sqrt(search->hist.branchDepthHist.var());
+    stmtRst.branchDepthHistMin      = search->hist.branchDepthHist.getMin();
+    stmtRst.branchDepthHistMax      = search->hist.branchDepthHist.getMax();
+
+
     stmtRst.branchDepthDeltaHist    = search->hist.branchDepthDeltaHist.getAvgMidLong();
     stmtRst.branchDepthDeltaHistSD  = sqrt(search->hist.branchDepthDeltaHist.getVarMidLong());
+    stmtRst.branchDepthDeltaHistMin  = search->hist.branchDepthDeltaHist.getMinMidLong();
+    stmtRst.branchDepthDeltaHistMax  = search->hist.branchDepthDeltaHist.getMaxMidLong();
+
     stmtRst.trailDepthHist          = search->hist.trailDepthHist.avg();
     stmtRst.trailDepthHistSD        = sqrt(search->hist.trailDepthHist.var());
+    stmtRst.trailDepthHistMin       = search->hist.trailDepthHist.getMin();
+    stmtRst.trailDepthHistMax       = search->hist.trailDepthHist.getMax();
+
     stmtRst.trailDepthDeltaHist     = search->hist.trailDepthDeltaHist.avg();
     stmtRst.trailDepthDeltaHistSD   = sqrt(search->hist.trailDepthDeltaHist.var());
+    stmtRst.trailDepthDeltaHistMin  = search->hist.trailDepthDeltaHist.getMin();
+    stmtRst.trailDepthDeltaHistMax  = search->hist.trailDepthDeltaHist.getMax();
+
     stmtRst.agilityHist             = search->hist.agilityHist.avg();
 
     //Prop
@@ -881,6 +932,10 @@ void SQLStats::restart(
     //Misc
     stmtRst.watchListSizeTraversed   = search->hist.watchListSizeTraversed.avg();
     stmtRst.watchListSizeTraversedSD = sqrt(search->hist.watchListSizeTraversed.var());
+    stmtRst.watchListSizeTraversedMin= search->hist.watchListSizeTraversed.getMin();
+    stmtRst.watchListSizeTraversedMax= search->hist.watchListSizeTraversed.getMax();
+
+
     stmtRst.litPropagatedSomething   = search->hist.litPropagatedSomething.avg()*100.0;
     stmtRst.litPropagatedSomethingSD = sqrt(search->hist.litPropagatedSomething.var())*100.0;
 

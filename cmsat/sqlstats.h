@@ -144,7 +144,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[59];
+        MYSQL_BIND  bind[73+1]; //+1 == runID
         MYSQL_STMT  *stmt;
 
         //Position
@@ -166,22 +166,42 @@ private:
         //Conflict stats
         double glueHist;
         double glueHistSD;
+        uint64_t glueHistMin;
+        uint64_t glueHistMax;
+
         double conflSizeHist;
         double conflSizeHistSD;
+        uint64_t conflSizeHistMin;
+        uint64_t conflSizeHistMax;
+
         double numResolutionsHist;
         double numResolutionsHistSD;
+        uint64_t numResolutionsHistMin;
+        uint64_t numResolutionsHistMax;
+
         double conflictAfterConflict;
-        double conflictAfterConflictSD;
 
         //Search stats
         double branchDepthHist;
         double branchDepthHistSD;
+        uint64_t branchDepthHistMin;
+        uint64_t branchDepthHistMax;
+
         double branchDepthDeltaHist;
         double branchDepthDeltaHistSD;
+        uint64_t branchDepthDeltaHistMin;
+        uint64_t branchDepthDeltaHistMax;
+
         double trailDepthHist;
         double trailDepthHistSD;
+        uint64_t trailDepthHistMin;
+        uint64_t trailDepthHistMax;
+
         double trailDepthDeltaHist;
         double trailDepthDeltaHistSD;
+        uint64_t trailDepthDeltaHistMin;
+        uint64_t trailDepthDeltaHistMax;
+
         double agilityHist;
 
         //Prop
@@ -209,6 +229,9 @@ private:
         //Misc
         double watchListSizeTraversed;
         double watchListSizeTraversedSD;
+        uint64_t watchListSizeTraversedMin;
+        uint64_t watchListSizeTraversedMax;
+
         double litPropagatedSomething;
         double litPropagatedSomethingSD;
 
@@ -222,7 +245,6 @@ private:
         uint64_t numReplacedVars;
         uint64_t numVarsElimed;
         uint64_t trailSize;
-
     };
 
     struct StmtSizeGlueScatter {
