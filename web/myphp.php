@@ -4,7 +4,6 @@ ini_set('display_errors',1);
 $maxConfl = 200000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
-//asfdasfdsf
 
 $username="presenter";
 $password="";
