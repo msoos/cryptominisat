@@ -29,6 +29,11 @@ public:
         uint64_t sumConflicts
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
     );
+    void varDataDump(
+        const Solver* solver
+        , const Searcher* search
+        , const vector<VarData>& varData
+    );
 
     void reduceDB(
         const ClauseUsageStats& irredStats
@@ -73,6 +78,7 @@ private:
         const Solver* solver
         , const size_t numInserts
     );
+    void initVarSTMT(const Solver* solver);
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
     template<typename T>
@@ -137,6 +143,39 @@ private:
     };
     StmtReduceDB stmtReduceDB;
     void initReduceDBSTMT(uint64_t verbosity);
+
+    struct StmtVar {
+        StmtVar() :
+            stmt(NULL)
+        {};
+
+        uint64_t varInitID;
+        vector<MYSQL_BIND>  bind; //13 per item
+        MYSQL_STMT  *stmt;
+
+        struct Data {
+            uint64_t var;
+
+            //Overall stats
+            uint64_t posPolarSet;
+            uint64_t negPolarSet;
+            uint64_t flippedPolarity;
+
+            //Dec level history stats
+            double decLevelAvg;
+            double decLevelSD;
+            uint64_t decLevelMin;
+            uint64_t decLevelMax;
+
+            //Trail level history stats
+            double trailLevelAvg;
+            double trailLevelSD;
+            uint64_t trailLevelMin;
+            uint64_t trailLevelMax;
+        };
+        vector<Data> data;
+    };
+    StmtVar stmtVar;
 
     size_t bindAt;
     struct StmtRst {

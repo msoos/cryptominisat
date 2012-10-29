@@ -104,6 +104,12 @@ struct VarData
 
     ///The preferred polarity of each variable.
     bool polarity;
+
+    ///The history of levels it was assigned
+    AvgCalc<uint32_t> decLevelHist;
+
+    ///The history of levels it was assigned
+    AvgCalc<uint32_t> trailLevelHist;
 };
 
 struct PolaritySorter
@@ -436,11 +442,14 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
+    varData[v].decLevelHist.push(trail.size());
+    varData[v].decLevelHist.push(decisionLevel());
+    varData[v].reason = from;
+    varData[v].level = decisionLevel();
+
     trail.push_back(p);
     propStats.propagations++;
 
-    varData[v].reason = from;
-    varData[v].level = decisionLevel();
     if (p.sign()) {
         varData[v].negPolarSet++;
         propStats.varSetNeg++;

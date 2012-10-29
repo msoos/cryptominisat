@@ -1239,6 +1239,15 @@ void Searcher::printClauseDistribSQL()
         , clauseGlueDistrib
     );
 
+    solver->sqlStats.varDataDump(solver, this, varData);
+    for(size_t i = 0; i < varData.size(); i++) {
+        varData[i].posPolarSet = 0;
+        varData[i].negPolarSet = 0;
+        varData[i].flippedPolarity = 0;
+        varData[i].decLevelHist.clear();
+        varData[i].trailLevelHist.clear();
+    }
+
     solver->sqlStats.clauseSizeGlueScatter(
         sumConflicts()
         , sizeAndGlue

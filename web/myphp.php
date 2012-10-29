@@ -1,7 +1,7 @@
 <?
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
-$maxConfl = 200000;
+$maxConfl = 7000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 

@@ -254,6 +254,24 @@ CREATE TABLE `startup` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `varDataInit`
+--
+
+DROP TABLE IF EXISTS `varDataInit`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `varDataInit` (
+  `varInitID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `runID` bigint(20) unsigned NOT NULL,
+  `simplifications` bigint(20) unsigned NOT NULL,
+  `restarts` bigint(20) unsigned NOT NULL,
+  `conflicts` bigint(20) unsigned NOT NULL,
+  `time` double unsigned NOT NULL,
+  PRIMARY KEY (`varInitID`)
+) ENGINE=MyISAM AUTO_INCREMENT=42 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `vars`
 --
 
@@ -261,13 +279,19 @@ DROP TABLE IF EXISTS `vars`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `vars` (
-  `runID` bigint(20) unsigned NOT NULL,
-  `simplifications` bigint(20) unsigned NOT NULL,
-  `order` int(10) unsigned NOT NULL,
-  `pos` bigint(20) unsigned NOT NULL,
-  `neg` bigint(20) unsigned NOT NULL,
-  `total` bigint(20) unsigned NOT NULL,
-  `flipped` bigint(20) unsigned NOT NULL
+  `varInitID` bigint(20) unsigned NOT NULL,
+  `var` bigint(20) unsigned NOT NULL,
+  `posPolarSet` bigint(20) unsigned NOT NULL,
+  `negPolarSet` bigint(20) unsigned NOT NULL,
+  `flippedPolarity` bigint(20) unsigned NOT NULL,
+  `decLevelAvg` double NOT NULL,
+  `decLevelSD` double NOT NULL,
+  `decLevelMin` bigint(20) unsigned NOT NULL,
+  `decLevelMax` bigint(20) unsigned NOT NULL,
+  `trailLevelAvg` double NOT NULL,
+  `trailLevelSD` double NOT NULL,
+  `trailLevelMin` bigint(20) unsigned NOT NULL,
+  `trailLevelMax` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -280,4 +304,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-10-25  0:14:26
+-- Dump completed on 2012-10-29 11:41:39

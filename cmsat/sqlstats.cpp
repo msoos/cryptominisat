@@ -28,6 +28,7 @@ void SQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->conf.verbosity);
     initReduceDBSTMT(solver->conf.verbosity);
+    initVarSTMT(solver);
     initClauseDistribSTMT(
         solver
         , stmtClsDistribSize
@@ -47,6 +48,7 @@ void SQLStats::setup(const Solver* solver)
         solver
         , solver->conf.preparedDumpSize
     );
+    initVarSTMT(solver);
 }
 
 void SQLStats::connectServer()
@@ -271,7 +273,7 @@ void SQLStats::initClauseDistribSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(mystruct.bind.data(), 0, mystruct.bind.size());
+    memset(mystruct.bind.data(), 0, mystruct.bind.size()*sizeof(MYSQL_BIND));
     mystruct.value.resize(numInserts);
     mystruct.num.resize(numInserts);
 
@@ -350,7 +352,7 @@ void SQLStats::initSizeGlueScatterSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(stmtSizeGlueScatter.bind.data(), 0, stmtSizeGlueScatter.bind.size());
+    memset(stmtSizeGlueScatter.bind.data(), 0, stmtSizeGlueScatter.bind.size()*sizeof(MYSQL_BIND));
     stmtSizeGlueScatter.size.resize(numInserts);
     stmtSizeGlueScatter.glue.resize(numInserts);
     stmtSizeGlueScatter.num.resize(numInserts);
@@ -701,6 +703,173 @@ void SQLStats::initReduceDBSTMT(
         << mysql_stmt_error(stmtReduceDB.stmt) << endl;
         exit(1);
     }
+}
+
+void SQLStats::initVarSTMT(
+    const Solver* solver
+) {
+    stmtVar.data.resize(100);
+    const size_t num = 13;
+    const size_t numElems = num*stmtVar.data.size();
+    stmtVar.bind.resize(numElems);
+
+    std::stringstream ss;
+    ss << "insert into `vars`"
+    << "("
+
+    //Position
+    << " `varInitID`, `var`"
+
+    //Actual data
+    << ", `posPolarSet`, `negPolarSet`, `flippedPolarity`"
+
+    //Dec level history stats
+    << ", `decLevelAvg`, `decLevelSD`, `decLevelMin`, `decLevelMax`"
+
+    //Trail level history stats
+    << ", `trailLevelAvg`, `trailLevelSD`, `trailLevelMin`, `trailLevelMax`"
+    << ") values ";
+    for(size_t i = 0; i < stmtVar.data.size(); i++) {
+        writeQuestionMarks(num, ss);
+
+        if (i != stmtVar.data.size()-1)
+            ss << " , ";
+    }
+    ss << ";";
+
+    //Get memory for statement
+    stmtVar.stmt = mysql_stmt_init(serverConn);
+    if (!stmtVar.stmt) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        exit(1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtVar.stmt, ss.str().c_str(), ss.str().length())) {
+        cout
+        << "Error in mysql_stmt_prepare(), INSERT failed"
+        << endl
+        << mysql_stmt_error(stmtVar.stmt)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        exit(0);
+    }
+
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "prepare INSERT successful"
+        << endl;
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtVar.stmt);
+    if (param_count != numElems) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        exit(1);
+    }
+
+    //Clear bind
+    memset(stmtVar.bind.data(), 0, numElems*sizeof(MYSQL_BIND));
+
+    //Bind the local variables to the statement
+    bindAt =0;
+    for(size_t i = 0; i < stmtVar.data.size(); i++) {
+        bindTo(stmtVar, stmtVar.varInitID);
+        bindTo(stmtVar, stmtVar.data[i].var);
+        bindTo(stmtVar, stmtVar.data[i].posPolarSet);
+        bindTo(stmtVar, stmtVar.data[i].negPolarSet);
+        bindTo(stmtVar, stmtVar.data[i].flippedPolarity);
+
+        bindTo(stmtVar, stmtVar.data[i].decLevelAvg);
+        bindTo(stmtVar, stmtVar.data[i].decLevelSD);
+        bindTo(stmtVar, stmtVar.data[i].decLevelMin);
+        bindTo(stmtVar, stmtVar.data[i].decLevelMax);
+
+        bindTo(stmtVar, stmtVar.data[i].trailLevelAvg);
+        bindTo(stmtVar, stmtVar.data[i].trailLevelSD);
+        bindTo(stmtVar, stmtVar.data[i].trailLevelMin);
+        bindTo(stmtVar, stmtVar.data[i].trailLevelMax);
+    }
+    assert(bindAt == numElems);
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(stmtVar.stmt, stmtVar.bind.data())) {
+        cout << "mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtVar.stmt) << endl;
+        exit(1);
+    }
+}
+
+void SQLStats::varDataDump(
+    const Solver* solver
+    , const Searcher* search
+    , const vector<VarData>& varData
+) {
+    double myTime = cpuTime();
+
+    std::stringstream ss;
+    ss
+    << "INSERT INTO varDataInit (`runID`, `simplifications`, `restarts`, `conflicts`, `time`)"
+    << " values ("
+    << runID
+    << ", " << solver->getSolveStats().numSimplify
+    << ", " << search->sumRestarts()
+    << ", " << search->sumConflicts()
+    << ", " << cpuTime()
+    << ");";
+
+    if (mysql_query(serverConn, ss.str().c_str())) {
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Couldn't insert into table `varDataInit`" << endl;
+            cout << "c " << mysql_error(serverConn) << endl;
+        }
+        exit(-1);
+    }
+
+    stmtVar.varInitID = mysql_insert_id(serverConn);
+
+    size_t at = 0;
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        stmtVar.data[at].var = i;
+
+        //Overall stats
+        stmtVar.data[at].posPolarSet = varData[i].posPolarSet;
+        stmtVar.data[at].negPolarSet = varData[i].negPolarSet;
+        stmtVar.data[at].flippedPolarity  = varData[i].flippedPolarity;
+
+        //Dec level history stats
+        stmtVar.data[at].decLevelAvg  = varData[i].decLevelHist.avg();
+        stmtVar.data[at].decLevelSD   = sqrt(varData[i].decLevelHist.var());
+        stmtVar.data[at].decLevelMin  = varData[i].decLevelHist.getMin();
+        stmtVar.data[at].decLevelMax  = varData[i].decLevelHist.getMax();
+
+        //Trail level history stats
+        stmtVar.data[at].trailLevelAvg  = varData[i].trailLevelHist.avg();
+        stmtVar.data[at].trailLevelSD   = sqrt(varData[i].trailLevelHist.var());
+        stmtVar.data[at].trailLevelMin  = varData[i].trailLevelHist.getMin();
+        stmtVar.data[at].trailLevelMax  = varData[i].trailLevelHist.getMax();
+        at++;
+
+        if (at == stmtVar.data.size()) {
+            if (mysql_stmt_execute(stmtVar.stmt)) {
+                cout
+                << "ERROR: while executing restart insertion MySQL prepared statement"
+                << endl;
+
+                cout << "Error from mysql: "
+                << mysql_stmt_error(stmtVar.stmt)
+                << endl;
+
+                exit(-1);
+            }
+            at = 0;
+        }
+    }
+    assert(at == 0 && "numInserts must be divisible");
 }
 
 void SQLStats::clauseSizeDistrib(
