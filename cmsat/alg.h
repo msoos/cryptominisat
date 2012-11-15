@@ -22,9 +22,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <iostream>
 #include "vec.h"
-#include "cmsat/solvertypes.h"
-#include "cmsat/watched.h"
-#include "cmsat/constants.h"
+#include "solvertypes.h"
+#include "watched.h"
+#include "constants.h"
 
 template<class V, class T>
 static inline void remove(V& ts, const T& t)

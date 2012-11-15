@@ -33,16 +33,16 @@ using std::cout;
 using std::endl;
 
 
-#include "cmsat/simplifier.h"
-#include "cmsat/clause.h"
-#include "cmsat/solver.h"
-#include "cmsat/clausecleaner.h"
-#include "cmsat/constants.h"
-#include "cmsat/solutionextender.h"
-#include "cmsat/xorfinder.h"
-#include "cmsat/gatefinder.h"
-#include "cmsat/varreplacer.h"
-#include "cmsat/varupdatehelper.h"
+#include "simplifier.h"
+#include "clause.h"
+#include "solver.h"
+#include "clausecleaner.h"
+#include "constants.h"
+#include "solutionextender.h"
+#include "xorfinder.h"
+#include "gatefinder.h"
+#include "varreplacer.h"
+#include "varupdatehelper.h"
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG

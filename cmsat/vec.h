@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <malloc.h>
 #include <string.h>
 
-#include "cmsat/constants.h"
+#include "constants.h"
 
 // NOTE! Don't use this vector on datatypes that cannot be re-located in memory
 // (with realloc)

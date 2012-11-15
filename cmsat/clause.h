@@ -32,7 +32,7 @@
 #include "constants.h"
 #include "watched.h"
 #include "alg.h"
-#include "cmsat/clabstraction.h"
+#include "clabstraction.h"
 #include "constants.h"
 
 class ClauseAllocator;
