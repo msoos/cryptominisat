@@ -64,7 +64,7 @@ struct ClauseStats
     uint32_t numConfl; ///<Number of times caused conflict
     uint32_t numLitVisited; ///<Number of literals visited
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
-    uint32_t numUsedUIP; ///Number of times the claue was using during conflict generation
+    uint32_t numUsedUIP; ///Number of times the claue was using during 1st UIP conflict generation
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for learnt clauses
