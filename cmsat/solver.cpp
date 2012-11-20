@@ -823,8 +823,15 @@ CleaningStats Solver::reduceDB()
                 tmpStats.preRemove.num ++;
                 tmpStats.preRemove.lits += cl->size();
                 tmpStats.preRemove.glue += cl->stats.glue;
-                tmpStats.preRemove.resol += cl->stats.resolutions;
                 tmpStats.preRemove.act += cl->stats.activity;
+
+                tmpStats.preRemove.numConfl += cl->stats.numConfl;
+                tmpStats.preRemove.numLitVisited += cl->stats.numLitVisited;
+                tmpStats.preRemove.numLookedAt += cl->stats.numLookedAt;
+                tmpStats.preRemove.numProp += cl->stats.numProp;
+                tmpStats.preRemove.numResolutions += cl->stats.resolutions;
+                tmpStats.preRemove.numUsedUIP += cl->stats.numUsedUIP;
+
                 assert(cl->stats.conflictNumIntroduced <= sumConfl);
                 tmpStats.preRemove.age += sumConfl - cl->stats.conflictNumIntroduced;
 
@@ -897,10 +904,17 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.num++;
         tmpStats.removed.lits += cl->size();
         tmpStats.removed.glue += cl->stats.glue;
-        tmpStats.removed.resol += cl->stats.resolutions;
         tmpStats.removed.act += cl->stats.activity;
         assert(cl->stats.conflictNumIntroduced <= sumConfl);
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
+
+
+        tmpStats.removed.numConfl += cl->stats.numConfl;
+        tmpStats.removed.numLitVisited += cl->stats.numLitVisited;
+        tmpStats.removed.numLookedAt += cl->stats.numLookedAt;
+        tmpStats.removed.numProp += cl->stats.numProp;
+        tmpStats.removed.numResolutions += cl->stats.resolutions;
+        tmpStats.removed.numUsedUIP += cl->stats.numUsedUIP;
 
         //detach & free
         detachClause(*cl);
@@ -915,10 +929,16 @@ CleaningStats Solver::reduceDB()
         tmpStats.remain.num++;
         tmpStats.remain.lits+= cl->size();
         tmpStats.remain.glue += cl->stats.glue;
-        tmpStats.remain.resol += cl->stats.resolutions;
         tmpStats.remain.act += cl->stats.activity;
         assert(cl->stats.conflictNumIntroduced <= sumConfl);
         tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
+
+        tmpStats.remain.numConfl += cl->stats.numConfl;
+        tmpStats.remain.numLitVisited += cl->stats.numLitVisited;
+        tmpStats.remain.numLookedAt += cl->stats.numLookedAt;
+        tmpStats.remain.numProp += cl->stats.numProp;
+        tmpStats.remain.numResolutions += cl->stats.resolutions;
+        tmpStats.remain.numUsedUIP += cl->stats.numUsedUIP;
 
         longRedCls[j++] = offset;
     }

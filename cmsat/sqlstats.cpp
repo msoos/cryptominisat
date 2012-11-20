@@ -603,9 +603,20 @@ void SQLStats::initReduceDBSTMT(
     << ", `redClsVisited`, `redLitsVisited`, `redProps`, `redConfls`, `redUIP`"
 
     //Clean data
-    << ", preRemovedNum, preRemovedLits, preRemovedGlue, preRemovedResol, preRemovedAge, preRemovedAct"
-    << ", removedNum, removedLits, removedGlue, removedResol, removedAge, removedAct"
-    << ", remainNum, remainLits, remainGlue, remainResol, remainAge, remainAct"
+    << ", preRemovedNum, preRemovedLits, preRemovedGlue"
+    << ", preRemovedResol, preRemovedAge, preRemovedAct"
+    << ", preRemovedLitVisited, preRemovedProp, preRemovedConfl"
+    << ", preRemovedLookedAt"
+
+    << ", removedNum, removedLits, removedGlue"
+    << ", removedResol, removedAge, removedAct"
+    << ", removedLitVisited, removedProp, removedConfl"
+    << ", removedLookedAt"
+
+    << ", remainNum, remainLits, remainGlue"
+    << ", remainResol, remainAge, remainAct"
+    << ", remainLitVisited, remainProp, remainConfl"
+    << ", remainLookedAt"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -677,23 +688,35 @@ void SQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numResolutions);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.act);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLitVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numProp);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numConfl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLookedAt);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numResolutions);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.act);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLitVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numProp);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numConfl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLookedAt);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numResolutions);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.act);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLitVisited);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numProp);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numConfl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLookedAt);
 
     assert(bindAt == numElems);
 

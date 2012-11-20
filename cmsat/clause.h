@@ -411,9 +411,16 @@ struct CleaningStats
         Data() :
             num(0)
             , lits(0)
-            , glue(0)
-            , resol(0)
             , age(0)
+
+            , glue(0)
+            , numProp(0)
+            , numConfl(0)
+            , numLitVisited(0)
+            , numLookedAt(0)
+            , numUsedUIP(0)
+            , numResolutions(0)
+
             , act(0)
         {}
 
@@ -421,9 +428,16 @@ struct CleaningStats
         {
             num += other.num;
             lits += other.lits;
-            glue += other.glue;
-            resol += other.resol;
             age += other.age;
+
+            glue += other.glue;
+            numProp += other.numProp;
+            numConfl += other.numConfl;
+            numLitVisited += other.numLitVisited;
+            numLookedAt += other.numLookedAt;
+            numUsedUIP += other.numUsedUIP;
+            numResolutions += other.numResolutions;
+
             act += other.act;
 
             return *this;
@@ -431,9 +445,15 @@ struct CleaningStats
 
         uint64_t num;
         uint64_t lits;
-        uint64_t glue;
-        uint64_t resol;
         uint64_t age;
+
+        uint64_t glue;
+        uint64_t numProp;
+        uint64_t numConfl;
+        uint64_t numLitVisited;
+        uint64_t numLookedAt;
+        uint64_t numUsedUIP;
+        uint64_t numResolutions;
         double   act;
 
     };
@@ -495,7 +515,7 @@ struct CleaningStats
             , (double)preRemove.glue/(double)preRemove.num
         );
         printStatsLine("c pre-removed cl avg num resolutions"
-            , (double)preRemove.resol/(double)preRemove.num
+            , (double)preRemove.numResolutions/(double)preRemove.num
         );
 
         //Types of clean
