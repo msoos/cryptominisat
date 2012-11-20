@@ -321,28 +321,28 @@ class DataPrinter
                 , "redUIP"
             )
             ,array(
-                  "irredUIP"
-                , "redUIP"
+                "long clauses used during 1st UIP clause generation -- % of irred"
+                , "long clauses used during 1st UIP clause generation -- % of red"
             )
         );
 
         $this->printOneThing(array(
-                  "irredProps"
+                "irredProps"
                 , "redProps"
             )
             ,array(
-                  "irredProps"
-                , "redProps"
+                "long clauses used during propagation -- % of irred"
+                , "long clauses used during propagation -- % of red"
             )
         );
 
         $this->printOneThing(array(
-                  "irredConfls"
+                "irredConfls"
                 , "redConfls"
             )
             ,array(
-                  "irredConfls"
-                , "redConfls"
+                "long clauses conflicted -- % of irred"
+                , "long clauses conflicted -- % of red"
             )
         );
 
