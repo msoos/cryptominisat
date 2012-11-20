@@ -49,9 +49,9 @@ public:
 
         //Mid
         , sumOfElemsMidLong(0)
-        , totalNumElemsMidLong(0)
         , minMidLong(std::numeric_limits<T>::max())
         , maxMidLong(std::numeric_limits<T>::min())
+        , totalNumElemsMidLong(0)
 
         //Full
         , sumOfElemsLong(0)
