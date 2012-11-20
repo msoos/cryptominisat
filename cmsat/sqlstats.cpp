@@ -28,7 +28,8 @@ void SQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->conf.verbosity);
     initReduceDBSTMT(solver->conf.verbosity);
-    initVarSTMT(solver);
+    initVarSTMT(solver, stmtVarBulk, 100);
+    initVarSTMT(solver, stmtVarSingle, 1);
     initClauseDistribSTMT(
         solver
         , stmtClsDistribSize
@@ -48,7 +49,6 @@ void SQLStats::setup(const Solver* solver)
         solver
         , solver->conf.preparedDumpSize
     );
-    initVarSTMT(solver);
 }
 
 void SQLStats::connectServer()
@@ -224,6 +224,12 @@ void SQLStats::initClauseDistribSTMT(
     const size_t numElems = 4;
     mystruct.bind.resize(numElems*numInserts);
 
+    if (solver->conf.verbosity >= 6)
+        cout
+        << "c Trying to prepare statement with " << numInserts
+        << " bulk inserts"
+        << endl;
+
     std::stringstream ss;
     ss << "insert into `" << tableName << "`"
     << "("
@@ -300,7 +306,14 @@ void SQLStats::initSizeGlueScatterSTMT(
     , const size_t numInserts
 ) {
     const size_t numElems = 5;
-    cout << "Trying to pass " << numInserts << " inserts" << endl;
+
+    //Output what we are trying to
+    if (solver->conf.verbosity >= 6)
+        cout
+        << "c Trying to prepare statement with " << numInserts
+        << " bulk inserts"
+        << endl;
+
     stmtSizeGlueScatter.bind.resize(numElems*numInserts);
 
     std::stringstream ss;
@@ -730,11 +743,20 @@ void SQLStats::initReduceDBSTMT(
 
 void SQLStats::initVarSTMT(
     const Solver* solver
+    , StmtVar& stmtVar
+    , uint64_t numInserts
 ) {
-    stmtVar.data.resize(100);
-    const size_t num = 13;
-    const size_t numElems = num*stmtVar.data.size();
-    stmtVar.bind.resize(numElems);
+    const size_t numElems = 13;
+
+    //Output what we are trying to
+    if (solver->conf.verbosity >= 6)
+        cout
+        << "c Trying to prepare statement with " << numInserts
+        << " bulk inserts"
+        << endl;
+
+    stmtVar.data.resize(numInserts);
+    stmtVar.bind.resize(numElems*numInserts);
 
     std::stringstream ss;
     ss << "insert into `vars`"
@@ -753,7 +775,7 @@ void SQLStats::initVarSTMT(
     << ", `trailLevelAvg`, `trailLevelSD`, `trailLevelMin`, `trailLevelMax`"
     << ") values ";
     for(size_t i = 0; i < stmtVar.data.size(); i++) {
-        writeQuestionMarks(num, ss);
+        writeQuestionMarks(numElems, ss);
 
         if (i != stmtVar.data.size()-1)
             ss << " , ";
@@ -787,7 +809,7 @@ void SQLStats::initVarSTMT(
 
     //Validate parameter count
     unsigned long param_count = mysql_stmt_param_count(stmtVar.stmt);
-    if (param_count != numElems) {
+    if (param_count != numElems*numInserts) {
         cout
         << "invalid parameter count returned by MySQL"
         << endl;
@@ -796,7 +818,7 @@ void SQLStats::initVarSTMT(
     }
 
     //Clear bind
-    memset(stmtVar.bind.data(), 0, numElems*sizeof(MYSQL_BIND));
+    memset(stmtVar.bind.data(), 0, numElems*numInserts*sizeof(MYSQL_BIND));
 
     //Bind the local variables to the statement
     bindAt =0;
@@ -817,7 +839,7 @@ void SQLStats::initVarSTMT(
         bindTo(stmtVar, stmtVar.data[i].trailLevelMin);
         bindTo(stmtVar, stmtVar.data[i].trailLevelMax);
     }
-    assert(bindAt == numElems);
+    assert(bindAt == numElems*numInserts);
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtVar.stmt, stmtVar.bind.data())) {
@@ -853,38 +875,50 @@ void SQLStats::varDataDump(
         exit(-1);
     }
 
-    stmtVar.varInitID = mysql_insert_id(serverConn);
 
     size_t at = 0;
+
+    //Do bulk insert by defult
+    StmtVar* stmtVar = &stmtVarBulk;
+
+    my_ulonglong id = mysql_insert_id(serverConn);
+
     for(size_t i = 0; i < solver->nVars(); i++) {
-        stmtVar.data[at].var = i;
+        //If we are at beginning of bulk, but not enough is left, do one-by-one
+        if ((at == 0 && solver->nVars()-i < stmtVarBulk.data.size())) {
+            stmtVar = &stmtVarSingle;
+            at = 0;
+        }
+
+        stmtVar->varInitID = id;
+        stmtVar->data[at].var = i;
 
         //Overall stats
-        stmtVar.data[at].posPolarSet = varData[i].posPolarSet;
-        stmtVar.data[at].negPolarSet = varData[i].negPolarSet;
-        stmtVar.data[at].flippedPolarity  = varData[i].flippedPolarity;
+        stmtVar->data[at].posPolarSet = varData[i].posPolarSet;
+        stmtVar->data[at].negPolarSet = varData[i].negPolarSet;
+        stmtVar->data[at].flippedPolarity  = varData[i].flippedPolarity;
 
         //Dec level history stats
-        stmtVar.data[at].decLevelAvg  = varData[i].decLevelHist.avg();
-        stmtVar.data[at].decLevelSD   = sqrt(varData[i].decLevelHist.var());
-        stmtVar.data[at].decLevelMin  = varData[i].decLevelHist.getMin();
-        stmtVar.data[at].decLevelMax  = varData[i].decLevelHist.getMax();
+        stmtVar->data[at].decLevelAvg  = varData[i].decLevelHist.avg();
+        stmtVar->data[at].decLevelSD   = sqrt(varData[i].decLevelHist.var());
+        stmtVar->data[at].decLevelMin  = varData[i].decLevelHist.getMin();
+        stmtVar->data[at].decLevelMax  = varData[i].decLevelHist.getMax();
 
         //Trail level history stats
-        stmtVar.data[at].trailLevelAvg  = varData[i].trailLevelHist.avg();
-        stmtVar.data[at].trailLevelSD   = sqrt(varData[i].trailLevelHist.var());
-        stmtVar.data[at].trailLevelMin  = varData[i].trailLevelHist.getMin();
-        stmtVar.data[at].trailLevelMax  = varData[i].trailLevelHist.getMax();
+        stmtVar->data[at].trailLevelAvg  = varData[i].trailLevelHist.avg();
+        stmtVar->data[at].trailLevelSD   = sqrt(varData[i].trailLevelHist.var());
+        stmtVar->data[at].trailLevelMin  = varData[i].trailLevelHist.getMin();
+        stmtVar->data[at].trailLevelMax  = varData[i].trailLevelHist.getMax();
         at++;
 
-        if (at == stmtVar.data.size()) {
-            if (mysql_stmt_execute(stmtVar.stmt)) {
+        if (at == stmtVar->data.size()) {
+            if (mysql_stmt_execute(stmtVar->stmt)) {
                 cout
                 << "ERROR: while executing restart insertion MySQL prepared statement"
                 << endl;
 
                 cout << "Error from mysql: "
-                << mysql_stmt_error(stmtVar.stmt)
+                << mysql_stmt_error(stmtVar->stmt)
                 << endl;
 
                 exit(-1);
@@ -893,6 +927,15 @@ void SQLStats::varDataDump(
         }
     }
     assert(at == 0 && "numInserts must be divisible");
+
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Time to insert variables' stats into DB: "
+        << std::fixed << std::setprecision(2) << std::setw(3)
+        << cpuTime() - myTime
+        << " s"
+        << endl;
+    }
 }
 
 void SQLStats::clauseSizeDistrib(

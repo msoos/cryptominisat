@@ -78,7 +78,7 @@ private:
         const Solver* solver
         , const size_t numInserts
     );
-    void initVarSTMT(const Solver* solver);
+
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
     template<typename T>
@@ -175,7 +175,13 @@ private:
         };
         vector<Data> data;
     };
-    StmtVar stmtVar;
+    StmtVar stmtVarBulk;
+    StmtVar stmtVarSingle;
+    void initVarSTMT(
+        const Solver* solver
+        , SQLStats::StmtVar& stmtVar
+        , uint64_t numInserts
+    );
 
     size_t bindAt;
     struct StmtRst {
