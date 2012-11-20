@@ -711,7 +711,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 continue;
             }
 
-            Lit lit = trail[trail_lim[0]];
+            //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
             stats.transRedRemoved += removeUselessBins();
         } else {
