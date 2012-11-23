@@ -76,12 +76,15 @@ class SolverConf
         int       updateGlues;
         uint32_t  shortTermHistorySize; ///< Rolling avg. glue window size
 
-        //Optimisations to do
+        //SQL
         int       doSQL;
+        size_t    dumpTopNVars; //Only dump information about the "top" N active variables
         size_t    dumpClauseDistribPer;
         size_t    dumpClauseDistribMaxSize;
         size_t    dumpClauseDistribMaxGlue;
         size_t    preparedDumpSize;
+
+        //Optimisations to do
         int       doOTFSubsume;
         int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
         int       printFullStats;

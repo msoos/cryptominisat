@@ -849,6 +849,23 @@ void SQLStats::initVarSTMT(
     }
 }
 
+struct VarOrder
+{
+    VarOrder(size_t _var, size_t _polarSetSum) :
+        var(_var)
+        , polarSetSum(_polarSetSum)
+    {}
+
+    size_t var;
+    size_t polarSetSum;
+
+    bool operator<(const VarOrder& other) const
+    {
+        //Order by largest polarSetSum first
+        return polarSetSum > other.polarSetSum;
+    }
+};
+
 void SQLStats::varDataDump(
     const Solver* solver
     , const Searcher* search
@@ -856,6 +873,7 @@ void SQLStats::varDataDump(
 ) {
     double myTime = cpuTime();
 
+    //Get ID for varDataInit
     std::stringstream ss;
     ss
     << "INSERT INTO varDataInit (`runID`, `simplifications`, `restarts`, `conflicts`, `time`)"
@@ -874,16 +892,30 @@ void SQLStats::varDataDump(
         }
         exit(-1);
     }
+    my_ulonglong id = mysql_insert_id(serverConn);
 
-
-    size_t at = 0;
+    //Only bother about top N vars, so sort them first
+    vector<VarOrder> order;
+    for(size_t i = 0; i < varData.size(); i++) {
+        if (varData[i].posPolarSet + varData[i].negPolarSet > 0) {
+            order.push_back(
+                VarOrder(i, varData[i].negPolarSet + varData[i].posPolarSet)
+            );
+        }
+    }
+    std::sort(order.begin(), order.end());
 
     //Do bulk insert by defult
     StmtVar* stmtVar = &stmtVarBulk;
 
-    my_ulonglong id = mysql_insert_id(serverConn);
+    //Go through top N variables
+    size_t at = 0;
+    for(size_t i = 0
+        ; i < std::min(order.size(), solver->conf.dumpTopNVars)
+        ; i++
+    ) {
+        size_t var = order[i].var;
 
-    for(size_t i = 0; i < solver->nVars(); i++) {
         //If we are at beginning of bulk, but not enough is left, do one-by-one
         if ((at == 0 && solver->nVars()-i < stmtVarBulk.data.size())) {
             stmtVar = &stmtVarSingle;
@@ -891,24 +923,25 @@ void SQLStats::varDataDump(
         }
 
         stmtVar->varInitID = id;
-        stmtVar->data[at].var = i;
+        //Back-number variables
+        stmtVar->data[at].var = solver->interToOuterMain[var];
 
         //Overall stats
-        stmtVar->data[at].posPolarSet = varData[i].posPolarSet;
-        stmtVar->data[at].negPolarSet = varData[i].negPolarSet;
-        stmtVar->data[at].flippedPolarity  = varData[i].flippedPolarity;
+        stmtVar->data[at].posPolarSet = varData[var].posPolarSet;
+        stmtVar->data[at].negPolarSet = varData[var].negPolarSet;
+        stmtVar->data[at].flippedPolarity  = varData[var].flippedPolarity;
 
         //Dec level history stats
-        stmtVar->data[at].decLevelAvg  = varData[i].decLevelHist.avg();
-        stmtVar->data[at].decLevelSD   = sqrt(varData[i].decLevelHist.var());
-        stmtVar->data[at].decLevelMin  = varData[i].decLevelHist.getMin();
-        stmtVar->data[at].decLevelMax  = varData[i].decLevelHist.getMax();
+        stmtVar->data[at].decLevelAvg  = varData[var].decLevelHist.avg();
+        stmtVar->data[at].decLevelSD   = sqrt(varData[var].decLevelHist.var());
+        stmtVar->data[at].decLevelMin  = varData[var].decLevelHist.getMin();
+        stmtVar->data[at].decLevelMax  = varData[var].decLevelHist.getMax();
 
         //Trail level history stats
-        stmtVar->data[at].trailLevelAvg  = varData[i].trailLevelHist.avg();
-        stmtVar->data[at].trailLevelSD   = sqrt(varData[i].trailLevelHist.var());
-        stmtVar->data[at].trailLevelMin  = varData[i].trailLevelHist.getMin();
-        stmtVar->data[at].trailLevelMax  = varData[i].trailLevelHist.getMax();
+        stmtVar->data[at].trailLevelAvg  = varData[var].trailLevelHist.avg();
+        stmtVar->data[at].trailLevelSD   = sqrt(varData[var].trailLevelHist.var());
+        stmtVar->data[at].trailLevelMin  = varData[var].trailLevelHist.getMin();
+        stmtVar->data[at].trailLevelMax  = varData[var].trailLevelHist.getMax();
         at++;
 
         if (at == stmtVar->data.size()) {

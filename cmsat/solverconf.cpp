@@ -64,12 +64,15 @@ SolverConf::SolverConf() :
         , updateGlues(true)
         , shortTermHistorySize (100)
 
-        //optimisations to do
+        //SQL
         , doSQL            (false)
-        , dumpClauseDistribPer(100000)
+        , dumpTopNVars     (1000)
+        , dumpClauseDistribPer(20000)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)
         , preparedDumpSize(100)
+
+        //optimisations to do
         , doOTFSubsume     (true)
         , rewardShortenedClauseWithConfl(10)
         , printFullStats   (false)
