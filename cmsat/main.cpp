@@ -430,6 +430,8 @@ void Main::parseCommandLine()
         , "Dumped learnt clause glue maximum -- longer will be 'truncated' in the statistics output")
     ("parparedstmtsize", po::value<size_t>(&conf.preparedDumpSize)->default_value(conf.preparedDumpSize)
         , "When dumping scatter data, dump by this chunks")
+    ("topnvars", po::value<size_t>(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
+        , "At every restart, dump the data about the top N variables")
     ;
 
     po::options_description miscOptions("Misc options");
