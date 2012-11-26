@@ -437,8 +437,8 @@ struct PropStats
         propsLongRed += other.propsLongRed;
 
         //LHBR
-        longLHBR += other.longLHBR;
         triLHBR += other.triLHBR;
+        longLHBR += other.longLHBR;
 
         //Var settings
         varSetPos += other.varSetPos;
@@ -461,8 +461,8 @@ struct PropStats
         propsLongRed -= other.propsLongRed;
 
         //LHBR
-        longLHBR -= other.longLHBR;
         triLHBR -= other.triLHBR;
+        longLHBR -= other.longLHBR;
 
         //Var settings
         varSetPos -= other.varSetPos;
