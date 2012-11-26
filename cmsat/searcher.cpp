@@ -1042,7 +1042,15 @@ void Searcher::resetStats()
     hist.reset(conf.shortTermHistorySize);
 
     //About vars
-    clearPolarData();
+    for(vector<VarData>::iterator
+        it = varData.begin(), end = varData.end()
+        ; it != end
+        ; it++
+    ) {
+        it->stats.reset();
+    }
+
+    //Clause data
     clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMaxSize, 0);
     clauseGlueDistrib.resize(solver->conf.dumpClauseDistribMaxGlue, 0);
     sizeAndGlue.resize(boost::extents[solver->conf.dumpClauseDistribMaxSize][solver->conf.dumpClauseDistribMaxGlue]);
@@ -1213,6 +1221,7 @@ struct MyPolarData
 
 void Searcher::printRestartSQL()
 {
+    //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     Stats thisStats = stats - lastSQLGlobalStats;
 
@@ -1225,6 +1234,13 @@ void Searcher::printRestartSQL()
 
     lastSQLPropStats = propStats;
     lastSQLGlobalStats = stats;
+
+    //Variable stats
+    solver->sqlStats.varDataDump(solver, this, varData);
+    for(size_t i = 0; i < varData.size(); i++) {
+        varDataLT[i].addData(varData[i].stats);
+        varData[i].stats.reset();
+    }
 }
 
 
@@ -1239,28 +1255,10 @@ void Searcher::printClauseDistribSQL()
         , clauseGlueDistrib
     );
 
-    solver->sqlStats.varDataDump(solver, this, varData);
-    for(size_t i = 0; i < varData.size(); i++) {
-        varData[i].posPolarSet = 0;
-        varData[i].negPolarSet = 0;
-        varData[i].flippedPolarity = 0;
-        varData[i].decLevelHist.clear();
-        varData[i].trailLevelHist.clear();
-    }
-
     solver->sqlStats.clauseSizeGlueScatter(
         sumConflicts()
         , sizeAndGlue
     );
-}
-
-void Searcher::clearPolarData()
-{
-    for(size_t i = 0; i < varData.size(); i++) {
-        varData[i].posPolarSet = 0;
-        varData[i].negPolarSet = 0;
-        varData[i].flippedPolarity = 0;
-    };
 }
 
 

@@ -583,7 +583,6 @@ class Searcher : public PropEngine
         void printRestartSQL();
         void printVarStatsSQL();
         void printClauseDistribSQL();
-        void clearPolarData();
         PropStats lastSQLPropStats;
         Stats lastSQLGlobalStats;
 

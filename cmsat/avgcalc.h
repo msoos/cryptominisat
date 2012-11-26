@@ -147,6 +147,22 @@ public:
         min = 0;
         max = 0;
     }
+
+    void addData(const AvgCalc& other)
+    {
+        sum += other.sum;
+        sumSqare += other.sumSqare;
+        num += other.num;
+
+
+        //min, max
+        min = std::min(min, other.min);
+        max = std::max(max, other.max);
+
+        //Long
+        longSum += other.longSum;
+        longNum += other.longNum;
+    }
 };
 
 #endif //__AVGCALC_H__

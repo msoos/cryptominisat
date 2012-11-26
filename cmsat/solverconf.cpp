@@ -66,7 +66,7 @@ SolverConf::SolverConf() :
 
         //SQL
         , doSQL            (false)
-        , dumpTopNVars     (1000)
+        , dumpTopNVars     (100)
         , dumpClauseDistribPer(20000)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)

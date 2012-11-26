@@ -897,9 +897,9 @@ void SQLStats::varDataDump(
     //Only bother about top N vars, so sort them first
     vector<VarOrder> order;
     for(size_t i = 0; i < varData.size(); i++) {
-        if (varData[i].posPolarSet + varData[i].negPolarSet > 0) {
+        if (varData[i].stats.posPolarSet + varData[i].stats.negPolarSet > 0) {
             order.push_back(
-                VarOrder(i, varData[i].negPolarSet + varData[i].posPolarSet)
+                VarOrder(i, varData[i].stats.negPolarSet + varData[i].stats.posPolarSet)
             );
         }
     }
@@ -928,21 +928,21 @@ void SQLStats::varDataDump(
         stmtVar->data[at].var = solver->interToOuterMain[var];
 
         //Overall stats
-        stmtVar->data[at].posPolarSet = varData[var].posPolarSet;
-        stmtVar->data[at].negPolarSet = varData[var].negPolarSet;
-        stmtVar->data[at].flippedPolarity  = varData[var].flippedPolarity;
+        stmtVar->data[at].posPolarSet = varData[var].stats.posPolarSet;
+        stmtVar->data[at].negPolarSet = varData[var].stats.negPolarSet;
+        stmtVar->data[at].flippedPolarity  = varData[var].stats.flippedPolarity;
 
         //Dec level history stats
-        stmtVar->data[at].decLevelAvg  = varData[var].decLevelHist.avg();
-        stmtVar->data[at].decLevelSD   = sqrt(varData[var].decLevelHist.var());
-        stmtVar->data[at].decLevelMin  = varData[var].decLevelHist.getMin();
-        stmtVar->data[at].decLevelMax  = varData[var].decLevelHist.getMax();
+        stmtVar->data[at].decLevelAvg  = varData[var].stats.decLevelHist.avg();
+        stmtVar->data[at].decLevelSD   = sqrt(varData[var].stats.decLevelHist.var());
+        stmtVar->data[at].decLevelMin  = varData[var].stats.decLevelHist.getMin();
+        stmtVar->data[at].decLevelMax  = varData[var].stats.decLevelHist.getMax();
 
         //Trail level history stats
-        stmtVar->data[at].trailLevelAvg  = varData[var].trailLevelHist.avg();
-        stmtVar->data[at].trailLevelSD   = sqrt(varData[var].trailLevelHist.var());
-        stmtVar->data[at].trailLevelMin  = varData[var].trailLevelHist.getMin();
-        stmtVar->data[at].trailLevelMax  = varData[var].trailLevelHist.getMax();
+        stmtVar->data[at].trailLevelAvg  = varData[var].stats.trailLevelHist.avg();
+        stmtVar->data[at].trailLevelSD   = sqrt(varData[var].stats.trailLevelHist.var());
+        stmtVar->data[at].trailLevelMin  = varData[var].stats.trailLevelHist.getMin();
+        stmtVar->data[at].trailLevelMax  = varData[var].stats.trailLevelHist.getMax();
         at++;
 
         if (at == stmtVar->data.size()) {

@@ -74,12 +74,48 @@ enum PropResult {
 
 struct VarData
 {
+    struct Stats
+    {
+        Stats() :
+            posPolarSet(0)
+            , negPolarSet(0)
+            , flippedPolarity(0)
+        {}
+
+        void addData(VarData::Stats& other)
+        {
+            posPolarSet += other.posPolarSet;
+            negPolarSet += other.negPolarSet;
+            flippedPolarity += other.flippedPolarity;
+            decLevelHist.addData(other.decLevelHist);
+            trailLevelHist.addData(other.trailLevelHist);
+        }
+
+        void reset()
+        {
+            Stats tmp;
+            *this = tmp;
+        }
+
+        ///Number of times positive polarity has been set
+        uint32_t posPolarSet;
+
+        ///Number of times negative polarity has been set
+        uint32_t negPolarSet;
+
+        ///Number of times polarity has been flipped
+        uint32_t flippedPolarity;
+
+        ///The history of levels it was assigned
+        AvgCalc<uint32_t> decLevelHist;
+
+        ///The history of levels it was assigned
+        AvgCalc<uint32_t> trailLevelHist;
+    };
+
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
         , reason(PropBy())
-        , posPolarSet(0)
-        , negPolarSet(0)
-        , flippedPolarity(0)
         , elimed(ELIMED_NONE)
         , polarity(false)
     {}
@@ -90,26 +126,13 @@ struct VarData
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason;
 
-    ///Number of times positive polarity has been set
-    uint32_t posPolarSet;
-
-    ///Number of times negative polarity has been set
-    uint32_t negPolarSet;
-
-    ///Number of times polarity has been flipped
-    uint32_t flippedPolarity;
-
     ///Whether var has been eliminated (var-elim, different component, etc.)
     char elimed;
 
     ///The preferred polarity of each variable.
     bool polarity;
 
-    ///The history of levels it was assigned
-    AvgCalc<uint32_t> decLevelHist;
-
-    ///The history of levels it was assigned
-    AvgCalc<uint32_t> trailLevelHist;
+    Stats stats;
 };
 
 struct PolaritySorter
@@ -206,6 +229,7 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
+    vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -442,8 +466,8 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
-    varData[v].trailLevelHist.push(trail.size());
-    varData[v].decLevelHist.push(decisionLevel());
+    varData[v].stats.trailLevelHist.push(trail.size());
+    varData[v].stats.decLevelHist.push(decisionLevel());
     varData[v].reason = from;
     varData[v].level = decisionLevel();
 
@@ -451,16 +475,16 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     propStats.propagations++;
 
     if (p.sign()) {
-        varData[v].negPolarSet++;
+        varData[v].stats.negPolarSet++;
         propStats.varSetNeg++;
     } else {
-        varData[v].posPolarSet++;
+        varData[v].stats.posPolarSet++;
         propStats.varSetPos++;
     }
 
     if (varData[v].polarity != !p.sign()) {
         agility.update(true);
-        varData[v].flippedPolarity++;
+        varData[v].stats.flippedPolarity++;
         propStats.varFlipped++;
     } else {
         agility.update(false);
