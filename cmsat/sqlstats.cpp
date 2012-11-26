@@ -909,15 +909,16 @@ void SQLStats::varDataDump(
     StmtVar* stmtVar = &stmtVarBulk;
 
     //Go through top N variables
+    const size_t numToDump = std::min(order.size(), solver->conf.dumpTopNVars);
     size_t at = 0;
     for(size_t i = 0
-        ; i < std::min(order.size(), solver->conf.dumpTopNVars)
+        ; i < numToDump
         ; i++
     ) {
         size_t var = order[i].var;
 
         //If we are at beginning of bulk, but not enough is left, do one-by-one
-        if ((at == 0 && solver->nVars()-i < stmtVarBulk.data.size())) {
+        if ((at == 0 && numToDump-i < stmtVarBulk.data.size())) {
             stmtVar = &stmtVarSingle;
             at = 0;
         }
