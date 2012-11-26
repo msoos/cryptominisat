@@ -442,7 +442,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
-    varData[v].decLevelHist.push(trail.size());
+    varData[v].trailLevelHist.push(trail.size());
     varData[v].decLevelHist.push(decisionLevel());
     varData[v].reason = from;
     varData[v].level = decisionLevel();
