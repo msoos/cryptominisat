@@ -369,43 +369,73 @@ class Searcher : public PropEngine
         struct Hist {
             //About the search
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
+            AvgCalc<uint32_t>   branchDepthHistLT;
             bqueue<uint32_t>    branchDepthDeltaHist;
             AvgCalc<uint32_t>   trailDepthHist;
+            AvgCalc<uint32_t>   trailDepthHistLT;
             AvgCalc<uint32_t>   trailDepthDeltaHist;
+            AvgCalc<uint32_t>   trailDepthDeltaHistLT;
             AvgCalc<bool>       conflictAfterConflict;
+            AvgCalc<bool>       conflictAfterConflictLT;
 
             //About the confl generated
             bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
             bqueue<uint32_t>    conflSizeHist;       ///< Conflict size history
             AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
+            AvgCalc<uint32_t>   numResolutionsHistLT;
 
             //lits, vars
             AvgCalc<double, double>  agilityHist;
+            AvgCalc<double, double>  agilityHistLT;
             AvgCalc<size_t>     watchListSizeTraversed;
+            AvgCalc<size_t>     watchListSizeTraversedLT;
             AvgCalc<bool>       litPropagatedSomething;
+            AvgCalc<bool>       litPropagatedSomethingLT;
 
             void clear()
             {
                 //About the search
-                branchDepthHist.shortClear();
+                branchDepthHistLT.addData(branchDepthHist);
+                branchDepthHist.clear();
                 branchDepthDeltaHist.fastclear();
-                trailDepthHist.shortClear();
-                trailDepthDeltaHist.shortClear();
-                conflictAfterConflict.shortClear();
+
+                trailDepthHistLT.addData(trailDepthHist);
+                trailDepthHist.clear();
+
+                trailDepthDeltaHistLT.addData(trailDepthDeltaHist);
+                trailDepthDeltaHist.clear();
+
+                conflictAfterConflictLT.addData(conflictAfterConflict);
+                conflictAfterConflict.clear();
 
                 //conflict generated
                 glueHist.fastclear();
                 conflSizeHist.fastclear();
-                numResolutionsHist.shortClear();
+
+                numResolutionsHistLT.addData(numResolutionsHist);
+                numResolutionsHist.clear();
 
                 //lits, vars
-                agilityHist.shortClear();
-                watchListSizeTraversed.shortClear();
-                litPropagatedSomething.shortClear();
+                agilityHistLT.addData(agilityHist);
+                agilityHist.clear();
+
+                watchListSizeTraversedLT.addData(watchListSizeTraversed);
+                watchListSizeTraversed.clear();
+
+                litPropagatedSomethingLT.addData(litPropagatedSomething);
+                litPropagatedSomething.clear();
             }
 
             void reset(const size_t shortTermHistorySize)
             {
+                //Long-term clearing
+                branchDepthHistLT.clear();
+                trailDepthHistLT.clear();
+                trailDepthDeltaHistLT.clear();
+                conflictAfterConflictLT.clear();
+                numResolutionsHistLT.clear();
+                watchListSizeTraversedLT.clear();
+
                 //About the search tree
                 branchDepthHist.clear();
                 branchDepthDeltaHist.clear();
@@ -436,7 +466,7 @@ class Searcher : public PropEngine
 
                 << " agil"
                 << " " << std::right << agilityHist.avgPrint(3, 5)
-                << "/" << std::left<< agilityHist.avgLongPrint(3, 5)
+                << "/" << std::left<< agilityHistLT.avgPrint(3, 5)
 
                 << " confllen"
                 << " " << std::right << conflSizeHist.getAvgMidPrint(1, 5)
@@ -444,7 +474,7 @@ class Searcher : public PropEngine
 
                 << " branchd"
                 << " " << std::right << branchDepthHist.avgPrint(1, 5)
-                << "/" << std::left  << branchDepthHist.avgLongPrint(1, 5)
+                << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
                 << " branchdd"
 
                 << " " << std::right << branchDepthDeltaHist.getAvgMidPrint(1, 4)
@@ -452,11 +482,11 @@ class Searcher : public PropEngine
 
                 << " traild"
                 << " " << std::right << trailDepthHist.avgPrint(0, 7)
-                << "/" << std::left << trailDepthHist.avgLongPrint(0, 7)
+                << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
 
                 << " traildd"
                 << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
-                << "/" << std::left << trailDepthDeltaHist.avgLongPrint(0, 5)
+                << "/" << std::left << trailDepthDeltaHistLT.avgPrint(0, 5)
                 ;
 
                 cout << std::right;
