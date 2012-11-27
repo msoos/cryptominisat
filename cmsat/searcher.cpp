@@ -293,8 +293,8 @@ Clause* Searcher::analyze(
         && conf.doMinimLearntMore
         && out_learnt.size() > 1
         && (conf.doAlwaysFMinim
-            || calcGlue(out_learnt) < 0.65*hist.glueHist.getAvgLong()
-            || out_learnt.size() < 0.65*hist.conflSizeHist.getAvgLong()
+            || calcGlue(out_learnt) < 0.65*hist.glueHistLT.avg()
+            || out_learnt.size() < 0.65*hist.conflSizeHistLT.avg()
             || out_learnt.size() < 10
             )
     ) {
@@ -813,12 +813,12 @@ void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
             && params.conflictsDoneThisRestart > rest
         ) || (conf.restartType == glue_restart
             && hist.glueHist.isvalid()
-            && 0.95*hist.glueHist.getAvg() > hist.glueHist.getAvgLong()
+            && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
         ) || (conf.restartType == agility_restart
             && agility.getAgility() < conf.agilityLimit
         ) || (conf.restartType == branch_depth_delta_restart
             && hist.branchDepthDeltaHist.isvalid()
-            && 0.95*hist.branchDepthDeltaHist.getAvg() > hist.branchDepthDeltaHist.getAvgLong()
+            && 0.95*hist.branchDepthDeltaHist.avg() > hist.branchDepthDeltaHistLT.avg()
         )
     ) {
         //Now check agility
@@ -1463,7 +1463,7 @@ bool Searcher::pickPolarity(const Var var)
 
         case polarity_auto:
             return getStoredPolarity(var)
-                ^ (mtrand.randInt(conf.flipPolarFreq*hist.branchDepthDeltaHist.getAvgLong()) == 1);
+                ^ (mtrand.randInt(conf.flipPolarFreq*hist.branchDepthDeltaHistLT.avg()) == 1);
         default:
             assert(false);
     }

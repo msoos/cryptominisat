@@ -11,6 +11,7 @@ Modifications also under MIT
 #define BOUNDEDQUEUE_H
 
 #include "constants.h"
+#include "avgcalc.h"
 #include "assert.h"
 #include <vector>
 #include <cstring>
@@ -27,17 +28,7 @@ class bqueue {
     size_t maxsize; //max number of history elements
     size_t queuesize; // Number of current elements (must be < maxsize !)
     T2  sumofqueue;
-
-    //for each restart
-    T2  sumOfElemsMidLong;
-    T   minMidLong;
-    T   maxMidLong;
-    double  sumOfElemsMidLongSqare;
-    size_t totalNumElemsMidLong;
-
-    //Data spanning over restarts
-    T2  sumOfElemsLong;
-    size_t totalNumElemsLong;
+    AvgCalc<T, T2> longTermAvg;
 
 public:
     bqueue(void) :
@@ -46,43 +37,35 @@ public:
         , maxsize(0)
         , queuesize(0)
         , sumofqueue(0)
-
-        //Mid
-        , sumOfElemsMidLong(0)
-        , minMidLong(std::numeric_limits<T>::max())
-        , maxMidLong(std::numeric_limits<T>::min())
-        , totalNumElemsMidLong(0)
-
-        //Full
-        , sumOfElemsLong(0)
-        , totalNumElemsLong(0)
     {}
 
     void push(const T x) {
-        if (queuesize==maxsize) {
-            assert(last==first); // The queue is full, next value to enter will replace oldest one
+        if (queuesize == maxsize) {
+            // The queue is full, next value to enter will replace oldest one
+
+            assert(last == first);
             sumofqueue -= elems[last];
-            if ((++last) == maxsize) last = 0;
-        } else
+
+            last++;
+            if (last == maxsize)
+                last = 0;
+
+        } else {
             queuesize++;
+        }
+
         sumofqueue += x;
 
-        //Update mid
-        sumOfElemsMidLong += x;
-        sumOfElemsMidLongSqare += (uint64_t)x*(uint64_t)x;
-        totalNumElemsMidLong++;
-        minMidLong = std::min(minMidLong, x);
-        maxMidLong = std::max(maxMidLong, x);
-
-        //Update long
-        sumOfElemsLong += x;
-        totalNumElemsLong++;
-
+        //Update avg
+        longTermAvg.push(x);
         elems[first] = x;
-        if ((++first) == maxsize) first = 0;
+
+        first++;
+        if (first == maxsize)
+            first = 0;
     }
 
-    double getAvg() const
+    double avg() const
     {
         if (queuesize == 0)
             return 0;
@@ -91,77 +74,18 @@ public:
         return (double)sumofqueue/(double)queuesize;
     }
 
-    double getAvgMidLong() const
+    const AvgCalc<T,T2>& getLongtTerm() const
     {
-        if (totalNumElemsMidLong == 0)
-            return 0;
-
-        return (double)sumOfElemsMidLong/(double)totalNumElemsMidLong;
-    }
-
-    T getMinMidLong() const
-    {
-        return minMidLong;
-    }
-
-    T getMaxMidLong() const
-    {
-        return maxMidLong;
-    }
-
-    double getVarMidLong() const
-    {
-        if (totalNumElemsMidLong == 0)
-            return 0;
-
-        const double avg = getAvgMidLong();
-        return
-            (((double)sumOfElemsMidLongSqare
-                - 2.0*avg*(double)sumOfElemsMidLong
-            ))/(double)totalNumElemsMidLong
-             + avg*avg;
-    }
-
-    double getAvgLong() const
-    {
-        if (totalNumElemsLong == 0)
-            return 0;
-
-        return (double)sumOfElemsLong/(double)totalNumElemsLong;
+        return longTermAvg;
     }
 
     std::string getAvgPrint(size_t prec, size_t w) const
     {
         std::stringstream ss;
         if (isvalid()) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::right
-            << getAvg();
-        } else {
-            ss << std::setw(5) << "?";
-        }
-
-        return ss.str();
-    }
-
-    std::string getAvgMidPrint(size_t prec, size_t w) const
-    {
-        std::stringstream ss;
-        if (totalNumElemsMidLong > 0) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
-            << getAvgMidLong();
-        } else {
-            ss << std::setw(5) << "?";
-        }
-
-        return ss.str();
-    }
-
-    std::string getAvgLongPrint(size_t prec, size_t w) const
-    {
-        std::stringstream ss;
-        if (totalNumElemsLong > 0) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
-            << getAvgLong();
+            ss
+            << std::fixed << std::setprecision(prec) << std::setw(w) << std::right
+            << avg();
         } else {
             ss << std::setw(5) << "?";
         }
@@ -171,53 +95,29 @@ public:
 
     bool isvalid() const
     {
-        return (queuesize==maxsize);
+        return (queuesize == maxsize);
     }
 
-    void resize(const uint32_t size)
+    void clearAndResize(const size_t size)
     {
+        clear();
         elems.resize(size);
-        first=0; maxsize=size; queuesize = 0;
-        for(uint32_t i=0;i<size;i++) elems[i]=0;
-    }
-
-    void fastclear()
-    {
-        //Discard the queue, but not the SUMs
-        first = 0;
-        last = 0;
-        queuesize=0;
-        sumofqueue=0;
-
-        totalNumElemsMidLong = 0;
-        sumOfElemsMidLong = 0;
-        sumOfElemsMidLongSqare = 0;
-        minMidLong = 0;
-        maxMidLong = 0;
-    }
-
-    int  size(void)
-    {
-        return queuesize;
+        maxsize = size;
     }
 
     void clear()
     {
-        elems.clear();
         first = 0;
         last = 0;
-        maxsize=0;
-        queuesize=0;
-        sumofqueue=0;
+        queuesize = 0;
+        sumofqueue = 0;
 
-        totalNumElemsMidLong = 0;
-        sumOfElemsMidLong = 0;
-        sumOfElemsMidLongSqare = 0;
-        minMidLong = 0;
-        maxMidLong = 0;
+        longTermAvg.clear();
+    }
 
-        totalNumElemsLong = 0;
-        sumOfElemsLong = 0;
+    size_t size()
+    {
+        return queuesize;
     }
 };
 

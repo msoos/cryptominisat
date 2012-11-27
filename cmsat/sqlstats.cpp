@@ -1130,15 +1130,15 @@ void SQLStats::restart(
     stmtRst.numRedLits    = solver->redLits;
 
     //Conflict stats
-    stmtRst.glueHist        = search->hist.glueHist.getAvgMidLong();
-    stmtRst.glueHistSD      = sqrt(search->hist.glueHist.getVarMidLong());
-    stmtRst.glueHistMin      = search->hist.glueHist.getMinMidLong();
-    stmtRst.glueHistMax      = search->hist.glueHist.getMaxMidLong();
+    stmtRst.glueHist        = search->hist.glueHist.getLongtTerm().avg();
+    stmtRst.glueHistSD      = sqrt(search->hist.glueHist.getLongtTerm().var());
+    stmtRst.glueHistMin      = search->hist.glueHist.getLongtTerm().getMin();
+    stmtRst.glueHistMax      = search->hist.glueHist.getLongtTerm().getMax();
 
-    stmtRst.conflSizeHist   = search->hist.conflSizeHist.getAvgMidLong();
-    stmtRst.conflSizeHistSD = sqrt(search->hist.conflSizeHist.getVarMidLong());
-    stmtRst.conflSizeHistMin = search->hist.conflSizeHist.getMinMidLong();
-    stmtRst.conflSizeHistMax = search->hist.conflSizeHist.getMaxMidLong();
+    stmtRst.conflSizeHist   = search->hist.conflSizeHist.getLongtTerm().avg();
+    stmtRst.conflSizeHistSD = sqrt(search->hist.conflSizeHist.getLongtTerm().var());
+    stmtRst.conflSizeHistMin = search->hist.conflSizeHist.getLongtTerm().getMin();
+    stmtRst.conflSizeHistMax = search->hist.conflSizeHist.getLongtTerm().getMax();
 
     stmtRst.numResolutionsHist =
         search->hist.numResolutionsHist.avg();
@@ -1159,10 +1159,10 @@ void SQLStats::restart(
     stmtRst.branchDepthHistMax      = search->hist.branchDepthHist.getMax();
 
 
-    stmtRst.branchDepthDeltaHist    = search->hist.branchDepthDeltaHist.getAvgMidLong();
-    stmtRst.branchDepthDeltaHistSD  = sqrt(search->hist.branchDepthDeltaHist.getVarMidLong());
-    stmtRst.branchDepthDeltaHistMin  = search->hist.branchDepthDeltaHist.getMinMidLong();
-    stmtRst.branchDepthDeltaHistMax  = search->hist.branchDepthDeltaHist.getMaxMidLong();
+    stmtRst.branchDepthDeltaHist    = search->hist.branchDepthDeltaHist.getLongtTerm().avg();
+    stmtRst.branchDepthDeltaHistSD  = sqrt(search->hist.branchDepthDeltaHist.getLongtTerm().var());
+    stmtRst.branchDepthDeltaHistMin  = search->hist.branchDepthDeltaHist.getLongtTerm().getMin();
+    stmtRst.branchDepthDeltaHistMax  = search->hist.branchDepthDeltaHist.getLongtTerm().getMax();
 
     stmtRst.trailDepthHist          = search->hist.trailDepthHist.avg();
     stmtRst.trailDepthHistSD        = sqrt(search->hist.trailDepthHist.var());

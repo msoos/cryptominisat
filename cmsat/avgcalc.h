@@ -23,6 +23,7 @@
 #define __AVGCALC_H__
 
 #include "constants.h"
+#include <limits>
 #include "assert.h"
 #include <vector>
 #include <cstring>
