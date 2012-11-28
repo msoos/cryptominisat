@@ -87,8 +87,9 @@ struct VarData
             posPolarSet += other.posPolarSet;
             negPolarSet += other.negPolarSet;
             flippedPolarity += other.flippedPolarity;
-            decLevelHist.addData(other.decLevelHist);
+
             trailLevelHist.addData(other.trailLevelHist);
+            decLevelHist.addData(other.decLevelHist);
         }
 
         void reset()
@@ -97,20 +98,18 @@ struct VarData
             *this = tmp;
         }
 
-        ///Number of times positive polarity has been set
+        ///Number of times positive/negative polarity has been set
         uint32_t posPolarSet;
-
-        ///Number of times negative polarity has been set
         uint32_t negPolarSet;
 
         ///Number of times polarity has been flipped
         uint32_t flippedPolarity;
 
         ///The history of levels it was assigned
-        AvgCalc<uint32_t> decLevelHist;
+        AvgCalc<uint32_t> trailLevelHist;
 
         ///The history of levels it was assigned
-        AvgCalc<uint32_t> trailLevelHist;
+        AvgCalc<uint32_t> decLevelHist;
     };
 
     VarData() :

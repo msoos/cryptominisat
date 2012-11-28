@@ -1237,10 +1237,6 @@ void Searcher::printRestartSQL()
 
     //Variable stats
     solver->sqlStats.varDataDump(solver, this, varData);
-    for(size_t i = 0; i < varData.size(); i++) {
-        varDataLT[i].addData(varData[i].stats);
-        varData[i].stats.reset();
-    }
 }
 
 
@@ -1385,8 +1381,50 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
             printRestartStats();
             lastRestartPrint = stats.conflStats.numConflicts;
         }
+
         if (conf.doSQL) {
             printRestartSQL();
+        }
+
+        //Print variance
+        /*if (conf.verbosity >= 0) {
+            double sumVar = 0;
+            size_t num = 0;
+            size_t maxDecLevel = 0;
+            for(size_t i = 0; i < varDataLT.size(); i++) {
+                if (varDataLT[i].posPolarSet || varDataLT[i].negPolarSet) {
+                    sumVar += sqrt(varDataLT[i].decLevelHist.var());
+                    maxDecLevel = std::max<size_t>(varDataLT[i].decLevelHist.getMax(), maxDecLevel);
+                    num++;
+                }
+            }
+            cout
+            << "c avg LT  variance: " << std::setprecision(4) << std::fixed
+            << (sumVar/(double)num)
+            << endl;
+        }
+
+        if (conf.verbosity >= 0) {
+            double sumVar = 0;
+            size_t num = 0;
+            size_t maxDecLevel = 0;
+            for(size_t i = 0; i < varData.size(); i++) {
+                if (varData[i].stats.posPolarSet || varData[i].stats.negPolarSet) {
+                    sumVar += sqrt(varData[i].stats.decLevelHist.var());
+                    maxDecLevel = std::max<size_t>(varData[i].stats.decLevelHist.getMax(), maxDecLevel);
+                    num++;
+                }
+            }
+            cout
+            << "c avg CUR variance: " << std::setprecision(4) << std::fixed
+            << (sumVar/(double)num)
+            << endl;
+        }*/
+
+        //Update varDataLT
+        for(size_t i = 0; i < varData.size(); i++) {
+            varDataLT[i].addData(varData[i].stats);
+            varData[i].stats.reset();
         }
     }
 
