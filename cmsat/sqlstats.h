@@ -14,6 +14,7 @@ public:
     void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
+        , const VariableVariance& varVarStats
         , const Solver* solver
         , const Searcher* searcher
     );
@@ -189,7 +190,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[73+1]; //+1 == runID
+        MYSQL_BIND  bind[77+1]; //+1 == runID
         MYSQL_STMT  *stmt;
 
         //Position
@@ -283,6 +284,7 @@ private:
         //Var stats
         uint64_t propagations;
         uint64_t decisions;
+        VariableVariance varVarStats;
         uint64_t varFlipped;
         uint64_t varSetNeg;
         uint64_t varSetPos;

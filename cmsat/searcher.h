@@ -34,6 +34,14 @@ using std::string;
 using std::cout;
 using std::endl;
 
+struct VariableVariance
+{
+    double avgDecLevelVarLT;
+    double avgTrailLevelVarLT;
+    double avgDecLevelVar;
+    double avgTrailLevelVar;
+};
+
 class Searcher : public PropEngine
 {
     public:
@@ -639,6 +647,14 @@ class Searcher : public PropEngine
         void printClauseDistribSQL();
         PropStats lastSQLPropStats;
         Stats lastSQLGlobalStats;
+        void calcVariancesLT(
+            double& avgDecLevelVar
+            , double& avgTrailLevelVar
+        );
+        void calcVariances(
+            double& avgDecLevelVar
+            , double& avgTrailLevelVar
+        );
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.

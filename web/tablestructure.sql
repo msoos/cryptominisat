@@ -210,6 +210,10 @@ CREATE TABLE `restart` (
   `litPropagatedSomethingSD` double unsigned NOT NULL,
   `propagations` bigint(20) unsigned NOT NULL,
   `decisions` bigint(20) unsigned NOT NULL,
+  `avgDecLevelVarLT` double unsigned NOT NULL,
+  `avgTrailLevelVarLT` double unsigned NOT NULL,
+  `avgDecLevelVar` double unsigned NOT NULL,
+  `avgTrailLevelVar` double unsigned NOT NULL,
   `flipped` bigint(20) unsigned NOT NULL,
   `varSetPos` bigint(20) unsigned NOT NULL,
   `varSetNeg` bigint(20) unsigned NOT NULL,
@@ -280,7 +284,7 @@ CREATE TABLE `varDataInit` (
   `conflicts` bigint(20) unsigned NOT NULL,
   `time` double unsigned NOT NULL,
   PRIMARY KEY (`varInitID`)
-) ENGINE=MyISAM AUTO_INCREMENT=161 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=10291 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -316,4 +320,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-11-20 22:37:15
+-- Dump completed on 2012-11-28 22:00:59

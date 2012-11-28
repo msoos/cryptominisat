@@ -1219,15 +1219,69 @@ struct MyPolarData
     }
 }*/
 
+void Searcher::calcVariancesLT(
+    double& avgDecLevelVar
+    , double& avgTrailLevelVar
+) {
+    double sumVarDec = 0;
+    double sumVarTrail = 0;
+    size_t num = 0;
+    size_t maxDecLevel = 0;
+    for(size_t i = 0; i < varDataLT.size(); i++) {
+        if (varDataLT[i].posPolarSet || varDataLT[i].negPolarSet) {
+            sumVarDec += sqrt(varDataLT[i].decLevelHist.var());
+            sumVarTrail += sqrt(varDataLT[i].decLevelHist.var());
+            maxDecLevel = std::max<size_t>(varDataLT[i].decLevelHist.getMax(), maxDecLevel);
+            num++;
+        }
+    }
+
+    avgDecLevelVar = sumVarDec/(double)num;
+    avgTrailLevelVar = sumVarTrail/(double)num;
+}
+
+void Searcher::calcVariances(
+    double& avgDecLevelVar
+    , double& avgTrailLevelVar
+) {
+    double sumVarDec = 0;
+    double sumVarTrail = 0;
+    size_t num = 0;
+    size_t maxDecLevel = 0;
+    for(size_t i = 0; i < varData.size(); i++) {
+        if (varData[i].stats.posPolarSet || varData[i].stats.negPolarSet) {
+            sumVarDec += sqrt(varData[i].stats.decLevelHist.var());
+            sumVarTrail += sqrt(varData[i].stats.decLevelHist.var());
+            maxDecLevel = std::max<size_t>(varData[i].stats.decLevelHist.getMax(), maxDecLevel);
+            num++;
+        }
+    }
+
+    avgDecLevelVar = sumVarDec/(double)num;
+    avgTrailLevelVar = sumVarTrail/(double)num;
+}
+
 void Searcher::printRestartSQL()
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     Stats thisStats = stats - lastSQLGlobalStats;
 
+    //Print variance
+    VariableVariance varVarStat;
+    calcVariances(varVarStat.avgDecLevelVar, varVarStat.avgTrailLevelVar);
+
+    //Update varDataLT
+    for(size_t i = 0; i < varData.size(); i++) {
+        varDataLT[i].addData(varData[i].stats);
+        varData[i].stats.reset();
+    }
+    calcVariancesLT(varVarStat.avgDecLevelVarLT, varVarStat.avgTrailLevelVarLT);
+
     solver->sqlStats.restart(
         thisPropStats
         , thisStats
+        , varVarStat
         , solver
         , this
     );
@@ -1384,47 +1438,12 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
         if (conf.doSQL) {
             printRestartSQL();
-        }
-
-        //Print variance
-        /*if (conf.verbosity >= 0) {
-            double sumVar = 0;
-            size_t num = 0;
-            size_t maxDecLevel = 0;
-            for(size_t i = 0; i < varDataLT.size(); i++) {
-                if (varDataLT[i].posPolarSet || varDataLT[i].negPolarSet) {
-                    sumVar += sqrt(varDataLT[i].decLevelHist.var());
-                    maxDecLevel = std::max<size_t>(varDataLT[i].decLevelHist.getMax(), maxDecLevel);
-                    num++;
-                }
-            }
-            cout
-            << "c avg LT  variance: " << std::setprecision(4) << std::fixed
-            << (sumVar/(double)num)
-            << endl;
-        }
-
-        if (conf.verbosity >= 0) {
-            double sumVar = 0;
-            size_t num = 0;
-            size_t maxDecLevel = 0;
+        } else {
+            //Update varDataLT
             for(size_t i = 0; i < varData.size(); i++) {
-                if (varData[i].stats.posPolarSet || varData[i].stats.negPolarSet) {
-                    sumVar += sqrt(varData[i].stats.decLevelHist.var());
-                    maxDecLevel = std::max<size_t>(varData[i].stats.decLevelHist.getMax(), maxDecLevel);
-                    num++;
-                }
+                varDataLT[i].addData(varData[i].stats);
+                varData[i].stats.reset();
             }
-            cout
-            << "c avg CUR variance: " << std::setprecision(4) << std::fixed
-            << (sumVar/(double)num)
-            << endl;
-        }*/
-
-        //Update varDataLT
-        for(size_t i = 0; i < varData.size(); i++) {
-            varDataLT[i].addData(varData[i].stats);
-            varData[i].stats.reset();
         }
     }
 
