@@ -1411,6 +1411,17 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         if (conf.doFindAndReplaceEqLits
             && solver->numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
         ) {
+            if (conf.verbosity >= 1) {
+                cout
+                << "C new bins since last SCC: "
+                << std::setw(2)
+                << solver->numNewBinsSinceSCC
+                << " free vars %:"
+                << std::fixed << std::setprecision(2) << std::setw(4)
+                << (double)solver->numNewBinsSinceSCC/(double)solver->getNumFreeVars()*100.0
+                << endl;
+            }
+
             solver->clauseCleaner->removeAndCleanAll();
 
             //Find eq lits
