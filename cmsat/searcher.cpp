@@ -1398,7 +1398,10 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //cout << "numNewBinsSinceSCC: " << solver->numNewBinsSinceSCC << endl;
         const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
         if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.005))  {
-            cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
+            if (conf.verbosity >= 2) {
+                cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
+            }
+
             lastCleanZeroDepthAssigns = trail.size();
             solver->clauseCleaner->removeAndCleanAll();
         }
