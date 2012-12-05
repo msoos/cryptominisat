@@ -522,14 +522,6 @@ void Main::parseCommandLine()
         conf.needToDumpLearnts = true;
     }
 
-    if (max_nr_of_solutions > 1) {
-        cout
-        << "More than one solution is currently not supported."
-        << "Sorry for the inconvenience."
-        << endl;
-        exit(-1);
-    }
-
     if (vm.count("dumporig")) {
         conf.origFilename = vm["dumporig"].as<std::string>();
         conf.needToDumpOrig = true;
@@ -620,7 +612,11 @@ void Main::parseCommandLine()
         conf.doCalcReach = false;
     }
 
-    if (numThreads < 1) throw WrongParam("threads", "Num threads must be at least 1");
+    if (numThreads < 1)
+        throw WrongParam("threads", "Num threads must be at least 1");
+
+    if (max_nr_of_solutions > 1)
+        throw WrongParam("maxsolutions",  "More than one solution is currently not supported. Sorry.");
 
     if (vm.count("input")) {
         filesToRead = vm["input"].as<std::vector<std::string> >();
