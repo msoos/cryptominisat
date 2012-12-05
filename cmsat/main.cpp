@@ -522,6 +522,14 @@ void Main::parseCommandLine()
         conf.needToDumpLearnts = true;
     }
 
+    if (max_nr_of_solutions > 1) {
+        cout
+        << "More than one solution is currently not supported."
+        << "Sorry for the inconvenience."
+        << endl;
+        exit(-1);
+    }
+
     if (vm.count("dumporig")) {
         conf.origFilename = vm["dumporig"].as<std::string>();
         conf.needToDumpOrig = true;
