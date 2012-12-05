@@ -82,7 +82,7 @@ inline void ClauseCleaner::removeAndCleanAll()
     if (solver->conf.verbosity >= 1) {
         cout
         << "c [clean] T: "
-        << std::fixed << std::setprecision(2)
+        << std::fixed << std::setprecision(4)
         << (cpuTime() - myTime)
         << " s" << endl;
     }
