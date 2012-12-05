@@ -615,6 +615,10 @@ void Main::parseCommandLine()
     if (numThreads < 1)
         throw WrongParam("threads", "Num threads must be at least 1");
 
+    if (numThreads > 1)
+        throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
+
+
     if (max_nr_of_solutions > 1)
         throw WrongParam("maxsolutions",  "More than one solution is currently not supported. Sorry.");
 
