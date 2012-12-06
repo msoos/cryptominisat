@@ -10,27 +10,14 @@ windows, I suggest you add the -DDISABLE_ZLIB to your compilation flags.
 The compilation instruction should finally be:
 
 64-bit version:
-
-cl /openmp /favor:INTEL64 /O2
-/Fecryptominisat64.exe -DVERSION="__DATE__" -DDISABLE_ZLIB /F2097152 /TP
-/EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Solver.cpp ClauseCleaner.cpp
-PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp
-XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
-FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
-StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
-CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp
-
-32-bit version:
-
-cl /O2 /Fecryptominisat32.exe -DVERSION="__DATE__" -DDISABLE_ZLIB /F2097152
-/TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Solver.cpp ClauseCleaner.cpp
-PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp
-XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
-FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
-StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
-CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp
+cl /openmp /favor:INTEL64 /O2 /Fecryptominisat64.exe
+-DVERSION="__DATE__" -DDISABLE_ZLIB /F2097152 /TP /EHsc -I. -I../mtl/
+-I../MTRand/ -Id:\boost_1_51_0 Main.cpp Solver.cpp ClauseCleaner.cpp
+PackedRow.cpp VarReplacer.cpp XorFinder.cpp ClauseAllocator.cpp
+ClauseVivifier.cpp CompleteDetachReattacher.cpp DimacsParser.cpp
+SCCFinder.cpp SolverConf.cpp SolutionExtender.cpp CalcDefPolars.cpp
+GateFinder.cpp Prober.cpp PropEngine.cpp Searcher.cpp Simplifier.cpp
+/link /LIBPATH:d:\boost_1_51_0\lib\x64\lib
 
 executed from the 'Solver' subdirectory
 
