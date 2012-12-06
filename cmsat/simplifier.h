@@ -32,11 +32,11 @@
 #include <iomanip>
 #include <fstream>
 
-#include "cmsat/clause.h"
-#include "cmsat/queue.h"
-#include "cmsat/bitarray.h"
-#include "cmsat/solvertypes.h"
-#include "cmsat/heap.h"
+#include "clause.h"
+#include "queue.h"
+#include "bitarray.h"
+#include "solvertypes.h"
+#include "heap.h"
 
 using std::vector;
 using std::list;
