@@ -399,7 +399,7 @@ public:
         uint64_t zeroDepthAssings;
     };
 
-    const vector<char>& getVarElimed() const;
+    const vector<bool>& getVarElimed() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
     const GateFinder* getGateFinder() const;
@@ -415,7 +415,7 @@ private:
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
-    vector<char>    var_elimed;           ///<Contains TRUE if var has been eliminated
+    vector<bool>    var_elimed;           ///<Contains TRUE if var has been eliminated
 
     //Temporaries
     vector<char>    seen;        ///<Used in various places to help perform algorithms
@@ -752,7 +752,7 @@ inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
     return blockedClauses;
 }
 
-inline const vector<char>& Simplifier::getVarElimed() const
+inline const vector<bool>& Simplifier::getVarElimed() const
 {
     return var_elimed;
 }

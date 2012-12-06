@@ -95,7 +95,7 @@ void Simplifier::newVar()
     gateFinder->newVar();
 
     //variable status
-    var_elimed .push_back(0);
+    var_elimed .push_back(false);
 }
 
 void Simplifier::updateVars(
