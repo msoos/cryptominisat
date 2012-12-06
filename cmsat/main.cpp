@@ -82,7 +82,7 @@ void SIGINT_handler(int)
     Solver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (solver->getNeedToDumpLearnts() || solver->getNeedToDumpOrig()) {
+    if (solver->getNeedToDumpLearnts() || solver->getNeedToDumpSimplified()) {
         solver->setNeedToInterrupt();
         std::cerr << "*** Please wait. We need to interrupt cleanly" << endl;
         std::cerr << "*** This means we might need to finish some calculations" << endl;
@@ -295,11 +295,11 @@ void Main::parseCommandLine()
     iterativeOptions.add_options()
     ("maxsolutions", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
-    ("dumplearnts", po::value<std::string>(&conf.learntsFilename)
+    ("dumplearnts", po::value<std::string>(&conf.learntsDumpFilename)
         , "If stopped dump learnt clauses here")
     ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)
         , "Maximum length of learnt clause dumped")
-    ("dumporig", po::value<std::string>()
+    ("dumpsimplified", po::value<std::string>()
         , "If stopped, dump simplified original problem here")
     ("banfoundsol", po::value<int>(&doBanFoundSolution)->default_value(doBanFoundSolution)
      , "Ban solutions found")
@@ -522,9 +522,9 @@ void Main::parseCommandLine()
         conf.needToDumpLearnts = true;
     }
 
-    if (vm.count("dumporig")) {
-        conf.origFilename = vm["dumporig"].as<std::string>();
-        conf.needToDumpOrig = true;
+    if (vm.count("dumpsimplified")) {
+        conf.simplifiedDumpFilename = vm["dumpsimplified"].as<std::string>();
+        conf.needToDumpSimplified = true;
     }
 
     if (vm.count("maxdump")) {
@@ -677,30 +677,47 @@ int Main::solve()
         }
     }
 
-    /*
     if (conf.needToDumpLearnts) {
-        solver->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << endl;
+        cout << "Dumping learnt is not supported yet! Sorry." << endl;
+        //solver->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+        //cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << endl;
     }
-    if (conf.needToDumpOrig) {
-        if (ret == l_False && conf.origFilename == "stdout") {
-            cout << "p cnf 0 1" << endl;
-            cout << "0";
-        } else if (ret == l_True && conf.origFilename == "stdout") {
-            cout << "p cnf " << solver->model.size() << " " << solver->model.size() << endl;
-            for (uint32_t i = 0; i < solver->model.size(); i++) {
-                cout << (solver->model[i] == l_True ? "" : "-") << i+1 << " 0" << endl;
-            }
-        } else {
-            solver->dumpIrredClauses(conf.origFilename);
-            if (conf.verbosity >= 1)
-                cout << "c Simplified original clauses dumped to file '"
-                << conf.origFilename << "'" << endl;
+
+    if (conf.needToDumpSimplified) {
+        if (conf.verbosity >= 1) {
+            cout
+            << "c Dumping simplified original clauses to file '"
+            << conf.simplifiedDumpFilename << "'"
+            << endl;
         }
-    }*/
+
+        std::ostream* of;
+        if (conf.simplifiedDumpFilename == "stdout") {
+            of = &std::cout;
+        } else {
+            of = new std::ofstream(conf.simplifiedDumpFilename.c_str());
+            if (!*of) {
+                cout
+                << "Cannot open file '"
+                << conf.simplifiedDumpFilename
+                << "' for writing. exiting"
+                << endl;
+                exit(-1);
+            }
+        }
+
+        if (ret == l_False) {
+            *of << "p cnf 0 1" << endl;
+            *of << "0";
+        } else if (ret == l_True) {
+            solver->dumpIrredClauses(of);
+        }
+    }
 
     if (ret == l_Undef && conf.verbosity >= 1) {
-        cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
+        cout
+        << "c Not finished running -- signal caught or some maximum reached"
+        << endl;
     }
     if (conf.verbosity >= 1)
         solver->printFullStats();

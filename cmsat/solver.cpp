@@ -1645,8 +1645,11 @@ void Solver::printFullStats()
     printStatsLine("c Mem used", memUsed()/(1024UL*1024UL), "MB");
 }
 
-void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
-{
+void Solver::dumpBinClauses(
+    const bool alsoLearnt
+    , const bool alsoNonLearnt
+    , std::ostream* outfile
+) const {
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = watches.begin(), end = watches.end()
@@ -1662,7 +1665,40 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump)
-                    outfile << it2->lit1() << " " << lit << " 0" << endl;
+                    *outfile << it2->lit1() << " " << lit << " 0" << endl;
+            }
+        }
+    }
+}
+
+void Solver::dumpTriClauses(
+    const bool alsoLearnt
+    , const bool alsoNonLearnt
+    , std::ostream* outfile
+) const {
+    uint32_t wsLit = 0;
+    for (vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+            //Only one instance of tri clause
+            if (it2->isTri() && lit < it2->lit1()) {
+                bool toDump = false;
+                if (it2->learnt() && alsoLearnt) toDump = true;
+                if (!it2->learnt() && alsoNonLearnt) toDump = true;
+
+                if (toDump)
+                    *outfile
+                    << it2->lit1()
+                    << " "
+                    << it2->lit2()
+                    << " "
+                    << lit
+                    << " 0" << endl;
             }
         }
     }
@@ -1729,18 +1765,20 @@ void Solver::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
-{
-    os
+void Solver::dumpLearnts(
+    std::ostream* os
+    , const uint32_t maxSize
+) {
+    *os
     << "c " << endl
     << "c ---------" << endl
     << "c unitaries" << endl
     << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        os << trail[i] << " 0" << endl;    }
+        *os << trail[i] << " 0" << endl;    }
 
 
-    os
+    *os
     << "c " << endl
     << "c ---------------------------------" << endl
     << "c learnt binary clauses (extracted from watchlists)" << endl
@@ -1748,7 +1786,16 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     if (maxSize >= 2)
         dumpBinClauses(true, false, os);
 
-    os
+
+        *os
+    << "c " << endl
+    << "c ---------------------------------" << endl
+    << "c learnt tertiary clauses (extracted from watchlists)" << endl
+    << "c ---------------------------------" << endl;
+    if (maxSize >= 2)
+        dumpTriClauses(true, false, os);
+
+    *os
     << "c " << endl
     << "c ---------------------------------------" << endl
     << "c clauses representing 2-long XOR clauses" << endl
@@ -1760,12 +1807,12 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
             if (lit.var() == var)
                 continue;
 
-            os << (~lit) << " " << Lit(var, false) << " 0" << endl;
-            os << lit << " " << Lit(var, true) << " 0" << endl;
+            *os << (~lit) << " " << Lit(var, false) << " 0" << endl;
+            *os << lit << " " << Lit(var, true) << " 0" << endl;
         }
     }
 
-    os
+    *os
     << "c " << endl
     << "c --------------------" << endl
     << "c clauses from learnts" << endl
@@ -1777,8 +1824,11 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     ) {
         const Clause& cl = *clAllocator->getPointer(*it);
         if (cl.size() <= maxSize) {
-            os << cl << " 0" << endl;
-            os
+            //Dump clause
+            *os << cl << " 0" << endl;
+
+            //Dump the information about the clause
+            *os
             << "c clause learnt "
             << (cl.learnt() ? "yes" : "no")
             << " stats "  << cl.stats << endl;
@@ -1786,12 +1836,17 @@ void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     }
 }
 
-void Solver::dumpIrredClauses(std::ostream& os) const
+void Solver::dumpIrredClauses(std::ostream* os) const
 {
-    uint32_t numClauses = 0;
+    size_t numClauses = 0;
+
     //unitary clauses
-    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
+    for (size_t
+        i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size()
+        ; i < end; i++
+    ) {
         numClauses++;
+    }
 
     //binary XOR clauses
     const vector<Lit>& table = varReplacer->getReplaceTable();
@@ -1812,20 +1867,20 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
     numClauses += blockedClauses.size();
 
-    os << "p cnf " << nVars() << " " << numClauses << endl;
+    *os << "p cnf " << nVars() << " " << numClauses << endl;
 
     ////////////////////////////////////////////////////////////////////
 
-    os
+    *os
     << "c " << endl
     << "c ---------" << endl
     << "c unitaries" << endl
     << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        os << trail[i] << " 0" << endl;
+        *os << trail[i] << " 0" << endl;
     }
 
-    os
+    *os
     << "c " << endl
     << "c ---------------------------------------" << endl
     << "c clauses representing 2-long XOR clauses" << endl
@@ -1837,18 +1892,25 @@ void Solver::dumpIrredClauses(std::ostream& os) const
 
         Lit litP1 = ~lit;
         Lit litP2 = Lit(var, false);
-        os << litP1 << " " << litP2 << endl;
-        os << ~litP1 << " " << ~litP2 << endl;
+        *os << litP1 << " " << litP2 << endl;
+        *os << ~litP1 << " " << ~litP2 << endl;
     }
 
-    os
+    *os
     << "c " << endl
     << "c ---------------" << endl
     << "c binary clauses" << endl
     << "c ---------------" << endl;
     dumpBinClauses(false, true, os);
 
-    os
+    *os
+    << "c " << endl
+    << "c ---------------" << endl
+    << "c tertiary clauses" << endl
+    << "c ---------------" << endl;
+    dumpTriClauses(false, true, os);
+
+    *os
     << "c " << endl
     << "c ---------------" << endl
     << "c normal clauses" << endl
@@ -1860,17 +1922,30 @@ void Solver::dumpIrredClauses(std::ostream& os) const
     ) {
         Clause* cl = clAllocator->getPointer(*it);
         assert(!cl->learnt());
-        os << *cl << " 0" << endl;
+        *os << *cl << " 0" << endl;
     }
 
-    os
+    *os
     << "c " << endl
     << "c -------------------------------" << endl
     << "c previously eliminated variables" << endl
     << "c -------------------------------" << endl;
-    for (vector<BlockedClause>::const_iterator it = blockedClauses.begin(); it != blockedClauses.end(); it++) {
-        os << "c next clause is eliminated/blocked on lit " << it->blockedOn << endl;
-        os << it->lits << " 0" << endl;
+    for (vector<BlockedClause>::const_iterator
+        it = blockedClauses.begin(); it != blockedClauses.end()
+        ; it++
+    ) {
+
+        //Print info about clause
+        *os
+        << "c next clause is eliminated/blocked on lit "
+        << it->blockedOn
+        << endl;
+
+        //Print clause
+        *os
+        << it->lits
+        << " 0"
+        << endl;
     }
 }
 

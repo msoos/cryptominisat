@@ -120,7 +120,7 @@ SolverConf::SolverConf() :
         , doPrintConflDot  (false)
 
         , needToDumpLearnts(false)
-        , needToDumpOrig   (false)
+        , needToDumpSimplified (false)
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)

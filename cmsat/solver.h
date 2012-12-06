@@ -81,7 +81,7 @@ class Solver : public Searcher
         ///Return number of ALL clauses: non-learnt, learnt, bin
         uint64_t getNumLongClauses() const;
         bool     getNeedToDumpLearnts() const;
-        bool     getNeedToDumpOrig() const;
+        bool     getNeedToDumpSimplified() const;
         uint32_t getVerbosity() const;
         void     printFullStats();
         void     printClauseStats();
@@ -99,9 +99,10 @@ class Solver : public Searcher
 
         ///////////////////////////////////
         // State Dumping
-        void  dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const;
-        void  dumpLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
-        void  dumpIrredClauses(std::ostream& os) const; ///<Dump (simplified) irredundant system
+        void  dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
+        void  dumpTriClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
+        void  dumpLearnts(std::ostream* os, const uint32_t maxSize); ///<Dump all learnt clauses into file
+        void  dumpIrredClauses(std::ostream* os) const; ///<Dump (simplified) irredundant system
 
         struct SolveStats
         {
@@ -471,9 +472,9 @@ inline bool Solver::getNeedToDumpLearnts() const
     return conf.needToDumpLearnts;
 }
 
-inline bool Solver::getNeedToDumpOrig() const
+inline bool Solver::getNeedToDumpSimplified() const
 {
-    return conf.needToDumpOrig;
+    return conf.needToDumpSimplified;
 }
 
 inline uint64_t Solver::getNumLongClauses() const
