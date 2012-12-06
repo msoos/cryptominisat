@@ -396,7 +396,7 @@ void Searcher::find_removable(const vector<Lit>& out_learnt, const uint32_t abst
         assert(varData[curLit.var()].level > 0);
 
         if ((seen[curLit.var()] & (2|4|8)) == 0) {
-            found_some |= dfs_removable(curLit, abstract_level);
+            found_some |= (bool)dfs_removable(curLit, abstract_level);
         }
     }
 
@@ -507,7 +507,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
     }
     seen[p.var()] |= (char) pstatus;
     if (pseen == 0) toClear.push_back(p);
-    found_some |= maykeep;
+    found_some |= (bool)maykeep;
     return found_some;
 }
 
