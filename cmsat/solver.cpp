@@ -980,7 +980,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         status = simplifyProblem();
 
     //Iterate until solved
-    while (status == l_Undef) {
+    while (status == l_Undef  && !needToInterrupt) {
         if (conf.verbosity >= 2)
             printClauseSizeDistrib();
 
