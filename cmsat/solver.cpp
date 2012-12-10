@@ -35,11 +35,14 @@
 #include <fstream>
 #include <cmath>
 #include "xorfinder.h"
-#include "mysqlstats.h"
 #include <fcntl.h>
 #include <unistd.h>
 using std::cout;
 using std::endl;
+
+#ifdef USE_MYSQL
+#include "mysqlstats.h"
+#endif
 
 //#define DEBUG_TRI_SORTED_SANITY
 
@@ -56,7 +59,22 @@ Solver::Solver(const SolverConf& _conf) :
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
 {
-    sqlStats = new MySQLStats();
+    if (conf.doSQL) {
+        #ifdef USE_MYSQL
+        sqlStats = new MySQLStats();
+
+        #else
+
+        cout<< "ERROR: "
+        << "Cannot use SQL: no SQL library was found during compilation."
+        << endl;
+
+        exit(-1);
+        #endif
+    } else {
+        sqlStats = NULL;
+    }
+
     prober = new Prober(this);
     simplifier = new Simplifier(this);
     sCCFinder = new SCCFinder(this);

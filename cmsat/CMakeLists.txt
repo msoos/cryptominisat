@@ -13,8 +13,7 @@ add_library(m4ri SHARED IMPORTED)
 
 set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
-#add_library(cryptoms STATIC
-add_library(cryptoms SHARED
+set(cryptoms_lib_files
     propengine.cpp
     packedrow.cpp
     varreplacer.cpp
@@ -32,20 +31,33 @@ add_library(cryptoms SHARED
     solver.cpp
     xorfinder.cpp
     gatefinder.cpp
-    mysqlstats.cpp
     sqlstats.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-target_link_libraries(cryptoms
+set(cryptoms_lib_link_libs
     m4ri
-    ${MYSQL_LIB}
+)
+
+if (MYSQL_FOUND)
+    SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
+endif (MYSQL_FOUND)
+
+#add_library(cryptoms STATIC
+add_library(cryptoms SHARED
+    ${cryptoms_lib_files}
+)
+
+target_link_libraries(cryptoms
+    ${cryptoms_lib_link_libs}
 )
 
 add_executable(cryptominisat
     dimacsparser.cpp
     main.cpp
 )
+
 
 target_link_libraries(cryptominisat
     ${ZLIB_LIBRARY}
