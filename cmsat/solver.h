@@ -32,6 +32,7 @@
 #include "searcher.h"
 #include "GitSHA1.h"
 #include "sqlstats.h"
+#include "varupdatehelper.h"
 #include <fstream>
 
 using std::vector;
@@ -129,7 +130,8 @@ class Solver : public Searcher
 
         ///////////////////////////////////
         // State Dumping
-        string clauseBackNumbered(const Clause& cl) const;
+        template<class T>
+        string clauseBackNumbered(const T& cl) const;
         void   dumpUnitaryClauses(std::ostream* os) const;
         void   dump2LongXorClauses(std::ostream* os) const;
         void   dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
@@ -584,6 +586,21 @@ inline const vector<string>& Solver::getFileNamesUsed() const
 inline const Solver::BinTriStats& Solver::getBinTriStats() const
 {
     return binTri;
+}
+
+template<class T>
+inline string Solver::clauseBackNumbered(const T& cl) const
+{
+    std::stringstream ss;
+    for(size_t i = 0; i < cl.size(); i++) {
+        ss
+        << getUpdatedLit(cl[i], interToOuterMain);
+
+        if (i != cl.size()-1)
+            ss << " ";
+    }
+
+    return ss.str();
 }
 
 

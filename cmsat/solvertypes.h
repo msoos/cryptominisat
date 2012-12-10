@@ -115,12 +115,16 @@ inline std::ostream& operator<<(std::ostream& os, const Lit lit)
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& cout, const std::vector<Lit>& lits)
+inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 {
     for (uint32_t i = 0; i < lits.size(); i++) {
-        cout << lits[i] << " ";
+        co << lits[i];
+
+        if (i != lits.size()-1)
+            co << " ";
     }
-    return cout;
+
+    return co;
 }
 
 

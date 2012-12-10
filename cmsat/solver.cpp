@@ -1881,19 +1881,6 @@ void Solver::dumpRedClauses(
     }
 }
 
-string Solver::clauseBackNumbered(const Clause& cl) const
-{
-    std::stringstream ss;
-    for(size_t i = 0; i < cl.size(); i++) {
-        ss
-        << getUpdatedLit(cl[i], interToOuterMain)
-        << " ";
-    }
-    ss << "0";
-
-    return ss.str();
-}
-
 void Solver::dumpIrredClauses(std::ostream* os) const
 {
     size_t numClauses = 0;
@@ -1980,7 +1967,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
 
         //Print clause
         *os
-        << it->lits
+        << clauseBackNumbered(it->lits)
         << " 0"
         << endl;
     }
