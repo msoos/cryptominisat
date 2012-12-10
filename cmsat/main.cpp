@@ -699,26 +699,22 @@ int Main::solve()
             << endl;
         }
 
-        std::ostream* of;
-        if (conf.simplifiedDumpFilename == "stdout") {
-            of = &std::cout;
-        } else {
-            of = new std::ofstream(conf.simplifiedDumpFilename.c_str());
-            if (!*of) {
-                cout
-                << "Cannot open file '"
-                << conf.simplifiedDumpFilename
-                << "' for writing. exiting"
-                << endl;
-                exit(-1);
-            }
+        std::ofstream outfile;
+        outfile.open(conf.simplifiedDumpFilename.c_str());
+        if (!outfile) {
+            cout
+            << "Cannot open file '"
+            << conf.simplifiedDumpFilename
+            << "' for writing. exiting"
+            << endl;
+            exit(-1);
         }
 
         if (ret == l_False) {
-            *of << "p cnf 0 1" << endl;
-            *of << "0";
+            outfile << "p cnf 0 1" << endl;
+            outfile << "0";
         } else if (ret == l_True) {
-            solver->dumpIrredClauses(of);
+            solver->dumpIrredClauses(&outfile);
         }
     }
 
