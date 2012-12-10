@@ -153,8 +153,8 @@ uint32_t Simplifier::subsume0(ClOffset offset)
         && ret.subsumedNonLearnt
     ) {
         cl.makeNonLearnt();
-        solver->redLits -= cl.size();
-        solver->irredLits += cl.size();
+        solver->binTri.redLits -= cl.size();
+        solver->binTri.irredLits += cl.size();
     }
 
     //Combine stats
@@ -252,8 +252,8 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
                 && !cl2.learnt()
             ) {
                 cl.makeNonLearnt();
-                solver->redLits -= cl.size();
-                solver->irredLits += cl.size();
+                solver->binTri.redLits -= cl.size();
+                solver->binTri.irredLits += cl.size();
             }
 
             //Update stats
@@ -297,9 +297,9 @@ void Simplifier::unlinkClause(const ClOffset offset)
     }
 
     if (cl.learnt()) {
-        solver->redLits -= cl.size();
+        solver->binTri.redLits -= cl.size();
     } else {
-        solver->irredLits -= cl.size();
+        solver->binTri.irredLits -= cl.size();
     }
 
     //Free and set to NULL
@@ -350,9 +350,9 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
     //Update lits stat
     if (cl.learnt())
-        solver->redLits -= i-j;
+        solver->binTri.redLits -= i-j;
     else
-        solver->irredLits -= i-j;
+        solver->binTri.irredLits -= i-j;
 
     if (solver->conf.verbosity >= 6)
         cout << "-> Clause became after cleaning:" << cl << endl;
@@ -406,9 +406,9 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
     if (cl.learnt())
-        solver->redLits--;
+        solver->binTri.redLits--;
     else
-        solver->irredLits--;
+        solver->binTri.irredLits--;
 
     cleanClause(offset);
 }
@@ -608,9 +608,9 @@ bool Simplifier::completeCleanClause(Clause& cl)
     //Remove all lits from stats
     //we will re-attach the clause either way
     if (cl.learnt())
-        solver->redLits -= cl.size();
+        solver->binTri.redLits -= cl.size();
     else
-        solver->irredLits -= cl.size();
+        solver->binTri.irredLits -= cl.size();
 
     Lit *i = cl.begin();
     Lit *j = i;
@@ -836,7 +836,7 @@ void Simplifier::subsumeLearnts()
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 10000000UL
-        || solver->irredLits > 50000000UL
+        || solver->binTri.irredLits > 50000000UL
     )  return;
 
     //Setup
@@ -890,7 +890,7 @@ bool Simplifier::simplify()
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 10000000UL
-        || solver->irredLits > 50000000UL
+        || solver->binTri.irredLits > 50000000UL
     )  return true;
 
     //Setup
@@ -1132,10 +1132,10 @@ bool Simplifier::propImplicits()
 
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
-    solver->irredLits -= numRemovedHalfNonLearnt;
-    solver->redLits -= numRemovedHalfLearnt;
-    solver->redBins -= numRemovedHalfLearnt/2;
-    solver->irredBins -= numRemovedHalfNonLearnt/2;
+    solver->binTri.irredLits -= numRemovedHalfNonLearnt;
+    solver->binTri.redLits -= numRemovedHalfLearnt;
+    solver->binTri.redBins -= numRemovedHalfLearnt/2;
+    solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
 
     return solver->ok;
 }
@@ -1371,11 +1371,11 @@ void Simplifier::blockBinaries()
                 blocked++;
                 removeWBin(solver->watches, lit2, lit, ws[i].learnt());
                 if (ws[i].learnt()) {
-                    solver->redLits -= 2;
-                    solver->redBins--;
+                    solver->binTri.redLits -= 2;
+                    solver->binTri.redBins--;
                 } else {
-                    solver->irredLits -= 2;
-                    solver->irredBins--;
+                    solver->binTri.irredLits -= 2;
+                    solver->binTri.irredBins--;
                 }
             } else {
                 ws[j++] = ws[i];

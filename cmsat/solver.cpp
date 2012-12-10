@@ -35,6 +35,7 @@
 #include <fstream>
 #include <cmath>
 #include "xorfinder.h"
+#include "mysqlstats.h"
 #include <fcntl.h>
 #include <unistd.h>
 using std::cout;
@@ -54,15 +55,8 @@ Solver::Solver(const SolverConf& _conf) :
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
-
-    //Stats on implicit clauses and all literal
-    , irredLits(0)
-    , redLits(0)
-    , irredBins(0)
-    , redBins(0)
-    , irredTris(0)
-    , redTris(0)
 {
+    sqlStats = new MySQLStats();
     prober = new Prober(this);
     simplifier = new Simplifier(this);
     sCCFinder = new SCCFinder(this);
@@ -74,6 +68,7 @@ Solver::Solver(const SolverConf& _conf) :
 
 Solver::~Solver()
 {
+    delete sqlStats;
     delete prober;
     delete simplifier;
     delete sCCFinder;
@@ -232,9 +227,9 @@ Clause* Solver::addClauseInt(
                 attachClause(*c);
             else {
                 if (learnt)
-                    redLits += ps.size();
+                    binTri.redLits += ps.size();
                 else
-                    irredLits += ps.size();
+                    binTri.irredLits += ps.size();
             }
 
             return c;
@@ -245,9 +240,9 @@ void Solver::attachClause(const Clause& cl)
 {
     //Update stats
     if (cl.learnt())
-        redLits += cl.size();
+        binTri.redLits += cl.size();
     else
-        irredLits += cl.size();
+        binTri.irredLits += cl.size();
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachClause(cl);
@@ -261,11 +256,11 @@ void Solver::attachTriClause(
 ) {
     //Update stats
     if (learnt) {
-        redLits += 3;
-        redTris++;
+        binTri.redLits += 3;
+        binTri.redTris++;
     } else {
-        irredLits += 3;
-        irredTris++;
+        binTri.irredLits += 3;
+        binTri.irredTris++;
     }
 
     //Call Solver's function for heavy-lifting
@@ -280,13 +275,13 @@ void Solver::attachBinClause(
 ) {
     //Update stats
     if (learnt) {
-        redLits += 2;
-        redBins++;
+        binTri.redLits += 2;
+        binTri.redBins++;
     } else {
-        irredLits += 2;
-        irredBins++;
+        binTri.irredLits += 2;
+        binTri.irredBins++;
     }
-    numNewBinsSinceSCC++;
+    binTri.numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
@@ -299,11 +294,11 @@ void Solver::detachTriClause(
     , const bool learnt
 ) {
     if (learnt) {
-        redLits -= 3;
-        redTris--;
+        binTri.redLits -= 3;
+        binTri.redTris--;
     } else {
-        irredLits -= 3;
-        irredTris--;
+        binTri.irredLits -= 3;
+        binTri.irredTris--;
     }
 
     PropEngine::detachTriClause(lit1, lit2, lit3, learnt);
@@ -315,11 +310,11 @@ void Solver::detachBinClause(
     , const bool learnt
 ) {
     if (learnt) {
-        redLits -= 2;
-        redBins--;
+        binTri.redLits -= 2;
+        binTri.redBins--;
     } else {
-        irredLits -= 2;
-        irredBins--;
+        binTri.irredLits -= 2;
+        binTri.irredBins--;
     }
 
     PropEngine::detachBinClause(lit1, lit2, learnt);
@@ -339,9 +334,9 @@ void Solver::detachModifiedClause(
 ) {
     //Update stats
     if (address->learnt())
-        redLits -= origSize;
+        binTri.redLits -= origSize;
     else
-        irredLits -= origSize;
+        binTri.irredLits -= origSize;
 
     //Call heavy-lifter
     PropEngine::detachModifiedClause(lit1, lit2, origSize, address);
@@ -785,14 +780,14 @@ CleaningStats Solver::reduceDB()
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = longRedCls.size();
-    tmpStats.origNumLits = redLits - redBins*2;
+    tmpStats.origNumLits = binTri.redLits - binTri.redBins*2;
 
     //Calculate how many to remove
     size_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
-    size_t maxToHave = (double)(longIrredCls.size() + irredTris) * conf.maxNumLearntsRatio;
+    size_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris) * conf.maxNumLearntsRatio;
     size_t removeNum = std::max<long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
 
     if (removeNum != origRemoveNum && conf.verbosity >= 2) {
@@ -962,8 +957,9 @@ CleaningStats Solver::reduceDB()
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     //Set up SQL writer
-    if (conf.doSQL)
-        sqlStats.setup(this);
+    if (conf.doSQL) {
+        sqlStats->setup(this);
+    }
 
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
@@ -1493,7 +1489,7 @@ void Solver::fullReduce()
     consolidateMem();
 
     if (conf.doSQL) {
-        sqlStats.reduceDB(irredStats, redStats, iterCleanStat, solver);
+        sqlStats->reduceDB(irredStats, redStats, iterCleanStat, solver);
     }
 
     if (conf.doClearStatEveryClauseCleaning) {
@@ -1776,7 +1772,6 @@ void Solver::dumpLearnts(
     << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os << trail[i] << " 0" << endl;    }
-
 
     *os
     << "c " << endl
@@ -2071,9 +2066,15 @@ void Solver::checkLiteralCount() const
         cnt += cl->size();
     }
 
-    if (irredLits != cnt) {
-        cout << "c ERROR! literal count: " << irredLits << " , real value = " <<  cnt << endl;
-        assert(irredLits == cnt);
+    if (binTri.irredLits != cnt) {
+        cout
+        << "c ERROR! literal count: "
+        << binTri.irredLits
+        << " , real value = "
+        << cnt
+        << endl;
+
+        assert(binTri.irredLits == cnt);
     }
 }
 
@@ -2199,6 +2200,7 @@ size_t Solver::getNumFreeVars() const
 
 void Solver::printClauseStats()
 {
+    //LONG irred
     if (longIrredCls.size() > 20000) {
         cout
         << " " << std::setw(4) << longIrredCls.size()/1000 << "K";
@@ -2207,28 +2209,31 @@ void Solver::printClauseStats()
         << " " << std::setw(5) << longIrredCls.size();
     }
 
-    if (irredTris > 20000) {
+    //TRI irred
+    if (binTri.irredTris > 20000) {
         cout
-        << " " << std::setw(4) << irredTris/1000 << "K";
+        << " " << std::setw(4) << binTri.irredTris/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << irredTris;
+        << " " << std::setw(5) << binTri.irredTris;
     }
 
-    if (irredBins > 20000) {
+    //BIN irred
+    if (binTri.irredBins > 20000) {
         cout
-        << " " << std::setw(4) << irredBins/1000 << "K";
+        << " " << std::setw(4) << binTri.irredBins/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << irredBins;
+        << " " << std::setw(5) << binTri.irredBins;
     }
 
+    //LITERALS irred
     cout
-    << " " << std::setw(4) << std::fixed << std::setprecision(1);
+    << " " << std::setw(4) << std::fixed << std::setprecision(1)
+    << (double)(binTri.irredLits - binTri.irredBins*2)
+    /(double)(longIrredCls.size() + binTri.irredTris);
 
-    cout
-    << (double)(irredLits - irredBins*2)/(double)(longIrredCls.size() + irredTris);
-
+    //LONG red
     if (longRedCls.size() > 20000) {
         cout
         << " " << std::setw(4) << longRedCls.size()/1000 << "K";
@@ -2237,20 +2242,32 @@ void Solver::printClauseStats()
         << " " << std::setw(5) << longRedCls.size();
     }
 
-    cout
-    << " " << std::setw(6) << redTris;
-
-    if (redBins > 20000) {
+    //TRI red
+    if (binTri.redTris > 20000) {
         cout
-        << " " << std::setw(4) << redBins/1000 << "K";
+        << " " << std::setw(4) << binTri.redTris/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << redBins;
+        << " " << std::setw(5) << binTri.redTris;
     }
 
+    //BIN red
+    cout
+    << " " << std::setw(6) << binTri.redTris;
+
+    if (binTri.redBins > 20000) {
+        cout
+        << " " << std::setw(4) << binTri.redBins/1000 << "K";
+    } else {
+        cout
+        << " " << std::setw(5) << binTri.redBins;
+    }
+
+    //LITERALS red
     cout
     << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(redLits - redBins*2)/(double)(longRedCls.size() + redTris)
+    << (double)(binTri.redLits - binTri.redBins*2)
+        /(double)(longRedCls.size() + binTri.redTris)
     ;
 }
 
@@ -2312,46 +2329,46 @@ void Solver::checkImplicitStats() const
         }
     }
 
-    if (thisNumNonLearntBins/2 != irredBins) {
+    if (thisNumNonLearntBins/2 != binTri.irredBins) {
         cout
         << "ERROR:"
         << " thisNumNonLearntBins/2: " << thisNumNonLearntBins/2
-        << " irredBins: " << irredBins
+        << " binTri.irredBins: " << binTri.irredBins
         << "thisNumNonLearntBins: " << thisNumNonLearntBins
         << "thisNumLearntBins: " << thisNumLearntBins << endl;
     }
     assert(thisNumNonLearntBins % 2 == 0);
-    assert(thisNumNonLearntBins/2 == irredBins);
+    assert(thisNumNonLearntBins/2 == binTri.irredBins);
 
-    if (thisNumLearntBins/2 != redBins) {
+    if (thisNumLearntBins/2 != binTri.redBins) {
         cout
         << "ERROR:"
         << " thisNumLearntBins/2: " << thisNumLearntBins/2
-        << " redBins: " << redBins
+        << " binTri.redBins: " << binTri.redBins
         << endl;
     }
     assert(thisNumLearntBins % 2 == 0);
-    assert(thisNumLearntBins/2 == redBins);
+    assert(thisNumLearntBins/2 == binTri.redBins);
 
-    if (thisNumNonLearntTris/3 != irredTris) {
+    if (thisNumNonLearntTris/3 != binTri.irredTris) {
         cout
         << "ERROR:"
         << " thisNumNonLearntTris/3: " << thisNumNonLearntTris/3
-        << " irredTris: " << irredTris
+        << " binTri.irredTris: " << binTri.irredTris
         << endl;
     }
     assert(thisNumNonLearntTris % 3 == 0);
-    assert(thisNumNonLearntTris/3 == irredTris);
+    assert(thisNumNonLearntTris/3 == binTri.irredTris);
 
-    if (thisNumLearntTris/3 != redTris) {
+    if (thisNumLearntTris/3 != binTri.redTris) {
         cout
         << "ERROR:"
         << " thisNumLearntTris/3: " << thisNumLearntTris/3
-        << " redTris: " << redTris
+        << " binTri.redTris: " << binTri.redTris
         << endl;
     }
     assert(thisNumLearntTris % 3 == 0);
-    assert(thisNumLearntTris/3 == redTris);
+    assert(thisNumLearntTris/3 == binTri.redTris);
 }
 
 void Solver::checkStats(const bool allowFreed) const
@@ -2364,7 +2381,7 @@ void Solver::checkStats(const bool allowFreed) const
     checkImplicitStats();
 
     //Count number of non-learnt literals
-    uint64_t numLitsNonLearnt = irredBins*2 + irredTris*3;
+    uint64_t numLitsNonLearnt = binTri.irredBins*2 + binTri.irredTris*3;
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
@@ -2379,7 +2396,7 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Count number of learnt literals
-    uint64_t numLitsLearnt = redBins*2 + redTris*3;
+    uint64_t numLitsLearnt = binTri.redBins*2 + binTri.redTris*3;
     for(vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
@@ -2394,18 +2411,18 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Check counts
-    if (numLitsNonLearnt != irredLits) {
+    if (numLitsNonLearnt != binTri.irredLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsNonLearnt: " << numLitsNonLearnt << endl;
-        cout << "->irredLits: " << irredLits << endl;
+        cout << "->binTri.irredLits: " << binTri.irredLits << endl;
     }
-    if (numLitsLearnt != redLits) {
+    if (numLitsLearnt != binTri.redLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsLearnt: " << numLitsLearnt << endl;
-        cout << "->redLits: " << redLits << endl;
+        cout << "->binTri.redLits: " << binTri.redLits << endl;
     }
-    assert(numLitsNonLearnt == irredLits);
-    assert(numLitsLearnt == redLits);
+    assert(numLitsNonLearnt == binTri.irredLits);
+    assert(numLitsLearnt == binTri.redLits);
 }
 
 size_t Solver::getNewToReplaceVars() const
@@ -2525,10 +2542,10 @@ bool Solver::subsumeAndStrengthenImplicit()
 
                         lastBin->setLearnt(false);
                         findWatchedOfBin(watches, lastLit, lit, true).setLearnt(false);
-                        redLits -= 2;
-                        irredLits += 2;
-                        redBins--;
-                        irredBins++;
+                        binTri.redLits -= 2;
+                        binTri.irredLits += 2;
+                        binTri.redBins--;
+                        binTri.irredBins++;
                         lastLearnt = false;
                     }
 
@@ -2551,11 +2568,11 @@ bool Solver::subsumeAndStrengthenImplicit()
                     removeWTri(watches, i->lit2(), lit, i->lit1(), i->learnt());
 
                     if (i->learnt()) {
-                        redLits -= 3;
-                        redTris--;
+                        binTri.redLits -= 3;
+                        binTri.redTris--;
                     } else {
-                        irredLits -= 3;
-                        irredTris--;
+                        binTri.irredLits -= 3;
+                        binTri.irredTris--;
                     }
                     continue;
                 }
@@ -2581,11 +2598,11 @@ bool Solver::subsumeAndStrengthenImplicit()
                 assert(i->lit1().var() != lit.var());
                 removeWBin(watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
-                    redLits -= 2;
-                    redBins--;
+                    binTri.redLits -= 2;
+                    binTri.redBins--;
                 } else {
-                    irredLits -= 2;
-                    irredBins--;
+                    binTri.irredLits -= 2;
+                    binTri.irredBins--;
                 }
                 continue;
             } else {
@@ -2684,11 +2701,11 @@ bool Solver::subsumeAndStrengthenImplicit()
 
                 //Update stats for tri
                 if (i->learnt()) {
-                    redLits -= 3;
-                    redTris--;
+                    binTri.redLits -= 3;
+                    binTri.redTris--;
                 } else {
-                    irredLits -= 3;
-                    irredTris--;
+                    binTri.irredLits -= 3;
+                    binTri.irredTris--;
                 }
 
                 //Exaclty one will be removed
@@ -2824,8 +2841,12 @@ void Solver::checkImplicitPropagated() const
     }
 }
 
-void Solver::fileAdded(const string& filename)
+size_t Solver::getNumVarsElimed() const
 {
-    fileNamesUsed.push_back(filename);
+    return simplifier->getStats().numVarsElimed;
 }
 
+size_t Solver::getNumVarsReplaced() const
+{
+    return varReplacer->getNumReplacedVars();
+}

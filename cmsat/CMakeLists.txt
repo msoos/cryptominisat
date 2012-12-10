@@ -32,7 +32,7 @@ add_library(cryptoms SHARED
     solver.cpp
     xorfinder.cpp
     gatefinder.cpp
-    sqlstats.cpp
+    mysqlstats.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

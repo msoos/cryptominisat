@@ -1278,7 +1278,7 @@ void Searcher::printRestartSQL()
     }
     calcVariancesLT(varVarStat.avgDecLevelVarLT, varVarStat.avgTrailLevelVarLT);
 
-    solver->sqlStats.restart(
+    solver->sqlStats->restart(
         thisPropStats
         , thisStats
         , varVarStat
@@ -1290,22 +1290,22 @@ void Searcher::printRestartSQL()
     lastSQLGlobalStats = stats;
 
     //Variable stats
-    solver->sqlStats.varDataDump(solver, this, varData);
+    solver->sqlStats->varDataDump(solver, this, varData);
 }
 
 
 void Searcher::printClauseDistribSQL()
 {
-    solver->sqlStats.clauseSizeDistrib(
+    solver->sqlStats->clauseSizeDistrib(
         sumConflicts()
         , clauseSizeDistrib
     );
-    solver->sqlStats.clauseGlueDistrib(
+    solver->sqlStats->clauseGlueDistrib(
         sumConflicts()
         , clauseGlueDistrib
     );
 
-    solver->sqlStats.clauseSizeGlueScatter(
+    solver->sqlStats->clauseSizeGlueScatter(
         sumConflicts()
         , sizeAndGlue
     );
@@ -1409,16 +1409,17 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Eq-lit finding has been enabled? If so, let's see if there might be
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
-            && solver->numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
+            && solver->binTri.numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
         ) {
             if (conf.verbosity >= 1) {
                 cout
                 << "C new bins since last SCC: "
                 << std::setw(2)
-                << solver->numNewBinsSinceSCC
+                << solver->binTri.numNewBinsSinceSCC
                 << " free vars %:"
                 << std::fixed << std::setprecision(2) << std::setw(4)
-                << (double)solver->numNewBinsSinceSCC/(double)solver->getNumFreeVars()*100.0
+                << (double)solver->binTri.numNewBinsSinceSCC
+                /(double)solver->getNumFreeVars()*100.0
                 << endl;
             }
 
@@ -1811,11 +1812,11 @@ size_t Searcher::removeUselessBins()
 
             //Update stats
             if (it->getLearnt()) {
-                solver->redLits -= 2;
-                solver->redBins--;
+                solver->binTri.redLits -= 2;
+                solver->binTri.redBins--;
             } else {
-                solver->irredLits -= 2;
-                solver->irredBins--;
+                solver->binTri.irredLits -= 2;
+                solver->binTri.irredBins--;
             }
             removed++;
 

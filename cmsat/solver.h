@@ -74,6 +74,27 @@ class Solver : public Searcher
             , const ClauseStats& stats = ClauseStats()
         );
 
+        struct BinTriStats
+        {
+            BinTriStats() :
+                irredLits(0)
+                , redLits(0)
+                , irredBins(0)
+                , redBins(0)
+                , irredTris(0)
+                , redTris(0)
+                , numNewBinsSinceSCC(0)
+            {};
+
+            uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
+            uint64_t            redLits;  ///< Number of literals in learnt clauses
+            uint64_t            irredBins;
+            uint64_t            redBins;
+            uint64_t            irredTris;
+            uint64_t            redTris;
+            uint64_t            numNewBinsSinceSCC;
+        };
+
         //////////////////////////
         //Stats
         static const char* getVersion();
@@ -88,6 +109,15 @@ class Solver : public Searcher
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;
+        const SolverConf& getConf() const;
+        const vector<string>& getFileNamesUsed() const;
+        const BinTriStats& getBinTriStats() const;
+        size_t   getNumLongIrredCls() const;
+        size_t   getNumLongRedCls() const;
+        const vector<Var>& getInterToOuterMain() const;
+        size_t getNumVarsElimed() const;
+        size_t getNumVarsReplaced() const;
+
 
         ///Return number of variables waiting to be replaced
         size_t getNewToReplaceVars() const;
@@ -212,8 +242,8 @@ class Solver : public Searcher
 
     protected:
 
-        friend class SQLStats;
-        SQLStats sqlStats;
+        //friend class SQLStats;
+        SQLStats* sqlStats;
         vector<string> fileNamesUsed;
 
         //Control
@@ -379,13 +409,7 @@ class Solver : public Searcher
         vector<char>        decisionVar;
         vector<ClOffset>    longIrredCls;          ///< List of problem clauses that are larger than 2
         vector<ClOffset>    longRedCls;          ///< List of learnt clauses.
-        uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
-        uint64_t            redLits;  ///< Number of literals in learnt clauses
-        uint64_t            irredBins;
-        uint64_t            redBins;
-        uint64_t            irredTris;
-        uint64_t            redTris;
-        uint64_t            numNewBinsSinceSCC;
+        BinTriStats binTri;
         void                reArrangeClauses();
         void                reArrangeClause(ClOffset offset);
         void                checkLiteralCount() const;
@@ -523,5 +547,41 @@ inline const Solver::SolveStats& Solver::getSolveStats() const
 {
     return solveStats;
 }
+
+inline void Solver::fileAdded(const string& filename)
+{
+    fileNamesUsed.push_back(filename);
+}
+
+inline size_t Solver::getNumLongIrredCls() const
+{
+    return longIrredCls.size();
+}
+
+inline size_t Solver::getNumLongRedCls() const
+{
+    return longRedCls.size();
+}
+
+inline const vector<Var>& Solver::getInterToOuterMain() const
+{
+    return interToOuterMain;
+}
+
+inline const SolverConf& Solver::getConf() const
+{
+    return conf;
+}
+
+inline const vector<string>& Solver::getFileNamesUsed() const
+{
+    return fileNamesUsed;
+}
+
+inline const Solver::BinTriStats& Solver::getBinTriStats() const
+{
+    return binTri;
+}
+
 
 #endif //THREADCONTROL_H

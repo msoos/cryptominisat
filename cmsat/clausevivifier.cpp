@@ -149,7 +149,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
 
     //Time-limiting
     uint64_t maxNumProps = 5L*1000L*1000L;
-    if (solver->irredLits + solver->redLits < 500000)
+    if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
         maxNumProps *=2;
 
     extraTime = 0;
@@ -162,7 +162,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
-        && (solver->irredLits + solver->redLits < 4000000)
+        && (solver->binTri.irredLits + solver->binTri.redLits < 4000000)
         && (solver->longIrredCls.size() < 50000))
         queueByBy = 1;
 
@@ -315,7 +315,7 @@ bool ClauseVivifier::vivifyClausesCache(
     //Stats
     uint64_t countTime = 0;
     uint64_t maxCountTime = 700000000;
-    if (solver->irredLits + solver->redLits < 300000)
+    if (solver->binTri.irredLits + solver->binTri.redLits < 300000)
         maxCountTime *= 2;
     double myTime = cpuTime();
 
@@ -400,10 +400,10 @@ bool ClauseVivifier::vivifyClausesCache(
                     if (wit->learnt() && !cl.learnt()) {
                         wit->setLearnt(false);
                         findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
-                        solver->redBins--;
-                        solver->irredBins++;
-                        solver->redLits -= 2;
-                        solver->irredLits += 2;
+                        solver->binTri.redBins--;
+                        solver->binTri.irredBins++;
+                        solver->binTri.redLits -= 2;
+                        solver->binTri.irredLits += 2;
                     }
                     isSubsumed = true;
                     break;
@@ -424,10 +424,10 @@ bool ClauseVivifier::vivifyClausesCache(
                         wit->setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), true).setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
-                        solver->redTris--;
-                        solver->irredTris++;
-                        solver->redLits -= 3;
-                        solver->irredLits += 3;
+                        solver->binTri.redTris--;
+                        solver->binTri.irredTris++;
+                        solver->binTri.redLits -= 3;
+                        solver->binTri.irredLits += 3;
                     }
                     isSubsumed = true;
                     break;

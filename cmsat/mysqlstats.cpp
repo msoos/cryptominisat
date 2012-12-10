@@ -1,4 +1,4 @@
-#include "sqlstats.h"
+#include "mysqlstats.h"
 #include "solvertypes.h"
 #include "solver.h"
 #include "time_mem.h"
@@ -15,19 +15,19 @@ using std::cout;
 using std::endl;
 using std::string;
 
-SQLStats::SQLStats() :
+MySQLStats::MySQLStats() :
     bindAt(0)
 {
 }
 
-void SQLStats::setup(const Solver* solver)
+void MySQLStats::setup(const Solver* solver)
 {
     connectServer();
     getID(solver);
     addFiles(solver);
     addStartupData(solver);
-    initRestartSTMT(solver->conf.verbosity);
-    initReduceDBSTMT(solver->conf.verbosity);
+    initRestartSTMT(solver->getConf().verbosity);
+    initReduceDBSTMT(solver->getConf().verbosity);
     initVarSTMT(solver, stmtVarBulk, 100);
     initVarSTMT(solver, stmtVarSingle, 1);
     initClauseDistribSTMT(
@@ -35,7 +35,7 @@ void SQLStats::setup(const Solver* solver)
         , stmtClsDistribSize
         , "clauseSizeDistrib"   //table name
         , "size"                //property name
-        , solver->conf.dumpClauseDistribMaxSize //num inserts
+        , solver->getConf().dumpClauseDistribMaxSize //num inserts
     );
 
     initClauseDistribSTMT(
@@ -43,15 +43,15 @@ void SQLStats::setup(const Solver* solver)
         , stmtClsDistribGlue
         , "clauseGlueDistrib"   //table name
         , "glue"                //property name
-        , solver->conf.dumpClauseDistribMaxGlue //num inserts
+        , solver->getConf().dumpClauseDistribMaxGlue //num inserts
     );
     initSizeGlueScatterSTMT(
         solver
-        , solver->conf.preparedDumpSize
+        , solver->getConf().preparedDumpSize
     );
 }
 
-void SQLStats::connectServer()
+void MySQLStats::connectServer()
 {
     //Connection parameters
     string server = "localhost";
@@ -89,7 +89,7 @@ void SQLStats::connectServer()
     }
 }
 
-bool SQLStats::tryIDInSQL(const Solver* solver)
+bool MySQLStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
@@ -102,7 +102,7 @@ bool SQLStats::tryIDInSQL(const Solver* solver)
     //Inserting element into solverruns to get unique ID
     if (mysql_query(serverConn, ss.str().c_str())) {
 
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout << "c Couldn't insert into table 'solverruns'" << endl;
             cout << "c " << mysql_error(serverConn) << endl;
         }
@@ -113,7 +113,7 @@ bool SQLStats::tryIDInSQL(const Solver* solver)
     return true;
 }
 
-void SQLStats::getID(const Solver* solver)
+void MySQLStats::getID(const Solver* solver)
 {
     size_t numTries = 0;
     getRandomID();
@@ -133,12 +133,12 @@ void SQLStats::getID(const Solver* solver)
         }
     }
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->getConf().verbosity >= 1) {
         cout << "c SQL runID is " << runID << endl;
     }
 }
 
-void SQLStats::getRandomID()
+void MySQLStats::getRandomID()
 {
     //Generate random ID for SQL
     int randomData = open("/dev/urandom", O_RDONLY);
@@ -159,10 +159,10 @@ void SQLStats::getRandomID()
     close(randomData);
 }
 
-void SQLStats::addFiles(const Solver* solver)
+void MySQLStats::addFiles(const Solver* solver)
 {
     for(vector<string>::const_iterator
-        it = solver->fileNamesUsed.begin(), end = solver->fileNamesUsed.end()
+        it = solver->getFileNamesUsed().begin(), end = solver->getFileNamesUsed().end()
         ; it != end
         ; it++
     ) {
@@ -180,14 +180,14 @@ void SQLStats::addFiles(const Solver* solver)
     }
 }
 
-void SQLStats::addStartupData(const Solver* solver)
+void MySQLStats::addStartupData(const Solver* solver)
 {
     std::stringstream ss;
     ss
     << "INSERT INTO startup (runID, startTime, verbosity) VALUES ("
     << runID << ","
     << "NOW() , "
-    << solver->conf.verbosity
+    << solver->getConf().verbosity
     << ");";
 
     //Inserting element into solverruns to get unique ID
@@ -197,7 +197,7 @@ void SQLStats::addStartupData(const Solver* solver)
     }
 }
 
-void SQLStats::writeQuestionMarks(
+void MySQLStats::writeQuestionMarks(
     size_t num
     , std::stringstream& ss
 ) {
@@ -214,7 +214,7 @@ void SQLStats::writeQuestionMarks(
     ss << ")";
 }
 
-void SQLStats::initClauseDistribSTMT(
+void MySQLStats::initClauseDistribSTMT(
     const Solver* solver
     , StmtClsDistrib& mystruct
     , const string& tableName
@@ -224,7 +224,7 @@ void SQLStats::initClauseDistribSTMT(
     const size_t numElems = 4;
     mystruct.bind.resize(numElems*numInserts);
 
-    if (solver->conf.verbosity >= 6)
+    if (solver->getConf().verbosity >= 6)
         cout
         << "c Trying to prepare statement with " << numInserts
         << " bulk inserts"
@@ -262,7 +262,7 @@ void SQLStats::initClauseDistribSTMT(
         exit(0);
     }
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->getConf().verbosity >= 6) {
         cout
         << "prepare INSERT successful"
         << endl;
@@ -301,14 +301,14 @@ void SQLStats::initClauseDistribSTMT(
     }
 }
 
-void SQLStats::initSizeGlueScatterSTMT(
+void MySQLStats::initSizeGlueScatterSTMT(
     const Solver* solver
     , const size_t numInserts
 ) {
     const size_t numElems = 5;
 
     //Output what we are trying to
-    if (solver->conf.verbosity >= 6)
+    if (solver->getConf().verbosity >= 6)
         cout
         << "c Trying to prepare statement with " << numInserts
         << " bulk inserts"
@@ -348,7 +348,7 @@ void SQLStats::initSizeGlueScatterSTMT(
         exit(0);
     }
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->getConf().verbosity >= 6) {
         cout
         << "prepare INSERT successful"
         << endl;
@@ -390,7 +390,7 @@ void SQLStats::initSizeGlueScatterSTMT(
 }
 
 //Prepare statement for restart
-void SQLStats::initRestartSTMT(
+void MySQLStats::initRestartSTMT(
     uint64_t verbosity
 ) {
     const size_t numElems = sizeof(stmtRst.bind)/sizeof(MYSQL_BIND);
@@ -609,7 +609,7 @@ void SQLStats::initRestartSTMT(
 }
 
 //Prepare statement for restart
-void SQLStats::initReduceDBSTMT(
+void MySQLStats::initReduceDBSTMT(
     uint64_t verbosity
 ) {
     const size_t numElems = sizeof(stmtReduceDB.bind)/sizeof(MYSQL_BIND);
@@ -751,7 +751,7 @@ void SQLStats::initReduceDBSTMT(
     }
 }
 
-void SQLStats::initVarSTMT(
+void MySQLStats::initVarSTMT(
     const Solver* solver
     , StmtVar& stmtVar
     , uint64_t numInserts
@@ -759,7 +759,7 @@ void SQLStats::initVarSTMT(
     const size_t numElems = 13;
 
     //Output what we are trying to
-    if (solver->conf.verbosity >= 6)
+    if (solver->getConf().verbosity >= 6)
         cout
         << "c Trying to prepare statement with " << numInserts
         << " bulk inserts"
@@ -811,7 +811,7 @@ void SQLStats::initVarSTMT(
         exit(0);
     }
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->getConf().verbosity >= 6) {
         cout
         << "prepare INSERT successful"
         << endl;
@@ -876,7 +876,7 @@ struct VarOrder
     }
 };
 
-void SQLStats::varDataDump(
+void MySQLStats::varDataDump(
     const Solver* solver
     , const Searcher* search
     , const vector<VarData>& varData
@@ -896,7 +896,7 @@ void SQLStats::varDataDump(
     << ");";
 
     if (mysql_query(serverConn, ss.str().c_str())) {
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout << "c Couldn't insert into table `varDataInit`" << endl;
             cout << "c " << mysql_error(serverConn) << endl;
         }
@@ -919,7 +919,7 @@ void SQLStats::varDataDump(
     StmtVar* stmtVar = &stmtVarBulk;
 
     //Go through top N variables
-    const size_t numToDump = std::min(order.size(), solver->conf.dumpTopNVars);
+    const size_t numToDump = std::min(order.size(), solver->getConf().dumpTopNVars);
     size_t at = 0;
     for(size_t i = 0
         ; i < numToDump
@@ -935,7 +935,7 @@ void SQLStats::varDataDump(
 
         stmtVar->varInitID = id;
         //Back-number variables
-        stmtVar->data[at].var = solver->interToOuterMain[var];
+        stmtVar->data[at].var = solver->getInterToOuterMain()[var];
 
         //Overall stats
         stmtVar->data[at].posPolarSet = varData[var].stats.posPolarSet;
@@ -972,7 +972,7 @@ void SQLStats::varDataDump(
     }
     assert(at == 0 && "numInserts must be divisible");
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->getConf().verbosity >= 6) {
         cout
         << "c Time to insert variables' stats into DB: "
         << std::fixed << std::setprecision(2) << std::setw(3)
@@ -982,7 +982,7 @@ void SQLStats::varDataDump(
     }
 }
 
-void SQLStats::clauseSizeDistrib(
+void MySQLStats::clauseSizeDistrib(
     uint64_t sumConflicts
     , const vector<uint32_t>& sizes
 ) {
@@ -1008,7 +1008,7 @@ void SQLStats::clauseSizeDistrib(
     }
 }
 
-void SQLStats::clauseGlueDistrib(
+void MySQLStats::clauseGlueDistrib(
     uint64_t sumConflicts
     , const vector<uint32_t>& glues
 ) {
@@ -1034,7 +1034,7 @@ void SQLStats::clauseGlueDistrib(
     }
 }
 
-void SQLStats::clauseSizeGlueScatter(
+void MySQLStats::clauseSizeGlueScatter(
     uint64_t sumConflicts
     , boost::multi_array<uint32_t, 2>& sizeAndGlue
 ) {
@@ -1072,7 +1072,7 @@ void SQLStats::clauseSizeGlueScatter(
     assert(at == 0 && "numInserts must be divisible");
 }
 
-void SQLStats::reduceDB(
+void MySQLStats::reduceDB(
     const ClauseUsageStats& irredStats
     , const ClauseUsageStats& redStats
     , const CleaningStats& clean
@@ -1084,7 +1084,7 @@ void SQLStats::reduceDB(
     stmtReduceDB.sumRestarts     = solver->sumRestarts();
     stmtReduceDB.sumConflicts    = solver->sumConflicts();
     stmtReduceDB.cpuTime         = cpuTime();
-    stmtReduceDB.reduceDBs       = solver->solveStats.nbReduceDB;
+    stmtReduceDB.reduceDBs       = solver->getSolveStats().nbReduceDB;
 
     //Clause data for IRRED
     stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
@@ -1117,13 +1117,16 @@ void SQLStats::reduceDB(
 }
 
 
-void SQLStats::restart(
+void MySQLStats::restart(
     const PropStats& thisPropStats
     , const Searcher::Stats& thisStats
     , const VariableVariance& varVarStats
     , const Solver* solver
     , const Searcher* search
 ) {
+    const Searcher::Hist& searchHist = search->getHistory();
+    const Solver::BinTriStats& binTri = solver->getBinTriStats();
+
     //Position of solving
     stmtRst.numSimplify     = solver->getSolveStats().numSimplify;
     stmtRst.sumRestarts     = search->sumRestarts();
@@ -1131,61 +1134,61 @@ void SQLStats::restart(
     stmtRst.cpuTime         = cpuTime();
 
     //Clause stats
-    stmtRst.numIrredBins  = solver->irredBins;
-    stmtRst.numIrredTris  = solver->irredTris;
-    stmtRst.numIrredLongs = solver->longIrredCls.size();
-    stmtRst.numIrredLits  = solver->irredLits;
-    stmtRst.numRedBins    = solver->redBins;
-    stmtRst.numRedTris    = solver->redTris;
-    stmtRst.numRedLongs   = solver->longRedCls.size();
-    stmtRst.numRedLits    = solver->redLits;
+    stmtRst.numIrredBins  = binTri.irredBins;
+    stmtRst.numIrredTris  = binTri.irredTris;
+    stmtRst.numIrredLongs = solver->getNumLongIrredCls();
+    stmtRst.numIrredLits  = binTri.irredLits;
+    stmtRst.numRedBins    = binTri.redBins;
+    stmtRst.numRedTris    = binTri.redTris;
+    stmtRst.numRedLongs   = solver->getNumLongRedCls();
+    stmtRst.numRedLits    = binTri.redLits;
 
     //Conflict stats
-    stmtRst.glueHist        = search->hist.glueHist.getLongtTerm().avg();
-    stmtRst.glueHistSD      = sqrt(search->hist.glueHist.getLongtTerm().var());
-    stmtRst.glueHistMin      = search->hist.glueHist.getLongtTerm().getMin();
-    stmtRst.glueHistMax      = search->hist.glueHist.getLongtTerm().getMax();
+    stmtRst.glueHist        = searchHist.glueHist.getLongtTerm().avg();
+    stmtRst.glueHistSD      = sqrt(searchHist.glueHist.getLongtTerm().var());
+    stmtRst.glueHistMin      = searchHist.glueHist.getLongtTerm().getMin();
+    stmtRst.glueHistMax      = searchHist.glueHist.getLongtTerm().getMax();
 
-    stmtRst.conflSizeHist   = search->hist.conflSizeHist.getLongtTerm().avg();
-    stmtRst.conflSizeHistSD = sqrt(search->hist.conflSizeHist.getLongtTerm().var());
-    stmtRst.conflSizeHistMin = search->hist.conflSizeHist.getLongtTerm().getMin();
-    stmtRst.conflSizeHistMax = search->hist.conflSizeHist.getLongtTerm().getMax();
+    stmtRst.conflSizeHist   = searchHist.conflSizeHist.getLongtTerm().avg();
+    stmtRst.conflSizeHistSD = sqrt(searchHist.conflSizeHist.getLongtTerm().var());
+    stmtRst.conflSizeHistMin = searchHist.conflSizeHist.getLongtTerm().getMin();
+    stmtRst.conflSizeHistMax = searchHist.conflSizeHist.getLongtTerm().getMax();
 
     stmtRst.numResolutionsHist =
-        search->hist.numResolutionsHist.avg();
+        searchHist.numResolutionsHist.avg();
     stmtRst.numResolutionsHistSD =
-        sqrt(search->hist.numResolutionsHist.var());
+        sqrt(searchHist.numResolutionsHist.var());
     stmtRst.numResolutionsHistMin =
-        search->hist.numResolutionsHist.getMin();
+        searchHist.numResolutionsHist.getMin();
     stmtRst.numResolutionsHistMax =
-        search->hist.numResolutionsHist.getMax();
+        searchHist.numResolutionsHist.getMax();
 
     stmtRst.conflictAfterConflict =
-        search->hist.conflictAfterConflict.avg()*100.0;
+        searchHist.conflictAfterConflict.avg()*100.0;
 
     //Search stats
-    stmtRst.branchDepthHist         = search->hist.branchDepthHist.avg();
-    stmtRst.branchDepthHistSD       = sqrt(search->hist.branchDepthHist.var());
-    stmtRst.branchDepthHistMin      = search->hist.branchDepthHist.getMin();
-    stmtRst.branchDepthHistMax      = search->hist.branchDepthHist.getMax();
+    stmtRst.branchDepthHist         = searchHist.branchDepthHist.avg();
+    stmtRst.branchDepthHistSD       = sqrt(searchHist.branchDepthHist.var());
+    stmtRst.branchDepthHistMin      = searchHist.branchDepthHist.getMin();
+    stmtRst.branchDepthHistMax      = searchHist.branchDepthHist.getMax();
 
 
-    stmtRst.branchDepthDeltaHist    = search->hist.branchDepthDeltaHist.getLongtTerm().avg();
-    stmtRst.branchDepthDeltaHistSD  = sqrt(search->hist.branchDepthDeltaHist.getLongtTerm().var());
-    stmtRst.branchDepthDeltaHistMin  = search->hist.branchDepthDeltaHist.getLongtTerm().getMin();
-    stmtRst.branchDepthDeltaHistMax  = search->hist.branchDepthDeltaHist.getLongtTerm().getMax();
+    stmtRst.branchDepthDeltaHist    = searchHist.branchDepthDeltaHist.getLongtTerm().avg();
+    stmtRst.branchDepthDeltaHistSD  = sqrt(searchHist.branchDepthDeltaHist.getLongtTerm().var());
+    stmtRst.branchDepthDeltaHistMin  = searchHist.branchDepthDeltaHist.getLongtTerm().getMin();
+    stmtRst.branchDepthDeltaHistMax  = searchHist.branchDepthDeltaHist.getLongtTerm().getMax();
 
-    stmtRst.trailDepthHist          = search->hist.trailDepthHist.avg();
-    stmtRst.trailDepthHistSD        = sqrt(search->hist.trailDepthHist.var());
-    stmtRst.trailDepthHistMin       = search->hist.trailDepthHist.getMin();
-    stmtRst.trailDepthHistMax       = search->hist.trailDepthHist.getMax();
+    stmtRst.trailDepthHist          = searchHist.trailDepthHist.avg();
+    stmtRst.trailDepthHistSD        = sqrt(searchHist.trailDepthHist.var());
+    stmtRst.trailDepthHistMin       = searchHist.trailDepthHist.getMin();
+    stmtRst.trailDepthHistMax       = searchHist.trailDepthHist.getMax();
 
-    stmtRst.trailDepthDeltaHist     = search->hist.trailDepthDeltaHist.avg();
-    stmtRst.trailDepthDeltaHistSD   = sqrt(search->hist.trailDepthDeltaHist.var());
-    stmtRst.trailDepthDeltaHistMin  = search->hist.trailDepthDeltaHist.getMin();
-    stmtRst.trailDepthDeltaHistMax  = search->hist.trailDepthDeltaHist.getMax();
+    stmtRst.trailDepthDeltaHist     = searchHist.trailDepthDeltaHist.avg();
+    stmtRst.trailDepthDeltaHistSD   = sqrt(searchHist.trailDepthDeltaHist.var());
+    stmtRst.trailDepthDeltaHistMin  = searchHist.trailDepthDeltaHist.getMin();
+    stmtRst.trailDepthDeltaHistMax  = searchHist.trailDepthDeltaHist.getMax();
 
-    stmtRst.agilityHist             = search->hist.agilityHist.avg();
+    stmtRst.agilityHist             = searchHist.agilityHist.avg();
 
     //Prop
     stmtRst.propsBinIrred    = thisPropStats.propsBinIrred;
@@ -1210,14 +1213,14 @@ void SQLStats::restart(
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Misc
-    stmtRst.watchListSizeTraversed   = search->hist.watchListSizeTraversed.avg();
-    stmtRst.watchListSizeTraversedSD = sqrt(search->hist.watchListSizeTraversed.var());
-    stmtRst.watchListSizeTraversedMin= search->hist.watchListSizeTraversed.getMin();
-    stmtRst.watchListSizeTraversedMax= search->hist.watchListSizeTraversed.getMax();
+    stmtRst.watchListSizeTraversed   = searchHist.watchListSizeTraversed.avg();
+    stmtRst.watchListSizeTraversedSD = sqrt(searchHist.watchListSizeTraversed.var());
+    stmtRst.watchListSizeTraversedMin= searchHist.watchListSizeTraversed.getMin();
+    stmtRst.watchListSizeTraversedMax= searchHist.watchListSizeTraversed.getMax();
 
 
-    stmtRst.litPropagatedSomething   = search->hist.litPropagatedSomething.avg()*100.0;
-    stmtRst.litPropagatedSomethingSD = sqrt(search->hist.litPropagatedSomething.var())*100.0;
+    stmtRst.litPropagatedSomething   = searchHist.litPropagatedSomething.avg()*100.0;
+    stmtRst.litPropagatedSomethingSD = sqrt(searchHist.litPropagatedSomething.var())*100.0;
 
     //Var stats
     stmtRst.decisions       = thisStats.decisions;
@@ -1228,9 +1231,9 @@ void SQLStats::restart(
     stmtRst.varSetPos       = thisPropStats.varSetPos;
     stmtRst.varSetNeg       = thisPropStats.varSetNeg;
     stmtRst.numFreeVars     = solver->getNumFreeVars();
-    stmtRst.numReplacedVars = solver->varReplacer->getNumReplacedVars();
-    stmtRst.numVarsElimed   = solver->simplifier->getStats().numVarsElimed;
-    stmtRst.trailSize       = search->trail.size();
+    stmtRst.numReplacedVars = solver->getNumVarsReplaced();
+    stmtRst.numVarsElimed   = solver->getNumVarsElimed();
+    stmtRst.trailSize       = search->getTrailSize();
 
     if (mysql_stmt_execute(stmtRst.stmt)) {
         cout

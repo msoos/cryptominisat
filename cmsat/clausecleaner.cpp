@@ -146,12 +146,12 @@ void ClauseCleaner::treatImplicitClauses()
     assert(remLBin % 2 == 0);
     assert(remNonLTri % 3 == 0);
     assert(remLTri % 3 == 0);
-    solver->irredLits -= remNonLBin + remNonLTri;
-    solver->redLits -= remLBin + remLTri;
-    solver->irredBins -= remNonLBin/2;
-    solver->redBins -= remLBin/2;
-    solver->irredTris -= remNonLTri/3;
-    solver->redTris -= remLTri/3;
+    solver->binTri.irredLits -= remNonLBin + remNonLTri;
+    solver->binTri.redLits -= remLBin + remLTri;
+    solver->binTri.irredBins -= remNonLBin/2;
+    solver->binTri.redBins -= remLBin/2;
+    solver->binTri.irredTris -= remNonLTri/3;
+    solver->binTri.redTris -= remLTri/3;
     solver->checkImplicitStats();
 }
 
@@ -216,9 +216,9 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
             return true;
         } else {
             if (cl.learnt())
-                solver->redLits -= i-j;
+                solver->binTri.redLits -= i-j;
             else
-                solver->irredLits -= i-j;
+                solver->binTri.irredLits -= i-j;
         }
     }
 

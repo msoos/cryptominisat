@@ -410,12 +410,12 @@ bool VarReplacer::replaceImplicit()
     assert(removedNonLearntBin % 2 == 0);
     assert(removedLearntTri % 3 == 0);
     assert(removedNonLearntTri % 3 == 0);
-    solver->redLits -= removedLearntBin + removedLearntTri;
-    solver->irredLits -= removedNonLearntBin + removedNonLearntTri;
-    solver->redBins -= removedLearntBin/2;
-    solver->irredBins -= removedNonLearntBin/2;
-    solver->redTris -= removedLearntTri/3;
-    solver->irredTris -= removedNonLearntTri/3;
+    solver->binTri.redLits -= removedLearntBin + removedLearntTri;
+    solver->binTri.irredLits -= removedNonLearntBin + removedNonLearntTri;
+    solver->binTri.redBins -= removedLearntBin/2;
+    solver->binTri.irredBins -= removedNonLearntBin/2;
+    solver->binTri.redTris -= removedLearntTri/3;
+    solver->binTri.irredTris -= removedNonLearntTri/3;
     solver->checkImplicitStats();
 
     //Global stats update

@@ -118,7 +118,7 @@ bool Prober::probe()
     solver->propStats.clear();
     runStats.clear();
     runStats.origNumFreeVars = solver->getNumFreeVars();
-    runStats.origNumBins = solver->redBins + solver->irredBins;
+    runStats.origNumBins = solver->binTri.redBins + solver->binTri.irredBins;
     numCalls++;
 
     //State

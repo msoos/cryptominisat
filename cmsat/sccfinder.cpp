@@ -72,7 +72,7 @@ bool SCCFinder::find2LongXors()
             runStats.printShort();
     }
     globalStats += runStats;
-    solver->numNewBinsSinceSCC = 0;
+    solver->binTri.numNewBinsSinceSCC = 0;
 
     return solver->ok;
 }

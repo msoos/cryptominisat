@@ -48,6 +48,158 @@ class Searcher : public PropEngine
         Searcher(const SolverConf& _conf, Solver* solver);
         ~Searcher();
 
+        //History
+        struct Hist {
+            //About the search
+            AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
+            AvgCalc<uint32_t>   branchDepthHistLT;
+
+            bqueue<uint32_t>    branchDepthDeltaHist;
+            AvgCalc<uint32_t>   branchDepthDeltaHistLT;
+
+            AvgCalc<uint32_t>   trailDepthHist;
+            AvgCalc<uint32_t>   trailDepthHistLT;
+
+            AvgCalc<uint32_t>   trailDepthDeltaHist;
+            AvgCalc<uint32_t>   trailDepthDeltaHistLT;
+
+            AvgCalc<bool>       conflictAfterConflict;
+            AvgCalc<bool>       conflictAfterConflictLT;
+
+            //About the confl generated
+            bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
+            AvgCalc<uint32_t>   glueHistLT;
+
+            bqueue<uint32_t>    conflSizeHist;       ///< Conflict size history
+            AvgCalc<uint32_t>   conflSizeHistLT;
+
+            AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
+            AvgCalc<uint32_t>   numResolutionsHistLT;
+
+            //lits, vars
+            AvgCalc<double, double>  agilityHist;
+            AvgCalc<double, double>  agilityHistLT;
+
+            AvgCalc<size_t>     watchListSizeTraversed;
+            AvgCalc<size_t>     watchListSizeTraversedLT;
+
+            AvgCalc<bool>       litPropagatedSomething;
+            AvgCalc<bool>       litPropagatedSomethingLT;
+
+            void clear()
+            {
+                //About the search
+                branchDepthHistLT.addData(branchDepthHist);
+                branchDepthHist.clear();
+
+                branchDepthDeltaHistLT.addData(branchDepthDeltaHist.getLongtTerm());
+                branchDepthDeltaHist.clear();
+
+                trailDepthHistLT.addData(trailDepthHist);
+                trailDepthHist.clear();
+
+                trailDepthDeltaHistLT.addData(trailDepthDeltaHist);
+                trailDepthDeltaHist.clear();
+
+                conflictAfterConflictLT.addData(conflictAfterConflict);
+                conflictAfterConflict.clear();
+
+                //conflict generated
+                glueHistLT.addData(glueHist.getLongtTerm());
+                glueHist.clear();
+
+                conflSizeHistLT.addData(conflSizeHist.getLongtTerm());
+                conflSizeHist.clear();
+
+                numResolutionsHistLT.addData(numResolutionsHist);
+                numResolutionsHist.clear();
+
+                //lits, vars
+                agilityHistLT.addData(agilityHist);
+                agilityHist.clear();
+
+                watchListSizeTraversedLT.addData(watchListSizeTraversed);
+                watchListSizeTraversed.clear();
+
+                litPropagatedSomethingLT.addData(litPropagatedSomething);
+                litPropagatedSomething.clear();
+            }
+
+            void reset(const size_t shortTermHistorySize)
+            {
+                //About the search tree
+                branchDepthHist.clear();
+                branchDepthHistLT.clear();
+
+                branchDepthDeltaHist.clearAndResize(shortTermHistorySize);
+                branchDepthDeltaHistLT.clear();
+
+                trailDepthHist.clear();
+                trailDepthHistLT.clear();
+
+                trailDepthDeltaHist.clear();
+                trailDepthDeltaHistLT.clear();
+
+                conflictAfterConflict.clear();
+                conflictAfterConflictLT.clear();
+
+                //About the confl generated
+                glueHist.clearAndResize(shortTermHistorySize);
+                glueHistLT.clear();
+
+                conflSizeHist.clearAndResize(shortTermHistorySize);
+                conflSizeHistLT.clear();
+
+                numResolutionsHist.clear();
+                numResolutionsHistLT.clear();
+
+                //Lits, vars
+                agilityHist.clear();
+                agilityHistLT.clear();
+
+                watchListSizeTraversed.clear();
+                watchListSizeTraversedLT.clear();
+
+                litPropagatedSomething.clear();
+                litPropagatedSomethingLT.clear();
+            }
+
+            void print()
+            {
+                cout
+                << " glue"
+                << " " << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
+                << "/" << std::left << glueHistLT.avgPrint(1, 5)
+
+                << " agil"
+                << " " << std::right << agilityHist.avgPrint(3, 5)
+                << "/" << std::left<< agilityHistLT.avgPrint(3, 5)
+
+                << " confllen"
+                << " " << std::right << conflSizeHist.getLongtTerm().avgPrint(1, 5)
+                << "/" << std::left << conflSizeHistLT.avgPrint(1, 5)
+
+                << " branchd"
+                << " " << std::right << branchDepthHist.avgPrint(1, 5)
+                << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
+                << " branchdd"
+
+                << " " << std::right << branchDepthDeltaHist.getLongtTerm().avgPrint(1, 4)
+                << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
+
+                << " traild"
+                << " " << std::right << trailDepthHist.avgPrint(0, 7)
+                << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
+
+                << " traildd"
+                << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
+                << "/" << std::left << trailDepthDeltaHistLT.avgPrint(0, 5)
+                ;
+
+                cout << std::right;
+            }
+        };
+
         //////////////////////////////
         // Problem specification:
         Var newVar(bool dvar = true); // Add a new variable that can be decided on or not
@@ -72,6 +224,9 @@ class Searcher : public PropEngine
         void     printRestartStats();
         void     printBaseStats();
         void     printClauseStats();
+        uint64_t sumConflicts() const;
+        uint64_t sumRestarts() const;
+        const Hist& getHistory() const;
 
         void     setNeedToInterrupt();
         uint32_t getSavedActivity(Var var) const;
@@ -373,164 +528,10 @@ class Searcher : public PropEngine
         size_t hyperBinResAll();
         size_t removeUselessBins();
 
-        //History
-        struct Hist {
-            //About the search
-            AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
-            AvgCalc<uint32_t>   branchDepthHistLT;
-
-            bqueue<uint32_t>    branchDepthDeltaHist;
-            AvgCalc<uint32_t>   branchDepthDeltaHistLT;
-
-            AvgCalc<uint32_t>   trailDepthHist;
-            AvgCalc<uint32_t>   trailDepthHistLT;
-
-            AvgCalc<uint32_t>   trailDepthDeltaHist;
-            AvgCalc<uint32_t>   trailDepthDeltaHistLT;
-
-            AvgCalc<bool>       conflictAfterConflict;
-            AvgCalc<bool>       conflictAfterConflictLT;
-
-            //About the confl generated
-            bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
-            AvgCalc<uint32_t>   glueHistLT;
-
-            bqueue<uint32_t>    conflSizeHist;       ///< Conflict size history
-            AvgCalc<uint32_t>   conflSizeHistLT;
-
-            AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
-            AvgCalc<uint32_t>   numResolutionsHistLT;
-
-            //lits, vars
-            AvgCalc<double, double>  agilityHist;
-            AvgCalc<double, double>  agilityHistLT;
-
-            AvgCalc<size_t>     watchListSizeTraversed;
-            AvgCalc<size_t>     watchListSizeTraversedLT;
-
-            AvgCalc<bool>       litPropagatedSomething;
-            AvgCalc<bool>       litPropagatedSomethingLT;
-
-            void clear()
-            {
-                //About the search
-                branchDepthHistLT.addData(branchDepthHist);
-                branchDepthHist.clear();
-
-                branchDepthDeltaHistLT.addData(branchDepthDeltaHist.getLongtTerm());
-                branchDepthDeltaHist.clear();
-
-                trailDepthHistLT.addData(trailDepthHist);
-                trailDepthHist.clear();
-
-                trailDepthDeltaHistLT.addData(trailDepthDeltaHist);
-                trailDepthDeltaHist.clear();
-
-                conflictAfterConflictLT.addData(conflictAfterConflict);
-                conflictAfterConflict.clear();
-
-                //conflict generated
-                glueHistLT.addData(glueHist.getLongtTerm());
-                glueHist.clear();
-
-                conflSizeHistLT.addData(conflSizeHist.getLongtTerm());
-                conflSizeHist.clear();
-
-                numResolutionsHistLT.addData(numResolutionsHist);
-                numResolutionsHist.clear();
-
-                //lits, vars
-                agilityHistLT.addData(agilityHist);
-                agilityHist.clear();
-
-                watchListSizeTraversedLT.addData(watchListSizeTraversed);
-                watchListSizeTraversed.clear();
-
-                litPropagatedSomethingLT.addData(litPropagatedSomething);
-                litPropagatedSomething.clear();
-            }
-
-            void reset(const size_t shortTermHistorySize)
-            {
-                //About the search tree
-                branchDepthHist.clear();
-                branchDepthHistLT.clear();
-
-                branchDepthDeltaHist.clearAndResize(shortTermHistorySize);
-                branchDepthDeltaHistLT.clear();
-
-                trailDepthHist.clear();
-                trailDepthHistLT.clear();
-
-                trailDepthDeltaHist.clear();
-                trailDepthDeltaHistLT.clear();
-
-                conflictAfterConflict.clear();
-                conflictAfterConflictLT.clear();
-
-                //About the confl generated
-                glueHist.clearAndResize(shortTermHistorySize);
-                glueHistLT.clear();
-
-                conflSizeHist.clearAndResize(shortTermHistorySize);
-                conflSizeHistLT.clear();
-
-                numResolutionsHist.clear();
-                numResolutionsHistLT.clear();
-
-                //Lits, vars
-                agilityHist.clear();
-                agilityHistLT.clear();
-
-                watchListSizeTraversed.clear();
-                watchListSizeTraversedLT.clear();
-
-                litPropagatedSomething.clear();
-                litPropagatedSomethingLT.clear();
-            }
-
-            void print()
-            {
-                cout
-                << " glue"
-                << " " << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
-                << "/" << std::left << glueHistLT.avgPrint(1, 5)
-
-                << " agil"
-                << " " << std::right << agilityHist.avgPrint(3, 5)
-                << "/" << std::left<< agilityHistLT.avgPrint(3, 5)
-
-                << " confllen"
-                << " " << std::right << conflSizeHist.getLongtTerm().avgPrint(1, 5)
-                << "/" << std::left << conflSizeHistLT.avgPrint(1, 5)
-
-                << " branchd"
-                << " " << std::right << branchDepthHist.avgPrint(1, 5)
-                << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
-                << " branchdd"
-
-                << " " << std::right << branchDepthDeltaHist.getLongtTerm().avgPrint(1, 4)
-                << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
-
-                << " traild"
-                << " " << std::right << trailDepthHist.avgPrint(0, 7)
-                << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
-
-                << " traildd"
-                << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
-                << "/" << std::left << trailDepthDeltaHistLT.avgPrint(0, 5)
-                ;
-
-                cout << std::right;
-            }
-        };
         Hist hist;
         vector<uint32_t>    clauseSizeDistrib;
         vector<uint32_t>    clauseGlueDistrib;
         boost::multi_array<uint32_t, 2> sizeAndGlue;
-
-        uint64_t sumConflicts() const;
-        uint64_t sumRestarts() const;
 
         /////////////////
         //Settings
@@ -737,6 +738,11 @@ inline const Searcher::Stats& Searcher::getStats() const
 inline void Searcher::addInPartialSolvingStat()
 {
     stats.cpu_time = cpuTime() - startTime;
+}
+
+inline const Searcher::Hist& Searcher::getHistory() const
+{
+    return hist;
 }
 
 #endif //__SEARCHER_H__
