@@ -1660,8 +1660,14 @@ void Solver::dumpBinClauses(
                 if (it2->learnt() && alsoLearnt) toDump = true;
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
-                if (toDump)
-                    *outfile << it2->lit1() << " " << lit << " 0" << endl;
+                if (toDump) {
+                    *outfile
+                    << getUpdatedLit(it2->lit1(), interToOuterMain)
+                    << " "
+                    << getUpdatedLit(lit, interToOuterMain)
+                    << " 0"
+                    << endl;
+                }
             }
         }
     }
@@ -1689,11 +1695,11 @@ void Solver::dumpTriClauses(
 
                 if (toDump)
                     *outfile
-                    << it2->lit1()
+                    << getUpdatedLit(it2->lit1(), interToOuterMain)
                     << " "
-                    << it2->lit2()
+                    << getUpdatedLit(it2->lit2(), interToOuterMain)
                     << " "
-                    << lit
+                    << getUpdatedLit(lit, interToOuterMain)
                     << " 0" << endl;
             }
         }
@@ -1761,49 +1767,77 @@ void Solver::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void Solver::dumpRedClauses(
-    std::ostream* os
-    , const uint32_t maxSize
-) {
+void Solver::dump2LongXorClauses(std::ostream* os) const
+{
+    *os
+    << "c " << endl
+    << "c ---------------------------------------" << endl
+    << "c clauses representing 2-long XOR clauses" << endl
+    << "c ---------------------------------------" << endl;
+    const vector<Lit>& table = varReplacer->getReplaceTable();
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        *os
+        << getUpdatedLit((~lit), interToOuterMain)
+        << " "
+        << getUpdatedLit(Lit(var, false), interToOuterMain)
+        << " 0"
+        << endl;
+
+        *os
+        << getUpdatedLit(lit, interToOuterMain)
+        << " "
+        << getUpdatedLit(Lit(var, true), interToOuterMain)
+        << " 0"
+        << endl;
+    }
+}
+
+void Solver::dumpUnitaryClauses(std::ostream* os) const
+{
     *os
     << "c " << endl
     << "c ---------" << endl
     << "c unitaries" << endl
     << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        *os << trail[i] << " 0" << endl;    }
+        *os
+        << getUpdatedLit(trail[i], interToOuterMain)
+        << " 0"
+        << endl;
+    }
+}
+
+void Solver::dumpRedClauses(
+    std::ostream* os
+    , const uint32_t maxSize
+) const {
+
+    dumpUnitaryClauses(os);
 
     *os
     << "c " << endl
     << "c ---------------------------------" << endl
     << "c learnt binary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
-    if (maxSize >= 2)
+    if (maxSize >= 2) {
         dumpBinClauses(true, false, os);
+    }
 
     *os
     << "c " << endl
     << "c ---------------------------------" << endl
     << "c learnt tertiary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
-    if (maxSize >= 2)
-        dumpTriClauses(true, false, os);
-
-    *os
-    << "c " << endl
-    << "c ---------------------------------------" << endl
-    << "c clauses representing 2-long XOR clauses" << endl
-    << "c ---------------------------------------" << endl;
     if (maxSize >= 2) {
-        const vector<Lit>& table = varReplacer->getReplaceTable();
-        for (Var var = 0; var != table.size(); var++) {
-            Lit lit = table[var];
-            if (lit.var() == var)
-                continue;
+        dumpTriClauses(true, false, os);
+    }
 
-            *os << (~lit) << " " << Lit(var, false) << " 0" << endl;
-            *os << lit << " " << Lit(var, true) << " 0" << endl;
-        }
+    if (maxSize >= 2) {
+        dump2LongXorClauses(os);
     }
 
     *os
@@ -1816,18 +1850,31 @@ void Solver::dumpRedClauses(
         ; it != end
         ; it++
     ) {
-        const Clause& cl = *clAllocator->getPointer(*it);
-        if (cl.size() <= maxSize) {
-            //Dump clause
-            *os << cl << " 0" << endl;
+        const Clause* cl = clAllocator->getPointer(*it);
+
+        if (cl->size() <= maxSize) {
+            *os << clauseBackNumbered(*cl) << " 0" << endl;
 
             //Dump the information about the clause
             *os
             << "c clause learnt "
-            << (cl.learnt() ? "yes" : "no")
-            << " stats "  << cl.stats << endl;
+            << (cl->learnt() ? "yes" : "no")
+            << " stats "  << cl->stats << endl;
         }
     }
+}
+
+string Solver::clauseBackNumbered(const Clause& cl) const
+{
+    std::stringstream ss;
+    for(size_t i = 0; i < cl.size(); i++) {
+        ss
+        << getUpdatedLit(cl[i], interToOuterMain)
+        << " ";
+    }
+    ss << "0";
+
+    return ss.str();
 }
 
 void Solver::dumpIrredClauses(std::ostream* os) const
@@ -1865,30 +1912,9 @@ void Solver::dumpIrredClauses(std::ostream* os) const
 
     ////////////////////////////////////////////////////////////////////
 
-    *os
-    << "c " << endl
-    << "c ---------" << endl
-    << "c unitaries" << endl
-    << "c ---------" << endl;
-    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        *os << trail[i] << " 0" << endl;
-    }
+    dumpUnitaryClauses(os);
 
-    *os
-    << "c " << endl
-    << "c ---------------------------------------" << endl
-    << "c clauses representing 2-long XOR clauses" << endl
-    << "c ---------------------------------------" << endl;
-    for (Var var = 0; var != table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
-
-        Lit litP1 = ~lit;
-        Lit litP2 = Lit(var, false);
-        *os << litP1 << " " << litP2 << endl;
-        *os << ~litP1 << " " << ~litP2 << endl;
-    }
+    dump2LongXorClauses(os);
 
     *os
     << "c " << endl
@@ -1916,7 +1942,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     ) {
         Clause* cl = clAllocator->getPointer(*it);
         assert(!cl->learnt());
-        *os << *cl << " 0" << endl;
+        *os << clauseBackNumbered(*cl) << " 0" << endl;
     }
 
     *os
@@ -1932,7 +1958,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         //Print info about clause
         *os
         << "c next clause is eliminated/blocked on lit "
-        << it->blockedOn
+        << getUpdatedLit(it->blockedOn, interToOuterMain)
         << endl;
 
         //Print clause
