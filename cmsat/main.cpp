@@ -713,7 +713,7 @@ int Main::solve()
         if (ret == l_False) {
             outfile << "p cnf 0 1" << endl;
             outfile << "0";
-        } else if (ret == l_True) {
+        } else {
             solver->dumpIrredClauses(&outfile);
         }
     }
