@@ -678,9 +678,17 @@ int Main::solve()
     }
 
     if (conf.needToDumpLearnts) {
-        cout << "Dumping learnt is not supported yet! Sorry." << endl;
-        //solver->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        //cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << endl;
+        std::ofstream outfile;
+        outfile.open(conf.learntsDumpFilename.c_str());
+        if (!outfile) {
+            cout
+            << "ERROR: Couldn't open file '"
+            << conf.learntsDumpFilename
+            << "' for writing, cannot dump learnt clauses!"
+            << endl;
+        } else {
+            solver->dumpLearnts(&outfile, conf.maxDumpLearntsSize);
+        }
     }
 
     if (conf.needToDumpSimplified) {
