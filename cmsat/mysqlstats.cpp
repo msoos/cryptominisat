@@ -5,9 +5,6 @@
 #include <sstream>
 #include "varreplacer.h"
 #include "simplifier.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <string>
 #include <time.h>
 
@@ -136,27 +133,6 @@ void MySQLStats::getID(const Solver* solver)
     if (solver->getConf().verbosity >= 1) {
         cout << "c SQL runID is " << runID << endl;
     }
-}
-
-void MySQLStats::getRandomID()
-{
-    //Generate random ID for SQL
-    int randomData = open("/dev/urandom", O_RDONLY);
-    if (randomData == -1) {
-        cout << "Error reading from /dev/urandom !" << endl;
-        exit(-1);
-    }
-    ssize_t ret = read(randomData, &runID, sizeof(runID));
-
-    //Can only be <8 bytes long, some PHP-related limit
-    //Make it 6-byte long then (good chance to collide after 2^24 entries)
-    runID &= 0xffffffULL;
-
-    if (ret != sizeof(runID)) {
-        cout << "Couldn't read from /dev/urandom!" << endl;
-        exit(-1);
-    }
-    close(randomData);
 }
 
 void MySQLStats::addFiles(const Solver* solver)

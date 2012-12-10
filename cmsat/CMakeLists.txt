@@ -33,6 +33,7 @@ add_library(cryptoms SHARED
     xorfinder.cpp
     gatefinder.cpp
     mysqlstats.cpp
+    sqlstats.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

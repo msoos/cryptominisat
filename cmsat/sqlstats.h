@@ -47,6 +47,11 @@ public:
     ) = 0;
 
     virtual void setup(const Solver* solver) = 0;
+
+protected:
+
+    void getRandomID();
+    uint64_t runID;
 };
 
 #endif //__SQLSTATS_H__

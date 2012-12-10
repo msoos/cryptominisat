@@ -63,7 +63,6 @@ private:
     void connectServer();
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
-    void getRandomID();
 
     void addFiles(const Solver* solver);
     void addStartupData(const Solver* solver);
@@ -107,8 +106,6 @@ private:
 
         bindAt++;
     }
-
-    uint64_t runID;
 
     struct StmtReduceDB {
         StmtReduceDB() :
