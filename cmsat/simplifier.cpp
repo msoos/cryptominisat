@@ -1727,7 +1727,7 @@ void Simplifier::removeAssignedVarsFromEliminated()
         if (solver->value(i->blockedOn) != l_Undef) {
             const Var var = i->blockedOn.var();
             if (solver->varData[var].elimed == ELIMED_VARELIM) {
-                assert(var_elimed[var] == true);
+                assert(var_elimed[var]);
                 var_elimed[var] = false;
                 solver->varData[var].elimed = ELIMED_NONE;
                 solver->setDecisionVar(var);
