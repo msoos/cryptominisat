@@ -1761,7 +1761,7 @@ void Solver::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void Solver::dumpLearnts(
+void Solver::dumpRedClauses(
     std::ostream* os
     , const uint32_t maxSize
 ) {

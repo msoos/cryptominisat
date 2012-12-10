@@ -131,7 +131,7 @@ class Solver : public Searcher
         // State Dumping
         void  dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
         void  dumpTriClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
-        void  dumpLearnts(std::ostream* os, const uint32_t maxSize); ///<Dump all learnt clauses into file
+        void  dumpRedClauses(std::ostream* os, const uint32_t maxSize); ///<Dump all irredundant(=learnt) clauses into file
         void  dumpIrredClauses(std::ostream* os) const; ///<Dump (simplified) irredundant system
 
         struct SolveStats

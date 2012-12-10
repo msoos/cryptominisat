@@ -687,7 +687,7 @@ int Main::solve()
             << "' for writing, cannot dump learnt clauses!"
             << endl;
         } else {
-            solver->dumpLearnts(&outfile, conf.maxDumpLearntsSize);
+            solver->dumpRedClauses(&outfile, conf.maxDumpLearntsSize);
         }
     }
 
