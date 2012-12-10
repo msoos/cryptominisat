@@ -1781,8 +1781,7 @@ void Solver::dumpLearnts(
     if (maxSize >= 2)
         dumpBinClauses(true, false, os);
 
-
-        *os
+    *os
     << "c " << endl
     << "c ---------------------------------" << endl
     << "c learnt tertiary clauses (extracted from watchlists)" << endl
