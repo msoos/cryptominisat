@@ -1,4 +1,8 @@
 #include "sqlstats.h"
+
+#ifdef _MSC_VER
+#define NOMINMAX
+#endif
 #include <mysql/mysql.h>
 
 class MySQLStats: public SQLStats
