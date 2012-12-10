@@ -255,7 +255,8 @@ void MySQLStats::initClauseDistribSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(mystruct.bind.data(), 0, mystruct.bind.size()*sizeof(MYSQL_BIND));
+    assert(!mystruct.bind.empty());
+    memset(&mystruct.bind[0], 0, mystruct.bind.size()*sizeof(MYSQL_BIND));
     mystruct.value.resize(numInserts);
     mystruct.num.resize(numInserts);
 
@@ -270,7 +271,7 @@ void MySQLStats::initClauseDistribSTMT(
     assert(bindAt == numElems*numInserts);
 
     //Bind the buffers
-    if (mysql_stmt_bind_param(mystruct.stmt, mystruct.bind.data())) {
+    if (mysql_stmt_bind_param(mystruct.stmt, &mystruct.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(mystruct.stmt) << endl;
         exit(1);
@@ -341,7 +342,8 @@ void MySQLStats::initSizeGlueScatterSTMT(
     }
 
     //Clear mem of bind, get enough mem for vars
-    memset(stmtSizeGlueScatter.bind.data(), 0, stmtSizeGlueScatter.bind.size()*sizeof(MYSQL_BIND));
+    assert(!stmtSizeGlueScatter.bind.empty());
+    memset(&stmtSizeGlueScatter.bind[0], 0, stmtSizeGlueScatter.bind.size()*sizeof(MYSQL_BIND));
     stmtSizeGlueScatter.size.resize(numInserts);
     stmtSizeGlueScatter.glue.resize(numInserts);
     stmtSizeGlueScatter.num.resize(numInserts);
@@ -358,7 +360,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
     assert(bindAt == numElems*numInserts);
 
     //Bind the buffers
-    if (mysql_stmt_bind_param(stmtSizeGlueScatter.stmt, stmtSizeGlueScatter.bind.data())) {
+    if (mysql_stmt_bind_param(stmtSizeGlueScatter.stmt, &stmtSizeGlueScatter.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtSizeGlueScatter.stmt) << endl;
         exit(1);
@@ -804,7 +806,8 @@ void MySQLStats::initVarSTMT(
     }
 
     //Clear bind
-    memset(stmtVar.bind.data(), 0, numElems*numInserts*sizeof(MYSQL_BIND));
+    assert(!stmtVar.bind.empty());
+    memset(&stmtVar.bind[0], 0, numElems*numInserts*sizeof(MYSQL_BIND));
 
     //Bind the local variables to the statement
     bindAt =0;
@@ -828,7 +831,7 @@ void MySQLStats::initVarSTMT(
     assert(bindAt == numElems*numInserts);
 
     // Bind the buffers
-    if (mysql_stmt_bind_param(stmtVar.stmt, stmtVar.bind.data())) {
+    if (mysql_stmt_bind_param(stmtVar.stmt, &stmtVar.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtVar.stmt) << endl;
         exit(1);
