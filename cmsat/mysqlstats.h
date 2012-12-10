@@ -2,6 +2,7 @@
 
 #ifdef _MSC_VER
 #define NOMINMAX
+#include windows.h
 #endif
 #include <mysql/mysql.h>
 

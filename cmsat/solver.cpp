@@ -36,7 +36,6 @@
 #include <cmath>
 #include "xorfinder.h"
 #include <fcntl.h>
-#include <unistd.h>
 using std::cout;
 using std::endl;
 
@@ -1007,7 +1006,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         uint32_t numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
-            numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
+            numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
         }
 
         status = Searcher::solve(assumptions, numConfls);
