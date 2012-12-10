@@ -2,9 +2,12 @@
 
 #ifdef _MSC_VER
 #define NOMINMAX
-#include windows.h
-#endif
+#include <windows.h>
+#include <mysql.h>
+#else
 #include <mysql/mysql.h>
+#endif
+
 
 class MySQLStats: public SQLStats
 {
