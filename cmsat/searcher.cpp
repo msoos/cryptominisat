@@ -507,7 +507,8 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
     }
     seen[p.var()] |= (char) pstatus;
     if (pseen == 0) toClear.push_back(p);
-    found_some |= (bool)maykeep;
+    found_some |= (int)maykeep;
+
     return found_some;
 }
 
