@@ -22,7 +22,7 @@
 #ifndef THREADCONTROL_H
 #define THREADCONTROL_H
 
-#include <stdint.h>
+#include "constants.h"
 #include <vector>
 
 #include "constants.h"
