@@ -643,6 +643,7 @@ class Searcher : public PropEngine
 
         //SQL
         friend class SQLStats;
+        vector<Var> calcVarsToDump() const;
         void printRestartSQL();
         void printVarStatsSQL();
         void printClauseDistribSQL();

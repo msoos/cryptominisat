@@ -25,7 +25,7 @@ void MySQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->getConf().verbosity);
     initReduceDBSTMT(solver->getConf().verbosity);
-    initVarSTMT(solver, stmtVarBulk, 100);
+    initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
     initVarSTMT(solver, stmtVarSingle, 1);
     initClauseDistribSTMT(
         solver
@@ -44,7 +44,7 @@ void MySQLStats::setup(const Solver* solver)
     );
     initSizeGlueScatterSTMT(
         solver
-        , solver->getConf().preparedDumpSize
+        , solver->getConf().preparedDumpSizeScatter
     );
 }
 
@@ -734,7 +734,7 @@ void MySQLStats::initVarSTMT(
     , StmtVar& stmtVar
     , uint64_t numInserts
 ) {
-    const size_t numElems = 13;
+    const size_t numElems = 15;
 
     //Output what we are trying to
     if (solver->getConf().verbosity >= 6)
@@ -755,6 +755,7 @@ void MySQLStats::initVarSTMT(
 
     //Actual data
     << ", `posPolarSet`, `negPolarSet`, `flippedPolarity`"
+    << ", `posDecided`, `negDecided`"
 
     //Dec level history stats
     << ", `decLevelAvg`, `decLevelSD`, `decLevelMin`, `decLevelMax`"
@@ -810,13 +811,15 @@ void MySQLStats::initVarSTMT(
     memset(&stmtVar.bind[0], 0, numElems*numInserts*sizeof(MYSQL_BIND));
 
     //Bind the local variables to the statement
-    bindAt =0;
+    bindAt = 0;
     for(size_t i = 0; i < stmtVar.data.size(); i++) {
         bindTo(stmtVar, stmtVar.varInitID);
         bindTo(stmtVar, stmtVar.data[i].var);
         bindTo(stmtVar, stmtVar.data[i].posPolarSet);
         bindTo(stmtVar, stmtVar.data[i].negPolarSet);
         bindTo(stmtVar, stmtVar.data[i].flippedPolarity);
+        bindTo(stmtVar, stmtVar.data[i].posDecided);
+        bindTo(stmtVar, stmtVar.data[i].negDecided);
 
         bindTo(stmtVar, stmtVar.data[i].decLevelAvg);
         bindTo(stmtVar, stmtVar.data[i].decLevelSD);
@@ -838,26 +841,10 @@ void MySQLStats::initVarSTMT(
     }
 }
 
-struct VarOrder
-{
-    VarOrder(size_t _var, size_t _polarSetSum) :
-        var(_var)
-        , polarSetSum(_polarSetSum)
-    {}
-
-    size_t var;
-    size_t polarSetSum;
-
-    bool operator<(const VarOrder& other) const
-    {
-        //Order by largest polarSetSum first
-        return polarSetSum > other.polarSetSum;
-    }
-};
-
 void MySQLStats::varDataDump(
     const Solver* solver
     , const Searcher* search
+    , const vector<Var>& varsToDump
     , const vector<VarData>& varData
 ) {
     double myTime = cpuTime();
@@ -883,28 +870,21 @@ void MySQLStats::varDataDump(
     }
     my_ulonglong id = mysql_insert_id(serverConn);
 
-    //Only bother about top N vars, so sort them first
-    vector<VarOrder> order;
-    for(size_t i = 0; i < varData.size(); i++) {
-        if (varData[i].stats.posPolarSet + varData[i].stats.negPolarSet > 0) {
-            order.push_back(
-                VarOrder(i, varData[i].stats.negPolarSet + varData[i].stats.posPolarSet)
-            );
-        }
-    }
-    std::sort(order.begin(), order.end());
-
     //Do bulk insert by defult
     StmtVar* stmtVar = &stmtVarBulk;
 
     //Go through top N variables
-    const size_t numToDump = std::min(order.size(), solver->getConf().dumpTopNVars);
+
     size_t at = 0;
-    for(size_t i = 0
-        ; i < numToDump
-        ; i++
+    size_t i = 0;
+    size_t numToDump = varsToDump.size();
+
+    for(vector<Var>::const_iterator
+        it = varsToDump.begin(), end = varsToDump.end()
+        ; it != end
+        ; it++, i++
     ) {
-        size_t var = order[i].var;
+        size_t var = *it;
 
         //If we are at beginning of bulk, but not enough is left, do one-by-one
         if ((at == 0 && numToDump-i < stmtVarBulk.data.size())) {
@@ -920,6 +900,8 @@ void MySQLStats::varDataDump(
         stmtVar->data[at].posPolarSet = varData[var].stats.posPolarSet;
         stmtVar->data[at].negPolarSet = varData[var].stats.negPolarSet;
         stmtVar->data[at].flippedPolarity  = varData[var].stats.flippedPolarity;
+        stmtVar->data[at].posDecided  = varData[var].stats.posDecided;
+        stmtVar->data[at].negDecided  = varData[var].stats.negDecided;
 
         //Dec level history stats
         stmtVar->data[at].decLevelAvg  = varData[var].stats.decLevelHist.avg();

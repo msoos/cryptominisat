@@ -791,7 +791,13 @@ lbool Searcher::new_decision()
         if (next == lit_Undef)
             return l_True;
 
+        //Update stats
         stats.decisions++;
+        if (next.sign()) {
+            varData[next.var()].stats.negDecided++;
+        } else {
+            varData[next.var()].stats.posDecided++;
+        }
     }
 
     // Increase decision level and enqueue 'next'
@@ -1269,20 +1275,14 @@ void Searcher::printRestartSQL()
     Stats thisStats = stats - lastSQLGlobalStats;
 
     //Print variance
-    VariableVariance varVarStat;
-    calcVariances(varVarStat.avgDecLevelVar, varVarStat.avgTrailLevelVar);
-
-    //Update varDataLT
-    for(size_t i = 0; i < varData.size(); i++) {
-        varDataLT[i].addData(varData[i].stats);
-        varData[i].stats.reset();
-    }
-    calcVariancesLT(varVarStat.avgDecLevelVarLT, varVarStat.avgTrailLevelVarLT);
+    VariableVariance variableVarianceStat;
+    calcVariances(variableVarianceStat.avgDecLevelVar, variableVarianceStat.avgTrailLevelVar);
+    calcVariancesLT(variableVarianceStat.avgDecLevelVarLT, variableVarianceStat.avgTrailLevelVarLT);
 
     solver->sqlStats->restart(
         thisPropStats
         , thisStats
-        , varVarStat
+        , variableVarianceStat
         , solver
         , this
     );
@@ -1291,7 +1291,84 @@ void Searcher::printRestartSQL()
     lastSQLGlobalStats = stats;
 
     //Variable stats
-    solver->sqlStats->varDataDump(solver, this, varData);
+    solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
+}
+
+struct VarDumpOrder
+{
+    VarDumpOrder(size_t _var, size_t _polarSetSum) :
+        var(_var)
+        , polarSetSum(_polarSetSum)
+    {}
+
+    size_t var;
+    size_t polarSetSum;
+
+    bool operator<(const VarDumpOrder& other) const
+    {
+        //Order by largest polarSetSum first
+        return polarSetSum > other.polarSetSum;
+    }
+};
+
+vector<Var> Searcher::calcVarsToDump() const
+{
+    //How much to dump per criteria
+    const size_t numToDump = std::min(varData.size(), conf.dumpTopNVars);
+
+    //Collect what needs to be dumped here
+    set<Var> todump;
+
+    //Top N vars polarity set
+    vector<VarDumpOrder> order;
+    for(size_t i = 0; i < varData.size(); i++) {
+        if (varData[i].stats.posPolarSet + varData[i].stats.negPolarSet > 0) {
+            order.push_back(
+                VarDumpOrder(
+                    i
+                    , varData[i].stats.posPolarSet
+                        + varData[i].stats.negPolarSet
+                )
+            );
+        }
+    }
+    std::sort(order.begin(), order.end());
+
+    //These vars need to be dumped according to above stat
+    for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {
+        todump.insert(order[i].var);
+    }
+
+    //Top N vars, number of times decided on
+    order.clear();
+    for(size_t i = 0; i < varData.size(); i++) {
+        if (varData[i].stats.posDecided + varData[i].stats.negDecided > 0) {
+            order.push_back(
+                VarDumpOrder(
+                    i
+                    , varData[i].stats.negDecided
+                        + varData[i].stats.posDecided
+                )
+            );
+        }
+    }
+    std::sort(order.begin(), order.end());
+
+    //These vars need to be dumped according to above stat
+    for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {
+        todump.insert(order[i].var);
+    }
+
+    vector<Var> toDumpVec;
+    for(set<Var>::const_iterator
+        it = todump.begin(), end = todump.end()
+        ; it != end
+        ; it++
+    ) {
+        toDumpVec.push_back(*it);
+    }
+
+    return toDumpVec;
 }
 
 
@@ -1454,12 +1531,11 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
         if (conf.doSQL) {
             printRestartSQL();
-        } else {
-            //Update varDataLT
-            for(size_t i = 0; i < varData.size(); i++) {
-                varDataLT[i].addData(varData[i].stats);
-                varData[i].stats.reset();
-            }
+        }
+        //Update varDataLT
+        for(size_t i = 0; i < varData.size(); i++) {
+            varDataLT[i].addData(varData[i].stats);
+            varData[i].stats.reset();
         }
     }
 

@@ -300,6 +300,8 @@ CREATE TABLE `vars` (
   `posPolarSet` bigint(20) unsigned NOT NULL,
   `negPolarSet` bigint(20) unsigned NOT NULL,
   `flippedPolarity` bigint(20) unsigned NOT NULL,
+  `posDecided` bigint(20) unsigned NOT NULL,
+  `negDecided` bigint(20) unsigned NOT NULL,
   `decLevelAvg` double NOT NULL,
   `decLevelSD` double NOT NULL,
   `decLevelMin` bigint(20) unsigned NOT NULL,

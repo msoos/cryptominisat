@@ -66,11 +66,12 @@ SolverConf::SolverConf() :
 
         //SQL
         , doSQL            (false)
-        , dumpTopNVars     (100)
+        , dumpTopNVars     (50)
         , dumpClauseDistribPer(20000)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)
-        , preparedDumpSize(100)
+        , preparedDumpSizeScatter(100)
+        , preparedDumpSizeVarData(40)
 
         //optimisations to do
         , doOTFSubsume     (true)

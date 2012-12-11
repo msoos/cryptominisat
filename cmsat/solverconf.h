@@ -82,7 +82,8 @@ class SolverConf
         size_t    dumpClauseDistribPer;
         size_t    dumpClauseDistribMaxSize;
         size_t    dumpClauseDistribMaxGlue;
-        size_t    preparedDumpSize;
+        size_t    preparedDumpSizeScatter;
+        size_t    preparedDumpSizeVarData;
 
         //Optimisations to do
         int       doOTFSubsume;

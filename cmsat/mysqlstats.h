@@ -40,6 +40,7 @@ public:
     virtual void varDataDump(
         const Solver* solver
         , const Searcher* search
+        , const vector<Var>& varsToDump
         , const vector<VarData>& varData
     );
 
@@ -156,7 +157,7 @@ private:
         {};
 
         uint64_t varInitID;
-        vector<MYSQL_BIND>  bind; //13 per item
+        vector<MYSQL_BIND>  bind;
         MYSQL_STMT  *stmt;
 
         struct Data {
@@ -166,6 +167,8 @@ private:
             uint64_t posPolarSet;
             uint64_t negPolarSet;
             uint64_t flippedPolarity;
+            uint64_t posDecided;
+            uint64_t negDecided;
 
             //Dec level history stats
             double decLevelAvg;

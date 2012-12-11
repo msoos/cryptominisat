@@ -36,6 +36,7 @@ public:
     virtual void varDataDump(
         const Solver* solver
         , const Searcher* search
+        , const vector<Var>& varsToDump
         , const vector<VarData>& varData
     ) = 0;
 

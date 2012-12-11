@@ -79,6 +79,8 @@ struct VarData
         Stats() :
             posPolarSet(0)
             , negPolarSet(0)
+            , posDecided(0)
+            , negDecided(0)
             , flippedPolarity(0)
         {}
 
@@ -87,6 +89,8 @@ struct VarData
             posPolarSet += other.posPolarSet;
             negPolarSet += other.negPolarSet;
             flippedPolarity += other.flippedPolarity;
+            posDecided += other.posDecided;
+            negDecided += other.negDecided;
 
             trailLevelHist.addData(other.trailLevelHist);
             decLevelHist.addData(other.decLevelHist);
@@ -101,6 +105,10 @@ struct VarData
         ///Number of times positive/negative polarity has been set
         uint32_t posPolarSet;
         uint32_t negPolarSet;
+
+        ///Decided on
+        uint32_t posDecided;
+        uint32_t negDecided;
 
         ///Number of times polarity has been flipped
         uint32_t flippedPolarity;

@@ -596,7 +596,7 @@ inline string Solver::clauseBackNumbered(const T& cl) const
         ss
         << getUpdatedLit(cl[i], interToOuterMain);
 
-        if (i != cl.size()-1)
+        if (i+1 != cl.size())
             ss << " ";
     }
 
