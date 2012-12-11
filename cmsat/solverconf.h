@@ -99,7 +99,7 @@ class SolverConf
         uint64_t  maxXORMatrix;
         int      doFindAndReplaceEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
         int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-        int      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
+        int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int       doBlockedClause;    ///<Should try to remove blocked clauses

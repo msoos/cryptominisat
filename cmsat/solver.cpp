@@ -1115,7 +1115,7 @@ lbool Solver::simplifyProblem()
     }
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.doSatELite && !simplifier->simplify())
+    if (conf.doSimplify && !simplifier->simplify())
         goto end;
 
     //Vivify clauses
@@ -1582,7 +1582,7 @@ void Solver::printFullStats()
     prober->getStats().print(nVars());
 
     //Simplifier stats
-    printStatsLine("c SatELite time"
+    printStatsLine("c Simplifier time"
         , simplifier->getStats().totalTime()
         , simplifier->getStats().totalTime()/cpu_time*100.0
         , "% time"

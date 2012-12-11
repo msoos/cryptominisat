@@ -125,7 +125,7 @@ struct Clause
 protected:
 
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
-    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last simplification?
     uint32_t changed:1; ///<Var inside clause has been changed
 
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?

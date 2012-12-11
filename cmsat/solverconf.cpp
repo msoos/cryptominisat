@@ -86,7 +86,7 @@ SolverConf::SolverConf() :
         , maxXORMatrix     (10L*1000L*1000L)
         , doFindAndReplaceEqLits     (true)
         , doSchedSimp      (true)
-        , doSatELite       (true)
+        , doSimplify       (true)
         , doHyperBinRes    (true)
         , doLHBR           (true)
         , doBlockedClause  (true)

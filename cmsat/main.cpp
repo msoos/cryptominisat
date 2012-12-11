@@ -323,9 +323,9 @@ void Main::parseCommandLine()
         , "Remove useless binary clauses (transitive reduction)")
     ;
 
-    po::options_description sateliteOptions("SatELite-type options");
-    sateliteOptions.add_options()
-    ("satelite", po::value<int>(&conf.doSatELite)->default_value(conf.doSatELite)
+    po::options_description simplificationOptions("simplifcation options");
+    simplificationOptions.add_options()
+    ("simplify", po::value<int>(&conf.doSimplify)->default_value(conf.doSimplify)
         , "Perform play with norm clauses at ALL (none below)")
     ("varelim", po::value<int>(&conf.doVarElim)->default_value(conf.doVarElim)
         , "Perform variable elimination as per Een and Biere")
@@ -343,8 +343,8 @@ void Main::parseCommandLine()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
-    po::options_description xorSateliteOptions("XOR SatELite-type options");
-    xorSateliteOptions.add_options()
+    po::options_description xorOptions("XOR-related options");
+    xorOptions.add_options()
     ("xor", po::value<int>(&conf.doFindXors)->default_value(conf.doFindXors)
         , "Discover long XORs")
     ("xorcache", po::value<int>(&conf.useCacheWhenFindingXors)->default_value(conf.useCacheWhenFindingXors)
@@ -361,8 +361,8 @@ void Main::parseCommandLine()
         , "Perform SCC using cache")
     ;
 
-    po::options_description gatesOptions("Gates' options");
-    gatesOptions.add_options()
+    po::options_description gateOptions("Gate-related options");
+    gateOptions.add_options()
     ("gates", po::value<int>(&conf.doGateFind)->default_value(conf.doGateFind)
         , "Find gates. Disables all sub-options below")
     ("gorshort", po::value<int>(&conf.doShortenWithOrGates)->default_value(conf.doShortenWithOrGates)
@@ -468,10 +468,9 @@ void Main::parseCommandLine()
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)
-    .add(sateliteOptions)
-    .add(xorSateliteOptions)
-    //.add(xorSateliteOptions)
-    .add(gatesOptions)
+    .add(simplificationOptions)
+    .add(xorOptions)
+    .add(gateOptions)
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
