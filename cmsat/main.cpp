@@ -226,16 +226,12 @@ void Main::parseCommandLine()
     ("help,h", "Prints this help")
     ("version,v", "Print version number")
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
-    ("verb,w", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
-        , "[0-4] Verbosity of solver")
     ("randomize,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
     ("restart", po::value<std::string>()->default_value("glue")
         , "{geom, glue, agility}  Restart strategy to follow.")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
-    ("printsol,s", po::value<int>(&printResult)->default_value(printResult)
-        , "Print assignment if solution is SAT")
     ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
         , "Perform regular simplification rounds")
     ("nclbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
@@ -302,7 +298,7 @@ void Main::parseCommandLine()
     ("dumpsimplified", po::value<std::string>()
         , "If stopped, dump simplified original problem here")
     ("banfoundsol", po::value<int>(&doBanFoundSolution)->default_value(doBanFoundSolution)
-     , "Ban solutions found")
+        , "Ban solutions found")
     ("debuglib", po::bool_switch(&debugLib)
         , "Solve at specific 'solve()' points in CNF file")
     ("debugnewvar", po::bool_switch(&debugNewVar)
@@ -434,6 +430,18 @@ void Main::parseCommandLine()
         , "At every restart, dump the data about the top N variables")
     ;
 
+    po::options_description printOptions("Printing options");
+    printOptions.add_options()
+    ("verb,w", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
+        , "[0-10] Verbosity of solver. 0 = only solution")
+    ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
+        , "Print more thorough, but different stats")
+    ("printoften", po::bool_switch(&conf.printAllRestarts)
+        , "Print a stat line for every restart");
+    ("printsol,s", po::value<int>(&printResult)->default_value(printResult)
+        , "Print assignment if solution is SAT")
+    ;
+
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
     ("presimp", po::value<int>(&conf.doPerformPreSimp)->default_value(conf.doPerformPreSimp)
@@ -449,10 +457,6 @@ void Main::parseCommandLine()
         , "Use time stamping as per Heule&Jarvisalo&Biere paper")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase cache efficiency")
-    ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
-        , "Print more thorough, but different stats")
-    ("printoften", po::bool_switch(&conf.printAllRestarts)
-        , "Print a stat line for every restart");
     ;
 
     po::positional_options_description p;
@@ -462,6 +466,7 @@ void Main::parseCommandLine()
     po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
+    .add(printOptions)
     .add(propOptions)
     .add(reduceDBOptions)
     .add(varPickOptions)
