@@ -642,6 +642,8 @@ void XorFinder::findXorMatch(
                     std::swap(tmpClause[0], tmpClause[1]);
 
                 foundCls.add(tmpClause, varsMissing);
+                if (foundCls.foundAll())
+                    break;
             }
 
             continue;
@@ -669,6 +671,8 @@ void XorFinder::findXorMatch(
                         std::swap(tmpClause[1], tmpClause[2]);
 
                     foundCls.add(tmpClause, varsMissing);
+                    if (foundCls.foundAll())
+                        break;
                 }
 
             }
@@ -713,6 +717,9 @@ void XorFinder::findXorMatch(
             triedAlready.insert(offset);
 
         foundCls.add(cl, varsMissing);
+        if (foundCls.foundAll())
+            break;
+
         end:;
     }
 }
