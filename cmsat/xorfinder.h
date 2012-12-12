@@ -37,7 +37,7 @@ class Simplifier;
 class Xor
 {
     public:
-        Xor(const Clause& cl, const bool _rhs) :
+        Xor(const vector<Lit>& cl, const bool _rhs) :
             rhs(_rhs)
         {
             for (uint32_t i = 0; i < cl.size(); i++) {
@@ -68,33 +68,48 @@ class FoundXors
 {
     public:
         FoundXors(
-            const Clause& cl
-            , const bool _rhs
-            , const uint32_t whichOne
+            const vector<Lit>& cl
+            , CL_ABST_TYPE abst
+            , vector<char>& seen
         ) :
-            origCl(cl)
-            , abst(cl.abst)
+            abst(abst)
             , size(cl.size())
-            , rhs(_rhs)
         {
-            assert(size == cl.size() && "Abst data is out of sync of the clause?");
+            assert(cl.size() < sizeof(origCl)/sizeof(Lit));
+            for(size_t i = 0; i < size; i++) {
+                origCl[i] = cl[i];
+                if (i > 0)
+                    assert(cl[i-1] < cl[i]);
+            }
 
-            foundComb.resize(1UL<<cl.size(), false);
-            foundComb[whichOne] = true;
+            calcClauseData(seen);
         }
 
         //GET-type functions
         CL_ABST_TYPE      getAbst() const;
         uint32_t          getSize() const;
         bool              getRHS() const;
-        const Clause&           getOrigCl() const;
         bool              foundAll() const;
 
         //Add
-        template<class T> void add(const T& cl);
-        void  add(Lit lit1, Lit lit2);
+        template<class T> void add(const T& cl, vector<uint32_t>& varsMissing);
 
     private:
+        void calcClauseData(vector<char>& seen)
+        {
+            //Calculate parameters of base clause.
+            //Also set 'seen' for easy check in 'findXorMatch()'
+            bool rhs = true;
+            uint32_t whichOne = 0;
+            for (uint i = 0; i < size; i++) {
+                rhs ^= origCl[i].sign();
+                whichOne += ((uint32_t)origCl[i].sign()) << i;
+                seen[origCl[i].var()] = 1;
+            }
+
+            foundComb.resize(1UL<<size, false);
+            foundComb[whichOne] = true;
+        }
         uint32_t NumberOfSetBits(uint32_t i) const;
         bool     bit(const uint32_t a, const uint32_t b) const;
 
@@ -110,10 +125,10 @@ class FoundXors
         // 0 1 0
         // 0 0 1
         vector<bool> foundComb;
-        const Clause& origCl;
+        Lit origCl[5];
         const CL_ABST_TYPE abst;
-        const uint16_t size;
-        const bool rhs;
+        uint16_t size;
+        bool rhs;
 };
 
 class XorFinder
@@ -250,7 +265,7 @@ public:
 
 private:
     //Find XORs
-    void findXor(ClOffset offset);
+    void findXor(vector<Lit>& lits, CL_ABST_TYPE abst);
 
     ///Normal finding of matching clause for XOR
     void findXorMatch(
@@ -300,6 +315,10 @@ private:
     Stats globalStats;
     size_t numCalls;
 
+    //Temporary
+    vector<Lit> tmpClause;
+    vector<uint32_t> varsMissing;
+
     //Temporaries for putting xors into matrix, and extracting info from matrix
     vector<size_t> outerToInterVarMap;
     vector<size_t> interToOUterVarMap;
@@ -325,26 +344,33 @@ inline bool FoundXors::getRHS() const
     return rhs;
 }
 
-inline const Clause& FoundXors::getOrigCl() const
-{
-    return origCl;
-}
-
-template<class T> void FoundXors::add(const T& cl)
+template<class T> void FoundXors::add(const T& cl, vector<uint32_t>& varsMissing)
 {
     assert(cl.size() <= size);
 
-    vector<uint32_t> varsMissing; //If clause covers more than one combination, this is used to calculate which ones
-    uint32_t origI = 0; //Position of literal in the ORIGINAL clause. This may be larger than the position in the current clause (as some literals could be missing)
-    uint32_t i = 0; //Position in current clause
-    uint32_t whichOne = 0; //Used to calculate this clause covers which combination(s)
+    //If clause covers more than one combination, this is used to calculate which ones
+    varsMissing.clear();
 
-    for (typename T::const_iterator l = cl.begin(), end = cl.end(); l != end; l++, i++, origI++) {
+    //Position of literal in the ORIGINAL clause.
+    //This may be larger than the position in the current clause (as some literals could be missing)
+    uint32_t origI = 0;
+
+    //Position in current clause
+    uint32_t i = 0;
+
+    //Used to calculate this clause covers which combination(s)
+    uint32_t whichOne = 0;
+
+    for (typename T::const_iterator
+        l = cl.begin(), end = cl.end()
+        ; l != end
+        ; l++, i++, origI++
+    ) {
         //some variables might be missing
         while(cl[i].var() != origCl[origI].var()) {
             varsMissing.push_back(origI);
             origI++;
-            assert(origI < origCl.size() && "cl must be sorted");
+            assert(origI < size && "cl must be sorted");
         }
         whichOne += ((uint32_t)l->sign()) << origI;
     }
@@ -375,33 +401,6 @@ inline bool FoundXors::foundAll() const
         }
     }
     return OK;
-}
-
-inline void FoundXors::add(Lit lit1, Lit lit2)
-{
-    //Make sure that order is correct
-    if (lit1 > lit2)
-        std::swap(lit1, lit2);
-
-    uint32_t whichOne = 0;
-    vector<Var> varsMissing;
-
-    //whichOne is a PARTIAL bitfield representation of what this XOR covers
-    for (uint32_t i = 0; i < origCl.size(); i++) {
-        if (lit1.var() == origCl[i].var()) whichOne += ((uint32_t)lit1.sign()) << i;
-        else if (lit2.var() == origCl[i].var()) whichOne += ((uint32_t)lit2.sign()) << i;
-        else varsMissing.push_back(i);
-    }
-    //varsMissing now contains the INDEX of the variables that are missing
-
-    //set to true every combination for the missing variables
-    for (uint32_t i = 0; i < 1UL<<(varsMissing.size()); i++) {
-        uint32_t thisWhichOne = whichOne;
-        for (uint32_t i2 = 0; i2 < varsMissing.size(); i2++) {
-            if (bit(i, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
-        }
-        foundComb[thisWhichOne] = true;
-    }
 }
 
 inline uint32_t FoundXors::NumberOfSetBits(uint32_t i) const

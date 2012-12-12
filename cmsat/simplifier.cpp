@@ -944,11 +944,11 @@ bool Simplifier::simplify()
         goto end;
 
     //XOR-finding
-    /*if (solver->conf.doFindXors
+    if (solver->conf.doFindXors
         && !xorFinder->findXors()
     ) {
         goto end;
-    }*/
+    }
 
     //Do asymtotic tautology elimination
     if (solver->conf.doBlockedClause) {
