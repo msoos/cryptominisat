@@ -209,8 +209,15 @@ bool XorFinder::extractInfoFromBlock(
 
     //Outer-inner var mapping is needed because not all vars are in the matrix
     size_t num = 0;
-    for(vector<Var>::const_iterator it2 = block.begin(), end2 = block.end(); it2 != end2; it2++, num++) {
+    for(vector<Var>::const_iterator
+        it2 = block.begin(), end2 = block.end()
+        ; it2 != end2
+        ; it2++, num++
+    ) {
+        //Used to put XOR into matrix
         outerToInterVarMap[*it2] = num;
+
+        //Used to transform new data in matrix to solver
         interToOUterVarMap[num] = *it2;
     }
 
@@ -230,14 +237,25 @@ bool XorFinder::extractInfoFromBlock(
 
     //Fill row-by-row
     size_t row = 0;
-    for(vector<size_t>::const_iterator it = thisXors.begin(), end2 = thisXors.end(); it != end2; it++, row++) {
+    for(vector<size_t>::const_iterator
+        it = thisXors.begin(), end2 = thisXors.end()
+        ; it != end2
+        ; it++, row++
+    ) {
         const Xor& thisXor = xors[*it];
         assert(thisXor.vars.size() > 2 && "All XORs must be larger than 2-long");
-        for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end3 = thisXor.vars.end(); it2 != end3; it2++) {
+        //Put XOR into the matrix
+        for(vector<Var>::const_iterator
+            it2 = thisXor.vars.begin(), end3 = thisXor.vars.end()
+            ; it2 != end3
+            ; it2++
+        ) {
             const Var var = outerToInterVarMap[*it2];
             assert(var < numCols);
             mzd_write_bit(mat, row, var, 1);
         }
+
+        //Add RHS to the augmented columns
         if (thisXor.rhs)
             mzd_write_bit(mat, row, numCols-1, 1);
     }
