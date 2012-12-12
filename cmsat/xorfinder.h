@@ -75,6 +75,10 @@ class FoundXors
             abst(abst)
             , size(cl.size())
         {
+            #ifdef VERBOSE_DEBUG_XOR_FINDER
+            cout << "Trying to create XOR from clause: " << cl << endl;
+            #endif
+
             assert(cl.size() < sizeof(origCl)/sizeof(Lit));
             for(size_t i = 0; i < size; i++) {
                 origCl[i] = cl[i];
