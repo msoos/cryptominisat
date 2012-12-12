@@ -371,11 +371,14 @@ template<class T> void FoundXors::add(
     //Used to calculate this clause covers which combination(s)
     uint32_t whichOne = 0;
 
+    bool thisRhs = true;
+
     for (typename T::const_iterator
         l = cl.begin(), end = cl.end()
         ; l != end
         ; l++, i++, origI++
     ) {
+        thisRhs ^= l->sign();
         //some variables might be missing
         while(cl[i].var() != origCl[origI].var()) {
             varsMissing.push_back(origI);
@@ -384,6 +387,8 @@ template<class T> void FoundXors::add(
         }
         whichOne += ((uint32_t)l->sign()) << origI;
     }
+
+    assert(cl.size() < size || rhs == thisRhs);
 
     //set to true every combination for the missing variables
     for (uint32_t i = 0; i < 1UL<<(varsMissing.size()); i++) {
