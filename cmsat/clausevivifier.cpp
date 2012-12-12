@@ -127,7 +127,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
     if (solver->conf.verbosity >= 2) {
         cout
         << "c TRI vivified: " << runStats.numClShorten - origShorten
-        << " 0-detph ass: " << solver->trail.size() - origTrailSize
+        << " 0-depth ass: " << solver->trail.size() - origTrailSize
         << " time: " << cpuTime() - myTime
         << endl;
     }

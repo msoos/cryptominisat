@@ -283,7 +283,7 @@ void Main::parseCommandLine()
     ("dompickf", po::value<uint32_t>(&conf.dominPickFreq)->default_value(conf.dominPickFreq)
         , "Use dominating literal every once in N when picking decision literal")
     ("flippolf", po::value<uint32_t>(&conf.flipPolarFreq)->default_value(conf.flipPolarFreq)
-        , "Flip polarity frequency once every N, multilplied by avg. branch depth delta")
+        , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ;
 
 

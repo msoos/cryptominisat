@@ -293,7 +293,7 @@ public:
             << " / " << origNumFreeVars
             << endl;
 
-            printStatsLine("c 0-detph assigns"
+            printStatsLine("c 0-depth assigns"
                 , zeroDepthAssings
                 , (double)zeroDepthAssings/(double)nVars*100.0
                 , "% vars"

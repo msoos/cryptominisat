@@ -1157,7 +1157,7 @@ void Simplifier::checkForElimedVars()
         for (uint32_t i = 0; i < cl->size(); i++) {
             if (var_elimed[(*cl)[i].var()]) {
                 cout
-                << "Error: elmied var -- Lit " << (*cl)[i] << " in clause"
+                << "Error: elimed var -- Lit " << (*cl)[i] << " in clause"
                 << endl
                 << "wrongly left in clause: " << *cl
                 << endl;
@@ -2081,7 +2081,7 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //Print complexity stat for this var
     if (solver->conf.verbosity >= 5) {
-        cout << "trying comlexity: "
+        cout << "trying complexity: "
         << varElimComplexity[var].first
         << ", " << varElimComplexity[var].second
         << endl;
