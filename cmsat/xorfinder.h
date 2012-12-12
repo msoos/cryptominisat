@@ -346,6 +346,10 @@ inline bool FoundXors::getRHS() const
 
 template<class T> void FoundXors::add(const T& cl, vector<uint32_t>& varsMissing)
 {
+    #ifdef VERBOSE_DEBUG_XOR_FINDER
+    cout << "Adding to XOR: " << cl << endl;
+    #endif
+
     assert(cl.size() <= size);
 
     //If clause covers more than one combination, this is used to calculate which ones
@@ -400,6 +404,13 @@ inline bool FoundXors::foundAll() const
             break;
         }
     }
+
+    #ifdef VERBOSE_DEBUG_XOR_FINDER
+    if (OK) {
+        cout << "Found all for this clause" << endl;
+    }
+    #endif
+
     return OK;
 }
 
