@@ -652,12 +652,14 @@ void XorFinder::findXorMatch(
     ) {
         //Deal with binary
         if (it->isBinary()) {
-            if (seen[it->lit1().var()]) {
+            if (//Only once per binary
+                lit < it->lit1()
+                //only for correct binary
+                && seen[it->lit1().var()]
+            ) {
                 tmpClause.clear();
                 tmpClause.push_back(lit);
                 tmpClause.push_back(it->lit1());
-                if (tmpClause[0] > tmpClause[1])
-                    std::swap(tmpClause[0], tmpClause[1]);
 
                 foundCls.add(tmpClause, varsMissing);
                 if (foundCls.foundAll())
@@ -667,8 +669,14 @@ void XorFinder::findXorMatch(
             continue;
         }
 
+        //Deal with tertiary
         if (it->isTri()) {
-            if (seen[it->lit1().var()] && seen[it->lit2().var()]) {
+            if (//Only once per tri
+                lit < it->lit1() && it->lit1() < it->lit2()
+
+                //Only for correct tri
+                && seen[it->lit1().var()] && seen[it->lit2().var()]
+            ) {
                 bool rhs = true;
                 rhs ^= lit.sign();
                 rhs ^= it->lit1().sign();
@@ -679,14 +687,6 @@ void XorFinder::findXorMatch(
                     tmpClause.push_back(lit);
                     tmpClause.push_back(it->lit1());
                     tmpClause.push_back(it->lit2());
-
-                    //Order them
-                    if (tmpClause[0] > tmpClause[2])
-                        std::swap(tmpClause[0], tmpClause[2]);
-                    if (tmpClause[0] > tmpClause[1])
-                        std::swap(tmpClause[0], tmpClause[1]);
-                    if (tmpClause[1] > tmpClause[2])
-                        std::swap(tmpClause[1], tmpClause[2]);
 
                     foundCls.add(tmpClause, varsMissing);
                     if (foundCls.foundAll())
