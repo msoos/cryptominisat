@@ -335,7 +335,11 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 vector<Var>& finalBlock = blocks[blockNum];
                 it2++; //don't merge the first into the first
                 for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; it2++) {
-                    for(vector<Var>::const_iterator it3 = blocks[*it2].begin(), end3 = blocks[*it2].end(); it3 != end3; it3++) {
+                    for(vector<Var>::const_iterator
+                        it3 = blocks[*it2].begin(), end3 = blocks[*it2].end()
+                        ; it3 != end3
+                        ; it3++
+                    ) {
                         finalBlock.push_back(*it3);
                         varToBlock[*it3] = blockNum;
                     }
@@ -344,7 +348,11 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 }
 
                 //add remaining vars
-                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                for(vector<Var>::const_iterator
+                    it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
+                    ; it2 != end2
+                    ; it2++
+                ) {
                     if (varToBlock[*it2] == std::numeric_limits<size_t>::max()) {
                         finalBlock.push_back(*it2);
                         varToBlock[*it2] = blockNum;
@@ -355,8 +363,11 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 
     //caclulate stats
-    for(vector<vector<Var> >::const_iterator it = blocks.begin(), end = blocks.end(); it != end; it++) {
-
+    for(vector<vector<Var> >::const_iterator
+        it = blocks.begin(), end = blocks.end()
+        ; it != end
+        ; it++
+    ) {
         //this set has been merged into another set. Skip
         if (it->empty())
             continue;
