@@ -348,8 +348,10 @@ inline bool FoundXors::getRHS() const
     return rhs;
 }
 
-template<class T> void FoundXors::add(const T& cl, vector<uint32_t>& varsMissing)
-{
+template<class T> void FoundXors::add(
+    const T& cl
+    , vector<uint32_t>& varsMissing
+) {
     #ifdef VERBOSE_DEBUG_XOR_FINDER
     cout << "Adding to XOR: " << cl << endl;
     #endif
