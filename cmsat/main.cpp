@@ -375,20 +375,6 @@ void Main::parseCommandLine()
         , "Print gate structure regularly to file 'gatesX.dot'")
     ;
 
-    #ifdef USE_GAUSS
-    po::options_description gaussOptions("Gaussian options");
-    gaussOptions.add_options()
-    ("gaussuntil", po::value<uint32_t>()->default_value(gaussconfig.decision_until), "Cutoff decision depth for gauss. Default IS ZERO, so Gauss is OFF!!!!!!")
-    ("nosepmatrix", "Don't separate independent matrixes")
-    ("noordercol", "Don't order variables in the columns. Disables iterative matrix reduction")
-    ("noiterreduce", "Don't reduce iteratively the matrix")
-    ("maxmatrixrows", po::value<uint32_t>()->default_value(gaussconfig.maxMatrixRows), "Max. num of rows for gaussian matrix")
-    ("minmatrixrows", po::value<uint32_t>()->default_value(gaussconfig.minMatrixRows), "Min. num of rows for gaussian matrix")
-    ("savematrix", po::value<uint32_t>()->default_value(gaussconfig.only_nth_gauss_save), "Leave matrix trail every Nth decision level")
-    ("maxnummatrixes", po::value<uint32_t>()->default_value(gaussconfig.maxNumMatrixes), "Max. num matrixes")
-    ;
-    #endif //USE_GAUSS
-
     po::options_description conflOptions("Conflict options");
     conflOptions.add_options()
     ("recminim", po::value<int>(&conf.doRecursiveCCMin)->default_value(conf.doRecursiveCCMin)
