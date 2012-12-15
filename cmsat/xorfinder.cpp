@@ -116,6 +116,17 @@ bool XorFinder::findXors()
     runStats.extractTime = cpuTime() - myTime;
     assert(runStats.foundXors == xors.size());
 
+    if (solver->conf.verbosity >= 5) {
+        cout << "c Found XORs: " << endl;
+        for(vector<Xor>::const_iterator
+            it = xors.begin(), end = xors.end()
+            ; it != end
+            ; it++
+        ) {
+            cout << "c " << *it << endl;
+        }
+    }
+
     if (solver->conf.doEchelonizeXOR && xors.size() > 0)
         extractInfo();
 

@@ -31,6 +31,8 @@
 using std::vector;
 using std::set;
 
+//#define VERBOSE_DEBUG_XOR_FINDER
+
 class Solver;
 class Simplifier;
 
@@ -58,9 +60,13 @@ class Xor
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
 {
     for (uint32_t i = 0; i < thisXor.vars.size(); i++) {
-        os << Lit(thisXor.vars[i], false) << " ";
+        os << Lit(thisXor.vars[i], false);
+
+        if (i+1 < thisXor.vars.size())
+            os << " + ";
     }
     os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
+
     return os;
 }
 
@@ -354,6 +360,12 @@ template<class T> void FoundXors::add(
 ) {
     #ifdef VERBOSE_DEBUG_XOR_FINDER
     cout << "Adding to XOR: " << cl << endl;
+
+    cout << "FoundComb before:" << endl;
+    for(size_t i = 0; i < foundComb.size(); i++) {
+        cout << "foundComb[" << i << "]: " << foundComb[i] << endl;
+    }
+    cout << "----" << endl;
     #endif
 
     assert(cl.size() <= size);
@@ -398,6 +410,15 @@ template<class T> void FoundXors::add(
         }
         foundComb[thisWhichOne] = true;
     }
+
+    #ifdef VERBOSE_DEBUG_XOR_FINDER
+    cout << "whichOne was:" << whichOne << endl;
+    cout << "FoundComb after:" << endl;
+    for(size_t i = 0; i < foundComb.size(); i++) {
+        cout << "foundComb[" << i << "]: " << foundComb[i] << endl;
+    }
+    cout << "----" << endl;
+    #endif
 }
 
 inline bool FoundXors::foundAll() const
