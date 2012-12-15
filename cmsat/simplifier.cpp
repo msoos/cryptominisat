@@ -39,10 +39,13 @@ using std::endl;
 #include "clausecleaner.h"
 #include "constants.h"
 #include "solutionextender.h"
-#include "xorfinder.h"
 #include "gatefinder.h"
 #include "varreplacer.h"
 #include "varupdatehelper.h"
+
+#ifdef USE_M4RI
+#include "xorfinder.h"
+#endif
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -68,14 +71,21 @@ Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
     , varElimOrder(VarOrderLt(varElimComplexity))
     , numCalls(0)
+    , xorFinder(NULL)
 {
+    #ifdef USE_M4RI
     xorFinder = new XorFinder(this, solver);
+    #endif
+
     gateFinder = new GateFinder(this, solver);
 }
 
 Simplifier::~Simplifier()
 {
+    #ifdef USE_M4RI
     delete xorFinder;
+    #endif
+
     delete gateFinder;
 }
 
@@ -944,11 +954,13 @@ bool Simplifier::simplify()
         goto end;
 
     //XOR-finding
+    #ifdef USE_M4RI
     if (solver->conf.doFindXors
         && !xorFinder->findXors()
     ) {
         goto end;
     }
+    #endif
 
     //Do asymtotic tautology elimination
     if (solver->conf.doBlockedClause) {

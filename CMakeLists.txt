@@ -54,6 +54,8 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 # -----------------------------------------------------------------------------
 #find_package(Perftools)
 
+
+#MySQL
 find_package(MySQL)
 IF (MYSQL_FOUND)
     MESSAGE(STATUS "OK, Found MySQL!")
@@ -64,31 +66,21 @@ ELSE (MYSQL_FOUND)
     MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
 ENDIF (MYSQL_FOUND)
 
-# -----------------------------------------------------------------------------
 # Some awful definitiions
-# -----------------------------------------------------------------------------
 add_definitions(-DVERSION="3.0.0")
-#add_definitions(-DUSE_GAUSS)
 
-# -----------------------------------------------------------------------------
 # Look for Boost program options
-# -----------------------------------------------------------------------------
 find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
-find_package(M4RI REQUIRED)
 
-# ---------------
-# Look for VTK
-#---------------
-#IF(NOT VTK_BINARY_DIR)
-#  FIND_PACKAGE(VTK REQUIRED)
-#  IF(NOT VTK_USE_RENDERING)
-#    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_RENDERING.")
-#  ENDIF(NOT VTK_USE_RENDERING)
-#  IF(NOT VTK_USE_INFOVIS)
-#    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_INFOVIS.")
-#  ENDIF(NOT VTK_USE_INFOVIS)
-#  INCLUDE(${VTK_USE_FILE})
-#ENDIF(NOT VTK_BINARY_DIR)
+
+#M4RI
+find_package(M4RI)
+IF (M4RI_FOUND)
+    MESSAGE(STATUS "OK, Found M4RI!")
+    add_definitions( -DUSE_M4RI )
+ELSE (M4RI_FOUND)
+    MESSAGE(STATUS "WARNING: Did not find M4RI, XOR detection&manipulation disabled")
+ENDIF (M4RI_FOUND)
 
 
 # -----------------------------------------------------------------------------

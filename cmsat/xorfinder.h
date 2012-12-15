@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <set>
 #include "cset.h"
+#include "xorfinderabst.h"
 using std::vector;
 using std::set;
 
@@ -141,11 +142,11 @@ class FoundXors
         bool rhs;
 };
 
-class XorFinder
+class XorFinder: public XorFinderAbst
 {
 public:
     XorFinder(Simplifier* subsumer, Solver* solver);
-    bool findXors();
+    virtual bool findXors();
 
     struct Stats
     {

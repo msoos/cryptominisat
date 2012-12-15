@@ -48,7 +48,7 @@ class ClauseCleaner;
 class SolutionExtender;
 class Solver;
 class GateFinder;
-class XorFinder;
+class XorFinderAbst;
 
 class TouchList
 {
@@ -404,7 +404,6 @@ public:
     const vector<BlockedClause>& getBlockedClauses() const;
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
-    //const XorFinder* getXorFinder() const;
     void checkElimedUnassignedAndStats() const;
 
 private:
@@ -612,7 +611,7 @@ private:
     /////////////////////
     //XOR finding
     friend class XorFinder;
-    XorFinder *xorFinder;
+    XorFinderAbst *xorFinder;
 
     /////////////////////
     //Blocked clause elimination

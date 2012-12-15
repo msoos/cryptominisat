@@ -10,7 +10,7 @@ ENDMACRO(DBG_MSG)
 SET (M4RI_POSSIBLE_ROOT_DIRS
   "${M4RI_ROOT_DIR}"
   "$ENV{M4RI_ROOT_DIR}"
-  "$ENV{M4RI_DIR}" 
+  "$ENV{M4RI_DIR}"
   "$ENV{M4RI_HOME}"
   /usr/local
   /usr
@@ -60,5 +60,9 @@ include(FindPackageHandleStandardArgs)
 # if all listed variables are TRUE
 find_package_handle_standard_args(m4ri  DEFAULT_MSG
                                   M4RI_LIBRARIES M4RI_INCLUDE_DIRS)
+IF (M4RI_INCLUDE_DIRS AND M4RI_LIBRARIES)
+    SET(M4RI_FOUND TRUE)
+endif (M4RI_INCLUDE_DIRS AND M4RI_LIBRARIES)
+
 
 mark_as_advanced(M4RI_INCLUDE_DIRS M4RI_LIBRARIES )
