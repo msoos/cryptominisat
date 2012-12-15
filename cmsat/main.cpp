@@ -487,7 +487,9 @@ void Main::parseCommandLine()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    #ifdef USE_MYSQL
     .add(sqlOptions)
+    #endif
     .add(miscOptions)
     ;
 
