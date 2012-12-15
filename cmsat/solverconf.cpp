@@ -73,9 +73,9 @@ SolverConf::SolverConf() :
         , preparedDumpSizeScatter(100)
         , preparedDumpSizeVarData(40)
         , sqlServer ("localhost")
-        , sqlUser ("cryptomsuser")
+        , sqlUser ("cmsat_solver")
         , sqlPass ("")
-        , sqlDatabase("cryptoms")
+        , sqlDatabase("cmsat")
 
         //optimisations to do
         , doOTFSubsume     (true)

@@ -5,9 +5,9 @@ $maxConfl = 7000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 
-$username="presenter";
+$username="cmsat_presenter";
 $password="";
-$database="cryptoms";
+$database="cmsat";
 
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
