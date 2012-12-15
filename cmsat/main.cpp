@@ -482,8 +482,13 @@ void Main::parseCommandLine()
     .add(iterativeOptions)
     .add(probeOptions)
     .add(simplificationOptions)
+    #ifdef USE_M4RI
     .add(xorOptions)
-    .add(gateOptions)
+    #endif
+
+    //Currently unimplemented
+    //.add(gateOptions)
+
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
