@@ -391,13 +391,20 @@ template<class T> void FoundXors::add(
         ; l++, i++, origI++
     ) {
         thisRhs ^= l->sign();
-        //some variables might be missing
+
+        //some variables might be missing in the middle
         while(cl[i].var() != origCl[origI].var()) {
             varsMissing.push_back(origI);
             origI++;
             assert(origI < size && "cl must be sorted");
         }
         whichOne += ((uint32_t)l->sign()) << origI;
+    }
+
+    //if vars are missing from the end
+    while(origI < size) {
+        varsMissing.push_back(origI);
+        origI++;
     }
 
     assert(cl.size() < size || rhs == thisRhs);
