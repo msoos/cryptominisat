@@ -349,8 +349,10 @@ void Main::parseCommandLine()
         , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
     ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
-    ("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
-        , "Mix XORs and OrGates for new truths")
+
+    //Not implemented yet
+    //("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
+    //    , "Mix XORs and OrGates for new truths")
     ("scc", po::value<int>(&conf.doFindAndReplaceEqLits)->default_value(conf.doFindAndReplaceEqLits)
         , "Find equivalent literals through SCC and replace them")
     ("extendedscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
