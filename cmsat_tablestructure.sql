@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 5.5.28, for debian-linux-gnu (x86_64)
 --
--- Host: localhost    Database: cryptoms
+-- Host: localhost    Database: cmsat
 -- ------------------------------------------------------
--- Server version	5.5.28-0ubuntu0.12.04.2
+-- Server version	5.5.28-0ubuntu0.12.04.3
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -26,7 +26,8 @@ CREATE TABLE `clauseGlueDistrib` (
   `runID` bigint(20) unsigned NOT NULL,
   `conflicts` int(20) unsigned NOT NULL,
   `glue` int(10) unsigned NOT NULL,
-  `num` int(20) unsigned NOT NULL
+  `num` int(20) unsigned NOT NULL,
+  KEY `idx1` (`runID`,`conflicts`,`glue`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -41,7 +42,8 @@ CREATE TABLE `clauseSizeDistrib` (
   `runID` bigint(20) unsigned NOT NULL,
   `conflicts` int(20) unsigned NOT NULL,
   `size` int(10) unsigned NOT NULL,
-  `num` int(20) unsigned NOT NULL
+  `num` int(20) unsigned NOT NULL,
+  KEY `idx1` (`runID`,`conflicts`,`size`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -131,7 +133,8 @@ CREATE TABLE `reduceDB` (
   `remainLitVisited` int(20) unsigned NOT NULL,
   `remainProp` int(20) unsigned NOT NULL,
   `remainConfl` int(20) unsigned NOT NULL,
-  `remainLookedAt` int(20) unsigned NOT NULL
+  `remainLookedAt` int(20) unsigned NOT NULL,
+  KEY `idx1` (`conflicts`,`runID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -220,7 +223,9 @@ CREATE TABLE `restart` (
   `free` int(20) unsigned NOT NULL,
   `replaced` int(20) unsigned NOT NULL,
   `eliminated` int(20) unsigned NOT NULL,
-  `set` int(20) unsigned NOT NULL
+  `set` int(20) unsigned NOT NULL,
+  KEY `idx1` (`conflicts`,`runID`),
+  KEY `idx2` (`runID`,`simplifications`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -284,7 +289,7 @@ CREATE TABLE `varDataInit` (
   `conflicts` int(20) unsigned NOT NULL,
   `time` float unsigned NOT NULL,
   PRIMARY KEY (`varInitID`)
-) ENGINE=MyISAM AUTO_INCREMENT=10291 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=11810 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -322,4 +327,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-11-28 22:00:59
+-- Dump completed on 2012-12-16  0:09:35
