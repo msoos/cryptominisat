@@ -19,7 +19,7 @@ MySQLStats::MySQLStats() :
 
 void MySQLStats::setup(const Solver* solver)
 {
-    connectServer();
+    connectServer(solver);
     getID(solver);
     addFiles(solver);
     addStartupData(solver);
@@ -48,14 +48,8 @@ void MySQLStats::setup(const Solver* solver)
     );
 }
 
-void MySQLStats::connectServer()
+void MySQLStats::connectServer(const Solver* solver)
 {
-    //Connection parameters
-    string server = "localhost";
-    string user = "cryptomsuser";
-    string password = "";
-    string database = "cryptoms";
-
     //Init MySQL library
     serverConn = mysql_init(NULL);
     if (!serverConn) {
@@ -69,10 +63,10 @@ void MySQLStats::connectServer()
     //Connect to server
     if (!mysql_real_connect(
         serverConn
-        , server.c_str()
-        , user.c_str()
-        , password.c_str()
-        , database.c_str()
+        , solver->getConf().sqlServer.c_str()
+        , solver->getConf().sqlUser.c_str()
+        , solver->getConf().sqlPass.c_str()
+        , solver->getConf().sqlDatabase.c_str()
         , 0
         , NULL
         , 0)

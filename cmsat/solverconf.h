@@ -84,6 +84,10 @@ class SolverConf
         size_t    dumpClauseDistribMaxGlue;
         size_t    preparedDumpSizeScatter;
         size_t    preparedDumpSizeVarData;
+        string    sqlServer;
+        string    sqlUser;
+        string    sqlPass;
+        string    sqlDatabase;
 
         //Optimisations to do
         int       doOTFSubsume;

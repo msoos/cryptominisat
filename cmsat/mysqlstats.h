@@ -69,7 +69,7 @@ private:
         vector<uint64_t> num;
     };
 
-    void connectServer();
+    void connectServer(const Solver* solver);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
 

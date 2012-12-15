@@ -72,6 +72,10 @@ SolverConf::SolverConf() :
         , dumpClauseDistribMaxGlue(50)
         , preparedDumpSizeScatter(100)
         , preparedDumpSizeVarData(40)
+        , sqlServer ("localhost")
+        , sqlUser ("cryptomsuser")
+        , sqlPass ("")
+        , sqlDatabase("cryptoms")
 
         //optimisations to do
         , doOTFSubsume     (true)

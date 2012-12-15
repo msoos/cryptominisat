@@ -428,6 +428,14 @@ void Main::parseCommandLine()
         , "When dumping scatter data, dump by this chunks")
     ("topnvars", po::value<size_t>(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
         , "At every restart, dump the data about the top N variables")
+    ("sqluser", po::value<string>(&conf.sqlUser)->default_value(conf.sqlUser)
+        , "SQL user to connect with")
+    ("sqlpass", po::value<string>(&conf.sqlPass)->default_value(conf.sqlPass)
+        , "SQL user's pass to connect with")
+    ("sqldb", po::value<string>(&conf.sqlDatabase)->default_value(conf.sqlDatabase)
+        , "SQL database name. Default is used by PHP system, so it's highly recommended")
+    ("sqlserver", po::value<string>(&conf.sqlServer)->default_value(conf.sqlServer)
+        , "SQL server hostname/IP")
     ;
 
     po::options_description printOptions("Printing options");
