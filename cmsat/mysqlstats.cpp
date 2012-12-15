@@ -80,12 +80,10 @@ void MySQLStats::connectServer(const Solver* solver)
       << "If your MySQL server is running then you did not create the database" << endl
       << "and/or didn't add the correct user. You can fix this by executing: " << endl
       << "$ mysql -u root -p" << endl
-      << " (type in myql root pass)" << endl
       << "mysql> create database cmsat;" << endl
       << "mysql> grant all on cryptoms.* to user 'cmsat_solver'@localhost identified by '';" << endl
       << "mysql> quit;" << endl
       << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
-      << " (type in myql root pass)" << endl;
       ;
 
       exit(1);
@@ -127,7 +125,6 @@ void MySQLStats::getID(const Solver* solver)
         //Check if we have been in this loop for too long
         if (numTries > 10) {
             cout
-            << "Database is full?"
             << " Something is wrong while adding runID!" << endl
             << " Exiting!"
             << endl;
@@ -136,7 +133,7 @@ void MySQLStats::getID(const Solver* solver)
             << "Maybe you didn't create the tables in the database?" << endl
             << "You can fix this by executing: " << endl
             << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
-            << " (type in myql root pass)" << endl;
+            ;
 
             exit(-1);
         }
