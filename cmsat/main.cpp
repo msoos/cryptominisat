@@ -84,8 +84,10 @@ void SIGINT_handler(int)
     std::cerr << "*** INTERRUPTED ***" << endl;
     if (solver->getNeedToDumpLearnts() || solver->getNeedToDumpSimplified()) {
         solver->setNeedToInterrupt();
-        std::cerr << "*** Please wait. We need to interrupt cleanly" << endl;
-        std::cerr << "*** This means we might need to finish some calculations" << endl;
+        std::cerr
+        << "*** Please wait. We need to interrupt cleanly" << endl
+        << "*** This means we might need to finish some calculations"
+        << endl;
     } else {
         if (solver->getVerbosity() >= 1) {
             solver->addInPartialSolvingStat();
@@ -108,7 +110,11 @@ void Main::readInAFile(const std::string& filename)
     #endif // DISABLE_ZLIB
 
     if (in == NULL) {
-        cout << "ERROR! Could not open file '" << filename << "' for reading" << endl;
+        cout
+        << "ERROR! Could not open file '"
+        << filename
+        << "' for reading" << endl;
+
         exit(1);
     }
 
@@ -125,8 +131,11 @@ void Main::readInAFile(const std::string& filename)
 void Main::readInStandardInput()
 {
     if (solver->getVerbosity()) {
-        cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
+        cout
+        << "c Reading from standard input... Use '-h' or '--help' for help."
+        << endl;
     }
+
     #ifdef DISABLE_ZLIB
         FILE * in = stdin;
     #else
@@ -152,7 +161,11 @@ void Main::parseInAllFiles()
 
     //First read normal extra files
     if ((debugLib || debugNewVar) && filesToRead.size() > 1) {
-        cout << "debugNewVar and debugLib must both be OFF to parse in more than one file" << endl;
+        cout
+        << "debugNewVar and debugLib must both be OFF"
+        << "to parse in more than one file"
+        << endl;
+
         exit(-1);
     }
 
