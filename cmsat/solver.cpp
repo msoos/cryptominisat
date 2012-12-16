@@ -2258,9 +2258,9 @@ void Solver::printClauseStats()
 
     //LITERALS irred
     cout
-    << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(binTri.irredLits - binTri.irredBins*2)
-    /(double)(longIrredCls.size() + binTri.irredTris);
+    << " " << std::setw(5) << std::fixed << std::setprecision(1)
+    << (double)(binTri.irredLits - binTri.irredBins*2 - binTri.irredTris*3)
+    /(double)(longIrredCls.size());
 
     //LONG red
     if (longRedCls.size() > 20000) {
@@ -2294,9 +2294,9 @@ void Solver::printClauseStats()
 
     //LITERALS red
     cout
-    << " " << std::setw(4) << std::fixed << std::setprecision(1)
-    << (double)(binTri.redLits - binTri.redBins*2)
-        /(double)(longRedCls.size() + binTri.redTris)
+    << " " << std::setw(5) << std::fixed << std::setprecision(1)
+    << (double)(binTri.redLits - binTri.redBins*2 - binTri.redTris*3)
+        /(double)(longRedCls.size())
     ;
 }
 
