@@ -694,10 +694,12 @@ struct ConflStats
 
         cout
         << "c DEBUG"
-        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
-        << " = " << (((int)numConflicts -
-            (int)(conflsBinIrred + conflsBinRed
-                    + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
+        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed"
+        << endl
+        << "c  + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
+        << " = "
+        << (((int)numConflicts - (int)(conflsBinIrred + conflsBinRed
+            + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
         << endl;
 
         /*assert(((int)numConflicts -
