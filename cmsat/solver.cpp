@@ -1797,17 +1797,25 @@ void Solver::dump2LongXorClauses(std::ostream* os) const
         if (lit.var() == var)
             continue;
 
+        tmpCl.clear();
+        tmpCl.push_back(getUpdatedLit((~lit), interToOuterMain));
+        tmpCl.push_back(getUpdatedLit(Lit(var, false), interToOuterMain));
+        std::sort(tmpCl.begin(), tmpCl.end());
+
         *os
-        << getUpdatedLit((~lit), interToOuterMain)
+        << tmpCl[0]
         << " "
-        << getUpdatedLit(Lit(var, false), interToOuterMain)
+        << tmpCl[1]
         << " 0"
         << endl;
 
+        tmpCl[0] ^= true;
+        tmpCl[1] ^= true;
+
         *os
-        << getUpdatedLit(lit, interToOuterMain)
+        << tmpCl[0]
         << " "
-        << getUpdatedLit(Lit(var, true), interToOuterMain)
+        << tmpCl[1]
         << " 0"
         << endl;
     }
