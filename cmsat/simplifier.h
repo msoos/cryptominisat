@@ -278,7 +278,7 @@ public:
 
         void print(const size_t nVars) const
         {
-            cout << "c -------- SatELite STATS ----------" << endl;
+            cout << "c -------- Simplifier STATS ----------" << endl;
             printStatsLine("c time"
                 , totalTime());
 
@@ -354,7 +354,7 @@ public:
                 ((double)clauses_elimed_sumsize
                 /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
             );
-            cout << "c -------- SatELite STATS END ----------" << endl;
+            cout << "c -------- Simplifier STATS END ----------" << endl;
         }
 
         //Time stats
