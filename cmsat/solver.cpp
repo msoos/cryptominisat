@@ -2307,9 +2307,6 @@ void Solver::printClauseStats() const
     }
 
     //BIN red
-    cout
-    << " " << std::setw(6) << binTri.redTris;
-
     if (binTri.redBins > 20000) {
         cout
         << " " << std::setw(4) << binTri.redBins/1000 << "K";
