@@ -70,8 +70,8 @@ using std::endl;
 Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
     , varElimOrder(VarOrderLt(varElimComplexity))
-    , numCalls(0)
     , xorFinder(NULL)
+    , numCalls(0)
 {
     #ifdef USE_M4RI
     xorFinder = new XorFinder(this, solver);
