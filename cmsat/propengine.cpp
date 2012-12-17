@@ -351,7 +351,7 @@ PropResult PropEngine::propNormalClause(
                 && solver != NULL
                 && varData[c[1].var()].reason.getType() == binary_t
             ) {
-                Lit other = varData[c[1].var()].reason.lit1();
+                const Lit other = varData[c[1].var()].reason.lit1();
                 bool OK = true;
                 for(uint32_t i = 2; i < c.size(); i++) {
                     if (varData[c[i].var()].reason.getType() != binary_t
