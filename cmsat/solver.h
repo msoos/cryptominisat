@@ -335,6 +335,10 @@ class Solver : public Searcher
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////
+        // Temporary datastructs -- must be cleared before use
+        mutable std::vector<Lit> tmpCl;
+
+        /////////////////////////////
         //Renumberer
         vector<Var> outerToInterMain;
         vector<Var> interToOuterMain;
@@ -591,10 +595,15 @@ inline const Solver::BinTriStats& Solver::getBinTriStats() const
 template<class T>
 inline string Solver::clauseBackNumbered(const T& cl) const
 {
+    tmpCl.clear();
+    for(size_t i = 0; i < cl.size(); i++) {
+        tmpCl.push_back(getUpdatedLit(cl[i], interToOuterMain));
+    }
+    std::sort(tmpCl.begin(), tmpCl.end());
+
     std::stringstream ss;
     for(size_t i = 0; i < cl.size(); i++) {
-        ss
-        << getUpdatedLit(cl[i], interToOuterMain);
+        ss << tmpCl[i];
 
         if (i+1 != cl.size())
             ss << " ";
