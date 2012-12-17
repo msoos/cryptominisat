@@ -1678,10 +1678,15 @@ void Solver::dumpBinClauses(
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump) {
+                    tmpCl.clear();
+                    tmpCl.push_back(getUpdatedLit(it2->lit1(), interToOuterMain));
+                    tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
+                    std::sort(tmpCl.begin(), tmpCl.end());
+
                     *outfile
-                    << getUpdatedLit(it2->lit1(), interToOuterMain)
+                    << tmpCl[0]
                     << " "
-                    << getUpdatedLit(lit, interToOuterMain)
+                    << tmpCl[1]
                     << " 0"
                     << endl;
                 }
@@ -1710,14 +1715,21 @@ void Solver::dumpTriClauses(
                 if (it2->learnt() && alsoLearnt) toDump = true;
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
-                if (toDump)
+                if (toDump) {
+                    tmpCl.clear();
+                    tmpCl.push_back(getUpdatedLit(it2->lit1(), interToOuterMain));
+                    tmpCl.push_back(getUpdatedLit(it2->lit2(), interToOuterMain));
+                    tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
+                    std::sort(tmpCl.begin(), tmpCl.end());
+
                     *outfile
-                    << getUpdatedLit(it2->lit1(), interToOuterMain)
+                    << tmpCl[0]
                     << " "
-                    << getUpdatedLit(it2->lit2(), interToOuterMain)
+                    << tmpCl[1]
                     << " "
-                    << getUpdatedLit(lit, interToOuterMain)
+                    << tmpCl[2]
                     << " 0" << endl;
+                }
             }
         }
     }
