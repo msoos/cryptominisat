@@ -1135,7 +1135,25 @@ lbool Searcher::burstSearch()
     return status;
 }
 
-void Searcher::printRestartStats()
+void Searcher::printRestartHeader() const
+{
+    cout
+    << "c"
+    << " " << std::setw(5) << "rest"
+    << " " << std::setw(5) << "conf"
+    << " " << std::setw(7) << "freevar"
+    << " " << std::setw(5) << "IrrL"
+    << " " << std::setw(5) << "IrrT"
+    << " " << std::setw(5) << "IrrL"
+    << " " << std::setw(5) << "l/c"
+    << " " << std::setw(5) << "RedL"
+    << " " << std::setw(5) << "RedT"
+    << " " << std::setw(5) << "RedL"
+    << " " << std::setw(5) << "l/c"
+    << endl;
+}
+
+void Searcher::printRestartStats() const
 {
     printBaseStats();
     if (conf.printFullStats) {
@@ -1148,7 +1166,7 @@ void Searcher::printRestartStats()
     cout << endl;
 }
 
-void Searcher::printBaseStats()
+void Searcher::printBaseStats() const
 {
     cout
     << "c"
@@ -1413,6 +1431,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     lbool status = l_Undef;
 
     uint64_t lastRestartPrint = stats.conflStats.numConflicts;
+    uint64_t lastRestartPrintHeader = stats.conflStats.numConflicts;
 
     //Burst seach
     status = burstSearch();
@@ -1528,6 +1547,13 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
             && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
                 || conf.printAllRestarts)
         ) {
+            //Print restart output header
+            if (lastRestartPrintHeader == 0
+                ||(lastRestartPrintHeader + 20000) < stats.conflStats.numConflicts
+            ) {
+                printRestartHeader();
+                lastRestartPrintHeader = stats.conflStats.numConflicts;
+            }
             printRestartStats();
             lastRestartPrint = stats.conflStats.numConflicts;
         }

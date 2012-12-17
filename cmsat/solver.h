@@ -105,8 +105,8 @@ class Solver : public Searcher
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpSimplified() const;
         uint32_t getVerbosity() const;
-        void     printFullStats();
-        void     printClauseStats();
+        void     printFullStats() const;
+        void     printClauseStats() const;
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;

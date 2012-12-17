@@ -1529,7 +1529,7 @@ void Solver::consolidateMem()
     clAllocator->consolidate(this, true);
 }
 
-void Solver::printFullStats()
+void Solver::printFullStats() const
 {
     const double cpu_time = cpuTime();
     printStatsLine("c UIP search time"
@@ -2253,7 +2253,7 @@ size_t Solver::getNumFreeVars() const
     return freeVars;
 }
 
-void Solver::printClauseStats()
+void Solver::printClauseStats() const
 {
     //LONG irred
     if (longIrredCls.size() > 20000) {

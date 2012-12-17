@@ -164,7 +164,7 @@ class Searcher : public PropEngine
                 litPropagatedSomethingLT.clear();
             }
 
-            void print()
+            void print() const
             {
                 cout
                 << " glue"
@@ -221,9 +221,10 @@ class Searcher : public PropEngine
 
         ///////////////////////////////
         // Stats
-        void     printRestartStats();
-        void     printBaseStats();
-        void     printClauseStats();
+        void     printRestartHeader() const;
+        void     printRestartStats() const;
+        void     printBaseStats() const;
+        void     printClauseStats() const;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
         const Hist& getHistory() const;
@@ -363,7 +364,7 @@ class Searcher : public PropEngine
                 return result;
             }
 
-            void print()
+            void print() const
             {
                 uint64_t mem_used = memUsed();
 
