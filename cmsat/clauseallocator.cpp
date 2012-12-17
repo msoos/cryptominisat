@@ -97,7 +97,9 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
     assert(clauseSize > 3 && "Clause size cannot be 3 or less, those are stored implicitly");
 
     //Try to quickly find a place at the end of a dataStart
-    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*clauseSize)/sizeof(BASE_DATA_TYPE);
+    uint32_t needed
+        = (sizeof(Clause) + sizeof(Lit)*clauseSize) /sizeof(BASE_DATA_TYPE);
+
     if (size + needed > maxSize) {
         //Grow by default, but don't go under or over the limits
         size_t newMaxSize = maxSize * ALLOC_GROW_MULT;
@@ -107,7 +109,10 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
         //Oops, not enough space anyway
         if (newMaxSize < size + needed) {
             cout
-            << "ERROR: memory manager can't handle the load!"
+            << "ERROR: memory manager can't handle the load"
+            << " size: " << size
+            << " needed: " << needed
+            << " newMaxSize: " << newMaxSize
             << endl;
 
             exit(-1);
@@ -260,9 +265,10 @@ void ClauseAllocator::consolidate(
         //Next line is needed, because in case of isRemoved()
         //, the size of the clause could become 0, thus having less
         // than enough space to carry the NewPointerAndOffset info
-        sizeNeeded = std::max<uint32_t>(sizeNeeded, (uint32_t)sizeof(NewPointerAndOffset)/sizeof(BASE_DATA_TYPE));
+        sizeNeeded = std::max<uint32_t>(sizeNeeded, sizeof(NewPointerAndOffset)/sizeof(BASE_DATA_TYPE));
         memcpy(newDataStartsAt, (uint32_t*)clause, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
+        //Save new position of clause in the old place
         NewPointerAndOffset& ptr = *((NewPointerAndOffset*)clause);
         ptr.newOffset = newSize;
         ptr.newPointer = (Clause*)newDataStartsAt;
@@ -270,6 +276,14 @@ void ClauseAllocator::consolidate(
         newSize += sizeNeeded;
         newOrigClauseSizes.push_back(sizeNeeded);
         newDataStartsAt += sizeNeeded;
+    }
+
+    if (solver->conf.verbosity >= 3) {
+        cout << "c consolidated memory. "
+        << " Num cls:" << clauses.size()
+        << " new size:" << newSize
+        << " new maxSize:" << maxSize
+        << endl;
     }
 
     //Update offsets & pointers(?) now, when everything is in memory still
