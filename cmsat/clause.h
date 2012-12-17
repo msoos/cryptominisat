@@ -37,6 +37,33 @@
 
 class ClauseAllocator;
 
+struct ResolutionTypes
+{
+    ResolutionTypes() :
+        binCl(0)
+        , triCl(0)
+        , longCl(0)
+    {}
+
+    uint32_t sum() const
+    {
+        return binCl + triCl + longCl;
+    }
+
+    ResolutionTypes& operator+=(const ResolutionTypes& other)
+    {
+        binCl += other.binCl;
+        triCl += other.triCl;
+        longCl += other.longCl;
+
+        return *this;
+    }
+
+    uint16_t binCl;
+    uint16_t triCl;
+    uint16_t longCl;
+};
+
 struct ClauseStats
 {
     ClauseStats() :
@@ -48,7 +75,6 @@ struct ClauseStats
         , numLitVisited(0)
         , numLookedAt(0)
         , numUsedUIP(0)
-        , resolutions(0)
     {}
 
     uint32_t numPropAndConfl() const
@@ -68,7 +94,7 @@ struct ClauseStats
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for learnt clauses
-    uint32_t resolutions;
+    ResolutionTypes resolutions;
 
     void clearAfterReduceDB()
     {
@@ -423,10 +449,17 @@ struct CleaningStats
             , numLitVisited(0)
             , numLookedAt(0)
             , numUsedUIP(0)
-            , numResolutions(0)
+            , resolutionsBin(0)
+            , resolutionsTri(0)
+            , resolutionsLong(0)
 
             , act(0)
         {}
+
+        uint64_t sumResolutions() const
+        {
+            return resolutionsBin + resolutionsTri + resolutionsLong;
+        }
 
         Data& operator+=(const Data& other)
         {
@@ -440,7 +473,9 @@ struct CleaningStats
             numLitVisited += other.numLitVisited;
             numLookedAt += other.numLookedAt;
             numUsedUIP += other.numUsedUIP;
-            numResolutions += other.numResolutions;
+            resolutionsBin += other.resolutionsBin;
+            resolutionsTri += other.resolutionsTri;
+            resolutionsLong += other.resolutionsLong;
 
             act += other.act;
 
@@ -457,7 +492,9 @@ struct CleaningStats
         uint64_t numLitVisited;
         uint64_t numLookedAt;
         uint64_t numUsedUIP;
-        uint64_t numResolutions;
+        uint64_t resolutionsBin;
+        uint64_t resolutionsTri;
+        uint64_t resolutionsLong;
         double   act;
 
     };
@@ -519,7 +556,7 @@ struct CleaningStats
             , (double)preRemove.glue/(double)preRemove.num
         );
         printStatsLine("c pre-removed cl avg num resolutions"
-            , (double)preRemove.numResolutions/(double)preRemove.num
+            , (double)preRemove.sumResolutions()/(double)preRemove.num
         );
 
         //Types of clean

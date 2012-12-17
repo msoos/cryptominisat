@@ -564,7 +564,7 @@ class Searcher : public PropEngine
             , vector<Lit>& out_learnt    //learnt clause
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
-            , uint32_t &numResolutions   //number of resolutions made
+            , ResolutionTypes &resolutions   //number of resolutions made
         );
 
         void analyzeHelper(

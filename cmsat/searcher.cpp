@@ -172,7 +172,7 @@ Clause* Searcher::analyze(
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
     , uint32_t &glue
-    , uint32_t &numResolutions
+    , ResolutionTypes& resolutions
 ) {
     assert(out_learnt.empty());
     assert(decisionLevel() > 0);
@@ -183,22 +183,24 @@ Clause* Searcher::analyze(
     out_btlevel = 0;
     PropBy oldConfl;
 
-    numResolutions = 0;
-
     //cout << "---- Start analysis -----" << endl;
     toClear.clear();
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
-        numResolutions++;
-
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
+                resolutions.triCl++;
                 analyzeHelper(confl.lit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
             case binary_t : {
+                //We fall here even on TRI, so make sure
+                if (confl.getType() == binary_t)
+                    resolutions.binCl++;
+
+
                 if (p == lit_Undef)
                     analyzeHelper(failBinLit, pathC, out_learnt, true);
 
@@ -207,6 +209,7 @@ Clause* Searcher::analyze(
             }
 
             case clause_t : {
+                resolutions.longCl++;
                 Clause& cl = *clAllocator->getPointer(confl.getClause());
 
                 //Update stats
@@ -876,7 +879,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     //Stats
     uint32_t backtrack_level;
     uint32_t glue;
-    uint32_t numResolutions;
+    ResolutionTypes resolutions;
     vector<Lit> learnt_clause;
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
@@ -891,7 +894,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         , learnt_clause    //return learnt clause here
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
-        , numResolutions   //return number of resolutions made here
+        , resolutions   //return number of resolutions made here
     );
 
     size_t orig_trail_size = trail.size();
@@ -903,7 +906,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         hist.glueHist.push(glue);
         hist.conflSizeHist.push(learnt_clause.size());
         hist.agilityHist.push(agility.getAgility());
-        hist.numResolutionsHist.push(numResolutions);
+        hist.numResolutionsHist.push(resolutions.sum());
 
         if (solver->conf.doSQL) {
             if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
@@ -999,7 +1002,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
 
         default:
             //Normal learnt
-            cl->stats.resolutions = numResolutions;
+            cl->stats.resolutions = resolutions;
             stats.learntLongs++;
             solver->attachClause(*cl);
             if (decisionLevel() == 1)

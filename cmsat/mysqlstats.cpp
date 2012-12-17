@@ -614,17 +614,20 @@ void MySQLStats::initReduceDBSTMT(
 
     //Clean data
     << ", preRemovedNum, preRemovedLits, preRemovedGlue"
-    << ", preRemovedResol, preRemovedAge, preRemovedAct"
+    << ", preRemovedResolBin, preRemovedResolTri, preRemovedResolLong"
+    << ", preRemovedAge, preRemovedAct"
     << ", preRemovedLitVisited, preRemovedProp, preRemovedConfl"
     << ", preRemovedLookedAt"
 
     << ", removedNum, removedLits, removedGlue"
-    << ", removedResol, removedAge, removedAct"
+    << ", removedResolBin, removedResolTri, removedResolLong"
+    << ", removedAge, removedAct"
     << ", removedLitVisited, removedProp, removedConfl"
     << ", removedLookedAt"
 
     << ", remainNum, remainLits, remainGlue"
-    << ", remainResol, remainAge, remainAct"
+    << ", remainResolBin, remainResolTri, remainResolLong"
+    << ", remainAge, remainAct"
     << ", remainLitVisited, remainProp, remainConfl"
     << ", remainLookedAt"
     << ") values ";
@@ -698,7 +701,9 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numResolutions);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resolutionsBin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resolutionsTri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resolutionsLong);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLitVisited);
@@ -709,7 +714,9 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numResolutions);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resolutionsBin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resolutionsTri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resolutionsLong);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLitVisited);
@@ -720,7 +727,9 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numResolutions);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resolutionsBin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resolutionsTri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resolutionsLong);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLitVisited);

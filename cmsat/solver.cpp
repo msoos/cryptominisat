@@ -841,7 +841,9 @@ CleaningStats Solver::reduceDB()
                 tmpStats.preRemove.numLitVisited += cl->stats.numLitVisited;
                 tmpStats.preRemove.numLookedAt += cl->stats.numLookedAt;
                 tmpStats.preRemove.numProp += cl->stats.numProp;
-                tmpStats.preRemove.numResolutions += cl->stats.resolutions;
+                tmpStats.preRemove.resolutionsBin += cl->stats.resolutions.binCl;
+                tmpStats.preRemove.resolutionsTri += cl->stats.resolutions.triCl;
+                tmpStats.preRemove.resolutionsLong += cl->stats.resolutions.longCl;
                 tmpStats.preRemove.numUsedUIP += cl->stats.numUsedUIP;
 
                 assert(cl->stats.conflictNumIntroduced <= sumConfl);
@@ -925,7 +927,9 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.numLitVisited += cl->stats.numLitVisited;
         tmpStats.removed.numLookedAt += cl->stats.numLookedAt;
         tmpStats.removed.numProp += cl->stats.numProp;
-        tmpStats.removed.numResolutions += cl->stats.resolutions;
+        tmpStats.removed.resolutionsBin += cl->stats.resolutions.binCl;
+        tmpStats.removed.resolutionsTri += cl->stats.resolutions.triCl;
+        tmpStats.removed.resolutionsLong += cl->stats.resolutions.longCl;
         tmpStats.removed.numUsedUIP += cl->stats.numUsedUIP;
 
         //detach & free
@@ -949,7 +953,9 @@ CleaningStats Solver::reduceDB()
         tmpStats.remain.numLitVisited += cl->stats.numLitVisited;
         tmpStats.remain.numLookedAt += cl->stats.numLookedAt;
         tmpStats.remain.numProp += cl->stats.numProp;
-        tmpStats.remain.numResolutions += cl->stats.resolutions;
+        tmpStats.remain.resolutionsBin += cl->stats.resolutions.binCl;
+        tmpStats.removed.resolutionsTri += cl->stats.resolutions.triCl;
+        tmpStats.removed.resolutionsLong += cl->stats.resolutions.longCl;
         tmpStats.remain.numUsedUIP += cl->stats.numUsedUIP;
 
         longRedCls[j++] = offset;
