@@ -1889,7 +1889,7 @@ void Solver::dumpRedClauses(
     << "c clauses from learnts" << endl
     << "c --------------------" << endl;
     for (vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
+        it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
         ; it++
     ) {
