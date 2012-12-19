@@ -2054,8 +2054,17 @@ bool Solver::verifyBinClauses() const
                 && modelValue(lit) != l_True
                 && modelValue(i->lit1()) != l_True
             ) {
-                cout << "bin clause: " << lit << " , " << i->lit1() << " not satisfied!" << endl;
-                cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->lit1()) << endl;
+                cout
+                << "bin clause: "
+                << lit << " , " << i->lit1()
+                << " not satisfied!"
+                << endl;
+
+                cout
+                << "value of unsat bin clause: "
+                << value(lit) << " , " << value(i->lit1())
+                << endl;
+
                 return false;
             }
         }
