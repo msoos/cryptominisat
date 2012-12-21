@@ -1,3 +1,7 @@
+ver 2.9.6
+* Better handling of memory
+* Returning a vector of clauses with dumpOrigClauses()
+
 ver 2.9.5
 * License is now MIT
 * Moved all files under Solver
