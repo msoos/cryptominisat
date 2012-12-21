@@ -309,6 +309,147 @@ bool Solver::dumpOrigClauses(const std::string& fileName) const
     return true;
 }
 
+vector<RetClause> Solver::dumpOrigClauses() const
+{
+
+    vector<RetClause> ret;
+    vector<Lit> tmpCl;
+
+    //Unitaries
+    for (uint32_t i = 0
+        , end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size()
+        ; i < end
+        ; i++
+    ) {
+        tmpCl.clear();
+        tmpCl.push_back(trail[i]);
+        ret.push_back(RetClause(tmpCl));
+    }
+
+
+    //2-long XORs
+    const vector<Lit>& table = varReplacer->getReplaceTable();
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        Lit litP1 = ~lit;
+        Lit litP2 = Lit(var, false);
+        // a v b
+        //-a v -b
+        //-> a + b = 1
+        //-> litP1 + litP2 == 1
+        bool rhs = true;
+        rhs ^= litP1.sign();
+        rhs ^= litP2.sign();
+
+        tmpCl.clear();
+        tmpCl.push_back(litP1.unsign());
+        tmpCl.push_back(litP2.unsign());
+        ret.push_back(RetClause(true, rhs, tmpCl));
+    }
+
+    //Bins -- implicit, so more complicated
+    uint32_t wsLit = 0;
+    for (const vec<Watched>
+        *it = watches.getData(), *end = watches.getDataEnd()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (vec<Watched>::const_iterator
+            it2 = ws.getData(), end2 = ws.getDataEnd()
+            ; it2 != end2
+            ; it2++
+        ) {
+            //Only dump once
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (it2->getLearnt())
+                    continue;
+
+                tmpCl.clear();
+                tmpCl.push_back(lit);
+                tmpCl.push_back(it2->getOtherLit());
+                ret.push_back(RetClause(tmpCl));
+            }
+        }
+    }
+
+    //Longs
+    for (Clause *const *i = clauses.getData(); i != clauses.getDataEnd(); i++) {
+        const Clause& cl = **i;
+        if (cl.learnt())
+            continue;
+
+        tmpCl.clear();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            tmpCl.push_back(cl[i2]);
+        }
+        ret.push_back(RetClause(tmpCl));
+    }
+
+    //xor clauses
+    for (XorClause *const *i = xorclauses.getData(); i != xorclauses.getDataEnd(); i++) {
+        const XorClause& cl = **i;
+        tmpCl.clear();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            tmpCl.push_back(cl[i2].unsign());
+        }
+        ret.push_back(RetClause(true, true ^ cl.xorEqualFalse(), tmpCl));
+    }
+
+    //elimed
+    const map<Var, vector<vector<Lit> > >& elimedOutVar = subsumer->getElimedOutVar();
+    for (map<Var, vector<vector<Lit> > >::const_iterator
+        it = elimedOutVar.begin()
+        ; it != elimedOutVar.end()
+        ; it++
+    ) {
+        const vector<vector<Lit> >& cs = it->second;
+        for (vector<vector<Lit> >::const_iterator
+            it2 = cs.begin()
+            ; it2 != cs.end()
+            ; it2++
+        ) {
+            ret.push_back(RetClause(*it2));
+        }
+    }
+    const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
+    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator
+        it = elimedOutVarBin.begin()
+        ; it != elimedOutVarBin.end()
+        ; it++
+    ) {
+        for (uint32_t i = 0; i < it->second.size(); i++) {
+            tmpCl.clear();
+            tmpCl.push_back(it->second[i].first);
+            tmpCl.push_back(it->second[i].second);
+            ret.push_back(RetClause(tmpCl));
+        }
+    }
+
+    //previously xor-eliminated variables\n");
+    const map<Var, vector<XorSubsumer::XorElimedClause> >& xorElimedOutVar = xorSubsumer->getElimedOutVar();
+    for (map<Var, vector<XorSubsumer::XorElimedClause> >::const_iterator
+        it = xorElimedOutVar.begin()
+        ; it != xorElimedOutVar.end()
+        ; it++
+    ) {
+        for (vector<XorSubsumer::XorElimedClause>::const_iterator
+            it2 = it->second.begin(), end2 = it->second.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            ret.push_back(RetClause(true, true ^ it2->xorEqualFalse, it2->lits));
+        }
+    }
+
+    return ret;
+}
+
+
 vec<Lit> Solver::get_unitary_learnts() const
 {
     vec<Lit> unitaries;

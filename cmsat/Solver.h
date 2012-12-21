@@ -45,6 +45,23 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 namespace CMSat {
 
+struct RetClause
+{
+    RetClause (const vector<Lit>& _lits) :
+        is_xor(false)
+        , right_hand_side(true)
+        , lits(_lits)
+    {}
+    RetClause (bool isXOR, bool rhs, const vector<Lit>& _lits) :
+        is_xor(isXOR)
+        , right_hand_side(rhs)
+        , lits(_lits)
+    {}
+    bool is_xor;
+    bool right_hand_side;
+    vector<Lit> lits;
+};
+
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
@@ -171,6 +188,7 @@ public:
     uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     bool dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file; returns true for success, false for failure
     bool needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
+    vector<RetClause> dumpOrigClauses() const;
     bool dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
     const vector<std::pair<Lit, Lit> > get_all_binary_xors() const;
