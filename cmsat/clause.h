@@ -37,31 +37,45 @@
 
 class ClauseAllocator;
 
+template <class T>
 struct ResolutionTypes
 {
     ResolutionTypes() :
         binCl(0)
         , triCl(0)
-        , longCl(0)
+        , irredLCl(0)
+        , redLCl(0)
     {}
 
     uint32_t sum() const
     {
-        return binCl + triCl + longCl;
+        return binCl + triCl + irredLCl + redLCl;
     }
 
     ResolutionTypes& operator+=(const ResolutionTypes& other)
     {
         binCl += other.binCl;
         triCl += other.triCl;
-        longCl += other.longCl;
+        irredLCl += other.irredLCl;
+        redLCl += other.redLCl;
 
         return *this;
     }
 
-    uint16_t binCl;
-    uint16_t triCl;
-    uint16_t longCl;
+    ResolutionTypes& operator-=(const ResolutionTypes& other)
+    {
+        binCl -= other.binCl;
+        triCl -= other.triCl;
+        irredLCl -= other.irredLCl;
+        redLCl -= other.redLCl;
+
+        return *this;
+    }
+
+    T binCl;
+    T triCl;
+    T irredLCl;
+    T redLCl;
 };
 
 struct ClauseStats
@@ -94,7 +108,7 @@ struct ClauseStats
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for learnt clauses
-    ResolutionTypes resolutions;
+    ResolutionTypes<uint16_t> resolutions;
 
     void clearAfterReduceDB()
     {
@@ -451,14 +465,16 @@ struct CleaningStats
             , numUsedUIP(0)
             , resolutionsBin(0)
             , resolutionsTri(0)
-            , resolutionsLong(0)
+            , resolutionsLIrred(0)
+            , resolutionsLRed(0)
 
             , act(0)
         {}
 
         uint64_t sumResolutions() const
         {
-            return resolutionsBin + resolutionsTri + resolutionsLong;
+            return resolutionsBin + resolutionsTri
+                    + resolutionsLIrred + resolutionsLRed;
         }
 
         Data& operator+=(const Data& other)
@@ -475,7 +491,8 @@ struct CleaningStats
             numUsedUIP += other.numUsedUIP;
             resolutionsBin += other.resolutionsBin;
             resolutionsTri += other.resolutionsTri;
-            resolutionsLong += other.resolutionsLong;
+            resolutionsLIrred += other.resolutionsLIrred;
+            resolutionsLRed += other.resolutionsLRed;
 
             act += other.act;
 
@@ -494,8 +511,27 @@ struct CleaningStats
         uint64_t numUsedUIP;
         uint64_t resolutionsBin;
         uint64_t resolutionsTri;
-        uint64_t resolutionsLong;
+        uint64_t resolutionsLIrred;
+        uint64_t resolutionsLRed;
         double   act;
+
+        void incorporate(const Clause* cl)
+        {
+            num ++;
+            lits += cl->size();
+            glue += cl->stats.glue;
+            act += cl->stats.activity;
+            numConfl += cl->stats.numConfl;
+            numLitVisited += cl->stats.numLitVisited;
+            numLookedAt += cl->stats.numLookedAt;
+            numProp += cl->stats.numProp;
+            resolutionsBin += cl->stats.resolutions.binCl;
+            resolutionsTri += cl->stats.resolutions.triCl;
+            resolutionsLIrred += cl->stats.resolutions.irredLCl;
+            resolutionsLRed+= cl->stats.resolutions.redLCl;
+            numUsedUIP += cl->stats.numUsedUIP;
+        }
+
 
     };
     CleaningStats() :

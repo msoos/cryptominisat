@@ -309,6 +309,7 @@ class Searcher : public PropEngine
                 transRedRemoved += other.transRedRemoved;
 
                 //Stat structs
+                resolvs += other.resolvs;
                 conflStats += other.conflStats;
 
                 //Time
@@ -349,6 +350,7 @@ class Searcher : public PropEngine
                 transRedRemoved -= other.transRedRemoved;
 
                 //Stat structs
+                resolvs -= other.resolvs;
                 conflStats -= other.conflStats;
 
                 //Time
@@ -511,6 +513,9 @@ class Searcher : public PropEngine
             uint64_t hyperBinAdded;
             uint64_t transRedRemoved;
 
+            //Resolution Stats
+            ResolutionTypes<uint64_t> resolvs;
+
             //Stat structs
             ConflStats conflStats;
 
@@ -565,7 +570,7 @@ class Searcher : public PropEngine
             , vector<Lit>& out_learnt    //learnt clause
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
-            , ResolutionTypes &resolutions   //number of resolutions made
+            , ResolutionTypes<uint16_t> &resolutions   //number of resolutions made
         );
 
         void analyzeHelper(

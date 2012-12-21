@@ -172,7 +172,7 @@ Clause* Searcher::analyze(
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
     , uint32_t &glue
-    , ResolutionTypes& resolutions
+    , ResolutionTypes<uint16_t>& resolutions
 ) {
     assert(out_learnt.empty());
     assert(decisionLevel() > 0);
@@ -191,14 +191,17 @@ Clause* Searcher::analyze(
         switch (confl.getType()) {
             case tertiary_t : {
                 resolutions.triCl++;
+                stats.resolvs.triCl++;
                 analyzeHelper(confl.lit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
             case binary_t : {
                 //We fall here even on TRI, so make sure
-                if (confl.getType() == binary_t)
+                if (confl.getType() == binary_t) {
                     resolutions.binCl++;
+                    stats.resolvs.binCl++;
+                }
 
 
                 if (p == lit_Undef)
@@ -209,8 +212,14 @@ Clause* Searcher::analyze(
             }
 
             case clause_t : {
-                resolutions.longCl++;
                 Clause& cl = *clAllocator->getPointer(confl.getClause());
+                if (cl.learnt()) {
+                    resolutions.redLCl++;
+                    stats.resolvs.redLCl++;
+                } else {
+                    resolutions.irredLCl++;
+                    stats.resolvs.irredLCl++;
+                }
 
                 //Update stats
                 cl.stats.numUsedUIP++;
@@ -879,7 +888,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     //Stats
     uint32_t backtrack_level;
     uint32_t glue;
-    ResolutionTypes resolutions;
+    ResolutionTypes<uint16_t> resolutions;
     vector<Lit> learnt_clause;
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;

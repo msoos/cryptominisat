@@ -832,22 +832,11 @@ CleaningStats Solver::reduceDB()
                     < sumStats.conflStats.numConflicts
             ) {
                 //Stat update
-                tmpStats.preRemove.num ++;
-                tmpStats.preRemove.lits += cl->size();
-                tmpStats.preRemove.glue += cl->stats.glue;
-                tmpStats.preRemove.act += cl->stats.activity;
-
-                tmpStats.preRemove.numConfl += cl->stats.numConfl;
-                tmpStats.preRemove.numLitVisited += cl->stats.numLitVisited;
-                tmpStats.preRemove.numLookedAt += cl->stats.numLookedAt;
-                tmpStats.preRemove.numProp += cl->stats.numProp;
-                tmpStats.preRemove.resolutionsBin += cl->stats.resolutions.binCl;
-                tmpStats.preRemove.resolutionsTri += cl->stats.resolutions.triCl;
-                tmpStats.preRemove.resolutionsLong += cl->stats.resolutions.longCl;
-                tmpStats.preRemove.numUsedUIP += cl->stats.numUsedUIP;
-
-                assert(cl->stats.conflictNumIntroduced <= sumConfl);
+                tmpStats.preRemove.incorporate(cl);
                 tmpStats.preRemove.age += sumConfl - cl->stats.conflictNumIntroduced;
+
+                //Check
+                assert(cl->stats.conflictNumIntroduced <= sumConfl);
 
                 if (cl->stats.glue > cl->size() + 1000) {
                     cout
@@ -914,23 +903,11 @@ CleaningStats Solver::reduceDB()
         Clause* cl = clAllocator->getPointer(offset);
         assert(cl->size() > 3);
 
-        //Stats
-        tmpStats.removed.num++;
-        tmpStats.removed.lits += cl->size();
-        tmpStats.removed.glue += cl->stats.glue;
-        tmpStats.removed.act += cl->stats.activity;
-        assert(cl->stats.conflictNumIntroduced <= sumConfl);
+        //Stats Update
+        tmpStats.removed.incorporate(cl);
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
-
-        tmpStats.removed.numConfl += cl->stats.numConfl;
-        tmpStats.removed.numLitVisited += cl->stats.numLitVisited;
-        tmpStats.removed.numLookedAt += cl->stats.numLookedAt;
-        tmpStats.removed.numProp += cl->stats.numProp;
-        tmpStats.removed.resolutionsBin += cl->stats.resolutions.binCl;
-        tmpStats.removed.resolutionsTri += cl->stats.resolutions.triCl;
-        tmpStats.removed.resolutionsLong += cl->stats.resolutions.longCl;
-        tmpStats.removed.numUsedUIP += cl->stats.numUsedUIP;
+        //Check
 
         //detach & free
         detachClause(*cl);
@@ -942,21 +919,11 @@ CleaningStats Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
 
-        tmpStats.remain.num++;
-        tmpStats.remain.lits+= cl->size();
-        tmpStats.remain.glue += cl->stats.glue;
-        tmpStats.remain.act += cl->stats.activity;
-        assert(cl->stats.conflictNumIntroduced <= sumConfl);
+        //Stats Update
+        tmpStats.remain.incorporate(cl);
         tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
 
-        tmpStats.remain.numConfl += cl->stats.numConfl;
-        tmpStats.remain.numLitVisited += cl->stats.numLitVisited;
-        tmpStats.remain.numLookedAt += cl->stats.numLookedAt;
-        tmpStats.remain.numProp += cl->stats.numProp;
-        tmpStats.remain.resolutionsBin += cl->stats.resolutions.binCl;
-        tmpStats.removed.resolutionsTri += cl->stats.resolutions.triCl;
-        tmpStats.removed.resolutionsLong += cl->stats.resolutions.longCl;
-        tmpStats.remain.numUsedUIP += cl->stats.numUsedUIP;
+        assert(cl->stats.conflictNumIntroduced <= sumConfl);
 
         longRedCls[j++] = offset;
     }
