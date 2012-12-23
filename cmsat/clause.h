@@ -52,7 +52,8 @@ struct ResolutionTypes
         return binCl + triCl + irredLCl + redLCl;
     }
 
-    ResolutionTypes& operator+=(const ResolutionTypes& other)
+    template <class T2>
+    ResolutionTypes& operator+=(const ResolutionTypes<T2>& other)
     {
         binCl += other.binCl;
         triCl += other.triCl;
@@ -463,18 +464,13 @@ struct CleaningStats
             , numLitVisited(0)
             , numLookedAt(0)
             , numUsedUIP(0)
-            , resolutionsBin(0)
-            , resolutionsTri(0)
-            , resolutionsLIrred(0)
-            , resolutionsLRed(0)
 
             , act(0)
         {}
 
         uint64_t sumResolutions() const
         {
-            return resolutionsBin + resolutionsTri
-                    + resolutionsLIrred + resolutionsLRed;
+            return resol.sum();
         }
 
         Data& operator+=(const Data& other)
@@ -489,10 +485,7 @@ struct CleaningStats
             numLitVisited += other.numLitVisited;
             numLookedAt += other.numLookedAt;
             numUsedUIP += other.numUsedUIP;
-            resolutionsBin += other.resolutionsBin;
-            resolutionsTri += other.resolutionsTri;
-            resolutionsLIrred += other.resolutionsLIrred;
-            resolutionsLRed += other.resolutionsLRed;
+            resol += other.resol;
 
             act += other.act;
 
@@ -509,10 +502,7 @@ struct CleaningStats
         uint64_t numLitVisited;
         uint64_t numLookedAt;
         uint64_t numUsedUIP;
-        uint64_t resolutionsBin;
-        uint64_t resolutionsTri;
-        uint64_t resolutionsLIrred;
-        uint64_t resolutionsLRed;
+        ResolutionTypes<uint64_t> resol;
         double   act;
 
         void incorporate(const Clause* cl)
@@ -525,10 +515,7 @@ struct CleaningStats
             numLitVisited += cl->stats.numLitVisited;
             numLookedAt += cl->stats.numLookedAt;
             numProp += cl->stats.numProp;
-            resolutionsBin += cl->stats.resolutions.binCl;
-            resolutionsTri += cl->stats.resolutions.triCl;
-            resolutionsLIrred += cl->stats.resolutions.irredLCl;
-            resolutionsLRed+= cl->stats.resolutions.redLCl;
+            resol += cl->stats.resolutions;
             numUsedUIP += cl->stats.numUsedUIP;
         }
 

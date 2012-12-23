@@ -121,7 +121,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[16 + 12*3];
+        MYSQL_BIND  bind[16 + 13*3];
         MYSQL_STMT  *stmt;
 
         //Position
@@ -198,7 +198,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[77+1]; //+1 == runID
+        MYSQL_BIND  bind[81+1]; //+1 == runID
         MYSQL_STMT  *stmt;
 
         //Position
@@ -288,6 +288,9 @@ private:
 
         double litPropagatedSomething;
         double litPropagatedSomethingSD;
+
+        //Resolution stats
+        ResolutionTypes<uint64_t> resolv;
 
         //Var stats
         uint64_t propagations;
