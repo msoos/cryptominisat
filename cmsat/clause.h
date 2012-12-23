@@ -41,42 +41,42 @@ template <class T>
 struct ResolutionTypes
 {
     ResolutionTypes() :
-        binCl(0)
-        , triCl(0)
-        , irredLCl(0)
-        , redLCl(0)
+        bin(0)
+        , tri(0)
+        , irredL(0)
+        , redL(0)
     {}
 
-    uint32_t sum() const
+    uint64_t sum() const
     {
-        return binCl + triCl + irredLCl + redLCl;
+        return bin + tri + irredL + redL;
     }
 
     template <class T2>
     ResolutionTypes& operator+=(const ResolutionTypes<T2>& other)
     {
-        binCl += other.binCl;
-        triCl += other.triCl;
-        irredLCl += other.irredLCl;
-        redLCl += other.redLCl;
+        bin += other.bin;
+        tri += other.tri;
+        irredL += other.irredL;
+        redL += other.redL;
 
         return *this;
     }
 
     ResolutionTypes& operator-=(const ResolutionTypes& other)
     {
-        binCl -= other.binCl;
-        triCl -= other.triCl;
-        irredLCl -= other.irredLCl;
-        redLCl -= other.redLCl;
+        bin -= other.bin;
+        tri -= other.tri;
+        irredL -= other.irredL;
+        redL -= other.redL;
 
         return *this;
     }
 
-    T binCl;
-    T triCl;
-    T irredLCl;
-    T redLCl;
+    T bin;
+    T tri;
+    T irredL;
+    T redL;
 };
 
 struct ClauseStats

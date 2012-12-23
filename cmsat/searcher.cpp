@@ -190,8 +190,8 @@ Clause* Searcher::analyze(
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
-                resolutions.triCl++;
-                stats.resolvs.triCl++;
+                resolutions.tri++;
+                stats.resolvs.tri++;
                 analyzeHelper(confl.lit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
@@ -199,8 +199,8 @@ Clause* Searcher::analyze(
             case binary_t : {
                 //We fall here even on TRI, so make sure
                 if (confl.getType() == binary_t) {
-                    resolutions.binCl++;
-                    stats.resolvs.binCl++;
+                    resolutions.bin++;
+                    stats.resolvs.bin++;
                 }
 
 
@@ -214,11 +214,11 @@ Clause* Searcher::analyze(
             case clause_t : {
                 Clause& cl = *clAllocator->getPointer(confl.getClause());
                 if (cl.learnt()) {
-                    resolutions.redLCl++;
-                    stats.resolvs.redLCl++;
+                    resolutions.redL++;
+                    stats.resolvs.redL++;
                 } else {
-                    resolutions.irredLCl++;
-                    stats.resolvs.irredLCl++;
+                    resolutions.irredL++;
+                    stats.resolvs.irredL++;
                 }
 
                 //Update stats

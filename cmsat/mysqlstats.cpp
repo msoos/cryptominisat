@@ -573,10 +573,10 @@ void MySQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.litPropagatedSomethingSD);
 
     //Resolutions
-    bindTo(stmtRst, stmtRst.resolv.binCl);
-    bindTo(stmtRst, stmtRst.resolv.triCl);
-    bindTo(stmtRst, stmtRst.resolv.irredLCl);
-    bindTo(stmtRst, stmtRst.resolv.redLCl);
+    bindTo(stmtRst, stmtRst.resolv.bin);
+    bindTo(stmtRst, stmtRst.resolv.tri);
+    bindTo(stmtRst, stmtRst.resolv.irredL);
+    bindTo(stmtRst, stmtRst.resolv.redL);
 
     //Var stats
     bindTo(stmtRst, stmtRst.propagations);
@@ -710,10 +710,10 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.binCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.triCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.irredLCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.redLCl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.bin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.tri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.irredL);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLitVisited);
@@ -724,10 +724,10 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.binCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.triCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.irredLCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.redLCl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.bin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.tri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.irredL);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLitVisited);
@@ -738,10 +738,10 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.binCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.triCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.irredLCl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.redLCl);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.bin);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.tri);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.irredL);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLitVisited);
@@ -1212,6 +1212,9 @@ void MySQLStats::restart(
 
     stmtRst.litPropagatedSomething   = searchHist.litPropagatedSomething.avg()*100.0;
     stmtRst.litPropagatedSomethingSD = sqrt(searchHist.litPropagatedSomething.var())*100.0;
+
+    //Resolv stats
+    stmtRst.resolv          = thisStats.resolvs;
 
     //Var stats
     stmtRst.decisions       = thisStats.decisions;

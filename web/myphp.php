@@ -292,6 +292,20 @@ class DataPrinter
             )
         );
 
+        $this->printOneThing(array(
+              "resolBin"
+            , "resolTri"
+            , "resolLIrred"
+            , "resolLRed"
+            )
+            ,array(
+              "resolv by bin %"
+            , "resolv by tri %"
+            , "resolv by long irred %"
+            , "resolv by long red %"
+            )
+        );
+
         /*printOneThing("branchDepthSD", array("branchDepthSD")
             , array("branch depth std dev"));
 
