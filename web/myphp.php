@@ -197,6 +197,26 @@ class DataPrinter
         /*printOneThing(array("propsPerDec")
             , array("avg. no. propagations per decision"));*/
 
+        $this->printOneThing(array(
+            "set"
+            , "numIrredBins"
+            , "numRedBins"
+            , "numIrredTris"
+            , "numRedTris"
+            , "numIrredLongs"
+            , "numRedLongs"
+            )
+            ,array(
+            "unit cls %"
+            , "irredBin %"
+            , "redBin %"
+            , "irredTri %"
+            , "redTri  %"
+            , "irredLong %"
+            , "iredLong %"
+            )
+        );
+
         $this->printOneThing(array("branchDepth")
             , array("avg. branch depth"));
 
@@ -361,6 +381,48 @@ class DataPrinter
             ,array(
                 "long clauses conflicted -- % of irred"
                 , "long clauses conflicted -- % of red"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "preRemovedResolBin"
+                , "preRemovedResolTri"
+                , "preRemovedResolLIrred"
+                , "preRemovedResolLRed"
+            )
+            ,array(
+                  "preRemovedResolBin"
+                , "preRemovedResolTri"
+                , "preRemovedResolLIrred"
+                , "preRemovedResolLRed"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "removedResolBin"
+                , "removedResolTri"
+                , "removedResolLIrred"
+                , "removedResolLRed"
+            )
+            ,array(
+                  "removedResolBin"
+                , "removedResolTri"
+                , "removedResolLIrred"
+                , "removedResolLRed"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "remainResolBin"
+                , "remainResolTri"
+                , "remainResolLIrred"
+                , "remainResolLRed"
+            )
+            ,array(
+                  "remainResolBin"
+                , "remainResolTri"
+                , "remainResolLIrred"
+                , "remainResolLRed"
             )
         );
 
