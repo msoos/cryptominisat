@@ -557,6 +557,7 @@ class ClauseDistrib
         echo ", dataDivID:  '$dataDivID'";
         echo ", canvasID: '$canvasID'";
         echo ", labelDivID: '$labelDivID'";
+        echo ", lookAt: '".$this->lookAt."'";
         echo "};\n";
         echo "clDistrib[".$this->colnum."].push(oneData);";
 

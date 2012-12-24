@@ -296,11 +296,9 @@ function createHTMLforDists()
             </td> \
             <td> \
                 <div id=\"" + clDistrib[i][i2].labelDivID + "\" class=\"draghandle\"><b> \
-                (" + i + ") Newly learnt clause size distribution. \
-                Bottom: unitary clause. Top: largest clause. \
-                Black: Many learnt. White: None learnt. \
-                Horizontal resolution: 1000 conflicts. \
-                Vertical resolution: 1 literal \
+                (" + i + ") Newly learnt clause " + clDistrib[i][i2].lookAt + " distribution. \
+                Bottom: 1. Top:  max. \
+                Black: Many. White: 0. \
                 </b></div> \
             </td> \
             </tr> \
