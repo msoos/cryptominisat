@@ -121,7 +121,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[14 + 13*3];
+        MYSQL_BIND  bind[10 + 13*3];
         MYSQL_STMT  *stmt;
 
         //Position
@@ -134,14 +134,10 @@ private:
         //Actual data -- irred
         uint64_t irredClsVisited;
         uint64_t irredLitsVisited;
-        uint64_t irredProps;
-        uint64_t irredConfls;
 
         //Actual data -- red
         uint64_t redClsVisited;
         uint64_t redLitsVisited;
-        uint64_t redProps;
-        uint64_t redConfls;
 
         //Cleaning stats
         CleaningStats clean;

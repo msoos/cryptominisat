@@ -618,8 +618,8 @@ void MySQLStats::initReduceDBSTMT(
     << ", `reduceDBs`"
 
     //Actual data
-    << ", `irredClsVisited`, `irredLitsVisited`, `irredProps`, `irredConfls`"
-    << ", `redClsVisited`, `redLitsVisited`, `redProps`, `redConfls`"
+    << ", `irredClsVisited`, `irredLitsVisited`"
+    << ", `redClsVisited`, `redLitsVisited`"
 
     //Clean data
     << ", preRemovedNum, preRemovedLits, preRemovedGlue"
@@ -696,14 +696,10 @@ void MySQLStats::initReduceDBSTMT(
     //Clause stats -- irred
     bindTo(stmtReduceDB, stmtReduceDB.irredClsVisited);
     bindTo(stmtReduceDB, stmtReduceDB.irredLitsVisited);
-    bindTo(stmtReduceDB, stmtReduceDB.irredProps);
-    bindTo(stmtReduceDB, stmtReduceDB.irredConfls);
 
     //Clause stats -- red
     bindTo(stmtReduceDB, stmtReduceDB.redClsVisited);
     bindTo(stmtReduceDB, stmtReduceDB.redLitsVisited);
-    bindTo(stmtReduceDB, stmtReduceDB.redProps);
-    bindTo(stmtReduceDB, stmtReduceDB.redConfls);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
@@ -1078,14 +1074,10 @@ void MySQLStats::reduceDB(
     //Clause data for IRRED
     stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
     stmtReduceDB.irredClsVisited    = irredStats.sumLookedAt;
-    stmtReduceDB.irredProps         = irredStats.sumProp;
-    stmtReduceDB.irredConfls        = irredStats.sumConfl;
 
     //Clause data for RED
     stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
     stmtReduceDB.redClsVisited      = redStats.sumLookedAt;
-    stmtReduceDB.redProps           = redStats.sumProp;
-    stmtReduceDB.redConfls          = redStats.sumConfl;
 
     //Clean data
     stmtReduceDB.clean              = clean;
