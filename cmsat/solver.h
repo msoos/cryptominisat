@@ -118,6 +118,7 @@ class Solver : public Searcher
         const vector<Var>& getInterToOuterMain() const;
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
+        void dumpIfNeeded() const;
 
 
         ///Return number of variables waiting to be replaced

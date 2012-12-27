@@ -115,7 +115,7 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
             << " newMaxSize: " << newMaxSize
             << endl;
 
-            exit(-1);
+            throw std::bad_alloc();
         }
 
         //Reallocate data
@@ -125,7 +125,7 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
             << "ERROR: while reallocating clause space"
             << endl;
 
-            exit(-1);
+            throw std::bad_alloc();
         }
 
         //Update maxSize to reflect the update

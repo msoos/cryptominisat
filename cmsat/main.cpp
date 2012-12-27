@@ -699,46 +699,7 @@ int Main::solve()
         }
     }
 
-    if (conf.needToDumpLearnts) {
-        std::ofstream outfile;
-        outfile.open(conf.learntsDumpFilename.c_str());
-        if (!outfile) {
-            cout
-            << "ERROR: Couldn't open file '"
-            << conf.learntsDumpFilename
-            << "' for writing, cannot dump learnt clauses!"
-            << endl;
-        } else {
-            solver->dumpRedClauses(&outfile, conf.maxDumpLearntsSize);
-        }
-    }
-
-    if (conf.needToDumpSimplified) {
-        if (conf.verbosity >= 1) {
-            cout
-            << "c Dumping simplified original clauses to file '"
-            << conf.simplifiedDumpFilename << "'"
-            << endl;
-        }
-
-        std::ofstream outfile;
-        outfile.open(conf.simplifiedDumpFilename.c_str());
-        if (!outfile) {
-            cout
-            << "Cannot open file '"
-            << conf.simplifiedDumpFilename
-            << "' for writing. exiting"
-            << endl;
-            exit(-1);
-        }
-
-        if (ret == l_False) {
-            outfile << "p cnf 0 1" << endl;
-            outfile << "0";
-        } else {
-            solver->dumpIrredClauses(&outfile);
-        }
-    }
+    solver->dumpIfNeeded();
 
     if (ret == l_Undef && conf.verbosity >= 1) {
         cout

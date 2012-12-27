@@ -348,7 +348,15 @@ Clause* Searcher::analyze(
         return NULL;
     }
 
-    Clause* cl = clAllocator->getPointer(oldConfl.getClause());
+
+    Clause* cl = NULL;
+    try {
+         cl = clAllocator->getPointer(oldConfl.getClause());
+    } catch (const std::bad_alloc& e) {
+        cout << "Allocation failed: " << e.what() << '\n';
+        solver->dumpIfNeeded();
+        throw std::bad_alloc();
+    }
 
     //Larger or equivalent clauses cannot subsume the clause
     if (out_learnt.size() >= cl->size())
