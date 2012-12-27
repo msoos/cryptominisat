@@ -367,7 +367,7 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
     for (uint32_t i = 0; i < cl.size(); i++) {
         os << cl[i];
 
-        if (i+1 == cl.size())
+        if (i+1 != cl.size())
             os << " ";
     }
 
