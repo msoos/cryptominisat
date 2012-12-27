@@ -304,8 +304,13 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     std::string str;
     bool needToParseComments = false;
 
+    //Is it an XOR clause?
+    if ( *in == 'x') {
+        xor_clause = true;
+        ++in;
+    }
+
     //read in the actual clause
-    if ( *in == 'x') xor_clause = true, ++in;
     readClause(in, lits);
     skipLine(in);
 
