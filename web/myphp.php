@@ -355,8 +355,8 @@ class DataPrinter
         $this->runQuery("reduceDB");
 
         $this->printOneThing(array(
-                  "irredUIP"
-                , "redUIP"
+                "irredLitsVisited"
+                , "redLitsVisited"
             )
             ,array(
                 "long clauses used during 1st UIP clause generation -- % of irred"
