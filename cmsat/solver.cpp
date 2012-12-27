@@ -862,25 +862,29 @@ CleaningStats Solver::reduceDB()
     switch (conf.clauseCleaningType) {
         case CLEAN_CLAUSES_GLUE_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructGlue(clAllocator));
+            std::sort(longRedCls.begin(), longRedCls.end()
+                , reduceDBStructGlue(clAllocator));
             tmpStats.glueBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_SIZE_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructSize(clAllocator));
+            std::sort(longRedCls.begin(), longRedCls.end()
+                , reduceDBStructSize(clAllocator));
             tmpStats.sizeBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_ACTIVITY_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructActivity(clAllocator));
+            std::sort(longRedCls.begin(), longRedCls.end()
+                , reduceDBStructActivity(clAllocator));
             tmpStats.actBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_PROPCONFL_BASED :
             //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end(), reduceDBStructPropConfl(clAllocator));
+            std::sort(longRedCls.begin(), longRedCls.end()
+                , reduceDBStructPropConfl(clAllocator));
             tmpStats.propConflBasedClean = 1;
             break;
     }
