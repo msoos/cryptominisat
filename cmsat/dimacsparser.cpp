@@ -260,7 +260,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 }
 
 /**
-@brief Parses clause parameters given as e.g. "c clause learnt yes glue 4 miniSatAct 5.2"
+@brief Parses clause parameters given as e.g. "c clause learnt yes"
 */
 void DimacsParser::parseClauseParameters(
     StreamBuffer& in
@@ -287,13 +287,6 @@ void DimacsParser::parseClauseParameters(
         goto addTheClause;
     }
 
-    //Parse in Glue value
-    ++in;
-    parseString(in, str);
-    if (str != "glue") goto addTheClause;
-    ++in;
-    stats.glue = parseInt(in, len);
-
     addTheClause:
     skipLine(in);
     return;
@@ -301,19 +294,13 @@ void DimacsParser::parseClauseParameters(
 
 /**
 @brief Parses in a clause and its optional attributes
-
-We might have lines like:
-\li "c clause learnt yes glue 4 miniSatAct 5.2" which we need to parse up and
-make the clause learnt.
-\li Furthermore, we need to take care, since comments might mean orders like
-"c Solver::newVar() called", which needs to be parsed with parseComments()
--- this, we delegate
 */
 void DimacsParser::readFullClause(StreamBuffer& in)
 {
     bool xor_clause = false;
     bool learnt = false;
     ClauseStats stats;
+    stats.conflictNumIntroduced = 0;
     std::string str;
     bool needToParseComments = false;
 
