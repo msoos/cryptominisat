@@ -265,10 +265,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 void DimacsParser::parseClauseParameters(
     StreamBuffer& in
     , bool& learnt
-    , ClauseStats& stats
 ) {
     std::string str;
-    uint32_t len;
 
     //Parse in if we are a learnt clause or not
     ++in;
@@ -319,7 +317,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         ++in;
         parseString(in, str);
         if (str == "clause") {
-            parseClauseParameters(in, learnt, stats);
+            parseClauseParameters(in, learnt);
         } else {
             needToParseComments = true;
         }

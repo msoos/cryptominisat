@@ -45,7 +45,6 @@ class DimacsParser
         void parseClauseParameters(
             StreamBuffer& in
             , bool& learnt
-            , ClauseStats& stats
         );
         void readFullClause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
