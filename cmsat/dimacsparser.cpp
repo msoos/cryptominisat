@@ -24,7 +24,11 @@ using std::endl;
 
 //#define DEBUG_COMMENT_PARSING
 
-DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar):
+DimacsParser::DimacsParser(
+    Solver* _solver
+    , const bool _debugLib
+    , const bool _debugNewVar
+):
     solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
