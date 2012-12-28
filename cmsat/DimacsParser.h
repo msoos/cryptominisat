@@ -74,6 +74,7 @@ class DimacsParser
         std::string stringify(uint32_t x);
 
 
+        size_t lineNum;
         Solver *solver;
         const bool debugLib;
         const bool debugNewVar;

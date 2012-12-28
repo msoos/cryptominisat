@@ -40,7 +40,8 @@ DimacsParseError::DimacsParseError(const std::string& arg)
 DimacsParseError::~DimacsParseError() throw() { }
 
 DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping, const bool _addAsLearnt):
-    solver(_solver)
+    lineNum(0)
+    , solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
     , grouping(_grouping)
@@ -61,6 +62,7 @@ void DimacsParser::skipWhitespace(StreamBuffer& in)
 */
 void DimacsParser::skipLine(StreamBuffer& in)
 {
+    lineNum++;
     for (;;) {
         if (*in == EOF || *in == '\0') return;
         if (*in == '\n') {
@@ -99,7 +101,10 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed) throw (Dim
     else if (*in == '+') ++in;
     if (*in < '0' || *in > '9') {
         std::ostringstream ostr;
-        ostr << "Unexpected char (parseInt): " << *in;
+        ostr << "Unexpected char while parsing integer: " << *in
+        << " at line number (lines counting from 1): "
+        << lineNum + 1;
+
         throw DimacsParseError(ostr.str());
     }
     while (*in >= '0' && *in <= '9') {
@@ -210,7 +215,7 @@ void DimacsParser::printHeader(StreamBuffer& in) throw (DimacsParseError)
         }
     } else {
         std::ostringstream ostr;
-        ostr << "Unexpected char: " << *in;
+        ostr << "Unexpected char while reading header: " << *in;
         throw DimacsParseError(ostr.str());
     }
 }
