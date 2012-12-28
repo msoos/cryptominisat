@@ -1,6 +1,7 @@
 ver 2.9.6
 * Better handling of memory
 * Returning a vector of clauses with dumpOrigClauses()
+* Counting number of lines read from CNF to give better error reporting
 
 ver 2.9.5
 * License is now MIT
