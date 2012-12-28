@@ -39,7 +39,6 @@ class DimacsParser
         void skipLine(StreamBuffer& in);
         std::string untilEnd(StreamBuffer& in);
         int32_t parseInt(StreamBuffer& in, uint32_t& len);
-        float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, std::vector<Lit>& lits);
         void parseClauseParameters(
@@ -56,6 +55,9 @@ class DimacsParser
         Solver *solver;
         const bool debugLib;
         const bool debugNewVar;
+
+        //Stat
+        size_t lineNum;
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         std::vector<Lit> lits; ///<To reduce temporary creation overhead

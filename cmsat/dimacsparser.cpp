@@ -32,6 +32,7 @@ DimacsParser::DimacsParser(
     solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
+    , lineNum(0)
 {}
 
 /**
@@ -48,6 +49,7 @@ void DimacsParser::skipWhitespace(StreamBuffer& in)
 */
 void DimacsParser::skipLine(StreamBuffer& in)
 {
+    lineNum++;
     for (;;) {
         if (*in == EOF || *in == '\0') return;
         if (*in == '\n') {
@@ -88,7 +90,10 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
         ++in;
 
     if (*in < '0' || *in > '9') {
-        cout << "PARSE ERROR! Unexpected char: " << *in << endl;
+        cout
+        << "PARSE ERROR! Unexpected char: '" << *in << "'"
+        << "At line " << lineNum
+        << endl;
         exit(3);
     }
     while (*in >= '0' && *in <= '9') {
@@ -98,23 +103,6 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     }
     return neg ? -val : val;
 }
-
-float DimacsParser::parseFloat(StreamBuffer& in)
-{
-    uint32_t len;
-    uint32_t main = parseInt(in, len);
-    if (*in != '.') {
-        cout << "PARSE ERROR! Float does not contain a dot! Instead it contains: " << *in << endl;
-        exit(3);
-    }
-    ++in;
-    uint32_t sub = parseInt(in, len);
-
-    uint32_t exp = 1;
-    for (uint32_t i = 0;i < len; i++) exp *= 10;
-    return (float)main + ((float)sub/exp);
-}
-
 
 std::string DimacsParser::stringify(uint32_t x)
 {
@@ -154,9 +142,14 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
             if (var >= ((uint32_t)1)<<25) {
-                cout << "ERROR! Variable requested is far too large: " << var << endl;
+                cout
+                << "ERROR! Variable requested is far too large: "
+                << var
+                << "At line " << lineNum
+                << endl;
                 exit(-1);
             }
+
             while (var >= solver->nVars())
                 solver->newVar();
         }
@@ -197,7 +190,10 @@ void DimacsParser::printHeader(StreamBuffer& in)
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
     } else {
-        cout << "PARSE ERROR! Unexpected char: " << *in << endl;
+        cout
+        << "PARSE ERROR! Unexpected char: " << *in
+        << "In the header, at line " << lineNum
+        << endl;
         exit(3);
     }
 }
