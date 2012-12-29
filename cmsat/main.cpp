@@ -37,6 +37,7 @@ number of benefits relative to MiniSat.
 #include <map>
 #include <set>
 #include <signal.h>
+#include "constants.h"
 
 #include "main.h"
 #include "constants.h"
