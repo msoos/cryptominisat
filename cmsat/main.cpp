@@ -256,6 +256,24 @@ void Main::parseCommandLine()
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
 
+    std::stringstream ssAgilG;
+    ssAgilG << std::setprecision(6) << conf.agilityG;
+
+    std::stringstream ssAgilL;
+    ssAgilL << std::setprecision(6) << conf.agilityLimit;
+
+    po::options_description restartOptions("Restart options");
+    restartOptions.add_options()
+    ("agilg", po::value<double>(&conf.agilityG)->default_value(conf.agilityG, ssAgilG.str())
+        , "See paper by Armin Biere on agilities")
+    ("agillim", po::value<double>(&conf.agilityLimit)->default_value(conf.agilityLimit, ssAgilL.str())
+        , "The agility below which the agility is considered too low")
+    ("agilviollim", po::value<uint64_t>(&conf.agilityViolationLimit)->default_value(conf.agilityViolationLimit)
+        , "Number of agility limit violations over which to demand a restart")
+    ("gluehist", po::value<uint32_t>(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
+        , "The size of the moving window for short-term glue history of learnt clauses. If higher, the minimal number of conflicts between restarts is longer")
+    ;
+
     po::options_description reduceDBOptions("Learnt clause removal options");
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
@@ -335,6 +353,9 @@ void Main::parseCommandLine()
         , "Remove useless binary clauses (transitive reduction)")
     ;
 
+    std::stringstream ssERatio;
+    ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
+
     po::options_description simplificationOptions("simplifcation options");
     simplificationOptions.add_options()
     ("simplify", po::value<int>(&conf.doSimplify)->default_value(conf.doSimplify)
@@ -351,7 +372,7 @@ void Main::parseCommandLine()
         , "Do asymmetric tautology elimination. See Armin Biere & collaborators' papers")
     ("noextbinsubs", po::value<int>(&conf.doExtBinSubs)->default_value(conf.doExtBinSubs)
         , "No extended subsumption with binary clauses")
-    ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter)
+    ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
@@ -478,6 +499,7 @@ void Main::parseCommandLine()
     po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
+    .add(restartOptions)
     .add(printOptions)
     .add(propOptions)
     .add(reduceDBOptions)
