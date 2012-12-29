@@ -739,7 +739,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver
                 , &hist.watchListSizeTraversed
-                , &hist.litPropagatedSomething
+                //, &hist.litPropagatedSomething
             );
         }
 

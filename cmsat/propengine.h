@@ -290,7 +290,7 @@ protected:
     PropBy       propagate(
         Solver* solver = NULL
         ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
-        , AvgCalc<bool>* litPropagatedSomething = NULL
+        //,  AvgCalc<bool>* litPropagatedSomething = NULL
     );
 
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
@@ -331,7 +331,7 @@ protected:
     );
     Lit propagateFull(
         bqueue<size_t>* watchListSizeTraversed = NULL
-        , bqueue<bool>* litPropagatedSomething = NULL
+        //, bqueue<bool>* litPropagatedSomething = NULL
     );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;

@@ -493,7 +493,7 @@ void PropEngine::propTriHelper(
 PropBy PropEngine::propagate(
     Solver* solver
     , AvgCalc<size_t>* watchListSizeTraversed
-    , AvgCalc<bool>* litPropagatedSomething
+    //, AvgCalc<bool>* litPropagatedSomething
 ) {
     PropBy confl;
 
@@ -536,8 +536,8 @@ PropBy PropEngine::propagate(
                 continue;
             } //end CLAUSE
         }
-        if (litPropagatedSomething)
-            litPropagatedSomething->push(trail.size() > lastTrailSize);
+        /*if (litPropagatedSomething)
+            litPropagatedSomething->push(trail.size() > lastTrailSize);*/
     }
 
     PropResult ret = PROP_NOTHING;
@@ -621,7 +621,7 @@ PropBy PropEngine::propagateNonLearntBin()
 
 Lit PropEngine::propagateFull(
     bqueue<size_t>* watchListSizeTraversed
-    , bqueue<bool>* litPropagatedSomething
+    //, bqueue<bool>* litPropagatedSomething
 ) {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
@@ -667,8 +667,8 @@ Lit PropEngine::propagateFull(
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
         }
-        if (litPropagatedSomething)
-            litPropagatedSomething->push(trail.size() > lastTrailSize);
+        /*if (litPropagatedSomething)
+            litPropagatedSomething->push(trail.size() > lastTrailSize);*/
     }
 
     //Propagate binary learnt
