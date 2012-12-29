@@ -212,13 +212,20 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     if (str == "v" || str == "var") {
         int var = parseInt(in, len);
         skipWhitespace(in);
-        if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
+        if (var <= 0) {
+            cout
+            << "PARSE ERROR! Var number (after 'c v' or 'c var'"
+            << " must be a positive integer"
+            << endl;
+
+            exit(3);
+        }
         std::string name = untilEnd(in);
         //solver->setVariableName(var-1, name.c_str());
 
-        #ifdef DEBUG_COMMENT_PARSING
-        cout << "Parsed 'c var'" << endl;
-        #endif //DEBUG_COMMENT_PARSING
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Parsed 'c var'" << endl;
+        }
     } else if (debugLib && str == "Solver::solve()") {
         lbool ret = solver->solve();
         std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
@@ -243,19 +250,22 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         partFile.close();
         debugLibPart++;
 
-        #ifdef DEBUG_COMMENT_PARSING
-        cout << "Parsed Solver::solve()" << endl;
-        #endif //DEBUG_COMMENT_PARSING
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Parsed Solver::solve()" << endl;
+        }
     } else if (debugNewVar && str == "Solver::newVar()") {
         solver->newVar();
 
-        #ifdef DEBUG_COMMENT_PARSING
-        cout << "Parsed Solver::newVar()" << endl;
-        #endif //DEBUG_COMMENT_PARSING
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Parsed Solver::newVar()" << endl;
+        }
     } else {
-        #ifdef DEBUG_COMMENT_PARSING
-        cout << "didn't understand in CNF file: 'c " << str << endl;
-        #endif //DEBUG_COMMENT_PARSING
+        if (solver->conf.verbosity >= 6) {
+            cout
+            << "didn't understand in CNF file comment line:"
+            << "'c " << str << "'"
+            << endl;
+        }
     }
     skipLine(in);
 }
