@@ -356,7 +356,7 @@ void Main::parseCommandLine()
     std::stringstream ssERatio;
     ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
 
-    po::options_description simplificationOptions("simplifcation options");
+    po::options_description simplificationOptions("Simplification options");
     simplificationOptions.add_options()
     ("simplify", po::value<int>(&conf.doSimplify)->default_value(conf.doSimplify)
         , "Perform play with norm clauses at ALL (none below)")
