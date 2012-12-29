@@ -223,7 +223,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         std::string name = untilEnd(in);
         //solver->setVariableName(var-1, name.c_str());
 
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout << "c Parsed 'c var'" << endl;
         }
     } else if (debugLib && str == "Solver::solve()") {
@@ -250,17 +250,17 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         partFile.close();
         debugLibPart++;
 
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout << "c Parsed Solver::solve()" << endl;
         }
     } else if (debugNewVar && str == "Solver::newVar()") {
         solver->newVar();
 
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout << "c Parsed Solver::newVar()" << endl;
         }
     } else {
-        if (solver->conf.verbosity >= 6) {
+        if (solver->getConf().verbosity >= 6) {
             cout
             << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"
