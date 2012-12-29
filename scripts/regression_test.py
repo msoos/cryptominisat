@@ -127,7 +127,7 @@ class Tester:
             print "Error code 300"
             exit(300)
 
-        command = "%s --randomize=%d " % (options.solver,randomizeNum)
+        command = "%s --random=%d " % (options.solver,randomizeNum)
         if (self.needDebugLib) :
             command += "--debuglib "
         if options.verbose == False:
