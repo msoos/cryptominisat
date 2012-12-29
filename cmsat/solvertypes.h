@@ -43,7 +43,14 @@ using std::string;
 //Typedefs
 typedef uint32_t Var;
 static const Var var_Undef(~0U);
-enum RestType {glue_restart, geom_restart, agility_restart, branch_depth_delta_restart};
+enum RestType {
+    glue_restart
+    , glue_agility_restart
+    , geom_restart
+    , agility_restart
+    , branch_depth_delta_restart
+};
+
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
 /**
@@ -309,12 +316,17 @@ class AgilityData
 
 struct SearchFuncParams
 {
-    SearchFuncParams(uint64_t _conflictsToDo, uint64_t _maxNumConfl = std::numeric_limits< uint64_t >::max(), const bool _update = true) :
+    SearchFuncParams(
+        uint64_t _conflictsToDo
+        , uint64_t _maxNumConfl = std::numeric_limits< uint64_t >::max()
+        , const bool _update = true
+    ) :
         needToStopSearch(false)
         , conflictsDoneThisRestart(0)
         , conflictsToDo(_conflictsToDo)
         , maxNumConfl(_maxNumConfl)
         , update(_update)
+        , numAgilityNeedRestart(0)
     {}
 
     bool needToStopSearch;
@@ -323,6 +335,8 @@ struct SearchFuncParams
     const uint64_t conflictsToDo;
     const uint64_t maxNumConfl;
     const bool update;
+
+    uint64_t numAgilityNeedRestart;
 };
 
 template<class T, class T2> void printStatsLine(

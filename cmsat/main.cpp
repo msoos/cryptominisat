@@ -244,8 +244,8 @@ void Main::parseCommandLine()
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
     ("randomize,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
-    ("restart", po::value<std::string>()->default_value("glue")
-        , "{geom, glue, agility}  Restart strategy to follow.")
+    ("restart", po::value<std::string>()->default_value("glueagility")
+        , "{geom, agility, glue, glueagility}  Restart strategy to follow.")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
     ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
@@ -647,6 +647,8 @@ void Main::parseCommandLine()
         else if (type == "glue")
             conf.restartType = glue_restart;
         else if (type == "agility")
+            conf.restartType = agility_restart;
+        else if (type == "glueagility")
             conf.restartType = agility_restart;
         else if (type == "branchd")
             conf.restartType = branch_depth_delta_restart;

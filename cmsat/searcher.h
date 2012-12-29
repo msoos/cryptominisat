@@ -646,6 +646,9 @@ class Searcher : public PropEngine
         void decayClauseAct();
         void bumpClauseAct(Clause* cl);
 
+        //Other
+        uint64_t lastRestartConfl;
+
 
         //SQL
         friend class SQLStats;

@@ -67,6 +67,7 @@ class SolverConf
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities
         double    agilityLimit; ///The agility below which the agility is considered too low
+        uint64_t  agilityViolationLimit;
 
         //Burst?
         int      doPerformPreSimp; //Perform simplification at startup

@@ -836,40 +836,74 @@ void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
         params.needToStopSearch = true;
     }
 
-    if (     (conf.restartType == geom_restart
-            && params.conflictsDoneThisRestart > rest
-        ) || (conf.restartType == glue_restart
-            && hist.glueHist.isvalid()
-            && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
-        ) || (conf.restartType == agility_restart
-            && agility.getAgility() < conf.agilityLimit
-        ) || (conf.restartType == branch_depth_delta_restart
-            && hist.branchDepthDeltaHist.isvalid()
-            && 0.95*hist.branchDepthDeltaHist.avg() > hist.branchDepthDeltaHistLT.avg()
-        )
-    ) {
-        //Now check agility
-        if (agility.getAgility() < conf.agilityLimit) {
-            #ifdef DEBUG_DYNAMIC_RESTART
-            if (glueHistory.isvalid()) {
-                cout << "glueHistory.getavg():" << glueHistory.getavg() <<endl;
-                cout << "totalSumOfGlue:" << totalSumOfGlue << endl;
-                cout << "conflicts:" << conflicts<< endl;
-                cout << "compTotSumGlue:" << compTotSumGlue << endl;
-                cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< endl;
-            }
-            #endif
+    switch (conf.restartType) {
+        //If geometric restart
+        case geom_restart:
+            if (params.conflictsDoneThisRestart > rest)
+                params.needToStopSearch = true;
 
-            if (conf.verbosity >= 4) {
-                printAgilityStats();
-                cout << "c Agility was too low, restarting as soon as possible!" << endl;
+            break;
+
+        case glue_restart:
+            if (hist.glueHist.isvalid()
+                && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
+            ) {
+                params.needToStopSearch = true;
             }
-            params.needToStopSearch = true;
-        } else {
-            rest *= conf.restart_inc;
-        }
+
+            break;
+
+        case glue_agility_restart:
+            if (hist.glueHist.isvalid()
+                && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
+                && agility.getAgility() < conf.agilityLimit
+            ) {
+                params.numAgilityNeedRestart++;
+                if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
+                    params.needToStopSearch = true;
+                }
+            } else {
+                //Reset counter
+                params.numAgilityNeedRestart = 0;
+            }
+
+            break;
+
+        case branch_depth_delta_restart:
+            if (hist.branchDepthDeltaHist.isvalid()
+                && 0.95*hist.branchDepthDeltaHist.avg() > hist.branchDepthDeltaHistLT.avg()
+            ) {
+                params.needToStopSearch = true;
+            }
+
+            break;
+
+        case agility_restart:
+            if (agility.getAgility() < conf.agilityLimit) {
+                params.numAgilityNeedRestart++;
+                if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
+                    params.needToStopSearch = true;
+                }
+            } else {
+                //Reset counter
+                params.numAgilityNeedRestart = 0;
+            }
+
+            break;
     }
 
+    //If agility was used and it's too high, print it if need be
+    if (conf.verbosity >= 4
+        && params.needToStopSearch
+        && (conf.restartType == agility_restart
+            || conf.restartType == glue_agility_restart)
+    ) {
+        cout << "c Agility was too low, restarting asap";
+        printAgilityStats();
+        cout << endl;
+    }
+
+    //Conflict limit reached?
     if (params.conflictsDoneThisRestart > params.conflictsToDo) {
         if (conf.verbosity >= 3)
             cout
@@ -1479,6 +1513,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     ) {
         assert(stats.conflStats.numConflicts < maxConfls);
 
+        lastRestartConfl = sumConflicts();
         status = search(SearchFuncParams(maxConfls-stats.conflStats.numConflicts), rest);
         rest *= conf.restart_inc;
         if (status != l_Undef)
@@ -1861,20 +1896,21 @@ void Searcher::setNeedToInterrupt()
 void Searcher::printAgilityStats()
 {
     cout
-    << ", confl: " << std::setw(6) << stats.conflStats.numConflicts
-    << ", rest: " << std::setw(6) << stats.numRestarts
-    << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2)
+    << " -- "
+    << " confl:" << std::setw(6) << sumConflicts() - lastRestartConfl
+    << ", rest:" << std::setw(3) << stats.numRestarts
+    << ", ag:" << std::setw(4) << std::fixed << std::setprecision(2)
     << agility.getAgility()
 
-    << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2)
+    << ", agLim:" << std::setw(4) << std::fixed << std::setprecision(2)
     << conf.agilityLimit
 
-    << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3)
+    << ", agHist:" << std::setw(4) << std::fixed << std::setprecision(3)
     << hist.agilityHist.avg()
 
     /*<< ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
     << agilityHist.avgLong()*/
-    << endl;
+    ;
 }
 
 uint64_t Searcher::sumConflicts() const
