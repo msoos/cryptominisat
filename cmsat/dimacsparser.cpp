@@ -290,8 +290,7 @@ void DimacsParser::parseClauseParameters(
     else if (str == "no") {
         learnt = false;
         goto addTheClause;
-    }
-    else {
+    } else {
         cout << "parsed in instead of yes/no: '" << str << "'" << endl;
         goto addTheClause;
     }
