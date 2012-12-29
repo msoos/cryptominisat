@@ -92,7 +92,8 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     if (*in < '0' || *in > '9') {
         cout
         << "PARSE ERROR! Unexpected char: '" << *in << "'"
-        << "At line " << lineNum
+        << " At line " << lineNum
+        << " we expected a number"
         << endl;
         exit(3);
     }
