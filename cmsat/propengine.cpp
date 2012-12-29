@@ -514,7 +514,6 @@ PropBy PropEngine::propagate(
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;
-        size_t lastTrailSize = trail.size();
         for (; i != end; i++) {
 
             //Propagate binary clause
@@ -642,17 +641,21 @@ Lit PropEngine::propagateFull(
         varData[root.var()].reason = PropBy(~lit_Undef, false, false, false);
     }
 
-    uint32_t nlBinQHead = qhead;
-    uint32_t lBinQHead = qhead;
+    //Set up stacks
+    toPropNLBin.clear();
+    toPropLBin.clear();
+    toPropNorm.clear();
+    toPropNLBin.push(trail.back());
+    toPropLBin.push(trail.back());
+    toPropNorm.push(trail.back());
 
     needToAddBinClause.clear();
     PropResult ret = PROP_NOTHING;
     start:
 
     //Propagate binary non-learnt
-    while (nlBinQHead < trail.size()) {
-        const Lit p = trail[nlBinQHead++];
-        size_t lastTrailSize = trail.size();
+    while (!toPropNLBin.empty()) {
+        const Lit p = toPropNLBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
@@ -666,15 +669,25 @@ Lit PropEngine::propagateFull(
             ret = propBin(p, k, confl);
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
+
+            if (ret == PROP_SOMETHING) {
+                toPropNorm.push(trail.back());
+                toPropNLBin.push(trail.back());
+                toPropLBin.push(trail.back());
+                goto start;
+            }
         }
         /*if (litPropagatedSomething)
             litPropagatedSomething->push(trail.size() > lastTrailSize);*/
+
+
+        //Finished with this literal
+        toPropNLBin.pop();
     }
 
     //Propagate binary learnt
-    ret = PROP_NOTHING;
-    while (lBinQHead < trail.size()) {
-        const Lit p = trail[lBinQHead];
+    while (!toPropLBin.empty()) {
+        const Lit p = toPropLBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
@@ -688,17 +701,22 @@ Lit PropEngine::propagateFull(
             if (ret == PROP_FAIL) {
                 return analyzeFail(confl);
             } else if (ret == PROP_SOMETHING) {
+                toPropNorm.push(trail.back());
+                toPropNLBin.push(trail.back());
+                toPropLBin.push(trail.back());
                 goto start;
             } else {
                 assert(ret == PROP_NOTHING);
             }
         }
-        lBinQHead++;
+
+        //Finished with this literal
+        toPropLBin.pop();
     }
 
     ret = PROP_NOTHING;
-    while (qhead < trail.size()) {
-        const Lit p = trail[qhead];
+    while (!toPropNorm.empty()) {
+        const Lit p = toPropNorm.top();
         vec<Watched> & ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
@@ -741,9 +759,14 @@ Lit PropEngine::propagateFull(
         if (ret == PROP_FAIL) {
             return analyzeFail(confl);
         } else if (ret == PROP_SOMETHING) {
+            toPropNorm.push(trail.back());
+            toPropNLBin.push(trail.back());
+            toPropLBin.push(trail.back());
             goto start;
         }
 
+        //Finished with this literal
+        toPropNorm.pop();
         qhead++;
     }
 

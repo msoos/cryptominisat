@@ -72,6 +72,40 @@ enum PropResult {
     , PROP_SOMETHING = 2
 };
 
+template<class T>
+class MyStack
+{
+public:
+    void clear()
+    {
+        inter.clear();
+    }
+
+    bool empty() const
+    {
+        return inter.empty();
+    }
+
+    void pop()
+    {
+        assert(!inter.empty());
+        inter.resize(inter.size()-1);
+    }
+
+    const T top() const
+    {
+        return inter.back();
+    }
+
+    void push(const T& data)
+    {
+        inter.push_back(data);
+    }
+
+private:
+    vector<T> inter;
+};
+
 struct VarData
 {
     struct Stats
@@ -245,6 +279,9 @@ protected:
     vector<uint16_t>       seen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<Lit>            analyze_stack;
     vector<Lit>            toClear; ///<Temporary, used in some places
+    MyStack<Lit> toPropNorm;
+    MyStack<Lit> toPropNLBin;
+    MyStack<Lit> toPropLBin;
 
     /////////////////
     // Enqueue
