@@ -671,14 +671,18 @@ Lit PropEngine::propagateFull(
                 continue;
 
             ret = propBin(p, k, confl);
-            if (ret == PROP_FAIL)
-                return analyzeFail(confl);
+            switch(ret) {
+                case PROP_FAIL:
+                    return analyzeFail(confl);
 
-            if (ret == PROP_SOMETHING) {
-                toPropNorm.push(trail.back());
-                toPropNLBin.push(trail.back());
-                toPropLBin.push(trail.back());
-                goto start;
+                case PROP_SOMETHING:
+                    toPropNorm.push(trail.back());
+                    toPropNLBin.push(trail.back());
+                    toPropLBin.push(trail.back());
+                    goto start;
+
+                case PROP_NOTHING:
+                    break;
             }
         }
         /*if (litPropagatedSomething)
@@ -706,15 +710,18 @@ Lit PropEngine::propagateFull(
                 continue;
 
             ret = propBin(p, k, confl);
-            if (ret == PROP_FAIL) {
-                return analyzeFail(confl);
-            } else if (ret == PROP_SOMETHING) {
-                toPropNorm.push(trail.back());
-                toPropNLBin.push(trail.back());
-                toPropLBin.push(trail.back());
-                goto start;
-            } else {
-                assert(ret == PROP_NOTHING);
+            switch(ret) {
+                case PROP_FAIL:
+                    return analyzeFail(confl);
+
+                case PROP_SOMETHING:
+                    toPropNorm.push(trail.back());
+                    toPropNLBin.push(trail.back());
+                    toPropLBin.push(trail.back());
+                    goto start;
+
+                case PROP_NOTHING:
+                    break;
             }
         }
 
