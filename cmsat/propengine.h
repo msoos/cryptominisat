@@ -280,8 +280,7 @@ protected:
     vector<Lit>            analyze_stack;
     vector<Lit>            toClear; ///<Temporary, used in some places
     MyStack<Lit> toPropNorm;
-    MyStack<Lit> toPropNLBin;
-    MyStack<Lit> toPropLBin;
+    MyStack<Lit> toPropBin;
 
     /////////////////
     // Enqueue

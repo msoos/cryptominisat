@@ -642,11 +642,9 @@ Lit PropEngine::propagateFull(
     }
 
     //Set up stacks
-    toPropNLBin.clear();
-    toPropLBin.clear();
+    toPropBin.clear();
     toPropNorm.clear();
-    toPropNLBin.push(trail.back());
-    toPropLBin.push(trail.back());
+    toPropBin.push(trail.back());
     toPropNorm.push(trail.back());
 
     needToAddBinClause.clear();
@@ -654,8 +652,8 @@ Lit PropEngine::propagateFull(
     start:
 
     //Propagate binary non-learnt
-    while (!toPropNLBin.empty()) {
-        const Lit p = toPropNLBin.top();
+    while (!toPropBin.empty()) {
+        const Lit p = toPropBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
@@ -667,7 +665,7 @@ Lit PropEngine::propagateFull(
         ) {
 
             //If something other than non-learnt binary, skip
-            if (!k->isBinary() || k->learnt())
+            if (!k->isBinary())
                 continue;
 
             ret = propBin(p, k, confl);
@@ -677,8 +675,7 @@ Lit PropEngine::propagateFull(
 
                 case PROP_SOMETHING:
                     toPropNorm.push(trail.back());
-                    toPropNLBin.push(trail.back());
-                    toPropLBin.push(trail.back());
+                    toPropBin.push(trail.back());
                     goto start;
 
                 case PROP_NOTHING:
@@ -690,43 +687,7 @@ Lit PropEngine::propagateFull(
 
 
         //Finished with this literal
-        toPropNLBin.pop();
-    }
-
-    //Propagate binary learnt
-    while (!toPropLBin.empty()) {
-        const Lit p = toPropLBin.top();
-        const vec<Watched>& ws = watches[(~p).toInt()];
-        propStats.bogoProps += 1;
-
-        for(vec<Watched>::const_iterator
-            k = ws.begin(), end = ws.end()
-            ; k != end
-            ; k++
-        ) {
-
-            //If something other than learnt binary, skip
-            if (!k->isBinary() || !k->learnt())
-                continue;
-
-            ret = propBin(p, k, confl);
-            switch(ret) {
-                case PROP_FAIL:
-                    return analyzeFail(confl);
-
-                case PROP_SOMETHING:
-                    toPropNorm.push(trail.back());
-                    toPropNLBin.push(trail.back());
-                    toPropLBin.push(trail.back());
-                    goto start;
-
-                case PROP_NOTHING:
-                    break;
-            }
-        }
-
-        //Finished with this literal
-        toPropLBin.pop();
+        toPropBin.pop();
     }
 
     ret = PROP_NOTHING;
@@ -775,8 +736,7 @@ Lit PropEngine::propagateFull(
             return analyzeFail(confl);
         } else if (ret == PROP_SOMETHING) {
             toPropNorm.push(trail.back());
-            toPropNLBin.push(trail.back());
-            toPropLBin.push(trail.back());
+            toPropBin.push(trail.back());
             goto start;
         }
 
