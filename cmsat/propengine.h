@@ -613,7 +613,8 @@ inline bool PropEngine::isAncestorOf(
     #endif
 
     //Was propagated at level 0 -- clauseCleaner will remove the clause
-    if (lookingForAncestor == lit_Undef) return false;
+    if (lookingForAncestor == lit_Undef)
+        return false;
 
     if (lookingForAncestor == thisAncestor) {
         #ifdef VERBOSE_DEBUG_FULLPROP
