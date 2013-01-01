@@ -723,7 +723,9 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 stats.litsLearntFinal += 1;
                 propStats.propsUnit++;
                 stats.hyperBinAdded += hyperBinResAll();
-                stats.transRedRemoved += removeUselessBins();
+                std::pair<size_t, size_t> tmp = removeUselessBins();
+                stats.transReduRemIrred += tmp.first;
+                stats.transReduRemRed += tmp.second;
                 solver->enqueue(~failed);
 
                 if (!ok)
@@ -734,7 +736,9 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
             //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
-            stats.transRedRemoved += removeUselessBins();
+            std::pair<size_t, size_t> tmp = removeUselessBins();
+            stats.transReduRemIrred += tmp.first;
+            stats.transReduRemRed += tmp.second;
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver
@@ -1955,9 +1959,11 @@ size_t Searcher::hyperBinResAll()
     return added;
 }
 
-size_t Searcher::removeUselessBins()
+std::pair<size_t, size_t> Searcher::removeUselessBins()
 {
-    size_t removed = 0;
+    size_t removedIrred = 0;
+    size_t removedRed = 0;
+
     if (conf.doTransRed) {
         for(std::set<BinaryClause>::iterator
             it = uselessBin.begin()
@@ -1973,11 +1979,12 @@ size_t Searcher::removeUselessBins()
             if (it->getLearnt()) {
                 solver->binTri.redLits -= 2;
                 solver->binTri.redBins--;
+                removedRed++;
             } else {
                 solver->binTri.irredLits -= 2;
                 solver->binTri.irredBins--;
+                removedIrred++;
             }
-            removed++;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -1988,7 +1995,7 @@ size_t Searcher::removeUselessBins()
     }
     uselessBin.clear();
 
-    return removed;
+    return std::make_pair(removedIrred, removedRed);
 }
 
 //Only used to generate nice Graphviz graphs

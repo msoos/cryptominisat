@@ -264,7 +264,8 @@ class Searcher : public PropEngine
                 //Hyper-bin & transitive reduction
                 , advancedPropCalled(0)
                 , hyperBinAdded(0)
-                , transRedRemoved(0)
+                , transReduRemIrred(0)
+                , transReduRemRed(0)
 
                 //Time
                 , cpu_time(0)
@@ -306,7 +307,8 @@ class Searcher : public PropEngine
                 //Hyper-bin & transitive reduction
                 advancedPropCalled += other.advancedPropCalled;
                 hyperBinAdded += other.hyperBinAdded;
-                transRedRemoved += other.transRedRemoved;
+                transReduRemIrred += other.transReduRemIrred;
+                transReduRemRed += other.transReduRemRed;
 
                 //Stat structs
                 resolvs += other.resolvs;
@@ -347,7 +349,8 @@ class Searcher : public PropEngine
                 //Hyper-bin & transitive reduction
                 advancedPropCalled -= other.advancedPropCalled;
                 hyperBinAdded -= other.hyperBinAdded;
-                transRedRemoved -= other.transRedRemoved;
+                transReduRemIrred -= other.transReduRemIrred;
+                transReduRemRed -= other.transReduRemRed;
 
                 //Stat structs
                 resolvs -= other.resolvs;
@@ -441,9 +444,14 @@ class Searcher : public PropEngine
                     , (double)hyperBinAdded/(double)advancedPropCalled
                     , "bin/call"
                 );
-                printStatsLine("c trans-red rem bin"
-                    , transRedRemoved
-                    , (double)transRedRemoved/(double)advancedPropCalled
+                printStatsLine("c trans-red rem irred bin"
+                    , transReduRemIrred
+                    , (double)transReduRemIrred/(double)advancedPropCalled
+                    , "bin/call"
+                );
+                printStatsLine("c trans-red rem red bin"
+                    , transReduRemRed
+                    , (double)transReduRemRed/(double)advancedPropCalled
                     , "bin/call"
                 );
 
@@ -511,7 +519,8 @@ class Searcher : public PropEngine
             //Hyper-bin & transitive reduction
             uint64_t advancedPropCalled;
             uint64_t hyperBinAdded;
-            uint64_t transRedRemoved;
+            uint64_t transReduRemIrred;
+            uint64_t transReduRemRed;
 
             //Resolution Stats
             ResolutionTypes<uint64_t> resolvs;
@@ -532,7 +541,7 @@ class Searcher : public PropEngine
 
         //For hyper-bin and transitive reduction
         size_t hyperBinResAll();
-        size_t removeUselessBins();
+        std::pair<size_t, size_t> removeUselessBins();
 
         Hist hist;
         vector<uint32_t>    clauseSizeDistrib;

@@ -281,7 +281,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
         runStats.conflStats.update(solver->lastConflictCausedBy);
         runStats.conflStats.numConflicts++;
         runStats.addedBin += solver->hyperBinResAll();
-        runStats.removedBin += solver->removeUselessBins();
+        std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+        runStats.removedIrredBin += tmp.first;
+        runStats.removedRedBin += tmp.second;
 
         vector<Lit> lits;
         lits.push_back(~failed);
@@ -328,7 +330,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     solver->cancelZeroLight();
     runStats.addedBin += solver->hyperBinResAll();
-    runStats.removedBin += solver->removeUselessBins();
+    std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+    runStats.removedIrredBin += tmp.first;
+    runStats.removedRedBin += tmp.second;
     #ifdef DEBUG_REMOVE_USELESS_BIN
     testBinRemoval(lit);
     #endif

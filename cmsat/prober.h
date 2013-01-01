@@ -75,7 +75,8 @@ class Prober {
 
                 //Bins
                 , addedBin(0)
-                , removedBin(0)
+                , removedIrredBin(0)
+                , removedRedBin(0)
 
                 //Compare against
                 , origNumFreeVars(0)
@@ -108,7 +109,8 @@ class Prober {
 
                 //Binary clause
                 addedBin += other.addedBin;
-                removedBin += other.removedBin;
+                removedIrredBin += other.removedIrredBin;
+                removedRedBin += other.removedRedBin;
 
                 //Compare against
                 origNumFreeVars += other.origNumFreeVars;
@@ -169,9 +171,15 @@ class Prober {
                     , "% of bins"
                 );
 
-                printStatsLine("c bin rem"
-                    , removedBin
-                    , (double)removedBin/(double)origNumBins*100.0
+                printStatsLine("c irred bin rem"
+                    , removedIrredBin
+                    , (double)removedIrredBin/(double)origNumBins*100.0
+                    , "% of bins"
+                );
+
+                printStatsLine("c red bin rem"
+                    , removedRedBin
+                    , (double)removedRedBin/(double)origNumBins*100.0
                     , "% of bins"
                 );
 
@@ -208,7 +216,8 @@ class Prober {
                 << "%)"
 
                 << " hyperBin:" << addedBin
-                << " transRed:" << removedBin
+                << " transR-Irred:" << removedIrredBin
+                << " transR-Red:" << removedRedBin
                 << endl;
 
                 cout
@@ -236,7 +245,8 @@ class Prober {
 
             //Binary clause
             uint64_t addedBin;
-            uint64_t removedBin;
+            uint64_t removedIrredBin;
+            uint64_t removedRedBin;
 
             //Compare against
             uint64_t origNumFreeVars;
