@@ -660,7 +660,11 @@ Lit PropEngine::propagateFull(
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
         propStats.bogoProps += 1;
-        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+        for(vec<Watched>::const_iterator
+            k = ws.begin(), end = ws.end()
+            ; k != end
+            ; k++
+        ) {
 
             //If something other than non-learnt binary, skip
             if (!k->isBinary() || k->learnt())
@@ -691,7 +695,11 @@ Lit PropEngine::propagateFull(
         const vec<Watched>& ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
-        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+        for(vec<Watched>::const_iterator
+            k = ws.begin(), end = ws.end()
+            ; k != end
+            ; k++
+        ) {
 
             //If something other than learnt binary, skip
             if (!k->isBinary() || !k->learnt())
