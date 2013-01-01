@@ -550,23 +550,43 @@ inline void PropEngine::enqueueComplex(
 }
 
 /**
-We can try both ways: either binary clause can be removed. Try to remove one, then the other
+We can try both ways: either binary clause can be removed.
+Try to remove one, then the other
 Return which one is to be removed
 */
-inline Lit PropEngine::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
-{
+inline Lit PropEngine::removeWhich(
+    Lit conflict
+    , Lit thisAncestor
+    , bool thisStepLearnt
+) {
     const PropBy& data = varData[conflict.var()].reason;
 
     bool onlyNonLearnt = !data.getLearntStep();
     Lit lookingForAncestor = data.getAncestor();
-    if (isAncestorOf(conflict, thisAncestor, thisStepLearnt, onlyNonLearnt, lookingForAncestor))
+    if (isAncestorOf(
+        conflict
+        , thisAncestor
+        , thisStepLearnt
+        , onlyNonLearnt
+        , lookingForAncestor
+        )
+    ) {
         return thisAncestor;
+    }
 
     onlyNonLearnt = !thisStepLearnt;
     thisStepLearnt = data.getLearntStep();
     std::swap(lookingForAncestor, thisAncestor);
-    if (isAncestorOf(conflict, thisAncestor, thisStepLearnt, onlyNonLearnt, lookingForAncestor))
+    if (isAncestorOf(
+        conflict
+        , thisAncestor
+        , thisStepLearnt
+        , onlyNonLearnt
+        , lookingForAncestor
+        )
+    ) {
         return thisAncestor;
+    }
 
     return lit_Undef;
 }
