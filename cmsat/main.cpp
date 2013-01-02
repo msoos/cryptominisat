@@ -647,7 +647,7 @@ void Main::parseCommandLine()
         else if (type == "glue")
             conf.restartType = glue_restart;
         else if (type == "agility")
-            conf.restartType = agility_restart;
+            conf.restartType = glue_agility_restart;
         else if (type == "glueagility")
             conf.restartType = agility_restart;
         else if (type == "branchd")
