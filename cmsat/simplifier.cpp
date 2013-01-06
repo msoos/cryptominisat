@@ -2014,8 +2014,11 @@ int Simplifier::testVarElim(const Var var)
             *toDecrease -= 2;
 
             //Ignore learnt
-            if (((it2->isBinary() || it2->isTri()) && it2->learnt())
-                || (it2->isClause() && solver->clAllocator->getPointer(it2->getOffset())->learnt())
+            if (
+                ((it2->isBinary() || it2->isTri())
+                    && it2->learnt())
+                || (it2->isClause()
+                    && solver->clAllocator->getPointer(it2->getOffset())->learnt())
             ) {
                 continue;
             }
