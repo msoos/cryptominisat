@@ -2334,7 +2334,7 @@ bool Simplifier::merge(
     }
 
     dummy.clear(); //The final clause
-    dummy2.clear(); //Used to clear 'seen'
+    toClear.clear(); //Used to clear 'seen'
 
     bool retval = true;
     if (ps.isBinary() || ps.isTri()) {
@@ -2372,7 +2372,7 @@ bool Simplifier::merge(
 
         if (seen[(~qs.lit1()).toInt()]) {
             retval = false;
-            dummy2 = dummy;
+            toClear = dummy;
             goto end;
         }
         if (!seen[qs.lit1().toInt()]) {
@@ -2386,7 +2386,7 @@ bool Simplifier::merge(
 
         if (seen[(~qs.lit2()).toInt()]) {
             retval = false;
-            dummy2 = dummy;
+            toClear = dummy;
             goto end;
         }
         if (!seen[qs.lit2().toInt()]) {
@@ -2408,7 +2408,7 @@ bool Simplifier::merge(
             //Opposite is inside, nothing to add
             if (seen[(~cl[i]).toInt()]) {
                 retval = false;
-                dummy2 = dummy;
+                toClear = dummy;
                 goto end;
             }
 
@@ -2419,13 +2419,13 @@ bool Simplifier::merge(
             }
         }
     }
-    dummy2 = dummy;
+    toClear = dummy;
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
     if (useCache && solver->conf.doAsymmTE) {
         for (size_t i = 0; i < dummy.size(); i++) {
-            const Lit lit = dummy2[i];
+            const Lit lit = toClear[i];
             assert(lit.var() != noPosLit.var());
 
             //Use cache -- but only if none of the clauses were binary
@@ -2453,7 +2453,7 @@ bool Simplifier::merge(
                     //If (a) was in original clause
                     //then (a V b) means -b can be put inside
                     if(!seen[(~otherLit).toInt()]) {
-                        dummy2.push_back(~otherLit);
+                        toClear.push_back(~otherLit);
                         seen[(~otherLit).toInt()] = 1;
                     }
 
@@ -2467,88 +2467,17 @@ bool Simplifier::merge(
 
             //Use watchlists
             if (numMaxVarElimAgressiveCheck > 0) {
-                const vec<Watched>& ws = solver->watches[lit.toInt()];
-                numMaxVarElimAgressiveCheck -= ws.size()/3 + 2;
-                for(vec<Watched>::const_iterator it =
-                    ws.begin(), end = ws.end()
-                    ; it != end
-                    ; it++
-                ) {
-                    //Can't do much with clauses, too expensive
-                    if (it->isClause())
-                        continue;
-
-                    //handle tri
-                    if (it->isTri() && !it->learnt()) {
-
-                        //See if any of the literals is in
-                        Lit otherLit = lit_Undef;
-                        unsigned inside = 0;
-                        if (seen[it->lit1().toInt()]) {
-                            otherLit = it->lit2();
-                            inside++;
-                        }
-
-                        if (seen[it->lit2().toInt()]) {
-                            otherLit = it->lit1();
-                            inside++;
-                        }
-
-                        //Could subsume
-                        if (inside == 2) {
-                            retval = false;
-                            goto end;
-                        }
-
-                        //None is in, skip
-                        if (inside == 0)
-                            continue;
-
-                        if (otherLit.var() == noPosLit.var())
-                            continue;
-
-                        //Extend clause
-                        if (!seen[(~otherLit).toInt()]) {
-                            dummy2.push_back(~otherLit);
-                            seen[(~otherLit).toInt()] = 1;
-                        }
-
-                        continue;
-                    }
-
-                    if (it->isBinary() && !it->learnt()) {
-                        const Lit otherLit = it->lit1();
-                        if (otherLit.var() == noPosLit.var())
-                            continue;
-
-                        //learnt is useless
-                        if (it->learnt()) {
-                            continue;
-                        }
-
-                        //If (a V b) is non-learnt, and in the clause, then we can remove
-                        if (seen[otherLit.toInt()]) {
-                            retval = false;
-                            goto end;
-                        }
-
-                        //If (a) is in clause
-                        //then (a V b) means -b can be put inside
-                        if (!seen[(~otherLit).toInt()]) {
-                            dummy2.push_back(~otherLit);
-                            seen[(~otherLit).toInt()] = 1;
-                        }
-                    }
-                }
+                if (agressiveCheck(lit, noPosLit, retval))
+                    goto end;
             }
         }
     }
 
     end:
     //Clear 'seen'
-    *toDecrease -= dummy2.size()/2 + 1;
+    *toDecrease -= toClear.size()/2 + 1;
     for (vector<Lit>::const_iterator
-        it = dummy2.begin(), end = dummy2.end()
+        it = toClear.begin(), end = toClear.end()
         ; it != end
         ; it++
     ) {
@@ -2556,6 +2485,88 @@ bool Simplifier::merge(
     }
 
     return retval;
+}
+
+bool Simplifier::agressiveCheck(
+    const Lit lit
+    , const Lit noPosLit
+    , bool& retval
+) {
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    numMaxVarElimAgressiveCheck -= ws.size()/3 + 2;
+    for(vec<Watched>::const_iterator it =
+        ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        //Can't do much with clauses, too expensive
+        if (it->isClause())
+            continue;
+
+        //handle tri
+        if (it->isTri() && !it->learnt()) {
+
+            //See if any of the literals is in
+            Lit otherLit = lit_Undef;
+            unsigned inside = 0;
+            if (seen[it->lit1().toInt()]) {
+                otherLit = it->lit2();
+                inside++;
+            }
+
+            if (seen[it->lit2().toInt()]) {
+                otherLit = it->lit1();
+                inside++;
+            }
+
+            //Could subsume
+            if (inside == 2) {
+                retval = false;
+                return true;
+            }
+
+            //None is in, skip
+            if (inside == 0)
+                continue;
+
+            if (otherLit.var() == noPosLit.var())
+                continue;
+
+            //Extend clause
+            if (!seen[(~otherLit).toInt()]) {
+                toClear.push_back(~otherLit);
+                seen[(~otherLit).toInt()] = 1;
+            }
+
+            continue;
+        }
+
+        if (it->isBinary() && !it->learnt()) {
+            const Lit otherLit = it->lit1();
+            if (otherLit.var() == noPosLit.var())
+                continue;
+
+            //learnt is useless
+            if (it->learnt()) {
+                continue;
+            }
+
+            //If (a V b) is non-learnt, and in the clause, then we can remove
+            if (seen[otherLit.toInt()]) {
+                retval = false;
+                return true;
+            }
+
+            //If (a) is in clause
+            //then (a V b) means -b can be put inside
+            if (!seen[(~otherLit).toInt()]) {
+                toClear.push_back(~otherLit);
+                seen[(~otherLit).toInt()] = 1;
+            }
+        }
+    }
+
+    return false;
 }
 
 Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const

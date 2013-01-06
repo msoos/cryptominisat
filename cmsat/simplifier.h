@@ -420,7 +420,7 @@ private:
     vector<char>    seen;        ///<Used in various places to help perform algorithms
     vector<char>    seen2;       ///<Used in various places to help perform algorithms
     vector<Lit>     dummy;       ///<Used by merge()
-    vector<Lit>     dummy2;      ///<Used by merge()
+    vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits
@@ -604,6 +604,11 @@ private:
         , const Watched& qs
         , const Lit noPosLit
         , const bool useCache
+    );
+    bool agressiveCheck(
+        const Lit lit
+        , const Lit noPosLit
+        , bool& retval
     );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
