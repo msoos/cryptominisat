@@ -110,7 +110,7 @@ class FoundXors
         {
             //Calculate parameters of base clause.
             //Also set 'seen' for easy check in 'findXorMatch()'
-            bool rhs = true;
+            rhs = true;
             uint32_t whichOne = 0;
             for (uint i = 0; i < size; i++) {
                 rhs ^= origCl[i].sign();
