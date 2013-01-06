@@ -1727,8 +1727,7 @@ Lit Searcher::pickBranchLit()
 
     // Random decision:
     double rand = mtrand.randDblExc();
-    if (next == lit_Undef
-        && rand < conf.random_var_freq
+    if (rand < conf.random_var_freq
         && !order_heap.empty()
     ) {
         const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
