@@ -72,19 +72,33 @@ enum PropResult {
     , PROP_SOMETHING = 2
 };
 
+enum StampType {
+    STAMP_IRRED = 0
+    , STAMP_RED = 1
+};
+
 struct Timestamp
 {
-    Timestamp() :
-        start(0)
-        , end(0)
-        , dominator(lit_Undef)
-        , numDom(0)
-    {}
+    Timestamp()
+    {
+        start[STAMP_IRRED] = 0;
+        start[STAMP_RED] = 0;
 
-    uint64_t start;
-    uint64_t end;
-    Lit dominator;
-    uint64_t numDom;
+        end[STAMP_IRRED] = 0;
+        end[STAMP_RED] = 0;
+
+        dominator[STAMP_IRRED] = lit_Undef;
+        dominator[STAMP_RED] = lit_Undef;
+
+        numDom[STAMP_IRRED] = 0;
+        numDom[STAMP_RED] = 0;
+    }
+
+    uint64_t start[2];
+    uint64_t end[2];
+
+    Lit dominator[2];
+    uint64_t numDom[2];
 };
 
 template<class T>
@@ -382,10 +396,10 @@ protected:
         , PropBy& confl
     );
     Lit propagateFull(
-        bqueue<size_t>* watchListSizeTraversed = NULL
-        //, bqueue<bool>* litPropagatedSomething = NULL
+        const StampType stampType
+        , bqueue<size_t>* watchListSizeTraversed = NULL
     );
-    void closeAllTimestamps();
+    void closeAllTimestamps(const StampType stampType);
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal

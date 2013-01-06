@@ -707,7 +707,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         //If decision level==1, then do hyperbin & transitive reduction
         if (conf.otfHyperbin && decisionLevel() == 1) {
             stats.advancedPropCalled++;
-            failed = propagateFull();
+            failed = propagateFull(STAMP_RED);
             if (failed != lit_Undef) {
 
                 //Update conflict stats

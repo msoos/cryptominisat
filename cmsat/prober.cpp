@@ -159,7 +159,7 @@ bool Prober::probe()
         if (solver->value(lit.var()) != l_Undef
             || !solver->decisionVar[lit.var()]
             || visitedAlready[lit.toInt()]
-            || solver->timestamp[lit.toInt()].dominator != lit_Undef
+            || solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
         ) {
             continue;
         }
@@ -274,7 +274,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     if (solver->conf.verbosity >= 6)
         cout << "c Probing lit " << lit << endl;
 
-    const Lit failed = solver->propagateFull();
+    const Lit failed = solver->propagateFull(STAMP_RED);
     if (failed != lit_Undef) {
         if (solver->conf.verbosity >= 6) {
             cout << "c Failed on lit " << lit << endl;

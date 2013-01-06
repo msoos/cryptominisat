@@ -607,8 +607,10 @@ void Solver::renumberVariables()
             litReachable[i].lit = getUpdatedLit(litReachable[i].lit, outerToInter);
     }
     for(size_t i = 0; i < timestamp.size(); i++) {
-        if (timestamp[i].dominator != lit_Undef)
-            timestamp[i].dominator = getUpdatedLit(timestamp[i].dominator, outerToInter);
+        for(size_t i2 = 0; i2 < 2; i2++) {
+        if (timestamp[i].dominator[i2] != lit_Undef)
+            timestamp[i].dominator[i2] = getUpdatedLit(timestamp[i].dominator[i2], outerToInter);
+        }
     }
 
     //Update clauses
@@ -2960,9 +2962,11 @@ void Solver::updateDominators()
         ; it != end
         ; it++
     ) {
-        Lit newLit = updateLit(it->dominator);;
-        it->dominator = newLit;
-        if (newLit == lit_Undef)
-            it->numDom = 0;
+        for(size_t i = 0; i < 2; i++) {
+            Lit newLit = updateLit(it->dominator[i]);
+            it->dominator[i] = newLit;
+            if (newLit == lit_Undef)
+                it->numDom[i] = 0;
+        }
     }
 }
