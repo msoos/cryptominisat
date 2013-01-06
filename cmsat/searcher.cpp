@@ -1509,19 +1509,36 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     assert(order_heap.heapProperty());
 
     // Search:
+    size_t loopNum = 0;
     genRandomVarActMultDiv();
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
         && stats.conflStats.numConflicts < maxConfls
     ) {
+        if (conf.verbosity >= 6) {
+            cout
+            << "c search loop " << loopNum
+            << endl;
+        }
+        loopNum++;
+
         assert(stats.conflStats.numConflicts < maxConfls);
 
         lastRestartConfl = sumConflicts();
         status = search(SearchFuncParams(maxConfls-stats.conflStats.numConflicts), rest);
         rest *= conf.restart_inc;
-        if (status != l_Undef)
+        if (status != l_Undef) {
+            if (conf.verbosity >= 6) {
+                cout
+                << "c Returned status of search() is non-l_Undef at loop "
+                << loopNum
+                << " confl:"
+                << sumConflicts()
+                << endl;
+            }
             break;
+        }
 
         //Check if we should abort
         if (stats.conflStats.numConflicts >= maxConfls) {
