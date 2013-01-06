@@ -122,6 +122,9 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 break;
             }
         }
+
+        if (!solver->okay())
+            break;
     }
 
     if (solver->conf.verbosity >= 2) {
