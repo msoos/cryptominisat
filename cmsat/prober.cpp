@@ -159,6 +159,7 @@ bool Prober::probe()
         if (solver->value(lit.var()) != l_Undef
             || !solver->decisionVar[lit.var()]
             || visitedAlready[lit.toInt()]
+            || solver->timestamp[lit.toInt()].dominator != lit_Undef
         ) {
             continue;
         }
@@ -174,17 +175,22 @@ bool Prober::probe()
             }
         }
 
+        //Don't always try positive first. Try random sign first
+        //bool random_inv = solver->mtrand.randInt(1);
+        //bool random_inv = false;
+
         //Try it
         if (!tryThis(lit, true))
             goto end;
 
+        /*
         //If we are still unset, do the opposite, too
         //this lets us carry out BothProp
         if (solver->value(lit) == l_Undef
-            && !tryThis(~lit, false)
+            && !tryThis((~lit), false)
         ) {
             goto end;
-        }
+        }*/
     }
 
 end:
