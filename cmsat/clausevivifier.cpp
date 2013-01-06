@@ -213,6 +213,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
             , cl.learnt()
             , queueByBy
         );
+
         if (offset2 != std::numeric_limits<ClOffset>::max()) {
             *j++ = offset2;
         }
