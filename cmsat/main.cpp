@@ -358,8 +358,6 @@ void Main::parseCommandLine()
 
     po::options_description simplificationOptions("Simplification options");
     simplificationOptions.add_options()
-    ("simplify", po::value<int>(&conf.doSimplify)->default_value(conf.doSimplify)
-        , "Perform play with norm clauses at ALL (none below)")
     ("varelim", po::value<int>(&conf.doVarElim)->default_value(conf.doVarElim)
         , "Perform variable elimination as per Een and Biere")
     ("elimstrategy", po::value<int>(&conf.varelimStrategy)->default_value(conf.varelimStrategy)
