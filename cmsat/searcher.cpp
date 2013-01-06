@@ -705,7 +705,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         PropBy confl;
 
         //If decision level==1, then do hyperbin & transitive reduction
-        if (decisionLevel() == 1) {
+        if (conf.otfHyperbin && decisionLevel() == 1) {
             stats.advancedPropCalled++;
             failed = propagateFull();
             if (failed != lit_Undef) {
@@ -1034,7 +1034,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Binary learnt
             stats.learntBins++;
             solver->attachBinClause(learnt_clause[0], learnt_clause[1], true);
-            if (decisionLevel() == 1)
+            if (conf.otfHyperbin && decisionLevel() == 1)
                 enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
@@ -1047,7 +1047,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             stats.learntTris++;
             solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
-            if (decisionLevel() == 1)
+            if (conf.otfHyperbin && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
@@ -1060,7 +1060,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
             solver->attachClause(*cl);
-            if (decisionLevel() == 1)
+            if (conf.otfHyperbin && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
             else
                 enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));

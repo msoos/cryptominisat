@@ -435,6 +435,8 @@ void Main::parseCommandLine()
         , "Update glues while propagating")
     ("lhbr", po::value<int>(&conf.doLHBR)->default_value(conf.doLHBR)
         , "Perform lazy hyper-binary resolution while propagating")
+    ("otfhyper", po::value<int>(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
+        , "Perform hyper-binary resolution at dec. level 1 after every restart")
     ;
 
     po::options_description sqlOptions("SQL options");

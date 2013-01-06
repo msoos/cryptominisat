@@ -77,6 +77,12 @@ class SolverConf
         int       updateGlues;
         uint32_t  shortTermHistorySize; ///< Rolling avg. glue window size
 
+        //OTF stuff
+        int       otfHyperbin;
+        int       doOTFSubsume;
+        int       doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
+        int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
+
         //SQL
         int       doSQL;
         size_t    dumpTopNVars; //Only dump information about the "top" N active variables
@@ -91,8 +97,7 @@ class SolverConf
         string    sqlDatabase;
 
         //Optimisations to do
-        int       doOTFSubsume;
-        int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
+
         int       printFullStats;
         bool      printAllRestarts;
         int       doRenumberVars;
@@ -128,7 +133,7 @@ class SolverConf
         int      doER; ///< Perform Extended Resolution (ER)
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
-        int      doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
+
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption

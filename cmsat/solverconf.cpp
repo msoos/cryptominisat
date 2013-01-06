@@ -65,6 +65,12 @@ SolverConf::SolverConf() :
         , updateGlues(true)
         , shortTermHistorySize (100)
 
+        //OTF
+        , otfHyperbin      (true)
+        , doOTFSubsume     (true)
+        , doOTFGateShorten (true)
+        , rewardShortenedClauseWithConfl(10)
+
         //SQL
         , doSQL            (false)
         , dumpTopNVars     (50)
@@ -79,8 +85,6 @@ SolverConf::SolverConf() :
         , sqlDatabase("cmsat")
 
         //optimisations to do
-        , doOTFSubsume     (true)
-        , rewardShortenedClauseWithConfl(10)
         , printFullStats   (false)
         , doRenumberVars   (true)
         , dominPickFreq    (5)
@@ -115,7 +119,6 @@ SolverConf::SolverConf() :
         , doER             (false)
         , doCalcReach      (true)
         , doAsymmTE        (true)
-        , doOTFGateShorten (true)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)
