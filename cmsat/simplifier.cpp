@@ -2468,10 +2468,10 @@ bool Simplifier::stampCheck(
     //on the binary clause itself, so that would cause a circular de-
     //pendency
 
-    //TODO stamping
     if (ps.isBinary() || qs.isBinary())
         return false;
 
+    //TODO stamping
     /*const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
     numMaxVarElimAgressiveCheck -= cache.size()/3;
     for(vector<LitExtra>::const_iterator

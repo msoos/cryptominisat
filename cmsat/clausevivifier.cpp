@@ -367,7 +367,11 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Go through each literal and subsume/strengthen with it
-        for (const Lit *l = cl.begin(), *end = cl.end(); l != end && !isSubsumed; l++) {
+        for (const Lit
+            *l = cl.begin(), *end = cl.end()
+            ; l != end && !isSubsumed
+            ; l++
+        ) {
             const Lit lit = *l;
 
             //Go through the watchlist
