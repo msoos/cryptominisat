@@ -2336,6 +2336,7 @@ bool Simplifier::merge(
     dummy.clear(); //The final clause
     toClear.clear(); //Used to clear 'seen'
 
+    //Handle PS
     bool retval = true;
     if (ps.isBinary() || ps.isTri()) {
         *toDecrease -= 1;
@@ -2366,6 +2367,7 @@ bool Simplifier::merge(
         }
     }
 
+    //Handle QS
     if (qs.isBinary() || qs.isTri()) {
         *toDecrease -= 2;
         assert(qs.lit1() != ~noPosLit);
