@@ -610,6 +610,12 @@ private:
         , const Lit noPosLit
         , bool& retval
     );
+    bool stampCheck(
+        const Lit lit
+        , const Lit noPosLit
+        , const Watched& ps
+        , const Watched& qs
+    );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
 
