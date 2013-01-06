@@ -72,6 +72,21 @@ enum PropResult {
     , PROP_SOMETHING = 2
 };
 
+struct Timestamp
+{
+    Timestamp() :
+        start(0)
+        , end(0)
+        , dominator(lit_Undef)
+        , numDom(0)
+    {}
+
+    uint64_t start;
+    uint64_t end;
+    Lit dominator;
+    uint64_t numDom;
+};
+
 template<class T>
 class MyStack
 {
@@ -271,6 +286,7 @@ protected:
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
     vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
+    vector<Timestamp>   timestamp;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -369,6 +385,7 @@ protected:
         bqueue<size_t>* watchListSizeTraversed = NULL
         //, bqueue<bool>* litPropagatedSomething = NULL
     );
+    void closeAllTimestamps();
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
@@ -432,6 +449,9 @@ protected:
         , const vector<uint32_t>& interToOuter2
     );
     void updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter);
+
+private:
+    uint64_t stampingTime;
 };
 
 

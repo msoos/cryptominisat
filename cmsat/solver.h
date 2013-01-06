@@ -464,6 +464,11 @@ class Solver : public Searcher
         };
         bool subsumeAndStrengthenImplicit();
 
+        //////////////////
+        // Stamping
+        Lit updateLit(Lit lit) const;
+        void updateDominators();
+
         /////////////////
         // Debug
         void testAllClauseAttach() const;

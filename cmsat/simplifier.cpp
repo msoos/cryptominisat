@@ -1412,7 +1412,19 @@ void Simplifier::blockBinaries()
     runStats.blockedSumLits += blocked*2;
     runStats.blockTime += cpuTime() - myTime;
 
-    //TODO stamping -- clear stamps
+    //If any has been blocked, clear the stamps
+    if (blocked) {
+        for(vector<Timestamp>::iterator
+            it = solver->timestamp.begin(), end = solver->timestamp.end()
+            ; it != end
+            ; it++
+        ) {
+            *it = Timestamp();
+        }
+        cout
+        << "c [stamping] cleared stamps because of blocked binaries"
+        << endl;
+    }
 }
 
 void Simplifier::blockClauses()

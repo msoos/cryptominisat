@@ -244,6 +244,7 @@ class ClauseVivifier {
             , bool learnt
             , bool alsoStrengthen
         );
+        std::pair<size_t, size_t> stampBasedRemoval(vector<Lit>& lits);
 
         //Working set
         Solver* solver;

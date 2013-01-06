@@ -606,6 +606,10 @@ void Solver::renumberVariables()
         if (litReachable[i].lit != lit_Undef)
             litReachable[i].lit = getUpdatedLit(litReachable[i].lit, outerToInter);
     }
+    for(size_t i = 0; i < timestamp.size(); i++) {
+        if (timestamp[i].dominator != lit_Undef)
+            timestamp[i].dominator = getUpdatedLit(timestamp[i].dominator, outerToInter);
+    }
 
     //Update clauses
     //Clauses' abstractions have to be re-calculated
@@ -622,10 +626,9 @@ void Solver::renumberVariables()
     }
 
     //Update sub-elements' vars
+    updateArray(timestamp, interToOuter2);
     simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
-    //TODO stamping -- update stamp numbers here
-    //implCache.updateVars(seen, outerToInter, interToOuter2);
 
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
@@ -1066,6 +1069,7 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //PROBE
+    updateDominators();
     if (conf.doProbe && !prober->probe())
         goto end;
 
@@ -2932,5 +2936,33 @@ void Solver::dumpIfNeeded() const
         }
 
         cout << "Dumped irredundant (~non-learnt) clauses" << endl;
+    }
+}
+
+Lit Solver::updateLit(Lit lit) const
+{
+    //Nothing to update
+    if (lit == lit_Undef)
+        return lit;
+
+    lit = varReplacer->getLitReplacedWith(lit);
+
+    if (varData[lit.var()].elimed)
+        return lit_Undef;
+
+    return lit;
+}
+
+void Solver::updateDominators()
+{
+    for(vector<Timestamp>::iterator
+        it = timestamp.begin(), end = timestamp.end()
+        ; it != end
+        ; it++
+    ) {
+        Lit newLit = updateLit(it->dominator);;
+        it->dominator = newLit;
+        if (newLit == lit_Undef)
+            it->numDom = 0;
     }
 }

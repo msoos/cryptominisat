@@ -58,6 +58,7 @@ PropEngine::PropEngine(
         , ok(true)
         , qhead(0)
         , agility(agilityData)
+        , stampingTime(0)
 {
 }
 
@@ -76,6 +77,10 @@ Var PropEngine::newVar(const bool)
     assigns.push_back(l_Undef);
     varData.push_back(VarData());
     varDataLT.push_back(VarData::Stats());
+
+    //One for each lit
+    timestamp.push_back(Timestamp());
+    timestamp.push_back(Timestamp());
 
     //Temporaries
     seen      .push_back(0);
@@ -642,28 +647,39 @@ Lit PropEngine::propagateFull(
     }
 
     //Set up stacks
+    const size_t origTrailSize = trail.size();
     toPropBin.clear();
     toPropNorm.clear();
-    toPropBin.push(trail.back());
-    toPropNorm.push(trail.back());
+    const Lit root = trail.back();
+    toPropBin.push(root);
+    toPropNorm.push(root);
 
+    //Setup
     needToAddBinClause.clear();
     PropResult ret = PROP_NOTHING;
+    stampingTime++;
+    timestamp[root.toInt()].start = stampingTime;
+
+    #ifdef DEBUG_STAMPING
+    cout
+    << "Top-enqueued << " << trail.back()
+    << " for stampingTime " << stampingTime
+    << endl;
+    #endif
+
     start:
 
     //Propagate binary non-learnt
     while (!toPropBin.empty()) {
         const Lit p = toPropBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
-        if (watchListSizeTraversed)
-            watchListSizeTraversed->push(ws.size());
-        propStats.bogoProps += 1;
+        /*if (watchListSizeTraversed)
+            watchListSizeTraversed->push(ws.size());*/
         for(vec<Watched>::const_iterator
             k = ws.begin(), end = ws.end()
             ; k != end
             ; k++
         ) {
-
             //If something other than non-learnt binary, skip
             if (!k->isBinary())
                 continue;
@@ -671,9 +687,20 @@ Lit PropEngine::propagateFull(
             ret = propBin(p, k, confl);
             switch(ret) {
                 case PROP_FAIL:
+                    closeAllTimestamps();
                     return analyzeFail(confl);
 
                 case PROP_SOMETHING:
+                    stampingTime++;
+                    timestamp[trail.back().toInt()].start = stampingTime;
+                    timestamp[trail.back().toInt()].dominator = root;
+                    #ifdef DEBUG_STAMPING
+                    cout
+                    << "From " << p << " enqueued " << trail.back()
+                    << " for stampingTime " << stampingTime
+                    << endl;
+                    #endif
+
                     toPropNorm.push(trail.back());
                     toPropBin.push(trail.back());
                     goto start;
@@ -687,7 +714,16 @@ Lit PropEngine::propagateFull(
 
 
         //Finished with this literal
+        propStats.bogoProps += ws.size();
         toPropBin.pop();
+        stampingTime++;
+        timestamp[p.toInt()].end = stampingTime;
+        #ifdef DEBUG_STAMPING
+        cout
+        << "End time for " << p
+        << " is " << stampingTime
+        << endl;
+        #endif
     }
 
     ret = PROP_NOTHING;
@@ -700,6 +736,7 @@ Lit PropEngine::propagateFull(
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
         for(; i != end; i++) {
+            propStats.bogoProps += 1;
             if (i->isBinary()) {
                 *j++ = *i;
                 continue;
@@ -732,12 +769,26 @@ Lit PropEngine::propagateFull(
             *j++ = *i++;
         ws.shrink_(end-j);
 
-        if (ret == PROP_FAIL) {
-            return analyzeFail(confl);
-        } else if (ret == PROP_SOMETHING) {
-            toPropNorm.push(trail.back());
-            toPropBin.push(trail.back());
-            goto start;
+        switch(ret) {
+            case PROP_FAIL:
+                closeAllTimestamps();
+                return analyzeFail(confl);
+
+            case PROP_SOMETHING:
+                stampingTime++;
+                #ifdef DEBUG_STAMPING
+                cout
+                << "From (long-reduced) " << p << " enqueued << " << trail.back()
+                << " for stampingTime " << stampingTime
+                << endl;
+                #endif
+                timestamp[trail.back().toInt()].start = stampingTime;
+                toPropNorm.push(trail.back());
+                toPropBin.push(trail.back());
+                goto start;
+
+            case PROP_NOTHING:
+                break;
         }
 
         //Finished with this literal
@@ -745,8 +796,29 @@ Lit PropEngine::propagateFull(
         qhead++;
     }
 
+    timestamp[trail.back().toInt()].numDom = trail.size() - origTrailSize;
+
     return lit_Undef;
 }
+
+void PropEngine::closeAllTimestamps()
+{
+    while(!toPropBin.empty())
+    {
+        stampingTime++;
+        timestamp[toPropBin.top().toInt()].end = stampingTime;
+        #ifdef DEBUG_STAMPING
+        cout
+        << "End time for " << toPropBin.top()
+        << " is " << stampingTime
+        << " (due to failure, closing all nodes)"
+        << endl;
+        #endif
+
+        toPropBin.pop();
+    }
+}
+
 
 PropResult PropEngine::propBin(
     const Lit p

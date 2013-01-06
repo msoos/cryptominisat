@@ -326,6 +326,8 @@ bool ClauseVivifier::vivifyClausesCache(
     Stats::CacheBased tmpStats;
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
+    size_t remLitTimeStampTotal = 0;
+    size_t remLitTimeStampTotalInv = 0;
 
     //Temps
     vector<Lit> lits;
@@ -437,21 +439,6 @@ bool ClauseVivifier::vivifyClausesCache(
                     break;
                 }
             }
-
-            //TODO stamping -- cache was here
-            /*
-            if (alsoStrengthen //we need to strengthen
-                && seen[lit.toInt()] //We haven't yet removed it
-            ) {
-                countTime += solver->implCache[lit.toInt()].lits.size();
-                for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
-                    , end2 = solver->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
-                ) {
-                    seen[(~(it2->getLit())).toInt()] = 0;
-                }
-            }
-            */
-
         }
 
         //Clear 'seen' and fill new clause data
@@ -468,6 +455,12 @@ bool ClauseVivifier::vivifyClausesCache(
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
+        }
+
+        if (lits.size() > 1) {
+            std::pair<size_t, size_t> tmp = stampBasedRemoval(lits);
+            remLitTimeStampTotal += tmp.first;
+            remLitTimeStampTotalInv += tmp.second;
         }
 
         //If nothing to do, then move along
@@ -505,5 +498,145 @@ bool ClauseVivifier::vivifyClausesCache(
         runStats.irredCacheBased = tmpStats;
     }
 
+    cout
+    << "c [timestamp]"
+    << " lit-rem: " << remLitTimeStampTotal
+    << " inv-lit-rem: " << remLitTimeStampTotalInv
+    << endl;
+
     return solver->ok;
+}
+
+struct StampSorter
+{
+    StampSorter(const vector<Timestamp>& _timestamp) :
+        timestamp(_timestamp)
+    {}
+
+    const vector<Timestamp>& timestamp;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[lit1.toInt()].start
+                > timestamp[lit2.toInt()].start;
+    }
+};
+
+struct StampSorterInv
+{
+    StampSorterInv(const vector<Timestamp>& _timestamp) :
+        timestamp(_timestamp)
+    {}
+
+    const vector<Timestamp>& timestamp;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[(~lit1).toInt()].start
+                < timestamp[(~lit2).toInt()].start;
+    }
+};
+
+
+std::pair<size_t, size_t> ClauseVivifier::stampBasedRemoval(
+    vector<Lit>& lits
+) {
+    size_t remLitTimeStamp = 0;
+    StampSorter sorter(solver->timestamp);
+    std::sort(lits.begin(), lits.end(), sorter);
+
+    #ifdef DEBUG_STAMPING
+    cout << "Timestamps: ";
+    for(size_t i = 0; i < lits.size(); i++) {
+        cout
+        << " " << solver->timestamp[lits[i].toInt()].start
+        << "," << solver->timestamp[lits[i].toInt()].end;
+    }
+    cout << endl;
+    cout << "Ori clause: " << lits << endl;
+    #endif
+
+    assert(!lits.empty());
+    Lit lastLit = lits[0];
+    for(size_t i = 1; i < lits.size(); i++) {
+        if (solver->timestamp[lastLit.toInt()].end
+            < solver->timestamp[lits[i].toInt()].end
+        ) {
+            lits[i] = lit_Undef;
+            remLitTimeStamp++;
+        } else {
+            if (solver->timestamp[lits[i].toInt()].end <
+                solver->timestamp[lastLit.toInt()].end
+            ) {
+                    lastLit = lits[i];
+            }
+        }
+    }
+
+    if (remLitTimeStamp) {
+        //First literal cannot be removed
+        assert(lits.front() != lit_Undef);
+
+        //At least 1 literal must remain
+        assert(remLitTimeStamp < lits.size());
+
+        vector<Lit> lits2;
+        lits2.reserve(lits.size()-remLitTimeStamp);
+        for(size_t i = 0; i < lits.size(); i++) {
+            if (lits[i] != lit_Undef)
+                lits2.push_back(lits[i]);
+        }
+
+        lits.swap(lits2);
+
+        #ifdef DEBUG_STAMPING
+        cout << "New clause: " << lits << endl;
+        #endif
+    }
+
+    size_t remLitTimeStampInv = 0;
+    StampSorterInv sorterInv(solver->timestamp);
+    std::sort(lits.begin(), lits.end(), sorterInv);
+    assert(!lits.empty());
+    lastLit = lits[0];
+
+    for(size_t i = 1; i < lits.size(); i++) {
+        if (solver->timestamp[(~lastLit).toInt()].end
+            > solver->timestamp[(~lits[i]).toInt()].end
+        ) {
+            lits[i] = lit_Undef;
+            remLitTimeStampInv++;
+        } else {
+            //If this lit is already a different tree, update reference
+            if (solver->timestamp[(~lits[i]).toInt()].end >
+                solver->timestamp[(~lastLit).toInt()].end
+            ) {
+                    lastLit = lits[i];
+            }
+        }
+    }
+
+    if (remLitTimeStampInv) {
+        //First literal cannot be removed
+        assert(lits.front() != lit_Undef);
+
+        //At least 1 literal must remain
+        assert(remLitTimeStampInv < lits.size());
+
+        vector<Lit> lits2;
+        lits2.reserve(lits.size()-remLitTimeStampInv);
+        for(size_t i = 0; i < lits.size(); i++) {
+            if (lits[i] != lit_Undef)
+                lits2.push_back(lits[i]);
+        }
+
+        lits.swap(lits2);
+
+        #ifdef DEBUG_STAMPING
+        cout << "New clause: " << lits << endl;
+        #endif
+    }
+
+
+    return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
