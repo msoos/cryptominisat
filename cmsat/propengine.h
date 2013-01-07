@@ -101,6 +101,36 @@ struct Timestamp
     uint64_t numDom[2];
 };
 
+struct StampSorter
+{
+    StampSorter(const vector<Timestamp>& _timestamp) :
+        timestamp(_timestamp)
+    {}
+
+    const vector<Timestamp>& timestamp;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[lit1.toInt()].start
+                > timestamp[lit2.toInt()].start;
+    }
+};
+
+struct StampSorterInv
+{
+    StampSorterInv(const vector<Timestamp>& _timestamp) :
+        timestamp(_timestamp)
+    {}
+
+    const vector<Timestamp>& timestamp;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[(~lit1).toInt()].start
+                < timestamp[(~lit2).toInt()].start;
+    }
+};
+
 template<class T>
 class MyStack
 {

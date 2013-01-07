@@ -511,37 +511,6 @@ bool ClauseVivifier::vivifyClausesCache(
     return solver->ok;
 }
 
-struct StampSorter
-{
-    StampSorter(const vector<Timestamp>& _timestamp) :
-        timestamp(_timestamp)
-    {}
-
-    const vector<Timestamp>& timestamp;
-
-    bool operator()(const Lit lit1, const Lit lit2) const
-    {
-        return timestamp[lit1.toInt()].start
-                > timestamp[lit2.toInt()].start;
-    }
-};
-
-struct StampSorterInv
-{
-    StampSorterInv(const vector<Timestamp>& _timestamp) :
-        timestamp(_timestamp)
-    {}
-
-    const vector<Timestamp>& timestamp;
-
-    bool operator()(const Lit lit1, const Lit lit2) const
-    {
-        return timestamp[(~lit1).toInt()].start
-                < timestamp[(~lit2).toInt()].start;
-    }
-};
-
-
 std::pair<size_t, size_t> ClauseVivifier::stampBasedRemoval(
     vector<Lit>& lits
 ) {
