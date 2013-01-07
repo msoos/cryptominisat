@@ -649,10 +649,14 @@ Lit PropEngine::propagateFull(
     //Set up stacks
     const size_t origTrailSize = trail.size();
     toPropBin.clear();
+    toPropRedBin.clear();
     toPropNorm.clear();
+
     const Lit root = trail.back();
     toPropBin.push(root);
     toPropNorm.push(root);
+    if (stampType == STAMP_RED)
+        toPropRedBin.push(root);
 
     //Setup
     needToAddBinClause.clear();
@@ -678,9 +682,16 @@ Lit PropEngine::propagateFull(
             ; k != end
             ; k++
         ) {
-            //If something other than non-learnt binary, skip
+            //If something other than binary, skip
             if (!k->isBinary())
                 continue;
+
+            //If stamping only irred, go over red binaries
+            if (stampType == STAMP_IRRED
+                && k->learnt()
+            ) {
+                continue;
+            }
 
             ret = propBin(p, k, confl);
             switch(ret) {
@@ -701,15 +712,13 @@ Lit PropEngine::propagateFull(
 
                     toPropNorm.push(trail.back());
                     toPropBin.push(trail.back());
+                    if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
                     goto start;
 
                 case PROP_NOTHING:
                     break;
             }
         }
-        /*if (litPropagatedSomething)
-            litPropagatedSomething->push(trail.size() > lastTrailSize);*/
-
 
         //Finished with this literal
         propStats.bogoProps += ws.size();
@@ -722,6 +731,56 @@ Lit PropEngine::propagateFull(
         << " is " << stampingTime
         << endl;
         #endif
+    }
+
+    if (stampType == STAMP_IRRED) {
+        ret = PROP_NOTHING;
+        while (!toPropRedBin.empty()) {
+            propStats.bogoProps += 1;
+
+            const Lit p = toPropRedBin.top();
+            const vec<Watched>& ws = watches[(~p).toInt()];
+            for(vec<Watched>::const_iterator
+                k = ws.begin(), end = ws.end()
+                ; k != end
+                ; k++
+            ) {
+                propStats.bogoProps += 1;
+
+                //If something other than learnt binary, skip
+                if (!k->isBinary() || !k->learnt())
+                    continue;
+
+                ret = propBin(p, k, confl);
+                switch(ret) {
+                    case PROP_FAIL:
+                        closeAllTimestamps(stampType);
+                        return analyzeFail(confl);
+
+                    case PROP_SOMETHING:
+                        stampingTime++;
+                        timestamp[trail.back().toInt()].start[stampType] = stampingTime;
+                        timestamp[trail.back().toInt()].dominator[stampType] = root;
+                        #ifdef DEBUG_STAMPING
+                        cout
+                        << "From " << p << " enqueued " << trail.back()
+                        << " for stampingTime " << stampingTime
+                        << endl;
+                        #endif
+
+                        toPropNorm.push(trail.back());
+                        toPropBin.push(trail.back());
+                        toPropRedBin.push(trail.back());
+                        goto start;
+
+                    case PROP_NOTHING:
+                        break;
+                }
+            }
+
+            //Finished with this literal of this type
+            toPropRedBin.pop();
+        }
     }
 
     ret = PROP_NOTHING;
@@ -783,6 +842,7 @@ Lit PropEngine::propagateFull(
                 timestamp[trail.back().toInt()].start[stampType] = stampingTime;
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
+                if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
                 goto start;
 
             case PROP_NOTHING:

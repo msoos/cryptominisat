@@ -341,6 +341,7 @@ protected:
     vector<Lit>            toClear; ///<Temporary, used in some places
     MyStack<Lit> toPropNorm;
     MyStack<Lit> toPropBin;
+    MyStack<Lit> toPropRedBin;
 
     /////////////////
     // Enqueue
