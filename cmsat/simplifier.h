@@ -420,6 +420,8 @@ private:
     vector<char>    seen;        ///<Used in various places to help perform algorithms
     vector<char>    seen2;       ///<Used in various places to help perform algorithms
     vector<Lit>     dummy;       ///<Used by merge()
+    vector<Lit>     stampNorm;       ///<Used by merge()
+    vector<Lit>     stampInv;       ///<Used by merge()
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
 

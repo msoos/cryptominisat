@@ -625,7 +625,6 @@ PropBy PropEngine::propagateNonLearntBin()
 
 Lit PropEngine::propagateFull(
     const StampType stampType
-    , bqueue<size_t>* watchListSizeTraversed
 ) {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;

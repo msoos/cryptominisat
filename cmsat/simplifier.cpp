@@ -2471,35 +2471,40 @@ bool Simplifier::stampCheck(
     if (ps.isBinary() || qs.isBinary())
         return false;
 
-    //TODO stamping
-    /*const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-    numMaxVarElimAgressiveCheck -= cache.size()/3;
-    for(vector<LitExtra>::const_iterator
-        it = cache.begin(), end = cache.end()
-        ; it != end
-        ; it++
-    ) {
-        //If learnt, that doesn't help
-        if (!it->getOnlyNLBin())
-            continue;
+    StampSorter sortNorm(solver->timestamp);
+    StampSorter sortInv(solver->timestamp);
 
-        const Lit otherLit = it->getLit();
-        if (otherLit.var() == noPosLit.var())
-            continue;
+    stampNorm = dummy;
+    stampInv = dummy;
 
-        //If (a) was in original clause
-        //then (a V b) means -b can be put inside
-        if(!seen[(~otherLit).toInt()]) {
-            toClear.push_back(~otherLit);
-            seen[(~otherLit).toInt()] = 1;
+    std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
+    std::sort(stampInv.begin(), stampInv.end(), sortInv);
+
+    assert(dummy.size() > 0);
+    vector<Lit>::const_iterator lpos = stampNorm.begin();
+    vector<Lit>::const_iterator lneg = stampInv.begin();
+
+    const vector<Timestamp>& stamp = solver->timestamp;
+    while(true) {
+        if (stamp[lneg->toInt()].start[STAMP_IRRED]
+            > stamp[lpos->toInt()].start[STAMP_IRRED]
+        ) {
+            if (lpos == stampNorm.end())
+                return false;
+
+            lpos++;
+        } else if (stamp[lneg->toInt()].end[STAMP_IRRED]
+            < stamp[lpos->toInt()].end[STAMP_IRRED]
+        ) {
+            if (lneg == stampInv.end())
+                return false;
+
+            lneg++;
+        } else {
+            cout << "YAY, stamping worked!" << endl;
+            return true;
         }
-
-        //If (a V b) is non-learnt in the clause, then done
-        if (seen[otherLit.toInt()]) {
-            retval = false;
-            goto end;
-        }
-    }*/
+    }
 
     return false;
 }

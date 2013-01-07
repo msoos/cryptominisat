@@ -428,7 +428,6 @@ protected:
     );
     Lit propagateFull(
         const StampType stampType
-        , bqueue<size_t>* watchListSizeTraversed = NULL
     );
     void closeAllTimestamps(const StampType stampType);
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
