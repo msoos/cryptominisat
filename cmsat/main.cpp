@@ -549,7 +549,7 @@ void Main::parseCommandLine()
 
 
     if (vm.count("polar")) {
-        std::string mode = vm["polarity"].as<std::string>();
+        std::string mode = vm["polar"].as<std::string>();
 
         if (mode == "true") conf.polarity_mode = polarity_true;
         else if (mode == "false") conf.polarity_mode = polarity_false;
