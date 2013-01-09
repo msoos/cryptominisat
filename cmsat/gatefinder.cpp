@@ -417,7 +417,7 @@ size_t GateFinder::findEqOrGates()
             tmp[0] = gate1.eqLit.unsign();
             tmp[1] = gate2.eqLit.unsign();
             const bool RHS = gate1.eqLit.sign() ^ gate2.eqLit.sign();
-            if (!solver->addXorClauseInt(tmp, RHS))
+            if (!solver->addXorClauseInt(tmp, RHS, false))
                 return foundRep;
             tmp.resize(2);
         }

@@ -349,7 +349,6 @@ ClOffset ClauseVivifier::testVivify(
         return offset;
     }
 }
-
 bool ClauseVivifier::vivifyClausesCache(
     vector<ClOffset>& clauses
     , bool learnt

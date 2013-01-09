@@ -95,10 +95,13 @@ Solver::~Solver()
     delete varReplacer;
 }
 
-bool Solver::addXorClauseInt(const vector< Lit >& lits, bool rhs)
-{
+bool Solver::addXorClauseInt(
+    const vector< Lit >& lits
+    , bool rhs
+    , const bool attach
+) {
     assert(ok);
-    assert(qhead == trail.size());
+    assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
 
     if (lits.size() > (0x01UL << 18)) {
@@ -136,18 +139,19 @@ bool Solver::addXorClauseInt(const vector< Lit >& lits, bool rhs)
         case 1:
             enqueue(Lit(ps[0].var(), !rhs));
             propStats.propsUnit++;
-            ok = propagate().isNULL();
+            if (attach)
+                ok = propagate().isNULL();
             return ok;
 
         case 2:
             ps[0] ^= !rhs;
-            addClauseInt(ps, false);
+            addClauseInt(ps, false, ClauseStats(), attach);
             if (!ok)
                 return false;
 
             ps[0] ^= true;
             ps[1] ^= true;
-            addClauseInt(ps, false);
+            addClauseInt(ps, false, ClauseStats(), attach);
             break;
 
         default:

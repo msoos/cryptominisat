@@ -300,7 +300,11 @@ class Solver : public Searcher
 
     private:
 
-        bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
+        bool addXorClauseInt(
+            const vector< Lit >& lits
+            , bool rhs
+            , const bool attach
+        );
         lbool simplifyProblem();
         SolveStats solveStats;
 
