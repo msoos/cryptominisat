@@ -2431,9 +2431,17 @@ bool Simplifier::merge(
             assert(lit.var() != noPosLit.var());
 
             //Use stamping
-            if (stampCheck(lit, noPosLit, ps, qs))
-                goto end;
+            //but only if none of the clauses were binary
+            //Otherwise we cannot tell if the value in the cache is dependent
+            //on the binary clause itself, so that would cause a circular de-
+            //pendency
 
+            if (!ps.isBinary()
+                && !qs.isBinary()
+                && stampCheck()
+            ) {
+                goto end;
+            }
 
             //Use watchlists
             if (numMaxVarElimAgressiveCheck > 0) {
@@ -2457,22 +2465,10 @@ bool Simplifier::merge(
     return retval;
 }
 
-bool Simplifier::stampCheck(
-    const Lit lit
-    , const Lit noPosLit
-    , const Watched& ps
-    , const Watched& qs
-) {
-    //Use cache -- but only if none of the clauses were binary
-    //Otherwise we cannot tell if the value in the cache is dependent
-    //on the binary clause itself, so that would cause a circular de-
-    //pendency
-
-    if (ps.isBinary() || qs.isBinary())
-        return false;
-
-    StampSorter sortNorm(solver->timestamp);
-    StampSorter sortInv(solver->timestamp);
+bool Simplifier::stampCheck()
+{
+    StampSorter sortNorm(solver->timestamp, STAMP_IRRED);
+    StampSorter sortInv(solver->timestamp, STAMP_IRRED);
 
     stampNorm = dummy;
     stampInv = dummy;
@@ -2487,21 +2483,21 @@ bool Simplifier::stampCheck(
     const vector<Timestamp>& stamp = solver->timestamp;
     while(true) {
         if (stamp[lneg->toInt()].start[STAMP_IRRED]
-            > stamp[lpos->toInt()].start[STAMP_IRRED]
+            >= stamp[lpos->toInt()].start[STAMP_IRRED]
         ) {
+            lpos++;
+
             if (lpos == stampNorm.end())
                 return false;
-
-            lpos++;
         } else if (stamp[lneg->toInt()].end[STAMP_IRRED]
-            < stamp[lpos->toInt()].end[STAMP_IRRED]
+            <= stamp[lpos->toInt()].end[STAMP_IRRED]
         ) {
+            lneg++;
+
             if (lneg == stampInv.end())
                 return false;
-
-            lneg++;
         } else {
-            cout << "YAY, stamping worked!" << endl;
+            //cout << "YAY, stamping worked!" << endl;
             return true;
         }
     }

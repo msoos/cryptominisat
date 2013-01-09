@@ -72,65 +72,6 @@ enum PropResult {
     , PROP_SOMETHING = 2
 };
 
-enum StampType {
-    STAMP_IRRED = 0
-    , STAMP_RED = 1
-};
-
-struct Timestamp
-{
-    Timestamp()
-    {
-        start[STAMP_IRRED] = 0;
-        start[STAMP_RED] = 0;
-
-        end[STAMP_IRRED] = 0;
-        end[STAMP_RED] = 0;
-
-        dominator[STAMP_IRRED] = lit_Undef;
-        dominator[STAMP_RED] = lit_Undef;
-
-        numDom[STAMP_IRRED] = 0;
-        numDom[STAMP_RED] = 0;
-    }
-
-    uint64_t start[2];
-    uint64_t end[2];
-
-    Lit dominator[2];
-    uint64_t numDom[2];
-};
-
-struct StampSorter
-{
-    StampSorter(const vector<Timestamp>& _timestamp) :
-        timestamp(_timestamp)
-    {}
-
-    const vector<Timestamp>& timestamp;
-
-    bool operator()(const Lit lit1, const Lit lit2) const
-    {
-        return timestamp[lit1.toInt()].start
-                > timestamp[lit2.toInt()].start;
-    }
-};
-
-struct StampSorterInv
-{
-    StampSorterInv(const vector<Timestamp>& _timestamp) :
-        timestamp(_timestamp)
-    {}
-
-    const vector<Timestamp>& timestamp;
-
-    bool operator()(const Lit lit1, const Lit lit2) const
-    {
-        return timestamp[(~lit1).toInt()].start
-                < timestamp[(~lit2).toInt()].start;
-    }
-};
-
 template<class T>
 class MyStack
 {

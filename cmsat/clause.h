@@ -696,4 +696,73 @@ struct CleaningStats
     Data remain;
 };
 
+enum StampType {
+    STAMP_IRRED = 0
+    , STAMP_RED = 1
+};
+
+struct Timestamp
+{
+    Timestamp()
+    {
+        start[STAMP_IRRED] = 0;
+        start[STAMP_RED] = 0;
+
+        end[STAMP_IRRED] = 0;
+        end[STAMP_RED] = 0;
+
+        dominator[STAMP_IRRED] = lit_Undef;
+        dominator[STAMP_RED] = lit_Undef;
+
+        numDom[STAMP_IRRED] = 0;
+        numDom[STAMP_RED] = 0;
+    }
+
+    uint64_t start[2];
+    uint64_t end[2];
+
+    Lit dominator[2];
+    uint64_t numDom[2];
+};
+
+struct StampSorter
+{
+    StampSorter(
+        const vector<Timestamp>& _timestamp
+        , const StampType _stampType
+    ) :
+        timestamp(_timestamp)
+        , stampType(_stampType)
+    {}
+
+    const vector<Timestamp>& timestamp;
+    const StampType stampType;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[lit1.toInt()].start[stampType]
+                > timestamp[lit2.toInt()].start[stampType];
+    }
+};
+
+struct StampSorterInv
+{
+    StampSorterInv(
+        const vector<Timestamp>& _timestamp
+        , const StampType _stampType
+    ) :
+        timestamp(_timestamp)
+        , stampType(_stampType)
+    {}
+
+    const vector<Timestamp>& timestamp;
+    const StampType stampType;
+
+    bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return timestamp[(~lit1).toInt()].start[stampType]
+                < timestamp[(~lit2).toInt()].start[stampType];
+    }
+};
+
 #endif //CLAUSE_H

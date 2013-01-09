@@ -23,6 +23,7 @@
 #define CLAUSEVIVIFIER_H
 
 #include <vector>
+#include "clause.h"
 #include "constants.h"
 #include "solvertypes.h"
 #include "cloffset.h"
@@ -244,7 +245,13 @@ class ClauseVivifier {
             , bool learnt
             , bool alsoStrengthen
         );
-        std::pair<size_t, size_t> stampBasedRemoval(vector<Lit>& lits);
+        std::pair<size_t, size_t> stampBasedRemoval(
+            vector<Lit>& lits
+            , const StampType stampType
+        );
+        bool stampCheck(const vector<Lit>& lits);
+        vector<Lit> stampNorm;
+        vector<Lit> stampInv;
 
         //Working set
         Solver* solver;
