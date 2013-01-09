@@ -139,6 +139,7 @@ bool Prober::probe()
     //Use candidates
     sortAndResetCandidates();
     size_t atCandidates = 0;
+    candidates.clear();
 
     uint64_t origBogoProps = solver->propStats.bogoProps;
     while (solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
