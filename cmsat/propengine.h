@@ -278,7 +278,6 @@ protected:
     //
     vector<uint16_t>       seen;  ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
     vector<uint16_t>       seen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
-    vector<Lit>            analyze_stack;
     vector<Lit>            toClear; ///<Temporary, used in some places
     MyStack<Lit> toPropNorm;
     MyStack<Lit> toPropBin;
