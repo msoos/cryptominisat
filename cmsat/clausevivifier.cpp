@@ -227,47 +227,6 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     return solver->ok;
 }
 
-bool ClauseVivifier::stampCheck(
-    const vector<Lit>& lits
-) {
-    StampSorter sortNorm(solver->timestamp, STAMP_IRRED);
-    StampSorter sortInv(solver->timestamp, STAMP_IRRED);
-
-    stampNorm = lits;
-    stampInv = lits;
-
-    std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
-    std::sort(stampInv.begin(), stampInv.end(), sortInv);
-
-    assert(lits.size() > 0);
-    vector<Lit>::const_iterator lpos = stampNorm.begin();
-    vector<Lit>::const_iterator lneg = stampInv.begin();
-
-    const vector<Timestamp>& stamp = solver->timestamp;
-    while(true) {
-        if (stamp[lneg->toInt()].start[STAMP_IRRED]
-            >= stamp[lpos->toInt()].start[STAMP_IRRED]
-        ) {
-            lpos++;
-
-            if (lpos == stampNorm.end())
-                return false;
-        } else if (stamp[lneg->toInt()].end[STAMP_IRRED]
-            <= stamp[lpos->toInt()].end[STAMP_IRRED]
-        ) {
-            lneg++;
-
-            if (lneg == stampInv.end())
-                return false;
-        } else {
-            //cout << "YAY, stamping worked!" << endl;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 ClOffset ClauseVivifier::testVivify(
     ClOffset offset
     , Clause* cl
@@ -407,6 +366,17 @@ bool ClauseVivifier::vivifyClausesCache(
             seen_subs[cl[i2].toInt()] = 1;
         }
 
+        lits.resize(cl.size());
+        std::copy(cl.begin(), cl.end(), lits.begin());
+        if (lits.size() > 1
+            && !isSubsumed
+            && !learnt
+            && stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv)
+        ) {
+            isSubsumed = true;
+            subsumedStamp++;
+        }
+
         //Go through each literal and subsume/strengthen with it
         for (const Lit
             *l = cl.begin(), *end = cl.end()
@@ -503,24 +473,15 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         if (lits.size() > 1 && !isSubsumed) {
-            std::pair<size_t, size_t> tmp = stampBasedRemoval(lits, STAMP_RED);
+            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
 
-        /*if (lits.size() > 1 && !isSubsumed) {
-            std::pair<size_t, size_t> tmp = stampBasedRemoval(lits, STAMP_IRRED);
+        if (lits.size() > 1 && !isSubsumed) {
+            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
-        }*/
-
-        if (lits.size() > 1
-            && !isSubsumed
-            && !learnt
-            && stampCheck(lits)
-        ) {
-            isSubsumed = true;
-            subsumedStamp++;
         }
 
         //If nothing to do, then move along
@@ -568,7 +529,7 @@ bool ClauseVivifier::vivifyClausesCache(
     return solver->ok;
 }
 
-std::pair<size_t, size_t> ClauseVivifier::stampBasedRemoval(
+std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
     vector<Lit>& lits
     , const StampType stampType
 ) {

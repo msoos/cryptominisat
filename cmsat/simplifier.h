@@ -612,7 +612,6 @@ private:
         , const Lit noPosLit
         , bool& retval
     );
-    bool stampCheck();
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
 

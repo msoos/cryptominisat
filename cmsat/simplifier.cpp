@@ -2438,7 +2438,12 @@ bool Simplifier::merge(
 
             if (!ps.isBinary()
                 && !qs.isBinary()
-                && stampCheck()
+                && stampBasedClRem(
+                    dummy
+                    , solver->timestamp
+                    , stampNorm
+                    , stampInv
+                )
             ) {
                 goto end;
             }
@@ -2463,46 +2468,6 @@ bool Simplifier::merge(
     }
 
     return retval;
-}
-
-bool Simplifier::stampCheck()
-{
-    StampSorter sortNorm(solver->timestamp, STAMP_IRRED);
-    StampSorter sortInv(solver->timestamp, STAMP_IRRED);
-
-    stampNorm = dummy;
-    stampInv = dummy;
-
-    std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
-    std::sort(stampInv.begin(), stampInv.end(), sortInv);
-
-    assert(dummy.size() > 0);
-    vector<Lit>::const_iterator lpos = stampNorm.begin();
-    vector<Lit>::const_iterator lneg = stampInv.begin();
-
-    const vector<Timestamp>& stamp = solver->timestamp;
-    while(true) {
-        if (stamp[lneg->toInt()].start[STAMP_IRRED]
-            >= stamp[lpos->toInt()].start[STAMP_IRRED]
-        ) {
-            lpos++;
-
-            if (lpos == stampNorm.end())
-                return false;
-        } else if (stamp[lneg->toInt()].end[STAMP_IRRED]
-            <= stamp[lpos->toInt()].end[STAMP_IRRED]
-        ) {
-            lneg++;
-
-            if (lneg == stampInv.end())
-                return false;
-        } else {
-            //cout << "YAY, stamping worked!" << endl;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 bool Simplifier::agressiveCheck(

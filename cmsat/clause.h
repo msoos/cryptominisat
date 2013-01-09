@@ -765,4 +765,46 @@ struct StampSorterInv
     }
 };
 
+inline bool stampBasedClRem(
+    const vector<Lit>& lits
+    , const vector<Timestamp>& stamp
+    , vector<Lit>& stampNorm
+    , vector<Lit>& stampInv
+) {
+    StampSorter sortNorm(stamp, STAMP_IRRED);
+    StampSorter sortInv(stamp, STAMP_IRRED);
+
+    stampNorm = lits;
+    stampInv = lits;
+
+    std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
+    std::sort(stampInv.begin(), stampInv.end(), sortInv);
+
+    assert(lits.size() > 0);
+    vector<Lit>::const_iterator lpos = stampNorm.begin();
+    vector<Lit>::const_iterator lneg = stampInv.begin();
+
+    while(true) {
+        if (stamp[(~*lneg).toInt()].start[STAMP_IRRED]
+            >= stamp[lpos->toInt()].start[STAMP_IRRED]
+        ) {
+            lpos++;
+
+            if (lpos == stampNorm.end())
+                return false;
+        } else if (stamp[(~*lneg).toInt()].end[STAMP_IRRED]
+            <= stamp[lpos->toInt()].end[STAMP_IRRED]
+        ) {
+            lneg++;
+
+            if (lneg == stampInv.end())
+                return false;
+        } else {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #endif //CLAUSE_H
