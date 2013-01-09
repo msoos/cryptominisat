@@ -581,6 +581,9 @@ class Searcher : public PropEngine
             , uint32_t &nblevels         //glue of the learnt clause
             , ResolutionTypes<uint16_t> &resolutions   //number of resolutions made
         );
+        MyStack<Lit> analyze_stack;
+        vector<Lit> dummy;
+        bool litRedundant(Lit p, uint32_t abstract_levels);
 
         void analyzeHelper(
             Lit lit

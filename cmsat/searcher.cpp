@@ -187,11 +187,18 @@ Clause* Searcher::analyze(
     toClear.clear();
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
+        #ifdef DEBUG_RESOLV
+        cout << "p is: " << p << endl;
+        #endif
+
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
                 resolutions.tri++;
                 stats.resolvs.tri++;
+                #ifdef DEBUG_RESOLV
+                cout << "resolv (tri): " << confl.lit2() << endl;
+                #endif
                 analyzeHelper(confl.lit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
@@ -208,11 +215,18 @@ Clause* Searcher::analyze(
                     analyzeHelper(failBinLit, pathC, out_learnt, true);
 
                 analyzeHelper(confl.lit1(), pathC, out_learnt, true);
+                #ifdef DEBUG_RESOLV
+                cout << "resolv (bin/tri): " << confl.lit1() << endl;
+                #endif
                 break;
             }
 
             case clause_t : {
                 Clause& cl = *clAllocator->getPointer(confl.getClause());
+                #ifdef DEBUG_RESOLV
+                cout << "resolv (long): " << cl << endl;
+                #endif
+
                 if (cl.learnt()) {
                     resolutions.redL++;
                     stats.resolvs.redL++;
@@ -277,24 +291,28 @@ Clause* Searcher::analyze(
 
     //Recursive-simplify conflict clause:
     if (conf.doRecursiveCCMin) {
-        toClear = out_learnt;
-        trace_reasons.clear();
-
-
         uint32_t abstract_level = 0;
-        for (size_t i = 1; i < out_learnt.size(); i++)
-            abstract_level |= abstractLevel(out_learnt[i].var()); // (maintain an abstraction of levels involved in conflict)
+        for (size_t i = 1; i < out_learnt.size(); i++) {
+            //(maintain an abstraction of levels involved in conflict)
+            abstract_level |= abstractLevel(out_learnt[i].var());
+        }
 
-        find_removable(out_learnt, abstract_level);
-        prune_removable(out_learnt);
+        toClear = out_learnt;
+        size_t i, j;
+        for (i = j = 1; i < out_learnt.size(); i++) {
+            #ifdef DEBUG_LITREDUNDANT
+            cout << "Calling litRedundant at i = " << i << endl;
+            #endif
+            if (varData[out_learnt[i].var()].reason.isNULL()
+                || !litRedundant(out_learnt[i], abstract_level)
+            ) {
+                out_learnt[j++] = out_learnt[i];
+            }
+        }
+        out_learnt.resize(j);
 
-        //Clear 'seen'
-        for (vector<Lit>::const_iterator
-            it = toClear.begin(), end = toClear.end()
-            ; it != end
-            ; it++
-        ) {
-            seen[it->var()] = 0;
+        for(size_t i = 0; i < toClear.size(); i++) {
+            seen[toClear[i].var()] = 0;
         }
         toClear.clear();
     }
@@ -373,6 +391,101 @@ Clause* Searcher::analyze(
     return cl;
 
 }
+
+bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
+{
+    #ifdef DEBUG_LITREDUNDANT
+    cout << "Litredundant called" << endl;
+    #endif
+
+    analyze_stack.clear();
+    analyze_stack.push(p);
+
+    size_t top = toClear.size();
+    while (!analyze_stack.empty()) {
+        #ifdef DEBUG_LITREDUNDANT
+        cout << "At point in litRedundant: " << analyze_stack.top() << endl;
+        #endif
+
+        const PropBy reason = varData[analyze_stack.top().var()].reason;
+        analyze_stack.pop();
+
+        //Must have a reason
+        assert(!reason.isNULL());
+
+
+        //Clause& c = *reason[var(analyze_stack.back())];
+        Clause* cl = NULL;
+        dummy.clear();
+        switch (reason.getType()) {
+            case null_clause_t:
+                assert(false);
+                break;
+
+            case clause_t:
+                cl = clAllocator->getPointer(reason.getClause());
+                #ifdef DEBUG_LITREDUNDANT
+                cout << "Long clause: " << *cl << endl;
+                #endif
+
+                assert(cl->size() > 3);
+                dummy.resize(cl->size()-1);
+                for(size_t i = 1; i < cl->size(); i++) {
+                    dummy[i-1] = (*cl)[i];
+                }
+
+                break;
+
+            case binary_t:
+                dummy.push_back(reason.lit1());
+                #ifdef DEBUG_LITREDUNDANT
+                cout << "Bin clause: " << reason.lit1() << endl;
+                #endif
+
+                break;
+
+            case tertiary_t:
+                dummy.push_back(reason.lit1());
+                dummy.push_back(reason.lit2());
+                #ifdef DEBUG_LITREDUNDANT
+                cout
+                << "Tri clause:"
+                << reason.lit1() << ", "
+                << reason.lit2() << endl;
+                #endif
+
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
+
+        for (size_t i = 0; i < dummy.size(); i++) {
+            const Lit p = dummy[i];
+            if (!seen[p.var()] && varData[p.var()].level > 0) {
+                if (!varData[p.var()].reason.isNULL()
+                    && (abstractLevel(p.var()) & abstract_levels) != 0
+                ) {
+                    seen[p.var()] = 1;
+                    analyze_stack.push(p);
+                    toClear.push_back(p);
+                } else {
+                    //Return to where we started before function executed
+                    for (size_t j = top; j < toClear.size(); j++) {
+                        seen[toClear[j].var()] = 0;
+                    }
+                    toClear.resize(top);
+
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 
 bool Searcher::subset(const vector<Lit>& A, const Clause& B)
 {

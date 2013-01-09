@@ -665,6 +665,18 @@ inline bool Simplifier::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
 template<class T1, class T2>
 bool Simplifier::subset(const T1& A, const T2& B)
 {
+    #ifdef MORE_DEUBUG
+    cout << "A:" << A << endl;
+    for(size_t i = 1; i < A.size(); i++) {
+        assert(A[i-1] < A[i]);
+    }
+
+    cout << "B:" << B << endl;
+    for(size_t i = 1; i < B.size(); i++) {
+        assert(B[i-1] < B[i]);
+    }
+    #endif
+
     bool ret;
     uint16_t i = 0;
     uint16_t i2;
