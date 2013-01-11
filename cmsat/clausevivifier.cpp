@@ -472,13 +472,19 @@ bool ClauseVivifier::vivifyClausesCache(
             seen_subs[it2->toInt()] = 0;
         }
 
-        if (lits.size() > 1 && !isSubsumed) {
+        if (alsoStrengthen
+            && lits.size() > 1
+            && !isSubsumed
+        ) {
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
 
-        if (lits.size() > 1 && !isSubsumed) {
+        if (alsoStrengthen
+            && lits.size() > 1
+            && !isSubsumed
+        ) {
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
