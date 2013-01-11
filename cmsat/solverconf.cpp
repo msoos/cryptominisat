@@ -31,7 +31,7 @@ SolverConf::SolverConf() :
 
         //Clause cleaning
         , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)
-        , doPreClauseCleanPropAndConfl(true)
+        , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
