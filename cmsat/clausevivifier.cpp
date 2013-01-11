@@ -40,7 +40,7 @@ ClauseVivifier::ClauseVivifier(Solver* _solver) :
     , numCalls(0)
 {}
 
-bool ClauseVivifier::vivify(bool alsoStrengthen)
+bool ClauseVivifier::vivify(const bool alsoStrengthen)
 {
     assert(solver->ok);
     #ifdef VERBOSE_DEBUG
@@ -56,11 +56,17 @@ bool ClauseVivifier::vivify(bool alsoStrengthen)
     if (!vivifyClausesCache(solver->longRedCls, true, alsoStrengthen))
         goto end;
 
-    if (!vivifyClausesLongIrred())
+    if (alsoStrengthen
+        && !vivifyClausesLongIrred()
+    ) {
         goto end;
+    }
 
-    if (!vivifyClausesTriIrred())
+    if (alsoStrengthen
+        && !vivifyClausesTriIrred()
+    ) {
         goto end;
+    }
 
 end:
     //Stats
