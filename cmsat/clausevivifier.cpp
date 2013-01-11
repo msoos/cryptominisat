@@ -337,6 +337,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Temps
     vector<Lit> lits;
+    vector<Lit> lits2;
     vector<char> seen(solver->nVars()*2); //For strengthening
     vector<char> seen_subs(solver->nVars()*2); //For subsumption
     bool needToFinish = false;
@@ -365,22 +366,14 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*2;
         tmpStats.tried++;
         bool isSubsumed = false;
+        size_t numLitsRem = 0;
 
         //Fill 'seen'
+        lits2.clear();
         for (uint32_t i2 = 0; i2 < cl.size(); i2++) {
             seen[cl[i2].toInt()] = 1;
             seen_subs[cl[i2].toInt()] = 1;
-        }
-
-        lits.resize(cl.size());
-        std::copy(cl.begin(), cl.end(), lits.begin());
-        if (lits.size() > 1
-            && !isSubsumed
-            && !learnt
-            && stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv)
-        ) {
-            isSubsumed = true;
-            subsumedStamp++;
+            lits2.push_back(cl[i2]);
         }
 
         //Go through each literal and subsume/strengthen with it
@@ -406,6 +399,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
                         seen[(~wit->lit1()).toInt()] = 0;
+                        numLitsRem++;
                     }
 
                     //Strengthening w/ tri
@@ -416,6 +410,8 @@ bool ClauseVivifier::vivifyClausesCache(
                             seen[(~wit->lit2()).toInt()] = 0;
                         else if (seen[wit->lit2().toInt()])
                             seen[(~wit->lit1()).toInt()] = 0;
+
+                        numLitsRem++;
                     }
                 }
 
@@ -434,6 +430,15 @@ bool ClauseVivifier::vivifyClausesCache(
                     }
                     isSubsumed = true;
                     break;
+                }
+
+                //Extension w/ bin
+                if (wit->isBinary()
+                    && !wit->learnt()
+                    && !seen_subs[(~(wit->lit1())).toInt()]
+                ) {
+                    seen_subs[(~(wit->lit1())).toInt()] = 1;
+                    lits2.push_back(~(wit->lit1()));
                 }
 
                 if (wit->isTri()) {
@@ -459,23 +464,61 @@ bool ClauseVivifier::vivifyClausesCache(
                     isSubsumed = true;
                     break;
                 }
+
+                //Extension w/ tri (1)
+                if (wit->isTri()
+                    && lit < wit->lit1() //Check only one instance of the TRI clause
+                    && !wit->learnt()
+                    && seen_subs[wit->lit1().toInt()]
+                    && !seen_subs[(~(wit->lit2())).toInt()]
+                ) {
+                    seen_subs[(~(wit->lit2())).toInt()] = 1;
+                    lits2.push_back(~(wit->lit2()));
+                }
+
+                //Extension w/ tri (2)
+                if (wit->isTri()
+                    && lit < wit->lit1() //Check only one instance of the TRI clause
+                    && !wit->learnt()
+                    && !seen_subs[(~(wit->lit1())).toInt()]
+                    && seen_subs[wit->lit2().toInt()]
+                ) {
+                    seen_subs[(~(wit->lit1())).toInt()] = 1;
+                    lits2.push_back(~(wit->lit1()));
+                }
+
             }
+        }
+
+        assert(lits2.size() > 1);
+        if (!isSubsumed
+            && !learnt
+            && stampBasedClRem(lits2, solver->timestamp, stampNorm, stampInv)
+        ) {
+            isSubsumed = true;
+            subsumedStamp++;
         }
 
         //Clear 'seen' and fill new clause data
         lits.clear();
-        for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
+        for (vector<Lit>::const_iterator
+            it2 = lits2.begin(), end2 = lits2.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //Only fill new clause data if clause hasn't been subsumed
             if (!isSubsumed) {
                 if (seen[it2->toInt()])
                     lits.push_back(*it2);
-                else
-                    tmpStats.numLitsRem++;
             }
 
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
+        }
+
+        if (!isSubsumed) {
+            tmpStats.numLitsRem += numLitsRem;
         }
 
         if (alsoStrengthen
