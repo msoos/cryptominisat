@@ -783,11 +783,14 @@ bool Solver::reduceDBStructPropConfl::operator() (
 
     //First tie: numPropAndConfl -- notice the reversal of 1/0
     //Larger is better --> should be last in the sorted list
-    if (x->stats.numPropAndConfl() > y->stats.numPropAndConfl()) return 0;
-    if (x->stats.numPropAndConfl() < y->stats.numPropAndConfl()) return 1;
+    if (x->stats.numPropAndConfl() != y->stats.numPropAndConfl())
+        return (x->stats.numPropAndConfl() < y->stats.numPropAndConfl());
 
     //Second tie: size
-    return xsize > ysize;
+    if (x->stats.numUsedUIP != y->stats.numUsedUIP)
+        return x->stats.numUsedUIP < y->stats.numUsedUIP;
+
+    return x->size() > y->size();
 }
 
 /**
