@@ -612,8 +612,8 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
             lits[i] = lit_Undef;
             remLitTimeStamp++;
         } else {
-            if (solver->timestamp[lits[i].toInt()].end[stampType] <
-                solver->timestamp[lastLit.toInt()].end[stampType]
+            if (solver->timestamp[lits[i].toInt()].end[stampType]
+                <= solver->timestamp[lastLit.toInt()].end[stampType]
             ) {
                 lastLit = lits[i];
             }
@@ -655,8 +655,8 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
             remLitTimeStampInv++;
         } else {
             //If this lit is already a different tree, update reference
-            if (solver->timestamp[(~lits[i]).toInt()].end[stampType] >
-                solver->timestamp[(~lastLit).toInt()].end[stampType]
+            if (solver->timestamp[(~lits[i]).toInt()].end[stampType]
+                >= solver->timestamp[(~lastLit).toInt()].end[stampType]
             ) {
                 lastLit = lits[i];
             }
