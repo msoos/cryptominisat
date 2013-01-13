@@ -706,7 +706,8 @@ inline void Searcher::varDecayActivity()
 }
 inline void Searcher::varBumpActivity(Var var)
 {
-    if ( (activities[var] += var_inc) > (0x1U) << 24 ) {
+    activities[var] += var_inc;
+    if ( (activities[var]) > ((0x1U) << 24) ) {
         // Rescale:
         for (vector<uint32_t>::iterator
             it = activities.begin()
@@ -722,8 +723,8 @@ inline void Searcher::varBumpActivity(Var var)
 
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
-        if (var_inc < conf.var_inc_start)
-            var_inc = conf.var_inc_start;
+        /*if (var_inc < conf.var_inc_start)
+            var_inc = conf.var_inc_start;*/
     }
 
     // Update order_heap with respect to new activity:
