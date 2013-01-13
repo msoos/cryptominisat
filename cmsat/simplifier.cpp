@@ -1989,6 +1989,8 @@ int Simplifier::testVarElim(const Var var)
     uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
+    uint32_t after_bin = 0;
+    uint32_t after_tri = 0;
     uint32_t after_literals = 0;
     for (vec<Watched>::const_iterator
         it = poss.begin(), end = poss.end()
@@ -2037,8 +2039,12 @@ int Simplifier::testVarElim(const Var var)
             //Update after-stats
             after_clauses++;
             after_literals += dummy.size();
-            if (dummy.size() >= 3)
+            if (dummy.size() > 3)
                 after_long++;
+            if (dummy.size() == 3)
+                after_tri++;
+            if (dummy.size() == 2)
+                after_bin++;
 
             //Early-abort
             if (after_clauses > before_clauses)
@@ -2060,8 +2066,10 @@ int Simplifier::testVarElim(const Var var)
         }
     }
 
-    //return before_literals-after_literals;
-    return (pos.longer + neg.longer)-after_long;
+    //Larger value returned, the better
+    //return pos.lit+neg.lit-after_literals;
+    //return pos.longer + neg.longer - after_long - after_tri + pos.bin + neg.bin - after_bin;
+    return pos.longer + neg.longer - after_long - after_tri;
 }
 
 void Simplifier::printOccur(const Lit lit) const
