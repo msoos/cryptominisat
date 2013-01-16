@@ -694,7 +694,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
     const size_t origTrailSize = solver->trail.size();
 
     //For stamps
-    size_t stampRem;
+    size_t stampRem = 0;
 
     //For delayed enqueue and binary adding
     //Used for strengthening
