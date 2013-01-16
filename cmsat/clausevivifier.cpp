@@ -941,13 +941,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     } else if (lits.size() == 1) {
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri+=2;
-                        if (solver->value(lits[0]) == l_False) {
-                            solver->ok = false;
-                            goto end;
-                        }
-
-                        if (solver->value(lits[0]) == l_Undef)
-                            solver->enqueue(lits[0]);
+                        toEnqueue.push_back(lits[0]);
                     }
                 }
 
