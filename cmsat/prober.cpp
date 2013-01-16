@@ -165,6 +165,7 @@ bool Prober::probe()
             continue;
         }
 
+        /*
         //If this lit is reachable from somewhere else, then reach it from there
         if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
             const Lit betterlit = solver->litReachable[lit.toInt()].lit;
@@ -174,7 +175,7 @@ bool Prober::probe()
                 lit = betterlit;
                 assert(!visitedAlready[lit.toInt()]);
             }
-        }
+        }*/
 
         //Don't always try positive first. Try random sign first
         //bool random_inv = solver->mtrand.randInt(1);
