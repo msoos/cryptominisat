@@ -2685,6 +2685,7 @@ void Simplifier::orderVarsForElimInit()
                 continue;
 
             varElimComplexity[var].first = 1000-ret;
+            varElimComplexity[var].second = 0;
             varElimOrder.insert(var);
         }
     }
