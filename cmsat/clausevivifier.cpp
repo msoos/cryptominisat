@@ -173,6 +173,8 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     runStats.numCalled = 1;
 
     cout << "c WARNING!! We didn't sort by clause size here" << endl;
+    uint64_t origLitRem = runStats.numLitsRem;
+    uint64_t origClShorten = runStats.numClShorten;
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
@@ -230,6 +232,17 @@ bool ClauseVivifier::vivifyClausesLongIrred()
         }
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
+
+    if (solver->conf.verbosity >= 3) {
+        cout << "c [vivif] longirred"
+        << " tried: "
+        << runStats.checkedClauses << "/" << solver->longIrredCls.size()
+        << " cl-rem:"
+        << runStats.numClShorten- origClShorten
+        << " lits-rem:"
+        << runStats.numLitsRem - origLitRem
+        << endl;
+    }
 
     //Update stats
     runStats.timeNorm = cpuTime() - myTime;
