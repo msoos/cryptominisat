@@ -111,8 +111,9 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 break;
             }
 
-            //Only TRI and each TRI only once
+            //Only irred TRI and each TRI only once
             if (ws[i].isTri()
+                && !ws[i].learnt()
                 && lit < ws[i].lit1()
                 && ws[i].lit1() < ws[i].lit2()
             ) {
