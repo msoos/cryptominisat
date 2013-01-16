@@ -430,44 +430,6 @@ class Solver : public Searcher
         void                printAllClauses() const;
         void                consolidateMem();
 
-
-        //Subsumtion of bin with bin
-        struct WatchSorter {
-            bool operator()(const Watched& first, const Watched& second)
-            {
-                //Anything but clause!
-                if (first.isClause())
-                    return false;
-                if (second.isClause())
-                    return true;
-                //Now nothing is clause
-
-                if (first.lit1() < second.lit1()) return true;
-                if (first.lit1() > second.lit1()) return false;
-                if (first.isBinary() && second.isTri()) return true;
-                if (first.isTri() && second.isBinary()) return false;
-                //At this point either both are BIN or both are TRI
-
-
-                //Both are BIN
-                if (first.isBinary()) {
-                    assert(second.isBinary());
-                    if (first.learnt() == second.learnt()) return false;
-                    if (!first.learnt()) return true;
-                    return false;
-                }
-
-                //Both are Tri
-                assert(first.isTri() && second.isTri());
-                if (first.lit2() < second.lit2()) return true;
-                if (first.lit2() > second.lit2()) return false;
-                if (first.learnt() == second.learnt()) return false;
-                if (!first.learnt()) return true;
-                return false;
-            }
-        };
-        bool subsumeAndStrengthenImplicit();
-
         //////////////////
         // Stamping
         Lit updateLit(Lit lit) const;

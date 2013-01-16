@@ -682,3 +682,346 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
 
     return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
+
+bool ClauseVivifier::subsumeAndStrengthenImplicit()
+{
+    assert(solver->okay());
+    const double myTime = cpuTime();
+    uint64_t remBins = 0;
+    uint64_t remTris = 0;
+    uint64_t remLitFromBin = 0;
+    uint64_t remLitFromTri = 0;
+    const size_t origTrailSize = solver->trail.size();
+
+    //For stamps
+    size_t stampRem;
+
+    //For delayed enqueue and binary adding
+    //Used for strengthening
+    vector<Lit> bin(2);
+    vector<BinaryClause> binsToAdd;
+    vector<Lit> toEnqueue;
+
+    size_t wsLit = 0;
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        vec<Watched>& ws = *it;
+        Lit lit = Lit::toLit(wsLit);
+
+        //We can't do much when there is nothing, or only one
+        if (ws.size() < 2)
+            continue;
+
+        std::sort(ws.begin(), ws.end(), WatchSorter());
+        /*cout << "---> Before" << endl;
+        printWatchlist(ws, lit);*/
+
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* lastBin = NULL;
+
+        Lit lastLit = lit_Undef;
+        Lit lastLit2 = lit_Undef;
+        bool lastLearnt = false;
+        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+
+            //Don't care about long clauses
+            if (i->isClause()) {
+                *j++ = *i;
+                continue;
+            }
+
+            if (i->isTri()) {
+
+                //Only treat one of the TRI's instances
+                if (lit > i->lit1()) {
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Brand new TRI
+                if (lastLit != i->lit1()) {
+                    lastLit2 = i->lit2();
+                    lastLearnt = i->learnt();
+                    *j++ = *i;
+                    continue;
+                }
+
+                bool remove = false;
+
+                //Subsumed by bin
+                if (lastLit2 == lit_Undef
+                    && lastLit == i->lit1()
+                ) {
+                    if (lastLearnt && !i->learnt()) {
+                        assert(lastBin->isBinary());
+                        assert(lastBin->learnt());
+                        assert(lastBin->lit1() == lastLit);
+
+                        lastBin->setLearnt(false);
+                        findWatchedOfBin(solver->watches, lastLit, lit, true).setLearnt(false);
+                        solver->binTri.redLits -= 2;
+                        solver->binTri.irredLits += 2;
+                        solver->binTri.redBins--;
+                        solver->binTri.irredBins++;
+                        lastLearnt = false;
+                    }
+
+                    remove = true;
+                }
+
+                //Subsumed by Tri
+                if (lastLit == i->lit1() && lastLit2 == i->lit2()) {
+                    //The sorting algorithm prefers non-learnt to learnt, so it is
+                    //impossible to have non-learnt before learnt
+                    assert(!(i->learnt() == false && lastLearnt == true));
+
+                    remove = true;
+                }
+
+                if (remove) {
+                    //Remove Tri
+                    removeTri(lit, i->lit1(), i->lit2(), i->learnt());
+                    remTris++;
+                    continue;
+                }
+
+                //Don't remove
+                lastLit = i->lit1();
+                lastLit2 = i->lit2();
+                lastLearnt = i->learnt();
+                *j++ = *i;
+                continue;
+            }
+
+            //Binary from here on
+            assert(i->isBinary());
+
+            //Subsume bin with bin
+            if (i->lit1() == lastLit && lastLit2 == lit_Undef) {
+                //The sorting algorithm prefers non-learnt to learnt, so it is
+                //impossible to have non-learnt before learnt
+                assert(!(i->learnt() == false && lastLearnt == true));
+
+                remBins++;
+                assert(i->lit1().var() != lit.var());
+                removeWBin(solver->watches, i->lit1(), lit, i->learnt());
+                if (i->learnt()) {
+                    solver->binTri.redLits -= 2;
+                    solver->binTri.redBins--;
+                } else {
+                    solver->binTri.irredLits -= 2;
+                    solver->binTri.irredBins--;
+                }
+                continue;
+            } else {
+                lastBin = j;
+                lastLit = i->lit1();
+                lastLit2 = lit_Undef;
+                lastLearnt = i->learnt();
+                *j++ = *i;
+            }
+        }
+        ws.shrink(i-j);
+
+        /*cout << "---> After" << endl;
+        printWatchlist(ws, lit);*/
+
+
+        //Now strengthen
+        i = ws.begin();
+        j = i;
+        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+            //Can't do much with clause, will treat them during vivification
+            if (i->isClause()) {
+                *j++ = *i;
+                continue;
+            }
+
+            //Strengthen bin with bin -- effectively setting literal
+            if (i->isBinary()) {
+                //If inverted, then the inverse will never be found, because
+                //watches are sorted
+                if (i->lit1().sign()) {
+                    *j++ = *i;
+                    continue;
+                }
+
+                //Try to look for a binary in this same watchlist
+                //that has ~i->lit1() inside. Everything is sorted, so we are
+                //lucky, this is speedy
+                vec<Watched>::const_iterator i2 = i;
+                bool rem = false;
+                while(i2 != end
+                    && (i2->isBinary() || i2->isTri())
+                    && i2->lit1().var() == i2->lit1().var()
+                ) {
+                    //Yay, we have found what we needed!
+                    if (i2->isBinary() && i2->lit1() == ~i->lit1()) {
+                        rem = true;
+                        break;
+                    }
+
+                    i2++;
+                }
+
+                //Enqeue literal
+                if (rem) {
+                    remLitFromBin++;
+                    toEnqueue.push_back(lit);
+                }
+                *j++ = *i;
+                continue;
+            }
+
+            //Strengthen tri with bin
+            if (i->isTri()) {
+                const Lit lit1 = i->lit1();
+                const Lit lit2 = i->lit2();
+                bool rem = false;
+
+                for(vec<Watched>::const_iterator
+                    it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
+                    ; it2 != end2
+                    ; it2++
+                ) {
+                    if (it2->isBinary()
+                        && (it2->lit1() == lit1 || it2->lit1() == lit2)
+                    ) {
+                        rem = true;
+                        break;
+                    }
+                }
+
+                if (rem) {
+                    removeTri(lit, i->lit1(), i->lit2(), i->learnt());
+                    remLitFromTri++;
+                    binsToAdd.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
+                    continue;
+                } else {
+                    //Strengthen TRI using stamps
+                    lits.clear();
+                    lits.push_back(lit);
+                    lits.push_back(i->lit1());
+                    lits.push_back(i->lit2());
+
+                    //Try both stamp types to reduce size
+                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
+                    stampRem += tmp.first;
+                    stampRem += tmp.second;
+                    if (lits.size() > 1) {
+                        std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_IRRED);
+                        stampRem += tmp.first;
+                        stampRem += tmp.second;
+                    }
+
+                    if (lits.size() == 2) {
+                        removeTri(lit, i->lit1(), i->lit2(), i->learnt());
+                        remLitFromTri++;
+                        binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->learnt()));
+                        continue;
+                    } else if (lits.size() == 1) {
+                        removeTri(lit, i->lit1(), i->lit2(), i->learnt());
+                        remLitFromTri+=2;
+                        if (solver->value(lits[0]) == l_False) {
+                            solver->ok = false;
+                            goto end;
+                        }
+
+                        if (solver->value(lits[0]) == l_Undef)
+                            solver->enqueue(lits[0]);
+                    }
+                }
+
+
+                //Nothing to do, copy
+                *j++ = *i;
+                continue;
+            }
+
+            //Only bin, tri and clause in watchlist
+            assert(false);
+        }
+        ws.shrink(i-j);
+    }
+
+    //Enqueue delayed values
+    for(vector<Lit>::const_iterator
+        it = toEnqueue.begin(), end = toEnqueue.end()
+        ; it != end
+        ; it++
+    ) {
+        if (solver->value(*it) == l_False) {
+            solver->ok = false;
+            goto end;
+        }
+
+        if (solver->value(*it) == l_Undef)
+            solver->enqueue(*it);
+    }
+    solver->ok = solver->propagate().isNULL();
+    if (!solver->okay())
+        goto end;
+
+    //Add delayed binary clauses
+    for(vector<BinaryClause>::const_iterator
+        it = binsToAdd.begin(), end = binsToAdd.end()
+        ; it != end
+        ; it++
+    ) {
+        bin[0] = it->getLit1();
+        bin[1] = it->getLit2();
+        solver->addClauseInt(bin, it->getLearnt());
+        if (!solver->okay())
+            goto end;
+    }
+
+end:
+    if (solver->conf.verbosity >= 1) {
+        cout
+        << "c [implicit]"
+        << " rem-bin " << remBins
+        << " rem-tri " << remTris
+        << " rem-litBin: " << remLitFromBin
+        << " rem-litTri: " << remLitFromTri
+        << " set-var: " << solver->trail.size() - origTrailSize
+
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << (cpuTime() - myTime)
+        << " s" << endl;
+    }
+    solver->checkStats();
+
+    //Update stats
+    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    solver->solveStats.subsBinWithBin += remBins;
+
+    return solver->okay();
+}
+
+void ClauseVivifier::removeTri(
+    const Lit lit1
+    ,const Lit lit2
+    ,const Lit lit3
+    ,const bool learnt
+) {
+    //Remove tri
+    Lit lits[3];
+    lits[0] = lit1;
+    lits[1] = lit2;
+    lits[2] = lit3;
+    std::sort(lits, lits+3);
+    removeTriAllButOne(solver->watches, lit1, lits, learnt);
+
+    //Update stats for tri
+    if (learnt) {
+        solver->binTri.redLits -= 3;
+        solver->binTri.redTris--;
+    } else {
+        solver->binTri.irredLits -= 3;
+        solver->binTri.irredTris--;
+    }
+}

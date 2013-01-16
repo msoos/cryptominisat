@@ -36,6 +36,7 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver* solver);
         bool vivify(bool alsoStrengthen);
+        bool subsumeAndStrengthenImplicit();
 
         struct Stats
         {
@@ -251,6 +252,44 @@ class ClauseVivifier {
         );
         vector<Lit> stampNorm;
         vector<Lit> stampInv;
+
+
+          //Subsumtion of bin with bin
+        struct WatchSorter {
+            bool operator()(const Watched& first, const Watched& second)
+            {
+                //Anything but clause!
+                if (first.isClause())
+                    return false;
+                if (second.isClause())
+                    return true;
+                //Now nothing is clause
+
+                if (first.lit1() < second.lit1()) return true;
+                if (first.lit1() > second.lit1()) return false;
+                if (first.isBinary() && second.isTri()) return true;
+                if (first.isTri() && second.isBinary()) return false;
+                //At this point either both are BIN or both are TRI
+
+
+                //Both are BIN
+                if (first.isBinary()) {
+                    assert(second.isBinary());
+                    if (first.learnt() == second.learnt()) return false;
+                    if (!first.learnt()) return true;
+                    return false;
+                }
+
+                //Both are Tri
+                assert(first.isTri() && second.isTri());
+                if (first.lit2() < second.lit2()) return true;
+                if (first.lit2() > second.lit2()) return false;
+                if (first.learnt() == second.learnt()) return false;
+                if (!first.learnt()) return true;
+                return false;
+            }
+        };
+        void removeTri(Lit lit1, Lit lit2, Lit lit3, bool learnt);
 
         //Working set
         Solver* solver;
