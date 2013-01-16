@@ -340,7 +340,7 @@ ClOffset ClauseVivifier::testVivify(
         }
 
         //TODO cheating here: we don't detect a NULL return that is in fact a 2/3-long clause
-        runStats.numLitsRem += origSize - (cl2 == NULL ? 0 : cl2->size());
+        runStats.numLitsRem += origSize - lits.size();
 
         if (cl2 != NULL) {
             return solver->clAllocator->getOffset(cl2);
