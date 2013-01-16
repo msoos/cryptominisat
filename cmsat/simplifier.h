@@ -568,7 +568,7 @@ private:
                 return varElimComplexity[x].first < varElimComplexity[y].first;
 
             //Of the SECOND, the largest is best
-            return varElimComplexity[x].second > varElimComplexity[y].second;
+            return varElimComplexity[x].second < varElimComplexity[y].second;
         }
 
         VarOrderLt(
