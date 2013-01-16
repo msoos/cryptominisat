@@ -78,6 +78,7 @@ end:
         else
             runStats.printShort();
     }
+    runStats.clear();
 
     return solver->ok;
 }
