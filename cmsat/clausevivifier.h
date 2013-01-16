@@ -84,8 +84,8 @@ class ClauseVivifier {
 
                 //Norm Asymm
                 cout
-                << "c [vivif] asymm"
-                << " cl-useful: "<< numClShorten
+                << "c [vivif] asymm (tri+long)"
+                << " useful: "<< numClShorten
                 << "/" << checkedClauses << "/" << potentialClauses
 
                 << " lits-rem:" << numLitsRem
