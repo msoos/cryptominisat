@@ -92,6 +92,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     size_t origTrailSize = solver->trail.size();
 
+    //Randomize start in the watchlist
     size_t upI;
     upI = solver->mtrand.randInt(solver->watches.size()-1);
     size_t numDone = 0;
