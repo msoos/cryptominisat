@@ -86,6 +86,7 @@ end:
 bool ClauseVivifier::vivifyClausesTriIrred()
 {
     uint64_t origShorten = runStats.numClShorten;
+    uint64_t origLitRem = runStats.numLitsRem;
     double myTime = cpuTime();
     uint64_t maxNumProps = 2L*1000L*1000L;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
@@ -135,9 +136,11 @@ bool ClauseVivifier::vivifyClausesTriIrred()
             break;
     }
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 3) {
         cout
-        << "c TRI vivified: " << runStats.numClShorten - origShorten
+        << "c [vivif] tri "
+        << " tri-rem: " << runStats.numClShorten - origShorten
+        << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail.size() - origTrailSize
         << " time: " << cpuTime() - myTime
         << endl;
