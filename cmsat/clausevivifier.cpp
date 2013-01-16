@@ -942,6 +942,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
+                        continue;
                     }
                 }
 
