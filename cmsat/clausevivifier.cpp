@@ -996,6 +996,7 @@ end:
         << " rem-tri " << remTris
         << " rem-litBin: " << remLitFromBin
         << " rem-litTri: " << remLitFromTri
+        << " stamp:" << stampRem
         << " set-var: " << solver->trail.size() - origTrailSize
 
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
