@@ -868,8 +868,8 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 //Try to look for a binary in this same watchlist
                 //that has ~i->lit1() inside. Everything is sorted, so we are
                 //lucky, this is speedy
-                vec<Watched>::const_iterator i2 = i;
                 bool rem = false;
+                vec<Watched>::const_iterator i2 = i;
                 while(i2 != end
                     && (i2->isBinary() || i2->isTri())
                     && i2->lit1().var() == i2->lit1().var()
