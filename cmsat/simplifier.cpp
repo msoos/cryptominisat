@@ -2123,6 +2123,7 @@ bool Simplifier::maybeEliminate(const Var var)
     }
 
     //Test if we should remove, and fill posAll&negAll
+    runStats.testedToElimVars++;
     if (testVarElim(var) == -1000)
         return false;
 

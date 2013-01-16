@@ -157,6 +157,7 @@ public:
             , triLearntClRemThroughElim(0)
             , binLearntClRemThroughElim(0)
             , numLearntBinVarRemAdded(0)
+            , testedToElimVars(0)
             , triedToElimVars(0)
             , usedAgressiveCheckToELim(0)
             , newClauses(0)
@@ -214,6 +215,7 @@ public:
             triLearntClRemThroughElim += other.triLearntClRemThroughElim;
             binLearntClRemThroughElim += other.binLearntClRemThroughElim;
             numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
+            testedToElimVars += other.testedToElimVars;
             triedToElimVars += other.triedToElimVars;
             usedAgressiveCheckToELim += other.usedAgressiveCheckToELim;
             newClauses += other.newClauses;
@@ -256,6 +258,7 @@ public:
             << "c [v-elim]"
             << " cl-new: " << newClauses
             << " tried: " << triedToElimVars
+            << " tested: " << testedToElimVars
             << " ("
             << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
             << " % agressive)"
@@ -391,6 +394,7 @@ public:
         uint64_t triLearntClRemThroughElim;
         uint64_t binLearntClRemThroughElim;
         uint64_t numLearntBinVarRemAdded;
+        uint64_t testedToElimVars;
         uint64_t triedToElimVars;
         uint64_t usedAgressiveCheckToELim;
         uint64_t newClauses;
