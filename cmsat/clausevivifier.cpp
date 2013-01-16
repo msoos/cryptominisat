@@ -28,6 +28,7 @@ using std::cout;
 using std::endl;
 
 //#define ASSYM_DEBUG
+//#define DEBUG_STAMPING
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_SUBSUME_NONEXIST
@@ -366,7 +367,6 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*2;
         tmpStats.tried++;
         bool isSubsumed = false;
-        size_t numLitsRem = 0;
 
         //Fill 'seen'
         lits2.clear();
@@ -399,7 +399,6 @@ bool ClauseVivifier::vivifyClausesCache(
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
                         seen[(~wit->lit1()).toInt()] = 0;
-                        numLitsRem++;
                     }
 
                     //Strengthening w/ tri
@@ -410,8 +409,6 @@ bool ClauseVivifier::vivifyClausesCache(
                             seen[(~wit->lit2()).toInt()] = 0;
                         else if (seen[wit->lit2().toInt()])
                             seen[(~wit->lit1()).toInt()] = 0;
-
-                        numLitsRem++;
                     }
                 }
 
@@ -499,6 +496,15 @@ bool ClauseVivifier::vivifyClausesCache(
             subsumedStamp++;
         }
 
+        //Clear 'seen2'
+        for (vector<Lit>::const_iterator
+            it2 = lits2.begin(), end2 = lits2.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            seen_subs[it2->toInt()] = 0;
+        }
+
         //Clear 'seen' and fill new clause data
         lits.clear();
         for (vector<Lit>::const_iterator
@@ -507,18 +513,16 @@ bool ClauseVivifier::vivifyClausesCache(
             ; it2++
         ) {
             //Only fill new clause data if clause hasn't been subsumed
-            if (!isSubsumed) {
-                if (seen[it2->toInt()])
-                    lits.push_back(*it2);
+            if (!isSubsumed
+                && seen[it2->toInt()]
+            ) {
+                tmpStats.numLitsRem ++;
+                lits.push_back(*it2);
             }
 
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
-        }
-
-        if (!isSubsumed) {
-            tmpStats.numLitsRem += numLitsRem;
         }
 
         if (alsoStrengthen
@@ -589,7 +593,7 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
     , const StampType stampType
 ) {
     size_t remLitTimeStamp = 0;
-    StampSorter sorter(solver->timestamp, stampType);
+    StampSorter sorter(solver->timestamp, stampType, true);
     std::sort(lits.begin(), lits.end(), sorter);
 
     #ifdef DEBUG_STAMPING
@@ -612,11 +616,7 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
             lits[i] = lit_Undef;
             remLitTimeStamp++;
         } else {
-            if (solver->timestamp[lits[i].toInt()].end[stampType]
-                <= solver->timestamp[lastLit.toInt()].end[stampType]
-            ) {
-                lastLit = lits[i];
-            }
+            lastLit = lits[i];
         }
     }
 
@@ -642,7 +642,7 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
     }
 
     size_t remLitTimeStampInv = 0;
-    StampSorterInv sorterInv(solver->timestamp, stampType);
+    StampSorterInv sorterInv(solver->timestamp, stampType, false);
     std::sort(lits.begin(), lits.end(), sorterInv);
     assert(!lits.empty());
     lastLit = lits[0];
@@ -654,12 +654,7 @@ std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
             lits[i] = lit_Undef;
             remLitTimeStampInv++;
         } else {
-            //If this lit is already a different tree, update reference
-            if (solver->timestamp[(~lits[i]).toInt()].end[stampType]
-                >= solver->timestamp[(~lastLit).toInt()].end[stampType]
-            ) {
-                lastLit = lits[i];
-            }
+            lastLit = lits[i];
         }
     }
 

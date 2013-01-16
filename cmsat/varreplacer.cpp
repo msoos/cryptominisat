@@ -173,6 +173,10 @@ bool VarReplacer::performReplace()
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
 
+    for(size_t i = 0; i < solver->timestamp.size(); i++) {
+        solver->timestamp[i] = solver->timestamp[getLitReplacedWith(Lit::toLit(i)).toInt()];
+    }
+
     //Update stats
     runStats.zeroDepthAssigns += solver->trail.size() - origTrailSize;
     runStats.cpu_time = cpuTime() - myTime;

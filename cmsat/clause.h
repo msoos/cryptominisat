@@ -737,18 +737,26 @@ struct StampSorter
     StampSorter(
         const vector<Timestamp>& _timestamp
         , const StampType _stampType
+        , const bool _rev
     ) :
         timestamp(_timestamp)
         , stampType(_stampType)
+        , rev(_rev)
     {}
 
     const vector<Timestamp>& timestamp;
     const StampType stampType;
+    const bool rev;
 
     bool operator()(const Lit lit1, const Lit lit2) const
     {
-        return timestamp[lit1.toInt()].start[stampType]
-                > timestamp[lit2.toInt()].start[stampType];
+        if (!rev) {
+            return timestamp[lit1.toInt()].start[stampType]
+                    < timestamp[lit2.toInt()].start[stampType];
+        } else {
+            return timestamp[lit1.toInt()].start[stampType]
+                    > timestamp[lit2.toInt()].start[stampType];
+        }
     }
 };
 
@@ -757,18 +765,26 @@ struct StampSorterInv
     StampSorterInv(
         const vector<Timestamp>& _timestamp
         , const StampType _stampType
+        , const bool _rev
     ) :
         timestamp(_timestamp)
         , stampType(_stampType)
+        , rev(_rev)
     {}
 
     const vector<Timestamp>& timestamp;
     const StampType stampType;
+    const bool rev;
 
     bool operator()(const Lit lit1, const Lit lit2) const
     {
-        return timestamp[(~lit1).toInt()].start[stampType]
+        if (!rev) {
+            return timestamp[(~lit1).toInt()].start[stampType]
                 < timestamp[(~lit2).toInt()].start[stampType];
+        } else {
+            return timestamp[(~lit1).toInt()].start[stampType]
+                > timestamp[(~lit2).toInt()].start[stampType];
+        }
     }
 };
 
@@ -778,8 +794,8 @@ inline bool stampBasedClRem(
     , vector<Lit>& stampNorm
     , vector<Lit>& stampInv
 ) {
-    StampSorter sortNorm(stamp, STAMP_IRRED);
-    StampSorter sortInv(stamp, STAMP_IRRED);
+    StampSorter sortNorm(stamp, STAMP_IRRED, false);
+    StampSorterInv sortInv(stamp, STAMP_IRRED, false);
 
     stampNorm = lits;
     stampInv = lits;
