@@ -843,6 +843,21 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
 
             //Strengthen bin with bin -- effectively setting literal
             if (i->isBinary()) {
+                lits.clear();
+                lits.push_back(lit);
+                lits.push_back(i->lit1());
+                std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
+                stampRem += tmp.first;
+                stampRem += tmp.second;
+                assert(!lits.empty());
+                if (lits.size() == 1) {
+                    toEnqueue.push_back(lits[0]);
+                    remLitFromBin++;
+                    stampRem++;
+                    *j++ = *i;
+                    continue;
+                }
+
                 //If inverted, then the inverse will never be found, because
                 //watches are sorted
                 if (i->lit1().sign()) {
