@@ -141,7 +141,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
     if (solver->conf.verbosity >= 3) {
         cout
         << "c [vivif] tri "
-        << " tri-rem: " << runStats.numClShorten - origShorten
+        << " tri-shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail.size() - origTrailSize
         << " time: " << cpuTime() - myTime
