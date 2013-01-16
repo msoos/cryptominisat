@@ -153,6 +153,23 @@ bool ClauseVivifier::vivifyClausesTriIrred()
     return solver->ok;
 }
 
+struct ClauseSizeSorter
+{
+    ClauseSizeSorter(const ClauseAllocator* _clAllocator) :
+        clAllocator(_clAllocator)
+    {}
+
+    const ClauseAllocator* clAllocator;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = clAllocator->getPointer(off1);
+        const Clause* cl2 = clAllocator->getPointer(off2);
+
+        return cl1->size() > cl2->size();
+    }
+};
+
 /**
 @brief Performs clause vivification (by Hamadi et al.)
 */
@@ -174,7 +191,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
 
-    cout << "c WARNING!! We didn't sort by clause size here" << endl;
+    std::sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), ClauseSizeSorter(solver->clAllocator));
     uint64_t origLitRem = runStats.numLitsRem;
     uint64_t origClShorten = runStats.numClShorten;
 
