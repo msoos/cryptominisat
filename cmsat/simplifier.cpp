@@ -2069,7 +2069,7 @@ int Simplifier::testVarElim(const Var var)
     //Larger value returned, the better
     //return pos.lit+neg.lit-after_literals;
     //return pos.longer + neg.longer - after_long - after_tri + pos.bin + neg.bin - after_bin;
-    return pos.longer + neg.longer - after_long - after_tri;
+    return after_long + after_tri + after_bin*3 - pos.longer - neg.longer - pos.bin*3 - neg.bin*3;
 }
 
 void Simplifier::printOccur(const Lit lit) const
