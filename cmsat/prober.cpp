@@ -185,14 +185,13 @@ bool Prober::probe()
         if (!tryThis(lit, true))
             goto end;
 
-        /*
         //If we are still unset, do the opposite, too
         //this lets us carry out BothProp
         if (solver->value(lit) == l_Undef
             && !tryThis((~lit), false)
         ) {
             goto end;
-        }*/
+        }
     }
 
 end:
