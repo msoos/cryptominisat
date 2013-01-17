@@ -149,7 +149,7 @@ class VarReplacer
                 );
 
                 printStatsLine("c tri cls removed"
-                    , removedBinClauses
+                    , removedTriClauses
                 );
 
                 printStatsLine("c long cls removed"
