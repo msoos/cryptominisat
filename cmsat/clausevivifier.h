@@ -246,10 +246,6 @@ class ClauseVivifier {
             , bool learnt
             , bool alsoStrengthen
         );
-        std::pair<size_t, size_t> stampBasedLitRem(
-            vector<Lit>& lits
-            , const StampType stampType
-        );
         vector<Lit> stampNorm;
         vector<Lit> stampInv;
 

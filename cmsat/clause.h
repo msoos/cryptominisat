@@ -830,4 +830,100 @@ inline bool stampBasedClRem(
     return false;
 }
 
+inline std::pair<size_t, size_t> stampBasedLitRem(
+    vector<Lit>& lits
+    , const vector<Timestamp>& timestamp
+    , const StampType stampType
+) {
+    size_t remLitTimeStamp = 0;
+    StampSorter sorter(timestamp, stampType, true);
+    std::sort(lits.begin(), lits.end(), sorter);
+
+    #ifdef DEBUG_STAMPING
+    cout << "Timestamps: ";
+    for(size_t i = 0; i < lits.size(); i++) {
+        cout
+        << " " << timestamp[lits[i].toInt()].start[stampType]
+        << "," << timestamp[lits[i].toInt()].end[stampType];
+    }
+    cout << endl;
+    cout << "Ori clause: " << lits << endl;
+    #endif
+
+    assert(!lits.empty());
+    Lit lastLit = lits[0];
+    for(size_t i = 1; i < lits.size(); i++) {
+        if (timestamp[lastLit.toInt()].end[stampType]
+            < timestamp[lits[i].toInt()].end[stampType]
+        ) {
+            lits[i] = lit_Undef;
+            remLitTimeStamp++;
+        } else {
+            lastLit = lits[i];
+        }
+    }
+
+    if (remLitTimeStamp) {
+        //First literal cannot be removed
+        assert(lits.front() != lit_Undef);
+
+        //At least 1 literal must remain
+        assert(remLitTimeStamp < lits.size());
+
+        vector<Lit> lits2;
+        lits2.reserve(lits.size()-remLitTimeStamp);
+        for(size_t i = 0; i < lits.size(); i++) {
+            if (lits[i] != lit_Undef)
+                lits2.push_back(lits[i]);
+        }
+
+        lits.swap(lits2);
+
+        #ifdef DEBUG_STAMPING
+        cout << "New clause: " << lits << endl;
+        #endif
+    }
+
+    size_t remLitTimeStampInv = 0;
+    StampSorterInv sorterInv(timestamp, stampType, false);
+    std::sort(lits.begin(), lits.end(), sorterInv);
+    assert(!lits.empty());
+    lastLit = lits[0];
+
+    for(size_t i = 1; i < lits.size(); i++) {
+        if (timestamp[(~lastLit).toInt()].end[stampType]
+            > timestamp[(~lits[i]).toInt()].end[stampType]
+        ) {
+            lits[i] = lit_Undef;
+            remLitTimeStampInv++;
+        } else {
+            lastLit = lits[i];
+        }
+    }
+
+    if (remLitTimeStampInv) {
+        //First literal cannot be removed
+        assert(lits.front() != lit_Undef);
+
+        //At least 1 literal must remain
+        assert(remLitTimeStampInv < lits.size());
+
+        vector<Lit> lits2;
+        lits2.reserve(lits.size()-remLitTimeStampInv);
+        for(size_t i = 0; i < lits.size(); i++) {
+            if (lits[i] != lit_Undef)
+                lits2.push_back(lits[i]);
+        }
+
+        lits.swap(lits2);
+
+        #ifdef DEBUG_STAMPING
+        cout << "New clause: " << lits << endl;
+        #endif
+    }
+
+
+    return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
+}
+
 #endif //CLAUSE_H

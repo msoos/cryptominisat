@@ -565,7 +565,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && lits.size() > 1
             && !isSubsumed
         ) {
-            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
+            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
@@ -574,7 +574,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && lits.size() > 1
             && !isSubsumed
         ) {
-            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_IRRED);
+            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp,STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
@@ -622,101 +622,6 @@ bool ClauseVivifier::vivifyClausesCache(
     << endl;
 
     return solver->ok;
-}
-
-std::pair<size_t, size_t> ClauseVivifier::stampBasedLitRem(
-    vector<Lit>& lits
-    , const StampType stampType
-) {
-    size_t remLitTimeStamp = 0;
-    StampSorter sorter(solver->timestamp, stampType, true);
-    std::sort(lits.begin(), lits.end(), sorter);
-
-    #ifdef DEBUG_STAMPING
-    cout << "Timestamps: ";
-    for(size_t i = 0; i < lits.size(); i++) {
-        cout
-        << " " << solver->timestamp[lits[i].toInt()].start[stampType]
-        << "," << solver->timestamp[lits[i].toInt()].end[stampType];
-    }
-    cout << endl;
-    cout << "Ori clause: " << lits << endl;
-    #endif
-
-    assert(!lits.empty());
-    Lit lastLit = lits[0];
-    for(size_t i = 1; i < lits.size(); i++) {
-        if (solver->timestamp[lastLit.toInt()].end[stampType]
-            < solver->timestamp[lits[i].toInt()].end[stampType]
-        ) {
-            lits[i] = lit_Undef;
-            remLitTimeStamp++;
-        } else {
-            lastLit = lits[i];
-        }
-    }
-
-    if (remLitTimeStamp) {
-        //First literal cannot be removed
-        assert(lits.front() != lit_Undef);
-
-        //At least 1 literal must remain
-        assert(remLitTimeStamp < lits.size());
-
-        vector<Lit> lits2;
-        lits2.reserve(lits.size()-remLitTimeStamp);
-        for(size_t i = 0; i < lits.size(); i++) {
-            if (lits[i] != lit_Undef)
-                lits2.push_back(lits[i]);
-        }
-
-        lits.swap(lits2);
-
-        #ifdef DEBUG_STAMPING
-        cout << "New clause: " << lits << endl;
-        #endif
-    }
-
-    size_t remLitTimeStampInv = 0;
-    StampSorterInv sorterInv(solver->timestamp, stampType, false);
-    std::sort(lits.begin(), lits.end(), sorterInv);
-    assert(!lits.empty());
-    lastLit = lits[0];
-
-    for(size_t i = 1; i < lits.size(); i++) {
-        if (solver->timestamp[(~lastLit).toInt()].end[stampType]
-            > solver->timestamp[(~lits[i]).toInt()].end[stampType]
-        ) {
-            lits[i] = lit_Undef;
-            remLitTimeStampInv++;
-        } else {
-            lastLit = lits[i];
-        }
-    }
-
-    if (remLitTimeStampInv) {
-        //First literal cannot be removed
-        assert(lits.front() != lit_Undef);
-
-        //At least 1 literal must remain
-        assert(remLitTimeStampInv < lits.size());
-
-        vector<Lit> lits2;
-        lits2.reserve(lits.size()-remLitTimeStampInv);
-        for(size_t i = 0; i < lits.size(); i++) {
-            if (lits[i] != lit_Undef)
-                lits2.push_back(lits[i]);
-        }
-
-        lits.swap(lits2);
-
-        #ifdef DEBUG_STAMPING
-        cout << "New clause: " << lits << endl;
-        #endif
-    }
-
-
-    return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
 
 bool ClauseVivifier::subsumeAndStrengthenImplicit()
@@ -882,7 +787,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 lits.clear();
                 lits.push_back(lit);
                 lits.push_back(i->lit1());
-                std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
+                std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
                 stampRem += tmp.first;
                 stampRem += tmp.second;
                 assert(!lits.empty());
@@ -960,11 +865,11 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     lits.push_back(i->lit2());
 
                     //Try both stamp types to reduce size
-                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_RED);
+                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
                     if (lits.size() > 1) {
-                        std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, STAMP_IRRED);
+                        std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_IRRED);
                         stampRem += tmp.first;
                         stampRem += tmp.second;
                     }
