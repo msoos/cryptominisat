@@ -1932,8 +1932,13 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
-    for (uint32_t i = 0; i < cl.size(); i++)
-        seen[cl[i].toInt()] = 1;
+    for (vector<Lit>::const_iterator
+        it = cl.begin(), end = cl.end()
+        ; it != end
+        ; it++
+    ) {
+        seen[it->toInt()] = 1;
+    }
 
     //Do cache-based minimisation and watchlist-based minimisation
     //one-by-one on the literals. Order could be enforced to get smallest
