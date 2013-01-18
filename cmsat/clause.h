@@ -870,14 +870,14 @@ inline std::pair<size_t, size_t> stampBasedLitRem(
         //At least 1 literal must remain
         assert(remLitTimeStamp < lits.size());
 
-        vector<Lit> lits2;
-        lits2.reserve(lits.size()-remLitTimeStamp);
+        //Remove lit_Undef-s
+        size_t at = 0;
         for(size_t i = 0; i < lits.size(); i++) {
-            if (lits[i] != lit_Undef)
-                lits2.push_back(lits[i]);
+            if (lits[i] != lit_Undef) {
+                lits[at++] = lits[i];
+            }
         }
-
-        lits.swap(lits2);
+        lits.resize(lits.size()-remLitTimeStamp);
 
         #ifdef DEBUG_STAMPING
         cout << "New clause: " << lits << endl;
@@ -908,14 +908,14 @@ inline std::pair<size_t, size_t> stampBasedLitRem(
         //At least 1 literal must remain
         assert(remLitTimeStampInv < lits.size());
 
-        vector<Lit> lits2;
-        lits2.reserve(lits.size()-remLitTimeStampInv);
+        //Remove lit_Undef-s
+        size_t at = 0;
         for(size_t i = 0; i < lits.size(); i++) {
-            if (lits[i] != lit_Undef)
-                lits2.push_back(lits[i]);
+            if (lits[i] != lit_Undef) {
+                lits[at++] = lits[i];
+            }
         }
-
-        lits.swap(lits2);
+        lits.resize(lits.size()-remLitTimeStamp);
 
         #ifdef DEBUG_STAMPING
         cout << "New clause: " << lits << endl;
