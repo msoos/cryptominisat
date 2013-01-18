@@ -915,7 +915,7 @@ inline std::pair<size_t, size_t> stampBasedLitRem(
                 lits[at++] = lits[i];
             }
         }
-        lits.resize(lits.size()-remLitTimeStamp);
+        lits.resize(lits.size()-remLitTimeStampInv);
 
         #ifdef DEBUG_STAMPING
         cout << "New clause: " << lits << endl;
