@@ -7,18 +7,16 @@
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.js"></script>
     <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
-<!--     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1/prototype.js"></script> -->
     <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
+    <script type="text/javascript" src="myajax.js"></script>
+    <script type="text/javascript" src="myscripts.js"></script>
+
     <style>
 /*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
-    <script type="text/javascript" src="myajax.js"></script>
-    <script type="text/javascript" src="myscripts.js"></script>
-
-
 
     <!-- Start of StatCounter Code -->
     <!--<script type="text/javascript">
@@ -68,19 +66,6 @@ of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
 
-<!--<p>Please select averaging level:
-<input type="range" min="1" max="21" value="1" step="5" onchange="showValue(this.value)"/>
-<span id="range">1</span>
-</p>-->
-
-<script type="text/javascript">
-function showValue(newValue)
-{
-    document.getElementById("range").innerHTML=newValue;
-    setRollPeriod(newValue);
-}
-</script>
-
 <table class="doubleSize">
 <tr><td>
     <div id="columns">
@@ -90,12 +75,16 @@ function showValue(newValue)
 </td></tr>
 </table>
 
-<!--Here come all the datagraphs-->
+<!-- Here come all the datagraphs -->
 <div id="myajaxStuff"></div>
 <div id="datagraphs"></div>
+
+<!-- clear out column layout -->
 <p style="clear:both"></p>
 
-<h2>Terms used</h2><p style="clear:both"></p><table class="box-table-b">
+<h2>Terms used</h2>
+
+<table class="gridtable">
 <tr><th>Abbreviation</th><th>Explanation</th></tr>
 <tr><td>red.</td><td>reducible, also called learnt</td></tr>
 <tr><td>irred.</td><td>irreducible, also called non-learnt</td></tr>
@@ -148,17 +137,15 @@ Problems tend to evolve as simplication and solving steps are made,
 so search heuristics should evolve with the problem.
 </p>
 
-
-<!--all is up in the
-<a href="https://github.com/msoos/cryptominisat">GIT</a>, including SQL,
-PHP, HTML, CSS and more.-->
-
 <h2>The End</h2>
 <p>If you enjoyed this visualization, there are three things you can do.
 First, tell me about your impressions  <a href="http://www.msoos.org/">
 here</a> and send the link to a friend. Second, you can
 <a href="http://www.srlabs.de">contact my employer</a>, and he will be happy
-to find a way for us to help you with your SAT problems.
+to find a way for us to help you with your SAT problems. Third, you can improve
+this system by cloning my
+<a href="https://github.com/msoos/cryptominisat">GIT</a> repository. It includes
+everything i.e. SQL, PHP, HTML, CSS and more.
 </p>
 
 <h2>Acknowledgements</h2>

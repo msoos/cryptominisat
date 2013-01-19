@@ -59,7 +59,9 @@ function MyAjax() {
             div.innerHTML = response;
             var x = div.getElementsByTagName("script");
             for(var i=0; i < x.length; i++) {
-                //alert(x[i].text);
+                //console.log(x[i].text);
+                //jQuery.parseJSON(x[i].text);
+                //json.parse (x[i].text);
                 eval(x[i].text);
             }
             doAll();
@@ -74,6 +76,6 @@ function MyAjax() {
 myajax = new MyAjax();
 
 //while (true) {
-//setInterval(function(){myajax.makeGetRequest(251476569337848);}, 2000);
-myajax.makeGetRequest(53);
+//setInterval(function(){myajax.makeGetRequest(500005960);}, 2000);
+myajax.makeGetRequest(86533651);
 //}

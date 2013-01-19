@@ -21,7 +21,6 @@
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
-#include <sys/mman.h>
 #define __builtin_prefetch
 #else
 #include <stdint.h>

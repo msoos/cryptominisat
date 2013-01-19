@@ -7,7 +7,7 @@ IF(DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
   CACHE STRING "Choose the type of build: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ELSE()
-  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING 
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
   "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
@@ -20,9 +20,9 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some li
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
+        "-std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
+    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 # -----------------------------------------------------------------------------
@@ -54,35 +54,33 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 # -----------------------------------------------------------------------------
 #find_package(Perftools)
 
-find_package(MySQL REQUIRED)
-include_directories(${MySQL_INCLUDE_DIR})
-link_directories(${MySQL_LIB_DIR})
 
-# -----------------------------------------------------------------------------
+#MySQL
+find_package(MySQL)
+IF (MYSQL_FOUND)
+    MESSAGE(STATUS "OK, Found MySQL!")
+    include_directories(${MySQL_INCLUDE_DIR})
+    link_directories(${MySQL_LIB_DIR})
+    add_definitions( -DUSE_MYSQL )
+ELSE (MYSQL_FOUND)
+    MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
+ENDIF (MYSQL_FOUND)
+
 # Some awful definitiions
-# -----------------------------------------------------------------------------
 add_definitions(-DVERSION="3.0.0")
-#add_definitions(-DUSE_GAUSS)
 
-# -----------------------------------------------------------------------------
 # Look for Boost program options
-# -----------------------------------------------------------------------------
-find_package( Boost 1.34 REQUIRED COMPONENTS program_options)
-find_package(M4RI REQUIRED)
+find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
 
-# ---------------
-# Look for VTK
-#---------------
-#IF(NOT VTK_BINARY_DIR)
-#  FIND_PACKAGE(VTK REQUIRED)
-#  IF(NOT VTK_USE_RENDERING)
-#    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_RENDERING.")
-#  ENDIF(NOT VTK_USE_RENDERING)
-#  IF(NOT VTK_USE_INFOVIS)
-#    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_INFOVIS.")
-#  ENDIF(NOT VTK_USE_INFOVIS)
-#  INCLUDE(${VTK_USE_FILE})
-#ENDIF(NOT VTK_BINARY_DIR)
+
+#M4RI
+find_package(M4RI)
+IF (M4RI_FOUND)
+    MESSAGE(STATUS "OK, Found M4RI!")
+    add_definitions( -DUSE_M4RI )
+ELSE (M4RI_FOUND)
+    MESSAGE(STATUS "WARNING: Did not find M4RI, XOR detection&manipulation disabled")
+ENDIF (M4RI_FOUND)
 
 
 # -----------------------------------------------------------------------------

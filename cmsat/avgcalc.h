@@ -23,6 +23,7 @@
 #define __AVGCALC_H__
 
 #include "constants.h"
+#include <limits>
 #include "assert.h"
 #include <vector>
 #include <cstring>
@@ -36,8 +37,9 @@ class AvgCalc {
     double  sumSqare;
     size_t  num;
 
-    T2      longSum;
-    size_t  longNum;
+    //min, max
+    T       min;
+    T       max;
 
 public:
     AvgCalc(void) :
@@ -45,9 +47,10 @@ public:
         , sumSqare(0)
         , num(0)
 
-        //Long
-        , longSum(0)
-        , longNum(0)
+
+        //min, max
+        , min(std::numeric_limits<T>::max())
+        , max(std::numeric_limits<T>::min())
     {}
 
     void push(const T x) {
@@ -55,8 +58,18 @@ public:
         sumSqare += x*x;
         num++;
 
-        longSum += x;
-        longNum++;
+        max = std::max(max, x);
+        min = std::min(min, x);
+    }
+
+    T getMin() const
+    {
+        return min;
+    }
+
+    T getMax() const
+    {
+        return max;
     }
 
     double avg() const
@@ -65,14 +78,6 @@ public:
             return 0;
 
         return (double)sum/(double)num;
-    }
-
-    double longAvg() const
-    {
-        if (longNum == 0)
-            return 0;
-
-        return (double)longSum/(double)longNum;
     }
 
     double var() const
@@ -98,35 +103,21 @@ public:
         return ss.str();
     }
 
-    std::string avgLongPrint(size_t prec, size_t w) const
-    {
-        std::stringstream ss;
-        if (num > 0) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
-            << longAvg();
-        } else {
-            ss << std::setw(5) << "?";
-        }
-
-        return ss.str();
-    }
-
     void clear()
     {
-        sum = 0;
-        sumSqare = 0;
-        num = 0;
-
-        //Long
-        longSum = 0;
-        longNum = 0;
+        AvgCalc<T, T2> tmp;
+        *this = tmp;
     }
 
-    void shortClear()
+    void addData(const AvgCalc& other)
     {
-        sum = 0;
-        sumSqare = 0;
-        num = 0;
+        sum += other.sum;
+        sumSqare += other.sumSqare;
+        num += other.num;
+
+        //min, max
+        min = std::min(min, other.min);
+        max = std::max(max, other.max);
     }
 };
 

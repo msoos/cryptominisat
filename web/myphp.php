@@ -1,19 +1,41 @@
 <?
-$runIDs = array(1969178564);
-//$runIDs = array(49);
-$maxConfl = 500000;
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
+$maxConfl = 7000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
-//asfdasfdsf
 
-$username="presenter";
-$password="presenter";
-$database="cryptoms";
+$username="cmsat_presenter";
+$password="";
+$database="cmsat";
 
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
+
+#$runIDs = array(mysql_real_escape_string($_GET["id"]));
+$runIDs = array(getLatestID());
+
+//$runIDs = array(2981893) ;
+
+echo "<script type=\"text/javascript\">";
+function getLatestID()
+{
+    $query = "select runID from `startup` order by startTime desc limit 1;";
+    $result = mysql_query($query);
+
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+
+    $nrows = mysql_numrows($result);
+    if ($nrows < 1) {
+        return 7401737;
+    }
+
+    $runID = mysql_result($result, 0, "runID");
+
+    return $runID;
+}
 
 class DataPrinter
 {
@@ -24,19 +46,16 @@ class DataPrinter
     protected $runID;
     protected $maxConfl;
 
-    public function __construct($mycolnum, $myRunID, $myMaxConfl)
+    public function __construct($mycolnum, $runID, $maxConfl)
     {
         $this->colnum = $mycolnum;
-        $this->runID = $myRunID;
-        $this->maxConfl = $myMaxConfl;
+        $this->runID = $runID;
+        $this->maxConfl = $maxConfl;
         $this->numberingScheme = 0;
-        $this->runQuery();
 
         echo "
-        <script type=\"text/javascript\">
         if (columnDivs.length <= ".$this->colnum.")
             columnDivs.push(new Array());
-        </script>
         ";
     }
 
@@ -53,19 +72,15 @@ class DataPrinter
         }
 
         $max = mysql_result($result, 0, "mymax");
-        echo "<script type=\"text/javascript\">\n";
         echo "maxConflRestart.push($max);";
-        echo "</script>";
     }
 
     protected function printOneThing(
         $datanames
         , $nicedatanames
-        , $doSlideAvg = 0
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
-        echo "<script type=\"text/javascript\">\n";
         echo "tmp = [";
 
         //Start with an empty one
@@ -100,17 +115,17 @@ class DataPrinter
             foreach ($datanames as $dataname) {
                 $tmp = mysql_result($this->data, $i, $dataname);
                 if (sizeof($datanames) > 1) {
-                    $tmp /= $local_sum;
-                    $tmp *= 100.0;
+                    if ($local_sum == 0) {
+                        //$tmp = 0;
+                    } else {
+                        $tmp /= $local_sum;
+                        $tmp *= 100.0;
+                    }
                     echo ", $tmp";
                 } else {
                     $total_sum += $tmp*($confl-$last_confl);
                     $last_confl = $confl;
-                    $sliding_avg = $total_sum / $confl;
                     echo ", $tmp";
-                    if ($doSlideAvg) {
-                        echo ", $sliding_avg";
-                    }
                 }
             }
             echo "]\n";
@@ -129,9 +144,6 @@ class DataPrinter
         echo ", labels: [\"Conflicts\"";
         foreach ($nicedatanames as $dataname) {
             echo ", \"(".$this->colnum.") $dataname\"";
-        }
-        if (sizeof($datanames) == 1) {
-            echo ", \"".$fullname.$this->colnum." (sliding avg.)\"";
         }
         echo "]";
 
@@ -152,20 +164,17 @@ class DataPrinter
         echo "tmp = {blockDivID:  '$blockDivID'};";
         echo "columnDivs[".$this->colnum."].push(tmp);";
 
-
-        echo "</script>\n";
         $this->numberingScheme++;
     }
 
-    public function runQuery()
+    function runQuery($table, $extra = "")
     {
         $query="
         SELECT *
-        FROM `restart`
+        FROM `$table`
         where `runID` = ".$this->runID."
-        and conflicts < ".$this->maxConfl."
+        and conflicts < ".$this->maxConfl." $extra
         order by `conflicts`";
-        //echo "query was: $query";
 
         $this->data = mysql_query($query);
         if (!$this->data) {
@@ -177,6 +186,8 @@ class DataPrinter
 
     public function printOneSolve()
     {
+        $this->runQuery("restart");
+
         $this->printOneThing(array("time")
             , array("time"));
 
@@ -185,6 +196,26 @@ class DataPrinter
 
         /*printOneThing(array("propsPerDec")
             , array("avg. no. propagations per decision"));*/
+
+        $this->printOneThing(array(
+            "set"
+            , "numIrredBins"
+            , "numRedBins"
+            , "numIrredTris"
+            , "numRedTris"
+            , "numIrredLongs"
+            , "numRedLongs"
+            )
+            ,array(
+            "unit cls %"
+            , "irredBin %"
+            , "redBin %"
+            , "irredTri %"
+            , "redTri  %"
+            , "irredLong %"
+            , "iredLong %"
+            )
+        );
 
         $this->printOneThing(array("branchDepth")
             , array("avg. branch depth"));
@@ -285,6 +316,20 @@ class DataPrinter
             )
         );
 
+        $this->printOneThing(array(
+              "resolBin"
+            , "resolTri"
+            , "resolLIrred"
+            , "resolLRed"
+            )
+            ,array(
+              "resolv by bin %"
+            , "resolv by tri %"
+            , "resolv by long irred %"
+            , "resolv by long red %"
+            )
+        );
+
         /*printOneThing("branchDepthSD", array("branchDepthSD")
             , array("branch depth std dev"));
 
@@ -306,6 +351,61 @@ class DataPrinter
         printOneThing("resolutionsSD", array("resolutionsSD")
             , array("std dev no. resolutions for 1UIP"));*/
 
+
+        $this->runQuery("reduceDB");
+
+        $this->printOneThing(array(
+                "irredLitsVisited"
+                , "redLitsVisited"
+            )
+            ,array(
+                "irredLitsVisited % "
+                , "redLitsVisited %"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "preRemovedResolBin"
+                , "preRemovedResolTri"
+                , "preRemovedResolLIrred"
+                , "preRemovedResolLRed"
+            )
+            ,array(
+                  "preRemovedResolBin"
+                , "preRemovedResolTri"
+                , "preRemovedResolLIrred"
+                , "preRemovedResolLRed"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "removedResolBin"
+                , "removedResolTri"
+                , "removedResolLIrred"
+                , "removedResolLRed"
+            )
+            ,array(
+                  "removedResolBin"
+                , "removedResolTri"
+                , "removedResolLIrred"
+                , "removedResolLRed"
+            )
+        );
+
+        $this->printOneThing(array(
+                  "remainResolBin"
+                , "remainResolTri"
+                , "remainResolLIrred"
+                , "remainResolLRed"
+            )
+            ,array(
+                  "remainResolBin"
+                , "remainResolTri"
+                , "remainResolLIrred"
+                , "remainResolLRed"
+            )
+        );
+
         return $this->numberingScheme;
     }
 }
@@ -321,9 +421,9 @@ class Simplifications
 {
     protected $runIDs;
 
-    public function __construct($myRunIDs)
+    public function __construct($runIDs)
     {
-        $this->runIDs = $myRunIDs;
+        $this->runIDs = $runIDs;
     }
 
     protected function fillSimplificationPoints($thisRunID)
@@ -357,42 +457,45 @@ class Simplifications
 
     public function fill()
     {
-        echo '<script type="text/javascript">';
         foreach ($this->runIDs as $thisRunID) {
             $this->fillSimplificationPoints($thisRunID);
         }
-
-        echo '</script>';
     }
 }
 
 $simps = new Simplifications($runIDs);
 $simps->fill();
 
-class ClauseSizeDistrib
+class ClauseDistrib
 {
     protected $colnum;
+    protected $rownum;
     protected $runID;
     protected $maxConfl;
+    protected $tablename;
+    protected $lookAt;
 
-    public function __construct($mycolnum, $myRunID, $myMaxConfl)
+
+    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt)
     {
         $this->colnum = $mycolnum;
-        $this->runID = $myRunID;
-        $this->maxConfl = $myMaxConfl;
+        $this->rownum = $myrownum;
+        $this->runID = $runID;
+        $this->maxConfl = $maxConfl;
+        $this->tablename = $tablename;
+        $this->lookAt = $lookAt;
     }
 
     public function fillClauseDistrib()
     {
-        echo '<script type="text/javascript">';
         echo "tmpArray = new Array();\n";
 
         $query = "
-        SELECT conflicts, num FROM clauseSizeDistrib
+        SELECT conflicts, num FROM ".$this->tablename."
         where runID = ".$this->runID."
         and conflicts < ".$this->maxConfl."
-        and size > 0
-        order by conflicts, size";
+        and ".$this->lookAt." > 0
+        order by conflicts, ".$this->lookAt;
         $result=mysql_query($query);
         if (!$result) {
             die('Invalid query: ' . mysql_error());
@@ -423,29 +526,35 @@ class ClauseSizeDistrib
             echo "tmpArray.push(tmp);\n";
         }
 
-        echo "clDistrib.push({data: tmpArray";
-
-        $blockDivID = "distBlock".$this->colnum;
-        $dataDivID = "drawingPad".$this->colnum."Parent";
-        $canvasID = "drawingPad".$this->colnum;
+        $blockDivID = "distBlock".$this->colnum."-".$this->rownum;
+        $dataDivID = "drawingPad".$this->colnum."-".$this->rownum."-Parent";
+        $canvasID = "drawingPad".$this->colnum."-".$this->rownum;
         $labelDivID = "$blockDivID"."_labeldiv";
+
+        //Put into data
+        echo "oneData = {data: tmpArray";
         echo ", blockDivID:  '$blockDivID'";
         echo ", dataDivID:  '$dataDivID'";
         echo ", canvasID: '$canvasID'";
         echo ", labelDivID: '$labelDivID'";
-        echo "});\n";
+        echo ", lookAt: '".$this->lookAt."'";
+        echo "};\n";
+        echo "clDistrib[".$this->colnum."].push(oneData);";
 
         //Put into columnDivs
         echo "tmp = {blockDivID:  '$blockDivID'};";
         echo "columnDivs[".$this->colnum."].push(tmp);";
-
-        echo '</script>';
     }
 }
 
 for($i = 0; $i < count($runIDs); $i++) {
-    $myDist = new ClauseSizeDistrib($i, $runIDs[$i], $maxConfl);
+    echo "clDistrib.push([]);";
+    $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue");
+    $myDist->fillClauseDistrib();
+
+    $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size");
     $myDist->fillClauseDistrib();
 }
+echo '</script>';
 
 ?>
