@@ -2620,11 +2620,6 @@ void Solver::dumpIfNeeded() const
             exit(-1);
         }
 
-        if (okay())
-          cout << "okay() returns TRUE" << endl;
-        else
-          cout << "okay() returns FALSE" << endl;
-
         if (okay()) {
             solver->dumpIrredClauses(&outfile);
         } else {
