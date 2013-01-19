@@ -2620,11 +2620,16 @@ void Solver::dumpIfNeeded() const
             exit(-1);
         }
 
+        if (okay())
+          cout << "okay() returns TRUE" << endl;
+        else
+          cout << "okay() returns FALSE" << endl;
+
         if (okay()) {
+            solver->dumpIrredClauses(&outfile);
+        } else {
             outfile << "p cnf 0 1" << endl;
             outfile << "0";
-        } else {
-            solver->dumpIrredClauses(&outfile);
         }
 
         cout << "Dumped irredundant (~non-learnt) clauses" << endl;
