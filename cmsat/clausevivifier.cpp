@@ -155,18 +155,23 @@ bool ClauseVivifier::vivifyClausesTriIrred()
 
 struct ClauseSizeSorter
 {
-    ClauseSizeSorter(const ClauseAllocator* _clAllocator) :
+    ClauseSizeSorter(const ClauseAllocator* _clAllocator, const bool _invert = false) :
         clAllocator(_clAllocator)
+        , invert(_invert)
     {}
 
     const ClauseAllocator* clAllocator;
+    const bool invert;
 
     bool operator()(const ClOffset off1, const ClOffset off2) const
     {
         const Clause* cl1 = clAllocator->getPointer(off1);
         const Clause* cl2 = clAllocator->getPointer(off2);
 
-        return cl1->size() > cl2->size();
+        if (!invert)
+            return cl1->size() > cl2->size();
+        else
+            return cl1->size() < cl2->size();
     }
 };
 
