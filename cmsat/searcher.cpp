@@ -288,6 +288,7 @@ Clause* Searcher::analyze(
 
     assert(pathC == 0);
     stats.litsLearntNonMin += out_learnt.size();
+    const size_t origSize = out_learnt.size();
 
     //Recursive-simplify conflict clause:
     if (conf.doRecursiveCCMin) {
@@ -316,7 +317,8 @@ Clause* Searcher::analyze(
         }
         toClear.clear();
     }
-    stats.litsLearntRecMin += out_learnt.size();
+    stats.recMinCl += ((origSize - out_learnt.size()) > 0);
+    stats.recMinLitRem += origSize - out_learnt.size();
 
     //Cache-based minimisation
     if (conf.doStamp
@@ -328,7 +330,7 @@ Clause* Searcher::analyze(
             || out_learnt.size() < 10
             )
     ) {
-        //TODO stamping
+        stampBasedLearntMinim(out_learnt);
         minimiseLearntFurther(out_learnt);
     }
 
@@ -832,7 +834,6 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
                 cancelUntil(0);
                 stats.litsLearntNonMin += 1;
-                stats.litsLearntRecMin += 1;
                 stats.litsLearntFinal += 1;
                 propStats.propsUnit++;
                 stats.hyperBinAdded += hyperBinResAll();
@@ -1929,7 +1930,7 @@ form to carry out the forward-self-subsuming resolution
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doStamp);
-    stats.OTFShrinkAttempted++;
+    stats.binShrinkAttempt++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
@@ -1955,14 +1956,6 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         done++;
 
         Lit lit = *l;
-
-        //Cache-based minimisation
-        //TODO stamping
-        /*const TransCache& cache1 = solver->implCache[l->toInt()];
-        for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
-            seen[(~(it->getLit())).toInt()] = 0;
-        }*/
-
         //Watchlist-based minimisation
         const vec<Watched>& ws = watches[lit.toInt()];
         for (vec<Watched>::const_iterator
@@ -2005,12 +1998,54 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
         seen[i->toInt()] = 0;
     }
-    stats.OTFShrinkedClause += (removedLits > 0);
+    stats.binShrinkedClause += (removedLits > 0);
+    stats.binRemLits += removedLits;
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG
     cout << "c Removed further " << removedLits << " lits" << endl;
     #endif
+}
+
+void Searcher::stampBasedLearntMinim(vector<Lit>& cl)
+{
+    //Stamp-based minimization
+    stats.stampShrinkAttempt++;
+    const size_t origSize = cl.size();
+
+    Lit firstLit = cl[0];
+    std::pair<size_t, size_t> tmp;
+    tmp = stampBasedLitRem(cl, timestamp, STAMP_RED);
+    if (tmp.first || tmp.second) {
+        //cout << "Rem RED: " << tmp.first + tmp.second << endl;
+    }
+    tmp = stampBasedLitRem(cl, timestamp, STAMP_IRRED);
+    if (tmp.first || tmp.second) {
+        //cout << "Rem IRRED: " << tmp.first + tmp.second << endl;
+    }
+
+    //Handle removal or moving of the first literal
+    size_t at = std::numeric_limits<size_t>::max();
+    for(size_t i = 0; i < cl.size(); i++) {
+        if (cl[i] == firstLit) {
+            at = i;
+            break;
+        }
+    }
+    if (at != std::numeric_limits<size_t>::max()) {
+        //Make original first lit first in the final clause, too
+        std::swap(cl[0], cl[at]);
+    } else {
+        //Re-add first lit
+        cl.push_back(lit_Undef);
+        for(int i = ((int)cl.size())-1; i >= 1; i--) {
+            cl[i] = cl[i-1];
+        }
+        cl[0] = firstLit;
+    }
+
+    stats.stampShrinkCl += ((origSize - cl.size()) > 0);
+    stats.stampShrinkLit += origSize - cl.size();
 }
 
 void Searcher::insertVarOrder(const Var x)

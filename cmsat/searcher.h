@@ -247,10 +247,15 @@ class Searcher : public PropEngine
 
                 //Conflict generation
                 , litsLearntNonMin(0)
-                , litsLearntRecMin(0)
                 , litsLearntFinal(0)
-                , OTFShrinkAttempted(0)
-                , OTFShrinkedClause(0)
+                , recMinCl(0)
+                , recMinLitRem(0)
+                , binShrinkAttempt(0)
+                , binShrinkedClause(0)
+                , binRemLits(0)
+                , stampShrinkAttempt(0)
+                , stampShrinkCl(0)
+                , stampShrinkLit(0)
 
                 //Learnt stats
                 , learntUnits(0)
@@ -290,10 +295,15 @@ class Searcher : public PropEngine
 
                 //Conflict minimisation stats
                 litsLearntNonMin += other.litsLearntNonMin;
-                litsLearntRecMin += other.litsLearntRecMin;
                 litsLearntFinal += other.litsLearntFinal;
-                OTFShrinkAttempted  += other.OTFShrinkAttempted;
-                OTFShrinkedClause += other.OTFShrinkedClause;
+                recMinCl += other.recMinCl;
+                recMinLitRem += other.recMinLitRem;
+                binShrinkAttempt  += other.binShrinkAttempt;
+                binShrinkedClause += other.binShrinkedClause;
+                binRemLits += other.binRemLits;
+                stampShrinkAttempt += other.stampShrinkAttempt;
+                stampShrinkCl += other.stampShrinkCl;
+                stampShrinkLit += other.stampShrinkLit;
 
                 //Learnt stats
                 learntUnits += other.learntUnits;
@@ -332,10 +342,15 @@ class Searcher : public PropEngine
 
                 //Conflict minimisation stats
                 litsLearntNonMin -= other.litsLearntNonMin;
-                litsLearntRecMin -= other.litsLearntRecMin;
                 litsLearntFinal -= other.litsLearntFinal;
-                OTFShrinkAttempted  -= other.OTFShrinkAttempted;
-                OTFShrinkedClause -= other.OTFShrinkedClause;
+                recMinCl -= other.recMinCl;
+                recMinLitRem -= other.recMinLitRem;
+                binShrinkAttempt  -= other.binShrinkAttempt;
+                binShrinkedClause -= other.binShrinkedClause;
+                binRemLits -= other.binRemLits;
+                stampShrinkAttempt -= other.stampShrinkAttempt;
+                stampShrinkCl -= other.stampShrinkCl;
+                stampShrinkLit -= other.stampShrinkLit;
 
                 //Learnt stats
                 learntUnits -= other.learntUnits;
@@ -456,31 +471,49 @@ class Searcher : public PropEngine
                 );
 
                 cout << "c CONFL LITS stats" << endl;
-                printStatsLine("c confl-lits nonmin "
+                printStatsLine("c orig "
                     , litsLearntNonMin
                     , (double)litsLearntNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
-                printStatsLine("c confl-lits rec-min"
-                    , litsLearntRecMin
-                    , (double)(litsLearntNonMin-litsLearntRecMin)/(double)litsLearntNonMin*100.0
-                    , "% less"
-                );
-
-                printStatsLine("c confl-lits OTF-min"
-                    , litsLearntFinal
-                    , (double)(litsLearntNonMin-litsLearntFinal)/(double)litsLearntNonMin*100.0
-                    , "% less"
-                );
-
-                printStatsLine("c confl-lits OTF-min call%"
-                    , (double)OTFShrinkAttempted/(double)conflStats.numConflicts*100.0
-                    , (double)OTFShrinkedClause/(double)OTFShrinkAttempted*100.0
+                printStatsLine("c rec-min effective"
+                    , recMinCl
+                    , (double)recMinCl/(double)conflStats.numConflicts*100.0
                     , "% attempt successful"
                 );
 
-                printStatsLine("c confl-lits final avg"
+                printStatsLine("c rec-min lits"
+                    , recMinLitRem
+                    , (double)recMinLitRem/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c bin-min call%"
+                    , (double)binShrinkAttempt/(double)conflStats.numConflicts*100.0
+                    , (double)binShrinkedClause/(double)binShrinkAttempt*100.0
+                    , "% attempt successful"
+                );
+
+                printStatsLine("c bin-min lits"
+                    , binRemLits
+                    , (double)binRemLits/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c stamp-min call%"
+                    , (double)stampShrinkAttempt/(double)conflStats.numConflicts*100.0
+                    , (double)stampShrinkCl/(double)stampShrinkAttempt*100.0
+                    , "% attempt successful"
+                );
+
+                printStatsLine("c stamp-min lits"
+                    , stampShrinkLit
+                    , (double)stampShrinkLit/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c final avg"
                     , (double)litsLearntFinal/(double)conflStats.numConflicts
                 );
 
@@ -502,10 +535,15 @@ class Searcher : public PropEngine
             uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
 
             uint64_t litsLearntNonMin;
-            uint64_t litsLearntRecMin;
             uint64_t litsLearntFinal;
-            uint64_t OTFShrinkAttempted;
-            uint64_t OTFShrinkedClause;
+            uint64_t recMinCl;
+            uint64_t recMinLitRem;
+            uint64_t binShrinkAttempt;
+            uint64_t binShrinkedClause;
+            uint64_t binRemLits;
+            uint64_t stampShrinkAttempt;
+            uint64_t stampShrinkCl;
+            uint64_t stampShrinkLit;
 
             //Learnt stats
             uint64_t learntUnits;
@@ -621,6 +659,7 @@ class Searcher : public PropEngine
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
+        void   stampBasedLearntMinim(vector<Lit>& cl);
         const Stats& getStats() const;
 
     private:
