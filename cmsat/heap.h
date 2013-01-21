@@ -95,6 +95,11 @@ class Heap {
             indices.shrink(indices.size() - other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
+    size_t memUsed() const
+    {
+        return heap.capacity()*sizeof(uint32_t)
+            + indices.capacity()*sizeof(uint32_t);
+    }
 
     uint32_t  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }

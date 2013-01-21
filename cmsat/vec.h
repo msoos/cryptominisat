@@ -86,6 +86,10 @@ public:
     void     clear  (bool dealloc = false);
     void     capacity (uint32_t size) { grow(size); }
     bool     empty() const {return size() == 0;}
+    uint64_t capacity() const
+    {
+        return cap;
+    }
 
     typedef T* iterator;
     typedef const T* const_iterator;

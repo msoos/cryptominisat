@@ -102,6 +102,11 @@ public:
         inter.push_back(data);
     }
 
+    size_t capacity() const
+    {
+        return inter.capacity();
+    }
+
 private:
     vector<T> inter;
 };

@@ -437,3 +437,8 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
         it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
     }
 }
+
+uint64_t ClauseAllocator::getMemUsed() const
+{
+    return maxSize*sizeof(BASE_DATA_TYPE);
+}

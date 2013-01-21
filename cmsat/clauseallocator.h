@@ -80,6 +80,8 @@ class ClauseAllocator {
             , const bool force = false
         );
 
+        uint64_t getMemUsed() const;
+
     private:
         void updateAllOffsetsAndPointers(PropEngine* control);
         template<class T>

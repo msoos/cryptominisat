@@ -1638,7 +1638,69 @@ void Solver::printFullStats() const
         , "confl/TOTAL_TIME_SEC"
     );
     printStatsLine("c Total time", cpu_time);
-    printStatsLine("c Mem used", memUsed()/(1024UL*1024UL), "MB");
+    printStatsLine("c Mem used"
+        , memUsed()/(1024UL*1024UL)
+        , "MB"
+    );
+
+    printStatsLine("c Mem for longclauses"
+        , clAllocator->getMemUsed()/(1024UL*1024UL)
+        , "MB"
+    );
+
+    size_t numBytesForWatch = 0;
+    numBytesForWatch += watches.capacity()*sizeof(vec<Watched>);
+    for(size_t i = 0; i < watches.size(); i++) {
+        numBytesForWatch += watches[i].capacity()*sizeof(Watched);
+    }
+    printStatsLine("c Mem for watches"
+        , numBytesForWatch/(1024UL*1024UL)
+        , "MB"
+    );
+
+    size_t numBytesForVars = 0;
+    numBytesForVars += assigns.capacity()*sizeof(lbool);
+    numBytesForVars += varData.capacity()*sizeof(VarData);
+    numBytesForVars += varDataLT.capacity()*sizeof(VarData::Stats);
+    numBytesForVars += backupActivity.capacity()*sizeof(uint32_t);
+    numBytesForVars += backupPolarity.capacity()*sizeof(bool);
+    numBytesForVars += decisionVar.capacity()*sizeof(char);
+    numBytesForVars += assumptions.capacity()*sizeof(Lit);
+    numBytesForVars += litReachable.capacity()*sizeof(LitReachData);
+
+    printStatsLine("c Mem for vars"
+        , numBytesForVars/(1024UL*1024UL)
+        , "MB"
+    );
+
+    printStatsLine("c Mem for stamps"
+        , timestamp.capacity()*sizeof(Timestamp)/(1024UL*1024UL)
+        , "MB"
+    );
+
+
+    size_t propMemUsed = 0;
+    propMemUsed += toPropNorm.capacity()*sizeof(Lit);
+    propMemUsed += toPropBin.capacity()*sizeof(Lit);
+    propMemUsed += toPropRedBin.capacity()*sizeof(Lit);
+    propMemUsed += trail.capacity()*sizeof(Lit);
+    propMemUsed += trail_lim.capacity()*sizeof(Lit);
+    //propMemUsed += order_heap.memUsed();
+    printStatsLine("c Mem for propagation"
+        , propMemUsed/(1024UL*1024UL)
+        , "MB"
+    );
+
+    size_t tempsSize = 0;
+    tempsSize += seen.capacity()*sizeof(uint16_t);
+    tempsSize += seen2.capacity()*sizeof(uint16_t);
+    tempsSize += toClear.capacity()*sizeof(Lit);
+    tempsSize += analyze_stack.capacity()*sizeof(Lit);
+    tempsSize += dummy.capacity()*sizeof(Lit);
+    printStatsLine("c Mem for temporaries"
+        , tempsSize/(1024UL*1024UL)
+        , "MB"
+    );
 }
 
 void Solver::dumpBinClauses(
