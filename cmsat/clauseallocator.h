@@ -94,7 +94,7 @@ class ClauseAllocator {
         void checkGoodPropBy(const Solver* solver);
 
         BASE_DATA_TYPE* dataStart; ///<Stacks start at these positions
-        size_t size; ///<The number of 32-bit datapieces currently used in each stack
+        size_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
         This my NOT be their current size: the clauses may be shrinked during
@@ -102,7 +102,7 @@ class ClauseAllocator {
         size is saved. This way, we can later move clauses around.
         */
         vector<uint32_t> origClauseSizes;
-        size_t maxSize; ///<The number of 32-bit datapieces allocated
+        size_t maxSize; ///<The number of BASE_DATA_TYPE datapieces allocated
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
