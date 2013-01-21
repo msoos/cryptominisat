@@ -1115,7 +1115,6 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
 
     //Set up everything to get the clause
-    std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
 
     //Is there on-the-fly subsumption?
@@ -1158,6 +1157,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 3:
             //3-long learnt
             stats.learntTris++;
+            std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (conf.otfHyperbin && decisionLevel() == 1)
@@ -1172,6 +1172,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Normal learnt
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
+            std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
             if (conf.otfHyperbin && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
