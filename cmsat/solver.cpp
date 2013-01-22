@@ -1590,15 +1590,16 @@ void Solver::printFullStats() const
     );
 
 
-    size_t propMemUsed = 0;
-    propMemUsed += toPropNorm.capacity()*sizeof(Lit);
-    propMemUsed += toPropBin.capacity()*sizeof(Lit);
-    propMemUsed += toPropRedBin.capacity()*sizeof(Lit);
-    propMemUsed += trail.capacity()*sizeof(Lit);
-    propMemUsed += trail_lim.capacity()*sizeof(Lit);
-    //propMemUsed += order_heap.memUsed();
-    printStatsLine("c Mem for propagation"
-        , propMemUsed/(1024UL*1024UL)
+    size_t searchMem = 0;
+    searchMem += toPropNorm.capacity()*sizeof(Lit);
+    searchMem += toPropBin.capacity()*sizeof(Lit);
+    searchMem += toPropRedBin.capacity()*sizeof(Lit);
+    searchMem += trail.capacity()*sizeof(Lit);
+    searchMem += trail_lim.capacity()*sizeof(Lit);
+    searchMem += activities.capacity()*sizeof(uint32_t);
+    //searchMem += order_heap.memUsed();
+    printStatsLine("c Mem for search"
+        , searchMem/(1024UL*1024UL)
         , "MB"
     );
 
