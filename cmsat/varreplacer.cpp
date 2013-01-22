@@ -176,10 +176,15 @@ end:
     //Update stamps
     for(size_t i = 0; i < solver->timestamp.size(); i++) {
         solver->timestamp[i] = solver->timestamp[getLitReplacedWith(Lit::toLit(i)).toInt()];
-        solver->timestamp[i].dominator[STAMP_IRRED]
-            = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_IRRED]);
-        solver->timestamp[i].dominator[STAMP_RED]
-            = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_RED]);
+        if (solver->timestamp[i].dominator[STAMP_IRRED] != lit_Undef) {
+            solver->timestamp[i].dominator[STAMP_IRRED]
+                = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_IRRED]);
+        }
+
+        if (solver->timestamp[i].dominator[STAMP_RED] != lit_Undef) {
+            solver->timestamp[i].dominator[STAMP_RED]
+                = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_RED]);
+        }
     }
 
     //Update stats
