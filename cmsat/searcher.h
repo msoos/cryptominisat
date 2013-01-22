@@ -86,6 +86,20 @@ class Searcher : public PropEngine
             AvgCalc<bool>       litPropagatedSomething;
             AvgCalc<bool>       litPropagatedSomethingLT;
 
+            size_t getMemUsed() const
+            {
+                size_t used = 0;
+                used += sizeof(AvgCalc<uint32_t>)*12;
+                used += sizeof(AvgCalc<bool>)*4;
+                used += sizeof(AvgCalc<size_t>)*2;
+                used += sizeof(AvgCalc<double, double>)*2;
+                used += branchDepthDeltaHist.usedMem();
+                used += glueHist.usedMem();
+                used += conflSizeHist.usedMem();
+
+                return used;
+            }
+
             void clear()
             {
                 //About the search

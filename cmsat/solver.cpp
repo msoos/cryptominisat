@@ -1678,6 +1678,11 @@ void Solver::printFullStats() const
         , "MB"
     );
 
+    printStatsLine("c Mem for search stats"
+        , hist.getMemUsed()/(1024UL*1024UL)
+        , "MB"
+    );
+
 
     size_t propMemUsed = 0;
     propMemUsed += toPropNorm.capacity()*sizeof(Lit);

@@ -39,6 +39,11 @@ public:
         , sumofqueue(0)
     {}
 
+    size_t usedMem() const
+    {
+        return sizeof(size_t)*4 + elems.capacity()*sizeof(T) + sizeof(T2) + sizeof(AvgCalc<T,T2>);
+    }
+
     void push(const T x) {
         if (queuesize == maxsize) {
             // The queue is full, next value to enter will replace oldest one
