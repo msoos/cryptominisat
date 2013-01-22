@@ -547,8 +547,8 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Clear 'seen' and fill new clause data
         lits.clear();
-        for (vector<Lit>::const_iterator
-            it2 = lits2.begin(), end2 = lits2.end()
+        for (Clause::const_iterator
+            it2 = cl.begin(), end2 = cl.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -556,13 +556,13 @@ bool ClauseVivifier::vivifyClausesCache(
             if (!isSubsumed
                 && seen[it2->toInt()]
             ) {
-                tmpStats.numLitsRem ++;
                 lits.push_back(*it2);
+            } else {
+                tmpStats.numLitsRem ++;
             }
 
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
-            seen_subs[it2->toInt()] = 0;
         }
 
         if (alsoStrengthen
