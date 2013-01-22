@@ -651,7 +651,7 @@ Lit PropEngine::propagateFull(
     toPropRedBin.clear();
     toPropNorm.clear();
 
-    const Lit root = trail.back();
+    Lit root = trail.back();
     toPropBin.push(root);
     toPropNorm.push(root);
     if (stampType == STAMP_RED)
@@ -759,7 +759,14 @@ Lit PropEngine::propagateFull(
                     case PROP_SOMETHING:
                         stampingTime++;
                         timestamp[trail.back().toInt()].start[stampType] = stampingTime;
-                        timestamp[trail.back().toInt()].dominator[stampType] = root;
+
+                        //No need to set it. Old setting is either the same or better than lit_Undef
+                        //timestamp[trail.back().toInt()].dominator[stampType] = lit_Undef;
+
+
+                        //Root for literals propagated afterwards will be this literal
+                        root = p;
+
                         #ifdef DEBUG_STAMPING
                         cout
                         << "From " << p << " enqueued " << trail.back()
@@ -839,6 +846,11 @@ Lit PropEngine::propagateFull(
                 << endl;
                 #endif
                 timestamp[trail.back().toInt()].start[stampType] = stampingTime;
+                if (stampType == STAMP_IRRED) {
+                    //Root for literals propagated afterwards will be this literal
+                    root = p;
+                }
+
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
                 if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
