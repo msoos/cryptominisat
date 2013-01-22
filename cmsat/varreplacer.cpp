@@ -173,8 +173,13 @@ bool VarReplacer::performReplace()
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
 
+    //Update stamps
     for(size_t i = 0; i < solver->timestamp.size(); i++) {
         solver->timestamp[i] = solver->timestamp[getLitReplacedWith(Lit::toLit(i)).toInt()];
+        solver->timestamp[i].dominator[STAMP_IRRED]
+            = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_IRRED]);
+        solver->timestamp[i].dominator[STAMP_RED]
+            = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_RED]);
     }
 
     //Update stats
