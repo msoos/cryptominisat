@@ -765,7 +765,7 @@ Lit PropEngine::propagateFull(
 
 
                         //Root for literals propagated afterwards will be this literal
-                        root = p;
+                        root = trail.back();
 
                         #ifdef DEBUG_STAMPING
                         cout
@@ -848,7 +848,7 @@ Lit PropEngine::propagateFull(
                 timestamp[trail.back().toInt()].start[stampType] = stampingTime;
                 if (stampType == STAMP_IRRED) {
                     //Root for literals propagated afterwards will be this literal
-                    root = p;
+                    root = trail.back();
                 }
 
                 toPropNorm.push(trail.back());
