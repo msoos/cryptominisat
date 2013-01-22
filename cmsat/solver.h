@@ -400,8 +400,6 @@ class Solver : public Searcher
         /////////////////////
         // Data
         SolverConf           conf;
-        vector<LitReachData> litReachable;
-        void                 calcReachability();
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;

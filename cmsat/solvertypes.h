@@ -733,10 +733,4 @@ struct ConflStats
     uint64_t  numConflicts;
 };
 
-struct LitReachData
-{
-    Lit lit;
-    size_t num;
-};
-
 #endif //SOLVERTYPES_H

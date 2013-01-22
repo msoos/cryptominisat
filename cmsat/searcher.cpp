@@ -1894,7 +1894,7 @@ Lit Searcher::pickBranchLit()
     if (next != lit_Undef
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
-        const Lit lit2 = solver->litReachable[next.toInt()].lit;
+        const Lit lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
             && solver->decisionVar[lit2.var()]

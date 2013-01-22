@@ -604,12 +604,7 @@ void Solver::renumberVariables()
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     updateLitsMap(assumptions, outerToInter);
 
-    //Update reachability
-    updateArray(litReachable, interToOuter2);
-    for(size_t i = 0; i < litReachable.size(); i++) {
-        if (litReachable[i].lit != lit_Undef)
-            litReachable[i].lit = getUpdatedLit(litReachable[i].lit, outerToInter);
-    }
+    //Update stamps
     for(size_t i = 0; i < timestamp.size(); i++) {
         for(size_t i2 = 0; i2 < 2; i2++) {
         if (timestamp[i].dominator[i2] != lit_Undef)
@@ -684,8 +679,6 @@ Var Solver::newVar(const bool dvar)
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
 
-    litReachable.push_back(LitReachData());
-    litReachable.push_back(LitReachData());
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
 
@@ -1128,9 +1121,6 @@ lbool Solver::simplifyProblem()
     /*if (!implCache.tryBoth(this))
         goto end;*/
 
-    if (conf.doStamp && conf.doCalcReach)
-        calcReachability();
-
     if (conf.doSortWatched)
         sortWatched();
 
@@ -1164,89 +1154,6 @@ end:
         checkImplicitPropagated();
         return l_Undef;
     }
-}
-
-void Solver::calcReachability()
-{
-    solveStats.numCallReachCalc++;
-    ReachabilityStats tmpStats;
-    const double myTime = cpuTime();
-
-    for (uint32_t i = 0; i < nVars()*2; i++) {
-        litReachable[i] = LitReachData();
-    }
-
-    for (size_t litnum = 0; litnum < nVars()*2; litnum++) {
-        const Lit lit = Lit::toLit(litnum);
-        const Var var = lit.var();
-        if (value(var) != l_Undef
-            || varData[var].elimed != ELIMED_NONE
-            || !decisionVar[var]
-        ) continue;
-
-        //See where setting this lit leads to
-        //TODO stamping
-        /*const vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
-        const size_t cacheSize = cache.size();
-        for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-            //Cannot lead to itself
-            assert(it->getLit().var() != lit.var());
-
-            //If learnt, skip
-            if (!it->getOnlyNLBin())
-                continue;
-
-            //If reachability is nonexistent or low, set it
-            if (litReachable[it->getLit().toInt()].lit == lit_Undef
-                || litReachable[it->getLit().toInt()].numInCache < cacheSize
-            ) {
-                litReachable[it->getLit().toInt()].lit = lit;
-                //NOTE: we actually MISREPRESENT this, as only non-learnt should be presented here
-                litReachable[it->getLit().toInt()].numInCache = cacheSize;
-            }
-        }*/
-    }
-
-    vector<size_t> forEachSize(nVars()*2, 0);
-    for(vector<LitReachData>::const_iterator
-        it = litReachable.begin(), end = litReachable.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->lit != lit_Undef)
-            forEachSize[it->lit.toInt()]++;
-    }
-
-    size_t lit = 0;
-    for(vector<LitReachData>::const_iterator
-        it = litReachable.begin(), end = litReachable.end()
-        ; it != end
-        ; it++, lit++
-    ) {
-        if (forEachSize[lit])
-            tmpStats.dominators++;
-
-        const size_t var = lit/2;
-
-        //Variable is not used
-        if (varData[var].elimed != ELIMED_NONE
-            || value(var) != l_Undef
-            || !decisionVar[var]
-        )
-            continue;
-
-        tmpStats.numLits++;
-        tmpStats.numLitsDependent += (it->lit == lit_Undef) ? 0 : 1;
-    }
-
-    tmpStats.cpu_time = cpuTime() - myTime;
-    if (conf.verbosity >= 1) {
-        if (conf.verbosity >= 3)
-            tmpStats.print();
-        else
-            tmpStats.printShort();
-    }
-    reachStats += tmpStats;
 }
 
 Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
@@ -1666,7 +1573,6 @@ void Solver::printFullStats() const
     numBytesForVars += backupPolarity.capacity()*sizeof(bool);
     numBytesForVars += decisionVar.capacity()*sizeof(char);
     numBytesForVars += assumptions.capacity()*sizeof(Lit);
-    numBytesForVars += litReachable.capacity()*sizeof(LitReachData);
 
     printStatsLine("c Mem for vars"
         , numBytesForVars/(1024UL*1024UL)
