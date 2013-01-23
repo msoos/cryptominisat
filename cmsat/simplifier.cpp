@@ -2713,7 +2713,11 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
 {
     //clauses which contain '~lit'
     const vec<Watched>& ws = solver->watches[(~lit).toInt()];
-    for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
         *toDecrease -= 2;
 
         //Handle binary
