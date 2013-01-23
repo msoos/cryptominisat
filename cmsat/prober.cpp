@@ -138,22 +138,36 @@ bool Prober::probe()
 
     //Use candidates
     sortAndResetCandidates();
-    size_t atCandidates = 0;
     candidates.clear();
 
-    uint64_t origBogoProps = solver->propStats.bogoProps;
-    while (solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
-        uint32_t litnum;
+    //Calculate the set of possible variables for branching on randomly
+    vector<Var> possibleChoices;
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        if (solver->value(i) == l_Undef
+            && solver->decisionVar[i]
+        ) {
+            possibleChoices.push_back(i);
+        }
+    }
+
+    size_t atCandidates = 0;
+    const uint64_t origBogoProps = solver->propStats.bogoProps;
+    while (
+        !possibleChoices.empty()
+        && solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo
+    ) {
+        Lit lit;
 
         if (atCandidates < candidates.size()
             && candidates[atCandidates].minOfPolarities > 100
         ) {
-            litnum = Lit(candidates[atCandidates].var, 0).toInt();
+            lit = Lit(candidates[atCandidates].var, false);
             atCandidates++;
         } else {
-            litnum = solver->mtrand.randInt() % (solver->nVars()*2);
+            const size_t at = solver->mtrand.randInt(possibleChoices.size()-1);
+            lit = Lit(possibleChoices[at], false);
         }
-        Lit lit = Lit::toLit(litnum);
+
         extraTime += 20;
 
         //Check if var is set already
