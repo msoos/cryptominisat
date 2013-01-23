@@ -563,11 +563,11 @@ private:
         const vector<pair<int, int> >&  varElimComplexity;
         bool operator () (const size_t x, const size_t y) const
         {
-            //Of the FIRST, the smallest is best
+            //Smallest cost first
             if (varElimComplexity[x].first != varElimComplexity[y].first)
                 return varElimComplexity[x].first < varElimComplexity[y].first;
 
-            //Of the SECOND, the largest is best
+            //Smallest cost first
             return varElimComplexity[x].second < varElimComplexity[y].second;
         }
 

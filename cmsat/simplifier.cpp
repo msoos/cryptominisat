@@ -2050,7 +2050,7 @@ int Simplifier::testVarElim(const Var var)
 
             //Early-abort
             if (after_clauses > before_clauses)
-                return -1000;
+                return 1000;
 
             //Calculate new clause stats
             ClauseStats stats;
@@ -2129,7 +2129,7 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //Test if we should remove, and fill posAll&negAll
     runStats.testedToElimVars++;
-    if (testVarElim(var) == -1000)
+    if (testVarElim(var) == 1000)
         return false;
 
     //Update stats
@@ -2682,10 +2682,13 @@ void Simplifier::orderVarsForElimInit()
             int ret = testVarElim(var);
 
             //Cannot be eliminated
-            if (ret == -1000)
+            //But we can try later anyway...
+            //the clauses will have changed by then
+            /*if (ret == 1000)
                 continue;
+            */
 
-            varElimComplexity[var].first = 1000-ret;
+            varElimComplexity[var].first = ret;
             varElimComplexity[var].second = 0;
             varElimOrder.insert(var);
         }
