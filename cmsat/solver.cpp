@@ -2595,10 +2595,10 @@ void Solver::dumpIfNeeded() const
         }
 
         if (okay()) {
+            solver->dumpIrredClauses(&outfile);
+        } else {
             outfile << "p cnf 0 1" << endl;
             outfile << "0";
-        } else {
-            solver->dumpIrredClauses(&outfile);
         }
 
         cout << "Dumped irredundant (~non-learnt) clauses" << endl;
