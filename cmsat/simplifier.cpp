@@ -2540,11 +2540,6 @@ bool Simplifier::agressiveCheck(
             if (otherLit.var() == noPosLit.var())
                 continue;
 
-            //learnt is useless
-            if (it->learnt()) {
-                continue;
-            }
-
             //If (a V b) is non-learnt, and in the clause, then we can remove
             if (seen[otherLit.toInt()]) {
                 retval = false;
