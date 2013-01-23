@@ -1688,7 +1688,7 @@ void Simplifier::setLimits()
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
     numMaxBlockedBin  = 40L *1000L*1000L;
-    numMaxVarElimAgressiveCheck  = 100L *1000L*1000L;
+    numMaxVarElimAgressiveCheck  = 500L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
