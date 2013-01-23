@@ -2535,6 +2535,7 @@ bool Simplifier::agressiveCheck(
             continue;
         }
 
+        //Handle binary
         if (it->isBinary() && !it->learnt()) {
             const Lit otherLit = it->lit1();
             if (otherLit.var() == noPosLit.var())
