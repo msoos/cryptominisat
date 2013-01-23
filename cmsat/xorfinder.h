@@ -112,7 +112,7 @@ class FoundXors
             //Also set 'seen' for easy check in 'findXorMatch()'
             rhs = true;
             uint32_t whichOne = 0;
-            for (uint i = 0; i < size; i++) {
+            for (uint32_t i = 0; i < size; i++) {
                 rhs ^= origCl[i].sign();
                 whichOne += ((uint32_t)origCl[i].sign()) << i;
                 seen[origCl[i].var()] = 1;
