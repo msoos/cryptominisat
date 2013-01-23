@@ -174,22 +174,24 @@ bool Prober::probe()
         if (solver->value(lit.var()) != l_Undef
             || !solver->decisionVar[lit.var()]
             || visitedAlready[lit.toInt()]
-            || solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
+            //|| solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
         ) {
             continue;
         }
 
-        /*
+
         //If this lit is reachable from somewhere else, then reach it from there
-        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
-            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+        if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
+            const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
             if (solver->value(betterlit.var()) == l_Undef
                 && solver->decisionVar[betterlit.var()]
             ) {
                 lit = betterlit;
+
+                //Must not have visited it already, otherwise the stamp dominator would be incorrect
                 assert(!visitedAlready[lit.toInt()]);
             }
-        }*/
+        }
 
         //Don't always try positive first. Try random sign first
         //bool random_inv = solver->mtrand.randInt(1);
