@@ -2439,29 +2439,31 @@ bool Simplifier::merge(
             const Lit lit = toClear[i];
             assert(lit.var() != noPosLit.var());
 
-            //Use stamping
-            //but only if none of the clauses were binary
-            //Otherwise we cannot tell if the value in the cache is dependent
-            //on the binary clause itself, so that would cause a circular de-
-            //pendency
-
-            if (!ps.isBinary()
-                && !qs.isBinary()
-                && stampBasedClRem(
-                    dummy
-                    , solver->timestamp
-                    , stampNorm
-                    , stampInv
-                )
-            ) {
-                goto end;
-            }
-
             //Use watchlists
             if (numMaxVarElimAgressiveCheck > 0) {
                 if (agressiveCheck(lit, noPosLit, retval))
                     goto end;
             }
+        }
+    }
+
+    if (useCache && solver->conf.doAsymmTE) {
+        //Use stamping
+        //but only if none of the clauses were binary
+        //Otherwise we cannot tell if the value in the cache is dependent
+        //on the binary clause itself, so that would cause a circular de-
+        //pendency
+
+        if (!ps.isBinary()
+            && !qs.isBinary()
+            && stampBasedClRem(
+                toClear
+                , solver->timestamp
+                , stampNorm
+                , stampInv
+            )
+        ) {
+            goto end;
         }
     }
 
