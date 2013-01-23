@@ -1988,7 +1988,7 @@ int Simplifier::testVarElim(const Var var)
 
     // Count clauses/literals after elimination
     resolvents.clear();
-    uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
+    uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
     uint32_t after_bin = 0;
@@ -2068,10 +2068,13 @@ int Simplifier::testVarElim(const Var var)
         }
     }
 
-    //Larger value returned, the better
-    //return pos.lit+neg.lit-after_literals;
-    //return pos.longer + neg.longer - after_long - after_tri + pos.bin + neg.bin - after_bin;
-    return after_long + after_tri + after_bin*3 - pos.longer - neg.longer - pos.bin*3 - neg.bin*3;
+    //Smaller value returned, the better
+    int cost = after_long + after_tri + after_bin*3
+        - pos.longer - neg.longer
+        - pos.tri - neg.tri
+        - pos.bin*3 - neg.bin*3;
+
+    return cost;
 }
 
 void Simplifier::printOccur(const Lit lit) const
@@ -2589,7 +2592,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         {
             //Only count non-learnt
             if (!it->learnt()) {
-                ret.longer++;
+                ret.tri++;
                 ret.lit += 3;
             }
 
@@ -2626,20 +2629,18 @@ std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
-    /*int normCost = pos.longer * neg.longer //long clauses have a good chance of being tautologies
-        + pos.longer * neg.bin * 2 //lower chance of tautology because of binary clause
-        + neg.bin * pos.longer * 2 //lower chance of tautology because of binary clause
-        + pos.bin * neg.bin * 5; //Very low chance of tautology*/
+    int normCost = pos.longer + neg.longer
+        + pos.tri + neg.tri
+        + pos.bin + neg.bin;
 
-    int normCost = pos.longer + neg.longer + pos.bin + neg.bin;
-
-
-    if (((pos.longer + pos.bin) <= 2 && (neg.longer + neg.bin) <= 2)) {
+    if ((pos.longer + pos.tri + pos.bin) <= 2
+        && (neg.longer + neg.tri + neg.bin) <= 2
+    ) {
         normCost /= 2;
     }
 
-    if ((pos.longer + pos.bin) == 0
-        || (neg.longer + neg.bin) == 0
+    if ((pos.longer + pos.tri + pos.bin) == 0
+        || (neg.longer + neg.tri + neg.bin) == 0
     ) {
         normCost = 0;
     }

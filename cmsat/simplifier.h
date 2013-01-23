@@ -593,12 +593,14 @@ private:
     {
         HeuristicData() :
             bin(0)
+            , tri(0)
             , longer(0)
             , lit(0)
 
         {};
 
         size_t bin;
+        size_t tri;
         size_t longer;
         size_t lit;
     };
