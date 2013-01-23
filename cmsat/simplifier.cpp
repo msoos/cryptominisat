@@ -437,8 +437,7 @@ void Simplifier::performSubsumption()
     while (*toDecrease > 0
         && wenThrough < 1.5*(double)clauses.size()
     ) {
-        *toDecrease -= 20;
-        wenThrough++;
+        *toDecrease -= 2;
 
         //Print status
         if (solver->conf.verbosity >= 5
@@ -454,6 +453,9 @@ void Simplifier::performSubsumption()
         //Has already been removed
         if (cl->getFreed())
             continue;
+
+        wenThrough++;
+        *toDecrease -= 20;
 
         subsumed += subsume0(offset);
     }
