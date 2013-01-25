@@ -228,10 +228,10 @@ public:
         void printShortSubStr() const
         {
             //STRENGTH + SUBSUME
-            cout << "c"
-            << " lits-rem: " << litsRemStrengthen
-            << " subsSUB: " << subsumedBySub
-            << " subsSTR: " << subsumedByStr
+            cout << "c [subs] long"
+            << " subBySub: " << subsumedBySub
+            << " subByStr: " << subsumedByStr
+            << " lits-rem-str: " << litsRemStrengthen
             << " T: " << std::fixed << std::setprecision(2)
             << (subsumeTime+strengthenTime+linkInTime+finalCleanupTime)
             << "(" << linkInTime+finalCleanupTime << " is overhead)"
