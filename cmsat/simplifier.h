@@ -429,6 +429,7 @@ private:
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
     vector<ClOffset> subs;
+    vector<Lit> subsLits;
 
     //Limits
     int64_t  addedClauseLits;
@@ -691,6 +692,7 @@ bool Simplifier::subset(const T1& A, const T2& B)
     for (i2 = 0; i2 != B.size(); i2++) {
         if (lastB != lit_Undef)
             assert(lastB < B[i2]);
+
         lastB = B[i2];
         //Literals are ordered
         if (A[i] < B[i2]) {

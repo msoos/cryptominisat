@@ -233,8 +233,8 @@ self-subsuming resolution using backward-subsumption
 */
 Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
 {
-    vector<ClOffset> subs;
-    vector<Lit> subsLits;
+    subs.clear();
+    subsLits.clear();
     Sub1Ret ret;
     Clause& cl = *solver->clAllocator->getPointer(offset);
 
