@@ -190,7 +190,7 @@ Simplifier::Sub0Ret Simplifier::subsume0(
 ) {
     Sub0Ret ret;
 
-    vector<ClOffset> subs;
+    subs.clear();
     findSubsumed0(offset, ps, abs, subs);
 
     //Go through each clause that can be subsumed

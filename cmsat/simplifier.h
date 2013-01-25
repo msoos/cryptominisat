@@ -428,6 +428,7 @@ private:
     vector<Lit>     stampInv;       ///<Used by merge()
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
+    vector<ClOffset> subs;
 
     //Limits
     int64_t  addedClauseLits;
