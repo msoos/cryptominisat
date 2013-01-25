@@ -152,7 +152,7 @@ uint32_t Simplifier::subsume0(ClOffset offset)
     #endif
 
     Clause& cl = *solver->clAllocator->getPointer(offset);
-    Sub0Ret ret = subsume0(
+    Sub0Ret ret = subsume0Final(
         offset
         , cl
         , cl.abst
@@ -183,7 +183,7 @@ uint32_t Simplifier::subsume0(ClOffset offset)
 @return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
 template<class T>
-Simplifier::Sub0Ret Simplifier::subsume0(
+Simplifier::Sub0Ret Simplifier::subsume0Final(
     const ClOffset offset
     , const T& ps
     , CL_ABST_TYPE abs
@@ -2238,7 +2238,7 @@ bool Simplifier::maybeEliminate(const Var var)
             runStats.subsumedByVE += subsume0(offset);
         } else if (finalLits.size() == 3 || finalLits.size() == 2) {
             //Subsume long
-            Sub0Ret ret = subsume0(
+            Sub0Ret ret = subsume0Final(
                 std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
                 , finalLits //Literals in this binary clause
                 , calcAbstraction(finalLits) //Abstraction of literals

@@ -529,7 +529,7 @@ private:
     uint32_t subsume0(ClOffset offset);
 
     template<class T>
-    Sub0Ret subsume0(
+    Sub0Ret subsume0Final(
         const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
