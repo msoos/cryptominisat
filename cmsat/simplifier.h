@@ -283,7 +283,10 @@ public:
         {
             cout << "c -------- Simplifier STATS ----------" << endl;
             printStatsLine("c time"
-                , totalTime());
+                , totalTime()
+                , varElimTime/totalTime()*100.0
+                , "% var-elim"
+            );
 
             printStatsLine("c v-elimed"
                 , numVarsElimed
