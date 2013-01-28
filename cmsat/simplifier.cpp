@@ -692,8 +692,12 @@ bool Simplifier::eliminateVars()
     toDecrease = &numMaxElim;
     orderVarsForElimInit();
 
-    if (solver->conf.verbosity >= 5)
-        cout << "c #order size:" << varElimOrder.size() << endl;
+    if (solver->conf.verbosity >= 5) {
+        cout
+        << "c #order size:"
+        << varElimOrder.size()
+        << endl;
+    }
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
