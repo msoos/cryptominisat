@@ -111,6 +111,16 @@ class Watched {
             data1 = blockedLit.toInt();
         }
 
+        WatchType getType() const
+        {
+            if (isBinary())
+                return watch_binary_t;
+            else if (isTri())
+                return watch_tertiary_t;
+            else
+                return watch_clause_t;
+        }
+
         bool isBinary() const
         {
             return (type == watch_binary_t);
