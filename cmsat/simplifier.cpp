@@ -1921,6 +1921,8 @@ void Simplifier::removeClausesHelper(
             }
 
             //Remove
+            *toDecrease -= solver->watches[lit.toInt()].size();
+            *toDecrease -= solver->watches[watch.lit1().toInt()].size();
             solver->detachBinClause(lit, watch.lit1(), watch.learnt());
             if (!watch.learnt()) {
                 touched.touch(watch.lit1());
@@ -1949,6 +1951,9 @@ void Simplifier::removeClausesHelper(
             }
 
             //Remove
+            *toDecrease -= solver->watches[lit.toInt()].size();
+            *toDecrease -= solver->watches[watch.lit1().toInt()].size();
+            *toDecrease -= solver->watches[watch.lit2().toInt()].size();
             solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
             if (!watch.learnt()) {
                 touched.touch(watch.lit1());
@@ -1984,6 +1989,11 @@ int Simplifier::testVarElim(const Var var)
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
+    //Heuristic calculation took too much time
+    if (*toDecrease < 0) {
+        return 1000;
+    }
+
     //set-up
     const Lit lit = Lit(var, false);
     const vec<Watched>& poss = solver->watches[lit.toInt()];
@@ -2007,7 +2017,7 @@ int Simplifier::testVarElim(const Var var)
         ; it++
     ) {
         //Decrement available time
-        *toDecrease -= 1;
+        *toDecrease -= 3;
 
         //Ignore learnt
         if (((it->isBinary() || it->isTri()) && it->learnt())
@@ -2022,7 +2032,7 @@ int Simplifier::testVarElim(const Var var)
             ; it2++
         ) {
             //Decrement available time
-            *toDecrease -= 2;
+            *toDecrease -= 3;
 
             //Ignore learnt
             if (
@@ -2669,7 +2679,7 @@ void Simplifier::orderVarsForElimInit()
     //Go through all vars
     for (
         size_t var = 0
-        ; var < solver->nVars()
+        ; var < solver->nVars() && *toDecrease > 0
         ; var++
     ) {
         *toDecrease -= 50;
@@ -2828,7 +2838,7 @@ template<class T> void Simplifier::findSubsumed0(
 
     //Go through the occur list of the literal that has the smallest occur list
     const vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
-    *toDecrease -= occ.size()*15 + 40;
+    *toDecrease -= occ.size()*8 + 40;
     for (vec<Watched>::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
@@ -2836,6 +2846,8 @@ template<class T> void Simplifier::findSubsumed0(
     ) {
         if (!it->isClause())
             continue;
+
+        *toDecrease -= 15;
 
         if (it->getOffset() == offset
             || !subsetAbst(abs, it->getAbst())
