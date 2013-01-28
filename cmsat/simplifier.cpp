@@ -686,10 +686,13 @@ void Simplifier::removeAllLongsFromWatches()
 
 bool Simplifier::eliminateVars()
 {
+    //Set-up
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
     toDecrease = &numMaxElim;
+
+    //Order the variables
     orderVarsForElimInit();
 
     if (solver->conf.verbosity >= 5) {
@@ -2658,7 +2661,10 @@ void Simplifier::orderVarsForElimInit()
 {
     varElimOrder.clear();
     varElimComplexity.clear();
-    varElimComplexity.resize(solver->nVars(), std::make_pair<int, int>(1000, 1000));
+    varElimComplexity.resize(
+        solver->nVars()
+        , std::make_pair<int, int>(1000, 1000)
+    );
 
     //Go through all vars
     for (
