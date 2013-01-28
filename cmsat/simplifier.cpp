@@ -2270,19 +2270,21 @@ bool Simplifier::maybeEliminate(const Var var)
     }
 
     //Update var elim complexity heap
-    for(vector<Var>::const_iterator
-        it = touched.getTouchedList().begin()
-        , end = touched.getTouchedList().end()
-        ; it != end
-        ; it++
-    ) {
-        //No point in updating the score of this var
-        //it's eliminated already, or not to be eliminated at all
-        if (*it == var || !varElimOrder.inHeap(*it))
-            continue;
+    if (solver->conf.updateVarElimComplexityOTF) {
+        for(vector<Var>::const_iterator
+            it = touched.getTouchedList().begin()
+            , end = touched.getTouchedList().end()
+            ; it != end
+            ; it++
+        ) {
+            //No point in updating the score of this var
+            //it's eliminated already, or not to be eliminated at all
+            if (*it == var || !varElimOrder.inHeap(*it))
+                continue;
 
-        varElimComplexity[*it] = strategyCalcVarElimScore(*it);;
-        varElimOrder.update(*it);
+            varElimComplexity[*it] = strategyCalcVarElimScore(*it);;
+            varElimOrder.update(*it);
+        }
     }
 
 end:
