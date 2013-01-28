@@ -2281,8 +2281,7 @@ bool Simplifier::maybeEliminate(const Var var)
         if (*it == var || !varElimOrder.inHeap(*it))
             continue;
 
-        std::pair<int, int> cost = heuristicCalcVarElimScore(*it);
-        varElimComplexity[*it] = cost;
+        varElimComplexity[*it] = strategyCalcVarElimScore(*it);;
         varElimOrder.update(*it);
     }
 
@@ -2640,7 +2639,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
 }
 
 
-std::pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
+pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var) const
 {
     const Lit lit(var, false);
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
@@ -2693,25 +2692,8 @@ void Simplifier::orderVarsForElimInit()
         }
 
         assert(!varElimOrder.inHeap(var));
-
-        if (solver->conf.varelimStrategy == 0) {
-            std::pair<int, int> cost = heuristicCalcVarElimScore(var);
-            varElimComplexity[var] = cost;
-            varElimOrder.insert(var);
-        } else {
-            int ret = testVarElim(var);
-
-            //Cannot be eliminated
-            //But we can try later anyway...
-            //the clauses will have changed by then
-            /*if (ret == 1000)
-                continue;
-            */
-
-            varElimComplexity[var].first = ret;
-            varElimComplexity[var].second = 0;
-            varElimOrder.insert(var);
-        }
+        varElimComplexity[var] = strategyCalcVarElimScore(var);;
+        varElimOrder.insert(var);
     }
     //touchedVars.clear();
     assert(varElimOrder.heapProperty());
@@ -2727,6 +2709,21 @@ void Simplifier::orderVarsForElimInit()
         << endl;
     }
     #endif
+}
+
+std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
+{
+    std::pair<int, int> cost;
+    if (solver->conf.varelimStrategy == 0) {
+        cost = heuristicCalcVarElimScore(var);
+    } else {
+        int ret = testVarElim(var);
+
+        cost.first = ret;
+        cost.second = 0;
+    }
+
+    return cost;
 }
 
 inline bool Simplifier::allTautologySlim(const Lit lit)

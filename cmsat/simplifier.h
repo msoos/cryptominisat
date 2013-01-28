@@ -607,8 +607,9 @@ private:
         size_t lit;
     };
     HeuristicData calcDataForHeuristic(const Lit lit) const;
+    std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
-    pair<int, int>  heuristicCalcVarElimScore(const Var var);
+    pair<int, int>  heuristicCalcVarElimScore(const Var var) const;
     bool        merge(
         const Watched& ps
         , const Watched& qs
