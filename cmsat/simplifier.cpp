@@ -2455,7 +2455,10 @@ bool Simplifier::merge(
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
-    if (useCache && solver->conf.doAsymmTE) {
+    if (useCache
+        && solver->conf.doAsymmTE
+        && numMaxVarElimAgressiveCheck > 0
+    ) {
         for (size_t i = 0; i < dummy.size(); i++) {
             const Lit lit = toClear[i];
             assert(lit.var() != noPosLit.var());
