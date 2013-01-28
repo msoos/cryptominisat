@@ -426,12 +426,17 @@ bool ClauseVivifier::vivifyClausesCache(
 
             //Go through the watchlist
             vec<Watched>& thisW = solver->watches[lit.toInt()];
-            countTime += thisW.size();
+            countTime += thisW.size()*3;
             for(vec<Watched>::iterator
                 wit = thisW.begin(), wend = thisW.end()
                 ; wit != wend
                 ; wit++
             ) {
+                //Can't do anything with a clause
+                if (wit->isClause())
+                    continue;
+
+                countTime += 5;
 
                 if (alsoStrengthen) {
                     //Strengthening w/ bin
@@ -459,6 +464,7 @@ bool ClauseVivifier::vivifyClausesCache(
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (wit->learnt() && !cl.learnt()) {
                         wit->setLearnt(false);
+                        countTime += solver->watches[wit->lit1().toInt()].size()*3;
                         findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
                         solver->binTri.redBins--;
                         solver->binTri.irredBins++;
@@ -491,6 +497,8 @@ bool ClauseVivifier::vivifyClausesCache(
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (!cl.learnt() && wit->learnt()) {
                         wit->setLearnt(false);
+                        countTime += solver->watches[wit->lit1().toInt()].size()*3;
+                        countTime += solver->watches[wit->lit2().toInt()].size()*3;
                         findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), true).setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
                         solver->binTri.redTris--;
@@ -537,6 +545,7 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Clear 'seen2'
+        countTime += lits2.size()*3;
         for (vector<Lit>::const_iterator
             it2 = lits2.begin(), end2 = lits2.end()
             ; it2 != end2
@@ -547,6 +556,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Clear 'seen' and fill new clause data
         lits.clear();
+        countTime += cl.size()*3;
         for (Clause::const_iterator
             it2 = cl.begin(), end2 = cl.end()
             ; it2 != end2
@@ -569,6 +579,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && lits.size() > 1
             && !isSubsumed
         ) {
+            countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
@@ -578,6 +589,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && lits.size() > 1
             && !isSubsumed
         ) {
+            countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp,STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
@@ -597,6 +609,7 @@ bool ClauseVivifier::vivifyClausesCache(
             solver->clAllocator->clauseFree(offset);
         } else {
             tmpStats.shrinked++;
+            countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
             solver->clAllocator->clauseFree(offset);
 
