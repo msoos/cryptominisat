@@ -119,8 +119,13 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
         }
 
         //Reallocate data
-        dataStart = (BASE_DATA_TYPE*)realloc(dataStart, newMaxSize*sizeof(BASE_DATA_TYPE));
-        if (!dataStart) {
+        dataStart = (BASE_DATA_TYPE*)realloc(
+            dataStart
+            , newMaxSize*sizeof(BASE_DATA_TYPE)
+        );
+
+        //Realloc failed?
+        if (dataStart == NULL) {
             cout
             << "ERROR: while reallocating clause space"
             << endl;
