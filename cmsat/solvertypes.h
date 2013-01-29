@@ -533,12 +533,12 @@ struct PropStats
             , "% of propagations"
         );
 
-        printStatsLine("c propsTri", propsTriIrred
+        printStatsLine("c propsTriIred", propsTriIrred
             , 100.0*(double)propsTriIrred/(double)propagations
             , "% of propagations"
         );
 
-        printStatsLine("c propsTri", propsTriRed
+        printStatsLine("c propsTriRed", propsTriRed
             , 100.0*(double)propsTriRed/(double)propagations
             , "% of propagations"
         );
