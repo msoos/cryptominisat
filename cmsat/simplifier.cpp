@@ -1437,9 +1437,6 @@ void Simplifier::blockBinaries()
 
 void Simplifier::blockClauses()
 {
-    if (clauses.empty())
-        return;
-
     const double myTime = cpuTime();
     size_t blocked = 0;
     size_t blockedLits = 0;
