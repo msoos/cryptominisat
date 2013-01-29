@@ -1361,7 +1361,7 @@ void Simplifier::blockBinaries()
         ) {
             if (!ws[i].isBinary()
                 //Don't go through the same binary twice
-                || (ws[i].isBinary() && lit < ws[i].lit1())
+                || lit < ws[i].lit1()
             ) {
                 ws[j++] = ws[i];
                 continue;
