@@ -849,11 +849,11 @@ Lit PropEngine::propagateFull(
                 if (stampType == STAMP_IRRED) {
                     //Root for literals propagated afterwards will be this literal
                     root = trail.back();
+                    toPropRedBin.push(trail.back());
                 }
 
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
-                if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
                 goto start;
 
             case PROP_NOTHING:
