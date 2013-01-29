@@ -1913,15 +1913,15 @@ void Simplifier::removeClausesHelper(
                 lits[0] = lit;
                 lits[1] = watch.lit1();
                 blockedClauses.push_back(BlockedClause(lit, lits));
+
+                //touch removed lits
+                touched.touch(watch.lit1());
             }
 
             //Remove
             *toDecrease -= solver->watches[lit.toInt()].size();
             *toDecrease -= solver->watches[watch.lit1().toInt()].size();
             solver->detachBinClause(lit, watch.lit1(), watch.learnt());
-            if (!watch.learnt()) {
-                touched.touch(watch.lit1());
-            }
             continue;
         }
 
@@ -1943,6 +1943,10 @@ void Simplifier::removeClausesHelper(
                 lits[2] = watch.lit2();
 
                 blockedClauses.push_back(BlockedClause(lit, lits));
+
+                //Touch removed lits
+                touched.touch(watch.lit1());
+                touched.touch(watch.lit2());
             }
 
             //Remove
@@ -1950,10 +1954,6 @@ void Simplifier::removeClausesHelper(
             *toDecrease -= solver->watches[watch.lit1().toInt()].size();
             *toDecrease -= solver->watches[watch.lit2().toInt()].size();
             solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
-            if (!watch.learnt()) {
-                touched.touch(watch.lit1());
-                touched.touch(watch.lit2());
-            }
 
             continue;
         }
