@@ -337,13 +337,17 @@ static inline const Watched& findWatchedOfTri(
     , const bool learnt
 ) {
     const vec<Watched>& ws = wsFull[lit1.toInt()];
-    for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isTri()
-            && i->lit1() == lit2
-            && i->lit2() == lit3
-            && i->learnt() == learnt
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->isTri()
+            && it->lit1() == lit2
+            && it->lit2() == lit3
+            && it->learnt() == learnt
         ) {
-            return *i;
+            return *it;
         }
     }
 
