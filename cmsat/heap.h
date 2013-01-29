@@ -183,12 +183,6 @@ class Heap {
     bool heapProperty() const {
         return heapProperty(1); }
 
-
-    // COMPAT: should be removed
-    void setBounds (uint32_t n) { }
-    void increase  (uint32_t n) { decrease(n); }
-    uint32_t  getmin    ()      { return removeMin(); }
-
 };
 
 
