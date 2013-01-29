@@ -1441,6 +1441,7 @@ void Simplifier::blockClauses()
     size_t blocked = 0;
     size_t blockedLits = 0;
     size_t wenThrough = 0;
+    size_t tried = 0;
     toDecrease = &numMaxBlocked;
     while(*toDecrease > 0
         && wenThrough < 2*clauses.size()
@@ -1465,6 +1466,8 @@ void Simplifier::blockClauses()
 
         //Cannot be learnt
         assert(!cl.learnt());
+
+        tried++;
 
         //Fill up temps
         bool toRemove = false;
@@ -1507,6 +1510,7 @@ void Simplifier::blockClauses()
         cout
         << "c blocking"
         << " through: " << wenThrough
+        << " tried: " << tried
         << " blocked: " << blocked
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
