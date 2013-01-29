@@ -330,8 +330,10 @@ Clause* Searcher::analyze(
             || out_learnt.size() < 10
             )
     ) {
-        stampBasedLearntMinim(out_learnt);
         minimiseLearntFurther(out_learnt);
+
+        //Stamp-based minimization
+        stampBasedLearntMinim(out_learnt);
     }
 
     //Calc stats
