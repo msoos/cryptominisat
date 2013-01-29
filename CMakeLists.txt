@@ -14,7 +14,12 @@ ENDIF()
 PROJECT(cryptoms)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
 
-SET (CMAKE_C_COMPILER             "/usr/bin/clang")
+# SET (CMAKE_CXX_COMPILER  "/usr/bin/clang")
+# SET (CMAKE_AR      "/usr/bin/llvm-ar-3.1")
+# SET (CMAKE_LINKER  "/usr/bin/llvm-ld-3.1" CACHE INTERNAL STRING)
+# SET (CMAKE_NM      "/usr/bin/llvm-nm-3.1")
+# SET (CMAKE_OBJDUMP "/usr/bin/llvm-objdump-3.1")
+# SET (CMAKE_RANLIB  "/usr/bin/llvm-ranlib-3.1")
 
 # -----------------------------------------------------------------------------
 # Set build flags if compiler if gcc
