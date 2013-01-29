@@ -711,7 +711,7 @@ Lit PropEngine::propagateFull(
 
                     toPropNorm.push(trail.back());
                     toPropBin.push(trail.back());
-                    if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
+                    if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
                     goto start;
 
                 case PROP_NOTHING:
@@ -853,7 +853,7 @@ Lit PropEngine::propagateFull(
 
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
-                if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
+                if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
                 goto start;
 
             case PROP_NOTHING:
