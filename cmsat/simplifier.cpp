@@ -533,7 +533,6 @@ void Simplifier::linkInClause(Clause& cl)
         *toDecrease -= ws.size();
 
         ws.push(Watched(offset, cl.abst));
-        //touchedVars.touch(cl[i], cl.learnt());
     }
     assert(cl.abst == calcAbstraction(cl));
 }
@@ -2706,7 +2705,6 @@ void Simplifier::orderVarsForElimInit()
         varElimComplexity[var] = strategyCalcVarElimScore(var);;
         varElimOrder.insert(var);
     }
-    //touchedVars.clear();
     assert(varElimOrder.heapProperty());
 
     //Print sorted listed list
