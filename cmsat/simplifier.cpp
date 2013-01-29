@@ -2685,15 +2685,15 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var) const
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
-    int normCost = pos.longer + neg.longer
-        + pos.tri + neg.tri
-        + pos.bin + neg.bin;
+    int posTotal = pos.longer + pos.tri;
+    int negTotal = neg.longer + neg.tri;
+    int normCost =  posTotal*negTotal + pos.bin*negTotal*2 + neg.bin*posTotal*2 + pos.bin*neg.bin*3;
 
-    if ((pos.longer + pos.tri + pos.bin) <= 2
+    /*if ((pos.longer + pos.tri + pos.bin) <= 2
         && (neg.longer + neg.tri + neg.bin) <= 2
     ) {
         normCost /= 2;
-    }
+    }*/
 
     if ((pos.longer + pos.tri + pos.bin) == 0
         || (neg.longer + neg.tri + neg.bin) == 0
