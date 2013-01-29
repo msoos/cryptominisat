@@ -398,7 +398,7 @@ inline void removeTriAllButOne(
 // BINARY Clause
 //////////////////
 
-static inline bool findWBin(
+inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
@@ -409,7 +409,7 @@ static inline bool findWBin(
     return i != end;
 }
 
-static inline bool findWBin(
+inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
@@ -426,7 +426,7 @@ static inline bool findWBin(
     return i != end;
 }
 
-static inline void removeWBin(
+inline void removeWBin(
     vector<vec<Watched> > &wsFull
     , const Lit lit1
     , const Lit lit2
@@ -447,7 +447,7 @@ static inline void removeWBin(
     ws.shrink_(1);
 }
 
-static inline Watched& findWatchedOfBin(
+inline Watched& findWatchedOfBin(
     vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
