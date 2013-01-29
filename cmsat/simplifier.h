@@ -446,7 +446,6 @@ private:
     int64_t  numMaxBlockedBin;
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
-    uint32_t clTouchedTodo;
 
     //Propagation&handling of stuff
     bool propagate();

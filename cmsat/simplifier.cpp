@@ -1725,10 +1725,6 @@ void Simplifier::setLimits()
         numMaxSubsume1 = 0;
     }
 
-    clTouchedTodo = 2000;
-    if (addedClauseLits > 3000000) clTouchedTodo /= 2;
-    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-
     //For debugging
 
     //numMaxSubsume0 = 0;
