@@ -24,7 +24,7 @@
 #include "watched.h"
 
 class Solver;
-class Clause;
+struct Clause;
 
 /**
 @brief Helper class to completely detaches all(or only non-native) clauses

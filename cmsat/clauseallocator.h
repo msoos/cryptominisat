@@ -34,7 +34,7 @@
 
 #define BASE_DATA_TYPE uint32_t
 
-class Clause;
+struct Clause;
 class Solver;
 class PropEngine;
 
