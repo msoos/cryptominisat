@@ -760,7 +760,9 @@ inline void Searcher::varDecayActivity()
 inline void Searcher::varBumpActivity(Var var)
 {
     activities[var] += var_inc;
-    if ( (activities[var]) > ((0x1U) << 24) ) {
+    if ( (activities[var]) > ((0x1U) << 24)
+        || var_inc > ((0x1U) << 24)
+    ) {
         // Rescale:
         for (vector<uint32_t>::iterator
             it = activities.begin()
