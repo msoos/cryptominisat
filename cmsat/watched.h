@@ -28,7 +28,10 @@
 #include "constants.h"
 #include "cloffset.h"
 #include "solvertypes.h"
+#include "vec.h"
+
 #include <limits>
+
 
 enum WatchType {
     watch_clause_t = 0

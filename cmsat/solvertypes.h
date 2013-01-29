@@ -23,11 +23,7 @@
 #define SOLVERTYPES_H
 
 #include "constants.h"
-#include "vec.h"
 
-#include <iostream>
-#include <vector>
-#include <iomanip>
 #include <sstream>
 #include <algorithm>
 #include <limits>
@@ -39,6 +35,8 @@ using std::vector;
 using std::cout;
 using std::endl;
 using std::string;
+
+#include "assert.h"
 
 //Typedefs
 typedef uint32_t Var;

@@ -38,6 +38,7 @@
 #include "bitarray.h"
 #include "solvertypes.h"
 #include "heap.h"
+#include "touchlist.h"
 
 using std::vector;
 using std::list;
@@ -50,52 +51,6 @@ class SolutionExtender;
 class Solver;
 class GateFinder;
 class XorFinderAbst;
-
-class TouchList
-{
-public:
-    void touch(const Lit lit)
-    {
-        touch(lit.var());
-    }
-
-    void touch(const Var var)
-    {
-        if (touchedBitset.size() <= var)
-            touchedBitset.resize(var+1, 0);
-
-        if (touchedBitset[var] == 0) {
-            touched.push_back(var);
-            touchedBitset[var] = 1;
-        }
-    }
-
-    const vector<Var>& getTouchedList() const
-    {
-        return touched;
-    }
-
-    void clear()
-    {
-        //Clear touchedBitset
-        for(vector<Var>::const_iterator
-            it = touched.begin(), end = touched.end()
-            ; it != end
-            ; it++
-        ) {
-            touchedBitset[*it] = 0;
-        }
-
-        //Clear touched
-        touched.clear();
-    }
-
-private:
-    vector<Var> touched;
-    vector<char> touchedBitset;
-
-
-};
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
