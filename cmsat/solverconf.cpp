@@ -102,6 +102,7 @@ SolverConf::SolverConf() :
         , doBlockedClause  (true)
         , doExtBinSubs     (true)
         , doVarElim        (true)
+        , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimRatioPerIter(0.29)
         , doSubsume1       (true)
