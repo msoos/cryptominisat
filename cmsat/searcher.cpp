@@ -1712,7 +1712,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         ) {
             if (conf.verbosity >= 1) {
                 cout
-                << "C new bins since last SCC: "
+                << "c new bins since last SCC: "
                 << std::setw(2)
                 << solver->binTri.numNewBinsSinceSCC
                 << " free vars %:"
