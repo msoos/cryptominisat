@@ -412,7 +412,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     }
 }
 
-#ifndef DISABLE_ZLIB
+#ifdef USE_ZLIB
 template void DimacsParser::parse_DIMACS(gzFile input_stream);
 #else
 template void DimacsParser::parse_DIMACS(FILE* input_stream);

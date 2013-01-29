@@ -1,5 +1,4 @@
 include_directories(
-    ${ZLIB_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
 )

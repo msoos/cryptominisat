@@ -104,11 +104,11 @@ void Main::readInAFile(const std::string& filename)
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         FILE * in = fopen(filename.c_str(), "rb");
     #else
         gzFile in = gzopen(filename.c_str(), "rb");
-    #endif // DISABLE_ZLIB
+    #endif
 
     if (in == NULL) {
         cout
@@ -122,11 +122,11 @@ void Main::readInAFile(const std::string& filename)
     DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         fclose(in);
     #else
         gzclose(in);
-    #endif // DISABLE_ZLIB
+    #endif
 }
 
 void Main::readInStandardInput()
@@ -137,11 +137,11 @@ void Main::readInStandardInput()
         << endl;
     }
 
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         FILE * in = stdin;
     #else
         gzFile in = gzdopen(fileno(stdin), "rb");
-    #endif // DISABLE_ZLIB
+    #endif
 
     if (in == NULL) {
         cout << "ERROR! Could not open standard input for reading" << endl;
@@ -151,9 +151,9 @@ void Main::readInStandardInput()
     DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
-    #ifndef DISABLE_ZLIB
+    #ifdef USE_ZLIB
         gzclose(in);
-    #endif // DISABLE_ZLIB
+    #endif
 }
 
 void Main::parseInAllFiles()
@@ -533,11 +533,11 @@ void Main::parseCommandLine()
         cout
         << "USAGE: " << argv[0] << " [options] <input-files>" << endl
         << " where input is "
-        #ifdef DISABLE_ZLIB
+        #ifndef USE_ZLIB
         << "plain"
         #else
         << "plain or gzipped"
-        #endif // DISABLE_ZLIB
+        #endif
         << " DIMACS." << endl;
 
         cout << cmdline_options << endl;
