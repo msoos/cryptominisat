@@ -633,7 +633,7 @@ bool ClauseVivifier::vivifyClausesCache(
     }
 
     cout
-    << "c [timestamp]"
+    << "c [stamp]"
     << " lit-rem: " << remLitTimeStampTotal
     << " inv-lit-rem: " << remLitTimeStampTotalInv
     << " stamp-rem: " << subsumedStamp
