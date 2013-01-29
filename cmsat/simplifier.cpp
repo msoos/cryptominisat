@@ -2267,6 +2267,16 @@ bool Simplifier::maybeEliminate(const Var var)
                 }
             }
         }
+
+        //Touch every var of the new clause, so we re-estimate
+        //elimination complexity for this var
+        for(vector<Lit>::const_iterator
+            it3 = finalLits.begin(), end3 = finalLits.end()
+            ; it3 != end3
+            ; it3++
+        ) {
+            touched.touch(*it3);
+        }
     }
 
     //Update var elim complexity heap
