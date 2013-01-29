@@ -220,11 +220,12 @@ bool ClauseVivifier::vivifyClausesLongIrred()
 
         //if done enough, stop doing it
         if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
-            if (solver->conf.verbosity >= 2) {
+            if (solver->conf.verbosity >= 3) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
                 << endl;
             }
+            runStats.timeOut++;
             needToFinish = true;
         }
 
