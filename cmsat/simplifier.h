@@ -398,7 +398,7 @@ private:
     int64_t  numMaxElimVars;
     int64_t  numMaxAsymm;
     int64_t  numMaxBlocked;
-    int64_t  numMaxBlockedBin;
+    int64_t  numMaxBlockedImpl;
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
 
@@ -591,7 +591,7 @@ private:
     //Blocked clause elimination
     void asymmTE();
     void blockClauses();
-    void blockBinaries();
+    void blockImplicit(bool bins = false, bool tris = true);
     bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
 

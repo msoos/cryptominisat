@@ -101,6 +101,9 @@ public:
     bool operator >  (const Lit& p) const {
         return x > p.x;
     }
+    bool operator >=  (const Lit& p) const {
+        return x >= p.x;
+    }
     static Lit toLit(uint32_t data)
     {
         return Lit(data);
