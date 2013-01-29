@@ -105,6 +105,7 @@ SolverConf::SolverConf() :
         , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimRatioPerIter(0.29)
+        , varElimCostEstimateStrategy(0)
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)

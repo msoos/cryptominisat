@@ -118,6 +118,7 @@ class SolverConf
         int      doVarElim;          ///<Perform variable elimination
         int      updateVarElimComplexityOTF;
         int      varelimStrategy; ///<Guess varelim order, or calculate?
+        int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving

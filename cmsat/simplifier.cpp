@@ -2685,9 +2685,33 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var) const
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
-    int posTotal = pos.longer + pos.tri;
-    int negTotal = neg.longer + neg.tri;
-    int normCost =  posTotal*negTotal + pos.bin*negTotal*2 + neg.bin*posTotal*2 + pos.bin*neg.bin*3;
+    //Estimate cost
+    int posTotalLonger = pos.longer + pos.tri;
+    int negTotalLonger = neg.longer + neg.tri;
+    int normCost;
+    switch(solver->conf.varElimCostEstimateStrategy) {
+        case 0:
+            normCost =  posTotalLonger*negTotalLonger
+                + pos.bin*negTotalLonger*2
+                + neg.bin*posTotalLonger*2
+                + pos.bin*neg.bin*3;
+            break;
+
+        case 1:
+            normCost =  posTotalLonger*negTotalLonger
+                + pos.bin*negTotalLonger*2
+                + neg.bin*posTotalLonger*2
+                + pos.bin*neg.bin*4;
+            break;
+
+        default:
+            cout
+            << "ERROR: Invalid var-elim cost estimation strategy"
+            << endl;
+            exit(-1);
+            break;
+    }
+
 
     /*if ((pos.longer + pos.tri + pos.bin) <= 2
         && (neg.longer + neg.tri + neg.bin) <= 2
