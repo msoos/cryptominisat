@@ -144,8 +144,8 @@ void Searcher::analyzeHelper(
         return;
 
     if (seen2[var] == 0 && //hasn't been bumped yet
-        ((var_bump_necessary
-            && conf.rarely_bump_var_act) //rarely bump, but bump this time
+        (
+          (var_bump_necessary && conf.rarely_bump_var_act) //rarely bump, but bump this time
           || !conf.rarely_bump_var_act //always bump
         )
     ) {
