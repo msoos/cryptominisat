@@ -25,7 +25,6 @@
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
-#include <omp.h>
 #include "sccfinder.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
@@ -33,6 +32,10 @@
 #include <algorithm>
 using std::cout;
 using std::endl;
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 //#define VERBOSE_DEBUG_GEN_CONFL_DOT
 
@@ -1672,7 +1675,13 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         if (sumConflicts() > solver->getNextCleanLimit()) {
             if (conf.verbosity >= 3) {
                 cout
-                << "c th " << omp_get_thread_num() << " cleaning"
+                << "c th "
+                #ifdef USE_OMP
+                << omp_get_thread_num()
+                #else
+                << "1"
+                #endif
+                << " cleaning"
                 << " getNextCleanLimit(): " << solver->getNextCleanLimit()
                 << " numConflicts : " << stats.conflStats.numConflicts
                 << " SumConfl: " << sumConflicts()

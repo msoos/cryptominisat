@@ -31,13 +31,16 @@
 #include "solutionextender.h"
 #include "varupdatehelper.h"
 #include "gatefinder.h"
-#include <omp.h>
 #include <fstream>
 #include <cmath>
 #include "xorfinder.h"
 #include <fcntl.h>
 using std::cout;
 using std::endl;
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 #ifdef USE_MYSQL
 #include "mysqlstats.h"

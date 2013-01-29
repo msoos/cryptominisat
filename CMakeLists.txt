@@ -54,8 +54,8 @@ ENDIF (ZLIB_FOUND)
 # -----------------------------------------------------------------------------
 # Look for OpenMP (Multi-threading extension to C++)
 # -----------------------------------------------------------------------------
-FIND_PACKAGE(OpenMP REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#FIND_PACKAGE(OpenMP REQUIRED)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # -----------------------------------------------------------------------------
 # Add GIT version
