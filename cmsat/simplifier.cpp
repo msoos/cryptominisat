@@ -2256,7 +2256,7 @@ bool Simplifier::maybeEliminate(const Var var)
         } else if (finalLits.size() == 3 || finalLits.size() == 2) {
             //Subsume long
             Sub0Ret ret = subsume0Final(
-                std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
+                std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
                 , finalLits //Literals in this binary clause
                 , calcAbstraction(finalLits) //Abstraction of literals
             );
