@@ -260,8 +260,10 @@ Clause* Solver::addClauseInt(
     }
 }
 
-void Solver::attachClause(const Clause& cl)
-{
+void Solver::attachClause(
+    const Clause& cl
+    , const bool checkAttach
+) {
     //Update stats
     if (cl.learnt())
         binTri.redLits += cl.size();
@@ -269,7 +271,7 @@ void Solver::attachClause(const Clause& cl)
         binTri.irredLits += cl.size();
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachClause(cl);
+    PropEngine::attachClause(cl, checkAttach);
 }
 
 void Solver::attachTriClause(

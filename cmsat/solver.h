@@ -259,7 +259,10 @@ class Solver : public Searcher
         );
 
         //Attaching-detaching clauses
-        virtual void attachClause(const Clause& c);
+        virtual void attachClause(
+            const Clause& c
+            , const bool checkAttach = true
+        );
         virtual void attachBinClause(
             const Lit lit1
             , const Lit lit2
