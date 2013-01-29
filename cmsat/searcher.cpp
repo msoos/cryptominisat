@@ -1945,15 +1945,14 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     //Do cache-based minimisation and watchlist-based minimisation
     //one-by-one on the literals. Order could be enforced to get smallest
     //clause, but it doesn't really matter, I think
-    size_t done = 0;
+    size_t timeSpent = 0;
     for (vector<Lit>::iterator
         l = cl.begin(), end = cl.end()
-        ; l != end && done < 30
+        ; l != end && timeSpent < 300
         ; l++
     ) {
         if (seen[l->toInt()] == 0)
             continue;
-        done++;
 
         Lit lit = *l;
         //Watchlist-based minimisation
@@ -1964,6 +1963,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
             ; i != end
             ; i++
         ) {
+            timeSpent++;
             if (i->isBinary()) {
                 seen[(~i->lit1()).toInt()] = 0;
                 continue;
