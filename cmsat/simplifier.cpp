@@ -1409,7 +1409,7 @@ void Simplifier::blockBinaries()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c blocking bins"
+        << "c [block] bins"
         << " through: " << wenThrough
         << " blocked: " << blocked
         << " finished: " << (wsLit == solver->watches.size())
@@ -1508,7 +1508,7 @@ void Simplifier::blockClauses()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c blocking"
+        << "c [block] long"
         << " through: " << wenThrough
         << " tried: " << tried
         << " blocked: " << blocked
