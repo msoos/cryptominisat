@@ -283,7 +283,7 @@ PropResult PropEngine::propNormalClause(
         return PROP_NOTHING;
     }
     propStats.bogoProps += 4;
-    const uint32_t offset = i->getOffset();
+    const ClOffset offset = i->getOffset();
     Clause& c = *clAllocator->getPointer(offset);
     #ifdef STATS_NEEDED
     c.stats.numLookedAt++;
@@ -553,7 +553,7 @@ PropBy PropEngine::propagate(
             //Pre-fetch long clause
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
-                    const uint32_t offset = i->getOffset();
+                    const ClOffset offset = i->getOffset();
                     __builtin_prefetch(clAllocator->getPointer(offset));
                 }
 
