@@ -257,6 +257,7 @@ class ClauseVivifier {
         );
         vector<Lit> stampNorm;
         vector<Lit> stampInv;
+        int64_t timeAvailable;
 
 
           //Subsumtion of bin with bin
