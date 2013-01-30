@@ -650,6 +650,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
     uint64_t remTris = 0;
     uint64_t remLitFromBin = 0;
     uint64_t remLitFromTri = 0;
+    uint64_t stampTriRem = 0;
     const size_t origTrailSize = solver->trail.size();
     timeAvailable = 200L*1000L*1000L;
 
@@ -704,18 +705,11 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     continue;
                 }
 
-                //Brand new TRI
-                if (lastLit != i->lit1()) {
-                    lastLit2 = i->lit2();
-                    lastLearnt = i->learnt();
-                    *j++ = *i;
-                    continue;
-                }
-
                 bool remove = false;
 
                 //Subsumed by bin
-                if (lastLit2 == lit_Undef
+                if (lastLit == i->lit1()
+                    && lastLit2 == lit_Undef
                     && lastLit == i->lit1()
                 ) {
                     if (lastLearnt && !i->learnt()) {
@@ -747,6 +741,15 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     assert(!(i->learnt() == false && lastLearnt == true));
 
                     remove = true;
+                }
+
+                if (!remove) {
+                    lits.clear();
+                    lits.push_back(lit);
+                    lits.push_back(i->lit1());
+                    lits.push_back(i->lit2());
+                    remove = stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv);
+                    stampTriRem += remove;
                 }
 
                 if (remove) {
@@ -976,10 +979,10 @@ end:
         cout
         << "c [implicit]"
         << " rem-bin " << remBins
-        << " rem-tri " << remTris
+        << " rem-tri " << remTris << " (stamp: " << stampTriRem << ")"
         << " rem-litBin: " << remLitFromBin
         << " rem-litTri: " << remLitFromTri
-        << " stamp:" << stampRem
+        << " (rem-lit by stamp: " << stampRem << ")"
         << " set-var: " << solver->trail.size() - origTrailSize
 
         << " T: " << std::fixed << std::setprecision(2) << std::setw(5)
