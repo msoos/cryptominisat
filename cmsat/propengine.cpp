@@ -701,6 +701,16 @@ Lit PropEngine::propagateFull(
             ; k != end
             ; k++
         ) {
+            //Pre-fetch long clause
+            if (k->isClause()) {
+                if (value(k->getBlockedLit()) != l_True) {
+                    const ClOffset offset = k->getOffset();
+                    __builtin_prefetch(clAllocator->getPointer(offset));
+                }
+
+                continue;
+            } //end CLAUSE
+
             //If something other than binary, skip
             if (!k->isBinary())
                 continue;
