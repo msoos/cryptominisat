@@ -749,9 +749,7 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
 //Add binary clause to deepest common ancestor
 inline void PropEngine::addHyperBin(const Lit p)
 {
-    #ifdef STATS_NEEDED
     propStats.bogoProps += 1;
-    #endif
 
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
