@@ -738,7 +738,10 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 }
 
                 //Subsumed by Tri
-                if (lastLit == i->lit1() && lastLit2 == i->lit2()) {
+                if (!remove
+                    && lastLit == i->lit1()
+                    && lastLit2 == i->lit2()
+                ) {
                     //The sorting algorithm prefers non-learnt to learnt, so it is
                     //impossible to have non-learnt before learnt
                     assert(!(i->learnt() == false && lastLearnt == true));
