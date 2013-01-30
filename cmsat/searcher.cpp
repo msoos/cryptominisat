@@ -840,7 +840,9 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 cancelUntil(0);
                 stats.litsLearntNonMin += 1;
                 stats.litsLearntFinal += 1;
+                #ifdef STATS_NEEDED
                 propStats.propsUnit++;
+                #endif
                 stats.hyperBinAdded += hyperBinResAll();
                 std::pair<size_t, size_t> tmp = removeUselessBins();
                 stats.transReduRemIrred += tmp.first;
@@ -861,8 +863,10 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver
+                #ifdef STATS_NEEDED
                 , &hist.watchListSizeTraversed
                 //, &hist.litPropagatedSomething
+                #endif
             );
         }
 
@@ -936,11 +940,13 @@ lbool Searcher::new_decision()
 
         //Update stats
         stats.decisions++;
+        #ifdef STATS_NEEDED
         if (next.sign()) {
             varData[next.var()].stats.negDecided++;
         } else {
             varData[next.var()].stats.posDecided++;
         }
+        #endif
     }
 
     // Increase decision level and enqueue 'next'
@@ -1082,6 +1088,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         hist.agilityHist.push(agility.getAgility());
         hist.numResolutionsHist.push(resolutions.sum());
 
+        #ifdef STATS_NEEDED
         if (solver->conf.doSQL) {
             if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
                 printClauseDistribSQL();
@@ -1103,6 +1110,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             clauseGlueDistrib[truncGlue]++;
             sizeAndGlue[truncSize][truncGlue]++;
         }
+        #endif
     }
     cancelUntil(backtrack_level);
     if (params.update) {
@@ -1144,8 +1152,11 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Unitary learnt
             stats.learntUnits++;
             enqueue(learnt_clause[0]);
+            assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0");
+
+            #ifdef STATS_NEEDED
             propStats.propsUnit++;
-            assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
+            #endif
 
             break;
         case 2:
@@ -1157,7 +1168,9 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
 
+            #ifdef STATS_NEEDED
             propStats.propsBinRed++;
+            #endif
             break;
 
         case 3:
@@ -1171,7 +1184,9 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
+            #ifdef STATS_NEEDED
             propStats.propsTriRed++;
+            #endif
             break;
 
         default:
@@ -1184,7 +1199,11 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
                 addHyperBin(learnt_clause[0], *cl);
             else
                 enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
+
+            #ifdef STATS_NEEDED
             propStats.propsLongRed++;
+            #endif
+
             break;
     }
 
@@ -1227,6 +1246,7 @@ void Searcher::resetStats()
     hist.reset(conf.shortTermHistorySize);
 
     //About vars
+    #ifdef STATS_NEEDED
     for(vector<VarData>::iterator
         it = varData.begin(), end = varData.end()
         ; it != end
@@ -1234,6 +1254,7 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
+    #endif
 
     //Clause data
     clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMaxSize, 0);
@@ -1248,8 +1269,10 @@ void Searcher::resetStats()
     //Rest solving stats
     stats.clear();
     propStats.clear();
+    #ifdef STATS_NEEDED
     lastSQLPropStats = propStats;
     lastSQLGlobalStats = stats;
+    #endif
 
     //Set already set vars
     origTrailSize = trail.size();
@@ -1268,8 +1291,10 @@ lbool Searcher::burstSearch()
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
     const size_t numBinsUntilNow = stats.learntBins;
+    #ifdef STATS_NEEDED
     const size_t numTriLHBRUntilNow = propStats.triLHBR;
     const size_t numLongLHBRUntilNow = propStats.longLHBR;
+    #endif
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1302,8 +1327,10 @@ lbool Searcher::burstSearch()
         << conf.burstSearchLen << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
+        #ifdef STATS_NEEDED
         << " LHBR: "
         << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
+        #endif
         << endl;
     }
 
@@ -1422,6 +1449,7 @@ struct MyPolarData
     }
 }*/
 
+#ifdef STATS_NEEDED
 void Searcher::calcVariancesLT(
     double& avgDecLevelVar
     , double& avgTrailLevelVar
@@ -1489,6 +1517,7 @@ void Searcher::printRestartSQL()
     //Variable stats
     solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
 }
+#endif
 
 struct VarDumpOrder
 {
@@ -1507,6 +1536,7 @@ struct VarDumpOrder
     }
 };
 
+#ifdef STATS_NEEDED
 vector<Var> Searcher::calcVarsToDump() const
 {
     //How much to dump per criteria
@@ -1567,7 +1597,6 @@ vector<Var> Searcher::calcVarsToDump() const
     return toDumpVec;
 }
 
-
 void Searcher::printClauseDistribSQL()
 {
     solver->sqlStats->clauseSizeDistrib(
@@ -1584,6 +1613,7 @@ void Searcher::printClauseDistribSQL()
         , sizeAndGlue
     );
 }
+#endif
 
 
 /**
@@ -1757,14 +1787,17 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
             lastRestartPrint = stats.conflStats.numConflicts;
         }
 
+        #ifdef STATS_NEEDED
         if (conf.doSQL) {
             printRestartSQL();
         }
+
         //Update varDataLT
         for(size_t i = 0; i < varData.size(); i++) {
             varDataLT[i].addData(varData[i].stats);
             varData[i].stats.reset();
         }
+        #endif
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1795,6 +1828,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         << endl;
     }
 
+    #ifdef STATS_NEEDED
     if (conf.doSQL) {
         printRestartSQL();
         //printVarStatsSQL();
@@ -1803,17 +1837,20 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         printClauseDistribSQL();
         std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
     }
+    #endif
 
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         propStats.print(stats.cpu_time);
+        #ifdef STATS_NEEDED
         printStatsLine("c props/decision"
             , (double)propStats.propagations/(double)stats.decisions
         );
         printStatsLine("c props/conflict"
             , (double)propStats.propagations/(double)stats.conflStats.numConflicts
         );
+        #endif
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 

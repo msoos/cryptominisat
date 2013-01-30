@@ -80,15 +80,20 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
 #MySQL
+SET(STATSNEEDED 1)
+if (STATSNEEDED)
+    add_definitions( -DSTATS_NEEDED )
+endif (STATSNEEDED)
+
 find_package(MySQL)
-IF (MYSQL_FOUND)
+IF (MYSQL_FOUND AND STATSNEEDED)
     MESSAGE(STATUS "OK, Found MySQL!")
     include_directories(${MySQL_INCLUDE_DIR})
     link_directories(${MySQL_LIB_DIR})
     add_definitions( -DUSE_MYSQL )
-ELSE (MYSQL_FOUND)
+ELSE (MYSQL_FOUND AND STATSNEEDED)
     MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
-ENDIF (MYSQL_FOUND)
+ENDIF (MYSQL_FOUND AND STATSNEEDED)
 
 # Some awful definitiions
 add_definitions(-DVERSION="3.0.0")

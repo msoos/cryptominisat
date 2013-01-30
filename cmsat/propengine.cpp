@@ -238,10 +238,12 @@ inline bool PropEngine::propBinaryClause(
 ) {
     const lbool val = value(i->lit1());
     if (val == l_Undef) {
+        #ifdef STATS_NEEDED
         if (i->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
+        #endif
 
         enqueue(i->lit1(), PropBy(~p));
     } else if (val == l_False) {
@@ -283,8 +285,10 @@ PropResult PropEngine::propNormalClause(
     propStats.bogoProps += 4;
     const uint32_t offset = i->getOffset();
     Clause& c = *clAllocator->getPointer(offset);
+    #ifdef STATS_NEEDED
     c.stats.numLookedAt++;
     c.stats.numLitVisited++;
+    #endif
 
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
@@ -309,15 +313,19 @@ PropResult PropEngine::propNormalClause(
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
-            propStats.bogoProps += numLitVisited/10;
+            //propStats.bogoProps += numLitVisited/10;
+            #ifdef STATS_NEEDED
             c.stats.numLitVisited+= numLitVisited;
+            #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
             return PROP_NOTHING;
         }
     }
-    propStats.bogoProps += numLitVisited/10;
+    //propStats.bogoProps += numLitVisited/10;
+    #ifdef STATS_NEEDED
     c.stats.numLitVisited+= numLitVisited;
+    #endif
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
@@ -345,10 +353,12 @@ PropResult PropEngine::propNormalClause(
 
         //Update stats
         c.stats.numProp++;
+        #ifdef STATS_NEEDED
         if (c.learnt())
             propStats.propsLongRed++;
         else
             propStats.propsLongIrred++;
+        #endif
 
         if (simple) {
             //Do lazy hyper-binary resolution if possible
@@ -370,7 +380,9 @@ PropResult PropEngine::propNormalClause(
                 //Is it possible?
                 if (OK) {
                     solver->attachBinClause(other, c[0], true, false);
+                    #ifdef STATS_NEEDED
                     propStats.longLHBR++;
+                    #endif
                     enqueue(c[0], PropBy(other));
                 } else {
                     //no, not possible, just enqueue as normal
@@ -466,10 +478,12 @@ void PropEngine::propTriHelper(
     , const bool learnt
     , Solver* solver
 ) {
+    #ifdef STATS_NEEDED
     if (learnt)
         propStats.propsTriRed++;
     else
         propStats.propsTriIrred++;
+    #endif
 
     if (simple) {
         //Check if we could do lazy hyper-binary resoution
@@ -485,7 +499,9 @@ void PropEngine::propTriHelper(
 
             solver->attachBinClause(lit, lit2, true, false);
             enqueue(lit2, PropBy(lit));
+            #ifdef STATS_NEEDED
             propStats.triLHBR++;
+            #endif
         } else {
             //Lazy hyper-bin is not possibe
             enqueue(lit2, PropBy(~lit1, lit3));
@@ -497,8 +513,10 @@ void PropEngine::propTriHelper(
 
 PropBy PropEngine::propagate(
     Solver* solver
+    #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
+    #endif
 ) {
     PropBy confl;
 
@@ -513,8 +531,10 @@ PropBy PropEngine::propagate(
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         const vec<Watched>& ws = watches[(~p).toInt()];
+        #ifdef STATS_NEEDED
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
+        #endif
 
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
@@ -898,10 +918,12 @@ PropResult PropEngine::propBin(
     const Lit lit = k->lit1();
     const lbool val = value(lit);
     if (val == l_Undef) {
+        #ifdef STATS_NEEDED
         if (k->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
+        #endif
 
         //Never propagated before
         enqueueComplex(lit, p, k->learnt());

@@ -718,6 +718,7 @@ class Searcher : public PropEngine
         //SQL
         friend class SQLStats;
         vector<Var> calcVarsToDump() const;
+        #ifdef STATS_NEEDED
         void printRestartSQL();
         void printVarStatsSQL();
         void printClauseDistribSQL();
@@ -731,6 +732,7 @@ class Searcher : public PropEngine
             double& avgDecLevelVar
             , double& avgTrailLevelVar
         );
+        #endif
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.

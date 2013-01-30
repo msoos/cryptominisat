@@ -413,6 +413,7 @@ struct AssignStats
 
 };
 
+#ifdef STATS_NEEDED
 struct PropStats
 {
     PropStats() :
@@ -586,6 +587,57 @@ struct PropStats
     uint64_t varSetNeg;
     uint64_t varFlipped;
 };
+#else
+struct PropStats
+{
+    PropStats() :
+        bogoProps(0)
+    {
+    }
+
+    void clear()
+    {
+        PropStats tmp;
+        *this = tmp;
+    }
+
+    PropStats& operator+=(const PropStats& other)
+    {
+        bogoProps += other.bogoProps;
+        return *this;
+    }
+
+    PropStats& operator-=(const PropStats& other)
+    {
+        bogoProps -= other.bogoProps;
+        return *this;
+    }
+
+    PropStats operator-(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result -= other;
+        return result;
+    }
+
+    PropStats operator+(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result += other;
+        return result;
+    }
+
+    void print(const double cpu_time) const
+    {
+        cout << "c PROP stats" << endl;
+        printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
+            , (double)bogoProps/(cpu_time*1000.0*1000.0)
+            , "/ sec"
+        );
+    }
+    uint64_t bogoProps;    ///<An approximation of time
+};
+#endif
 
 enum ConflCausedBy {
     CONFL_BY_LONG_IRRED_CLAUSE

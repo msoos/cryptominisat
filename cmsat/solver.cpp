@@ -141,7 +141,9 @@ bool Solver::addXorClauseInt(
 
         case 1:
             enqueue(Lit(ps[0].var(), !rhs));
+            #ifdef STATS_NEEDED
             propStats.propsUnit++;
+            #endif
             if (attach)
                 ok = propagate().isNULL();
             return ok;
@@ -227,7 +229,9 @@ Clause* Solver::addClauseInt(
             return NULL;
         case 1:
             enqueue(ps[0]);
+            #ifdef STATS_NEEDED
             propStats.propsUnit++;
+            #endif
             if (attach)
                 ok = (propagate().isNULL());
 
@@ -1237,15 +1241,18 @@ ClauseUsageStats Solver::sumClauseData(
             cout
             << " Props: " << std::setw(10) << cl.stats.numProp
             << " Confls: " << std::setw(10) << cl.stats.numConfl
+            #ifdef STATS_NEEDED
             << " Lit visited: " << std::setw(10)<< cl.stats.numLitVisited
             << " Looked at: " << std::setw(10)<< cl.stats.numLookedAt
-            << " UIP used: " << std::setw(10)<< cl.stats.numUsedUIP
             << " Props&confls/Litsvisited*10: ";
             if (cl.stats.numLitVisited > 0) {
                 cout
                 << std::setw(6) << std::fixed << std::setprecision(4)
                 << (10.0*(double)cl.stats.numPropAndConfl()/(double)cl.stats.numLitVisited);
             }
+            #endif
+            ;
+            cout << " UIP used: " << std::setw(10)<< cl.stats.numUsedUIP;
             cout << endl;
         }
     }
@@ -1429,6 +1436,7 @@ void Solver::printFullStats() const
 
     cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumStats.print();
+    #ifdef STATS_NEEDED
     sumPropStats.print(sumStats.cpu_time);
     printStatsLine("c props/decision"
         , (double)propStats.propagations/(double)sumStats.decisions
@@ -1436,6 +1444,7 @@ void Solver::printFullStats() const
     printStatsLine("c props/conflict"
         , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
     );
+    #endif
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
 
     printStatsLine("c clause clean time"

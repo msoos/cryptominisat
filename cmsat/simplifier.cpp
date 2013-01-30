@@ -375,7 +375,9 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
         case 1:
             solver->enqueue(cl[0]);
+            #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
+            #endif
             unlinkClause(offset);
             return l_True;
 
@@ -642,7 +644,9 @@ bool Simplifier::completeCleanClause(Clause& cl)
 
         case 1:
             solver->enqueue(cl[0]);
+            #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
+            #endif
             return false;
 
         case 2:
@@ -804,6 +808,7 @@ bool Simplifier::propagate()
                     solver->enqueue(lastUndef);
 
                     //Update stats
+                    #ifdef STATS_NEEDED
                     if (cl.size() == 3)
                         if (cl.learnt())
                             solver->propStats.propsTriRed++;
@@ -815,6 +820,7 @@ bool Simplifier::propagate()
                         else
                             solver->propStats.propsLongIrred++;
                     }
+                    #endif
                 }
             }
 
@@ -830,10 +836,12 @@ bool Simplifier::propagate()
                 //Propagation
                 if (val == l_Undef) {
                     solver->enqueue(it->lit1());
+                    #ifdef STATS_NEEDED
                     if (it->learnt())
                         solver->propStats.propsBinRed++;
                     else
                         solver->propStats.propsBinIrred++;
+                    #endif
                 }
             }
         }

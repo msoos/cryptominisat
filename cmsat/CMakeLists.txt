@@ -41,10 +41,10 @@ if (M4RI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} m4ri)
 endif (M4RI_FOUND)
 
-if (MYSQL_FOUND)
+if (MYSQL_FOUND AND STATSNEEDED)
     SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
-endif (MYSQL_FOUND)
+endif (MYSQL_FOUND AND STATSNEEDED)
 
 #add_library(cryptoms STATIC
 add_library(cryptoms SHARED

@@ -150,7 +150,9 @@ bool VarReplacer::performReplace()
     ) {
         if (solver->value(*it) == l_Undef) {
             solver->enqueue(*it);
+            #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
+            #endif
         } else if (solver->value(*it) == l_False) {
             solver->ok = false;
             break;
@@ -522,7 +524,9 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     case 1 :
         solver->enqueue(c[0]);
+        #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
+        #endif
         solver->ok = (solver->propagate().isNULL());
         runStats.removedLongLits += origSize;
         return true;
@@ -666,7 +670,9 @@ bool VarReplacer::replace(
         } else {
             solver->enqueue(lit1 ^ (val2 == l_False));
         }
+        #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
+        #endif
 
         if (solver->ok) solver->ok = (solver->propagate().isNULL());
         return solver->ok;

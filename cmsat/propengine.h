@@ -178,7 +178,9 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity;
 
+    #ifdef STATS_NEEDED
     Stats stats;
+    #endif
 };
 
 struct PolaritySorter
@@ -331,8 +333,10 @@ protected:
     ///Perform BCP
     PropBy       propagate(
         Solver* solver = NULL
+        #ifdef STATS_NEEDED
         ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
         //,  AvgCalc<bool>* litPropagatedSomething = NULL
+        #endif
     );
 
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
@@ -518,12 +522,15 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
+    #ifdef STATS_NEEDED
     varData[v].stats.trailLevelHist.push(trail.size());
     varData[v].stats.decLevelHist.push(decisionLevel());
+    #endif
     varData[v].reason = from;
     varData[v].level = decisionLevel();
 
     trail.push_back(p);
+    #ifdef STATS_NEEDED
     propStats.propagations++;
 
     if (p.sign()) {
@@ -533,11 +540,14 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         varData[v].stats.posPolarSet++;
         propStats.varSetPos++;
     }
+    #endif
 
     if (varData[v].polarity != !p.sign()) {
         agility.update(true);
+        #ifdef STATS_NEEDED
         varData[v].stats.flippedPolarity++;
         propStats.varFlipped++;
+        #endif
     } else {
         agility.update(false);
     }
@@ -738,7 +748,10 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
 //Add binary clause to deepest common ancestor
 inline void PropEngine::addHyperBin(const Lit p)
 {
+    #ifdef STATS_NEEDED
     propStats.bogoProps += 1;
+    #endif
+
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
     if (currAncestors.size() > 1) {

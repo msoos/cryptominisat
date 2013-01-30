@@ -146,6 +146,7 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
     return pointer;
 }
 
+#ifdef STATS_NEEDED
 struct sortByClauseNumLookedAtDescending
 {
     bool operator () (const Clause* x, const Clause* y)
@@ -157,6 +158,7 @@ struct sortByClauseNumLookedAtDescending
         return x->size() < y->size();
     }
 };
+#endif
 
 /**
 @brief Given the pointer of the clause it finds a 32-bit offset for it
@@ -253,7 +255,9 @@ void ClauseAllocator::consolidate(
     }
 
     //Sort clauses according to usage data
+    #ifdef STATS_NEEDED
     std::sort(clauses.begin(), clauses.end(), sortByClauseNumLookedAtDescending());
+    #endif
 
     BASE_DATA_TYPE* newDataStartsAt = newDataStart;
     uint64_t newSize = 0;
