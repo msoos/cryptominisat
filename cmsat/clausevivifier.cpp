@@ -906,6 +906,10 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                         remLitFromTriByTri++;
                         break;
                     }
+
+                    //watches are sorted, so early-abort
+                    if (it2->isClause())
+                        break;
                 }
 
                 if (rem) {
