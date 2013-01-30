@@ -658,7 +658,6 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
 
     //For delayed enqueue and binary adding
     //Used for strengthening
-    vector<Lit> bin(2);
     vector<BinaryClause> binsToAdd;
     vector<Lit> toEnqueue;
 
@@ -960,10 +959,11 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
         ; it != end
         ; it++
     ) {
-        bin[0] = it->getLit1();
-        bin[1] = it->getLit2();
+        lits.clear();
+        lits.push_back(it->getLit1());
+        lits.push_back(it->getLit2());
         timeAvailable -= 5;
-        solver->addClauseInt(bin, it->getLearnt());
+        solver->addClauseInt(lits, it->getLearnt());
         if (!solver->okay())
             goto end;
     }
