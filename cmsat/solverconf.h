@@ -71,7 +71,7 @@ class SolverConf
 
         //Burst?
         int      doPerformPreSimp; //Perform simplification at startup
-        double    probeMultiplier; //Increase failed lit time by this multiplier
+
 
         //Glues
         int       updateGlues;
@@ -103,6 +103,13 @@ class SolverConf
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
 
+        //Probing
+        int      doProbe;
+        double   probeMultiplier; //Increase failed lit time by this multiplier
+        int      doBothProp;
+        int      doTransRed;   ///<Should carry out transitive reduction
+        int      doStamp;
+
         //Optimisations to do
 
         int       printFullStats;
@@ -126,10 +133,6 @@ class SolverConf
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int      doProbe;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
-        int      doBothProp;
-        int      doTransRed;   ///<Should carry out transitive reduction
-        int      doStamp;
         int      doExtendedSCC;
         int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;

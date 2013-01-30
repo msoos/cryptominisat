@@ -59,7 +59,6 @@ SolverConf::SolverConf() :
         , agilityViolationLimit     (20)
 
         , doPerformPreSimp (true)
-        , probeMultiplier(1.0)
 
         //Glues
         , updateGlues(true)
@@ -91,6 +90,13 @@ SolverConf::SolverConf() :
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.22)
 
+        //Probing
+        , doProbe          (true)
+        , probeMultiplier  (1.0)
+        , doBothProp       (true)
+        , doTransRed       (true)
+        , doStamp          (true)
+
         //optimisations to do
         , printFullStats   (false)
         , doRenumberVars   (true)
@@ -112,10 +118,6 @@ SolverConf::SolverConf() :
         , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doProbe          (true)
-        , doBothProp       (true)
-        , doTransRed (true)
-        , doStamp          (true)
         , doExtendedSCC    (false)
         , doGateFind       (true)
         , maxGateSize      (20)
