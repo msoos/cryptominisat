@@ -84,6 +84,13 @@ SolverConf::SolverConf() :
         , sqlPass ("")
         , sqlDatabase("cmsat")
 
+        //Var-elim
+        , doVarElim        (true)
+        , updateVarElimComplexityOTF(true)
+        , varelimStrategy  (0)
+        , varElimCostEstimateStrategy(0)
+        , varElimRatioPerIter(0.22)
+
         //optimisations to do
         , printFullStats   (false)
         , doRenumberVars   (true)
@@ -101,11 +108,6 @@ SolverConf::SolverConf() :
         , doLHBR           (true)
         , doBlockedClause  (true)
         , doExtBinSubs     (true)
-        , doVarElim        (true)
-        , updateVarElimComplexityOTF(true)
-        , varelimStrategy  (0)
-        , varElimCostEstimateStrategy(0)
-        , varElimRatioPerIter(0.22)
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)

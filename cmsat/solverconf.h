@@ -96,6 +96,13 @@ class SolverConf
         string    sqlPass;
         string    sqlDatabase;
 
+        //Var-elim
+        int      doVarElim;          ///<Perform variable elimination
+        int      updateVarElimComplexityOTF;
+        int      varelimStrategy; ///<Guess varelim order, or calculate?
+        int      varElimCostEstimateStrategy;
+        double    varElimRatioPerIter;
+
         //Optimisations to do
 
         int       printFullStats;
@@ -115,11 +122,6 @@ class SolverConf
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int       doBlockedClause;    ///<Should try to remove blocked clauses
         int      doExtBinSubs;
-        int      doVarElim;          ///<Perform variable elimination
-        int      updateVarElimComplexityOTF;
-        int      varelimStrategy; ///<Guess varelim order, or calculate?
-        int      varElimCostEstimateStrategy;
-        double    varElimRatioPerIter;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
