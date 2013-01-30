@@ -982,10 +982,10 @@ end:
         << " stamp:" << stampRem
         << " set-var: " << solver->trail.size() - origTrailSize
 
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << " T: " << std::fixed << std::setprecision(2) << std::setw(5)
         << (cpuTime() - myTime)
-        << " time-out: " << (timeAvailable < 0 ? "Y" : "N")
-        << " s" << endl;
+        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << endl;
     }
     solver->checkStats();
 
