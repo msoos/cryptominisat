@@ -47,6 +47,7 @@ class Solver;
 class SQLStats;
 
 //#define VERBOSE_DEBUG_FULLPROP
+//#define DEBUG_STAMPING
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_FULLPROP
