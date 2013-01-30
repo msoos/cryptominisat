@@ -128,6 +128,7 @@ struct ClauseStats
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
+        ret.activity = std::max(first.activity, second.activity);
         ret.conflictNumIntroduced = std::min(first.conflictNumIntroduced, second.conflictNumIntroduced);
         ret.numProp = first.numProp + second.numProp;
         ret.numConfl = first.numConfl + second.numConfl;
