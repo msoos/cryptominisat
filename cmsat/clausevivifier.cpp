@@ -650,6 +650,8 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
     uint64_t remTris = 0;
     uint64_t remLitFromBin = 0;
     uint64_t remLitFromTri = 0;
+    uint64_t remLitFromTriByBin = 0;
+    uint64_t remLitFromTriByTri = 0;
     uint64_t stampTriRem = 0;
     const size_t origTrailSize = solver->trail.size();
     timeAvailable = 200L*1000L*1000L;
@@ -872,7 +874,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 continue;
             }
 
-            //Strengthen tri with bin
+            //Strengthen tri with bin/tri/stamp
             if (i->isTri()) {
                 const Lit lit1 = i->lit1();
                 const Lit lit2 = i->lit2();
@@ -888,6 +890,20 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                         && (it2->lit1() == lit1 || it2->lit1() == lit2)
                     ) {
                         rem = true;
+                        remLitFromTriByBin++;
+                        break;
+                    }
+
+                    if (it2->isTri()
+                        && (
+                            (it2->lit1() == lit1 && it2->lit2() == lit2)
+                            ||
+                            (it2->lit1() == lit2 && it2->lit2() == lit1)
+                        )
+
+                    ) {
+                        rem = true;
+                        remLitFromTriByTri++;
                         break;
                     }
                 }
@@ -981,7 +997,7 @@ end:
         << " rem-bin " << remBins
         << " rem-tri " << remTris << " (stamp: " << stampTriRem << ")"
         << " rem-litBin: " << remLitFromBin
-        << " rem-litTri: " << remLitFromTri
+        << " rem-litTri: " << remLitFromTri << " (by tri: " << remLitFromTriByTri << ")"
         << " (rem-lit by stamp: " << stampRem << ")"
         << " set-var: " << solver->trail.size() - origTrailSize
 
