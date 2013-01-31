@@ -186,7 +186,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     const size_t origTrailSize = solver->trail.size();
 
     //Time-limiting
-    uint64_t maxNumProps = 5L*1000L*1000L;
+    uint64_t maxNumProps = 10L*1000L*1000L;
     if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
         maxNumProps *=2;
 
