@@ -642,27 +642,14 @@ bool ClauseVivifier::vivifyClausesCache(
     return solver->ok;
 }
 
-bool ClauseVivifier::subsumeAndStrengthenImplicit()
+void ClauseVivifier::subsumeImplicit()
 {
     assert(solver->okay());
     const double myTime = cpuTime();
     uint64_t remBins = 0;
     uint64_t remTris = 0;
-    uint64_t remLitFromBin = 0;
-    uint64_t remLitFromTri = 0;
-    uint64_t remLitFromTriByBin = 0;
-    uint64_t remLitFromTriByTri = 0;
     uint64_t stampTriRem = 0;
-    const size_t origTrailSize = solver->trail.size();
-    timeAvailable = 200L*1000L*1000L;
-
-    //For stamps
-    size_t stampRem = 0;
-
-    //For delayed enqueue and binary adding
-    //Used for strengthening
-    vector<BinaryClause> binsToAdd;
-    vector<Lit> toEnqueue;
+    timeAvailable = 100L*1000L*1000L;
 
     //Randomize starting point
     size_t upI;
@@ -804,14 +791,55 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
             }
         }
         ws.shrink(i-j);
+    }
 
-        /*cout << "---> After" << endl;
-        printWatchlist(ws, lit);*/
+    if (solver->conf.verbosity >= 1) {
+        cout
+        << "c [implicit] sub"
+        << " bin: " << remBins
+        << " tri: " << remTris << " (stamp: " << stampTriRem << ")"
 
+        << " T: " << std::fixed << std::setprecision(2)
+        << (cpuTime() - myTime)
+        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << endl;
+    }
+    solver->checkStats();
 
-        //Now strengthen
-        i = ws.begin();
-        j = i;
+    //Update stats
+    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    solver->solveStats.subsBinWithBin += remBins;
+}
+
+bool ClauseVivifier::strengthenImplicit()
+{
+    uint64_t remLitFromBin = 0;
+    uint64_t remLitFromTri = 0;
+    uint64_t remLitFromTriByBin = 0;
+    uint64_t remLitFromTriByTri = 0;
+    uint64_t stampRem = 0;
+    const size_t origTrailSize = solver->trail.size();
+    timeAvailable = 100L*1000L*1000L;
+    double myTime = cpuTime();
+
+    //For delayed enqueue and binary adding
+    //Used for strengthening
+    vector<BinaryClause> binsToAdd;
+    vector<Lit> toEnqueue;
+
+    //Randomize starting point
+    size_t upI;
+    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t numDone = 0;
+    for (; numDone < solver->watches.size() && timeAvailable > 0
+        ; upI = (upI +1) % solver->watches.size(), numDone++
+
+    ) {
+        Lit lit = Lit::toLit(upI);
+        vec<Watched>& ws = solver->watches[upI];
+
+        Watched* i = ws.begin();
+        Watched* j = i;
         for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
             timeAvailable -= 2;
             //Can't do much with clause, will treat them during vivification
@@ -995,17 +1023,16 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
     }
 
 end:
+
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [implicit]"
-        << " rem-bin " << remBins
-        << " rem-tri " << remTris << " (stamp: " << stampTriRem << ")"
-        << " rem-litBin: " << remLitFromBin
-        << " rem-litTri: " << remLitFromTri << " (by tri: " << remLitFromTriByTri << ")"
-        << " (rem-lit by stamp: " << stampRem << ")"
+        << "c [implicit] str"
+        << " lit bin: " << remLitFromBin
+        << " lit tri: " << remLitFromTri << " (by tri: " << remLitFromTriByTri << ")"
+        << " (by stamp: " << stampRem << ")"
         << " set-var: " << solver->trail.size() - origTrailSize
 
-        << " T: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << " T: " << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
         << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
         << endl;
@@ -1014,7 +1041,6 @@ end:
 
     //Update stats
     solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
-    solver->solveStats.subsBinWithBin += remBins;
 
     return solver->okay();
 }

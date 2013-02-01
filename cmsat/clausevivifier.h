@@ -36,7 +36,8 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver* solver);
         bool vivify(bool alsoStrengthen);
-        bool subsumeAndStrengthenImplicit();
+        void subsumeImplicit();
+        bool strengthenImplicit();
 
         struct Stats
         {

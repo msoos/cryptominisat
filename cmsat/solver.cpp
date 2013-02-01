@@ -1076,8 +1076,7 @@ lbool Solver::simplifyProblem()
         goto end;*/
 
     //Treat implicits
-    if (!clauseVivifier->subsumeAndStrengthenImplicit())
-        goto end;
+    clauseVivifier->subsumeImplicit();
 
     //PROBE
     updateDominators();
@@ -1088,6 +1087,9 @@ lbool Solver::simplifyProblem()
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
         goto end;
     }
+
+    //Treat implicits
+    clauseVivifier->subsumeImplicit();
 
     //SCC&VAR-REPL
     if (solveStats.numSimplify > 0
@@ -1102,13 +1104,14 @@ lbool Solver::simplifyProblem()
 
     if (needToInterrupt) return l_Undef;
 
-    //Treat implicits
-    if (!clauseVivifier->subsumeAndStrengthenImplicit())
-        goto end;
-
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSimplify && !simplifier->simplify())
         goto end;
+
+    //Treat implicits
+    if (!clauseVivifier->strengthenImplicit())
+        goto end;
+    clauseVivifier->subsumeImplicit();
 
     //Vivify clauses
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
