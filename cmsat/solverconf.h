@@ -127,7 +127,7 @@ class SolverConf
         int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         int      doLHBR; ///<Do lazy hyper-binary resolution
-        int       doBlockedClause;    ///<Should try to remove blocked clauses
+        int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doExtBinSubs;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving

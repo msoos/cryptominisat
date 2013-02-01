@@ -112,7 +112,7 @@ SolverConf::SolverConf() :
         , doSimplify       (true)
         , doHyperBinRes    (true)
         , doLHBR           (true)
-        , doBlockedClause  (true)
+        , doBlockClauses   (true)
         , doExtBinSubs     (true)
         , doSubsume1       (true)
         , doClausVivif     (true)

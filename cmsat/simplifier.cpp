@@ -1100,7 +1100,7 @@ bool Simplifier::simplify()
     #endif
 
     //Do asymtotic tautology elimination
-    if (solver->conf.doBlockedClause) {
+    if (solver->conf.doBlockClauses) {
         blockClauses();
         blockImplicit();
     }
@@ -1551,6 +1551,7 @@ void Simplifier::blockImplicit(
                 }
 
                 blockedClauses.push_back(BlockedClause(tautOn, dummy));
+                anythingHasBeenBlocked = true;
             } else {
                 //Not blocked, so just go through
                 ws[j++] = ws[i];
@@ -1643,6 +1644,7 @@ void Simplifier::blockClauses()
                 vector<Lit> remCl(cl.size());
                 std::copy(cl.begin(), cl.end(), remCl.begin());
                 blockedClauses.push_back(BlockedClause(*l, remCl));
+                anythingHasBeenBlocked = true;
 
                 blocked++;
                 blockedLits += cl.size();
@@ -1770,7 +1772,7 @@ void Simplifier::asymmTE()
             goto next;
 
         //Blocked clause elimination
-        if (solver->conf.doBlockedClause && numMaxBlocked > 0) {
+        if (solver->conf.doBlockClauses && numMaxBlocked > 0) {
             toDecrease = &numMaxBlocked;
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
                 if (solver->varData[l->var()].elimed != ELIMED_NONE)
@@ -1780,6 +1782,7 @@ void Simplifier::asymmTE()
                     vector<Lit> remCl(cl.size());
                     std::copy(cl.begin(), cl.end(), remCl.begin());
                     blockedClauses.push_back(BlockedClause(*l, remCl));
+                    anythingHasBeenBlocked = true;
 
                     blocked++;
                     blockedLits += cl.size();

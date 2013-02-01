@@ -368,6 +368,7 @@ public:
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
+    bool getAnythingHasBeenBlocked() const;
 
 private:
 
@@ -592,6 +593,7 @@ private:
     /////////////////////
     //Blocked clause elimination
     void asymmTE();
+    bool anythingHasBeenBlocked;
     void blockClauses();
     void blockImplicit(bool bins = false, bool tris = true);
     bool allTautologySlim(const Lit lit);
@@ -814,6 +816,11 @@ template<class T> void Simplifier::findSubsumed0(
             #endif
         }
     }
+}
+
+bool Simplifier::getAnythingHasBeenBlocked() const
+{
+    return anythingHasBeenBlocked;
 }
 
 /*inline const XorFinder* Simplifier::getXorFinder() const
