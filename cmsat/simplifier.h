@@ -393,6 +393,7 @@ private:
     //Limits
     int64_t  addedClauseLits;
     int64_t  numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
+//     int64_t  numMaxTriSub;
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
@@ -485,6 +486,7 @@ private:
         uint32_t numSubsumed;
     };
     uint32_t subsume0(ClOffset offset);
+//     bool subsumeWithTris();
 
     template<class T>
     Sub0Ret subsume0Final(

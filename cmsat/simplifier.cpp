@@ -850,6 +850,124 @@ bool Simplifier::propagate()
     return true;
 }
 
+// struct WatchTriFirst
+// {
+//     bool operator()(const Watched& a, const Watched& b)
+//     {
+//         WatchType aType = a.getType();
+//         WatchType bType = b.getType();
+//
+//         //Equal? Undecidable
+//         if (aType == bType)
+//             return false;
+//
+//         //One is binary, but the other isn't? Return that
+//         if (aType == watch_binary_t)
+//             return true;
+//         if (bType == watch_binary_t)
+//             return false;
+//
+//         //At this point neither is binary, and they are unequal
+//
+//         //One is tri, but the other isn't? Return that
+//         if (aType == watch_tertiary_t)
+//             return true;
+//         if (bType == watch_tertiary_t)
+//             return false;
+//
+//         //At this point, both must be clause, but that's impossible
+//         assert(false);
+//     }
+// };
+
+// bool Simplifier::subsumeWithTris()
+// {
+//     vector<Lit> lits;
+//     size_t strSucceed = 0;
+//
+//     //Stats
+//     toDecrease = &numMaxTriSub;
+//     const size_t origTrailSize = solver->trail.size();
+//     double myTime = cpuTime();
+//     size_t subsumed = 0;
+//
+//     //Randomize start in the watchlist
+//     size_t upI;
+//     upI = solver->mtrand.randInt(solver->watches.size()-1);
+//
+//     size_t tried = 0;
+//     size_t numDone = 0;
+//     for (; numDone < solver->watches.size() && *toDecrease > 0
+//         ; upI = (upI +1) % solver->watches.size(), numDone++
+//
+//     ) {
+//         Lit lit = Lit::toLit(upI);
+//         vec<Watched>& ws = solver->watches[upI];
+//
+//         //Must re-order so that TRI-s are first
+//         //Otherwise we might re-order list while looking through.. very messy
+//         WatchTriFirst sorter;
+//         std::sort(ws.begin(), ws.end(), sorter);
+//
+//         for (size_t i = 0
+//             ; i < ws.size() && *toDecrease > 0
+//             ; i++
+//         ) {
+//             //Each TRI only once
+//             if (ws[i].isTri()
+//                 && lit < ws[i].lit1()
+//                 && ws[i].lit1() < ws[i].lit2()
+//             ) {
+//                 tried++;
+//                 lits.resize(3);
+//                 lits[0] = lit;
+//                 lits[1] = ws[i].lit1();
+//                 lits[2] = ws[i].lit2();
+//                 CL_ABST_TYPE abstr = calcAbstraction(lits);
+//
+//                 Sub0Ret ret = subsume0Final(
+//                     std::numeric_limits<ClOffset>::max()
+//                     , lits
+//                     , abstr
+//                 );
+//
+//                 subsumed += ret.numSubsumed;
+//
+//                 if (ws[i].learnt()
+//                     && ret.subsumedNonLearnt
+//                 ) {
+//                     ws[i].setLearnt(false);
+//                     solver->binTri.redLits -= 3;
+//                     solver->binTri.irredLits += 3;
+//                     solver->binTri.redTris--;
+//                     solver->binTri.irredTris++;
+//                     findWatchedOfTri(solver->watches, ws[i].lit1(), lit, ws[i].lit2(), true).setLearnt(false);
+//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit1(), true).setLearnt(false);
+//                 }
+//             }
+//         }
+//
+//         if (!solver->okay())
+//             break;
+//     }
+//
+//     if (solver->conf.verbosity >= 2) {
+//         cout
+//         << "c [subs] tri"
+//         << " subs: " << subsumed
+//         << " tried: " << tried
+//         << " str: " << strSucceed
+//         << " toDecrease: " << *toDecrease
+//         << " 0-depth ass: " << solver->trail.size() - origTrailSize
+//         << " time: " << cpuTime() - myTime
+//         << endl;
+//     }
+//
+//     //runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+//
+//     return solver->ok;
+// }
+
 void Simplifier::subsumeLearnts()
 {
     double myTime = cpuTime();
@@ -961,6 +1079,8 @@ bool Simplifier::simplify()
 
     //Do subsumption & var-elim in loop
     assert(solver->ok);
+
+//     subsumeWithTris();
 
     //Carry out subsume0
     performSubsumption();
@@ -1730,6 +1850,7 @@ void Simplifier::setLimits()
 {
     numMaxSubsume0    = 450L*1000L*1000L;
     numMaxSubsume1    = 100L*1000L*1000L;
+//     numMaxTriSub      = 600L*1000L*1000L;
     numMaxElim        = 400L*1000L*1000L;
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
