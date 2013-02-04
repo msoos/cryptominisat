@@ -696,10 +696,11 @@ Lit PropEngine::propagateFull(
     while (!toPropBin.empty()) {
         const Lit p = toPropBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
+        size_t done = 0;
         for(vec<Watched>::const_iterator
             k = ws.begin(), end = ws.end()
             ; k != end
-            ; k++
+            ; k++, done++
         ) {
             //Pre-fetch long clause
             if (k->isClause()) {
@@ -742,6 +743,7 @@ Lit PropEngine::propagateFull(
                     toPropNorm.push(trail.back());
                     toPropBin.push(trail.back());
                     if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
+                    propStats.bogoProps += done*4;
                     goto start;
 
                 case PROP_NOTHING:
@@ -750,7 +752,7 @@ Lit PropEngine::propagateFull(
         }
 
         //Finished with this literal
-        propStats.bogoProps += ws.size();
+        propStats.bogoProps += ws.size()*4;
         toPropBin.pop();
         stampingTime++;
         timestamp[p.toInt()].end[stampType] = stampingTime;
@@ -769,10 +771,11 @@ Lit PropEngine::propagateFull(
 
             const Lit p = toPropRedBin.top();
             const vec<Watched>& ws = watches[(~p).toInt()];
+            size_t done = 0;
             for(vec<Watched>::const_iterator
                 k = ws.begin(), end = ws.end()
                 ; k != end
-                ; k++
+                ; k++, done++
             ) {
                 propStats.bogoProps += 1;
 
@@ -807,6 +810,7 @@ Lit PropEngine::propagateFull(
                         toPropNorm.push(trail.back());
                         toPropBin.push(trail.back());
                         toPropRedBin.push(trail.back());
+                        propStats.bogoProps += done*4;
                         goto start;
 
                     case PROP_NOTHING:
@@ -815,6 +819,7 @@ Lit PropEngine::propagateFull(
             }
 
             //Finished with this literal of this type
+            propStats.bogoProps += ws.size()*4;
             toPropRedBin.pop();
         }
     }
@@ -884,6 +889,7 @@ Lit PropEngine::propagateFull(
 
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
+                propStats.bogoProps += ws.size()*8;
                 goto start;
 
             case PROP_NOTHING:
@@ -891,6 +897,7 @@ Lit PropEngine::propagateFull(
         }
 
         //Finished with this literal
+        propStats.bogoProps += ws.size()*8;
         toPropNorm.pop();
         qhead++;
     }

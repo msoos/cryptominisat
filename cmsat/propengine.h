@@ -657,8 +657,9 @@ inline bool PropEngine::isAncestorOf(
         return false;
     }
 
-    propStats.bogoProps += 1;
     while(thisAncestor != lit_Undef) {
+        propStats.bogoProps ++;
+
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
         << " its learnt-ness: " << varData[thisAncestor.var()].reason.getLearntStep()

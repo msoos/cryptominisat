@@ -2190,6 +2190,8 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             ; it++
         ) {
             //cout << "Removing binary clause: " << *it << endl;
+            propStats.bogoProps += solver->watches[it->getLit1().toInt()].size();
+            propStats.bogoProps += solver->watches[it->getLit2().toInt()].size();
             removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->getLearnt());
             removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 
