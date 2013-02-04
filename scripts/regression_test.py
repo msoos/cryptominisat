@@ -395,7 +395,7 @@ class Tester:
                     print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
         print "Checking console output..."
-        (unsat, value) = self.parse_solution_from_output(consoleOutput)
+        (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
         if self.check_unsat and unsat:
             toexec = "../../lingeling-587f/lingeling %s" % fname
@@ -408,7 +408,7 @@ class Tester:
                 print "Other solver: too much time to solve, aborted!"
                 return
             print "Checking other solver output..."
-            (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2)
+            (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         if unsat == True:
             if self.check_unsat == False:
