@@ -210,10 +210,12 @@ struct BlockedClause {
 
     BlockedClause(const Lit _blockedOn, const vector<Lit>& _lits) :
         blockedOn(_blockedOn)
+        , toRemove(false)
         , lits(_lits)
     {}
 
     Lit blockedOn;
+    bool toRemove;
     vector<Lit> lits;
 };
 

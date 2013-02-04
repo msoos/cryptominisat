@@ -396,8 +396,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
         //Uneliminate var if need be
         if (simplifier->getVarElimed()[ps[i].var()]) {
-            //if (!subsumer->unEliminate(ps[i].var(), this) return false
-            assert(false);
+            if (!simplifier->unEliminate(ps[i].var()))
+                return false;
         }
     }
 
@@ -419,6 +419,14 @@ the heavy-lifting
 */
 bool Solver::addClause(const vector<Lit>& lits)
 {
+    if (simplifier->getAnythingHasBeenBlocked()) {
+        cout
+        << "ERROR: Cannot add new clauses to the system if blocking was"
+        << " enabled. Turn it off from conf.doBlockClauses"
+        << endl;
+        exit(-1);
+    }
+
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << lits << endl;
     #endif //VERBOSE_DEBUG

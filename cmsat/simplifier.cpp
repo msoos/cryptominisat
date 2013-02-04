@@ -72,6 +72,8 @@ Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
     , varElimOrder(VarOrderLt(varElimComplexity))
     , xorFinder(NULL)
+    , anythingHasBeenBlocked(false)
+    , blockedMapBuilt(false)
     , numCalls(0)
 {
     #ifdef USE_M4RI
@@ -127,8 +129,10 @@ void Simplifier::updateVars(
     }
 }
 
-void Simplifier::extendModel(SolutionExtender* extender) const
+void Simplifier::extendModel(SolutionExtender* extender)
 {
+    cleanBlockedClauses();
+
     //go through in reverse order
     for (vector<BlockedClause>::const_reverse_iterator
         it = blockedClauses.rbegin(), end = blockedClauses.rend()
@@ -1130,6 +1134,66 @@ end:
     return solver->ok;
 }
 
+bool Simplifier::unEliminate(const Var var)
+{
+    assert(solver->okay());
+
+    //Sanity check
+    assert(var_elimed[var]);
+    assert(solver->varData[var].elimed == ELIMED_VARELIM);
+    assert(!solver->decisionVar[var]);
+    assert(solver->value(var) == l_Undef);
+
+    if (!blockedMapBuilt) {
+        cleanBlockedClauses();
+        buildBlockedMap();
+    }
+
+    //Uneliminate it in theory
+    var_elimed[var] = false;
+    solver->varData[var].elimed = ELIMED_NONE;
+    solver->setDecisionVar(var);
+
+    //Find if variable is really needed to be eliminated
+    map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
+    if (it == blk_var_to_cl.end())
+        return solver->okay();
+
+    for(size_t i = 0; i < it->second.size(); i++) {
+        size_t at = it->second[i];
+
+        //Mark for removal from blocked list
+        blockedClauses[at].toRemove = true;
+
+        //Re-insert into Solver
+        const vector<Lit>& cl = blockedClauses[at].lits;
+        bool ret = solver->addClause(cl);
+        if (!ret)
+            return false;
+    }
+
+    return solver->okay();
+}
+
+void Simplifier::buildBlockedMap()
+{
+    blk_var_to_cl.clear();
+    for(size_t i = 0; i < blockedClauses.size(); i++) {
+        const BlockedClause& blocked = blockedClauses[i];
+        map<Var, vector<size_t> >::iterator it
+            = blk_var_to_cl.find(blocked.blockedOn.var());
+
+        if (it == blk_var_to_cl.end()) {
+            vector<size_t> tmp;
+            tmp.push_back(i);
+            blk_var_to_cl[blocked.blockedOn.var()] = tmp;
+        } else {
+            it->second.push_back(i);
+        }
+    }
+    blockedMapBuilt = true;
+}
+
 void Simplifier::finishUp(
     size_t origTrailSize
 ) {
@@ -1140,7 +1204,7 @@ void Simplifier::finishUp(
 
     //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
     if (somethingSet)
-        removeAssignedVarsFromEliminated();
+        cleanBlockedClauses();
 
     //Add back clauses to solver
     removeAllLongsFromWatches();
@@ -1460,6 +1524,8 @@ void Simplifier::blockImplicit(
     const bool bins
     , const bool tris
 ) {
+    blockedMapBuilt = false;
+
     const double myTime = cpuTime();
     size_t tried = 0;
     size_t blockedBin = 0;
@@ -1596,6 +1662,8 @@ void Simplifier::blockImplicit(
 
 void Simplifier::blockClauses()
 {
+    blockedMapBuilt = false;
+
     const double myTime = cpuTime();
     size_t blocked = 0;
     size_t blockedLits = 0;
@@ -1685,6 +1753,10 @@ void Simplifier::asymmTE()
     //Random system would die here
     if (clauses.empty())
         return;
+
+    if (solver->conf.doBlockClauses) {
+        blockedMapBuilt = false;
+    }
 
     const double myTime = cpuTime();
     uint32_t blocked = 0;
@@ -1909,13 +1981,20 @@ Therefore, we must check at the very end if any variables that we eliminated
 got set, and if so, the clauses linked to these variables can be fully removed
 from elimedOutVar[].
 */
-void Simplifier::removeAssignedVarsFromEliminated()
+void Simplifier::cleanBlockedClauses()
 {
     vector<BlockedClause>::iterator i = blockedClauses.begin();
     vector<BlockedClause>::iterator j = blockedClauses.begin();
+    size_t at = 0;
 
-    for (vector<BlockedClause>::iterator end = blockedClauses.end(); i != end; i++) {
-        if (solver->value(i->blockedOn) != l_Undef) {
+    for (vector<BlockedClause>::iterator
+        end = blockedClauses.end()
+        ; i != end
+        ; i++, at++
+    ) {
+        if (solver->value(i->blockedOn) != l_Undef
+            || blockedClauses[at].toRemove
+        ) {
             const Var var = i->blockedOn.var();
             if (solver->varData[var].elimed == ELIMED_VARELIM) {
                 assert(var_elimed[var]);
@@ -1924,6 +2003,7 @@ void Simplifier::removeAssignedVarsFromEliminated()
                 solver->setDecisionVar(var);
                 runStats.numVarsElimed--;
             }
+            blockedMapBuilt = false;
         } else {
             *j++ = *i;
         }
@@ -2033,6 +2113,8 @@ void Simplifier::removeClausesHelper(
     const vec<Watched>& todo
     , const Lit lit
 ) {
+    blockedMapBuilt = false;
+
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
 

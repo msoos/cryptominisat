@@ -71,9 +71,10 @@ public:
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
     );
+    bool unEliminate(const Var var);
 
     //UnElimination
-    void extendModel(SolutionExtender* extender) const;
+    void extendModel(SolutionExtender* extender);
 
     //Get-functions
     struct Stats
@@ -417,7 +418,6 @@ private:
     void addBackToSolver();
     bool propImplicits();
     void removeAllLongsFromWatches();
-    void removeAssignedVarsFromEliminated();
     bool completeCleanClause(Clause& ps);
 
     //Clause update
@@ -598,6 +598,10 @@ private:
     void blockImplicit(bool bins = false, bool tris = true);
     bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
+    map<Var, vector<size_t> > blk_var_to_cl;
+    bool blockedMapBuilt;
+    void buildBlockedMap();
+    void cleanBlockedClauses();
 
     /////////////////////
     //Gate extraction
@@ -818,7 +822,7 @@ template<class T> void Simplifier::findSubsumed0(
     }
 }
 
-bool Simplifier::getAnythingHasBeenBlocked() const
+inline bool Simplifier::getAnythingHasBeenBlocked() const
 {
     return anythingHasBeenBlocked;
 }
