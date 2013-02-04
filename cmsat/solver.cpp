@@ -123,11 +123,6 @@ bool Solver::addXorClauseInt(
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
 
-    if (lits.size() > (0x01UL << 18)) {
-        cout << "Too long clause!" << endl;
-        exit(-1);
-    }
-
     vector<Lit> ps(lits);
     std::sort(ps.begin(), ps.end());
     Lit p;
@@ -163,6 +158,12 @@ bool Solver::addXorClauseInt(
         }
     }
     ps.resize(ps.size() - (i - j));
+
+    if (ps.size() > (0x01UL << 18)) {
+        cout << "Too long clause!" << endl;
+        exit(-1);
+    }
+
 
     switch(ps.size()) {
         case 0:
