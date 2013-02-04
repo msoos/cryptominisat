@@ -177,9 +177,9 @@ class Watched {
             assert(learnt());
             #endif
             if (toSet) {
-                data2 |= (uint32_t)1;
+                data2 |= 1U;
             } else {
-                data2 &= (~((uint32_t)1));
+                data2 &= (~(1U));
             }
         }
 
