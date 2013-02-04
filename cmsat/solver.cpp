@@ -839,7 +839,12 @@ CleaningStats Solver::reduceDB()
     //Subsume
     uint64_t sumConfl = solver->sumConflicts();
     simplifier->subsumeLearnts();
-    cout << "c Time wasted on clean&replace&sub: " << cpuTime()-myTime << endl;
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Time wasted on clean&replace&sub: "
+        << std::setprecision(3) << cpuTime()-myTime
+        << endl;
+    }
 
     //pre-remove
     if (conf.doPreClauseCleanPropAndConfl) {

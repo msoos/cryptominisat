@@ -632,12 +632,14 @@ bool ClauseVivifier::vivifyClausesCache(
         runStats.irredCacheBased = tmpStats;
     }
 
-    cout
-    << "c [stamp]"
-    << " lit-rem: " << remLitTimeStampTotal
-    << " inv-lit-rem: " << remLitTimeStampTotalInv
-    << " stamp-rem: " << subsumedStamp
-    << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [stamp]"
+        << " lit-rem: " << remLitTimeStampTotal
+        << " inv-lit-rem: " << remLitTimeStampTotalInv
+        << " stamp-rem: " << subsumedStamp
+        << endl;
+    }
 
     return solver->ok;
 }
