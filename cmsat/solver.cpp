@@ -98,6 +98,22 @@ Solver::~Solver()
     delete varReplacer;
 }
 
+bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
+{
+    vector<Lit> ps(vars.size());
+    for(size_t i = 0; i < vars.size(); i++) {
+        ps[i] = Lit(vars[i], false);
+    }
+
+    if (!addClauseHelper(ps))
+        return false;
+
+    if (!addXorClauseInt(ps, rhs, true))
+        return false;
+
+    return okay();
+}
+
 bool Solver::addXorClauseInt(
     const vector< Lit >& lits
     , bool rhs
@@ -123,13 +139,28 @@ bool Solver::addXorClauseInt(
             //added, but easily removed
             j--;
             p = lit_Undef;
-            if (value(ps[i]) != l_Undef)
-                rhs ^= value(ps[i].var()).getBool();
-        } else if (value(ps[i]) == l_Undef) { //just add
+
+            //Flip rhs if neccessary
+            if (value(ps[i]) != l_Undef) {
+                rhs ^= value(ps[i]).getBool();
+            }
+
+        } else if (value(ps[i]) == l_Undef) {
+            //If signed, unsign it and flip rhs
+            if (ps[i].sign()) {
+                rhs ^= true;
+                ps[i] = ps[i].unsign();
+            }
+
+            //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
+
             assert(!simplifier->getVarElimed()[p.var()]);
-        } else //modify rhs instead of adding
-            rhs ^= (value(ps[i].var()).getBool());
+        } else {
+            //modify rhs instead of adding
+            assert(value(ps[i]) != l_Undef);
+            rhs ^= value(ps[i]).getBool();
+        }
     }
     ps.resize(ps.size() - (i - j));
 

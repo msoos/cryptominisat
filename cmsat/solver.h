@@ -69,7 +69,8 @@ class Solver : public Searcher
         //////////////////////////////
         // Problem specification:
         Var  newVar(const bool dvar = true); ///< Add new variable
-        bool addClause (const vector<Lit>& ps);  ///< Add clause to the solver
+        bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
+        bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addLearntClause(
             const vector<Lit>& ps
             , const ClauseStats& stats = ClauseStats()
