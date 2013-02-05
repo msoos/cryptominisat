@@ -80,7 +80,7 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
 #MySQL
-SET(STATSNEEDED 1)
+#SET(STATSNEEDED 1)
 if (STATSNEEDED)
     add_definitions( -DSTATS_NEEDED )
 endif (STATSNEEDED)
