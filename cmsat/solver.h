@@ -134,12 +134,30 @@ class Solver : public Searcher
         // State Dumping
         template<class T>
         string clauseBackNumbered(const T& cl) const;
-        void   dumpUnitaryClauses(std::ostream* os) const;
-        void   dump2LongXorClauses(std::ostream* os) const;
-        void   dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
-        void   dumpTriClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
-        void   dumpRedClauses(std::ostream* os, const uint32_t maxSize) const; ///<Dump all irredundant(=learnt) clauses into file
-        void   dumpIrredClauses(std::ostream* os) const; ///<Dump (simplified) irredundant system
+        void dumpUnitaryClauses(std::ostream* os) const;
+        void dump2LongXorClauses(std::ostream* os) const;
+        void dumpBinClauses(
+            const bool alsoLearnt
+            , const bool alsoNonLearnt
+            , std::ostream* outfile
+        ) const;
+
+        void dumpTriClauses(
+            const bool alsoLearnt
+            , const bool alsoNonLearnt
+            , std::ostream* outfile
+        ) const;
+
+        ///Dump all irredundant(=learnt) clauses into file
+        void dumpRedClauses(
+            std::ostream* os
+            , const uint32_t maxSize
+        ) const;
+
+        ///Dump (simplified) irredundant system
+        void dumpIrredClauses(
+            std::ostream* os
+        ) const;
 
         struct SolveStats
         {
