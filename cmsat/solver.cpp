@@ -679,6 +679,7 @@ void Solver::renumberVariables()
     updateArray(timestamp, interToOuter2);
     simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
+    implCache.updateVars(seen, outerToInter, interToOuter2);
 
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
@@ -727,6 +728,9 @@ Var Solver::newVar(const bool dvar)
     interToOuterMain.push_back(var);
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
+
+    if (conf.doCache)
+        implCache.addNew();
 
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
@@ -1117,8 +1121,12 @@ lbool Solver::simplifyProblem()
         }
     }
 
-    /*if (conf.doBothProp && !bothProp->tryBothProp())
-        goto end;*/
+    //Cache clean before probing (for speed)
+    if (conf.doCache) {
+        implCache.clean(this);
+        if (!implCache.tryBoth(this))
+            goto end;
+    }
 
     //Treat implicits
     clauseVivifier->subsumeImplicit();
@@ -1173,10 +1181,6 @@ lbool Solver::simplifyProblem()
                 goto end;
         }
     }
-
-    //TODO stamping
-    /*if (!implCache.tryBoth(this))
-        goto end;*/
 
     if (conf.doSortWatched)
         sortWatched();

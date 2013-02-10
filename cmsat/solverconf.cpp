@@ -96,6 +96,8 @@ SolverConf::SolverConf() :
         , doBothProp       (true)
         , doTransRed       (true)
         , doStamp          (true)
+        , doCache          (true)
+        , cacheUpdateCutoff(200)
 
         //optimisations to do
         , printFullStats   (false)

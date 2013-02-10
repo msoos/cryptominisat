@@ -318,6 +318,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
+    size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
     for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
@@ -350,6 +351,37 @@ bool Prober::tryThis(const Lit lit, const bool first)
         }
 
         visitedAlready[thisLit.toInt()] = 1;
+
+        //Update cache, if the trail was within limits (cacheUpdateCutoff)
+        const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
+        if (solver->conf.doCache
+            && thisLit != lit
+            && numElemsSet <= solver->conf.cacheUpdateCutoff
+            //&& cacheUpdated[(~ancestor).toInt()] == 0
+        ) {
+            //Update stats/markings
+            //cacheUpdated[(~ancestor).toInt()]++;
+            extraTime += 1;
+            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/100;
+            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/100;
+
+            const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
+
+            //Update the cache now
+            assert(ancestor != lit_Undef);
+            solver->implCache[(~ancestor).toInt()].merge(
+                solver->implCache[(~thisLit).toInt()].lits
+                , thisLit
+                , learntStep
+                , ancestor
+                , solver->seen
+            );
+
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            cout << "The impl cache of " << (~ancestor) << " is now: ";
+            cout << solver->implCache[(~ancestor).toInt()] << endl;
+            #endif
+        }
     }
 
     solver->cancelZeroLight();

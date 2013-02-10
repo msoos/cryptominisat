@@ -27,6 +27,7 @@
 
 #include "constants.h"
 #include "solvertypes.h"
+#include "implcache.h"
 #include "solverconf.h"
 #include "propengine.h"
 #include "searcher.h"
@@ -48,6 +49,8 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
+class ImplCache;
+
 
 class Solver : public Searcher
 {
@@ -349,6 +352,7 @@ class Solver : public Searcher
         friend class ClauseCleaner;
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;
+        friend class ImplCache;
         friend class Searcher;
         friend class XorFinder;
         friend class GateFinder;
@@ -422,6 +426,7 @@ class Solver : public Searcher
         /////////////////////
         // Data
         SolverConf           conf;
+        ImplCache            implCache;
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;

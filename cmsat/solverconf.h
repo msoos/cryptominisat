@@ -109,6 +109,9 @@ class SolverConf
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;
+        int      doCache;
+        size_t   cacheUpdateCutoff;
+
 
         //Optimisations to do
 
