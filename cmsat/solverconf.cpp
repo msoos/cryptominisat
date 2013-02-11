@@ -99,17 +99,24 @@ SolverConf::SolverConf() :
         , doCache          (true)
         , cacheUpdateCutoff(200)
 
-        //optimisations to do
-        , printFullStats   (false)
-        , doRenumberVars   (true)
-        , dominPickFreq    (5)
-        , flipPolarFreq    (300)
+        //XOR
         , doFindXors       (true)
         , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10L*1000L*1000L)
-        , doFindAndReplaceEqLits     (true)
+
+        //Var-replacer
+        , doFindAndReplaceEqLits(true)
+        , doExtendedSCC         (true)
+        , sccFindPercent        (0.02)
+
+        //optimisations to do
+        , printFullStats   (false)
+        , doRenumberVars   (true)
+        , dominPickFreq    (5)
+        , flipPolarFreq    (300)
+
         , doSchedSimp      (true)
         , doSimplify       (true)
         , doHyperBinRes    (true)
@@ -120,7 +127,6 @@ SolverConf::SolverConf() :
         , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doExtendedSCC    (false)
         , doGateFind       (true)
         , maxGateSize      (20)
         , doAlwaysFMinim   (false)

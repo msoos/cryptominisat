@@ -378,6 +378,9 @@ void Main::parseCommandLine()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
+    std::ostringstream sccFindPercent;
+    sccFindPercent << std::fixed << std::setprecision(3) << conf.sccFindPercent;
+
     po::options_description xorOptions("XOR-related options");
     xorOptions.add_options()
     ("xor", po::value<int>(&conf.doFindXors)->default_value(conf.doFindXors)
@@ -388,14 +391,19 @@ void Main::parseCommandLine()
         , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
     ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
-
     //Not implemented yet
     //("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
     //    , "Mix XORs and OrGates for new truths")
+    ;
+
+    po::options_description eqLitOpts("Equivalent literal options");
+    eqLitOpts.add_options()
     ("scc", po::value<int>(&conf.doFindAndReplaceEqLits)->default_value(conf.doFindAndReplaceEqLits)
         , "Find equivalent literals through SCC and replace them")
-    ("extendedscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
+    ("extscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
         , "Perform SCC using cache")
+    ("sccperc", po::value<double>(&conf.sccFindPercent)->default_value(conf.sccFindPercent, sccFindPercent.str())
+        , "Perform SCC only if the number of new binary clauses is at least this many % of the number of free variables")
     ;
 
     po::options_description gateOptions("Gate-related options");
@@ -512,6 +520,7 @@ void Main::parseCommandLine()
     .add(iterativeOptions)
     .add(probeOptions)
     .add(simplificationOptions)
+    .add(eqLitOpts)
     #ifdef USE_M4RI
     .add(xorOptions)
     #endif

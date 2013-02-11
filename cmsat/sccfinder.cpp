@@ -91,6 +91,16 @@ void SCCFinder::tarjan(const uint32_t vertex)
     ) {
         Lit vertLit = Lit::toLit(vertex);
 
+        vector<LitExtra>& transCache = solver->implCache[(~vertLit).toInt()].lits;
+
+        //Prefetch cache in case we are doing extended SCC
+        if (solver->conf.doExtendedSCC
+            && transCache.size() > 0
+        ) {
+            __builtin_prefetch(&transCache[0]);
+        }
+
+
         //Go through the watch
         const vec<Watched>& ws = solver->watches[(~vertLit).toInt()];
         for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
@@ -103,14 +113,13 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        //TODO stamping here was a cache stuff
-        /*if (solver->conf.doExtendedSCC && solver->conf.doCache) {
+        if (solver->conf.doExtendedSCC && solver->conf.doCache) {
             vector<LitExtra>::iterator it = transCache.begin();
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
                 if (lit != ~vertLit) doit(lit, vertex);
             }
-        }*/
+        }
 
     }
 

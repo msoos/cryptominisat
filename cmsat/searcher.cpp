@@ -1738,7 +1738,8 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Eq-lit finding has been enabled? If so, let's see if there might be
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
-            && solver->binTri.numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
+            && (solver->binTri.numNewBinsSinceSCC
+                > ((double)solver->getNumFreeVars()*solver->conf.sccFindPercent))
         ) {
             if (conf.verbosity >= 1) {
                 cout
