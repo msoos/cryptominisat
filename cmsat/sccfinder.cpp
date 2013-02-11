@@ -153,7 +153,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                         lits[0]
                         , lits[1]
                         , xorEqualsFalse
-                        , solver->conf.doExtendedSCC && solver->conf.doStamp
+                        , solver->conf.doExtendedSCC || solver->conf.doStamp
                     );
                 }
             }
