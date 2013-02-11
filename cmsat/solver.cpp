@@ -1166,6 +1166,12 @@ lbool Solver::simplifyProblem()
         goto end;
     clauseVivifier->subsumeImplicit();
 
+
+    //Clean cache before vivif
+    if (conf.doCache) {
+        implCache.clean(this);
+    }
+
     //Vivify clauses
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
         goto end;

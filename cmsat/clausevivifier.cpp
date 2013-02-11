@@ -376,6 +376,10 @@ bool ClauseVivifier::vivifyClausesCache(
     size_t remLitTimeStampTotal = 0;
     size_t remLitTimeStampTotalInv = 0;
     size_t subsumedStamp = 0;
+    size_t remLitCache = 0;
+    size_t remLitBinTri = 0;
+    size_t subBinTri = 0;
+    size_t subCache = 0;
 
     //Temps
     vector<Lit> lits;
@@ -408,6 +412,8 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*2;
         tmpStats.tried++;
         bool isSubsumed = false;
+        size_t thisRemLitCache = 0;
+        size_t thisRemLitBinTri = 0;
 
         //Fill 'seen'
         lits2.clear();
@@ -424,6 +430,31 @@ bool ClauseVivifier::vivifyClausesCache(
             ; l++
         ) {
             const Lit lit = *l;
+
+            if (alsoStrengthen
+                 && seen[lit.toInt()] //We haven't yet removed it
+             ) {
+                 countTime += solver->implCache[lit.toInt()].lits.size();
+                 for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
+                     , end2 = solver->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
+                 ) {
+                     if (seen[(~(it2->getLit())).toInt()]) {
+                        seen[(~(it2->getLit())).toInt()] = 0;
+                        thisRemLitCache++;
+                     }
+
+                     if (seen_subs[it2->getLit().toInt()]
+                         && it2->getOnlyNLBin()
+                     ) {
+                         isSubsumed = true;
+                         subCache++;
+                         break;
+                     }
+                 }
+             }
+
+             if (isSubsumed)
+                 break;
 
             //Go through the watchlist
             vec<Watched>& thisW = solver->watches[lit.toInt()];
@@ -444,17 +475,27 @@ bool ClauseVivifier::vivifyClausesCache(
                     if (wit->isBinary()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        seen[(~wit->lit1()).toInt()] = 0;
+                        if (seen[(~wit->lit1()).toInt()]) {
+                            thisRemLitBinTri++;
+                            seen[(~wit->lit1()).toInt()] = 0;
+                        }
                     }
 
                     //Strengthening w/ tri
                     if (wit->isTri()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        if (seen[(wit->lit1()).toInt()])
-                            seen[(~wit->lit2()).toInt()] = 0;
-                        else if (seen[wit->lit2().toInt()])
-                            seen[(~wit->lit1()).toInt()] = 0;
+                        if (seen[(wit->lit1()).toInt()]) {
+                            if (seen[(~wit->lit2()).toInt()]) {
+                                thisRemLitBinTri++;
+                                seen[(~wit->lit2()).toInt()] = 0;
+                            }
+                        } else if (seen[wit->lit2().toInt()]) {
+                            if (seen[(~wit->lit1()).toInt()]) {
+                                thisRemLitBinTri++;
+                                seen[(~wit->lit1()).toInt()] = 0;
+                            }
+                        }
                     }
                 }
 
@@ -472,6 +513,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         solver->binTri.redLits -= 2;
                         solver->binTri.irredLits += 2;
                     }
+                    subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -507,6 +549,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         solver->binTri.redLits -= 3;
                         solver->binTri.irredLits += 3;
                     }
+                    subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -536,6 +579,7 @@ bool ClauseVivifier::vivifyClausesCache(
             }
         }
 
+        //Remove through stamp
         assert(lits2.size() > 1);
         if (!isSubsumed
             && !learnt
@@ -568,14 +612,13 @@ bool ClauseVivifier::vivifyClausesCache(
                 && seen[it2->toInt()]
             ) {
                 lits.push_back(*it2);
-            } else {
-                tmpStats.numLitsRem ++;
             }
 
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
         }
 
+        //Remove lits through stamping
         if (alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
@@ -586,6 +629,7 @@ bool ClauseVivifier::vivifyClausesCache(
             remLitTimeStampTotalInv += tmp.second;
         }
 
+        //Remove lits through stamping
         if (alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
@@ -606,9 +650,10 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*10;
         solver->detachClause(cl);
         if (isSubsumed) {
-            tmpStats.numClSubsumed++;
             solver->clAllocator->clauseFree(offset);
         } else {
+            remLitCache += thisRemLitCache;
+            remLitBinTri += thisRemLitBinTri;
             tmpStats.shrinked++;
             countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
@@ -625,6 +670,8 @@ bool ClauseVivifier::vivifyClausesCache(
     solver->checkImplicitStats();
 
     //Set stats
+    tmpStats.numClSubsumed += subBinTri + subsumedStamp + subCache;
+    tmpStats.numLitsRem += remLitBinTri + remLitCache + remLitTimeStampTotal + remLitTimeStampTotalInv;
     tmpStats.cpu_time = cpuTime() - myTime;
     if (learnt) {
         runStats.redCacheBased = tmpStats;
@@ -637,7 +684,19 @@ bool ClauseVivifier::vivifyClausesCache(
         << "c [stamp]"
         << " lit-rem: " << remLitTimeStampTotal
         << " inv-lit-rem: " << remLitTimeStampTotalInv
-        << " stamp-rem: " << subsumedStamp
+        << " stamp-cl-rem: " << subsumedStamp
+        << endl;
+
+        cout
+        << "c [bintri]"
+        << " lit-rem: " << remLitBinTri
+        << " cl-sub: " << subBinTri
+        << endl;
+
+        cout
+        << "c [cache]"
+        << " lit-rem: " << remLitCache
+        << " cl-sub: " << subCache
         << endl;
     }
 

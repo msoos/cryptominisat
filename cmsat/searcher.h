@@ -264,9 +264,10 @@ class Searcher : public PropEngine
                 , litsLearntFinal(0)
                 , recMinCl(0)
                 , recMinLitRem(0)
-                , binShrinkAttempt(0)
-                , binShrinkedClause(0)
-                , binRemLits(0)
+                , furtherShrinkAttempt(0)
+                , binTriShrinkedClause(0)
+                , cacheShrinkedClause(0)
+                , furtherShrinkedSuccess(0)
                 , stampShrinkAttempt(0)
                 , stampShrinkCl(0)
                 , stampShrinkLit(0)
@@ -312,9 +313,13 @@ class Searcher : public PropEngine
                 litsLearntFinal += other.litsLearntFinal;
                 recMinCl += other.recMinCl;
                 recMinLitRem += other.recMinLitRem;
-                binShrinkAttempt  += other.binShrinkAttempt;
-                binShrinkedClause += other.binShrinkedClause;
-                binRemLits += other.binRemLits;
+
+                furtherShrinkAttempt  += other.furtherShrinkAttempt;
+                binTriShrinkedClause += other.binTriShrinkedClause;
+                cacheShrinkedClause += other.cacheShrinkedClause;
+                furtherShrinkedSuccess += other.furtherShrinkedSuccess;
+
+
                 stampShrinkAttempt += other.stampShrinkAttempt;
                 stampShrinkCl += other.stampShrinkCl;
                 stampShrinkLit += other.stampShrinkLit;
@@ -359,9 +364,12 @@ class Searcher : public PropEngine
                 litsLearntFinal -= other.litsLearntFinal;
                 recMinCl -= other.recMinCl;
                 recMinLitRem -= other.recMinLitRem;
-                binShrinkAttempt  -= other.binShrinkAttempt;
-                binShrinkedClause -= other.binShrinkedClause;
-                binRemLits -= other.binRemLits;
+
+                furtherShrinkAttempt  -= other.furtherShrinkAttempt;
+                binTriShrinkedClause -= other.binTriShrinkedClause;
+                cacheShrinkedClause -= other.cacheShrinkedClause;
+                furtherShrinkedSuccess -= other.furtherShrinkedSuccess;
+
                 stampShrinkAttempt -= other.stampShrinkAttempt;
                 stampShrinkCl -= other.stampShrinkCl;
                 stampShrinkLit -= other.stampShrinkLit;
@@ -503,15 +511,21 @@ class Searcher : public PropEngine
                     , "% less overall"
                 );
 
-                printStatsLine("c bin-min call%"
-                    , (double)binShrinkAttempt/(double)conflStats.numConflicts*100.0
-                    , (double)binShrinkedClause/(double)binShrinkAttempt*100.0
+                printStatsLine("c further-min call%"
+                    , (double)furtherShrinkAttempt/(double)conflStats.numConflicts*100.0
+                    , (double)furtherShrinkedSuccess/(double)furtherShrinkAttempt*100.0
                     , "% attempt successful"
                 );
 
-                printStatsLine("c bin-min lits"
-                    , binRemLits
-                    , (double)binRemLits/(double)litsLearntNonMin*100.0
+                printStatsLine("c bintri-min lits"
+                    , binTriShrinkedClause
+                    , (double)binTriShrinkedClause/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c cache-min lits"
+                    , cacheShrinkedClause
+                    , (double)cacheShrinkedClause/(double)litsLearntNonMin*100.0
                     , "% less overall"
                 );
 
@@ -552,9 +566,10 @@ class Searcher : public PropEngine
             uint64_t litsLearntFinal;
             uint64_t recMinCl;
             uint64_t recMinLitRem;
-            uint64_t binShrinkAttempt;
-            uint64_t binShrinkedClause;
-            uint64_t binRemLits;
+            uint64_t furtherShrinkAttempt;
+            uint64_t binTriShrinkedClause;
+            uint64_t cacheShrinkedClause;
+            uint64_t furtherShrinkedSuccess;
             uint64_t stampShrinkAttempt;
             uint64_t stampShrinkCl;
             uint64_t stampShrinkLit;

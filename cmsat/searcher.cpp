@@ -1978,7 +1978,7 @@ form to carry out the forward-self-subsuming resolution
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doStamp);
-    stats.binShrinkAttempt++;
+    stats.furtherShrinkAttempt++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
@@ -2003,6 +2003,21 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
             continue;
 
         Lit lit = *l;
+
+        const TransCache& cache1 = solver->implCache[l->toInt()];
+        timeSpent += cache1.lits.size()/2;
+        for (vector<LitExtra>::const_iterator
+            it = cache1.lits.begin(), end2 = cache1.lits.end()
+            ; it != end2
+            ; it++
+        ) {
+            if (seen[(~(it->getLit())).toInt()]) {
+                stats.cacheShrinkedClause++;
+                seen[(~(it->getLit())).toInt()] = 0;
+            }
+        }
+
+
         //Watchlist-based minimisation
         const vec<Watched>& ws = watches[lit.toInt()];
         for (vec<Watched>::const_iterator
@@ -2013,16 +2028,25 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         ) {
             timeSpent++;
             if (i->isBinary()) {
-                seen[(~i->lit1()).toInt()] = 0;
+                if (seen[(~i->lit1()).toInt()]) {
+                    stats.binTriShrinkedClause++;
+                    seen[(~i->lit1()).toInt()] = 0;
+                }
                 continue;
             }
 
             if (i->isTri()) {
                 if (seen[i->lit2().toInt()]) {
-                    seen[(~i->lit1()).toInt()] = 0;
+                    if (seen[(~i->lit1()).toInt()]) {
+                        stats.binTriShrinkedClause++;
+                        seen[(~i->lit1()).toInt()] = 0;
+                    }
                 }
                 if (seen[i->lit1().toInt()]) {
-                    seen[(~i->lit2()).toInt()] = 0;
+                    if (seen[(~i->lit2()).toInt()]) {
+                        stats.binTriShrinkedClause++;
+                        seen[(~i->lit2()).toInt()] = 0;
+                    }
                 }
             }
         }
@@ -2030,7 +2054,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.
-    uint32_t removedLits = 0;
+    bool changedClause  = false;
     vector<Lit>::iterator i = cl.begin();
     vector<Lit>::iterator j= i;
 
@@ -2042,12 +2066,11 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         if (seen[i->toInt()])
             *j++ = *i;
         else
-            removedLits++;
+            changedClause = true;
 
         seen[i->toInt()] = 0;
     }
-    stats.binShrinkedClause += (removedLits > 0);
-    stats.binRemLits += removedLits;
+    stats.furtherShrinkedSuccess += changedClause;
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG

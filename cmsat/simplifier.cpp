@@ -2715,6 +2715,38 @@ bool Simplifier::merge(
             const Lit lit = toClear[i];
             assert(lit.var() != noPosLit.var());
 
+            //Use cache
+            if (!ps.isBinary() && !qs.isBinary()) {
+                const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+                numMaxVarElimAgressiveCheck -= cache.size()/3;
+                for(vector<LitExtra>::const_iterator
+                    it = cache.begin(), end = cache.end()
+                    ; it != end
+                    ; it++
+                ) {
+                    //If learnt, that doesn't help
+                    if (!it->getOnlyNLBin())
+                        continue;
+
+                    const Lit otherLit = it->getLit();
+                    if (otherLit.var() == noPosLit.var())
+                        continue;
+
+                    //If (a) was in original clause
+                    //then (a V b) means -b can be put inside
+                    if (!seen[(~otherLit).toInt()]) {
+                        toClear.push_back(~otherLit);
+                        seen[(~otherLit).toInt()] = 1;
+                    }
+
+                    //If (a V b) is non-learnt in the clause, then done
+                    if (seen[otherLit.toInt()]) {
+                        retval = false;
+                        goto end;
+                    }
+                }
+            }
+
             //Use watchlists
             if (numMaxVarElimAgressiveCheck > 0) {
                 if (agressiveCheck(lit, noPosLit, retval))
