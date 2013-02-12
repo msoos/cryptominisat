@@ -1136,7 +1136,7 @@ lbool Solver::simplifyProblem()
     if (conf.doProbe && !prober->probe())
         goto end;
 
-    //Subsume only
+    //Don't replace first -- the stamps won't work so well
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
         goto end;
     }
