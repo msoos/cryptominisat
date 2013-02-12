@@ -855,6 +855,29 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 continue;
             }
 
+            //Update cache
+            size_t numElems = trail.size() - trail_lim[0];
+            if (solver->conf.doCache
+                && numElems <= solver->conf.cacheUpdateCutoff
+            ) {
+                for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
+                    const Lit thisLit = trail[c];
+                    const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
+                    assert(thisLit != trail[trail_lim[0]]);
+                    const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
+
+                    assert(ancestor != lit_Undef);
+                    solver->implCache[(~ancestor).toInt()].merge(
+                        solver->implCache[(~thisLit).toInt()].lits
+                        , thisLit
+                        , learntStep
+                        , ancestor
+                        , solver->seen
+                    );
+                }
+            }
+
+
             //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
             std::pair<size_t, size_t> tmp = removeUselessBins();
