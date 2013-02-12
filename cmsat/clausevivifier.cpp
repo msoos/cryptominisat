@@ -710,6 +710,7 @@ void ClauseVivifier::subsumeImplicit()
     uint64_t remBins = 0;
     uint64_t remTris = 0;
     uint64_t stampTriRem = 0;
+    uint64_t cacheTriRem = 0;
     timeAvailable = 100L*1000L*1000L;
 
     //Randomize starting point
@@ -793,13 +794,39 @@ void ClauseVivifier::subsumeImplicit()
                     remove = true;
                 }
 
+                lits.clear();
+                lits.push_back(lit);
+                lits.push_back(i->lit1());
+                lits.push_back(i->lit2());
+
+                //Subsumed by stamp
                 if (!remove) {
-                    lits.clear();
-                    lits.push_back(lit);
-                    lits.push_back(i->lit1());
-                    lits.push_back(i->lit2());
                     remove = stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv);
                     stampTriRem += remove;
+                }
+
+                //Subsumed by cache
+                if (!remove) {
+                    for(size_t i = 0; i < lits.size() && !remove; i++) {
+                        //countTime += solver->implCache[lit.toInt()].lits.size();
+                        for (vector<LitExtra>::const_iterator
+                            it2 = solver->implCache[lits[i].toInt()].lits.begin()
+                            , end2 = solver->implCache[lits[i].toInt()].lits.end()
+                            ; it2 != end2
+                            ; it2++
+                        ) {
+                            if ((   it2->getLit() == lits[0]
+                                    || it2->getLit() == lits[1]
+                                    || it2->getLit() == lits[2]
+                                )
+                                && it2->getOnlyNLBin()
+                            ) {
+                                remove = true;
+                                cacheTriRem++;
+                                break;
+                             }
+                        }
+                    }
                 }
 
                 if (remove) {
@@ -858,7 +885,7 @@ void ClauseVivifier::subsumeImplicit()
         cout
         << "c [implicit] sub"
         << " bin: " << remBins
-        << " tri: " << remTris << " (stamp: " << stampTriRem << ")"
+        << " tri: " << remTris << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
 
         << " T: " << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
