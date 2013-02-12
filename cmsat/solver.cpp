@@ -1145,9 +1145,7 @@ lbool Solver::simplifyProblem()
     clauseVivifier->subsumeImplicit();
 
     //SCC&VAR-REPL
-    if (solveStats.numSimplify > 0
-        && conf.doFindAndReplaceEqLits
-    ) {
+    if (conf.doFindAndReplaceEqLits) {
         if (!sCCFinder->find2LongXors())
             goto end;
 
