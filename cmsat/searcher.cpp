@@ -25,7 +25,6 @@
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
-#include <omp.h>
 #include "sccfinder.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
@@ -33,6 +32,10 @@
 #include <algorithm>
 using std::cout;
 using std::endl;
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 //#define VERBOSE_DEBUG_GEN_CONFL_DOT
 
@@ -141,8 +144,8 @@ void Searcher::analyzeHelper(
         return;
 
     if (seen2[var] == 0 && //hasn't been bumped yet
-        ((var_bump_necessary
-            && conf.rarely_bump_var_act) //rarely bump, but bump this time
+        (
+          (var_bump_necessary && conf.rarely_bump_var_act) //rarely bump, but bump this time
           || !conf.rarely_bump_var_act //always bump
         )
     ) {
@@ -288,6 +291,7 @@ Clause* Searcher::analyze(
 
     assert(pathC == 0);
     stats.litsLearntNonMin += out_learnt.size();
+    const size_t origSize = out_learnt.size();
 
     //Recursive-simplify conflict clause:
     if (conf.doRecursiveCCMin) {
@@ -316,7 +320,8 @@ Clause* Searcher::analyze(
         }
         toClear.clear();
     }
-    stats.litsLearntRecMin += out_learnt.size();
+    stats.recMinCl += ((origSize - out_learnt.size()) > 0);
+    stats.recMinLitRem += origSize - out_learnt.size();
 
     //Cache-based minimisation
     if (conf.doStamp
@@ -328,8 +333,10 @@ Clause* Searcher::analyze(
             || out_learnt.size() < 10
             )
     ) {
-        //TODO stamping
         minimiseLearntFurther(out_learnt);
+
+        //Stamp-based minimization
+        stampBasedLearntMinim(out_learnt);
     }
 
     //Calc stats
@@ -832,9 +839,10 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
                 cancelUntil(0);
                 stats.litsLearntNonMin += 1;
-                stats.litsLearntRecMin += 1;
                 stats.litsLearntFinal += 1;
+                #ifdef STATS_NEEDED
                 propStats.propsUnit++;
+                #endif
                 stats.hyperBinAdded += hyperBinResAll();
                 std::pair<size_t, size_t> tmp = removeUselessBins();
                 stats.transReduRemIrred += tmp.first;
@@ -847,6 +855,29 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 continue;
             }
 
+            //Update cache
+            size_t numElems = trail.size() - trail_lim[0];
+            if (solver->conf.doCache
+                && numElems <= solver->conf.cacheUpdateCutoff
+            ) {
+                for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
+                    const Lit thisLit = trail[c];
+                    const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
+                    assert(thisLit != trail[trail_lim[0]]);
+                    const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
+
+                    assert(ancestor != lit_Undef);
+                    solver->implCache[(~ancestor).toInt()].merge(
+                        solver->implCache[(~thisLit).toInt()].lits
+                        , thisLit
+                        , learntStep
+                        , ancestor
+                        , solver->seen
+                    );
+                }
+            }
+
+
             //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
             std::pair<size_t, size_t> tmp = removeUselessBins();
@@ -855,8 +886,10 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver
+                #ifdef STATS_NEEDED
                 , &hist.watchListSizeTraversed
                 //, &hist.litPropagatedSomething
+                #endif
             );
         }
 
@@ -930,11 +963,13 @@ lbool Searcher::new_decision()
 
         //Update stats
         stats.decisions++;
+        #ifdef STATS_NEEDED
         if (next.sign()) {
             varData[next.var()].stats.negDecided++;
         } else {
             varData[next.var()].stats.posDecided++;
         }
+        #endif
     }
 
     // Increase decision level and enqueue 'next'
@@ -1076,6 +1111,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         hist.agilityHist.push(agility.getAgility());
         hist.numResolutionsHist.push(resolutions.sum());
 
+        #ifdef STATS_NEEDED
         if (solver->conf.doSQL) {
             if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
                 printClauseDistribSQL();
@@ -1097,6 +1133,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             clauseGlueDistrib[truncGlue]++;
             sizeAndGlue[truncSize][truncGlue]++;
         }
+        #endif
     }
     cancelUntil(backtrack_level);
     if (params.update) {
@@ -1115,7 +1152,6 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
 
     //Set up everything to get the clause
-    std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
 
     //Is there on-the-fly subsumption?
@@ -1139,8 +1175,11 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Unitary learnt
             stats.learntUnits++;
             enqueue(learnt_clause[0]);
+            assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0");
+
+            #ifdef STATS_NEEDED
             propStats.propsUnit++;
-            assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
+            #endif
 
             break;
         case 2:
@@ -1152,12 +1191,15 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
 
+            #ifdef STATS_NEEDED
             propStats.propsBinRed++;
+            #endif
             break;
 
         case 3:
             //3-long learnt
             stats.learntTris++;
+            std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (conf.otfHyperbin && decisionLevel() == 1)
@@ -1165,19 +1207,26 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
+            #ifdef STATS_NEEDED
             propStats.propsTriRed++;
+            #endif
             break;
 
         default:
             //Normal learnt
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
+            std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
             if (conf.otfHyperbin && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
             else
                 enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
+
+            #ifdef STATS_NEEDED
             propStats.propsLongRed++;
+            #endif
+
             break;
     }
 
@@ -1220,6 +1269,7 @@ void Searcher::resetStats()
     hist.reset(conf.shortTermHistorySize);
 
     //About vars
+    #ifdef STATS_NEEDED
     for(vector<VarData>::iterator
         it = varData.begin(), end = varData.end()
         ; it != end
@@ -1227,6 +1277,7 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
+    #endif
 
     //Clause data
     clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMaxSize, 0);
@@ -1241,8 +1292,10 @@ void Searcher::resetStats()
     //Rest solving stats
     stats.clear();
     propStats.clear();
+    #ifdef STATS_NEEDED
     lastSQLPropStats = propStats;
     lastSQLGlobalStats = stats;
+    #endif
 
     //Set already set vars
     origTrailSize = trail.size();
@@ -1261,8 +1314,10 @@ lbool Searcher::burstSearch()
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
     const size_t numBinsUntilNow = stats.learntBins;
+    #ifdef STATS_NEEDED
     const size_t numTriLHBRUntilNow = propStats.triLHBR;
     const size_t numLongLHBRUntilNow = propStats.longLHBR;
+    #endif
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1295,8 +1350,10 @@ lbool Searcher::burstSearch()
         << conf.burstSearchLen << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
+        #ifdef STATS_NEEDED
         << " LHBR: "
         << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
+        #endif
         << endl;
     }
 
@@ -1415,6 +1472,7 @@ struct MyPolarData
     }
 }*/
 
+#ifdef STATS_NEEDED
 void Searcher::calcVariancesLT(
     double& avgDecLevelVar
     , double& avgTrailLevelVar
@@ -1482,6 +1540,7 @@ void Searcher::printRestartSQL()
     //Variable stats
     solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
 }
+#endif
 
 struct VarDumpOrder
 {
@@ -1500,6 +1559,7 @@ struct VarDumpOrder
     }
 };
 
+#ifdef STATS_NEEDED
 vector<Var> Searcher::calcVarsToDump() const
 {
     //How much to dump per criteria
@@ -1560,7 +1620,6 @@ vector<Var> Searcher::calcVarsToDump() const
     return toDumpVec;
 }
 
-
 void Searcher::printClauseDistribSQL()
 {
     solver->sqlStats->clauseSizeDistrib(
@@ -1577,6 +1636,7 @@ void Searcher::printClauseDistribSQL()
         , sizeAndGlue
     );
 }
+#endif
 
 
 /**
@@ -1668,7 +1728,13 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         if (sumConflicts() > solver->getNextCleanLimit()) {
             if (conf.verbosity >= 3) {
                 cout
-                << "c th " << omp_get_thread_num() << " cleaning"
+                << "c th "
+                #ifdef USE_OMP
+                << omp_get_thread_num()
+                #else
+                << "1"
+                #endif
+                << " cleaning"
                 << " getNextCleanLimit(): " << solver->getNextCleanLimit()
                 << " numConflicts : " << stats.conflStats.numConflicts
                 << " SumConfl: " << sumConflicts()
@@ -1695,11 +1761,12 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Eq-lit finding has been enabled? If so, let's see if there might be
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
-            && solver->binTri.numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
+            && (solver->binTri.numNewBinsSinceSCC
+                > ((double)solver->getNumFreeVars()*solver->conf.sccFindPercent))
         ) {
             if (conf.verbosity >= 1) {
                 cout
-                << "C new bins since last SCC: "
+                << "c new bins since last SCC: "
                 << std::setw(2)
                 << solver->binTri.numNewBinsSinceSCC
                 << " free vars %:"
@@ -1744,14 +1811,17 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
             lastRestartPrint = stats.conflStats.numConflicts;
         }
 
+        #ifdef STATS_NEEDED
         if (conf.doSQL) {
             printRestartSQL();
         }
+
         //Update varDataLT
         for(size_t i = 0; i < varData.size(); i++) {
             varDataLT[i].addData(varData[i].stats);
             varData[i].stats.reset();
         }
+        #endif
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1782,6 +1852,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         << endl;
     }
 
+    #ifdef STATS_NEEDED
     if (conf.doSQL) {
         printRestartSQL();
         //printVarStatsSQL();
@@ -1790,17 +1861,20 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         printClauseDistribSQL();
         std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
     }
+    #endif
 
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         propStats.print(stats.cpu_time);
+        #ifdef STATS_NEEDED
         printStatsLine("c props/decision"
             , (double)propStats.propagations/(double)stats.decisions
         );
         printStatsLine("c props/conflict"
             , (double)propStats.propagations/(double)stats.conflStats.numConflicts
         );
+        #endif
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 
@@ -1882,8 +1956,8 @@ Lit Searcher::pickBranchLit()
 
         const Var next_var = order_heap.removeMin();
         bool oldPolar = getStoredPolarity(next_var);
-        next = Lit(next_var, !pickPolarity(next_var));
-        bool newPolar = !next.sign();
+        bool newPolar = pickPolarity(next_var);
+        next = Lit(next_var, !newPolar);
         if (oldPolar != newPolar)
             stats.decisionFlippedPolar++;
     }
@@ -1892,7 +1966,7 @@ Lit Searcher::pickBranchLit()
     if (next != lit_Undef
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
-        const Lit lit2 = solver->litReachable[next.toInt()].lit;
+        const Lit lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
             && solver->decisionVar[lit2.var()]
@@ -1928,7 +2002,7 @@ form to carry out the forward-self-subsuming resolution
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doStamp);
-    stats.OTFShrinkAttempted++;
+    stats.furtherShrinkAttempt++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
@@ -1943,24 +2017,30 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     //Do cache-based minimisation and watchlist-based minimisation
     //one-by-one on the literals. Order could be enforced to get smallest
     //clause, but it doesn't really matter, I think
-    size_t done = 0;
+    size_t timeSpent = 0;
     for (vector<Lit>::iterator
         l = cl.begin(), end = cl.end()
-        ; l != end && done < 30
+        ; l != end && timeSpent < 300
         ; l++
     ) {
         if (seen[l->toInt()] == 0)
             continue;
-        done++;
 
         Lit lit = *l;
 
-        //Cache-based minimisation
-        //TODO stamping
-        /*const TransCache& cache1 = solver->implCache[l->toInt()];
-        for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
-            seen[(~(it->getLit())).toInt()] = 0;
-        }*/
+        const TransCache& cache1 = solver->implCache[l->toInt()];
+        timeSpent += cache1.lits.size()/2;
+        for (vector<LitExtra>::const_iterator
+            it = cache1.lits.begin(), end2 = cache1.lits.end()
+            ; it != end2
+            ; it++
+        ) {
+            if (seen[(~(it->getLit())).toInt()]) {
+                stats.cacheShrinkedClause++;
+                seen[(~(it->getLit())).toInt()] = 0;
+            }
+        }
+
 
         //Watchlist-based minimisation
         const vec<Watched>& ws = watches[lit.toInt()];
@@ -1970,17 +2050,27 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
             ; i != end
             ; i++
         ) {
+            timeSpent++;
             if (i->isBinary()) {
-                seen[(~i->lit1()).toInt()] = 0;
+                if (seen[(~i->lit1()).toInt()]) {
+                    stats.binTriShrinkedClause++;
+                    seen[(~i->lit1()).toInt()] = 0;
+                }
                 continue;
             }
 
             if (i->isTri()) {
                 if (seen[i->lit2().toInt()]) {
-                    seen[(~i->lit1()).toInt()] = 0;
+                    if (seen[(~i->lit1()).toInt()]) {
+                        stats.binTriShrinkedClause++;
+                        seen[(~i->lit1()).toInt()] = 0;
+                    }
                 }
                 if (seen[i->lit1().toInt()]) {
-                    seen[(~i->lit2()).toInt()] = 0;
+                    if (seen[(~i->lit2()).toInt()]) {
+                        stats.binTriShrinkedClause++;
+                        seen[(~i->lit2()).toInt()] = 0;
+                    }
                 }
             }
         }
@@ -1988,7 +2078,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.
-    uint32_t removedLits = 0;
+    bool changedClause  = false;
     vector<Lit>::iterator i = cl.begin();
     vector<Lit>::iterator j= i;
 
@@ -2000,16 +2090,57 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         if (seen[i->toInt()])
             *j++ = *i;
         else
-            removedLits++;
+            changedClause = true;
 
         seen[i->toInt()] = 0;
     }
-    stats.OTFShrinkedClause += (removedLits > 0);
+    stats.furtherShrinkedSuccess += changedClause;
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG
     cout << "c Removed further " << removedLits << " lits" << endl;
     #endif
+}
+
+void Searcher::stampBasedLearntMinim(vector<Lit>& cl)
+{
+    //Stamp-based minimization
+    stats.stampShrinkAttempt++;
+    const size_t origSize = cl.size();
+
+    Lit firstLit = cl[0];
+    std::pair<size_t, size_t> tmp;
+    tmp = stampBasedLitRem(cl, timestamp, STAMP_RED);
+    if (tmp.first || tmp.second) {
+        //cout << "Rem RED: " << tmp.first + tmp.second << endl;
+    }
+    tmp = stampBasedLitRem(cl, timestamp, STAMP_IRRED);
+    if (tmp.first || tmp.second) {
+        //cout << "Rem IRRED: " << tmp.first + tmp.second << endl;
+    }
+
+    //Handle removal or moving of the first literal
+    size_t at = std::numeric_limits<size_t>::max();
+    for(size_t i = 0; i < cl.size(); i++) {
+        if (cl[i] == firstLit) {
+            at = i;
+            break;
+        }
+    }
+    if (at != std::numeric_limits<size_t>::max()) {
+        //Make original first lit first in the final clause, too
+        std::swap(cl[0], cl[at]);
+    } else {
+        //Re-add first lit
+        cl.push_back(lit_Undef);
+        for(int i = ((int)cl.size())-1; i >= 1; i--) {
+            cl[i] = cl[i-1];
+        }
+        cl[0] = firstLit;
+    }
+
+    stats.stampShrinkCl += ((origSize - cl.size()) > 0);
+    stats.stampShrinkLit += origSize - cl.size();
 }
 
 void Searcher::insertVarOrder(const Var x)
@@ -2106,6 +2237,8 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             ; it++
         ) {
             //cout << "Removing binary clause: " << *it << endl;
+            propStats.bogoProps += solver->watches[it->getLit1().toInt()].size();
+            propStats.bogoProps += solver->watches[it->getLit2().toInt()].size();
             removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->getLearnt());
             removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 

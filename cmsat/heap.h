@@ -95,6 +95,11 @@ class Heap {
             indices.shrink(indices.size() - other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
+    size_t memUsed() const
+    {
+        return heap.capacity()*sizeof(uint32_t)
+            + indices.capacity()*sizeof(uint32_t);
+    }
 
     uint32_t  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }
@@ -177,12 +182,6 @@ class Heap {
     // DEBUG: consistency checking
     bool heapProperty() const {
         return heapProperty(1); }
-
-
-    // COMPAT: should be removed
-    void setBounds (uint32_t n) { }
-    void increase  (uint32_t n) { decrease(n); }
-    uint32_t  getmin    ()      { return removeMin(); }
 
 };
 

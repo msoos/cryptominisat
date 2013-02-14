@@ -71,7 +71,7 @@ class SolverConf
 
         //Burst?
         int      doPerformPreSimp; //Perform simplification at startup
-        double    probeMultiplier; //Increase failed lit time by this multiplier
+
 
         //Glues
         int       updateGlues;
@@ -96,6 +96,35 @@ class SolverConf
         string    sqlPass;
         string    sqlDatabase;
 
+        //Var-elim
+        int      doVarElim;          ///<Perform variable elimination
+        int      updateVarElimComplexityOTF;
+        int      varelimStrategy; ///<Guess varelim order, or calculate?
+        int      varElimCostEstimateStrategy;
+        double    varElimRatioPerIter;
+
+        //Probing
+        int      doProbe;
+        double   probeMultiplier; //Increase failed lit time by this multiplier
+        int      doBothProp;
+        int      doTransRed;   ///<Should carry out transitive reduction
+        int      doStamp;
+        int      doCache;
+        size_t   cacheUpdateCutoff;
+
+        //XORs
+        int      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
+        int      maxXorToFind;
+        int      useCacheWhenFindingXors;
+        int      doEchelonizeXOR;
+        uint64_t  maxXORMatrix;
+
+        //Var-replacement
+        int doFindAndReplaceEqLits;
+        int doExtendedSCC;
+        double sccFindPercent;
+
+
         //Optimisations to do
 
         int       printFullStats;
@@ -103,30 +132,16 @@ class SolverConf
         int       doRenumberVars;
         uint32_t  dominPickFreq;
         uint32_t  flipPolarFreq;
-        int      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
-        int      maxXorToFind;
-        int      useCacheWhenFindingXors;
-        int      doEchelonizeXOR;
-        uint64_t  maxXORMatrix;
-        int      doFindAndReplaceEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
         int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         int      doLHBR; ///<Do lazy hyper-binary resolution
-        int       doBlockedClause;    ///<Should try to remove blocked clauses
+        int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doExtBinSubs;
-        int      doVarElim;          ///<Perform variable elimination
-        int      varelimStrategy; ///<Guess varelim order, or calculate?
-        double    varElimRatioPerIter;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int      doProbe;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
-        int      doBothProp;
-        int      doTransRed;   ///<Should carry out transitive reduction
-        int      doStamp;
-        int      doExtendedSCC;
         int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;
         int      doAlwaysFMinim; ///< Always try to minimise clause with cache&gates

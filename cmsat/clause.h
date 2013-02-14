@@ -87,8 +87,10 @@ struct ClauseStats
         , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
         , numProp(0)
         , numConfl(0)
+        #ifdef STATS_NEEDED
         , numLitVisited(0)
         , numLookedAt(0)
+        #endif
         , numUsedUIP(0)
     {}
 
@@ -103,8 +105,10 @@ struct ClauseStats
     uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
     uint32_t numProp; ///<Number of times caused propagation
     uint32_t numConfl; ///<Number of times caused conflict
+    #ifdef STATS_NEEDED
     uint32_t numLitVisited; ///<Number of literals visited
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
+    #endif
     uint32_t numUsedUIP; ///Number of times the claue was using during 1st UIP conflict generation
 
     ///Number of resolutions it took to make the clause when it was
@@ -116,8 +120,10 @@ struct ClauseStats
         activity = 0;
         numProp = 0;
         numConfl = 0;
+        #ifdef STATS_NEEDED
         numLitVisited = 0;
         numLookedAt = 0;
+        #endif
         numUsedUIP = 0;
     }
 
@@ -128,11 +134,14 @@ struct ClauseStats
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
+        ret.activity = std::max(first.activity, second.activity);
         ret.conflictNumIntroduced = std::min(first.conflictNumIntroduced, second.conflictNumIntroduced);
         ret.numProp = first.numProp + second.numProp;
         ret.numConfl = first.numConfl + second.numConfl;
+        #ifdef STATS_NEEDED
         ret.numLitVisited = first.numLitVisited + second.numLitVisited;
         ret.numLookedAt = first.numLookedAt + second.numLookedAt;
+        #endif
         ret.numUsedUIP = first.numUsedUIP + second.numUsedUIP;
 
         return ret;
@@ -146,8 +155,10 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "conflIntro " << stats.conflictNumIntroduced<< " ";
     os << "numProp " << stats.numProp<< " ";
     os << "numConfl " << stats.numConfl<< " ";
+    #ifdef STATS_NEEDED
     os << "numLitVisit " << stats.numLitVisited<< " ";
     os << "numLook " << stats.numLookedAt<< " ";
+    #endif
     os << "numUsedUIP" << stats.numUsedUIP << " ";
 
     return os;
@@ -414,8 +425,10 @@ struct ClauseUsageStats
         num++;
         sumProp += cl.stats.numProp;
         sumConfl += cl.stats.numConfl;
+        #ifdef STATS_NEEDED
         sumLitVisited += cl.stats.numLitVisited;
         sumLookedAt += cl.stats.numLookedAt;
+        #endif
         sumUsedUIP += cl.stats.numUsedUIP;
     }
 };
@@ -512,8 +525,10 @@ struct CleaningStats
             glue += cl->stats.glue;
             act += cl->stats.activity;
             numConfl += cl->stats.numConfl;
+            #ifdef STATS_NEEDED
             numLitVisited += cl->stats.numLitVisited;
             numLookedAt += cl->stats.numLookedAt;
+            #endif
             numProp += cl->stats.numProp;
             resol += cl->stats.resolutions;
             numUsedUIP += cl->stats.numUsedUIP;

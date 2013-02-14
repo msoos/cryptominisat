@@ -27,6 +27,7 @@
 
 #include "constants.h"
 #include "solvertypes.h"
+#include "implcache.h"
 #include "solverconf.h"
 #include "propengine.h"
 #include "searcher.h"
@@ -48,6 +49,8 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
+class ImplCache;
+
 
 class Solver : public Searcher
 {
@@ -69,7 +72,8 @@ class Solver : public Searcher
         //////////////////////////////
         // Problem specification:
         Var  newVar(const bool dvar = true); ///< Add new variable
-        bool addClause (const vector<Lit>& ps);  ///< Add clause to the solver
+        bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
+        bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addLearntClause(
             const vector<Lit>& ps
             , const ClauseStats& stats = ClauseStats()
@@ -133,12 +137,30 @@ class Solver : public Searcher
         // State Dumping
         template<class T>
         string clauseBackNumbered(const T& cl) const;
-        void   dumpUnitaryClauses(std::ostream* os) const;
-        void   dump2LongXorClauses(std::ostream* os) const;
-        void   dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
-        void   dumpTriClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream* outfile) const;
-        void   dumpRedClauses(std::ostream* os, const uint32_t maxSize) const; ///<Dump all irredundant(=learnt) clauses into file
-        void   dumpIrredClauses(std::ostream* os) const; ///<Dump (simplified) irredundant system
+        void dumpUnitaryClauses(std::ostream* os) const;
+        void dump2LongXorClauses(std::ostream* os) const;
+        void dumpBinClauses(
+            const bool alsoLearnt
+            , const bool alsoNonLearnt
+            , std::ostream* outfile
+        ) const;
+
+        void dumpTriClauses(
+            const bool alsoLearnt
+            , const bool alsoNonLearnt
+            , std::ostream* outfile
+        ) const;
+
+        ///Dump all irredundant(=learnt) clauses into file
+        void dumpRedClauses(
+            std::ostream* os
+            , const uint32_t maxSize
+        ) const;
+
+        ///Dump (simplified) irredundant system
+        void dumpIrredClauses(
+            std::ostream* os
+        ) const;
 
         struct SolveStats
         {
@@ -259,7 +281,10 @@ class Solver : public Searcher
         );
 
         //Attaching-detaching clauses
-        virtual void attachClause(const Clause& c);
+        virtual void attachClause(
+            const Clause& c
+            , const bool checkAttach = true
+        );
         virtual void attachBinClause(
             const Lit lit1
             , const Lit lit2
@@ -327,6 +352,7 @@ class Solver : public Searcher
         friend class ClauseCleaner;
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;
+        friend class ImplCache;
         friend class Searcher;
         friend class XorFinder;
         friend class GateFinder;
@@ -400,8 +426,7 @@ class Solver : public Searcher
         /////////////////////
         // Data
         SolverConf           conf;
-        vector<LitReachData> litReachable;
-        void                 calcReachability();
+        ImplCache            implCache;
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
@@ -461,6 +486,12 @@ inline void Solver::setDecisionVar(const uint32_t var)
     if (!decisionVar[var]) {
         numDecisionVars++;
         decisionVar[var] = true;
+
+        //Add to order_heap
+        //No need to do this -> Searcher is never launched when it's called
+        /*assert(!order_heap.inHeap(var));
+        order_heap.insert(var);
+        */
     }
 }
 

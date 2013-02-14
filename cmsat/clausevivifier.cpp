@@ -155,18 +155,23 @@ bool ClauseVivifier::vivifyClausesTriIrred()
 
 struct ClauseSizeSorter
 {
-    ClauseSizeSorter(const ClauseAllocator* _clAllocator) :
+    ClauseSizeSorter(const ClauseAllocator* _clAllocator, const bool _invert = false) :
         clAllocator(_clAllocator)
+        , invert(_invert)
     {}
 
     const ClauseAllocator* clAllocator;
+    const bool invert;
 
     bool operator()(const ClOffset off1, const ClOffset off2) const
     {
         const Clause* cl1 = clAllocator->getPointer(off1);
         const Clause* cl2 = clAllocator->getPointer(off2);
 
-        return cl1->size() > cl2->size();
+        if (!invert)
+            return cl1->size() > cl2->size();
+        else
+            return cl1->size() < cl2->size();
     }
 };
 
@@ -181,7 +186,7 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     const size_t origTrailSize = solver->trail.size();
 
     //Time-limiting
-    uint64_t maxNumProps = 5L*1000L*1000L;
+    uint64_t maxNumProps = 10L*1000L*1000L;
     if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
         maxNumProps *=2;
 
@@ -215,11 +220,12 @@ bool ClauseVivifier::vivifyClausesLongIrred()
 
         //if done enough, stop doing it
         if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
-            if (solver->conf.verbosity >= 2) {
+            if (solver->conf.verbosity >= 3) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
                 << endl;
             }
+            runStats.timeOut++;
             needToFinish = true;
         }
 
@@ -339,7 +345,6 @@ ClOffset ClauseVivifier::testVivify(
             << endl;
         }
 
-        //TODO cheating here: we don't detect a NULL return that is in fact a 2/3-long clause
         runStats.numLitsRem += origSize - lits.size();
 
         if (cl2 != NULL) {
@@ -371,6 +376,10 @@ bool ClauseVivifier::vivifyClausesCache(
     size_t remLitTimeStampTotal = 0;
     size_t remLitTimeStampTotalInv = 0;
     size_t subsumedStamp = 0;
+    size_t remLitCache = 0;
+    size_t remLitBinTri = 0;
+    size_t subBinTri = 0;
+    size_t subCache = 0;
 
     //Temps
     vector<Lit> lits;
@@ -403,6 +412,8 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*2;
         tmpStats.tried++;
         bool isSubsumed = false;
+        size_t thisRemLitCache = 0;
+        size_t thisRemLitBinTri = 0;
 
         //Fill 'seen'
         lits2.clear();
@@ -420,31 +431,71 @@ bool ClauseVivifier::vivifyClausesCache(
         ) {
             const Lit lit = *l;
 
+            if (alsoStrengthen
+                 && seen[lit.toInt()] //We haven't yet removed it
+             ) {
+                 countTime += solver->implCache[lit.toInt()].lits.size();
+                 for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
+                     , end2 = solver->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
+                 ) {
+                     if (seen[(~(it2->getLit())).toInt()]) {
+                        seen[(~(it2->getLit())).toInt()] = 0;
+                        thisRemLitCache++;
+                     }
+
+                     if (seen_subs[it2->getLit().toInt()]
+                         && it2->getOnlyNLBin()
+                     ) {
+                         isSubsumed = true;
+                         subCache++;
+                         break;
+                     }
+                 }
+             }
+
+             if (isSubsumed)
+                 break;
+
             //Go through the watchlist
             vec<Watched>& thisW = solver->watches[lit.toInt()];
-            countTime += thisW.size();
+            countTime += thisW.size()*3;
             for(vec<Watched>::iterator
                 wit = thisW.begin(), wend = thisW.end()
                 ; wit != wend
                 ; wit++
             ) {
+                //Can't do anything with a clause
+                if (wit->isClause())
+                    continue;
+
+                countTime += 5;
 
                 if (alsoStrengthen) {
                     //Strengthening w/ bin
                     if (wit->isBinary()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        seen[(~wit->lit1()).toInt()] = 0;
+                        if (seen[(~wit->lit1()).toInt()]) {
+                            thisRemLitBinTri++;
+                            seen[(~wit->lit1()).toInt()] = 0;
+                        }
                     }
 
                     //Strengthening w/ tri
                     if (wit->isTri()
                         && seen[lit.toInt()] //We haven't yet removed it
                     ) {
-                        if (seen[(wit->lit1()).toInt()])
-                            seen[(~wit->lit2()).toInt()] = 0;
-                        else if (seen[wit->lit2().toInt()])
-                            seen[(~wit->lit1()).toInt()] = 0;
+                        if (seen[(wit->lit1()).toInt()]) {
+                            if (seen[(~wit->lit2()).toInt()]) {
+                                thisRemLitBinTri++;
+                                seen[(~wit->lit2()).toInt()] = 0;
+                            }
+                        } else if (seen[wit->lit2().toInt()]) {
+                            if (seen[(~wit->lit1()).toInt()]) {
+                                thisRemLitBinTri++;
+                                seen[(~wit->lit1()).toInt()] = 0;
+                            }
+                        }
                     }
                 }
 
@@ -455,12 +506,14 @@ bool ClauseVivifier::vivifyClausesCache(
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (wit->learnt() && !cl.learnt()) {
                         wit->setLearnt(false);
+                        countTime += solver->watches[wit->lit1().toInt()].size()*3;
                         findWatchedOfBin(solver->watches, wit->lit1(), lit, true).setLearnt(false);
                         solver->binTri.redBins--;
                         solver->binTri.irredBins++;
                         solver->binTri.redLits -= 2;
                         solver->binTri.irredLits += 2;
                     }
+                    subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -487,6 +540,8 @@ bool ClauseVivifier::vivifyClausesCache(
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     if (!cl.learnt() && wit->learnt()) {
                         wit->setLearnt(false);
+                        countTime += solver->watches[wit->lit1().toInt()].size()*3;
+                        countTime += solver->watches[wit->lit2().toInt()].size()*3;
                         findWatchedOfTri(solver->watches, wit->lit1(), lit, wit->lit2(), true).setLearnt(false);
                         findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit1(), true).setLearnt(false);
                         solver->binTri.redTris--;
@@ -494,6 +549,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         solver->binTri.redLits -= 3;
                         solver->binTri.irredLits += 3;
                     }
+                    subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -523,6 +579,7 @@ bool ClauseVivifier::vivifyClausesCache(
             }
         }
 
+        //Remove through stamp
         assert(lits2.size() > 1);
         if (!isSubsumed
             && !learnt
@@ -533,6 +590,7 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Clear 'seen2'
+        countTime += lits2.size()*3;
         for (vector<Lit>::const_iterator
             it2 = lits2.begin(), end2 = lits2.end()
             ; it2 != end2
@@ -543,8 +601,9 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Clear 'seen' and fill new clause data
         lits.clear();
-        for (vector<Lit>::const_iterator
-            it2 = lits2.begin(), end2 = lits2.end()
+        countTime += cl.size()*3;
+        for (Clause::const_iterator
+            it2 = cl.begin(), end2 = cl.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -552,28 +611,30 @@ bool ClauseVivifier::vivifyClausesCache(
             if (!isSubsumed
                 && seen[it2->toInt()]
             ) {
-                tmpStats.numLitsRem ++;
                 lits.push_back(*it2);
             }
 
             //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
-            seen_subs[it2->toInt()] = 0;
         }
 
+        //Remove lits through stamping
         if (alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
         ) {
+            countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
 
+        //Remove lits through stamping
         if (alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
         ) {
+            countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp,STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
@@ -589,10 +650,12 @@ bool ClauseVivifier::vivifyClausesCache(
         countTime += cl.size()*10;
         solver->detachClause(cl);
         if (isSubsumed) {
-            tmpStats.numClSubsumed++;
             solver->clAllocator->clauseFree(offset);
         } else {
+            remLitCache += thisRemLitCache;
+            remLitBinTri += thisRemLitBinTri;
             tmpStats.shrinked++;
+            countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
             solver->clAllocator->clauseFree(offset);
 
@@ -607,6 +670,8 @@ bool ClauseVivifier::vivifyClausesCache(
     solver->checkImplicitStats();
 
     //Set stats
+    tmpStats.numClSubsumed += subBinTri + subsumedStamp + subCache;
+    tmpStats.numLitsRem += remLitBinTri + remLitCache + remLitTimeStampTotal + remLitTimeStampTotalInv;
     tmpStats.cpu_time = cpuTime() - myTime;
     if (learnt) {
         runStats.redCacheBased = tmpStats;
@@ -614,48 +679,56 @@ bool ClauseVivifier::vivifyClausesCache(
         runStats.irredCacheBased = tmpStats;
     }
 
-    cout
-    << "c [timestamp]"
-    << " lit-rem: " << remLitTimeStampTotal
-    << " inv-lit-rem: " << remLitTimeStampTotalInv
-    << " stamp-rem: " << subsumedStamp
-    << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [stamp]"
+        << " lit-rem: " << remLitTimeStampTotal
+        << " inv-lit-rem: " << remLitTimeStampTotalInv
+        << " stamp-cl-rem: " << subsumedStamp
+        << endl;
+
+        cout
+        << "c [bintri]"
+        << " lit-rem: " << remLitBinTri
+        << " cl-sub: " << subBinTri
+        << endl;
+
+        cout
+        << "c [cache]"
+        << " lit-rem: " << remLitCache
+        << " cl-sub: " << subCache
+        << endl;
+    }
 
     return solver->ok;
 }
 
-bool ClauseVivifier::subsumeAndStrengthenImplicit()
+void ClauseVivifier::subsumeImplicit()
 {
     assert(solver->okay());
     const double myTime = cpuTime();
     uint64_t remBins = 0;
     uint64_t remTris = 0;
-    uint64_t remLitFromBin = 0;
-    uint64_t remLitFromTri = 0;
-    const size_t origTrailSize = solver->trail.size();
+    uint64_t stampTriRem = 0;
+    uint64_t cacheTriRem = 0;
+    timeAvailable = 100L*1000L*1000L;
 
-    //For stamps
-    size_t stampRem = 0;
+    //Randomize starting point
+    size_t upI;
+    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t numDone = 0;
+    for (; numDone < solver->watches.size() && timeAvailable > 0
+        ; upI = (upI +1) % solver->watches.size(), numDone++
 
-    //For delayed enqueue and binary adding
-    //Used for strengthening
-    vector<Lit> bin(2);
-    vector<BinaryClause> binsToAdd;
-    vector<Lit> toEnqueue;
-
-    size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
     ) {
-        vec<Watched>& ws = *it;
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = Lit::toLit(upI);
+        vec<Watched>& ws = solver->watches[upI];
 
         //We can't do much when there is nothing, or only one
         if (ws.size() < 2)
             continue;
 
+        timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size()));
         std::sort(ws.begin(), ws.end(), WatchSorter());
         /*cout << "---> Before" << endl;
         printWatchlist(ws, lit);*/
@@ -683,18 +756,11 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     continue;
                 }
 
-                //Brand new TRI
-                if (lastLit != i->lit1()) {
-                    lastLit2 = i->lit2();
-                    lastLearnt = i->learnt();
-                    *j++ = *i;
-                    continue;
-                }
-
                 bool remove = false;
 
                 //Subsumed by bin
-                if (lastLit2 == lit_Undef
+                if (lastLit == i->lit1()
+                    && lastLit2 == lit_Undef
                     && lastLit == i->lit1()
                 ) {
                     if (lastLearnt && !i->learnt()) {
@@ -703,6 +769,8 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                         assert(lastBin->lit1() == lastLit);
 
                         lastBin->setLearnt(false);
+                        timeAvailable -= 20;
+                        timeAvailable -= solver->watches[lastLit.toInt()].size();
                         findWatchedOfBin(solver->watches, lastLit, lit, true).setLearnt(false);
                         solver->binTri.redLits -= 2;
                         solver->binTri.irredLits += 2;
@@ -715,7 +783,10 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 }
 
                 //Subsumed by Tri
-                if (lastLit == i->lit1() && lastLit2 == i->lit2()) {
+                if (!remove
+                    && lastLit == i->lit1()
+                    && lastLit2 == i->lit2()
+                ) {
                     //The sorting algorithm prefers non-learnt to learnt, so it is
                     //impossible to have non-learnt before learnt
                     assert(!(i->learnt() == false && lastLearnt == true));
@@ -723,8 +794,47 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     remove = true;
                 }
 
+                lits.clear();
+                lits.push_back(lit);
+                lits.push_back(i->lit1());
+                lits.push_back(i->lit2());
+
+                //Subsumed by stamp
+                if (!remove) {
+                    remove = stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv);
+                    stampTriRem += remove;
+                }
+
+                //Subsumed by cache
+                if (!remove) {
+                    for(size_t i = 0; i < lits.size() && !remove; i++) {
+                        //countTime += solver->implCache[lit.toInt()].lits.size();
+                        for (vector<LitExtra>::const_iterator
+                            it2 = solver->implCache[lits[i].toInt()].lits.begin()
+                            , end2 = solver->implCache[lits[i].toInt()].lits.end()
+                            ; it2 != end2
+                            ; it2++
+                        ) {
+                            if ((   it2->getLit() == lits[0]
+                                    || it2->getLit() == lits[1]
+                                    || it2->getLit() == lits[2]
+                                )
+                                && it2->getOnlyNLBin()
+                            ) {
+                                remove = true;
+                                cacheTriRem++;
+                                break;
+                             }
+                        }
+                    }
+                }
+
                 if (remove) {
                     //Remove Tri
+                    timeAvailable -= 30;
+                    timeAvailable -= solver->watches[lit.toInt()].size();
+                    timeAvailable -= solver->watches[i->lit1().toInt()].size();
+                    timeAvailable -= solver->watches[i->lit2().toInt()].size();
                     removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                     remTris++;
                     continue;
@@ -749,6 +859,8 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
 
                 remBins++;
                 assert(i->lit1().var() != lit.var());
+                timeAvailable -= 30;
+                timeAvailable -= solver->watches[i->lit1().toInt()].size();
                 removeWBin(solver->watches, i->lit1(), lit, i->learnt());
                 if (i->learnt()) {
                     solver->binTri.redLits -= 2;
@@ -767,20 +879,64 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
             }
         }
         ws.shrink(i-j);
+    }
 
-        /*cout << "---> After" << endl;
-        printWatchlist(ws, lit);*/
+    if (solver->conf.verbosity >= 1) {
+        cout
+        << "c [implicit] sub"
+        << " bin: " << remBins
+        << " tri: " << remTris << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
 
+        << " T: " << std::fixed << std::setprecision(2)
+        << (cpuTime() - myTime)
+        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << endl;
+    }
+    solver->checkStats();
 
-        //Now strengthen
-        i = ws.begin();
-        j = i;
+    //Update stats
+    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    solver->solveStats.subsBinWithBin += remBins;
+}
+
+bool ClauseVivifier::strengthenImplicit()
+{
+    uint64_t remLitFromBin = 0;
+    uint64_t remLitFromTri = 0;
+    uint64_t remLitFromTriByBin = 0;
+    uint64_t remLitFromTriByTri = 0;
+    uint64_t stampRem = 0;
+    const size_t origTrailSize = solver->trail.size();
+    timeAvailable = 100L*1000L*1000L;
+    double myTime = cpuTime();
+
+    //For delayed enqueue and binary adding
+    //Used for strengthening
+    vector<BinaryClause> binsToAdd;
+    vector<Lit> toEnqueue;
+
+    //Randomize starting point
+    size_t upI;
+    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t numDone = 0;
+    for (; numDone < solver->watches.size() && timeAvailable > 0
+        ; upI = (upI +1) % solver->watches.size(), numDone++
+
+    ) {
+        Lit lit = Lit::toLit(upI);
+        vec<Watched>& ws = solver->watches[upI];
+
+        Watched* i = ws.begin();
+        Watched* j = i;
         for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+            timeAvailable -= 2;
             //Can't do much with clause, will treat them during vivification
             if (i->isClause()) {
                 *j++ = *i;
                 continue;
             }
+
+            timeAvailable -= 20;
 
             //Strengthen bin with bin -- effectively setting literal
             if (i->isBinary()) {
@@ -815,6 +971,7 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     && (i2->isBinary() || i2->isTri())
                     && i2->lit1().var() == i2->lit1().var()
                 ) {
+                    timeAvailable -= 2;
                     //Yay, we have found what we needed!
                     if (i2->isBinary() && i2->lit1() == ~i->lit1()) {
                         rem = true;
@@ -833,12 +990,13 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                 continue;
             }
 
-            //Strengthen tri with bin
+            //Strengthen tri with bin/tri/stamp
             if (i->isTri()) {
                 const Lit lit1 = i->lit1();
                 const Lit lit2 = i->lit2();
                 bool rem = false;
 
+                timeAvailable -= solver->watches[(~lit).toInt()].size();
                 for(vec<Watched>::const_iterator
                     it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
                     ; it2 != end2
@@ -848,8 +1006,26 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                         && (it2->lit1() == lit1 || it2->lit1() == lit2)
                     ) {
                         rem = true;
+                        remLitFromTriByBin++;
                         break;
                     }
+
+                    if (it2->isTri()
+                        && (
+                            (it2->lit1() == lit1 && it2->lit2() == lit2)
+                            ||
+                            (it2->lit1() == lit2 && it2->lit2() == lit1)
+                        )
+
+                    ) {
+                        rem = true;
+                        remLitFromTriByTri++;
+                        break;
+                    }
+
+                    //watches are sorted, so early-abort
+                    if (it2->isClause())
+                        break;
                 }
 
                 if (rem) {
@@ -865,10 +1041,12 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
                     lits.push_back(i->lit2());
 
                     //Try both stamp types to reduce size
+                    timeAvailable -= lits.size()*5;
                     std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
                     if (lits.size() > 1) {
+                        timeAvailable -= lits.size()*5;
                         std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_IRRED);
                         stampRem += tmp.first;
                         stampRem += tmp.second;
@@ -923,33 +1101,34 @@ bool ClauseVivifier::subsumeAndStrengthenImplicit()
         ; it != end
         ; it++
     ) {
-        bin[0] = it->getLit1();
-        bin[1] = it->getLit2();
-        solver->addClauseInt(bin, it->getLearnt());
+        lits.clear();
+        lits.push_back(it->getLit1());
+        lits.push_back(it->getLit2());
+        timeAvailable -= 5;
+        solver->addClauseInt(lits, it->getLearnt());
         if (!solver->okay())
             goto end;
     }
 
 end:
+
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [implicit]"
-        << " rem-bin " << remBins
-        << " rem-tri " << remTris
-        << " rem-litBin: " << remLitFromBin
-        << " rem-litTri: " << remLitFromTri
-        << " stamp:" << stampRem
+        << "c [implicit] str"
+        << " lit bin: " << remLitFromBin
+        << " lit tri: " << remLitFromTri << " (by tri: " << remLitFromTriByTri << ")"
+        << " (by stamp: " << stampRem << ")"
         << " set-var: " << solver->trail.size() - origTrailSize
 
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << " T: " << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
-        << " s" << endl;
+        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << endl;
     }
     solver->checkStats();
 
     //Update stats
     solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
-    solver->solveStats.subsBinWithBin += remBins;
 
     return solver->okay();
 }
@@ -966,6 +1145,9 @@ void ClauseVivifier::removeTri(
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits, lits+3);
+    timeAvailable -= solver->watches[lits[0].toInt()].size();
+    timeAvailable -= solver->watches[lits[1].toInt()].size();
+    timeAvailable -= solver->watches[lits[2].toInt()].size();
     removeTriAllButOne(solver->watches, lit1, lits, learnt);
 
     //Update stats for tri

@@ -22,13 +22,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #define CHUNK_LIMIT 1048576
 
-#ifndef DISABLE_ZLIB
+#ifdef USE_ZLIB
 #include <zlib.h>
-#endif // DISABLE_ZLIB
+#endif
 
 class StreamBuffer
 {
-    #ifndef DISABLE_ZLIB
+    #ifdef USE_ZLIB
     gzFile  in;
     void assureLookahead() {
         if (pos >= size) {
@@ -58,7 +58,7 @@ class StreamBuffer
     int     size;
 
 public:
-    #ifndef DISABLE_ZLIB
+    #ifdef USE_ZLIB
     StreamBuffer(gzFile i) : in(i), pos(0), size(0) {
         assureLookahead();
     }

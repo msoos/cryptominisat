@@ -150,7 +150,9 @@ bool VarReplacer::performReplace()
     ) {
         if (solver->value(*it) == l_Undef) {
             solver->enqueue(*it);
+            #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
+            #endif
         } else if (solver->value(*it) == l_False) {
             solver->ok = false;
             break;
@@ -173,8 +175,18 @@ bool VarReplacer::performReplace()
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
 
+    //Update stamps
     for(size_t i = 0; i < solver->timestamp.size(); i++) {
         solver->timestamp[i] = solver->timestamp[getLitReplacedWith(Lit::toLit(i)).toInt()];
+        if (solver->timestamp[i].dominator[STAMP_IRRED] != lit_Undef) {
+            solver->timestamp[i].dominator[STAMP_IRRED]
+                = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_IRRED]);
+        }
+
+        if (solver->timestamp[i].dominator[STAMP_RED] != lit_Undef) {
+            solver->timestamp[i].dominator[STAMP_RED]
+                = getLitReplacedWith(solver->timestamp[i].dominator[STAMP_RED]);
+        }
     }
 
     //Update stats
@@ -512,7 +524,9 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     case 1 :
         solver->enqueue(c[0]);
+        #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
+        #endif
         solver->ok = (solver->propagate().isNULL());
         runStats.removedLongLits += origSize;
         return true;
@@ -656,7 +670,9 @@ bool VarReplacer::replace(
         } else {
             solver->enqueue(lit1 ^ (val2 == l_False));
         }
+        #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
+        #endif
 
         if (solver->ok) solver->ok = (solver->propagate().isNULL());
         return solver->ok;

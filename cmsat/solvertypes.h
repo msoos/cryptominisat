@@ -23,11 +23,7 @@
 #define SOLVERTYPES_H
 
 #include "constants.h"
-#include "vec.h"
 
-#include <iostream>
-#include <vector>
-#include <iomanip>
 #include <sstream>
 #include <algorithm>
 #include <limits>
@@ -39,6 +35,8 @@ using std::vector;
 using std::cout;
 using std::endl;
 using std::string;
+
+#include "assert.h"
 
 //Typedefs
 typedef uint32_t Var;
@@ -102,6 +100,9 @@ public:
     }
     bool operator >  (const Lit& p) const {
         return x > p.x;
+    }
+    bool operator >=  (const Lit& p) const {
+        return x >= p.x;
     }
     static Lit toLit(uint32_t data)
     {
@@ -209,10 +210,12 @@ struct BlockedClause {
 
     BlockedClause(const Lit _blockedOn, const vector<Lit>& _lits) :
         blockedOn(_blockedOn)
+        , toRemove(false)
         , lits(_lits)
     {}
 
     Lit blockedOn;
+    bool toRemove;
     vector<Lit> lits;
 };
 
@@ -412,6 +415,7 @@ struct AssignStats
 
 };
 
+#ifdef STATS_NEEDED
 struct PropStats
 {
     PropStats() :
@@ -532,12 +536,12 @@ struct PropStats
             , "% of propagations"
         );
 
-        printStatsLine("c propsTri", propsTriIrred
+        printStatsLine("c propsTriIred", propsTriIrred
             , 100.0*(double)propsTriIrred/(double)propagations
             , "% of propagations"
         );
 
-        printStatsLine("c propsTri", propsTriRed
+        printStatsLine("c propsTriRed", propsTriRed
             , 100.0*(double)propsTriRed/(double)propagations
             , "% of propagations"
         );
@@ -585,6 +589,57 @@ struct PropStats
     uint64_t varSetNeg;
     uint64_t varFlipped;
 };
+#else
+struct PropStats
+{
+    PropStats() :
+        bogoProps(0)
+    {
+    }
+
+    void clear()
+    {
+        PropStats tmp;
+        *this = tmp;
+    }
+
+    PropStats& operator+=(const PropStats& other)
+    {
+        bogoProps += other.bogoProps;
+        return *this;
+    }
+
+    PropStats& operator-=(const PropStats& other)
+    {
+        bogoProps -= other.bogoProps;
+        return *this;
+    }
+
+    PropStats operator-(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result -= other;
+        return result;
+    }
+
+    PropStats operator+(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result += other;
+        return result;
+    }
+
+    void print(const double cpu_time) const
+    {
+        cout << "c PROP stats" << endl;
+        printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
+            , (double)bogoProps/(cpu_time*1000.0*1000.0)
+            , "/ sec"
+        );
+    }
+    uint64_t bogoProps;    ///<An approximation of time
+};
+#endif
 
 enum ConflCausedBy {
     CONFL_BY_LONG_IRRED_CLAUSE
@@ -731,12 +786,6 @@ struct ConflStats
 
     ///Number of conflicts
     uint64_t  numConflicts;
-};
-
-struct LitReachData
-{
-    Lit lit;
-    size_t num;
 };
 
 #endif //SOLVERTYPES_H

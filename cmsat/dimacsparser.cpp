@@ -232,7 +232,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         std::ofstream partFile;
         partFile.open(s.c_str());
         if (ret == l_True) {
-            partFile << "SAT" << endl;
+            partFile << "s SAT" << endl;
+            partFile << "v ";
             for (Var i = 0; i != solver->nVars(); i++) {
                 if (solver->model[i] != l_Undef)
                     partFile
@@ -241,7 +242,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
             }
             partFile << "0" << endl;;
         } else if (ret == l_False) {
-            partFile << "UNSAT" << endl;
+            partFile << "s UNSAT" << endl;
         } else if (ret == l_Undef) {
             assert(false);
         } else {
@@ -412,7 +413,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     }
 }
 
-#ifndef DISABLE_ZLIB
+#ifdef USE_ZLIB
 template void DimacsParser::parse_DIMACS(gzFile input_stream);
 #else
 template void DimacsParser::parse_DIMACS(FILE* input_stream);

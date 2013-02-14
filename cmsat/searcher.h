@@ -86,6 +86,20 @@ class Searcher : public PropEngine
             AvgCalc<bool>       litPropagatedSomething;
             AvgCalc<bool>       litPropagatedSomethingLT;
 
+            size_t getMemUsed() const
+            {
+                size_t used = 0;
+                used += sizeof(AvgCalc<uint32_t>)*12;
+                used += sizeof(AvgCalc<bool>)*4;
+                used += sizeof(AvgCalc<size_t>)*2;
+                used += sizeof(AvgCalc<double, double>)*2;
+                used += branchDepthDeltaHist.usedMem();
+                used += glueHist.usedMem();
+                used += conflSizeHist.usedMem();
+
+                return used;
+            }
+
             void clear()
             {
                 //About the search
@@ -247,10 +261,16 @@ class Searcher : public PropEngine
 
                 //Conflict generation
                 , litsLearntNonMin(0)
-                , litsLearntRecMin(0)
                 , litsLearntFinal(0)
-                , OTFShrinkAttempted(0)
-                , OTFShrinkedClause(0)
+                , recMinCl(0)
+                , recMinLitRem(0)
+                , furtherShrinkAttempt(0)
+                , binTriShrinkedClause(0)
+                , cacheShrinkedClause(0)
+                , furtherShrinkedSuccess(0)
+                , stampShrinkAttempt(0)
+                , stampShrinkCl(0)
+                , stampShrinkLit(0)
 
                 //Learnt stats
                 , learntUnits(0)
@@ -290,10 +310,19 @@ class Searcher : public PropEngine
 
                 //Conflict minimisation stats
                 litsLearntNonMin += other.litsLearntNonMin;
-                litsLearntRecMin += other.litsLearntRecMin;
                 litsLearntFinal += other.litsLearntFinal;
-                OTFShrinkAttempted  += other.OTFShrinkAttempted;
-                OTFShrinkedClause += other.OTFShrinkedClause;
+                recMinCl += other.recMinCl;
+                recMinLitRem += other.recMinLitRem;
+
+                furtherShrinkAttempt  += other.furtherShrinkAttempt;
+                binTriShrinkedClause += other.binTriShrinkedClause;
+                cacheShrinkedClause += other.cacheShrinkedClause;
+                furtherShrinkedSuccess += other.furtherShrinkedSuccess;
+
+
+                stampShrinkAttempt += other.stampShrinkAttempt;
+                stampShrinkCl += other.stampShrinkCl;
+                stampShrinkLit += other.stampShrinkLit;
 
                 //Learnt stats
                 learntUnits += other.learntUnits;
@@ -332,10 +361,18 @@ class Searcher : public PropEngine
 
                 //Conflict minimisation stats
                 litsLearntNonMin -= other.litsLearntNonMin;
-                litsLearntRecMin -= other.litsLearntRecMin;
                 litsLearntFinal -= other.litsLearntFinal;
-                OTFShrinkAttempted  -= other.OTFShrinkAttempted;
-                OTFShrinkedClause -= other.OTFShrinkedClause;
+                recMinCl -= other.recMinCl;
+                recMinLitRem -= other.recMinLitRem;
+
+                furtherShrinkAttempt  -= other.furtherShrinkAttempt;
+                binTriShrinkedClause -= other.binTriShrinkedClause;
+                cacheShrinkedClause -= other.cacheShrinkedClause;
+                furtherShrinkedSuccess -= other.furtherShrinkedSuccess;
+
+                stampShrinkAttempt -= other.stampShrinkAttempt;
+                stampShrinkCl -= other.stampShrinkCl;
+                stampShrinkLit -= other.stampShrinkLit;
 
                 //Learnt stats
                 learntUnits -= other.learntUnits;
@@ -456,31 +493,55 @@ class Searcher : public PropEngine
                 );
 
                 cout << "c CONFL LITS stats" << endl;
-                printStatsLine("c confl-lits nonmin "
+                printStatsLine("c orig "
                     , litsLearntNonMin
                     , (double)litsLearntNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
-                printStatsLine("c confl-lits rec-min"
-                    , litsLearntRecMin
-                    , (double)(litsLearntNonMin-litsLearntRecMin)/(double)litsLearntNonMin*100.0
-                    , "% less"
-                );
-
-                printStatsLine("c confl-lits OTF-min"
-                    , litsLearntFinal
-                    , (double)(litsLearntNonMin-litsLearntFinal)/(double)litsLearntNonMin*100.0
-                    , "% less"
-                );
-
-                printStatsLine("c confl-lits OTF-min call%"
-                    , (double)OTFShrinkAttempted/(double)conflStats.numConflicts*100.0
-                    , (double)OTFShrinkedClause/(double)OTFShrinkAttempted*100.0
+                printStatsLine("c rec-min effective"
+                    , recMinCl
+                    , (double)recMinCl/(double)conflStats.numConflicts*100.0
                     , "% attempt successful"
                 );
 
-                printStatsLine("c confl-lits final avg"
+                printStatsLine("c rec-min lits"
+                    , recMinLitRem
+                    , (double)recMinLitRem/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c further-min call%"
+                    , (double)furtherShrinkAttempt/(double)conflStats.numConflicts*100.0
+                    , (double)furtherShrinkedSuccess/(double)furtherShrinkAttempt*100.0
+                    , "% attempt successful"
+                );
+
+                printStatsLine("c bintri-min lits"
+                    , binTriShrinkedClause
+                    , (double)binTriShrinkedClause/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c cache-min lits"
+                    , cacheShrinkedClause
+                    , (double)cacheShrinkedClause/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c stamp-min call%"
+                    , (double)stampShrinkAttempt/(double)conflStats.numConflicts*100.0
+                    , (double)stampShrinkCl/(double)stampShrinkAttempt*100.0
+                    , "% attempt successful"
+                );
+
+                printStatsLine("c stamp-min lits"
+                    , stampShrinkLit
+                    , (double)stampShrinkLit/(double)litsLearntNonMin*100.0
+                    , "% less overall"
+                );
+
+                printStatsLine("c final avg"
                     , (double)litsLearntFinal/(double)conflStats.numConflicts
                 );
 
@@ -502,10 +563,16 @@ class Searcher : public PropEngine
             uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
 
             uint64_t litsLearntNonMin;
-            uint64_t litsLearntRecMin;
             uint64_t litsLearntFinal;
-            uint64_t OTFShrinkAttempted;
-            uint64_t OTFShrinkedClause;
+            uint64_t recMinCl;
+            uint64_t recMinLitRem;
+            uint64_t furtherShrinkAttempt;
+            uint64_t binTriShrinkedClause;
+            uint64_t cacheShrinkedClause;
+            uint64_t furtherShrinkedSuccess;
+            uint64_t stampShrinkAttempt;
+            uint64_t stampShrinkCl;
+            uint64_t stampShrinkLit;
 
             //Learnt stats
             uint64_t learntUnits;
@@ -621,6 +688,7 @@ class Searcher : public PropEngine
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
+        void   stampBasedLearntMinim(vector<Lit>& cl);
         const Stats& getStats() const;
 
     private:
@@ -665,6 +733,7 @@ class Searcher : public PropEngine
         //SQL
         friend class SQLStats;
         vector<Var> calcVarsToDump() const;
+        #ifdef STATS_NEEDED
         void printRestartSQL();
         void printVarStatsSQL();
         void printClauseDistribSQL();
@@ -678,6 +747,7 @@ class Searcher : public PropEngine
             double& avgDecLevelVar
             , double& avgTrailLevelVar
         );
+        #endif
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
@@ -707,7 +777,9 @@ inline void Searcher::varDecayActivity()
 inline void Searcher::varBumpActivity(Var var)
 {
     activities[var] += var_inc;
-    if ( (activities[var]) > ((0x1U) << 24) ) {
+    if ( (activities[var]) > ((0x1U) << 30)
+        || var_inc > ((0x1U) << 30)
+    ) {
         // Rescale:
         for (vector<uint32_t>::iterator
             it = activities.begin()
@@ -723,8 +795,16 @@ inline void Searcher::varBumpActivity(Var var)
 
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
-        /*if (var_inc < conf.var_inc_start)
-            var_inc = conf.var_inc_start;*/
+        if (var_inc < conf.var_inc_start) {
+            /*cout
+            << "WHAAAAAAAAAAAAAT!!!? var_inc < conf.var_inc_start ! "
+            << var_inc
+            << ", "
+            << conf.var_inc_start
+            << endl;*/
+
+            var_inc = conf.var_inc_start;
+        }
     }
 
     // Update order_heap with respect to new activity:

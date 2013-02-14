@@ -28,7 +28,10 @@
 #include "constants.h"
 #include "cloffset.h"
 #include "solvertypes.h"
+#include "vec.h"
+
 #include <limits>
+
 
 enum WatchType {
     watch_clause_t = 0
@@ -111,6 +114,16 @@ class Watched {
             data1 = blockedLit.toInt();
         }
 
+        WatchType getType() const
+        {
+            if (isBinary())
+                return watch_binary_t;
+            else if (isTri())
+                return watch_tertiary_t;
+            else
+                return watch_clause_t;
+        }
+
         bool isBinary() const
         {
             return (type == watch_binary_t);
@@ -164,9 +177,9 @@ class Watched {
             assert(learnt());
             #endif
             if (toSet) {
-                data2 |= (uint32_t)1;
+                data2 |= 1U;
             } else {
-                data2 &= (~((uint32_t)1));
+                data2 &= (~(1U));
             }
         }
 
@@ -324,13 +337,17 @@ static inline const Watched& findWatchedOfTri(
     , const bool learnt
 ) {
     const vec<Watched>& ws = wsFull[lit1.toInt()];
-    for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isTri()
-            && i->lit1() == lit2
-            && i->lit2() == lit3
-            && i->learnt() == learnt
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->isTri()
+            && it->lit1() == lit2
+            && it->lit2() == lit3
+            && it->learnt() == learnt
         ) {
-            return *i;
+            return *it;
         }
     }
 
@@ -381,7 +398,7 @@ inline void removeTriAllButOne(
 // BINARY Clause
 //////////////////
 
-static inline bool findWBin(
+inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
@@ -392,7 +409,7 @@ static inline bool findWBin(
     return i != end;
 }
 
-static inline bool findWBin(
+inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
@@ -409,7 +426,7 @@ static inline bool findWBin(
     return i != end;
 }
 
-static inline void removeWBin(
+inline void removeWBin(
     vector<vec<Watched> > &wsFull
     , const Lit lit1
     , const Lit lit2
@@ -430,7 +447,7 @@ static inline void removeWBin(
     ws.shrink_(1);
 }
 
-static inline Watched& findWatchedOfBin(
+inline Watched& findWatchedOfBin(
     vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2

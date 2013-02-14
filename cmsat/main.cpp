@@ -104,11 +104,11 @@ void Main::readInAFile(const std::string& filename)
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         FILE * in = fopen(filename.c_str(), "rb");
     #else
         gzFile in = gzopen(filename.c_str(), "rb");
-    #endif // DISABLE_ZLIB
+    #endif
 
     if (in == NULL) {
         cout
@@ -122,11 +122,11 @@ void Main::readInAFile(const std::string& filename)
     DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         fclose(in);
     #else
         gzclose(in);
-    #endif // DISABLE_ZLIB
+    #endif
 }
 
 void Main::readInStandardInput()
@@ -137,11 +137,11 @@ void Main::readInStandardInput()
         << endl;
     }
 
-    #ifdef DISABLE_ZLIB
+    #ifndef USE_ZLIB
         FILE * in = stdin;
     #else
         gzFile in = gzdopen(fileno(stdin), "rb");
-    #endif // DISABLE_ZLIB
+    #endif
 
     if (in == NULL) {
         cout << "ERROR! Could not open standard input for reading" << endl;
@@ -151,9 +151,9 @@ void Main::readInStandardInput()
     DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
-    #ifndef DISABLE_ZLIB
+    #ifdef USE_ZLIB
         gzclose(in);
-    #endif // DISABLE_ZLIB
+    #endif
 }
 
 void Main::parseInAllFiles()
@@ -244,7 +244,7 @@ void Main::parseCommandLine()
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
     ("random,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
-    ("restart", po::value<std::string>()->default_value("glueagility")
+    ("restart", po::value<std::string>()
         , "{geom, agility, glue, glueagility}  Restart strategy to follow.")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
@@ -278,7 +278,7 @@ void Main::parseCommandLine()
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
-    ("typeclean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
+    ("clean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
         , "Metric to use to clean clauses: 'size', 'glue', 'activity' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
     ("preclean", po::value<int>(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
         , "Before cleaning clauses with whatever sorting strategy, remove learnt clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
@@ -362,9 +362,13 @@ void Main::parseCommandLine()
         , "Perform variable elimination as per Een and Biere")
     ("elimstrategy", po::value<int>(&conf.varelimStrategy)->default_value(conf.varelimStrategy)
         , "Sort variable elimination order by guessing(0) or by calculation(1)")
+    ("elimcomplexupdate", po::value<int>(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
+        , "Update estimated elimination complexity on-the-fly while eliminating")
+    ("elimcoststrategy", po::value<int>(&conf.varElimCostEstimateStrategy)->default_value(conf.varElimCostEstimateStrategy)
+        , "How simple strategy (guessing, above) is calculated. Valid values: [0..1]")
     ("subsume1", po::value<int>(&conf.doSubsume1)->default_value(conf.doSubsume1)
         , "Perform clause contraction through resolution")
-    ("block", po::value<int>(&conf.doBlockedClause)->default_value(conf.doBlockedClause)
+    ("block", po::value<int>(&conf.doBlockClauses)->default_value(conf.doBlockClauses)
         , "Do blocked-clause removal")
     ("asymmte", po::value<int>(&conf.doAsymmTE)->default_value(conf.doAsymmTE)
         , "Do asymmetric tautology elimination. See Armin Biere & collaborators' papers")
@@ -373,6 +377,9 @@ void Main::parseCommandLine()
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
+
+    std::ostringstream sccFindPercent;
+    sccFindPercent << std::fixed << std::setprecision(3) << conf.sccFindPercent;
 
     po::options_description xorOptions("XOR-related options");
     xorOptions.add_options()
@@ -384,14 +391,19 @@ void Main::parseCommandLine()
         , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
     ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
-
     //Not implemented yet
     //("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
     //    , "Mix XORs and OrGates for new truths")
+    ;
+
+    po::options_description eqLitOpts("Equivalent literal options");
+    eqLitOpts.add_options()
     ("scc", po::value<int>(&conf.doFindAndReplaceEqLits)->default_value(conf.doFindAndReplaceEqLits)
         , "Find equivalent literals through SCC and replace them")
-    ("extendedscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
+    ("extscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
         , "Perform SCC using cache")
+    ("sccperc", po::value<double>(&conf.sccFindPercent)->default_value(conf.sccFindPercent, sccFindPercent.str())
+        , "Perform SCC only if the number of new binary clauses is at least this many % of the number of free variables")
     ;
 
     po::options_description gateOptions("Gate-related options");
@@ -508,6 +520,7 @@ void Main::parseCommandLine()
     .add(iterativeOptions)
     .add(probeOptions)
     .add(simplificationOptions)
+    .add(eqLitOpts)
     #ifdef USE_M4RI
     .add(xorOptions)
     #endif
@@ -531,11 +544,11 @@ void Main::parseCommandLine()
         cout
         << "USAGE: " << argv[0] << " [options] <input-files>" << endl
         << " where input is "
-        #ifdef DISABLE_ZLIB
+        #ifndef USE_ZLIB
         << "plain"
         #else
         << "plain or gzipped"
-        #endif // DISABLE_ZLIB
+        #endif
         << " DIMACS." << endl;
 
         cout << cmdline_options << endl;

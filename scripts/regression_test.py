@@ -39,15 +39,19 @@ desc = """Example usages:
            --numStart 20 --num 100"
 
 * fuzz the solver with precosat as solution-checker:
-   python regression_test.py --fuzz"""
+   python regression_test.py --fuzz
+
+* go through regression listdir
+   python regression_test.py --regtest --checkdir ../tests/
+"""
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
-parser.add_option("--numstart", dest="num_start_random_seed", default=0
+parser.add_option("--rndstart", dest="rndStart", default=0
                     , type = "int", metavar="SEEDSTART"
                     , help="Start randomize from this random seed. Default: %default"
                     )
 
-parser.add_option("--num", dest="num_random_seeds", default=3
+parser.add_option("--rndnum", dest="rndNum", default=3
                     , type="int", metavar="SEEDS"
                     , help="Go through this many random seeds. Default: %default"
                     )
@@ -72,25 +76,40 @@ parser.add_option("-t", "--threads", dest="num_threads", metavar="NUM"
                     , help="Number of threads"
                     )
 
-parser.add_option("--cnfdir", dest="dir_for_check"
-                    , default=""
-                    , help="Directory of CNF files checked against"
-                    )
-
+#for fuzz-testing
 parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     , default=False, action="store_true"
                     , help="Fuzz-test"
                     )
 
-parser.add_option("--regtest", dest="regression_test"
+#for regression testing
+parser.add_option("--regtest", dest="regressionTest"
                     , default=False, action="store_true"
                     , help="Regression test"
                     )
-parser.add_option("--checkdir", metavar= "DIR", dest="testdir"
+parser.add_option("--testdir", dest="testDir"
+                    , default= "../tests/"
+                    , help="Directory where the tests are"
+                    )
+
+parser.add_option("--testdirNewVar", dest="testDirNewVar"
+                    , default= "../tests/newVar/"
+                    , help="Directory where the tests are"
+                    )
+
+#check dir stuff
+parser.add_option("--checksol", dest="checkSol"
+                    , default=False, action="store_true"
+                    , help="Check solution at specified dir against problems at specified dir"
+                    )
+
+parser.add_option("--soldir", dest="checkDirSol"
                     ,  help="Check solutions found here"
                     )
-    #elif opt in ("--nodebuglib"):
-    #self.needDebugLib = False
+parser.add_option("--probdir", dest="checkDirProb"
+                    , default="/home/soos/media/sat/examples/satcomp09/"
+                    , help="Directory of CNF files checked against"
+                    )
 
 (options, args) = parser.parse_args()
 
@@ -113,10 +132,9 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
     def __init__(self):
-        self.testDir = "../tests/"
-        self.testDirNewVar = "../tests/newVar/"
-        self.differentDirForCheck = \
-            "/home/soos/Development/sat_solvers/satcomp09/"
+        self.testDir = options.testDir
+        self.testDirNewVar = options.testDirNewVar
+
         self.ignoreNoSolution = False
         self.needDebugLib = True
 
@@ -127,18 +145,19 @@ class Tester:
             print "Error code 300"
             exit(300)
 
+        #construct command
         command = "%s --random=%d " % (options.solver,randomizeNum)
-        if (self.needDebugLib) :
+        if self.needDebugLib :
             command += "--debuglib "
         if options.verbose == False:
             command += "--verb 0 "
-        if (newVar) :
+        if newVar :
             command += "--debugnewvar "
         command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += fname
-
         print "Executing: %s " % command
+
         #print time limit
         if options.verbose:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
@@ -177,7 +196,7 @@ class Tester:
         value = {}
 
         #parse in solution
-        for line in output_lines.split('\n'):
+        for line in output_lines:
             #skip comment
             if (re.match('^c ', line)):
                 continue;
@@ -322,6 +341,8 @@ class Tester:
 
         consoleOutput = ""
         currTime = time.time()
+
+        #Do we need to solve the problem, or is it already solved?
         if needSolve:
             consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
         else:
@@ -332,16 +353,17 @@ class Tester:
             consoleOutput = f.read()
             f.close()
 
-        if needToLimitTime == True:
+        #if time was limited, we need to know if we were over the time limit
+        #and that is why there is no solution
+        if needToLimitTime:
             diffTime = time.time() - currTime
             if diffTime > maxTimeLimit/options.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
-                print "Not too much time: %f s" % (time.time() - currTime)
+                print "Within time limit: %f s" % (time.time() - currTime)
 
-        print "filename: %s, random seed: %3d" % \
-            (fname[:20], randomizeNum)
+        print "filename: %s, random seed: %3d" % (fname[:20], randomizeNum)
 
         if (self.needDebugLib) :
             largestPart = -1
@@ -353,11 +375,13 @@ class Tester:
 
             for debugLibPart in range(1, largestPart + 1):
                 fname_debug = "debugLibPart%d.output" % debugLibPart
+                print "Checking debug lib part ", debugLibPart
 
-                if (os.path.isfile(filename) == False) :
-                    print "Error: Filename to be read '%s' is not a file!" % filename
+                if (os.path.isfile(fname_debug) == False) :
+                    print "Error: Filename to be read '%s' is not a file!" % fname_debug
                     print "Error code 400"
                     exit(400);
+
                 f = open(fname_debug, "r")
                 text = f.read()
                 output_lines = text.splitlines()
@@ -371,7 +395,7 @@ class Tester:
                     print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
         print "Checking console output..."
-        (unsat, value) = self.parse_solution_from_output(consoleOutput)
+        (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
         if self.check_unsat and unsat:
             toexec = "../../lingeling-587f/lingeling %s" % fname
@@ -384,7 +408,7 @@ class Tester:
                 print "Other solver: too much time to solve, aborted!"
                 return
             print "Checking other solver output..."
-            (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2)
+            (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         if unsat == True:
             if self.check_unsat == False:
@@ -416,7 +440,7 @@ class Tester:
         ]
 
         directory = "../../cnf-utils/"
-        for i in xrange(1,100000000):
+        while True:
             for fuzzer in fuzzers :
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
@@ -433,7 +457,7 @@ class Tester:
                 out = commands.getstatusoutput(call)
                 print "fuzzer ", fuzzer, " : ", out
 
-                for seednum in range(options.num_start_random_seed, options.num_start_random_seed+options.num_random_seeds):
+                for seednum in range(options.rndStart, options.rndStart+options.rndNum):
                     self.check(fname=file_name, fnameCheck=file_name,
                             randomizeNum=seednum, needToLimitTime=True)
 
@@ -442,44 +466,44 @@ class Tester:
     def checkDir(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
-        if testDirSet == False:
+
+        #check if options.checkDir has bee set
+        if options.checkDir == "":
             print "When checking, you must give test dir"
             exit()
-        else:
-            print "You gave testdir (where solutions are):", self.testDir
-        dirList = os.listdir(self.testDir)
+
+        print "You gave testdir (where solutions are):", options.checkDirSol
+        print "You gave CNF dir (where problems are) :", options.checkDirProb
+
+        dirList = os.listdir(options.checkDir)
         for fname in dirList:
-            myMatch = ""
-            if self.checkDirDifferent == True:
-                myMatch = '*.cnf.gz.out'
-            else:
-                myMatch = '*.cnf.gz'
-            if fnmatch.fnmatch(fname, myMatch):
-                myDir = self.testDir
-                if self.checkDirDifferent:
-                    fname = fname[:len(fname) - 4]  #remove trailing .out
-                    myDir = self.differentDirForCheck
-                    self.check(fname=self.testDir + fname,
-                               fnameCheck=myDir + fname, needSolve=False)
 
-    def regression_test(self) :
-        if testDirSet == False:
-            dirList = os.listdir(self.testDirNewVar)
-            if self.testDirNewVar == ".":
-                self.testDirNewVar = ""
-            for fname in dirList:
-                if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    for i in range(numStart, numStart+num):
-                        self.check(fname=self.testDirNewVar + fname,
-                                fnameCheck=self.testDirNewVar +
-                                fname, randomizeNum=i, newVar=True)
+            if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
+                #add dir, remove trailing .out
+                fnameCheck = options.checkDirProb + fname[:len(fname) - 4]
 
-        dirList = os.listdir(self.testDir)
-        if self.testDir == ".":
-            self.testDir = ""
+                #check now
+                self.check(fname=self.testDir + fname, \
+                   fnameCheck=fnameCheck, needSolve=False)
+
+    def regressionTest(self) :
+
+        #first, test stuff with newVar
+        dirList = os.listdir(self.testDirNewVar)
         for fname in dirList:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                for i in range(numStart, numStart+num):
+                print options.rndStart
+                for i in range(options.rndStart, options.rndStart + options.rndNum):
+                    self.check(fname=self.testDirNewVar + fname,
+                            fnameCheck=self.testDirNewVar +
+                            fname, randomizeNum=i, newVar=True)
+
+        dirList = os.listdir(self.testDir)
+
+        #test stuff without newVar
+        for fname in dirList:
+            if fnmatch.fnmatch(fname, '*.cnf.gz'):
+                for i in range(options.rndStart, options.rndStart+options.rndNum):
                     self.check(fname=self.testDir + fname,
                                fnameCheck=self.testDir + fname,
                                randomizeNum=i, newVar=False)
@@ -489,7 +513,7 @@ class Tester:
             print "Filename given '%s' is not a file!" % fname
             exit(-1)
 
-        for seednum in range(options.num_start_random_seed, options.num_start_random_seed+options.num_random_seeds):
+        for seednum in range(options.rndStart, options.rndStart+options.rndNum):
             print "Checking fname %s" % fname
             self.check(fname=fname, fnameCheck=fname, randomizeNum=seednum)
 
@@ -501,7 +525,13 @@ if len(args) == 1:
     tester.checkFile(args[0])
 
 
-if (options.fuzz_test):
+if options.fuzz_test:
     tester.needDebugLib = False
     tester.check_unsat = True
     tester.fuzz_test()
+
+if options.checkSol:
+    tester.checkDir()
+
+if options.regressionTest:
+    tester.regressionTest()

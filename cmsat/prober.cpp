@@ -106,7 +106,7 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 170L*1000L*1000L;
+    uint64_t numPropsTodo = 2770L*1000L*1000L;
 
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -138,44 +138,60 @@ bool Prober::probe()
 
     //Use candidates
     sortAndResetCandidates();
-    size_t atCandidates = 0;
     candidates.clear();
 
-    uint64_t origBogoProps = solver->propStats.bogoProps;
-    while (solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
-        uint32_t litnum;
+    //Calculate the set of possible variables for branching on randomly
+    vector<Var> possibleChoices;
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        if (solver->value(i) == l_Undef
+            && solver->decisionVar[i]
+        ) {
+            possibleChoices.push_back(i);
+        }
+    }
+
+    size_t atCandidates = 0;
+    const uint64_t origBogoProps = solver->propStats.bogoProps;
+    while (
+        !possibleChoices.empty()
+        && solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo
+    ) {
+        Lit lit;
 
         if (atCandidates < candidates.size()
             && candidates[atCandidates].minOfPolarities > 100
         ) {
-            litnum = Lit(candidates[atCandidates].var, 0).toInt();
+            lit = Lit(candidates[atCandidates].var, false);
             atCandidates++;
         } else {
-            litnum = solver->mtrand.randInt() % (solver->nVars()*2);
+            const size_t at = solver->mtrand.randInt(possibleChoices.size()-1);
+            lit = Lit(possibleChoices[at], false);
         }
-        Lit lit = Lit::toLit(litnum);
+
         extraTime += 20;
 
         //Check if var is set already
         if (solver->value(lit.var()) != l_Undef
             || !solver->decisionVar[lit.var()]
             || visitedAlready[lit.toInt()]
-            || solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
+            //|| solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
         ) {
             continue;
         }
 
-        /*
+
         //If this lit is reachable from somewhere else, then reach it from there
-        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
-            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+        if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
+            const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
             if (solver->value(betterlit.var()) == l_Undef
                 && solver->decisionVar[betterlit.var()]
             ) {
                 lit = betterlit;
+
+                //Must not have visited it already, otherwise the stamp dominator would be incorrect
                 assert(!visitedAlready[lit.toInt()]);
             }
-        }*/
+        }
 
         //Don't always try positive first. Try random sign first
         //bool random_inv = solver->mtrand.randInt(1);
@@ -302,6 +318,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
+    size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
     for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
@@ -334,6 +351,37 @@ bool Prober::tryThis(const Lit lit, const bool first)
         }
 
         visitedAlready[thisLit.toInt()] = 1;
+
+        //Update cache, if the trail was within limits (cacheUpdateCutoff)
+        const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
+        if (solver->conf.doCache
+            && thisLit != lit
+            && numElemsSet <= solver->conf.cacheUpdateCutoff
+            //&& cacheUpdated[(~ancestor).toInt()] == 0
+        ) {
+            //Update stats/markings
+            //cacheUpdated[(~ancestor).toInt()]++;
+            extraTime += 1;
+            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/100;
+            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/100;
+
+            const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
+
+            //Update the cache now
+            assert(ancestor != lit_Undef);
+            solver->implCache[(~ancestor).toInt()].merge(
+                solver->implCache[(~thisLit).toInt()].lits
+                , thisLit
+                , learntStep
+                , ancestor
+                , solver->seen
+            );
+
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            cout << "The impl cache of " << (~ancestor) << " is now: ";
+            cout << solver->implCache[(~ancestor).toInt()] << endl;
+            #endif
+        }
     }
 
     solver->cancelZeroLight();

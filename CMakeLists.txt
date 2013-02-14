@@ -14,13 +14,19 @@ ENDIF()
 PROJECT(cryptoms)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
 
+# SET (CMAKE_CXX_COMPILER  "/usr/bin/clang")
+# SET (CMAKE_AR      "/usr/bin/llvm-ar-3.1")
+# SET (CMAKE_LINKER  "/usr/bin/llvm-ld-3.1" CACHE INTERNAL STRING)
+# SET (CMAKE_NM      "/usr/bin/llvm-nm-3.1")
+# SET (CMAKE_OBJDUMP "/usr/bin/llvm-objdump-3.1")
+# SET (CMAKE_RANLIB  "/usr/bin/llvm-ranlib-3.1")
 
 # -----------------------------------------------------------------------------
 # Set build flags if compiler if gcc
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
+        "-std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
@@ -35,13 +41,31 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 # -----------------------------------------------------------------------------
 # Look for ZLIP (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
-find_package(ZLIB  REQUIRED)
+find_package(ZLIB)
+IF (ZLIB_FOUND)
+    MESSAGE(STATUS "OK, Found ZLIB!")
+    include_directories(${ZLIB_INCLUDE_DIR})
+    link_directories(${ZLIB_LIB_DIR})
+    add_definitions( -DUSE_ZLIB )
+ELSE (ZLIB_FOUND)
+    MESSAGE(STATUS "WARNING: Did not find ZLIB, gzipped file support will be disabled")
+ENDIF (ZLIB_FOUND)
 
 # -----------------------------------------------------------------------------
 # Look for OpenMP (Multi-threading extension to C++)
 # -----------------------------------------------------------------------------
-FIND_PACKAGE(OpenMP REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+FIND_PACKAGE(OpenMP)
+IF (OPENMP_FOUND)
+    MESSAGE(STATUS "OK, Found OpenMP!")
+    #include_directories(${OpenMP_INCLUDE_DIR})
+    #link_directories(${OpenMP_LIB_DIR})
+    add_definitions( -DUSE_OPENMP )
+    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+ELSE (OPENMP_FOUND)
+    MESSAGE(STATUS "WARNING: Did not find OpenMP, multi-threading will be disabled")
+ENDIF (OPENMP_FOUND)
+
 
 # -----------------------------------------------------------------------------
 # Add GIT version
@@ -56,15 +80,20 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
 #MySQL
+#SET(STATSNEEDED 1)
+if (STATSNEEDED)
+    add_definitions( -DSTATS_NEEDED )
+endif (STATSNEEDED)
+
 find_package(MySQL)
-IF (MYSQL_FOUND)
+IF (MYSQL_FOUND AND STATSNEEDED)
     MESSAGE(STATUS "OK, Found MySQL!")
     include_directories(${MySQL_INCLUDE_DIR})
     link_directories(${MySQL_LIB_DIR})
     add_definitions( -DUSE_MYSQL )
-ELSE (MYSQL_FOUND)
+ELSE (MYSQL_FOUND AND STATSNEEDED)
     MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
-ENDIF (MYSQL_FOUND)
+ENDIF (MYSQL_FOUND AND STATSNEEDED)
 
 # Some awful definitiions
 add_definitions(-DVERSION="3.0.0")
@@ -101,14 +130,14 @@ add_dependencies(copy
 )
 
 
-set(CPACK_PACKAGE_NAME "cryptominisat")
-set(CPACK_PACKAGE_VENDOR "www.msoos.org")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "3.0.0")
-set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "0")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
-set(CPACK_GENERATOR TGZ)
-include(CPack)
+#set(CPACK_PACKAGE_NAME "cryptominisat")
+#set(CPACK_PACKAGE_VENDOR "www.msoos.org")
+#set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
+#set(CPACK_PACKAGE_VERSION "3.0.0")
+#set(CPACK_PACKAGE_VERSION_MAJOR "3")
+#set(CPACK_PACKAGE_VERSION_MINOR "0")
+#set(CPACK_PACKAGE_VERSION_PATCH "0")
+#set(CPACK_GENERATOR TGZ)
+#include(CPack)
 
 

@@ -13,9 +13,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <vector>
 #include <memory>
 
-#ifndef DISABLE_ZLIB
+#ifdef USE_ZLIB
 #include <zlib.h>
-#endif // DISABLE_ZLIB
+#endif
 
 #include "solvertypes.h"
 #include "solverconf.h"

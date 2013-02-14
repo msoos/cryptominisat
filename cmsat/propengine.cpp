@@ -238,10 +238,12 @@ inline bool PropEngine::propBinaryClause(
 ) {
     const lbool val = value(i->lit1());
     if (val == l_Undef) {
+        #ifdef STATS_NEEDED
         if (i->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
+        #endif
 
         enqueue(i->lit1(), PropBy(~p));
     } else if (val == l_False) {
@@ -281,10 +283,12 @@ PropResult PropEngine::propNormalClause(
         return PROP_NOTHING;
     }
     propStats.bogoProps += 4;
-    const uint32_t offset = i->getOffset();
+    const ClOffset offset = i->getOffset();
     Clause& c = *clAllocator->getPointer(offset);
+    #ifdef STATS_NEEDED
     c.stats.numLookedAt++;
     c.stats.numLitVisited++;
+    #endif
 
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
@@ -309,15 +313,19 @@ PropResult PropEngine::propNormalClause(
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
-            propStats.bogoProps += numLitVisited/10;
+            //propStats.bogoProps += numLitVisited/10;
+            #ifdef STATS_NEEDED
             c.stats.numLitVisited+= numLitVisited;
+            #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
             return PROP_NOTHING;
         }
     }
-    propStats.bogoProps += numLitVisited/10;
+    //propStats.bogoProps += numLitVisited/10;
+    #ifdef STATS_NEEDED
     c.stats.numLitVisited+= numLitVisited;
+    #endif
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
@@ -345,10 +353,12 @@ PropResult PropEngine::propNormalClause(
 
         //Update stats
         c.stats.numProp++;
+        #ifdef STATS_NEEDED
         if (c.learnt())
             propStats.propsLongRed++;
         else
             propStats.propsLongIrred++;
+        #endif
 
         if (simple) {
             //Do lazy hyper-binary resolution if possible
@@ -370,7 +380,9 @@ PropResult PropEngine::propNormalClause(
                 //Is it possible?
                 if (OK) {
                     solver->attachBinClause(other, c[0], true, false);
+                    #ifdef STATS_NEEDED
                     propStats.longLHBR++;
+                    #endif
                     enqueue(c[0], PropBy(other));
                 } else {
                     //no, not possible, just enqueue as normal
@@ -466,10 +478,12 @@ void PropEngine::propTriHelper(
     , const bool learnt
     , Solver* solver
 ) {
+    #ifdef STATS_NEEDED
     if (learnt)
         propStats.propsTriRed++;
     else
         propStats.propsTriIrred++;
+    #endif
 
     if (simple) {
         //Check if we could do lazy hyper-binary resoution
@@ -485,7 +499,9 @@ void PropEngine::propTriHelper(
 
             solver->attachBinClause(lit, lit2, true, false);
             enqueue(lit2, PropBy(lit));
+            #ifdef STATS_NEEDED
             propStats.triLHBR++;
+            #endif
         } else {
             //Lazy hyper-bin is not possibe
             enqueue(lit2, PropBy(~lit1, lit3));
@@ -497,8 +513,10 @@ void PropEngine::propTriHelper(
 
 PropBy PropEngine::propagate(
     Solver* solver
+    #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
+    #endif
 ) {
     PropBy confl;
 
@@ -513,8 +531,10 @@ PropBy PropEngine::propagate(
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         const vec<Watched>& ws = watches[(~p).toInt()];
+        #ifdef STATS_NEEDED
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
+        #endif
 
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
@@ -533,7 +553,7 @@ PropBy PropEngine::propagate(
             //Pre-fetch long clause
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
-                    const uint32_t offset = i->getOffset();
+                    const ClOffset offset = i->getOffset();
                     __builtin_prefetch(clAllocator->getPointer(offset));
                 }
 
@@ -651,7 +671,7 @@ Lit PropEngine::propagateFull(
     toPropRedBin.clear();
     toPropNorm.clear();
 
-    const Lit root = trail.back();
+    Lit root = trail.back();
     toPropBin.push(root);
     toPropNorm.push(root);
     if (stampType == STAMP_RED)
@@ -676,11 +696,22 @@ Lit PropEngine::propagateFull(
     while (!toPropBin.empty()) {
         const Lit p = toPropBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
+        size_t done = 0;
         for(vec<Watched>::const_iterator
             k = ws.begin(), end = ws.end()
             ; k != end
-            ; k++
+            ; k++, done++
         ) {
+            //Pre-fetch long clause
+            if (k->isClause()) {
+                if (value(k->getBlockedLit()) != l_True) {
+                    const ClOffset offset = k->getOffset();
+                    __builtin_prefetch(clAllocator->getPointer(offset));
+                }
+
+                continue;
+            } //end CLAUSE
+
             //If something other than binary, skip
             if (!k->isBinary())
                 continue;
@@ -711,7 +742,8 @@ Lit PropEngine::propagateFull(
 
                     toPropNorm.push(trail.back());
                     toPropBin.push(trail.back());
-                    if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
+                    if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
+                    propStats.bogoProps += done*4;
                     goto start;
 
                 case PROP_NOTHING:
@@ -720,7 +752,7 @@ Lit PropEngine::propagateFull(
         }
 
         //Finished with this literal
-        propStats.bogoProps += ws.size();
+        propStats.bogoProps += ws.size()*4;
         toPropBin.pop();
         stampingTime++;
         timestamp[p.toInt()].end[stampType] = stampingTime;
@@ -739,10 +771,11 @@ Lit PropEngine::propagateFull(
 
             const Lit p = toPropRedBin.top();
             const vec<Watched>& ws = watches[(~p).toInt()];
+            size_t done = 0;
             for(vec<Watched>::const_iterator
                 k = ws.begin(), end = ws.end()
                 ; k != end
-                ; k++
+                ; k++, done++
             ) {
                 propStats.bogoProps += 1;
 
@@ -759,7 +792,14 @@ Lit PropEngine::propagateFull(
                     case PROP_SOMETHING:
                         stampingTime++;
                         timestamp[trail.back().toInt()].start[stampType] = stampingTime;
-                        timestamp[trail.back().toInt()].dominator[stampType] = root;
+
+                        //No need to set it. Old setting is either the same or better than lit_Undef
+                        //timestamp[trail.back().toInt()].dominator[stampType] = lit_Undef;
+
+
+                        //Root for literals propagated afterwards will be this literal
+                        root = trail.back();
+
                         #ifdef DEBUG_STAMPING
                         cout
                         << "From " << p << " enqueued " << trail.back()
@@ -770,6 +810,7 @@ Lit PropEngine::propagateFull(
                         toPropNorm.push(trail.back());
                         toPropBin.push(trail.back());
                         toPropRedBin.push(trail.back());
+                        propStats.bogoProps += done*4;
                         goto start;
 
                     case PROP_NOTHING:
@@ -778,6 +819,7 @@ Lit PropEngine::propagateFull(
             }
 
             //Finished with this literal of this type
+            propStats.bogoProps += ws.size()*4;
             toPropRedBin.pop();
         }
     }
@@ -839,9 +881,15 @@ Lit PropEngine::propagateFull(
                 << endl;
                 #endif
                 timestamp[trail.back().toInt()].start[stampType] = stampingTime;
+                if (stampType == STAMP_IRRED) {
+                    //Root for literals propagated afterwards will be this literal
+                    root = trail.back();
+                    toPropRedBin.push(trail.back());
+                }
+
                 toPropNorm.push(trail.back());
                 toPropBin.push(trail.back());
-                if (stampType == STAMP_RED) toPropRedBin.push(trail.back());
+                propStats.bogoProps += ws.size()*8;
                 goto start;
 
             case PROP_NOTHING:
@@ -849,6 +897,7 @@ Lit PropEngine::propagateFull(
         }
 
         //Finished with this literal
+        propStats.bogoProps += ws.size()*8;
         toPropNorm.pop();
         qhead++;
     }
@@ -886,10 +935,12 @@ PropResult PropEngine::propBin(
     const Lit lit = k->lit1();
     const lbool val = value(lit);
     if (val == l_Undef) {
+        #ifdef STATS_NEEDED
         if (k->learnt())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
+        #endif
 
         //Never propagated before
         enqueueComplex(lit, p, k->learnt());

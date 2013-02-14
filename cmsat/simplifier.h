@@ -32,11 +32,13 @@
 #include <iomanip>
 #include <fstream>
 
+#include "solver.h"
 #include "clause.h"
 #include "queue.h"
 #include "bitarray.h"
 #include "solvertypes.h"
 #include "heap.h"
+#include "touchlist.h"
 
 using std::vector;
 using std::list;
@@ -49,52 +51,6 @@ class SolutionExtender;
 class Solver;
 class GateFinder;
 class XorFinderAbst;
-
-class TouchList
-{
-public:
-    void touch(const Lit lit)
-    {
-        touch(lit.var());
-    }
-
-    void touch(const Var var)
-    {
-        if (touchedBitset.size() <= var)
-            touchedBitset.resize(var+1, 0);
-
-        if (touchedBitset[var] == 0) {
-            touched.push_back(var);
-            touchedBitset[var] = 1;
-        }
-    }
-
-    const vector<Var>& getTouchedList() const
-    {
-        return touched;
-    }
-
-    void clear()
-    {
-        //Clear touchedBitset
-        for(vector<Var>::const_iterator
-            it = touched.begin(), end = touched.end()
-            ; it != end
-            ; it++
-        ) {
-            touchedBitset[*it] = 0;
-        }
-
-        //Clear touched
-        touched.clear();
-    }
-
-private:
-    vector<Var> touched;
-    vector<char> touchedBitset;
-
-
-};
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -115,9 +71,10 @@ public:
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
     );
+    bool unEliminate(const Var var);
 
     //UnElimination
-    void extendModel(SolutionExtender* extender) const;
+    void extendModel(SolutionExtender* extender);
 
     //Get-functions
     struct Stats
@@ -228,10 +185,10 @@ public:
         void printShortSubStr() const
         {
             //STRENGTH + SUBSUME
-            cout << "c"
-            << " lits-rem: " << litsRemStrengthen
-            << " subsSUB: " << subsumedBySub
-            << " subsSTR: " << subsumedByStr
+            cout << "c [subs] long"
+            << " subBySub: " << subsumedBySub
+            << " subByStr: " << subsumedByStr
+            << " lits-rem-str: " << litsRemStrengthen
             << " T: " << std::fixed << std::setprecision(2)
             << (subsumeTime+strengthenTime+linkInTime+finalCleanupTime)
             << "(" << linkInTime+finalCleanupTime << " is overhead)"
@@ -283,7 +240,10 @@ public:
         {
             cout << "c -------- Simplifier STATS ----------" << endl;
             printStatsLine("c time"
-                , totalTime());
+                , totalTime()
+                , varElimTime/totalTime()*100.0
+                , "% var-elim"
+            );
 
             printStatsLine("c v-elimed"
                 , numVarsElimed
@@ -409,6 +369,7 @@ public:
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
+    bool getAnythingHasBeenBlocked() const;
 
 private:
 
@@ -428,19 +389,21 @@ private:
     vector<Lit>     stampInv;       ///<Used by merge()
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
+    vector<ClOffset> subs;
+    vector<Lit> subsLits;
 
     //Limits
     int64_t  addedClauseLits;
     int64_t  numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
+//     int64_t  numMaxTriSub;
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
     int64_t  numMaxAsymm;
     int64_t  numMaxBlocked;
-    int64_t  numMaxBlockedBin;
+    int64_t  numMaxBlockedImpl;
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
-    uint32_t clTouchedTodo;
 
     //Propagation&handling of stuff
     bool propagate();
@@ -455,7 +418,6 @@ private:
     void addBackToSolver();
     bool propImplicits();
     void removeAllLongsFromWatches();
-    void removeAssignedVarsFromEliminated();
     bool completeCleanClause(Clause& ps);
 
     //Clause update
@@ -525,9 +487,10 @@ private:
         uint32_t numSubsumed;
     };
     uint32_t subsume0(ClOffset offset);
+//     bool subsumeWithTris();
 
     template<class T>
-    Sub0Ret subsume0(
+    Sub0Ret subsume0Final(
         const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
@@ -563,11 +526,11 @@ private:
         const vector<pair<int, int> >&  varElimComplexity;
         bool operator () (const size_t x, const size_t y) const
         {
-            //Of the FIRST, the smallest is best
+            //Smallest cost first
             if (varElimComplexity[x].first != varElimComplexity[y].first)
                 return varElimComplexity[x].first < varElimComplexity[y].first;
 
-            //Of the SECOND, the largest is best
+            //Smallest cost first
             return varElimComplexity[x].second < varElimComplexity[y].second;
         }
 
@@ -593,18 +556,21 @@ private:
     {
         HeuristicData() :
             bin(0)
+            , tri(0)
             , longer(0)
             , lit(0)
 
         {};
 
         size_t bin;
+        size_t tri;
         size_t longer;
         size_t lit;
     };
     HeuristicData calcDataForHeuristic(const Lit lit) const;
+    std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
-    pair<int, int>  heuristicCalcVarElimScore(const Var var);
+    pair<int, int>  heuristicCalcVarElimScore(const Var var) const;
     bool        merge(
         const Watched& ps
         , const Watched& qs
@@ -627,10 +593,15 @@ private:
     /////////////////////
     //Blocked clause elimination
     void asymmTE();
+    bool anythingHasBeenBlocked;
     void blockClauses();
-    void blockBinaries();
+    void blockImplicit(bool bins = false, bool tris = true);
     bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
+    map<Var, vector<size_t> > blk_var_to_cl;
+    bool blockedMapBuilt;
+    void buildBlockedMap();
+    void cleanBlockedClauses();
 
     /////////////////////
     //Gate extraction
@@ -688,6 +659,7 @@ bool Simplifier::subset(const T1& A, const T2& B)
     for (i2 = 0; i2 != B.size(); i2++) {
         if (lastB != lit_Undef)
             assert(lastB < B[i2]);
+
         lastB = B[i2];
         //Literals are ordered
         if (A[i] < B[i2]) {
@@ -782,6 +754,77 @@ inline const vector<bool>& Simplifier::getVarElimed() const
 inline const Simplifier::Stats& Simplifier::getStats() const
 {
     return globalStats;
+}
+
+/**
+@brief Finds clauses that are backward-subsumed by given clause
+
+Only handles backward-subsumption. Uses occurrence lists
+
+@param[in] ps The clause to backward-subsume with.
+@param[in] abs Abstraction of the clause ps
+@param[out] out_subsumed The set of clauses subsumed by this clause
+*/
+template<class T> void Simplifier::findSubsumed0(
+    const ClOffset offset //Will not match with index of the name value
+    , const T& ps //Literals in clause
+    , const CL_ABST_TYPE abs //Abstraction of literals in clause
+    , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
+) {
+    #ifdef VERBOSE_DEBUG
+    cout << "findSubsumed0: ";
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        cout << ps[i] << " , ";
+    }
+    cout << endl;
+    #endif
+
+    //Which literal in the clause has the smallest occur list? -- that will be picked to go through
+    size_t min_i = 0;
+    for (uint32_t i = 1; i < ps.size(); i++){
+        if (solver->watches[ps[i].toInt()].size() < solver->watches[ps[min_i].toInt()].size())
+            min_i = i;
+    }
+    *toDecrease -= ps.size();
+
+    //Go through the occur list of the literal that has the smallest occur list
+    const vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
+    *toDecrease -= occ.size()*8 + 40;
+    for (vec<Watched>::const_iterator
+        it = occ.begin(), end = occ.end()
+        ; it != end
+        ; it++
+    ) {
+        if (!it->isClause())
+            continue;
+
+        *toDecrease -= 15;
+
+        if (it->getOffset() == offset
+            || !subsetAbst(abs, it->getAbst())
+        ) {
+            continue;
+        }
+
+        ClOffset offset2 = it->getOffset();
+        const Clause& cl2 = *solver->clAllocator->getPointer(offset2);
+
+        if (ps.size() > cl2.size())
+            continue;
+
+        *toDecrease -= 50;
+        if (subset(ps, cl2)) {
+            out_subsumed.push_back(it->getOffset());
+            #ifdef VERBOSE_DEBUG
+            cout << "subsumed: " << *clauses[it->index] << endl;
+            #endif
+        }
+    }
+}
+
+inline bool Simplifier::getAnythingHasBeenBlocked() const
+{
+    return anythingHasBeenBlocked;
 }
 
 /*inline const XorFinder* Simplifier::getXorFinder() const

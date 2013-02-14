@@ -35,7 +35,7 @@ SolverConf::SolverConf() :
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
-        , ratioRemoveClauses(1.0/3.0)
+        , ratioRemoveClauses(1.0/2.0)
         , numCleanBetweenSimplify(1)
         , startClean(8000)
         , increaseClean(1.1)
@@ -47,7 +47,7 @@ SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.2)
         , burstSearchLen(300)
-        , restartType(glue_restart)
+        , restartType(agility_restart)
 
         , doRecursiveCCMin  (true)
         , polarity_mode    (polarity_auto)
@@ -55,11 +55,10 @@ SolverConf::SolverConf() :
 
         //Agilities
         , agilityG                  (0.9999)
-        , agilityLimit              (0.20)
+        , agilityLimit              (0.05)
         , agilityViolationLimit     (20)
 
         , doPerformPreSimp (true)
-        , probeMultiplier(1.0)
 
         //Glues
         , updateGlues(true)
@@ -84,35 +83,50 @@ SolverConf::SolverConf() :
         , sqlPass ("")
         , sqlDatabase("cmsat")
 
-        //optimisations to do
-        , printFullStats   (false)
-        , doRenumberVars   (true)
-        , dominPickFreq    (5)
-        , flipPolarFreq    (300)
+        //Var-elim
+        , doVarElim        (true)
+        , updateVarElimComplexityOTF(true)
+        , varelimStrategy  (0)
+        , varElimCostEstimateStrategy(0)
+        , varElimRatioPerIter(0.22)
+
+        //Probing
+        , doProbe          (true)
+        , probeMultiplier  (1.0)
+        , doBothProp       (true)
+        , doTransRed       (true)
+        , doStamp          (true)
+        , doCache          (true)
+        , cacheUpdateCutoff(200)
+
+        //XOR
         , doFindXors       (true)
         , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10L*1000L*1000L)
-        , doFindAndReplaceEqLits     (true)
+
+        //Var-replacer
+        , doFindAndReplaceEqLits(true)
+        , doExtendedSCC         (true)
+        , sccFindPercent        (0.02)
+
+        //optimisations to do
+        , printFullStats   (false)
+        , doRenumberVars   (true)
+        , dominPickFreq    (5)
+        , flipPolarFreq    (300)
+
         , doSchedSimp      (true)
         , doSimplify       (true)
         , doHyperBinRes    (true)
         , doLHBR           (true)
-        , doBlockedClause  (true)
+        , doBlockClauses   (true)
         , doExtBinSubs     (true)
-        , doVarElim        (true)
-        , varelimStrategy  (1)
-        , varElimRatioPerIter(0.29)
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doProbe          (true)
-        , doBothProp       (true)
-        , doTransRed (true)
-        , doStamp          (true)
-        , doExtendedSCC    (false)
         , doGateFind       (true)
         , maxGateSize      (20)
         , doAlwaysFMinim   (false)

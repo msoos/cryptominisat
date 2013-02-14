@@ -119,8 +119,13 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
         }
 
         //Reallocate data
-        dataStart = (BASE_DATA_TYPE*)realloc(dataStart, newMaxSize*sizeof(BASE_DATA_TYPE));
-        if (!dataStart) {
+        dataStart = (BASE_DATA_TYPE*)realloc(
+            dataStart
+            , newMaxSize*sizeof(BASE_DATA_TYPE)
+        );
+
+        //Realloc failed?
+        if (dataStart == NULL) {
             cout
             << "ERROR: while reallocating clause space"
             << endl;
@@ -141,6 +146,7 @@ void* ClauseAllocator::allocEnough(uint32_t clauseSize)
     return pointer;
 }
 
+#ifdef STATS_NEEDED
 struct sortByClauseNumLookedAtDescending
 {
     bool operator () (const Clause* x, const Clause* y)
@@ -152,6 +158,7 @@ struct sortByClauseNumLookedAtDescending
         return x->size() < y->size();
     }
 };
+#endif
 
 /**
 @brief Given the pointer of the clause it finds a 32-bit offset for it
@@ -248,7 +255,9 @@ void ClauseAllocator::consolidate(
     }
 
     //Sort clauses according to usage data
+    #ifdef STATS_NEEDED
     std::sort(clauses.begin(), clauses.end(), sortByClauseNumLookedAtDescending());
+    #endif
 
     BASE_DATA_TYPE* newDataStartsAt = newDataStart;
     uint64_t newSize = 0;
@@ -436,4 +445,9 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
     }
+}
+
+uint64_t ClauseAllocator::getMemUsed() const
+{
+    return maxSize*sizeof(BASE_DATA_TYPE);
 }

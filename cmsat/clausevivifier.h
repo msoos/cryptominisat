@@ -36,13 +36,15 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver* solver);
         bool vivify(bool alsoStrengthen);
-        bool subsumeAndStrengthenImplicit();
+        void subsumeImplicit();
+        bool strengthenImplicit();
 
         struct Stats
         {
             Stats() :
                 //Asymm
                 timeNorm(0)
+                , timeOut(0)
                 , zeroDepthAssigns(0)
                 , numClShorten(0)
                 , numLitsRem(0)
@@ -60,6 +62,7 @@ class ClauseVivifier {
             Stats& operator+=(const Stats& other)
             {
                 timeNorm += other.timeNorm;
+                timeOut += other.timeOut;
                 zeroDepthAssigns += other.zeroDepthAssigns;
                 numClShorten += other.numClShorten;
                 numLitsRem += other.numLitsRem;
@@ -87,10 +90,10 @@ class ClauseVivifier {
                 << "c [vivif] asymm (tri+long)"
                 << " useful: "<< numClShorten
                 << "/" << checkedClauses << "/" << potentialClauses
-
                 << " lits-rem:" << numLitsRem
                 << " 0-depth-assigns:" << zeroDepthAssigns
                 << " T: " << timeNorm << " s"
+                << " time-out: " << (timeOut ? "Y" : "N")
                 << endl;
             }
 
@@ -102,6 +105,12 @@ class ClauseVivifier {
                     , timeNorm
                     , timeNorm/(double)numCalled
                     , "per call"
+                );
+
+                printStatsLine("c timed out"
+                    , timeOut
+                    , (double)timeOut/(double)numCalled*100.0
+                    , "% of calls"
                 );
 
                 printStatsLine("c asymm/checked/potential"
@@ -129,6 +138,7 @@ class ClauseVivifier {
 
             //Asymm
             double timeNorm;
+            uint64_t timeOut;
             uint64_t zeroDepthAssigns;
             uint64_t numClShorten;
             uint64_t numLitsRem;
@@ -248,6 +258,7 @@ class ClauseVivifier {
         );
         vector<Lit> stampNorm;
         vector<Lit> stampInv;
+        int64_t timeAvailable;
 
 
           //Subsumtion of bin with bin
