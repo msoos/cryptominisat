@@ -188,24 +188,31 @@ void Main::parseInAllFiles()
     }
 }
 
-void Main::printResultFunc(const lbool ret)
+void Main::printResultFunc(std::ostream* os, const bool toFile,
+                           const lbool ret, const bool firstSolution)
 {
     if (ret == l_True) {
-        if (!printResult) cout << "c SATISFIABLE" << endl;
-        else              cout << "s SATISFIABLE" << endl;
+        if(toFile) {
+            if(firstSolution)  *os << "SAT" << endl;
+        }
+        else if (!printResult) *os << "c SATISFIABLE" << endl;
+        else                   *os << "s SATISFIABLE" << endl;
     } else if (ret == l_False) {
-        if (!printResult) cout << "c UNSATISFIABLE" << endl;
-        else              cout << "s UNSATISFIABLE" << endl;
+        if(toFile) {
+            if(firstSolution)  *os << "UNSAT" << endl;
+        }
+        else if (!printResult) *os << "c UNSATISFIABLE" << endl;
+        else                   *os << "s UNSATISFIABLE" << endl;
     }
 
-    if(ret == l_True && printResult) {
+    if(ret == l_True && (printResult || toFile)) {
         std::stringstream toPrint;
-        toPrint << "v ";
+        if(!toFile) toPrint << "v ";
         for (Var var = 0; var != solver->nVars(); var++)
             if (solver->model[var] != l_Undef)
                 toPrint << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
             toPrint << "0" << endl;
-        cout << toPrint.str();
+        *os << toPrint.str();
     }
 }
 
@@ -337,6 +344,8 @@ void Main::parseCommandLine()
         , "Solve at specific 'solve()' points in CNF file")
     ("debugnewvar", po::bool_switch(&debugNewVar)
         , "Add new vars at specific 'newVar()' points in 6CNF file")
+    ("dumpresult", po::value<std::string>(&conf.resultFilename)
+        , "Write result(s) to this file")
     ;
 
     po::options_description probeOptions("Probing lit options");
@@ -590,6 +599,10 @@ void Main::parseCommandLine()
             throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing --maxdumplearnts=<size>");
     }
 
+    if (vm.count("dumpresult")) {
+        conf.needResultFile = true;
+    }
+
     if (typeclean == "glue") {
         conf.clauseCleaningType = CLEAN_CLAUSES_GLUE_BASED;
     } else if (typeclean == "size") {
@@ -711,6 +724,19 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
 
+    std::ofstream resultfile;
+
+    if (conf.needResultFile) {
+        resultfile.open(conf.resultFilename.c_str());
+        if (!resultfile) {
+            cout
+            << "ERROR: Couldn't open file '"
+            << conf.resultFilename
+            << "' for writing, cannot write result to file!"
+            << endl;
+        }
+    }
+
     if (conf.verbosity >= 1)
         printVersionInfo();
     parseInAllFiles();
@@ -723,7 +749,12 @@ int Main::solve()
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             if (conf.verbosity >= 1) cout << "c Prepare for next run..." << endl;
-            printResultFunc(ret);
+
+            printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+
+            if (conf.needResultFile) {
+                printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+            }
 
             if (doBanFoundSolution) {
                 vector<Lit> lits;
@@ -747,7 +778,13 @@ int Main::solve()
     if (conf.verbosity >= 1)
         solver->printFullStats();
 
-    printResultFunc(ret);
+    printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+
+    if (conf.needResultFile) {
+        printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+    }
+
+    resultfile.close();
 
     return correctReturnValue(ret);
 }

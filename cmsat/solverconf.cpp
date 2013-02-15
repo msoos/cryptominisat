@@ -144,6 +144,7 @@ SolverConf::SolverConf() :
 
         , needToDumpLearnts(false)
         , needToDumpSimplified (false)
+        , needResultFile       (false)
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
