@@ -42,7 +42,8 @@ class Main
         void parseInAllFiles();
 
         //Helper functions
-        void printResultFunc(const lbool ret);
+        void printResultFunc(std::ostream* os, const bool toFile,
+                             const lbool ret, const bool firstSolution);
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
 
