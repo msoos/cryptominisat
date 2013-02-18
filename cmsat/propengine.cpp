@@ -511,7 +511,70 @@ void PropEngine::propTriHelper(
     }
 }
 
-PropBy PropEngine::propagate(
+PropBy PropEngine::propagateFast(
+    Solver* solver
+) {
+    assert(doLHBR == false);
+    PropBy confl;
+
+    #ifdef VERBOSE_DEBUG_PROP
+    cout << "Fast Propagation started" << endl;
+    #endif
+
+    PropResult ret = PROP_NOTHING;
+    while (qhead < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
+        vec<Watched>& ws = watches[(~p).toInt()];
+        vec<Watched>::iterator i = ws.begin();
+        vec<Watched>::iterator j = ws.begin();
+        const vec<Watched>::iterator end = ws.end();
+        propStats.bogoProps += ws.size()/4 + 1;
+        for (; i != end; i++) {
+            if (i->isBinary()) {
+                *j++ = *i;
+                if (!propBinaryClause(i, p, confl)) {
+                    i++;
+                    break;
+                }
+
+                continue;
+            }
+
+            //Propagate tri clause
+            if (i->isTri()) {
+                *j++ = *i;
+                ret = propTriClause<true>(i, p, confl, solver);
+                if (ret == PROP_FAIL) {
+                    i++;
+                    break;
+                }
+            }
+
+            //propagate normal clause
+            if (i->isClause()) {
+                ret = propNormalClause<true>(i, j, p, confl, solver);
+                if (ret == PROP_FAIL) {
+                    i++;
+                    break;
+                }
+            }
+        }
+        while (i != end) {
+            *j++ = *i++;
+        }
+        ws.shrink_(end-j);
+
+        qhead++;
+    }
+
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation ended." << endl;
+    #endif
+
+    return confl;
+}
+
+PropBy PropEngine::propagateSlow(
     Solver* solver
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed

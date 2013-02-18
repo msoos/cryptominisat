@@ -111,6 +111,10 @@ SolverConf::SolverConf() :
         , doExtendedSCC         (true)
         , sccFindPercent        (0.02)
 
+        //Propagation
+        , doLHBR           (true)
+        , propSlow         (false)
+
         //optimisations to do
         , printFullStats   (false)
         , doRenumberVars   (true)
@@ -120,7 +124,6 @@ SolverConf::SolverConf() :
         , doSchedSimp      (true)
         , doSimplify       (true)
         , doHyperBinRes    (true)
-        , doLHBR           (true)
         , doBlockClauses   (true)
         , doExtBinSubs     (true)
         , doSubsume1       (true)

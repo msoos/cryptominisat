@@ -2530,3 +2530,23 @@ void Searcher::bumpClauseAct(Clause* cl)
         clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
     }
 }
+
+PropBy Searcher::propagate(
+    Solver* solver
+    #ifdef STATS_NEEDED
+    , AvgCalc<size_t>* watchListSizeTraversed
+    //, AvgCalc<bool>* litPropagatedSomething
+    #endif
+) {
+    if (solver->conf.propSlow) {
+        return propagateSlow(
+            solver
+            #ifdef STATS_NEEDED
+            , AvgCalc<size_t>* watchListSizeTraversed
+            //, AvgCalc<bool>* litPropagatedSomething
+            #endif
+        );
+    } else {
+        return propagateFast(solver);
+    }
+}
