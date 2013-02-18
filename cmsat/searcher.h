@@ -699,6 +699,7 @@ class Searcher : public PropEngine
         const Stats& getStats() const;
 
     private:
+
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const Searcher* cc;

@@ -674,7 +674,9 @@ bool VarReplacer::replace(
         solver->propStats.propsUnit++;
         #endif
 
-        if (solver->ok) solver->ok = (solver->propagate().isNULL());
+        if (solver->ok) {
+            solver->ok = (solver->propagate().isNULL());
+        }
         return solver->ok;
     }
 
