@@ -112,7 +112,7 @@ SolverConf::SolverConf() :
         , sccFindPercent        (0.02)
 
         //Propagation
-        , doLHBR           (true)
+        , doLHBR           (false)
         , propBinFirst     (false)
 
         //optimisations to do
