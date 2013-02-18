@@ -2538,7 +2538,9 @@ PropBy Searcher::propagate(
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver->conf.propBinFirst) {
+    if (solver == NULL
+        || solver->conf.propBinFirst
+    ) {
         return propagateBinFirst(
             solver
             #ifdef STATS_NEEDED
