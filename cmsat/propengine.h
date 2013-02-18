@@ -332,15 +332,21 @@ protected:
     void         newDecisionLevel();                       ///<Begins a new decision level.
 
     ///Perform BCP
-    PropBy  propagateSlow(
+    PropBy  propagateBinFirst(
         Solver* solver = NULL
         #ifdef STATS_NEEDED
         ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
     );
-    PropBy propagateFast(Solver* solver);
+    PropBy propagateAnyOrder(
+        Solver* solver
+    );
 
-    bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
+    bool propBinaryClause(
+        const vec<Watched>::const_iterator i
+        , const Lit p
+        , PropBy& confl
+    ); ///<Propagate 2-long clause
 
     ///Propagate 3-long clause
     template<bool simple>

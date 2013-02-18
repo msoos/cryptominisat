@@ -299,7 +299,7 @@ ClOffset ClauseVivifier::testVivify(
         }
         done += i2;
         extraTime += 5;
-        failed = (!solver->propagateFast(solver).isNULL());
+        failed = (!solver->propagateAnyOrder(solver).isNULL());
         if (failed) break;
     }
     solver->cancelZeroLight();

@@ -113,7 +113,7 @@ SolverConf::SolverConf() :
 
         //Propagation
         , doLHBR           (true)
-        , propSlow         (false)
+        , propBinFirst     (false)
 
         //optimisations to do
         , printFullStats   (false)

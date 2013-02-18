@@ -126,7 +126,7 @@ class SolverConf
 
         //Propagation
         int      doLHBR; ///<Do lazy hyper-binary resolution
-        int      propSlow;
+        int      propBinFirst;
 
 
         //Optimisations to do

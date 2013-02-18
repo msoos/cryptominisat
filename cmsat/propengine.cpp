@@ -511,10 +511,13 @@ void PropEngine::propTriHelper(
     }
 }
 
-PropBy PropEngine::propagateFast(
+PropBy PropEngine::propagateAnyOrder(
     Solver* solver
 ) {
-    assert(doLHBR == false);
+    assert(
+        doLHBR == false
+        && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
+    );
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
@@ -574,7 +577,7 @@ PropBy PropEngine::propagateFast(
     return confl;
 }
 
-PropBy PropEngine::propagateSlow(
+PropBy PropEngine::propagateBinFirst(
     Solver* solver
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed

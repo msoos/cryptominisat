@@ -2538,8 +2538,8 @@ PropBy Searcher::propagate(
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver->conf.propSlow) {
-        return propagateSlow(
+    if (solver->conf.propBinFirst) {
+        return propagateBinFirst(
             solver
             #ifdef STATS_NEEDED
             , AvgCalc<size_t>* watchListSizeTraversed
@@ -2547,6 +2547,6 @@ PropBy Searcher::propagate(
             #endif
         );
     } else {
-        return propagateFast(solver);
+        return propagateAnyOrder(solver);
     }
 }
