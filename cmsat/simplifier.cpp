@@ -1109,8 +1109,8 @@ bool Simplifier::simplify()
         blockImplicit();
     }
 
-    if (solver->conf.doAsymmTE)
-        asymmTE();
+    /*if (solver->conf.doAsymmTE)
+        asymmTE();*/
 
     //If no var elimination is needed, this IS fixedpoint
     if (solver->conf.doVarElim &&!eliminateVars())
@@ -1753,6 +1753,7 @@ void Simplifier::blockClauses()
 
 void Simplifier::asymmTE()
 {
+    assert(false && "asymmTE has a bug (unknown), cannot be used");
     //Random system would die here
     if (clauses.empty())
         return;
