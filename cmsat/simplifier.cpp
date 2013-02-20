@@ -1602,6 +1602,7 @@ void Simplifier::blockImplicit(
 
                 if (lit3 == lit_Undef) {
                     blockedBin++;
+                    *toDecrease -= solver->watches[lit2.toInt()].size();
                     removeWBin(solver->watches, lit2, lit, false);
                     assert(!ws[i].learnt());
                     solver->binTri.irredLits -= 2;
