@@ -1609,6 +1609,8 @@ void Simplifier::blockImplicit(
                 } else {
                     blockedTri++;
                     dummy.push_back(lit3);
+                    *toDecrease -= solver->watches[lit2.toInt()].size();
+                    *toDecrease -= solver->watches[lit3.toInt()].size();
                     removeWTri(solver->watches, lit2, lit, lit3, false);
                     removeWTri(solver->watches, lit3, lit, lit2, false);
                     assert(!ws[i].learnt());
