@@ -160,6 +160,8 @@ class SolverConf
         //Verbosity
         int      doPrintGateDot; ///< Print DOT file of gates
         int      doPrintConflDot; ///< Print DOT file for each conflict
+        double   maxTime;
+        size_t   maxConfl;
 
         //interrupting & dumping
         bool      needToDumpLearnts;  ///<If set to TRUE, learnt clauses will be dumped to the file speified by "learntsFilename"

@@ -1688,6 +1688,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     while (status == l_Undef
         && !needToInterrupt
         && stats.conflStats.numConflicts < maxConfls
+        && cpuTime() < solver->conf.maxTime
     ) {
         if (conf.verbosity >= 6) {
             cout

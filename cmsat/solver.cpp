@@ -1049,10 +1049,22 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
         }
 
+        //Abide by maxConfl limit
+        numConfls = std::min<uint32_t>(numConfls, conf.maxConfl - sumStats.conflStats.numConflicts);
+
+        //Solve and update stats
         status = Searcher::solve(assumptions, numConfls);
         sumStats += Searcher::getStats();
         sumPropStats += propStats;
         propStats.clear();
+
+        //If we are over the limit, exit
+        if (sumStats.conflStats.numConflicts >= conf.maxConfl
+            || cpuTime() > conf.maxTime
+        ) {
+            status = l_Undef;
+            break;
+        }
 
         //Back up activities, polairties and var_inc
         backupActivity.clear();

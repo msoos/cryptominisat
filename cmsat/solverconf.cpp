@@ -144,6 +144,8 @@ SolverConf::SolverConf() :
         //Verbosity
         , doPrintGateDot   (false)
         , doPrintConflDot  (false)
+        , maxTime          (std::numeric_limits<double>::max())
+        , maxConfl         (std::numeric_limits<size_t>::max())
 
         , needToDumpLearnts(false)
         , needToDumpSimplified (false)
