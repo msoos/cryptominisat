@@ -1033,7 +1033,11 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         status = simplifyProblem();
 
     //Iterate until solved
-    while (status == l_Undef  && !needToInterrupt) {
+    while (status == l_Undef
+        && !needToInterrupt
+        && cpuTime() < conf.maxTime
+        && sumStats.conflStats.numConflicts < conf.maxConfl
+    ) {
         if (conf.verbosity >= 2)
             printClauseSizeDistrib();
 
@@ -1147,6 +1151,13 @@ lbool Solver::simplifyProblem()
     updateDominators();
     if (conf.doProbe && !prober->probe())
         goto end;
+
+    //If we are over the limit, exit
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+    ) {
+        l_Undef;
+    }
 
     //Don't replace first -- the stamps won't work so well
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
