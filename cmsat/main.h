@@ -49,6 +49,7 @@ class Main
         bool debugLib;
         bool debugNewVar;
         int printResult;
+        string commandLine;
 
         //Multi-start solving
         uint32_t max_nr_of_solutions;

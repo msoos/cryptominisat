@@ -234,7 +234,15 @@ void Main::parseCommandLine()
 {
     conf.verbosity = 2;
 
-    std::string typeclean;
+    //Reconstruct the command line so we can emit it later if needed
+    for(int i = 0; i < argc; i++) {
+        commandLine += string(argv[i]);
+        if (i+1 < argc) {
+            commandLine += " ";
+        }
+    }
+
+    string typeclean;
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -713,8 +721,13 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
 
-    if (conf.verbosity >= 1)
+    if (conf.verbosity >= 1) {
         printVersionInfo();
+        cout
+        << "c Executed with command line:"
+        << commandLine
+        << endl;
+    }
     parseInAllFiles();
 
     unsigned long current_nr_of_solutions = 0;
