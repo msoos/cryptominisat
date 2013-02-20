@@ -195,8 +195,10 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     //Propagate&check, see what happens
     bool OK = propagate();
     if (!OK) {
-        cout << "Error! Propagation leads to failure after flipping of value" << endl;
-        exit(-1);
+        cout
+        << "Error! Propagation leads to failure after flipping of value"
+        << endl;
+        assert(false);
     }
 }
 
