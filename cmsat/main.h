@@ -13,16 +13,13 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <vector>
 #include <memory>
 
-#ifdef USE_ZLIB
-#include <zlib.h>
-#endif
-
 #include "solvertypes.h"
 #include "solverconf.h"
 
 class Solver;
 
 using std::string;
+using std::vector;
 
 class Main
 {
@@ -37,7 +34,7 @@ class Main
         Solver* solver;
 
         //File reading
-        void readInAFile(const std::string& filename);
+        void readInAFile(const string& filename);
         void readInStandardInput();
         void parseInAllFiles();
 
@@ -59,7 +56,7 @@ class Main
 
         //Files to read & write
         bool fileNamePresent;
-        std::vector<std::string> filesToRead;
+        vector<string> filesToRead;
 
         //Command line arguments
         int argc;

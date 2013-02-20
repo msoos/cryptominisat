@@ -98,7 +98,7 @@ void SIGINT_handler(int)
     }
 }
 
-void Main::readInAFile(const std::string& filename)
+void Main::readInAFile(const string& filename)
 {
     solver->fileAdded(filename);
     if (conf.verbosity >= 1) {
@@ -199,7 +199,7 @@ void Main::printResultFunc(const lbool ret)
     }
 
     if(ret == l_True && printResult) {
-        std::stringstream toPrint;
+        std::ostringstream toPrint;
         toPrint << "v ";
         for (Var var = 0; var != solver->nVars(); var++)
             if (solver->model[var] != l_Undef)
@@ -211,23 +211,23 @@ void Main::printResultFunc(const lbool ret)
 
 struct WrongParam
 {
-    WrongParam(std::string _param, std::string _msg) :
+    WrongParam(string _param, string _msg) :
         param(_param)
         , msg(_msg)
     {}
 
-    const std::string& getMsg() const
+    const string& getMsg() const
     {
         return msg;
     }
 
-    const std::string& getParam() const
+    const string& getParam() const
     {
         return param;
     }
 
-    std::string param;
-    std::string msg;
+    string param;
+    string msg;
 };
 
 void Main::parseCommandLine()
@@ -241,10 +241,10 @@ void Main::parseCommandLine()
     generalOptions.add_options()
     ("help,h", "Prints this help")
     ("version,v", "Print version number")
-    ("input", po::value< std::vector<std::string> >(), "file(s) to read")
+    ("input", po::value< vector<string> >(), "file(s) to read")
     ("random,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
-    ("restart", po::value<std::string>()
+    ("restart", po::value<string>()
         , "{geom, agility, glue, glueagility}  Restart strategy to follow.")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
@@ -256,10 +256,10 @@ void Main::parseCommandLine()
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
 
-    std::stringstream ssAgilG;
+    std::ostringstream ssAgilG;
     ssAgilG << std::setprecision(6) << conf.agilityG;
 
-    std::stringstream ssAgilL;
+    std::ostringstream ssAgilL;
     ssAgilL << std::setprecision(6) << conf.agilityLimit;
 
     po::options_description restartOptions("Restart options");
@@ -310,7 +310,7 @@ void Main::parseCommandLine()
         , "Only bump variables' activities when they appear in a non-learnt long clause or any 2- or 3-long clause")
     ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq)
         , "[0 - 1] freq. of picking var at random")
-    ("polar", po::value<std::string>()->default_value("auto")
+    ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
     ("flippolarfreq", po::value<uint32_t>(&conf.flipPolarFreq)->default_value(conf.flipPolarFreq)
         , "How rarely, relative to the branch depth delta history should we flip polarities randomly? A higher value will flip it less often.")
@@ -325,11 +325,11 @@ void Main::parseCommandLine()
     iterativeOptions.add_options()
     ("maxsolutions", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
-    ("dumplearnts", po::value<std::string>(&conf.learntsDumpFilename)
+    ("dumplearnts", po::value<string>(&conf.learntsDumpFilename)
         , "If stopped dump learnt clauses here")
     ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)
         , "Maximum length of learnt clause dumped")
-    ("dumpsimplified", po::value<std::string>()
+    ("dumpsimplified", po::value<string>()
         , "If stopped, dump simplified original problem here")
     ("banfoundsol", po::value<int>(&doBanFoundSolution)->default_value(doBanFoundSolution)
         , "Ban solutions found")
@@ -353,7 +353,7 @@ void Main::parseCommandLine()
         , "Remove useless binary clauses (transitive reduction)")
     ;
 
-    std::stringstream ssERatio;
+    std::ostringstream ssERatio;
     ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
 
     po::options_description simplificationOptions("Simplification options");
@@ -564,7 +564,7 @@ void Main::parseCommandLine()
 
 
     if (vm.count("polar")) {
-        std::string mode = vm["polar"].as<std::string>();
+        string mode = vm["polar"].as<string>();
 
         if (mode == "true") conf.polarity_mode = polarity_true;
         else if (mode == "false") conf.polarity_mode = polarity_false;
@@ -574,7 +574,7 @@ void Main::parseCommandLine()
     }
 
     if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        WrongParam(lexical_cast<std::string>(conf.random_var_freq), "Illegal random var frequency ");
+        WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     //Conflict
@@ -583,7 +583,7 @@ void Main::parseCommandLine()
     }
 
     if (vm.count("dumpsimplified")) {
-        conf.simplifiedDumpFilename = vm["dumpsimplified"].as<std::string>();
+        conf.simplifiedDumpFilename = vm["dumpsimplified"].as<string>();
         conf.needToDumpSimplified = true;
     }
 
@@ -656,7 +656,7 @@ void Main::parseCommandLine()
     #endif //USE_GAUSS
 
     if (vm.count("restart")) {
-        std::string type = vm["restart"].as<std::string>();
+        string type = vm["restart"].as<string>();
         if (type == "geom")
             conf.restartType = geom_restart;
         else if (type == "glue")
@@ -685,7 +685,7 @@ void Main::parseCommandLine()
         throw WrongParam("maxsolutions",  "More than one solution is currently not supported. Sorry.");
 
     if (vm.count("input")) {
-        filesToRead = vm["input"].as<std::vector<std::string> >();
+        filesToRead = vm["input"].as<vector<string> >();
         fileNamePresent = true;
     } else {
         fileNamePresent = false;
