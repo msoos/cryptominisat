@@ -149,6 +149,14 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     && solver->value(lits[1]) == l_Undef
                 ) {
                     runStats.foundXors++;
+#ifdef VERBOSE_DEBUG
+                    cout << "SCC says: "
+                    << lits[0]
+                    << " XOR "
+                    << lits[1]
+                    << " = " << !xorEqualsFalse
+                    << endl;
+#endif
                     solver->varReplacer->replace(
                         lits[0]
                         , lits[1]

@@ -152,11 +152,11 @@ void Simplifier::extendModel(SolutionExtender* extender)
 */
 uint32_t Simplifier::subsume0(ClOffset offset)
 {
+    Clause& cl = *solver->clAllocator->getPointer(offset);
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: " << cl << endl;
     #endif
 
-    Clause& cl = *solver->clAllocator->getPointer(offset);
     Sub0Ret ret = subsume0Final(
         offset
         , cl
@@ -204,11 +204,10 @@ Simplifier::Sub0Ret Simplifier::subsume0Final(
         ; it != end
         ; it++
     ) {
-        #ifdef VERBOSE_DEBUG
-        cout << "-> subsume0 removing:" << *clauses[it->index] << endl;
-        #endif
-
         Clause *tmp = solver->clAllocator->getPointer(*it);
+        #ifdef VERBOSE_DEBUG
+        cout << "-> subsume0 removing:" << *tmp << endl;
+        #endif
 
         //Combine stats
         ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
@@ -324,6 +323,9 @@ void Simplifier::unlinkClause(const ClOffset offset)
 lbool Simplifier::cleanClause(ClOffset offset)
 {
     assert(solver->ok);
+
+    bool satisfied = false;
+    Clause& cl = *solver->clAllocator->getPointer(offset);
     #ifdef VERBOSE_DEBUG
     cout << "Clause to clean: " << cl << endl;
     for(size_t i = 0; i < cl.size(); i++) {
@@ -332,8 +334,6 @@ lbool Simplifier::cleanClause(ClOffset offset)
     cout << endl;
     #endif
 
-    bool satisfied = false;
-    Clause& cl = *solver->clAllocator->getPointer(offset);
     Lit* i = cl.begin();
     Lit* j = cl.begin();
     const Lit* end = cl.end();
@@ -412,12 +412,12 @@ May return with solver->ok being FALSE, and may set&propagate variable values.
 */
 void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
 {
+    Clause& cl = *solver->clAllocator->getPointer(offset);
     #ifdef VERBOSE_DEBUG
-    cout << "-> Strenghtening clause :" << *clauses[c.index];
+    cout << "-> Strenghtening clause :" << cl;
     cout << " with lit: " << toRemoveLit << endl;
     #endif
 
-    Clause& cl = *solver->clAllocator->getPointer(offset);
     *toDecrease -= 5;
     cl.strengthen(toRemoveLit);
     runStats.litsRemStrengthen++;
@@ -2040,7 +2040,7 @@ void Simplifier::findStrengthened(
 )
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findStrengthened: " << ps << endl;
+    cout << "findStrengthened: " << cl << endl;
     #endif
 
     Var minVar = var_Undef;
@@ -2107,7 +2107,11 @@ void inline Simplifier::fillSubs(
 
             #ifdef VERBOSE_DEBUG
             if (litSub == lit_Undef) cout << "subsume0-d: ";
-            else cout << "subsume1-ed (lit: " << litSub << "): " << *clauses[it->index] << endl;
+            else cout << "subsume1-ed (lit: "
+                << litSub
+                << ") clause offset: "
+                << it->getOffset()
+                << endl;
             #endif
         }
     }
@@ -3019,7 +3023,8 @@ void Simplifier::orderVarsForElimInit()
         cout
         << "varElimOrder[" << i << "]: "
         << " var: " << varElimOrder[i]+1
-        << " val: " << varElimComplexity[varElimOrder[i]]
+        << " val: " << varElimComplexity[varElimOrder[i]].first
+        << " , " << varElimComplexity[varElimOrder[i]].second
         << endl;
     }
     #endif

@@ -816,7 +816,7 @@ template<class T> void Simplifier::findSubsumed0(
         if (subset(ps, cl2)) {
             out_subsumed.push_back(it->getOffset());
             #ifdef VERBOSE_DEBUG
-            cout << "subsumed: " << *clauses[it->index] << endl;
+            cout << "subsumed cl offset: " << it->getOffset() << endl;
             #endif
         }
     }

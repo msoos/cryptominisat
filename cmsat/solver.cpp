@@ -273,6 +273,12 @@ Clause* Solver::addClauseInt(
             return NULL;
 
         case 3:
+            /*cout << "Attached tri clause: "
+            << ps[0] << ", "
+            << ps[1] << ", "
+            << ps[2]
+            << endl;*/
+
             attachTriClause(ps[0], ps[1], ps[2], learnt);
             return NULL;
 
@@ -423,8 +429,31 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     for (uint32_t i = 0; i != ps.size(); i++) {
-        //Update to correct var
-        ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+        Lit origLit = ps[i];
+
+        //Update variable numbering
+        ps[i] = Lit(outerToInterMain[ps[i].var()], ps[i].sign());
+
+        #ifdef VERBOSE_DEBUG
+        cout
+        << "var-renumber updating lit "
+        << origLit
+        << " to lit "
+        << ps[i]
+        << endl;
+        #endif
+
+        //Update to correct lit
+        origLit = ps[i];
+        ps[i] = varReplacer->getLitReplacedWith(ps[i]);
+        #ifdef VERBOSE_DEBUG
+        cout
+        << "EqLit updating lit "
+        << origLit
+        << " to lit "
+        << ps[i]
+        << endl;
+        #endif
 
         //Uneliminate var if need be
         if (simplifier->getVarElimed()[ps[i].var()]) {
@@ -954,9 +983,9 @@ CleaningStats Solver::reduceDB()
 
     #ifdef VERBOSE_DEBUG
     cout << "Cleaning learnt clauses. Learnt clauses after sort: " << endl;
-    for (uint32_t i = 0; i != learnts.size(); i++) {
-        cout << "activity:" << learnts[i]->getGlue()
-        << " \tsize:" << learnts[i]->size() << endl;
+    for (uint32_t i = 0; i != longRedCls.size(); i++) {
+        const Clause* cl = clAllocator->getPointer(longRedCls[i]);
+        cout << *cl << endl;
     }
     #endif
 

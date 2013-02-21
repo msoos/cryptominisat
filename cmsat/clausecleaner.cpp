@@ -161,7 +161,7 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
     assert(solver->qhead == solver->trail.size());
 
     #ifdef VERBOSE_DEBUG
-    cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << endl;
+    cout << "Cleaning  clauses" << endl;
     #endif //VERBOSE_DEBUG
 
     vector<ClOffset>::iterator s, ss, end;

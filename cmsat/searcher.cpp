@@ -2097,10 +2097,6 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     }
     stats.furtherShrinkedSuccess += changedClause;
     cl.resize(cl.size() - (i-j));
-
-    #ifdef VERBOSE_DEBUG
-    cout << "c Removed further " << removedLits << " lits" << endl;
-    #endif
 }
 
 void Searcher::stampBasedLearntMinim(vector<Lit>& cl)
@@ -2257,7 +2253,7 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
             << it->getLit1() << " , " << it->getLit2()
-            << " , learnt: " << it->learnt() << endl;
+            << " , learnt: " << it->getLearnt() << endl;
             #endif
         }
     }

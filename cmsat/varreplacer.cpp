@@ -417,8 +417,6 @@ bool VarReplacer::replaceImplicit()
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
     cout << "c debug bin replacer start" << endl;
-    cout << "c removedLearnt: " << removedLearnt << endl;
-    cout << "c removedNonLearnt: " << removedNonLearnt << endl;
     cout << "c debug bin replacer end" << endl;
     #endif
 
