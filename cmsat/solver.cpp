@@ -666,7 +666,7 @@ void Solver::renumberVariables()
 
     //Update updater data
     updateArray(interToOuterMain, interToOuter);
-    updateArray(outerToInterMain, outerToInter);
+    updateVarsMap(outerToInterMain, outerToInter);
 
     //For debug
     /*printArray(outerToInter, "outerToInter");
