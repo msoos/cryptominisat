@@ -70,6 +70,8 @@ class Prober {
                 //Probe stats
                 , numFailed(0)
                 , numProbed(0)
+                , numLoopIters(0)
+                , numVarProbed(0)
                 , numVisited(0)
                 , zeroDepthAssigns(0)
 
@@ -100,6 +102,8 @@ class Prober {
                 //Probe stats
                 numFailed += other.numFailed;
                 numProbed += other.numProbed;
+                numLoopIters += other.numLoopIters;
+                numVarProbed += other.numVarProbed;
                 numVisited += other.numVisited;
                 zeroDepthAssigns += other.zeroDepthAssigns;
 
@@ -144,6 +148,12 @@ class Prober {
                     , numProbed
                     , (double)numProbed/cpu_time
                     , "probe/sec"
+                );
+
+                printStatsLine("c loop iters"
+                    , numLoopIters
+                    , (double)numVarProbed/(double)numLoopIters*100.0
+                    , "% var probed"
                 );
 
                 printStatsLine("c failed"
@@ -236,6 +246,8 @@ class Prober {
             //Probe stats
             uint64_t numFailed;
             uint64_t numProbed;
+            uint64_t numLoopIters;
+            uint64_t numVarProbed;
             uint64_t numVisited;
             uint64_t zeroDepthAssigns;
 

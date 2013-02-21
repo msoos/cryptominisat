@@ -141,34 +141,46 @@ bool Prober::probe()
     candidates.clear();
 
     //Calculate the set of possible variables for branching on randomly
-    vector<Var> possibleChoices;
+    vector<Var> possCh;
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
             && solver->decisionVar[i]
         ) {
-            possibleChoices.push_back(i);
+            possCh.push_back(i);
         }
     }
 
-    size_t atCandidates = 0;
+    //Random swap
+    for (size_t i = 0; i < possCh.size()-1; i++)
+    {
+        std::swap(
+            possCh[i]
+            , possCh[i+solver->mtrand.randInt(possCh.size()-1-i)]
+        );
+    }
+
+    //For fast black-listing, O(1)-time lookup
+    vector<size_t> lookup(possCh.size(), std::numeric_limits<size_t>::max());
+    for (size_t i = 0; i < possCh.size(); i++) {
+        lookup[possCh[i]] = i;
+    }
+
     const uint64_t origBogoProps = solver->propStats.bogoProps;
-    while (
-        !possibleChoices.empty()
-        && solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo
+    for(size_t i = 0
+        ; i < possCh.size()
+            && solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo
+        ; i++
     ) {
-        Lit lit;
+        runStats.numLoopIters++;
+        const Var var = possCh[i];
 
-        if (atCandidates < candidates.size()
-            && candidates[atCandidates].minOfPolarities > 100
-        ) {
-            lit = Lit(candidates[atCandidates].var, false);
-            atCandidates++;
-        } else {
-            const size_t at = solver->mtrand.randInt(possibleChoices.size()-1);
-            lit = Lit(possibleChoices[at], false);
-        }
+        //Check if already blacklisted
+        if (var == std::numeric_limits<Var>::max())
+            continue;
 
-        extraTime += 20;
+        Lit lit = Lit(var, false);
+
+        extraTime += 200;
 
         //Check if var is set already
         if (solver->value(lit.var()) != l_Undef
@@ -185,16 +197,19 @@ bool Prober::probe()
             if (solver->value(betterlit.var()) == l_Undef
                 && solver->decisionVar[betterlit.var()]
             ) {
+                //Update lit
                 lit = betterlit;
+
+                //Blacklist new lit
+                possCh[lookup[lit.var()]] = std::numeric_limits<Var>::max();
 
                 //Must not have visited it already, otherwise the stamp dominator would be incorrect
                 assert(!visitedAlready[lit.toInt()]);
             }
         }
 
-        //Don't always try positive first. Try random sign first
-        //bool random_inv = solver->mtrand.randInt(1);
-        //bool random_inv = false;
+        //Update stats
+        runStats.numVarProbed++;
 
         //Try it
         if (!tryThis(lit, true))
