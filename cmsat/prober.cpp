@@ -160,7 +160,7 @@ bool Prober::probe()
     }
 
     //For fast black-listing, O(1)-time lookup
-    vector<size_t> lookup(possCh.size(), std::numeric_limits<size_t>::max());
+    vector<size_t> lookup(solver->nVars(), std::numeric_limits<size_t>::max());
     for (size_t i = 0; i < possCh.size(); i++) {
         lookup[possCh[i]] = i;
     }
