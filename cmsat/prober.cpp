@@ -179,7 +179,6 @@ bool Prober::probe()
             continue;
         }
 
-
         //If this lit is reachable from somewhere else, then reach it from there
         if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
             const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
