@@ -52,7 +52,12 @@ class Main
         void parseInAllFiles();
 
         //Helper functions
-        void printResultFunc(const lbool ret);
+        void printResultFunc(
+            std::ostream* os
+            , const bool toFile
+            , const lbool ret
+            , const bool firstSolut
+        );
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
 
@@ -66,7 +71,6 @@ class Main
 
         //Multi-start solving
         uint32_t max_nr_of_solutions;
-        int doBanFoundSolution;
 
         //Files to read & write
         bool fileNamePresent;

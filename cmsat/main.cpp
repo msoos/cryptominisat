@@ -61,7 +61,6 @@ Main::Main(int _argc, char** _argv) :
         , debugNewVar (false)
         , printResult (true)
         , max_nr_of_solutions (1)
-        , doBanFoundSolution(true)
         , fileNamePresent (false)
         , argc(_argc)
         , argv(_argv)
@@ -188,24 +187,35 @@ void Main::parseInAllFiles()
     }
 }
 
-void Main::printResultFunc(const lbool ret)
-{
+void Main::printResultFunc(
+    std::ostream* os
+    , const bool toFile
+    , const lbool ret
+    , const bool firstSolution
+) {
     if (ret == l_True) {
-        if (!printResult) cout << "c SATISFIABLE" << endl;
-        else              cout << "s SATISFIABLE" << endl;
-    } else if (ret == l_False) {
-        if (!printResult) cout << "c UNSATISFIABLE" << endl;
-        else              cout << "s UNSATISFIABLE" << endl;
+        if(toFile) {
+            if(firstSolution)  *os << "SAT" << endl;
+        }
+        else if (!printResult) *os << "c SATISFIABLE" << endl;
+        else                   *os << "s SATISFIABLE" << endl;
+     } else if (ret == l_False) {
+        if(toFile) {
+            if(firstSolution)  *os << "UNSAT" << endl;
+        }
+        else if (!printResult) *os << "c UNSATISFIABLE" << endl;
+        else                   *os << "s UNSATISFIABLE" << endl;
     }
 
-    if(ret == l_True && printResult) {
-        std::ostringstream toPrint;
-        toPrint << "v ";
-        for (Var var = 0; var != solver->nVars(); var++)
+    if (ret == l_True && (printResult || toFile)) {
+
+        if(!toFile) *os << "v ";
+        for (Var var = 0; var != solver->nVars(); var++) {
             if (solver->model[var] != l_Undef)
-                toPrint << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
-            toPrint << "0" << endl;
-        cout << toPrint.str();
+                *os << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
+        }
+
+        *os << "0" << endl;
     }
 }
 
@@ -335,7 +345,7 @@ void Main::parseCommandLine()
 
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()
-    ("maxsolutions", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
+    ("maxsol", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
     ("dumplearnts", po::value<string>(&conf.learntsDumpFilename)
         , "If stopped dump learnt clauses here")
@@ -343,12 +353,12 @@ void Main::parseCommandLine()
         , "Maximum length of learnt clause dumped")
     ("dumpsimplified", po::value<string>()
         , "If stopped, dump simplified original problem here")
-    ("banfoundsol", po::value<int>(&doBanFoundSolution)->default_value(doBanFoundSolution)
-        , "Ban solutions found")
     ("debuglib", po::bool_switch(&debugLib)
         , "Solve at specific 'solve()' points in CNF file")
     ("debugnewvar", po::bool_switch(&debugNewVar)
         , "Add new vars at specific 'newVar()' points in 6CNF file")
+    ("dumpresult", po::value<std::string>(&conf.resultFilename)
+        , "Write result(s) to this file")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -569,11 +579,14 @@ void Main::parseCommandLine()
         exit(0);
     }
 
+    if (vm.count("dumpresult")) {
+        conf.needResultFile = true;
+    }
+
     if (vm.count("version")) {
         printVersionInfo();
         exit(0);
     }
-
 
     if (vm.count("polar")) {
         string mode = vm["polar"].as<string>();
@@ -693,8 +706,15 @@ void Main::parseCommandLine()
         throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
 
 
-    if (max_nr_of_solutions > 1)
-        throw WrongParam("maxsolutions",  "More than one solution is currently not supported. Sorry.");
+    //If the number of solutions requested is more than 1, we need to disable blocking
+    if (max_nr_of_solutions > 1) {
+        conf.doBlockClauses = false;
+        if (conf.verbosity >= 1) {
+            cout
+            << "c Blocking disabled because multiple solutions are needed"
+            << endl;
+        }
+    }
 
     if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
@@ -725,6 +745,22 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
 
+    std::ofstream resultfile;
+
+    //For dumping result into file
+    if (conf.needResultFile) {
+        resultfile.open(conf.resultFilename.c_str());
+        if (!resultfile) {
+            cout
+            << "ERROR: Couldn't open file '"
+            << conf.resultFilename
+            << "' for writing!"
+            << endl;
+            exit(-1);
+        }
+    }
+
+    //Print command line used to execute the solver: for options and inputs
     if (conf.verbosity >= 1) {
         printVersionInfo();
         cout
@@ -744,18 +780,24 @@ int Main::solve()
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            if (conf.verbosity >= 1) cout << "c Prepare for next run..." << endl;
-            printResultFunc(ret);
-
-            if (doBanFoundSolution) {
-                vector<Lit> lits;
-                for (Var var = 0; var != solver->nVars(); var++) {
-                    if (solver->model[var] != l_Undef) {
-                        lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
-                    }
-                }
-                solver->addClause(lits);
+            //Print result
+            printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+            if (conf.needResultFile) {
+                printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
             }
+
+            if (conf.verbosity >= 1)
+                cout << "c Prepare for next run..." << endl;
+
+            //Banning found solution
+            vector<Lit> lits;
+            for (Var var = 0; var < solver->nVars(); var++) {
+                if (solver->model[var] != l_Undef) {
+                    lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
+                }
+            }
+            bool ret = solver->addClause(lits);
+            cout << "RET: " << ret << endl;
         }
     }
 
@@ -769,7 +811,11 @@ int Main::solve()
     if (conf.verbosity >= 1)
         solver->printFullStats();
 
-    printResultFunc(ret);
+    //Final print of solution
+    printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+    if (conf.needResultFile) {
+        printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+    }
 
     return correctReturnValue(ret);
 }
