@@ -662,7 +662,7 @@ struct CleaningStats
         << "c [DBclean]"
         << " Pre-removed: "
         << preRemove.num
-        << " next by " << getNameOfCleanType(clauseCleaningType)
+        << " clean type will be " << getNameOfCleanType(clauseCleaningType)
         << endl;
 
         cout
