@@ -140,7 +140,10 @@ const vector<char> CalcDefPolars::calculate()
 
     //Print results
     if (solver->conf.verbosity >= 3) {
+        #ifdef USE_OPENMP
         #pragma omp critical
+        #endif
+
         cout << "c Calc default polars - "
         << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << " pos: " << std::setw(7) << posPolars
