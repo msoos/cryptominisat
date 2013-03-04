@@ -35,6 +35,7 @@
 #include <cmath>
 #include "xorfinder.h"
 #include <fcntl.h>
+#include "completedetachreattacher.h"
 using std::cout;
 using std::endl;
 
@@ -989,7 +990,11 @@ CleaningStats Solver::reduceDB()
     }
     #endif
 
-    //Remove normally
+    //Complete detach&reattach of OK clauses will be *much* faster
+    CompleteDetachReatacher detachReattach(this);
+    detachReattach.detachNonBinsNonTris();
+
+    //Remove clauses
     size_t i, j;
     for (i = j = 0
         ; i < longRedCls.size() && tmpStats.removed.num < removeNum
@@ -1003,10 +1008,7 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.incorporate(cl);
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
-        //Check
-
-        //detach & free
-        detachClause(*cl);
+        //free clause
         clAllocator->clauseFree(offset);
     }
 
@@ -1026,6 +1028,9 @@ CleaningStats Solver::reduceDB()
 
     //Resize learnt datastruct
     longRedCls.resize(longRedCls.size() - (i - j));
+
+    //Reattach what's left
+    detachReattach.reattachLongs();
 
     //Print results
     tmpStats.cpu_time = cpuTime() - myTime;
