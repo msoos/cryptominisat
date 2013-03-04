@@ -252,7 +252,7 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 
     if (ws.isTri()) {
         os << "Tri: "
-        << ws.lit1() << ", " << ws.lit1()
+        << ws.lit1() << ", " << ws.lit2()
         << " (learnt: " << ws.learnt() << " )";
     }
 
