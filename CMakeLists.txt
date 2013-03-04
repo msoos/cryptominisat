@@ -53,18 +53,19 @@ ENDIF (ZLIB_FOUND)
 
 # -----------------------------------------------------------------------------
 # Look for OpenMP (Multi-threading extension to C++)
+# Disabled --> not used
 # -----------------------------------------------------------------------------
-FIND_PACKAGE(OpenMP)
-IF (OPENMP_FOUND)
-    MESSAGE(STATUS "OK, Found OpenMP!")
-    #include_directories(${OpenMP_INCLUDE_DIR})
-    #link_directories(${OpenMP_LIB_DIR})
-    add_definitions( -DUSE_OPENMP )
-    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-ELSE (OPENMP_FOUND)
-    MESSAGE(STATUS "WARNING: Did not find OpenMP, multi-threading will be disabled")
-ENDIF (OPENMP_FOUND)
+# FIND_PACKAGE(OpenMP)
+# IF (OPENMP_FOUND)
+#     MESSAGE(STATUS "OK, Found OpenMP!")
+#     #include_directories(${OpenMP_INCLUDE_DIR})
+#     #link_directories(${OpenMP_LIB_DIR})
+#     add_definitions( -DUSE_OPENMP )
+#     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_C_FLAGS}")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+# ELSE (OPENMP_FOUND)
+#     MESSAGE(STATUS "WARNING: Did not find OpenMP, multi-threading will be disabled")
+# ENDIF (OPENMP_FOUND)
 
 
 # -----------------------------------------------------------------------------
@@ -72,11 +73,6 @@ ENDIF (OPENMP_FOUND)
 # -----------------------------------------------------------------------------
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-
-# -----------------------------------------------------------------------------
-# Look for Google Perftools
-# -----------------------------------------------------------------------------
-#find_package(Perftools)
 
 
 #MySQL
