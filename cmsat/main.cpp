@@ -797,7 +797,6 @@ int Main::solve()
                 }
             }
             bool ret = solver->addClause(lits);
-            cout << "RET: " << ret << endl;
         }
     }
 
