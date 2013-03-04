@@ -686,6 +686,9 @@ struct CleaningStats
 
         << " avgSize " << std::fixed << std::setprecision(2)
         << ((double)remain.lits/(double)remain.num)
+
+        << " T " << std::fixed << std::setprecision(2)
+        << cpu_time
         << endl;
     }
 
