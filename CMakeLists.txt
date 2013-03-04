@@ -88,7 +88,7 @@ if (STATSNEEDED)
            ERROR(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
     endif (MYSQL_FOUND)
 ELSE (STATSNEEDED)
-    MESSAGE("Not using MySQL because STATS_NEEDED is not set")
+    MESSAGE(STATUS "Not using MySQL because STATS_NEEDED is not set")
 ENDIF (STATSNEEDED)
 
 
