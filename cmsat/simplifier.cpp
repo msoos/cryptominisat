@@ -1151,6 +1151,7 @@ bool Simplifier::unEliminate(const Var var)
 
     //Uneliminate it in theory
     var_elimed[var] = false;
+    globalStats.numVarsElimed--;
     solver->varData[var].elimed = ELIMED_NONE;
     solver->setDecisionVar(var);
 
