@@ -345,7 +345,7 @@ public:
         uint64_t litsRemStrengthen;
 
         //Stats for var-elim
-        uint64_t numVarsElimed;
+        int64_t numVarsElimed;
         uint64_t clauses_elimed_long;
         uint64_t clauses_elimed_tri;
         uint64_t clauses_elimed_bin;

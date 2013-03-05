@@ -3106,7 +3106,7 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
 void Simplifier::checkElimedUnassignedAndStats() const
 {
     assert(solver->ok);
-    uint64_t checkNumElimed = 0;
+    int64_t checkNumElimed = 0;
     for (size_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
