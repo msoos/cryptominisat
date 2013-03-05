@@ -163,15 +163,18 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         cout << "c Adding blocked clause: " << cl << endl;
     }
 
-    vector<Lit> lits = cl.lits;
+    const vector<Lit>& lits = cl.lits;
     Lit blockedOn = cl.blockedOn;
 
+    //Add the clause to the database
     addClause(lits);
 
     //If satisfied, OK
     if (satisfiedNorm(lits))
         return;
 
+    //If there are still literals that can be adjusted
+    //then skip: we can always satisfy it later
     size_t numUndef = 0;
     for (size_t i = 0; i < lits.size(); i++) {
         if (value(lits[i]) == l_Undef)
@@ -188,6 +191,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
 
     assert(solver->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
     enqueue(blockedOn);
+
     //flip forward equiv
     if (solver->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
         blockedOn = solver->varReplacer->getLitReplacedWith(blockedOn);
@@ -195,6 +199,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         //Have to flip it
         enqueue(Lit(blockedOn.var(), value(blockedOn.var()) == l_True));
     }
+
     //flip backward equiv
     map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(blockedOn.var());
     if (revTable != solver->varReplacer->getReverseTable().end()) {
