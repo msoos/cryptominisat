@@ -2006,7 +2006,7 @@ void Simplifier::cleanBlockedClauses()
                 var_elimed[var] = false;
                 solver->varData[var].elimed = ELIMED_NONE;
                 solver->setDecisionVar(var);
-                runStats.numVarsElimed--;
+                globalStats.numVarsElimed--;
             }
             blockedMapBuilt = false;
         } else {
