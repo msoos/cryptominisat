@@ -1190,7 +1190,7 @@ lbool Solver::simplifyProblem()
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
     ) {
-        l_Undef;
+        return l_Undef;
     }
 
     //Don't replace first -- the stamps won't work so well
