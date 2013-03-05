@@ -60,6 +60,9 @@ void SolutionExtender::extend()
     //Sanity check
     solver->simplifier->checkElimedUnassignedAndStats();
 
+    //Temporary
+    vector<Lit> tmp;
+
     for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
         ; it != end
@@ -69,7 +72,7 @@ void SolutionExtender::extend()
         assert(!cl.learnt());
 
         //Add clause to our local system
-        vector<Lit> tmp;
+        tmp.clear();
         for (uint32_t i = 0; i < cl.size(); i++)
             tmp.push_back(cl[i]);
         const bool OK = addClause(tmp);
@@ -85,10 +88,21 @@ void SolutionExtender::extend()
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+            //Binary clauses
             if (it2->isBinary() && !it2->learnt()) {
-                vector<Lit> tmp;
+                tmp.clear();
                 tmp.push_back(lit);
                 tmp.push_back(it2->lit1());
+                const bool OK = addClause(tmp);
+                assert(OK);
+            }
+
+            //Tertiary clauses
+            if (it2->isTri() && !it2->learnt()) {
+                tmp.clear();
+                tmp.push_back(lit);
+                tmp.push_back(it2->lit1());
+                tmp.push_back(it2->lit2());
                 const bool OK = addClause(tmp);
                 assert(OK);
             }
