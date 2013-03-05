@@ -786,8 +786,13 @@ int Main::solve()
                 printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
             }
 
-            if (conf.verbosity >= 1)
-                cout << "c Prepare for next run..." << endl;
+            if (conf.verbosity >= 1) {
+                cout
+                << "c Number of solutions found until now: "
+                << std::setw(6) << current_nr_of_solutions
+                << " --- preparing for next run..."
+                << endl;
+            }
 
             //Banning found solution
             vector<Lit> lits;
