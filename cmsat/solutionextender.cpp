@@ -132,8 +132,15 @@ void SolutionExtender::extend()
 
 bool SolutionExtender::satisfiedNorm(const vector<Lit>& lits) const
 {
-    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)
-        if (value(*it) == l_True) return true;
+    for (vector<Lit>::const_iterator
+        it = lits.begin(), end = lits.end()
+        ; it != end
+        ; it++
+    ) {
+        if (value(*it) == l_True)
+            return true;
+    }
+
     return false;
 }
 
@@ -160,24 +167,32 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     Lit blockedOn = cl.blockedOn;
 
     addClause(lits);
-    if (satisfiedNorm(lits)) return;
 
-    uint32_t numUndef = 0;
-    for (uint32_t i = 0; i < lits.size(); i++) {
-        if (value(lits[i]) == l_Undef) numUndef++;
+    //If satisfied, OK
+    if (satisfiedNorm(lits))
+        return;
+
+    size_t numUndef = 0;
+    for (size_t i = 0; i < lits.size(); i++) {
+        if (value(lits[i]) == l_Undef)
+            numUndef++;
     }
-    if (numUndef != 0) return;
+    if (numUndef != 0)
+        return;
 
-    //Nothing is UNDEF and it's not satisfied!
+    //Everything is l_False!
     assert(value(blockedOn) == l_False);
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout << "c recursively flipping to " << blockedOn << endl;
     #endif
+
     assert(solver->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
     enqueue(blockedOn);
     //flip forward equiv
     if (solver->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
         blockedOn = solver->varReplacer->getLitReplacedWith(blockedOn);
+
+        //Have to flip it
         enqueue(Lit(blockedOn.var(), value(blockedOn.var()) == l_True));
     }
     //flip backward equiv
@@ -185,6 +200,8 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     if (revTable != solver->varReplacer->getReverseTable().end()) {
         const vector<Var>& toGoThrough = revTable->second;
         for (uint32_t i = 0; i < toGoThrough.size(); i++) {
+
+            //Have to flip it
             enqueue(Lit(toGoThrough[i], value(toGoThrough[i]) == l_True));
         }
     }
