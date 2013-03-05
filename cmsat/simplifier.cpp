@@ -3113,7 +3113,15 @@ void Simplifier::checkElimedUnassignedAndStats() const
             assert(solver->assigns[i] == l_Undef);
         }
     }
-    assert(globalStats.numVarsElimed == checkNumElimed);
+    if (globalStats.numVarsElimed != checkNumElimed) {
+        cout
+        << "ERROR: globalStats.numVarsElimed is "<<
+        globalStats.numVarsElimed
+        << " but checkNumElimed is: " << checkNumElimed
+        << endl;
+
+        assert(false);
+    }
 }
 
 /*const GateFinder* Simplifier::getGateFinder() const
