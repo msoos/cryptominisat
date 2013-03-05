@@ -826,7 +826,10 @@ int Main::correctReturnValue(const lbool ret) const
     else if (ret == l_False) retval = 20;
     else if (ret == l_Undef) retval = 15;
     else {
-        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
+        cerr
+        << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True"
+        << endl;
+
         exit(-1);
     }
 
@@ -843,7 +846,9 @@ int main(int argc, char** argv)
 
     try {
         main.parseCommandLine();
-    } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::unknown_option> >& c) {
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::unknown_option> >& c
+    ) {
         cout
         << "ERROR! Some option you gave was wrong. Please give '--help' to get help"
         << endl;
@@ -861,10 +866,14 @@ int main(int argc, char** argv)
         << endl;
 
         exit(-1);
-    } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::invalid_option_value> > what) {
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
+    ) {
         std::cerr << "ERROR! " << what.what() << endl;
         exit(-1);
-    } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::multiple_occurrences> >& c) {
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::multiple_occurrences> >& c
+    ) {
         std::cerr << "ERROR! Multiple occurrences of option: " << c.get_option_name() << endl;
         exit(-1);
     } catch (WrongParam& w) {
