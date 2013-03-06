@@ -207,8 +207,11 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         return;
     }
 
-    //Everything is l_False!
+    //Must be l_False, and must NOT be set at level 0
     assert(value(blockedOn) == l_False);
+    assert(solver->varData[blockedOn.var()].level != 0);
+
+    //Everything is l_False!
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout << "c recursively flipping to " << blockedOn << endl;
     #endif
@@ -270,7 +273,9 @@ bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     cout << "c Adding extend clause: " << lits << endl;
     #endif
 
-    if (lits.size() == 0) return false;
+    //Empty clause, oops!
+    if (lits.size() == 0)
+        return false;
 
     MyClause* cl = new MyClause(lits);
     clauses.push_back(cl);
@@ -280,7 +285,11 @@ bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     }
 
     const bool OK = propagateCl(*cl);
-    if (!OK || !propagate()) return false;
+    //If problem with propagating this one clause
+    //or problem with propagating what it propagates, return false
+    if (!OK || !propagate())
+        return false;
+
     return true;
 }
 
@@ -313,16 +322,24 @@ bool SolutionExtender::propagateCl(MyClause& cl)
 
         assert(value(*it) == l_Undef);
         numUndef++;
-        if (numUndef > 1) break;
+
+        //Doesn't propagate anything
+        if (numUndef > 1)
+            break;
+
         lastUndef = *it;
     }
+
+    //Must set this one value
     if (numUndef == 1) {
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
         cout << "c Due to cl " << cl.getLits() << " propagate enqueueing " << lastUndef << endl;
         #endif
         enqueue(lastUndef);
     }
-    if (numUndef >= 1) return true;
+
+    if (numUndef >= 1)
+        return true;
 
     assert(numUndef == 0);
     return false;
