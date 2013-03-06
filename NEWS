@@ -1,5 +1,7 @@
 ver 2.9.7
 * Adding missing function definitions
+* Converting all 3-long XORs into 4-long XORs before dumping simplified
+  problem
 
 ver 2.9.6
 * Better handling of memory
