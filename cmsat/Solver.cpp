@@ -3189,3 +3189,25 @@ void Solver::cleanCachePart(const Lit vertLit)
     }
     seen_vec.clear();
 }
+
+const vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
+{
+    vector<pair<Lit, Lit> > ret;
+
+    const vector<Lit>& table = varReplacer->getReplaceTable();
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        ret.push_back(std::make_pair(Lit(var, false), lit));
+    }
+
+    return ret;
+}
+
+void Solver::resetPolaritiesToRand()
+{
+    for(vector<char>::iterator it = polarity.begin(), end = polarity.end(); it != end; it++)
+        *it = mtrand.randInt(1);
+}
