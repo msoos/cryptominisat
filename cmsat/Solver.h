@@ -189,6 +189,7 @@ public:
     bool dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file; returns true for success, false for failure
     bool needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     vector<RetClause> dumpOrigClauses() const;
+    void addAllXorAsNorm();
     bool dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
     const vector<std::pair<Lit, Lit> > get_all_binary_xors() const;

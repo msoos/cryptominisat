@@ -336,7 +336,7 @@ void XorFinder::addAllXorAsNorm()
         }
         added++;
         if ((*i)->size() == 3) addXorAsNormal3(**i);
-        //if ((*i)->size() == 4) addXorAsNormal4(**i);
+        if ((*i)->size() == 4) addXorAsNormal4(**i);
         solver.removeClause(**i);
     }
     solver.xorclauses.shrink(i-j);
@@ -402,7 +402,7 @@ void XorFinder::addXorAsNormal4(XorClause& c)
     Clause *tmp;
     vec<Var> vars;
     vec<Lit> vars2(c.size());
-    const bool inverted = !c.xorEqualFalse();
+    const bool inverted = c.xorEqualFalse();
 
     for (uint32_t i = 0; i < c.size(); i++) {
         vars.push(c[i].var());
@@ -411,48 +411,48 @@ void XorFinder::addXorAsNormal4(XorClause& c)
     vars2[0] = Lit(vars[0], false ^ inverted);
     vars2[1] = Lit(vars[1], false ^ inverted);
     vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2);
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
     vars2[3] = Lit(vars[3], false ^ inverted);
-    tmp = solver.addClauseInt(vars2);
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], false ^ inverted);
-    tmp = solver.addClauseInt(vars2);
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2);
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2);
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
 
     vars2[0] = Lit(vars[0], true ^ inverted);
     vars2[1] = Lit(vars[1], true ^ inverted);
     vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2);
+    if (tmp) solver.clauses.push(tmp);
+
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2);
+    if (tmp) solver.clauses.push(tmp);
+
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2);
+    if (tmp) solver.clauses.push(tmp);
+
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2);
+    if (tmp) solver.clauses.push(tmp);
+
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2);
+    if (tmp) solver.clauses.push(tmp);
+
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
     vars2[3] = Lit(vars[3], true ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
@@ -460,7 +460,7 @@ void XorFinder::addXorAsNormal4(XorClause& c)
     vars2[0] = Lit(vars[0], true ^ inverted);
     vars2[1] = Lit(vars[1], true ^ inverted);
     vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
 }

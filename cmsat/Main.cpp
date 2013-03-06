@@ -757,6 +757,9 @@ int Main::singleThreadSolve()
         }
     }
     if (conf.needToDumpOrig) {
+        if (ret != l_False) {
+            solver.addAllXorAsNorm();
+        }
         if (ret == l_False && conf.origFilename == "stdout") {
             std::cout << "p cnf 0 1" << std::endl;
             std::cout << "0";

@@ -3211,3 +3211,10 @@ void Solver::resetPolaritiesToRand()
     for(vector<char>::iterator it = polarity.begin(), end = polarity.end(); it != end; it++)
         *it = mtrand.randInt(1);
 }
+
+void Solver::addAllXorAsNorm()
+{
+    assert(ok);
+    XorFinder xorFinder(*this, clauses);
+    xorFinder.addAllXorAsNorm();
+}
