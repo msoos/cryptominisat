@@ -358,7 +358,10 @@ bool SolutionExtender::propagateCl(MyClause& cl)
 Lit SolutionExtender::pickBranchLit()
 {
     for (Var var = 0; var < nVars(); var++) {
-        if (value(var) == l_Undef) {
+        if (value(var) == l_Undef
+            //Don't pick replaced variables
+            && solver->varData[var].elimed != ELIMED_VARREPLACER
+        ) {
             Lit toEnqueue = Lit(var, false);
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "c Picking lit for reconstruction: " << toEnqueue << endl;
