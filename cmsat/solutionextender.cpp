@@ -181,11 +181,16 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     Lit blockedOn = cl.blockedOn;
 
     //Add the clause to the database
+    //Return value is not *so* important, because addClause() doesn't
+    //distinguish between all-zero-level-l_False and other stuff
+    //so we just add it, potentially propagate, and then we flip if need be
     addClause(lits);
 
     //If satisfied, OK
     if (satisfiedNorm(lits))
         return;
+
+    //Not satisfied, so either more than 1 l_Undef or all l_False inside
 
     //If there are still literals that can be adjusted
     //then skip: we can always satisfy it later
