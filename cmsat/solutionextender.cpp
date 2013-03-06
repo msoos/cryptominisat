@@ -199,8 +199,13 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         if (value(lits[i]) == l_Undef)
             numUndef++;
     }
-    if (numUndef != 0)
+    if (numUndef != 0) {
+        //Must be more than 1
+        //otherwise propagation during addClause() would have set&propagated it
+        assert(numUndef > 1);
+
         return;
+    }
 
     //Everything is l_False!
     assert(value(blockedOn) == l_False);
