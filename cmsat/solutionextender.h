@@ -80,6 +80,8 @@ class SolutionExtender
         void extend();
         bool addClause(const vector<Lit>& lits);
         void addBlockedClause(const BlockedClause& cl);
+        void replaceSet(Lit toSet);
+        void replaceBackwardSet(const Lit toSet);
         void enqueue(const Lit lit);
 
         lbool value(const Lit lit) const

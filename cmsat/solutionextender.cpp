@@ -218,28 +218,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
 
     assert(solver->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
     enqueue(blockedOn);
-
-    //flip forward equiv
-    if (solver->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
-        blockedOn = solver->varReplacer->getLitReplacedWith(blockedOn);
-
-        //Have to flip it
-        enqueue(Lit(blockedOn.var(), value(blockedOn.var()) == l_True));
-    }
-
-    //flip backward equiv
-    map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(blockedOn.var());
-    if (revTable != solver->varReplacer->getReverseTable().end()) {
-        const vector<Var>& toGoThrough = revTable->second;
-        for (uint32_t i = 0; i < toGoThrough.size(); i++) {
-
-            //Have to flip it
-            enqueue(Lit(toGoThrough[i], value(toGoThrough[i]) == l_True));
-        }
-    }
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c recursive flip(s) done." << endl;
-    #endif
+    replaceSet(blockedOn);
 
     //Propagate&check, see what happens
     bool OK = propagate();
@@ -248,6 +227,37 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         << "Error! Propagation leads to failure after flipping of value"
         << endl;
         assert(false);
+    }
+}
+
+void SolutionExtender::replaceSet(Lit toSet)
+{
+    //set forward equivalent
+    if (solver->varReplacer->isReplaced(toSet)) {
+        toSet = solver->varReplacer->getLitReplacedWith(toSet);
+        enqueue(toSet);
+    }
+    replaceBackwardSet(toSet);
+
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout << "c recursive set(s) done." << endl;
+    #endif
+}
+
+void SolutionExtender::replaceBackwardSet(const Lit toSet)
+{
+    //set backward equiv
+    map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(toSet.var());
+    if (revTable != solver->varReplacer->getReverseTable().end()) {
+        const vector<Var>& toGoThrough = revTable->second;
+        for (size_t i = 0; i < toGoThrough.size(); i++) {
+            //Get sign of replacement
+            const Lit lit = Lit(toGoThrough[i], false);
+            Lit tmp = solver->varReplacer->getLitReplacedWith(lit);
+
+            //Set var
+            enqueue(lit ^ tmp.sign() ^ toSet.sign());
+        }
     }
 }
 

@@ -71,6 +71,8 @@ class VarReplacer
         const vector<Lit>& getReplaceTable() const;
         const Lit getLitReplacedWith(Lit lit) const;
         const map<Var, vector<Var> >&getReverseTable() const;
+        bool isReplaced(const Var var) const;
+        bool isReplaced(const Lit lit) const;
         bool replacingVar(const Var var) const;
         void newVar();
         bool addLaterAddBinXor();
@@ -260,6 +262,16 @@ inline const map<Var, vector<Var> >& VarReplacer::getReverseTable() const
 inline const VarReplacer::Stats& VarReplacer::getStats() const
 {
     return globalStats;
+}
+
+inline bool VarReplacer::isReplaced(const Var var) const
+{
+    return getReplaceTable()[var].var() != var;
+}
+
+inline bool VarReplacer::isReplaced(const Lit lit) const
+{
+    return isReplaced(lit.var());
 }
 
 #endif //VARREPLACER_H
