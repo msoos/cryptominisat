@@ -790,7 +790,6 @@ int Main::solve()
                 cout
                 << "c Number of solutions found until now: "
                 << std::setw(6) << current_nr_of_solutions
-                << " --- preparing for next run..."
                 << endl;
             }
 
