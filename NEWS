@@ -1,3 +1,6 @@
+ver 2.9.7
+* Adding missing function definitions
+
 ver 2.9.6
 * Better handling of memory
 * Returning a vector of clauses with dumpOrigClauses()
