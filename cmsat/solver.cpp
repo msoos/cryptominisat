@@ -1743,11 +1743,12 @@ void Solver::printFullStats() const
 }
 
 void Solver::dumpBinClauses(
-    const bool alsoLearnt
-    , const bool alsoNonLearnt
+    const bool dumpLearnt
+    , const bool dumpNonLearnt
     , std::ostream* outfile
 ) const {
-    uint32_t wsLit = 0;
+    //Go trough each watchlist
+    size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
@@ -1755,11 +1756,18 @@ void Solver::dumpBinClauses(
     ) {
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+
+        //Each element in the watchlist
+        for (vec<Watched>::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            //Only dump binaries
             if (it2->isBinary() && lit < it2->lit1()) {
                 bool toDump = false;
-                if (it2->learnt() && alsoLearnt) toDump = true;
-                if (!it2->learnt() && alsoNonLearnt) toDump = true;
+                if (it2->learnt() && dumpLearnt) toDump = true;
+                if (!it2->learnt() && dumpNonLearnt) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();

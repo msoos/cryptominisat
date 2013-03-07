@@ -140,8 +140,8 @@ class Solver : public Searcher
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
-            const bool alsoLearnt
-            , const bool alsoNonLearnt
+            const bool dumpLearnt
+            , const bool dumpNonLearnt
             , std::ostream* outfile
         ) const;
 
