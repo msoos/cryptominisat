@@ -2694,6 +2694,16 @@ size_t Solver::getNumVarsReplaced() const
 
 void Solver::dumpIfNeeded() const
 {
+    if (!conf.needToDumpLearnts
+        && !conf.needToDumpSimplified
+    ) {
+        //Nothing to do, return
+        return;
+    }
+
+    //Don't dump implicit clauses multiple times
+    solver->clauseVivifier->subsumeImplicit();
+
     if (conf.needToDumpLearnts) {
         std::ofstream outfile;
         outfile.open(conf.learntsDumpFilename.c_str());
