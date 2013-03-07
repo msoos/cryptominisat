@@ -138,7 +138,7 @@ class Solver : public Searcher
         template<class T>
         string clauseBackNumbered(const T& cl) const;
         void dumpUnitaryClauses(std::ostream* os) const;
-        void dump2LongXorClauses(std::ostream* os) const;
+        void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
             const bool alsoLearnt
             , const bool alsoNonLearnt

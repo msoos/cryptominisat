@@ -1880,7 +1880,7 @@ void Solver::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void Solver::dump2LongXorClauses(std::ostream* os) const
+void Solver::dumpEquivalentLits(std::ostream* os) const
 {
     *os
     << "c " << endl
@@ -1958,7 +1958,7 @@ void Solver::dumpRedClauses(
     }
 
     if (maxSize >= 2) {
-        dump2LongXorClauses(os);
+        dumpEquivalentLits(os);
     }
 
     *os
@@ -2022,7 +2022,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
 
     dumpUnitaryClauses(os);
 
-    dump2LongXorClauses(os);
+    dumpEquivalentLits(os);
 
     *os
     << "c " << endl
