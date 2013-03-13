@@ -424,7 +424,11 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         cout << "Too long clause!" << endl;
         exit(-1);
     }
-    for (vector<Lit>::const_iterator it = ps.begin(), end = ps.end(); it != end; it++) {
+    for (vector<Lit>::const_iterator
+        it = ps.begin(), end = ps.end()
+        ; it != end
+        ; it++
+    ) {
         assert(it->var() < nVars()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
