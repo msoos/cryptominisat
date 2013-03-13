@@ -55,25 +55,25 @@ inline std::string restart_type_to_string(const RestartType type)
 {
     switch(type) {
         case glue_restart:
-            return "glue";
+            return "glue-based";
 
         case glue_agility_restart:
-            return "glue_agility";
+            return "glue&agility based";
 
         case geom_restart:
-            return "geom";
+            return "geometric";
 
         case  agility_restart:
-            return "agility";
+            return "agility-based";
 
         case branch_depth_delta_restart:
-            return "branch_depth_delta";
+            return "based on branch depth delta";
 
         case no_restart:
             return "never restart";
 
         case auto_restart:
-            return "auto";
+            return "automatic";
     }
 
     assert(false && "oops, one of the restart types has no string name");
