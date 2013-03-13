@@ -486,12 +486,7 @@ inline void Solver::setDecisionVar(const uint32_t var)
     if (!decisionVar[var]) {
         numDecisionVars++;
         decisionVar[var] = true;
-
-        //Add to order_heap
-        //No need to do this -> Searcher is never launched when it's called
-        /*assert(!order_heap.inHeap(var));
-        order_heap.insert(var);
-        */
+        insertVarOrder(var);
     }
 }
 
