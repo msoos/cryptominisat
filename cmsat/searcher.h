@@ -242,6 +242,10 @@ class Searcher : public PropEngine
 
         ///////////////////////////////
         // Stats
+        //Restart print status
+        uint64_t lastRestartPrint;
+        uint64_t lastRestartPrintHeader;
+        void     check_if_print_restart_stat();
         void     printRestartHeader() const;
         void     printRestartStats() const;
         void     printBaseStats() const;
