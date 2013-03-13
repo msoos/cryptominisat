@@ -245,7 +245,7 @@ class Searcher : public PropEngine
         //Restart print status
         uint64_t lastRestartPrint;
         uint64_t lastRestartPrintHeader;
-        void     check_if_print_restart_stat();
+        void     check_if_print_restart_stat(const lbool status);
         void     printRestartHeader() const;
         void     printRestartStats() const;
         void     printBaseStats() const;

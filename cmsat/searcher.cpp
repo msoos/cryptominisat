@@ -1676,10 +1676,11 @@ RestartType Searcher::decide_restart_type() const
     return rest_type;
 }
 
-void Searcher::check_if_print_restart_stat()
+void Searcher::check_if_print_restart_stat(const lbool status)
 {
     //Print restart stat
     if (conf.verbosity >= 1
+        && status == l_Undef
         && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
             || conf.printAllRestarts)
     ) {
@@ -1714,37 +1715,39 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
     //Current solving status
     lbool status = l_Undef;
+    RestartType rest_type;
 
     //Burst seach
     status = burstSearch();
-
-    //Restore polarities and activities
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        varData[i].polarity = solver->getSavedPolarity(i);
-        activities[i] = solver->getSavedActivity(i);
-    }
-    var_inc = solver->getSavedActivityInc();
-
-    //Restore order_heap
-    order_heap.clear();
-    for(size_t var = 0; var < nVars(); var++) {
-        if (solver->decisionVar[var]
-            && value(var) == l_Undef
-        ) {
-            insertVarOrder(var);
+    if (status == l_Undef) {
+        //Restore polarities and activities
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            varData[i].polarity = solver->getSavedPolarity(i);
+            activities[i] = solver->getSavedActivity(i);
         }
-    }
-    assert(order_heap.heapProperty());
+        var_inc = solver->getSavedActivityInc();
 
-    //Set up data for search
-    const RestartType rest_type = decide_restart_type();
-    genRandomVarActMultDiv();
+        //Restore order_heap
+        order_heap.clear();
+        for(size_t var = 0; var < nVars(); var++) {
+            if (solver->decisionVar[var]
+                && value(var) == l_Undef
+            ) {
+                insertVarOrder(var);
+            }
+        }
+        assert(order_heap.heapProperty());
 
-    //Set up restart printing status
-    lastRestartPrint = stats.conflStats.numConflicts;
-    lastRestartPrintHeader = stats.conflStats.numConflicts;
-    if (solver->conf.verbosity >= 1) {
-        printRestartStats();
+        //Set up data for search
+        rest_type = decide_restart_type();
+        genRandomVarActMultDiv();
+
+        //Set up restart printing status
+        lastRestartPrint = stats.conflStats.numConflicts;
+        lastRestartPrintHeader = stats.conflStats.numConflicts;
+        if (solver->conf.verbosity >= 1) {
+            printRestartStats();
+        }
     }
 
     //Search loop final setup
@@ -1775,7 +1778,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
             , &geom_max
         );
         geom_max *= conf.restart_inc;
-        check_if_print_restart_stat();
+        check_if_print_restart_stat(status);
 
         if (status != l_Undef) {
             if (conf.verbosity >= 6) {
