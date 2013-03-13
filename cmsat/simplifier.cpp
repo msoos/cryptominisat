@@ -1150,7 +1150,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort();
+            runStats.printShort(solver->conf.doVarElim);
     }
 
     numCalls++;

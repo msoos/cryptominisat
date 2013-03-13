@@ -198,39 +198,41 @@ public:
             << endl;
         }
 
-        void printShort() const
+        void printShort(const bool print_var_elim = true) const
         {
             printShortSubStr();
 
-            //ELIM
-            cout
-            << "c [v-elim]"
-            << " elimed: " << numVarsElimed
-            << " / " << origNumMaxElimVars
-            << " / " << origNumFreeVars
-            //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
-            << " T: " << std::fixed << std::setprecision(2)
-            << varElimTime << " s"
-            << endl;
+            //About elimination
+            if (print_var_elim) {
+                cout
+                << "c [v-elim]"
+                << " elimed: " << numVarsElimed
+                << " / " << origNumMaxElimVars
+                << " / " << origNumFreeVars
+                //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
+                << " T: " << std::fixed << std::setprecision(2)
+                << varElimTime << " s"
+                << endl;
 
-            cout
-            << "c [v-elim]"
-            << " cl-new: " << newClauses
-            << " tried: " << triedToElimVars
-            << " tested: " << testedToElimVars
-            << " ("
-            << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
-            << " % agressive)"
-            << endl;
+                cout
+                << "c [v-elim]"
+                << " cl-new: " << newClauses
+                << " tried: " << triedToElimVars
+                << " tested: " << testedToElimVars
+                << " ("
+                << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
+                << " % agressive)"
+                << endl;
 
-            cout
-            << "c [v-elim]"
-            << " subs: "  << subsumedByVE
-            << " learnt-bin rem: " << binLearntClRemThroughElim
-            << " learnt-tri rem: " << triLearntClRemThroughElim
-            << " learnt-long rem: " << longLearntClRemThroughElim
-            << " v-fix: " << std::setw(4) << zeroDepthAssings
-            << endl;
+                cout
+                << "c [v-elim]"
+                << " subs: "  << subsumedByVE
+                << " learnt-bin rem: " << binLearntClRemThroughElim
+                << " learnt-tri rem: " << triLearntClRemThroughElim
+                << " learnt-long rem: " << longLearntClRemThroughElim
+                << " v-fix: " << std::setw(4) << zeroDepthAssings
+                << endl;
+            }
 
             cout
             << "c [simp] link-in T: " << linkInTime
