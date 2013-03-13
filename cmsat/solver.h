@@ -123,6 +123,7 @@ class Solver : public Searcher
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
         void dumpIfNeeded() const;
+        void print_elimed_vars() const;
 
 
         ///Return number of variables waiting to be replaced
@@ -609,6 +610,5 @@ inline string Solver::clauseBackNumbered(const T& cl) const
 
     return ss.str();
 }
-
 
 #endif //THREADCONTROL_H

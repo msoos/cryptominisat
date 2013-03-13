@@ -129,9 +129,32 @@ void Simplifier::updateVars(
     }
 }
 
+void Simplifier::print_blocked_clauses_reverse() const
+{
+    for(vector<BlockedClause>::const_reverse_iterator
+        it = blockedClauses.rbegin(), end = blockedClauses.rend()
+        ; it != end
+        ; it++
+    ) {
+        cout
+        << "blocked clause " << it->lits
+        << " blocked on var " << it->blockedOn.var()+1
+        << endl;
+    }
+}
+
 void Simplifier::extendModel(SolutionExtender* extender)
 {
+    //Either a variable is not eliminated, or its value is false
+    for(size_t i = 0; i < var_elimed.size(); i++) {
+        assert(var_elimed[i] == false || solver->value(i) == l_Undef);
+    }
+
     cleanBlockedClauses();
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout << "Number of blocked clauses:" << blockedClauses.size() << endl;
+    print_blocked_clauses_reverse();
+    #endif
 
     //go through in reverse order
     for (vector<BlockedClause>::const_reverse_iterator
@@ -1168,9 +1191,13 @@ bool Simplifier::unEliminate(const Var var)
 
         //Mark for removal from blocked list
         blockedClauses[at].toRemove = true;
+        assert(blockedClauses[at].blockedOn.var() == var);
 
         //Re-insert into Solver
         const vector<Lit>& cl = blockedClauses[at].lits;
+        #ifdef VERBOSE_DEBUG_RECONSTRUCT
+        cout << "Uneliminating " << cl << " on var " << var+1 << endl;
+        #endif
         bool ret = solver->addClause(cl);
         if (!ret)
             return false;
@@ -1991,6 +2018,7 @@ from elimedOutVar[].
 */
 void Simplifier::cleanBlockedClauses()
 {
+    assert(solver->decisionLevel() == 0);
     vector<BlockedClause>::iterator i = blockedClauses.begin();
     vector<BlockedClause>::iterator j = blockedClauses.begin();
     size_t at = 0;
@@ -2000,17 +2028,8 @@ void Simplifier::cleanBlockedClauses()
         ; i != end
         ; i++, at++
     ) {
-        if (solver->value(i->blockedOn) != l_Undef
-            || blockedClauses[at].toRemove
-        ) {
-            const Var var = i->blockedOn.var();
-            if (solver->varData[var].elimed == ELIMED_VARELIM) {
-                assert(var_elimed[var]);
-                var_elimed[var] = false;
-                solver->varData[var].elimed = ELIMED_NONE;
-                solver->setDecisionVar(var);
-                globalStats.numVarsElimed--;
-            }
+        assert(var_elimed[i->blockedOn.var()] == false || solver->value(i->blockedOn) == l_Undef);
+        if (blockedClauses[at].toRemove) {
             blockedMapBuilt = false;
         } else {
             *j++ = *i;
@@ -2129,6 +2148,7 @@ void Simplifier::removeClausesHelper(
 
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
+        vector<Lit> lits;
 
         #ifdef VERBOSE_DEBUG_VARELIM
         cout << "Removing clause due to var-elim on " << lit << " : ";
@@ -2144,14 +2164,13 @@ void Simplifier::removeClausesHelper(
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
 
-                vector<Lit> lits(cl.size());
+                lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
             //Remove
             unlinkClause(offset);
-            continue;
         }
 
         if (watch.isBinary()) {
@@ -2166,7 +2185,7 @@ void Simplifier::removeClausesHelper(
 
             //Put clause into blocked status
             if (!watch.learnt()) {
-                vector<Lit> lits(2);
+                lits.resize(2);
                 lits[0] = lit;
                 lits[1] = watch.lit1();
                 blockedClauses.push_back(BlockedClause(lit, lits));
@@ -2179,7 +2198,6 @@ void Simplifier::removeClausesHelper(
             *toDecrease -= solver->watches[lit.toInt()].size();
             *toDecrease -= solver->watches[watch.lit1().toInt()].size();
             solver->detachBinClause(lit, watch.lit1(), watch.learnt());
-            continue;
         }
 
         if (watch.isTri()) {
@@ -2194,11 +2212,10 @@ void Simplifier::removeClausesHelper(
 
             //Put clause into blocked status
             if (!watch.learnt()) {
-                vector<Lit> lits(3);
+                lits.resize(3);
                 lits[0] = lit;
                 lits[1] = watch.lit1();
                 lits[2] = watch.lit2();
-
                 blockedClauses.push_back(BlockedClause(lit, lits));
 
                 //Touch removed lits
@@ -2211,9 +2228,16 @@ void Simplifier::removeClausesHelper(
             *toDecrease -= solver->watches[watch.lit1().toInt()].size();
             *toDecrease -= solver->watches[watch.lit2().toInt()].size();
             solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
-
-            continue;
         }
+
+        #ifdef VERBOSE_DEBUG_RECONSTRUCT
+        if (!lits.empt()) {
+            cout
+            << "Eliminated clause " << lits
+            << " on var " << lit.var()+1
+            << endl;
+        }
+        #endif
     }
 }
 
@@ -3124,6 +3148,15 @@ void Simplifier::checkElimedUnassignedAndStats() const
         << endl;
 
         assert(false);
+    }
+}
+
+void Simplifier::print_elimed_vars() const
+{
+    for(size_t i = 0; i < var_elimed.size(); i++) {
+        if (var_elimed[i]) {
+            cout << "Elimed var: " << i+1 << endl;
+        }
     }
 }
 

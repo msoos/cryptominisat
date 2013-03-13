@@ -117,6 +117,7 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
     }
+
     while(pickBranchLit() != lit_Undef) {
         const bool OK = propagate();
         if (!OK) {
@@ -173,9 +174,9 @@ bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) con
 void SolutionExtender::addBlockedClause(const BlockedClause& cl)
 {
     assert(qhead == trail.size());
-    if (solver->conf.verbosity >= 3) {
-        cout << "c Adding blocked clause: " << cl << endl;
-    }
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout << "c Adding blocked clause: " << cl << endl;
+    #endif
 
     const vector<Lit>& lits = cl.lits;
     Lit blockedOn = cl.blockedOn;

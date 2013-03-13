@@ -798,6 +798,9 @@ int Main::solve()
                 << std::setw(6) << current_nr_of_solutions
                 << endl;
             }
+            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+            solver->print_elimed_vars();
+            #endif
 
             //Banning found solution
             vector<Lit> lits;

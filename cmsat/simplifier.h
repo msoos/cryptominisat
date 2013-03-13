@@ -67,6 +67,7 @@ public:
     bool simplify();
     void subsumeLearnts();
     void newVar();
+    void print_elimed_vars() const;
     void updateVars(
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
@@ -74,6 +75,7 @@ public:
     bool unEliminate(const Var var);
 
     //UnElimination
+    void print_blocked_clauses_reverse() const;
     void extendModel(SolutionExtender* extender);
 
     //Get-functions

@@ -251,6 +251,10 @@ Clause* Solver::addClauseInt(
     }
     ps.resize(ps.size() - (i - j));
 
+    #ifdef VERBOSE_DEBUG
+    cout << "addClauseInt final clause " << ps << endl;
+    #endif
+
     //If caller required final set of lits, return it.
     if (finalLits)
         *finalLits = ps;
@@ -462,6 +466,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
         //Uneliminate var if need be
         if (simplifier->getVarElimed()[ps[i].var()]) {
+            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+            cout << "Uneliminating var " << ps[i].var() + 1 << endl;
+            #endif
             if (!simplifier->unEliminate(ps[i].var()))
                 return false;
         }
@@ -2789,3 +2796,9 @@ void Solver::updateDominators()
         }
     }
 }
+
+void Solver::print_elimed_vars() const
+{
+    simplifier->print_elimed_vars();
+}
+
