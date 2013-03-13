@@ -1136,6 +1136,7 @@ end:
 
 bool Simplifier::unEliminate(const Var var)
 {
+    assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
     //Sanity check
@@ -1160,6 +1161,8 @@ bool Simplifier::unEliminate(const Var var)
     if (it == blk_var_to_cl.end())
         return solver->okay();
 
+    //Eliminate it in practice
+    //NOTE: Need to eliminate in theory first to avoid infinite loops
     for(size_t i = 0; i < it->second.size(); i++) {
         size_t at = it->second[i];
 
