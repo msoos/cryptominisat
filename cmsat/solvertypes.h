@@ -415,12 +415,12 @@ struct AssignStats
 
 };
 
-#ifdef STATS_NEEDED
 struct PropStats
 {
     PropStats() :
         propagations(0)
         , bogoProps(0)
+        #ifdef STATS_NEEDED
         , propsUnit(0)
         , propsBinIrred(0)
         , propsBinRed(0)
@@ -432,6 +432,7 @@ struct PropStats
         //LHBR
         , triLHBR(0)
         , longLHBR(0)
+        #endif
 
         //Var setsing
         , varSetPos(0)
@@ -449,6 +450,7 @@ struct PropStats
     PropStats& operator+=(const PropStats& other)
     {
         propagations += other.propagations;
+        #ifdef STATS_NEEDED
         bogoProps += other.bogoProps;
         propsUnit += other.propsUnit;
         propsBinIrred += other.propsBinIrred;
@@ -461,6 +463,7 @@ struct PropStats
         //LHBR
         triLHBR += other.triLHBR;
         longLHBR += other.longLHBR;
+        #endif
 
         //Var settings
         varSetPos += other.varSetPos;
@@ -474,6 +477,7 @@ struct PropStats
     {
         propagations -= other.propagations;
         bogoProps -= other.bogoProps;
+        #ifdef STATS_NEEDED
         propsUnit -= other.propsUnit;
         propsBinIrred -= other.propsBinIrred;
         propsBinRed -= other.propsBinRed;
@@ -485,6 +489,7 @@ struct PropStats
         //LHBR
         triLHBR -= other.triLHBR;
         longLHBR -= other.longLHBR;
+        #endif
 
         //Var settings
         varSetPos -= other.varSetPos;
@@ -521,6 +526,7 @@ struct PropStats
             , "/ sec"
         );
 
+        #ifdef STATS_NEEDED
         printStatsLine("c propsUnit", propsUnit
             , 100.0*(double)propsUnit/(double)propagations
             , "% of propagations"
@@ -566,11 +572,29 @@ struct PropStats
             , 100.0*(double)triLHBR/(double)(triLHBR + longLHBR)
             , "% of LHBR"
         );
+        #endif
+
+        printStatsLine("c varSetPos", varSetPos
+            , 100.0*(double)varSetPos/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c varSetNeg", varSetNeg
+            , 100.0*(double)varSetNeg/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c flipped", varFlipped
+            , 100.0*(double)varSetNeg/(double)propagations
+            , "% of propagations"
+        );
+
     }
 
     uint64_t propagations; ///<Number of propagations made
     uint64_t bogoProps;    ///<An approximation of time
 
+    #ifdef STATS_NEEDED
     //Stats for propagations
     uint64_t propsUnit;
     uint64_t propsBinIrred;
@@ -583,63 +607,13 @@ struct PropStats
     //Lazy hyper-binary clause added
     uint64_t triLHBR; //LHBR by 3-long clauses
     uint64_t longLHBR; //LHBR by 3+-long clauses
+    #endif
 
     //Var settings
     uint64_t varSetPos;
     uint64_t varSetNeg;
     uint64_t varFlipped;
 };
-#else
-struct PropStats
-{
-    PropStats() :
-        bogoProps(0)
-    {
-    }
-
-    void clear()
-    {
-        PropStats tmp;
-        *this = tmp;
-    }
-
-    PropStats& operator+=(const PropStats& other)
-    {
-        bogoProps += other.bogoProps;
-        return *this;
-    }
-
-    PropStats& operator-=(const PropStats& other)
-    {
-        bogoProps -= other.bogoProps;
-        return *this;
-    }
-
-    PropStats operator-(const PropStats& other) const
-    {
-        PropStats result = *this;
-        result -= other;
-        return result;
-    }
-
-    PropStats operator+(const PropStats& other) const
-    {
-        PropStats result = *this;
-        result += other;
-        return result;
-    }
-
-    void print(const double cpu_time) const
-    {
-        cout << "c PROP stats" << endl;
-        printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
-            , (double)bogoProps/(cpu_time*1000.0*1000.0)
-            , "/ sec"
-        );
-    }
-    uint64_t bogoProps;    ///<An approximation of time
-};
-#endif
 
 enum ConflCausedBy {
     CONFL_BY_LONG_IRRED_CLAUSE

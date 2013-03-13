@@ -1557,7 +1557,6 @@ void Solver::printFullStats() const
 
     cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumStats.print();
-    #ifdef STATS_NEEDED
     sumPropStats.print(sumStats.cpu_time);
     printStatsLine("c props/decision"
         , (double)propStats.propagations/(double)sumStats.decisions
@@ -1565,7 +1564,6 @@ void Solver::printFullStats() const
     printStatsLine("c props/conflict"
         , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
     );
-    #endif
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
 
     printStatsLine("c clause clean time"

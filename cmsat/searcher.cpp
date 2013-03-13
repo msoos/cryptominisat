@@ -1868,14 +1868,12 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         propStats.print(stats.cpu_time);
-        #ifdef STATS_NEEDED
         printStatsLine("c props/decision"
             , (double)propStats.propagations/(double)stats.decisions
         );
         printStatsLine("c props/conflict"
             , (double)propStats.propagations/(double)stats.conflStats.numConflicts
         );
-        #endif
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 

@@ -537,24 +537,26 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     varData[v].level = decisionLevel();
 
     trail.push_back(p);
-    #ifdef STATS_NEEDED
     propStats.propagations++;
 
     if (p.sign()) {
+        #ifdef STATS_NEEDED
         varData[v].stats.negPolarSet++;
+        #endif
         propStats.varSetNeg++;
     } else {
+        #ifdef STATS_NEEDED
         varData[v].stats.posPolarSet++;
+        #endif
         propStats.varSetPos++;
     }
-    #endif
 
     if (varData[v].polarity != !p.sign()) {
         agility.update(true);
         #ifdef STATS_NEEDED
         varData[v].stats.flippedPolarity++;
-        propStats.varFlipped++;
         #endif
+        propStats.varFlipped++;
     } else {
         agility.update(false);
     }
