@@ -31,6 +31,22 @@
 using std::cout;
 using std::endl;
 
+size_t ImplCache::memoryUsedInMB() const
+{
+    size_t numBytes = 0;
+    for(vector<TransCache>::const_iterator
+        it = implCache.begin(), end = implCache.end()
+        ; it != end
+        ; it++
+    ) {
+        numBytes += it->lits.capacity()*sizeof(LitExtra);
+    }
+
+    const double MBused = (double)numBytes/(1000.0*1000.0);
+
+    return (size_t)MBused;
+}
+
 void ImplCache::clean(Solver* solver)
 {
     assert(solver->ok);

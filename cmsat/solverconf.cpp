@@ -98,6 +98,7 @@ SolverConf::SolverConf() :
         , doStamp          (true)
         , doCache          (true)
         , cacheUpdateCutoff(200)
+        , maxCacheSizeMB   (1024)
 
         //XOR
         , doFindXors       (true)

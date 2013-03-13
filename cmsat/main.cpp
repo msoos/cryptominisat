@@ -475,6 +475,19 @@ void Main::parseCommandLine()
         , "Perform hyper-binary resolution at dec. level 1 after every restart")
     ;
 
+
+    po::options_description stampOptions("Stamping options");
+    stampOptions.add_options()
+    ("stamp", po::value<int>(&conf.doStamp)->default_value(conf.doStamp)
+        , "Use time stamping as per Heule&Jarvisalo&Biere paper")
+    ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
+        , "Use implication cache -- may use a lot of memory")
+    ("cachesize", po::value<size_t>(&conf.maxCacheSizeMB)->default_value(conf.maxCacheSizeMB)
+        , "Maximum size of the implication cache in MB. It may temporarily reach higher usage, but will be deleted&disabled if this limit is reached.")
+    ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
+        , "Calculate literal reachability")
+    ;
+
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
     ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
@@ -520,12 +533,8 @@ void Main::parseCommandLine()
         , "Regularly execute clause vivification")
     ("sortwatched", po::value<int>(&conf.doSortWatched)->default_value(conf.doSortWatched)
         , "Sort watches according to size")
-    ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
-        , "Calculate literal reachability")
-    ("stamp", po::value<int>(&conf.doStamp)->default_value(conf.doStamp)
-        , "Use time stamping as per Heule&Jarvisalo&Biere paper")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
-        , "Renumber variables to increase cache efficiency")
+        , "Renumber variables to increase CPU cache efficiency")
     ;
 
     po::positional_options_description p;
@@ -543,6 +552,7 @@ void Main::parseCommandLine()
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)
+    .add(stampOptions)
     .add(simplificationOptions)
     .add(eqLitOpts)
     #ifdef USE_M4RI
@@ -693,10 +703,6 @@ void Main::parseCommandLine()
         else if (type == "branchd")
             conf.restartType = branch_depth_delta_restart;
         else throw WrongParam("restart", "unknown restart type");
-    }
-
-    if (vm.count("nocalcreach")) {
-        conf.doCalcReach = false;
     }
 
     if (numThreads < 1)

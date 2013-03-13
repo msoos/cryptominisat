@@ -1249,6 +1249,14 @@ lbool Solver::simplifyProblem()
     if (conf.doRenumberVars)
         renumberVariables();
 
+    //Delete and disable cache if too large
+    if (conf.doCache) {
+        if (implCache.memoryUsedInMB() > conf.maxCacheSizeMB) {
+            implCache.free();
+            conf.doCache = false;
+        }
+    }
+
     reArrangeClauses();
 
     //addSymmBreakClauses();

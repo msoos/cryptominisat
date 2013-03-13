@@ -111,6 +111,7 @@ class SolverConf
         int      doStamp;
         int      doCache;
         size_t   cacheUpdateCutoff;
+        size_t   maxCacheSizeMB;
 
         //XORs
         int      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses

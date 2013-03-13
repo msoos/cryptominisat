@@ -127,6 +127,7 @@ inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 
 class ImplCache  {
     public:
+        size_t memoryUsedInMB() const;
         std::vector<TransCache> implCache;
 
         std::vector<TransCache>::iterator begin()
@@ -233,6 +234,12 @@ class ImplCache  {
         const TryBothStats& getStats() const
         {
             return globalStats;
+        }
+
+        void free()
+        {
+            vector<TransCache> tmp;
+            implCache.swap(tmp);
         }
 
         void clear()
