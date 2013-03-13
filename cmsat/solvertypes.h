@@ -41,13 +41,45 @@ using std::string;
 //Typedefs
 typedef uint32_t Var;
 static const Var var_Undef(~0U);
-enum RestType {
+enum RestartType {
     glue_restart
     , glue_agility_restart
     , geom_restart
     , agility_restart
     , branch_depth_delta_restart
+    , no_restart
+    , auto_restart
 };
+
+inline std::string restart_type_to_string(const RestartType type)
+{
+    switch(type) {
+        case glue_restart:
+            return "glue";
+
+        case glue_agility_restart:
+            return "glue_agility";
+
+        case geom_restart:
+            return "geom";
+
+        case  agility_restart:
+            return "agility";
+
+        case branch_depth_delta_restart:
+            return "branch_depth_delta";
+
+        case no_restart:
+            return "never restart";
+
+        case auto_restart:
+            return "auto";
+    }
+
+    assert(false && "oops, one of the restart types has no string name");
+
+    return "Ooops, none defined!";
+}
 
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
@@ -321,6 +353,7 @@ struct SearchFuncParams
 {
     SearchFuncParams(
         uint64_t _conflictsToDo
+        , RestartType _rest_type
         , uint64_t _maxNumConfl = std::numeric_limits< uint64_t >::max()
         , const bool _update = true
     ) :
@@ -330,6 +363,7 @@ struct SearchFuncParams
         , maxNumConfl(_maxNumConfl)
         , update(_update)
         , numAgilityNeedRestart(0)
+        , rest_type(_rest_type)
     {}
 
     bool needToStopSearch;
@@ -340,6 +374,7 @@ struct SearchFuncParams
     const bool update;
 
     uint64_t numAgilityNeedRestart;
+    RestartType rest_type;
 };
 
 template<class T, class T2> void printStatsLine(

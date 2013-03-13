@@ -47,7 +47,7 @@ SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.2)
         , burstSearchLen(300)
-        , restartType(agility_restart)
+        , restartType(auto_restart)
 
         , doRecursiveCCMin  (true)
         , polarity_mode    (polarity_auto)

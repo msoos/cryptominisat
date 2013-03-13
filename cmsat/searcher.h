@@ -637,12 +637,13 @@ class Searcher : public PropEngine
         /// Search for a given number of conflicts.
         lbool search(
             const SearchFuncParams _params
-            , uint64_t& rest
+            , uint64_t* geom_max
         );
         lbool burstSearch();
         bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
-        void  checkNeedRestart(SearchFuncParams& params, uint64_t& rest);     // Helper function to decide if we need to restart during search
+        void  checkNeedRestart(SearchFuncParams& params, uint64_t* geom_max);     // Helper function to decide if we need to restart during search
+        RestartType decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
 
         ///////////////

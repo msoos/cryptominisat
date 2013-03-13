@@ -800,7 +800,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
+lbool Searcher::search(SearchFuncParams _params, uint64_t* geom_max)
 {
     assert(ok);
 
@@ -902,7 +902,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
             stats.conflStats.update(lastConflictCausedBy);
 
             //If restart is needed, set it as so
-            checkNeedRestart(params, rest);
+            checkNeedRestart(params, geom_max);
             hist.conflictAfterConflict.push(lastWasConflict);
             lastWasConflict = true;
 
@@ -980,7 +980,7 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
+void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t* geom_max)
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
@@ -988,10 +988,15 @@ void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
         params.needToStopSearch = true;
     }
 
-    switch (conf.restartType) {
-        //If geometric restart
+    switch (params.rest_type) {
+
+        case no_restart:
+            //Just don't restart no matter what
+            break;
+
         case geom_restart:
-            if (params.conflictsDoneThisRestart > rest)
+            assert(geom_max != NULL);
+            if (params.conflictsDoneThisRestart > *geom_max)
                 params.needToStopSearch = true;
 
             break;
@@ -1041,6 +1046,9 @@ void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
                 params.numAgilityNeedRestart = 0;
             }
 
+            break;
+        default:
+            assert(false && "This should not happen, auto decision is make before this point");
             break;
     }
 
@@ -1321,7 +1329,6 @@ lbool Searcher::burstSearch()
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
-    const RestType backup_restType = conf.restartType;
     const int backup_polar_mode = conf.polarity_mode;
     uint32_t backup_var_inc_divider = var_inc_divider;
     uint32_t backup_var_inc_multiplier = var_inc_multiplier;
@@ -1333,12 +1340,10 @@ lbool Searcher::burstSearch()
     var_inc_multiplier = 1;
 
     //Do burst
-    uint64_t rest_burst = conf.burstSearchLen;
-    lbool status = search(SearchFuncParams(rest_burst), rest_burst);
+    lbool status = search(SearchFuncParams(conf.burstSearchLen, no_restart), NULL);
 
     //Restore config
     conf.random_var_freq = backup_rand;
-    conf.restartType = backup_restType;
     conf.polarity_mode = backup_polar_mode;
     var_inc_divider = backup_var_inc_divider;
     var_inc_multiplier = backup_var_inc_multiplier;
@@ -1638,6 +1643,39 @@ void Searcher::printClauseDistribSQL()
 }
 #endif
 
+RestartType Searcher::decide_restart_type() const
+{
+    RestartType rest_type = conf.restartType;
+    if (rest_type == auto_restart) {
+        if (solver->sumPropStats.propagations == 0) {
+
+            //If no data yet, default to glue_restart
+            rest_type = glue_restart;
+        } else {
+
+            //Otherwise, choose according to % of pos/neg polarities
+            double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
+            double percent = ((double)solver->sumPropStats.varSetNeg)/total;
+            if (percent > 0.7
+                || percent < 0.3
+            ) {
+                rest_type = glue_restart;
+            } else {
+                rest_type = geom_restart;
+            }
+        }
+
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c Chose restart type "
+            << restart_type_to_string(rest_type)
+            << endl;
+        }
+    }
+
+    return rest_type;
+}
+
 
 /**
 @brief The main solve loop that glues everything together
@@ -1681,10 +1719,13 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     }
     assert(order_heap.heapProperty());
 
+
+    const RestartType rest_type = decide_restart_type();
+
     // Search:
     size_t loopNum = 0;
     genRandomVarActMultDiv();
-    uint64_t rest = conf.restart_first;
+    uint64_t geom_max = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
         && stats.conflStats.numConflicts < maxConfls
@@ -1700,8 +1741,17 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         assert(stats.conflStats.numConflicts < maxConfls);
 
         lastRestartConfl = sumConflicts();
-        status = search(SearchFuncParams(maxConfls-stats.conflStats.numConflicts), rest);
-        rest *= conf.restart_inc;
+
+        //Search, update 'rest' for geometric restart
+        status = search(
+            SearchFuncParams(
+                maxConfls-stats.conflStats.numConflicts
+                , rest_type
+            )
+            , &geom_max
+        );
+        geom_max *= conf.restart_inc;
+
         if (status != l_Undef) {
             if (conf.verbosity >= 6) {
                 cout

@@ -59,7 +59,7 @@ class SolverConf
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
 
         size_t    burstSearchLen;
-        RestType  restartType;   ///<If set, the solver will always choose the given restart strategy
+        RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
         int       doRecursiveCCMin;    ///<Should clause minimisation by Sorensson&Biere be used?                                    (default TRUE)
         int       polarity_mode;      ///<Controls which polarity the decision heuristic chooses. Auto means Jeroslow-Wang          (default: polarity_auto)
         int       verbosity;          ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
