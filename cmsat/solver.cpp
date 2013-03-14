@@ -459,11 +459,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         #endif
     }
 
-    //Randomise
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        std::swap(ps[i], ps[(mtrand.randInt() % (ps.size()-i)) + i]);
-    }
-
     return true;
 }
 
