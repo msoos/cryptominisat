@@ -24,7 +24,7 @@
 
 #include "propengine.h"
 #include "solvertypes.h"
-#include "boost/multi_array.hpp"
+#include <boost/multi_array.hpp>
 #include "time_mem.h"
 #include "avgcalc.h"
 class Solver;

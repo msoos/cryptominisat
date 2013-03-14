@@ -31,6 +31,7 @@
 #include "solutionextender.h"
 #include "varupdatehelper.h"
 #include "gatefinder.h"
+#include "sqlstats.h"
 #include <fstream>
 #include <cmath>
 #include "xorfinder.h"

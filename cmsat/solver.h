@@ -28,12 +28,9 @@
 #include "constants.h"
 #include "solvertypes.h"
 #include "implcache.h"
-#include "solverconf.h"
 #include "propengine.h"
 #include "searcher.h"
 #include "GitSHA1.h"
-#include "sqlstats.h"
-#include "varupdatehelper.h"
 #include <fstream>
 
 using std::vector;
