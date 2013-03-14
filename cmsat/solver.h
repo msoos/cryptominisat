@@ -91,13 +91,13 @@ class Solver : public Searcher
                 , numNewBinsSinceSCC(0)
             {};
 
-            uint64_t            irredLits;  ///< Number of literals in non-learnt clauses
-            uint64_t            redLits;  ///< Number of literals in learnt clauses
-            uint64_t            irredBins;
-            uint64_t            redBins;
-            uint64_t            irredTris;
-            uint64_t            redTris;
-            uint64_t            numNewBinsSinceSCC;
+            uint64_t irredLits;  ///< Number of literals in non-learnt clauses
+            uint64_t redLits;  ///< Number of literals in learnt clauses
+            uint64_t irredBins;
+            uint64_t redBins;
+            uint64_t irredTris;
+            uint64_t redTris;
+            uint64_t numNewBinsSinceSCC;
         };
 
         //////////////////////////
