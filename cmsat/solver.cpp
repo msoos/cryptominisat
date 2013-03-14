@@ -1574,16 +1574,117 @@ void Solver::consolidateMem()
     clAllocator->consolidate(this, true);
 }
 
-void Solver::printFullStats() const
+void Solver::printStats() const
 {
     const double cpu_time = cpuTime();
+    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     printStatsLine("c UIP search time"
         , sumStats.cpu_time
         , sumStats.cpu_time/cpu_time*100.0
         , "% time"
     );
 
-    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    if (conf.verbStats >= 1) {
+        printFullStats();
+    } else {
+        printMinStats();
+    }
+}
+
+void Solver::printMinStats() const
+{
+    const double cpu_time = cpuTime();
+    sumStats.printShort();
+    printStatsLine("c props/decision"
+        , (double)propStats.propagations/(double)sumStats.decisions
+    );
+    printStatsLine("c props/conflict"
+        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+    );
+
+    printStatsLine("c 0-depth assigns", trail.size()
+        , (double)trail.size()/(double)nVars()*100.0
+        , "% vars"
+    );
+    printStatsLine("c 0-depth assigns by thrds"
+        , zeroLevAssignsByThreads
+        , (double)zeroLevAssignsByThreads/(double)nVars()*100.0
+        , "% vars"
+    );
+    printStatsLine("c 0-depth assigns by CNF"
+        , zeroLevAssignsByCNF
+        , (double)zeroLevAssignsByCNF/(double)nVars()*100.0
+        , "% vars"
+    );
+
+    //Failed lit stats
+    printStatsLine("c probing time"
+        , prober->getStats().cpu_time
+        , prober->getStats().cpu_time/cpu_time*100.0
+        , "% time"
+    );
+
+    prober->getStats().printShort();
+    //Simplifier stats
+    printStatsLine("c Simplifier time"
+        , simplifier->getStats().totalTime()
+        , simplifier->getStats().totalTime()/cpu_time*100.0
+        , "% time"
+    );
+    simplifier->getStats().printShort(nVars());
+    printStatsLine("c SCC time"
+        , sCCFinder->getStats().cpu_time
+        , sCCFinder->getStats().cpu_time/cpu_time*100.0
+        , "% time"
+    );
+    sCCFinder->getStats().printShort();
+    printStatsLine("c vrep replace time"
+        , varReplacer->getStats().cpu_time
+        , varReplacer->getStats().cpu_time/cpu_time*100.0
+        , "% time"
+    );
+
+    printStatsLine("c vrep tree roots"
+        , varReplacer->getNumTrees()
+    );
+
+    printStatsLine("c vrep trees' crown"
+        , varReplacer->getNumReplacedVars()
+        , (double)varReplacer->getNumReplacedVars()/(double)varReplacer->getNumTrees()
+        , "leafs/tree"
+    );
+    //varReplacer->getStats().printShort(nVars());
+    printStatsLine("c vivif time"
+                    , clauseVivifier->getStats().timeNorm
+                    , clauseVivifier->getStats().timeNorm/cpu_time*100.0
+                    , "% time"
+    );
+    printStatsLine("c vivif cache-irred time"
+                    , clauseVivifier->getStats().irredCacheBased.cpu_time
+                    , clauseVivifier->getStats().irredCacheBased.cpu_time/cpu_time*100.0
+                    , "% time"
+    );
+    printStatsLine("c vivif cache-red time"
+                    , clauseVivifier->getStats().redCacheBased.cpu_time
+                    , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
+                    , "% time"
+    );
+    printStatsLine("c Conflicts in UIP"
+        , sumStats.conflStats.numConflicts
+        , (double)sumStats.conflStats.numConflicts/cpu_time
+        , "confl/TOTAL_TIME_SEC"
+    );
+    printStatsLine("c Total time", cpu_time);
+    printStatsLine("c Mem used"
+        , memUsed()/(1024UL*1024UL)
+        , "MB"
+    );
+}
+
+void Solver::printFullStats() const
+{
+    const double cpu_time = cpuTime();
+
     sumStats.print();
     sumPropStats.print(sumStats.cpu_time);
     printStatsLine("c props/decision"

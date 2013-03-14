@@ -731,14 +731,20 @@ struct ConflStats
         }
     }
 
-    void print(double cpu_time) const
+    void printShort(double cpu_time) const
     {
         //Search stats
-        cout << "c CONFLS stats" << endl;
         printStatsLine("c conflicts", numConflicts
             , (double)numConflicts/cpu_time
             , "/ sec"
         );
+    }
+
+    void print(double cpu_time) const
+    {
+        //Search stats
+        cout << "c CONFLS stats" << endl;
+        printShort(cpu_time);
 
         printStatsLine("c conflsBinIrred", conflsBinIrred
             , 100.0*(double)conflsBinIrred/(double)numConflicts

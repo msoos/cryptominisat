@@ -417,6 +417,37 @@ class Searcher : public PropEngine
                 return result;
             }
 
+            void printShort() const
+            {
+                //Restarts stats
+                printStatsLine("c restarts", numRestarts);
+                printStatsLine("c time", cpu_time);
+                printStatsLine("c decisions", decisions
+                    , (double)decisionsRand*100.0/(double)decisions
+                    , "% random"
+                );
+
+                printStatsLine("c decisions", decisions
+                    , (double)decisionFlippedPolar/(double)decisions*100.0
+                    , "% flipped polarity"
+                );
+
+                printStatsLine("c decisions/conflicts"
+                    , (double)decisions/(double)conflStats.numConflicts
+                );
+                conflStats.printShort(cpu_time);
+
+                printStatsLine("c conf lits non-minim"
+                    , litsLearntNonMin
+                    , (double)litsLearntNonMin/(double)conflStats.numConflicts
+                    , "lit/confl"
+                );
+
+                printStatsLine("c conf lits final"
+                    , (double)litsLearntFinal/(double)conflStats.numConflicts
+                );
+            }
+
             void print() const
             {
                 uint64_t mem_used = memUsed();

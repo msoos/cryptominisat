@@ -129,10 +129,12 @@ class SolverConf
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
 
+        //Stats
+        int      printFullStats;
+        int      verbStats;
+
 
         //Optimisations to do
-
-        int       printFullStats;
         bool      printAllRestarts;
         int       doRenumberVars;
         uint32_t  dominPickFreq;

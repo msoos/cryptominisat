@@ -91,7 +91,9 @@ void SIGINT_handler(int)
     } else {
         if (solver->getVerbosity() >= 1) {
             solver->addInPartialSolvingStat();
-            solver->printFullStats();
+            if (solver->getVerbosity() >= 1) {
+                solver->printStats();
+            }
         }
         _exit(1);
     }
@@ -243,6 +245,7 @@ struct WrongParam
 void Main::parseCommandLine()
 {
     conf.verbosity = 2;
+    conf.verbStats = 1;
 
     //Reconstruct the command line so we can emit it later if needed
     for(int i = 0; i < argc; i++) {
@@ -514,8 +517,10 @@ void Main::parseCommandLine()
 
     po::options_description printOptions("Printing options");
     printOptions.add_options()
-    ("verb,w", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
+    ("verb", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
         , "[0-10] Verbosity of solver. 0 = only solution")
+    ("verbstat", po::value<int>(&conf.verbStats)->default_value(conf.verbStats)
+        , "Turns off verbose stats if needed")
     ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
         , "Print more thorough, but different stats")
     ("printoften", po::bool_switch(&conf.printAllRestarts)
@@ -820,8 +825,9 @@ int Main::solve()
         << "c Not finished running -- signal caught or some maximum reached"
         << endl;
     }
-    if (conf.verbosity >= 1)
-        solver->printFullStats();
+    if (conf.verbosity >= 1) {
+        solver->printStats();
+    }
 
     //Final print of solution
     printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);

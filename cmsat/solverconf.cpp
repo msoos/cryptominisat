@@ -116,8 +116,11 @@ SolverConf::SolverConf() :
         , doLHBR           (false)
         , propBinFirst     (false)
 
-        //optimisations to do
+        //Stats
         , printFullStats   (false)
+        , verbStats        (0)
+
+        //optimisations to do
         , doRenumberVars   (true)
         , dominPickFreq    (5)
         , flipPolarFreq    (300)

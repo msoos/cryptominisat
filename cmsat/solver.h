@@ -108,8 +108,9 @@ class Solver : public Searcher
         uint64_t getNumLongClauses() const;
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpSimplified() const;
-        uint32_t getVerbosity() const;
-        void     printFullStats() const;
+        int      getVerbosity() const;
+        int      getverbStatsosity() const;
+        void     printStats() const;
         void     printClauseStats() const;
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
@@ -326,6 +327,10 @@ class Solver : public Searcher
 
     private:
 
+        //Stats printing
+        void printMinStats() const;
+        void printFullStats() const;
+
         bool addXorClauseInt(
             const vector< Lit >& lits
             , bool rhs
@@ -516,9 +521,14 @@ inline uint64_t Solver::getNumLongClauses() const
     return longIrredCls.size() + longRedCls.size();
 }
 
-inline uint32_t Solver::getVerbosity() const
+inline int Solver::getVerbosity() const
 {
     return conf.verbosity;
+}
+
+inline int Solver::getverbStatsosity() const
+{
+    return conf.verbStats;
 }
 
 inline const Searcher::Stats& Solver::getStats() const
