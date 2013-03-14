@@ -17,6 +17,8 @@ Modifications also under MIT
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+
+namespace CMSat {
 using std::vector;
 
 template <class T, class T2 = uint64_t>
@@ -125,5 +127,7 @@ public:
         return queuesize;
     }
 };
+
+} //end namespace
 
 #endif //BOUNDEDQUEUE_H

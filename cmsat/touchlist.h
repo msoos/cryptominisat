@@ -19,9 +19,13 @@
  * MA 02110-1301  USA
 */
 
+#ifndef __TOUCHLIST_H__
+#define __TOUCHLIST_H__
 
 #include <vector>
 #include "solvertypes.h"
+
+namespace CMSat {
 
 class TouchList
 {
@@ -66,3 +70,7 @@ private:
     vector<Var> touched;
     vector<char> touchedBitset;
 };
+
+} //end namespace
+
+#endif //__TOUCHLIST_H__

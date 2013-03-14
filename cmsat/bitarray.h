@@ -29,6 +29,8 @@
 #include <assert.h>
 #include "constants.h"
 
+namespace CMSat {
+
 class BitArray
 {
 public:
@@ -179,6 +181,8 @@ private:
     uint32_t size;
     uint64_t* mp;
 };
+
+} //end namespace
 
 #endif //BITARRAY_H
 

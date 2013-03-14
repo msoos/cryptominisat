@@ -57,11 +57,11 @@ class Main
         void printResultFunc(
             std::ostream* os
             , const bool toFile
-            , const lbool ret
+            , const CMSat::lbool ret
             , const bool firstSolut
         );
         void printVersionInfo();
-        int correctReturnValue(const lbool ret) const;
+        int correctReturnValue(const CMSat::lbool ret) const;
 
         //Config
         CMSat::SolverConf conf;

@@ -31,12 +31,14 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include "assert.h"
+
+namespace CMSat {
+
 using std::vector;
 using std::cout;
 using std::endl;
 using std::string;
-
-#include "assert.h"
 
 //Typedefs
 typedef uint32_t Var;
@@ -802,5 +804,7 @@ struct ConflStats
     ///Number of conflicts
     uint64_t  numConflicts;
 };
+
+} //end namespace
 
 #endif //SOLVERTYPES_H

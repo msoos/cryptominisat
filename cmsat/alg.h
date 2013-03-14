@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "watched.h"
 #include "constants.h"
 
+namespace CMSat {
+
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {
@@ -35,5 +37,7 @@ static inline void remove(V& ts, const T& t)
     for (; j < (uint16_t)(ts.size()-1); j++) ts[j] = ts[j+1];
     ts.resize(ts.size() -1);
 }
+
+} //end namespace
 
 #endif

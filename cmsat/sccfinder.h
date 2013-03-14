@@ -137,6 +137,6 @@ inline const SCCFinder::Stats& SCCFinder::getStats() const
     return globalStats;
 }
 
-} //end namespace
+} //end namespaceC
 
 #endif //SCCFINDER_H

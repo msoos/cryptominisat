@@ -30,6 +30,8 @@
 
 #include "cloffset.h"
 
+namespace CMSat {
+
 enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 
 class PropBy
@@ -204,5 +206,7 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
     }
     return os;
 }
+
+} //end namespace
 
 #endif //PROPBY_H

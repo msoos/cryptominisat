@@ -29,6 +29,8 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+
+namespace CMSat {
 using std::vector;
 
 template <class T, class T2 = uint64_t>
@@ -120,5 +122,7 @@ public:
         max = std::max(max, other.max);
     }
 };
+
+} //end namespace
 
 #endif //__AVGCALC_H__

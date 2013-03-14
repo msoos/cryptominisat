@@ -32,6 +32,7 @@
 
 #include <limits>
 
+namespace CMSat {
 
 enum WatchType {
     watch_clause_t = 0
@@ -462,5 +463,7 @@ inline Watched& findWatchedOfBin(
     assert(false);
     return *ws.begin();
 }
+
+} //end namespace
 
 #endif //WATCHED_H

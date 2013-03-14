@@ -21,14 +21,16 @@
 
 #include "packedrow.h"
 
-std::ostream& operator << (std::ostream& os, const PackedRow& m)
+::std::ostream& operator << (std::ostream& os, const CMSat::PackedRow& m)
 {
-    for(uint32_t i = 0; i < m.size*64; i++) {
+    for(uint32_t i = 0; i < m.getSize()*64; i++) {
         os << m[i];
     }
     os << " -- xor: " << m.is_true();
     return os;
 }
+
+using namespace CMSat;
 
 bool PackedRow::operator ==(const PackedRow& b) const
 {

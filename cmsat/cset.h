@@ -29,6 +29,8 @@
 #include "constants.h"
 
 #include "clause.h"
+
+namespace CMSat {
 using std::vector;
 
 /**
@@ -208,5 +210,7 @@ class CSet {
             return const_iterator(which.begin() + which.size());
         }
 };
+
+} //end namespace
 
 #endif //CSET_H

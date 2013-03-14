@@ -5,6 +5,8 @@
 #include <iostream>
 #include <set>
 
+namespace CMSat {
+
 Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper);
 Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
 
@@ -110,5 +112,7 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
         seen[i] = 0;
     }
 }
+
+} //end namespace
 
 #endif //__VARUPDATE_HELPER_H__

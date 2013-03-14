@@ -33,8 +33,8 @@
 #include <algorithm>
 #include <limits>
 
+namespace CMSat {
 using std::vector;
-
 
 class PackedMatrix;
 
@@ -221,7 +221,11 @@ public:
         return std::numeric_limits<unsigned long int>::max();
     }
 
-    friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
+    //friend ::std::ostream& operator << (std::ostream& os, const PackedRow& m);
+    uint32_t getSize() const
+    {
+        return size;
+    }
 
 private:
     friend class PackedMatrix;
@@ -237,6 +241,8 @@ private:
 };
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m);
+
+} //end namespace
 
 #endif //PACKEDROW_H
 
