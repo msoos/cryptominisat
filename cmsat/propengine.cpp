@@ -34,6 +34,7 @@
 #include "time_mem.h"
 #include "varupdatehelper.h"
 
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

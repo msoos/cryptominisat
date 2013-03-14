@@ -26,7 +26,6 @@
 #include <string.h>
 #include <stack>
 #include <set>
-using std::set;
 
 //#define ANIMATE3D
 
@@ -43,6 +42,10 @@ using std::set;
 #include "boundedqueue.h"
 #include "solverconf.h"
 #include "clauseallocator.h"
+
+namespace CMSat {
+
+using std::set;
 class Solver;
 class SQLStats;
 
@@ -974,4 +977,7 @@ inline bool PropEngine::getStoredPolarity(const Var var)
 {
     return varData[var].polarity;
 }
+
+} //end namespace
+
 #endif //__PROPENGINE_H__

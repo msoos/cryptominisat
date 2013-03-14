@@ -37,6 +37,8 @@
 #include "xorfinder.h"
 #include <fcntl.h>
 #include "completedetachreattacher.h"
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

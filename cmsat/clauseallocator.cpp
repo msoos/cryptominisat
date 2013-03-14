@@ -31,6 +31,8 @@
 #include "time_mem.h"
 #include "simplifier.h"
 
+using namespace CMSat;
+
 using std::pair;
 using std::cout;
 using std::endl;

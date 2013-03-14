@@ -25,6 +25,8 @@
 #include "solvertypes.h"
 #include "cset.h"
 
+namespace CMSat {
+
 class Solver;
 class Simplifier;
 
@@ -433,5 +435,7 @@ inline const GateFinder::Stats& GateFinder::getStats() const
 {
     return globalStats;
 }
+
+} //end namespace
 
 #endif //_GATEFINDER_H_

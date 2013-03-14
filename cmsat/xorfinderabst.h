@@ -19,12 +19,20 @@
  * MA 02110-1301  USA
  */
 
+#ifndef __XORFINDERABST_H__
+#define __XORFINDERABST_H__
+
+namespace CMSat {
+
 class Simplifier;
 class Solver;
-
 
 class XorFinderAbst
 {
     public:
         virtual bool findXors() = 0;
 };
+
+}
+
+#endif //__XORFINDERABST_H__

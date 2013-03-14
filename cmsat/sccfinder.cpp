@@ -22,14 +22,16 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
-using std::cout;
-using std::endl;
 
 #include "solvertypes.h"
 #include "sccfinder.h"
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "solver.h"
+
+using namespace CMSat;
+using std::cout;
+using std::endl;
 
 SCCFinder::SCCFinder(Solver* _solver) :
     solver(_solver)

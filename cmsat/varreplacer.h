@@ -30,6 +30,8 @@
 #include "clause.h"
 #include "vec.h"
 
+namespace CMSat {
+
 //#define VERBOSE_DEBUG
 
 using std::map;
@@ -273,5 +275,7 @@ inline bool VarReplacer::isReplaced(const Lit lit) const
 {
     return isReplaced(lit.var());
 }
+
+} //end namespace
 
 #endif //VARREPLACER_H

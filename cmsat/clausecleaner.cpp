@@ -21,6 +21,8 @@
 
 #include "clausecleaner.h"
 
+using namespace CMSat;
+
 //#define DEBUG_CLEAN
 //#define VERBOSE_DEBUG
 

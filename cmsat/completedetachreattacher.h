@@ -19,9 +19,14 @@
  * MA 02110-1301  USA
 */
 
+#ifndef __COMPLETE_DETACH_REATTACHER__
+#define __COMPLETE_DETACH_REATTACHER__
+
 #include "constants.h"
 #include "vec.h"
 #include "watched.h"
+
+namespace CMSat {
 
 class Solver;
 struct Clause;
@@ -75,3 +80,7 @@ class CompleteDetachReatacher
 
         Solver* solver;
 };
+
+} //end namespace
+
+#endif //__COMPLETE_DETACH_REATTACHER__

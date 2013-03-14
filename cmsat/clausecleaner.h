@@ -26,6 +26,8 @@
 #include "simplifier.h"
 #include "solver.h"
 
+namespace CMSat {
+
 /**
 @brief Cleans clauses from false literals & removes satisfied clauses
 */
@@ -87,5 +89,7 @@ inline void ClauseCleaner::removeAndCleanAll()
         << " s" << endl;
     }
 }
+
+} //end namespace
 
 #endif //CLAUSECLEANER_H

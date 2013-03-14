@@ -26,6 +26,8 @@
 #include "simplifier.h"
 #include <limits>
 #include "m4ri.h"
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

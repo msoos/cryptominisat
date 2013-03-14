@@ -26,6 +26,8 @@
 #include "constants.h"
 #include "clause.h"
 
+namespace CMSat {
+
 class SolverConf
 {
     public:
@@ -179,5 +181,7 @@ class SolverConf
 
         uint32_t origSeed;
 };
+
+} //end namespace
 
 #endif //SOLVERCONF_H

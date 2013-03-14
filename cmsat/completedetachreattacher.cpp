@@ -24,6 +24,8 @@
 #include "varreplacer.h"
 #include "clausecleaner.h"
 
+using namespace CMSat;
+
 CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
     solver(_solver)
 {

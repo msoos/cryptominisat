@@ -35,6 +35,8 @@
 #include "clabstraction.h"
 #include "constants.h"
 
+namespace CMSat {
+
 class ClauseAllocator;
 
 template <class T>
@@ -943,5 +945,7 @@ inline std::pair<size_t, size_t> stampBasedLitRem(
 
     return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
+
+} //end namespace
 
 #endif //CLAUSE_H

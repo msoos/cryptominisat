@@ -26,6 +26,8 @@
 #ifndef __PROPBYFORGRAPH_H__
 #define __PROPBYFORGRAPH_H__
 
+namespace CMSat {
+
 class PropByForGraph
 {
     private:
@@ -154,5 +156,7 @@ inline std::ostream& operator<<(
     }
     return os;
 }
+
+} //end namespace
 
 #endif //__PROPBYFORGRAPH_H__

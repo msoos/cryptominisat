@@ -27,6 +27,8 @@
 #include <boost/multi_array.hpp>
 #include "time_mem.h"
 #include "avgcalc.h"
+namespace CMSat {
+
 class Solver;
 class SQLStats;
 
@@ -891,5 +893,7 @@ inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
 }
+
+} //end namespace
 
 #endif //__SEARCHER_H__

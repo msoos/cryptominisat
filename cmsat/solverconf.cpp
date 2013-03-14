@@ -21,6 +21,7 @@
 
 #include "solverconf.h"
 #include <limits>
+using namespace CMSat;
 
 SolverConf::SolverConf() :
         var_inc_start(128)

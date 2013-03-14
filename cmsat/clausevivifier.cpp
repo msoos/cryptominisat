@@ -24,6 +24,7 @@
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

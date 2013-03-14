@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "solvertypes.h"
 #include "clause.h"
 
+namespace CMSat {
+
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_RECONSTRUCT
 #endif
@@ -114,5 +116,7 @@ class SolutionExtender
         vector<Lit> trail;
         vector<lbool> assigns;
 };
+
+} //end namespace
 
 #endif //__SOLUTIONEXTENDER_H__

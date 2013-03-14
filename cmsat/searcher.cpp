@@ -30,6 +30,8 @@
 #include "clausecleaner.h"
 #include "propbyforgraph.h"
 #include <algorithm>
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

@@ -33,6 +33,8 @@
 #include "GitSHA1.h"
 #include <fstream>
 
+namespace CMSat {
+
 using std::vector;
 using std::pair;
 using std::string;
@@ -635,5 +637,7 @@ inline void Solver::remove_from_stamps(const Var var)
         }
     }
 }
+
+} //end namespace
 
 #endif //THREADCONTROL_H

@@ -27,6 +27,9 @@
 #include "constants.h"
 #include "solvertypes.h"
 #include "cloffset.h"
+
+namespace CMSat {
+
 using std::vector;
 
 class Solver;
@@ -317,5 +320,7 @@ inline const ClauseVivifier::Stats& ClauseVivifier::getStats() const
 {
     return globalStats;
 }
+
+} //end namespace
 
 #endif //CLAUSEVIVIFIER_H

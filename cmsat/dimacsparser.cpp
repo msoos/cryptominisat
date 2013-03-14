@@ -18,6 +18,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define DEBUG_COMMENT_PARSING
 #endif //VERBOSE_DEBUG
 
+using namespace CMSat;
 using std::vector;
 using std::cout;
 using std::endl;

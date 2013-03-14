@@ -29,6 +29,9 @@
 #include <set>
 #include "cset.h"
 #include "xorfinderabst.h"
+
+namespace CMSat {
+
 using std::vector;
 using std::set;
 
@@ -477,5 +480,6 @@ inline size_t XorFinder::getNumCalls() const
     return numCalls;
 }
 
+} //end namespace
 
 #endif //_XORFINDER_H_

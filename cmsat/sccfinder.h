@@ -26,6 +26,8 @@
 #include "clause.h"
 #include <stack>
 
+namespace CMSat {
+
 class Solver;
 
 class SCCFinder {
@@ -135,5 +137,6 @@ inline const SCCFinder::Stats& SCCFinder::getStats() const
     return globalStats;
 }
 
+} //end namespace
 
 #endif //SCCFINDER_H

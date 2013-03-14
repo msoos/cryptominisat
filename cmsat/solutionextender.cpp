@@ -23,6 +23,7 @@
 #include "varreplacer.h"
 #include "simplifier.h"
 #include "solver.h"
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

@@ -39,6 +39,8 @@ using std::endl;
 #define VERBOSE_DEBUG_BIN_REPLACER
 #endif
 
+using namespace CMSat;
+
 //#define VERBOSE_DEBUG
 //#define REPLACE_STATISTICS
 //#define DEBUG_BIN_REPLACER

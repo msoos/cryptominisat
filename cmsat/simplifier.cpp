@@ -30,8 +30,6 @@
 #include <set>
 #include <iostream>
 #include <limits>
-using std::cout;
-using std::endl;
 
 
 #include "simplifier.h"
@@ -58,6 +56,10 @@ using std::endl;
 #define VERBOSE_DEBUG_XOR_FINDER
 #define VERBOSE_DEBUG_VARELIM
 #endif
+
+using namespace CMSat;
+using std::cout;
+using std::endl;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER

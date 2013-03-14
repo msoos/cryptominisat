@@ -4,6 +4,9 @@
 #include "searcher.h"
 #include "clause.h"
 #include "boost/multi_array.hpp"
+
+namespace CMSat {
+
 class Solver;
 
 class SQLStats
@@ -54,5 +57,7 @@ protected:
     void getRandomID();
     uint64_t runID;
 };
+
+} //end namespace
 
 #endif //__SQLSTATS_H__

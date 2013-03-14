@@ -28,6 +28,8 @@
 #include "varreplacer.h"
 #include "varupdatehelper.h"
 #include "time_mem.h"
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

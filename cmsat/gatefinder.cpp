@@ -32,6 +32,8 @@
 #include "vtkMutableUndirectedGraph.h"
 #include "vtkMutableGraphHelper.h"
 #endif //USE_VTK
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "solvertypes.h"
 
+namespace CMSat {
 
 class Solver;
 
@@ -106,15 +107,6 @@ class TransCache {
         std::vector<LitExtra> lits;
         //uint64_t conflictLastUpdated;
 };
-
-namespace std
-{
-    template <>
-    inline void swap (TransCache& m1, TransCache& m2)
-    {
-         m1.lits.swap(m2.lits);
-    }
-}
 
 inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 {
@@ -266,5 +258,16 @@ private:
     vector<Lit> delayedClausesToAddNorm;
     bool addDelayedClauses(Solver* solver);
 };
+
+} //end namespace
+
+namespace std
+{
+    template <>
+    inline void swap (CMSat::TransCache& m1, CMSat::TransCache& m2)
+    {
+         m1.lits.swap(m2.lits);
+    }
+}
 
 #endif //TRANSCACHE_H

@@ -27,16 +27,17 @@
 #include <utility>
 #include <cmath>
 
-using std::make_pair;
-using std::set;
-using std::cout;
-using std::endl;
-
 #include "solver.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "clausecleaner.h"
 #include "completedetachreattacher.h"
+
+using namespace CMSat;
+using std::make_pair;
+using std::set;
+using std::cout;
+using std::endl;
 
 //#define VERBOSE_DEUBUG
 

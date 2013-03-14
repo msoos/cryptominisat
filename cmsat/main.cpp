@@ -49,6 +49,7 @@ number of benefits relative to MiniSat.
 
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+using namespace CMSat;
 using boost::lexical_cast;
 namespace po = boost::program_options;
 using std::cout;

@@ -30,6 +30,8 @@
 #include "clause.h"
 #include "bitarray.h"
 
+namespace CMSat {
+
 using std::set;
 using std::map;
 using std::vector;
@@ -377,6 +379,7 @@ inline const Prober::Stats& Prober::getStats() const
     return globalStats;
 }
 
+} //end namespace;
 
 #endif //__PROBER_H__
 

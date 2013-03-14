@@ -34,6 +34,8 @@
 
 #define BASE_DATA_TYPE uint32_t
 
+namespace CMSat {
+
 struct Clause;
 class Solver;
 class PropEngine;
@@ -131,5 +133,7 @@ class ClauseAllocator {
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 };
+
+} //end namespace
 
 #endif //CLAUSEALLOCATOR_H

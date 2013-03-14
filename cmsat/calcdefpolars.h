@@ -25,6 +25,8 @@
 #include "vec.h"
 #include "clause.h"
 
+namespace CMSat {
+
 class Solver;
 
 class CalcDefPolars
@@ -41,5 +43,7 @@ class CalcDefPolars
 
         Solver* solver;
 };
+
+} //end namespace
 
 #endif //CALCDEFAULTPOLARITIES__H

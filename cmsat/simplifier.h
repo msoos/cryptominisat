@@ -40,6 +40,8 @@
 #include "heap.h"
 #include "touchlist.h"
 
+namespace CMSat {
+
 using std::vector;
 using std::list;
 using std::map;
@@ -835,5 +837,7 @@ inline bool Simplifier::getAnythingHasBeenBlocked() const
 {
     return xorFinder;
 }*/
+
+} //end namespace
 
 #endif //SIMPLIFIER_H

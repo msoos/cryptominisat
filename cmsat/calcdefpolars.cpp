@@ -23,6 +23,8 @@
 #include "assert.h"
 #include "time_mem.h"
 #include "solver.h"
+
+using namespace CMSat;
 using std::cout;
 using std::endl;
 

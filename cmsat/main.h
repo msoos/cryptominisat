@@ -29,10 +29,12 @@
 #include "solvertypes.h"
 #include "solverconf.h"
 
-class Solver;
-
 using std::string;
 using std::vector;
+
+namespace CMSat {
+    class Solver;
+}
 
 class Main
 {
@@ -44,7 +46,7 @@ class Main
 
     private:
 
-        Solver* solver;
+        CMSat::Solver* solver;
 
         //File reading
         void readInAFile(const string& filename);
@@ -62,7 +64,7 @@ class Main
         int correctReturnValue(const lbool ret) const;
 
         //Config
-        SolverConf conf;
+        CMSat::SolverConf conf;
         int numThreads;
         bool debugLib;
         bool debugNewVar;
