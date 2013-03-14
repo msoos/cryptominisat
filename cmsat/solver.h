@@ -632,8 +632,8 @@ inline void Solver::remove_from_stamps(const Var var)
     }
     for(size_t i = 0; i < timestamp.size(); i++) {
         for(int i2 = 0; i2 < 2; i2++) {
-            if (timestamp[i].dominator[types[i]].var() == var) {
-                timestamp[i].dominator[types[i]] = lit_Undef;
+            if (timestamp[i].dominator[types[i2]].var() == var) {
+                timestamp[i].dominator[types[i2]] = lit_Undef;
             }
         }
     }
