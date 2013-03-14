@@ -47,6 +47,8 @@ using std::endl;
 #include "mysqlstats.h"
 #endif
 
+//#define DEBUG_RENUMBER
+
 //#define DEBUG_TRI_SORTED_SANITY
 
 Solver::Solver(const SolverConf& _conf) :
@@ -108,6 +110,10 @@ bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
 
     if (!addClauseHelper(ps))
         return false;
+
+    if (!replacevar_uneliminate_clause(ps)) {
+        return false;
+    }
 
     if (!addXorClauseInt(ps, rhs, true))
         return false;
@@ -437,7 +443,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
-    for (uint32_t i = 0; i != ps.size(); i++) {
+    for (size_t i = 0; i < ps.size(); i++) {
         Lit origLit = ps[i];
 
         //Update variable numbering
@@ -451,9 +457,22 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         << ps[i]
         << endl;
         #endif
+    }
 
-        //Update to correct lit
-        origLit = ps[i];
+    //Randomise
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::swap(ps[i], ps[(mtrand.randInt() % (ps.size()-i)) + i]);
+    }
+
+    return true;
+}
+
+bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
+{
+    //Update replace, uneliminate
+    for (size_t i = 0; i < ps.size(); i++) {
+        //Update to correct lit -- replacer
+        Lit origLit = ps[i];
         ps[i] = varReplacer->getLitReplacedWith(ps[i]);
         #ifdef VERBOSE_DEBUG
         cout
@@ -472,11 +491,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             if (!simplifier->unEliminate(ps[i].var()))
                 return false;
         }
-    }
-
-    //Randomise
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        std::swap(ps[i], ps[(mtrand.randInt() % (ps.size()-i)) + i]);
     }
 
     return true;
@@ -506,8 +520,13 @@ bool Solver::addClause(const vector<Lit>& lits)
     const size_t origTrailSize = trail.size();
 
     vector<Lit> ps = lits;
-    if (!addClauseHelper(ps))
+    if (!addClauseHelper(ps)) {
         return false;
+    }
+
+    if (!replacevar_uneliminate_clause(ps)) {
+        return false;
+    }
 
     Clause* cl = addClauseInt(ps);
 
@@ -517,6 +536,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
+
     return ok;
 }
 
@@ -607,36 +627,12 @@ void Solver::renumberVariables()
     double myTime = cpuTime();
     clauseCleaner->removeAndCleanAll();
 
-    /*vector<uint32_t> myOuterToInter;
-    myOuterToInter.push_back(2);
-    myOuterToInter.push_back(3);
-    myOuterToInter.push_back(1);
-    myOuterToInter.push_back(0);
-    myOuterToInter.push_back(4);
-    myOuterToInter.push_back(5);
-
-    vector<uint32_t> myInterToOUter;
-    myInterToOUter.push_back(3);
-    myInterToOUter.push_back(2);
-    myInterToOUter.push_back(0);
-    myInterToOUter.push_back(1);
-    myInterToOUter.push_back(4);
-    myInterToOUter.push_back(5);
-
-    vector<uint32_t> toreorder;
-    for(size_t i = 0; i < 6; i++)
-        toreorder.push_back(i);
-
-    //updateBySwap(toreorder, seen, myOuterToInter);
-    updateVarsArray(toreorder, myInterToOUter);
-    for(size_t i = 0; i < 6; i++) {
-        cout << toreorder[i] << " , ";
-    }
-
-    cout << endl;
-    exit(-1);*/
-
     //outerToInter[10] = 0 ---> what was 10 is now 0.
+
+    #ifdef DEBUG_RENUMBER
+    printArray(interToOuterMain, "interToOuterMain");
+    printArray(outerToInterMain, "outerToInterMain");
+    #endif
 
     //Fill the first part of interToOuter with vars that are used
     vector<Var> outerToInter(nVars());
@@ -678,13 +674,14 @@ void Solver::renumberVariables()
 
     //Update updater data
     updateArray(interToOuterMain, interToOuter);
-    updateVarsMap(outerToInterMain, outerToInter);
+    updateArrayMapCopy(outerToInterMain, outerToInter);
 
-    //For debug
-    /*printArray(outerToInter, "outerToInter");
-    printArray(outerToInterMain, "outerToInterMain");
+    #ifdef DEBUG_RENUMBER
     printArray(interToOuter, "interToOuter");
-    printArray(interToOuterMain, "interToOuterMain");*/
+    printArray(outerToInter, "outerToInter");
+    printArray(interToOuterMain, "interToOuterMain");
+    printArray(outerToInterMain, "outerToInterMain");
+    #endif
 
 
     //Update local data
@@ -759,6 +756,28 @@ void Solver::renumberVariables()
         << (cpuTime() - myTime)
         << endl;
     }
+
+    //Test for reflectivity of interToOuterMain & outerToInterMain
+    vector<Var> test(nVars());
+    for(size_t i = 0; i  < nVars(); i++) {
+        test[i] = i;
+    }
+    updateArrayRev(test, interToOuterMain);
+    #ifdef DEBUG_RENUMBER
+    for(size_t i = 0; i < nVars(); i++) {
+        cout << i << ": "
+        << std::setw(2) << test[i] << ", "
+        << std::setw(2) << outerToInterMain[i]
+        << endl;
+    }
+    #endif
+    for(size_t i = 0; i < nVars(); i++) {
+        assert(test[i] == outerToInterMain[i]);
+    }
+    #ifdef DEBUG_RENUMBER
+    cout << "Passed test" << endl;
+    #endif
+
 }
 
 Var Solver::newVar(const bool dvar)
@@ -1144,6 +1163,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Not much to do, just return l_False
         return l_False;
     } else if (status == l_True) {
+        //If literal stats are wrong, the solution is probably wrong
+        checkStats();
+
         //Extend solution
         SolutionExtender extender(this, solution);
         extender.extend();

@@ -1178,6 +1178,7 @@ bool Simplifier::unEliminate(const Var var)
     globalStats.numVarsElimed--;
     solver->varData[var].elimed = ELIMED_NONE;
     solver->setDecisionVar(var);
+    solver->remove_from_stamps(var);
 
     //Find if variable is really needed to be eliminated
     map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
@@ -1198,8 +1199,16 @@ bool Simplifier::unEliminate(const Var var)
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
         cout << "Uneliminating " << cl << " on var " << var+1 << endl;
         #endif
-        bool ret = solver->addClause(cl);
-        if (!ret)
+        vector<Lit> tmp(cl);
+        bool ret = solver->replacevar_uneliminate_clause(tmp);
+        if (ret) {
+            Clause* cl = solver->addClauseInt(tmp);
+            if (cl) {
+                solver->longIrredCls.push_back(solver->clAllocator->getOffset(cl));
+            }
+        }
+
+        if (!solver->okay())
             return false;
     }
 

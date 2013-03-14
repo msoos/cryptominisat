@@ -445,7 +445,8 @@ class Solver : public Searcher
 
         /////////////////////
         // Clauses
-        bool          addClauseHelper(vector<Lit>& ps);
+        bool addClauseHelper(vector<Lit>& ps);
+        bool replacevar_uneliminate_clause(vector<Lit>& ps);
         vector<char>        decisionVar;
         vector<ClOffset>    longIrredCls;          ///< List of problem clauses that are larger than 2
         vector<ClOffset>    longRedCls;          ///< List of learnt clauses.
@@ -460,6 +461,7 @@ class Solver : public Searcher
         // Stamping
         Lit updateLit(Lit lit) const;
         void updateDominators();
+        void remove_from_stamps(const Var var);
 
         /////////////////
         // Debug
@@ -609,6 +611,22 @@ inline string Solver::clauseBackNumbered(const T& cl) const
     }
 
     return ss.str();
+}
+
+inline void Solver::remove_from_stamps(const Var var)
+{
+    int types[] = {STAMP_IRRED, STAMP_RED};
+    for(int i = 0; i < 2; i++) {
+        timestamp[Lit(var, false).toInt()].dominator[types[i]] = lit_Undef;
+        timestamp[Lit(var, true).toInt()].dominator[types[i]] = lit_Undef;
+    }
+    for(size_t i = 0; i < timestamp.size(); i++) {
+        for(int i2 = 0; i2 < 2; i2++) {
+            if (timestamp[i].dominator[types[i]].var() == var) {
+                timestamp[i].dominator[types[i]] = lit_Undef;
+            }
+        }
+    }
 }
 
 #endif //THREADCONTROL_H

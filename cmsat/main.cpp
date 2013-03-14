@@ -809,7 +809,7 @@ int Main::solve()
                     lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
                 }
             }
-            bool ret = solver->addClause(lits);
+            solver->addClause(lits);
         }
     }
 
