@@ -366,7 +366,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Stats
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 700000000;
+    uint64_t maxCountTime = 300000000;
     if (solver->binTri.irredLits + solver->binTri.redLits < 300000)
         maxCountTime *= 2;
     double myTime = cpuTime();
@@ -389,16 +389,16 @@ bool ClauseVivifier::vivifyClausesCache(
     vector<char> seen_subs(solver->nVars()*2); //For subsumption
     bool needToFinish = false;
 
-    vector<ClOffset>::iterator i = clauses.begin();
-    vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator
-        end = clauses.end()
-        ; i != end
+    size_t i = solver->mtrand.randInt(clauses.size()-1);
+    size_t j = i;
+    const size_t end = clauses.size();
+    for (
+        ; i < end
         ; i++
     ) {
         //Check status
         if (needToFinish) {
-            *j++ = *i;
+            clauses[j++] = clauses[i];
             continue;
         }
         if (countTime > maxCountTime) {
@@ -407,7 +407,7 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Setup
-        ClOffset offset = *i;
+        ClOffset offset = clauses[i];
         Clause& cl = *solver->clAllocator->getPointer(offset);
         assert(cl.size() > 3);
         countTime += cl.size()*2;
@@ -643,7 +643,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //If nothing to do, then move along
         if (lits.size() == cl.size() && !isSubsumed) {
-            *j++ = *i;
+            clauses[j++] = clauses[i];
             continue;
         }
 
@@ -660,11 +660,13 @@ bool ClauseVivifier::vivifyClausesCache(
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
             solver->clAllocator->clauseFree(offset);
 
-            if (c2 != NULL)
-                *j++ = solver->clAllocator->getOffset(c2);
+            if (c2 != NULL) {
+                clauses[j++] = solver->clAllocator->getOffset(c2);
+            }
 
-            if (!solver->ok)
+            if (!solver->ok) {
                 needToFinish = true;
+            }
         }
     }
     clauses.resize(clauses.size() - (i-j));
