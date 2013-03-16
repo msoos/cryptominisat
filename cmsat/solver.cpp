@@ -1682,6 +1682,7 @@ void Solver::printMinStats() const
         , memUsed()/(1024UL*1024UL)
         , "MB"
     );
+    implCache.printStatsSort(this);
 }
 
 void Solver::printFullStats() const
@@ -1803,6 +1804,8 @@ void Solver::printFullStats() const
                     , "% time");
     clauseVivifier->getStats().print(nVars());
 
+    implCache.printStats(this);
+
     //Other stats
     printStatsLine("c Conflicts in UIP"
         , sumStats.conflStats.numConflicts
@@ -1849,11 +1852,15 @@ void Solver::printFullStats() const
         , "MB"
     );
 
+    printStatsLine("c Mem for impl cache"
+        , implCache.memoryUsedInMB()
+        , "MB"
+    );
+
     printStatsLine("c Mem for search stats"
         , hist.getMemUsed()/(1024UL*1024UL)
         , "MB"
     );
-
 
     size_t searchMem = 0;
     searchMem += toPropNorm.capacity()*sizeof(Lit);

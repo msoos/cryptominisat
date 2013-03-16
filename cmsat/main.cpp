@@ -490,6 +490,8 @@ void Main::parseCommandLine()
         , "Maximum size of the implication cache in MB. It may temporarily reach higher usage, but will be deleted&disabled if this limit is reached.")
     ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
         , "Calculate literal reachability")
+    ("cachecutoff", po::value<size_t>(&conf.cacheUpdateCutoff)->default_value(conf.cacheUpdateCutoff)
+        , "If the number of literals propagated by a literal is more than this, it's not included into the implication cache")
     ;
 
     po::options_description sqlOptions("SQL options");

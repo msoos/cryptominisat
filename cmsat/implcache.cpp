@@ -49,6 +49,48 @@ size_t ImplCache::memoryUsedInMB() const
     return (size_t)MBused;
 }
 
+void ImplCache::printStats(const Solver* solver) const
+{
+    cout
+    << "--------- Implication Cache Stats Start ----------"
+    << endl;
+
+    printStatsSort(solver);
+
+    cout
+    << "--------- Implication Cache Stats End   ----------"
+    << endl;
+}
+
+void ImplCache::printStatsSort(const Solver* solver) const
+{
+    size_t numHasElems = 0;
+    size_t totalElems = 0;
+    size_t activeLits = 0;
+
+    for(size_t i = 0; i < implCache.size(); i++) {
+        Lit lit = Lit::toLit(i);
+
+        if (solver->decisionVar[lit.var()]) {
+            activeLits++;
+            totalElems += implCache[i].lits.size();
+            numHasElems += !implCache[i].lits.empty();
+        }
+    }
+
+    printStatsLine(
+        "lits having cache"
+        , (double)numHasElems/(double)activeLits * 100.0
+        , "% of decision lits"
+    );
+
+    printStatsLine(
+        "avg num elems in cache/lit"
+        , (double)totalElems/(double)numHasElems
+        , "extralits"
+    );
+}
+
 void ImplCache::clean(Solver* solver)
 {
     assert(solver->ok);

@@ -119,6 +119,8 @@ inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 
 class ImplCache  {
     public:
+        void printStats(const Solver* solver) const;
+        void printStatsSort(const Solver* solver) const;
         size_t memoryUsedInMB() const;
         std::vector<TransCache> implCache;
 
