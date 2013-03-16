@@ -1419,26 +1419,24 @@ ClauseUsageStats Solver::sumClauseData(
             cout << "c irred";
         }
         cout
+        #ifdef STATS_NEEDED
         << " lits visit: "
         << std::setw(8) << stats.sumLitVisited/1000UL
-        << "K";
+        << "K"
 
-        cout
         << " cls visit: "
         << std::setw(7) << stats.sumLookedAt/1000UL
-        << "K";
+        << "K"
+        #endif
 
-        cout
         << " prop: "
         << std::setw(5) << stats.sumProp/1000UL
-        << "K";
+        << "K"
 
-        cout
         << " conf: "
         << std::setw(5) << stats.sumConfl/1000UL
-        << "K";
+        << "K"
 
-        cout
         << " UIP used: "
         << std::setw(5) << stats.sumUsedUIP/1000UL
         << "K"
