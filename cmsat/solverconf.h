@@ -38,7 +38,6 @@ class SolverConf
         uint32_t  var_inc_multiplier;
         uint32_t  var_inc_divider;
         uint32_t  var_inc_variability;
-        bool      rarely_bump_var_act;
 
 	//Clause cleaning
         clauseCleaningTypes clauseCleaningType;

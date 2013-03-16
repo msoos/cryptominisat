@@ -28,7 +28,6 @@ SolverConf::SolverConf() :
         , var_inc_multiplier(11)
         , var_inc_divider(10)
         , var_inc_variability(0)
-        , rarely_bump_var_act(false)
 
         //Clause cleaning
         , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)

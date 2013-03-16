@@ -351,34 +351,6 @@ class AgilityData
         double agility;
 };
 
-struct SearchFuncParams
-{
-    SearchFuncParams(
-        uint64_t _conflictsToDo
-        , RestartType _rest_type
-        , uint64_t _maxNumConfl = std::numeric_limits< uint64_t >::max()
-        , const bool _update = true
-    ) :
-        needToStopSearch(false)
-        , conflictsDoneThisRestart(0)
-        , conflictsToDo(_conflictsToDo)
-        , maxNumConfl(_maxNumConfl)
-        , update(_update)
-        , numAgilityNeedRestart(0)
-        , rest_type(_rest_type)
-    {}
-
-    bool needToStopSearch;
-    uint64_t conflictsDoneThisRestart;
-
-    const uint64_t conflictsToDo;
-    const uint64_t maxNumConfl;
-    const bool update;
-
-    uint64_t numAgilityNeedRestart;
-    RestartType rest_type;
-};
-
 template<class T, class T2> void printStatsLine(
     string left
     , T value

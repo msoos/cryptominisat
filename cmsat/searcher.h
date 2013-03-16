@@ -673,35 +673,52 @@ class Searcher : public PropEngine
         // Searching
         /// Search for a given number of conflicts.
         lbool search(
-            const SearchFuncParams _params
-            , uint64_t* geom_max
+            uint64_t* geom_max
         );
         lbool burstSearch();
-        bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
+        bool  handle_conflict(PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
-        void  checkNeedRestart(SearchFuncParams& params, uint64_t* geom_max);     // Helper function to decide if we need to restart during search
+        void  checkNeedRestart(uint64_t* geom_max);     // Helper function to decide if we need to restart during search
         RestartType decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
 
         ///////////////
         // Conflicting
+        struct SearchParams
+        {
+            void clear()
+            {
+                update = true;
+                needToStopSearch = false;
+                conflictsDoneThisRestart = 0;
+                numAgilityNeedRestart = 0;
+            }
+
+            bool needToStopSearch;
+            bool update;
+            uint64_t conflictsDoneThisRestart;
+            uint64_t conflictsToDo;
+            uint64_t numAgilityNeedRestart;
+            RestartType rest_type;
+        };
+        SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         Clause* analyze(
             PropBy confl //The conflict that we are investigating
             , vector<Lit>& out_learnt    //learnt clause
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
-            , ResolutionTypes<uint16_t> &resolutions   //number of resolutions made
+            , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
         );
         MyStack<Lit> analyze_stack;
         vector<Lit> dummy;
+        vector<std::pair<Lit, size_t> > lastDecisionLevel;
         bool litRedundant(Lit p, uint32_t abstract_levels);
 
         void analyzeHelper(
             Lit lit
             , int& pathC
             , vector<Lit>& out_learnt
-            , bool var_bump_necessary
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
 

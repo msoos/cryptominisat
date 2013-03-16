@@ -135,21 +135,17 @@ void Searcher::analyzeHelper(
     const Lit lit
     , int& pathC
     , vector<Lit>& out_learnt
-    , bool var_bump_necessary
 ) {
     const Var var = lit.var();
     assert(varData[var].elimed == ELIMED_NONE
-        || varData[var].elimed == ELIMED_QUEUED_VARREPLACER);
+        || varData[var].elimed == ELIMED_QUEUED_VARREPLACER
+    );
 
     //If var is at level 0, don't do anything with it, just skip
     if (varData[var].level == 0)
         return;
 
-    if (seen2[var] == 0 && //hasn't been bumped yet
-        (
-          (var_bump_necessary && conf.rarely_bump_var_act) //rarely bump, but bump this time
-          || !conf.rarely_bump_var_act //always bump
-        )
+    if (seen2[var] == 0//hasn't been bumped yet
     ) {
         varBumpActivity(var);
         seen2[var] = 1;
@@ -160,10 +156,23 @@ void Searcher::analyzeHelper(
     if (!seen[var]) {
         seen[var] = 1;
 
-        if (varData[var].level == decisionLevel())
+        if (varData[var].level == decisionLevel()) {
             pathC++;
-        else
+
+            //Glucose 2.1
+            if (params.rest_type != geom_restart
+                && varData[var].reason != PropBy()
+                && varData[var].reason.getType() == clause_t
+            ) {
+                Clause* cl = clAllocator->getPointer(varData[var].reason.getClause());
+                if (cl->learnt()) {
+                    lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
+                }
+            }
+        }
+        else {
             out_learnt.push_back(lit);
+        }
     }
 }
 
@@ -187,6 +196,7 @@ Clause* Searcher::analyze(
     int index = trail.size() - 1;
     out_btlevel = 0;
     PropBy oldConfl;
+    lastDecisionLevel.clear();
 
     //cout << "---- Start analysis -----" << endl;
     toClear.clear();
@@ -204,7 +214,7 @@ Clause* Searcher::analyze(
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (tri): " << confl.lit2() << endl;
                 #endif
-                analyzeHelper(confl.lit2(), pathC, out_learnt, true);
+                analyzeHelper(confl.lit2(), pathC, out_learnt);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
@@ -217,9 +227,9 @@ Clause* Searcher::analyze(
 
 
                 if (p == lit_Undef)
-                    analyzeHelper(failBinLit, pathC, out_learnt, true);
+                    analyzeHelper(failBinLit, pathC, out_learnt);
 
-                analyzeHelper(confl.lit1(), pathC, out_learnt, true);
+                analyzeHelper(confl.lit1(), pathC, out_learnt);
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (bin/tri): " << confl.lit1() << endl;
                 #endif
@@ -251,7 +261,7 @@ Clause* Searcher::analyze(
                     if (p != lit_Undef && j == 0)
                         continue;
 
-                    analyzeHelper(cl[j], pathC, out_learnt, !cl.learnt());
+                    analyzeHelper(cl[j], pathC, out_learnt);
                 }
                 break;
             }
@@ -364,6 +374,18 @@ Clause* Searcher::analyze(
         std::swap(out_learnt[max_i], out_learnt[1]);
         out_btlevel = varData[out_learnt[1].var()].level;
     }
+
+    //Glucose 2.1
+    for (vector<pair<Lit, size_t> >::const_iterator
+        it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->second < glue) {
+            varBumpActivity(it->first.var());
+        }
+    }
+    lastDecisionLevel.clear();
 
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
@@ -802,12 +824,11 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Searcher::search(SearchFuncParams _params, uint64_t* geom_max)
+lbool Searcher::search(uint64_t* geom_max)
 {
     assert(ok);
 
     //Stats reset & update
-    SearchFuncParams params(_params);
     if (params.update)
         stats.numRestarts ++;
     agility.reset(conf.agilityLimit);
@@ -904,11 +925,11 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t* geom_max)
             stats.conflStats.update(lastConflictCausedBy);
 
             //If restart is needed, set it as so
-            checkNeedRestart(params, geom_max);
+            checkNeedRestart(geom_max);
             hist.conflictAfterConflict.push(lastWasConflict);
             lastWasConflict = true;
 
-            if (!handle_conflict(params, confl))
+            if (!handle_conflict(confl))
                 return l_False;
 
         } else {
@@ -982,7 +1003,7 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t* geom_max)
+void Searcher::checkNeedRestart(uint64_t* geom_max)
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
@@ -1083,7 +1104,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
+bool Searcher::handle_conflict(PropBy confl)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict" << endl;
@@ -1342,7 +1363,10 @@ lbool Searcher::burstSearch()
     var_inc_multiplier = 1;
 
     //Do burst
-    lbool status = search(SearchFuncParams(conf.burstSearchLen, no_restart), NULL);
+    params.clear();
+    params.conflictsToDo = conf.burstSearchLen;
+    params.rest_type = no_restart;
+    lbool status = search(NULL);
 
     //Restore config
     conf.random_var_freq = backup_rand;
@@ -1717,7 +1741,6 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
     //Current solving status
     lbool status = l_Undef;
-    RestartType rest_type;
 
     //Burst seach
     status = burstSearch();
@@ -1741,7 +1764,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         assert(order_heap.heapProperty());
 
         //Set up data for search
-        rest_type = decide_restart_type();
+        params.rest_type = decide_restart_type();
         genRandomVarActMultDiv();
 
         //Set up restart printing status
@@ -1760,6 +1783,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         && stats.conflStats.numConflicts < maxConfls
         && cpuTime() < solver->conf.maxTime
     ) {
+        //Print search loop number if needed
         if (conf.verbosity >= 6) {
             cout
             << "c search loop " << loopNum
@@ -1771,14 +1795,10 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
         lastRestartConfl = sumConflicts();
 
-        //Search, update 'rest' for geometric restart
-        status = search(
-            SearchFuncParams(
-                maxConfls-stats.conflStats.numConflicts
-                , rest_type
-            )
-            , &geom_max
-        );
+        //Set up params
+        params.clear();
+        params.conflictsToDo = maxConfls-stats.conflStats.numConflicts;
+        status = search(&geom_max);
         geom_max *= conf.restart_inc;
         check_if_print_restart_stat(status);
 
