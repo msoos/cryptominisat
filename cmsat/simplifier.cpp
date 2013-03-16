@@ -2794,11 +2794,13 @@ bool Simplifier::merge(
                 }
             }
 
+            /*
+            //TODO
             //Use watchlists
             if (numMaxVarElimAgressiveCheck > 0) {
                 if (agressiveCheck(lit, noPosLit, retval))
                     goto end;
-            }
+            }*/
         }
     }
 
