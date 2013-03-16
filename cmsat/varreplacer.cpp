@@ -432,7 +432,9 @@ bool VarReplacer::replaceImplicit()
     solver->binTri.irredBins -= removedNonLearntBin/2;
     solver->binTri.redTris -= removedLearntTri/3;
     solver->binTri.irredTris -= removedNonLearntTri/3;
+    #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
+    #endif
 
     //Global stats update
     runStats.removedBinClauses += removedLearntBin/2 + removedNonLearntBin/2;

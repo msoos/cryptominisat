@@ -1186,7 +1186,9 @@ lbool Solver::simplifyProblem()
 {
     assert(ok);
     testAllClauseAttach();
+    #ifdef DEBUG_IMPLICIT_STATS
     checkStats();
+    #endif
     reArrangeClauses();
 
     //SCC&VAR-REPL

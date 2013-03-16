@@ -154,7 +154,10 @@ void ClauseCleaner::treatImplicitClauses()
     solver->binTri.redBins -= remLBin/2;
     solver->binTri.irredTris -= remNonLTri/3;
     solver->binTri.redTris -= remLTri/3;
+
+    #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
+    #endif
 }
 
 void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
