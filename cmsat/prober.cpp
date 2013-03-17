@@ -364,14 +364,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
             if (propValue[var] == solver->value(var).getBool()) {
                 //they both imply the same
                 bothSame.push_back(Lit(var, !propValue[var]));
-            } /*else if (c != (int)solver->trail_lim[0]) {
-                bool isEqualTrue;
-                assert(litToSet.sign() == false);
-                tmpPs[0] = Lit(~lit.var(), false);
-                tmpPs[1] = Lit(var, false);
-                isEqualTrue = !propValue[var];
-                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], isEqualTrue));
-            }*/
+            }
         }
 
         visitedAlready[thisLit.toInt()] = 1;
