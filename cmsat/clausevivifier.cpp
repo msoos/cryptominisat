@@ -366,7 +366,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Stats
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 300000000;
+    uint64_t maxCountTime = 700000000;
     if (solver->binTri.irredLits + solver->binTri.redLits < 300000)
         maxCountTime *= 2;
     double myTime = cpuTime();
@@ -389,7 +389,17 @@ bool ClauseVivifier::vivifyClausesCache(
     vector<char> seen_subs(solver->nVars()*2); //For subsumption
     bool needToFinish = false;
 
-    size_t i = solver->mtrand.randInt(clauses.size()-1);
+    //Randomise order of clauses
+    if (!clauses.empty()) {
+        for(size_t i = 0; i < clauses.size()-1; i++) {
+            std::swap(
+                clauses[i]
+                , clauses[i + solver->mtrand.randInt(clauses.size()-i-1)]
+            );
+        }
+    }
+
+    size_t i = 0; //solver->mtrand.randInt(clauses.size()-1);
     size_t j = i;
     const size_t end = clauses.size();
     for (
