@@ -97,8 +97,8 @@ SolverConf::SolverConf() :
         , doTransRed       (true)
         , doStamp          (true)
         , doCache          (true)
-        , cacheUpdateCutoff(200)
-        , maxCacheSizeMB   (1024)
+        , cacheUpdateCutoff(2000)
+        , maxCacheSizeMB   (2048)
 
         //XOR
         , doFindXors       (true)
