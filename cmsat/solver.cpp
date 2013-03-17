@@ -906,7 +906,7 @@ sorted and then removed
 CleaningStats Solver::reduceDB()
 {
     //Clean the clause database before doing cleaning
-    varReplacer->performReplace();
+    //varReplacer->performReplace();
     clauseCleaner->removeAndCleanAll();
 
     const double myTime = cpuTime();
@@ -931,8 +931,8 @@ CleaningStats Solver::reduceDB()
     }
 
     //Subsume
-    uint64_t sumConfl = solver->sumConflicts();
-    simplifier->subsumeLearnts();
+    uint64_t sumConfl = sumConflicts();
+    //simplifier->subsumeLearnts();
     if (conf.verbosity >= 3) {
         cout
         << "c Time wasted on clean&replace&sub: "
