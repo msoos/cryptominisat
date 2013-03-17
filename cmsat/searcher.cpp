@@ -850,7 +850,7 @@ lbool Searcher::search(uint64_t* geom_max)
         //If decision level==1, then do hyperbin & transitive reduction
         if (conf.otfHyperbin && decisionLevel() == 1) {
             stats.advancedPropCalled++;
-            failed = propagateFull(STAMP_RED);
+            failed = propagateFullBFS();
             if (failed != lit_Undef) {
 
                 //Update conflict stats

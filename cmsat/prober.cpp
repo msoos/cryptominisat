@@ -107,7 +107,7 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 2770L*1000L*1000L;
+    uint64_t numPropsTodo = 2000L*1000L*1000L;
 
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -313,9 +313,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
     Lit failed = lit_Undef;
     if (solver->mtrand.randInt(1) == 0) {
         const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
-        failed = solver->propagateFull(stampType);
+        failed = solver->propagateFullDFS(stampType);
     } else {
-        failed = solver->propagateFull2();
+        failed = solver->propagateFullBFS();
     }
     if (failed != lit_Undef) {
         if (solver->conf.verbosity >= 6) {

@@ -709,8 +709,141 @@ PropBy PropEngine::propagateNonLearntBin()
 
     return PropBy();
 }
+Lit PropEngine::propagateFullBFS()
+{
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    cout << "Prop full started" << endl;
+    #endif
 
-Lit PropEngine::propagateFull(
+    PropBy confl;
+
+    //Assert startup: only 1 enqueued, uselessBin is empty
+    assert(uselessBin.empty());
+    assert(decisionLevel() == 1);
+
+    //The toplevel decision has to be set specifically
+    //If we came here as part of a backtrack to decision level 1, then
+    //this is already set, and there is no need to set it
+    if (trail.size() - trail_lim.back() == 1) {
+        //Set up root node
+        Lit root = trail[qhead];
+        varData[root.var()].reason = PropBy(~lit_Undef, false, false, false);
+    }
+
+    uint32_t nlBinQHead = qhead;
+    uint32_t lBinQHead = qhead;
+
+    needToAddBinClause.clear();
+    PropResult ret = PROP_NOTHING;
+    start:
+
+    //Propagate binary non-learnt
+    while (nlBinQHead < trail.size()) {
+        const Lit p = trail[nlBinQHead++];
+        size_t lastTrailSize = trail.size();
+        const vec<Watched>& ws = watches[(~p).toInt()];
+        propStats.bogoProps += 1;
+        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+
+            //If something other than non-learnt binary, skip
+            if (!k->isBinary() || k->learnt())
+                continue;
+
+            ret = propBin(p, k, confl);
+            if (ret == PROP_FAIL)
+                return analyzeFail(confl);
+
+        }
+        propStats.bogoProps += ws.size()*4;
+    }
+
+    //Propagate binary learnt
+    ret = PROP_NOTHING;
+    while (lBinQHead < trail.size()) {
+        const Lit p = trail[lBinQHead];
+        const vec<Watched>& ws = watches[(~p).toInt()];
+        propStats.bogoProps += 1;
+        size_t done = 0;
+
+        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++, done++) {
+
+            //If something other than learnt binary, skip
+            if (!k->isBinary() || !k->learnt())
+                continue;
+
+            ret = propBin(p, k, confl);
+            if (ret == PROP_FAIL) {
+                return analyzeFail(confl);
+            } else if (ret == PROP_SOMETHING) {
+                propStats.bogoProps += done*4;
+                goto start;
+            } else {
+                assert(ret == PROP_NOTHING);
+            }
+        }
+        lBinQHead++;
+        propStats.bogoProps += done*4;
+    }
+
+    ret = PROP_NOTHING;
+    while (qhead < trail.size()) {
+        const Lit p = trail[qhead];
+        vec<Watched> & ws = watches[(~p).toInt()];
+        propStats.bogoProps += 1;
+
+        vec<Watched>::iterator i = ws.begin();
+        vec<Watched>::iterator j = ws.begin();
+        const vec<Watched>::iterator end = ws.end();
+        for(; i != end; i++) {
+            if (i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
+
+            if (i->isTri()) {
+                *j++ = *i;
+                ret = propTriClause<false>(i, p, confl, NULL);
+                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                    i++;
+                    break;
+                } else {
+                    assert(ret == PROP_NOTHING);
+                    continue;
+                }
+            }
+
+            if (i->isClause()) {
+                ret = propNormalClause<false>(i, j, p, confl, NULL);
+                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                    i++;
+                    break;
+                } else {
+                    assert(ret == PROP_NOTHING);
+                    continue;
+                }
+            }
+        }
+        propStats.bogoProps += ws.size()*4;
+        while(i != end)
+            *j++ = *i++;
+        ws.shrink_(end-j);
+
+        if (ret == PROP_FAIL) {
+            return analyzeFail(confl);
+        } else if (ret == PROP_SOMETHING) {
+            propStats.bogoProps += ws.size()*4;
+            goto start;
+        }
+
+        qhead++;
+        propStats.bogoProps += ws.size()*4;
+    }
+
+    return lit_Undef;
+}
+
+
+Lit PropEngine::propagateFullDFS(
     const StampType stampType
 ) {
     #ifdef VERBOSE_DEBUG_FULLPROP

@@ -385,7 +385,8 @@ protected:
         , vec<Watched>::const_iterator k
         , PropBy& confl
     );
-    Lit propagateFull(
+    Lit propagateFullBFS();
+    Lit propagateFullDFS(
         const StampType stampType
     );
     void closeAllTimestamps(const StampType stampType);
