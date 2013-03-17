@@ -289,6 +289,7 @@ end:
 
 bool Prober::tryThis(const Lit lit, const bool first)
 {
+    //Clean state if this is the 1st of two
     if (first) {
         propagated.removeThese(propagatedBitSet);
         propagatedBitSet.clear();
