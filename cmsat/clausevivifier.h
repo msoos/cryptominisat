@@ -264,7 +264,7 @@ class ClauseVivifier {
         int64_t timeAvailable;
 
 
-          //Subsumtion of bin with bin
+        //Subsumtion of bin with bin
         struct WatchSorter {
             bool operator()(const Watched& first, const Watched& second)
             {
