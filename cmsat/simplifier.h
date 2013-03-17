@@ -598,7 +598,7 @@ private:
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
     pair<int, int>  heuristicCalcVarElimScore(const Var var) const;
-    bool        merge(
+    bool merge(
         const Watched& ps
         , const Watched& qs
         , const Lit noPosLit
