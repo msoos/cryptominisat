@@ -680,7 +680,9 @@ bool ClauseVivifier::vivifyClausesCache(
         }
     }
     clauses.resize(clauses.size() - (i-j));
+    #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
+    #endif
 
     //Set stats
     tmpStats.numClSubsumed += subBinTri + subsumedStamp + subCache;
