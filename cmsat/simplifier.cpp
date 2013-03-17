@@ -2283,15 +2283,23 @@ int Simplifier::testVarElim(const Var var)
 
     //set-up
     const Lit lit = Lit(var, false);
-    const vec<Watched>& poss = solver->watches[lit.toInt()];
-    const vec<Watched>& negs = solver->watches[(~lit).toInt()];
+    vec<Watched>& poss = solver->watches[lit.toInt()];
+    vec<Watched>& negs = solver->watches[(~lit).toInt()];
+    std::sort(poss.begin(), poss.end(), WatchSorter());
+    std::sort(negs.begin(), negs.end(), WatchSorter());
+    resolvents.clear();
+
+    //Pure literal, no resolvents
+    //we look at "pos" and "neg" (and not poss&negs) because we don't care about learnt clauses
+    if (pos.totalCls() == 0 || neg.totalCls() == 0) {
+        return -100;
+    }
 
     /*// Heuristic CUT OFF:
     if (posSize >= 15 && negSize >= 15)
         return -1000;*/
 
     // Count clauses/literals after elimination
-    resolvents.clear();
     uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;

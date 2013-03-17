@@ -469,6 +469,22 @@ private:
     Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
 
+    struct WatchSorter {
+        bool operator()(const Watched& first, const Watched& second)
+        {
+            //Anything but clause!
+            if (first.isClause())
+                return false;
+            if (second.isClause())
+                return true;
+
+            //BIN is better than TRI
+            if (first.isBinary() && second.isTri()) return true;
+
+            return false;
+        }
+    };
+
     /**
     @brief Sort clauses according to size
     */
@@ -567,6 +583,11 @@ private:
             , lit(0)
 
         {};
+
+        size_t totalCls() const
+        {
+            return bin + tri + longer;
+        }
 
         size_t bin;
         size_t tri;
