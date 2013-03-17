@@ -310,8 +310,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
     if (solver->conf.verbosity >= 6)
         cout << "c Probing lit " << lit << endl;
 
-    const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
-    const Lit failed = solver->propagateFull(stampType);
+    Lit failed = lit_Undef;
+    if (solver->mtrand.randInt(1) == 0) {
+        const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
+        failed = solver->propagateFull(stampType);
+    } else {
+        failed = solver->propagateFull2();
+    }
     if (failed != lit_Undef) {
         if (solver->conf.verbosity >= 6) {
             cout << "c Failed on lit " << lit << endl;
