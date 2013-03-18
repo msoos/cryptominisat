@@ -2849,7 +2849,7 @@ void Solver::dumpIfNeeded() const
     //Handle UNSAT
     if (!solver->okay()) {
         cout
-        << "Problem is UNSAT, so simplified and/or learnt clauses cannot be dumped"
+        << "c Problem is UNSAT, so simplified and/or learnt clauses cannot be dumped"
         << endl;
 
         return;
