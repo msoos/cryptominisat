@@ -2846,6 +2846,15 @@ void Solver::dumpIfNeeded() const
         return;
     }
 
+    //Handle UNSAT
+    if (!solver->okay()) {
+        cout
+        << "Problem is UNSAT, so simplified and/or learnt clauses cannot be dumped"
+        << endl;
+
+        return;
+    }
+
     //Don't dump implicit clauses multiple times
     solver->clauseVivifier->subsumeImplicit();
 
