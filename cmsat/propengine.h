@@ -122,21 +122,25 @@ struct VarData
         Stats() :
             posPolarSet(0)
             , negPolarSet(0)
+            #ifdef STATS_NEEDED
             , posDecided(0)
             , negDecided(0)
             , flippedPolarity(0)
+            #endif
         {}
 
         void addData(VarData::Stats& other)
         {
             posPolarSet += other.posPolarSet;
             negPolarSet += other.negPolarSet;
-            flippedPolarity += other.flippedPolarity;
+            #ifdef STATS_NEEDED
             posDecided += other.posDecided;
             negDecided += other.negDecided;
+            flippedPolarity += other.flippedPolarity;
 
             trailLevelHist.addData(other.trailLevelHist);
             decLevelHist.addData(other.decLevelHist);
+            #endif
         }
 
         void reset()
@@ -149,6 +153,7 @@ struct VarData
         uint32_t posPolarSet;
         uint32_t negPolarSet;
 
+        #ifdef STATS_NEEDED
         ///Decided on
         uint32_t posDecided;
         uint32_t negDecided;
@@ -161,6 +166,7 @@ struct VarData
 
         ///The history of levels it was assigned
         AvgCalc<uint32_t> decLevelHist;
+        #endif
     };
 
     VarData() :
