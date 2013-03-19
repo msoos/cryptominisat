@@ -265,8 +265,9 @@ Clause* Solver::addClauseInt(
     #endif
 
     //If caller required final set of lits, return it.
-    if (finalLits)
+    if (finalLits) {
         *finalLits = ps;
+    }
 
     //Handle special cases
     switch (ps.size()) {
