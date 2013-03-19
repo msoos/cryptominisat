@@ -596,7 +596,12 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
     //Find clauses that potentially could be shortened
     vector<ClOffset> subs;
-    subsumer->findSubsumed0(std::numeric_limits< uint32_t >::max(), gate.lits, calcAbstraction(gate.lits), subs);
+    subsumer->findSubsumed0(
+        std::numeric_limits< uint32_t >::max()
+        , gate.lits
+        , calcAbstraction(gate.lits)
+        , subs
+    );
 
     for (size_t i = 0; i < subs.size(); i++) {
         ClOffset offset = subs[i];
