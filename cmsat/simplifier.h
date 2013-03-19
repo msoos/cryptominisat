@@ -567,7 +567,7 @@ private:
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numNonLearntBins(const Lit lit) const;
-    void        addLearntBinaries(const Var var);
+    //void        addLearntBinaries(const Var var);
     void        removeClausesHelper(const vec<Watched>& todo, const Lit lit);
 
 

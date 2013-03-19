@@ -2611,7 +2611,7 @@ end:
     return solver->ok;
 }
 
-void Simplifier::addLearntBinaries(const Var var)
+/*void Simplifier::addLearntBinaries(const Var var)
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
@@ -2644,7 +2644,7 @@ void Simplifier::addLearntBinaries(const Var var)
         }
     }
     assert(solver->value(lit) == l_Undef);
-}
+}*/
 
 /**
 @brief Resolves two clauses on a variable
