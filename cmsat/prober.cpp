@@ -306,6 +306,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     solver->newDecisionLevel();
     solver->enqueue(lit);
+    solver->varData[lit.var()].depth = 0;
 
     if (solver->conf.verbosity >= 6)
         cout << "c Probing lit " << lit << endl;

@@ -179,6 +179,9 @@ struct VarData
     ///contains the decision level at which the assignment was made.
     uint32_t level;
 
+    //Used during hyper-bin and trans-reduction for speed
+    uint32_t depth;
+
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason;
 
@@ -584,6 +587,18 @@ inline void PropEngine::enqueueComplex(
     , const bool learntStep
 ) {
     enqueue(p, PropBy(~ancestor, learntStep, false, false));
+
+    assert(varData[ancestor.var()].level != 0);
+
+    varData[p.var()].depth = varData[ancestor.var()].depth + 1;
+    #ifdef DEBUG_DEPTH
+    cout
+    << "Enqueued "
+    << std::setw(6) << (p)
+    << " by " << std::setw(6) << (~ancestor)
+    << " at depth " << std::setw(4) << varData[p.var()].depth
+    << endl;
+    #endif
 }
 
 /**
@@ -600,7 +615,27 @@ inline Lit PropEngine::removeWhich(
 
     bool onlyNonLearnt = !data.getLearntStep();
     Lit lookingForAncestor = data.getAncestor();
-    if (isAncestorOf(
+
+    if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
+        return lit_Undef;
+
+    bool second_is_deeper = false;
+    bool ambivalent = varData[thisAncestor.var()].depth == varData[lookingForAncestor.var()].depth;
+    if (varData[thisAncestor.var()].depth < varData[lookingForAncestor.var()].depth) {
+        second_is_deeper = true;
+    }
+    #ifdef DEBUG_DEPTH
+    cout
+    << "1st: " << std::setw(6) << thisAncestor
+    << " depth: " << std::setw(4) << varData[thisAncestor.var()].depth
+    << "  2nd: " << std::setw(6) << lookingForAncestor
+    << " depth: " << std::setw(4) << varData[lookingForAncestor.var()].depth
+    ;
+    #endif
+
+
+    if ((ambivalent || !second_is_deeper) &&
+        isAncestorOf(
         conflict
         , thisAncestor
         , thisStepLearnt
@@ -608,13 +643,18 @@ inline Lit PropEngine::removeWhich(
         , lookingForAncestor
         )
     ) {
+        #ifdef DEBUG_DEPTH
+        cout << " -- OK" << endl;
+        #endif
+        //assert(ambivalent || !second_is_deeper);
         return thisAncestor;
     }
 
     onlyNonLearnt = !thisStepLearnt;
     thisStepLearnt = data.getLearntStep();
     std::swap(lookingForAncestor, thisAncestor);
-    if (isAncestorOf(
+    if ((ambivalent || second_is_deeper) &&
+        isAncestorOf(
         conflict
         , thisAncestor
         , thisStepLearnt
@@ -622,8 +662,16 @@ inline Lit PropEngine::removeWhich(
         , lookingForAncestor
         )
     ) {
+        #ifdef DEBUG_DEPTH
+        cout << " -- OK" << endl;
+        #endif
+        //assert(ambivalent || second_is_deeper);
         return thisAncestor;
     }
+
+    #ifdef DEBUG_DEPTH
+    cout << " -- NOTK" << endl;
+    #endif
 
     return lit_Undef;
 }
@@ -675,7 +723,12 @@ inline bool PropEngine::isAncestorOf(
         return false;
     }
 
-    while(thisAncestor != lit_Undef) {
+    //This is as low as we should search -- we cannot find what we are searchig for lower than this
+    const size_t bottom = varData[lookingForAncestor.var()].depth;
+
+    while(thisAncestor != lit_Undef
+        && bottom <= varData[thisAncestor.var()].depth
+    ) {
         propStats.bogoProps ++;
 
         #ifdef VERBOSE_DEBUG_FULLPROP

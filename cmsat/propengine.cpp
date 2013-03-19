@@ -1210,6 +1210,9 @@ PropResult PropEngine::propBin(
 
             //Update data indicating what lead to lit
             varData[lit.var()].reason = PropBy(~p, k->learnt(), false, false);
+            assert(varData[p.var()].level != 0);
+            varData[lit.var()].depth = varData[p.var()].depth + 1;
+            //NOTE: we don't update the levels of other literals... :S
 
             //for correctness, we would need this, but that would need re-writing of history :S
             //if (!onlyNonLearnt) return PropBy();
