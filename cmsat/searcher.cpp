@@ -376,13 +376,15 @@ Clause* Searcher::analyze(
     }
 
     //Glucose 2.1
-    for (vector<pair<Lit, size_t> >::const_iterator
-        it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->second < glue) {
-            varBumpActivity(it->first.var());
+    if (params.rest_type == glue_restart) {
+        for (vector<pair<Lit, size_t> >::const_iterator
+            it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
+            ; it != end
+            ; it++
+        ) {
+            if (it->second < glue) {
+                varBumpActivity(it->first.var());
+            }
         }
     }
     lastDecisionLevel.clear();
