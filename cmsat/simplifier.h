@@ -440,6 +440,7 @@ private:
         , const T& ps
         , const CL_ABST_TYPE abs
         , vector<ClOffset>& out_subsumed
+        , const bool removeImplicit = false
     );
 
     template<class T>
@@ -512,10 +513,11 @@ private:
 //     bool subsumeWithTris();
 
     template<class T>
-    Sub0Ret subsume0Final(
+    Sub0Ret subsume0AndUnlink(
         const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
+        , const bool removeImplicit = false
     );
 
     /////////////////////
@@ -797,6 +799,7 @@ template<class T> void Simplifier::findSubsumed0(
     , const T& ps //Literals in clause
     , const CL_ABST_TYPE abs //Abstraction of literals in clause
     , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
+    , bool removeImplicit
 ) {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed0: ";
@@ -815,15 +818,68 @@ template<class T> void Simplifier::findSubsumed0(
     *toDecrease -= ps.size();
 
     //Go through the occur list of the literal that has the smallest occur list
-    const vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
+    vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
     *toDecrease -= occ.size()*8 + 40;
+
+    vec<Watched>::iterator it = occ.begin();
+    vec<Watched>::iterator it2 = occ.begin();
+    size_t numBinFound = 0;
     for (vec<Watched>::const_iterator
-        it = occ.begin(), end = occ.end()
+        end = occ.end()
         ; it != end
         ; it++
     ) {
-        if (!it->isClause())
+        if (removeImplicit) {
+            if (it->isBinary()
+                && ps.size() == 2
+                && ps[!min_i] == it->lit1()
+                && !it->learnt()
+            ) {
+                /*cout
+                << "ps " << ps << " could subsume this bin: "
+                << ps[min_i] << ", " << it->lit1()
+                << endl;*/
+                numBinFound++;
+
+                //We cannot remove ourselves
+                if (numBinFound > 1) {
+                    removeWBin(solver->watches, it->lit1(), ps[min_i], it->learnt());
+                    solver->binTri.irredBins--;
+                    solver->binTri.irredLits-=2;
+                    continue;
+                }
+            }
+
+            if (it->isTri()
+                && ps.size() == 2
+                && (ps[!min_i] == it->lit1() || ps[!min_i] == it->lit2())
+            ) {
+                /*cout
+                << "ps " << ps << " could subsume this tri: "
+                << ps[min_i] << ", " << it->lit1() << ", " << it->lit2()
+                << endl;
+                */
+                Lit lits[3];
+                lits[0] = ps[min_i];
+                lits[1] = it->lit1();
+                lits[2] = it->lit2();
+                std::sort(lits + 0, lits + 3);
+                removeTriAllButOne(solver->watches, ps[min_i], lits, it->learnt());
+                if (it->learnt()) {
+                    solver->binTri.redTris--;
+                    solver->binTri.redLits-=3;
+                } else {
+                    solver->binTri.irredTris--;
+                    solver->binTri.irredLits-=3;
+                }
+                continue;
+            }
+        }
+        *it2++ = *it;
+
+        if (!it->isClause()) {
             continue;
+        }
 
         *toDecrease -= 15;
 
@@ -847,6 +903,7 @@ template<class T> void Simplifier::findSubsumed0(
             #endif
         }
     }
+    occ.shrink(it-it2);
 }
 
 inline bool Simplifier::getAnythingHasBeenBlocked() const

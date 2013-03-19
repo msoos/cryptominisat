@@ -182,7 +182,7 @@ uint32_t Simplifier::subsume0(ClOffset offset)
     cout << "subsume0-ing with clause: " << cl << endl;
     #endif
 
-    Sub0Ret ret = subsume0Final(
+    Sub0Ret ret = subsume0AndUnlink(
         offset
         , cl
         , cl.abst
@@ -213,15 +213,16 @@ uint32_t Simplifier::subsume0(ClOffset offset)
 @return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
 template<class T>
-Simplifier::Sub0Ret Simplifier::subsume0Final(
+Simplifier::Sub0Ret Simplifier::subsume0AndUnlink(
     const ClOffset offset
     , const T& ps
-    , CL_ABST_TYPE abs
+    , const CL_ABST_TYPE abs
+    , const bool removeImplicit
 ) {
     Sub0Ret ret;
 
     subs.clear();
-    findSubsumed0(offset, ps, abs, subs);
+    findSubsumed0(offset, ps, abs, subs, removeImplicit);
 
     //Go through each clause that can be subsumed
     for (vector<ClOffset>::const_iterator
@@ -240,6 +241,11 @@ Simplifier::Sub0Ret Simplifier::subsume0Final(
         //At least one is non-learnt. Indicate this to caller.
         if (!tmp->learnt())
             ret.subsumedNonLearnt = true;
+
+        /*cout
+        << "This " << ps << " (offset: " << offset << ") subsumed this: "
+        << *tmp << "(offset: " << *it << ")"
+        << endl;*/
 
         unlinkClause(*it);
         ret.numSubsumed++;
@@ -2550,10 +2556,11 @@ bool Simplifier::maybeEliminate(const Var var)
             runStats.subsumedByVE += subsume0(offset);
         } else if (finalLits.size() == 3 || finalLits.size() == 2) {
             //Subsume long
-            Sub0Ret ret = subsume0Final(
+            Sub0Ret ret = subsume0AndUnlink(
                 std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
                 , finalLits //Literals in this binary clause
                 , calcAbstraction(finalLits) //Abstraction of literals
+                , true //subsume implicit ones
             );
             runStats.subsumedByVE += ret.numSubsumed;
             if (ret.numSubsumed > 0) {
