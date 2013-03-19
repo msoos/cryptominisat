@@ -1680,7 +1680,6 @@ RestartType Searcher::decide_restart_type() const
             //If no data yet, default to glue_restart
             rest_type = glue_restart;
         } else {
-
             //Otherwise, choose according to % of pos/neg polarities
             double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
             double percent = ((double)solver->sumPropStats.varSetNeg)/total;
@@ -1690,6 +1689,14 @@ RestartType Searcher::decide_restart_type() const
                 rest_type = glue_restart;
             } else {
                 rest_type = geom_restart;
+            }
+
+            if (solver->conf.verbosity >= 1) {
+                cout
+                << "c percent of negative polarities set: "
+                << std::setprecision(2) << percent
+                << " % (this is used to choose restart type)"
+                << endl;
             }
         }
 
