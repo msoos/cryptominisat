@@ -24,10 +24,13 @@
 using namespace CMSat;
 
 SolverConf::SolverConf() :
+        //Variable activities
         var_inc_start(128)
         , var_inc_multiplier(11)
         , var_inc_divider(10)
         , var_inc_variability(0)
+        , random_var_freq(0)
+        , polarity_mode(polarity_auto)
 
         //Clause cleaning
         , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)
@@ -42,16 +45,27 @@ SolverConf::SolverConf() :
         , maxNumLearntsRatio(10)
         , clauseDecayActivity(1.0/0.999)
 
-        //var picking
-        , random_var_freq(0)
+        //Restarting
         , restart_first(100)
         , restart_inc(1.2)
         , burstSearchLen(300)
         , restartType(auto_restart)
 
+        //Clause minimisation
         , doRecursiveCCMin  (true)
-        , polarity_mode    (polarity_auto)
+        , doMinimLearntMore(true)
+        , doAlwaysFMinim   (false)
+
+        //Verbosity
         , verbosity        (0)
+        , doPrintGateDot   (false)
+        , doPrintConflDot  (false)
+        , printFullStats   (false)
+        , verbStats        (0)
+
+        //Limits
+        , maxTime          (std::numeric_limits<double>::max())
+        , maxConfl         (std::numeric_limits<size_t>::max())
 
         //Agilities
         , agilityG                  (0.9999)
@@ -116,10 +130,6 @@ SolverConf::SolverConf() :
         , doLHBR           (false)
         , propBinFirst     (false)
 
-        //Stats
-        , printFullStats   (false)
-        , verbStats        (0)
-
         //optimisations to do
         , doRenumberVars   (true)
         , dominPickFreq    (5)
@@ -133,10 +143,10 @@ SolverConf::SolverConf() :
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
-        , doMinimLearntMore(true)
+
         , doGateFind       (true)
         , maxGateSize      (20)
-        , doAlwaysFMinim   (false)
+
         , doER             (false)
         , doCalcReach      (true)
         , doAsymmTE        (true)
@@ -145,18 +155,11 @@ SolverConf::SolverConf() :
         , doFindEqLitsWithGates(true)
         , doMixXorAndGates (false)
 
-        //Verbosity
-        , doPrintGateDot   (false)
-        , doPrintConflDot  (false)
-        , maxTime          (std::numeric_limits<double>::max())
-        , maxConfl         (std::numeric_limits<size_t>::max())
-
         , needToDumpLearnts(false)
         , needToDumpSimplified (false)
         , needResultFile       (false)
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
-        , greedyUnbound    (false)
         , origSeed(0)
 {
 }

@@ -50,14 +50,6 @@ void SolutionExtender::extend()
         cout << "c Extending solution" << endl;
     }
 
-    /*if (greedyUnbound) {
-        double time = cpuTime();
-        FindUndef finder(*this);
-        const uint32_t unbounded = finder.unRoll();
-        if (conf.verbosity >= 1)
-            cout << "c Greedy unbounding     : " << (cpuTime()-time) << ", unbounded: " << unbounded << " vars" << endl;
-    }*/
-
     //Sanity check
     solver->simplifier->checkElimedUnassignedAndStats();
 
