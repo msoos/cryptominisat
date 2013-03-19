@@ -46,7 +46,7 @@ SolverConf::SolverConf() :
         , clauseDecayActivity(1.0/0.999)
 
         //Restarting
-        , restart_first(100)
+        , restart_first(300)
         , restart_inc(1.2)
         , burstSearchLen(300)
         , restartType(auto_restart)
