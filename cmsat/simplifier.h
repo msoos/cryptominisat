@@ -228,7 +228,7 @@ public:
                 << " tried: " << triedToElimVars
                 << " tested: " << testedToElimVars
                 << " ("
-                << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
+                << (double)usedAgressiveCheckToELim/(double)testedToElimVars*100.0
                 << " % agressive)"
                 << endl;
 
