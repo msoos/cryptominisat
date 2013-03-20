@@ -1983,7 +1983,7 @@ void Simplifier::setLimits()
     numMaxSubsume0    = 450L*1000L*1000L;
     numMaxSubsume1    = 100L*1000L*1000L;
 //     numMaxTriSub      = 600L*1000L*1000L;
-    numMaxElim        = 400L*1000L*1000L;
+    numMaxElim        = 800L*1000L*1000L;
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
     numMaxBlockedImpl = 1800L *1000L*1000L;
@@ -1991,6 +1991,13 @@ void Simplifier::setLimits()
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
+
+    //If variable elimination isn't going so well
+    if (globalStats.testedToElimVars > 0
+        && (double)globalStats.numVarsElimed/(double)globalStats.testedToElimVars < 0.1
+    ) {
+        numMaxElim /= 2;
+    }
 
     #ifdef BIT_MORE_VERBOSITY
     cout << "c addedClauseLits: " << addedClauseLits << endl;
