@@ -1986,7 +1986,7 @@ void Simplifier::setLimits()
     numMaxElim        = 400L*1000L*1000L;
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
-    numMaxBlockedImpl = 40L *1000L*1000L;
+    numMaxBlockedImpl = 1800L *1000L*1000L;
     numMaxVarElimAgressiveCheck  = 100L *1000L*1000L;
 
     //numMaxElim = 0;
