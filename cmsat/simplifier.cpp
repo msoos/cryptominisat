@@ -1987,7 +1987,7 @@ void Simplifier::setLimits()
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
     numMaxBlockedImpl = 1800L *1000L*1000L;
-    numMaxVarElimAgressiveCheck  = 50L *1000L*1000L;
+    numMaxVarElimAgressiveCheck  = 300L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
