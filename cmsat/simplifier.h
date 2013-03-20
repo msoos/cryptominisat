@@ -111,6 +111,7 @@ public:
 
             //Elimination
             , numVarsElimed(0)
+            , varElimTimeOut(0)
             , clauses_elimed_long(0)
             , clauses_elimed_tri(0)
             , clauses_elimed_bin(0)
@@ -171,6 +172,7 @@ public:
 
             //Elim
             numVarsElimed += other.numVarsElimed;
+            varElimTimeOut += other.varElimTimeOut;
             clauses_elimed_long += other.clauses_elimed_long;
             clauses_elimed_tri += other.clauses_elimed_tri;
             clauses_elimed_bin += other.clauses_elimed_bin;
@@ -217,6 +219,7 @@ public:
                 //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
                 << " T: " << std::fixed << std::setprecision(2)
                 << varElimTime << " s"
+                << " T-out: " << varElimTimeOut
                 << endl;
 
                 cout
@@ -252,6 +255,11 @@ public:
                 , totalTime()
                 , varElimTime/totalTime()*100.0
                 , "% var-elim"
+            );
+
+            printStatsLine("c timeouted"
+                , (double)varElimTimeOut/(double)numCalls*100.0
+                , "% called"
             );
 
             printStatsLine("c called"
@@ -363,6 +371,7 @@ public:
 
         //Stats for var-elim
         int64_t numVarsElimed;
+        uint64_t varElimTimeOut;
         uint64_t clauses_elimed_long;
         uint64_t clauses_elimed_tri;
         uint64_t clauses_elimed_bin;

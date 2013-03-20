@@ -784,7 +784,9 @@ end:
         cout << "c  #var-elim: " << vars_elimed << endl;
         cout << "   #time: " << (cpuTime() - myTime) << endl;
     }
+    assert(toDecrease == &numMaxElim);
 
+    runStats.varElimTimeOut += (*toDecrease <= 0);
     runStats.varElimTime += cpuTime() - myTime;
 
     return solver->ok;
