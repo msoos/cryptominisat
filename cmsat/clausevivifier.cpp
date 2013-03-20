@@ -922,7 +922,7 @@ bool ClauseVivifier::strengthenImplicit()
     uint64_t remLitFromTriByTri = 0;
     uint64_t stampRem = 0;
     const size_t origTrailSize = solver->trail.size();
-    timeAvailable = 100L*1000L*1000L;
+    timeAvailable = 400L*1000L*1000L;
     double myTime = cpuTime();
 
     //For delayed enqueue and binary adding
