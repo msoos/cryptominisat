@@ -779,10 +779,11 @@ bool Simplifier::eliminateVars()
     }
 
 end:
-    if (solver->conf.verbosity >= 5) {
-        cout << "c  #try to eliminate: " << wenThrough << endl;
-        cout << "c  #var-elim: " << vars_elimed << endl;
-        cout << "   #time: " << (cpuTime() - myTime) << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout << "c  #try to eliminate: " << wenThrough << endl
+        << "c  #var-elim: " << vars_elimed << endl
+        << "c  #time-out: " << ((*toDecrease <= 0) ? "Y" : "N") << endl
+        << "c  #time: " << (cpuTime() - myTime) << endl;
     }
     assert(toDecrease == &numMaxElim);
 
