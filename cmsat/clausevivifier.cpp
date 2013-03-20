@@ -696,20 +696,20 @@ bool ClauseVivifier::vivifyClausesCache(
 
     if (solver->conf.verbosity >= 2) {
         cout
-        << "c [stamp]"
+        << "c [cl-str] stamp-based"
         << " lit-rem: " << remLitTimeStampTotal
         << " inv-lit-rem: " << remLitTimeStampTotalInv
         << " stamp-cl-rem: " << subsumedStamp
         << endl;
 
         cout
-        << "c [bintri]"
+        << "c [cl-str] bintri-based"
         << " lit-rem: " << remLitBinTri
         << " cl-sub: " << subBinTri
         << endl;
 
         cout
-        << "c [cache]"
+        << "c [cl-str] cache-based"
         << " lit-rem: " << remLitCache
         << " cl-sub: " << subCache
         << endl;
