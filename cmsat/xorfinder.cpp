@@ -41,6 +41,7 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
 
 bool XorFinder::findXors()
 {
+    maxTimeFindXors = 200L*1000L*1000L;
     double myTime = cpuTime();
     numCalls++;
     runStats.clear();
@@ -53,11 +54,12 @@ bool XorFinder::findXors()
     for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin()
         , end = solver->longIrredCls.end()
-        ; it != end
+        ; it != end && maxTimeFindXors > 0
         ; it++
     ) {
         ClOffset offset = *it;
         Clause* cl = solver->clAllocator->getPointer(offset);
+        maxTimeFindXors -= 3;
 
         //Already freed
         if (cl->freed())
@@ -82,12 +84,13 @@ bool XorFinder::findXors()
     size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
+        ; it != end && maxTimeFindXors > 0
         ; it++, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
 
+        maxTimeFindXors -= ws.size()*3;
         for (vec<Watched>::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
@@ -129,8 +132,9 @@ bool XorFinder::findXors()
         }
     }
 
-    if (solver->conf.doEchelonizeXOR && xors.size() > 0)
+    if (solver->conf.doEchelonizeXOR && xors.size() > 0) {
         extractInfo();
+    }
 
     if (solver->getVerbosity() >= 1) {
         runStats.printShort();
@@ -477,10 +481,12 @@ void XorFinder::findXor(vector<Lit>& lits, CL_ABST_TYPE abst)
             findXorMatch(solver->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
         }*/
 
+        maxTimeFindXors -= 5;
         if (foundCls.foundAll())
             break;
     }
 
+    maxTimeFindXors -= 5;
     if (foundCls.foundAll()) {
         Xor thisXor(lits, foundCls.getRHS());
         assert(xorOcc.size() > lits[0].var());
@@ -504,6 +510,7 @@ void XorFinder::findXor(vector<Lit>& lits, CL_ABST_TYPE abst)
 
         //If XOR clause is new, add it
         if (!found) {
+            maxTimeFindXors -= 20;
             xors.push_back(thisXor);
             runStats.foundXors++;
             runStats.sumSizeXors += lits.size();
@@ -658,6 +665,7 @@ void XorFinder::findXorMatch(
     , const Lit lit
     , FoundXors& foundCls
 ) {
+    maxTimeFindXors -= occ.size();
     for (vec<Watched>::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
@@ -675,6 +683,7 @@ void XorFinder::findXorMatch(
                 tmpClause.push_back(it->lit1());
 
                 foundCls.add(tmpClause, varsMissing);
+                maxTimeFindXors-=5;
                 if (foundCls.foundAll())
                     break;
             }
@@ -702,6 +711,7 @@ void XorFinder::findXorMatch(
                     tmpClause.push_back(it->lit2());
 
                     foundCls.add(tmpClause, varsMissing);
+                    maxTimeFindXors-=5;
                     if (foundCls.foundAll())
                         break;
                 }
@@ -748,6 +758,7 @@ void XorFinder::findXorMatch(
             triedAlready.insert(offset);
 
         foundCls.add(cl, varsMissing);
+        maxTimeFindXors-=5;
         if (foundCls.foundAll())
             break;
 

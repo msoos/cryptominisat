@@ -278,6 +278,9 @@ public:
     size_t getNumCalls() const;
 
 private:
+
+    int64_t maxTimeFindXors;
+
     //Find XORs
     void findXor(vector<Lit>& lits, CL_ABST_TYPE abst);
 
