@@ -1987,7 +1987,7 @@ void Simplifier::setLimits()
     numMaxAsymm       = 40L *1000L*1000L;
     numMaxBlocked     = 40L *1000L*1000L;
     numMaxBlockedImpl = 1800L *1000L*1000L;
-    numMaxVarElimAgressiveCheck  = 100L *1000L*1000L;
+    numMaxVarElimAgressiveCheck  = 50L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -2280,7 +2280,6 @@ int Simplifier::testVarElim(const Var var)
     assert(solver->varData[var].elimed == ELIMED_NONE);
     assert(solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
-    //const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
     //Gather data
     HeuristicData pos = calcDataForHeuristic(Lit(var, false));
@@ -2290,6 +2289,10 @@ int Simplifier::testVarElim(const Var var)
     if (*toDecrease < 0) {
         return 1000;
     }
+
+    //Check if we should do agressive check or not
+    const bool agressive = (numMaxVarElimAgressiveCheck > 0);
+    runStats.usedAgressiveCheckToELim += agressive;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -2350,7 +2353,7 @@ int Simplifier::testVarElim(const Var var)
             }
 
             //Resolve the two clauses
-            bool ok = merge(*it, *it2, lit, true);
+            bool ok = merge(*it, *it2, lit, agressive);
 
             //The resolvent is tautological
             if (!ok)
@@ -2454,10 +2457,6 @@ bool Simplifier::maybeEliminate(const Var var)
     if (testVarElim(var) == 1000)
         return false;
 
-    //Update stats
-    const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
-    if (agressiveCheck)
-        runStats.usedAgressiveCheckToELim++;
     runStats.triedToElimVars++;
 
     //The literal
@@ -2667,7 +2666,7 @@ bool Simplifier::merge(
     const Watched& ps
     , const Watched& qs
     , const Lit noPosLit
-    , const bool useCache
+    , const bool aggressive
 ) {
     //If clause has already been freed, skip
     if (ps.isClause()
@@ -2773,11 +2772,14 @@ bool Simplifier::merge(
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
-    if (useCache
+    if (aggressive
         && solver->conf.doAsymmTE
-        && numMaxVarElimAgressiveCheck > 0
     ) {
-        for (size_t i = 0; i < dummy.size(); i++) {
+        for (size_t i = 0
+            ; i < dummy.size() && numMaxVarElimAgressiveCheck > 0
+            ; i++
+        ) {
+            numMaxVarElimAgressiveCheck -= 3;
             const Lit lit = toClear[i];
             assert(lit.var() != noPosLit.var());
 
@@ -2823,23 +2825,23 @@ bool Simplifier::merge(
         }
     }
 
-    if (useCache && solver->conf.doAsymmTE) {
+    if (aggressive && solver->conf.doAsymmTE) {
         //Use stamping
         //but only if none of the clauses were binary
         //Otherwise we cannot tell if the value in the cache is dependent
         //on the binary clause itself, so that would cause a circular de-
         //pendency
 
-        if (!ps.isBinary()
-            && !qs.isBinary()
-            && stampBasedClRem(
+        if (!ps.isBinary() && !qs.isBinary()) {
+            numMaxVarElimAgressiveCheck -= 20;
+            if (stampBasedClRem(
                 toClear
                 , solver->timestamp
                 , stampNorm
-                , stampInv
-            )
-        ) {
-            goto end;
+                , stampInv)
+            ) {
+                goto end;
+            }
         }
     }
 
