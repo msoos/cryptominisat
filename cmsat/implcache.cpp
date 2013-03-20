@@ -33,6 +33,18 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
+//Make all literals as if propagated only by redundant
+void ImplCache::makeAllRed()
+{
+    for(vector<TransCache>::iterator
+        it = implCache.begin(), end = implCache.end()
+        ; it != end
+        ; it++
+    ) {
+        it->makeAllRed();
+    }
+}
+
 size_t ImplCache::memoryUsedInMB() const
 {
     size_t numBytes = 0;
@@ -504,6 +516,15 @@ void TransCache::merge(
             lits.push_back(LitExtra(extraLit, !learnt));
         seen[extraLit.toInt()] = 0;
     }
+}
+
+//Make all literals as if propagated only by redundant
+void TransCache::makeAllRed()
+{
+    for(size_t i = 0; i < lits.size(); i++) {
+        lits[i] = LitExtra(lits[i].getLit(), false);
+    }
+
 }
 
 void TransCache::updateVars(const std::vector< uint32_t >& outerToInter)

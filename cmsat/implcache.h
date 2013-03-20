@@ -101,6 +101,7 @@ class TransCache {
             , const Lit leaveOut
             , vector<uint16_t>& seen
         );
+        void makeAllRed();
 
         void updateVars(const std::vector< uint32_t >& outerToInter);
 
@@ -122,6 +123,7 @@ class ImplCache  {
         void printStats(const Solver* solver) const;
         void printStatsSort(const Solver* solver) const;
         size_t memoryUsedInMB() const;
+        void makeAllRed();
         std::vector<TransCache> implCache;
 
         std::vector<TransCache>::iterator begin()
