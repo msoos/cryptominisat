@@ -84,8 +84,9 @@ public:
     struct Stats
     {
         Stats() :
+            numCalls(0)
             //Time
-            linkInTime(0)
+            , linkInTime(0)
             , blockTime(0)
             , asymmTime(0)
             , subsumeTime(0)
@@ -142,6 +143,8 @@ public:
 
         Stats& operator+=(const Stats& other)
         {
+            numCalls += other.numCalls;
+
             //Time
             linkInTime += other.linkInTime;
             blockTime += other.blockTime;
@@ -251,6 +254,12 @@ public:
                 , "% var-elim"
             );
 
+            printStatsLine("c called"
+                ,  numCalls
+                , (double)totalTime()/(double)numCalls
+                , "s per call"
+            );
+
             printStatsLine("c v-elimed"
                 , numVarsElimed
                 , (double)numVarsElimed/(double)nVars*100.0
@@ -325,6 +334,8 @@ public:
             );
             cout << "c -------- Simplifier STATS END ----------" << endl;
         }
+
+        uint64_t numCalls;
 
         //Time stats
         double linkInTime;
@@ -640,9 +651,6 @@ private:
     //validity checking
     void checkForElimedVars();
     void printOccur(const Lit lit) const;
-
-    ///Number of times simplifyBySubsumption() has been called
-    size_t numCalls;
 
     ///Stats from this run
     Stats runStats;

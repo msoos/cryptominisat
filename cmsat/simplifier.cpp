@@ -76,7 +76,6 @@ Simplifier::Simplifier(Solver* _solver):
     , xorFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
-    , numCalls(0)
 {
     #ifdef USE_M4RI
     xorFinder = new XorFinder(this, solver);
@@ -1077,6 +1076,7 @@ bool Simplifier::simplify()
     double myTime = cpuTime();
     addedClauseLits = 0;
     runStats.clear();
+    runStats.numCalls++;
     clauses.clear();
     toDecrease = &numMaxSubsume1;
     size_t origTrailSize = solver->trail.size();
@@ -1161,7 +1161,6 @@ end:
             runStats.printShort(solver->conf.doVarElim);
     }
 
-    numCalls++;
     return solver->ok;
 }
 
@@ -2004,7 +2003,7 @@ void Simplifier::setLimits()
     }
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
-    numMaxElimVars = (double)numMaxElimVars * sqrt((double)(numCalls+1));
+    numMaxElimVars = (double)numMaxElimVars * sqrt((double)(globalStats.numCalls+1));
     runStats.origNumMaxElimVars = numMaxElimVars;
 
     if (!solver->conf.doSubsume1) {
