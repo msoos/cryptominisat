@@ -212,7 +212,7 @@ public:
             << ((double)sumSizeXors/(double)foundXors)
 
             << " T: "
-            << std::fixed << std::setprecision(2) << extractTime
+            << std::fixed << std::setprecision(2) << findTime
             << endl;
 
             cout

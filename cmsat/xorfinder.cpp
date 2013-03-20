@@ -118,7 +118,7 @@ bool XorFinder::findXors()
 
 
     //Calculate & display stats
-    runStats.extractTime = cpuTime() - myTime;
+    runStats.findTime = cpuTime() - myTime;
     assert(runStats.foundXors == xors.size());
 
     if (solver->conf.verbosity >= 5) {
