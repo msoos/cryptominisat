@@ -1139,7 +1139,8 @@ bool Simplifier::simplify()
     //Do asymtotic tautology elimination
     if (solver->conf.doBlockClauses) {
         blockClauses();
-        blockImplicit();
+        //Call it first time, and that's it
+        blockImplicit(globalStats.numCalls == 0, true);
     }
 
     /*if (solver->conf.doAsymmTE)
@@ -1709,6 +1710,8 @@ void Simplifier::blockImplicit(
         cout
         << "c [stamping] cleared stamps because of blocked binaries"
         << endl;
+
+        solver->implCache.makeAllRed();
     }
 }
 
