@@ -13,6 +13,8 @@ class SQLStats
 {
 public:
 
+    virtual ~SQLStats() = 0;
+
     virtual void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
