@@ -35,7 +35,7 @@
     } while (0)
 
 #ifndef __GNUC__
-#define __builtin_prefetch
+#define __builtin_prefetch(x)
 #endif //__GNUC__
 
 ///////////////////
