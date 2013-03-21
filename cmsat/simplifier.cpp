@@ -2016,7 +2016,9 @@ void Simplifier::setLimits()
     }
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
-    numMaxElimVars = (double)numMaxElimVars * sqrt((double)(globalStats.numCalls+1));
+    if (globalStats.numCalls > 0) {
+        numMaxElimVars = (double)numMaxElimVars * sqrt((double)(globalStats.numCalls+2));
+    }
     runStats.origNumMaxElimVars = numMaxElimVars;
 
     if (!solver->conf.doSubsume1) {
