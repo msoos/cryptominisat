@@ -639,11 +639,11 @@ void Main::parseCommandLine()
         conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
     } else if (typeclean == "propconfl") {
         conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
-    } else if (typeclean == "activiy") {
+    } else if (typeclean == "activity") {
         conf.clauseCleaningType = CLEAN_CLAUSES_ACTIVITY_BASED;
     } else {
         std::cerr
-        << "ERROR: Cannot parse option given to '--cleantype'. It's '"
+        << "ERROR: Cannot parse option given to '--clean'. It's '"
         << typeclean << "'" << " but that none of the possiblities listed."
         << endl;
 
