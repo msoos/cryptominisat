@@ -2604,8 +2604,13 @@ bool Simplifier::maybeEliminate(const Var var)
         ) {
             //No point in updating the score of this var
             //it's eliminated already, or not to be eliminated at all
-            if (*it == var || !varElimOrder.inHeap(*it))
+            if (*it == var
+                || !varElimOrder.inHeap(*it)
+                || solver->value(*it) != l_Undef
+                || solver->varData[*it].elimed != ELIMED_NONE
+            ) {
                 continue;
+            }
 
             varElimComplexity[*it] = strategyCalcVarElimScore(*it);;
             varElimOrder.update(*it);
