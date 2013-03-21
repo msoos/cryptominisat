@@ -93,13 +93,18 @@ void SCCFinder::tarjan(const uint32_t vertex)
     ) {
         Lit vertLit = Lit::toLit(vertex);
 
-        vector<LitExtra>& transCache = solver->implCache[(~vertLit).toInt()].lits;
+        vector<LitExtra>* transCache = NULL;
+
+        if (solver->conf.doCache) {
+            transCache = &(solver->implCache[(~vertLit).toInt()].lits);
+        }
 
         //Prefetch cache in case we are doing extended SCC
         if (solver->conf.doExtendedSCC
-            && transCache.size() > 0
+            && transCache
+            && transCache->size() > 0
         ) {
-            __builtin_prefetch(&transCache[0]);
+            __builtin_prefetch(transCache->data());
         }
 
 
@@ -115,9 +120,9 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        if (solver->conf.doExtendedSCC && solver->conf.doCache) {
-            vector<LitExtra>::iterator it = transCache.begin();
-            for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
+        if (transCache) {
+            vector<LitExtra>::iterator it = transCache->begin();
+            for (vector<LitExtra>::iterator end = transCache->end(); it != end; it++) {
                 Lit lit = it->getLit();
                 if (lit != ~vertLit) doit(lit, vertex);
             }

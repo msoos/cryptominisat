@@ -2120,19 +2120,20 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
         Lit lit = *l;
 
-        const TransCache& cache1 = solver->implCache[l->toInt()];
-        timeSpent += cache1.lits.size()/2;
-        for (vector<LitExtra>::const_iterator
-            it = cache1.lits.begin(), end2 = cache1.lits.end()
-            ; it != end2
-            ; it++
-        ) {
-            if (seen[(~(it->getLit())).toInt()]) {
-                stats.cacheShrinkedClause++;
-                seen[(~(it->getLit())).toInt()] = 0;
+        if (solver->conf.doCache) {
+            const TransCache& cache1 = solver->implCache[l->toInt()];
+            timeSpent += cache1.lits.size()/2;
+            for (vector<LitExtra>::const_iterator
+                it = cache1.lits.begin(), end2 = cache1.lits.end()
+                ; it != end2
+                ; it++
+            ) {
+                if (seen[(~(it->getLit())).toInt()]) {
+                    stats.cacheShrinkedClause++;
+                    seen[(~(it->getLit())).toInt()] = 0;
+                }
             }
         }
-
 
         //Watchlist-based minimisation
         const vec<Watched>& ws = watches[lit.toInt()];

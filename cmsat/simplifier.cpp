@@ -2792,7 +2792,10 @@ bool Simplifier::merge(
             assert(lit.var() != noPosLit.var());
 
             //Use cache
-            if (!ps.isBinary() && !qs.isBinary()) {
+            if (!ps.isBinary()
+                && !qs.isBinary()
+                && solver->conf.doCache
+            ) {
                 const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
                 numMaxVarElimAgressiveCheck -= cache.size()/3;
                 for(vector<LitExtra>::const_iterator

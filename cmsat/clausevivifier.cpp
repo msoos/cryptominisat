@@ -442,8 +442,10 @@ bool ClauseVivifier::vivifyClausesCache(
         ) {
             const Lit lit = *l;
 
+            //Use cache
             if (alsoStrengthen
-                 && seen[lit.toInt()] //We haven't yet removed it
+                && solver->conf.doCache
+                && seen[lit.toInt()] //We haven't yet removed it
              ) {
                  countTime += solver->implCache[lit.toInt()].lits.size();
                  for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
@@ -821,7 +823,9 @@ void ClauseVivifier::subsumeImplicit()
                 }
 
                 //Subsumed by cache
-                if (!remove) {
+                if (!remove
+                    && solver->conf.doCache
+                ) {
                     for(size_t i = 0; i < lits.size() && !remove; i++) {
                         //countTime += solver->implCache[lit.toInt()].lits.size();
                         for (vector<LitExtra>::const_iterator
