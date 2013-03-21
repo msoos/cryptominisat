@@ -714,6 +714,7 @@ class Searcher : public PropEngine
         vector<Lit> dummy;
         vector<std::pair<Lit, size_t> > lastDecisionLevel;
         bool litRedundant(Lit p, uint32_t abstract_levels);
+        void recursiveConfClauseMin(vector<Lit>& out_learnt);
 
         void analyzeHelper(
             Lit lit

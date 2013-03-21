@@ -450,8 +450,6 @@ void Main::parseCommandLine()
 
     po::options_description conflOptions("Conflict options");
     conflOptions.add_options()
-    ("recminim", po::value<int>(&conf.doRecursiveCCMin)->default_value(conf.doRecursiveCCMin)
-        , "Perform MiniSat-type conflict-clause minim.")
     ("moreminim", po::value<int>(&conf.doMinimLearntMore)->default_value(conf.doMinimLearntMore)
         , "Perform strong minimisation at conflict gen.")
     ("alwaysmoremin", po::value<int>(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)

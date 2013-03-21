@@ -176,6 +176,28 @@ void Searcher::analyzeHelper(
     }
 }
 
+void Searcher::recursiveConfClauseMin(vector<Lit>& out_learnt)
+{
+    uint32_t abstract_level = 0;
+    for (size_t i = 1; i < out_learnt.size(); i++) {
+        //(maintain an abstraction of levels involved in conflict)
+        abstract_level |= abstractLevel(out_learnt[i].var());
+    }
+
+    size_t i, j;
+    for (i = j = 1; i < out_learnt.size(); i++) {
+        #ifdef DEBUG_LITREDUNDANT
+        cout << "Calling litRedundant at i = " << i << endl;
+        #endif
+        if (varData[out_learnt[i].var()].reason.isNULL()
+            || !litRedundant(out_learnt[i], abstract_level)
+        ) {
+            out_learnt[j++] = out_learnt[i];
+        }
+    }
+    out_learnt.resize(j);
+}
+
 /**
 @brief    Analyze conflict and produce a reason clause.
 
@@ -305,33 +327,16 @@ Clause* Searcher::analyze(
     stats.litsLearntNonMin += out_learnt.size();
     const size_t origSize = out_learnt.size();
 
-    //Recursive-simplify conflict clause:
-    if (conf.doRecursiveCCMin) {
-        uint32_t abstract_level = 0;
-        for (size_t i = 1; i < out_learnt.size(); i++) {
-            //(maintain an abstraction of levels involved in conflict)
-            abstract_level |= abstractLevel(out_learnt[i].var());
-        }
+    //Recursive cc min
+    toClear = out_learnt;
+    recursiveConfClauseMin(out_learnt);
 
-        toClear = out_learnt;
-        size_t i, j;
-        for (i = j = 1; i < out_learnt.size(); i++) {
-            #ifdef DEBUG_LITREDUNDANT
-            cout << "Calling litRedundant at i = " << i << endl;
-            #endif
-            if (varData[out_learnt[i].var()].reason.isNULL()
-                || !litRedundant(out_learnt[i], abstract_level)
-            ) {
-                out_learnt[j++] = out_learnt[i];
-            }
-        }
-        out_learnt.resize(j);
-
-        for(size_t i = 0; i < toClear.size(); i++) {
-            seen[toClear[i].var()] = 0;
-        }
-        toClear.clear();
+    //Clear seen
+    for (size_t i = 0; i < toClear.size(); i++) {
+        seen[toClear[i].var()] = 0;
     }
+    toClear.clear();
+
     stats.recMinCl += ((origSize - out_learnt.size()) > 0);
     stats.recMinLitRem += origSize - out_learnt.size();
 
