@@ -1046,6 +1046,7 @@ CleaningStats Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
 
+        /*
         //No use at all? Remove!
         if (cl->stats.numPropAndConfl() == 0
             && cl->stats.conflictNumIntroduced + 20000
@@ -1058,7 +1059,7 @@ CleaningStats Solver::reduceDB()
             //free clause
             clAllocator->clauseFree(offset);
             continue;
-        }
+        }*/
 
         //Stats Update
         tmpStats.remain.incorporate(cl);
