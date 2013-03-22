@@ -593,6 +593,17 @@ void Main::parseCommandLine()
         exit(0);
     }
 
+    if (conf.doLHBR
+        && !conf.propBinFirst
+    ) {
+        cout
+        << "You must NOT set both LHBR and any-order propagation." << endl
+        << "LHBR needs binary clauses propagated first."
+        << endl;
+
+        exit(-1);
+    }
+
     if (vm.count("dumpresult")) {
         conf.needResultFile = true;
     }

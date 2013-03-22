@@ -1076,6 +1076,9 @@ CleaningStats Solver::reduceDB()
 
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
+    release_assert(!(conf.doLHBR && !conf.propBinFirst)
+        && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
+    );
     //Set up SQL writer
     if (conf.doSQL) {
         sqlStats->setup(this);

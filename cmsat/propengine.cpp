@@ -515,10 +515,6 @@ void PropEngine::propTriHelper(
 PropBy PropEngine::propagateAnyOrder(
     Solver* solver
 ) {
-    assert(
-        doLHBR == false
-        && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
-    );
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
