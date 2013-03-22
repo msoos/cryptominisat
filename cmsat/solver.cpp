@@ -1046,6 +1046,20 @@ CleaningStats Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
 
+        //No use at all? Remove!
+        if (cl->stats.numPropAndConfl() == 0
+            && cl->stats.conflictNumIntroduced + 20000
+                < sumStats.conflStats.numConflicts
+        ) {
+            //Stats Update
+            tmpStats.removed.incorporate(cl);
+            tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
+
+            //free clause
+            clAllocator->clauseFree(offset);
+            continue;
+        }
+
         //Stats Update
         tmpStats.remain.incorporate(cl);
         tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
