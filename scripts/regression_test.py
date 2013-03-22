@@ -14,6 +14,7 @@ import signal
 import resource
 import time
 import struct
+import random
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
@@ -116,7 +117,7 @@ parser.add_option("--probdir", dest="checkDirProb"
 
 
 def setlimits():
-    sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
+    sys.stderr.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -138,6 +139,55 @@ class Tester:
         self.ignoreNoSolution = False
         self.needDebugLib = True
 
+    def random_options(self) :
+        cmd = ""
+
+        cmd += "--simplify %s " % random.randint(0,1)
+        cmd += "--clbtwsimp %s " % random.randint(0,3)
+        cmd += "--restart %s " % random.choice(["geom", "agility", "glue", "glueagility"])
+        cmd += "--agilviollim %s " % random.randint(0,40)
+        cmd += "--gluehist %s " % random.randint(0,500)
+        cmd += "--updateglue %s " % random.randint(0,1)
+        cmd += "--binpri %s " % random.randint(0,1)
+        cmd += "--otfhyper %s " % random.randint(0,1)
+        cmd += "--clean %s " % random.choice(["size", "glue", "activity", "propconfl"])
+        cmd += "--preclean %s " % random.randint(0,1)
+        cmd += "--precleanlim %s " % random.randint(0,10)
+        cmd += "--precleantime %s " % random.randint(0,20000)
+        cmd += "--clearstat %s " % random.randint(0,1)
+        cmd += "--startclean %s " % random.randint(0,16000)
+        cmd += "--maxredratio %s " % random.randint(2,20)
+        cmd += "--dompickf %s " % random.randint(1,20)
+        cmd += "--flippolf %s " % random.randint(1,3000)
+        cmd += "--moreminim %s " % random.randint(0,1)
+        cmd += "--alwaysmoremin %s " % random.randint(0,1)
+        cmd += "--otfsubsume %s " % random.randint(0,1)
+        cmd += "--rewardotfsubsume %s " % random.randint(0,100)
+        cmd += "--bothprop %s " % random.randint(0,1)
+        cmd += "--probe %s " % random.randint(0,1)
+        cmd += "--probemultip %s " % random.randint(0,10)
+        cmd += "--hyperbinres %s " % random.randint(0,1)
+        cmd += "--stamp %s " % random.randint(0,1)
+        cmd += "--cache %s " % random.randint(0,1)
+        cmd += "--cachesize %s " % random.randint(10, 100)
+        cmd += "--calcreach %s " % random.randint(0,1)
+        cmd += "--cachecutoff %s " % random.randint(0,2000)
+        cmd += "--varelim %s " % random.randint(0,1)
+        cmd += "--elimstrategy %s " % random.randint(0,1)
+        cmd += "--elimcomplexupdate %s " % random.randint(0,1)
+        cmd += "--subsume1 %s " % random.randint(0,1)
+        cmd += "--block %s " % random.randint(0,1)
+        cmd += "--asymmte %s " % random.randint(0,1)
+        cmd += "--noextbinsubs %s " % random.randint(0,1)
+        cmd += "--scc %s " % random.randint(0,1)
+        cmd += "--extscc %s " % random.randint(0,1)
+        cmd += "--presimp %s " % random.randint(0,1)
+        cmd += "--vivif %s " % random.randint(0,1)
+        cmd += "--sortwatched %s " % random.randint(0,1)
+        cmd += "--renumber %s " % random.randint(0,1)
+
+        return cmd
+
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(options.solver) != True:
             print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
@@ -146,7 +196,8 @@ class Tester:
             exit(300)
 
         #construct command
-        command = "%s --random=%d " % (options.solver,randomizeNum)
+        command = "%s --random=%d " % (options.solver, randomizeNum)
+        command += self.random_options()
         if self.needDebugLib :
             command += "--debuglib "
         if options.verbose == False:
