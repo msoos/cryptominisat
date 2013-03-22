@@ -483,11 +483,11 @@ class Tester:
                 None
 
     def fuzz_test(self) :
-        fuzzers = [ \
-            ["build/cnf-fuzz-biere"]    \
+        fuzzers = [
+            ["build/cnf-fuzz-biere"] \
             , ["build/cnf-fuzz-nossum"] \
             , ["cnf-fuzz-brummayer.py"] \
-            , ["build/sgen4 -unsat -n 50", "-s"]     \
+            , ["build/sgen4 -unsat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
