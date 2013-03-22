@@ -1708,9 +1708,12 @@ void Simplifier::blockImplicit(
         ) {
             *it = Timestamp();
         }
-        cout
-        << "c [stamping] cleared stamps because of blocked binaries"
-        << endl;
+
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [stamping] cleared stamps because of blocked binaries"
+            << endl;
+        }
 
         solver->implCache.makeAllRed();
     }
