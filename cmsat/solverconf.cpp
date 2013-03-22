@@ -47,7 +47,7 @@ SolverConf::SolverConf() :
 
         //Restarting
         , restart_first(300)
-        , restart_inc(1.2)
+        , restart_inc(2)
         , burstSearchLen(300)
         , restartType(auto_restart)
 
