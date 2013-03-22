@@ -40,7 +40,7 @@ SolverConf::SolverConf() :
         , doClearStatEveryClauseCleaning(true)
         , ratioRemoveClauses(0.5)
         , numCleanBetweenSimplify(1)
-        , startClean(8000)
+        , startClean(10000)
         , increaseClean(1.1)
         , maxNumLearntsRatio(10)
         , clauseDecayActivity(1.0/0.999)
