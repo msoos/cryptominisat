@@ -1093,6 +1093,11 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
         && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
     );
+
+    release_assert(conf.shortTermHistorySize > 0
+        && "You MUST give a short term history size (\"--gluehist\")  greater than 0!"
+    );
+
     //Set up SQL writer
     if (conf.doSQL) {
         sqlStats->setup(this);

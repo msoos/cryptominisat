@@ -602,6 +602,15 @@ void Main::parseCommandLine()
         exit(-1);
     }
 
+    if (conf.shortTermHistorySize <= 0) {
+        cout
+        << "You MUST give a short term history size (\"--gluehist\")" << endl
+        << "  greater than 0!"
+        << endl;
+
+        exit(-1);
+    }
+
     if (vm.count("dumpresult")) {
         conf.needResultFile = true;
     }
