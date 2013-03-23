@@ -131,7 +131,7 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doRenumberVars   (true)
-        , dominPickFreq    (2)
+        , dominPickFreq    (400)
         , flipPolarFreq    (300)
 
         , doSchedSimp      (true)

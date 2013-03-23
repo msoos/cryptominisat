@@ -2108,7 +2108,7 @@ Lit Searcher::pickBranchLit()
             if (lit2 != lit_Undef
                 && value(lit2.var()) == l_Undef
                 && solver->decisionVar[lit2.var()]
-                && mtrand.randInt(4) == 1
+                && mtrand.randInt(conf.dominPickFreq) == 1
             ) {
                 //Dominator may not actually dominate this variabe
                 //So just to be sure, re-insert it
