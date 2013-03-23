@@ -145,7 +145,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
         << " tri-shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail.size() - origTrailSize
-        << " time: " << cpuTime() - myTime
+        << " T: " << std::setprecision(2) << cpuTime() - myTime
         << endl;
     }
 

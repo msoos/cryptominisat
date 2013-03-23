@@ -188,7 +188,7 @@ class ClauseVivifier {
                     << " cl-rem " << std::setw(4) << numClSubsumed
                     << " lit-rem " << std::setw(6) << numLitsRem
                     << " time-out " << (ranOutOfTime ? "Y" : "N")
-                    << " time: " << cpu_time
+                    << " T: " << std::setprecision(2) << cpu_time
                     << endl;
                 }
 

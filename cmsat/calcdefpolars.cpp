@@ -147,7 +147,7 @@ const vector<char> CalcDefPolars::calculate()
         #endif
 
         cout << "c Calc default polars - "
-        << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << " pos: " << std::setw(7) << posPolars
         << " undec: " << std::setw(7) << undecidedPolars
         << " neg: " << std::setw(7) << solver->nVars()-  undecidedPolars - posPolars

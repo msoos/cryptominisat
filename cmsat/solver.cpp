@@ -3019,7 +3019,7 @@ void Solver::calcReachability()
 
     if (conf.verbosity >= 1) {
         cout
-        << "c calculated reachability. Time: "
+        << "c calculated reachability. T: "
         << std::setprecision(3) << (cpuTime() - myTime)
         << endl;
     }

@@ -184,7 +184,7 @@ void Main::parseInAllFiles()
     if (conf.verbosity >= 1) {
         cout
         << "c Parsing time: "
-        << std::fixed << std::setw(5) << std::setprecision(2)
+        << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
         << " s" << endl;
     }
