@@ -369,10 +369,14 @@ class Searcher : public PropEngine
                 return result;
             }
 
-            void printShort() const
+            void printCommon() const
             {
-                //Restarts stats
-                printStatsLine("c restarts", numRestarts);
+                printStatsLine("c restarts"
+                    , numRestarts
+                    , (double)conflStats.numConflicts/(double)numRestarts
+                    , "confls per restart"
+
+                );
                 printStatsLine("c time", cpu_time);
                 printStatsLine("c decisions", decisions
                     , (double)decisionsRand*100.0/(double)decisions
@@ -387,6 +391,12 @@ class Searcher : public PropEngine
                 printStatsLine("c decisions/conflicts"
                     , (double)decisions/(double)conflStats.numConflicts
                 );
+            }
+
+            void printShort() const
+            {
+                //Restarts stats
+                printCommon();
                 conflStats.printShort(cpu_time);
 
                 printStatsLine("c conf lits non-minim"
@@ -403,24 +413,7 @@ class Searcher : public PropEngine
             void print() const
             {
                 uint64_t mem_used = memUsed();
-
-                //Restarts stats
-                printStatsLine("c restarts", numRestarts);
-                printStatsLine("c time", cpu_time);
-                printStatsLine("c decisions", decisions
-                    , (double)decisionsRand*100.0/(double)decisions
-                    , "% random"
-                );
-
-                printStatsLine("c decisions", decisions
-                    , (double)decisionFlippedPolar/(double)decisions*100.0
-                    , "% flipped polarity"
-                );
-
-                printStatsLine("c decisions/conflicts"
-                    , (double)decisions/(double)conflStats.numConflicts
-                );
-
+                printCommon();
                 conflStats.print(cpu_time);
 
                 /*assert(numConflicts
