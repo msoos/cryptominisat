@@ -887,8 +887,8 @@ lbool Searcher::search(uint64_t* geom_max)
 
             //Update cache
             size_t numElems = trail.size() - trail_lim[0];
-            if (solver->conf.doCache
-                && numElems <= solver->conf.cacheUpdateCutoff
+            if (conf.doCache
+                && numElems <= conf.cacheUpdateCutoff
             ) {
                 for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
                     const Lit thisLit = trail[c];
@@ -1141,8 +1141,8 @@ bool Searcher::handle_conflict(PropBy confl)
         hist.numResolutionsHist.push(resolutions.sum());
 
         #ifdef STATS_NEEDED
-        if (solver->conf.doSQL) {
-            if (sumConflicts() % solver->conf.dumpClauseDistribPer == 0) {
+        if (conf.doSQL) {
+            if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
                 printClauseDistribSQL();
 
                 //Clear distributions
@@ -1309,9 +1309,9 @@ void Searcher::resetStats()
     #endif
 
     //Clause data
-    clauseSizeDistrib.resize(solver->conf.dumpClauseDistribMaxSize, 0);
-    clauseGlueDistrib.resize(solver->conf.dumpClauseDistribMaxGlue, 0);
-    sizeAndGlue.resize(boost::extents[solver->conf.dumpClauseDistribMaxSize][solver->conf.dumpClauseDistribMaxGlue]);
+    clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
+    clauseGlueDistrib.resize(conf.dumpClauseDistribMaxGlue, 0);
+    sizeAndGlue.resize(boost::extents[conf.dumpClauseDistribMaxSize][conf.dumpClauseDistribMaxGlue]);
     for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
         for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
             sizeAndGlue[i][i2] = 0;
@@ -1687,7 +1687,7 @@ RestartType Searcher::decide_restart_type() const
                 rest_type = geom_restart;
             }
 
-            if (solver->conf.verbosity >= 1) {
+            if (conf.verbosity >= 1) {
                 cout
                 << "c percent of negative polarities set: "
                 << std::setprecision(2) << percent
@@ -1696,7 +1696,7 @@ RestartType Searcher::decide_restart_type() const
             }
         }
 
-        if (solver->conf.verbosity >= 2) {
+        if (conf.verbosity >= 2) {
             cout
             << "c Chose restart type "
             << restart_type_to_string(rest_type)
@@ -1775,7 +1775,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Set up restart printing status
         lastRestartPrint = stats.conflStats.numConflicts;
         lastRestartPrintHeader = stats.conflStats.numConflicts;
-        if (solver->conf.verbosity >= 1) {
+        if (conf.verbosity >= 1) {
             printRestartStats();
         }
     }
@@ -1786,7 +1786,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     while (status == l_Undef
         && !needToInterrupt
         && stats.conflStats.numConflicts < maxConfls
-        && cpuTime() < solver->conf.maxTime
+        && cpuTime() < conf.maxTime
     ) {
         //Print search loop number if needed
         if (conf.verbosity >= 6) {
@@ -1868,7 +1868,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
             && (solver->binTri.numNewBinsSinceSCC
-                > ((double)solver->getNumFreeVars()*solver->conf.sccFindPercent))
+                > ((double)solver->getNumFreeVars()*conf.sccFindPercent))
         ) {
             if (conf.verbosity >= 1) {
                 cout
@@ -2116,7 +2116,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 
         Lit lit = *l;
 
-        if (solver->conf.doCache) {
+        if (conf.doCache) {
             const TransCache& cache1 = solver->implCache[l->toInt()];
             timeSpent += cache1.lits.size()/2;
             for (vector<LitExtra>::const_iterator
@@ -2290,7 +2290,7 @@ size_t Searcher::hyperBinResAll()
         lbool val1 = value(it->getLit1());
         lbool val2 = value(it->getLit2());
 
-        if (solver->conf.verbosity >= 6)
+        if (conf.verbosity >= 6)
             cout
             << "c Attached hyper-bin: "
             << it->getLit1() << "(val: " << val1 << " )"
@@ -2624,7 +2624,7 @@ PropBy Searcher::propagate(
     #endif
 ) {
     if (solver == NULL
-        || solver->conf.propBinFirst
+        || conf.propBinFirst
     ) {
         return propagateBinFirst(
             solver
