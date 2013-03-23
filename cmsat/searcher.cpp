@@ -2032,7 +2032,7 @@ Lit Searcher::pickBranchLit()
     }
 
     // Activity based decision:
-    while (next == lit_Undef
+    /*while (next == lit_Undef
       || value(next.var()) != l_Undef
       || !solver->decisionVar[next.var()]
     ) {
@@ -2046,8 +2046,9 @@ Lit Searcher::pickBranchLit()
         bool oldPolar = getStoredPolarity(next_var);
         bool newPolar = pickPolarity(next_var);
         next = Lit(next_var, !newPolar);
-        if (oldPolar != newPolar)
+        if (oldPolar != newPolar) {
             stats.decisionFlippedPolar++;
+        }
     }
 
     //Try to use reachability to pick a literal that dominates this one
@@ -2065,6 +2066,42 @@ Lit Searcher::pickBranchLit()
 
             //Save this literal & sign
             next = lit2;
+        }
+    }*/
+
+    while (next == lit_Undef
+        || value(next.var()) != l_Undef
+        || !solver->decisionVar[next.var()]
+    ) {
+        //There is nothing to branch on anymore! Satisfiable!
+        if (order_heap.empty()) {
+            next = lit_Undef;
+            break;
+        }
+
+        //Remove the best candidate
+        const Var var = order_heap.removeMin();
+
+        //Check if it makes any sense
+        if (value(var) == l_Undef
+            && solver->decisionVar[var]
+        ) {
+            next = Lit(var, pickPolarity(var));
+
+            //Try to update to dominator
+            const Lit lit2 = solver->litReachable[next.toInt()].lit;
+            if (lit2 != lit_Undef
+                && value(lit2.var()) == l_Undef
+                && solver->decisionVar[lit2.var()]
+                && mtrand.randInt(4) == 1
+            ) {
+                //Dominator may not actually dominate this variabe
+                //So just to be sure, re-insert it
+                insertVarOrder(next.var());
+
+                //Update picked literal
+                next = solver->litReachable[next.toInt()].lit;
+            }
         }
     }
 

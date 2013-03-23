@@ -50,6 +50,16 @@ class SolutionExtender;
 class SQLStats;
 class ImplCache;
 
+class LitReachData {
+    public:
+        LitReachData() :
+            lit(lit_Undef)
+            , numInCache(0)
+        {}
+        Lit lit;
+        uint32_t numInCache;
+};
+
 
 class Solver : public Searcher
 {
@@ -440,6 +450,8 @@ class Solver : public Searcher
         void unsetDecisionVar(const uint32_t var);
         size_t               zeroLevAssignsByCNF;
         size_t               zeroLevAssignsByThreads;
+        vector<LitReachData> litReachable;
+        void calcReachability();
 
         //Main up stats
         Stats sumStats;

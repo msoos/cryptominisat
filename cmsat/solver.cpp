@@ -787,6 +787,8 @@ Var Solver::newVar(const bool dvar)
     interToOuterMain.push_back(var);
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
+    litReachable.push_back(LitReachData());
+    litReachable.push_back(LitReachData());
 
     if (conf.doCache)
         implCache.addNew();
@@ -1305,6 +1307,9 @@ lbool Solver::simplifyProblem()
 
     if (conf.doRenumberVars)
         renumberVariables();
+
+    //Re-calculate reachability after re-numbering and new cache data
+    calcReachability();
 
     //Delete and disable cache if too large
     if (conf.doCache) {
@@ -2963,3 +2968,59 @@ void Solver::print_elimed_vars() const
     simplifier->print_elimed_vars();
 }
 
+void Solver::calcReachability()
+{
+    double myTime = cpuTime();
+
+    //Clear out
+    for (size_t i = 0; i < nVars()*2; i++) {
+        litReachable[i] = LitReachData();
+    }
+
+    //Go through each that is decision variable
+    for (Var var = 0; var < nVars(); var++) {
+
+        //Check if it's a good idea to look at the variable as a dominator
+        if (value(var) != l_Undef
+            || varData[var].elimed != ELIMED_NONE
+            || !decisionVar[var]
+        ) {
+            continue;
+        }
+
+        //Both poliarities
+        for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
+            const Lit lit = Lit(var, sig1);
+
+            const vector<LitExtra>& cache = implCache[lit.toInt()].lits;
+            uint32_t cacheSize = cache.size();
+            for (vector<LitExtra>::const_iterator
+                it = cache.begin(), end = cache.end()
+                ; it != end
+                ; it++
+            ) {
+                /*if (solver.value(it->var()) != l_Undef
+                || solver.subsumer->getVarElimed()[it->var()]
+                || solver.xorSubsumer->getVarElimed()[it->var()])
+                continue;*/
+
+                assert(it->getLit() != lit);
+                assert(it->getLit() != ~lit);
+
+                if (litReachable[it->getLit().toInt()].lit == lit_Undef
+                    || litReachable[it->getLit().toInt()].numInCache < cacheSize
+                ) {
+                    litReachable[it->getLit().toInt()].lit = ~lit;
+                    litReachable[it->getLit().toInt()].numInCache = cacheSize;
+                }
+            }
+        }
+    }
+
+    if (conf.verbosity >= 1) {
+        cout
+        << "c calculated reachability. Time: "
+        << std::setprecision(3) << (cpuTime() - myTime)
+        << endl;
+    }
+}

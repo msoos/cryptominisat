@@ -33,16 +33,6 @@ namespace CMSat {
 
 class Solver;
 
-class LitReachData {
-    public:
-        LitReachData() :
-            lit(lit_Undef)
-            , numInCache(0)
-        {}
-        Lit lit;
-        uint32_t numInCache;
-};
-
 class LitExtra {
     public:
         LitExtra() {};
