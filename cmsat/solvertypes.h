@@ -48,7 +48,6 @@ enum RestartType {
     , glue_agility_restart
     , geom_restart
     , agility_restart
-    , branch_depth_delta_restart
     , no_restart
     , auto_restart
 };
@@ -67,9 +66,6 @@ inline std::string restart_type_to_string(const RestartType type)
 
         case  agility_restart:
             return "agility-based";
-
-        case branch_depth_delta_restart:
-            return "based on branch depth delta";
 
         case no_restart:
             return "never restart";

@@ -722,8 +722,6 @@ void Main::parseCommandLine()
             conf.restartType = agility_restart;
         else if (type == "glueagility")
             conf.restartType = glue_agility_restart;
-        else if (type == "branchd")
-            conf.restartType = branch_depth_delta_restart;
         else throw WrongParam("restart", "unknown restart type");
     }
 

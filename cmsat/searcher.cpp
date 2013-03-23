@@ -1056,15 +1056,6 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
 
             break;
 
-        case branch_depth_delta_restart:
-            if (hist.branchDepthDeltaHist.isvalid()
-                && 0.95*hist.branchDepthDeltaHist.avg() > hist.branchDepthDeltaHistLT.avg()
-            ) {
-                params.needToStopSearch = true;
-            }
-
-            break;
-
         case agility_restart:
             if (agility.getAgility() < conf.agilityLimit) {
                 params.numAgilityNeedRestart++;
