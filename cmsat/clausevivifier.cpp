@@ -449,7 +449,9 @@ bool ClauseVivifier::vivifyClausesCache(
              ) {
                  countTime += solver->implCache[lit.toInt()].lits.size();
                  for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
-                     , end2 = solver->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
+                     , end2 = solver->implCache[lit.toInt()].lits.end()
+                     ; it2 != end2
+                     ; it2++
                  ) {
                      if (seen[(~(it2->getLit())).toInt()]) {
                         seen[(~(it2->getLit())).toInt()] = 0;
