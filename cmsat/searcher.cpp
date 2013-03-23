@@ -2310,7 +2310,7 @@ void Searcher::printAgilityStats()
 {
     cout
     << " -- "
-    << " confl:" << std::setw(6) << sumConflicts() - lastRestartConfl
+    << " confl:" << std::setw(6) << params.conflictsDoneThisRestart
     << ", rest:" << std::setw(3) << stats.numRestarts
     << ", ag:" << std::setw(4) << std::fixed << std::setprecision(2)
     << agility.getAgility()
