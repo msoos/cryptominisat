@@ -1348,26 +1348,6 @@ end:
     }
 }
 
-Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
-{
-    assert(glue < 60000);
-    Clause* cl = NULL;
-    switch (lits.size()) {
-        case 1:
-        case 2:
-        case 3:
-            break;
-        default:
-            cl = clAllocator->Clause_new(lits, Searcher::sumConflicts());
-            cl->makeLearnt(glue);
-            ClOffset offset = clAllocator->getOffset(cl);
-            longRedCls.push_back(offset);
-            break;
-    }
-
-    return cl;
-}
-
 ClauseUsageStats Solver::sumClauseData(
     const vector<ClOffset>& toprint
     , const bool learnt

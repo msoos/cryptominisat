@@ -1203,8 +1203,15 @@ bool Searcher::handle_conflict(PropBy confl)
 
     //Is there on-the-fly subsumption?
     if (cl == NULL) {
-        //Get new clause
-        cl = solver->newClauseByThread(learnt_clause, glue);
+
+        //Otherwise, we will attach it directly, below
+        if (learnt_clause.size() > 3) {
+            cl = clAllocator->Clause_new(learnt_clause, Searcher::sumConflicts());
+            cl->makeLearnt(glue);
+            ClOffset offset = clAllocator->getOffset(cl);
+            solver->longRedCls.push_back(offset);
+        }
+
     } else {
         uint32_t origSize = cl->size();
         solver->detachClause(*cl);

@@ -285,12 +285,6 @@ class Solver : public Searcher
         SQLStats* sqlStats;
         vector<string> fileNamesUsed;
 
-        //Control
-        Clause*  newClauseByThread(
-            const vector<Lit>& lits
-            , const uint32_t glue
-        );
-
         //Attaching-detaching clauses
         virtual void attachClause(
             const Clause& c
