@@ -1309,7 +1309,9 @@ lbool Solver::simplifyProblem()
         renumberVariables();
 
     //Re-calculate reachability after re-numbering and new cache data
-    calcReachability();
+    if (conf.doCache) {
+        calcReachability();
+    }
 
     //Delete and disable cache if too large
     if (conf.doCache) {
