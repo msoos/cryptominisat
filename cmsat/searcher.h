@@ -56,7 +56,7 @@ class Searcher : public PropEngine
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
             AvgCalc<uint32_t>   branchDepthHistLT;
 
-            bqueue<uint32_t>    branchDepthDeltaHist;
+            AvgCalc<uint32_t>   branchDepthDeltaHist;
             AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
             AvgCalc<uint32_t>   trailDepthHist;
@@ -65,14 +65,11 @@ class Searcher : public PropEngine
             AvgCalc<uint32_t>   trailDepthDeltaHist;
             AvgCalc<uint32_t>   trailDepthDeltaHistLT;
 
-            AvgCalc<bool>       conflictAfterConflict;
-            AvgCalc<bool>       conflictAfterConflictLT;
-
             //About the confl generated
             bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
             AvgCalc<uint32_t>   glueHistLT;
 
-            bqueue<uint32_t>    conflSizeHist;       ///< Conflict size history
+            AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history
             AvgCalc<uint32_t>   conflSizeHistLT;
 
             AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
@@ -82,22 +79,25 @@ class Searcher : public PropEngine
             AvgCalc<double, double>  agilityHist;
             AvgCalc<double, double>  agilityHistLT;
 
+            #ifdef STATS_NEEDED
+            AvgCalc<bool>       conflictAfterConflict;
+            AvgCalc<bool>       conflictAfterConflictLT;
+
             AvgCalc<size_t>     watchListSizeTraversed;
             AvgCalc<size_t>     watchListSizeTraversedLT;
 
             AvgCalc<bool>       litPropagatedSomething;
             AvgCalc<bool>       litPropagatedSomethingLT;
+            #endif
 
             size_t getMemUsed() const
             {
                 size_t used = 0;
-                used += sizeof(AvgCalc<uint32_t>)*12;
+                used += sizeof(AvgCalc<uint32_t>)*16;
                 used += sizeof(AvgCalc<bool>)*4;
                 used += sizeof(AvgCalc<size_t>)*2;
                 used += sizeof(AvgCalc<double, double>)*2;
-                used += branchDepthDeltaHist.usedMem();
                 used += glueHist.usedMem();
-                used += conflSizeHist.usedMem();
 
                 return used;
             }
@@ -105,79 +105,29 @@ class Searcher : public PropEngine
             void clear()
             {
                 //About the search
-                branchDepthHistLT.addData(branchDepthHist);
                 branchDepthHist.clear();
-
-                branchDepthDeltaHistLT.addData(branchDepthDeltaHist.getLongtTerm());
                 branchDepthDeltaHist.clear();
-
-                trailDepthHistLT.addData(trailDepthHist);
                 trailDepthHist.clear();
-
-                trailDepthDeltaHistLT.addData(trailDepthDeltaHist);
                 trailDepthDeltaHist.clear();
 
-                conflictAfterConflictLT.addData(conflictAfterConflict);
-                conflictAfterConflict.clear();
-
                 //conflict generated
-                glueHistLT.addData(glueHist.getLongtTerm());
                 glueHist.clear();
-
-                conflSizeHistLT.addData(conflSizeHist.getLongtTerm());
                 conflSizeHist.clear();
-
-                numResolutionsHistLT.addData(numResolutionsHist);
                 numResolutionsHist.clear();
 
                 //lits, vars
-                agilityHistLT.addData(agilityHist);
                 agilityHist.clear();
 
-                watchListSizeTraversedLT.addData(watchListSizeTraversed);
+                #ifdef STATS_NEEDED
+                conflictAfterConflict.clear();
                 watchListSizeTraversed.clear();
-
-                litPropagatedSomethingLT.addData(litPropagatedSomething);
                 litPropagatedSomething.clear();
+                #endif
             }
 
-            void reset(const size_t shortTermHistorySize)
+            void setSize(const size_t shortTermHistorySize)
             {
-                //About the search tree
-                branchDepthHist.clear();
-                branchDepthHistLT.clear();
-
-                branchDepthDeltaHist.clearAndResize(shortTermHistorySize);
-                branchDepthDeltaHistLT.clear();
-
-                trailDepthHist.clear();
-                trailDepthHistLT.clear();
-
-                trailDepthDeltaHist.clear();
-                trailDepthDeltaHistLT.clear();
-
-                conflictAfterConflict.clear();
-                conflictAfterConflictLT.clear();
-
-                //About the confl generated
                 glueHist.clearAndResize(shortTermHistorySize);
-                glueHistLT.clear();
-
-                conflSizeHist.clearAndResize(shortTermHistorySize);
-                conflSizeHistLT.clear();
-
-                numResolutionsHist.clear();
-                numResolutionsHistLT.clear();
-
-                //Lits, vars
-                agilityHist.clear();
-                agilityHistLT.clear();
-
-                watchListSizeTraversed.clear();
-                watchListSizeTraversedLT.clear();
-
-                litPropagatedSomething.clear();
-                litPropagatedSomethingLT.clear();
             }
 
             void print() const
@@ -192,7 +142,7 @@ class Searcher : public PropEngine
                 << "/" << std::left<< agilityHistLT.avgPrint(3, 5)
 
                 << " confllen"
-                << " " << std::right << conflSizeHist.getLongtTerm().avgPrint(1, 5)
+                << " " << std::right << conflSizeHist.avgPrint(1, 5)
                 << "/" << std::left << conflSizeHistLT.avgPrint(1, 5)
 
                 << " branchd"
@@ -200,7 +150,7 @@ class Searcher : public PropEngine
                 << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
                 << " branchdd"
 
-                << " " << std::right << branchDepthDeltaHist.getLongtTerm().avgPrint(1, 4)
+                << " " << std::right << branchDepthDeltaHist.avgPrint(1, 4)
                 << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
 
                 << " traild"

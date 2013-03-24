@@ -65,6 +65,7 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         , clauseActivityIncrease(1)
 {
     mtrand.seed(conf.origSeed);
+    hist.setSize(conf.shortTermHistorySize);
 }
 
 Searcher::~Searcher()
@@ -864,7 +865,9 @@ lbool Searcher::search(uint64_t* geom_max)
                 stats.learntUnits++;
                 stats.conflStats.numConflicts++;
                 stats.conflStats.update(lastConflictCausedBy);
+                #ifdef STATS_NEEDED
                 hist.conflictAfterConflict.push(lastWasConflict);
+                #endif
                 lastWasConflict = true;
 
                 cancelUntil(0);
@@ -933,7 +936,9 @@ lbool Searcher::search(uint64_t* geom_max)
 
             //If restart is needed, set it as so
             checkNeedRestart(geom_max);
+            #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(lastWasConflict);
+            #endif
             lastWasConflict = true;
 
             if (!handle_conflict(confl))
@@ -1133,12 +1138,25 @@ bool Searcher::handle_conflict(PropBy confl)
     if (params.update) {
         //Update history
         hist.trailDepthHist.push(trail.size() - trail_lim[0]);
+        hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
+
         hist.branchDepthHist.push(decisionLevel());
+        hist.branchDepthHistLT.push(decisionLevel());
+
         hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
+        hist.branchDepthDeltaHistLT.push(decisionLevel() - backtrack_level);
+
         hist.glueHist.push(glue);
+        hist.glueHistLT.push(glue);
+
         hist.conflSizeHist.push(learnt_clause.size());
+        hist.conflSizeHistLT.push(learnt_clause.size());
+
         hist.agilityHist.push(agility.getAgility());
+        hist.agilityHistLT.push(agility.getAgility());
+
         hist.numResolutionsHist.push(resolutions.sum());
+        hist.numResolutionsHistLT.push(resolutions.sum());
 
         #ifdef STATS_NEEDED
         if (conf.doSQL) {
@@ -1300,9 +1318,6 @@ void Searcher::resetStats()
 
     //Clear up previous stuff like model, final conflict
     conflict.clear();
-
-    //histories
-    hist.reset(conf.shortTermHistorySize);
 
     //About vars
     #ifdef STATS_NEEDED
