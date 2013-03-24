@@ -95,7 +95,7 @@ do
 		--vivif $(bool) \
 		--sortwatched $(bool) \
 		--renumber $(bool) \
-		--verb 0 \
+		--verb 1 \
 		instance.cnf \
 		| tee solution.out | grep -v '^v'
 
