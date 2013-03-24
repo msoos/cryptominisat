@@ -2265,7 +2265,7 @@ void Simplifier::removeClausesHelper(
         }
 
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        if (!lits.empt()) {
+        if (!lits.empty()) {
             cout
             << "Eliminated clause " << lits
             << " on var " << lit.var()+1

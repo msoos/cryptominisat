@@ -27,8 +27,6 @@ namespace CMSat {
 #define VERBOSE_DEBUG_RECONSTRUCT
 #endif
 
-//#define VERBOSE_DEBUG_RECONSTRUCT
-
 class Solver;
 
 class SolutionExtender
