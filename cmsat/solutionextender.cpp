@@ -123,10 +123,6 @@ void SolutionExtender::extend()
     }
 
     if (solver->conf.verbosity >= 3) {
-        cout << "c Picking braches and propagating" << endl;
-    }
-
-    if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
     solver->simplifier->extendModel(this);
@@ -137,6 +133,10 @@ void SolutionExtender::extend()
             cout << "Error! While picking lit and propagating after solution reconstruction" << endl;
             exit(-1);
         }
+    }
+
+    if (solver->conf.verbosity >= 3) {
+        cout << "c Picking braches and propagating" << endl;
     }
 
     //Copy&check model
