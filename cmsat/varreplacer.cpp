@@ -596,14 +596,18 @@ void VarReplacer::extendModel(SolutionExtender* extender) const
             continue;
 
         tmpClause.clear();
-        tmpClause.push_back(Lit(it->var(), true));
-        tmpClause.push_back(Lit(i, it->sign()));
+        Lit lit1 = Lit(it->var(), true);
+        Lit lit2 = Lit(i, it->sign());
+        tmpClause.push_back(lit1);
+        tmpClause.push_back(lit2);
         bool OK = extender->addClause(tmpClause);
         assert(OK);
 
         tmpClause.clear();
-        tmpClause.push_back(Lit(it->var(), false));
-        tmpClause.push_back(Lit(i, it->sign()^true));
+        lit1 ^= true;
+        lit2 ^= true;
+        tmpClause.push_back(lit1);
+        tmpClause.push_back(lit2);
         OK = extender->addClause(tmpClause);
         assert(OK);
     }
