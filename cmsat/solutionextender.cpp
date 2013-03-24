@@ -87,7 +87,9 @@ void SolutionExtender::extend()
         ) {
             //Binary clauses
             if (it2->isBinary()
+                //Only irred
                 && !it2->learnt()
+                //Only add each bin once
                 && lit < it2->lit1()
             ) {
                 tmp.clear();
@@ -99,7 +101,9 @@ void SolutionExtender::extend()
 
             //Tertiary clauses
             if (it2->isTri()
+                //Only irred
                 && !it2->learnt()
+                //Each tri only once
                 && lit < it2->lit1()
                 && it2->lit1() < it2->lit2()
             ) {
