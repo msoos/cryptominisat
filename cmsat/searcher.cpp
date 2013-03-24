@@ -2077,7 +2077,7 @@ Lit Searcher::pickBranchLit()
     if (next != lit_Undef
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
-        Lit lit2;
+        Lit lit2 = lit_Undef;
         if (true) {
             //Use timestamps
             lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
