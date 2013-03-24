@@ -1141,7 +1141,7 @@ bool Simplifier::simplify()
     if (solver->conf.doBlockClauses) {
         blockClauses();
         //Call it first time, and that's it
-        blockImplicit(globalStats.numCalls == 0, true);
+        blockImplicit(false, true);
     }
 
     /*if (solver->conf.doAsymmTE)
