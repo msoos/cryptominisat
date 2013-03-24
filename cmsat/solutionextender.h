@@ -95,6 +95,8 @@ class SolutionExtender
         }
 
     private:
+        void replaceSet(Lit toSet);
+        void replaceBackwardSet(const Lit toSet);
         bool propagateCl(MyClause& cl);
         bool propagate();
         bool satisfiedNorm(const vector<Lit>& lits) const;
