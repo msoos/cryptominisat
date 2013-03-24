@@ -202,7 +202,7 @@ bool SolutionExtender::addClause(
     lits.resize(lits.size()-(i-j));
 
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c Adding extend clause: " << lits << endl;
+    cout << "c Adding extend clause: " << lits << " blocked on: " << blockedOn << endl;
     #endif
 
     //Empty clause, oops!
@@ -282,12 +282,12 @@ bool SolutionExtender::propagateCl(MyClause& cl)
         return true;
 
     //Must flip
-    assert(cl.blockedOn != lit_Undef);
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout
     << "Flipping lit " << cl.blockedOn
     << " due to clause " << cl.lits << endl;
     #endif
+    assert(cl.blockedOn != lit_Undef);
 
     assert(solver->varData[cl.blockedOn.var()].level != 0
         && "We cannot flip 0-level vars"
