@@ -2039,7 +2039,7 @@ Lit Searcher::pickBranchLit()
     }
 
     // Activity based decision:
-    /*while (next == lit_Undef
+    while (next == lit_Undef
       || value(next.var()) != l_Undef
       || !solver->decisionVar[next.var()]
     ) {
@@ -2058,57 +2058,30 @@ Lit Searcher::pickBranchLit()
         }
     }
 
-    //Try to use reachability to pick a literal that dominates this one
+    //Try to update to dominator
     if (next != lit_Undef
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
-        const Lit lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
+        Lit lit2;
+        if (true) {
+            //Use timestamps
+            lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
+        } else {
+            //Ude cache
+            lit2 = solver->litReachable[next.toInt()].lit;
+        }
+
+        //Update
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
             && solver->decisionVar[lit2.var()]
         ) {
-            //insert this one back, just in case the litReachable isn't entirely correct
-            //which would be a MAJOR bug, btw
+            //Dominator may not actually dominate this variabe
+            //So just to be sure, re-insert it
             insertVarOrder(next.var());
 
             //Save this literal & sign
             next = lit2;
-        }
-    }*/
-
-    while (next == lit_Undef
-        || value(next.var()) != l_Undef
-        || !solver->decisionVar[next.var()]
-    ) {
-        //There is nothing to branch on anymore! Satisfiable!
-        if (order_heap.empty()) {
-            next = lit_Undef;
-            break;
-        }
-
-        //Remove the best candidate
-        const Var var = order_heap.removeMin();
-
-        //Check if it makes any sense
-        if (value(var) == l_Undef
-            && solver->decisionVar[var]
-        ) {
-            next = Lit(var, pickPolarity(var));
-
-            //Try to update to dominator
-            const Lit lit2 = solver->litReachable[next.toInt()].lit;
-            if (lit2 != lit_Undef
-                && value(lit2.var()) == l_Undef
-                && solver->decisionVar[lit2.var()]
-                && mtrand.randInt(conf.dominPickFreq) == 1
-            ) {
-                //Dominator may not actually dominate this variabe
-                //So just to be sure, re-insert it
-                insertVarOrder(next.var());
-
-                //Update picked literal
-                next = solver->litReachable[next.toInt()].lit;
-            }
         }
     }
 
