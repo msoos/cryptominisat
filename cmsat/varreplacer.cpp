@@ -586,8 +586,15 @@ void VarReplacer::extendModel(SolutionExtender* extender) const
 
     vector<Lit> tmpClause;
     uint32_t i = 0;
-    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-        if (it->var() == i) continue;
+    for (vector<Lit>::const_iterator
+        it = table.begin()
+        ; it != table.end()
+        ; it++, i++
+    ) {
+        //Not replaced, nothing to do
+        if (it->var() == i)
+            continue;
+
         tmpClause.clear();
         tmpClause.push_back(Lit(it->var(), true));
         tmpClause.push_back(Lit(i, it->sign()));

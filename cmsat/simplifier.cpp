@@ -163,7 +163,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
-        extender->addBlockedClause(*it);
+        extender->addClause(it->lits, it->blockedOn);
     }
 }
 
@@ -2179,10 +2179,10 @@ void Simplifier::removeClausesHelper(
     , const Lit lit
 ) {
     blockedMapBuilt = false;
+    vector<Lit> lits;
 
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
-        vector<Lit> lits;
 
         #ifdef VERBOSE_DEBUG_VARELIM
         cout << "Removing clause due to var-elim on " << lit << " : ";
