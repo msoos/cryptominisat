@@ -86,7 +86,10 @@ void SolutionExtender::extend()
             ; it2++
         ) {
             //Binary clauses
-            if (it2->isBinary() && !it2->learnt()) {
+            if (it2->isBinary()
+                && !it2->learnt()
+                && lit < it2->lit1()
+            ) {
                 tmp.clear();
                 tmp.push_back(lit);
                 tmp.push_back(it2->lit1());
@@ -95,7 +98,11 @@ void SolutionExtender::extend()
             }
 
             //Tertiary clauses
-            if (it2->isTri() && !it2->learnt()) {
+            if (it2->isTri()
+                && !it2->learnt()
+                && lit < it2->lit1()
+                && it2->lit1() < it2->lit2()
+            ) {
                 tmp.clear();
                 tmp.push_back(lit);
                 tmp.push_back(it2->lit1());
