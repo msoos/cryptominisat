@@ -190,7 +190,6 @@ bool Prober::probe()
         if (solver->value(lit.var()) != l_Undef
             || !solver->decisionVar[lit.var()]
             || visitedAlready[lit.toInt()]
-            //|| solver->timestamp[lit.toInt()].dominator[STAMP_RED] != lit_Undef
         ) {
             continue;
         }
