@@ -36,19 +36,22 @@ class SolutionExtender
     class MyClause
     {
         public:
-            MyClause(const vector<Lit>& _lits) :
+            MyClause(const vector<Lit>& _lits, const Lit _blockedOn = lit_Undef) :
                 lits(_lits)
+                , blockedOn(_blockedOn)
             {
             }
 
-            MyClause(const Clause& cl)
+            MyClause(const Clause& cl, const Lit _blockedOn = lit_Undef) :
+                blockedOn(_blockedOn)
             {
                 for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
                     lits.push_back(*l);
                 }
             }
 
-            MyClause(const Lit lit1, const Lit lit2)
+            MyClause(const Lit lit1, const Lit lit2, const Lit _blockedOn = lit_Undef) :
+                blockedOn(_blockedOn)
             {
                 lits.push_back(lit1);
                 lits.push_back(lit2);
@@ -74,16 +77,13 @@ class SolutionExtender
                 return lits;
             }
 
-        private:
             vector<Lit> lits;
+            Lit blockedOn;
     };
     public:
         SolutionExtender(Solver* _solver, const vector<lbool>& _assigns);
         void extend();
-        bool addClause(const vector<Lit>& lits);
-        void addBlockedClause(const BlockedClause& cl);
-        void replaceSet(Lit toSet);
-        void replaceBackwardSet(const Lit toSet);
+        bool addClause(const vector<Lit>& lits, const Lit blockedOn = lit_Undef);
         void enqueue(const Lit lit);
 
         lbool value(const Lit lit) const

@@ -163,7 +163,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
-        extender->addBlockedClause(*it);
+        extender->addClause(it->lits, it->blockedOn);
     }
 }
 

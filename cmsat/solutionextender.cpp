@@ -56,22 +56,6 @@ void SolutionExtender::extend()
     //Temporary
     vector<Lit> tmp;
 
-    for (vector<ClOffset>::iterator
-        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause& cl = *solver->clAllocator->getPointer(*it);
-        assert(!cl.learnt());
-
-        //Add clause to our local system
-        tmp.clear();
-        for (uint32_t i = 0; i < cl.size(); i++)
-            tmp.push_back(cl[i]);
-        const bool OK = addClause(tmp);
-        assert(OK);
-    }
-
     size_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -122,9 +106,30 @@ void SolutionExtender::extend()
     }
     solver->varReplacer->extendModel(this);
 
+    for (vector<ClOffset>::iterator
+        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *solver->clAllocator->getPointer(*it);
+        assert(!cl.learnt());
+
+        //Add clause to our local system
+        tmp.clear();
+        for (uint32_t i = 0; i < cl.size(); i++)
+            tmp.push_back(cl[i]);
+        const bool OK = addClause(tmp);
+        assert(OK);
+    }
+
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
     }
+
+    if (solver->conf.verbosity >= 3) {
+        cout << "c Adding blocked clauses" << endl;
+    }
+    solver->simplifier->extendModel(this);
 
     while(pickBranchLit() != lit_Undef) {
         const bool OK = propagate();
@@ -133,11 +138,6 @@ void SolutionExtender::extend()
             exit(-1);
         }
     }
-
-    if (solver->conf.verbosity >= 3) {
-        cout << "c Adding blocked clauses" << endl;
-    }
-    solver->simplifier->extendModel(this);
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);
@@ -179,100 +179,13 @@ bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) con
     return (undef > 0 || val == rhs);
 }
 
-void SolutionExtender::addBlockedClause(const BlockedClause& cl)
-{
-    assert(qhead == trail.size());
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c Adding blocked clause: " << cl << endl;
-    #endif
-
-    const vector<Lit>& lits = cl.lits;
-    Lit blockedOn = cl.blockedOn;
-
-    //Add the clause to the database
-    //Return value is not *so* important, because addClause() doesn't
-    //distinguish between all-zero-level-l_False and other stuff
-    //so we just add it, potentially propagate, and then we flip if need be
-    addClause(lits);
-
-    //If satisfied, OK
-    if (satisfiedNorm(lits))
-        return;
-
-    //Not satisfied, so either more than 1 l_Undef or all l_False inside
-
-    //If there are still literals that can be adjusted
-    //then skip: we can always satisfy it later
-    size_t numUndef = 0;
-    for (size_t i = 0; i < lits.size(); i++) {
-        if (value(lits[i]) == l_Undef)
-            numUndef++;
-    }
-    if (numUndef != 0) {
-        //Must be more than 1
-        //otherwise propagation during addClause() would have set&propagated it
-        assert(numUndef > 1);
-
-        return;
-    }
-
-    //Must be l_False, and must NOT be set at level 0
-    assert(value(blockedOn) == l_False);
-    assert(solver->varData[blockedOn.var()].level != 0);
-
-    //Everything is l_False!
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c recursively flipping to " << blockedOn << endl;
-    #endif
-
-    assert(solver->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
-    enqueue(blockedOn);
-    replaceSet(blockedOn);
-
-    //Propagate&check, see what happens
-    bool OK = propagate();
-    if (!OK) {
-        cout
-        << "Error! Propagation leads to failure after flipping of value"
-        << endl;
-        assert(false);
-    }
-}
-
-void SolutionExtender::replaceSet(Lit toSet)
-{
-    //set forward equivalent
-    if (solver->varReplacer->isReplaced(toSet)) {
-        toSet = solver->varReplacer->getLitReplacedWith(toSet);
-        enqueue(toSet);
-    }
-    replaceBackwardSet(toSet);
-
-    #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c recursive set(s) done." << endl;
-    #endif
-}
-
-void SolutionExtender::replaceBackwardSet(const Lit toSet)
-{
-    //set backward equiv
-    map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(toSet.var());
-    if (revTable != solver->varReplacer->getReverseTable().end()) {
-        const vector<Var>& toGoThrough = revTable->second;
-        for (size_t i = 0; i < toGoThrough.size(); i++) {
-            //Get sign of replacement
-            const Lit lit = Lit(toGoThrough[i], false);
-            Lit tmp = solver->varReplacer->getLitReplacedWith(lit);
-
-            //Set var
-            enqueue(lit ^ tmp.sign() ^ toSet.sign());
-        }
-    }
-}
-
-bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
-{
+bool SolutionExtender::addClause(
+    const vector< Lit >& givenLits
+    , const Lit blockedOn
+) {
     vector<Lit> lits = givenLits;
+
+    //Remove lits set at 0-level or return TRUE if any is set to TRUE at 0-level
     vector<Lit>::iterator i = lits.begin();
     vector<Lit>::iterator j = i;
     for (vector<Lit>::iterator end = lits.end(); i != end; i++) {
@@ -296,18 +209,22 @@ bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     if (lits.size() == 0)
         return false;
 
-    MyClause* cl = new MyClause(lits);
+    //Create new clause, and add it
+    MyClause* cl = new MyClause(lits, blockedOn);
     clauses.push_back(cl);
-    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)
-    {
+    for (vector<Lit>::const_iterator
+        it = lits.begin(), end = lits.end()
+        ; it != end
+        ; it++
+    ) {
         occur[it->toInt()].push_back(cl);
     }
 
-    const bool OK = propagateCl(*cl);
-    //If problem with propagating this one clause
-    //or problem with propagating what it propagates, return false
-    if (!OK || !propagate())
+    propagateCl(*cl);
+    if (!propagate()) {
+        assert(false);
         return false;
+    }
 
     return true;
 }
@@ -364,8 +281,19 @@ bool SolutionExtender::propagateCl(MyClause& cl)
     if (numUndef >= 1)
         return true;
 
-    assert(numUndef == 0);
-    return false;
+    //Must flip
+    assert(cl.blockedOn != lit_Undef);
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout
+    << "Flipping lit " << cl.blockedOn
+    << " due to clause " << cl.lits << endl;
+    #endif
+
+    assert(solver->varData[cl.blockedOn.var()].level != 0
+        && "We cannot flip 0-level vars"
+    );
+    enqueue(cl.blockedOn);
+    return true;
 }
 
 Lit SolutionExtender::pickBranchLit()
