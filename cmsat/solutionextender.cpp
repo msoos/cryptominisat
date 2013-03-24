@@ -80,7 +80,11 @@ void SolutionExtender::extend()
     ) {
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+        for (vec<Watched>::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //Binary clauses
             if (it2->isBinary() && !it2->learnt()) {
                 tmp.clear();
