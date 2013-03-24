@@ -318,7 +318,11 @@ bool SolutionExtender::propagate()
     while(qhead < trail.size()) {
         const Lit p = trail[qhead++];
         const vector<MyClause*>& occ = occur[(~p).toInt()];
-        for(vector<MyClause*>::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
+        for(vector<MyClause*>::const_iterator
+            it = occ.begin(), end = occ.end()
+            ; it != end
+            ; it++
+        ) {
             const bool thisRet = propagateCl(**it);
             if (!thisRet) {
                 cout << "Problem with clause: " << (*it)->getLits() << endl;
