@@ -1717,7 +1717,7 @@ RestartType Searcher::decide_restart_type() const
 void Searcher::check_if_print_restart_stat(const lbool status)
 {
     //Print restart stat
-    if (conf.verbosity >= 1
+    if (conf.verbosity >= 2
         && status == l_Undef
         && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
             || conf.printAllRestarts)
