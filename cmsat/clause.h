@@ -179,8 +179,6 @@ struct Clause
 protected:
 
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
-    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last simplification?
-    uint32_t changed:1; ///<Var inside clause has been changed
 
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
@@ -231,20 +229,9 @@ public:
         return mySize;
     }
 
-    bool getChanged() const
-    {
-        return changed;
-    }
-
     void setChanged()
     {
         setStrenghtened();
-        changed = 1;
-    }
-
-    void unsetChanged()
-    {
-        changed = 0;
     }
 
     void shrink (const uint32_t i)
@@ -273,11 +260,6 @@ public:
         return isFreed;
     }
 
-    bool getStrenghtened() const
-    {
-        return strenghtened;
-    }
-
     void reCalcAbstraction()
     {
         abst = calcAbstraction(*this);
@@ -286,12 +268,6 @@ public:
     void setStrenghtened()
     {
         abst = calcAbstraction(*this);
-        strenghtened = true;
-    }
-
-    void unsetStrenghtened()
-    {
-        strenghtened = false;
     }
 
     Lit& operator [] (const uint32_t i)
