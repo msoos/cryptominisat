@@ -193,8 +193,8 @@ void DimacsParser::printHeader(StreamBuffer& in)
         }
     } else {
         cout
-        << "PARSE ERROR! Unexpected char: " << *in
-        << "In the header, at line " << lineNum
+        << "PARSE ERROR! Unexpected char: '" << *in
+        << "' in the header, at line " << lineNum
         << endl;
         exit(3);
     }
