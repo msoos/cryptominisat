@@ -746,20 +746,25 @@ struct ConflStats
             , "%"
         );
 
-        cout
-        << "c DEBUG"
-        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed"
-        << endl
-        << "c  + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
-        << " = "
-        << (((int)numConflicts - (int)(conflsBinIrred + conflsBinRed
-            + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
-        << endl;
+        long diff = (long)numConflicts
+            - (long)(conflsBinIrred + conflsBinRed
+                + (long)conflsTriIrred + (long)conflsTriRed
+                + (long)conflsLongIrred + (long)conflsLongRed
+            );
 
-        /*assert(((int)numConflicts -
-            (int)(conflsBinIrred + conflsBinRed
-                    + conflsTri + conflsLongIrred + conflsLongRed)
-        ) == 0);*/
+        if (diff != 0) {
+            cout
+            << "c DEBUG"
+            << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed"
+            << endl
+            << "c  + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
+            << " = "
+            << (((int)numConflicts - (int)(conflsBinIrred + conflsBinRed
+                + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
+            << endl;
+
+            //assert(diff == 0);
+        }
     }
 
     uint64_t conflsBinIrred;
