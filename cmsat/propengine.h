@@ -369,6 +369,11 @@ protected:
         , const bool learnt
         , Solver* solver
     );
+    void propTriHelperAnyOrder(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+    );
 
     template<bool simple>
     PropResult propTriClause (
@@ -376,6 +381,11 @@ protected:
         , const Lit p
         , PropBy& confl
         , Solver* solver
+    );
+    bool propTriClauseAnyOrder(
+        const vec<Watched>::const_iterator i
+        , const Lit lit1
+        , PropBy& confl
     );
 
     ///Propagate >3-long clause
@@ -386,6 +396,12 @@ protected:
         , const Lit p
         , PropBy& confl
         , Solver* solver
+    );
+    bool propNormalClauseAnyOrder(
+        const vec<Watched>::iterator i
+        , vec<Watched>::iterator &j
+        , const Lit p
+        , PropBy& confl
     );
 
     //For hyper-bin and transitive reduction.

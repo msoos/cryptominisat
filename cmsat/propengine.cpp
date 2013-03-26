@@ -411,6 +411,109 @@ PropResult PropEngine::propNormalClause(
     return PROP_SOMETHING;
 }
 
+
+bool PropEngine::propNormalClauseAnyOrder(
+    const vec<Watched>::iterator i
+    , vec<Watched>::iterator &j
+    , const Lit p
+    , PropBy& confl
+) {
+    //Blocked literal is satisfied, so clause is satisfied
+    if (value(i->getBlockedLit()).getBool()) {
+        *j++ = *i;
+        return true;
+    }
+    propStats.bogoProps += 4;
+    const ClOffset offset = i->getOffset();
+    Clause& c = *clAllocator->getPointer(offset);
+    #ifdef STATS_NEEDED
+    c.stats.numLookedAt++;
+    c.stats.numLitVisited++;
+    #endif
+
+    // Make sure the false literal is data[1]:
+    if (c[0] == ~p) {
+        std::swap(c[0], c[1]);
+    }
+
+    assert(c[1] == ~p);
+
+    // If 0th watch is true, then clause is already satisfied.
+    if (value(c[0]).getBool()) {
+        *j = Watched(offset, c[0]);
+        j++;
+        return true;
+    }
+
+    // Look for new watch:
+    for (Lit *k = c.begin() + 2, *end2 = c.end()
+        ; k != end2
+        ; k++
+    ) {
+        //Literal is either unset or satisfied, attach to other watchlist
+        if (value(*k) != l_False) {
+            c[1] = *k;
+            //propStats.bogoProps += numLitVisited/10;
+            #ifdef STATS_NEEDED
+            c.stats.numLitVisited+= numLitVisited;
+            #endif
+            *k = ~p;
+            watches[c[1].toInt()].push(Watched(offset, c[0]));
+            return true;
+        }
+    }
+    //propStats.bogoProps += numLitVisited/10;
+    #ifdef STATS_NEEDED
+    c.stats.numLitVisited+= numLitVisited;
+    #endif
+
+    // Did not find watch -- clause is unit under assignment:
+    *j++ = *i;
+    if (value(c[0]) == l_False) {
+
+        confl = PropBy(offset);
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        cout << "Conflict from ";
+        for(size_t i = 0; i < c.size(); i++) {
+            cout  << c[i] << " , ";
+        }
+        cout << endl;
+        #endif //VERBOSE_DEBUG_FULLPROP
+
+        //Update stats
+        c.stats.numConfl++;
+        if (c.learnt())
+            lastConflictCausedBy = CONFL_BY_LONG_RED_CLAUSE;
+        else
+            lastConflictCausedBy = CONFL_BY_LONG_IRRED_CLAUSE;
+
+        qhead = trail.size();
+        return false;
+    } else {
+
+        //Update stats
+        c.stats.numProp++;
+        #ifdef STATS_NEEDED
+        if (c.learnt())
+            propStats.propsLongRed++;
+        else
+            propStats.propsLongIrred++;
+        #endif
+        enqueue(c[0], PropBy(offset));
+
+        //Update glues?
+        if (c.learnt()
+            && c.stats.glue > 2
+            && updateGlues
+        ) {
+            uint16_t newGlue = calcGlue(c);
+            c.stats.glue = std::min(c.stats.glue, newGlue);
+        }
+    }
+
+    return true;
+}
+
 /**
 @brief Propagates a tertiary (3-long) clause
 
@@ -471,6 +574,57 @@ PropResult PropEngine::propTriClause(
     return PROP_NOTHING;
 }
 
+inline bool PropEngine::propTriClauseAnyOrder(
+    const vec<Watched>::const_iterator i
+    , const Lit lit1
+    , PropBy& confl
+) {
+    const Lit lit2 = i->lit1();
+    lbool val2 = value(lit2);
+
+    //literal is already satisfied, nothing to do
+    if (val2 == l_True)
+        return true;
+
+    const Lit lit3 = i->lit2();
+    lbool val3 = value(lit3);
+
+    //literal is already satisfied, nothing to do
+    if (val3 == l_True)
+        return true;
+
+    if (val2 == l_False && val3 == l_False) {
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        cout << "Conflict from "
+            << lit1 << " , "
+            << i->lit1() << " , "
+            << i->lit2() << endl;
+        #endif //VERBOSE_DEBUG_FULLPROP
+        confl = PropBy(~lit1, i->lit2());
+
+        //Update stats
+        if (i->learnt())
+            lastConflictCausedBy = CONFL_BY_TRI_RED_CLAUSE;
+        else
+            lastConflictCausedBy = CONFL_BY_TRI_IRRED_CLAUSE;
+
+        failBinLit = i->lit1();
+        qhead = trail.size();
+        return false;
+    }
+    if (val2 == l_Undef && val3 == l_False) {
+        propTriHelperAnyOrder(lit1, lit2, lit3);
+        return true;
+    }
+
+    if (val3 == l_Undef && val2 == l_False) {
+        propTriHelperAnyOrder(lit1, lit3, lit2);
+        return true;
+    }
+
+    return true;
+}
+
 template<bool simple>
 void PropEngine::propTriHelper(
     const Lit lit1
@@ -512,6 +666,22 @@ void PropEngine::propTriHelper(
     }
 }
 
+inline void PropEngine::propTriHelperAnyOrder(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+) {
+    #ifdef STATS_NEEDED
+    if (learnt)
+        propStats.propsTriRed++;
+    else
+        propStats.propsTriIrred++;
+    #endif
+
+    //Lazy hyper-bin is not possibe
+    enqueue(lit2, PropBy(~lit1, lit3));
+}
+
 PropBy PropEngine::propagateAnyOrder(
     Solver* solver
 ) {
@@ -521,7 +691,6 @@ PropBy PropEngine::propagateAnyOrder(
     cout << "Fast Propagation started" << endl;
     #endif
 
-    PropResult ret = PROP_NOTHING;
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[(~p).toInt()];
@@ -543,20 +712,20 @@ PropBy PropEngine::propagateAnyOrder(
             //Propagate tri clause
             if (i->isTri()) {
                 *j++ = *i;
-                ret = propTriClause<true>(i, p, confl, solver);
-                if (ret == PROP_FAIL) {
+                if (!propTriClauseAnyOrder(i, p, confl)) {
                     i++;
                     break;
                 }
+                continue;
             }
 
             //propagate normal clause
             if (i->isClause()) {
-                ret = propNormalClause<true>(i, j, p, confl, solver);
-                if (ret == PROP_FAIL) {
+                if (!propNormalClauseAnyOrder(i, j, p, confl)) {
                     i++;
                     break;
                 }
+                continue;
             }
         }
         while (i != end) {
