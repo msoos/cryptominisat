@@ -1262,7 +1262,7 @@ lbool Solver::simplifyProblem()
     }
 
     //Don't replace first -- the stamps won't work so well
-    if (conf.doClausVivif && !clauseVivifier->vivify(solveStats.numSimplify > 1)) {
+    if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
         goto end;
     }
 
@@ -1270,7 +1270,7 @@ lbool Solver::simplifyProblem()
     clauseVivifier->subsumeImplicit();
 
     //SCC&VAR-REPL
-    if (conf.doFindAndReplaceEqLits && solveStats.numSimplify > 0) {
+    if (conf.doFindAndReplaceEqLits) {
         if (!sCCFinder->find2LongXors())
             goto end;
 
@@ -1296,7 +1296,7 @@ lbool Solver::simplifyProblem()
     }
 
     //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify(solveStats.numSimplify > 0)) {
+    if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
         goto end;
     }
 
