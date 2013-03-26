@@ -39,7 +39,7 @@ SolverConf::SolverConf() :
         , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
         , ratioRemoveClauses(0.5)
-        , numCleanBetweenSimplify(1)
+        , numCleanBetweenSimplify(2)
         , startClean(10000)
         , increaseClean(1.1)
         , maxNumLearntsRatio(10)
