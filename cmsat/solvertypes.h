@@ -590,7 +590,7 @@ struct PropStats
         );
 
         printStatsLine("c flipped", varFlipped
-            , 100.0*(double)varSetNeg/(double)propagations
+            , 100.0*(double)varFlipped/(double)propagations
             , "% of propagations"
         );
 
