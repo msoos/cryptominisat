@@ -68,7 +68,7 @@ SolverConf::SolverConf() :
 
         //Agilities
         , agilityG                  (0.9999)
-        , agilityLimit              (0.05)
+        , agilityLimit              (0.03)
         , agilityViolationLimit     (20)
 
         , doPerformPreSimp (true)
