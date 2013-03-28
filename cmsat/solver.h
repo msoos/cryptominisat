@@ -434,7 +434,6 @@ class Solver : public Searcher
 
         /////////////////////
         // Data
-        SolverConf           conf;
         ImplCache            implCache;
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;

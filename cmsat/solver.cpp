@@ -58,7 +58,6 @@ Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
-    , conf(_conf)
     , needToInterrupt(false)
 
     //Stuff
