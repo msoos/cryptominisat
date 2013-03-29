@@ -161,7 +161,7 @@ void ImplCache::clean(Solver* solver)
         size_t newSize = 0;
 
         //Update to replaced vars, remove vars already set or eliminated
-        Lit vertLit = ~Lit::toLit(wsLit);
+        Lit vertLit = Lit::toLit(wsLit);
         vector<LitExtra>::iterator it = trans->lits.begin();
         vector<LitExtra>::iterator it2 = it;
         for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; it++) {
