@@ -53,13 +53,15 @@ void ClauseCleaner::treatImplicitClauses()
     vector<BinaryClause> toAttach;
 
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
+    for (size_t end = solver->watches.size()
+        ; wsLit != end
+        ; wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        vec<Watched>& ws = *it;
+        vec<Watched>& ws = solver->watches[wsLit];;
+        if (wsLit+1 < solver->watches.size()) {
+            __builtin_prefetch(solver->watches[wsLit+1].begin());
+        }
 
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;
