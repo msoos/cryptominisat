@@ -13,25 +13,25 @@ The compilation instruction should finally be:
 
 cl /openmp /favor:INTEL64 /O2
 /Fecryptominisat64.exe -DVERSION="__DATE__" -DDISABLE_ZLIB /F2097152 /TP
-/EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Solver.cpp ClauseCleaner.cpp
+/EHsc -I. -I.. Main.cpp Solver.cpp ClauseCleaner.cpp
 PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp
-XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
-FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
-StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
-CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp BothCache.cpp
+XorSubsumer.cpp Subsumer.cpp FailedLitSearcher.cpp ClauseAllocator.cpp
+UselessBinRemover.cpp StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp
+SolverDebug.cpp CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp
+SolverConf.cpp OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp
+Gaussian.cpp BothCache.cpp
 
 32-bit version:
 
 cl /O2 /Fecryptominisat32.exe -DVERSION="__DATE__" -DDISABLE_ZLIB /F2097152
-/TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Solver.cpp ClauseCleaner.cpp
+/TP /EHsc -I. -I.. Main.cpp Solver.cpp ClauseCleaner.cpp
 PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp
-XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
-FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
-StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
-CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp BothCache.cpp
+XorSubsumer.cpp Subsumer.cpp FailedLitSearcher.cpp ClauseAllocator.cpp
+UselessBinRemover.cpp StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp
+SolverDebug.cpp CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp
+SolverConf.cpp OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp
+Gaussian.cpp BothCache.cpp
 
-executed from the 'Solver' subdirectory
+executed from the 'cmsat' subdirectory
 
 --- Build instructions by Martin Maurer
