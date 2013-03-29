@@ -241,14 +241,32 @@ bool SolutionExtender::propagate()
             ; it++
         ) {
             if (it->isBinary() && !it->learnt()) {
-                ret &= propBinaryClause(it);
+                bool thisret = propBinaryClause(it);
+                ret &= thisret;
+                if (!thisret) {
+                    cout
+                    << "Problem with implicit binary clause: "
+                    << ~p
+                    << ", " << it->lit1()
+                    << endl;
+                }
 
                 continue;
             }
 
             //Propagate tri clause
             if (it->isTri() && !it->learnt()) {
-                ret &= propTriClause(it);
+                bool thisret = propTriClause(it);
+                ret &= thisret;
+                if (!thisret) {
+                    cout
+                    << "Problem with implicit tertiary clause: "
+                    << ~p
+                    << ", " << it->lit1()
+                    << ", " << it->lit2()
+                    << endl;
+                }
+
                 continue;
             }
         }
