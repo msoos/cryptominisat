@@ -99,6 +99,12 @@ class SolutionExtender
         void replaceBackwardSet(const Lit toSet);
         bool propagateCl(MyClause& cl);
         bool propagate();
+        bool propBinaryClause(
+            const vec<Watched>::const_iterator i
+        );
+        bool propTriClause(
+            const vec<Watched>::const_iterator i
+        );
         bool satisfiedNorm(const vector<Lit>& lits) const;
         bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
         Lit pickBranchLit();

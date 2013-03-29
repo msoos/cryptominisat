@@ -53,59 +53,12 @@ void SolutionExtender::extend()
     //Sanity check
     solver->simplifier->checkElimedUnassignedAndStats();
 
-    //Temporary
-    vector<Lit> tmp;
-
-    size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //Binary clauses
-            if (it2->isBinary()
-                //Only irred
-                && !it2->learnt()
-                //Only add each bin once
-                && lit < it2->lit1()
-            ) {
-                tmp.clear();
-                tmp.push_back(lit);
-                tmp.push_back(it2->lit1());
-                const bool OK = addClause(tmp);
-                assert(OK);
-            }
-
-            //Tertiary clauses
-            if (it2->isTri()
-                //Only irred
-                && !it2->learnt()
-                //Each tri only once
-                && lit < it2->lit1()
-                && it2->lit1() < it2->lit2()
-            ) {
-                tmp.clear();
-                tmp.push_back(lit);
-                tmp.push_back(it2->lit1());
-                tmp.push_back(it2->lit2());
-                const bool OK = addClause(tmp);
-                assert(OK);
-            }
-        }
-    }
-
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding equivalent literals" << endl;
     }
     solver->varReplacer->extendModel(this);
 
+    vector<Lit> tmp;
     for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
         ; it != end
@@ -121,6 +74,7 @@ void SolutionExtender::extend()
         const bool OK = addClause(tmp);
         assert(OK);
     }
+
 
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
@@ -229,11 +183,76 @@ bool SolutionExtender::addClause(
     return true;
 }
 
+inline bool SolutionExtender::propBinaryClause(
+    const vec<Watched>::const_iterator i
+) {
+    const lbool val = value(i->lit1());
+    if (val == l_Undef) {
+        enqueue(i->lit1());
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+inline bool SolutionExtender::propTriClause(
+    const vec<Watched>::const_iterator i
+) {
+    const Lit lit2 = i->lit1();
+    lbool val2 = value(lit2);
+
+    //literal is already satisfied, nothing to do
+    if (val2 == l_True)
+        return true;
+
+    const Lit lit3 = i->lit2();
+    lbool val3 = value(lit3);
+
+    //literal is already satisfied, nothing to do
+    if (val3 == l_True)
+        return true;
+
+    if (val2 == l_False && val3 == l_False) {
+        return false;
+    }
+    if (val2 == l_Undef && val3 == l_False) {
+        enqueue(lit2);
+        return true;
+    }
+
+    if (val3 == l_Undef && val2 == l_False) {
+        enqueue(lit3);
+        return true;
+    }
+
+    return true;
+}
+
 bool SolutionExtender::propagate()
 {
     bool ret = true;
     while(qhead < trail.size()) {
         const Lit p = trail[qhead++];
+        const vec<Watched>& ws = solver->watches[(~p).toInt()];
+        for(vec<Watched>::const_iterator
+            it = ws.begin(), end = ws.end()
+            ; it != end
+            ; it++
+        ) {
+            if (it->isBinary() && !it->learnt()) {
+                ret &= propBinaryClause(it);
+
+                continue;
+            }
+
+            //Propagate tri clause
+            if (it->isTri() && !it->learnt()) {
+                ret &= propTriClause(it);
+                continue;
+            }
+        }
+
         const vector<MyClause*>& occ = occur[(~p).toInt()];
         for(vector<MyClause*>::const_iterator
             it = occ.begin(), end = occ.end()
