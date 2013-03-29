@@ -252,7 +252,7 @@ class ClauseVivifier {
         );
 
         //Actual algorithms used
-        bool vivifyClausesLongIrred();
+        bool asymmClausesLongIrred();
         bool vivifyClausesTriIrred();
         bool vivifyClausesCache(
             vector<ClOffset>& clauses

@@ -178,10 +178,10 @@ struct Clause
 {
 protected:
 
-    uint32_t isLearnt:1; ///<Is the clause a learnt clause?
-
-    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
-    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    uint16_t isLearnt:1; ///<Is the clause a learnt clause?
+    uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    uint16_t isAsymmed:1;
     uint16_t mySize; ///<The current size of the clause
 
 
@@ -212,6 +212,7 @@ public:
         mySize = ps.size();
         isLearnt = false;
         isRemoved = false;
+        isAsymmed = false;
 
         for (uint32_t i = 0; i < ps.size(); i++)
             getData()[i] = ps[i];
@@ -348,6 +349,16 @@ public:
     void combineStats(const ClauseStats& other)
     {
         stats = ClauseStats::combineStats(stats, other);
+    }
+
+    void setAsymmed(bool asymmed)
+    {
+        isAsymmed = asymmed;
+    }
+
+    bool getAsymmed() const
+    {
+        return isAsymmed;
     }
 };
 

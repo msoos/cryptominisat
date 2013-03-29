@@ -59,7 +59,7 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
         goto end;
 
     if (alsoStrengthen
-        && !vivifyClausesLongIrred()
+        && !asymmClausesLongIrred()
     ) {
         goto end;
     }
@@ -179,7 +179,7 @@ struct ClauseSizeSorter
 /**
 @brief Performs clause vivification (by Hamadi et al.)
 */
-bool ClauseVivifier::vivifyClausesLongIrred()
+bool ClauseVivifier::asymmClausesLongIrred()
 {
     assert(solver->ok);
 
@@ -233,6 +233,18 @@ bool ClauseVivifier::vivifyClausesLongIrred()
         //Get pointer
         ClOffset offset = *i;
         Clause& cl = *solver->clAllocator->getPointer(offset);
+        //Time to dereference
+        extraTime += 5;
+
+        //If we already tried this clause, then move to next
+        if (cl.getAsymmed()) {
+            *j++ = *i;
+            continue;
+        } else {
+            //Otherwise, this clause has been tried for sure
+            cl.setAsymmed(true);
+        }
+
         extraTime += cl.size();
         runStats.checkedClauses++;
 
@@ -259,14 +271,30 @@ bool ClauseVivifier::vivifyClausesLongIrred()
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
 
-    if (solver->conf.verbosity >= 3) {
-        cout << "c [vivif] longirred"
+    //If went through the whole list, then reset 'asymmed' flag
+    //so next time we start from the beginning
+    if (!needToFinish) {
+        for (vector<ClOffset>::const_iterator
+            it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
+            ; it != end
+            ; it++
+        ) {
+            Clause* cl = solver->clAllocator->getPointer(*it);
+            cl->setAsymmed(false);
+        }
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [asymm] longirred"
         << " tried: "
         << runStats.checkedClauses << "/" << solver->longIrredCls.size()
         << " cl-rem:"
         << runStats.numClShorten- origClShorten
         << " lits-rem:"
         << runStats.numLitsRem - origLitRem
+        << " T: "
+        << std::setprecision(2) << cpuTime() - myTime
+        << " T-out: " << needToFinish
         << endl;
     }
 
@@ -349,6 +377,9 @@ ClOffset ClauseVivifier::testVivify(
         runStats.numLitsRem += origSize - lits.size();
 
         if (cl2 != NULL) {
+            //The new clause has been asymm-tried
+            cl2->setAsymmed(true);
+
             return solver->clAllocator->getOffset(cl2);
         } else {
             return std::numeric_limits<ClOffset>::max();

@@ -1676,7 +1676,7 @@ void Solver::printMinStats() const
         , "leafs/tree"
     );
     //varReplacer->getStats().printShort(nVars());
-    printStatsLine("c vivif time"
+    printStatsLine("c asymm time"
                     , clauseVivifier->getStats().timeNorm
                     , clauseVivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time"
