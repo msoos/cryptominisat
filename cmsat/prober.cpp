@@ -311,7 +311,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         cout << "c Probing lit " << lit << endl;
 
     Lit failed = lit_Undef;
-    if (solver->mtrand.randInt(1) == 0) {
+    if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
         const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
         failed = solver->propagateFullDFS(stampType);
     } else {
