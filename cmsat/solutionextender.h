@@ -101,9 +101,11 @@ class SolutionExtender
         bool propagate();
         bool propBinaryClause(
             const vec<Watched>::const_iterator i
+            , const Lit p
         );
         bool propTriClause(
             const vec<Watched>::const_iterator i
+            , const Lit p
         );
         bool satisfiedNorm(const vector<Lit>& lits) const;
         bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;

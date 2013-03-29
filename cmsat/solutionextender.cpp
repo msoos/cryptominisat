@@ -185,9 +185,17 @@ bool SolutionExtender::addClause(
 
 inline bool SolutionExtender::propBinaryClause(
     const vec<Watched>::const_iterator i
+    , const Lit p
 ) {
     const lbool val = value(i->lit1());
     if (val == l_Undef) {
+        #ifdef VERBOSE_DEBUG_RECONSTRUCT
+        cout
+        << "c Due to cl "
+        << ~p << ", " << i->lit1()
+        << " propagate enqueueing "
+        << i->lit1() << endl;
+        #endif
         enqueue(i->lit1());
     } else {
         return false;
@@ -198,6 +206,7 @@ inline bool SolutionExtender::propBinaryClause(
 
 inline bool SolutionExtender::propTriClause(
     const vec<Watched>::const_iterator i
+    , const Lit p
 ) {
     const Lit lit2 = i->lit1();
     lbool val2 = value(lit2);
@@ -217,11 +226,29 @@ inline bool SolutionExtender::propTriClause(
         return false;
     }
     if (val2 == l_Undef && val3 == l_False) {
+        #ifdef VERBOSE_DEBUG_RECONSTRUCT
+        cout
+        << "c Due to cl "
+        << ~p << ", "
+        << i->lit1() << ", "
+        << i->lit2()
+        << " propagate enqueueing "
+        << lit2 << endl;
+        #endif
         enqueue(lit2);
         return true;
     }
 
     if (val3 == l_Undef && val2 == l_False) {
+        #ifdef VERBOSE_DEBUG_RECONSTRUCT
+        cout
+        << "c Due to cl "
+        << ~p << ", "
+        << i->lit1() << ", "
+        << i->lit2()
+        << " propagate enqueueing "
+        << lit3 << endl;
+        #endif
         enqueue(lit3);
         return true;
     }
@@ -241,7 +268,7 @@ bool SolutionExtender::propagate()
             ; it++
         ) {
             if (it->isBinary() && !it->learnt()) {
-                bool thisret = propBinaryClause(it);
+                bool thisret = propBinaryClause(it, p);
                 ret &= thisret;
                 if (!thisret) {
                     cout
@@ -256,7 +283,7 @@ bool SolutionExtender::propagate()
 
             //Propagate tri clause
             if (it->isTri() && !it->learnt()) {
-                bool thisret = propTriClause(it);
+                bool thisret = propTriClause(it, p);
                 ret &= thisret;
                 if (!thisret) {
                     cout
