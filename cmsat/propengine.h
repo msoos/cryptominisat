@@ -350,9 +350,7 @@ protected:
         ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
     );
-    PropBy propagateAnyOrder(
-        Solver* solver
-    );
+    PropBy propagateAnyOrder();
 
     bool propBinaryClause(
         const vec<Watched>::const_iterator i

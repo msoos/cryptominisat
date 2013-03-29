@@ -2666,6 +2666,6 @@ PropBy Searcher::propagate(
             #endif
         );
     } else {
-        return propagateAnyOrder(solver);
+        return propagateAnyOrder();
     }
 }

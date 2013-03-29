@@ -682,9 +682,8 @@ inline void PropEngine::propTriHelperAnyOrder(
     enqueue(lit2, PropBy(~lit1, lit3));
 }
 
-PropBy PropEngine::propagateAnyOrder(
-    Solver* solver
-) {
+PropBy PropEngine::propagateAnyOrder()
+{
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
