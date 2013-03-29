@@ -197,7 +197,7 @@ inline bool SolutionExtender::propBinaryClause(
         << i->lit1() << endl;
         #endif
         enqueue(i->lit1());
-    } else {
+    } else if (val == l_False){
         return false;
     }
 
