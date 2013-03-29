@@ -2010,8 +2010,7 @@ bool Searcher::pickPolarity(const Var var)
             return mtrand.randInt(1);
 
         case polarity_auto:
-            return getStoredPolarity(var)
-                ^ (mtrand.randInt(conf.flipPolarFreq*hist.branchDepthDeltaHistLT.avg()) == 1);
+            return getStoredPolarity(var);
         default:
             assert(false);
     }
@@ -2071,6 +2070,11 @@ Lit Searcher::pickBranchLit()
         if (oldPolar != newPolar) {
             stats.decisionFlippedPolar++;
         }
+    }
+
+    //Flip polaritiy if need be
+    if (next != lit_Undef) {
+        next ^= (mtrand.randInt(conf.flipPolarFreq*hist.branchDepthDeltaHistLT.avg()) == 1);
     }
 
     //Try to update to dominator
