@@ -172,7 +172,12 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
     #endif //VERBOSE_DEBUG
 
     vector<ClOffset>::iterator s, ss, end;
-    for (s = ss = cs.begin(), end = cs.end();  s != end; s++) {
+    size_t at = 0;
+    for (s = ss = cs.begin(), end = cs.end();  s != end; s++, at++) {
+        if (at + 1 < cs.size()) {
+            Clause* cl = solver->clAllocator->getPointer(cs[at+1]);
+            __builtin_prefetch(cl);
+        }
         if (cleanClause(*s)) {
             solver->clAllocator->clauseFree(*s);
         } else {
