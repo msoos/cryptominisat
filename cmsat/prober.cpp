@@ -194,22 +194,36 @@ bool Prober::probe()
             continue;
         }
 
-        //If this lit is reachable from somewhere else, then reach it from there
-        if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
-            const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
-            if (solver->value(betterlit.var()) == l_Undef
-                && solver->decisionVar[betterlit.var()]
-            ) {
-                //Update lit
-                lit = betterlit;
+        if (solver->conf.doStamp) {
+            //If this lit is reachable from somewhere else, then reach it from there
+            if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
+                const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
+                if (solver->value(betterlit.var()) == l_Undef
+                    && solver->decisionVar[betterlit.var()]
+                ) {
+                    //Update lit
+                    lit = betterlit;
 
-                //Blacklist new lit
-                possCh[lookup[lit.var()]] = std::numeric_limits<Var>::max();
+                    //Blacklist new lit
+                    possCh[lookup[lit.var()]] = std::numeric_limits<Var>::max();
 
-                //Must not have visited it already, otherwise the stamp dominator would be incorrect
-                assert(!visitedAlready[lit.toInt()]);
+                    //Must not have visited it already, otherwise the stamp dominator would be incorrect
+                    assert(!visitedAlready[lit.toInt()]);
+                }
+            }
+        } else {
+            if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
+                const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+                if (solver->value(betterlit.var()) == l_Undef
+                    && solver->decisionVar[betterlit.var()]
+                ) {
+                    //Update lit
+                    lit = betterlit;
+                }
             }
         }
+
+
 
         //Update stats
         runStats.numVarProbed++;
