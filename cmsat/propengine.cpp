@@ -904,7 +904,6 @@ Lit PropEngine::propagateFullBFS()
     //Propagate binary non-learnt
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
-        size_t lastTrailSize = trail.size();
         const vec<Watched>& ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
