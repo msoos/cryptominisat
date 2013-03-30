@@ -1880,7 +1880,7 @@ void Simplifier::asymmTE()
         bool toRemove = false;
         if (solver->conf.doExtBinSubs) {
             //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
-            for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
+//            for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
 
                 //TODO stamping
                 /*const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
@@ -1897,7 +1897,7 @@ void Simplifier::asymmTE()
                         goto next;
                     }
                 }*/
-            }
+//            }
         }
 
         if (cl.learnt())
