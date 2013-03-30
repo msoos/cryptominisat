@@ -276,7 +276,6 @@ class Prober {
         //Main
         bool tryThis(const Lit lit, const bool first);
         vector<char> visitedAlready;
-
         Solver* solver; ///<The solver we are updating&working with
 
         //2-long xor-finding

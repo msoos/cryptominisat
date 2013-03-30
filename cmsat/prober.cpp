@@ -331,11 +331,11 @@ bool Prober::tryThis(const Lit lit, const bool first)
     } else {
         failed = solver->propagateFullBFS();
     }
+
     if (failed != lit_Undef) {
         if (solver->conf.verbosity >= 6) {
             cout << "c Failed on lit " << lit << endl;
         }
-
         solver->cancelZeroLight();
 
         //Update conflict stats
