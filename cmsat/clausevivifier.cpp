@@ -398,9 +398,22 @@ bool ClauseVivifier::vivifyClausesCache(
     //Stats
     uint64_t countTime = 0;
     uint64_t maxCountTime = 700000000;
-    if (solver->binTri.irredLits + solver->binTri.redLits < 300000)
-        maxCountTime *= 2;
+
     double myTime = cpuTime();
+
+    //If it hasn't been to successful until now, don't do it so much
+    Stats::CacheBased* tmp = NULL;
+    if (learnt) {
+        tmp = &(globalStats.redCacheBased);
+    } else {
+        tmp = &(globalStats.irredCacheBased);
+    }
+    if (tmp->numCalled > 2
+        && (double)tmp->numClSubsumed/(double)tmp->triedCls < 0.05
+        && (double)tmp->numLitsRem/(double)tmp->totalLits < 0.05
+    ) {
+        maxCountTime /= 2;
+    }
 
     Stats::CacheBased tmpStats;
     tmpStats.totalCls = clauses.size();
@@ -423,6 +436,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Randomise order of clauses
     if (!clauses.empty()) {
+        countTime += clauses.size()*2;
         for(size_t i = 0; i < clauses.size()-1; i++) {
             std::swap(
                 clauses[i]
@@ -453,7 +467,8 @@ bool ClauseVivifier::vivifyClausesCache(
         Clause& cl = *solver->clAllocator->getPointer(offset);
         assert(cl.size() > 3);
         countTime += cl.size()*2;
-        tmpStats.tried++;
+        tmpStats.totalLits += cl.size();
+        tmpStats.triedCls++;
         bool isSubsumed = false;
         size_t thisRemLitCache = 0;
         size_t thisRemLitBinTri = 0;
@@ -479,7 +494,7 @@ bool ClauseVivifier::vivifyClausesCache(
                 && solver->conf.doCache
                 && seen[lit.toInt()] //We haven't yet removed it
              ) {
-                 countTime += solver->implCache[lit.toInt()].lits.size();
+                 countTime += 2*solver->implCache[lit.toInt()].lits.size();
                  for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
                      , end2 = solver->implCache[lit.toInt()].lits.end()
                      ; it2 != end2
@@ -505,7 +520,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
             //Go through the watchlist
             vec<Watched>& thisW = solver->watches[lit.toInt()];
-            countTime += thisW.size()*3;
+            countTime += thisW.size()*2 + 5;
             for(vec<Watched>::iterator
                 wit = thisW.begin(), wend = thisW.end()
                 ; wit != wend
@@ -631,10 +646,12 @@ bool ClauseVivifier::vivifyClausesCache(
         if (doStamp
             && !isSubsumed
             && !learnt
-            && stampBasedClRem(lits2, solver->timestamp, stampNorm, stampInv)
         ) {
-            isSubsumed = true;
-            subsumedStamp++;
+            countTime += lits2.size()*3 + 10;
+            if (stampBasedClRem(lits2, solver->timestamp, stampNorm, stampInv)) {
+                isSubsumed = true;
+                subsumedStamp++;
+            }
         }
 
         //Clear 'seen2'

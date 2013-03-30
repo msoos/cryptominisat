@@ -155,9 +155,10 @@ class ClauseVivifier {
                 double cpu_time;
                 uint64_t numLitsRem;
                 uint64_t numClSubsumed;
-                uint64_t tried;
+                uint64_t triedCls;
                 uint64_t shrinked;
                 uint64_t totalCls;
+                uint64_t totalLits;
                 uint64_t ranOutOfTime;
                 uint64_t numCalled;
 
@@ -165,9 +166,10 @@ class ClauseVivifier {
                     cpu_time(0)
                     , numLitsRem(0)
                     , numClSubsumed(0)
-                    , tried(0)
+                    , triedCls(0)
                     , shrinked(0)
                     , totalCls(0)
+                    , totalLits(0)
                     , ranOutOfTime(0)
                     , numCalled(0)
                 {}
@@ -183,7 +185,7 @@ class ClauseVivifier {
                     cout << "c [vivif] cache-based "
                     << std::setw(5) << type
                     << "-- "
-                    << " cl tried " << std::setw(8) << tried
+                    << " cl tried " << std::setw(8) << triedCls
                     << " cl-sh " << std::setw(5) << shrinked
                     << " cl-rem " << std::setw(4) << numClSubsumed
                     << " lit-rem " << std::setw(6) << numLitsRem
@@ -196,22 +198,26 @@ class ClauseVivifier {
                 {
                     printStatsLine("c time"
                         , cpu_time
+                        , cpu_time/(double)numCalled
+                        , "s/call"
                     );
 
                     printStatsLine("c shrinked/tried/total"
                         , shrinked
-                        , tried
+                        , triedCls
                         , totalCls
                     );
 
                     printStatsLine("c subsumed/tried/total"
                         , numClSubsumed
-                        , tried
+                        , triedCls
                         , totalCls
                     );
 
                     printStatsLine("c lits-rem"
                         , numLitsRem
+                        , (double)numLitsRem/(double)totalLits*100.0
+                        , "% of lits tried"
                     );
 
                     printStatsLine("c called "
@@ -226,9 +232,10 @@ class ClauseVivifier {
                     cpu_time += other.cpu_time;
                     numLitsRem += other.numLitsRem;
                     numClSubsumed += other.numClSubsumed;
-                    tried += other.tried;
+                    triedCls += other.triedCls;
                     shrinked += other.shrinked;
                     totalCls += other.totalCls;
+                    totalLits += other.totalLits;
                     ranOutOfTime += other.ranOutOfTime;
                     numCalled += other.numCalled;
 
