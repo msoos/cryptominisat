@@ -1331,7 +1331,15 @@ lbool Solver::simplifyProblem()
 
     //Delete and disable cache if too large
     if (conf.doCache) {
-        if (implCache.memoryUsedInMB() > conf.maxCacheSizeMB) {
+        const size_t memUsed = implCache.memoryUsedInMB();
+        if (memUsed > conf.maxCacheSizeMB) {
+            if (conf.verbosity >= 2) {
+                cout
+                << "c Turning off cache, memory used, "
+                << memUsed << " MB"
+                << " is over limit of " << conf.maxCacheSizeMB  << " MB"
+                << endl;
+            }
             implCache.free();
             conf.doCache = false;
         }
