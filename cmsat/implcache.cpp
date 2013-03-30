@@ -97,7 +97,7 @@ void ImplCache::printStatsSort(const Solver* solver) const
     );
 
     printStatsLine(
-        "c avg num elems in cache/lit"
+        "c num elems in cache/lit"
         , (double)totalElems/(double)numHasElems
         , "extralits"
     );
