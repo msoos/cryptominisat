@@ -2846,7 +2846,10 @@ bool Simplifier::merge(
         }
     }
 
-    if (aggressive && solver->conf.doAsymmTE) {
+    if (aggressive
+        && solver->conf.doAsymmTE
+        && solver->conf.doStamp
+    ) {
         //Use stamping
         //but only if none of the clauses were binary
         //Otherwise we cannot tell if the value in the cache is dependent

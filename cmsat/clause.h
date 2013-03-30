@@ -736,7 +736,7 @@ struct Timestamp
     uint64_t end[2];
 
     Lit dominator[2];
-    uint64_t numDom[2];
+    uint32_t numDom[2];
 };
 
 struct StampSorter

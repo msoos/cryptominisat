@@ -412,6 +412,7 @@ bool ClauseVivifier::vivifyClausesCache(
     size_t remLitBinTri = 0;
     size_t subBinTri = 0;
     size_t subCache = 0;
+    const bool doStamp = solver->conf.doStamp;
 
     //Temps
     vector<Lit> lits;
@@ -627,7 +628,8 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Remove through stamp
         assert(lits2.size() > 1);
-        if (!isSubsumed
+        if (doStamp
+            && !isSubsumed
             && !learnt
             && stampBasedClRem(lits2, solver->timestamp, stampNorm, stampInv)
         ) {
@@ -665,7 +667,8 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Remove lits through stamping
-        if (alsoStrengthen
+        if (doStamp
+            && alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
         ) {
@@ -676,7 +679,8 @@ bool ClauseVivifier::vivifyClausesCache(
         }
 
         //Remove lits through stamping
-        if (alsoStrengthen
+        if (doStamp
+            && alsoStrengthen
             && lits.size() > 1
             && !isSubsumed
         ) {
@@ -762,6 +766,7 @@ void ClauseVivifier::subsumeImplicit()
     uint64_t stampTriRem = 0;
     uint64_t cacheTriRem = 0;
     timeAvailable = 100L*1000L*1000L;
+    const bool doStamp = solver->conf.doStamp;
 
     //Randomize starting point
     size_t upI;
@@ -850,7 +855,7 @@ void ClauseVivifier::subsumeImplicit()
                 lits.push_back(i->lit2());
 
                 //Subsumed by stamp
-                if (!remove) {
+                if (doStamp && !remove) {
                     remove = stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv);
                     stampTriRem += remove;
                 }
@@ -961,6 +966,7 @@ bool ClauseVivifier::strengthenImplicit()
     const size_t origTrailSize = solver->trail.size();
     timeAvailable = 400L*1000L*1000L;
     double myTime = cpuTime();
+    const bool doStamp = solver->conf.doStamp;
 
     //For delayed enqueue and binary adding
     //Used for strengthening
@@ -995,16 +1001,18 @@ bool ClauseVivifier::strengthenImplicit()
                 lits.clear();
                 lits.push_back(lit);
                 lits.push_back(i->lit1());
-                std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
-                stampRem += tmp.first;
-                stampRem += tmp.second;
-                assert(!lits.empty());
-                if (lits.size() == 1) {
-                    toEnqueue.push_back(lits[0]);
-                    remLitFromBin++;
-                    stampRem++;
-                    *j++ = *i;
-                    continue;
+                if (doStamp) {
+                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
+                    stampRem += tmp.first;
+                    stampRem += tmp.second;
+                    assert(!lits.empty());
+                    if (lits.size() == 1) {
+                        toEnqueue.push_back(lits[0]);
+                        remLitFromBin++;
+                        stampRem++;
+                        *j++ = *i;
+                        continue;
+                    }
                 }
 
                 //If inverted, then the inverse will never be found, because
@@ -1085,7 +1093,9 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
                     continue;
-                } else {
+                }
+
+                if (doStamp) {
                     //Strengthen TRI using stamps
                     lits.clear();
                     lits.push_back(lit);
