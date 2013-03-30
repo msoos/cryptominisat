@@ -690,11 +690,14 @@ void Solver::renumberVariables()
     updateLitsMap(assumptions, outerToInter);
 
     //Update stamps
-    for(size_t i = 0; i < timestamp.size(); i++) {
-        for(size_t i2 = 0; i2 < 2; i2++) {
-        if (timestamp[i].dominator[i2] != lit_Undef)
-            timestamp[i].dominator[i2] = getUpdatedLit(timestamp[i].dominator[i2], outerToInter);
+    if (conf.doStamp) {
+        for(size_t i = 0; i < timestamp.size(); i++) {
+            for(size_t i2 = 0; i2 < 2; i2++) {
+            if (timestamp[i].dominator[i2] != lit_Undef)
+                timestamp[i].dominator[i2] = getUpdatedLit(timestamp[i].dominator[i2], outerToInter);
+            }
         }
+        updateArray(timestamp, interToOuter2);
     }
 
     //Update clauses
@@ -712,7 +715,6 @@ void Solver::renumberVariables()
     }
 
     //Update sub-elements' vars
-    updateArray(timestamp, interToOuter2);
     simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
     implCache.updateVars(seen, outerToInter, interToOuter2);
@@ -781,6 +783,12 @@ void Solver::renumberVariables()
 Var Solver::newVar(const bool dvar)
 {
     const Var var = decisionVar.size();
+
+
+    if (conf.doStamp) {
+        timestamp.push_back(Timestamp());
+        timestamp.push_back(Timestamp());
+    }
 
     outerToInterMain.push_back(var);
     interToOuterMain.push_back(var);

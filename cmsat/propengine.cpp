@@ -79,10 +79,6 @@ Var PropEngine::newVar(const bool)
     varData.push_back(VarData());
     varDataLT.push_back(VarData::Stats());
 
-    //One for each lit
-    timestamp.push_back(Timestamp());
-    timestamp.push_back(Timestamp());
-
     //Temporaries
     seen      .push_back(0);
     seen      .push_back(0);
