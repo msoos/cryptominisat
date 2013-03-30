@@ -821,7 +821,11 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
 
     currAncestors.clear();
     size_t i = 0;
-    for (Clause::const_iterator it = cl.begin(), end = cl.end(); it != end; it++, i++) {
+    for (Clause::const_iterator
+        it = cl.begin(), end = cl.end()
+        ; it != end
+        ; it++, i++
+    ) {
         if (*it != p) {
             assert(value(*it) == l_False);
             if (varData[it->var()].level != 0)

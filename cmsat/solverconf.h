@@ -160,7 +160,6 @@ class SolverConf
         uint32_t  flipPolarFreq;
         int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doExtBinSubs;
         int      doSubsume1;         ///<Perform self-subsuming resolution

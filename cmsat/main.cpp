@@ -369,8 +369,6 @@ void Main::parseCommandLine()
         , "Carry out probing")
     ("probemultip", po::value<double>(&conf.probeMultiplier)->default_value(conf.probeMultiplier)
       , "Do this times more/less failed lit than default")
-    ("hyperbinres", po::value<int>(&conf.doHyperBinRes)->default_value(conf.doHyperBinRes)
-        , "Add binary clauses when doing failed lit probing.")
     ("transred", po::value<int>(&conf.doTransRed)->default_value(conf.doTransRed)
         , "Remove useless binary clauses (transitive reduction)")
     ;

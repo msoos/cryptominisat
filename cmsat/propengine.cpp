@@ -400,6 +400,7 @@ PropResult PropEngine::propNormalClause(
                 c.stats.glue = std::min(c.stats.glue, newGlue);
             }
         } else {
+            //Not simple
             addHyperBin(c[0], c);
         }
     }
@@ -658,6 +659,7 @@ void PropEngine::propTriHelper(
             enqueue(lit2, PropBy(~lit1, lit3));
         }
     } else {
+        //Not simple
         addHyperBin(lit2, ~lit1, lit3);
     }
 }

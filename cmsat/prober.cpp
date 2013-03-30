@@ -357,7 +357,10 @@ bool Prober::tryThis(const Lit lit, const bool first)
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
     size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
-    for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
+    for (int64_t c = solver->trail.size()-1
+        ; c != (int64_t)solver->trail_lim[0] - 1
+        ; c--
+    ) {
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
 

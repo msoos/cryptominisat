@@ -136,7 +136,6 @@ SolverConf::SolverConf() :
 
         , doSchedSimp      (true)
         , doSimplify       (true)
-        , doHyperBinRes    (true)
         , doBlockClauses   (true)
         , doExtBinSubs     (true)
         , doSubsume1       (true)
