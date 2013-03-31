@@ -61,9 +61,7 @@ add_executable(cryptominisat
     main.cpp
 )
 
-
-target_link_libraries(cryptominisat
-    ${ZLIB_LIBRARY}
+set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
     cryptoms
 #    vtkViews
@@ -72,6 +70,15 @@ target_link_libraries(cryptominisat
 #    vtkImaging
 #    vtkIO
 #    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+IF (ZLIB_FOUND)
+SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
+ENDIF(ZLIB_FOUND)
+
+
+target_link_libraries(cryptominisat
+    ${cryptoms_exec_link_libs}
 )
 
 
