@@ -101,13 +101,55 @@ void Prober::sortAndResetCandidates()
     std::sort(candidates.begin(), candidates.end());
 }
 
+void Prober::checkOTFRatio(bool printRatio)
+{
+    double ratio = (double)solver->propStats.bogoProps
+    /(double)(solver->propStats.otfHyperTime + solver->propStats.bogoProps);
+
+    /*static int val = 0;
+    if (val  % 100 == 0) {
+        cout << "Ratio is " << std::setprecision(2) << ratio << endl;
+    }
+    val++;*/
+
+    if (solver->propStats.bogoProps+solver->propStats.otfHyperTime
+            > 0.8*800L*1000L*1000L
+        && ratio < 0.3
+        && solver->conf.otfHyperbin
+    ) {
+        solver->conf.otfHyperbin = false;
+        if (solver->conf.verbosity >= 2) {
+            cout << "c NO LONGER doing HYPER!!" << endl;
+        }
+        solver->needToAddBinClause.clear();
+        solver->uselessBin.clear();
+    }
+
+    if (printRatio
+        && solver->conf.verbosity >= 2
+    ) {
+        cout
+        << "c Ratio of hyperbin/(bogo+hyperbin) is : "
+        << std::setprecision(2) << ratio
+        << " (this indicates how much time is spent doing hyperbin&trans-red)"
+        << endl;
+    }
+}
 
 bool Prober::probe()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 2000L*1000L*1000L;
+    uint64_t numPropsTodo = 2300L*1000L*1000L;
+
+    //Account for cache being too small
+    if (solver->numActiveVars() > 400000) {
+        numPropsTodo *= 0.8;
+    }
+    if (solver->binTri.redLits + solver->binTri.irredLits > 8L*1000L*1000L) {
+        numPropsTodo *= 0.8;
+    }
 
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -169,12 +211,16 @@ bool Prober::probe()
         lookup[possCh[i]] = i;
     }
 
-    const uint64_t origBogoProps = solver->propStats.bogoProps;
+    assert(solver->propStats.bogoProps == 0);
+    assert(solver->propStats.otfHyperTime == 0);
     for(size_t i = 0
         ; i < possCh.size()
-            && solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo
+            && solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime
+                    < numPropsTodo
         ; i++
     ) {
+        checkOTFRatio(false);
+
         runStats.numLoopIters++;
         const Var var = possCh[i];
 
@@ -242,6 +288,14 @@ bool Prober::probe()
     }
 
 end:
+    //Delete any remaining binaries to add or remove
+    //next time, variables will be renumbered/etc. so it will be wrong
+    //to add/remove them
+    solver->needToAddBinClause.clear();
+    solver->uselessBin.clear();
+
+    //Check if we need to disable OTF hyper-bin&transitive reduction
+    checkOTFRatio(true);
 
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
@@ -287,6 +341,7 @@ end:
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     runStats.cpu_time = cpuTime() - myTime;
     runStats.propStats = solver->propStats;
+    runStats.timeAllocated += numPropsTodo;
     globalStats += runStats;
 
     //Print & update stats
@@ -304,6 +359,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 {
     //Clean state if this is the 1st of two
     if (first) {
+        extraTime += propagatedBitSet.size();
         propagated.removeThese(propagatedBitSet);
         propagatedBitSet.clear();
         bothSame.clear();
@@ -325,11 +381,34 @@ bool Prober::tryThis(const Lit lit, const bool first)
         cout << "c Probing lit " << lit << endl;
 
     Lit failed = lit_Undef;
-    if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
-        const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
-        failed = solver->propagateFullDFS(stampType);
+    if (solver->conf.otfHyperbin) {
+        if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
+            const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
+            failed = solver->propagateFullDFS(stampType);
+        } else {
+            failed = solver->propagateFullBFS();
+        }
     } else {
-        failed = solver->propagateFullBFS();
+        PropBy confl = solver->propagate();
+        if (!confl.isNULL()) {
+            vector<Lit> learnt_clause;
+            ResolutionTypes<uint16_t> resolutions;
+            uint32_t  glue;
+            uint32_t  backtrack_level;
+            solver->analyze(
+                confl
+                , learnt_clause    //return learnt clause here
+                , backtrack_level  //return backtrack level here
+                , glue             //return glue here
+                , resolutions   //return number of resolutions made here
+            );
+            if (learnt_clause.empty()) {
+                solver->ok = false;
+                return false;
+            }
+            assert(learnt_clause.size() == 1);
+            failed = ~learnt_clause[0];
+        }
     }
 
     if (failed != lit_Undef) {
@@ -361,6 +440,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         ; c != (int64_t)solver->trail_lim[0] - 1
         ; c--
     ) {
+        extraTime += 2;
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
 
@@ -386,6 +466,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
         visitedAlready[thisLit.toInt()] = 1;
 
+        if (!solver->conf.otfHyperbin)
+            continue;
+
         //Update cache, if the trail was within limits (cacheUpdateCutoff)
         const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
         if (solver->conf.doCache
@@ -396,8 +479,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
             //Update stats/markings
             //cacheUpdated[(~ancestor).toInt()]++;
             extraTime += 1;
-            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/100;
-            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/100;
+            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/30;
+            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/30;
 
             const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
 
@@ -415,6 +498,22 @@ bool Prober::tryThis(const Lit lit, const bool first)
             cout << "The impl cache of " << (~ancestor) << " is now: ";
             cout << solver->implCache[(~ancestor).toInt()] << endl;
             #endif
+        }
+    }
+
+    if (!solver->conf.otfHyperbin
+        && solver->conf.doCache
+    ) {
+        for (int64_t c = solver->trail.size()-1
+            ; c != (int64_t)solver->trail_lim[0] - 1
+            ; c--
+        ) {
+            extraTime += 2;
+            const Lit thisLit = solver->trail[c];
+            if (thisLit.var() == lit.var())
+                continue;
+
+            solver->implCache[(~lit).toInt()].lits.push_back(LitExtra(thisLit, false));
         }
     }
 

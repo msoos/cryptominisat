@@ -134,6 +134,7 @@ class Solver : public Searcher
         size_t getNumVarsReplaced() const;
         void dumpIfNeeded() const;
         void print_elimed_vars() const;
+        Var numActiveVars() const;
 
 
         ///Return number of variables waiting to be replaced
@@ -641,6 +642,21 @@ inline void Solver::remove_from_stamps(const Var var)
             }
         }
     }
+}
+
+inline Var Solver::numActiveVars() const
+{
+    Var numActive = 0;
+    for(Var var = 0; var < solver->nVars(); var++) {
+        if (decisionVar[var]
+            && varData[var].elimed == ELIMED_NONE
+            && value(var) == l_Undef
+        ) {
+            numActive++;
+        }
+    }
+
+    return numActive;
 }
 
 } //end namespace

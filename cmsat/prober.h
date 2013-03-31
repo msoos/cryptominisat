@@ -68,6 +68,7 @@ class Prober {
             Stats() :
                 //Time
                 cpu_time(0)
+                , timeAllocated(0)
 
                 //Probe stats
                 , numFailed(0)
@@ -100,6 +101,7 @@ class Prober {
             {
                 //Time
                 cpu_time += other.cpu_time;
+                timeAllocated += other.timeAllocated;
 
                 //Probe stats
                 numFailed += other.numFailed;
@@ -133,6 +135,14 @@ class Prober {
                 cout << "c -------- PROBE STATS ----------" << endl;
                 printStatsLine("c probe time"
                     , cpu_time
+                    , (double)timeAllocated/(cpu_time*1000.0*1000.0)
+                    , "(Mega BP+HP)/s"
+                );
+
+                printStatsLine("c unused Mega BP+HP"
+                    , (double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))/(1000.0*1000.0)
+                    , (cpu_time/(double)(propStats.bogoProps + propStats.otfHyperTime))*(double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))
+                    , "est. secs"
                 );
 
                 printStatsLine("c 0-depth-assigns"
@@ -234,8 +244,10 @@ class Prober {
 
                 cout
                 << "c [probe]"
-                << " P: " << std::fixed << std::setprecision(1)
+                << " BP: " << std::fixed << std::setprecision(1)
                 << (double)(propStats.bogoProps)/1000000.0  << "M"
+                << " HP: " << std::fixed << std::setprecision(1)
+                << (double)(propStats.otfHyperTime)/1000000.0  << "M"
 
                 << " T: " << std::fixed << std::setprecision(2)
                 << cpu_time
@@ -244,6 +256,7 @@ class Prober {
 
             //Time
             double cpu_time;
+            uint64_t timeAllocated;
 
             //Probe stats
             uint64_t numFailed;
@@ -277,6 +290,7 @@ class Prober {
         bool tryThis(const Lit lit, const bool first);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
+        void checkOTFRatio(bool printRatio);
 
         //2-long xor-finding
         /**

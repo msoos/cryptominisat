@@ -625,6 +625,7 @@ inline Lit PropEngine::removeWhich(
     , Lit thisAncestor
     , bool thisStepLearnt
 ) {
+    propStats.otfHyperTime += 2;;
     const PropBy& data = varData[conflict.var()].reason;
 
     bool onlyNonLearnt = !data.getLearntStep();
@@ -633,6 +634,7 @@ inline Lit PropEngine::removeWhich(
     if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
         return lit_Undef;
 
+    propStats.otfHyperTime += 5;
     bool second_is_deeper = false;
     bool ambivalent = varData[thisAncestor.var()].depth == varData[lookingForAncestor.var()].depth;
     if (varData[thisAncestor.var()].depth < varData[lookingForAncestor.var()].depth) {
@@ -702,6 +704,7 @@ inline bool PropEngine::isAncestorOf(
     , const bool onlyNonLearnt
     , const Lit lookingForAncestor
 ) {
+    propStats.otfHyperTime += 3;
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "isAncestorOf."
     << "conflict: " << conflict
@@ -743,7 +746,7 @@ inline bool PropEngine::isAncestorOf(
     while(thisAncestor != lit_Undef
         && bottom <= varData[thisAncestor.var()].depth
     ) {
-        propStats.bogoProps ++;
+        propStats.otfHyperTime += 1;
 
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
@@ -839,7 +842,7 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
 //Add binary clause to deepest common ancestor
 inline void PropEngine::addHyperBin(const Lit p)
 {
-    propStats.bogoProps += 1;
+    propStats.otfHyperTime += 3;
 
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
@@ -934,6 +937,7 @@ inline Lit PropEngine::deepestCommonAcestor()
             ; it != end
             ; it++
         ) {
+            propStats.otfHyperTime += 2;
 
             //We have reached the top of the graph, the other 'threads' that
             //are still stepping back will find which literal is the lowest
@@ -977,6 +981,7 @@ inline Lit PropEngine::deepestCommonAcestor()
     assert(foundLit != lit_Undef);
 
     //Clear nodes we have visited
+    propStats.otfHyperTime += toClear.size();
     for(std::vector<Lit>::const_iterator
         it = toClear.begin(), end = toClear.end()
         ; it != end

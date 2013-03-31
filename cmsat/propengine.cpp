@@ -873,6 +873,7 @@ PropBy PropEngine::propagateNonLearntBin()
 }
 Lit PropEngine::propagateFullBFS()
 {
+    propStats.otfHyperPropCalled++;
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
     #endif
@@ -1007,6 +1008,7 @@ Lit PropEngine::propagateFullBFS()
 Lit PropEngine::propagateFullDFS(
     const StampType stampType
 ) {
+    propStats.otfHyperPropCalled++;
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
     #endif
@@ -1052,6 +1054,7 @@ Lit PropEngine::propagateFullDFS(
     #endif
 
     start:
+    propStats.bogoProps += 3;
 
     //Propagate binary non-learnt
     while (!toPropBin.empty()) {
@@ -1063,6 +1066,7 @@ Lit PropEngine::propagateFullDFS(
             ; k != end
             ; k++, done++
         ) {
+            propStats.bogoProps += 1;
             //Pre-fetch long clause
             if (k->isClause()) {
                 if (value(k->getBlockedLit()) != l_True) {
@@ -1091,6 +1095,7 @@ Lit PropEngine::propagateFullDFS(
                     return analyzeFail(confl);
 
                 case PROP_SOMETHING:
+                    propStats.bogoProps += 8;
                     stampingTime++;
                     timestamp[trail.back().toInt()].start[stampType] = stampingTime;
                     timestamp[trail.back().toInt()].dominator[stampType] = root;
@@ -1151,6 +1156,7 @@ Lit PropEngine::propagateFullDFS(
                         return analyzeFail(confl);
 
                     case PROP_SOMETHING:
+                        propStats.bogoProps += 8;
                         stampingTime++;
                         timestamp[trail.back().toInt()].start[stampType] = stampingTime;
 
@@ -1234,6 +1240,7 @@ Lit PropEngine::propagateFullDFS(
                 return analyzeFail(confl);
 
             case PROP_SOMETHING:
+                propStats.bogoProps += 8;
                 stampingTime++;
                 #ifdef DEBUG_STAMPING
                 cout
@@ -1352,11 +1359,13 @@ PropResult PropEngine::propBin(
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "Normal removing clause " << clauseToRemove << endl;
                 #endif
+                propStats.otfHyperTime += 2;
                 uselessBin.insert(clauseToRemove);
             } else if (!varData[lit.var()].reason.getHyperbinNotAdded()) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "Removing hyper-bin clause " << clauseToRemove << endl;
                 #endif
+                propStats.otfHyperTime += needToAddBinClause.size()/4;
                 std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
 
                 //In case this is called after a backtrack to decisionLevel 1
@@ -1364,6 +1373,7 @@ PropResult PropEngine::propBin(
                 //'needToAddBinClause'. When called from probing, the IF below
                 //must ALWAYS be true
                 if (it != needToAddBinClause.end()) {
+                    propStats.otfHyperTime += 4;
                     needToAddBinClause.erase(it);
                 }
                 //This will subsume the clause later, so don't remove it
@@ -1382,6 +1392,7 @@ PropResult PropEngine::propBin(
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removing this bin clause" << endl;
             #endif
+            propStats.otfHyperTime += 4;
             uselessBin.insert(BinaryClause(~p, lit, k->learnt()));
         }
     }

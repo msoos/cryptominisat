@@ -166,7 +166,6 @@ class Tester:
         cmd += "--bothprop %s " % random.randint(0,1)
         cmd += "--probe %s " % random.randint(0,1)
         cmd += "--probemultip %s " % random.randint(0,10)
-        cmd += "--hyperbinres %s " % random.randint(0,1)
         cmd += "--stamp %s " % random.randint(0,1)
         cmd += "--cache %s " % random.randint(0,1)
         cmd += "--cachesize %s " % random.randint(10, 100)

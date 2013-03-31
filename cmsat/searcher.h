@@ -383,11 +383,6 @@ class Searcher : public PropEngine
                     , "% random"
                 );
 
-                printStatsLine("c decisions", decisions
-                    , (double)decisionFlippedPolar/(double)decisions*100.0
-                    , "% flipped polarity"
-                );
-
                 printStatsLine("c decisions/conflicts"
                     , (double)decisions/(double)conflStats.numConflicts
                 );

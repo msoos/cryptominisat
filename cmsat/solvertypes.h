@@ -425,6 +425,8 @@ struct PropStats
     PropStats() :
         propagations(0)
         , bogoProps(0)
+        , otfHyperTime(0)
+        , otfHyperPropCalled(0)
         #ifdef STATS_NEEDED
         , propsUnit(0)
         , propsBinIrred(0)
@@ -455,8 +457,10 @@ struct PropStats
     PropStats& operator+=(const PropStats& other)
     {
         propagations += other.propagations;
-        #ifdef STATS_NEEDED
         bogoProps += other.bogoProps;
+        otfHyperTime += other.otfHyperTime;
+        otfHyperPropCalled += other.otfHyperPropCalled;
+        #ifdef STATS_NEEDED
         propsUnit += other.propsUnit;
         propsBinIrred += other.propsBinIrred;
         propsBinRed += other.propsBinRed;
@@ -482,6 +486,8 @@ struct PropStats
     {
         propagations -= other.propagations;
         bogoProps -= other.bogoProps;
+        otfHyperTime -= other.otfHyperTime;
+        otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
         propsUnit -= other.propsUnit;
         propsBinIrred -= other.propsBinIrred;
@@ -523,6 +529,11 @@ struct PropStats
         cout << "c PROP stats" << endl;
         printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
             , (double)bogoProps/(cpu_time*1000.0*1000.0)
+            , "/ sec"
+        );
+
+        printStatsLine("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
+            , (double)otfHyperTime/(cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
@@ -598,6 +609,8 @@ struct PropStats
 
     uint64_t propagations; ///<Number of propagations made
     uint64_t bogoProps;    ///<An approximation of time
+    uint64_t otfHyperTime;
+    uint32_t otfHyperPropCalled;
 
     #ifdef STATS_NEEDED
     //Stats for propagations

@@ -76,7 +76,6 @@ do
 		--bothprop $(bool) \
 		--probe $(bool) \
 		--probemultip $(int 0 10) \
-		--hyperbinres $(bool) \
 		--stamp $(bool) \
 		--cache $(bool) \
 		--cachesize $(int 10 100) \
