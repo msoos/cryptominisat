@@ -290,7 +290,7 @@ class Prober {
         bool tryThis(const Lit lit, const bool first);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
-        void checkOTFRatio(bool printRatio);
+        void checkOTFRatio();
 
         //2-long xor-finding
         /**

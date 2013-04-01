@@ -2357,10 +2357,10 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             ; it != end
             ; it++
         ) {
-            propStats.otfHyperTime += 5;
+            propStats.otfHyperTime += 2;
             //cout << "Removing binary clause: " << *it << endl;
-            propStats.otfHyperTime += solver->watches[it->getLit1().toInt()].size();
-            propStats.otfHyperTime += solver->watches[it->getLit2().toInt()].size();
+            propStats.otfHyperTime += solver->watches[it->getLit1().toInt()].size()/2;
+            propStats.otfHyperTime += solver->watches[it->getLit2().toInt()].size()/2;
             removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->getLearnt());
             removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 

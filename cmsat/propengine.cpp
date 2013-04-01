@@ -1373,7 +1373,7 @@ PropResult PropEngine::propBin(
                 //'needToAddBinClause'. When called from probing, the IF below
                 //must ALWAYS be true
                 if (it != needToAddBinClause.end()) {
-                    propStats.otfHyperTime += 4;
+                    propStats.otfHyperTime += 2;
                     needToAddBinClause.erase(it);
                 }
                 //This will subsume the clause later, so don't remove it
@@ -1392,7 +1392,7 @@ PropResult PropEngine::propBin(
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removing this bin clause" << endl;
             #endif
-            propStats.otfHyperTime += 4;
+            propStats.otfHyperTime += 2;
             uselessBin.insert(BinaryClause(~p, lit, k->learnt()));
         }
     }

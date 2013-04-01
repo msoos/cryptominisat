@@ -101,13 +101,13 @@ void Prober::sortAndResetCandidates()
     std::sort(candidates.begin(), candidates.end());
 }
 
-void Prober::checkOTFRatio(bool printRatio)
+void Prober::checkOTFRatio()
 {
     double ratio = (double)solver->propStats.bogoProps
     /(double)(solver->propStats.otfHyperTime + solver->propStats.bogoProps);
 
     /*static int val = 0;
-    if (val  % 100 == 0) {
+    if (val  % 10 == 0) {
         cout << "Ratio is " << std::setprecision(2) << ratio << endl;
     }
     val++;*/
@@ -125,9 +125,7 @@ void Prober::checkOTFRatio(bool printRatio)
         solver->uselessBin.clear();
     }
 
-    if (printRatio
-        && solver->conf.verbosity >= 2
-    ) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c Ratio of hyperbin/(bogo+hyperbin) is : "
         << std::setprecision(2) << ratio
@@ -144,11 +142,29 @@ bool Prober::probe()
     uint64_t numPropsTodo = 2300L*1000L*1000L;
 
     //Account for cache being too small
-    if (solver->numActiveVars() > 400000) {
+    const size_t numActiveVars = solver->numActiveVars();
+    if (numActiveVars < 50L*1000L) {
+        numPropsTodo *= 1.2;
+    }
+    if (solver->binTri.redLits + solver->binTri.irredLits  < 2L*1000L*1000L) {
+        numPropsTodo *= 1.2;
+    }
+    if (numActiveVars > 400L*1000L) {
         numPropsTodo *= 0.8;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits > 8L*1000L*1000L) {
+    if (solver->binTri.redLits + solver->binTri.irredLits > 20L*1000L*1000L) {
         numPropsTodo *= 0.8;
+    }
+    if (solver->conf.verbosity >= 2) {
+    cout
+        << "c [probe] lits : "
+        << std::setprecision(2) << (double)(solver->binTri.redLits + solver->binTri.irredLits)/(1000.0*1000.0)
+        << "M"
+        << " act vars: "
+        << std::setprecision(2) << (double)numActiveVars/1000.0 << "K"
+        << " BP+HP todo: "
+        << std::setprecision(2) << (double)numPropsTodo/(1000.0*1000.0) << "M"
+        << endl;
     }
 
     solver->testAllClauseAttach();
@@ -219,8 +235,6 @@ bool Prober::probe()
                     < numPropsTodo
         ; i++
     ) {
-        checkOTFRatio(false);
-
         runStats.numLoopIters++;
         const Var var = possCh[i];
 
@@ -294,9 +308,6 @@ end:
     solver->needToAddBinClause.clear();
     solver->uselessBin.clear();
 
-    //Check if we need to disable OTF hyper-bin&transitive reduction
-    checkOTFRatio(true);
-
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
         double time = cpuTime();
@@ -343,6 +354,20 @@ end:
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;
     globalStats += runStats;
+
+    //Check if we need to disable OTF hyper-bin&transitive reduction
+    const double ratioUsedTime =
+        (solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime)
+        /(double)numPropsTodo
+    ;
+    if (solver->conf.otfHyperbin
+        //Visited less than half
+        && (double)runStats.numVisited/(double)(runStats.origNumFreeVars*2) < 0.4
+        //And we used up most of the time
+        && ratioUsedTime > 0.8
+    ) {
+        checkOTFRatio();
+    }
 
     //Print & update stats
     if (solver->conf.verbosity >= 1) {
