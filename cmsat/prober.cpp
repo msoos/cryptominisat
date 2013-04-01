@@ -112,6 +112,14 @@ void Prober::checkOTFRatio()
     }
     val++;*/
 
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [probe] Ratio of hyperbin/(bogo+hyperbin) is : "
+        << std::setprecision(2) << ratio
+        << " (this indicates how much time is spent doing hyperbin&trans-red)"
+        << endl;
+    }
+
     if (solver->propStats.bogoProps+solver->propStats.otfHyperTime
             > 0.8*800L*1000L*1000L
         && ratio < 0.3
@@ -119,18 +127,10 @@ void Prober::checkOTFRatio()
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
-            cout << "c NO LONGER doing HYPER!!" << endl;
+            cout << "c [probe] no longer doing OTF hyper-bin&trans-red" << endl;
         }
         solver->needToAddBinClause.clear();
         solver->uselessBin.clear();
-    }
-
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c Ratio of hyperbin/(bogo+hyperbin) is : "
-        << std::setprecision(2) << ratio
-        << " (this indicates how much time is spent doing hyperbin&trans-red)"
-        << endl;
     }
 }
 
@@ -176,7 +176,7 @@ bool Prober::probe()
     extraTime = 0;
     solver->propStats.clear();
     runStats.clear();
-    runStats.origNumFreeVars = solver->getNumFreeVars();
+    runStats.origNumFreeVars = numActiveVars;
     runStats.origNumBins = solver->binTri.redBins + solver->binTri.irredBins;
     numCalls++;
 
@@ -188,8 +188,8 @@ bool Prober::probe()
     propValue.resize(solver->nVars(), 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings > (double)solver->getNumFreeVars() * 0.10)
-        numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
+    if ((double)lastTimeZeroDepthAssings > (double)numActiveVars * 0.10)
+        numPropsMultiplier = std::min(numPropsMultiplier*1.3, 1.8);
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
