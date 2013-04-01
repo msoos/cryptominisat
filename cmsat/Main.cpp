@@ -296,24 +296,23 @@ const char* Main::hasPrefix(const char* str, const char* prefix)
         return NULL;
 }
 
-void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
+void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res, const bool firstSolution)
 {
     if (res != NULL) {
         if (ret == l_True) {
             std::cout << "c SAT" << std::endl;
-            fprintf(res, "SAT\n");
+            if(firstSolution) fprintf(res, "SAT\n");
                 for (Var var = 0; var != S.nVars(); var++)
                     if (S.model[var] != l_Undef)
                         fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
                     fprintf(res, "0\n");
         } else if (ret == l_False) {
             std::cout << "c UNSAT" << std::endl;
-            fprintf(res, "UNSAT\n");
+            if(firstSolution) fprintf(res, "UNSAT\n");
         } else {
             std::cout << "c INCONCLUSIVE" << std::endl;
-            fprintf(res, "INCONCLUSIVE\n");
+            if(firstSolution) fprintf(res, "INCONCLUSIVE\n");
         }
-        fclose(res);
     } else {
         if (ret == l_True) {
             if (!printResult) std::cout << "c SATISFIABLE" << std::endl;
@@ -736,7 +735,14 @@ int Main::singleThreadSolve()
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             if (conf.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
-            printResultFunc(solver, ret, res);
+            printResultFunc(solver, ret, res, current_nr_of_solutions == 1);
+
+            if (conf.verbosity >= 1) {
+                std::cout
+                << "c Number of solutions found until now: "
+                << std::setw(6) << current_nr_of_solutions
+                << std::endl;
+            }
 
             vec<Lit> lits;
             for (Var var = 0; var != solver.nVars(); var++) {
@@ -783,7 +789,7 @@ int Main::singleThreadSolve()
     }
     if (conf.verbosity >= 1) solver.printStats();
 
-    printResultFunc(solver, ret, res);
+    printResultFunc(solver, ret, res, current_nr_of_solutions == 1);
 
     return correctReturnValue(ret);
 }
@@ -889,7 +895,7 @@ int Main::oneThreadSolve()
 
         FILE* res = openOutputFile();
         if (conf.verbosity >= 1) solver.printStats();
-        printResultFunc(solver, ret, res);
+        printResultFunc(solver, ret, res, true);
 
         retval = correctReturnValue(ret);
         exit(retval);

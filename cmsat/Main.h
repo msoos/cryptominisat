@@ -52,7 +52,7 @@ class Main
 
         void printUsage(char** argv);
         const char* hasPrefix(const char* str, const char* prefix);
-        void printResultFunc(const Solver& S, const lbool ret, FILE* res);
+        void printResultFunc(const Solver& S, const lbool ret, FILE* res, const bool firstSolution);
 
         //File reading
         void readInAFile(const std::string& filename, Solver& solver);
