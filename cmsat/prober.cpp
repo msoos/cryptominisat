@@ -193,7 +193,19 @@ bool Prober::probe()
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
-    numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.2);
+    const size_t numPropsTodoAftPerf = numPropsTodo;
+    numPropsTodo = (double)numPropsTodo * std::pow((double)numCalls, 0.1);
+
+    if (solver->conf.verbosity >=2 ) {
+        cout
+        << "c [probe] NumProps after perf multi: "
+        << std::setprecision(2) << (double)numPropsTodoAftPerf/(1000.0*1000.0)
+        << "M"
+        << " after numcall multi: "
+        << std::setprecision(2) << (double)numPropsTodo/(1000.0*1000.0)
+        << "M (<- final)"
+        << endl;
+    }
 
     //Use candidates
     sortAndResetCandidates();
