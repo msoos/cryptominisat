@@ -189,7 +189,7 @@ bool Prober::probe()
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.10)
-        numPropsMultiplier = std::min(numPropsMultiplier*1.5, 3.0);
+        numPropsMultiplier = std::min(numPropsMultiplier*2, 4.0);
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
