@@ -188,13 +188,13 @@ bool Prober::probe()
     propValue.resize(solver->nVars(), 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings > (double)numActiveVars * 0.10)
-        numPropsMultiplier = std::min(numPropsMultiplier*1.3, 1.8);
+    if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.10)
+        numPropsMultiplier = std::min(numPropsMultiplier*1.5, 3.0);
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     const size_t numPropsTodoAftPerf = numPropsTodo;
-    numPropsTodo = (double)numPropsTodo * std::pow((double)numCalls, 0.1);
+    numPropsTodo = (double)numPropsTodo * std::pow((double)numCalls, 0.2);
 
     if (solver->conf.verbosity >=2 ) {
         cout
