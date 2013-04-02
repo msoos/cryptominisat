@@ -89,7 +89,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 2L*1000L*1000L;
+    uint64_t maxNumProps = 2LL*1000LL*1000LL;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     size_t origTrailSize = solver->trail.size();
 
@@ -187,7 +187,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
     const size_t origTrailSize = solver->trail.size();
 
     //Time-limiting
-    uint64_t maxNumProps = 10L*1000L*1000L;
+    uint64_t maxNumProps = 10LL*1000LL*1000LL;
     if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
         maxNumProps *=2;
 
@@ -782,7 +782,7 @@ void ClauseVivifier::subsumeImplicit()
     uint64_t remTris = 0;
     uint64_t stampTriRem = 0;
     uint64_t cacheTriRem = 0;
-    timeAvailable = 100L*1000L*1000L;
+    timeAvailable = 100LL*1000LL*1000LL;
     const bool doStamp = solver->conf.doStamp;
 
     //Randomize starting point
@@ -981,7 +981,7 @@ bool ClauseVivifier::strengthenImplicit()
     uint64_t remLitFromTriByTri = 0;
     uint64_t stampRem = 0;
     const size_t origTrailSize = solver->trail.size();
-    timeAvailable = 400L*1000L*1000L;
+    timeAvailable = 400LL*1000LL*1000LL;
     double myTime = cpuTime();
     const bool doStamp = solver->conf.doStamp;
 

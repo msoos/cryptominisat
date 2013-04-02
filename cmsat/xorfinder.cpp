@@ -41,7 +41,7 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
 
 bool XorFinder::findXors()
 {
-    maxTimeFindXors = 200L*1000L*1000L;
+    maxTimeFindXors = 200LL*1000LL*1000LL;
     double myTime = cpuTime();
     numCalls++;
     runStats.clear();

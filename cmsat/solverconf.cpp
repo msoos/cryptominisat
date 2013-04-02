@@ -118,7 +118,7 @@ SolverConf::SolverConf() :
         , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
-        , maxXORMatrix     (10L*1000L*1000L)
+        , maxXORMatrix     (10LL*1000LL*1000LL)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)

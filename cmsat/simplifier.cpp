@@ -250,7 +250,7 @@ Simplifier::Sub0Ret Simplifier::subsume0AndUnlink(
         ret.numSubsumed++;
 
         //If we are waaay over time, just exit
-        if (*toDecrease < -20L*1000L*1000L)
+        if (*toDecrease < -20LL*1000LL*1000LL)
             break;
     }
 
@@ -315,7 +315,7 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
                 return ret;
 
             //If we are waaay over time, just exit
-            if (*toDecrease < -20L*1000L*1000L)
+            if (*toDecrease < -20LL*1000LL*1000LL)
                 break;
         }
     }
@@ -1984,14 +1984,14 @@ from the beginning.
 */
 void Simplifier::setLimits()
 {
-    numMaxSubsume0    = 450L*1000L*1000L;
-    numMaxSubsume1    = 100L*1000L*1000L;
+    numMaxSubsume0    = 450LL*1000L*1000LL;
+    numMaxSubsume1    = 100LL*1000L*1000LL;
 //     numMaxTriSub      = 600L*1000L*1000L;
-    numMaxElim        = 800L*1000L*1000L;
-    numMaxAsymm       = 40L *1000L*1000L;
-    numMaxBlocked     = 40L *1000L*1000L;
-    numMaxBlockedImpl = 1800L *1000L*1000L;
-    numMaxVarElimAgressiveCheck  = 300L *1000L*1000L;
+    numMaxElim        = 800LL*1000L*1000LL;
+    numMaxAsymm       = 40LL *1000L*1000LL;
+    numMaxBlocked     = 40LL *1000L*1000LL;
+    numMaxBlockedImpl = 1800LL *1000LL*1000LL;
+    numMaxVarElimAgressiveCheck  = 300LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();

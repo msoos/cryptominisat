@@ -98,7 +98,7 @@ end:
 
     size_t tries = 0;
     for (; tries < std::min<size_t>(100000U, size*size/2); tries++) {
-        if (*subsumer->toDecrease < 50L*1000L*1000L)
+        if (*subsumer->toDecrease < 50LL*1000LL*1000LL)
             break;
 
         //Take some variables randomly
@@ -222,7 +222,7 @@ void GateFinder::findOrGates()
 
     double myTime = cpuTime();
     clearIndexes();
-    numMaxGateFinder = 100L*1000L*1000L;
+    numMaxGateFinder = 100LL*1000LL*1000LL;
     subsumer->toDecrease = &numMaxGateFinder;
 
     findOrGates(true);
@@ -306,7 +306,7 @@ bool GateFinder::doAllOptimisationWithGates()
     if (solver->conf.doShortenWithOrGates) {
         //Setup
         double myTime = cpuTime();
-        numMaxShortenWithGates = 100L*1000L*1000L;
+        numMaxShortenWithGates = 100LL*1000LL*1000LL;
         subsumer->toDecrease = &numMaxShortenWithGates;
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
@@ -343,7 +343,7 @@ bool GateFinder::doAllOptimisationWithGates()
     //AND gate treatment
     if (solver->conf.doRemClWithAndGates) {
         //Setup
-        numMaxClRemWithGates = 100L*1000L*1000L;
+        numMaxClRemWithGates = 100LL*1000LL*1000LL;
         subsumer->toDecrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
 
