@@ -1,3 +1,7 @@
+ver 3.0 1/03/2011
+-> git rev 988b0b3b320e830f7285212f342186b41f04ebf6 
+* A redesigned architecture with many options and web statistics
+
 ver 2.9.0 20/01/2011
 * Added extended SCC and vivification using cached implications
 * Reachability testing and related branching heuristic using cached

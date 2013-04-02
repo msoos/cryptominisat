@@ -1,12 +1,5 @@
 Mate Soos <soos.mate@gmail.com> and others
 
-Special thanks to:
-- the author's professors
-- the gcc compiler team
-- libstdc team
-- Bjarne Stroustrup for C++
-- Karsten Nohl for starting the project
-
 Bug-hunting thanks to:
 - Martin Maurer for helping with Visual C-specific things
   and reporting on multiple important bugs
