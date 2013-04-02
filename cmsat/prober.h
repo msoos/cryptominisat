@@ -372,7 +372,7 @@ class Prober {
         vector<Lit> tmpPs;
 
         //Used to count extra time, must be cleared at every startup
-        size_t extraTime;
+        uint64_t extraTime;
 
         //Stats
         Stats runStats;
