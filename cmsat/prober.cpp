@@ -139,20 +139,20 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 2300L*1000L*1000L;
+    uint64_t numPropsTodo = 2300LL*1000LL*1000LL;
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
     if (numActiveVars < 50L*1000L) {
         numPropsTodo *= 1.2;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits  < 2L*1000L*1000L) {
+    if (solver->binTri.redLits + solver->binTri.irredLits  < 2LL*1000L*1000LL) {
         numPropsTodo *= 1.2;
     }
     if (numActiveVars > 400L*1000L) {
         numPropsTodo *= 0.8;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits > 20L*1000L*1000L) {
+    if (solver->binTri.redLits + solver->binTri.irredLits > 20LL*1000LL*1000LL) {
         numPropsTodo *= 0.8;
     }
     if (solver->conf.verbosity >= 2) {
