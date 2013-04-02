@@ -34,8 +34,8 @@ set(cryptoms_lib_link_libs "")
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 
-    #add_library(m4ri STATIC IMPORTED)
-    add_library(m4ri SHARED IMPORTED)
+    add_library(m4ri STATIC IMPORTED)
+    #add_library(m4ri SHARED IMPORTED)
     set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
     SET(cryptoms_lib_files ${cryptoms_lib_files} xorfinder.cpp)
@@ -47,8 +47,8 @@ if (MYSQL_FOUND AND STATSNEEDED)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
 endif (MYSQL_FOUND AND STATSNEEDED)
 
-#add_library(cryptoms STATIC
-add_library(cryptoms SHARED
+add_library(cryptoms STATIC
+#add_library(cryptoms SHARED
     ${cryptoms_lib_files}
 )
 

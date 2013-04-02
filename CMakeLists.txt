@@ -34,9 +34,9 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # -----------------------------------------------------------------------------
 # Look for ZLIP (For reading zipped CNFs)
