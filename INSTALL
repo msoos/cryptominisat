@@ -35,37 +35,8 @@ Please read help
 For help, build the program, and issue:
 './cryptominisat -h'
 
---------------
-Verbose debug
--------------
-You can also turn on verbose debugging.
-Simply remove the comment before 
-
-"//#define VERBOSE_DEBUG" 
-in Solver/constants.h and re-compile
-
-When executing:
-
-'./cryptominisat satfile.cnf'
-You will see a LOT of debug info. You should therefore maybe do:
-
-'./cryptominisat satfile.cnf > debuginfo.txt'
-then you can open the 'debuginfo.txt' file from a text editor and have a look
-
 --------------------------
 Windows binary generation
 -------------------------
-It should be possible f you compile under windows
-using Visual C++. Please read the HOWTO_VisualCpp for details
 
-I compile under linux all windows binaries, using gcc that generates 
-windows executables. It works really well. There is a sort-of-howto in 
-the "HOWTO_MinGW32" text file. A short step-by-step is here: 
-
-1) Install gcc that generates windows binaries:
-
-i586-mingw32msvc
-
-2) Install all libraries (libz) 
-
-3) Get "libz" from source and compile as per "HOWTO_MINGW32"
+Not supported, but possible with cmake & boost installed
