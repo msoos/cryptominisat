@@ -69,6 +69,7 @@ class Prober {
                 //Time
                 cpu_time(0)
                 , timeAllocated(0)
+                , numCalls(0)
 
                 //Probe stats
                 , numFailed(0)
@@ -102,6 +103,7 @@ class Prober {
                 //Time
                 cpu_time += other.cpu_time;
                 timeAllocated += other.timeAllocated;
+                numCalls += other.numCalls;
 
                 //Probe stats
                 numFailed += other.numFailed;
@@ -137,6 +139,12 @@ class Prober {
                     , cpu_time
                     , (double)timeAllocated/(cpu_time*1000.0*1000.0)
                     , "(Mega BP+HP)/s"
+                );
+
+                printStatsLine("c called"
+                    , numCalls
+                    , cpu_time/(double)numCalls
+                    , "s/call"
                 );
 
                 printStatsLine("c unused Mega BP+HP"
@@ -257,6 +265,7 @@ class Prober {
             //Time
             double cpu_time;
             uint64_t timeAllocated;
+            uint64_t numCalls;
 
             //Probe stats
             uint64_t numFailed;
@@ -383,8 +392,6 @@ class Prober {
         ///How successful were we last time?
         uint32_t lastTimeZeroDepthAssings;
 
-        ///How many times we tried to do failed lit probing
-        uint32_t numCalls;
 };
 
 inline const Prober::Stats& Prober::getStats() const

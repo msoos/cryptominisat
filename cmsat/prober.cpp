@@ -49,7 +49,6 @@ Prober::Prober(Solver* _solver):
     , tmpPs(2)
     , numPropsMultiplier(1.0)
     , lastTimeZeroDepthAssings(0)
-    , numCalls(0)
 {
 }
 
@@ -140,6 +139,10 @@ bool Prober::probe()
     assert(solver->nVars() > 0);
 
     uint64_t numPropsTodo = 2300LL*1000LL*1000LL;
+    //Do slightly more at first start-up
+    if (globalStats.numCalls == 0) {
+        numPropsTodo *= 1.5;
+    }
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
@@ -178,7 +181,6 @@ bool Prober::probe()
     runStats.clear();
     runStats.origNumFreeVars = numActiveVars;
     runStats.origNumBins = solver->binTri.redBins + solver->binTri.irredBins;
-    numCalls++;
 
     //State
     visitedAlready.clear();
@@ -194,7 +196,7 @@ bool Prober::probe()
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     const size_t numPropsTodoAftPerf = numPropsTodo;
-    numPropsTodo = (double)numPropsTodo * std::pow((double)numCalls, 0.2);
+    numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.2);
 
     if (solver->conf.verbosity >=2 ) {
         cout
@@ -365,6 +367,7 @@ end:
     runStats.cpu_time = cpuTime() - myTime;
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;
+    runStats.numCalls = 1;
     globalStats += runStats;
 
     //Check if we need to disable OTF hyper-bin&transitive reduction
