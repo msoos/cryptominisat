@@ -138,11 +138,7 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 2300LL*1000LL*1000LL;
-    //Do slightly more at first start-up
-    if (globalStats.numCalls == 0) {
-        numPropsTodo *= 1.5;
-    }
+    uint64_t numPropsTodo = 2800LL*1000LL*1000LL;
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
@@ -190,10 +186,13 @@ bool Prober::probe()
     propValue.resize(solver->nVars(), 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.10)
-        numPropsMultiplier = std::min(numPropsMultiplier*2, 4.0);
-    else
+    if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.20) {
+        numPropsMultiplier = std::min(numPropsMultiplier*2, 5.0);
+    } else if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.10) {
+        numPropsMultiplier = std::min(numPropsMultiplier*1.6, 4.0);
+    } else {
         numPropsMultiplier = 1.0;
+    }
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     const size_t numPropsTodoAftPerf = numPropsTodo;
     numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.2);
