@@ -55,6 +55,7 @@ size_t ImplCache::memoryUsedInMB() const
     ) {
         numBytes += it->lits.capacity()*sizeof(LitExtra);
     }
+    numBytes += implCache.capacity()*sizeof(vector<TransCache>);
 
     const double MBused = (double)numBytes/(1000.0*1000.0);
 

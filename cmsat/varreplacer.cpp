@@ -814,3 +814,21 @@ bool VarReplacer::addLaterAddBinXor()
 
     return true;
 }
+
+uint64_t VarReplacer::bytesMemUsed() const
+{
+    uint64_t b = 0;
+    b += delayedEnqueue.capacity()*sizeof(Lit);
+    b += laterAddBinXor.capacity()*sizeof(LaterAddBinXor);
+    b += table.capacity()*sizeof(Lit);
+    for(map<Var, vector<Var> >::const_iterator
+        it = reverseTable.begin(), end = reverseTable.end()
+        ; it != end
+        ; it++
+    ) {
+        b += it->second.capacity()*sizeof(Lit);
+    }
+    b += reverseTable.size()*sizeof(vector<Var>);
+
+    return b;
+}

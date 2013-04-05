@@ -261,6 +261,24 @@ public:
         sz = 0;
         cap = 0;
     }
+
+    void fitToSize()
+    {
+        if (data == NULL || cap == sz)
+            return;
+
+        assert(cap > sz);
+        if (sz == 0) {
+            free(data);
+            data = 0;
+            cap = 0;
+        } else {
+            data = (T*)realloc(data, sz*sizeof(T));
+            assert(data != NULL);
+            cap = sz;
+        }
+
+    }
 };
 
 template<class T>

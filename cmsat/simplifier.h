@@ -75,6 +75,7 @@ public:
         , const vector<uint32_t>& interToOuter
     );
     bool unEliminate(const Var var);
+    uint64_t bytesMemUsed() const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;

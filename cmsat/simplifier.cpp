@@ -3207,6 +3207,23 @@ void Simplifier::print_elimed_vars() const
     }
 }
 
+uint64_t Simplifier::bytesMemUsed() const
+{
+    uint64_t b = 0;
+    b += seen.capacity()*sizeof(char);
+    b += seen2.capacity()*sizeof(char);
+    b += dummy.capacity()*sizeof(char);
+    b += toClear.capacity()*sizeof(Lit);
+    b += finalLits.capacity()*sizeof(Lit);
+    b += subs.capacity()*sizeof(ClOffset);
+    b += subsLits.capacity()*sizeof(Lit);
+    b += var_elimed.capacity()*sizeof(char);
+    b += varElimOrder.memUsed();
+    b += varElimComplexity.capacity()*sizeof(int)*2;
+
+    return b;
+}
+
 /*const GateFinder* Simplifier::getGateFinder() const
 {
     return gateFinder;

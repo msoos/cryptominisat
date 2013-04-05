@@ -135,6 +135,8 @@ class Solver : public Searcher
         void dumpIfNeeded() const;
         void print_elimed_vars() const;
         Var numActiveVars() const;
+        void printMemStats() const;
+        void printWatchMemUsed() const;
 
 
         ///Return number of variables waiting to be replaced

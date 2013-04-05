@@ -1847,6 +1847,24 @@ void Solver::printFullStats() const
         , "confl/TOTAL_TIME_SEC"
     );
     printStatsLine("c Total time", cpu_time);
+    printMemStats();
+}
+
+void Solver::printWatchMemUsed() const
+{
+    size_t numBytesForWatch = 0;
+    numBytesForWatch += watches.capacity()*sizeof(vec<Watched>);
+    for(size_t i = 0; i < watches.size(); i++) {
+        numBytesForWatch += watches[i].capacity()*sizeof(Watched);
+    }
+    printStatsLine("c Mem for watches"
+        , numBytesForWatch/(1024UL*1024UL)
+        , "MB"
+    );
+}
+
+void Solver::printMemStats() const
+{
     printStatsLine("c Mem used"
         , memUsed()/(1024UL*1024UL)
         , "MB"
@@ -1857,15 +1875,7 @@ void Solver::printFullStats() const
         , "MB"
     );
 
-    size_t numBytesForWatch = 0;
-    numBytesForWatch += watches.capacity()*sizeof(vec<Watched>);
-    for(size_t i = 0; i < watches.size(); i++) {
-        numBytesForWatch += watches[i].capacity()*sizeof(Watched);
-    }
-    printStatsLine("c Mem for watches"
-        , numBytesForWatch/(1024UL*1024UL)
-        , "MB"
-    );
+    printWatchMemUsed();
 
     size_t numBytesForVars = 0;
     numBytesForVars += assigns.capacity()*sizeof(lbool);
@@ -1917,6 +1927,16 @@ void Solver::printFullStats() const
     tempsSize += dummy.capacity()*sizeof(Lit);
     printStatsLine("c Mem for temporaries"
         , tempsSize/(1024UL*1024UL)
+        , "MB"
+    );
+
+    printStatsLine("c Mem for simplifier"
+        , simplifier->bytesMemUsed()/(1024UL*1024UL)
+        , "MB"
+    );
+
+    printStatsLine("c Mem for simplifier"
+        , varReplacer->bytesMemUsed()/(1024UL*1024UL)
         , "MB"
     );
 }
