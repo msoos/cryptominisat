@@ -2084,7 +2084,7 @@ Lit Searcher::pickBranchLit()
         Lit lit2 = lit_Undef;
         if (conf.doStamp) {
             //Use timestamps
-            lit2 = timestamp[next.toInt()].dominator[STAMP_RED];
+            lit2 = stamp.tstamp[next.toInt()].dominator[STAMP_RED];
         } else {
             //Ude cache
             lit2 = solver->litReachable[next.toInt()].lit;
@@ -2231,11 +2231,11 @@ void Searcher::stampBasedLearntMinim(vector<Lit>& cl)
 
     Lit firstLit = cl[0];
     std::pair<size_t, size_t> tmp;
-    tmp = stampBasedLitRem(cl, timestamp, STAMP_RED);
+    tmp = stamp.stampBasedLitRem(cl, STAMP_RED);
     if (tmp.first || tmp.second) {
         //cout << "Rem RED: " << tmp.first + tmp.second << endl;
     }
-    tmp = stampBasedLitRem(cl, timestamp, STAMP_IRRED);
+    tmp = stamp.stampBasedLitRem(cl, STAMP_IRRED);
     if (tmp.first || tmp.second) {
         //cout << "Rem IRRED: " << tmp.first + tmp.second << endl;
     }

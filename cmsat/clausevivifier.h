@@ -266,8 +266,6 @@ class ClauseVivifier {
             , bool learnt
             , bool alsoStrengthen
         );
-        vector<Lit> stampNorm;
-        vector<Lit> stampInv;
         int64_t timeAvailable;
 
 

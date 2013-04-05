@@ -471,7 +471,6 @@ class Solver : public Searcher
         // Stamping
         Lit updateLit(Lit lit) const;
         void updateDominators();
-        void remove_from_stamps(const Var var);
 
         /////////////////
         // Debug
@@ -626,22 +625,6 @@ inline string Solver::clauseBackNumbered(const T& cl) const
     }
 
     return ss.str();
-}
-
-inline void Solver::remove_from_stamps(const Var var)
-{
-    int types[] = {STAMP_IRRED, STAMP_RED};
-    for(int i = 0; i < 2; i++) {
-        timestamp[Lit(var, false).toInt()].dominator[types[i]] = lit_Undef;
-        timestamp[Lit(var, true).toInt()].dominator[types[i]] = lit_Undef;
-    }
-    for(size_t i = 0; i < timestamp.size(); i++) {
-        for(int i2 = 0; i2 < 2; i2++) {
-            if (timestamp[i].dominator[types[i2]].var() == var) {
-                timestamp[i].dominator[types[i2]] = lit_Undef;
-            }
-        }
-    }
 }
 
 inline Var Solver::numActiveVars() const

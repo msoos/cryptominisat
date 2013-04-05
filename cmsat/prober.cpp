@@ -269,8 +269,8 @@ bool Prober::probe()
 
         if (solver->conf.doStamp) {
             //If this lit is reachable from somewhere else, then reach it from there
-            if (solver->timestamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
-                const Lit betterlit = solver->timestamp[lit.toInt()].dominator[STAMP_IRRED];
+            if (solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
+                const Lit betterlit = solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED];
                 if (solver->value(betterlit.var()) == l_Undef
                     && solver->decisionVar[betterlit.var()]
                 ) {

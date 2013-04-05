@@ -1044,7 +1044,7 @@ Lit PropEngine::propagateFullDFS(
     needToAddBinClause.clear();
     PropResult ret = PROP_NOTHING;
     stampingTime++;
-    timestamp[root.toInt()].start[stampType] = stampingTime;
+    stamp.tstamp[root.toInt()].start[stampType] = stampingTime;
 
     #ifdef DEBUG_STAMPING
     cout
@@ -1097,8 +1097,8 @@ Lit PropEngine::propagateFullDFS(
                 case PROP_SOMETHING:
                     propStats.bogoProps += 8;
                     stampingTime++;
-                    timestamp[trail.back().toInt()].start[stampType] = stampingTime;
-                    timestamp[trail.back().toInt()].dominator[stampType] = root;
+                    stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+                    stamp.tstamp[trail.back().toInt()].dominator[stampType] = root;
                     #ifdef DEBUG_STAMPING
                     cout
                     << "From " << p << " enqueued " << trail.back()
@@ -1121,7 +1121,7 @@ Lit PropEngine::propagateFullDFS(
         propStats.bogoProps += ws.size()*4;
         toPropBin.pop();
         stampingTime++;
-        timestamp[p.toInt()].end[stampType] = stampingTime;
+        stamp.tstamp[p.toInt()].end[stampType] = stampingTime;
         #ifdef DEBUG_STAMPING
         cout
         << "End time for " << p
@@ -1158,7 +1158,7 @@ Lit PropEngine::propagateFullDFS(
                     case PROP_SOMETHING:
                         propStats.bogoProps += 8;
                         stampingTime++;
-                        timestamp[trail.back().toInt()].start[stampType] = stampingTime;
+                        stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
 
                         //No need to set it. Old setting is either the same or better than lit_Undef
                         //timestamp[trail.back().toInt()].dominator[stampType] = lit_Undef;
@@ -1248,7 +1248,7 @@ Lit PropEngine::propagateFullDFS(
                 << " for stampingTime " << stampingTime
                 << endl;
                 #endif
-                timestamp[trail.back().toInt()].start[stampType] = stampingTime;
+                stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
                 if (stampType == STAMP_IRRED) {
                     //Root for literals propagated afterwards will be this literal
                     root = trail.back();
@@ -1270,7 +1270,7 @@ Lit PropEngine::propagateFullDFS(
         qhead++;
     }
 
-    timestamp[trail.back().toInt()].numDom[stampType] = trail.size() - origTrailSize;
+    stamp.tstamp[trail.back().toInt()].numDom[stampType] = trail.size() - origTrailSize;
 
     return lit_Undef;
 }
@@ -1281,7 +1281,7 @@ void PropEngine::closeAllTimestamps(const StampType stampType)
     while(!toPropBin.empty())
     {
         stampingTime++;
-        timestamp[toPropBin.top().toInt()].end[stampType] = stampingTime;
+        stamp.tstamp[toPropBin.top().toInt()].end[stampType] = stampingTime;
         #ifdef DEBUG_STAMPING
         cout
         << "End time for " << toPropBin.top()

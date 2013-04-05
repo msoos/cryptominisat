@@ -1189,7 +1189,7 @@ bool Simplifier::unEliminate(const Var var)
     globalStats.numVarsElimed--;
     solver->varData[var].elimed = ELIMED_NONE;
     solver->setDecisionVar(var);
-    solver->remove_from_stamps(var);
+    solver->stamp.remove_from_stamps(var);
 
     //Find if variable is really needed to be eliminated
     map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
@@ -1701,13 +1701,7 @@ void Simplifier::blockImplicit(
 
     //If any binary has been blocked, clear the stamps
     if (blockedBin) {
-        for(vector<Timestamp>::iterator
-            it = solver->timestamp.begin(), end = solver->timestamp.end()
-            ; it != end
-            ; it++
-        ) {
-            *it = Timestamp();
-        }
+        solver->stamp.clearStamps();
 
         if (solver->conf.verbosity >= 2) {
             cout
@@ -2858,12 +2852,7 @@ bool Simplifier::merge(
 
         if (!ps.isBinary() && !qs.isBinary()) {
             numMaxVarElimAgressiveCheck -= 20;
-            if (stampBasedClRem(
-                toClear
-                , solver->timestamp
-                , stampNorm
-                , stampInv)
-            ) {
+            if (solver->stamp.stampBasedClRem(toClear)) {
                 goto end;
             }
         }

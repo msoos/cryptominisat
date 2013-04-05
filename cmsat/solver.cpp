@@ -691,13 +691,13 @@ void Solver::renumberVariables()
 
     //Update stamps
     if (conf.doStamp) {
-        for(size_t i = 0; i < timestamp.size(); i++) {
+        for(size_t i = 0; i < stamp.tstamp.size(); i++) {
             for(size_t i2 = 0; i2 < 2; i2++) {
-            if (timestamp[i].dominator[i2] != lit_Undef)
-                timestamp[i].dominator[i2] = getUpdatedLit(timestamp[i].dominator[i2], outerToInter);
+            if (stamp.tstamp[i].dominator[i2] != lit_Undef)
+                stamp.tstamp[i].dominator[i2] = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
             }
         }
-        updateArray(timestamp, interToOuter2);
+        updateArray(stamp.tstamp, interToOuter2);
     }
 
     //Update clauses
@@ -786,8 +786,7 @@ Var Solver::newVar(const bool dvar)
 
 
     if (conf.doStamp) {
-        timestamp.push_back(Timestamp());
-        timestamp.push_back(Timestamp());
+        stamp.newVar();
     }
 
     outerToInterMain.push_back(var);
@@ -1883,7 +1882,7 @@ void Solver::printFullStats() const
     );
 
     printStatsLine("c Mem for stamps"
-        , timestamp.capacity()*sizeof(Timestamp)/(1024UL*1024UL)
+        , stamp.getMemUsed()/(1024UL*1024UL)
         , "MB"
     );
 
@@ -2956,7 +2955,7 @@ Lit Solver::updateLit(Lit lit) const
 void Solver::updateDominators()
 {
     for(vector<Timestamp>::iterator
-        it = timestamp.begin(), end = timestamp.end()
+        it = stamp.tstamp.begin(), end = stamp.tstamp.end()
         ; it != end
         ; it++
     ) {

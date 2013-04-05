@@ -26,6 +26,7 @@ set(cryptoms_lib_files
     gatefinder.cpp
     sqlstats.cpp
     implcache.cpp
+    stamp.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

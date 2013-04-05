@@ -648,7 +648,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && !learnt
         ) {
             countTime += lits2.size()*3 + 10;
-            if (stampBasedClRem(lits2, solver->timestamp, stampNorm, stampInv)) {
+            if (solver->stamp.stampBasedClRem(lits2)) {
                 isSubsumed = true;
                 subsumedStamp++;
             }
@@ -690,7 +690,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && !isSubsumed
         ) {
             countTime += lits.size()*3 + 10;
-            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
+            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
@@ -702,7 +702,7 @@ bool ClauseVivifier::vivifyClausesCache(
             && !isSubsumed
         ) {
             countTime += lits.size()*3 + 10;
-            std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp,STAMP_IRRED);
+            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
             remLitTimeStampTotal += tmp.first;
             remLitTimeStampTotalInv += tmp.second;
         }
@@ -873,7 +873,7 @@ void ClauseVivifier::subsumeImplicit()
 
                 //Subsumed by stamp
                 if (doStamp && !remove) {
-                    remove = stampBasedClRem(lits, solver->timestamp, stampNorm, stampInv);
+                    remove = solver->stamp.stampBasedClRem(lits);
                     stampTriRem += remove;
                 }
 
@@ -1019,7 +1019,7 @@ bool ClauseVivifier::strengthenImplicit()
                 lits.push_back(lit);
                 lits.push_back(i->lit1());
                 if (doStamp) {
-                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
+                    std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
                     assert(!lits.empty());
@@ -1121,12 +1121,12 @@ bool ClauseVivifier::strengthenImplicit()
 
                     //Try both stamp types to reduce size
                     timeAvailable -= lits.size()*5;
-                    std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_RED);
+                    std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
                     if (lits.size() > 1) {
                         timeAvailable -= lits.size()*5;
-                        std::pair<size_t, size_t> tmp = stampBasedLitRem(lits, solver->timestamp, STAMP_IRRED);
+                        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
                         stampRem += tmp.first;
                         stampRem += tmp.second;
                     }

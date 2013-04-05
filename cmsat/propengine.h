@@ -42,6 +42,7 @@
 #include "boundedqueue.h"
 #include "solverconf.h"
 #include "clauseallocator.h"
+#include "stamp.h"
 
 namespace CMSat {
 
@@ -291,7 +292,7 @@ protected:
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
     vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
-    vector<Timestamp>   timestamp;
+    Stamp stamp;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
