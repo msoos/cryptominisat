@@ -358,6 +358,7 @@ template<class T, class T2> void printStatsLine(
     << ": " << std::setw(11) << std::setprecision(2) << value
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
     << " " << extra << ")"
+    << std::right
     << endl;
 }
 
@@ -372,6 +373,7 @@ inline void printStatsLine(
     << ": " << std::setw(11) << std::setprecision(2) << value
     << "/" << value2
     << "/" << value3
+    << std::right
     << endl;
 }
 
@@ -388,6 +390,7 @@ template<class T, class T2> void printStatsLine(
     << " " << extra1
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
     << " " << extra2 << ")"
+    << std::right
     << endl;
 }
 
@@ -401,6 +404,7 @@ template<class T> void printStatsLine(
     << ": " << std::setw(11) << std::setprecision(2)
     << value
     << " " << extra
+    << std::right
     << endl;
 }
 
