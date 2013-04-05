@@ -13,7 +13,7 @@ for line in mylines :
   i += 1
 
 lastnum = -1
-for a in range(0, 6000, 1) :
+for a in range(0, 60000, 1) :
   num = 0
   for t in time :
     #print "t: %f a: %d" %(t, a)
