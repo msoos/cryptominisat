@@ -849,7 +849,9 @@ lbool Searcher::search(uint64_t* geom_max)
     #endif //VERBOSE_DEBUG
 
     //Loop until restart or finish (SAT/UNSAT)
+    #ifdef STATS_NEEDED
     bool lastWasConflict = false;
+    #endif
     while (true) {
         assert(ok);
         Lit failed;
@@ -867,8 +869,8 @@ lbool Searcher::search(uint64_t* geom_max)
                 stats.conflStats.update(lastConflictCausedBy);
                 #ifdef STATS_NEEDED
                 hist.conflictAfterConflict.push(lastWasConflict);
-                #endif
                 lastWasConflict = true;
+                #endif
 
                 cancelUntil(0);
                 stats.litsLearntNonMin += 1;
@@ -938,15 +940,17 @@ lbool Searcher::search(uint64_t* geom_max)
             checkNeedRestart(geom_max);
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(lastWasConflict);
-            #endif
             lastWasConflict = true;
+            #endif
 
             if (!handle_conflict(confl))
                 return l_False;
 
         } else {
             assert(ok);
+            #ifdef STATS_NEEDED
             lastWasConflict = false;
+            #endif
 
             //If restart is needed, restart here
             if (params.needToStopSearch
