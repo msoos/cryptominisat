@@ -200,13 +200,13 @@ void Main::printResultFunc(
         if(toFile) {
             if(firstSolution)  *os << "SAT" << endl;
         }
-        else if (!printResult) *os << "c SATISFIABLE" << endl;
+        else if (!printResult) *os << "s SATISFIABLE" << endl;
         else                   *os << "s SATISFIABLE" << endl;
      } else if (ret == l_False) {
         if(toFile) {
             if(firstSolution)  *os << "UNSAT" << endl;
         }
-        else if (!printResult) *os << "c UNSATISFIABLE" << endl;
+        else if (!printResult) *os << "s UNSATISFIABLE" << endl;
         else                   *os << "s UNSATISFIABLE" << endl;
     }
 
