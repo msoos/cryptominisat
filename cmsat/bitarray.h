@@ -28,6 +28,8 @@
 #include <string.h>
 #include <assert.h>
 #include "constants.h"
+#include <stdlib.h>
+
 
 namespace CMSat {
 
@@ -43,18 +45,24 @@ public:
     BitArray(const BitArray& b) :
         size(b.size)
     {
-        mp = new uint64_t[size];
+        mp = (uint64_t*)malloc(size*sizeof(uint64_t));
+        assert(mp != NULL);
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
+    }
+
+    ~BitArray()
+    {
+        free(mp);
     }
 
     BitArray& operator=(const BitArray& b)
     {
         if (size != b.size) {
-            delete[] mp;
+            mp = (uint64_t*)realloc(mp, b.size*sizeof(uint64_t));
+            assert(mp != NULL);
             size = b.size;
-            mp = new uint64_t[size];
         }
-        memcpy(mp, b.mp, sizeof(uint64_t)*size);
+        memcpy(mp, b.mp, size*sizeof(uint64_t));
 
         return *this;
     }
@@ -111,17 +119,12 @@ public:
     {
         _size = _size/64 + (bool)(_size%64);
         if (size != _size) {
-            delete[] mp;
+            mp = (uint64_t*)realloc(mp, _size*sizeof(uint64_t));
+            assert(mp != NULL);
             size = _size;
-            mp = new uint64_t[size];
         }
         if (fill) setOne();
         else setZero();
-    }
-
-    ~BitArray()
-    {
-        delete[] mp;
     }
 
     inline bool isZero() const
