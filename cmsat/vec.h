@@ -270,7 +270,7 @@ public:
         assert(cap > sz);
         if (sz == 0) {
             free(data);
-            data = 0;
+            data = NULL;
             cap = 0;
         } else {
             data = (T*)realloc(data, sz*sizeof(T));
@@ -289,12 +289,12 @@ void vec<T>::grow(uint32_t min_cap)
     }
     if (cap == 0) {
         cap = (min_cap >= 2) ? min_cap : 2;
-    } else          do {
-            cap = (cap * 3 + 1) >> 1;
-        } while (cap < min_cap);
+    } else do {
+        cap = (cap * 3 + 1) >> 1;
+    } while (cap < min_cap);
+
     data = (T*)realloc(data, cap * sizeof(T));
     if (data == NULL) {
-        free(data);
         throw std::bad_alloc();
     }
 }
