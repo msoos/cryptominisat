@@ -48,6 +48,10 @@ if (MYSQL_FOUND AND STATSNEEDED)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
 endif (MYSQL_FOUND AND STATSNEEDED)
 
+if (Perftools_FOUND)
+    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
+endif (Perftools_FOUND)
+
 #add_library(cryptoms STATIC
 add_library(cryptoms SHARED
     ${cryptoms_lib_files}

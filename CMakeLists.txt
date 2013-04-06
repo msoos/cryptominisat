@@ -104,6 +104,12 @@ ELSE (M4RI_FOUND)
     MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
 ENDIF (M4RI_FOUND)
 
+# find_package(Perftools)
+IF (Perftools_FOUND)
+    MESSAGE(STATUS "OK, Found Google Perftools")
+else (Perftools_FOUND)
+    MESSAGE(WARNING "Did NOT find Perftools, memory allocation will be terrible")
+endif (Perftools_FOUND)
 
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
