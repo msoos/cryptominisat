@@ -30,6 +30,7 @@
 #include "searcher.h"
 #include "time_mem.h"
 #include "simplifier.h"
+#include "completedetachreattacher.h"
 
 using namespace CMSat;
 
@@ -231,222 +232,124 @@ void ClauseAllocator::consolidate(
         return;
     }
 
-    //Calculate the new size needed
-    uint64_t newMaxSize = (double)currentlyUsedSize*1.2 + MIN_LIST_SIZE;
-    newMaxSize = std::min<uint64_t>(newMaxSize, MAXSIZE);
-    BASE_DATA_TYPE* newDataStart = (BASE_DATA_TYPE*)malloc(newMaxSize*sizeof(BASE_DATA_TYPE));
-    if (!newDataStart) {
-        cout
-        << "ERROR! While consolidating memory, malloc failed"
-        << endl;
-
-        exit(-1);
-    }
-
-    //Fill up 'clauses' with all the clauses stored and not freed
-    clauses.clear();
-    BASE_DATA_TYPE* currentLoc = dataStart;
-    for (size_t i2 = 0; i2 < origClauseSizes.size(); i2++) {
-        Clause* oldPointer = (Clause*)(currentLoc);
-        if (!oldPointer->getFreed()) {
-            clauses.push_back(oldPointer);
-        } else {
-            (*((NewPointerAndOffset*)(oldPointer))).newOffset = std::numeric_limits<uint32_t>::max();
-        }
-        currentLoc += origClauseSizes[i2];
-    }
-
-    //Sort clauses according to usage data
-    #ifdef STATS_NEEDED
-    std::sort(clauses.begin(), clauses.end(), sortByClauseNumLookedAtDescending());
-    #endif
-
-    BASE_DATA_TYPE* newDataStartsAt = newDataStart;
-    uint64_t newSize = 0;
+    //Data for new struct
+    vector<ClOffset> newClauseOffsets;
     vector<uint32_t> newOrigClauseSizes;
-    for (vector<Clause*>::iterator
-        it = clauses.begin(), end = clauses.end()
+    vector<ClOffset> newOffsets;
+    uint64_t newSize = 0;
+
+    //Pointers that will be moved along
+    BASE_DATA_TYPE* newDataStart = dataStart;
+    BASE_DATA_TYPE* tmpDataStart = dataStart;
+
+    assert(sizeof(Clause) % sizeof(BASE_DATA_TYPE) == 0);
+    assert(sizeof(Lit) % sizeof(BASE_DATA_TYPE) == 0);
+    for (vector<uint32_t>::iterator
+        it = origClauseSizes.begin(), end = origClauseSizes.end()
         ; it != end
         ; it++
     ) {
-        Clause* clause = *it;
+        Clause* clause = (Clause*)tmpDataStart;
+        //Already freed, so skip entirely
+        if (clause->freed()) {
+            tmpDataStart += *it;
+            continue;
+        }
 
+        //Move to new position
         uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+        assert(sizeNeeded <= *it && "New clause size must not be bigger than orig clause size");
+        memmove(newDataStart, tmpDataStart, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
-        //Next line is needed, because in case of isRemoved()
-        //, the size of the clause could become 0, thus having less
-        // than enough space to carry the NewPointerAndOffset info
-        sizeNeeded = std::max<uint32_t>(sizeNeeded, sizeof(NewPointerAndOffset)/sizeof(BASE_DATA_TYPE));
-        memcpy(newDataStartsAt, (uint32_t*)clause, sizeNeeded*sizeof(BASE_DATA_TYPE));
+        //Record position
+        newOffsets.push_back(newSize);
 
-        //Save new position of clause in the old place
-        NewPointerAndOffset& ptr = *((NewPointerAndOffset*)clause);
-        ptr.newOffset = newSize;
-        ptr.newPointer = (Clause*)newDataStartsAt;
-
-        newSize += sizeNeeded;
+        //Record sizes
         newOrigClauseSizes.push_back(sizeNeeded);
-        newDataStartsAt += sizeNeeded;
+        newSize += sizeNeeded;
+
+        //Move pointers along
+        newDataStart += sizeNeeded;
+        tmpDataStart += *it;
     }
 
     if (solver->conf.verbosity >= 3) {
         cout << "c consolidated memory. "
-        << " Num cls:" << clauses.size()
+        << " Num cls:" << newOrigClauseSizes.size()
+        << " old size:" << size
         << " new size:" << newSize
-        << " new maxSize:" << maxSize
         << endl;
     }
 
     //Update offsets & pointers(?) now, when everything is in memory still
-    updateOffsets(solver->longIrredCls);
-    updateOffsets(solver->longRedCls);
-    updateAllOffsetsAndPointers(solver);
+    updateAllOffsetsAndPointers(solver, newOffsets);
 
-    //Free old piece
-    free(dataStart);
-
-    //Swap the new for the old
-    dataStart = newDataStart;
-    maxSize = newMaxSize;
+    //Update sizes
     size = newSize;
     currentlyUsedSize = newSize;
     newOrigClauseSizes.swap(origClauseSizes);
-
-    /*if (solver->conf.verbosity >= 3) {
-        cout
-        << "c Consolidated memory."
-        << " old sum max size: "
-        << ((double)oldSumMaxSize/(1000.0*1000.0)) << "M"
-        << " old used size: "
-        << ((double)oldSumSize/(1000.0*1000.0)) << "M"
-        << " (" << oldNumPieces << " piece(s) )"
-        << endl;
-
-        cout
-        << "c Consolidated memory."
-        << " new sum max size: "
-        << ((double)newSumMaxSize/(1000.0*1000.0)) << "M"
-        << " new used size: "
-        << ((double)newSumSize/(1000.0*1000.0)) << "M"
-        << " (" << oldNumPieces << " piece(s) )"
-
-        << " Time: " << cpuTime() - myTime
-        << endl;
-    }*/
 }
 
-void ClauseAllocator::checkGoodPropBy(const Solver* solver)
-{
-    //Go through each variable's varData and check if 'propBy' is correct
+void ClauseAllocator::updateAllOffsetsAndPointers(
+    Solver* solver
+    , const vector<ClOffset>& offsets
+) {
+    //Must be at toplevel, otherwise propBy reset will not work
+    //and also, detachReattacher will fail
+    assert(solver->decisionLevel() == 0);
+
+    //We are at decision level 0, so we can reset all PropBy-s
     Var var = 0;
-    for (vector<VarData>::const_iterator
+    for (vector<VarData>::iterator
         it = solver->varData.begin(), end = solver->varData.end()
         ; it != end
         ; it++, var++
     ) {
-        //If level is larger than current level, it's something that remained from old days
-        //If level is 0, it's assigned at decision level 0, and can be ignored
-        //If value is UNDEF then it's something that remained form old days
-        //Remember: stuff remains from 'old days' because this is lazily updated
-        if ((uint32_t)it->level > solver->decisionLevel()
-            || it->level == 0
-            || solver->value(var) == l_Undef
-        ) {
-            continue;
-        }
-
-        //If it's none of the above, then it's supposed to be actually correct
-        //So check it
-        if (it->reason.isClause()) {
-            assert(!getPointer(it->reason.getClause())->getFreed());
-            assert(!getPointer(it->reason.getClause())->getRemoved());
-        }
+        it->reason = PropBy();
     }
-}
 
+    //Detach long clauses
+    CompleteDetachReatacher detachReattach(solver);
+    detachReattach.detachNonBinsNonTris();
 
-void ClauseAllocator::updateAllOffsetsAndPointers(PropEngine*  propEngine)
-{
-    updateOffsets(propEngine->watches);
+    //Make sure all non-freed clauses were accessible from solver
+    const size_t origNumClauses =
+        solver->longIrredCls.size() + solver->longRedCls.size();
+    if (origNumClauses != offsets.size()) {
+        cout
+        << "ERROR: Not all non-freed clauses are accessible from Solver"
+        << endl
+        << " This usually means that a clause was not freed, i.e. a mem leak"
+        << endl
+        << " no. clauses accessible from solver: " << origNumClauses
+        << endl
+        << " no. clauses non-freed: " << offsets.size()
+        << endl;
 
-    Var var = 0;
-    for (vector<VarData>::iterator
-        it = propEngine->varData.begin(), end = propEngine->varData.end()
+        assert(origNumClauses == offsets.size());
+        exit(-1);
+    }
+
+    //Clear clauses
+    solver->longIrredCls.clear();
+    solver->longRedCls.clear();
+
+    //Add back to the solver the correct red & irred clauses
+    for(vector<ClOffset>::const_iterator
+        it = offsets.begin(), end = offsets.end()
         ; it != end
-        ; it++, var++
+        ; it++
     ) {
-        if ((uint32_t)it->level > propEngine->decisionLevel()
-            || it->level == 0
-            || propEngine->value(var) == l_Undef
-        ) {
-            it->reason = PropBy();
-            continue;
-        }
-
-        if (it->reason.isClause() && !it->reason.isNULL()) {
-
-            //Has not been marked as invalid
-            assert(
-                ((NewPointerAndOffset*)(getPointer(it->reason.getClause())))
-                ->newOffset !=
-                std::numeric_limits<uint32_t>::max()
-            );
-
-            //Update reason
-            it->reason = PropBy(
-                ((NewPointerAndOffset*)(getPointer(it->reason.getClause())))
-                ->newOffset
-            );
-
+        Clause* cl = getPointer(*it);
+        if (cl->learnt()) {
+            solver->longRedCls.push_back(*it);
+        } else {
+            solver->longIrredCls.push_back(*it);
         }
     }
-}
 
-/**
-@brief A dumb helper function to update offsets
-*/
-void ClauseAllocator::updateOffsets(vector<vec<Watched> >& watches)
-{
-    for (uint32_t i = 0;  i < watches.size(); i++) {
-        vec<Watched>& list = watches[i];
-        for (vec<Watched>::iterator it = list.begin(), end = list.end(); it != end; it++) {
-            if (it->isClause())
-                it->setNormOffset(((NewPointerAndOffset*)(getPointer(it->getOffset())))->newOffset);
-        }
-    }
-}
-
-/**
-@brief A dumb helper function to update offsets
-*/
-void ClauseAllocator::updateOffsets(vector<ClOffset>& clauses)
-{
-    for (uint32_t i = 0;  i < clauses.size(); i++) {
-        clauses[i] = ((NewPointerAndOffset*)(getPointer(clauses[i])))->newOffset;
-    }
-}
-
-/**
-@brief A dumb helper function to update pointers
-*/
-template<class T>
-void ClauseAllocator::updatePointers(vector<T*>& toUpdate)
-{
-    for (T **it = toUpdate.begin(), **end = toUpdate.end(); it != end; it++) {
-        if (*it != NULL) {
-            *it = (T*)(((NewPointerAndOffset*)(*it))->newPointer);
-        }
-    }
-}
-
-/**
-@brief A dumb helper function to update pointers
-*/
-void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
-{
-    for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
-        it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
-    }
+    //Finally, reattach long clauses
+    detachReattach.reattachLongs();
 }
 
 uint64_t ClauseAllocator::getMemUsed() const

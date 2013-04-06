@@ -85,15 +85,10 @@ class ClauseAllocator {
         uint64_t getMemUsed() const;
 
     private:
-        void updateAllOffsetsAndPointers(PropEngine* control);
-        template<class T>
-        void updatePointers(vector<T*>& toUpdate);
-        void updatePointers(vector<Clause*>& toUpdate);
-        void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
-        void updateOffsets(vector<vec<Watched> >& watches);
-        void updateOffsets(vector<ClOffset>& clauses);
-
-        void checkGoodPropBy(const Solver* solver);
+        void updateAllOffsetsAndPointers(
+            Solver* solver
+            , const vector<ClOffset>& offsets
+        );
 
         BASE_DATA_TYPE* dataStart; ///<Stacks start at these positions
         size_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
@@ -115,23 +110,6 @@ class ClauseAllocator {
         size_t currentlyUsedSize;
 
         void* allocEnough(const uint32_t size);
-
-        /**
-        @brief The clause's data is replaced by this to aid updating
-
-        We need to update the pointer or offset that points to the clause
-        The best way to do that is to simply fill the original place of the clause
-        with the pointer/offset of the new location.
-        */
-        struct NewPointerAndOffset
-        {
-            uint32_t newOffset; ///<The new offset where the clause now resides
-            Clause* newPointer; ///<The new place
-        };
-
-        vector<Clause*> clauses;
-        Clause* getClause();
-        void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 };
 
 } //end namespace
