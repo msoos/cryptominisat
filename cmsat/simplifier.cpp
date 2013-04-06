@@ -2279,10 +2279,6 @@ void Simplifier::removeClausesHelper(
 
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
-
-        #ifdef VERBOSE_DEBUG_VARELIM
-        cout << "Removing clause due to var-elim on " << lit << " : ";
-        #endif
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
             Clause& cl = *solver->clAllocator->getPointer(offset);
@@ -2360,14 +2356,12 @@ void Simplifier::removeClausesHelper(
             solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
         }
 
-        #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        if (!lits.empty()) {
+        if (solver->conf.verbosity >= 3 && !lits.empty()) {
             cout
             << "Eliminated clause " << lits
             << " on var " << lit.var()+1
             << endl;
         }
-        #endif
     }
 }
 
