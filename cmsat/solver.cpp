@@ -1339,7 +1339,7 @@ lbool Solver::simplifyProblem()
             if (conf.verbosity >= 2) {
                 cout
                 << "c Turning off cache, memory used, "
-                << memUsed << " MB"
+                << memUsedMB/(1024UL*1024UL) << " MB"
                 << " is over limit of " << conf.maxCacheSizeMB  << " MB"
                 << endl;
             }
