@@ -633,8 +633,10 @@ void Solver::renumberVariables()
     #endif
 
     //Fill the first part of interToOuter with vars that are used
-    vector<Var> outerToInter(nVars());
-    vector<Var> interToOuter(nVars());
+    interToOuter.clear();
+    interToOuter.resize(nVars());
+    outerToInter.clear();
+    outerToInter.resize(nVars());
     size_t at = 0;
     vector<Var> useless;
     for(size_t i = 0; i < nVars(); i++) {
@@ -664,7 +666,8 @@ void Solver::renumberVariables()
     assert(at == nVars());
 
     //Create temporary outerToInter2
-    vector<uint32_t> interToOuter2(interToOuter.size()*2);
+    interToOuter2.clear();
+    interToOuter2.resize(interToOuter.size()*2);
     for(size_t i = 0; i < interToOuter.size(); i++) {
         interToOuter2[i*2] = interToOuter[i]*2;
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
@@ -777,7 +780,6 @@ void Solver::renumberVariables()
     #ifdef DEBUG_RENUMBER
     cout << "Passed test" << endl;
     #endif
-
 }
 
 Var Solver::newVar(const bool dvar)
