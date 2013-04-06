@@ -761,6 +761,7 @@ void Solver::renumberVariables()
     }
 
     //Test for reflectivity of interToOuterMain & outerToInterMain
+    #ifndef NDEBUG
     vector<Var> test(nVars());
     for(size_t i = 0; i  < nVars(); i++) {
         test[i] = i;
@@ -779,6 +780,7 @@ void Solver::renumberVariables()
     }
     #ifdef DEBUG_RENUMBER
     cout << "Passed test" << endl;
+    #endif
     #endif
 }
 
