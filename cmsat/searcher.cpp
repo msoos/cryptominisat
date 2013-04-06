@@ -1236,9 +1236,8 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
-        //If too small, free it, too
+        //Must not be too small
         assert(learnt_clause.size() > 3);
-        solver->clAllocator->clauseFree(cl);
     }
 
     //Attach new clause
