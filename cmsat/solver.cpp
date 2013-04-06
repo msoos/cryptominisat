@@ -1136,7 +1136,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     lbool status = ok ? l_Undef : l_False;
 
     //If still unknown, simplify
-    if (status == l_Undef && nVars() > 0)
+    if (status == l_Undef && nVars() > 0 && conf.doPreSimp)
         status = simplifyProblem();
 
     //Iterate until solved

@@ -526,7 +526,7 @@ void Main::parseCommandLine()
 
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
-    ("presimp", po::value<int>(&conf.doPerformPreSimp)->default_value(conf.doPerformPreSimp)
+    ("presimp", po::value<int>(&conf.doPreSimp)->default_value(conf.doPreSimp)
         , "Perform simplification at startup (turning this OFF can save you time for small instances)")
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("vivif", po::value<int>(&conf.doClausVivif)->default_value(conf.doClausVivif)

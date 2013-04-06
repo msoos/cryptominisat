@@ -71,8 +71,6 @@ SolverConf::SolverConf() :
         , agilityLimit              (0.03)
         , agilityViolationLimit     (20)
 
-        , doPerformPreSimp (true)
-
         //Glues
         , updateGlues(true)
         , shortTermHistorySize (100)
@@ -133,6 +131,7 @@ SolverConf::SolverConf() :
 
         //Simplifier
         , doSimplify       (true)
+        , doPreSimp        (true)
         , doSchedSimp      (true)
         , doSubsume1       (true)
         , doBlockClauses   (true)
