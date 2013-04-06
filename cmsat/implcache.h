@@ -112,7 +112,7 @@ class ImplCache  {
     public:
         void printStats(const Solver* solver) const;
         void printStatsSort(const Solver* solver) const;
-        size_t memoryUsedInMB() const;
+        uint64_t memUsed() const;
         void makeAllRed();
         std::vector<TransCache> implCache;
 

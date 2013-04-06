@@ -1330,8 +1330,8 @@ lbool Solver::simplifyProblem()
 
     //Delete and disable cache if too large
     if (conf.doCache) {
-        const size_t memUsed = implCache.memoryUsedInMB();
-        if (memUsed > conf.maxCacheSizeMB) {
+        const size_t memUsedMB = implCache.memUsed()/(1024UL*1024UL);
+        if (memUsedMB > conf.maxCacheSizeMB) {
             if (conf.verbosity >= 2) {
                 cout
                 << "c Turning off cache, memory used, "
@@ -1343,6 +1343,9 @@ lbool Solver::simplifyProblem()
             conf.doCache = false;
         }
     }
+
+    //Free unused watch memory
+    freeUnusedWatches();
 
     reArrangeClauses();
 
@@ -1865,8 +1868,9 @@ void Solver::printWatchMemUsed() const
 
 void Solver::printMemStats() const
 {
+    const uint64_t totalMem = memUsed();
     printStatsLine("c Mem used"
-        , memUsed()/(1024UL*1024UL)
+        , totalMem/(1024UL*1024UL)
         , "MB"
     );
 
@@ -1897,7 +1901,7 @@ void Solver::printMemStats() const
     );
 
     printStatsLine("c Mem for impl cache"
-        , implCache.memoryUsedInMB()
+        , implCache.memUsed()/(1024UL*1024UL)
         , "MB"
     );
 
@@ -1935,7 +1939,7 @@ void Solver::printMemStats() const
         , "MB"
     );
 
-    printStatsLine("c Mem for simplifier"
+    printStatsLine("c Mem for varReplacer"
         , varReplacer->bytesMemUsed()/(1024UL*1024UL)
         , "MB"
     );
@@ -3047,5 +3051,25 @@ void Solver::calcReachability()
         << "c calculated reachability. T: "
         << std::setprecision(3) << (cpuTime() - myTime)
         << endl;
+    }
+}
+
+void Solver::freeUnusedWatches()
+{
+    size_t wsLit = 0;
+    for (vector<vec<Watched> >::iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
+        if (varData[lit.var()].elimed == ELIMED_VARELIM
+            || varData[lit.var()].elimed == ELIMED_VARREPLACER
+        ) {
+            assert(it->empty());
+            it->clear(true);
+        }
+
+        it->fitToSize();
     }
 }

@@ -68,7 +68,7 @@ public:
     }
     uint64_t getMemUsed() const
     {
-        return tstamp.capacity()*sizeof(Timestamp)/(1024UL*1024UL);
+        return tstamp.capacity()*sizeof(Timestamp);
     }
 
 private:

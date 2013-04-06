@@ -45,7 +45,7 @@ void ImplCache::makeAllRed()
     }
 }
 
-size_t ImplCache::memoryUsedInMB() const
+uint64_t ImplCache::memUsed() const
 {
     size_t numBytes = 0;
     for(vector<TransCache>::const_iterator
@@ -57,9 +57,7 @@ size_t ImplCache::memoryUsedInMB() const
     }
     numBytes += implCache.capacity()*sizeof(vector<TransCache>);
 
-    const double MBused = (double)numBytes/(1000.0*1000.0);
-
-    return (size_t)MBused;
+    return numBytes;
 }
 
 void ImplCache::printStats(const Solver* solver) const

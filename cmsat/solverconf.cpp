@@ -125,29 +125,35 @@ SolverConf::SolverConf() :
         , doExtendedSCC         (true)
         , sccFindPercent        (0.02)
 
-        //Propagation
+        //Propagation & search
         , doLHBR           (false)
         , propBinFirst     (false)
-
-        //optimisations to do
-        , doRenumberVars   (true)
         , dominPickFreq    (400)
         , flipPolarFreq    (300)
 
-        , doSchedSimp      (true)
+        //Simplifier
         , doSimplify       (true)
-        , doBlockClauses   (true)
-        , doExtBinSubs     (true)
+        , doSchedSimp      (true)
         , doSubsume1       (true)
+        , doBlockClauses   (true)
+        , doAsymmTE        (true)
+        , maxRedLinkInSize (80)
+        , maxOccurIrredMB(1000)
+        , maxOccurRedMB(600)
+
+        //optimisations to do
+        , doRenumberVars   (true)
+
+        , doExtBinSubs     (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
 
-        , doGateFind       (true)
+
+        , doGateFind       (false)
         , maxGateSize      (20)
 
         , doER             (false)
         , doCalcReach      (true)
-        , doAsymmTE        (true)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)

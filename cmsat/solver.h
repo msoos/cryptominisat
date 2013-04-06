@@ -386,6 +386,7 @@ class Solver : public Searcher
         vector<Var> outerToInterMain;
         vector<Var> interToOuterMain;
         void renumberVariables();
+        void freeUnusedWatches();
 
         /////////////////////////////
         // SAT solution verification

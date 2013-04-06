@@ -148,28 +148,40 @@ class SolverConf
         int doExtendedSCC;
         double sccFindPercent;
 
-        //Propagation
+        //Propagation & searching
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
+        uint32_t  dominPickFreq;
+        uint32_t  flipPolarFreq;
+
+        //Simplifier
+        int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
+        int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
+        int      doSubsume1;         ///<Perform self-subsuming resolution
+        int      doBlockClauses;    ///<Should try to remove blocked clauses
+        int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
+        unsigned maxRedLinkInSize;
+        uint64_t maxOccurIrredMB;
+        uint64_t maxOccurRedMB;
 
 
         //Optimisations to do
         bool      printAllRestarts;
         int       doRenumberVars;
-        uint32_t  dominPickFreq;
-        uint32_t  flipPolarFreq;
-        int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-        int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        int      doBlockClauses;    ///<Should try to remove blocked clauses
+
+
         int      doExtBinSubs;
-        int      doSubsume1;         ///<Perform self-subsuming resolution
+
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
+
+        //Gates
         int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;
+
         int      doER; ///< Perform Extended Resolution (ER)
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
-        int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
+
 
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption

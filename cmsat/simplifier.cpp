@@ -106,7 +106,10 @@ void Simplifier::newVar()
     seen    .push_back(0);
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
-    gateFinder->newVar();
+
+    if (solver->conf.doGateFind) {
+        gateFinder->newVar();
+    }
 
     //variable status
     var_elimed .push_back(false);
@@ -1107,10 +1110,10 @@ bool Simplifier::simplify()
     checkForElimedVars();
 
     //Gate-finding
-    /*if (solver->conf.doCache && solver->conf.doGateFind) {
+    if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
-    }*/
+    }
     toDecrease = &numMaxBlocked;
 
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
