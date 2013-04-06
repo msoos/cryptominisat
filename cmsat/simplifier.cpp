@@ -634,8 +634,16 @@ bool Simplifier::addFromSolver(
         ; it++
     ) {
         Clause* cl = solver->clAllocator->getPointer(*it);
+
+        //Sanity check that the value given as irred is correct
+        assert(
+            (irred && !cl->learnt())
+            || (!irred && cl->learnt())
+        );
+
         if (alsoOccur
-            && cl->size() < solver->conf.maxRedLinkInSize
+            //If irreduntant or small enough, link it in
+            && (irred || cl->size() < solver->conf.maxRedLinkInSize)
         ) {
             linkInClause(*cl);
         } else {
@@ -702,10 +710,13 @@ void Simplifier::addBackToSolver()
             }
         }
 
-        //The clause was too long, and wasn't linked in but needs removal now
+        //The clause wasn't linked in but needs removal now
         if (notLinkedNeedFree) {
-            assert(cl->learnt());
-            solver->binTri.redLits -= cl->size();
+            if (cl->learnt()) {
+                solver->binTri.redLits -= cl->size();
+            } else {
+                solver->binTri.irredLits -= cl->size();
+            }
 
             //Free
             solver->clAllocator->clauseFree(cl);
@@ -1877,7 +1888,11 @@ void Simplifier::blockClauses()
         }
 
         //Clear seen
-        for (Clause::const_iterator l = cl.begin(), end = cl.end(); l != end; l++) {
+        for (Clause::const_iterator
+            l = cl.begin(), end = cl.end()
+            ; l != end
+            ; l++
+        ) {
             seen[l->toInt()] = 0;
         }
 
