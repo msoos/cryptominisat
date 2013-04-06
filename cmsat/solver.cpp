@@ -1297,8 +1297,8 @@ lbool Solver::simplifyProblem()
     //Treat implicits
     if (!clauseVivifier->strengthenImplicit())
         goto end;
-    clauseVivifier->subsumeImplicit();
 
+    clauseVivifier->subsumeImplicit();
 
     //Clean cache before vivif
     if (conf.doCache) {

@@ -464,12 +464,6 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
             solver->clAllocator->clauseFree(*i);
             runStats.removedLongClauses++;
             if (!solver->ok) {
-                i++;
-                #ifdef VERBOSE_DEBUG
-                cout << "contradiction while replacing lits in normal clause" << endl;
-                #endif
-                for(;i != end; i++) solver->clAllocator->clauseFree(*i);
-                cs.resize(cs.size() - (i-j));
                 return false;
             }
         } else {
