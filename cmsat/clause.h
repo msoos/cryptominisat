@@ -182,6 +182,7 @@ protected:
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t isAsymmed:1;
+    uint16_t occurLinked:1;
     uint16_t mySize; ///<The current size of the clause
 
 
@@ -359,6 +360,16 @@ public:
     bool getAsymmed() const
     {
         return isAsymmed;
+    }
+
+    bool getOccurLinked() const
+    {
+        return occurLinked;
+    }
+
+    void setOccurLinked(bool toset)
+    {
+        occurLinked = toset;
     }
 };
 

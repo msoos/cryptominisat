@@ -418,7 +418,7 @@ private:
     vector<Lit> subsLits;
 
     //Limits
-    int64_t  addedClauseLits;
+    uint64_t addedClauseLits;
     int64_t  numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
 //     int64_t  numMaxTriSub;
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
@@ -434,7 +434,12 @@ private:
     bool propagate();
 
     //Start-up
-    uint64_t addFromSolver(vector<ClOffset>& toAdd, bool alsoOccur = true);
+    bool addFromSolver(
+        vector<ClOffset>& toAdd
+        , bool alsoOccur
+        , bool irred
+        , uint64_t& numLitsAdded
+    );
     void setLimits();
     void performSubsumption();
     bool performStrengthening();

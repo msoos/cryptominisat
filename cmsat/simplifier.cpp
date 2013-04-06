@@ -575,30 +575,81 @@ void Simplifier::linkInClause(Clause& cl)
         ws.push(Watched(offset, cl.abst));
     }
     assert(cl.abst == calcAbstraction(cl));
+    cl.setOccurLinked(true);
 }
 
 /**
 @brief Adds clauses from the solver to the occur
 */
-uint64_t Simplifier::addFromSolver(
+bool Simplifier::addFromSolver(
     vector<ClOffset>& toAdd
     , bool alsoOccur
+    , bool irred
+    , uint64_t& numLitsAdded
 ) {
-    uint64_t numLitsAdded = 0;
-    for (vector<ClOffset>::iterator it = toAdd.begin(), end = toAdd.end()
+    //solver->printWatchMemUsed();
+
+    //Estimate memory usage it would imply and if over
+    //over + irred -> exit
+    //over + red -> don't link
+    if (alsoOccur) {
+        uint64_t memUsage = 0;
+        for (vector<ClOffset>::iterator
+            it = toAdd.begin(), end = toAdd.end()
+            ; it !=  end
+            ; it++
+        ) {
+            Clause* cl = solver->clAllocator->getPointer(*it);
+            //*2 because of the overhead of allocation
+            memUsage += cl->size()*sizeof(Watched)*2;
+        }
+
+        //Estimate malloc overhead
+        memUsage += solver->numActiveVars()*2*40;
+
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [probe] mem usage for occur of "
+            << (irred ?  "irred" : "red  ")
+            << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
+            << endl;
+        }
+
+        if (irred
+            && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
+        ) {
+            return false;
+        }
+
+        if (!irred
+            && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
+        ) {
+            alsoOccur = false;
+        }
+    }
+
+    for (vector<ClOffset>::iterator
+        it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
         ; it++
     ) {
         Clause* cl = solver->clAllocator->getPointer(*it);
-        if (alsoOccur)
+        if (alsoOccur
+            && cl->size() < solver->conf.maxRedLinkInSize
+        ) {
             linkInClause(*cl);
+        } else {
+            cl->setOccurLinked(false);
+        }
 
         numLitsAdded += cl->size();
         clauses.push_back(*it);
     }
     toAdd.clear();
 
-    return numLitsAdded;
+    //solver->printWatchMemUsed();
+
+    return true;
 }
 
 /**
@@ -621,12 +672,22 @@ void Simplifier::addBackToSolver()
         assert(cl->size() > 3);
 
         //Check variable elimination sanity
+        bool notLinkedNeedFree = false;
         for (Clause::const_iterator
             it2 = cl->begin(), end2 = cl->end()
             ; it2 != end2
             ; it2++
         ) {
-            if (solver->varData[it2->var()].elimed != ELIMED_NONE
+            //The clause was too long, and wasn't linked in
+            //but has been var-elimed, so remove it
+            if (!cl->getOccurLinked()
+                && solver->varData[it2->var()].elimed == ELIMED_VARELIM
+            ) {
+                notLinkedNeedFree = true;
+            }
+
+            if (cl->getOccurLinked()
+                && solver->varData[it2->var()].elimed != ELIMED_NONE
                 && solver->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
             ) {
                 cout
@@ -639,6 +700,16 @@ void Simplifier::addBackToSolver()
                 assert(false);
                 exit(-1);
             }
+        }
+
+        //The clause was too long, and wasn't linked in but needs removal now
+        if (notLinkedNeedFree) {
+            assert(cl->learnt());
+            solver->binTri.redLits -= cl->size();
+
+            //Free
+            solver->clAllocator->clauseFree(cl);
+            continue;
         }
 
         if (completeCleanClause(*cl)) {
@@ -1036,7 +1107,12 @@ void Simplifier::subsumeLearnts()
 
     //Add red to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
-    addedClauseLits += addFromSolver(solver->longRedCls);
+    addFromSolver(
+        solver->longRedCls
+        , true //try to add to occur
+        , false //irreduntant?
+        , addedClauseLits
+    );
     solver->longRedCls.clear();
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
@@ -1050,7 +1126,11 @@ void Simplifier::subsumeLearnts()
 
     //Add irred to occur, but only temporarily
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    addedClauseLits += addFromSolver(solver->longIrredCls, false);
+    addFromSolver(solver->longIrredCls
+        , false //try to add to occur
+        , true //irreduntant?
+        , addedClauseLits
+    );
     solver->longIrredCls.clear();
 
     //Add back clauses to solver etc
@@ -1094,15 +1174,28 @@ bool Simplifier::simplify()
     //Remove all long clauses from watches
     removeAllLongsFromWatches();
 
-    //Add non-learnt to occur
+    //Try to add irreducible to occur
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    addedClauseLits += addFromSolver(solver->longIrredCls);
-    solver->longIrredCls.clear();
+    bool ret = addFromSolver(solver->longIrredCls
+        , true //try to add to occur list
+        , true //it is irred
+        , addedClauseLits
+    );
+
+    //Memory limit would have been reached, irreduntant clauses cannot
+    //be added to occur, so exit, we can't do most of the good stuff
+    //like var-elim
+    if (!ret) {
+        return solver->okay();
+    }
 
     //Add learnt to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
-    addedClauseLits += addFromSolver(solver->longRedCls);
-    solver->longRedCls.clear();
+    addFromSolver(solver->longRedCls
+        , true //try to add to occur list
+        , false //irreduntant?
+        , addedClauseLits
+    );
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
 
