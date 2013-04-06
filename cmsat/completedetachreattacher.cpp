@@ -128,6 +128,12 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<ClOffset>& cs)
 bool CompleteDetachReatacher::cleanClause(Clause* cl)
 {
     Clause& ps = *cl;
+    if (ps.size() <= 3) {
+        cout
+        << "ERROR, clause is too small, and linked in: "
+        << *cl
+        << endl;
+    }
     assert(ps.size() > 3);
 
     Lit *i = ps.begin();

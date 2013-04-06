@@ -1206,7 +1206,11 @@ bool Searcher::handle_conflict(PropBy confl)
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
 
     //Is there on-the-fly subsumption?
-    if (cl == NULL) {
+    if (cl == NULL
+        //Would make the OTF strengthened clause implicit, making PropBy
+        //incorrect
+        || learnt_clause.size() <= 3
+    ) {
 
         //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
@@ -1217,14 +1221,24 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
-        uint32_t origSize = cl->size();
         solver->detachClause(*cl);
-        for (uint32_t i = 0; i != learnt_clause.size(); i++)
+
+        //Shrink clause
+        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
             (*cl)[i] = learnt_clause[i];
-        cl->shrink(origSize - learnt_clause.size());
-        if (cl->learnt() && cl->stats.glue > glue)
+        }
+        cl->shrink(cl->size() - learnt_clause.size());
+        assert(cl->size() == learnt_clause.size());
+
+        //Update stats
+        if (cl->learnt() && cl->stats.glue > glue) {
             cl->stats.glue = glue;
+        }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
+
+        //If too small, free it, too
+        assert(learnt_clause.size() > 3);
+        solver->clAllocator->clauseFree(cl);
     }
 
     //Attach new clause

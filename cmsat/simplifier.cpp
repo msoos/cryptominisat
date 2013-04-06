@@ -719,6 +719,8 @@ void Simplifier::addBackToSolver()
             } else {
                 solver->longIrredCls.push_back(*it);
             }
+        } else {
+            solver->clAllocator->clauseFree(cl);
         }
     }
 }
