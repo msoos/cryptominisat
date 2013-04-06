@@ -1064,6 +1064,8 @@ void Simplifier::subsumeLearnts()
 
 bool Simplifier::simplify()
 {
+    assert(solver->okay());
+
     //Test & debug
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
@@ -1074,9 +1076,11 @@ bool Simplifier::simplify()
     solver->clauseCleaner->removeAndCleanAll();
 
     //If too many clauses, don't do it
-    if (solver->getNumLongClauses() > 10000000UL
-        || solver->binTri.irredLits > 50000000UL
-    )  return true;
+    if (solver->getNumLongClauses() > 10ULL*1000ULL*1000ULL
+        || solver->binTri.irredLits > 50ULL*1000ULL*1000ULL
+    ) {
+        return solver->okay();
+    }
 
     //Setup
     double myTime = cpuTime();
