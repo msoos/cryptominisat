@@ -37,7 +37,7 @@ function bool()
 	shuf -i 0-1 -n 1
 }
 
-for i in {1..200}
+for i in {1..20000}
 do
 	# generate the instance
 	../../sha1-sat/build/sha1-gen \
