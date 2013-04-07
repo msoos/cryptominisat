@@ -204,7 +204,7 @@ public:
     template<class V>
     Clause(const V& ps, const uint32_t _conflictNumIntroduced)
     {
-        assert(ps.size() > 2);
+        //assert(ps.size() > 2);
 
         stats.conflictNumIntroduced = _conflictNumIntroduced;
         stats.glue = std::min<uint16_t>(stats.glue, ps.size());

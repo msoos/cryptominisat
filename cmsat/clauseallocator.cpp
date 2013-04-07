@@ -72,16 +72,24 @@ ClauseAllocator::~ClauseAllocator()
 @brief Allocates space&initializes a clause
 */
 template<class T>
-Clause* ClauseAllocator::Clause_new(const T& ps, const uint32_t conflictNum)
+Clause* ClauseAllocator::Clause_new(
+    const T& ps
+    , const uint32_t conflictNum
+    , const bool reconstruct
+)
 {
-    assert(ps.size() > 3);
-    void* mem = allocEnough(ps.size());
+    assert(reconstruct || ps.size() > 3);
+    void* mem = allocEnough(ps.size(), reconstruct);
     Clause* real= new (mem) Clause(ps, conflictNum);
 
     return real;
 }
 
-template Clause* ClauseAllocator::Clause_new(const vector<Lit>& ps, uint32_t conflictNum);
+template Clause* ClauseAllocator::Clause_new(
+    const vector<Lit>& ps
+    , uint32_t conflictNum
+    , bool reconstruct
+);
 
 /**
 @brief Allocates space for a new clause & copies a give clause to it
@@ -89,15 +97,21 @@ template Clause* ClauseAllocator::Clause_new(const vector<Lit>& ps, uint32_t con
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
     assert(c.size() > 3);
-    void* mem = allocEnough(c.size());
+    void* mem = allocEnough(c.size(), false);
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
 
     return (Clause*)mem;
 }
 
-void* ClauseAllocator::allocEnough(uint32_t clauseSize)
-{
-    assert(clauseSize > 3 && "Clause size cannot be 3 or less, those are stored implicitly");
+void* ClauseAllocator::allocEnough(
+    uint32_t clauseSize
+    , bool reconstruct //Are we reconstructing a solution?
+) {
+    assert(reconstruct
+        || (clauseSize > 3
+            && "Clause size cannot be 3 or less, those are stored implicitly"
+        )
+    );
 
     //Try to quickly find a place at the end of a dataStart
     uint32_t needed

@@ -610,6 +610,7 @@ void Solver::reArrangeClauses()
     }
 }
 
+#ifdef DEBUG_RENUMBER
 static void printArray(const vector<Var>& array, const std::string& str)
 {
     cout << str << " : " << endl;
@@ -618,6 +619,7 @@ static void printArray(const vector<Var>& array, const std::string& str)
     }
     cout << endl;
 }
+#endif
 
 //Beware. Cannot be called while Searcher is running.
 void Solver::renumberVariables()
@@ -1212,6 +1214,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Extend solution
         SolutionExtender extender(this, solution);
         extender.extend();
+        cancelUntil(0);
 
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);

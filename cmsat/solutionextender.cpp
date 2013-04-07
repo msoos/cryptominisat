@@ -23,13 +23,13 @@
 #include "varreplacer.h"
 #include "simplifier.h"
 #include "solver.h"
+#include "completedetachreattacher.h"
 using namespace CMSat;
 using std::cout;
 using std::endl;
 
 SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assigns) :
     solver(_solver)
-    , occur(_solver->nVars()*2)
     , qhead (0)
     , assigns(_assigns)
 {
@@ -45,36 +45,44 @@ original problem, not just of what remained of it at the end inside this class
 */
 void SolutionExtender::extend()
 {
-
     if (solver->conf.verbosity >= 3) {
         cout << "c Extending solution" << endl;
     }
 
+    assert(clausesToFree.empty());
+
+    //First detach all long clauses
+    CompleteDetachReatacher detachReattach(solver);
+    detachReattach.detachNonBinsNonTris();
+
     //Sanity check
     solver->simplifier->checkElimedUnassignedAndStats();
 
+    //Adding binary clauses representing equivalent literals
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding equivalent literals" << endl;
     }
     solver->varReplacer->extendModel(this);
 
-    vector<Lit> tmp;
+    //Add normal clauses to occur
     for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
         ; it != end
         ; it++
     ) {
-        Clause& cl = *solver->clAllocator->getPointer(*it);
-        assert(!cl.learnt());
+        Clause* cl = solver->clAllocator->getPointer(*it);
+        assert(!cl->learnt());
 
-        //Add clause to our local system
-        tmp.clear();
-        for (uint32_t i = 0; i < cl.size(); i++)
-            tmp.push_back(cl[i]);
-        const bool OK = addClause(tmp);
-        assert(OK);
+        //Add to occur each lit
+        for (const Lit
+            *it2 = cl->begin(), *end2 = cl->end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            //lit_Undef because it's a non-blocked clause
+            solver->watches[it2->toInt()].push(Watched(*it, lit_Undef));
+        }
     }
-
 
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
@@ -102,9 +110,19 @@ void SolutionExtender::extend()
     release_assert(solver->verifyModel());
 
     //free clauses
-    for (vector<MyClause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
-        delete *it;
+    for (vector<ClOffset>::iterator
+        it = clausesToFree.begin(), end = clausesToFree.end()
+        ; it != end
+        ; it++
+    ) {
+        solver->clAllocator->clauseFree(*it);
     }
+    clausesToFree.clear();
+
+    //Remove occur, go back to 0, and
+    detachReattach.detachNonBinsNonTris();
+    solver->cancelUntil(0);
+    detachReattach.reattachLongs();
 }
 
 bool SolutionExtender::satisfiedNorm(const vector<Lit>& lits) const
@@ -137,12 +155,12 @@ bool SolutionExtender::addClause(
     const vector< Lit >& givenLits
     , const Lit blockedOn
 ) {
-    vector<Lit> lits = givenLits;
+    tmpLits = givenLits;
 
     //Remove lits set at 0-level or return TRUE if any is set to TRUE at 0-level
-    vector<Lit>::iterator i = lits.begin();
+    vector<Lit>::iterator i = tmpLits.begin();
     vector<Lit>::iterator j = i;
-    for (vector<Lit>::iterator end = lits.end(); i != end; i++) {
+    for (vector<Lit>::iterator end = tmpLits.end(); i != end; i++) {
         if (value(*i) == l_True && solver->varData[i->var()].level == 0) {
             return true;
         }
@@ -153,28 +171,35 @@ bool SolutionExtender::addClause(
 
         *j++ = *i;
     }
-    lits.resize(lits.size()-(i-j));
+    tmpLits.resize(tmpLits.size()-(i-j));
 
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "c Adding extend clause: " << lits << " blocked on: " << blockedOn << endl;
+    cout << "c Adding extend clause: " << tmpLits << " blocked on: " << blockedOn << endl;
     #endif
 
     //Empty clause, oops!
-    if (lits.size() == 0)
+    if (tmpLits.empty())
         return false;
 
     //Create new clause, and add it
-    MyClause* cl = new MyClause(lits, blockedOn);
-    clauses.push_back(cl);
+    Clause* cl = solver->clAllocator->Clause_new(
+        tmpLits //the literals
+        , 0 //the time it was created -- useless, ignoring
+        , true //yes, this is extender, so don't care if it's <=3 in size
+    );
+    ClOffset offset = solver->clAllocator->getOffset(cl);
+    clausesToFree.push_back(offset);
     for (vector<Lit>::const_iterator
-        it = lits.begin(), end = lits.end()
+        it = tmpLits.begin(), end = tmpLits.end()
         ; it != end
         ; it++
     ) {
-        occur[it->toInt()].push_back(cl);
+        //Special used of blocked Lit -- for blocking, but not in the same
+        //sense as the original
+        solver->watches[it->toInt()].push(Watched(offset, blockedOn));
     }
 
-    propagateCl(*cl);
+    propagateCl(cl, blockedOn);
     if (!propagate()) {
         assert(false);
         return false;
@@ -296,31 +321,34 @@ bool SolutionExtender::propagate()
 
                 continue;
             }
-        }
 
-        const vector<MyClause*>& occ = occur[(~p).toInt()];
-        for(vector<MyClause*>::const_iterator
-            it = occ.begin(), end = occ.end()
-            ; it != end
-            ; it++
-        ) {
-            const bool thisRet = propagateCl(**it);
-            if (!thisRet) {
-                cout << "Problem with clause: " << (*it)->getLits() << endl;
+            if (it->isClause()) {
+                ClOffset offset = it->getOffset();
+                const Clause* cl = solver->clAllocator->getPointer(offset);
+                const Lit blockedOn = it->getBlockedLit();
+                const bool thisRet = propagateCl(cl, blockedOn);
+                if (!thisRet) {
+                    cout << "Problem with clause: " << (*it) << endl;
+                }
+                ret &= thisRet;
             }
-            ret &= thisRet;
         }
     }
 
     return ret;
 }
 
-bool SolutionExtender::propagateCl(MyClause& cl)
-{
+bool SolutionExtender::propagateCl(
+    const Clause* cl
+    , const Lit blockedOn
+) {
     size_t numUndef = 0;
     Lit lastUndef = lit_Undef;
-    for (vector<Lit>::const_iterator it = cl.begin(), end = cl.end(); it != end; it++)
-    {
+    for (const Lit
+        *it = cl->begin(), *end = cl->end()
+        ; it != end
+        ; it++
+    ) {
         if (value(*it) == l_True) return true;
         if (value(*it) == l_False) continue;
 
@@ -337,7 +365,7 @@ bool SolutionExtender::propagateCl(MyClause& cl)
     //Must set this one value
     if (numUndef == 1) {
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        cout << "c Due to cl " << cl.getLits() << " propagate enqueueing " << lastUndef << endl;
+        cout << "c Due to cl " << *cl << " propagate enqueueing " << lastUndef << endl;
         #endif
         enqueue(lastUndef);
     }
@@ -348,16 +376,16 @@ bool SolutionExtender::propagateCl(MyClause& cl)
     //Must flip
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout
-    << "Flipping lit " << cl.blockedOn
-    << " due to clause " << cl.lits << endl;
+    << "Flipping lit " << blockedOn
+    << " due to clause " << *cl << endl;
     #endif
-    assert(cl.blockedOn != lit_Undef);
+    assert(blockedOn != lit_Undef);
 
-    assert(solver->varData[cl.blockedOn.var()].level != 0
+    assert(solver->varData[blockedOn.var()].level != 0
         && "We cannot flip 0-level vars"
     );
-    enqueue(cl.blockedOn);
-    replaceSet(cl.blockedOn);
+    enqueue(blockedOn);
+    replaceSet(blockedOn);
     return true;
 }
 
