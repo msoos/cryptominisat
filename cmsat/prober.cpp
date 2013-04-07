@@ -142,13 +142,13 @@ bool Prober::probe()
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
-    if (numActiveVars < 50L*1000LL) {
+    if (numActiveVars < 50LL*1000LL) {
         numPropsTodo *= 1.2;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits  < 2LL*1000L*1000LL) {
+    if (solver->binTri.redLits + solver->binTri.irredLits  < 2LL*1000LL*1000LL) {
         numPropsTodo *= 1.2;
     }
-    if (numActiveVars > 400L*1000LL) {
+    if (numActiveVars > 400LL*1000LL) {
         numPropsTodo *= 0.8;
     }
     if (solver->binTri.redLits + solver->binTri.irredLits > 20LL*1000LL*1000LL) {

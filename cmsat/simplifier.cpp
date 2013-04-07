@@ -2095,12 +2095,12 @@ from the beginning.
 */
 void Simplifier::setLimits()
 {
-    numMaxSubsume0    = 450LL*1000L*1000LL;
-    numMaxSubsume1    = 100LL*1000L*1000LL;
-//     numMaxTriSub      = 600L*1000L*1000L;
-    numMaxElim        = 800LL*1000L*1000LL;
-    numMaxAsymm       = 40LL *1000L*1000LL;
-    numMaxBlocked     = 40LL *1000L*1000LL;
+    numMaxSubsume0    = 450LL*1000LL*1000LL;
+    numMaxSubsume1    = 100LL*1000LL*1000LL;
+//     numMaxTriSub      = 600LL*1000LL*1000LL;
+    numMaxElim        = 800LL*1000LL*1000LL;
+    numMaxAsymm       = 40LL *1000LL*1000LL;
+    numMaxBlocked     = 40LL *1000LL*1000LL;
     numMaxBlockedImpl = 1800LL *1000LL*1000LL;
     numMaxVarElimAgressiveCheck  = 300LL *1000LL*1000LL;
 
