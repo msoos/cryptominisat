@@ -663,6 +663,7 @@ class Searcher : public PropEngine
         void doOTFSubsume(PropBy confl);
         //set<Lit> learnt_clause2;
         size_t learnt_clause2_size;
+        CL_ABST_TYPE learnt_clause2_abst;
 
         void analyzeHelper(
             Lit lit

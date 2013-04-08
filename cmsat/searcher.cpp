@@ -153,6 +153,7 @@ void Searcher::analyzeHelper(
         //learnt_clause2.insert(lit);
         learnt_clause2_size++;
         seen2[lit.toInt()] = 1;
+        learnt_clause2_abst |= abst_var(lit.var());
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
@@ -264,6 +265,7 @@ Clause* Searcher::analyze(
     lastDecisionLevel.clear();
     //learnt_clause2.clear();
     learnt_clause2_size = 0;
+    learnt_clause2_abst = 0;
     assert(decisionLevel() > 0);
     assert(toAttachLater.empty());
 
@@ -286,6 +288,9 @@ Clause* Searcher::analyze(
             learnt_clause2_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
+
+            //We MUST under-estimate
+            learnt_clause2_abst &= ~(abst_var((~p).var()));
         }
 
         //Add literals from 'confl' to clause
@@ -366,6 +371,8 @@ Clause* Searcher::analyze(
             && conf.doOTFSubsume
             && cl != NULL
             && cl->size() > learnt_clause2_size
+            //Everything in learnt_cl_2 seems to be also in cl
+            && ((cl->abst & learnt_clause2_abst) ==  learnt_clause2_abst)
             && pathC > 1
         ) {
             doOTFSubsume(confl);
