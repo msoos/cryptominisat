@@ -145,16 +145,10 @@ void Searcher::analyzeHelper(
     if (varData[var].level == 0)
         return;
 
-    if (seen2[var] == 0//hasn't been bumped yet
-    ) {
-        varBumpActivity(var);
-        seen2[var] = 1;
-        toClear.push_back(Lit(var, false));
-    }
-
     //Update our state of going through the conflict
     if (!seen[var]) {
         seen[var] = 1;
+        varBumpActivity(var);
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
@@ -312,16 +306,6 @@ Clause* Searcher::analyze(
         pathC--;
     } while (pathC > 0);
     learnt_clause[0] = ~p;
-
-    //Clear seen2, which was used to mark literals that have been bumped
-    for (vector<Lit>::const_iterator
-        it = toClear.begin(), end = toClear.end()
-        ; it != end
-        ; it++
-    ) {
-        seen2[it->var()] = 0;
-    }
-    toClear.clear();
 
     assert(pathC == 0);
     stats.litsLearntNonMin += learnt_clause.size();
