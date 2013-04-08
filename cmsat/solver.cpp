@@ -230,7 +230,8 @@ Clause* Solver::addClauseInt(
     cout << "addClauseInt clause " << lits << endl;
     #endif //VERBOSE_DEBUG
 
-    vector<Lit> ps(lits.size());
+    vector<Lit>& ps = addClIntTmpLits;
+    ps.resize(lits.size());
     std::copy(lits.begin(), lits.end(), ps.begin());
 
     std::sort(ps.begin(), ps.end());
@@ -517,16 +518,16 @@ bool Solver::addClause(const vector<Lit>& lits)
     #endif //VERBOSE_DEBUG
     const size_t origTrailSize = trail.size();
 
-    vector<Lit> ps = lits;
-    if (!addClauseHelper(ps)) {
+    addClTmpLits = lits;
+    if (!addClauseHelper(addClTmpLits)) {
         return false;
     }
 
-    if (!replacevar_uneliminate_clause(ps)) {
+    if (!replacevar_uneliminate_clause(addClTmpLits)) {
         return false;
     }
 
-    Clause* cl = addClauseInt(ps);
+    Clause* cl = addClauseInt(addClTmpLits);
 
     if (cl != NULL) {
         ClOffset offset = clAllocator->getOffset(cl);
