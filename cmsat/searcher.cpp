@@ -1206,11 +1206,7 @@ bool Searcher::handle_conflict(PropBy confl)
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
 
     //Is there on-the-fly subsumption?
-    if (cl == NULL
-        //Would make the OTF strengthened clause implicit, making PropBy
-        //incorrect
-        || learnt_clause.size() <= 3
-    ) {
+    if (cl == NULL) {
 
         //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
@@ -1221,6 +1217,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
+        Lit firstLit = (*cl)[0];
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -1236,8 +1233,54 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
-        //Must not be too small
-        assert(learnt_clause.size() > 3);
+        //If too small, will be implicit, so we need to free the clause
+        //and re-set the reason
+        if (learnt_clause.size() <= 3) {
+            //Reset reason
+            switch(learnt_clause.size()) {
+                case 0:
+                case 1:
+                    varData[firstLit.var()].reason = PropBy();
+                    break;
+
+                case 2: {
+                    size_t other = (firstLit == learnt_clause[0]) ? 1 : 0;
+                    varData[firstLit.var()].reason = PropBy(
+                        learnt_clause[other]
+                    );
+                    break;
+                }
+
+                case 3: {
+                    size_t other = std::numeric_limits<size_t>::max();
+                    size_t other2 = std::numeric_limits<size_t>::max();
+                    if (firstLit == learnt_clause[0]) {
+                        other = 1;
+                        other2 = 2;
+                    } else if (firstLit == learnt_clause[1]) {
+                        other = 0;
+                        other2 = 2;
+                    } else if (firstLit == learnt_clause[2]) {
+                        other = 0;
+                        other2 = 1;
+                    } else {
+                        assert(false);
+                    }
+
+                    varData[firstLit.var()].reason = PropBy(
+                        learnt_clause[other]
+                        , learnt_clause[other2]
+                    );
+                    break;
+                }
+
+                default:
+                    assert(false);
+            }
+
+            //Free clause
+            solver->clAllocator->clauseFree(cl);
+        }
     }
 
     //Attach new clause
