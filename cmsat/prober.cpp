@@ -430,23 +430,21 @@ bool Prober::tryThis(const Lit lit, const bool first)
     } else {
         PropBy confl = solver->propagate();
         if (!confl.isNULL()) {
-            vector<Lit> learnt_clause;
             ResolutionTypes<uint16_t> resolutions;
             uint32_t  glue;
             uint32_t  backtrack_level;
             solver->analyze(
                 confl
-                , learnt_clause    //return learnt clause here
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
                 , resolutions   //return number of resolutions made here
             );
-            if (learnt_clause.empty()) {
+            if (solver->learnt_clause.empty()) {
                 solver->ok = false;
                 return false;
             }
-            assert(learnt_clause.size() == 1);
-            failed = ~learnt_clause[0];
+            assert(solver->learnt_clause.size() == 1);
+            failed = ~(solver->learnt_clause[0]);
         }
     }
 

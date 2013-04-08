@@ -641,9 +641,9 @@ class Searcher : public PropEngine
         };
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
+        vector<Lit> learnt_clause;
         Clause* analyze(
             PropBy confl //The conflict that we are investigating
-            , vector<Lit>& out_learnt    //learnt clause
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
             , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
@@ -652,12 +652,11 @@ class Searcher : public PropEngine
         vector<Lit> dummy;
         vector<std::pair<Lit, size_t> > lastDecisionLevel;
         bool litRedundant(Lit p, uint32_t abstract_levels);
-        void recursiveConfClauseMin(vector<Lit>& out_learnt);
+        void recursiveConfClauseMin();
 
         void analyzeHelper(
             Lit lit
             , int& pathC
-            , vector<Lit>& out_learnt
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
 
@@ -677,7 +676,7 @@ class Searcher : public PropEngine
         /////////////////
         //Graphical conflict generation
         void         genConfGraph     (PropBy conflPart);
-        string simplAnalyseGraph (PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue);
+        string simplAnalyseGraph (PropBy conflHalf, uint32_t& out_btlevel, uint32_t &glue);
 
         /////////////////
         // Variable activity
