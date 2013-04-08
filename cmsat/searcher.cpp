@@ -208,7 +208,10 @@ void Searcher::doOTFSubsume(PropBy confl)
             num++;
         }
     }
-    if (num == learnt_clause2_size && num > 3) {
+    if (num == learnt_clause2_size
+        && num > 3
+        && cl.size() > learnt_clause2_size
+    ) {
         /*
         cout
         << "MATCH!"
