@@ -183,7 +183,7 @@ void PropEngine::attachClause(
 ) {
     assert(c.size() > 3);
     if (checkAttach) {
-        assert(value(c[0].var()) == l_Undef);
+        assert(value(c[0]) == l_Undef);
         assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
     }
 

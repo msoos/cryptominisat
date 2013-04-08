@@ -79,7 +79,7 @@ SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (true)
         , doOTFGateShorten (true)
-        , rewardShortenedClauseWithConfl(10)
+        , rewardShortenedClauseWithConfl(3)
 
         //SQL
         , doSQL            (false)

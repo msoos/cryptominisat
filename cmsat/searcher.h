@@ -438,8 +438,8 @@ class Searcher : public PropEngine
 
                 printStatsLine("c otf-subs"
                     , otfSubsumed
-                    , (double)otfSubsumed/(double)conflStats.numConflicts*100.0
-                    , "% of conflicts"
+                    , (double)otfSubsumed/(double)conflStats.numConflicts
+                    , "/conflict"
                 );
 
                 printStatsLine("c otf-subs learnt"
@@ -647,12 +647,21 @@ class Searcher : public PropEngine
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
             , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
+            , bool otfSubsume
         );
-        MyStack<Lit> analyze_stack;
-        vector<Lit> dummy;
-        vector<std::pair<Lit, size_t> > lastDecisionLevel;
+
+        vector<std::pair<Lit, size_t> > lastDecisionLevel; //for glue-based extra var activity bumping
+
+        //Recursive minimization
         bool litRedundant(Lit p, uint32_t abstract_levels);
         void recursiveConfClauseMin();
+        vector<Lit> dummy; //for litRedundant
+        MyStack<Lit> analyze_stack;
+
+        //OTF subsumption
+        vector<ClOffset> toAttachLater;
+        void doOTFSubsume(PropBy confl);
+        set<Lit> learnt_clause2;
 
         void analyzeHelper(
             Lit lit

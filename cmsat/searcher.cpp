@@ -148,7 +148,10 @@ void Searcher::analyzeHelper(
     //Update our state of going through the conflict
     if (!seen[var]) {
         seen[var] = 1;
+
         varBumpActivity(var);
+        learnt_clause2.insert(lit);
+        seen2[lit.toInt()] = 1;
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
@@ -192,6 +195,53 @@ void Searcher::recursiveConfClauseMin()
     learnt_clause.resize(j);
 }
 
+void Searcher::doOTFSubsume(PropBy confl)
+{
+    size_t num = 0;
+    ClOffset offset = confl.getClause();
+    Clause& cl = *clAllocator->getPointer(offset);
+
+    //Count if every one from learnt_clause is inside
+    for (size_t j = 0, size = cl.size(); j < size; j++) {
+        if (seen2[cl[j].toInt()]) {
+            num++;
+        }
+    }
+    if (num == learnt_clause2.size() && num > 3) {
+        /*
+        cout
+        << "MATCH!"
+        << " cl: " << cl
+        << " learnt cl: ";
+        for(set<Lit>::const_iterator
+            it = learnt_clause2.begin(), end = learnt_clause2.end()
+            ; it != end
+            ; it++
+        ) {
+            cout << *it << ", ";
+        }
+        cout << endl;
+        */
+
+        solver->detachClause(cl);
+        stats.otfSubsumed++;
+        stats.otfSubsumedLearnt += cl.learnt();
+        stats.otfSubsumedLitsGained += cl.size() - learnt_clause2.size();
+        cl.shrink(cl.size() - learnt_clause2.size());
+
+        size_t i = 0;
+        for(set<Lit>::const_iterator
+            it = learnt_clause2.begin(), end = learnt_clause2.end()
+            ; it != end
+            ; it++, i++
+        ) {
+            cl[i] = *it;
+        }
+
+        toAttachLater.push_back(offset);
+    }
+}
+
 /**
 @brief    Analyze conflict and produce a reason clause.
 
@@ -202,12 +252,15 @@ Clause* Searcher::analyze(
     , uint32_t& out_btlevel
     , uint32_t &glue
     , ResolutionTypes<uint16_t>& resolutions
+    , bool otfSubsume
 ) {
     //Set up environment
     learnt_clause.clear();
     toClear.clear();
     lastDecisionLevel.clear();
+    learnt_clause2.clear();
     assert(decisionLevel() > 0);
+    assert(toAttachLater.empty());
 
     int pathC = 0;
     Lit p = lit_Undef;
@@ -221,6 +274,13 @@ Clause* Searcher::analyze(
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
         #endif
+
+        if (p != lit_Undef) {
+            assert(learnt_clause2.find(~p) != learnt_clause2.end());
+            learnt_clause2.erase(~p);
+            assert(seen2[(~p).toInt()] == 1);
+            seen2[(~p).toInt()] = 0;
+        }
 
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
@@ -274,8 +334,9 @@ Clause* Searcher::analyze(
                 for (size_t j = 0, size = cl.size(); j != size; j++) {
 
                     //This is the one that will be resolved out anyway, so just skip
-                    if (p != lit_Undef && j == 0)
+                    if (p != lit_Undef && j == 0) {
                         continue;
+                    }
 
                     analyzeHelper(cl[j], pathC);
                 }
@@ -293,6 +354,14 @@ Clause* Searcher::analyze(
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
+
+        if (otfSubsume
+            && conf.doOTFSubsume
+            && confl.getType() == clause_t
+            && pathC > 1
+        ) {
+            doOTFSubsume(confl);
+        }
 
         //Saving old confl for OTF subsumption
         oldConfl = confl;
@@ -318,6 +387,7 @@ Clause* Searcher::analyze(
     //Clear seen
     for (size_t i = 0; i < toClear.size(); i++) {
         seen[toClear[i].var()] = 0;
+        seen2[toClear[i].toInt()] = 0;
     }
     toClear.clear();
 
@@ -382,21 +452,13 @@ Clause* Searcher::analyze(
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
     if (!conf.doOTFSubsume
-        || learnt_clause.size() <= 3
         || !oldConfl.isClause()
+        || learnt_clause.size() <= 3
     ) {
         return NULL;
     }
 
-
-    Clause* cl = NULL;
-    try {
-         cl = clAllocator->getPointer(oldConfl.getClause());
-    } catch (const std::bad_alloc& e) {
-        cout << "Allocation failed: " << e.what() << '\n';
-        solver->dumpIfNeeded();
-        throw std::bad_alloc();
-    }
+    Clause* cl = clAllocator->getPointer(oldConfl.getClause());
 
     //Larger or equivalent clauses cannot subsume the clause
     if (learnt_clause.size() >= cl->size())
@@ -906,6 +968,7 @@ bool Searcher::handle_conflict(PropBy confl)
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
         , resolutions   //return number of resolutions made here
+        , true
     );
 
     size_t orig_trail_size = trail.size();
@@ -960,6 +1023,51 @@ bool Searcher::handle_conflict(PropBy confl)
     if (params.update) {
         hist.trailDepthDeltaHist.push(orig_trail_size - trail.size());
     }
+    for(size_t i = 0; i < toAttachLater.size(); i++) {
+        const ClOffset offset = toAttachLater[i];
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
+
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(cl[at], cl[0]);
+        assert(value(cl[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
+                at = i2;
+                break;
+            }
+        }
+        assert(cl.size() > 3);
+
+        if (at == 0) {
+            //If none found, we have a propagating clause_t
+
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                addHyperBin(cl[0], cl);
+            } else {
+                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+            }
+        } else {
+            //We have a non-propagating clause
+
+            std::swap(cl[at], cl[1]);
+            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
+        }
+        solver->attachClause(cl, false);
+        cl.reCalcAbstraction();
+    }
+    toAttachLater.clear();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -987,7 +1095,6 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
-        Lit firstLit = (*cl)[0];
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -1002,55 +1109,6 @@ bool Searcher::handle_conflict(PropBy confl)
             cl->stats.glue = glue;
         }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
-
-        //If too small, will be implicit, so we need to free the clause
-        //and re-set the reason
-        if (learnt_clause.size() <= 3) {
-            //Reset reason
-            switch(learnt_clause.size()) {
-                case 0:
-                case 1:
-                    varData[firstLit.var()].reason = PropBy();
-                    break;
-
-                case 2: {
-                    size_t other = (firstLit == learnt_clause[0]) ? 1 : 0;
-                    varData[firstLit.var()].reason = PropBy(
-                        learnt_clause[other]
-                    );
-                    break;
-                }
-
-                case 3: {
-                    size_t other = std::numeric_limits<size_t>::max();
-                    size_t other2 = std::numeric_limits<size_t>::max();
-                    if (firstLit == learnt_clause[0]) {
-                        other = 1;
-                        other2 = 2;
-                    } else if (firstLit == learnt_clause[1]) {
-                        other = 0;
-                        other2 = 2;
-                    } else if (firstLit == learnt_clause[2]) {
-                        other = 0;
-                        other2 = 1;
-                    } else {
-                        assert(false);
-                    }
-
-                    varData[firstLit.var()].reason = PropBy(
-                        learnt_clause[other]
-                        , learnt_clause[other2]
-                    );
-                    break;
-                }
-
-                default:
-                    assert(false);
-            }
-
-            //Free clause
-            solver->clAllocator->clauseFree(cl);
-        }
     }
 
     //Attach new clause

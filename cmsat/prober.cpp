@@ -438,6 +438,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
                 , resolutions   //return number of resolutions made here
+                , false
             );
             if (solver->learnt_clause.empty()) {
                 solver->ok = false;
