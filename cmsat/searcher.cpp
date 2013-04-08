@@ -150,7 +150,8 @@ void Searcher::analyzeHelper(
         seen[var] = 1;
 
         varBumpActivity(var);
-        learnt_clause2.insert(lit);
+        //learnt_clause2.insert(lit);
+        learnt_clause2_size++;
         seen2[lit.toInt()] = 1;
 
         if (varData[var].level == decisionLevel()) {
@@ -207,7 +208,7 @@ void Searcher::doOTFSubsume(PropBy confl)
             num++;
         }
     }
-    if (num == learnt_clause2.size() && num > 3) {
+    if (num == learnt_clause2_size && num > 3) {
         /*
         cout
         << "MATCH!"
@@ -226,17 +227,17 @@ void Searcher::doOTFSubsume(PropBy confl)
         solver->detachClause(cl);
         stats.otfSubsumed++;
         stats.otfSubsumedLearnt += cl.learnt();
-        stats.otfSubsumedLitsGained += cl.size() - learnt_clause2.size();
-        cl.shrink(cl.size() - learnt_clause2.size());
+        stats.otfSubsumedLitsGained += cl.size() - learnt_clause2_size;
 
         size_t i = 0;
-        for(set<Lit>::const_iterator
-            it = learnt_clause2.begin(), end = learnt_clause2.end()
-            ; it != end
-            ; it++, i++
-        ) {
-            cl[i] = *it;
+        size_t i2 = 0;
+        for (; i < cl.size(); i++) {
+            if (seen2[cl[i].toInt()]) {
+                cl[i2++] = cl[i];
+            }
         }
+        cl.shrink(i-i2);
+        assert(cl.size() == learnt_clause2_size);
 
         toAttachLater.push_back(offset);
     }
@@ -258,7 +259,8 @@ Clause* Searcher::analyze(
     learnt_clause.clear();
     toClear.clear();
     lastDecisionLevel.clear();
-    learnt_clause2.clear();
+    //learnt_clause2.clear();
+    learnt_clause2_size = 0;
     assert(decisionLevel() > 0);
     assert(toAttachLater.empty());
 
@@ -276,8 +278,9 @@ Clause* Searcher::analyze(
         #endif
 
         if (p != lit_Undef) {
-            assert(learnt_clause2.find(~p) != learnt_clause2.end());
-            learnt_clause2.erase(~p);
+            //assert(learnt_clause2.find(~p) != learnt_clause2.end());
+            //learnt_clause2.erase(~p);
+            learnt_clause2_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
         }

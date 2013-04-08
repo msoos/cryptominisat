@@ -661,7 +661,8 @@ class Searcher : public PropEngine
         //OTF subsumption
         vector<ClOffset> toAttachLater;
         void doOTFSubsume(PropBy confl);
-        set<Lit> learnt_clause2;
+        //set<Lit> learnt_clause2;
+        size_t learnt_clause2_size;
 
         void analyzeHelper(
             Lit lit
