@@ -518,16 +518,16 @@ bool Solver::addClause(const vector<Lit>& lits)
     #endif //VERBOSE_DEBUG
     const size_t origTrailSize = trail.size();
 
-    addClTmpLits = lits;
-    if (!addClauseHelper(addClTmpLits)) {
+    vector<Lit> ps = lits;
+    if (!addClauseHelper(ps)) {
         return false;
     }
 
-    if (!replacevar_uneliminate_clause(addClTmpLits)) {
+    if (!replacevar_uneliminate_clause(ps)) {
         return false;
     }
 
-    Clause* cl = addClauseInt(addClTmpLits);
+    Clause* cl = addClauseInt(ps);
 
     if (cl != NULL) {
         ClOffset offset = clAllocator->getOffset(cl);
