@@ -198,19 +198,19 @@ void Searcher::recursiveConfClauseMin()
 
 void Searcher::doOTFSubsume(PropBy confl)
 {
-    size_t num = 0;
     ClOffset offset = confl.getClause();
     Clause& cl = *clAllocator->getPointer(offset);
 
     //Count if every one from learnt_clause is inside
+    size_t num = 0;
     for (size_t j = 0, size = cl.size(); j < size; j++) {
         if (seen2[cl[j].toInt()]) {
             num++;
         }
     }
     if (num == learnt_clause2_size
+        //Final won't be implicit
         && num > 3
-        && cl.size() > learnt_clause2_size
     ) {
         /*
         cout
@@ -271,10 +271,10 @@ Clause* Searcher::analyze(
     Lit p = lit_Undef;
     int index = trail.size() - 1;
     out_btlevel = 0;
-    PropBy oldConfl;
 
     //cout << "---- Start analysis -----" << endl;
     learnt_clause.push_back(lit_Undef); //make space for ~p
+    Clause* cl;
     do {
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
@@ -289,6 +289,7 @@ Clause* Searcher::analyze(
         }
 
         //Add literals from 'confl' to clause
+        cl = NULL;
         switch (confl.getType()) {
             case tertiary_t : {
                 resolutions.tri++;
@@ -319,12 +320,12 @@ Clause* Searcher::analyze(
             }
 
             case clause_t : {
-                Clause& cl = *clAllocator->getPointer(confl.getClause());
+                cl = clAllocator->getPointer(confl.getClause());
                 #ifdef DEBUG_RESOLV
-                cout << "resolv (long): " << cl << endl;
+                cout << "resolv (long): " << *cl << endl;
                 #endif
 
-                if (cl.learnt()) {
+                if (cl->learnt()) {
                     resolutions.redL++;
                     stats.resolvs.redL++;
                 } else {
@@ -333,18 +334,18 @@ Clause* Searcher::analyze(
                 }
 
                 //Update stats
-                cl.stats.numUsedUIP++;
-                if (cl.learnt())
-                    bumpClauseAct(&cl);
+                cl->stats.numUsedUIP++;
+                if (cl->learnt())
+                    bumpClauseAct(cl);
 
-                for (size_t j = 0, size = cl.size(); j != size; j++) {
+                for (size_t j = 0, size = cl->size(); j != size; j++) {
 
                     //This is the one that will be resolved out anyway, so just skip
                     if (p != lit_Undef && j == 0) {
                         continue;
                     }
 
-                    analyzeHelper(cl[j], pathC);
+                    analyzeHelper((*cl)[j], pathC);
                 }
                 break;
             }
@@ -363,14 +364,14 @@ Clause* Searcher::analyze(
 
         if (otfSubsume
             && conf.doOTFSubsume
-            && confl.getType() == clause_t
+            && cl != NULL
+            && cl->size() > learnt_clause2_size
             && pathC > 1
         ) {
             doOTFSubsume(confl);
         }
 
         //Saving old confl for OTF subsumption
-        oldConfl = confl;
         confl = varData[p.var()].reason;
 
         //This clears out vars that haven't been added to learnt_clause,
@@ -458,17 +459,15 @@ Clause* Searcher::analyze(
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
     if (!conf.doOTFSubsume
-        || !oldConfl.isClause()
+        //Last was a lont clause
+        || cl == NULL
+        //Final clause will not be implicit
         || learnt_clause.size() <= 3
+        //Larger or equivalent clauses cannot subsume the clause
+        || learnt_clause.size() >= cl->size()
     ) {
         return NULL;
     }
-
-    Clause* cl = clAllocator->getPointer(oldConfl.getClause());
-
-    //Larger or equivalent clauses cannot subsume the clause
-    if (learnt_clause.size() >= cl->size())
-        return NULL;
 
     //Does it subsume?
     if (!subset(learnt_clause, *cl))
