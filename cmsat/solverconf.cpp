@@ -136,9 +136,9 @@ SolverConf::SolverConf() :
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)
-        , maxRedLinkInSize (80)
-        , maxOccurIrredMB(1000)
-        , maxOccurRedMB(600)
+        , maxRedLinkInSize (200)
+        , maxOccurIrredMB  (600)
+        , maxOccurRedMB    (800)
 
         //optimisations to do
         , doRenumberVars   (true)
