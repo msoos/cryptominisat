@@ -90,11 +90,17 @@ void SIGINT_handler(int)
         << "*** This means we might need to finish some calculations"
         << endl;
     } else {
-        if (solver->getVerbosity() >= 1) {
-            solver->addInPartialSolvingStat();
+        if (solver->nVars() > 0) {
             if (solver->getVerbosity() >= 1) {
-                solver->printStats();
+                solver->addInPartialSolvingStat();
+                if (solver->getVerbosity() >= 1) {
+                    solver->printStats();
+                }
             }
+        } else {
+            cout
+            << "No clauses or variables were put into the solver, exiting without stats"
+            << endl;
         }
         _exit(1);
     }
