@@ -609,7 +609,7 @@ bool Simplifier::addFromSolver(
 
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [probe] mem usage for occur of "
+            << "c [simp] mem usage for occur of "
             << (irred ?  "irred" : "red  ")
             << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
             << endl;
@@ -618,6 +618,12 @@ bool Simplifier::addFromSolver(
         if (irred
             && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
         ) {
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [simp] Not linking in irred due to excessive memory usage"
+                << endl;
+            }
+
             return false;
         }
 
@@ -625,9 +631,16 @@ bool Simplifier::addFromSolver(
             && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
         ) {
             alsoOccur = false;
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [simp] Not linking in red due to excessive memory usage"
+                << endl;
+            }
         }
     }
 
+    size_t numNotLinkedIn = 0;
+    size_t numLinkedIn = 0;
     for (vector<ClOffset>::iterator
         it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
@@ -646,8 +659,10 @@ bool Simplifier::addFromSolver(
             && (irred || cl->size() < solver->conf.maxRedLinkInSize)
         ) {
             linkInClause(*cl);
+            numLinkedIn++;
         } else {
             cl->setOccurLinked(false);
+            numNotLinkedIn++;
         }
 
         numLitsAdded += cl->size();
@@ -655,7 +670,18 @@ bool Simplifier::addFromSolver(
     }
     toAdd.clear();
 
-    //solver->printWatchMemUsed();
+    if (solver->conf.verbosity >= 2
+        && !irred
+    ) {
+        cout
+        << "c [simp] Not linked in red "
+        << numNotLinkedIn << "/" << (numLinkedIn + numNotLinkedIn)
+        << " ("
+        << std::setprecision(2) << std::fixed
+        << (double)numNotLinkedIn/(double)(numLinkedIn + numNotLinkedIn)*100.0
+        << " %)"
+        << endl;
+    }
 
     return true;
 }
@@ -1211,6 +1237,11 @@ bool Simplifier::simplify()
     );
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
+
+    //Print memory usage after occur link-in
+    if (solver->conf.verbosity >= 2) {
+        solver->printWatchMemUsed();
+    }
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
