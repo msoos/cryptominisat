@@ -36,6 +36,12 @@ using std::string;
 using std::cout;
 using std::endl;
 
+struct OTFClause
+{
+    Lit lits[3];
+    unsigned size;
+};
+
 struct VariableVariance
 {
     double avgDecLevelVarLT;
@@ -241,6 +247,8 @@ class Searcher : public PropEngine
                 , learntTris(0)
                 , learntLongs(0)
                 , otfSubsumed(0)
+                , otfSubsumedImplicit(0)
+                , otfSubsumedLong(0)
                 , otfSubsumedLearnt(0)
                 , otfSubsumedLitsGained(0)
 
@@ -293,6 +301,8 @@ class Searcher : public PropEngine
                 learntTris += other.learntTris;
                 learntLongs += other.learntLongs;
                 otfSubsumed += other.otfSubsumed;
+                otfSubsumedImplicit += other.otfSubsumedImplicit;
+                otfSubsumedLong += other.otfSubsumedLong;
                 otfSubsumedLearnt += other.otfSubsumedLearnt;
                 otfSubsumedLitsGained += other.otfSubsumedLitsGained;
 
@@ -343,6 +353,8 @@ class Searcher : public PropEngine
                 learntTris -= other.learntTris;
                 learntLongs -= other.learntLongs;
                 otfSubsumed -= other.otfSubsumed;
+                otfSubsumedImplicit -= other.otfSubsumedImplicit;
+                otfSubsumedLong -= other.otfSubsumedLong;
                 otfSubsumedLearnt -= other.otfSubsumedLearnt;
                 otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
 
@@ -440,6 +452,18 @@ class Searcher : public PropEngine
                     , otfSubsumed
                     , (double)otfSubsumed/(double)conflStats.numConflicts
                     , "/conflict"
+                );
+
+                printStatsLine("c otf-subs implicit"
+                    , otfSubsumedImplicit
+                    , (double)otfSubsumedImplicit/(double)otfSubsumed*100.0
+                    , "%"
+                );
+
+                printStatsLine("c otf-subs long"
+                    , otfSubsumedLong
+                    , (double)otfSubsumedLong/(double)otfSubsumed*100.0
+                    , "%"
                 );
 
                 printStatsLine("c otf-subs learnt"
@@ -562,6 +586,8 @@ class Searcher : public PropEngine
             uint64_t learntTris;
             uint64_t learntLongs;
             uint64_t otfSubsumed;
+            uint64_t otfSubsumedImplicit;
+            uint64_t otfSubsumedLong;
             uint64_t otfSubsumedLearnt;
             uint64_t otfSubsumedLitsGained;
 
@@ -661,6 +687,7 @@ class Searcher : public PropEngine
         //OTF subsumption
         vector<ClOffset> toAttachLater;
         void doOTFSubsume(PropBy confl);
+        vector<OTFClause> otfMustAttach;
         //set<Lit> learnt_clause2;
         size_t learnt_clause2_size;
         CL_ABST_TYPE learnt_clause2_abst;
