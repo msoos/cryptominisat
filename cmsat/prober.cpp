@@ -443,7 +443,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         if (solver->timedOutPropagateFull) {
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c [probe] timeout during proapgation,"
+                << "c [probe] timeout during propagation,"
                 << " turning off OTF hyper-bin&tran-red"
                 << endl;
             }
