@@ -855,7 +855,7 @@ bool Simplifier::eliminateVars()
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
-        && numMaxElim > 0
+        && *toDecrease > 0
         && numMaxElimVars > 0
     ) {
         assert(toDecrease == &numMaxElim);
@@ -2522,8 +2522,11 @@ int Simplifier::testVarElim(const Var var)
             if (dummy.size() == 2)
                 after_bin++;
 
-            //Early-abort
-            if (after_clauses > before_clauses)
+            //Early-abort or over time
+            if (after_clauses > before_clauses
+                //Over-time
+                || *toDecrease < -10LL*1000LL
+            )
                 return 1000;
 
             //Calculate new clause stats
