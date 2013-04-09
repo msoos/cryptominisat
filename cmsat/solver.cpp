@@ -1058,6 +1058,16 @@ CleaningStats Solver::reduceDB()
         Clause* cl = clAllocator->getPointer(offset);
         assert(cl->size() > 3);
 
+        //Don't delete if not aged long enough
+        if (cl->stats.conflictNumIntroduced + 1000
+             >= Searcher::sumConflicts()
+        ) {
+            longRedCls[j++] = offset;
+            tmpStats.remain.incorporate(cl);
+            tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
+            continue;
+        }
+
         //Stats Update
         tmpStats.removed.incorporate(cl);
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
