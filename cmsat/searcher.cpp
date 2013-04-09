@@ -706,6 +706,7 @@ lbool Searcher::search(uint64_t* geom_max)
         //If decision level==1, then do hyperbin & transitive reduction
         if (conf.otfHyperbin && decisionLevel() == 1) {
             stats.advancedPropCalled++;
+            solver->varData[trail.back().var()].depth = 0;
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
 
