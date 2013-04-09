@@ -409,6 +409,7 @@ protected:
         , vec<Watched>::const_iterator k
         , PropBy& confl
     );
+    bool timedOutPropagateFull;
     Lit propagateFullBFS(const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max());
     Lit propagateFullDFS(
         const StampType stampType

@@ -421,16 +421,36 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     Lit failed = lit_Undef;
     if (solver->conf.otfHyperbin) {
+        const uint64_t timeout =
+            solver->propStats.otfHyperTime
+            + solver->propStats.bogoProps
+            + 1600ULL*1000ULL*1000ULL;
+
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
             const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
             failed = solver->propagateFullDFS(
                 stampType
-                , 1600ULL*1000ULL*1000ULL //early-abort timeout
+                , timeout //early-abort timeout
             );
         } else {
             failed = solver->propagateFullBFS(
-                1600ULL*1000ULL*1000ULL //early-abort timeout
+                timeout //early-abort timeout
             );
+        }
+
+        //If we timed out on ONE call, turn otf hyper-bin off
+        //and return --> the "visitedAlready" will be wrong
+        if (solver->timedOutPropagateFull) {
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [probe] timeout during proapgation,"
+                << " turning off OTF hyper-bin&tran-red"
+                << endl;
+            }
+
+            solver->conf.otfHyperbin = false;
+            solver->cancelZeroLight();
+            return solver->okay();
         }
     } else {
         PropBy confl = solver->propagate();
