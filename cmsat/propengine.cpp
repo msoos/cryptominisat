@@ -871,7 +871,7 @@ PropBy PropEngine::propagateNonLearntBin()
 
     return PropBy();
 }
-Lit PropEngine::propagateFullBFS()
+Lit PropEngine::propagateFullBFS(const uint64_t timeout)
 {
     propStats.otfHyperPropCalled++;
     #ifdef VERBOSE_DEBUG_FULLPROP
@@ -899,6 +899,10 @@ Lit PropEngine::propagateFullBFS()
     needToAddBinClause.clear();
     PropResult ret = PROP_NOTHING;
     start:
+
+    //Early-abort if too much time was used (from prober)
+    if (propStats.otfHyperTime + propStats.bogoProps > timeout)
+        return lit_Undef;
 
     //Propagate binary non-learnt
     while (nlBinQHead < trail.size()) {
@@ -1007,6 +1011,7 @@ Lit PropEngine::propagateFullBFS()
 
 Lit PropEngine::propagateFullDFS(
     const StampType stampType
+    , const uint64_t timeout
 ) {
     propStats.otfHyperPropCalled++;
     #ifdef VERBOSE_DEBUG_FULLPROP
@@ -1054,6 +1059,10 @@ Lit PropEngine::propagateFullDFS(
     #endif
 
     start:
+    //Early-abort if too much time was used (from prober)
+    if (propStats.otfHyperTime + propStats.bogoProps > timeout)
+        return lit_Undef;
+
     propStats.bogoProps += 3;
 
     //Propagate binary non-learnt

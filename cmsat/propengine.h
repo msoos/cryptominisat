@@ -409,9 +409,10 @@ protected:
         , vec<Watched>::const_iterator k
         , PropBy& confl
     );
-    Lit propagateFullBFS();
+    Lit propagateFullBFS(const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max());
     Lit propagateFullDFS(
         const StampType stampType
+        , const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
     );
     void closeAllTimestamps(const StampType stampType);
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()

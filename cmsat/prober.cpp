@@ -423,9 +423,14 @@ bool Prober::tryThis(const Lit lit, const bool first)
     if (solver->conf.otfHyperbin) {
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
             const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
-            failed = solver->propagateFullDFS(stampType);
+            failed = solver->propagateFullDFS(
+                stampType
+                , 1600ULL*1000ULL*1000ULL //early-abort timeout
+            );
         } else {
-            failed = solver->propagateFullBFS();
+            failed = solver->propagateFullBFS(
+                1600ULL*1000ULL*1000ULL //early-abort timeout
+            );
         }
     } else {
         PropBy confl = solver->propagate();
