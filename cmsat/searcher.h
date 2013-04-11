@@ -652,6 +652,7 @@ class Searcher : public PropEngine
         {
             void clear()
             {
+                rest_type = no_restart;
                 update = true;
                 needToStopSearch = false;
                 conflictsDoneThisRestart = 0;

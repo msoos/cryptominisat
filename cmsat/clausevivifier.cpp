@@ -782,7 +782,7 @@ void ClauseVivifier::subsumeImplicit()
     uint64_t remTris = 0;
     uint64_t stampTriRem = 0;
     uint64_t cacheTriRem = 0;
-    timeAvailable = 20LL*1000LL*1000LL;
+    timeAvailable = 1900LL*1000LL*1000LL;
     const bool doStamp = solver->conf.doStamp;
     uint64_t numWatchesLooked = 0;
 
@@ -802,7 +802,7 @@ void ClauseVivifier::subsumeImplicit()
         if (ws.size() < 2)
             continue;
 
-        timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size()));
+        timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
         std::sort(ws.begin(), ws.end(), WatchSorter());
         /*cout << "---> Before" << endl;
         printWatchlist(ws, lit);*/
@@ -817,7 +817,7 @@ void ClauseVivifier::subsumeImplicit()
         for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
 
             //Don't care about long clauses
-            if (i->isClause()) {
+            if (i->isClause() || timeAvailable < 0) {
                 *j++ = *i;
                 continue;
             }
@@ -875,6 +875,7 @@ void ClauseVivifier::subsumeImplicit()
 
                 //Subsumed by stamp
                 if (doStamp && !remove) {
+                    timeAvailable -= 15;
                     remove = solver->stamp.stampBasedClRem(lits);
                     stampTriRem += remove;
                 }
@@ -884,7 +885,7 @@ void ClauseVivifier::subsumeImplicit()
                     && solver->conf.doCache
                 ) {
                     for(size_t i = 0; i < lits.size() && !remove; i++) {
-                        //countTime += solver->implCache[lit.toInt()].lits.size();
+                        timeAvailable -= solver->implCache[lit.toInt()].lits.size();
                         for (vector<LitExtra>::const_iterator
                             it2 = solver->implCache[lits[i].toInt()].lits.begin()
                             , end2 = solver->implCache[lits[i].toInt()].lits.end()
@@ -984,7 +985,7 @@ bool ClauseVivifier::strengthenImplicit()
     uint64_t remLitFromTriByTri = 0;
     uint64_t stampRem = 0;
     const size_t origTrailSize = solver->trail.size();
-    timeAvailable = 300LL*1000LL*1000LL;
+    timeAvailable = 1000LL*1000LL*1000LL;
     double myTime = cpuTime();
     const bool doStamp = solver->conf.doStamp;
     uint64_t numWatchesLooked = 0;
