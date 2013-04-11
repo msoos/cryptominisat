@@ -138,7 +138,7 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 2800LL*1000LL*1000LL;
+    uint64_t numPropsTodo = 1500LL*1000LL*1000LL;
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
