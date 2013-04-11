@@ -1835,7 +1835,7 @@ void Simplifier::blockImplicit(
         << " tried: " << tried
         << " bin: " << blockedBin
         << " tri: " << blockedTri
-        << " finished: " << (numDone == solver->watches.size() ? "Y" : "N")
+        << " t-out: " << (numDone == solver->watches.size() ? "N" : "Y")
         << " T : " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
         << endl;
     }
