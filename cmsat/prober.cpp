@@ -138,7 +138,13 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 1500LL*1000LL*1000LL;
+    uint64_t numPropsTodo = 1900LL*1000LL*1000LL;
+
+    //Bogoprops for hyper-bin is MUCH more precise, so if no propagateFull???
+    //then mush less bogoProps will lead to the same amount of time
+    if (!solver->conf.otfHyperbin) {
+        numPropsTodo /= 4;
+    }
 
     //Account for cache being too small
     const size_t numActiveVars = solver->numActiveVars();
