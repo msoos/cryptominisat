@@ -1342,8 +1342,9 @@ lbool Solver::simplifyProblem()
     if (conf.doSortWatched)
         sortWatched();
 
-    if (conf.doRenumberVars)
+    if (conf.doRenumberVars) {
         renumberVariables();
+    }
 
     //Re-calculate reachability after re-numbering and new cache data
     if (conf.doCache) {
