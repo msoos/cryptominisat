@@ -723,7 +723,9 @@ void Solver::renumberVariables()
     //Update sub-elements' vars
     simplifier->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
-    implCache.updateVars(seen, outerToInter, interToOuter2);
+    if (conf.doCache) {
+        implCache.updateVars(seen, outerToInter, interToOuter2);
+    }
 
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
@@ -800,11 +802,12 @@ Var Solver::newVar(const bool dvar)
     interToOuterMain.push_back(var);
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
-    litReachable.push_back(LitReachData());
-    litReachable.push_back(LitReachData());
 
-    if (conf.doCache)
+    if (conf.doCache) {
         implCache.addNew();
+        litReachable.push_back(LitReachData());
+        litReachable.push_back(LitReachData());
+    }
 
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
@@ -1359,6 +1362,7 @@ lbool Solver::simplifyProblem()
                 << endl;
             }
             implCache.free();
+            litReachable.~vector();
             conf.doCache = false;
         }
     }

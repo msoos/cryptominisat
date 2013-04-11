@@ -284,7 +284,7 @@ bool Prober::probe()
                     assert(!visitedAlready[lit.toInt()]);
                 }
             }
-        } else {
+        } else if (solver->conf.doCache) {
             if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
                 const Lit betterlit = solver->litReachable[lit.toInt()].lit;
                 if (solver->value(betterlit.var()) == l_Undef

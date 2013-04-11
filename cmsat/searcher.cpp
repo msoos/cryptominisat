@@ -2138,8 +2138,8 @@ Lit Searcher::pickBranchLit()
         if (conf.doStamp) {
             //Use timestamps
             lit2 = stamp.tstamp[next.toInt()].dominator[STAMP_RED];
-        } else {
-            //Ude cache
+        } else if (conf.doCache) {
+            //Use cache
             lit2 = solver->litReachable[next.toInt()].lit;
         }
 
