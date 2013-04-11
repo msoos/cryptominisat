@@ -186,13 +186,26 @@ bool Prober::probe()
     propValue.resize(solver->nVars(), 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.20) {
+    double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)numActiveVars * 100.0;
+    if (percentEffectLast > 20.0) {
+        //It's doing VERY well
         numPropsMultiplier = std::min(numPropsMultiplier*2, 5.0);
-    } else if ((double)lastTimeZeroDepthAssings >= (double)numActiveVars * 0.10) {
+    } else if (percentEffectLast >= 10.0) {
+        //It's doing well
         numPropsMultiplier = std::min(numPropsMultiplier*1.6, 4.0);
+    } else if (percentEffectLast <= 3) {
+        //It's doing badly
+        numPropsMultiplier = 0.5;
     } else {
+        //It's doing OK
         numPropsMultiplier = 1.0;
     }
+
+    //First start is special, there is no previous record
+    if (globalStats.numCalls == 0) {
+        numPropsMultiplier = 1.0;
+    }
+
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     const size_t numPropsTodoAftPerf = numPropsTodo;
     numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.2);
