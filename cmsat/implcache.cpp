@@ -126,7 +126,7 @@ void ImplCache::clean(Solver* solver)
                     implCache[litOrig.toInt()].lits
                     , lit_Undef //nothing to add
                     , false //replaced, so 'non-learnt'
-                    , lit //exclude this var
+                    , lit.var() //exclude the literal itself
                     , solver->seen
                 );
             }
@@ -467,11 +467,11 @@ void ImplCache::tryVar(
     }
 }
 
-void TransCache::merge(
-    vector<LitExtra>& otherLits
-    , const Lit extraLit
-    , const bool learnt
-    , const Lit leaveOut
+bool TransCache::merge(
+    const vector<LitExtra>& otherLits //Lits to add
+    , const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , const Var leaveOut //Leave this literal out
     , vector<uint16_t>& seen
 ) {
     //Mark every literal that is to be added in 'seen'
@@ -481,6 +481,72 @@ void TransCache::merge(
 
         seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
     }
+
+    bool taut = mergeHelper(extraLit, learnt, leaveOut, seen);
+
+    //Whatever rests needs to be added
+    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i].getLit();
+        if (seen[lit.toInt()]) {
+            if (lit.var() != leaveOut)
+                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
+            seen[lit.toInt()] = 0;
+        }
+    }
+
+    //Handle extra lit
+    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
+        if (extraLit.var() != leaveOut)
+            lits.push_back(LitExtra(extraLit, !learnt));
+        seen[extraLit.toInt()] = 0;
+    }
+
+    return taut;
+}
+
+bool TransCache::merge(
+    const vector<Lit>& otherLits //Lits to add
+    , const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , const Var leaveOut //Leave this literal out
+    , vector<uint16_t>& seen
+) {
+    //Mark every literal that is to be added in 'seen'
+    for (size_t i = 0, size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i];
+        seen[lit.toInt()] = 1;
+    }
+
+    bool taut = mergeHelper(extraLit, learnt, leaveOut, seen);
+
+    //Whatever rests needs to be added
+    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i];
+        if (seen[lit.toInt()]) {
+            if (lit.var() != leaveOut)
+                lits.push_back(LitExtra(lit, false));
+            seen[lit.toInt()] = 0;
+        }
+    }
+
+    //Handle extra lit
+    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
+        if (extraLit.var() != leaveOut)
+            lits.push_back(LitExtra(extraLit, !learnt));
+        seen[extraLit.toInt()] = 0;
+    }
+
+    return taut;
+}
+
+bool TransCache::mergeHelper(
+    const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , const Var leaveOut //Leave this literal out
+    , vector<uint16_t>& seen
+) {
+    bool taut = false;
+
     //Handle extra lit
     if (extraLit != lit_Undef)
         seen[extraLit.toInt()] = 1 + (int)!learnt;
@@ -497,24 +563,14 @@ void TransCache::merge(
         }
 
         seen[lits[i].getLit().toInt()] = 0;
-    }
 
-    //Whatever rests needs to be added
-    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
-        const Lit lit = otherLits[i].getLit();
-        if (seen[lit.toInt()]) {
-            if (lit.var() != leaveOut.var())
-                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
-            seen[lit.toInt()] = 0;
+        //Both L and ~L are in, the ancestor is a tautology
+        if (seen[(~(lits[i].getLit())).toInt()]) {
+            taut = true;
         }
     }
 
-    //Handle extra lit
-    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
-        if (extraLit.var() != leaveOut.var())
-            lits.push_back(LitExtra(extraLit, !learnt));
-        seen[extraLit.toInt()] = 0;
-    }
+    return taut;
 }
 
 //Make all literals as if propagated only by redundant

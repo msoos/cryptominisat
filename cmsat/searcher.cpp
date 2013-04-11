@@ -770,6 +770,7 @@ lbool Searcher::search(uint64_t* geom_max)
             }
 
             //Update cache
+            vector<Lit> toEnqueue;
             size_t numElems = trail.size() - trail_lim[0];
             if (conf.doCache
                 && numElems <= conf.cacheUpdateCutoff
@@ -781,22 +782,60 @@ lbool Searcher::search(uint64_t* geom_max)
                     const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
 
                     assert(ancestor != lit_Undef);
-                    solver->implCache[(~ancestor).toInt()].merge(
+                    bool taut = solver->implCache[(~ancestor).toInt()].merge(
                         solver->implCache[(~thisLit).toInt()].lits
                         , thisLit
                         , learntStep
-                        , ancestor
+                        , ancestor.var()
                         , solver->seen
                     );
+
+                    //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
+                    //So enqueue ~ancestor
+                    if (taut) {
+                        toEnqueue.push_back(~ancestor);
+                    }
                 }
             }
-
 
             //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
             std::pair<size_t, size_t> tmp = removeUselessBins();
             stats.transReduRemIrred += tmp.first;
             stats.transReduRemRed += tmp.second;
+
+            //There are things to enqueue at top-level
+            if (!toEnqueue.empty()) {
+                solver->cancelUntil(0);
+
+                //Enqueue them
+                for(vector<Lit>::const_iterator
+                    it = toEnqueue.begin(), end = toEnqueue.end()
+                    ; it != end
+                    ; it++
+                ) {
+                    const lbool val = value(*it);
+                    if (val == l_Undef) {
+                        enqueue(*it);
+                        solver->ok = propagate(solver
+                            #ifdef STATS_NEEDED
+                            , &hist.watchListSizeTraversed
+                            //, &hist.litPropagatedSomething
+                            #endif
+                        ).isNULL();
+                        if (!solver->okay()) {
+                            return l_False;
+                        }
+                    } else if (val == l_False) {
+                        solver->ok = false;
+                        return l_False;
+                    }
+                }
+
+                //Start from beginning
+                continue;
+            }
+
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver

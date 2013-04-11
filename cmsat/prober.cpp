@@ -401,8 +401,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
         extraTime += propagatedBitSet.size();
         propagated.removeThese(propagatedBitSet);
         propagatedBitSet.clear();
-        bothSame.clear();
     }
+    toEnqueue.clear();
 
     //Start-up cleaning
     runStats.numProbed++;
@@ -450,6 +450,15 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
             solver->conf.otfHyperbin = false;
             solver->cancelZeroLight();
+
+            runStats.addedBin += solver->hyperBinResAll();
+            std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+            runStats.removedIrredBin += tmp.first;
+            runStats.removedRedBin += tmp.second;
+
+            propagated.removeThese(propagatedBitSet);
+            propagatedBitSet.clear();
+            toEnqueue.clear();
             return solver->okay();
         }
     } else {
@@ -522,8 +531,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
                 propValue.clearBit(var);
         } else if (propagated[var]) {
             if (propValue[var] == solver->value(var).getBool()) {
+
                 //they both imply the same
-                bothSame.push_back(Lit(var, !propValue[var]));
+                toEnqueue.push_back(Lit(var, !propValue[var]));
             }
         }
 
@@ -549,13 +559,20 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
             //Update the cache now
             assert(ancestor != lit_Undef);
-            solver->implCache[(~ancestor).toInt()].merge(
+            bool taut = solver->implCache[(~ancestor).toInt()].merge(
                 solver->implCache[(~thisLit).toInt()].lits
                 , thisLit
                 , learntStep
-                , ancestor
+                , ancestor.var()
                 , solver->seen
             );
+
+            //If tautology according to cache we can
+            //enqueue ~ancestor at toplevel since both
+            //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
+            if (taut) {
+                toEnqueue.push_back(~ancestor);
+            }
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "The impl cache of " << (~ancestor) << " is now: ";
@@ -567,16 +584,29 @@ bool Prober::tryThis(const Lit lit, const bool first)
     if (!solver->conf.otfHyperbin
         && solver->conf.doCache
     ) {
+        tmp.clear();
         for (int64_t c = solver->trail.size()-1
             ; c != (int64_t)solver->trail_lim[0] - 1
             ; c--
         ) {
             extraTime += 2;
             const Lit thisLit = solver->trail[c];
-            if (thisLit.var() == lit.var())
-                continue;
+            tmp.push_back(thisLit);
+        }
 
-            solver->implCache[(~lit).toInt()].lits.push_back(LitExtra(thisLit, false));
+        bool taut = solver->implCache[(~lit).toInt()].merge(
+            tmp
+            , lit_Undef
+            , true //Learnt step -- we don't know, so we assume
+            , lit.var()
+            , solver->seen
+        );
+
+        //If tautology according to cache we can
+        //enqueue ~lit at toplevel since both
+        //~lit V OTHER, and ~lit V ~OTHER are technically in
+        if (taut) {
+            toEnqueue.push_back(~lit);
         }
     }
 
@@ -589,16 +619,24 @@ bool Prober::tryThis(const Lit lit, const bool first)
     testBinRemoval(lit);
     #endif
 
-    if (!first) {
-        //Add bothsame
-        for(size_t i = 0; i < bothSame.size(); i++) {
-            extraTime += 3;
-            solver->enqueue(bothSame[i]);
-        }
-        runStats.bothSameAdded += bothSame.size();
-    }
+    //Add toEnqueue
     assert(solver->ok);
-    solver->ok = solver->propagate().isNULL();
+    for(size_t i = 0; i < toEnqueue.size(); i++) {
+        runStats.bothSameAdded++;
+        extraTime += 3;
+        const lbool val = solver->value(toEnqueue[i]);
+        if (val == l_Undef) {
+            solver->enqueue(toEnqueue[i]);
+            solver->ok = solver->propagate().isNULL();
+            if (!solver->okay()) {
+                return false;
+            }
+        } else if (val == l_False) {
+            solver->ok = false;
+            return false;
+        }
+    }
+
 
     return solver->ok;
 }
