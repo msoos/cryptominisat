@@ -187,7 +187,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
     const size_t origTrailSize = solver->trail.size();
 
     //Time-limiting
-    uint64_t maxNumProps = 10LL*1000LL*1000LL;
+    uint64_t maxNumProps = 20LL*1000LL*1000LL;
     if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
         maxNumProps *=2;
 
@@ -294,7 +294,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
         << runStats.numLitsRem - origLitRem
         << " T: "
         << std::setprecision(2) << cpuTime() - myTime
-        << " T-out: " << needToFinish
+        << " T-out: " << (needToFinish ? "Y" : "N")
         << endl;
     }
 
@@ -782,8 +782,9 @@ void ClauseVivifier::subsumeImplicit()
     uint64_t remTris = 0;
     uint64_t stampTriRem = 0;
     uint64_t cacheTriRem = 0;
-    timeAvailable = 100LL*1000LL*1000LL;
+    timeAvailable = 20LL*1000LL*1000LL;
     const bool doStamp = solver->conf.doStamp;
+    uint64_t numWatchesLooked = 0;
 
     //Randomize starting point
     size_t upI;
@@ -793,6 +794,7 @@ void ClauseVivifier::subsumeImplicit()
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
+        numWatchesLooked++;
         Lit lit = Lit::toLit(upI);
         vec<Watched>& ws = solver->watches[upI];
 
@@ -964,6 +966,7 @@ void ClauseVivifier::subsumeImplicit()
         << " T: " << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
         << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << " w-visit: " << numWatchesLooked
         << endl;
     }
     solver->checkStats();
@@ -981,9 +984,10 @@ bool ClauseVivifier::strengthenImplicit()
     uint64_t remLitFromTriByTri = 0;
     uint64_t stampRem = 0;
     const size_t origTrailSize = solver->trail.size();
-    timeAvailable = 400LL*1000LL*1000LL;
+    timeAvailable = 300LL*1000LL*1000LL;
     double myTime = cpuTime();
     const bool doStamp = solver->conf.doStamp;
+    uint64_t numWatchesLooked = 0;
 
     //For delayed enqueue and binary adding
     //Used for strengthening
@@ -998,15 +1002,21 @@ bool ClauseVivifier::strengthenImplicit()
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
+        numWatchesLooked++;
         Lit lit = Lit::toLit(upI);
         vec<Watched>& ws = solver->watches[upI];
 
         Watched* i = ws.begin();
         Watched* j = i;
-        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+        for (vec<Watched>::iterator
+            end = ws.end()
+            ; i != end
+            ; i++
+        ) {
             timeAvailable -= 2;
             //Can't do much with clause, will treat them during vivification
-            if (i->isClause()) {
+            //Or timeout
+            if (i->isClause() || timeAvailable < 0) {
                 *j++ = *i;
                 continue;
             }
@@ -1019,6 +1029,7 @@ bool ClauseVivifier::strengthenImplicit()
                 lits.push_back(lit);
                 lits.push_back(i->lit1());
                 if (doStamp) {
+                    timeAvailable -= 10;
                     std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
@@ -1076,7 +1087,7 @@ bool ClauseVivifier::strengthenImplicit()
                 timeAvailable -= solver->watches[(~lit).toInt()].size();
                 for(vec<Watched>::const_iterator
                     it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
-                    ; it2 != end2
+                    ; it2 != end2 && timeAvailable > 0
                     ; it2++
                 ) {
                     if (it2->isBinary()
@@ -1120,12 +1131,12 @@ bool ClauseVivifier::strengthenImplicit()
                     lits.push_back(i->lit2());
 
                     //Try both stamp types to reduce size
-                    timeAvailable -= lits.size()*5;
+                    timeAvailable -= 15;
                     std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
                     stampRem += tmp.first;
                     stampRem += tmp.second;
                     if (lits.size() > 1) {
-                        timeAvailable -= lits.size()*5;
+                        timeAvailable -= 15;
                         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
                         stampRem += tmp.first;
                         stampRem += tmp.second;
@@ -1202,6 +1213,7 @@ end:
         << " T: " << std::fixed << std::setprecision(2)
         << (cpuTime() - myTime)
         << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+        << " w-visit: " << numWatchesLooked
         << endl;
     }
     solver->checkStats();
