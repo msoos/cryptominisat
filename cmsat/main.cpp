@@ -474,7 +474,7 @@ void Main::parseCommandLine()
     ("binpri", po::value<int>(&conf.propBinFirst)->default_value(conf.propBinFirst)
         , "Propagated binary clauses strictly first")
     ("otfhyper", po::value<int>(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
-        , "Perform hyper-binary resolution at dec. level 1 after every restart")
+        , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
 
 
