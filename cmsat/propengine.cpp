@@ -1065,6 +1065,7 @@ Lit PropEngine::propagateFullDFS(
     start:
     //Early-abort if too much time was used (from prober)
     if (propStats.otfHyperTime + propStats.bogoProps > timeout) {
+        closeAllTimestamps(stampType);
         timedOutPropagateFull = true;
         return lit_Undef;
     }
