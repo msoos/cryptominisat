@@ -1167,6 +1167,7 @@ bool Searcher::handle_conflict(PropBy confl)
         ; it != end
         ; it++
     ) {
+        assert(it->size > 1);
         //Find the l_Undef
         size_t at = std::numeric_limits<size_t>::max();
         for(size_t i2 = 0; i2 < it->size; i2++) {
