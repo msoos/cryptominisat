@@ -650,9 +650,14 @@ class Searcher : public PropEngine
         // Conflicting
         struct SearchParams
         {
+            SearchParams() :
+                rest_type(no_restart)
+            {
+                clear();
+            }
+
             void clear()
             {
-                rest_type = no_restart;
                 update = true;
                 needToStopSearch = false;
                 conflictsDoneThisRestart = 0;
