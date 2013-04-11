@@ -296,8 +296,6 @@ bool Prober::probe()
             }
         }
 
-
-
         //Update stats
         runStats.numVarProbed++;
 
@@ -444,7 +442,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
             if (solver->conf.verbosity >= 2) {
                 cout
                 << "c [probe] timeout during propagation,"
-                << " turning off OTF hyper-bin&tran-red"
+                << " turning off OTF hyper-bin&trans-red"
                 << endl;
             }
 
