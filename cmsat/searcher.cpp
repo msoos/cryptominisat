@@ -135,6 +135,7 @@ void Searcher::cancelUntil(uint32_t level)
 void Searcher::analyzeHelper(
     const Lit lit
     , int& pathC
+    , bool fromProber
 ) {
     const Var var = lit.var();
     assert(varData[var].elimed == ELIMED_NONE
@@ -159,7 +160,8 @@ void Searcher::analyzeHelper(
             pathC++;
 
             //Glucose 2.1
-            if (params.rest_type != geom_restart
+            if (!fromProber
+                && params.rest_type != geom_restart
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
@@ -286,18 +288,18 @@ Clause* Searcher::analyze(
     , uint32_t& out_btlevel
     , uint32_t &glue
     , ResolutionTypes<uint16_t>& resolutions
-    , bool otfSubsume
+    , bool fromProber
 ) {
     //Set up environment
     learnt_clause.clear();
     toClear.clear();
     lastDecisionLevel.clear();
     otfMustAttach.clear();
+    toAttachLater.clear();
     //learnt_clause2.clear();
     learnt_clause2_size = 0;
     learnt_clause2_abst = 0;
     assert(decisionLevel() > 0);
-    assert(toAttachLater.empty());
 
     int pathC = 0;
     Lit p = lit_Undef;
@@ -333,7 +335,7 @@ Clause* Searcher::analyze(
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (tri): " << confl.lit2() << endl;
                 #endif
-                analyzeHelper(confl.lit2(), pathC);
+                analyzeHelper(confl.lit2(), pathC, fromProber);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
@@ -345,10 +347,11 @@ Clause* Searcher::analyze(
                 }
 
 
-                if (p == lit_Undef)
-                    analyzeHelper(failBinLit, pathC);
+                if (p == lit_Undef) {
+                    analyzeHelper(failBinLit, pathC, fromProber);
+                }
 
-                analyzeHelper(confl.lit1(), pathC);
+                analyzeHelper(confl.lit1(), pathC, fromProber);
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (bin/tri): " << confl.lit1() << endl;
                 #endif
@@ -371,8 +374,9 @@ Clause* Searcher::analyze(
 
                 //Update stats
                 cl->stats.numUsedUIP++;
-                if (cl->learnt())
+                if (cl->learnt() && !fromProber) {
                     bumpClauseAct(cl);
+                }
 
                 for (size_t j = 0, size = cl->size(); j != size; j++) {
 
@@ -381,7 +385,7 @@ Clause* Searcher::analyze(
                         continue;
                     }
 
-                    analyzeHelper((*cl)[j], pathC);
+                    analyzeHelper((*cl)[j], pathC, fromProber);
                 }
                 break;
             }
@@ -398,7 +402,7 @@ Clause* Searcher::analyze(
 
         p = trail[index+1];
 
-        if (otfSubsume
+        if (!fromProber
             && conf.doOTFSubsume
             && cl != NULL
             && cl->size() > learnt_clause2_size
@@ -480,7 +484,9 @@ Clause* Searcher::analyze(
     }
 
     //Glucose 2.1
-    if (params.rest_type == glue_restart) {
+    if (!fromProber
+        && params.rest_type == glue_restart
+    ) {
         for (vector<pair<Lit, size_t> >::const_iterator
             it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
             ; it != end
@@ -1052,7 +1058,7 @@ bool Searcher::handle_conflict(PropBy confl)
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
         , resolutions   //return number of resolutions made here
-        , true
+        , false
     );
 
     size_t orig_trail_size = trail.size();
@@ -2707,8 +2713,8 @@ PropBy Searcher::propagate(
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver == NULL
-        || conf.propBinFirst
+    if (solver != NULL
+        && conf.propBinFirst
     ) {
         return propagateBinFirst(
             solver

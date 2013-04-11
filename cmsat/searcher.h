@@ -673,16 +673,10 @@ class Searcher : public PropEngine
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
             , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
-            , bool otfSubsume
+            , bool fromProber = false
         );
 
         vector<std::pair<Lit, size_t> > lastDecisionLevel; //for glue-based extra var activity bumping
-
-        //Recursive minimization
-        bool litRedundant(Lit p, uint32_t abstract_levels);
-        void recursiveConfClauseMin();
-        vector<Lit> dummy; //for litRedundant
-        MyStack<Lit> analyze_stack;
 
         //OTF subsumption
         vector<ClOffset> toAttachLater;
@@ -695,20 +689,25 @@ class Searcher : public PropEngine
         void analyzeHelper(
             Lit lit
             , int& pathC
+            , bool fromProber
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
 
         //////////////
         // Conflict minimisation
-        void            prune_removable(vector<Lit>& out_learnt);
-        void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
-        int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
-        int             dfs_removable(Lit p, uint32_t abstract_level);
-        void            mark_needed_removable(Lit p);
-        int             res_removable();
+        bool litRedundant(Lit p, uint32_t abstract_levels);
+        void recursiveConfClauseMin();
+        vector<Lit> dummy; //for litRedundant
+        MyStack<Lit> analyze_stack;
+        //void            prune_removable(vector<Lit>& out_learnt);
+        //void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
+        //int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
+        //int             dfs_removable(Lit p, uint32_t abstract_level);
+        //void            mark_needed_removable(Lit p);
+        //int             res_removable();
         uint32_t        abstractLevel(const Var x) const;
-        vector<PropBy> trace_reasons; // clauses to resolve to give CC
-        vector<Lit>     trace_lits_minim; // lits maybe used in minimization
+        //vector<PropBy> trace_reasons; // clauses to resolve to give CC
+        //vector<Lit>     trace_lits_minim; // lits maybe used in minimization
 
 
         /////////////////
