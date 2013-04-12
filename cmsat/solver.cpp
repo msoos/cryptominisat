@@ -794,7 +794,9 @@ Var Solver::newVar(const bool dvar)
 {
     const Var var = decisionVar.size();
 
-    if (nVars() > 10ULL*1000ULL*1000ULL) {
+    if (conf.doStamp
+        && nVars() > 10ULL*1000ULL*1000ULL
+    ) {
         conf.doStamp = false;
         stamp.freeMem();
         if (conf.verbosity >= 2) {
