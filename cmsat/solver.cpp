@@ -1269,7 +1269,9 @@ lbool Solver::simplifyProblem()
 
     //Cache clean before probing (for speed)
     if (conf.doCache) {
-        implCache.clean(this);
+        if (!implCache.clean(this))
+            goto end;
+
         if (!implCache.tryBoth(this))
             goto end;
     }
@@ -1319,9 +1321,8 @@ lbool Solver::simplifyProblem()
     clauseVivifier->subsumeImplicit();
 
     //Clean cache before vivif
-    if (conf.doCache) {
-        implCache.clean(this);
-    }
+    if (conf.doCache && !implCache.clean(this))
+        goto end;
 
     //Vivify clauses
     if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
@@ -3096,4 +3097,25 @@ void Solver::freeUnusedWatches()
 
         it->fitToSize();
     }
+}
+
+bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
+{
+    assert(ok);
+    assert(decisionLevel() == 0);
+    for(size_t i = 0; i < toEnqueue.size(); i++) {
+        const lbool val = solver->value(toEnqueue[i]);
+        if (val == l_Undef) {
+            solver->enqueue(toEnqueue[i]);
+            solver->ok = solver->propagate().isNULL();
+            if (!solver->okay()) {
+                return false;
+            }
+        } else if (val == l_False) {
+            solver->ok = false;
+            return false;
+        }
+    }
+
+    return true;
 }

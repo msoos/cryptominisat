@@ -813,29 +813,9 @@ lbool Searcher::search(uint64_t* geom_max)
             //There are things to enqueue at top-level
             if (!toEnqueue.empty()) {
                 solver->cancelUntil(0);
-
-                //Enqueue them
-                for(vector<Lit>::const_iterator
-                    it = toEnqueue.begin(), end = toEnqueue.end()
-                    ; it != end
-                    ; it++
-                ) {
-                    const lbool val = value(*it);
-                    if (val == l_Undef) {
-                        enqueue(*it);
-                        solver->ok = propagate(solver
-                            #ifdef STATS_NEEDED
-                            , &hist.watchListSizeTraversed
-                            //, &hist.litPropagatedSomething
-                            #endif
-                        ).isNULL();
-                        if (!solver->okay()) {
-                            return l_False;
-                        }
-                    } else if (val == l_False) {
-                        solver->ok = false;
-                        return l_False;
-                    }
+                bool ret = solver->enqueueThese(toEnqueue);
+                if (!ret) {
+                    return l_False;
                 }
 
                 //Start from beginning

@@ -178,7 +178,7 @@ public:
         , const std::vector< uint32_t >& interToOuter2
     );
 
-    void clean(Solver* solver);
+    bool clean(Solver* solver);
     bool tryBoth(Solver* solver);
 
     struct TryBothStats

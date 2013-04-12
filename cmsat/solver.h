@@ -332,6 +332,7 @@ class Solver : public Searcher
         );
 
     private:
+        bool enqueueThese(const vector<Lit>& toEnqueue);
 
         //Stats printing
         void printMinStats() const;

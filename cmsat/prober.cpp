@@ -638,24 +638,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     //Add toEnqueue
     assert(solver->ok);
-    for(size_t i = 0; i < toEnqueue.size(); i++) {
-        runStats.bothSameAdded++;
-        extraTime += 3;
-        const lbool val = solver->value(toEnqueue[i]);
-        if (val == l_Undef) {
-            solver->enqueue(toEnqueue[i]);
-            solver->ok = solver->propagate().isNULL();
-            if (!solver->okay()) {
-                return false;
-            }
-        } else if (val == l_False) {
-            solver->ok = false;
-            return false;
-        }
-    }
-
-
-    return solver->ok;
+    runStats.bothSameAdded += toEnqueue.size();
+    extraTime += 3*toEnqueue.size();
+    return solver->enqueueThese(toEnqueue);
 }
 
 #ifdef DEBUG_REMOVE_USELESS_BIN

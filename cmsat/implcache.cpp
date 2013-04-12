@@ -102,18 +102,20 @@ void ImplCache::printStatsSort(const Solver* solver) const
     );
 }
 
-void ImplCache::clean(Solver* solver)
+bool ImplCache::clean(Solver* solver)
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
+    vector<Lit> toEnqueue;
 
     double myTime = cpuTime();
     uint64_t numUpdated = 0;
     uint64_t numCleaned = 0;
     uint64_t numFreed = 0;
 
-    //Free memory if possible
+    //Merge in & free memory
     for (Var var = 0; var < solver->nVars(); var++) {
+
         //If replaced, merge it into the one that replaced it
         if (solver->varData[var].elimed == ELIMED_VARREPLACER) {
             for(int i = 0; i < 2; i++) {
@@ -122,13 +124,17 @@ void ImplCache::clean(Solver* solver)
                     continue;
 
                 const Lit lit = solver->varReplacer->getLitReplacedWith(litOrig);
-                implCache[lit.toInt()].merge(
+                bool taut = implCache[lit.toInt()].merge(
                     implCache[litOrig.toInt()].lits
                     , lit_Undef //nothing to add
                     , false //replaced, so 'non-learnt'
                     , lit.var() //exclude the literal itself
                     , solver->seen
                 );
+
+                if (taut) {
+                    toEnqueue.push_back(lit);
+                }
             }
         }
 
@@ -220,6 +226,8 @@ void ImplCache::clean(Solver* solver)
         numCleaned += origSize-trans->lits.size();
     }
 
+    solver->enqueueThese(toEnqueue);
+
     if (solver->conf.verbosity >= 1) {
         cout << "c Cache cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
@@ -227,6 +235,8 @@ void ImplCache::clean(Solver* solver)
         << " Freed: " << std::setw(7) << numFreed/1000 << " K"
         << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << endl;
     }
+
+    return solver->okay();
 }
 
 void ImplCache::handleNewData(
