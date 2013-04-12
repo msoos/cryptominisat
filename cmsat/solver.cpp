@@ -801,7 +801,7 @@ Var Solver::newVar(const bool dvar)
         stamp.freeMem();
         if (conf.verbosity >= 2) {
             cout
-            << "Switching off stamping due to excessive number of variables"
+            << "c Switching off stamping due to excessive number of variables"
             << " (it would take too much memory)"
             << endl;
         }
