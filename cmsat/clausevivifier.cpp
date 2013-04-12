@@ -1169,21 +1169,7 @@ bool ClauseVivifier::strengthenImplicit()
     }
 
     //Enqueue delayed values
-    for(vector<Lit>::const_iterator
-        it = toEnqueue.begin(), end = toEnqueue.end()
-        ; it != end
-        ; it++
-    ) {
-        if (solver->value(*it) == l_False) {
-            solver->ok = false;
-            goto end;
-        }
-
-        if (solver->value(*it) == l_Undef)
-            solver->enqueue(*it);
-    }
-    solver->ok = solver->propagate().isNULL();
-    if (!solver->okay())
+    if (!solver->enqueueThese(toEnqueue))
         goto end;
 
     //Add delayed binary clauses
