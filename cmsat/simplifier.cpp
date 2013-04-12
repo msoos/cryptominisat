@@ -673,12 +673,20 @@ bool Simplifier::addFromSolver(
     if (solver->conf.verbosity >= 2
         && !irred
     ) {
+        //Pretty-printing
+        double val;
+        if (numLinkedIn + numNotLinkedIn == 0) {
+            val = 0;
+        } else {
+            val = (double)numNotLinkedIn/(double)(numLinkedIn + numNotLinkedIn)*100.0;
+        }
+
         cout
         << "c [simp] Not linked in red "
         << numNotLinkedIn << "/" << (numLinkedIn + numNotLinkedIn)
         << " ("
         << std::setprecision(2) << std::fixed
-        << (double)numNotLinkedIn/(double)(numLinkedIn + numNotLinkedIn)*100.0
+        << val
         << " %)"
         << endl;
     }
