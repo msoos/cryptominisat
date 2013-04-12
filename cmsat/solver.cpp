@@ -794,6 +794,16 @@ Var Solver::newVar(const bool dvar)
 {
     const Var var = decisionVar.size();
 
+    if (nVars() > 10ULL*1000ULL*1000ULL) {
+        conf.doStamp = false;
+        stamp.freeMem();
+        if (conf.verbosity >= 2) {
+            cout
+            << "Switching off stamping due to excessive number of variables"
+            << " (it would take too much memory)"
+            << endl;
+        }
+    }
 
     if (conf.doStamp) {
         stamp.newVar();

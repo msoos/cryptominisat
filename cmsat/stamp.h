@@ -71,6 +71,12 @@ public:
         return tstamp.capacity()*sizeof(Timestamp);
     }
 
+    void freeMem()
+    {
+        vector<Timestamp> tmp;
+        tstamp.swap(tmp);
+    }
+
 private:
     struct StampSorter
     {
