@@ -49,6 +49,8 @@ class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
 class ImplCache;
+class PartFinder;
+class PartHandler;
 
 class LitReachData {
     public:
@@ -370,6 +372,8 @@ class Solver : public Searcher
         friend class XorFinder;
         friend class GateFinder;
         friend class PropEngine;
+        friend class PartFinder;
+        friend class PartHandler;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;

@@ -37,6 +37,7 @@
 #include "xorfinder.h"
 #include <fcntl.h>
 #include "completedetachreattacher.h"
+#include "partfinder.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1253,6 +1254,13 @@ lbool Solver::simplifyProblem()
     checkStats();
     #endif
     reArrangeClauses();
+
+    if (conf.doFindParts) {
+        PartFinder findParts(this);
+        if (!findParts.findParts()) {
+            goto end;
+        }
+    }
 
     //SCC&VAR-REPL
     if (solveStats.numSimplify > 0
