@@ -19,7 +19,7 @@ from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 
-maxTime = 50
+maxTime = 300
 maxTimeLimit = 40
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -485,6 +485,7 @@ class Tester:
         fuzzers = [
             ["build/cnf-fuzz-biere"] \
             , ["build/cnf-fuzz-nossum"] \
+            , ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
             , ["build/sgen4 -unsat -n 50", "-s"] \
         ]
