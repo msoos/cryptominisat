@@ -228,9 +228,6 @@ void ClauseAllocator::consolidate(
     , const bool force
 ) {
     //double myTime = cpuTime();
-    #ifdef DEBUG_PROPAGATEFROM
-    checkGoodPropBy(solver);
-    #endif
 
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
