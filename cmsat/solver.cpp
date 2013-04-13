@@ -2522,7 +2522,12 @@ bool Solver::normClauseIsAttached(const ClOffset offset) const
 
 void Solver::findAllAttach() const
 {
-    for (uint32_t i = 0; i < watches.size(); i++) {
+
+    #ifndef MORE_DEBUG
+    return;
+    #endif
+
+    for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
             const Watched& w = watches[i][i2];
@@ -2532,7 +2537,6 @@ void Solver::findAllAttach() const
             //Get clause
             Clause* cl = clAllocator->getPointer(w.getOffset());
             assert(!cl->getFreed());
-            cout << (*cl) << endl;
 
             //Assert watch correctness
             if ((*cl)[0] != lit
@@ -2542,12 +2546,57 @@ void Solver::findAllAttach() const
                 << "ERROR! Clause " << (*cl)
                 << " not attached?"
                 << endl;
+
+                assert(false);
+                exit(-1);
             }
 
             //Clause in one of the lists
             if (!findClause(w.getOffset())) {
-                cout << "ERROR! did not find clause!" << endl;
+                cout
+                << "ERROR! did not find clause " << *cl
+                << endl;
+
+                assert(false);
+                exit(1);
             }
+        }
+    }
+
+    findAllAttach(longIrredCls);
+    findAllAttach(longRedCls);
+}
+
+void Solver::findAllAttach(const vector<ClOffset>& cs) const
+{
+    for(vector<ClOffset>::const_iterator
+        it = cs.begin(), end = cs.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *clAllocator->getPointer(*it);
+        bool ret = findWCl(watches[cl[0].toInt()], *it);
+        if (!ret) {
+            cout
+            << "Clause " << cl
+            << " (learnt: " << cl.learnt() << ")"
+            << " doesn't have its 1st watch attached!"
+            << endl;
+
+            assert(false);
+            exit(-1);
+        }
+
+        ret = findWCl(watches[cl[1].toInt()], *it);
+        if (!ret) {
+            cout
+            << "Clause " << cl
+            << " (learnt: " << cl.learnt() << ")"
+            << " doesn't have its 2nd watch attached!"
+            << endl;
+
+            assert(false);
+            exit(-1);
         }
     }
 }

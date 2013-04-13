@@ -489,6 +489,7 @@ class Solver : public Searcher
         void testAllClauseAttach() const;
         bool normClauseIsAttached(const ClOffset offset) const;
         void findAllAttach() const;
+        void findAllAttach(const vector<ClOffset>& cs) const;
         bool findClause(const ClOffset offset) const;
         void checkNoWrongAttach() const;
         void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
