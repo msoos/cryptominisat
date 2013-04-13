@@ -52,7 +52,7 @@ parser.add_option("--rndstart", dest="rndStart", default=0
                     , help="Start randomize from this random seed. Default: %default"
                     )
 
-parser.add_option("--rndnum", dest="rndNum", default=3
+parser.add_option("--rndnum", dest="rndNum", default=1
                     , type="int", metavar="SEEDS"
                     , help="Go through this many random seeds. Default: %default"
                     )
