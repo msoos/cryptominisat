@@ -1328,7 +1328,9 @@ lbool Solver::simplifyProblem()
             goto end;
     }
 
-    if (needToInterrupt) return l_Undef;
+    //Check if time is up
+    if (needToInterrupt)
+        return l_Undef;
 
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSimplify && !simplifier->simplify())
@@ -2629,7 +2631,8 @@ void Solver::checkNoWrongAttach() const
     ) {
         const Clause& cl = *clAllocator->getPointer(*it);
         for (uint32_t i = 0; i < cl.size(); i++) {
-            if (i > 0) assert(cl[i-1].var() != cl[i].var());
+            if (i > 0)
+                assert(cl[i-1].var() != cl[i].var());
         }
     }
 }
