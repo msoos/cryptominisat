@@ -47,11 +47,14 @@ class CompleteDetachReatacher
 {
     public:
         CompleteDetachReatacher(Solver* solver);
-        bool reattachLongs();
+        bool reattachLongs(bool removeStatsFrist = false);
         void detachNonBinsNonTris();
 
     private:
-        void cleanAndAttachClauses(vector<ClOffset>& cs);
+        void cleanAndAttachClauses(
+            vector<ClOffset>& cs
+            , bool removeStatsFrist
+        );
         bool cleanClause(Clause* cl);
 
         class ClausesStay {

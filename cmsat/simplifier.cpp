@@ -44,6 +44,7 @@
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
+#include "completedetachreattacher.h"
 #endif
 
 //#define VERBOSE_DEBUG
@@ -1233,6 +1234,8 @@ bool Simplifier::simplify()
     //be added to occur, so exit, we can't do most of the good stuff
     //like var-elim
     if (!ret) {
+        CompleteDetachReatacher detRet(solver);;
+        detRet.reattachLongs(true);
         return solver->okay();
     }
 
