@@ -1386,7 +1386,8 @@ lbool Solver::simplifyProblem()
                 << endl;
             }
             implCache.free();
-            litReachable.~vector();
+            vector<LitReachData> tmp;
+            litReachable.swap(tmp);
             conf.doCache = false;
         }
     }

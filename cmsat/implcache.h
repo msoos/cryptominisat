@@ -239,7 +239,8 @@ public:
 
     void free()
     {
-        implCache.~vector();
+        vector<TransCache> tmp;
+        implCache.swap(tmp);
     }
 
     void clear()
