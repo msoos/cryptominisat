@@ -332,6 +332,38 @@ bool Prober::probe()
     }
 
 end:
+
+    //If time wasted on cache updating (extraTime) is large, stop cache
+    //updation
+    double timeOnCache = (double)extraTime
+            /(double)(solver->propStats.bogoProps
+               + solver->propStats.otfHyperTime
+               + extraTime
+            ) * 100.0;
+
+    //More than 50% of the time is spent updating the cache... that's a lot
+    //Disable and free
+    if (timeOnCache > 50.0)  {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [probe] too much time spent on updating cache: "
+            << std::fixed << std::setprecision(1) << timeOnCache
+            << "% during probing --> disabling cache"
+            << endl;
+        }
+
+        solver->conf.doCache = false;
+        solver->implCache.free();
+    } else {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [probe] time spent updating cache&other housekeeping during probing: "
+            << std::fixed << std::setprecision(1) << timeOnCache
+            << "%"
+            << endl;
+        }
+    }
+
     //Delete any remaining binaries to add or remove
     //next time, variables will be renumbered/etc. so it will be wrong
     //to add/remove them
