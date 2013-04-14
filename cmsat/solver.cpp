@@ -637,10 +637,8 @@ void Solver::renumberVariables()
     #endif
 
     //Fill the first part of interToOuter with vars that are used
-    printMemStats();
     interToOuter.clear();
     interToOuter.resize(nVars());
-    printMemStats();
     outerToInter.clear();
     outerToInter.resize(nVars());
     size_t at = 0;
