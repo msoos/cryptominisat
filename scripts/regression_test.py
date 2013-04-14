@@ -176,6 +176,7 @@ class Tester:
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
         cmd += "--subsume1 %s " % random.randint(0,1)
         cmd += "--block %s " % random.randint(0,1)
+        cmd += "--occlearntmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--scc %s " % random.randint(0,1)

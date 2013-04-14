@@ -402,6 +402,8 @@ void Main::parseCommandLine()
         , "No extended subsumption with binary clauses")
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
+    ("occlearntmax", po::value<unsigned>(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
+        , "Don't add to occur list any learnt clause larger than this")
     ;
 
     std::ostringstream sccFindPercent;
