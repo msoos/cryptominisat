@@ -2082,6 +2082,14 @@ void Solver::printMemStats() const
     );
     account += mem;
 
+    mem = prober->memUsed();
+    printStatsLine("c Mem for prober"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+    account += mem;
 
     printStatsLine("c Accounted for mem"
         , (double)account/(double)totalMem*100.0

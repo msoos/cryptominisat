@@ -46,7 +46,6 @@ using std::endl;
 */
 Prober::Prober(Solver* _solver):
     solver(_solver)
-    , tmpPs(2)
     , numPropsMultiplier(1.0)
     , lastTimeZeroDepthAssings(0)
 {
@@ -66,39 +65,6 @@ struct ActSorter
         return (activities[var1] < activities[var2]);
     }
 };
-
-void Prober::sortAndResetCandidates()
-{
-    candidates.clear();
-    candidates.resize(solver->nVars());
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        Lit lit = Lit(i, false);
-        candidates[i].var = lit.var();
-
-        //Calculate approx number of literals propagated for positive polarity
-        //TODO stamping -- replace '0'
-        size_t posPolar =
-            std::max<size_t>(
-                solver->watches[(~lit).toInt()].size()
-                , 0//solver->implCache[(~lit).toInt()].lits.size()
-            );
-
-        //Calculate approx number of literals propagated for negative polarity
-        //TODO stamping -- replace '0'
-        size_t negPolar =
-            std::max<size_t>(
-                solver->watches[lit.toInt()].size()
-                , 0 //solver->implCache[lit.toInt()].lits.size()
-            );
-
-        //Minimim of the two polarities
-        candidates[i].minOfPolarities = std::min(posPolar, negPolar);
-        //cout << "candidate size: " << candidates[i].minOfPolarities << endl;
-    }
-
-    //Sort candidates from MAX to MIN of 'minOfPolarities'
-    std::sort(candidates.begin(), candidates.end());
-}
 
 void Prober::checkOTFRatio()
 {
@@ -229,8 +195,8 @@ bool Prober::probe()
     }
 
     //Use candidates
-    sortAndResetCandidates();
-    candidates.clear();
+    //sortAndResetCandidates();
+    //candidates.clear();
 
     //Calculate the set of possible variables for branching on randomly
     vector<Var> possCh;
@@ -689,6 +655,52 @@ bool Prober::tryThis(const Lit lit, const bool first)
     return solver->enqueueThese(toEnqueue);
 }
 
+uint64_t Prober::memUsed() const
+{
+    uint64_t mem = 0;
+    mem += propagatedBitSet.capacity()*sizeof(uint32_t);
+    mem += toEnqueue.capacity()*sizeof(Lit);
+    mem += tmp.capacity()*sizeof(Lit);
+    mem += propagated.getSize()/8;
+    mem += propValue.getSize()/8;
+    mem += candidates.capacity()*sizeof(TwoSignVar);
+
+    return mem;
+}
+
+/*void Prober::sortAndResetCandidates()
+{
+    candidates.clear();
+    candidates.resize(solver->nVars());
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        Lit lit = Lit(i, false);
+        candidates[i].var = lit.var();
+
+        //Calculate approx number of literals propagated for positive polarity
+        //TODO stamping -- replace '0'
+        size_t posPolar =
+            std::max<size_t>(
+                solver->watches[(~lit).toInt()].size()
+                , 0//solver->implCache[(~lit).toInt()].lits.size()
+            );
+
+        //Calculate approx number of literals propagated for negative polarity
+        //TODO stamping -- replace '0'
+        size_t negPolar =
+            std::max<size_t>(
+                solver->watches[lit.toInt()].size()
+                , 0 //solver->implCache[lit.toInt()].lits.size()
+            );
+
+        //Minimim of the two polarities
+        candidates[i].minOfPolarities = std::min(posPolar, negPolar);
+        //cout << "candidate size: " << candidates[i].minOfPolarities << endl;
+    }
+
+    //Sort candidates from MAX to MIN of 'minOfPolarities'
+    std::sort(candidates.begin(), candidates.end());
+}*/
+
 #ifdef DEBUG_REMOVE_USELESS_BIN
 void Prober::fillTestUselessBinRemoval(const Lit lit)
 {
@@ -870,3 +882,4 @@ void Prober::testBinRemoval(const Lit origLit)
 //
 //     return solver->ok;
 // }
+

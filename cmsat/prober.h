@@ -293,6 +293,7 @@ class Prober {
         };
 
         const Stats& getStats() const;
+        uint64_t memUsed() const;
 
     private:
         //Main
@@ -377,9 +378,6 @@ class Prober {
         bool tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
         bool tryMultiLevelAll();
         void fillToTry(vector<Var>& toTry);
-
-        //Temporaries
-        vector<Lit> tmpPs;
 
         //Used to count extra time, must be cleared at every startup
         uint64_t extraTime;
