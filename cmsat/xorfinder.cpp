@@ -765,3 +765,30 @@ void XorFinder::findXorMatch(
         end:;
     }
 }
+
+uint64_t XorFinder::memUsed() const
+{
+    uint64_t mem = 0;
+    mem += xors.capacity()*sizeof(Xor);
+    mem += xorOcc.capacity()*sizeof(vector<uint32_t>);
+    for(size_t i = 0; i < xorOcc.size(); i++) {
+        mem += xorOcc[i].capacity()*sizeof(uint32_t);
+    }
+    mem += triedAlready.size()*sizeof(ClOffset); //TODO very much under-estimates
+    mem += blocks.capacity()*sizeof(vector<Var>);
+    for(size_t i = 0; i< blocks.size(); i++) {
+        mem += blocks[i].capacity()*sizeof(Var);
+    }
+    mem += varToBlock.capacity()*sizeof(size_t);
+    vector<size_t> varToBlock; ///<variable-> block index map
+
+    //Temporary
+    mem += tmpClause.capacity()*sizeof(Lit);
+    mem += varsMissing.capacity()*sizeof(uint32_t);
+
+    //Temporaries for putting xors into matrix, and extracting info from matrix
+    mem += outerToInterVarMap.capacity()*sizeof(size_t);
+    mem += interToOUterVarMap.capacity()*sizeof(size_t);
+
+    return mem;
+}

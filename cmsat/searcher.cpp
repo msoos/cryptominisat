@@ -1362,7 +1362,6 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
-    #endif
 
     //Clause data
     clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
@@ -1373,6 +1372,7 @@ void Searcher::resetStats()
             sizeAndGlue[i][i2] = 0;
         }
     }
+    #endif
 
     //Rest solving stats
     stats.clear();
@@ -2708,3 +2708,24 @@ PropBy Searcher::propagate(
         return propagateAnyOrder();
     }
 }
+
+const uint64_t Searcher::memUsedSearch() const
+{
+    uint64_t mem = 0;
+    mem += otfMustAttach.capacity()*sizeof(OTFClause);
+    mem += toAttachLater.capacity()*sizeof(ClOffset);
+    mem += toClear.capacity()*sizeof(Lit);
+    mem += trail.capacity()*sizeof(Lit);
+    mem += trail_lim.capacity()*sizeof(uint32_t);
+    mem += activities.capacity()*sizeof(uint32_t);
+    mem += order_heap.memUsed();
+    mem += learnt_clause.capacity()*sizeof(Lit);
+    mem += hist.memUsed();
+    mem += conflict.capacity()*sizeof(Lit);
+    mem += dummy.capacity()*sizeof(Lit);
+    mem += analyze_stack.capacity()*sizeof(Lit);
+    mem += solution.capacity()*sizeof(lbool);
+
+    return mem;
+}
+

@@ -102,6 +102,7 @@ class SCCFinder {
         };
 
         const Stats& getStats() const;
+        uint64_t memUsed() const;
 
     private:
 
@@ -111,7 +112,7 @@ class SCCFinder {
         uint32_t globalIndex;
         vector<uint32_t> index;
         vector<uint32_t> lowlink;
-        std::stack<uint32_t> stack;
+        std::stack<uint32_t, vector<uint32_t> > stack;
         vector<char> stackIndicator;
         vector<uint32_t> tmp;
 

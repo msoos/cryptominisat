@@ -170,6 +170,13 @@ class Searcher : public PropEngine
 
                 cout << std::right;
             }
+
+            uint64_t memUsed() const
+            {
+                uint64_t mem = sizeof(Hist);
+                mem += glueHist.usedMem();
+                return mem;
+            }
         };
 
         //////////////////////////////
@@ -619,9 +626,11 @@ class Searcher : public PropEngine
         std::pair<size_t, size_t> removeUselessBins();
 
         Hist hist;
+        #ifdef STATS_NEEDED
         vector<uint32_t>    clauseSizeDistrib;
         vector<uint32_t>    clauseGlueDistrib;
         boost::multi_array<uint32_t, 2> sizeAndGlue;
+        #endif
 
         /////////////////
         //Settings
@@ -733,6 +742,7 @@ class Searcher : public PropEngine
         void   minimiseLearntFurther(vector<Lit>& cl);
         void   stampBasedLearntMinim(vector<Lit>& cl);
         const Stats& getStats() const;
+        const uint64_t memUsedSearch() const;
 
     private:
 

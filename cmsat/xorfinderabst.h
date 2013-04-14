@@ -31,6 +31,7 @@ class XorFinderAbst
 {
     public:
         virtual bool findXors() = 0;
+        virtual uint64_t memUsed() const = 0;
 };
 
 }

@@ -637,8 +637,10 @@ void Solver::renumberVariables()
     #endif
 
     //Fill the first part of interToOuter with vars that are used
+    printMemStats();
     interToOuter.clear();
     interToOuter.resize(nVars());
+    printMemStats();
     outerToInter.clear();
     outerToInter.resize(nVars());
     size_t at = 0;
@@ -2007,14 +2009,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = 0;
-    mem += otfMustAttach.capacity()*sizeof(OTFClause);
-    mem += toAttachLater.capacity()*sizeof(ClOffset);
-    mem += toClear.capacity()*sizeof(Lit);
-    mem += trail.capacity()*sizeof(Lit);
-    mem += trail_lim.capacity()*sizeof(uint32_t);
-    mem += activities.capacity()*sizeof(uint32_t);
-    //mem += order_heap.memUsed();
+    mem = memUsedSearch();
     printStatsLine("c Mem for search"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2051,8 +2046,17 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = simplifier->bytesMemUsed();
+    mem = simplifier->memUsed();
     printStatsLine("c Mem for simplifier"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+    account += mem;
+
+    mem = simplifier->memUsedXor();
+    printStatsLine("c Mem for xor-finder"
         , mem/(1024UL*1024UL)
         , "MB"
         , (double)mem/(double)totalMem*100.0
@@ -2068,6 +2072,16 @@ void Solver::printMemStats() const
         , "%"
     );
     account += mem;
+
+    mem = sCCFinder->memUsed();
+    printStatsLine("c Mem for SCC"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+    account += mem;
+
 
     printStatsLine("c Accounted for mem"
         , (double)account/(double)totalMem*100.0

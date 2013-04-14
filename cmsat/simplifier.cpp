@@ -3363,7 +3363,7 @@ void Simplifier::print_elimed_vars() const
     }
 }
 
-uint64_t Simplifier::bytesMemUsed() const
+uint64_t Simplifier::memUsed() const
 {
     uint64_t b = 0;
     b += seen.capacity()*sizeof(char);
@@ -3373,12 +3373,44 @@ uint64_t Simplifier::bytesMemUsed() const
     b += finalLits.capacity()*sizeof(Lit);
     b += subs.capacity()*sizeof(ClOffset);
     b += subsLits.capacity()*sizeof(Lit);
-    b += var_elimed.capacity()*sizeof(char);
+    b += var_elimed.capacity()*sizeof(char); //TODO wrong, because of template specialization of bit-array
+    for(map<Var, vector<size_t> >::const_iterator
+        it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
+        ; it != end
+        ; it++
+    ) {
+        b += it->second.capacity()*sizeof(size_t);
+    }
+    b += blockedClauses.capacity()*sizeof(BlockedClause);
+    for(vector<BlockedClause>::const_iterator
+        it = blockedClauses.begin(), end = blockedClauses.end()
+        ; it != end
+        ; it++
+    ) {
+        b += it->lits.capacity()*sizeof(Lit);
+    }
+    b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>))*sizeof(std::_Rb_tree_node_base);
     b += varElimOrder.memUsed();
     b += varElimComplexity.capacity()*sizeof(int)*2;
+    b += touched.memUsed();
+    b += clauses.capacity()*sizeof(ClOffset);
 
     return b;
 }
+
+uint64_t Simplifier::memUsedXor() const
+{
+    #ifdef USE_M4RI
+    if (xorFinder) {
+        return xorFinder->memUsed();
+    } else {
+        return 0;
+    }
+    #else
+    return 0;
+    #endif
+}
+
 
 /*const GateFinder* Simplifier::getGateFinder() const
 {
