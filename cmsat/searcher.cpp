@@ -1394,7 +1394,7 @@ lbool Searcher::burstSearch()
     //Print what we will be doing
     if (conf.verbosity >= 2) {
         cout
-        << "c Doing bust search for " << conf.burstSearchLen << " conflicts"
+        << "c Doing burst search for " << conf.burstSearchLen << " conflicts"
         << endl;
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
