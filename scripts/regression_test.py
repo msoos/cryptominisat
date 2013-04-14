@@ -448,7 +448,7 @@ class Tester:
         (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
         if self.check_unsat and unsat:
-            toexec = "../../lingeling-587f/lingeling %s" % fname
+            toexec = "../../lingeling-587f/lingeling -f %s" % fname
             print "Solving with other solver.."
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                                  preexec_fn=setlimits)
