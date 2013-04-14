@@ -541,6 +541,8 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
+    ("parts", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
+        , "Find parts")
     ;
 
     po::positional_options_description p;

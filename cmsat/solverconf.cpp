@@ -142,6 +142,7 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doRenumberVars   (true)
+        , doFindParts      (false)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)
@@ -163,7 +164,6 @@ SolverConf::SolverConf() :
         , needResultFile       (false)
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
-        , doFindParts (false)
         , origSeed(0)
 
 {

@@ -91,6 +91,26 @@ bool PartFinder::findParts()
         << std::setprecision(2) << std::fixed << cpuTime() - time
         << " s"
         << endl;
+
+        size_t totalSmallSize = 0;
+        size_t i = 0;
+        for(map<uint32_t, vector<Var> >::const_iterator
+            it = reverseTable.begin(), end = reverseTable.end()
+            ; it != end
+            ; it++, i++
+        ) {
+            cout
+            << "c part " << std::setw(5) << i
+            << " size: " << std::setw(10) << it->second.size()
+            << endl;
+
+            if (it->second.size() < 100) {
+                totalSmallSize += it->second.size();
+            }
+        }
+        cout
+        << "c Total small (<100 vars) parts' vars: " << totalSmallSize
+        << endl;
     }
 
     return true;
