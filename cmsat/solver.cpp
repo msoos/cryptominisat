@@ -1913,17 +1913,21 @@ void Solver::printFullStats() const
     printMemStats();
 }
 
-void Solver::printWatchMemUsed() const
+uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
 {
-    size_t numBytesForWatch = 0;
-    numBytesForWatch += watches.capacity()*sizeof(vec<Watched>);
+    size_t mem = 0;
+    mem += watches.capacity()*sizeof(vec<Watched>);
     for(size_t i = 0; i < watches.size(); i++) {
-        numBytesForWatch += watches[i].capacity()*sizeof(Watched);
+        mem += watches[i].capacity()*sizeof(Watched);
     }
     printStatsLine("c Mem for watches"
-        , numBytesForWatch/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.
+        , "%"
     );
+
+    return mem;
 }
 
 void Solver::printMemStats() const
@@ -1933,75 +1937,133 @@ void Solver::printMemStats() const
         , totalMem/(1024UL*1024UL)
         , "MB"
     );
+    uint64_t account = 0;
 
+    size_t mem = 0;
+    mem += clAllocator->getMemUsed();
     printStatsLine("c Mem for longclauses"
-        , clAllocator->getMemUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
-    printWatchMemUsed();
+    account += printWatchMemUsed(totalMem);
 
-    size_t numBytesForVars = 0;
-    numBytesForVars += assigns.capacity()*sizeof(lbool);
-    numBytesForVars += varData.capacity()*sizeof(VarData);
-    numBytesForVars += varDataLT.capacity()*sizeof(VarData::Stats);
-    numBytesForVars += backupActivity.capacity()*sizeof(uint32_t);
-    numBytesForVars += backupPolarity.capacity()*sizeof(bool);
-    numBytesForVars += decisionVar.capacity()*sizeof(char);
-    numBytesForVars += assumptions.capacity()*sizeof(Lit);
-
+    mem = 0;
+    mem += assigns.capacity()*sizeof(lbool);
+    mem += varData.capacity()*sizeof(VarData);
+    mem += varDataLT.capacity()*sizeof(VarData::Stats);
+    mem += backupActivity.capacity()*sizeof(uint32_t);
+    mem += backupPolarity.capacity()*sizeof(bool);
+    mem += decisionVar.capacity()*sizeof(char);
+    mem += assumptions.capacity()*sizeof(Lit);
     printStatsLine("c Mem for vars"
-        , numBytesForVars/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
-    );
+        , (double)mem/(double)totalMem*100.0
+        , "%"
 
+    );
+    account += mem;
+
+    mem = 0;
+    mem += toPropNorm.capacity()*sizeof(Lit);
+    mem += toPropBin.capacity()*sizeof(Lit);
+    mem += toPropRedBin.capacity()*sizeof(Lit);
+    mem += stamp.getMemUsed();
     printStatsLine("c Mem for stamps"
-        , stamp.getMemUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
+    mem = implCache.memUsed();
     printStatsLine("c Mem for impl cache"
-        , implCache.memUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
+    mem = hist.getMemUsed();
     printStatsLine("c Mem for search stats"
-        , hist.getMemUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
-    size_t searchMem = 0;
-    searchMem += toPropNorm.capacity()*sizeof(Lit);
-    searchMem += toPropBin.capacity()*sizeof(Lit);
-    searchMem += toPropRedBin.capacity()*sizeof(Lit);
-    searchMem += trail.capacity()*sizeof(Lit);
-    searchMem += trail_lim.capacity()*sizeof(Lit);
-    searchMem += activities.capacity()*sizeof(uint32_t);
-    //searchMem += order_heap.memUsed();
+    mem = 0;
+    mem += otfMustAttach.capacity()*sizeof(OTFClause);
+    mem += toAttachLater.capacity()*sizeof(ClOffset);
+    mem += toClear.capacity()*sizeof(Lit);
+    mem += trail.capacity()*sizeof(Lit);
+    mem += trail_lim.capacity()*sizeof(uint32_t);
+    mem += activities.capacity()*sizeof(uint32_t);
+    //mem += order_heap.memUsed();
     printStatsLine("c Mem for search"
-        , searchMem/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
-    size_t tempsSize = 0;
-    tempsSize += seen.capacity()*sizeof(uint16_t);
-    tempsSize += seen2.capacity()*sizeof(uint16_t);
-    tempsSize += toClear.capacity()*sizeof(Lit);
-    tempsSize += analyze_stack.capacity()*sizeof(Lit);
-    tempsSize += dummy.capacity()*sizeof(Lit);
+    mem = 0;
+    mem += seen.capacity()*sizeof(uint16_t);
+    mem += seen2.capacity()*sizeof(uint16_t);
+    mem += toClear.capacity()*sizeof(Lit);
+    mem += analyze_stack.capacity()*sizeof(Lit);
+    mem += dummy.capacity()*sizeof(Lit);
     printStatsLine("c Mem for temporaries"
-        , tempsSize/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
+    mem = 0;
+    mem += interToOuterMain.capacity()*sizeof(Var);
+    mem += interToOuter.capacity()*sizeof(Var);
+    mem += interToOuter2.capacity()*sizeof(Var);
+    mem += outerToInter.capacity()*sizeof(Var);
+    mem += outerToInterMain.capacity()*sizeof(Var);
+    printStatsLine("c Mem for renumberer"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+    account += mem;
+
+    mem = simplifier->bytesMemUsed();
     printStatsLine("c Mem for simplifier"
-        , simplifier->bytesMemUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
     );
+    account += mem;
 
+    mem = varReplacer->bytesMemUsed();
     printStatsLine("c Mem for varReplacer"
-        , varReplacer->bytesMemUsed()/(1024UL*1024UL)
+        , mem/(1024UL*1024UL)
         , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+    account += mem;
+
+    printStatsLine("c Accounted for mem"
+        , (double)account/(double)totalMem*100.0
+        , "%"
     );
 }
 
