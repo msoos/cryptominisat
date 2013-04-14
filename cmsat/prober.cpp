@@ -658,6 +658,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 uint64_t Prober::memUsed() const
 {
     uint64_t mem = 0;
+    mem += visitedAlready.capacity()*sizeof(char);
     mem += propagatedBitSet.capacity()*sizeof(uint32_t);
     mem += toEnqueue.capacity()*sizeof(Lit);
     mem += tmp.capacity()*sizeof(Lit);
