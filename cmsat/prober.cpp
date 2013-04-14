@@ -470,16 +470,23 @@ bool Prober::tryThis(const Lit lit, const bool first)
     solver->enqueue(lit);
     solver->varData[lit.var()].depth = 0;
 
-    if (solver->conf.verbosity >= 6)
-        cout << "c Probing lit " << lit << endl;
+    //Display what we are doing in case of high verbosity
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Probing lit " << lit
+        << endl;
+    }
 
     Lit failed = lit_Undef;
     if (solver->conf.otfHyperbin) {
+        //Set timeout for ONE enqueue. This used so that in case ONE enqueue
+        //takes too long (usually because of hyper-bin), we exit early
         const uint64_t timeout =
             solver->propStats.otfHyperTime
             + solver->propStats.bogoProps
             + 1600ULL*1000ULL*1000ULL;
 
+        //DFS is expensive, actually. So do BFS 50% of the time
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
             const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
             failed = solver->propagateFullDFS(
@@ -516,6 +523,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
             return solver->okay();
         }
     } else {
+        //No hyper-bin so we use regular propagate and regular analyze
+
         PropBy confl = solver->propagate();
         if (!confl.isNULL()) {
             ResolutionTypes<uint16_t> resolutions;
