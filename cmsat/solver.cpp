@@ -795,7 +795,7 @@ Var Solver::newVar(const bool dvar)
     const Var var = decisionVar.size();
 
     if (conf.doStamp
-        && nVars() > 10ULL*1000ULL*1000ULL
+        && nVars() > 15ULL*1000ULL*1000ULL
     ) {
         conf.doStamp = false;
         stamp.freeMem();
