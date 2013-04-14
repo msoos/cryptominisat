@@ -698,13 +698,18 @@ void Solver::renumberVariables()
 
     //Update stamps
     if (conf.doStamp) {
+
+        //Update both dominators
         for(size_t i = 0; i < stamp.tstamp.size(); i++) {
             for(size_t i2 = 0; i2 < 2; i2++) {
-            if (stamp.tstamp[i].dominator[i2] != lit_Undef)
-                stamp.tstamp[i].dominator[i2] = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
+                if (stamp.tstamp[i].dominator[i2] != lit_Undef)
+                    stamp.tstamp[i].dominator[i2]
+                        = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
             }
         }
-        updateArray(stamp.tstamp, interToOuter2);
+
+        //Update the stamp. Stamp can be very large, so update by swapping
+        updateBySwap(stamp.tstamp, seen, interToOuter2);
     }
 
     //Update clauses
