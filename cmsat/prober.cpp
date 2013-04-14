@@ -179,6 +179,7 @@ bool Prober::probe()
 
     //Stats
     extraTime = 0;
+    extraTimeCache = 0;
     solver->propStats.clear();
     runStats.clear();
     runStats.origNumFreeVars = numActiveVars;
@@ -263,10 +264,13 @@ bool Prober::probe()
     assert(solver->propStats.otfHyperTime == 0);
     for(size_t i = 0
         ; i < possCh.size()
-            && solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime
-                    < numPropsTodo
+            && solver->propStats.bogoProps
+                + solver->propStats.otfHyperTime
+                + extraTime + extraTimeCache
+                < numPropsTodo
         ; i++
     ) {
+        extraTime += 20;
         runStats.numLoopIters++;
         const Var var = possCh[i];
 
@@ -274,9 +278,9 @@ bool Prober::probe()
         if (var == std::numeric_limits<Var>::max())
             continue;
 
+        //Probe 'false' first --> this is not critical
+        //but one has to be chosen.
         Lit lit = Lit(var, false);
-
-        extraTime += 200;
 
         //Check if var is set already
         if (solver->value(lit.var()) != l_Undef
@@ -317,6 +321,7 @@ bool Prober::probe()
 
         //Update stats
         runStats.numVarProbed++;
+        extraTime += 20;
 
         //Try it
         if (!tryThis(lit, true))
@@ -335,10 +340,10 @@ end:
 
     //If time wasted on cache updating (extraTime) is large, stop cache
     //updation
-    double timeOnCache = (double)extraTime
+    double timeOnCache = (double)extraTimeCache
             /(double)(solver->propStats.bogoProps
                + solver->propStats.otfHyperTime
-               + extraTime
+               + extraTime + extraTimeCache
             ) * 100.0;
 
     //More than 50% of the time is spent updating the cache... that's a lot
@@ -601,8 +606,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
             //Update stats/markings
             //cacheUpdated[(~ancestor).toInt()]++;
             extraTime += 1;
-            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/30;
-            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/30;
+            extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
+            extraTimeCache += solver->implCache[(~thisLit).toInt()].lits.size()/30;
 
             const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
 

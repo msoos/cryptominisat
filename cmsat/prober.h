@@ -383,6 +383,7 @@ class Prober {
 
         //Used to count extra time, must be cleared at every startup
         uint64_t extraTime;
+        uint64_t extraTimeCache;
 
         //Stats
         Stats runStats;
