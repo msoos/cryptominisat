@@ -807,6 +807,18 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
+    if (conf.doCache && nVars() > 8ULL*1000ULL*1000ULL) {
+        conf.doCache = false;
+        implCache.free();
+
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Switching off caching due to excessive number of variables"
+            << " (it would take too much memory)"
+            << endl;
+        }
+    }
+
     if (conf.doStamp) {
         stamp.newVar();
     }
