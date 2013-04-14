@@ -367,5 +367,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
 uint64_t ClauseAllocator::getMemUsed() const
 {
-    return maxSize*sizeof(BASE_DATA_TYPE);
+    uint64_t mem = 0;
+    mem += maxSize*sizeof(BASE_DATA_TYPE);
+    mem += origClauseSizes.capacity()*sizeof(uint32_t);
+
+    return mem;
 }
