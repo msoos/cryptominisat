@@ -1946,6 +1946,8 @@ void Solver::printMemStats() const
 
     size_t mem = 0;
     mem += clAllocator->getMemUsed();
+    mem += longIrredCls.capacity()*sizeof(ClOffset);
+    mem += longRedCls.capacity()*sizeof(ClOffset);
     printStatsLine("c Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -1987,6 +1989,7 @@ void Solver::printMemStats() const
     account += mem;
 
     mem = implCache.memUsed();
+    mem += litReachable.capacity()*sizeof(LitReachData);
     printStatsLine("c Mem for impl cache"
         , mem/(1024UL*1024UL)
         , "MB"
