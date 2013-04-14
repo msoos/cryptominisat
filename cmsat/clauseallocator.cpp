@@ -244,7 +244,6 @@ void ClauseAllocator::consolidate(
     }
 
     //Data for new struct
-    vector<ClOffset> newClauseOffsets;
     vector<uint32_t> newOrigClauseSizes;
     vector<ClOffset> newOffsets;
     uint64_t newSize = 0;
