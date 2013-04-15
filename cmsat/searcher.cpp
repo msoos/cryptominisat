@@ -1027,7 +1027,7 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
                 if (hist.trailDepthHist.isvalid()
-                    && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.6
+                    && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.8
                 ) {
                     //Nothing
                 } else {
