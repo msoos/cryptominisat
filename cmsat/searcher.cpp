@@ -613,6 +613,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         #endif
 
         const PropBy reason = varData[analyze_stack.top().var()].reason;
+        PropByType type = reason.getType();
         analyze_stack.pop();
 
         //Must have a reason
@@ -620,7 +621,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
         size_t size;
         Clause* cl = NULL;
-        switch (reason.getType()) {
+        switch (type) {
             case clause_t:
                 cl = clAllocator->getPointer(reason.getClause());
                 size = cl->size()-1;
@@ -645,7 +646,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             ; i++
         ) {
             Lit p;
-            switch (reason.getType()) {
+            switch (type) {
                 case clause_t:
                     p = (*cl)[i+1];
                     break;
