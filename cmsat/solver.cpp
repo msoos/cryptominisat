@@ -2008,6 +2008,7 @@ void Solver::printMemStats() const
     account += mem;
 
     mem = memUsedSearch();
+    mem += model.capacity()*sizeof(lbool);
     printStatsLine("c Mem for search"
         , mem/(1024UL*1024UL)
         , "MB"
