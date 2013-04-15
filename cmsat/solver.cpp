@@ -1999,7 +1999,7 @@ void Solver::printMemStats() const
     account += mem;
 
     mem = hist.getMemUsed();
-    printStatsLine("c Mem for search stats"
+    printStatsLine("c Mem for history stats"
         , mem/(1024UL*1024UL)
         , "MB"
         , (double)mem/(double)totalMem*100.0
