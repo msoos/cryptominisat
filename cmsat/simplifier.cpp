@@ -2165,11 +2165,10 @@ void Simplifier::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    if (addedClauseLits < 3000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
-    }
+
+    numMaxElim *= 2;
+    numMaxSubsume0 *= 2;
+    numMaxSubsume1 *= 2;
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
