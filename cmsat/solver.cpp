@@ -1221,7 +1221,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
                 (double)stats.recMinLitRem/(double)stats.litsLearntNonMin*100.0;
 
             double costPerGained = (double)stats.recMinimCost/remPercent;
-            if (costPerGained > 100ULL*1000ULL*1000ULL) {
+            if (costPerGained > 200ULL*1000ULL*1000ULL) {
                 conf.doRecursiveMinim = false;
                 if (conf.verbosity >= 2) {
                     cout
