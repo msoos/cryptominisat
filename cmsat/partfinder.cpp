@@ -144,7 +144,6 @@ void PartFinder::addToPartImplicits()
             ; it2 != end2
             ; it2++
         ) {
-            const vec<Watched>& ws = *it;
             if (it2->isBinary()
                 //Only non-learnt
                 && !it2->learnt()
