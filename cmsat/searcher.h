@@ -65,7 +65,7 @@ class Searcher : public PropEngine
             AvgCalc<uint32_t>   branchDepthDeltaHist;
             AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
-            AvgCalc<uint32_t>   trailDepthHist;
+            bqueue<uint32_t>   trailDepthHist;
             AvgCalc<uint32_t>   trailDepthHistLT;
 
             AvgCalc<uint32_t>   trailDepthDeltaHist;
@@ -134,6 +134,7 @@ class Searcher : public PropEngine
             void setSize(const size_t shortTermHistorySize)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
+                trailDepthHist.clearAndResize(shortTermHistorySize);
             }
 
             void print() const
@@ -160,7 +161,7 @@ class Searcher : public PropEngine
                 << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
 
                 << " traild"
-                << " " << std::right << trailDepthHist.avgPrint(0, 7)
+                << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
                 << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
 
                 << " traildd"

@@ -1020,7 +1020,13 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
-                params.needToStopSearch = true;
+                if (hist.trailDepthHist.isvalid()
+                    && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.6
+                ) {
+                    //Nothing
+                } else {
+                    params.needToStopSearch = true;
+                }
             }
 
             break;
