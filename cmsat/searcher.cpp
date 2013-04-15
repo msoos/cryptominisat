@@ -2781,7 +2781,7 @@ PropBy Searcher::propagate(
     }
 }
 
-const uint64_t Searcher::memUsedSearch() const
+uint64_t Searcher::memUsedSearch() const
 {
     uint64_t mem = 0;
     mem += otfMustAttach.capacity()*sizeof(OTFClause);

@@ -742,7 +742,7 @@ class Searcher : public PropEngine
         void   minimiseLearntFurther(vector<Lit>& cl);
         void   stampBasedLearntMinim(vector<Lit>& cl);
         const Stats& getStats() const;
-        const uint64_t memUsedSearch() const;
+        uint64_t memUsedSearch() const;
 
     private:
 
