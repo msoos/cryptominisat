@@ -1212,6 +1212,62 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
         //Solve and update stats
         status = Searcher::solve(assumptions, numConfls);
+
+        //If stats indicate that recursive minimization is not helping
+        //turn it off
+        if (conf.doRecursiveMinim) {
+            const Searcher::Stats& stats = Searcher::getStats();
+            double remPercent =
+                (double)stats.recMinLitRem/(double)stats.litsLearntNonMin*100.0;
+
+            double costPerGained = (double)stats.recMinimCost/remPercent;
+            if (costPerGained > 100ULL*1000ULL*1000ULL) {
+                conf.doRecursiveMinim = false;
+                if (conf.verbosity >= 2) {
+                    cout
+                    << "c recursive minimization too costly: "
+                    << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
+                    << "Kcost/(% lits removed) --> disabling"
+                    << endl;
+                }
+            } else {
+                if (conf.verbosity >= 2) {
+                    cout
+                    << "c recursive minimization cost OK: "
+                    << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
+                    << "Kcost/(% lits removed)"
+                    << endl;
+                }
+            }
+        }
+
+        //If more minimization isn't helping much, disable
+        if (conf.doMinimLearntMore) {
+            const Searcher::Stats& stats = Searcher::getStats();
+            double remPercent =
+                (double)(stats.moreMinimLitsStart-stats.moreMinimLitsEnd)/
+                    (double)(stats.moreMinimLitsStart)*100.0;
+
+            if (remPercent < 1.0) {
+                conf.doMinimLearntMore = false;
+                if (conf.verbosity >= 2) {
+                    cout
+                    << "c more minimization effectiveness low: "
+                    << std::fixed << std::setprecision(2) << remPercent
+                    << " % lits removed --> disabling"
+                    << endl;
+                }
+            } else {
+                if (conf.verbosity >= 2) {
+                    cout
+                    << "c more minimization effectiveness OK: "
+                    << std::fixed << std::setprecision(2) << remPercent
+                    << " %"
+                    << endl;
+                }
+            }
+        }
+
         sumStats += Searcher::getStats();
         sumPropStats += propStats;
         propStats.clear();
