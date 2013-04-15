@@ -2021,7 +2021,6 @@ void Solver::printMemStats() const
     mem += seen2.capacity()*sizeof(uint16_t);
     mem += toClear.capacity()*sizeof(Lit);
     mem += analyze_stack.capacity()*sizeof(Lit);
-    mem += dummy.capacity()*sizeof(Lit);
     printStatsLine("c Mem for temporaries"
         , mem/(1024UL*1024UL)
         , "MB"

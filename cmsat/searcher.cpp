@@ -547,56 +547,56 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         //Must have a reason
         assert(!reason.isNULL());
 
-
-        //Clause& c = *reason[var(analyze_stack.back())];
+        size_t size;
         Clause* cl = NULL;
-        dummy.clear();
         switch (reason.getType()) {
-            case null_clause_t:
-                assert(false);
-                break;
-
             case clause_t:
                 cl = clAllocator->getPointer(reason.getClause());
-                #ifdef DEBUG_LITREDUNDANT
-                cout << "Long clause: " << *cl << endl;
-                #endif
-
-                assert(cl->size() > 3);
-                dummy.resize(cl->size()-1);
-                for(size_t i = 1; i < cl->size(); i++) {
-                    dummy[i-1] = (*cl)[i];
-                }
-
+                size = cl->size()-1;
                 break;
 
             case binary_t:
-                dummy.push_back(reason.lit1());
-                #ifdef DEBUG_LITREDUNDANT
-                cout << "Bin clause: " << reason.lit1() << endl;
-                #endif
-
+                size = 1;
                 break;
 
             case tertiary_t:
-                dummy.push_back(reason.lit1());
-                dummy.push_back(reason.lit2());
-                #ifdef DEBUG_LITREDUNDANT
-                cout
-                << "Tri clause:"
-                << reason.lit1() << ", "
-                << reason.lit2() << endl;
-                #endif
-
+                size = 2;
                 break;
 
-            default:
-                assert(false);
+            case null_clause_t:
+                release_assert(false);
+                exit(-1);
                 break;
         }
 
-        for (size_t i = 0; i < dummy.size(); i++) {
-            const Lit p = dummy[i];
+        for (size_t i = 0
+            ; i < size
+            ; i++
+        ) {
+            Lit p;
+            switch (reason.getType()) {
+                case clause_t:
+                    p = (*cl)[i+1];
+                    break;
+
+                case binary_t:
+                    p = reason.lit1();
+                    break;
+
+                case tertiary_t:
+                    if (i == 0) {
+                        p = reason.lit1();
+                    } else {
+                        p = reason.lit2();
+                    }
+                    break;
+
+                case null_clause_t:
+                    release_assert(false);
+                    exit(-1);
+                    break;
+            }
+
             if (!seen[p.var()] && varData[p.var()].level > 0) {
                 if (!varData[p.var()].reason.isNULL()
                     && (abstractLevel(p.var()) & abstract_levels) != 0
@@ -2722,7 +2722,6 @@ const uint64_t Searcher::memUsedSearch() const
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.memUsed();
     mem += conflict.capacity()*sizeof(Lit);
-    mem += dummy.capacity()*sizeof(Lit);
     mem += analyze_stack.capacity()*sizeof(Lit);
     mem += solution.capacity()*sizeof(lbool);
 
