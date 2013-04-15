@@ -2262,7 +2262,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     size_t timeSpent = 0;
     for (vector<Lit>::iterator
         l = cl.begin(), end = cl.end()
-        ; l != end && timeSpent < 300
+        ; l != end && timeSpent < conf.moreMinimLimit
         ; l++
     ) {
         if (seen[l->toInt()] == 0)
@@ -2290,7 +2290,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         for (vec<Watched>::const_iterator
             i = ws.begin()
             , end = ws.end()
-            ; i != end && timeSpent < 300
+            ; i != end && timeSpent < conf.moreMinimLimit
             ; i++
         ) {
             timeSpent++;

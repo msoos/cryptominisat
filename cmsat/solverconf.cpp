@@ -55,6 +55,7 @@ SolverConf::SolverConf() :
         , doMinimLearntMore(true)
         , doRecursiveMinim (true)
         , doAlwaysFMinim   (false)
+        , moreMinimLimit   (300)
 
         //Verbosity
         , verbosity        (0)

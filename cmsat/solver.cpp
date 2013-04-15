@@ -1257,14 +1257,25 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
                     << " % lits removed --> disabling"
                     << endl;
                 }
+            } else if (remPercent > 7.0) {
+                conf.moreMinimLimit = 800;
+                if (conf.verbosity >= 2) {
+                    cout
+                    << "c more minimization effectiveness good: "
+                    << std::fixed << std::setprecision(2) << remPercent
+                    << " % --> increasing limit to " << conf.moreMinimLimit
+                    << endl;
+                }
             } else {
+                conf.moreMinimLimit = 300;
                 if (conf.verbosity >= 2) {
                     cout
                     << "c more minimization effectiveness OK: "
                     << std::fixed << std::setprecision(2) << remPercent
-                    << " %"
+                    << " % --> setting limit to norm " << conf.moreMinimLimit
                     << endl;
                 }
+                conf.moreMinimLimit = 300;
             }
         }
 
