@@ -328,7 +328,7 @@ end:
     } else {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [probe] time spent updating cache&other housekeeping during probing: "
+            << "c [probe] time spent updating cache during probing: "
             << std::fixed << std::setprecision(1) << timeOnCache
             << "%"
             << endl;
