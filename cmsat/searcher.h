@@ -248,6 +248,9 @@ class Searcher : public PropEngine
                 , stampShrinkAttempt(0)
                 , stampShrinkCl(0)
                 , stampShrinkLit(0)
+                , moreMinimLitsStart(0)
+                , moreMinimLitsEnd(0)
+                , recMinimCost(0)
 
                 //Learnt stats
                 , learntUnits(0)
@@ -302,6 +305,9 @@ class Searcher : public PropEngine
                 stampShrinkAttempt += other.stampShrinkAttempt;
                 stampShrinkCl += other.stampShrinkCl;
                 stampShrinkLit += other.stampShrinkLit;
+                moreMinimLitsStart += other.moreMinimLitsStart;
+                moreMinimLitsEnd += other.moreMinimLitsEnd;
+                recMinimCost += other.recMinimCost;
 
                 //Learnt stats
                 learntUnits += other.learntUnits;
@@ -354,6 +360,9 @@ class Searcher : public PropEngine
                 stampShrinkAttempt -= other.stampShrinkAttempt;
                 stampShrinkCl -= other.stampShrinkCl;
                 stampShrinkLit -= other.stampShrinkLit;
+                moreMinimLitsStart -= other.moreMinimLitsStart;
+                moreMinimLitsEnd -= other.moreMinimLitsEnd;
+                recMinimCost -= other.recMinimCost;
 
                 //Learnt stats
                 learntUnits -= other.learntUnits;
@@ -587,6 +596,9 @@ class Searcher : public PropEngine
             uint64_t stampShrinkAttempt;
             uint64_t stampShrinkCl;
             uint64_t stampShrinkLit;
+            uint64_t moreMinimLitsStart;
+            uint64_t moreMinimLitsEnd;
+            uint64_t recMinimCost;
 
             //Learnt stats
             uint64_t learntUnits;

@@ -524,10 +524,15 @@ Clause* Searcher::analyze(
             || learnt_clause.size() < 10
             )
     ) {
+        stats.moreMinimLitsStart += learnt_clause.size();
+
+        //Binary&cache-based minim
         minimiseLearntFurther(learnt_clause);
 
         //Stamp-based minimization
         stampBasedLearntMinim(learnt_clause);
+
+        stats.moreMinimLitsEnd += learnt_clause.size();
     }
 
     //Calc stats
@@ -668,6 +673,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     exit(-1);
                     break;
             }
+            stats.recMinimCost++;
 
             if (!seen[p.var()] && varData[p.var()].level > 0) {
                 if (!varData[p.var()].reason.isNULL()
@@ -2284,7 +2290,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         for (vec<Watched>::const_iterator
             i = ws.begin()
             , end = ws.end()
-            ; i != end
+            ; i != end && timeSpent < 300
             ; i++
         ) {
             timeSpent++;
