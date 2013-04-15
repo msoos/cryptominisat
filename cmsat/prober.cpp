@@ -120,7 +120,7 @@ bool Prober::probe()
     if (solver->binTri.redLits + solver->binTri.irredLits  < 2LL*1000LL*1000LL) {
         numPropsTodo *= 1.2;
     }
-    if (numActiveVars > 400LL*1000LL) {
+    if (numActiveVars > 600LL*1000LL) {
         numPropsTodo *= 0.8;
     }
     if (solver->binTri.redLits + solver->binTri.irredLits > 20LL*1000LL*1000LL) {
