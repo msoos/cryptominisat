@@ -278,6 +278,73 @@ void Searcher::doOTFSubsume(PropBy confl)
     }
 }
 
+void Searcher::normalClMinim()
+{
+    size_t i,j;
+    for (i = j = 1; i < learnt_clause.size(); i++) {
+        const PropBy& reason = varData[learnt_clause[i].var()].reason;
+        size_t size;
+        Clause* cl = NULL;
+        PropByType type = reason.getType();
+        if (type == null_clause_t) {
+            learnt_clause[j++] = learnt_clause[i];
+            continue;
+        }
+
+        switch (type) {
+            case clause_t:
+                cl = clAllocator->getPointer(reason.getClause());
+                size = cl->size()-1;
+                break;
+
+            case binary_t:
+                size = 1;
+                break;
+
+            case tertiary_t:
+                size = 2;
+                break;
+
+            case null_clause_t:
+                release_assert(false);
+                exit(-1);
+                break;
+        }
+
+        for (size_t k = 0; k < size; k++) {
+            Lit p;
+            switch (type) {
+                case clause_t:
+                    p = (*cl)[k+1];
+                    break;
+
+                case binary_t:
+                    p = reason.lit1();
+                    break;
+
+                case tertiary_t:
+                    if (k == 0) {
+                        p = reason.lit1();
+                    } else {
+                        p = reason.lit2();
+                    }
+                    break;
+
+                case null_clause_t:
+                    release_assert(false);
+                    exit(-1);
+                    break;
+            }
+
+            if (!seen[p.var()] && varData[p.var()].level > 0) {
+                learnt_clause[j++] = learnt_clause[i];
+                break;
+            }
+        }
+    }
+    learnt_clause.resize(j);
+}
+
 /**
 @brief    Analyze conflict and produce a reason clause.
 
@@ -431,7 +498,11 @@ Clause* Searcher::analyze(
 
     //Recursive cc min
     toClear = learnt_clause;
-    recursiveConfClauseMin();
+    if (conf.doRecursiveMinim) {
+        recursiveConfClauseMin();
+    } else {
+        normalClMinim();
+    }
 
     //Clear seen
     for (size_t i = 0; i < toClear.size(); i++) {

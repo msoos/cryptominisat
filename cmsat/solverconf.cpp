@@ -53,6 +53,7 @@ SolverConf::SolverConf() :
 
         //Clause minimisation
         , doMinimLearntMore(true)
+        , doRecursiveMinim (true)
         , doAlwaysFMinim   (false)
 
         //Verbosity

@@ -185,6 +185,7 @@ class Tester:
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--renumber %s " % random.randint(0,1)
+        cmd += "--recur %s " % random.randint(0,1)
 
         return cmd
 

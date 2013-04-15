@@ -712,6 +712,7 @@ class Searcher : public PropEngine
         // Conflict minimisation
         bool litRedundant(Lit p, uint32_t abstract_levels);
         void recursiveConfClauseMin();
+        void normalClMinim();
         MyStack<Lit> analyze_stack;
         //void            prune_removable(vector<Lit>& out_learnt);
         //void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);

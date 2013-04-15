@@ -282,6 +282,8 @@ void Main::parseCommandLine()
         , "Perform regular simplification rounds")
     ("clbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
+    ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
+        , "Perform recursive minimisation")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;

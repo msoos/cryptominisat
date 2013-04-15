@@ -73,6 +73,7 @@ class SolverConf
         RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
 
         //Clause minimisation
+        int doRecursiveMinim;
         int doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
 
