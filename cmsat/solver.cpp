@@ -853,7 +853,7 @@ Var Solver::newVar(const bool dvar)
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
 
-    Searcher::newVar();
+    Searcher::newVar(dvar);
 
     varReplacer->newVar();
     simplifier->newVar();
