@@ -33,6 +33,11 @@ SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assign
     , qhead (0)
     , assigns(_assigns)
 {
+    solver->model.resize(nVars(), l_Undef);
+    for (Var var = 0; var != nVars(); var++) {
+        solver->model[var] = value(var);
+    }
+    release_assert(solver->verifyModel());
 }
 
 /**
