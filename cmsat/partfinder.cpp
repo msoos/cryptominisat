@@ -137,58 +137,102 @@ void PartFinder::addToPartClauses(const vector<ClOffset>& cs)
 void PartFinder::addToPartImplicits()
 {
     vector<Lit> lits;
+    vector<uint16_t>& seen = solver->seen;
 
-    size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; it++, wsLit++
-    ) {
-        //If empty, skip
-        if (it->empty())
-            continue;
-
+    for (size_t var = 0; var < solver->nVars(); var++) {
+        Lit lit(var, false);
         lits.clear();
-
-        Lit lit = Lit::toLit(wsLit);
         lits.push_back(lit);
-        for(vec<Watched>::const_iterator
-            it2 = it->begin(), end2 = it->end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBinary()
-                //Only non-learnt
-                && !it2->learnt()
-                //Only do each binary once
-                && lit < it2->lit1()
-            ) {
-                lits.push_back(it2->lit1());
-            }
+        for(int sign = 0; sign < 2; sign++) {
+            lit = Lit(var, sign);
+            vec<Watched>& ws = solver->watches[lit.toInt()];
 
-            if (it2->isTri()
-                //Non-learnt
-                && !it2->learnt()
-                //Only do each tri once
-                && lit < it2->lit2()
-                && it2->lit1() < it2->lit2()
+            //If empty, skip
+            if (ws.empty())
+                continue;
+
+            for(vec<Watched>::const_iterator
+                it2 = ws.begin(), end2 = ws.end()
+                ; it2 != end2
+                ; it2++
             ) {
-                lits.push_back(it2->lit1());
-                lits.push_back(it2->lit2());
+                if (it2->isBinary()
+                    //Only non-learnt
+                    && !it2->learnt()
+                    //Only do each binary once
+                    && lit < it2->lit1()
+                ) {
+                    if (!seen[it2->lit1().var()]) {
+                        lits.push_back(it2->lit1());
+                        seen[it2->lit1().var()] = 1;
+                    }
+                }
+
+                if (it2->isTri()
+                    //Non-learnt
+                    && !it2->learnt()
+                    //Only do each tri once
+                    && lit < it2->lit2()
+                    && it2->lit1() < it2->lit2()
+                ) {
+                    if (!seen[it2->lit1().var()]) {
+                        lits.push_back(it2->lit1());
+                        seen[it2->lit1().var()] = 1;
+                    }
+
+                    if (!seen[it2->lit2().var()]) {
+                        lits.push_back(it2->lit2());
+                        seen[it2->lit2().var()] = 1;
+                    }
+                }
             }
         }
 
         if (lits.size() > 1) {
+            //Clear seen
+            for(vector<Lit>::const_iterator
+                it = lits.begin(), end = lits.end()
+                ; it != end
+                ; it++
+            ) {
+                seen[it->var()] = 0;
+            }
+
             addToPartClause(lits);
         }
+
     }
 }
 
 template<class T>
 void PartFinder::addToPartClause(const T& cl)
 {
-    set<uint32_t> tomerge;
+    assert(cl.size() > 1);
+    tomerge.clear();
     newSet.clear();
+    vector<uint16_t>& seen = solver->seen;
+
+    //Do they all belong to the same place?
+    bool allsame = false;
+    if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
+        uint32_t part = table[cl[0].var()];
+        allsame = true;
+        for (typename T::const_iterator
+            it = cl.begin(), end = cl.end()
+            ; it != end
+            ; it++
+        ) {
+            if (table[it->var()] != part) {
+                allsame = false;;
+                break;
+            }
+        }
+    }
+
+    //They already all belong to the same part, skip
+    if (allsame) {
+        return;
+    }
 
     //Where should each literal go?
     for (typename T::const_iterator
@@ -196,8 +240,12 @@ void PartFinder::addToPartClause(const T& cl)
         ; it != end
         ; it++
     ) {
-        if (table[it->var()] != std::numeric_limits<uint32_t>::max()) {
-            tomerge.insert(table[it->var()]);
+        if (table[it->var()] != std::numeric_limits<uint32_t>::max()
+        ) {
+            if (!seen[table[it->var()]]) {
+                tomerge.push_back(table[it->var()]);
+                seen[table[it->var()]] = 1;
+            }
         } else {
             newSet.push_back(it->var());
         }
@@ -205,8 +253,8 @@ void PartFinder::addToPartClause(const T& cl)
 
     //no trees to merge, only merge the clause into one tree
     if (tomerge.size() == 1) {
-
         const uint32_t into = *tomerge.begin();
+        seen[into] = 0;
         map<uint32_t, vector<Var> >::iterator intoReverse
             = reverseTable.find(into);
 
@@ -223,11 +271,12 @@ void PartFinder::addToPartClause(const T& cl)
     }
 
     //Delete tables to merge and put their elements into newSet
-    for (set<uint32_t>::iterator
+    for (vector<uint32_t>::iterator
         it = tomerge.begin(), end = tomerge.end()
         ; it != end
         ; it++
     ) {
+        seen[*it] = 0;
         //Add them all
         newSet.insert(
             newSet.end()

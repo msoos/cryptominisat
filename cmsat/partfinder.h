@@ -81,6 +81,7 @@ class PartFinder {
 
         //Temporary
         vector<Var> newSet;
+        vector<uint32_t> tomerge;
 
         Solver* solver;
 };
