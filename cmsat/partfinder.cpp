@@ -92,6 +92,7 @@ bool PartFinder::findParts()
         << " s"
         << endl;
 
+        size_t notPrinted = 0;
         size_t totalSmallSize = 0;
         size_t i = 0;
         for(map<uint32_t, vector<Var> >::const_iterator
@@ -99,18 +100,23 @@ bool PartFinder::findParts()
             ; it != end
             ; it++, i++
         ) {
-            cout
-            << "c part " << std::setw(5) << i
-            << " size: " << std::setw(10) << it->second.size()
-            << endl;
-
-            if (it->second.size() < 300) {
+            if (it->second.size() < 300 || solver->conf.verbosity >= 3) {
                 totalSmallSize += it->second.size();
+                notPrinted++;
+            } else {
+                cout
+                << "c large part " << std::setw(5) << i
+                << " size: " << std::setw(10) << it->second.size()
+                << endl;
             }
         }
-        cout
-        << "c Total small (<300 vars) parts' vars: " << totalSmallSize
-        << endl;
+
+        if (solver->conf.verbosity < 3) {
+            cout
+            << "c Not printed total small (<300 vars) parts:" << notPrinted
+            << " vars: " << totalSmallSize
+            << endl;
+        }
     }
 
     return true;
@@ -138,6 +144,10 @@ void PartFinder::addToPartImplicits()
         ; it != end
         ; it++, wsLit++
     ) {
+        //If empty, skip
+        if (it->empty())
+            continue;
+
         Lit lit = Lit::toLit(wsLit);
         for(vec<Watched>::const_iterator
             it2 = it->begin(), end2 = it->end()
