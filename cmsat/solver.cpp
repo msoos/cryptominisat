@@ -83,8 +83,12 @@ Solver::Solver(const SolverConf& _conf) :
         sqlStats = NULL;
     }
 
-    prober = new Prober(this);
-    simplifier = new Simplifier(this);
+    if (conf.doProbe) {
+        prober = new Prober(this);
+    }
+    if (conf.doSimplify) {
+        simplifier = new Simplifier(this);
+    }
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -1882,13 +1886,15 @@ void Solver::printMinStats() const
     );
 
     //Failed lit stats
-    printStatsLine("c probing time"
-        , prober->getStats().cpu_time
-        , prober->getStats().cpu_time/cpu_time*100.0
-        , "% time"
-    );
+    if (conf.doProbe) {
+        printStatsLine("c probing time"
+            , prober->getStats().cpu_time
+            , prober->getStats().cpu_time/cpu_time*100.0
+            , "% time"
+        );
 
-    prober->getStats().printShort();
+        prober->getStats().printShort();
+    }
     //Simplifier stats
     if (conf.doSimplify) {
         printStatsLine("c Simplifier time"
@@ -1992,13 +1998,15 @@ void Solver::printFullStats() const
     );
 
     //Failed lit stats
-    printStatsLine("c probing time"
-        , prober->getStats().cpu_time
-        , prober->getStats().cpu_time/cpu_time*100.0
-        , "% time"
-    );
+    if (conf.doProbe) {
+        printStatsLine("c probing time"
+            , prober->getStats().cpu_time
+            , prober->getStats().cpu_time/cpu_time*100.0
+            , "% time"
+        );
 
-    prober->getStats().print(nVars());
+        prober->getStats().print(nVars());
+    }
 
     //Simplifier stats
     if (conf.doSimplify) {
@@ -2245,14 +2253,16 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = prober->memUsed();
-    printStatsLine("c Mem for prober"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , (double)mem/(double)totalMem*100.0
-        , "%"
-    );
-    account += mem;
+    if (conf.doProbe) {
+        mem = prober->memUsed();
+        printStatsLine("c Mem for prober"
+            , mem/(1024UL*1024UL)
+            , "MB"
+            , (double)mem/(double)totalMem*100.0
+            , "%"
+        );
+        account += mem;
+    }
 
     printStatsLine("c Accounted for mem"
         , (double)account/(double)totalMem*100.0

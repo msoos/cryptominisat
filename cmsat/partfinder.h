@@ -79,6 +79,9 @@ class PartFinder {
         uint32_t part_no;
         uint32_t used_part_no;
 
+        //Temporary
+        vector<Var> newSet;
+
         Solver* solver;
 };
 

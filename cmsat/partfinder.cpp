@@ -187,7 +187,7 @@ template<class T>
 void PartFinder::addToPartClause(const T& cl)
 {
     set<uint32_t> tomerge;
-    vector<Var> newSet;
+    newSet.clear();
 
     //Where should each literal go?
     for (typename T::const_iterator
