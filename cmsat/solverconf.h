@@ -76,7 +76,7 @@ class SolverConf
         int doRecursiveMinim;
         int doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
-        int moreMinimLimit;
+        size_t moreMinimLimit;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
