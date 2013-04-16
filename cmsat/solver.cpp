@@ -58,6 +58,9 @@ using std::endl;
 Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
+    , prober(NULL)
+    , simplifier(NULL)
+    , partHandler(NULL)
     , mtrand(_conf.origSeed)
     , needToInterrupt(false)
 
@@ -96,16 +99,12 @@ Solver::Solver(const SolverConf& _conf) :
     varReplacer = new VarReplacer(this);
     if (conf.doPartHandler) {
         partHandler = new PartHandler(this);
-    } else {
-        partHandler = NULL;
     }
 }
 
 Solver::~Solver()
 {
-    if (partHandler) {
-        delete partHandler;
-    }
+    delete partHandler;
     delete sqlStats;
     delete prober;
     delete simplifier;
