@@ -284,6 +284,8 @@ void Main::parseCommandLine()
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
+    ("parts", po::value<int>(&conf.doPartHandler)->default_value(conf.doPartHandler)
+        , "Perform part-finding and separate handling")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -545,7 +547,7 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
-    ("parts", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
+    ("findparts", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
         , "Find parts")
     ;
 
