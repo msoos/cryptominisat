@@ -630,6 +630,7 @@ class Searcher : public PropEngine
     protected:
         friend class CalcDefPolars;
         void filterOrderHeap();
+        void redoOrderHeap();
 
         //For connection with Solver
         void  resetStats();

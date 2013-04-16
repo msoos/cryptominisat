@@ -2812,3 +2812,15 @@ uint64_t Searcher::memUsedSearch() const
     return mem;
 }
 
+void Searcher::redoOrderHeap()
+{
+    order_heap.clear();
+    for(size_t var = 0; var < nVars(); var++) {
+        if (solver->decisionVar[var]
+            && varData[var].elimed == ELIMED_NONE
+        ) {
+            insertVarOrder(var);
+        }
+    }
+}
+

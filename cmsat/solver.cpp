@@ -755,6 +755,9 @@ void Solver::renumberVariables()
         implCache.updateVars(seen, outerToInter, interToOuter2);
     }
 
+    //Update order heap -- needed due to decisionVar update
+    redoOrderHeap();
+
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
     bool uninteresting = false;

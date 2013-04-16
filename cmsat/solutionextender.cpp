@@ -114,6 +114,7 @@ void SolutionExtender::extend()
                 << "Error while picking lit " << toEnqueue
                 << " and propagating after solution reconstruction"
                 << endl;
+                assert(false);
 
                 exit(-1);
             }
