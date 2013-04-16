@@ -2440,7 +2440,7 @@ int Simplifier::testVarElim(const Var var)
     assert(solver->ok);
     assert(!var_elimed[var]);
     assert(solver->varData[var].elimed == ELIMED_NONE);
-    assert(solver->decisionVar[var]);
+    //assert(solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
     //Gather data
