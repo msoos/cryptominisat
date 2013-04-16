@@ -118,7 +118,7 @@ parser.add_option("--probdir", dest="checkDirProb"
 
 
 def setlimits():
-    sys.stderr.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+    sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
