@@ -871,12 +871,6 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
-    if (conf.doPartHandler && nVars() > conf.partVarLimit) {
-        conf.doPartHandler = false;
-        delete partHandler;
-        partHandler = NULL;
-    }
-
     if (conf.doStamp) {
         stamp.newVar();
     }
@@ -1439,7 +1433,9 @@ lbool Solver::simplifyProblem()
     #endif
     reArrangeClauses();
 
-    if (conf.doFindParts) {
+    if (conf.doFindParts
+        && getNumFreeVars() < conf.partVarLimit
+    ) {
         PartFinder findParts(this);
         if (!findParts.findParts()) {
             goto end;
@@ -1447,6 +1443,7 @@ lbool Solver::simplifyProblem()
     }
 
     if (conf.doPartHandler
+        && getNumFreeVars() < conf.partVarLimit
         && solveStats.numSimplify >= conf.handlerFromSimpNum
         //Only every 2nd, since it can be costly to find parts
         && solveStats.numSimplify % 2 == 0

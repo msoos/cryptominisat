@@ -118,8 +118,8 @@ bool PartHandler::handle()
         vars.swap(tmp);
 
         //Are there too many variables? If so, don't create a sub-solver
-        //Afraid that we will memory-out
-        if (vars.size() > 100ULL*1000ULL*1000ULL) {
+        //I'm afraid that we will memory-out
+        if (vars.size() > 100ULL*1000ULL) {
             continue;
         }
 
