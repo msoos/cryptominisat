@@ -69,7 +69,9 @@ void SolutionExtender::extend()
     detachReattach.detachNonBinsNonTris();
 
     //Sanity check
-    solver->simplifier->checkElimedUnassignedAndStats();
+    if (solver->simplifier) {
+        solver->simplifier->checkElimedUnassignedAndStats();
+    }
 
     //Adding binary clauses representing equivalent literals
     if (solver->conf.verbosity >= 3) {
@@ -129,7 +131,9 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
-    solver->simplifier->extendModel(this);
+    if (solver->simplifier) {
+        solver->simplifier->extendModel(this);
+    }
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);

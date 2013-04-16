@@ -1402,7 +1402,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         //Extend solution
-        if (conf.doSimplify) {
+        if (conf.doSimplify
+            || conf.doFindAndReplaceEqLits
+        ) {
             SolutionExtender extender(this, solution);
             extender.extend();
         } else {
