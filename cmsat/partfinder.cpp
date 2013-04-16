@@ -148,7 +148,10 @@ void PartFinder::addToPartImplicits()
         if (it->empty())
             continue;
 
+        lits.clear();
+
         Lit lit = Lit::toLit(wsLit);
+        lits.push_back(lit);
         for(vec<Watched>::const_iterator
             it2 = it->begin(), end2 = it->end()
             ; it2 != end2
@@ -160,10 +163,7 @@ void PartFinder::addToPartImplicits()
                 //Only do each binary once
                 && lit < it2->lit1()
             ) {
-                lits.clear();
-                lits.push_back(lit);
                 lits.push_back(it2->lit1());
-                addToPartClause(lits);
             }
 
             if (it2->isTri()
@@ -173,12 +173,13 @@ void PartFinder::addToPartImplicits()
                 && lit < it2->lit2()
                 && it2->lit1() < it2->lit2()
             ) {
-                lits.clear();
-                lits.push_back(lit);
                 lits.push_back(it2->lit1());
                 lits.push_back(it2->lit2());
-                addToPartClause(lits);
             }
+        }
+
+        if (lits.size() > 1) {
+            addToPartClause(lits);
         }
     }
 }
