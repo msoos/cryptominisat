@@ -200,6 +200,9 @@ uint32_t Simplifier::subsume0(ClOffset offset)
         cl.makeNonLearnt();
         solver->binTri.redLits -= cl.size();
         solver->binTri.irredLits += cl.size();
+        if (!cl.getOccurLinked()) {
+            linkInClause(cl);
+        }
     }
 
     //Combine stats
@@ -304,6 +307,9 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
                 cl.makeNonLearnt();
                 solver->binTri.redLits -= cl.size();
                 solver->binTri.irredLits += cl.size();
+                if (!cl.getOccurLinked()) {
+                    linkInClause(cl);
+                }
             }
 
             //Update stats
