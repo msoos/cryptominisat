@@ -2814,9 +2814,11 @@ uint64_t Searcher::memUsedSearch() const
 
 void Searcher::redoOrderHeap()
 {
+    assert(decisionLevel() == 0);
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
         if (solver->decisionVar[var]
+            && value(var) == l_Undef
             && varData[var].elimed == ELIMED_NONE
         ) {
             insertVarOrder(var);
