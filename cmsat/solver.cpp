@@ -1269,7 +1269,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
         //If stats indicate that recursive minimization is not helping
         //turn it off
-        if (conf.doRecursiveMinim) {
+        if (status == l_Undef
+            && conf.doRecursiveMinim
+        ) {
             const Searcher::Stats& stats = Searcher::getStats();
             double remPercent =
                 (double)stats.recMinLitRem/(double)stats.litsLearntNonMin*100.0;
@@ -1296,7 +1298,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         //If more minimization isn't helping much, disable
-        if (conf.doMinimLearntMore) {
+        if (status == l_Undef
+            && conf.doMinimLearntMore
+        ) {
             const Searcher::Stats& stats = Searcher::getStats();
             double remPercent =
                 (double)(stats.moreMinimLitsStart-stats.moreMinimLitsEnd)/
@@ -1337,6 +1341,11 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         sumPropStats += propStats;
         propStats.clear();
 
+        //Solution has been found
+        if (status != l_Undef) {
+            break;
+        }
+
         //If we are over the limit, exit
         if (sumStats.conflStats.numConflicts >= conf.maxConfl
             || cpuTime() > conf.maxTime
@@ -1362,8 +1371,6 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
-        if (status != l_Undef)
-            break;
 
         //Simplify
         status = simplifyProblem();
