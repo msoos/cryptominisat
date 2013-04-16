@@ -109,7 +109,6 @@ private:
     bool mergeHelper(
         const Lit extraLit //Add this, too to the list of lits
         , const bool learnt //The step was a learnt step?
-        , const Var leaveOut //Leave this literal out
         , vector<uint16_t>& seen
     );
 };

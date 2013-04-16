@@ -492,7 +492,7 @@ bool TransCache::merge(
         seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
     }
 
-    bool taut = mergeHelper(extraLit, learnt, leaveOut, seen);
+    bool taut = mergeHelper(extraLit, learnt, seen);
 
     //Whatever rests needs to be added
     for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
@@ -527,7 +527,7 @@ bool TransCache::merge(
         seen[lit.toInt()] = 1;
     }
 
-    bool taut = mergeHelper(extraLit, learnt, leaveOut, seen);
+    bool taut = mergeHelper(extraLit, learnt, seen);
 
     //Whatever rests needs to be added
     for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
@@ -552,7 +552,6 @@ bool TransCache::merge(
 bool TransCache::mergeHelper(
     const Lit extraLit //Add this, too to the list of lits
     , const bool learnt //The step was a learnt step?
-    , const Var leaveOut //Leave this literal out
     , vector<uint16_t>& seen
 ) {
     bool taut = false;
