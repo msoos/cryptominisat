@@ -15,6 +15,7 @@ import resource
 import time
 import struct
 import random
+from random import choice
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
@@ -186,6 +187,8 @@ class Tester:
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--renumber %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
+        #cmd += "--parts %s " % random.randint(0,1)
+        cmd += "--parts 1 "
 
         return cmd
 
@@ -483,13 +486,29 @@ class Tester:
                 os.unlink(fname_unlink)
                 None
 
+    def callFromFuzzer(self, directory, fuzzer, file_name) :
+        if (len(fuzzer) == 1) :
+            call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+        elif(len(fuzzer) == 2) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+        elif(len(fuzzer) == 3) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            hashbits = (random.getrandbits(20) % 79) + 1
+            call = "%s %s %d %s %d > %s" % (fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
+
+        return call
+
     def fuzz_test(self) :
         fuzzers = [
-            ["build/cnf-fuzz-biere"] \
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
             , ["build/cnf-fuzz-nossum"] \
-            , ["build/largefuzzer"] \
+            #, ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
+            , ["multipart.py", "special"] \
             , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
@@ -498,17 +517,50 @@ class Tester:
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
 
-                #how should the fuzzer be called?
-                if (len(fuzzer) == 1) :
-                    call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+                #should the multi-fuzzer be called?
+                if len(fuzzer) == 2 and fuzzer[1] == "special":
+                    #create N files
+                    file_names_multi = []
+
+                    #sometimes just fuzz with all SAT problems
+                    if random.getrandbits(1)  == 1 :
+                        fixed = 1
+                    else:
+                        fixed = 0
+
+                    for i in range(random.randrange(1,4)) :
+                        fileopened2, file_name2 = unique_fuzz_file("fuzzTest");
+                        fileopened2.close()
+                        file_names_multi.append(file_name2)
+
+                        #chose a ranom fuzzer, not multipart
+                        fuzzer2 = ["multipart.py", "special"]
+                        while (fuzzer2[0] == "multipart.py") :
+                            fuzzer2 = choice(fuzzers)
+
+                        #sometimes fuzz with SAT problems only
+                        if (fixed) :
+                            fuzzer2 = fuzzers[0]
+
+                        print "fuzzer2 used: ", fuzzer2
+                        call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                        print "calling sub-fuzzer:", call
+                        out = commands.getstatusoutput(call)
+
+                    #construct multi-fuzzer call
+                    call = ""
+                    call += directory
+                    call += fuzzer[0]
+                    call += " "
+                    for name in file_names_multi :
+                        call += " " + name
+                    call += " > " + file_name
+
                 else :
-                    #seed given
-                    seed = struct.unpack("<L", os.urandom(4))[0]
-                    call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
-                    print "calling:", call
+                    call = self.callFromFuzzer(directory, fuzzer, file_name)
 
                 out = commands.getstatusoutput(call)
-                print "fuzzer ", fuzzer, " : ", out
+                print "calling ", fuzzer, " : ", call
 
                 for seednum in range(options.rndStart, options.rndStart+options.rndNum):
                     self.check(fname=file_name, fnameCheck=file_name,
