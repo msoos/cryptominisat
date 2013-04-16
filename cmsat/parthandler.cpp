@@ -277,7 +277,7 @@ void PartHandler::moveVariablesBetweenSolvers(
     , vector<Var>& vars
     , const uint32_t part
 ) {
-    for(size_t i = 0;i < vars.size(); i++) {
+    for(size_t i = 0; i < vars.size(); i++) {
         Var var = interToOuter[i];
 
         //Misc check
