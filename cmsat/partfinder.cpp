@@ -104,12 +104,12 @@ bool PartFinder::findParts()
             << " size: " << std::setw(10) << it->second.size()
             << endl;
 
-            if (it->second.size() < 100) {
+            if (it->second.size() < 300) {
                 totalSmallSize += it->second.size();
             }
         }
         cout
-        << "c Total small (<100 vars) parts' vars: " << totalSmallSize
+        << "c Total small (<300 vars) parts' vars: " << totalSmallSize
         << endl;
     }
 
