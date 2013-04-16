@@ -1377,13 +1377,14 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
 
+        if (conf.doPartHandler) {
+            partHandler->addSavedState(model, solution);
+        }
+
         //Extend solution
         SolutionExtender extender(this, solution);
         extender.extend();
         cancelUntil(0);
-        if (conf.doPartHandler) {
-            partHandler->addSavedState(model);
-        }
 
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);

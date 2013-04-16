@@ -497,12 +497,13 @@ void PartHandler::moveClausesImplicit(
     solver->binTri.redLits -= numRemovedThirdLearnt;
 }
 
-void PartHandler::addSavedState(vector<lbool>& model)
+void PartHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
 {
-    //Add them to model
+    //Enqueue them. They may need to be extended, so enqueue is needed
+    //manipulating "model" may not be good enough
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
-            model[var] = savedState[var];
+            solution[var] = savedState[var];
             solver->varData[var].polarity = (savedState[var] == l_True);
         }
     }
