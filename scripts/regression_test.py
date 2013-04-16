@@ -134,6 +134,7 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
     def __init__(self):
+        self.check_unsat = True
         self.testDir = options.testDir
         self.testDirNewVar = options.testDirNewVar
 
@@ -505,12 +506,12 @@ class Tester:
         fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             , ["build/cnf-fuzz-biere"] \
-            , ["build/cnf-fuzz-nossum"] \
+            #, ["build/cnf-fuzz-nossum"] \
             #, ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
             , ["multipart.py", "special"] \
-            , ["build/sgen4 -unsat -n 50", "-s"] \
-            , ["build/sgen4 -sat -n 50", "-s"] \
+            #, ["build/sgen4 -unsat -n 50", "-s"] \
+            #, ["build/sgen4 -sat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
@@ -595,15 +596,16 @@ class Tester:
 
     def regressionTest(self) :
 
-        #first, test stuff with newVar
-        dirList = os.listdir(self.testDirNewVar)
-        for fname in dirList:
-            if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                print options.rndStart
-                for i in range(options.rndStart, options.rndStart + options.rndNum):
-                    self.check(fname=self.testDirNewVar + fname,
-                            fnameCheck=self.testDirNewVar +
-                            fname, randomizeNum=i, newVar=True)
+        if False:
+            #first, test stuff with newVar
+            dirList = os.listdir(self.testDirNewVar)
+            for fname in dirList:
+                if fnmatch.fnmatch(fname, '*.cnf.gz'):
+                    print options.rndStart
+                    for i in range(options.rndStart, options.rndStart + options.rndNum):
+                        self.check(fname=self.testDirNewVar + fname,
+                                fnameCheck=self.testDirNewVar +
+                                fname, randomizeNum=i, newVar=True)
 
         dirList = os.listdir(self.testDir)
 
