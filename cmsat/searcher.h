@@ -629,6 +629,7 @@ class Searcher : public PropEngine
 
     protected:
         friend class CalcDefPolars;
+        void filterOrderHeap();
 
         //For connection with Solver
         void  resetStats();
@@ -913,6 +914,11 @@ inline void Searcher::addInPartialSolvingStat()
 inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
+}
+
+inline void Searcher::filterOrderHeap()
+{
+    order_heap.filter(VarFilter(this, solver));
 }
 
 } //end namespace
