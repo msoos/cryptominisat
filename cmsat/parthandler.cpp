@@ -254,6 +254,7 @@ void PartHandler::configureNewSolver(
         newSolver->conf.doStamp = false;
         newSolver->conf.doCache = false;
         newSolver->conf.doProbe = false;
+        newSolver->conf.verbosity = 1;
     }
 
     //To small, don't clogger up the screen
