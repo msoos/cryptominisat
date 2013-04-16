@@ -1028,7 +1028,7 @@ CleaningStats Solver::reduceDB()
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
-    size_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris)
+    size_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300)
         * solveStats.nbReduceDB
         * conf.maxNumLearntsRatio;
     size_t removeNum = std::max<long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
