@@ -99,8 +99,8 @@ Solver::~Solver()
     delete sCCFinder;
     delete clauseVivifier;
     delete clauseCleaner;
-    delete clAllocator;
     delete varReplacer;
+    delete clAllocator;
 }
 
 bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
