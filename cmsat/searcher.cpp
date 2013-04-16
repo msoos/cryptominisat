@@ -1818,9 +1818,9 @@ RestartType Searcher::decide_restart_type() const
         } else {
             //Otherwise, choose according to % of pos/neg polarities
             double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
-            double percent = ((double)solver->sumPropStats.varSetNeg)/total;
-            if (percent > 0.6
-                || percent < 0.4
+            double percent = ((double)solver->sumPropStats.varSetNeg)/total*100.0;
+            if (percent > 60.0
+                || percent < 40.0
             ) {
                 rest_type = glue_restart;
             } else {
