@@ -84,6 +84,7 @@ class PartHandler
         void moveClausesImplicit(
             Solver* newSolver
             , const uint32_t part
+            , const vector<Var>& vars
         );
         void moveClausesLong(
             vector<ClOffset>& cs
@@ -99,6 +100,22 @@ class PartHandler
 
         ///List of variables whose decision-ness has been removed (set to FALSE)
         vector<Var> decisionVarRemoved;
+
+        //Re-numbering
+        void createRenumbering(const vector<Var>& vars);
+        vector<Var> useless; //temporary
+        vector<Var> interToOuter;
+        vector<Var> outerToInter;
+
+        Lit updateLit(const Lit lit) const
+        {
+            return Lit(updateVar(lit.var()), lit.sign());
+        }
+
+        Var updateVar(const Var var) const
+        {
+            return outerToInter[var];
+        }
 
         //Clauses that have been moved to other parts
         //vector<ClOffset> clausesRemoved;

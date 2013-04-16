@@ -48,8 +48,24 @@ PartHandler::~PartHandler()
     }
 }
 
+void PartHandler::createRenumbering(const vector<Var>& vars)
+{
+    interToOuter.resize(solver->nVars());
+    outerToInter.resize(solver->nVars());
+
+    size_t at = 0;
+    for(size_t i = 0, size = vars.size()
+        ; i < size
+        ; i++
+    ) {
+        outerToInter[vars[i]] = i;
+        interToOuter[i] = vars[i];
+    }
+}
+
 bool PartHandler::handle()
 {
+    double myTime = cpuTime();
     partFinder = new PartFinder(solver);
     partFinder->findParts();
     const uint32_t num_parts = partFinder->getReverseTable().size();
@@ -99,8 +115,18 @@ bool PartHandler::handle()
         }
         vars.swap(tmp);
 
+        //Are there too many variables? If so, don't create a sub-solver
+        //Afraid that we will memory-out
+        if (vars.size() > 100ULL*1000ULL*1000ULL) {
+            continue;
+        }
+
+        //Sort and renumber
+        std::sort(vars.begin(), vars.end());
+        createRenumbering(vars);
+
         //Print what we are going to do
-        if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 1 && num_parts < 20) {
             cout
             << "c Solving part " << it
             << " num vars: " << vars.size()
@@ -115,7 +141,7 @@ bool PartHandler::handle()
         moveVariablesBetweenSolvers(&newSolver, vars, part);
 
         //Move clauses over
-        moveClausesImplicit(&newSolver, part);
+        moveClausesImplicit(&newSolver, part, vars);
         moveClausesLong(solver->longIrredCls, &newSolver, part);
         moveClausesLong(solver->longRedCls, &newSolver, part);
 
@@ -135,7 +161,7 @@ bool PartHandler::handle()
         //original solver
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
-            if (newSolver.model[var] != l_Undef) {
+            if (newSolver.model[updateVar(var)] != l_Undef) {
                 assert(solver->assigns[var] == l_Undef);
             }
         }
@@ -145,7 +171,7 @@ bool PartHandler::handle()
         assert(solver->decisionLevel() == 0);
          for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
-            lbool val = newSolver.value(var);
+            lbool val = newSolver.value(updateVar(var));
             if (val != l_Undef) {
                 Lit lit(var, val == l_False);
                 solver->enqueue(lit);
@@ -160,15 +186,15 @@ bool PartHandler::handle()
         //Save the solution as savedState
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
-            if (newSolver.model[var] != l_Undef) {
+            if (newSolver.model[updateVar(var)] != l_Undef) {
                 assert(savedState[var] == l_Undef);
                 assert(partFinder->getVarPart(var) == part);
 
-                savedState[var] = newSolver.model[var];
+                savedState[var] = newSolver.model[updateVar(var)];
             }
         }
 
-        if (solver->conf.verbosity  >= 1) {
+        if (solver->conf.verbosity >= 1 && num_parts < 20) {
             cout
             << "c Solved part " << it
             << " ======================================="
@@ -179,8 +205,11 @@ bool PartHandler::handle()
     //Coming back to the original instance now
     if (solver->conf.verbosity  >= 1) {
         cout
-        << "c Coming back to original instance"
-        << " ======================================="
+        << "c Coming back to original instance, solved "
+        << num_parts-1 << " parts"
+        << " T: "
+        << std::setprecision(2) << std::fixed
+        << cpuTime() - myTime
         << endl;
     }
 
@@ -214,14 +243,19 @@ void PartHandler::configureNewSolver(
 ) const {
     newSolver->conf = solver->conf;
     newSolver->mtrand.seed(solver->mtrand.randInt());
-    if (numVars < 80) {
+    if (numVars < 100) {
         newSolver->conf.doSchedSimp = false;
         newSolver->conf.doSimplify = false;
         newSolver->conf.doStamp = false;
         newSolver->conf.doCache = false;
     }
 
-    //Don't recurse, please
+    //To small, don't clogger up the screen
+    if (numVars < 20 && solver->conf.verbosity < 3) {
+        newSolver->conf.verbosity = 0;
+    }
+
+    //Don't recurse
     newSolver->conf.doPartHandler = false;
 }
 
@@ -236,39 +270,29 @@ void PartHandler::moveVariablesBetweenSolvers(
     , vector<Var>& vars
     , const uint32_t part
 ) {
-    std::sort(vars.begin(), vars.end());
-    uint32_t i2 = 0;
-    for (Var var = 0; var < solver->nVars(); var++) {
-        //Inside this part?
-        if (i2 < vars.size()
-            && vars[i2] == var
-        ) {
+    for(size_t i = 0;i < vars.size(); i++) {
+        Var var = interToOuter[i];
 
-            //Yes, inside, so make it decision
-            #ifdef VERBOSE_DEBUG
-            if (!solver->decisionVar[var]) {
-                cout
-                << "var " << var + 1
-                << " is non-decision, but in part... strange."
-                << endl;
-            }
-            #endif //VERBOSE_DEBUG
-            newSolver->newVar(solver->decisionVar[var]);
-            assert(partFinder->getVarPart(var) == part);
-            if (solver->decisionVar[var]) {
-                solver->unsetDecisionVar(var);
-                decisionVarRemoved.push_back(var);
-            }
-            i2++;
-        } else {
-            //No, not inside, so make it non-decision
-            assert(partFinder->getVarPart(var) != part);
-            newSolver->newVar(false);
+        //Misc check
+        #ifdef VERBOSE_DEBUG
+        if (!solver->decisionVar[var]) {
+            cout
+            << "var " << var + 1
+            << " is non-decision, but in part... strange."
+            << endl;
+        }
+        #endif //VERBOSE_DEBUG
+
+        //Add to new solver
+        newSolver->newVar(solver->decisionVar[var]);
+        assert(partFinder->getVarPart(var) == part);
+
+        //Remove from old solver
+        if (solver->decisionVar[var]) {
+            solver->unsetDecisionVar(var);
+            decisionVarRemoved.push_back(var);
         }
     }
-
-    //Update order_heap to remove variables set to non-decision
-    solver->filterOrderHeap();
 }
 
 void PartHandler::moveClausesLong(
@@ -328,7 +352,9 @@ void PartHandler::moveClausesLong(
         #endif
 
         tmp.resize(cl.size());
-        std::copy(cl.begin(), cl.end(), tmp.begin());
+        for (size_t i = 0;i < cl.size(); i++) {
+            tmp[i] = updateLit(cl[i]);
+        }
         if (cl.learnt()) {
             cl.stats.conflictNumIntroduced = 0;
             newSolver->addLearntClause(tmp, cl.stats);
@@ -346,6 +372,7 @@ void PartHandler::moveClausesLong(
 void PartHandler::moveClausesImplicit(
     Solver* newSolver
     , const uint32_t part
+    , const vector<Var>& vars
 ) {
     vector<Lit> lits;
     uint32_t numRemovedHalfNonLearnt = 0;
@@ -354,13 +381,14 @@ void PartHandler::moveClausesImplicit(
     uint32_t numRemovedThirdLearnt = 0;
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
+    for (vector<Var>::const_iterator
+        it = vars.begin(), end = vars.end()
         ; it != end
-        ; it++, wsLit++
+        ; it++
     ) {
-        const Lit lit = Lit::toLit(wsLit);
-        vec<Watched>& ws = *it;
+        for(unsigned sign = 0; sign < 2; sign++) {
+        const Lit lit = Lit(*it, sign == 0);
+        vec<Watched>& ws = solver->watches[lit.toInt()];
 
         //If empty, nothing to to, skip
         if (ws.empty()) {
@@ -401,8 +429,8 @@ void PartHandler::moveClausesImplicit(
 
                     //Add clause
                     lits.resize(2);
-                    lits[0] = lit;
-                    lits[1] = lit2;
+                    lits[0] = updateLit(lit);
+                    lits[1] = updateLit(lit2);
                     assert(partFinder->getVarPart(lit.var()) == part);
                     assert(partFinder->getVarPart(lit2.var()) == part);
                     if (i->learnt()) {
@@ -460,9 +488,9 @@ void PartHandler::moveClausesImplicit(
 
                     //Add clause
                     lits.resize(3);
-                    lits[0] = lit;
-                    lits[1] = lit2;
-                    lits[2] = lit3;
+                    lits[0] = updateLit(lit);
+                    lits[1] = updateLit(lit2);
+                    lits[2] = updateLit(lit3);
                     assert(partFinder->getVarPart(lit.var()) == part);
                     assert(partFinder->getVarPart(lit2.var()) == part);
                     assert(partFinder->getVarPart(lit3.var()) == part);
@@ -491,7 +519,7 @@ void PartHandler::moveClausesImplicit(
             *j++ = *i;
         }
         ws.shrink_(i-j);
-    }
+    }}
 
     assert(numRemovedHalfNonLearnt % 2 == 0);
     solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
@@ -528,9 +556,9 @@ void PartHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
     decisionVarRemoved.clear();
 }
 
-void PartHandler::updateVars(const vector<Var>& interToOuter)
+void PartHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
 {
-    updateArray(savedState, interToOuter);
+    updateArray(savedState, interToOuter_nonlocal);
 }
 
 /*void PartHandler::readdRemovedClauses()

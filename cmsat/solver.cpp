@@ -1405,8 +1405,12 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         //Extend solution
-        SolutionExtender extender(this, solution);
-        extender.extend();
+        if (conf.doSimplify) {
+            SolutionExtender extender(this, solution);
+            extender.extend();
+        } else {
+            model = solution;
+        }
         cancelUntil(0);
 
         //Renumber model back to original variable numbering
