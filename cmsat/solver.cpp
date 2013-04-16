@@ -168,7 +168,7 @@ bool Solver::addXorClauseInt(
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
-            assert(!simplifier->getVarElimed()[p.var()]);
+            assert(!conf.doSimplify || !simplifier->getVarElimed()[p.var()]);
         } else {
             //modify rhs instead of adding
             assert(value(ps[i]) != l_Undef);
@@ -502,7 +502,9 @@ bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
         #endif
 
         //Uneliminate var if need be
-        if (simplifier->getVarElimed()[ps[i].var()]) {
+        if (conf.doSimplify
+            && simplifier->getVarElimed()[ps[i].var()]
+        ) {
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "Uneliminating var " << ps[i].var() + 1 << endl;
             #endif
@@ -524,7 +526,7 @@ the heavy-lifting
 */
 bool Solver::addClause(const vector<Lit>& lits)
 {
-    if (simplifier->getAnythingHasBeenBlocked()) {
+    if (conf.doSimplify && simplifier->getAnythingHasBeenBlocked()) {
         cout
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
@@ -749,7 +751,9 @@ void Solver::renumberVariables()
     }
 
     //Update sub-elements' vars
-    simplifier->updateVars(outerToInter, interToOuter);
+    if (conf.doSimplify) {
+        simplifier->updateVars(outerToInter, interToOuter);
+    }
     varReplacer->updateVars(outerToInter, interToOuter);
     if (conf.doCache) {
         implCache.updateVars(seen, outerToInter, interToOuter2);
@@ -849,7 +853,10 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
-    if (conf.doFindXors && nVars() > 1ULL*1000ULL*1000ULL) {
+    if (conf.doSimplify
+        && conf.doFindXors
+        && nVars() > 1ULL*1000ULL*1000ULL
+    ) {
         conf.doFindXors = false;
         simplifier->freeXorMem();
 
@@ -861,7 +868,7 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
-    if (conf.doPartHandler && nVars() > 30ULL*1000ULL) {
+    if (conf.doPartHandler && nVars() > conf.partVarLimit) {
         conf.doPartHandler = false;
         delete partHandler;
         partHandler = NULL;
@@ -888,7 +895,9 @@ Var Solver::newVar(const bool dvar)
     Searcher::newVar(dvar);
 
     varReplacer->newVar();
-    simplifier->newVar();
+    if (conf.doSimplify) {
+        simplifier->newVar();
+    }
 
     if (conf.doPartHandler) {
         partHandler->newVar();
@@ -1237,8 +1246,13 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     lbool status = ok ? l_Undef : l_False;
 
     //If still unknown, simplify
-    if (status == l_Undef && nVars() > 0 && conf.doPreSimp)
+    if (status == l_Undef
+        && nVars() > 0
+        && conf.doPreSimp
+        && conf.doSchedSimp
+    ) {
         status = simplifyProblem();
+    }
 
     //Iterate until solved
     while (status == l_Undef
@@ -1373,7 +1387,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         //Simplify
-        status = simplifyProblem();
+        if (conf.doSchedSimp) {
+            status = simplifyProblem();
+        }
     }
 
     //Handle found solution
@@ -1423,7 +1439,9 @@ lbool Solver::simplifyProblem()
         }
     }
 
-    if (conf.doPartHandler) {
+    if (conf.doPartHandler
+        && solveStats.numSimplify >= conf.handlerFromSimpNum
+    ) {
         if (!partHandler->handle())
             goto end;
     }
@@ -1868,12 +1886,14 @@ void Solver::printMinStats() const
 
     prober->getStats().printShort();
     //Simplifier stats
-    printStatsLine("c Simplifier time"
-        , simplifier->getStats().totalTime()
-        , simplifier->getStats().totalTime()/cpu_time*100.0
-        , "% time"
-    );
-    simplifier->getStats().printShort(nVars());
+    if (conf.doSimplify) {
+        printStatsLine("c Simplifier time"
+            , simplifier->getStats().totalTime()
+            , simplifier->getStats().totalTime()/cpu_time*100.0
+            , "% time"
+        );
+        simplifier->getStats().printShort(nVars());
+    }
     printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
         , sCCFinder->getStats().cpu_time/cpu_time*100.0
@@ -1977,13 +1997,15 @@ void Solver::printFullStats() const
     prober->getStats().print(nVars());
 
     //Simplifier stats
-    printStatsLine("c Simplifier time"
-        , simplifier->getStats().totalTime()
-        , simplifier->getStats().totalTime()/cpu_time*100.0
-        , "% time"
-    );
+    if (conf.doSimplify) {
+        printStatsLine("c Simplifier time"
+            , simplifier->getStats().totalTime()
+            , simplifier->getStats().totalTime()/cpu_time*100.0
+            , "% time"
+        );
 
-    simplifier->getStats().print(nVars());
+        simplifier->getStats().print(nVars());
+    }
 
     //GateFinder stats
     /*printStatsLine("c gatefinder time"
@@ -2181,23 +2203,25 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = simplifier->memUsed();
-    printStatsLine("c Mem for simplifier"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , (double)mem/(double)totalMem*100.0
-        , "%"
-    );
-    account += mem;
+    if (conf.doSimplify) {
+        mem = simplifier->memUsed();
+        printStatsLine("c Mem for simplifier"
+            , mem/(1024UL*1024UL)
+            , "MB"
+            , (double)mem/(double)totalMem*100.0
+            , "%"
+        );
+        account += mem;
 
-    mem = simplifier->memUsedXor();
-    printStatsLine("c Mem for xor-finder"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , (double)mem/(double)totalMem*100.0
-        , "%"
-    );
-    account += mem;
+        mem = simplifier->memUsedXor();
+        printStatsLine("c Mem for xor-finder"
+            , mem/(1024UL*1024UL)
+            , "MB"
+            , (double)mem/(double)totalMem*100.0
+            , "%"
+        );
+        account += mem;
+    }
 
     mem = varReplacer->bytesMemUsed();
     printStatsLine("c Mem for varReplacer"
@@ -2511,8 +2535,10 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     numClauses += longIrredCls.size();
 
     //previously eliminated clauses
-    const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
-    numClauses += blockedClauses.size();
+    if (conf.doSimplify) {
+        const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
+        numClauses += blockedClauses.size();
+    }
 
     *os << "p cnf " << nVars() << " " << numClauses << endl;
 
@@ -2551,27 +2577,32 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         *os << clauseBackNumbered(*cl) << " 0" << endl;
     }
 
-    *os
-    << "c " << endl
-    << "c -------------------------------" << endl
-    << "c previously eliminated variables" << endl
-    << "c -------------------------------" << endl;
-    for (vector<BlockedClause>::const_iterator
-        it = blockedClauses.begin(); it != blockedClauses.end()
-        ; it++
-    ) {
+    if (conf.doSimplify) {
+        const vector<BlockedClause>& blockedClauses
+            = simplifier->getBlockedClauses();
 
-        //Print info about clause
         *os
-        << "c next clause is eliminated/blocked on lit "
-        << getUpdatedLit(it->blockedOn, interToOuterMain)
-        << endl;
+        << "c " << endl
+        << "c -------------------------------" << endl
+        << "c previously eliminated variables" << endl
+        << "c -------------------------------" << endl;
+        for (vector<BlockedClause>::const_iterator
+            it = blockedClauses.begin(); it != blockedClauses.end()
+            ; it++
+        ) {
 
-        //Print clause
-        *os
-        << clauseBackNumbered(it->lits)
-        << " 0"
-        << endl;
+            //Print info about clause
+            *os
+            << "c next clause is eliminated/blocked on lit "
+            << getUpdatedLit(it->blockedOn, interToOuterMain)
+            << endl;
+
+            //Print clause
+            *os
+            << clauseBackNumbered(it->lits)
+            << " 0"
+            << endl;
+        }
     }
 }
 
@@ -2882,7 +2913,9 @@ size_t Solver::getNumFreeVars() const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail.size();
-    freeVars -= simplifier->getStats().numVarsElimed;
+    if (conf.doSimplify) {
+        freeVars -= simplifier->getStats().numVarsElimed;
+    }
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;
@@ -3224,7 +3257,11 @@ void Solver::checkImplicitPropagated() const
 
 size_t Solver::getNumVarsElimed() const
 {
-    return simplifier->getStats().numVarsElimed;
+    if (conf.doSimplify) {
+        return simplifier->getStats().numVarsElimed;
+    } else {
+        return 0;
+    }
 }
 
 size_t Solver::getNumVarsReplaced() const
@@ -3331,7 +3368,9 @@ void Solver::updateDominators()
 
 void Solver::print_elimed_vars() const
 {
-    simplifier->print_elimed_vars();
+    if (conf.doSimplify) {
+        simplifier->print_elimed_vars();
+    }
 }
 
 void Solver::calcReachability()

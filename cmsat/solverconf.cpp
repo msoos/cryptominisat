@@ -146,6 +146,8 @@ SolverConf::SolverConf() :
         , doRenumberVars   (true)
         , doFindParts      (false)
         , doPartHandler    (true)
+        , handlerFromSimpNum (0)
+        , partVarLimit      (30ULL*1000ULL)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)

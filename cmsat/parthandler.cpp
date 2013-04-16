@@ -111,7 +111,7 @@ bool PartHandler::handle()
         //Set up new solver
         SolverConf conf;
         Solver newSolver(conf);
-        configureNewSolver(&newSolver);
+        configureNewSolver(&newSolver, vars.size());
         moveVariablesBetweenSolvers(&newSolver, vars, part);
 
         //Move clauses over
@@ -208,10 +208,18 @@ bool PartHandler::handle()
 /**
 @brief Sets up the sub-solver with a specific configuration
 */
-void PartHandler::configureNewSolver(Solver* newSolver) const
-{
+void PartHandler::configureNewSolver(
+    Solver* newSolver
+    , const size_t numVars
+) const {
     newSolver->conf = solver->conf;
     newSolver->mtrand.seed(solver->mtrand.randInt());
+    if (numVars < 80) {
+        newSolver->conf.doSchedSimp = false;
+        newSolver->conf.doSimplify = false;
+        newSolver->conf.doStamp = false;
+        newSolver->conf.doCache = false;
+    }
 
     //Don't recurse, please
     newSolver->conf.doPartHandler = false;
@@ -353,6 +361,11 @@ void PartHandler::moveClausesImplicit(
     ) {
         const Lit lit = Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
+
+        //If empty, nothing to to, skip
+        if (ws.empty()) {
+            continue;
+        }
 
         Watched *i = ws.begin();
         Watched *j = i;

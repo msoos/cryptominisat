@@ -189,6 +189,8 @@ class Tester:
         cmd += "--recur %s " % random.randint(0,1)
         #cmd += "--parts %s " % random.randint(0,1)
         cmd += "--parts 1 "
+        cmd += "--partsfrom %d " % random.randint(0,2)
+        cmd += "--partsvar %d " % random.randint(20000,500000)
 
         return cmd
 
@@ -528,7 +530,7 @@ class Tester:
                     else:
                         fixed = 0
 
-                    for i in range(random.randrange(1,4)) :
+                    for i in range(random.randrange(2,4)) :
                         fileopened2, file_name2 = unique_fuzz_file("fuzzTest");
                         fileopened2.close()
                         file_names_multi.append(file_name2)

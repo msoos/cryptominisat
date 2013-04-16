@@ -69,7 +69,11 @@ class PartHandler
             }
         };
 
-        void configureNewSolver(Solver* newSolver) const;
+        void configureNewSolver(
+            Solver* newSolver
+            , const size_t numVars
+        ) const;
+
         void moveVariablesBetweenSolvers(
             Solver* newSolver
             , vector<Var>& vars

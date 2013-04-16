@@ -169,6 +169,8 @@ class SolverConf
         int       doRenumberVars;
         int       doFindParts;
         int       doPartHandler;
+        size_t    handlerFromSimpNum;
+        size_t    partVarLimit;
 
 
         int      doExtBinSubs;
