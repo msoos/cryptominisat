@@ -248,7 +248,7 @@ void PartHandler::configureNewSolver(
 ) const {
     newSolver->conf = solver->conf;
     newSolver->mtrand.seed(solver->mtrand.randInt());
-    if (numVars < 80) {
+    if (numVars < 60) {
         newSolver->conf.doSchedSimp = false;
         newSolver->conf.doSimplify = false;
         newSolver->conf.doStamp = false;
