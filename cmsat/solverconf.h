@@ -168,6 +168,7 @@ class SolverConf
         bool      printAllRestarts;
         int       doRenumberVars;
         int       doFindParts;
+        int       doPartHandler;
 
 
         int      doExtBinSubs;

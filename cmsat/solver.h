@@ -380,6 +380,7 @@ class Solver : public Searcher
         ClauseVivifier      *clauseVivifier;
         ClauseCleaner       *clauseCleaner;
         VarReplacer         *varReplacer;
+        PartHandler         *partHandler;
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////

@@ -28,6 +28,7 @@ set(cryptoms_lib_files
     implcache.cpp
     stamp.cpp
     partfinder.cpp
+    parthandler.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

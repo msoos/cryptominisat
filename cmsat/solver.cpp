@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include "completedetachreattacher.h"
 #include "partfinder.h"
+#include "parthandler.h"
 
 using namespace CMSat;
 using std::cout;
@@ -89,10 +90,16 @@ Solver::Solver(const SolverConf& _conf) :
     clauseCleaner = new ClauseCleaner(this);
     clAllocator = new ClauseAllocator;
     varReplacer = new VarReplacer(this);
+    if (conf.doPartHandler) {
+        partHandler = new PartHandler(this);
+    }
 }
 
 Solver::~Solver()
 {
+    if (partHandler) {
+        delete partHandler;
+    }
     delete sqlStats;
     delete prober;
     delete simplifier;
@@ -711,6 +718,10 @@ void Solver::renumberVariables()
         updateBySwap(stamp.tstamp, seen, interToOuter2);
     }
 
+    if (conf.doPartHandler) {
+        partHandler->updateVars(interToOuter);
+    }
+
     //Update clauses
     //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < longIrredCls.size(); i++) {
@@ -835,6 +846,12 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
+    if (conf.doPartHandler && nVars() > 5000ULL) {
+        conf.doPartHandler = false;
+        delete partHandler;
+        partHandler = NULL;
+    }
+
     if (conf.doStamp) {
         stamp.newVar();
     }
@@ -857,6 +874,10 @@ Var Solver::newVar(const bool dvar)
 
     varReplacer->newVar();
     simplifier->newVar();
+
+    if (conf.doPartHandler) {
+        partHandler->newVar();
+    }
 
     return decisionVar.size()-1;
 }
@@ -1338,6 +1359,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         SolutionExtender extender(this, solution);
         extender.extend();
         cancelUntil(0);
+        if (conf.doPartHandler) {
+            partHandler->addSavedState(model);
+        }
 
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);
@@ -1367,6 +1391,11 @@ lbool Solver::simplifyProblem()
         if (!findParts.findParts()) {
             goto end;
         }
+    }
+
+    if (conf.doPartHandler) {
+        if (!partHandler->handle())
+            goto end;
     }
 
     //SCC&VAR-REPL

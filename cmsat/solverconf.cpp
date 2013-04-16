@@ -145,6 +145,7 @@ SolverConf::SolverConf() :
         //optimisations to do
         , doRenumberVars   (true)
         , doFindParts      (false)
+        , doPartHandler    (false)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)
