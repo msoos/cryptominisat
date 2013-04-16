@@ -559,8 +559,8 @@ class Tester:
                 else :
                     call = self.callFromFuzzer(directory, fuzzer, file_name)
 
-                out = commands.getstatusoutput(call)
                 print "calling ", fuzzer, " : ", call
+                out = commands.getstatusoutput(call)
 
                 for seednum in range(options.rndStart, options.rndStart+options.rndNum):
                     self.check(fname=file_name, fnameCheck=file_name,
