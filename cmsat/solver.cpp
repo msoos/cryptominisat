@@ -92,6 +92,8 @@ Solver::Solver(const SolverConf& _conf) :
     varReplacer = new VarReplacer(this);
     if (conf.doPartHandler) {
         partHandler = new PartHandler(this);
+    } else {
+        partHandler = NULL;
     }
 }
 
@@ -226,7 +228,7 @@ and only internally
 Clause* Solver::addClauseInt(
     const vector<Lit>& lits
     , const bool learnt
-    , const ClauseStats stats
+    , ClauseStats stats
     , const bool attach
     , vector<Lit>* finalLits
 ) {
@@ -236,6 +238,9 @@ Clause* Solver::addClauseInt(
     #ifdef VERBOSE_DEBUG
     cout << "addClauseInt clause " << lits << endl;
     #endif //VERBOSE_DEBUG
+
+    //Make stats sane
+    stats.conflictNumIntroduced = std::min<uint64_t>(Searcher::sumConflicts(), stats.conflictNumIntroduced);
 
     vector<Lit>& ps = addClIntTmpLits;
     ps.resize(lits.size());
@@ -450,7 +455,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         ; it != end
         ; it++
     ) {
-        assert(it->var() < nVars()
+        if (it->var() >= nVars()) {
+            cout
+            << "Variable (internal numbering:)" << it->var()
+            << " inserted, but max var (internal numbering) is "
+            << nVars()
+            << endl;
+        }
+        release_assert(it->var() < nVars()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
@@ -1165,6 +1177,13 @@ CleaningStats Solver::reduceDB()
         tmpStats.remain.incorporate(cl);
         tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
 
+        if (cl->stats.conflictNumIntroduced > sumConfl) {
+            cout
+            << "c DEBUG: conflict introduction numbers are wrong."
+            << " according to CL, introduction: " << cl->stats.conflictNumIntroduced
+            << " but we think max confl: "  << sumConfl
+            << endl;
+        }
         assert(cl->stats.conflictNumIntroduced <= sumConfl);
 
         longRedCls[j++] = offset;

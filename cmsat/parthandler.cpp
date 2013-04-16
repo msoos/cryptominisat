@@ -37,6 +37,7 @@ using std::endl;
 
 PartHandler::PartHandler(Solver* _solver) :
     solver(_solver)
+    , partFinder(NULL)
 {
 }
 
@@ -129,14 +130,19 @@ bool PartHandler::handle()
         //Move decision level 0 vars over
         assert(newSolver.decisionLevel() == 0);
         assert(solver->decisionLevel() == 0);
-        for (size_t i = 0; i < newSolver.trail.size(); i++) {
-            solver->enqueue(newSolver.trail[i]);
-        }
-        solver->ok = (solver->propagate().isNULL());
+         for (size_t i = 0; i < vars.size(); i++) {
+            Var var = vars[i];
+            lbool val = newSolver.value(var);
+            if (val != l_Undef) {
+                Lit lit(var, val == l_False);
+                solver->enqueue(lit);
 
-        //These vars are not meant to be in the orig solver
-        //so they cannot cause UNSAT
-        assert(solver->ok);
+                //These vars are not meant to be in the orig solver
+                //so they cannot cause UNSAT
+                solver->ok = (solver->propagate().isNULL());
+                assert(solver->ok);
+            }
+        }
 
         //Save the solution as savedState
         for (size_t i = 0; i < vars.size(); i++) {
@@ -151,7 +157,7 @@ bool PartHandler::handle()
 
         if (solver->conf.verbosity  >= 1) {
             cout
-            << "c Solved part" << it << endl
+            << "c Solved part " << it
             << " ======================================="
             << endl;
         }
@@ -301,6 +307,7 @@ void PartHandler::moveClausesLong(
         tmp.resize(cl.size());
         std::copy(cl.begin(), cl.end(), tmp.begin());
         if (cl.learnt()) {
+            cl.stats.conflictNumIntroduced = 0;
             newSolver->addLearntClause(tmp, cl.stats);
         } else {
             newSolver->addClause(tmp);
@@ -427,7 +434,7 @@ void PartHandler::moveClausesImplicit(
                     lits.resize(3);
                     lits[0] = lit;
                     lits[1] = lit2;
-                    lits[3] = lit3;
+                    lits[2] = lit3;
                     assert(partFinder->getVarPart(lit.var()) == part);
                     assert(partFinder->getVarPart(lit2.var()) == part);
                     assert(partFinder->getVarPart(lit3.var()) == part);
