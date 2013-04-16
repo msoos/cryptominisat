@@ -100,6 +100,8 @@ bool PartHandler::handle()
     std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
 
+    size_t num_parts_solved = 0;
+    size_t vars_solved = 0;
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         //What are we solving?
         const uint32_t part = sizes[it].first;
@@ -200,13 +202,16 @@ bool PartHandler::handle()
             << " ======================================="
             << endl;
         }
+        num_parts_solved++;
+        vars_solved += vars.size();
     }
 
     //Coming back to the original instance now
     if (solver->conf.verbosity  >= 1) {
         cout
         << "c Coming back to original instance, solved "
-        << num_parts-1 << " parts"
+        << num_parts_solved << " parts, "
+        << vars_solved << " vars"
         << " T: "
         << std::setprecision(2) << std::fixed
         << cpuTime() - myTime
