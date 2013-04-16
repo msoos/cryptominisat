@@ -56,7 +56,7 @@ Binary and tertiary clauses are stored and handled implicitly. This greatly ease
 \emph{forl} gathers large amounts of running statistics. Unfortunately they are not yet used to direct search. However, they can be gathered into MySQL and displayed in a web browser. Importing statistics into the database incurs setup costs and about 10\% running cost and so is disabled by default.
 
 \subsection{Timing}
-For average problems inprocesing techniques tend to work well. However, in case of strange problems (such as problems with billions of binary clauses) they sometimes misbehave. This has been solved with more precise time measurements (measuring effort, not actual time) and sometimes complicated time-out checks.
+For average problems inprocessing techniques tend to work well. However, in case of strange problems (such as problems with billions of binary clauses) they sometimes misbehave. This has been solved with more precise time measurements (measuring effort, not actual time) and sometimes complicated time-out checks.
 
 \subsection{Memory usage}
 Memory usage has been greatly improved with precise tracking of where memory is being used. Although memory leaks are not generally an issue given the programming techniques used, temporary allocation of large data structures was a problem. These issues have been fixed through algorithmic means: e.g. through the use of circular swapping for variable renumbering.
