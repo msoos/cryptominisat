@@ -34,7 +34,6 @@
 #include "sqlstats.h"
 #include <fstream>
 #include <cmath>
-#include "xorfinder.h"
 #include <fcntl.h>
 #include "completedetachreattacher.h"
 #include "partfinder.h"
@@ -819,6 +818,18 @@ Var Solver::newVar(const bool dvar)
         if (conf.verbosity >= 2) {
             cout
             << "c Switching off caching due to excessive number of variables"
+            << " (it would take too much memory)"
+            << endl;
+        }
+    }
+
+    if (conf.doFindXors && nVars() > 1ULL*1000ULL*1000ULL) {
+        conf.doFindXors = false;
+        simplifier->freeXorMem();
+
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Switching off XOR finding due to excessive number of variables"
             << " (it would take too much memory)"
             << endl;
         }

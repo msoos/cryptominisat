@@ -398,6 +398,7 @@ public:
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
     bool getAnythingHasBeenBlocked() const;
+    void freeXorMem();
 
 private:
 

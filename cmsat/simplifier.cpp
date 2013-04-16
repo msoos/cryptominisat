@@ -79,7 +79,9 @@ Simplifier::Simplifier(Solver* _solver):
     , blockedMapBuilt(false)
 {
     #ifdef USE_M4RI
-    xorFinder = new XorFinder(this, solver);
+    if (solver->conf.doFindXors) {
+        xorFinder = new XorFinder(this, solver);
+    }
     #endif
 
     gateFinder = new GateFinder(this, solver);
@@ -1286,6 +1288,7 @@ bool Simplifier::simplify()
     //XOR-finding
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
+        && xorFinder != NULL
         && !xorFinder->findXors()
     ) {
         goto end;
@@ -3410,6 +3413,11 @@ uint64_t Simplifier::memUsedXor() const
     #endif
 }
 
+void Simplifier::freeXorMem()
+{
+    delete xorFinder;
+    xorFinder = NULL;
+}
 
 /*const GateFinder* Simplifier::getGateFinder() const
 {
