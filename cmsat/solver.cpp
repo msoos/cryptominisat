@@ -858,7 +858,7 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
-    if (conf.doPartHandler && nVars() > 5000ULL) {
+    if (conf.doPartHandler && nVars() > 30ULL*1000ULL) {
         conf.doPartHandler = false;
         delete partHandler;
         partHandler = NULL;
