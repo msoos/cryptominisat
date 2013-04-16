@@ -88,6 +88,17 @@ bool PartHandler::handle()
         //What are we solving?
         const uint32_t part = sizes[it].first;
         vector<Var> vars = reverseTable[part];
+
+        //Don't move over variables already solved
+        vector<Var> tmp;
+        for(size_t i = 0; i < vars.size(); i++) {
+            Var var = vars[i];
+            if (solver->value(var) == l_Undef) {
+                tmp.push_back(var);
+            }
+        }
+        vars.swap(tmp);
+
         if (solver->conf.verbosity >= 1) {
             cout
             << "c Solving part " << it
