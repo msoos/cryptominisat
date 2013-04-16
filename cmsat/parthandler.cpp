@@ -52,10 +52,10 @@ bool PartHandler::handle()
 {
     partFinder = new PartFinder(solver);
     partFinder->findParts();
-    uint32_t num_parts = partFinder->getReverseTable().size();
+    const uint32_t num_parts = partFinder->getReverseTable().size();
 
     //If there is only one big part, we can't do anything
-    if (num_parts == 1) {
+    if (num_parts <= 1) {
         if (solver->conf.verbosity >= 2) {
             cout
             << "c Only one part, not handling it separately"

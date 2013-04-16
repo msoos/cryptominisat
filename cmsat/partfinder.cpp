@@ -86,7 +86,7 @@ bool PartFinder::findParts()
         || (solver->conf.verbosity  >=1 && used_part_no > 1)
     ) {
         cout
-        << "c Found parts: " <<  used_part_no
+        << "c Found parts: " <<  reverseTable.size()
         << " time: "
         << std::setprecision(2) << std::fixed << cpuTime() - time
         << " s"
