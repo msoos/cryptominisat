@@ -1448,6 +1448,8 @@ lbool Solver::simplifyProblem()
 
     if (conf.doPartHandler
         && solveStats.numSimplify >= conf.handlerFromSimpNum
+        //Only every 2nd, since it can be costly to find parts
+        && solveStats.numSimplify % 2 == 0
     ) {
         if (!partHandler->handle())
             goto end;
