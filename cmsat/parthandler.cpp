@@ -99,6 +99,7 @@ bool PartHandler::handle()
         }
         vars.swap(tmp);
 
+        //Print what we are going to do
         if (solver->conf.verbosity >= 1) {
             cout
             << "c Solving part " << it
@@ -107,15 +108,16 @@ bool PartHandler::handle()
             << endl;
         }
 
+        //Set up new solver
         SolverConf conf;
         Solver newSolver(conf);
         configureNewSolver(&newSolver);
         moveVariablesBetweenSolvers(&newSolver, vars, part);
 
+        //Move clauses over
         moveClausesImplicit(&newSolver, part);
         moveClausesLong(solver->longIrredCls, &newSolver, part);
         moveClausesLong(solver->longRedCls, &newSolver, part);
-        //assert(checkClauseMovement(newSolver, part));
 
         lbool status = newSolver.solve();
         assert(status != l_Undef);
@@ -230,7 +232,9 @@ void PartHandler::moveVariablesBetweenSolvers(
     uint32_t i2 = 0;
     for (Var var = 0; var < solver->nVars(); var++) {
         //Inside this part?
-        if (i2 < vars.size() && vars[i2] == var) {
+        if (i2 < vars.size()
+            && vars[i2] == var
+        ) {
 
             //Yes, inside, so make it decision
             #ifdef VERBOSE_DEBUG
