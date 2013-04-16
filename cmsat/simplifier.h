@@ -402,6 +402,9 @@ public:
 
 private:
 
+    //debug
+    void checkAllLinkedIn();
+
     void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;
     bool subsumeWithBinaries();

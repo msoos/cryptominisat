@@ -670,6 +670,7 @@ bool Simplifier::addFromSolver(
             linkInClause(*cl);
             numLinkedIn++;
         } else {
+            assert(cl->learnt());
             cl->setOccurLinked(false);
             numNotLinkedIn++;
         }
@@ -1194,6 +1195,27 @@ void Simplifier::subsumeLearnts()
 
     if (solver->conf.verbosity >= 1) {
         runStats.printShortSubStr();
+    }
+}
+
+void Simplifier::checkAllLinkedIn()
+{
+    for(vector<ClOffset>::const_iterator
+        it = clauses.begin(), end = clauses.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *solver->clAllocator->getPointer(*it);
+
+        assert(cl.learnt() || cl.getOccurLinked());
+        if (cl.freed() || cl.learnt())
+            continue;
+
+        for(size_t i = 0; i < cl.size(); i++) {
+            Lit lit = cl[i];
+            bool found = findWCl(solver->watches[lit.toInt()], *it);
+            assert(found);
+        }
     }
 }
 
