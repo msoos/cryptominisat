@@ -202,7 +202,8 @@ bool Prober::probe()
     vector<Var> possCh;
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
-            && solver->decisionVar[i]
+            && (solver->varData[i].elimed == ELIMED_NONE
+                || solver->varData[i].elimed == ELIMED_QUEUED_VARREPLACER)
         ) {
             possCh.push_back(i);
         }

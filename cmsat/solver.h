@@ -646,7 +646,8 @@ inline Var Solver::numActiveVars() const
     Var numActive = 0;
     for(Var var = 0; var < solver->nVars(); var++) {
         if (decisionVar[var]
-            && varData[var].elimed == ELIMED_NONE
+            && (varData[var].elimed == ELIMED_NONE
+                || varData[var].elimed == ELIMED_QUEUED_VARREPLACER)
             && value(var) == l_Undef
         ) {
             numActive++;
