@@ -395,9 +395,13 @@ void ImplCache::tryVar(
         ; it++
     ) {
         const Var var2 = it->getLit().var();
+
+        //A variable that has been really eliminated, skip
         if (solver->varData[var2].elimed != ELIMED_NONE
             && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
-        ) continue;
+        ) {
+            continue;
+        }
 
         seen[it->getLit().var()] = 1;
         val[it->getLit().var()] = it->getLit().sign();
