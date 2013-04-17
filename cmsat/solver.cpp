@@ -36,8 +36,8 @@
 #include <cmath>
 #include <fcntl.h>
 #include "completedetachreattacher.h"
-#include "partfinder.h"
-#include "parthandler.h"
+#include "compfinder.h"
+#include "comphandler.h"
 
 using namespace CMSat;
 using std::cout;

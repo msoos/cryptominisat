@@ -24,7 +24,7 @@
 #include <map>
 #include <iomanip>
 #include <iostream>
-#include "partfinder.h"
+#include "compfinder.h"
 #include "time_mem.h"
 #include "cloffset.h"
 #include "solver.h"

@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#include "parthandler.h"
-#include "partfinder.h"
+#include "comphandler.h"
+#include "compfinder.h"
 #include "varreplacer.h"
 #include "solver.h"
 #include "varupdatehelper.h"
