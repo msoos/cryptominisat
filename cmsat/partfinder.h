@@ -37,23 +37,23 @@ using std::map;
 using std::vector;
 using std::pair;
 
-class PartFinder {
+class CompFinder {
 
     public:
-        PartFinder(Solver* solver);
-        bool findParts();
+        CompFinder(Solver* solver);
+        bool findComps();
         bool getTimedOut() const;
 
-        const map<uint32_t, vector<Var> >& getReverseTable() const; // part->var
-        uint32_t getVarPart(const Var var) const;
-        const vector<uint32_t>& getTable() const; //var -> part
-        const vector<Var>& getPartVars(const uint32_t part);
+        const map<uint32_t, vector<Var> >& getReverseTable() const; // comp->var
+        uint32_t getVarComp(const Var var) const;
+        const vector<uint32_t>& getTable() const; //var -> comp
+        const vector<Var>& getCompVars(const uint32_t comp);
 
     private:
-        void addToPartImplicits();
-        void addToPartClauses(const vector<ClOffset>& cs);
+        void addToCompImplicits();
+        void addToCompClauses(const vector<ClOffset>& cs);
         template<class T>
-        void addToPartClause(const T& cl);
+        void addToCompClause(const T& cl);
 
         struct MySorter
         {
@@ -65,20 +65,20 @@ class PartFinder {
             }
         };
 
-        /*const uint32_t setParts();
+        /*const uint32_t setComps();
         template<class T>
-        void calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart);
-        void calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart);*/
+        void calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp);
+        void calcInBins(vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp);*/
 
-        //part -> vars
+        //comp -> vars
         map<uint32_t, vector<Var> > reverseTable;
 
-        //var -> part
+        //var -> comp
         vector<uint32_t> table;
 
-        //The part counter
-        uint32_t part_no;
-        uint32_t used_part_no;
+        //The comp counter
+        uint32_t comp_no;
+        uint32_t used_comp_no;
 
         //Temporary
         vector<Var> newSet;
@@ -91,31 +91,31 @@ class PartFinder {
         Solver* solver;
 };
 
-inline const map<uint32_t, vector<Var> >& PartFinder::getReverseTable() const
+inline const map<uint32_t, vector<Var> >& CompFinder::getReverseTable() const
 {
     assert(!timedout);
     return reverseTable;
 }
 
-inline const vector<Var>& PartFinder::getTable() const
+inline const vector<Var>& CompFinder::getTable() const
 {
     assert(!timedout);
     return table;
 }
 
-inline uint32_t PartFinder::getVarPart(const Var var) const
+inline uint32_t CompFinder::getVarComp(const Var var) const
 {
     assert(!timedout);
     return table[var];
 }
 
-inline const vector<Var>& PartFinder::getPartVars(const uint32_t part)
+inline const vector<Var>& CompFinder::getCompVars(const uint32_t comp)
 {
     assert(!timedout);
-    return reverseTable[part];
+    return reverseTable[comp];
 }
 
-inline bool PartFinder::getTimedOut() const
+inline bool CompFinder::getTimedOut() const
 {
     return timedout;
 }

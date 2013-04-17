@@ -167,11 +167,13 @@ class SolverConf
         //Optimisations to do
         bool      printAllRestarts;
         int       doRenumberVars;
-        int       doFindParts;
-        int       doPartHandler;
+
+        //Component handling
+        int       doFindComps;
+        int       doCompHandler;
         size_t    handlerFromSimpNum;
-        size_t    partVarLimit;
-        uint64_t  partFindLimitMega;
+        size_t    compVarLimit;
+        uint64_t  compFindLimitMega;
 
 
         int      doExtBinSubs;

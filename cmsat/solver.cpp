@@ -60,7 +60,7 @@ Solver::Solver(const SolverConf& _conf) :
     , backupActivityInc(_conf.var_inc_start)
     , prober(NULL)
     , simplifier(NULL)
-    , partHandler(NULL)
+    , compHandler(NULL)
     , mtrand(_conf.origSeed)
     , needToInterrupt(false)
 
@@ -97,14 +97,14 @@ Solver::Solver(const SolverConf& _conf) :
     clauseCleaner = new ClauseCleaner(this);
     clAllocator = new ClauseAllocator;
     varReplacer = new VarReplacer(this);
-    if (conf.doPartHandler) {
-        partHandler = new PartHandler(this);
+    if (conf.doCompHandler) {
+        compHandler = new CompHandler(this);
     }
 }
 
 Solver::~Solver()
 {
-    delete partHandler;
+    delete compHandler;
     delete sqlStats;
     delete prober;
     delete simplifier;
@@ -736,8 +736,8 @@ void Solver::renumberVariables()
         updateBySwap(stamp.tstamp, seen, interToOuter2);
     }
 
-    if (conf.doPartHandler) {
-        partHandler->updateVars(interToOuter);
+    if (conf.doCompHandler) {
+        compHandler->updateVars(interToOuter);
     }
 
     //Update clauses
@@ -899,8 +899,8 @@ Var Solver::newVar(const bool dvar)
         simplifier->newVar();
     }
 
-    if (conf.doPartHandler) {
-        partHandler->newVar();
+    if (conf.doCompHandler) {
+        compHandler->newVar();
     }
 
     return decisionVar.size()-1;
@@ -1400,8 +1400,8 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
 
-        if (conf.doPartHandler) {
-            partHandler->addSavedState(model, solution);
+        if (conf.doCompHandler) {
+            compHandler->addSavedState(model, solution);
         }
 
         //Extend solution
@@ -1438,22 +1438,22 @@ lbool Solver::simplifyProblem()
     #endif
     reArrangeClauses();
 
-    if (conf.doFindParts
-        && getNumFreeVars() < conf.partVarLimit
+    if (conf.doFindComps
+        && getNumFreeVars() < conf.compVarLimit
     ) {
-        PartFinder findParts(this);
-        if (!findParts.findParts()) {
+        CompFinder findParts(this);
+        if (!findParts.findComps()) {
             goto end;
         }
     }
 
-    if (conf.doPartHandler
-        && getNumFreeVars() < conf.partVarLimit
+    if (conf.doCompHandler
+        && getNumFreeVars() < conf.compVarLimit
         && solveStats.numSimplify >= conf.handlerFromSimpNum
         //Only every 2nd, since it can be costly to find parts
         && solveStats.numSimplify % 2 == 0
     ) {
-        if (!partHandler->handle())
+        if (!compHandler->handle())
             goto end;
     }
 

@@ -49,8 +49,8 @@ class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
 class ImplCache;
-class PartFinder;
-class PartHandler;
+class CompFinder;
+class CompHandler;
 
 class LitReachData {
     public:
@@ -372,15 +372,15 @@ class Solver : public Searcher
         friend class XorFinder;
         friend class GateFinder;
         friend class PropEngine;
-        friend class PartFinder;
-        friend class PartHandler;
+        friend class CompFinder;
+        friend class CompHandler;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;
         ClauseCleaner       *clauseCleaner;
         VarReplacer         *varReplacer;
-        PartHandler         *partHandler;
+        CompHandler         *compHandler;
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////

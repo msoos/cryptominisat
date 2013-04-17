@@ -549,15 +549,15 @@ void Main::parseCommandLine()
 
     po::options_description componentOptions("Component options");
     componentOptions.add_options()
-    ("findcomp", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
+    ("findcomp", po::value<int>(&conf.doFindComps)->default_value(conf.doFindComps)
         , "Find components")
-    ("comps", po::value<int>(&conf.doPartHandler)->default_value(conf.doPartHandler)
+    ("comps", po::value<int>(&conf.doCompHandler)->default_value(conf.doCompHandler)
         , "Perform component-finding and separate handling")
     ("compsfrom", po::value<size_t>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
         , "Component finding only after this many simplification rounds")
-    ("compsvar", po::value<size_t>(&conf.partVarLimit)->default_value(conf.partVarLimit)
+    ("compsvar", po::value<size_t>(&conf.compVarLimit)->default_value(conf.compVarLimit)
         , "Only use components in case the number of variables is below this limit");
-    ("compslimit", po::value<size_t>(&conf.partFindLimitMega)->default_value(conf.partFindLimitMega)
+    ("compslimit", po::value<size_t>(&conf.compFindLimitMega)->default_value(conf.compFindLimitMega)
         , "Limit how much time is spent in component-finding");
 
     po::positional_options_description p;

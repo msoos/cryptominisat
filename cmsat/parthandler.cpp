@@ -35,20 +35,20 @@ using std::endl;
 
 //#define VERBOSE_DEBUG
 
-PartHandler::PartHandler(Solver* _solver) :
+CompHandler::CompHandler(Solver* _solver) :
     solver(_solver)
-    , partFinder(NULL)
+    , compFinder(NULL)
 {
 }
 
-PartHandler::~PartHandler()
+CompHandler::~CompHandler()
 {
-    if (partFinder != NULL) {
-        delete partFinder;
+    if (compFinder != NULL) {
+        delete compFinder;
     }
 }
 
-void PartHandler::createRenumbering(const vector<Var>& vars)
+void CompHandler::createRenumbering(const vector<Var>& vars)
 {
     interToOuter.resize(solver->nVars());
     outerToInter.resize(solver->nVars());
@@ -63,22 +63,22 @@ void PartHandler::createRenumbering(const vector<Var>& vars)
     }
 }
 
-bool PartHandler::handle()
+bool CompHandler::handle()
 {
     assert(solver->okay());
     double myTime = cpuTime();
-    partFinder = new PartFinder(solver);
-    if (!partFinder->findParts()) {
+    compFinder = new CompFinder(solver);
+    if (!compFinder->findComps()) {
         return false;
     }
-    if (partFinder->getTimedOut()) {
+    if (compFinder->getTimedOut()) {
         return solver->okay();
     }
 
-    const uint32_t num_parts = partFinder->getReverseTable().size();
+    const uint32_t num_comps = compFinder->getReverseTable().size();
 
-    //If there is only one big part, we can't do anything
-    if (num_parts <= 1) {
+    //If there is only one big comp, we can't do anything
+    if (num_comps <= 1) {
         if (solver->conf.verbosity >= 2) {
             cout
             << "c Only one component, not handling it separately"
@@ -87,8 +87,8 @@ bool PartHandler::handle()
         return true;
     }
 
-    map<uint32_t, vector<Var> > reverseTable = partFinder->getReverseTable();
-    assert(num_parts == partFinder->getReverseTable().size());
+    map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
+    assert(num_comps == compFinder->getReverseTable().size());
 
     //Get the sizes now
     vector<pair<uint32_t, uint32_t> > sizes;
@@ -98,7 +98,7 @@ bool PartHandler::handle()
         ; it++
     ) {
         sizes.push_back(make_pair(
-            it->first //Part number
+            it->first //Comp number
             , (uint32_t)it->second.size() //Size of the table
         ));
     }
@@ -107,12 +107,12 @@ bool PartHandler::handle()
     std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
 
-    size_t num_parts_solved = 0;
+    size_t num_comps_solved = 0;
     size_t vars_solved = 0;
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         //What are we solving?
-        const uint32_t part = sizes[it].first;
-        vector<Var> vars = reverseTable[part];
+        const uint32_t comp = sizes[it].first;
+        vector<Var> vars = reverseTable[comp];
 
         //Don't move over variables already solved
         vector<Var> tmp;
@@ -135,7 +135,7 @@ bool PartHandler::handle()
         createRenumbering(vars);
 
         //Print what we are going to do
-        if (solver->conf.verbosity >= 1 && num_parts < 20) {
+        if (solver->conf.verbosity >= 1 && num_comps < 20) {
             cout
             << "c Solving component " << it
             << " num vars: " << vars.size()
@@ -147,12 +147,12 @@ bool PartHandler::handle()
         SolverConf conf;
         Solver newSolver(conf);
         configureNewSolver(&newSolver, vars.size());
-        moveVariablesBetweenSolvers(&newSolver, vars, part);
+        moveVariablesBetweenSolvers(&newSolver, vars, comp);
 
         //Move clauses over
-        moveClausesImplicit(&newSolver, part, vars);
-        moveClausesLong(solver->longIrredCls, &newSolver, part);
-        moveClausesLong(solver->longRedCls, &newSolver, part);
+        moveClausesImplicit(&newSolver, comp, vars);
+        moveClausesLong(solver->longIrredCls, &newSolver, comp);
+        moveClausesLong(solver->longRedCls, &newSolver, comp);
 
         lbool status = newSolver.solve();
         assert(status != l_Undef);
@@ -197,19 +197,19 @@ bool PartHandler::handle()
             Var var = vars[i];
             if (newSolver.model[updateVar(var)] != l_Undef) {
                 assert(savedState[var] == l_Undef);
-                assert(partFinder->getVarPart(var) == part);
+                assert(compFinder->getVarComp(var) == comp);
 
                 savedState[var] = newSolver.model[updateVar(var)];
             }
         }
 
-        if (solver->conf.verbosity >= 1 && num_parts < 20) {
+        if (solver->conf.verbosity >= 1 && num_comps < 20) {
             cout
             << "c Solved component " << it
             << " ======================================="
             << endl;
         }
-        num_parts_solved++;
+        num_comps_solved++;
         vars_solved += vars.size();
     }
 
@@ -217,7 +217,7 @@ bool PartHandler::handle()
     if (solver->conf.verbosity  >= 1) {
         cout
         << "c Coming back to original instance, solved "
-        << num_parts_solved << " component, "
+        << num_comps_solved << " component, "
         << vars_solved << " vars"
         << " T: "
         << std::setprecision(2) << std::fixed
@@ -228,7 +228,7 @@ bool PartHandler::handle()
     //Filter out the variables that have been made non-decision
     solver->filterOrderHeap();
 
-    //Checking that all variables that are not in the remaining part are all
+    //Checking that all variables that are not in the remaining comp are all
     //non-decision vars, and none have been assigned
     for (Var var = 0; var < solver->nVars(); var++) {
         if (savedState[var] != l_Undef) {
@@ -238,18 +238,18 @@ bool PartHandler::handle()
     }
 
     //Checking that all remaining clauses contain only variables
-    //that are in the remaining part
+    //that are in the remaining comp
     //assert(checkClauseMovement(solver, sizes[sizes.size()-1].first));
 
-    delete partFinder;
-    partFinder = NULL;
+    delete compFinder;
+    compFinder = NULL;
     return true;
 }
 
 /**
 @brief Sets up the sub-solver with a specific configuration
 */
-void PartHandler::configureNewSolver(
+void CompHandler::configureNewSolver(
     Solver* newSolver
     , const size_t numVars
 ) const {
@@ -270,7 +270,7 @@ void PartHandler::configureNewSolver(
     }
 
     //Don't recurse
-    newSolver->conf.doPartHandler = false;
+    newSolver->conf.doCompHandler = false;
 }
 
 /**
@@ -279,10 +279,10 @@ void PartHandler::configureNewSolver(
 This implies making the right variables decision in the new solver,
 and making it non-decision in the old solver.
 */
-void PartHandler::moveVariablesBetweenSolvers(
+void CompHandler::moveVariablesBetweenSolvers(
     Solver* newSolver
     , vector<Var>& vars
-    , const uint32_t part
+    , const uint32_t comp
 ) {
     for(size_t i = 0; i < vars.size(); i++) {
         Var var = interToOuter[i];
@@ -292,14 +292,14 @@ void PartHandler::moveVariablesBetweenSolvers(
         if (!solver->decisionVar[var]) {
             cout
             << "var " << var + 1
-            << " is non-decision, but in part... strange."
+            << " is non-decision, but in comp... strange."
             << endl;
         }
         #endif //VERBOSE_DEBUG
 
         //Add to new solver
         newSolver->newVar(solver->decisionVar[var]);
-        assert(partFinder->getVarPart(var) == part);
+        assert(compFinder->getVarComp(var) == comp);
 
         //Remove from old solver
         if (solver->decisionVar[var]) {
@@ -310,10 +310,10 @@ void PartHandler::moveVariablesBetweenSolvers(
     }
 }
 
-void PartHandler::moveClausesLong(
+void CompHandler::moveClausesLong(
     vector<ClOffset>& cs
     , Solver* newSolver
-    , const uint32_t part
+    , const uint32_t comp
 ) {
     vector<Lit> tmp;
 
@@ -324,46 +324,46 @@ void PartHandler::moveClausesLong(
     ) {
         Clause& cl = *solver->clAllocator->getPointer(*i);
 
-        //Irred, different part
+        //Irred, different comp
         if (!cl.learnt()) {
-            if (partFinder->getVarPart(cl[0].var()) != part) {
-                //different part, move along
+            if (compFinder->getVarComp(cl[0].var()) != comp) {
+                //different comp, move along
                 *j++ = *i;
                 continue;
             }
         }
 
         if (cl.learnt()) {
-            //Check which part(s) it belongs to
-            bool thisPart = false;
-            bool otherPart = false;
+            //Check which comp(s) it belongs to
+            bool thisComp = false;
+            bool otherComp = false;
             for (Lit* l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
-                if (partFinder->getVarPart(l->var()) == part)
-                    thisPart = true;
+                if (compFinder->getVarComp(l->var()) == comp)
+                    thisComp = true;
 
-                if (partFinder->getVarPart(l->var()) != part)
-                    otherPart = true;
+                if (compFinder->getVarComp(l->var()) != comp)
+                    otherComp = true;
             }
 
-            //In both parts, remove it
-            if (thisPart && otherPart) {
+            //In both comps, remove it
+            if (thisComp && otherComp) {
                 solver->detachClause(cl);
                 solver->clAllocator->clauseFree(&cl);
                 continue;
             }
 
-            //In one part, but not this one
-            if (!thisPart) {
-                //different part, move along
+            //In one comp, but not this one
+            if (!thisComp) {
+                //different comp, move along
                 *j++ = *i;
                 continue;
             }
-            assert(thisPart && !otherPart);
+            assert(thisComp && !otherComp);
         }
 
         //Let's move it to the other solver!
         #ifdef VERBOSE_DEBUG
-        cout << "clause in this part:" << cl << endl;;
+        cout << "clause in this comp:" << cl << endl;;
         #endif
 
         tmp.resize(cl.size());
@@ -384,9 +384,9 @@ void PartHandler::moveClausesLong(
     cs.resize(cs.size() - (i-j));
 }
 
-void PartHandler::moveClausesImplicit(
+void CompHandler::moveClausesImplicit(
     Solver* newSolver
-    , const uint32_t part
+    , const uint32_t comp
     , const vector<Var>& vars
 ) {
     vector<Lit> lits;
@@ -416,23 +416,23 @@ void PartHandler::moveClausesImplicit(
             ; i != end2
             ; i++
         ) {
-            //At least one variable inside part
+            //At least one variable inside comp
             if (i->isBinary()
-                && (partFinder->getVarPart(lit.var()) == part
-                    || partFinder->getVarPart(i->lit1().var()) == part
+                && (compFinder->getVarComp(lit.var()) == comp
+                    || compFinder->getVarComp(i->lit1().var()) == comp
                 )
             ) {
                 const Lit lit2 = i->lit1();
 
-                //Unless learnt, cannot be in 2 parts at once
-                assert((partFinder->getVarPart(lit.var()) == part
-                            && partFinder->getVarPart(lit2.var()) == part
+                //Unless learnt, cannot be in 2 comps at once
+                assert((compFinder->getVarComp(lit.var()) == comp
+                            && compFinder->getVarComp(lit2.var()) == comp
                        ) || i->learnt()
                 );
 
-                //If it's learnt and the lits are in different parts, remove it.
-                if (partFinder->getVarPart(lit.var()) != part
-                    || partFinder->getVarPart(lit2.var()) != part
+                //If it's learnt and the lits are in different comps, remove it.
+                if (compFinder->getVarComp(lit.var()) != comp
+                    || compFinder->getVarComp(lit2.var()) != comp
                 ) {
                     assert(i->learnt());
                     numRemovedHalfLearnt++;
@@ -446,8 +446,8 @@ void PartHandler::moveClausesImplicit(
                     lits.resize(2);
                     lits[0] = updateLit(lit);
                     lits[1] = updateLit(lit2);
-                    assert(partFinder->getVarPart(lit.var()) == part);
-                    assert(partFinder->getVarPart(lit2.var()) == part);
+                    assert(compFinder->getVarComp(lit.var()) == comp);
+                    assert(compFinder->getVarComp(lit2.var()) == comp);
                     if (i->learnt()) {
                         newSolver->addLearntClause(lits);
                         numRemovedHalfLearnt++;
@@ -471,25 +471,25 @@ void PartHandler::moveClausesImplicit(
             }
 
             if (i->isTri()
-                && (partFinder->getVarPart(lit.var()) == part
-                    || partFinder->getVarPart(i->lit1().var()) == part
-                    || partFinder->getVarPart(i->lit2().var()) == part
+                && (compFinder->getVarComp(lit.var()) == comp
+                    || compFinder->getVarComp(i->lit1().var()) == comp
+                    || compFinder->getVarComp(i->lit2().var()) == comp
                 )
             ) {
                 const Lit lit2 = i->lit1();
                 const Lit lit3 = i->lit2();
 
-                //Unless learnt, cannot be in 2 parts at once
-                assert((partFinder->getVarPart(lit.var()) == part
-                            && partFinder->getVarPart(lit2.var()) == part
-                            && partFinder->getVarPart(lit3.var()) == part
+                //Unless learnt, cannot be in 2 comps at once
+                assert((compFinder->getVarComp(lit.var()) == comp
+                            && compFinder->getVarComp(lit2.var()) == comp
+                            && compFinder->getVarComp(lit3.var()) == comp
                        ) || i->learnt()
                 );
 
-                //If it's learnt and the lits are in different parts, remove it.
-                if (partFinder->getVarPart(lit.var()) != part
-                    || partFinder->getVarPart(lit2.var()) != part
-                    || partFinder->getVarPart(lit3.var()) != part
+                //If it's learnt and the lits are in different comps, remove it.
+                if (compFinder->getVarComp(lit.var()) != comp
+                    || compFinder->getVarComp(lit2.var()) != comp
+                    || compFinder->getVarComp(lit3.var()) != comp
                 ) {
                     assert(i->learnt());
                     numRemovedThirdLearnt++;
@@ -506,9 +506,9 @@ void PartHandler::moveClausesImplicit(
                     lits[0] = updateLit(lit);
                     lits[1] = updateLit(lit2);
                     lits[2] = updateLit(lit3);
-                    assert(partFinder->getVarPart(lit.var()) == part);
-                    assert(partFinder->getVarPart(lit2.var()) == part);
-                    assert(partFinder->getVarPart(lit3.var()) == part);
+                    assert(compFinder->getVarComp(lit.var()) == comp);
+                    assert(compFinder->getVarComp(lit2.var()) == comp);
+                    assert(compFinder->getVarComp(lit3.var()) == comp);
                     if (i->learnt()) {
                         newSolver->addLearntClause(lits);
                         numRemovedThirdLearnt++;
@@ -553,7 +553,7 @@ void PartHandler::moveClausesImplicit(
     solver->binTri.redLits -= numRemovedThirdLearnt;
 }
 
-void PartHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
+void CompHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
 {
     //Enqueue them. They may need to be extended, so enqueue is needed
     //manipulating "model" may not be good enough
@@ -571,12 +571,12 @@ void PartHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
     decisionVarRemoved.clear();
 }
 
-void PartHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
+void CompHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
 {
     updateArray(savedState, interToOuter_nonlocal);
 }
 
-/*void PartHandler::readdRemovedClauses()
+/*void CompHandler::readdRemovedClauses()
 {
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
@@ -604,17 +604,17 @@ void PartHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
     solver.libraryCNFFile = backup_libraryCNFfile;
 }
 
-const bool PartHandler::checkClauseMovement(
+const bool CompHandler::checkClauseMovement(
     const Solver& thisSolver
-    , const uint32_t part
+    , const uint32_t comp
 ) const {
-    if (!checkOnlyThisPartLong(thisSolver.longIrredCls, part))
+    if (!checkOnlyThisCompLong(thisSolver.longIrredCls, comp))
         return false;
 
-    if (!checkOnlyThisPartLong(thisSolver.longRedCls, part))
+    if (!checkOnlyThisCompLong(thisSolver.longRedCls, comp))
         return false;
 
-    if (!checkOnlyThisPartImplicit(thisSolver, part))
+    if (!checkOnlyThisCompImplicit(thisSolver, comp))
         return false;
 
     return true;
@@ -622,19 +622,19 @@ const bool PartHandler::checkClauseMovement(
 
 
 template<class T>
-const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const
+const bool CompHandler::checkOnlyThisComp(const vec<T*>& cs, const uint32_t comp, const CompFinder& compFinder) const
 {
     for(T * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const T& c = **it;
         for(const Lit *l = c.getData(), *end2 = l + c.size(); l != end2; l++) {
-            if (partFinder->getVarPart(l->var()) != part) return false;
+            if (compFinder->getVarComp(l->var()) != comp) return false;
         }
     }
 
     return true;
 }
 
-const bool PartHandler::checkOnlyThisPartBin(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const
+const bool CompHandler::checkOnlyThisCompBin(const Solver& thisSolver, const uint32_t comp, const CompFinder& compFinder) const
 {
     bool retval = true;
     uint32_t wsLit = 0;
@@ -643,10 +643,10 @@ const bool PartHandler::checkOnlyThisPartBin(const Solver& thisSolver, const uin
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (partFinder->getVarPart(lit.var()) != part
-                    || partFinder->getVarPart(it2->getOtherLit().var()) != part
+                if (compFinder->getVarComp(lit.var()) != comp
+                    || compFinder->getVarComp(it2->getOtherLit().var()) != comp
                     ) {
-                    cout << "bin incorrectly moved to this part:" << lit << " , " << it2->getOtherLit() << endl;
+                    cout << "bin incorrectly moved to this comp:" << lit << " , " << it2->getOtherLit() << endl;
                     retval = false;
                 }
             }

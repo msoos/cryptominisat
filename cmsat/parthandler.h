@@ -34,21 +34,21 @@ using std::vector;
 using std::pair;
 
 class Solver;
-class PartFinder;
+class CompFinder;
 
 /**
 @brief Disconnected components are treated here
 
-Uses PartFinder to find disconnected components and treats them using
+Uses CompFinder to find disconnected components and treats them using
 subsolvers. The solutions (if SAT) are aggregated, and at then end, the
 solution is extended with the sub-solutions, and the removed clauses are
 added back to the problem.
 */
-class PartHandler
+class CompHandler
 {
     public:
-        PartHandler(Solver* solver);
-        ~PartHandler();
+        CompHandler(Solver* solver);
+        ~CompHandler();
 
         bool handle();
         const vector<lbool>& getSavedState();
@@ -77,25 +77,25 @@ class PartHandler
         void moveVariablesBetweenSolvers(
             Solver* newSolver
             , vector<Var>& vars
-            , const uint32_t part
+            , const uint32_t comp
         );
 
         //For moving clauses
         void moveClausesImplicit(
             Solver* newSolver
-            , const uint32_t part
+            , const uint32_t comp
             , const vector<Var>& vars
         );
         void moveClausesLong(
             vector<ClOffset>& cs
             , Solver* newSolver
-            , const uint32_t part
+            , const uint32_t comp
         );
 
         Solver* solver;
-        PartFinder* partFinder;
+        CompFinder* compFinder;
 
-        ///The solutions that have been found by the parts
+        ///The solutions that have been found by the comps
         vector<lbool> savedState;
 
         ///List of variables whose decision-ness has been removed (set to FALSE)
@@ -117,7 +117,7 @@ class PartHandler
             return outerToInter[var];
         }
 
-        //Clauses that have been moved to other parts
+        //Clauses that have been moved to other comps
         //vector<ClOffset> clausesRemoved;
         //vector<pair<Lit, Lit> > binClausesRemoved;
 };
@@ -125,7 +125,7 @@ class PartHandler
 /**
 @brief Returns the saved state of a variable
 */
-inline const vector<lbool>& PartHandler::getSavedState()
+inline const vector<lbool>& CompHandler::getSavedState()
 {
     return savedState;
 }
@@ -133,10 +133,10 @@ inline const vector<lbool>& PartHandler::getSavedState()
 /**
 @brief Creates a space in savedState
 
-So that the solution can eventually be saved here (if parts are used). By
+So that the solution can eventually be saved here (if comps are used). By
 default the value is l_Undef, i.e. no solution has been saved there.
 */
-inline void PartHandler::newVar()
+inline void CompHandler::newVar()
 {
     savedState.push_back(l_Undef);
 }

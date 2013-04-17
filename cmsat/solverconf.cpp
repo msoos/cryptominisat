@@ -144,11 +144,13 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doRenumberVars   (true)
-        , doFindParts      (false)
-        , doPartHandler    (true)
+
+        //Component finding
+        , doFindComps     (false)
+        , doCompHandler    (true)
         , handlerFromSimpNum (0)
-        , partVarLimit      (1ULL*1000ULL*1000ULL)
-        , partFindLimitMega (500)
+        , compVarLimit      (1ULL*1000ULL*1000ULL)
+        , compFindLimitMega (500)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)

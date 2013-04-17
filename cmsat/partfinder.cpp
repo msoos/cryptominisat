@@ -44,22 +44,22 @@ using std::endl;
 
 //#define PART_FINDING
 
-PartFinder::PartFinder(Solver* _solver) :
+CompFinder::CompFinder(Solver* _solver) :
     timeUsed(0)
     , timedout(false)
     , solver(_solver)
 {
 }
 
-bool PartFinder::findParts()
+bool CompFinder::findComps()
 {
     const double myTime = cpuTime();
 
     table.clear();
     table.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
     reverseTable.clear();
-    part_no = 0;
-    used_part_no = 0;
+    comp_no = 0;
+    used_comp_no = 0;
 
     solver->clauseCleaner->removeAndCleanAll();
 
@@ -69,8 +69,8 @@ bool PartFinder::findParts()
     //Add the clauses to the sets
     timeUsed = 0;
     timedout = false;
-    addToPartClauses(solver->longIrredCls);
-    addToPartImplicits();
+    addToCompClauses(solver->longIrredCls);
+    addToCompImplicits();
 
     //We timed-out while searching, internal datas are wrong!
     if (timedout) {
@@ -88,7 +88,7 @@ bool PartFinder::findParts()
         return solver->okay();
     }
 
-    //const uint32_t parts = setParts();
+    //const uint32_t comps = setComps();
 
     #ifndef NDEBUG
     for (map<uint32_t, vector<Var> >::const_iterator
@@ -103,7 +103,7 @@ bool PartFinder::findParts()
     #endif
 
     if (solver->conf.verbosity  >= 2
-        || (solver->conf.verbosity  >=1 && used_part_no > 1)
+        || (solver->conf.verbosity  >=1 && used_comp_no > 1)
     ) {
         cout
         << "c Found components: " <<  reverseTable.size()
@@ -145,30 +145,30 @@ bool PartFinder::findParts()
     return true;
 }
 
-void PartFinder::addToPartClauses(const vector<ClOffset>& cs)
+void CompFinder::addToCompClauses(const vector<ClOffset>& cs)
 {
     for (vector<ClOffset>::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
         ; it++
     ) {
-        if (timeUsed/(1000ULL*1000ULL) > solver->conf.partFindLimitMega) {
+        if (timeUsed/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
             timedout = true;
             break;
         }
         timeUsed += 10;
         Clause* cl = solver->clAllocator->getPointer(*it);
-        addToPartClause(*cl);
+        addToCompClause(*cl);
     }
 }
 
-void PartFinder::addToPartImplicits()
+void CompFinder::addToCompImplicits()
 {
     vector<Lit> lits;
     vector<uint16_t>& seen = solver->seen;
 
     for (size_t var = 0; var < solver->nVars(); var++) {
-        if (timeUsed/(1000ULL*1000ULL) > solver->conf.partFindLimitMega) {
+        if (timeUsed/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
             timedout = true;
             break;
         }
@@ -233,14 +233,14 @@ void PartFinder::addToPartImplicits()
                 seen[it->var()] = 0;
             }
 
-            addToPartClause(lits);
+            addToCompClause(lits);
         }
 
     }
 }
 
 template<class T>
-void PartFinder::addToPartClause(const T& cl)
+void CompFinder::addToCompClause(const T& cl)
 {
     assert(cl.size() > 1);
     tomerge.clear();
@@ -251,21 +251,21 @@ void PartFinder::addToPartClause(const T& cl)
     //Do they all belong to the same place?
     bool allsame = false;
     if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
-        uint32_t part = table[cl[0].var()];
+        uint32_t comp = table[cl[0].var()];
         allsame = true;
         for (typename T::const_iterator
             it = cl.begin(), end = cl.end()
             ; it != end
             ; it++
         ) {
-            if (table[it->var()] != part) {
+            if (table[it->var()] != comp) {
                 allsame = false;;
                 break;
             }
         }
     }
 
-    //They already all belong to the same part, skip
+    //They already all belong to the same comp, skip
     if (allsame) {
         return;
     }
@@ -333,53 +333,53 @@ void PartFinder::addToPartClause(const T& cl)
             , it2->second.end()
         );
 
-        //Delete this part
+        //Delete this comp
         timeUsed += reverseTable.size();
         reverseTable.erase(it2);
-        used_part_no--;
+        used_comp_no--;
     }
 
-    //Mark all these lits as belonging to part_no
+    //Mark all these lits as belonging to comp_no
     timeUsed += newSet.size();
     for (size_t i = 0; i < newSet.size(); i++) {
-        table[newSet[i]] = part_no;
+        table[newSet[i]] = comp_no;
     }
 
-    reverseTable[part_no] = newSet;
-    part_no++;
-    used_part_no++;
+    reverseTable[comp_no] = newSet;
+    comp_no++;
+    used_comp_no++;
 }
 
 /*
-const uint32_t PartFinder::setParts()
+const uint32_t CompFinder::setComps()
 {
-    vector<uint32_t> numClauseInPart(part_no, 0);
-    vector<uint32_t> sumLitsInPart(part_no, 0);
+    vector<uint32_t> numClauseInComp(comp_no, 0);
+    vector<uint32_t> sumLitsInComp(comp_no, 0);
 
-    calcIn(solver->longIrredCls, numClauseInPart, sumLitsInPart);
-    calcInImplicits(numClauseInPart, sumLitsInPart);
+    calcIn(solver->longIrredCls, numClauseInComp, sumLitsInComp);
+    calcInImplicits(numClauseInComp, sumLitsInComp);
 
-    uint32_t parts = 0;
-    for (uint32_t i = 0; i < numClauseInPart.size(); i++) {
+    uint32_t comps = 0;
+    for (uint32_t i = 0; i < numClauseInComp.size(); i++) {
 
         //Nothing in here
-        if (sumLitsInPart[i] == 0)
+        if (sumLitsInComp[i] == 0)
             continue;
 
         if (solver->conf.verbosity  >= 3
             || ( solver->conf.verbosity  >= 1 && reverseTable.size() > 1)
         ) {
             cout
-            << "c Found part " << std::setw(8) << i
+            << "c Found comp " << std::setw(8) << i
             << " vars: " << std::setw(10) << reverseTable[i].size()
-            << " clauses:" << std::setw(10) << numClauseInPart[i]
-            << " lits size:" << std::setw(10) << sumLitsInPart[i]
+            << " clauses:" << std::setw(10) << numClauseInComp[i]
+            << " lits size:" << std::setw(10) << sumLitsInComp[i]
             << endl;
         }
-        parts++;
+        comps++;
     }
 
-    if (parts > 1) {
+    if (comps > 1) {
         #ifdef VERBOSE_DEBUG
         for (map<uint32_t, vector<Var> >::iterator
             it = reverseTable.begin(), end = reverseTable.end()
@@ -399,10 +399,10 @@ const uint32_t PartFinder::setParts()
         #endif
     }
 
-    return parts;
+    return comps;
 }
 
-void PartFinder::calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart)
+void CompFinder::calcInBins(vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp)
 {
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
@@ -412,27 +412,27 @@ void PartFinder::calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>&
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 if (it2->getLearnt()) continue;
 
-                const uint32_t part = table[lit.var()];
-                assert(part < part_no);
-                numClauseInPart[part]++;
-                sumLitsInPart[part] += 2;
+                const uint32_t comp = table[lit.var()];
+                assert(comp < comp_no);
+                numClauseInComp[comp]++;
+                sumLitsInComp[comp] += 2;
             }
         }
     }
 }
 
 template<class T>
-void PartFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart)
+void CompFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp)
 {
     for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
         if ((*c)->learnt()) continue;
         T& x = **c;
-        const uint32_t part = table[x[0].var()];
-        assert(part < part_no);
+        const uint32_t comp = table[x[0].var()];
+        assert(comp < comp_no);
 
         //for stats
-        numClauseInPart[part]++;
-        sumLitsInPart[part] += x.size();
+        numClauseInComp[comp]++;
+        sumLitsInComp[comp] += x.size();
     }
 }
 */
