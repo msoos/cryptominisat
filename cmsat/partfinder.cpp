@@ -45,13 +45,15 @@ using std::endl;
 //#define PART_FINDING
 
 PartFinder::PartFinder(Solver* _solver) :
-    solver(_solver)
+    timeUsed(0)
+    , timedout(false)
+    , solver(_solver)
 {
 }
 
 bool PartFinder::findParts()
 {
-    double time = cpuTime();
+    const double myTime = cpuTime();
 
     table.clear();
     table.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
@@ -65,8 +67,26 @@ bool PartFinder::findParts()
         return false;
 
     //Add the clauses to the sets
+    timeUsed = 0;
+    timedout = false;
     addToPartClauses(solver->longIrredCls);
     addToPartImplicits();
+
+    //We timed-out while searching, internal datas are wrong!
+    if (timedout) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c Timed out fiding components, BP: "
+            << std::setprecision(2) << std::fixed
+            << (double)timeUsed/(1000.0*1000.0)
+            << " T: "
+            << std::setprecision(2) << std::fixed
+            << cpuTime() - myTime
+            << endl;
+        }
+
+        return solver->okay();
+    }
 
     //const uint32_t parts = setParts();
 
@@ -86,9 +106,12 @@ bool PartFinder::findParts()
         || (solver->conf.verbosity  >=1 && used_part_no > 1)
     ) {
         cout
-        << "c Found parts: " <<  reverseTable.size()
+        << "c Found components: " <<  reverseTable.size()
+        << " BP: "
+        << std::setprecision(2) << std::fixed
+        << (double)timeUsed/(1000.0*1000.0)<< "M"
         << " time: "
-        << std::setprecision(2) << std::fixed << cpuTime() - time
+        << std::setprecision(2) << std::fixed << cpuTime() - myTime
         << " s"
         << endl;
 
@@ -105,7 +128,7 @@ bool PartFinder::findParts()
                 notPrinted++;
             } else {
                 cout
-                << "c large part " << std::setw(5) << i
+                << "c large component " << std::setw(5) << i
                 << " size: " << std::setw(10) << it->second.size()
                 << endl;
             }
@@ -113,7 +136,7 @@ bool PartFinder::findParts()
 
         if (solver->conf.verbosity < 3) {
             cout
-            << "c Not printed total small (<300 vars) parts:" << notPrinted
+            << "c Not printed total small (<300 vars) components:" << notPrinted
             << " vars: " << totalSmallSize
             << endl;
         }
@@ -129,6 +152,11 @@ void PartFinder::addToPartClauses(const vector<ClOffset>& cs)
         ; it != end
         ; it++
     ) {
+        if (timeUsed/(1000ULL*1000ULL) > solver->conf.partFindLimitMega) {
+            timedout = true;
+            break;
+        }
+        timeUsed += 10;
         Clause* cl = solver->clAllocator->getPointer(*it);
         addToPartClause(*cl);
     }
@@ -140,6 +168,12 @@ void PartFinder::addToPartImplicits()
     vector<uint16_t>& seen = solver->seen;
 
     for (size_t var = 0; var < solver->nVars(); var++) {
+        if (timeUsed/(1000ULL*1000ULL) > solver->conf.partFindLimitMega) {
+            timedout = true;
+            break;
+        }
+
+        timeUsed += 2;
         Lit lit(var, false);
         lits.clear();
         lits.push_back(lit);
@@ -151,6 +185,7 @@ void PartFinder::addToPartImplicits()
             if (ws.empty())
                 continue;
 
+            timeUsed += ws.size() + 10;
             for(vec<Watched>::const_iterator
                 it2 = ws.begin(), end2 = ws.end()
                 ; it2 != end2
@@ -211,6 +246,7 @@ void PartFinder::addToPartClause(const T& cl)
     tomerge.clear();
     newSet.clear();
     vector<uint16_t>& seen = solver->seen;
+    timeUsed += cl.size()/2 + 1;
 
     //Do they all belong to the same place?
     bool allsame = false;
@@ -235,6 +271,7 @@ void PartFinder::addToPartClause(const T& cl)
     }
 
     //Where should each literal go?
+    timeUsed += cl.size()*2;
     for (typename T::const_iterator
         it = cl.begin(), end = cl.end()
         ; it != end
@@ -270,26 +307,40 @@ void PartFinder::addToPartClause(const T& cl)
         return;
     }
 
+    //Expensive merging coming up
+    timeUsed += 20;
+
     //Delete tables to merge and put their elements into newSet
     for (vector<uint32_t>::iterator
         it = tomerge.begin(), end = tomerge.end()
         ; it != end
         ; it++
     ) {
+        //Clear seen
         seen[*it] = 0;
+
+        //Find in reverseTable
+        timeUsed += reverseTable.size()*2;
+        map<uint32_t, vector<Var> >::iterator it2 =
+            reverseTable.find(*it);
+        assert(it2 != reverseTable.end());
+
         //Add them all
+        timeUsed += it2->second.size();
         newSet.insert(
             newSet.end()
-            , reverseTable[*it].begin()
-            , reverseTable[*it].end()
+            , it2->second.begin()
+            , it2->second.end()
         );
 
         //Delete this part
-        reverseTable.erase(*it);
+        timeUsed += reverseTable.size();
+        reverseTable.erase(it2);
         used_part_no--;
     }
 
     //Mark all these lits as belonging to part_no
+    timeUsed += newSet.size();
     for (size_t i = 0; i < newSet.size(); i++) {
         table[newSet[i]] = part_no;
     }

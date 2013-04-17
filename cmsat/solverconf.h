@@ -171,6 +171,7 @@ class SolverConf
         int       doPartHandler;
         size_t    handlerFromSimpNum;
         size_t    partVarLimit;
+        uint64_t  partFindLimitMega;
 
 
         int      doExtBinSubs;

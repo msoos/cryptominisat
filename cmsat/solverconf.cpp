@@ -148,6 +148,7 @@ SolverConf::SolverConf() :
         , doPartHandler    (true)
         , handlerFromSimpNum (0)
         , partVarLimit      (1ULL*1000ULL*1000ULL)
+        , partFindLimitMega (500)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)

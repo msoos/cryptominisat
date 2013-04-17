@@ -284,12 +284,6 @@ void Main::parseCommandLine()
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
-    ("parts", po::value<int>(&conf.doPartHandler)->default_value(conf.doPartHandler)
-        , "Perform part-finding and separate handling")
-    ("partsfrom", po::value<size_t>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
-        , "Part finding only after this many simplification rounds")
-    ("partsvar", po::value<size_t>(&conf.partVarLimit)->default_value(conf.partVarLimit)
-        , "Only use parts in case the number of variables is below this limit")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -551,9 +545,20 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
-    ("findparts", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
-        , "Find parts")
     ;
+
+    po::options_description componentOptions("Component options");
+    componentOptions.add_options()
+    ("findcomp", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
+        , "Find components")
+    ("comps", po::value<int>(&conf.doPartHandler)->default_value(conf.doPartHandler)
+        , "Perform component-finding and separate handling")
+    ("compsfrom", po::value<size_t>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
+        , "Component finding only after this many simplification rounds")
+    ("compsvar", po::value<size_t>(&conf.partVarLimit)->default_value(conf.partVarLimit)
+        , "Only use components in case the number of variables is below this limit");
+    ("compslimit", po::value<size_t>(&conf.partFindLimitMega)->default_value(conf.partFindLimitMega)
+        , "Limit how much time is spent in component-finding");
 
     po::positional_options_description p;
     p.add("input", -1);
@@ -573,6 +578,7 @@ void Main::parseCommandLine()
     .add(stampOptions)
     .add(simplificationOptions)
     .add(eqLitOpts)
+    .add(componentOptions)
     #ifdef USE_M4RI
     .add(xorOptions)
     #endif

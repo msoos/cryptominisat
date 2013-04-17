@@ -65,16 +65,23 @@ void PartHandler::createRenumbering(const vector<Var>& vars)
 
 bool PartHandler::handle()
 {
+    assert(solver->okay());
     double myTime = cpuTime();
     partFinder = new PartFinder(solver);
-    partFinder->findParts();
+    if (!partFinder->findParts()) {
+        return false;
+    }
+    if (partFinder->getTimedOut()) {
+        return solver->okay();
+    }
+
     const uint32_t num_parts = partFinder->getReverseTable().size();
 
     //If there is only one big part, we can't do anything
     if (num_parts <= 1) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c Only one part, not handling it separately"
+            << "c Only one component, not handling it separately"
             << endl;
         }
         return true;
@@ -130,7 +137,7 @@ bool PartHandler::handle()
         //Print what we are going to do
         if (solver->conf.verbosity >= 1 && num_parts < 20) {
             cout
-            << "c Solving part " << it
+            << "c Solving component " << it
             << " num vars: " << vars.size()
             << " ======================================="
             << endl;
@@ -198,7 +205,7 @@ bool PartHandler::handle()
 
         if (solver->conf.verbosity >= 1 && num_parts < 20) {
             cout
-            << "c Solved part " << it
+            << "c Solved component " << it
             << " ======================================="
             << endl;
         }
@@ -210,7 +217,7 @@ bool PartHandler::handle()
     if (solver->conf.verbosity  >= 1) {
         cout
         << "c Coming back to original instance, solved "
-        << num_parts_solved << " parts, "
+        << num_parts_solved << " component, "
         << vars_solved << " vars"
         << " T: "
         << std::setprecision(2) << std::fixed

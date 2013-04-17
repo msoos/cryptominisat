@@ -42,6 +42,7 @@ class PartFinder {
     public:
         PartFinder(Solver* solver);
         bool findParts();
+        bool getTimedOut() const;
 
         const map<uint32_t, vector<Var> >& getReverseTable() const; // part->var
         uint32_t getVarPart(const Var var) const;
@@ -83,27 +84,40 @@ class PartFinder {
         vector<Var> newSet;
         vector<uint32_t> tomerge;
 
+        //Keep track of time
+        uint64_t timeUsed;
+        bool timedout;
+
         Solver* solver;
 };
 
 inline const map<uint32_t, vector<Var> >& PartFinder::getReverseTable() const
 {
+    assert(!timedout);
     return reverseTable;
 }
 
 inline const vector<Var>& PartFinder::getTable() const
 {
+    assert(!timedout);
     return table;
 }
 
 inline uint32_t PartFinder::getVarPart(const Var var) const
 {
+    assert(!timedout);
     return table[var];
 }
 
 inline const vector<Var>& PartFinder::getPartVars(const uint32_t part)
 {
+    assert(!timedout);
     return reverseTable[part];
+}
+
+inline bool PartFinder::getTimedOut() const
+{
+    return timedout;
 }
 
 } //End namespace

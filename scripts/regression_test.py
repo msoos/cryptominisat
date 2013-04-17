@@ -188,10 +188,11 @@ class Tester:
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--renumber %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
-        #cmd += "--parts %s " % random.randint(0,1)
-        cmd += "--parts 1 "
-        cmd += "--partsfrom %d " % random.randint(0,2)
-        cmd += "--partsvar %d " % random.randint(20000,500000)
+        #cmd += "--compss %s " % random.randint(0,1)
+        cmd += "--coms 1 "
+        cmd += "--compsfrom %d " % random.randint(0,2)
+        cmd += "--compsvar %d " % random.randint(20000,500000)
+        cmd += "--compslimit %d " % random.randint(0,3000)
 
         return cmd
 
