@@ -222,9 +222,9 @@ class Tester:
 
         #if need time limit, then limit
         if (needToLimitTime) :
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE, preexec_fn=setlimits)
         else:
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
 
         #print time limit after child startup
@@ -233,7 +233,7 @@ class Tester:
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         #Get solver output
-        consoleOutput = p.communicate()[0]
+        consoleOutput, err = p.communicate()
         if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
