@@ -211,8 +211,7 @@ bool Prober::probe()
 
     //Random swap
     for (size_t i = 0
-        //Seems redundant, but '-1' on unsigned wraps around
-        ; i < possCh.size() && i < possCh.size()-1
+        ; i + 1< possCh.size()
         ; i++
     ) {
         std::swap(
