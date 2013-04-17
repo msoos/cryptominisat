@@ -129,14 +129,42 @@ add_dependencies(copy
 )
 
 
-#set(CPACK_PACKAGE_NAME "cryptominisat")
-#set(CPACK_PACKAGE_VENDOR "www.msoos.org")
-#set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-#set(CPACK_PACKAGE_VERSION "3.0.0")
-#set(CPACK_PACKAGE_VERSION_MAJOR "3")
-#set(CPACK_PACKAGE_VERSION_MINOR "0")
-#set(CPACK_PACKAGE_VERSION_PATCH "0")
-#set(CPACK_GENERATOR TGZ)
-#include(CPack)
+set(CPACK_PACKAGE_NAME "cryptominisat")
+set(CPACK_PACKAGE_VENDOR "www.msoos.org")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
+set(CPACK_PACKAGE_VERSION "3.0.0")
+set(CPACK_PACKAGE_VERSION_MAJOR "3")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_SOURCE_GENERATOR "TBZ2")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME
+  "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+set(CPACK_SOURCE_IGNORE_FILES
+  "/build/"
+  "/.git/"
+  "/scripts/"
+  "~$"
+  "${CPACK_SOURCE_IGNORE_FILES}"
+  "/tests/"
+  "/m4/"
+  "/cactusplots/"
+  "/debugbuild/"
+  "/gitstats/"
+  "/matrixes/"
+  "/man/"
+  "/.kdev4/"
+  "/web/jquery/docs/"
+  "/web/jquery/examples/"
+  "/web/scriptaculous-js-1.9.0/test/"
+  ".gitignore"
+  ".git$"
+  "tar.gz$"
+  "tar.bz2$"
+  ".kdev4$"
+
+)
+include(CPack)
+
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 

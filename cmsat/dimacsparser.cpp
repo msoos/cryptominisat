@@ -146,8 +146,8 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
             if (var >= ((uint32_t)1)<<25) {
                 cout
                 << "ERROR! Variable requested is far too large: "
-                << var
-                << "At line " << lineNum
+                << var << endl
+                << "--> At line " << lineNum
                 << endl;
                 exit(-1);
             }

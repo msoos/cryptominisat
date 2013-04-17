@@ -89,10 +89,12 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 /**
 @brief Completely attach all clauses
 */
-bool CompleteDetachReatacher::reattachLongs()
+bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 {
-    cleanAndAttachClauses(solver->longIrredCls);
-    cleanAndAttachClauses(solver->longRedCls);
+    cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
+    cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
+
+    //Treat implicits
     solver->clauseCleaner->treatImplicitClauses();
 
     if (solver->ok)
@@ -106,12 +108,24 @@ bool CompleteDetachReatacher::reattachLongs()
 
 May change solver->ok to FALSE (!)
 */
-void CompleteDetachReatacher::cleanAndAttachClauses(vector<ClOffset>& cs)
-{
+void CompleteDetachReatacher::cleanAndAttachClauses(
+    vector<ClOffset>& cs
+    , bool removeStatsFirst
+) {
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
         Clause* cl = solver->clAllocator->getPointer(*i);
+
+        //Handle stat removal if need be
+        if (removeStatsFirst) {
+            if (cl->learnt()) {
+                solver->binTri.redLits -= cl->size();
+            } else {
+                solver->binTri.irredLits -= cl->size();
+            }
+        }
+
         if (cleanClause(cl)) {
             solver->attachClause(*cl);
             *j++ = *i;

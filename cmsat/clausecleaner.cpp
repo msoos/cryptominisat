@@ -59,9 +59,13 @@ void ClauseCleaner::treatImplicitClauses()
     ) {
         Lit lit = Lit::toLit(wsLit);
         vec<Watched>& ws = solver->watches[wsLit];;
-        if (wsLit+1 < solver->watches.size()) {
-            __builtin_prefetch(solver->watches[wsLit+1].begin());
-        }
+        /*if (wsLit+5 < solver->watches.size()) {
+            __builtin_prefetch(solver->watches[wsLit+5].begin());
+        }*/
+
+        //If watchlist if empty, nothing to do
+        if (ws.empty())
+            continue;
 
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;

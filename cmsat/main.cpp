@@ -90,11 +90,17 @@ void SIGINT_handler(int)
         << "*** This means we might need to finish some calculations"
         << endl;
     } else {
-        if (solver->getVerbosity() >= 1) {
-            solver->addInPartialSolvingStat();
+        if (solver->nVars() > 0) {
             if (solver->getVerbosity() >= 1) {
-                solver->printStats();
+                solver->addInPartialSolvingStat();
+                if (solver->getVerbosity() >= 1) {
+                    solver->printStats();
+                }
             }
+        } else {
+            cout
+            << "No clauses or variables were put into the solver, exiting without stats"
+            << endl;
         }
         _exit(1);
     }
@@ -276,6 +282,14 @@ void Main::parseCommandLine()
         , "Perform regular simplification rounds")
     ("clbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
+    ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
+        , "Perform recursive minimisation")
+    ("parts", po::value<int>(&conf.doPartHandler)->default_value(conf.doPartHandler)
+        , "Perform part-finding and separate handling")
+    ("partsfrom", po::value<size_t>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
+        , "Part finding only after this many simplification rounds")
+    ("partsvar", po::value<size_t>(&conf.partVarLimit)->default_value(conf.partVarLimit)
+        , "Only use parts in case the number of variables is below this limit")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -396,6 +410,8 @@ void Main::parseCommandLine()
         , "No extended subsumption with binary clauses")
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
+    ("occlearntmax", po::value<unsigned>(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
+        , "Don't add to occur list any learnt clause larger than this")
     ;
 
     std::ostringstream sccFindPercent;
@@ -468,7 +484,7 @@ void Main::parseCommandLine()
     ("binpri", po::value<int>(&conf.propBinFirst)->default_value(conf.propBinFirst)
         , "Propagated binary clauses strictly first")
     ("otfhyper", po::value<int>(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
-        , "Perform hyper-binary resolution at dec. level 1 after every restart")
+        , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
 
 
@@ -535,6 +551,8 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
+    ("findparts", po::value<int>(&conf.doFindParts)->default_value(conf.doFindParts)
+        , "Find parts")
     ;
 
     po::positional_options_description p;

@@ -73,8 +73,10 @@ class SolverConf
         RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
 
         //Clause minimisation
+        int doRecursiveMinim;
         int doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
+        size_t moreMinimLimit;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
@@ -165,6 +167,10 @@ class SolverConf
         //Optimisations to do
         bool      printAllRestarts;
         int       doRenumberVars;
+        int       doFindParts;
+        int       doPartHandler;
+        size_t    handlerFromSimpNum;
+        size_t    partVarLimit;
 
 
         int      doExtBinSubs;

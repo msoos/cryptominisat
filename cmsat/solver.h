@@ -49,6 +49,8 @@ class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
 class ImplCache;
+class PartFinder;
+class PartHandler;
 
 class LitReachData {
     public:
@@ -136,7 +138,7 @@ class Solver : public Searcher
         void print_elimed_vars() const;
         Var numActiveVars() const;
         void printMemStats() const;
-        void printWatchMemUsed() const;
+        uint64_t printWatchMemUsed(uint64_t totalMem) const;
 
 
         ///Return number of variables waiting to be replaced
@@ -332,6 +334,7 @@ class Solver : public Searcher
         );
 
     private:
+        bool enqueueThese(const vector<Lit>& toEnqueue);
 
         //Stats printing
         void printMinStats() const;
@@ -369,18 +372,20 @@ class Solver : public Searcher
         friend class XorFinder;
         friend class GateFinder;
         friend class PropEngine;
+        friend class PartFinder;
+        friend class PartHandler;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;
         ClauseCleaner       *clauseCleaner;
         VarReplacer         *varReplacer;
+        PartHandler         *partHandler;
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
-        vector<Lit> addClTmpLits;
         vector<Lit> addClIntTmpLits;
 
         /////////////////////////////
@@ -485,6 +490,7 @@ class Solver : public Searcher
         void testAllClauseAttach() const;
         bool normClauseIsAttached(const ClOffset offset) const;
         void findAllAttach() const;
+        void findAllAttach(const vector<ClOffset>& cs) const;
         bool findClause(const ClOffset offset) const;
         void checkNoWrongAttach() const;
         void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
@@ -640,7 +646,8 @@ inline Var Solver::numActiveVars() const
     Var numActive = 0;
     for(Var var = 0; var < solver->nVars(); var++) {
         if (decisionVar[var]
-            && varData[var].elimed == ELIMED_NONE
+            && (varData[var].elimed == ELIMED_NONE
+                || varData[var].elimed == ELIMED_QUEUED_VARREPLACER)
             && value(var) == l_Undef
         ) {
             numActive++;

@@ -75,7 +75,8 @@ public:
         , const vector<uint32_t>& interToOuter
     );
     bool unEliminate(const Var var);
-    uint64_t bytesMemUsed() const;
+    uint64_t memUsed() const;
+    uint64_t memUsedXor() const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
@@ -397,8 +398,12 @@ public:
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
     bool getAnythingHasBeenBlocked() const;
+    void freeXorMem();
 
 private:
+
+    //debug
+    void checkAllLinkedIn();
 
     void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;

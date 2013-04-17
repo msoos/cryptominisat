@@ -1,8 +1,0 @@
-http://lwn.net/Articles/255364/
-
-opcontrol --vmlinux=vmlinux --callgraph=5 --start
-opcontrol --vmlinux=vmlinux --callgraph=8 -i ./cryptominisat --start
-                                             
-perf record ./cryptominisat satfile.cnf
-perf report
-perf annotate

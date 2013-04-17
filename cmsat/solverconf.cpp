@@ -53,7 +53,9 @@ SolverConf::SolverConf() :
 
         //Clause minimisation
         , doMinimLearntMore(true)
+        , doRecursiveMinim (true)
         , doAlwaysFMinim   (false)
+        , moreMinimLimit   (300)
 
         //Verbosity
         , verbosity        (0)
@@ -79,7 +81,7 @@ SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (true)
         , doOTFGateShorten (true)
-        , rewardShortenedClauseWithConfl(10)
+        , rewardShortenedClauseWithConfl(3)
 
         //SQL
         , doSQL            (false)
@@ -136,12 +138,16 @@ SolverConf::SolverConf() :
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)
-        , maxRedLinkInSize (80)
-        , maxOccurIrredMB(1000)
-        , maxOccurRedMB(600)
+        , maxRedLinkInSize (200)
+        , maxOccurIrredMB  (800)
+        , maxOccurRedMB    (800)
 
         //optimisations to do
         , doRenumberVars   (true)
+        , doFindParts      (false)
+        , doPartHandler    (true)
+        , handlerFromSimpNum (0)
+        , partVarLimit      (1ULL*1000ULL*1000ULL)
 
         , doExtBinSubs     (true)
         , doClausVivif     (true)
@@ -164,5 +170,6 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , origSeed(0)
+
 {
 }

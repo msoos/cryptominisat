@@ -293,6 +293,7 @@ class Prober {
         };
 
         const Stats& getStats() const;
+        uint64_t memUsed() const;
 
     private:
         //Main
@@ -361,7 +362,8 @@ class Prober {
         vector<uint32_t> propagatedBitSet;
         BitArray propagated; ///<These lits have been propagated by propagating the lit picked
         BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
-        vector<Lit> bothSame;
+        vector<Lit> toEnqueue;
+        vector<Lit> tmp;
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN
@@ -377,11 +379,9 @@ class Prober {
         bool tryMultiLevelAll();
         void fillToTry(vector<Var>& toTry);
 
-        //Temporaries
-        vector<Lit> tmpPs;
-
         //Used to count extra time, must be cleared at every startup
         uint64_t extraTime;
+        uint64_t extraTimeCache;
 
         //Stats
         Stats runStats;

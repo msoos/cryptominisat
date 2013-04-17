@@ -102,18 +102,20 @@ void ImplCache::printStatsSort(const Solver* solver) const
     );
 }
 
-void ImplCache::clean(Solver* solver)
+bool ImplCache::clean(Solver* solver)
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
+    vector<Lit> toEnqueue;
 
     double myTime = cpuTime();
     uint64_t numUpdated = 0;
     uint64_t numCleaned = 0;
     uint64_t numFreed = 0;
 
-    //Free memory if possible
+    //Merge in & free memory
     for (Var var = 0; var < solver->nVars(); var++) {
+
         //If replaced, merge it into the one that replaced it
         if (solver->varData[var].elimed == ELIMED_VARREPLACER) {
             for(int i = 0; i < 2; i++) {
@@ -122,13 +124,17 @@ void ImplCache::clean(Solver* solver)
                     continue;
 
                 const Lit lit = solver->varReplacer->getLitReplacedWith(litOrig);
-                implCache[lit.toInt()].merge(
+                bool taut = implCache[lit.toInt()].merge(
                     implCache[litOrig.toInt()].lits
                     , lit_Undef //nothing to add
                     , false //replaced, so 'non-learnt'
-                    , lit //exclude this var
+                    , lit.var() //exclude the literal itself
                     , solver->seen
                 );
+
+                if (taut) {
+                    toEnqueue.push_back(lit);
+                }
             }
         }
 
@@ -136,6 +142,7 @@ void ImplCache::clean(Solver* solver)
         if (solver->value(var) != l_Undef
             || solver->varData[var].elimed == ELIMED_VARELIM
             || solver->varData[var].elimed == ELIMED_VARREPLACER
+            || solver->varData[var].elimed == ELIMED_DECOMPOSE
         ) {
             vector<LitExtra> tmp1;
             numFreed += implCache[Lit(var, false).toInt()].lits.capacity();
@@ -220,6 +227,8 @@ void ImplCache::clean(Solver* solver)
         numCleaned += origSize-trans->lits.size();
     }
 
+    solver->enqueueThese(toEnqueue);
+
     if (solver->conf.verbosity >= 1) {
         cout << "c Cache cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
@@ -227,6 +236,8 @@ void ImplCache::clean(Solver* solver)
         << " Freed: " << std::setw(7) << numFreed/1000 << " K"
         << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << endl;
     }
+
+    return solver->okay();
 }
 
 void ImplCache::handleNewData(
@@ -384,9 +395,13 @@ void ImplCache::tryVar(
         ; it++
     ) {
         const Var var2 = it->getLit().var();
+
+        //A variable that has been really eliminated, skip
         if (solver->varData[var2].elimed != ELIMED_NONE
             && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
-        ) continue;
+        ) {
+            continue;
+        }
 
         seen[it->getLit().var()] = 1;
         val[it->getLit().var()] = it->getLit().sign();
@@ -467,11 +482,11 @@ void ImplCache::tryVar(
     }
 }
 
-void TransCache::merge(
-    vector<LitExtra>& otherLits
-    , const Lit extraLit
-    , const bool learnt
-    , const Lit leaveOut
+bool TransCache::merge(
+    const vector<LitExtra>& otherLits //Lits to add
+    , const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , const Var leaveOut //Leave this literal out
     , vector<uint16_t>& seen
 ) {
     //Mark every literal that is to be added in 'seen'
@@ -481,6 +496,71 @@ void TransCache::merge(
 
         seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
     }
+
+    bool taut = mergeHelper(extraLit, learnt, seen);
+
+    //Whatever rests needs to be added
+    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i].getLit();
+        if (seen[lit.toInt()]) {
+            if (lit.var() != leaveOut)
+                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
+            seen[lit.toInt()] = 0;
+        }
+    }
+
+    //Handle extra lit
+    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
+        if (extraLit.var() != leaveOut)
+            lits.push_back(LitExtra(extraLit, !learnt));
+        seen[extraLit.toInt()] = 0;
+    }
+
+    return taut;
+}
+
+bool TransCache::merge(
+    const vector<Lit>& otherLits //Lits to add
+    , const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , const Var leaveOut //Leave this literal out
+    , vector<uint16_t>& seen
+) {
+    //Mark every literal that is to be added in 'seen'
+    for (size_t i = 0, size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i];
+        seen[lit.toInt()] = 1;
+    }
+
+    bool taut = mergeHelper(extraLit, learnt, seen);
+
+    //Whatever rests needs to be added
+    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i];
+        if (seen[lit.toInt()]) {
+            if (lit.var() != leaveOut)
+                lits.push_back(LitExtra(lit, false));
+            seen[lit.toInt()] = 0;
+        }
+    }
+
+    //Handle extra lit
+    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
+        if (extraLit.var() != leaveOut)
+            lits.push_back(LitExtra(extraLit, !learnt));
+        seen[extraLit.toInt()] = 0;
+    }
+
+    return taut;
+}
+
+bool TransCache::mergeHelper(
+    const Lit extraLit //Add this, too to the list of lits
+    , const bool learnt //The step was a learnt step?
+    , vector<uint16_t>& seen
+) {
+    bool taut = false;
+
     //Handle extra lit
     if (extraLit != lit_Undef)
         seen[extraLit.toInt()] = 1 + (int)!learnt;
@@ -497,24 +577,14 @@ void TransCache::merge(
         }
 
         seen[lits[i].getLit().toInt()] = 0;
-    }
 
-    //Whatever rests needs to be added
-    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
-        const Lit lit = otherLits[i].getLit();
-        if (seen[lit.toInt()]) {
-            if (lit.var() != leaveOut.var())
-                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
-            seen[lit.toInt()] = 0;
+        //Both L and ~L are in, the ancestor is a tautology
+        if (seen[(~(lits[i].getLit())).toInt()]) {
+            taut = true;
         }
     }
 
-    //Handle extra lit
-    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
-        if (extraLit.var() != leaveOut.var())
-            lits.push_back(LitExtra(extraLit, !learnt));
-        seen[extraLit.toInt()] = 0;
-    }
+    return taut;
 }
 
 //Make all literals as if propagated only by redundant

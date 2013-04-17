@@ -98,7 +98,7 @@ public:
     template<class T>
     BitArray& removeThese(const T& rem)
     {
-        for (uint32_t i = 0; i < rem.size(); i++) {
+        for (size_t i = 0; i < rem.size(); i++) {
             clearBit(rem[i]);
         }
 

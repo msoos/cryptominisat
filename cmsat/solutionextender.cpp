@@ -33,6 +33,11 @@ SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assign
     , qhead (0)
     , assigns(_assigns)
 {
+    solver->model.resize(nVars(), l_Undef);
+    for (Var var = 0; var != nVars(); var++) {
+        solver->model[var] = value(var);
+    }
+    release_assert(solver->verifyModel());
 }
 
 /**
@@ -49,6 +54,14 @@ void SolutionExtender::extend()
         cout << "c Extending solution" << endl;
     }
 
+    //Memory might be low... remove stamps to make way for occur list
+    if (solver->nVars() > 1ULL*1000ULL*1000ULL
+        && solver->conf.doStamp
+    ) {
+        solver->conf.doStamp = false;
+        solver->stamp.freeMem();
+    }
+
     assert(clausesToFree.empty());
 
     //First detach all long clauses
@@ -56,7 +69,9 @@ void SolutionExtender::extend()
     detachReattach.detachNonBinsNonTris();
 
     //Sanity check
-    solver->simplifier->checkElimedUnassignedAndStats();
+    if (solver->simplifier) {
+        solver->simplifier->checkElimedUnassignedAndStats();
+    }
 
     //Adding binary clauses representing equivalent literals
     if (solver->conf.verbosity >= 3) {
@@ -88,18 +103,37 @@ void SolutionExtender::extend()
         cout << "c Picking braches and propagating" << endl;
     }
 
-    while(pickBranchLit() != lit_Undef) {
-        const bool OK = propagate();
-        if (!OK) {
-            cout << "Error! While picking lit and propagating after solution reconstruction" << endl;
-            exit(-1);
+    //Pick branches as long as we can
+    for (Var var = 0; var < nVars(); var++) {
+        if (value(var) == l_Undef
+            //Don't pick replaced variables
+            && solver->varData[var].elimed != ELIMED_VARREPLACER
+        ) {
+            Lit toEnqueue = Lit(var, false);
+            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+            cout << "c Picking lit for reconstruction: " << toEnqueue << endl;
+            #endif
+            enqueue(toEnqueue);
+
+            const bool OK = propagate();
+            if (!OK) {
+                cout
+                << "Error while picking lit " << toEnqueue
+                << " and propagating after solution reconstruction"
+                << endl;
+                assert(false);
+
+                exit(-1);
+            }
         }
     }
 
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
-    solver->simplifier->extendModel(this);
+    if (solver->simplifier) {
+        solver->simplifier->extendModel(this);
+    }
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);
@@ -387,24 +421,6 @@ bool SolutionExtender::propagateCl(
     enqueue(blockedOn);
     replaceSet(blockedOn);
     return true;
-}
-
-Lit SolutionExtender::pickBranchLit()
-{
-    for (Var var = 0; var < nVars(); var++) {
-        if (value(var) == l_Undef
-            //Don't pick replaced variables
-            && solver->varData[var].elimed != ELIMED_VARREPLACER
-        ) {
-            Lit toEnqueue = Lit(var, false);
-            #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            cout << "c Picking lit for reconstruction: " << toEnqueue << endl;
-            #endif
-            enqueue(toEnqueue);
-            return toEnqueue;
-        }
-    }
-    return lit_Undef;
 }
 
 void SolutionExtender::enqueue(const Lit lit)

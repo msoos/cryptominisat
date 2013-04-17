@@ -175,3 +175,15 @@ void SCCFinder::tarjan(const uint32_t vertex)
         }
     }
 }
+
+uint64_t SCCFinder::memUsed() const
+{
+    uint64_t mem = 0;
+    mem += index.capacity()*sizeof(uint32_t);
+    mem += lowlink.capacity()*sizeof(uint32_t);
+    mem += stack.size()*sizeof(uint32_t); //TODO under-estimates
+    mem += stackIndicator.capacity()*sizeof(char);
+    mem += tmp.capacity()*sizeof(uint32_t);
+
+    return mem;
+}

@@ -135,7 +135,7 @@ void Searcher::cancelUntil(uint32_t level)
 void Searcher::analyzeHelper(
     const Lit lit
     , int& pathC
-    , vector<Lit>& out_learnt
+    , bool fromProber
 ) {
     const Var var = lit.var();
     assert(varData[var].elimed == ELIMED_NONE
@@ -146,22 +146,22 @@ void Searcher::analyzeHelper(
     if (varData[var].level == 0)
         return;
 
-    if (seen2[var] == 0//hasn't been bumped yet
-    ) {
-        varBumpActivity(var);
-        seen2[var] = 1;
-        toClear.push_back(Lit(var, false));
-    }
-
     //Update our state of going through the conflict
     if (!seen[var]) {
         seen[var] = 1;
+
+        varBumpActivity(var);
+        //learnt_clause2.insert(lit);
+        learnt_clause2_size++;
+        seen2[lit.toInt()] = 1;
+        learnt_clause2_abst |= abst_var(lit.var());
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
 
             //Glucose 2.1
-            if (params.rest_type != geom_restart
+            if (!fromProber
+                && params.rest_type != geom_restart
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
@@ -172,64 +172,229 @@ void Searcher::analyzeHelper(
             }
         }
         else {
-            out_learnt.push_back(lit);
+            learnt_clause.push_back(lit);
         }
     }
 }
 
-void Searcher::recursiveConfClauseMin(vector<Lit>& out_learnt)
+void Searcher::recursiveConfClauseMin()
 {
     uint32_t abstract_level = 0;
-    for (size_t i = 1; i < out_learnt.size(); i++) {
+    for (size_t i = 1; i < learnt_clause.size(); i++) {
         //(maintain an abstraction of levels involved in conflict)
-        abstract_level |= abstractLevel(out_learnt[i].var());
+        abstract_level |= abstractLevel(learnt_clause[i].var());
     }
 
     size_t i, j;
-    for (i = j = 1; i < out_learnt.size(); i++) {
+    for (i = j = 1; i < learnt_clause.size(); i++) {
         #ifdef DEBUG_LITREDUNDANT
         cout << "Calling litRedundant at i = " << i << endl;
         #endif
-        if (varData[out_learnt[i].var()].reason.isNULL()
-            || !litRedundant(out_learnt[i], abstract_level)
+        if (varData[learnt_clause[i].var()].reason.isNULL()
+            || !litRedundant(learnt_clause[i], abstract_level)
         ) {
-            out_learnt[j++] = out_learnt[i];
+            learnt_clause[j++] = learnt_clause[i];
         }
     }
-    out_learnt.resize(j);
+    learnt_clause.resize(j);
+}
+
+void Searcher::doOTFSubsume(PropBy confl)
+{
+    ClOffset offset = confl.getClause();
+    Clause& cl = *clAllocator->getPointer(offset);
+
+    //Count if every one from learnt_clause is inside
+    size_t num = 0;
+    for (size_t j = 0, size = cl.size(); j < size; j++) {
+        if (seen2[cl[j].toInt()]) {
+            num++;
+        }
+    }
+
+    //Does not subsume
+    if (num != learnt_clause2_size)
+        return;
+
+    /*
+    cout
+    << "MATCH!"
+    << " cl: " << cl << "learnt: " << cl.learnt() << endl
+    << " learnt cl: ";
+    for(const Lit
+        *it = cl.begin(), *end = cl.end()
+        ; it != end
+        ; it++
+    ) {
+        if (seen2[it->toInt()]) {
+            cout << *it << ", ";
+        }
+    }
+    cout << endl;
+    */
+
+    //Final will be implicit
+    if (num <= 3) {
+        OTFClause newCl;
+        newCl.size = 0;
+        for(const Lit
+            *it = cl.begin(), *end = cl.end()
+            ; it != end
+            ; it++
+        ) {
+            if (seen2[it->toInt()]) {
+                assert(newCl.size < 3);
+                newCl.lits[newCl.size] = *it;
+                newCl.size++;
+            }
+        }
+        otfMustAttach.push_back(newCl);
+
+        stats.otfSubsumed++;
+        stats.otfSubsumedImplicit++;
+        stats.otfSubsumedLearnt += cl.learnt();
+        stats.otfSubsumedLitsGained += cl.size() - newCl.size;
+    }
+
+    //Final will not be implicit
+    if (num > 3) {
+        solver->detachClause(cl);
+        stats.otfSubsumed++;
+        stats.otfSubsumedLong++;
+        stats.otfSubsumedLearnt += cl.learnt();
+        stats.otfSubsumedLitsGained += cl.size() - learnt_clause2_size;
+
+        size_t i = 0;
+        size_t i2 = 0;
+        for (; i < cl.size(); i++) {
+            if (seen2[cl[i].toInt()]) {
+                cl[i2++] = cl[i];
+            }
+        }
+        cl.shrink(i-i2);
+        assert(cl.size() == learnt_clause2_size);
+
+        toAttachLater.push_back(offset);
+    }
+}
+
+void Searcher::normalClMinim()
+{
+    size_t i,j;
+    for (i = j = 1; i < learnt_clause.size(); i++) {
+        const PropBy& reason = varData[learnt_clause[i].var()].reason;
+        size_t size;
+        Clause* cl = NULL;
+        PropByType type = reason.getType();
+        if (type == null_clause_t) {
+            learnt_clause[j++] = learnt_clause[i];
+            continue;
+        }
+
+        switch (type) {
+            case clause_t:
+                cl = clAllocator->getPointer(reason.getClause());
+                size = cl->size()-1;
+                break;
+
+            case binary_t:
+                size = 1;
+                break;
+
+            case tertiary_t:
+                size = 2;
+                break;
+
+            case null_clause_t:
+                release_assert(false);
+                exit(-1);
+                break;
+        }
+
+        for (size_t k = 0; k < size; k++) {
+            Lit p;
+            switch (type) {
+                case clause_t:
+                    p = (*cl)[k+1];
+                    break;
+
+                case binary_t:
+                    p = reason.lit1();
+                    break;
+
+                case tertiary_t:
+                    if (k == 0) {
+                        p = reason.lit1();
+                    } else {
+                        p = reason.lit2();
+                    }
+                    break;
+
+                case null_clause_t:
+                    release_assert(false);
+                    exit(-1);
+                    break;
+            }
+
+            if (!seen[p.var()] && varData[p.var()].level > 0) {
+                learnt_clause[j++] = learnt_clause[i];
+                break;
+            }
+        }
+    }
+    learnt_clause.resize(j);
 }
 
 /**
 @brief    Analyze conflict and produce a reason clause.
 
-Post-condition: 'out_learnt[0]' is the asserting literal at level 'out_btlevel'
+Post-condition: 'learnt_clause[0]' is the asserting literal at level 'out_btlevel'
 */
 Clause* Searcher::analyze(
     PropBy confl
-    , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
     , uint32_t &glue
     , ResolutionTypes<uint16_t>& resolutions
+    , bool fromProber
 ) {
-    assert(out_learnt.empty());
+    //Set up environment
+    learnt_clause.clear();
+    toClear.clear();
+    lastDecisionLevel.clear();
+    otfMustAttach.clear();
+    toAttachLater.clear();
+    //learnt_clause2.clear();
+    learnt_clause2_size = 0;
+    learnt_clause2_abst = 0;
     assert(decisionLevel() > 0);
 
     int pathC = 0;
     Lit p = lit_Undef;
     int index = trail.size() - 1;
     out_btlevel = 0;
-    PropBy oldConfl;
-    lastDecisionLevel.clear();
 
     //cout << "---- Start analysis -----" << endl;
-    toClear.clear();
-    out_learnt.push_back(lit_Undef); //make space for ~p
+    learnt_clause.push_back(lit_Undef); //make space for ~p
+    Clause* cl;
     do {
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
         #endif
 
+        //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
+        if (p != lit_Undef) {
+            //assert(learnt_clause2.find(~p) != learnt_clause2.end());
+            //learnt_clause2.erase(~p);
+            learnt_clause2_size--;
+            assert(seen2[(~p).toInt()] == 1);
+            seen2[(~p).toInt()] = 0;
+
+            //We MUST under-estimate
+            learnt_clause2_abst &= ~(abst_var((~p).var()));
+        }
+
         //Add literals from 'confl' to clause
+        cl = NULL;
         switch (confl.getType()) {
             case tertiary_t : {
                 resolutions.tri++;
@@ -237,7 +402,7 @@ Clause* Searcher::analyze(
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (tri): " << confl.lit2() << endl;
                 #endif
-                analyzeHelper(confl.lit2(), pathC, out_learnt);
+                analyzeHelper(confl.lit2(), pathC, fromProber);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
@@ -249,10 +414,11 @@ Clause* Searcher::analyze(
                 }
 
 
-                if (p == lit_Undef)
-                    analyzeHelper(failBinLit, pathC, out_learnt);
+                if (p == lit_Undef) {
+                    analyzeHelper(failBinLit, pathC, fromProber);
+                }
 
-                analyzeHelper(confl.lit1(), pathC, out_learnt);
+                analyzeHelper(confl.lit1(), pathC, fromProber);
                 #ifdef DEBUG_RESOLV
                 cout << "resolv (bin/tri): " << confl.lit1() << endl;
                 #endif
@@ -260,12 +426,12 @@ Clause* Searcher::analyze(
             }
 
             case clause_t : {
-                Clause& cl = *clAllocator->getPointer(confl.getClause());
+                cl = clAllocator->getPointer(confl.getClause());
                 #ifdef DEBUG_RESOLV
-                cout << "resolv (long): " << cl << endl;
+                cout << "resolv (long): " << *cl << endl;
                 #endif
 
-                if (cl.learnt()) {
+                if (cl->learnt()) {
                     resolutions.redL++;
                     stats.resolvs.redL++;
                 } else {
@@ -274,17 +440,19 @@ Clause* Searcher::analyze(
                 }
 
                 //Update stats
-                cl.stats.numUsedUIP++;
-                if (cl.learnt())
-                    bumpClauseAct(&cl);
+                cl->stats.numUsedUIP++;
+                if (cl->learnt() && !fromProber) {
+                    bumpClauseAct(cl);
+                }
 
-                for (size_t j = 0, size = cl.size(); j != size; j++) {
+                for (size_t j = 0, size = cl->size(); j != size; j++) {
 
                     //This is the one that will be resolved out anyway, so just skip
-                    if (p != lit_Undef && j == 0)
+                    if (p != lit_Undef && j == 0) {
                         continue;
+                    }
 
-                    analyzeHelper(cl[j], pathC, out_learnt);
+                    analyzeHelper((*cl)[j], pathC, fromProber);
                 }
                 break;
             }
@@ -301,88 +469,100 @@ Clause* Searcher::analyze(
 
         p = trail[index+1];
 
+        if (!fromProber
+            && conf.doOTFSubsume
+            && cl != NULL
+            && cl->size() > learnt_clause2_size
+            //Everything in learnt_cl_2 seems to be also in cl
+            && ((cl->abst & learnt_clause2_abst) ==  learnt_clause2_abst)
+            && pathC > 1
+        ) {
+            doOTFSubsume(confl);
+        }
+
         //Saving old confl for OTF subsumption
-        oldConfl = confl;
         confl = varData[p.var()].reason;
 
-        //This clears out vars that haven't been added to out_learnt,
+        //This clears out vars that haven't been added to learnt_clause,
         //but their 'seen' has been set
         seen[p.var()] = 0;
 
         //Okay, one more path done
         pathC--;
     } while (pathC > 0);
-    out_learnt[0] = ~p;
-
-    //Clear seen2, which was used to mark literals that have been bumped
-    for (vector<Lit>::const_iterator
-        it = toClear.begin(), end = toClear.end()
-        ; it != end
-        ; it++
-    ) {
-        seen2[it->var()] = 0;
-    }
-    toClear.clear();
+    learnt_clause[0] = ~p;
 
     assert(pathC == 0);
-    stats.litsLearntNonMin += out_learnt.size();
-    const size_t origSize = out_learnt.size();
+    stats.litsLearntNonMin += learnt_clause.size();
+    const size_t origSize = learnt_clause.size();
 
     //Recursive cc min
-    toClear = out_learnt;
-    recursiveConfClauseMin(out_learnt);
+    toClear = learnt_clause;
+    if (conf.doRecursiveMinim) {
+        recursiveConfClauseMin();
+    } else {
+        normalClMinim();
+    }
 
     //Clear seen
     for (size_t i = 0; i < toClear.size(); i++) {
         seen[toClear[i].var()] = 0;
+        seen2[toClear[i].toInt()] = 0;
     }
     toClear.clear();
 
-    stats.recMinCl += ((origSize - out_learnt.size()) > 0);
-    stats.recMinLitRem += origSize - out_learnt.size();
+    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
+    stats.recMinLitRem += origSize - learnt_clause.size();
 
     //Cache-based minimisation
     if (conf.doStamp
         && conf.doMinimLearntMore
-        && out_learnt.size() > 1
+        && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
-            || calcGlue(out_learnt) < 0.65*hist.glueHistLT.avg()
-            || out_learnt.size() < 0.65*hist.conflSizeHistLT.avg()
-            || out_learnt.size() < 10
+            || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
+            || learnt_clause.size() < 0.65*hist.conflSizeHistLT.avg()
+            || learnt_clause.size() < 10
             )
     ) {
-        minimiseLearntFurther(out_learnt);
+        stats.moreMinimLitsStart += learnt_clause.size();
+
+        //Binary&cache-based minim
+        minimiseLearntFurther(learnt_clause);
 
         //Stamp-based minimization
-        stampBasedLearntMinim(out_learnt);
+        stampBasedLearntMinim(learnt_clause);
+
+        stats.moreMinimLitsEnd += learnt_clause.size();
     }
 
     //Calc stats
-    glue = calcGlue(out_learnt);
-    stats.litsLearntFinal += out_learnt.size();
+    glue = calcGlue(learnt_clause);
+    stats.litsLearntFinal += learnt_clause.size();
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
-    cout << "Final clause: " << out_learnt << endl;
-    for (uint32_t i = 0; i < out_learnt.size(); i++) {
-        cout << "lev out_learnt[" << i << "]:" << varData[out_learnt[i].var()].level << endl;
+    cout << "Final clause: " << learnt_clause << endl;
+    for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+        cout << "lev learnt_clause[" << i << "]:" << varData[learnt_clause[i].var()].level << endl;
     }
     #endif
 
     // Find correct backtrack level:
-    if (out_learnt.size() <= 1)
+    if (learnt_clause.size() <= 1)
         out_btlevel = 0;
     else {
         uint32_t max_i = 1;
-        for (uint32_t i = 2; i < out_learnt.size(); i++)
-            if (varData[out_learnt[i].var()].level > varData[out_learnt[max_i].var()].level)
+        for (uint32_t i = 2; i < learnt_clause.size(); i++)
+            if (varData[learnt_clause[i].var()].level > varData[learnt_clause[max_i].var()].level)
                 max_i = i;
-        std::swap(out_learnt[max_i], out_learnt[1]);
-        out_btlevel = varData[out_learnt[1].var()].level;
+        std::swap(learnt_clause[max_i], learnt_clause[1]);
+        out_btlevel = varData[learnt_clause[1].var()].level;
     }
 
     //Glucose 2.1
-    if (params.rest_type == glue_restart) {
+    if (!fromProber
+        && params.rest_type == glue_restart
+    ) {
         for (vector<pair<Lit, size_t> >::const_iterator
             it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
             ; it != end
@@ -399,34 +579,25 @@ Clause* Searcher::analyze(
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
     if (!conf.doOTFSubsume
-        || out_learnt.size() <= 3
-        || !oldConfl.isClause()
+        //Last was a lont clause
+        || cl == NULL
+        //Final clause will not be implicit
+        || learnt_clause.size() <= 3
+        //Larger or equivalent clauses cannot subsume the clause
+        || learnt_clause.size() >= cl->size()
     ) {
         return NULL;
     }
 
-
-    Clause* cl = NULL;
-    try {
-         cl = clAllocator->getPointer(oldConfl.getClause());
-    } catch (const std::bad_alloc& e) {
-        cout << "Allocation failed: " << e.what() << '\n';
-        solver->dumpIfNeeded();
-        throw std::bad_alloc();
-    }
-
-    //Larger or equivalent clauses cannot subsume the clause
-    if (out_learnt.size() >= cl->size())
-        return NULL;
-
     //Does it subsume?
-    if (!subset(out_learnt, *cl))
+    if (!subset(learnt_clause, *cl))
         return NULL;
 
     //on-the-fly subsumed the original clause
     stats.otfSubsumed++;
+    stats.otfSubsumedLong++;
     stats.otfSubsumedLearnt += cl->learnt();
-    stats.otfSubsumedLitsGained += cl->size() - out_learnt.size();
+    stats.otfSubsumedLitsGained += cl->size() - learnt_clause.size();
     return cl;
 
 }
@@ -447,61 +618,63 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         #endif
 
         const PropBy reason = varData[analyze_stack.top().var()].reason;
+        PropByType type = reason.getType();
         analyze_stack.pop();
 
         //Must have a reason
         assert(!reason.isNULL());
 
-
-        //Clause& c = *reason[var(analyze_stack.back())];
+        size_t size;
         Clause* cl = NULL;
-        dummy.clear();
-        switch (reason.getType()) {
-            case null_clause_t:
-                assert(false);
-                break;
-
+        switch (type) {
             case clause_t:
                 cl = clAllocator->getPointer(reason.getClause());
-                #ifdef DEBUG_LITREDUNDANT
-                cout << "Long clause: " << *cl << endl;
-                #endif
-
-                assert(cl->size() > 3);
-                dummy.resize(cl->size()-1);
-                for(size_t i = 1; i < cl->size(); i++) {
-                    dummy[i-1] = (*cl)[i];
-                }
-
+                size = cl->size()-1;
                 break;
 
             case binary_t:
-                dummy.push_back(reason.lit1());
-                #ifdef DEBUG_LITREDUNDANT
-                cout << "Bin clause: " << reason.lit1() << endl;
-                #endif
-
+                size = 1;
                 break;
 
             case tertiary_t:
-                dummy.push_back(reason.lit1());
-                dummy.push_back(reason.lit2());
-                #ifdef DEBUG_LITREDUNDANT
-                cout
-                << "Tri clause:"
-                << reason.lit1() << ", "
-                << reason.lit2() << endl;
-                #endif
-
+                size = 2;
                 break;
 
-            default:
-                assert(false);
+            case null_clause_t:
+                release_assert(false);
+                exit(-1);
                 break;
         }
 
-        for (size_t i = 0; i < dummy.size(); i++) {
-            const Lit p = dummy[i];
+        for (size_t i = 0
+            ; i < size
+            ; i++
+        ) {
+            Lit p;
+            switch (type) {
+                case clause_t:
+                    p = (*cl)[i+1];
+                    break;
+
+                case binary_t:
+                    p = reason.lit1();
+                    break;
+
+                case tertiary_t:
+                    if (i == 0) {
+                        p = reason.lit1();
+                    } else {
+                        p = reason.lit2();
+                    }
+                    break;
+
+                case null_clause_t:
+                    release_assert(false);
+                    exit(-1);
+                    break;
+            }
+            stats.recMinimCost++;
+
             if (!seen[p.var()] && varData[p.var()].level > 0) {
                 if (!varData[p.var()].reason.isNULL()
                     && (abstractLevel(p.var()) & abstract_levels) != 0
@@ -545,217 +718,6 @@ bool Searcher::subset(const vector<Lit>& A, const Clause& B)
         seen[B[i].toInt()] = 0;
 
     return ret;
-}
-
-void Searcher::prune_removable(vector<Lit>& out_learnt)
-{
-    int j = 1;
-    for (int i = 1, sz = out_learnt.size(); i < sz; i++) {
-        if ((seen[out_learnt[i].var()] & (1|2)) == (1|2)) {
-            assert((seen[out_learnt[i].var()] & (4|8)) == 0);
-            out_learnt[j++] = out_learnt[i];
-        }
-    }
-    out_learnt.resize(j);
-}
-
-void Searcher::find_removable(const vector<Lit>& out_learnt, const uint32_t abstract_level)
-{
-    bool found_some = false;
-    trace_lits_minim.clear();
-    for (int i = 1, sz = out_learnt.size(); i < sz; i++) {
-        const Lit curLit = out_learnt[i];
-        assert(varData[curLit.var()].level > 0);
-
-        if ((seen[curLit.var()] & (2|4|8)) == 0) {
-            found_some |= (bool)dfs_removable(curLit, abstract_level);
-        }
-    }
-
-    if (found_some)
-       res_removable();
-}
-
-int Searcher::quick_keeper(Lit p, uint32_t abstract_level, const bool maykeep)
-{
-    // See if I can kill myself right away.
-    // maykeep == 1 if I am in the original conflict clause.
-    if (varData[p.var()].reason.isNULL()) {
-        return (maykeep ? 2 : 8);
-    } else if ((abstractLevel(p.var()) & abstract_level) == 0) {
-        assert(maykeep == 0);
-        return 8;
-    } else {
-        return 0;
-    }
-}
-
-//seen[x.var()] = 2  -> cannot be removed
-//seen[x.var()] = 2 or 4 or 8 -> DFS has been done
-
-int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
-{
-    int pseen = seen[p.var()];
-    assert((pseen & (2|4|8)) == 0);
-
-    bool maykeep = pseen & (1);
-    int pstatus = quick_keeper(p, abstract_level, maykeep);
-    if (pstatus) {
-        seen[p.var()] |= (char) pstatus;
-        if (pseen == 0) toClear.push_back(p);
-        return 0;
-    }
-
-    int found_some = 0;
-    pstatus = 4;
-
-    // rp[0] is p.  The rest of rp are predecessors of p.
-    const PropBy rp = varData[p.var()].reason;
-    switch (rp.getType()) {
-        case tertiary_t : {
-            const Lit q = rp.lit2();
-            if (varData[q.var()].level > 0) {
-                if ((seen[q.var()] & (2|4|8)) == 0) {
-                    found_some |= dfs_removable(q, abstract_level);
-                }
-                int qseen = seen[q.var()];
-                if (qseen & (8)) {
-                    pstatus = (maykeep ? 2 : 8);
-                    break;
-                 }
-                 assert((qseen & (2|4)));
-            }
-             //NO BREAK
-        }
-
-        case binary_t: {
-            const Lit q = rp.lit1();
-            if (varData[q.var()].level > 0) {
-                if ((seen[q.var()] & (2|4|8)) == 0) {
-                    found_some |= dfs_removable(q, abstract_level);
-                }
-                int qseen = seen[q.var()];
-                if (qseen & (8)) {
-                    pstatus = (maykeep ? 2 : 8);
-                    break;
-                 }
-                 assert((qseen & (2|4)));
-            }
-            break;
-        }
-
-        case clause_t : {
-            const Clause& cl = *clAllocator->getPointer(rp.getClause());
-            for (int i = 0, sz = cl.size(); i < sz; i++) {
-                if (i == 0)
-                    continue;
-
-                const Lit q = cl[i];
-                if (varData[q.var()].level > 0) {
-                    if ((seen[q.var()] & (2|4|8)) == 0) {
-                        found_some |= dfs_removable(q, abstract_level);
-                    }
-                    int qseen = seen[q.var()];
-                    if (qseen & (8)) {
-                        pstatus = (maykeep ? 2 : 8);
-                        break;
-                     }
-                     assert((qseen & (2|4)));
-                }
-            }
-            break;
-        }
-
-        case null_clause_t :
-        default:
-            assert(false);
-            break;
-    }
-
-
-    if (pstatus == 4) {
-        // We might want to resolve p out.  See res_removable().
-        trace_lits_minim.push_back(p);
-    }
-    seen[p.var()] |= (char) pstatus;
-    if (pseen == 0) toClear.push_back(p);
-    found_some |= (int)maykeep;
-
-    return found_some;
-}
-
-void Searcher::mark_needed_removable(const Lit p)
-{
-    const PropBy rp = varData[p.var()].reason;
-    switch (rp.getType()) {
-        case tertiary_t : {
-            const Lit q = rp.lit2();
-            if (varData[q.var()].level > 0) {
-                const int qseen = seen[q.var()];
-                if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
-                    seen[q.var()] |= 1;
-                    if (qseen == 0) toClear.push_back(q);
-                }
-            }
-            //NO BREAK
-        }
-
-        case binary_t : {
-            const Lit q  = rp.lit1();
-            if (varData[q.var()].level > 0) {
-                const int qseen = seen[q.var()];
-                if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
-                    seen[q.var()] |= 1;
-                    if (qseen == 0) toClear.push_back(q);
-                }
-            }
-            break;
-        }
-
-        case clause_t : {
-            const Clause& cl = *clAllocator->getPointer(rp.getClause());
-            for (int i = 0; i < cl.size(); i++){
-                if (i == 0)
-                    continue;
-
-                const Lit q  = cl[i];
-                if (varData[q.var()].level > 0) {
-                    const int qseen = seen[q.var()];
-                    if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
-                        seen[q.var()] |= 1;
-                        if (qseen == 0) toClear.push_back(q);
-                    }
-                }
-            }
-            break;
-        }
-
-        case null_clause_t :
-        default:
-            assert(false);
-            break;
-    }
-
-    return;
-}
-
-
-int  Searcher::res_removable()
-{
-    int minim_res_ctr = 0;
-    while (trace_lits_minim.size() > 0){
-        const Lit p = trace_lits_minim.back();
-        trace_lits_minim.pop_back();
-        assert(!varData[p.var()].reason.isNULL());
-
-        int pseen = seen[p.var()];
-        if (pseen & (1)) {
-            minim_res_ctr ++;
-            trace_reasons.push_back(varData[p.var()].reason);
-            mark_needed_removable(p);
-        }
-    }
-    return minim_res_ctr;
 }
 
 /**
@@ -860,6 +822,7 @@ lbool Searcher::search(uint64_t* geom_max)
         //If decision level==1, then do hyperbin & transitive reduction
         if (conf.otfHyperbin && decisionLevel() == 1) {
             stats.advancedPropCalled++;
+            solver->varData[trail.back().var()].depth = 0;
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
 
@@ -891,6 +854,7 @@ lbool Searcher::search(uint64_t* geom_max)
             }
 
             //Update cache
+            vector<Lit> toEnqueue;
             size_t numElems = trail.size() - trail_lim[0];
             if (conf.doCache
                 && numElems <= conf.cacheUpdateCutoff
@@ -902,22 +866,40 @@ lbool Searcher::search(uint64_t* geom_max)
                     const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
 
                     assert(ancestor != lit_Undef);
-                    solver->implCache[(~ancestor).toInt()].merge(
+                    bool taut = solver->implCache[(~ancestor).toInt()].merge(
                         solver->implCache[(~thisLit).toInt()].lits
                         , thisLit
                         , learntStep
-                        , ancestor
+                        , ancestor.var()
                         , solver->seen
                     );
+
+                    //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
+                    //So enqueue ~ancestor
+                    if (taut) {
+                        toEnqueue.push_back(~ancestor);
+                    }
                 }
             }
-
 
             //Lit lit = trail[trail_lim[0]];
             stats.hyperBinAdded += hyperBinResAll();
             std::pair<size_t, size_t> tmp = removeUselessBins();
             stats.transReduRemIrred += tmp.first;
             stats.transReduRemRed += tmp.second;
+
+            //There are things to enqueue at top-level
+            if (!toEnqueue.empty()) {
+                solver->cancelUntil(0);
+                bool ret = solver->enqueueThese(toEnqueue);
+                if (!ret) {
+                    return l_False;
+                }
+
+                //Start from beginning
+                continue;
+            }
+
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(solver
@@ -1044,7 +1026,13 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
-                params.needToStopSearch = true;
+                if (hist.trailDepthHist.isvalid()
+                    && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.8
+                ) {
+                    //Nothing
+                } else {
+                    params.needToStopSearch = true;
+                }
             }
 
             break;
@@ -1121,7 +1109,6 @@ bool Searcher::handle_conflict(PropBy confl)
     uint32_t backtrack_level;
     uint32_t glue;
     ResolutionTypes<uint16_t> resolutions;
-    vector<Lit> learnt_clause;
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
@@ -1132,10 +1119,10 @@ bool Searcher::handle_conflict(PropBy confl)
 
     Clause* cl = analyze(
         confl
-        , learnt_clause    //return learnt clause here
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
         , resolutions   //return number of resolutions made here
+        , false
     );
 
     size_t orig_trail_size = trail.size();
@@ -1191,6 +1178,127 @@ bool Searcher::handle_conflict(PropBy confl)
         hist.trailDepthDeltaHist.push(orig_trail_size - trail.size());
     }
 
+    //Hande long OTF subsumption
+    for(size_t i = 0; i < toAttachLater.size(); i++) {
+        const ClOffset offset = toAttachLater[i];
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
+
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(cl[at], cl[0]);
+        assert(value(cl[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
+                at = i2;
+                break;
+            }
+        }
+        assert(cl.size() > 3);
+
+        if (at == 0) {
+            //If none found, we have a propagating clause_t
+
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                addHyperBin(cl[0], cl);
+            } else {
+                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+            }
+        } else {
+            //We have a non-propagating clause
+
+            std::swap(cl[at], cl[1]);
+            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
+        }
+        solver->attachClause(cl, false);
+        cl.reCalcAbstraction();
+    }
+    toAttachLater.clear();
+
+    //Handle implicit OTF subsumption
+    for(vector<OTFClause>::iterator
+        it = otfMustAttach.begin(), end = otfMustAttach.end()
+        ; it != end
+        ; it++
+    ) {
+        assert(it->size > 1);
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(it->lits[at], it->lits[0]);
+        assert(value(it->lits[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef
+                || value(it->lits[i2]) == l_True
+            ) {
+                at = i2;
+                break;
+            }
+        }
+
+        if (at == 0) {
+            //If none found, we have a propagation
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                if (it->size == 2) {
+                    enqueueComplex(it->lits[0], ~it->lits[1], true);
+                } else {
+                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
+                }
+            } else {
+                //Calculate reason
+                PropBy by = PropBy();
+
+                //if decision level is non-zero, we have to be more careful
+                if (decisionLevel() != 0) {
+                    if (it->size == 2) {
+                        by = PropBy(it->lits[1]);
+                    } else {
+                        by = PropBy(it->lits[1], it->lits[2]);
+                    }
+                }
+
+                //Enqueue this literal, finally
+                enqueue(
+                    it->lits[0]
+                    , by
+                );
+            }
+        } else {
+            //We have a non-propagating clause
+            std::swap(it->lits[at], it->lits[1]);
+            assert(value(it->lits[1]) == l_Undef
+                || value(it->lits[1]) == l_True
+            );
+
+            //Attach new binary/tertiary clause
+            if (it->size == 2) {
+                solver->attachBinClause(it->lits[0], it->lits[1], true);
+            } else {
+                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
+            }
+        }
+    }
+    otfMustAttach.clear();
+
     //Debug
     #ifdef VERBOSE_DEBUG
     cout
@@ -1217,7 +1325,6 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
-        Lit firstLit = (*cl)[0];
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -1232,55 +1339,6 @@ bool Searcher::handle_conflict(PropBy confl)
             cl->stats.glue = glue;
         }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
-
-        //If too small, will be implicit, so we need to free the clause
-        //and re-set the reason
-        if (learnt_clause.size() <= 3) {
-            //Reset reason
-            switch(learnt_clause.size()) {
-                case 0:
-                case 1:
-                    varData[firstLit.var()].reason = PropBy();
-                    break;
-
-                case 2: {
-                    size_t other = (firstLit == learnt_clause[0]) ? 1 : 0;
-                    varData[firstLit.var()].reason = PropBy(
-                        learnt_clause[other]
-                    );
-                    break;
-                }
-
-                case 3: {
-                    size_t other = std::numeric_limits<size_t>::max();
-                    size_t other2 = std::numeric_limits<size_t>::max();
-                    if (firstLit == learnt_clause[0]) {
-                        other = 1;
-                        other2 = 2;
-                    } else if (firstLit == learnt_clause[1]) {
-                        other = 0;
-                        other2 = 2;
-                    } else if (firstLit == learnt_clause[2]) {
-                        other = 0;
-                        other2 = 1;
-                    } else {
-                        assert(false);
-                    }
-
-                    varData[firstLit.var()].reason = PropBy(
-                        learnt_clause[other]
-                        , learnt_clause[other2]
-                    );
-                    break;
-                }
-
-                default:
-                    assert(false);
-            }
-
-            //Free clause
-            solver->clAllocator->clauseFree(cl);
-        }
     }
 
     //Attach new clause
@@ -1388,7 +1446,6 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
-    #endif
 
     //Clause data
     clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
@@ -1399,6 +1456,7 @@ void Searcher::resetStats()
             sizeAndGlue[i][i2] = 0;
         }
     }
+    #endif
 
     //Rest solving stats
     stats.clear();
@@ -1420,7 +1478,7 @@ lbool Searcher::burstSearch()
     //Print what we will be doing
     if (conf.verbosity >= 2) {
         cout
-        << "c Doing bust search for " << conf.burstSearchLen << " conflicts"
+        << "c Doing burst search for " << conf.burstSearchLen << " conflicts"
         << endl;
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
@@ -1760,9 +1818,9 @@ RestartType Searcher::decide_restart_type() const
         } else {
             //Otherwise, choose according to % of pos/neg polarities
             double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
-            double percent = ((double)solver->sumPropStats.varSetNeg)/total;
-            if (percent > 0.6
-                || percent < 0.4
+            double percent = ((double)solver->sumPropStats.varSetNeg)/total*100.0;
+            if (percent > 60.0
+                || percent < 40.0
             ) {
                 rest_type = glue_restart;
             } else {
@@ -2142,11 +2200,11 @@ Lit Searcher::pickBranchLit()
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
         Lit lit2 = lit_Undef;
-        if (conf.doStamp) {
+        /*if (conf.doStamp) {
             //Use timestamps
             lit2 = stamp.tstamp[next.toInt()].dominator[STAMP_RED];
-        } else {
-            //Ude cache
+        } else*/ if (conf.doCache) {
+            //Use cache
             lit2 = solver->litReachable[next.toInt()].lit;
         }
 
@@ -2204,7 +2262,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     size_t timeSpent = 0;
     for (vector<Lit>::iterator
         l = cl.begin(), end = cl.end()
-        ; l != end && timeSpent < 300
+        ; l != end && timeSpent < conf.moreMinimLimit
         ; l++
     ) {
         if (seen[l->toInt()] == 0)
@@ -2232,7 +2290,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         for (vec<Watched>::const_iterator
             i = ws.begin()
             , end = ws.end()
-            ; i != end
+            ; i != end && timeSpent < conf.moreMinimLimit
             ; i++
         ) {
             timeSpent++;
@@ -2450,13 +2508,14 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
 //Only used to generate nice Graphviz graphs
 string Searcher::simplAnalyseGraph(
     PropBy conflHalf
-    , vector<Lit>& out_learnt
-    , uint32_t& out_btlevel, uint32_t &glue
+    , uint32_t& out_btlevel
+    , uint32_t &glue
 ) {
     int pathC = 0;
     Lit p = lit_Undef;
 
-    out_learnt.push_back(lit_Undef);      // (leave room for the asserting literal)
+    learnt_clause.clear();
+    learnt_clause.push_back(lit_Undef);      // (leave room for the asserting literal)
     int index   = trail.size() - 1;
     out_btlevel = 0;
     std::stringstream resolutions;
@@ -2484,7 +2543,7 @@ string Searcher::simplAnalyseGraph(
                 if (varData[my_var].level == decisionLevel()) {
                     pathC++;
                 } else {
-                    out_learnt.push_back(q);
+                    learnt_clause.push_back(q);
 
                     //Backtracking level is largest of thosee inside the clause
                     if (varData[my_var].level > out_btlevel)
@@ -2503,14 +2562,14 @@ string Searcher::simplAnalyseGraph(
         pathC--;
     } while (pathC > 0); //UIP when eveything goes through this one
     assert(pathC == 0);
-    out_learnt[0] = ~p;
+    learnt_clause[0] = ~p;
 
     // clear out seen
-    for (uint32_t j = 0; j != out_learnt.size(); j++)
-        seen[out_learnt[j].var()] = 0;    // ('seen[]' is now cleared)
+    for (uint32_t j = 0; j != learnt_clause.size(); j++)
+        seen[learnt_clause[j].var()] = 0;    // ('seen[]' is now cleared)
 
     //Calculate glue
-    glue = calcGlue(out_learnt);
+    glue = calcGlue(learnt_clause);
 
     return resolutions.str();
 }
@@ -2537,15 +2596,14 @@ void Searcher::genConfGraph(const PropBy conflPart)
     file << "digraph G {" << endl;
 
     //Special vertex indicating final conflict clause (to help us)
-    vector<Lit> out_learnt;
     uint32_t out_btlevel, glue;
-    const std::string res = simplAnalyseGraph(conflPart, out_learnt, out_btlevel, glue);
+    const std::string res = simplAnalyseGraph(conflPart, out_btlevel, glue);
     file << "vertK -> dummy;";
     file << "dummy "
     << "[ "
     << " shape=record"
     << " , label=\"{"
-    << " clause: " << out_learnt
+    << " clause: " << learnt_clause
     << " | btlevel: " << out_btlevel
     << " | glue: " << glue
     << " | {resol: | " << res << " }"
@@ -2720,8 +2778,8 @@ PropBy Searcher::propagate(
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver == NULL
-        || conf.propBinFirst
+    if (solver != NULL
+        && conf.propBinFirst
     ) {
         return propagateBinFirst(
             solver
@@ -2734,3 +2792,37 @@ PropBy Searcher::propagate(
         return propagateAnyOrder();
     }
 }
+
+uint64_t Searcher::memUsedSearch() const
+{
+    uint64_t mem = 0;
+    mem += otfMustAttach.capacity()*sizeof(OTFClause);
+    mem += toAttachLater.capacity()*sizeof(ClOffset);
+    mem += toClear.capacity()*sizeof(Lit);
+    mem += trail.capacity()*sizeof(Lit);
+    mem += trail_lim.capacity()*sizeof(uint32_t);
+    mem += activities.capacity()*sizeof(uint32_t);
+    mem += order_heap.memUsed();
+    mem += learnt_clause.capacity()*sizeof(Lit);
+    mem += hist.memUsed();
+    mem += conflict.capacity()*sizeof(Lit);
+    mem += analyze_stack.capacity()*sizeof(Lit);
+    mem += solution.capacity()*sizeof(lbool);
+
+    return mem;
+}
+
+void Searcher::redoOrderHeap()
+{
+    assert(decisionLevel() == 0);
+    order_heap.clear();
+    for(size_t var = 0; var < nVars(); var++) {
+        if (solver->decisionVar[var]
+            && value(var) == l_Undef
+            && varData[var].elimed == ELIMED_NONE
+        ) {
+            insertVarOrder(var);
+        }
+    }
+}
+

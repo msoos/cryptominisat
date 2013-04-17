@@ -15,11 +15,12 @@ import resource
 import time
 import struct
 import random
+from random import choice
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 
-maxTime = 50
+maxTime = 300
 maxTimeLimit = 40
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -52,7 +53,7 @@ parser.add_option("--rndstart", dest="rndStart", default=0
                     , help="Start randomize from this random seed. Default: %default"
                     )
 
-parser.add_option("--rndnum", dest="rndNum", default=3
+parser.add_option("--rndnum", dest="rndNum", default=1
                     , type="int", metavar="SEEDS"
                     , help="Go through this many random seeds. Default: %default"
                     )
@@ -117,7 +118,7 @@ parser.add_option("--probdir", dest="checkDirProb"
 
 
 def setlimits():
-    sys.stderr.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+    sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -133,6 +134,7 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
     def __init__(self):
+        self.check_unsat = True
         self.testDir = options.testDir
         self.testDirNewVar = options.testDirNewVar
 
@@ -176,6 +178,7 @@ class Tester:
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
         cmd += "--subsume1 %s " % random.randint(0,1)
         cmd += "--block %s " % random.randint(0,1)
+        cmd += "--occlearntmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--scc %s " % random.randint(0,1)
@@ -184,6 +187,11 @@ class Tester:
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--renumber %s " % random.randint(0,1)
+        cmd += "--recur %s " % random.randint(0,1)
+        #cmd += "--parts %s " % random.randint(0,1)
+        cmd += "--parts 1 "
+        cmd += "--partsfrom %d " % random.randint(0,2)
+        cmd += "--partsvar %d " % random.randint(20000,500000)
 
         return cmd
 
@@ -214,9 +222,9 @@ class Tester:
 
         #if need time limit, then limit
         if (needToLimitTime) :
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE, preexec_fn=setlimits)
         else:
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
 
         #print time limit after child startup
@@ -225,7 +233,7 @@ class Tester:
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         #Get solver output
-        consoleOutput = p.communicate()[0]
+        consoleOutput, err = p.communicate()
         if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
@@ -448,7 +456,7 @@ class Tester:
         (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
         if self.check_unsat and unsat:
-            toexec = "../../lingeling-587f/lingeling %s" % fname
+            toexec = "../../lingeling-587f/lingeling -f %s" % fname
             print "Solving with other solver.."
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                                  preexec_fn=setlimits)
@@ -481,12 +489,29 @@ class Tester:
                 os.unlink(fname_unlink)
                 None
 
+    def callFromFuzzer(self, directory, fuzzer, file_name) :
+        if (len(fuzzer) == 1) :
+            call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+        elif(len(fuzzer) == 2) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+        elif(len(fuzzer) == 3) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            hashbits = (random.getrandbits(20) % 79) + 1
+            call = "%s %s %d %s %d > %s" % (fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
+
+        return call
+
     def fuzz_test(self) :
         fuzzers = [
-            ["build/cnf-fuzz-biere"] \
-            , ["build/cnf-fuzz-nossum"] \
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
+            #, ["build/cnf-fuzz-nossum"] \
+            #, ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
-            , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["multipart.py", "special"] \
+            #, ["build/sgen4 -unsat -n 50", "-s"] \
+            #, ["build/sgen4 -sat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
@@ -495,17 +520,50 @@ class Tester:
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
 
-                #how should the fuzzer be called?
-                if (len(fuzzer) == 1) :
-                    call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
-                else :
-                    #seed given
-                    seed = struct.unpack("<L", os.urandom(4))[0]
-                    call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
-                    print "calling:", call
+                #should the multi-fuzzer be called?
+                if len(fuzzer) == 2 and fuzzer[1] == "special":
+                    #create N files
+                    file_names_multi = []
 
+                    #sometimes just fuzz with all SAT problems
+                    if random.getrandbits(1)  == 1 :
+                        fixed = 1
+                    else:
+                        fixed = 0
+
+                    for i in range(random.randrange(2,4)) :
+                        fileopened2, file_name2 = unique_fuzz_file("fuzzTest");
+                        fileopened2.close()
+                        file_names_multi.append(file_name2)
+
+                        #chose a ranom fuzzer, not multipart
+                        fuzzer2 = ["multipart.py", "special"]
+                        while (fuzzer2[0] == "multipart.py") :
+                            fuzzer2 = choice(fuzzers)
+
+                        #sometimes fuzz with SAT problems only
+                        if (fixed) :
+                            fuzzer2 = fuzzers[0]
+
+                        print "fuzzer2 used: ", fuzzer2
+                        call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                        print "calling sub-fuzzer:", call
+                        out = commands.getstatusoutput(call)
+
+                    #construct multi-fuzzer call
+                    call = ""
+                    call += directory
+                    call += fuzzer[0]
+                    call += " "
+                    for name in file_names_multi :
+                        call += " " + name
+                    call += " > " + file_name
+
+                else :
+                    call = self.callFromFuzzer(directory, fuzzer, file_name)
+
+                print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
-                print "fuzzer ", fuzzer, " : ", out
 
                 for seednum in range(options.rndStart, options.rndStart+options.rndNum):
                     self.check(fname=file_name, fnameCheck=file_name,
@@ -538,15 +596,16 @@ class Tester:
 
     def regressionTest(self) :
 
-        #first, test stuff with newVar
-        dirList = os.listdir(self.testDirNewVar)
-        for fname in dirList:
-            if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                print options.rndStart
-                for i in range(options.rndStart, options.rndStart + options.rndNum):
-                    self.check(fname=self.testDirNewVar + fname,
-                            fnameCheck=self.testDirNewVar +
-                            fname, randomizeNum=i, newVar=True)
+        if False:
+            #first, test stuff with newVar
+            dirList = os.listdir(self.testDirNewVar)
+            for fname in dirList:
+                if fnmatch.fnmatch(fname, '*.cnf.gz'):
+                    print options.rndStart
+                    for i in range(options.rndStart, options.rndStart + options.rndNum):
+                        self.check(fname=self.testDirNewVar + fname,
+                                fnameCheck=self.testDirNewVar +
+                                fname, randomizeNum=i, newVar=True)
 
         dirList = os.listdir(self.testDir)
 

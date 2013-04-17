@@ -276,6 +276,7 @@ public:
 
     const Stats& getStats() const;
     size_t getNumCalls() const;
+    virtual uint64_t memUsed() const;
 
 private:
 

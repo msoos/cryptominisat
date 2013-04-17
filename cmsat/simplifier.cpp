@@ -44,6 +44,7 @@
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
+#include "completedetachreattacher.h"
 #endif
 
 //#define VERBOSE_DEBUG
@@ -78,7 +79,9 @@ Simplifier::Simplifier(Solver* _solver):
     , blockedMapBuilt(false)
 {
     #ifdef USE_M4RI
-    xorFinder = new XorFinder(this, solver);
+    if (solver->conf.doFindXors) {
+        xorFinder = new XorFinder(this, solver);
+    }
     #endif
 
     gateFinder = new GateFinder(this, solver);
@@ -197,6 +200,9 @@ uint32_t Simplifier::subsume0(ClOffset offset)
         cl.makeNonLearnt();
         solver->binTri.redLits -= cl.size();
         solver->binTri.irredLits += cl.size();
+        if (!cl.getOccurLinked()) {
+            linkInClause(cl);
+        }
     }
 
     //Combine stats
@@ -301,6 +307,9 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
                 cl.makeNonLearnt();
                 solver->binTri.redLits -= cl.size();
                 solver->binTri.irredLits += cl.size();
+                if (!cl.getOccurLinked()) {
+                    linkInClause(cl);
+                }
             }
 
             //Update stats
@@ -609,7 +618,7 @@ bool Simplifier::addFromSolver(
 
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [probe] mem usage for occur of "
+            << "c [simp] mem usage for occur of "
             << (irred ?  "irred" : "red  ")
             << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
             << endl;
@@ -618,6 +627,12 @@ bool Simplifier::addFromSolver(
         if (irred
             && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
         ) {
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [simp] Not linking in irred due to excessive memory usage"
+                << endl;
+            }
+
             return false;
         }
 
@@ -625,9 +640,16 @@ bool Simplifier::addFromSolver(
             && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
         ) {
             alsoOccur = false;
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [simp] Not linking in red due to excessive memory usage"
+                << endl;
+            }
         }
     }
 
+    size_t numNotLinkedIn = 0;
+    size_t numLinkedIn = 0;
     for (vector<ClOffset>::iterator
         it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
@@ -646,8 +668,11 @@ bool Simplifier::addFromSolver(
             && (irred || cl->size() < solver->conf.maxRedLinkInSize)
         ) {
             linkInClause(*cl);
+            numLinkedIn++;
         } else {
+            assert(cl->learnt());
             cl->setOccurLinked(false);
+            numNotLinkedIn++;
         }
 
         numLitsAdded += cl->size();
@@ -655,7 +680,26 @@ bool Simplifier::addFromSolver(
     }
     toAdd.clear();
 
-    //solver->printWatchMemUsed();
+    if (solver->conf.verbosity >= 2
+        && !irred
+    ) {
+        //Pretty-printing
+        double val;
+        if (numLinkedIn + numNotLinkedIn == 0) {
+            val = 0;
+        } else {
+            val = (double)numNotLinkedIn/(double)(numLinkedIn + numNotLinkedIn)*100.0;
+        }
+
+        cout
+        << "c [simp] Not linked in red "
+        << numNotLinkedIn << "/" << (numLinkedIn + numNotLinkedIn)
+        << " ("
+        << std::setprecision(2) << std::fixed
+        << val
+        << " %)"
+        << endl;
+    }
 
     return true;
 }
@@ -829,7 +873,7 @@ bool Simplifier::eliminateVars()
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
-        && numMaxElim > 0
+        && *toDecrease > 0
         && numMaxElimVars > 0
     ) {
         assert(toDecrease == &numMaxElim);
@@ -1154,6 +1198,27 @@ void Simplifier::subsumeLearnts()
     }
 }
 
+void Simplifier::checkAllLinkedIn()
+{
+    for(vector<ClOffset>::const_iterator
+        it = clauses.begin(), end = clauses.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause& cl = *solver->clAllocator->getPointer(*it);
+
+        assert(cl.learnt() || cl.getOccurLinked());
+        if (cl.freed() || cl.learnt())
+            continue;
+
+        for(size_t i = 0; i < cl.size(); i++) {
+            Lit lit = cl[i];
+            bool found = findWCl(solver->watches[lit.toInt()], *it);
+            assert(found);
+        }
+    }
+}
+
 
 bool Simplifier::simplify()
 {
@@ -1199,6 +1264,8 @@ bool Simplifier::simplify()
     //be added to occur, so exit, we can't do most of the good stuff
     //like var-elim
     if (!ret) {
+        CompleteDetachReatacher detRet(solver);;
+        detRet.reattachLongs(true);
         return solver->okay();
     }
 
@@ -1211,6 +1278,11 @@ bool Simplifier::simplify()
     );
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
+
+    //Print memory usage after occur link-in
+    if (solver->conf.verbosity >= 2) {
+        solver->printWatchMemUsed(memUsed());
+    }
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
@@ -1244,6 +1316,7 @@ bool Simplifier::simplify()
     //XOR-finding
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
+        && xorFinder != NULL
         && !xorFinder->findXors()
     ) {
         goto end;
@@ -1804,7 +1877,7 @@ void Simplifier::blockImplicit(
         << " tried: " << tried
         << " bin: " << blockedBin
         << " tri: " << blockedTri
-        << " finished: " << (numDone == solver->watches.size() ? "Y" : "N")
+        << " t-out: " << (numDone == solver->watches.size() ? "N" : "Y")
         << " T : " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
         << endl;
     }
@@ -2123,11 +2196,10 @@ void Simplifier::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    if (addedClauseLits < 3000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
-    }
+
+    numMaxElim *= 2;
+    numMaxSubsume0 *= 2;
+    numMaxSubsume1 *= 2;
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
@@ -2396,7 +2468,7 @@ int Simplifier::testVarElim(const Var var)
     assert(solver->ok);
     assert(!var_elimed[var]);
     assert(solver->varData[var].elimed == ELIMED_NONE);
-    assert(solver->decisionVar[var]);
+    //assert(solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
     //Gather data
@@ -2491,8 +2563,11 @@ int Simplifier::testVarElim(const Var var)
             if (dummy.size() == 2)
                 after_bin++;
 
-            //Early-abort
-            if (after_clauses > before_clauses)
+            //Early-abort or over time
+            if (after_clauses > before_clauses
+                //Over-time
+                || *toDecrease < -10LL*1000LL
+            )
                 return 1000;
 
             //Calculate new clause stats
@@ -3318,7 +3393,7 @@ void Simplifier::print_elimed_vars() const
     }
 }
 
-uint64_t Simplifier::bytesMemUsed() const
+uint64_t Simplifier::memUsed() const
 {
     uint64_t b = 0;
     b += seen.capacity()*sizeof(char);
@@ -3328,11 +3403,48 @@ uint64_t Simplifier::bytesMemUsed() const
     b += finalLits.capacity()*sizeof(Lit);
     b += subs.capacity()*sizeof(ClOffset);
     b += subsLits.capacity()*sizeof(Lit);
-    b += var_elimed.capacity()*sizeof(char);
+    b += var_elimed.capacity()*sizeof(char); //TODO wrong, because of template specialization of bit-array
+    for(map<Var, vector<size_t> >::const_iterator
+        it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
+        ; it != end
+        ; it++
+    ) {
+        b += it->second.capacity()*sizeof(size_t);
+    }
+    b += blockedClauses.capacity()*sizeof(BlockedClause);
+    for(vector<BlockedClause>::const_iterator
+        it = blockedClauses.begin(), end = blockedClauses.end()
+        ; it != end
+        ; it++
+    ) {
+        b += it->lits.capacity()*sizeof(Lit);
+    }
+    b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>))*sizeof(std::_Rb_tree_node_base);
     b += varElimOrder.memUsed();
     b += varElimComplexity.capacity()*sizeof(int)*2;
+    b += touched.memUsed();
+    b += clauses.capacity()*sizeof(ClOffset);
 
     return b;
+}
+
+uint64_t Simplifier::memUsedXor() const
+{
+    #ifdef USE_M4RI
+    if (xorFinder) {
+        return xorFinder->memUsed();
+    } else {
+        return 0;
+    }
+    #else
+    return 0;
+    #endif
+}
+
+void Simplifier::freeXorMem()
+{
+    delete xorFinder;
+    xorFinder = NULL;
 }
 
 /*const GateFinder* Simplifier::getGateFinder() const

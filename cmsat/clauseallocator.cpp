@@ -228,9 +228,6 @@ void ClauseAllocator::consolidate(
     , const bool force
 ) {
     //double myTime = cpuTime();
-    #ifdef DEBUG_PROPAGATEFROM
-    checkGoodPropBy(solver);
-    #endif
 
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
@@ -247,7 +244,6 @@ void ClauseAllocator::consolidate(
     }
 
     //Data for new struct
-    vector<ClOffset> newClauseOffsets;
     vector<uint32_t> newOrigClauseSizes;
     vector<ClOffset> newOffsets;
     uint64_t newSize = 0;
@@ -371,5 +367,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
 uint64_t ClauseAllocator::getMemUsed() const
 {
-    return maxSize*sizeof(BASE_DATA_TYPE);
+    uint64_t mem = 0;
+    mem += maxSize*sizeof(BASE_DATA_TYPE);
+    mem += origClauseSizes.capacity()*sizeof(uint32_t);
+
+    return mem;
 }

@@ -85,9 +85,11 @@ template<typename T, typename T2>
 inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper)
 {
     for(size_t i = 0; i < toUpdate.size(); i++) {
+        //Already updated
         if (seen[i])
             continue;
 
+        //Swap circularly until we reach full circle
         uint32_t var = i;
         const uint32_t origStart = var;
         while(true) {

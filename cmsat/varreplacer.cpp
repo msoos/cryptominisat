@@ -822,7 +822,7 @@ uint64_t VarReplacer::bytesMemUsed() const
     ) {
         b += it->second.capacity()*sizeof(Lit);
     }
-    b += reverseTable.size()*sizeof(vector<Var>);
+    b += reverseTable.size()*(sizeof(Var) + sizeof(vector<Var>))*sizeof(std::_Rb_tree_node_base);
 
     return b;
 }

@@ -36,6 +36,12 @@ using std::string;
 using std::cout;
 using std::endl;
 
+struct OTFClause
+{
+    Lit lits[3];
+    unsigned size;
+};
+
 struct VariableVariance
 {
     double avgDecLevelVarLT;
@@ -59,7 +65,7 @@ class Searcher : public PropEngine
             AvgCalc<uint32_t>   branchDepthDeltaHist;
             AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
-            AvgCalc<uint32_t>   trailDepthHist;
+            bqueue<uint32_t>   trailDepthHist;
             AvgCalc<uint32_t>   trailDepthHistLT;
 
             AvgCalc<uint32_t>   trailDepthDeltaHist;
@@ -128,6 +134,7 @@ class Searcher : public PropEngine
             void setSize(const size_t shortTermHistorySize)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
+                trailDepthHist.clearAndResize(shortTermHistorySize);
             }
 
             void print() const
@@ -154,7 +161,7 @@ class Searcher : public PropEngine
                 << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
 
                 << " traild"
-                << " " << std::right << trailDepthHist.avgPrint(0, 7)
+                << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
                 << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
 
                 << " traildd"
@@ -163,6 +170,13 @@ class Searcher : public PropEngine
                 ;
 
                 cout << std::right;
+            }
+
+            uint64_t memUsed() const
+            {
+                uint64_t mem = sizeof(Hist);
+                mem += glueHist.usedMem();
+                return mem;
             }
         };
 
@@ -234,6 +248,9 @@ class Searcher : public PropEngine
                 , stampShrinkAttempt(0)
                 , stampShrinkCl(0)
                 , stampShrinkLit(0)
+                , moreMinimLitsStart(0)
+                , moreMinimLitsEnd(0)
+                , recMinimCost(0)
 
                 //Learnt stats
                 , learntUnits(0)
@@ -241,6 +258,8 @@ class Searcher : public PropEngine
                 , learntTris(0)
                 , learntLongs(0)
                 , otfSubsumed(0)
+                , otfSubsumedImplicit(0)
+                , otfSubsumedLong(0)
                 , otfSubsumedLearnt(0)
                 , otfSubsumedLitsGained(0)
 
@@ -286,6 +305,9 @@ class Searcher : public PropEngine
                 stampShrinkAttempt += other.stampShrinkAttempt;
                 stampShrinkCl += other.stampShrinkCl;
                 stampShrinkLit += other.stampShrinkLit;
+                moreMinimLitsStart += other.moreMinimLitsStart;
+                moreMinimLitsEnd += other.moreMinimLitsEnd;
+                recMinimCost += other.recMinimCost;
 
                 //Learnt stats
                 learntUnits += other.learntUnits;
@@ -293,6 +315,8 @@ class Searcher : public PropEngine
                 learntTris += other.learntTris;
                 learntLongs += other.learntLongs;
                 otfSubsumed += other.otfSubsumed;
+                otfSubsumedImplicit += other.otfSubsumedImplicit;
+                otfSubsumedLong += other.otfSubsumedLong;
                 otfSubsumedLearnt += other.otfSubsumedLearnt;
                 otfSubsumedLitsGained += other.otfSubsumedLitsGained;
 
@@ -336,6 +360,9 @@ class Searcher : public PropEngine
                 stampShrinkAttempt -= other.stampShrinkAttempt;
                 stampShrinkCl -= other.stampShrinkCl;
                 stampShrinkLit -= other.stampShrinkLit;
+                moreMinimLitsStart -= other.moreMinimLitsStart;
+                moreMinimLitsEnd -= other.moreMinimLitsEnd;
+                recMinimCost -= other.recMinimCost;
 
                 //Learnt stats
                 learntUnits -= other.learntUnits;
@@ -343,6 +370,8 @@ class Searcher : public PropEngine
                 learntTris -= other.learntTris;
                 learntLongs -= other.learntLongs;
                 otfSubsumed -= other.otfSubsumed;
+                otfSubsumedImplicit -= other.otfSubsumedImplicit;
+                otfSubsumedLong -= other.otfSubsumedLong;
                 otfSubsumedLearnt -= other.otfSubsumedLearnt;
                 otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
 
@@ -438,8 +467,20 @@ class Searcher : public PropEngine
 
                 printStatsLine("c otf-subs"
                     , otfSubsumed
-                    , (double)otfSubsumed/(double)conflStats.numConflicts*100.0
-                    , "% of conflicts"
+                    , (double)otfSubsumed/(double)conflStats.numConflicts
+                    , "/conflict"
+                );
+
+                printStatsLine("c otf-subs implicit"
+                    , otfSubsumedImplicit
+                    , (double)otfSubsumedImplicit/(double)otfSubsumed*100.0
+                    , "%"
+                );
+
+                printStatsLine("c otf-subs long"
+                    , otfSubsumedLong
+                    , (double)otfSubsumedLong/(double)otfSubsumed*100.0
+                    , "%"
                 );
 
                 printStatsLine("c otf-subs learnt"
@@ -555,6 +596,9 @@ class Searcher : public PropEngine
             uint64_t stampShrinkAttempt;
             uint64_t stampShrinkCl;
             uint64_t stampShrinkLit;
+            uint64_t moreMinimLitsStart;
+            uint64_t moreMinimLitsEnd;
+            uint64_t recMinimCost;
 
             //Learnt stats
             uint64_t learntUnits;
@@ -562,6 +606,8 @@ class Searcher : public PropEngine
             uint64_t learntTris;
             uint64_t learntLongs;
             uint64_t otfSubsumed;
+            uint64_t otfSubsumedImplicit;
+            uint64_t otfSubsumedLong;
             uint64_t otfSubsumedLearnt;
             uint64_t otfSubsumedLitsGained;
 
@@ -583,6 +629,8 @@ class Searcher : public PropEngine
 
     protected:
         friend class CalcDefPolars;
+        void filterOrderHeap();
+        void redoOrderHeap();
 
         //For connection with Solver
         void  resetStats();
@@ -593,9 +641,11 @@ class Searcher : public PropEngine
         std::pair<size_t, size_t> removeUselessBins();
 
         Hist hist;
+        #ifdef STATS_NEEDED
         vector<uint32_t>    clauseSizeDistrib;
         vector<uint32_t>    clauseGlueDistrib;
         boost::multi_array<uint32_t, 2> sizeAndGlue;
+        #endif
 
         /////////////////
         //Settings
@@ -624,6 +674,12 @@ class Searcher : public PropEngine
         // Conflicting
         struct SearchParams
         {
+            SearchParams() :
+                rest_type(no_restart)
+            {
+                clear();
+            }
+
             void clear()
             {
                 update = true;
@@ -641,43 +697,53 @@ class Searcher : public PropEngine
         };
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
+        vector<Lit> learnt_clause;
         Clause* analyze(
             PropBy confl //The conflict that we are investigating
-            , vector<Lit>& out_learnt    //learnt clause
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
             , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
+            , bool fromProber = false
         );
-        MyStack<Lit> analyze_stack;
-        vector<Lit> dummy;
-        vector<std::pair<Lit, size_t> > lastDecisionLevel;
-        bool litRedundant(Lit p, uint32_t abstract_levels);
-        void recursiveConfClauseMin(vector<Lit>& out_learnt);
+
+        vector<std::pair<Lit, size_t> > lastDecisionLevel; //for glue-based extra var activity bumping
+
+        //OTF subsumption
+        vector<ClOffset> toAttachLater;
+        void doOTFSubsume(PropBy confl);
+        vector<OTFClause> otfMustAttach;
+        //set<Lit> learnt_clause2;
+        size_t learnt_clause2_size;
+        CL_ABST_TYPE learnt_clause2_abst;
 
         void analyzeHelper(
             Lit lit
             , int& pathC
-            , vector<Lit>& out_learnt
+            , bool fromProber
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
 
         //////////////
         // Conflict minimisation
-        void            prune_removable(vector<Lit>& out_learnt);
-        void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
-        int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
-        int             dfs_removable(Lit p, uint32_t abstract_level);
-        void            mark_needed_removable(Lit p);
-        int             res_removable();
+        bool litRedundant(Lit p, uint32_t abstract_levels);
+        void recursiveConfClauseMin();
+        void normalClMinim();
+        MyStack<Lit> analyze_stack;
+        //void            prune_removable(vector<Lit>& out_learnt);
+        //void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
+        //int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
+        //int             dfs_removable(Lit p, uint32_t abstract_level);
+        //void            mark_needed_removable(Lit p);
+        //int             res_removable();
         uint32_t        abstractLevel(const Var x) const;
-        vector<PropBy> trace_reasons; // clauses to resolve to give CC
-        vector<Lit>     trace_lits_minim; // lits maybe used in minimization
+        //vector<PropBy> trace_reasons; // clauses to resolve to give CC
+        //vector<Lit>     trace_lits_minim; // lits maybe used in minimization
 
 
         /////////////////
         //Graphical conflict generation
         void         genConfGraph     (PropBy conflPart);
-        string simplAnalyseGraph (PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue);
+        string simplAnalyseGraph (PropBy conflHalf, uint32_t& out_btlevel, uint32_t &glue);
 
         /////////////////
         // Variable activity
@@ -691,6 +757,7 @@ class Searcher : public PropEngine
         void   minimiseLearntFurther(vector<Lit>& cl);
         void   stampBasedLearntMinim(vector<Lit>& cl);
         const Stats& getStats() const;
+        uint64_t memUsedSearch() const;
 
     private:
 
@@ -848,6 +915,11 @@ inline void Searcher::addInPartialSolvingStat()
 inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
+}
+
+inline void Searcher::filterOrderHeap()
+{
+    order_heap.filter(VarFilter(this, solver));
 }
 
 } //end namespace

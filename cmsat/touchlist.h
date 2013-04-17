@@ -66,6 +66,15 @@ public:
         touched.clear();
     }
 
+    uint64_t memUsed() const
+    {
+        uint64_t mem = 0;
+        mem += touched.capacity()*sizeof(Var);
+        mem += touchedBitset.capacity()*sizeof(char);
+
+        return mem;
+    }
+
 private:
     vector<Var> touched;
     vector<char> touchedBitset;
