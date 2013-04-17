@@ -670,6 +670,7 @@ void Solver::renumberVariables()
         if (value(i) != l_Undef
             || varData[i].elimed == ELIMED_VARELIM
             || varData[i].elimed == ELIMED_VARREPLACER
+            || varData[i].elimed == ELIMED_DECOMPOSE
         ) {
             useless.push_back(i);
             continue;
@@ -777,6 +778,7 @@ void Solver::renumberVariables()
 
         if (varData[i].elimed == ELIMED_VARELIM
             || varData[i].elimed == ELIMED_VARREPLACER
+            || varData[i].elimed == ELIMED_DECOMPOSE
         ) {
             uninteresting = true;
             //cout << " elimed" << endl;
@@ -787,6 +789,7 @@ void Solver::renumberVariables()
         if (value(i) == l_Undef
             && varData[i].elimed != ELIMED_VARELIM
             && varData[i].elimed != ELIMED_VARREPLACER
+            && varData[i].elimed != ELIMED_DECOMPOSE
             && uninteresting
         ) {
             problem = true;
@@ -3455,6 +3458,7 @@ void Solver::freeUnusedWatches()
         Lit lit = Lit::toLit(wsLit);
         if (varData[lit.var()].elimed == ELIMED_VARELIM
             || varData[lit.var()].elimed == ELIMED_VARREPLACER
+            || varData[lit.var()].elimed == ELIMED_DECOMPOSE
         ) {
             assert(it->empty());
             it->clear(true);

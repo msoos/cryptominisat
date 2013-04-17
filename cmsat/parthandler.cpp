@@ -298,6 +298,7 @@ void PartHandler::moveVariablesBetweenSolvers(
         if (solver->decisionVar[var]) {
             solver->unsetDecisionVar(var);
             decisionVarRemoved.push_back(var);
+            solver->varData[var].elimed = ELIMED_DECOMPOSE;
         }
     }
 }
