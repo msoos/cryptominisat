@@ -434,8 +434,21 @@ void CompHandler::moveClausesImplicit(
                 if (compFinder->getVarComp(lit.var()) != comp
                     || compFinder->getVarComp(lit2.var()) != comp
                 ) {
+                    //Can only be learnt, otherwise it would be in the same
+                    //component
                     assert(i->learnt());
-                    numRemovedHalfLearnt++;
+
+                    //The way we go through this, it's definitely going to be
+                    //lit2 that's in the other component
+                    assert(compFinder->getVarComp(lit2.var()) != comp);
+
+                    removeWBin(solver->watches, lit2, lit, true);
+
+                    //Update stats
+                    solver->binTri.redBins--;
+                    solver->binTri.redLits -= 2;
+
+                    //Not copy, that's the other Watched removed
                     continue;
                 }
 
@@ -492,7 +505,37 @@ void CompHandler::moveClausesImplicit(
                     || compFinder->getVarComp(lit3.var()) != comp
                 ) {
                     assert(i->learnt());
-                    numRemovedThirdLearnt++;
+
+                    //The way we go through this, it's definitely going to be
+                    //either lit2 or lit3, not lit, that's in the other comp
+                    assert(compFinder->getVarComp(lit2.var()) != comp
+                        || compFinder->getVarComp(lit3.var()) != comp
+                    );
+
+                    //Update stats
+                    solver->binTri.redTris--;
+                    solver->binTri.redLits -= 3;
+
+                    //We need it sorted, because that's how we know what order
+                    //it is in the Watched()
+                    lits.resize(3);
+                    lits[0] = updateLit(lit);
+                    lits[1] = updateLit(lit2);
+                    lits[2] = updateLit(lit3);
+                    std::sort(lits.begin(), lits.end());
+
+                    //Remove only 2, the other gets removed by not copying it over
+                    if (lits[0] != lit) {
+                        removeWTri(solver->watches, lits[0], lits[1], lits[2], true);
+                    }
+                    if (lits[1] != lit) {
+                        removeWTri(solver->watches, lits[1], lits[0], lits[2], true);
+                    }
+                    if (lits[2] != lit) {
+                        removeWTri(solver->watches, lits[2], lits[0], lits[1], true);
+                    }
+
+                    //Not copying, that's the 3rd one
                     continue;
                 }
 
