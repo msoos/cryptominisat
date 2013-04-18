@@ -1401,7 +1401,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         checkStats();
 
         if (conf.doCompHandler) {
-            compHandler->addSavedState(model, solution);
+            compHandler->addSavedState(solution);
         }
 
         //Extend solution

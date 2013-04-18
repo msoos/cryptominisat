@@ -610,7 +610,7 @@ void CompHandler::moveClausesImplicit(
     solver->binTri.redLits -= numRemovedThirdLearnt;
 }
 
-void CompHandler::addSavedState(vector<lbool>& model, vector<lbool>& solution)
+void CompHandler::addSavedState(vector<lbool>& solution)
 {
     //Enqueue them. They may need to be extended, so enqueue is needed
     //manipulating "model" may not be good enough
