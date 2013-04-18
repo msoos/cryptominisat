@@ -20,6 +20,7 @@ output="/home/soos/sat/newout/44-satcomp11"
 tlimit="1000"
 #5GB mem limit
 memlimit="5000000"
+numthreads=4
 
 mkdir -p $output
 
@@ -56,28 +57,28 @@ echo "Done."
 
 # create per-core todos
 echo "numlines:" $numlines
-let numper=numlines/4
-remain=$((numlines-numper*4))
+let numper=numlines/numthreads
+remain=$((numlines-numper*numthreads))
 mystart=0
 echo -ne "Creating per-core TODOs"
-for myi in 0 1 2 3
+for ((myi=0; myi < numthreads ; myi++))
 do
     rm todo_rnd_$myi.sh
-    echo todo_rnd$myi.sh
-    echo "ulimit -t $tlimit" > todo_rnd$myi.sh
-    echo "ulimit -v $memlimit" >> todo_rnd$myi.sh
-    echo "ulimit -a" >> todo_rnd$myi.sh
+    echo todo_rnd_$myi.sh
+    echo "ulimit -t $tlimit" > todo_rnd_$myi.sh
+    echo "ulimit -v $memlimit" >> todo_rnd_$myi.sh
+    echo "ulimit -a" >> todo_rnd_$myi.sh
     typeset -i myi
     typeset -i numper
     typeset -i mystart
     echo "myi: $myi, numper: $numper,"
     mystart=$((mystart + numper))
     echo "mystart: $mystart"
-    head -n $mystart todo_rnd | tail -n $numper>> todo_rnd$myi.sh
-    chmod +x todo_rnd$myi.sh
+    head -n $mystart todo_rnd | tail -n $numper>> todo_rnd_$myi.sh
+    chmod +x todo_rnd_$myi.sh
 done
 echo "Done."
-tail -n $remain todo_rnd >> todo_rnd$myi.sh
+tail -n $remain todo_rnd >> todo_rnd_$myi.sh
 
 #check that todos match original
 # rm valami
@@ -92,9 +93,9 @@ tail -n $remain todo_rnd >> todo_rnd$myi.sh
 # Execute todos
 rm out_*
 echo -ne "executing todos..."
-for myi in 0 1 2 3
+for ((myi=0; myi < numthreads ; myi++))
 do
-#    nohup ./todo_rnd$myi.sh > out_$I &
+    nohup ./todo_rnd_$myi.sh > out_$I &
     echo "OK"
 done
 echo  "done."
