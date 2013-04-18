@@ -96,7 +96,7 @@ do
 		--renumber $(bool) \
                 --recur $(bool) \
 		--verb 1 \
-		--coms 1 \
+		--comps 1 \
         --compsfrom $(int 0 2) \
         --compsvar $(int 20000 500000) \
         --compslimit $(int 0 3000) \
