@@ -415,7 +415,17 @@ bool SolutionExtender::propagateCl(
     #endif
     assert(blockedOn != lit_Undef);
 
-    assert(solver->varData[blockedOn.var()].level != 0
+    if (solver->varData[blockedOn.var()].level == 0) {
+        cout
+        << "!! Flip 0-level var:"
+        << solver->interToOuterMain[blockedOn.var()]
+        << endl;
+    }
+
+    assert(
+        (solver->varData[blockedOn.var()].level != 0
+            //|| solver->varData[blockedOn.var()].elimed == ELIMED_DECOMPOSE
+        )
         && "We cannot flip 0-level vars"
     );
     enqueue(blockedOn);

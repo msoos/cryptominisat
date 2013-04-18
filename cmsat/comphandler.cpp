@@ -179,9 +179,23 @@ bool CompHandler::handle()
         assert(newSolver.decisionLevel() == 0);
         assert(solver->decisionLevel() == 0);
          for (size_t i = 0; i < vars.size(); i++) {
-            Var var = vars[i];
-            lbool val = newSolver.value(updateVar(var));
+
+            //This is *tricky*. The newSolver might have internally re-numbered
+            //the variables, so we must take this into account
+            Var newSolverInternalVar;
+            if (!newSolver.interToOuter.empty()) {
+                newSolverInternalVar = newSolver.interToOuter[i];
+            } else {
+                newSolverInternalVar = i;
+            }
+
+            //Is it 0-level assigned in newSolver?
+            lbool val = newSolver.value(newSolverInternalVar);
             if (val != l_Undef) {
+                assert(newSolver.varData[newSolverInternalVar].level == 0);
+
+                //Use our 'solver'-s notation, i.e. 'var'
+                Var var = vars[i];
                 Lit lit(var, val == l_False);
                 solver->enqueue(lit);
 
