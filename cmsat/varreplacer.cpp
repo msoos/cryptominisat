@@ -779,7 +779,7 @@ void VarReplacer::updateVars(
         ; it != end
         ; it++
     ) {
-        updateArrayMap(it->second, outerToInter);
+        updateArrayMapCopy(it->second, outerToInter);
         newReverseTable[outerToInter[it->first]] = it->second;
     }
     reverseTable.swap(newReverseTable);

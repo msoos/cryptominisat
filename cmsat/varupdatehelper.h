@@ -41,15 +41,6 @@ void updateArrayMapCopy(T& toUpdate, const vector< uint32_t >& mapper)
 }
 
 template<typename T>
-void updateArrayMap(T& toUpdate, const vector< uint32_t >& mapper)
-{
-    for(size_t i = 0; i < toUpdate.size(); i++) {
-        toUpdate[i] = mapper[toUpdate[i]];
-    }
-
-}
-
-template<typename T>
 void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 {
     for(size_t i = 0; i < toUpdate.size(); i++) {
