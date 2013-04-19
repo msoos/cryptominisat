@@ -2102,7 +2102,7 @@ uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
     printStatsLine("c Mem for watches"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.
+        , (double)mem/(double)totalMem*100.0
         , "%"
     );
 
