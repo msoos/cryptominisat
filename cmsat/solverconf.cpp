@@ -141,6 +141,7 @@ SolverConf::SolverConf() :
         , maxRedLinkInSize (200)
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
+        , maxOccurRedLitLinkedM(50)
 
         //optimisations to do
         , doRenumberVars   (true)

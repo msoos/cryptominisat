@@ -518,12 +518,20 @@ private:
     /**
     @brief Sort clauses according to size
     */
-    struct sortBySize
+    struct MySorter
     {
-        bool operator () (const Clause* x, const Clause* y)
+        MySorter(const ClauseAllocator* _clAllocator) :
+            clAllocator(_clAllocator)
+        {}
+
+        bool operator () (const ClOffset x, const ClOffset y)
         {
-            return (x->size() < y->size());
+            Clause* cl1 = clAllocator->getPointer(x);
+            Clause* cl2 = clAllocator->getPointer(y);
+            return (cl1->size() < cl2->size());
         }
+
+        const ClauseAllocator* clAllocator;
     };
 
     /////////////////////

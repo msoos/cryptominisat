@@ -648,6 +648,11 @@ bool Simplifier::addFromSolver(
         }
     }
 
+    if (!irred && alsoOccur) {
+        std::sort(toAdd.begin(), toAdd.end(), MySorter(solver->clAllocator));
+    }
+
+    uint64_t linkedInLits = 0;
     size_t numNotLinkedIn = 0;
     size_t numLinkedIn = 0;
     for (vector<ClOffset>::iterator
@@ -664,11 +669,15 @@ bool Simplifier::addFromSolver(
         );
 
         if (alsoOccur
-            //If irreduntant or small enough, link it in
-            && (irred || cl->size() < solver->conf.maxRedLinkInSize)
+            //If irreduntant or (small enough AND link in limit not reached)
+            && (irred
+                || (cl->size() < solver->conf.maxRedLinkInSize
+                    && linkedInLits < solver->conf.maxOccurRedLitLinkedM)
+            )
         ) {
             linkInClause(*cl);
             numLinkedIn++;
+            linkedInLits += cl->size();
         } else {
             assert(cl->learnt());
             cl->setOccurLinked(false);

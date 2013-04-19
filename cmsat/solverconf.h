@@ -162,6 +162,7 @@ class SolverConf
         unsigned maxRedLinkInSize;
         uint64_t maxOccurIrredMB;
         uint64_t maxOccurRedMB;
+        uint64_t maxOccurRedLitLinkedM;
 
 
         //Optimisations to do
