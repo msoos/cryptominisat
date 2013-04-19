@@ -95,7 +95,7 @@ rm out_*
 echo -ne "executing todos..."
 for ((myi=0; myi < numthreads ; myi++))
 do
-    nohup ./todo_rnd_$myi.sh > out_$I &
+    nohup ./todo_rnd_$myi.sh > out_$my &
     echo "OK"
 done
 echo  "done."

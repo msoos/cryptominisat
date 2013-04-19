@@ -59,6 +59,11 @@ public:
     ) const;
     void updateDominators(const VarReplacer* replacer);
     void clearStamps();
+    void newNumVars(uint32_t newNumVars)
+    {
+        tstamp.resize(newNumVars*2);
+        tstamp.shrink_to_fit();
+    }
 
     vector<Timestamp>   tstamp;
     void newVar()

@@ -13,9 +13,9 @@ Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
 template<typename T>
 void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() == mapper.size());
+    assert(toUpdate.size() >= mapper.size());
     T backup = toUpdate;
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    for(size_t i = 0; i < mapper.size(); i++) {
         toUpdate[i] = backup[mapper[i]];
     }
 }
@@ -23,9 +23,9 @@ void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
 template<typename T>
 void updateArrayRev(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() == mapper.size());
+    assert(toUpdate.size() >= mapper.size());
     T backup = toUpdate;
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    for(size_t i = 0; i < mapper.size(); i++) {
         toUpdate[mapper[i]] = backup[i];
     }
 }
@@ -33,10 +33,12 @@ void updateArrayRev(T& toUpdate, const vector< uint32_t >& mapper)
 template<typename T>
 void updateArrayMapCopy(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() == mapper.size());
+    assert(toUpdate.size() >= mapper.size());
     T backup = toUpdate;
     for(size_t i = 0; i < toUpdate.size(); i++) {
-        toUpdate[i] = mapper[backup[i]];
+        if (backup[i] < mapper.size()) {
+            toUpdate[i] = mapper[backup[i]];
+        }
     }
 }
 
@@ -44,23 +46,11 @@ template<typename T>
 void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 {
     for(size_t i = 0; i < toUpdate.size(); i++) {
-        toUpdate[i] = getUpdatedLit(toUpdate[i], mapper);
+        if (toUpdate[i].var() < mapper.size()) {
+            toUpdate[i] = getUpdatedLit(toUpdate[i], mapper);
+        }
     }
 }
-
-inline void updateSet(std::set<Var>& toUpdate, const vector< uint32_t >& mapper)
-{
-    std::set<Var> updatedSet;
-    for(std::set<Var>::iterator
-        it = toUpdate.begin(), end = toUpdate.end()
-        ; it != end
-        ; it++
-    ){
-        updatedSet.insert(getUpdatedVar(*it, mapper));
-    }
-    toUpdate.swap(updatedSet);
-}
-
 
 inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
 {
@@ -75,7 +65,7 @@ inline Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper)
 template<typename T, typename T2>
 inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper)
 {
-    for(size_t i = 0; i < toUpdate.size(); i++) {
+    for(size_t i = 0; i < mapper.size(); i++) {
         //Already updated
         if (seen[i])
             continue;

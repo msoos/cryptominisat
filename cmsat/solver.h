@@ -397,6 +397,8 @@ class Solver : public Searcher
         vector<uint32_t> interToOuter2;
         void renumberVariables();
         void freeUnusedWatches();
+        void saveVarMem(uint32_t newNumVars);
+        Var realNumVars;
 
         /////////////////////////////
         // SAT solution verification

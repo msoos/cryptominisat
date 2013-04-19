@@ -128,6 +128,12 @@ public:
     void printStatsSort(const Solver* solver) const;
     uint64_t memUsed() const;
     void makeAllRed();
+    void newNumVars(uint32_t newNumVars)
+    {
+        implCache.resize(newNumVars*2);
+        implCache.shrink_to_fit();
+    }
+
     std::vector<TransCache> implCache;
 
     std::vector<TransCache>::iterator begin()

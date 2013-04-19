@@ -61,6 +61,7 @@ Solver::Solver(const SolverConf& _conf) :
     , prober(NULL)
     , simplifier(NULL)
     , compHandler(NULL)
+    , realNumVars(0)
     , mtrand(_conf.origSeed)
     , needToInterrupt(false)
 
@@ -666,6 +667,7 @@ void Solver::renumberVariables()
     outerToInter.resize(nVars());
     size_t at = 0;
     vector<Var> useless;
+    size_t numEffectiveVars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
             || varData[i].elimed == ELIMED_VARELIM
@@ -679,6 +681,7 @@ void Solver::renumberVariables()
         outerToInter[i] = at;
         interToOuter[at] = i;
         at++;
+        numEffectiveVars++;
     }
 
     //Fill the rest with variables that have been removed/eliminated/set
@@ -828,11 +831,28 @@ void Solver::renumberVariables()
     cout << "Passed test" << endl;
     #endif
     #endif
+
+    saveVarMem(numEffectiveVars);
+}
+
+void Solver::saveVarMem(const uint32_t newNumVars)
+{
+    //never resize varData
+    //never resize interToOuterMain, outerToInterMain
+
+    printMemStats();
+    assigns.resize(newNumVars);
+    watches.resize(newNumVars*2);
+    watches.shrink_to_fit();
+    implCache.newNumVars(newNumVars);
+    stamp.newNumVars(newNumVars);
+    printMemStats();
 }
 
 Var Solver::newVar(const bool dvar)
 {
     const Var var = decisionVar.size();
+    realNumVars++;
 
     if (conf.doStamp
         && nVars() > 15ULL*1000ULL*1000ULL
@@ -1399,6 +1419,10 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     } else if (status == l_True) {
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
+
+        for(size_t i = 0; i < realNumVars - nVars(); i++) {
+            solution.push_back(l_Undef);
+        }
 
         if (conf.doCompHandler) {
             compHandler->addSavedState(solution);
@@ -3010,6 +3034,11 @@ void Solver::printClauseStats() const
 
 void Solver::checkImplicitStats() const
 {
+    //Don't check if in crazy mode
+    #ifdef NDEBUG
+    return;
+    #endif
+
     //Check number of learnt & non-learnt binary clauses
     uint64_t thisNumLearntBins = 0;
     uint64_t thisNumNonLearntBins = 0;
