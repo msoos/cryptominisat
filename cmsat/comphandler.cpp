@@ -184,7 +184,7 @@ bool CompHandler::handle()
             //the variables, so we must take this into account
             Var newSolverInternalVar;
             if (!newSolver.interToOuter.empty()) {
-                newSolverInternalVar = newSolver.interToOuter[i];
+                newSolverInternalVar = newSolver.interToOuterMain[i];
             } else {
                 newSolverInternalVar = i;
             }
