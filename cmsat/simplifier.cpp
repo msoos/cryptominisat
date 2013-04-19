@@ -3419,7 +3419,7 @@ uint64_t Simplifier::memUsed() const
     ) {
         b += it->lits.capacity()*sizeof(Lit);
     }
-    b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>))*sizeof(std::_Rb_tree_node_base);
+    b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>)); //TODO under-counting
     b += varElimOrder.memUsed();
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += touched.memUsed();
