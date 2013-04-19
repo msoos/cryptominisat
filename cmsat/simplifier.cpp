@@ -41,10 +41,10 @@
 #include "gatefinder.h"
 #include "varreplacer.h"
 #include "varupdatehelper.h"
+#include "completedetachreattacher.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
-#include "completedetachreattacher.h"
 #endif
 
 //#define VERBOSE_DEBUG
