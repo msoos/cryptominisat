@@ -629,7 +629,7 @@ bool Simplifier::addFromSolver(
         ) {
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c [simp] Not linking in irred due to excessive memory usage"
+                << "c [simp] Not linking in irred due to excessive expected memory usage"
                 << endl;
             }
 
@@ -642,7 +642,7 @@ bool Simplifier::addFromSolver(
             alsoOccur = false;
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c [simp] Not linking in red due to excessive memory usage"
+                << "c [simp] Not linking in red due to excessive expected memory usage"
                 << endl;
             }
         }
