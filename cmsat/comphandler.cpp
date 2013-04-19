@@ -199,6 +199,11 @@ bool CompHandler::handle()
                 Lit lit(var, val == l_False);
                 solver->enqueue(lit);
 
+                /*cout
+                << "0-level enqueueing var "
+                << solver->interToOuterMain[var]
+                << endl;*/
+
                 //These vars are not meant to be in the orig solver
                 //so they cannot cause UNSAT
                 solver->ok = (solver->propagate().isNULL());
