@@ -1021,14 +1021,14 @@ CleaningStats Solver::reduceDB()
     tmpStats.origNumLits = binTri.redLits - binTri.redBins*2;
 
     //Calculate how many to remove
-    size_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
+    uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
-    size_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300)
-        * solveStats.nbReduceDB
+    uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
+        * (double)solveStats.nbReduceDB
         * conf.maxNumLearntsRatio;
-    size_t removeNum = std::max<long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
+    uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
 
     if (removeNum != origRemoveNum) {
         if (conf.verbosity >= 2) {
