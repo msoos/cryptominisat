@@ -52,11 +52,19 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
 
     solver->clauseCleaner->cleanClauses(solver->longIrredCls);
 
-    if (!vivifyClausesCache(solver->longIrredCls, false, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longIrredCls, false, false))
         goto end;
 
-    if (!vivifyClausesCache(solver->longRedCls, true, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longRedCls, true, false))
         goto end;
+
+    if (alsoStrengthen) {
+        if (!vivifyClausesCache(solver->longIrredCls, false, true))
+            goto end;
+
+        if (!vivifyClausesCache(solver->longRedCls, true, true))
+            goto end;
+    }
 
     if (alsoStrengthen
         && !asymmClausesLongIrred()
