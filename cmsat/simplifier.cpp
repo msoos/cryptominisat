@@ -2177,8 +2177,8 @@ from the beginning.
 */
 void Simplifier::setLimits()
 {
-    numMaxSubsume0    = 450LL*1000LL*1000LL;
-    numMaxSubsume1    = 100LL*1000LL*1000LL;
+    numMaxSubsume0    = 850LL*1000LL*1000LL;
+    numMaxSubsume1    = 400LL*1000LL*1000LL;
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
     numMaxElim        = 800LL*1000LL*1000LL;
     numMaxAsymm       = 40LL *1000LL*1000LL;
