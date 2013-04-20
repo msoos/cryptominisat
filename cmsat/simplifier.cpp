@@ -672,7 +672,7 @@ bool Simplifier::addFromSolver(
             //If irreduntant or (small enough AND link in limit not reached)
             && (irred
                 || (cl->size() < solver->conf.maxRedLinkInSize
-                    && linkedInLits < solver->conf.maxOccurRedLitLinkedM)
+                    && linkedInLits < (solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL))
             )
         ) {
             linkInClause(*cl);
