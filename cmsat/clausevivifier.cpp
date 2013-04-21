@@ -925,6 +925,17 @@ void ClauseVivifier::subsumeImplicit()
                     timeAvailable -= solver->watches[i->lit2().toInt()].size();
                     removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                     remTris++;
+
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        << "d "
+                        << lit << " "
+                        << i->lit1() << " "
+                        << i->lit2() << " 0"
+                        << endl;
+                    }
+                    #endif
                     continue;
                 }
 
@@ -957,6 +968,17 @@ void ClauseVivifier::subsumeImplicit()
                     solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
                 }
+
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << "d "
+                    << lit << " "
+                    << i->lit1() << " 0"
+                    << endl;
+                }
+                #endif
+
                 continue;
             } else {
                 lastBin = j;
@@ -1048,6 +1070,14 @@ bool ClauseVivifier::strengthenImplicit()
                     assert(!lits.empty());
                     if (lits.size() == 1) {
                         toEnqueue.push_back(lits[0]);
+
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            << lits[0] << " 0"
+                            << endl;
+                        }
+                        #endif
                         remLitFromBin++;
                         stampRem++;
                         *j++ = *i;
@@ -1085,6 +1115,14 @@ bool ClauseVivifier::strengthenImplicit()
                 if (rem) {
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        << lit << " 0"
+                        << endl;
+                    }
+                    #endif
+
                 }
                 *j++ = *i;
                 continue;
@@ -1132,6 +1170,26 @@ bool ClauseVivifier::strengthenImplicit()
                     removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        //Add shortened
+                        << i->lit1() << " "
+                        << i->lit2()
+                        << " 0"
+                        << endl
+
+                        //Delete old
+                        << "d "
+                        << lit << " "
+                        << i->lit1() << " "
+                        << i->lit2()
+                        << " 0"
+                        << endl;
+                    }
+                    #endif
+
+
                     continue;
                 }
 
@@ -1158,11 +1216,47 @@ bool ClauseVivifier::strengthenImplicit()
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri++;
                         binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->learnt()));
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            //Add shortened
+                            << lits[0] << " "
+                            << lits[1]
+                            << " 0"
+                            << endl
+
+                            //Delete old
+                            << "d "
+                            << lit << " "
+                            << i->lit1() << " "
+                            << i->lit2()
+                            << " 0"
+                            << endl;
+                        }
+                        #endif
+
                         continue;
                     } else if (lits.size() == 1) {
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            //Add shortened
+                            << lits[0] << " 0"
+                            << endl
+
+                            //Delete old
+                            << "d "
+                            << lit << " "
+                            << i->lit1() << " "
+                            << i->lit2()
+                            << " 0"
+                            << endl;
+                        }
+                        #endif
+
                         continue;
                     }
                 }

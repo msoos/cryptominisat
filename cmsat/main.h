@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <fstream>
 
 #include "solvertypes.h"
 #include "solverconf.h"
@@ -81,6 +82,9 @@ class Main
         //Command line arguments
         int argc;
         char** argv;
+
+        //Drup checker
+        std::ofstream* drupf;
 };
 
 #endif //MAIN_H

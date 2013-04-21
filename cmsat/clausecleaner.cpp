@@ -80,10 +80,23 @@ void ClauseCleaner::treatImplicitClauses()
             //Treat binaries
             if (i->isBinary()) {
                 if (satisfied(*i, lit)) {
-                    if (i->learnt())
+                    #ifdef DRUP
+                    if (solver->drup
+                        && lit < i->lit1()
+                    ) {
+                        (*solver->drup)
+                        << "d "
+                        << lit << " "
+                        << i->lit1() << " 0"
+                        << endl;
+                    }
+                    #endif
+
+                    if (i->learnt()) {
                         remLBin++;
-                    else
+                    } else {
                         remNonLBin++;
+                    }
                 } else {
                     assert(solver->value(i->lit1()) == l_Undef);
                     assert(solver->value(lit) == l_Undef);
@@ -105,29 +118,66 @@ void ClauseCleaner::treatImplicitClauses()
             }
 
             //Shortened -- attach bin, but only *once*
+            Lit lits[2];
+            bool needAttach = false;
             if (!remove
                 && solver->value(lit) == l_False
             ) {
-                if (lit < i->lit1())
-                    toAttach.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
+                if (lit < i->lit1()) {
+                    lits[0] = i->lit1();
+                    lits[1] = i->lit2();
+                    needAttach = true;
+                }
                 remove = true;
             }
             if (!remove
                 && solver->value(i->lit1()) == l_False
             ) {
-                if (lit < i->lit1())
-                    toAttach.push_back(BinaryClause(lit, i->lit2(), i->learnt()));
+                if (lit < i->lit1()) {
+                    lits[0] = lit;
+                    lits[1] = i->lit2();
+                    needAttach = true;
+                }
                 remove = true;
             }
             if (!remove
                 && solver->value(i->lit2()) == l_False
             ) {
-                if (lit < i->lit1())
-                    toAttach.push_back(BinaryClause(lit, i->lit1(), i->learnt()));
+                if (lit < i->lit1()) {
+                    lits[0] = lit;
+                    lits[1] = i->lit1();
+                    needAttach = true;
+                }
                 remove = true;
+            }
+            if (needAttach) {
+                toAttach.push_back(BinaryClause(lits[0], lits[1], i->learnt()));
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << lits[0] << " "
+                    << lits[1] << " 0"
+                    << endl;
+                }
+                #endif
             }
 
             if (remove) {
+                #ifdef DRUP
+                if (solver->drup
+                    //Only remove once --> exactly when deleting
+                    && lit < i->lit1()
+                    && i->lit1() < i->lit2()
+                ) {
+                    (*solver->drup)
+                    << "d "
+                    << lit << " "
+                    << i->lit1() << " "
+                    << i->lit2()
+                    << " 0" << endl;
+                }
+                #endif
+
                 if (i->learnt())
                     remLTri++;
                 else
@@ -200,6 +250,10 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     Clause& cl = *solver->clAllocator->getPointer(offset);
     assert(cl.size() > 3);
     const uint32_t origSize = cl.size();
+    #ifdef DRUP
+    vector<Lit> origCl(cl.size());
+    std::copy(cl.begin(), cl.end(), origCl.begin());
+    #endif
 
     Lit origLit1 = cl[0];
     Lit origLit2 = cl[1];
@@ -215,10 +269,22 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
 
         if (val == l_True) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
+            #ifdef DRUP
+            if (solver->drup) {
+                (*solver->drup) << "d " << origCl << " 0" << endl;
+            }
+            #endif
             return true;
         }
     }
     cl.shrink(i-j);
+
+    #ifdef DRUP
+    if (solver->drup && i != j) {
+        (*solver->drup) << cl << " 0" << endl;
+        (*solver->drup) << "d " << origCl << " 0" << endl;
+    }
+    #endif
 
     assert(cl.size() > 1);
     if (i != j) {

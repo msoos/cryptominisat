@@ -266,6 +266,10 @@ public:
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
 
+    #ifdef DRUP
+    std::ofstream* drup;
+    #endif
+
 protected:
 
     //Non-categorised functions
@@ -840,40 +844,6 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
     }
 
     addHyperBin(p);
-}
-
-//Add binary clause to deepest common ancestor
-inline void PropEngine::addHyperBin(const Lit p)
-{
-    propStats.otfHyperTime += 2;
-
-    Lit deepestAncestor = lit_Undef;
-    bool hyperBinNotAdded = true;
-    if (currAncestors.size() > 1) {
-        deepestAncestor = deepestCommonAcestor();
-
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
-        #endif
-        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        hyperBinNotAdded = false;
-    } else {
-        //0-level propagation is NEVER made by propFull
-        assert(currAncestors.size() > 0);
-
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout
-        << "Not adding hyper-bin because only ONE lit is not set at"
-        << "level 0 in long clause, but that long clause needs to be cleaned"
-        << endl;
-        #endif
-        deepestAncestor = currAncestors[0];
-        hyperBinNotAdded = true;
-    }
-
-    enqueueComplex(p, deepestAncestor, true);
-    varData[p.var()].reason.setHyperbin(true);
-    varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
 
 //Analyze why did we fail at decision level 1

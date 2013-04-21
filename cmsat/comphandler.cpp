@@ -275,11 +275,11 @@ void CompHandler::configureNewSolver(
     newSolver->conf = solver->conf;
     newSolver->mtrand.seed(solver->mtrand.randInt());
     if (numVars < 60) {
-        newSolver->conf.doSchedSimp = false;
-        newSolver->conf.doSimplify = false;
+        newSolver->conf.doSchedSimpProblem = false;
         newSolver->conf.doStamp = false;
         newSolver->conf.doCache = false;
         newSolver->conf.doProbe = false;
+        newSolver->conf.otfHyperbin = false;
         newSolver->conf.verbosity = 1;
     }
 

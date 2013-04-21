@@ -48,16 +48,6 @@ desc = """Example usages:
 """
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
-parser.add_option("--rndstart", dest="rndStart", default=0
-                    , type = "int", metavar="SEEDSTART"
-                    , help="Start randomize from this random seed. Default: %default"
-                    )
-
-parser.add_option("--rndnum", dest="rndNum", default=1
-                    , type="int", metavar="SEEDS"
-                    , help="Go through this many random seeds. Default: %default"
-                    )
-
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
                     , default="../build/cryptominisat"
                     , help="SAT solver executable. Default: %default"
@@ -140,17 +130,16 @@ class Tester:
 
         self.ignoreNoSolution = False
         self.needDebugLib = True
+        self.drup = True
 
     def random_options(self) :
-        cmd = ""
+        cmd = " "
 
-        cmd += "--simplify %s " % random.randint(0,1)
         cmd += "--clbtwsimp %s " % random.randint(0,3)
         cmd += "--restart %s " % random.choice(["geom", "agility", "glue", "glueagility"])
         cmd += "--agilviollim %s " % random.randint(0,40)
         cmd += "--gluehist %s " % random.randint(1,500)
         cmd += "--updateglue %s " % random.randint(0,1)
-        cmd += "--binpri %s " % random.randint(0,1)
         cmd += "--otfhyper %s " % random.randint(0,1)
         cmd += "--clean %s " % random.choice(["size", "glue", "activity", "propconfl"])
         cmd += "--preclean %s " % random.randint(0,1)
@@ -161,15 +150,11 @@ class Tester:
         cmd += "--maxredratio %s " % random.randint(2,20)
         cmd += "--dompickf %s " % random.randint(1,20)
         cmd += "--flippolf %s " % random.randint(1,3000)
-        cmd += "--moreminim %s " % random.randint(0,1)
         cmd += "--alwaysmoremin %s " % random.randint(0,1)
-        cmd += "--otfsubsume %s " % random.randint(0,1)
         cmd += "--rewardotfsubsume %s " % random.randint(0,100)
         cmd += "--bothprop %s " % random.randint(0,1)
         cmd += "--probe %s " % random.randint(0,1)
         cmd += "--probemultip %s " % random.randint(0,10)
-        cmd += "--stamp %s " % random.randint(0,1)
-        cmd += "--cache %s " % random.randint(0,1)
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
@@ -181,22 +166,31 @@ class Tester:
         cmd += "--occlearntmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
-        cmd += "--scc %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)
         cmd += "--presimp %s " % random.randint(0,1)
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
-        cmd += "--renumber %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
         #cmd += "--compss %s " % random.randint(0,1)
-        cmd += "--comps 1 "
         cmd += "--compsfrom %d " % random.randint(0,2)
         cmd += "--compsvar %d " % random.randint(20000,500000)
         cmd += "--compslimit %d " % random.randint(0,3000)
 
+
+        if self.drup == False :
+            cmd += "--binpri %s " % random.randint(0,1)
+            cmd += "--stamp %s " % random.randint(0,1)
+            cmd += "--cache %s " % random.randint(0,1)
+            cmd += "--otfsubsume %s " % random.randint(0,1)
+            cmd += "--simplify %s " % random.randint(0,1)
+            cmd += "--scc %s " % random.randint(0,1)
+            cmd += "--renumber %s " % random.randint(0,1)
+            cmd += "--comps 1 "
+            cmd += "--moreminim %s " % random.randint(0,1)
+
         return cmd
 
-    def execute(self, fname, randomizeNum, newVar, needToLimitTime):
+    def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None):
         if os.path.isfile(options.solver) != True:
             print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
                 options.solver
@@ -204,7 +198,7 @@ class Tester:
             exit(300)
 
         #construct command
-        command = "%s --random=%d " % (options.solver, randomizeNum)
+        command = options.solver
         command += self.random_options()
         if self.needDebugLib :
             command += "--debuglib "
@@ -215,6 +209,8 @@ class Tester:
         command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += fname
+        if fnameDrup:
+            command += " " + fnameDrup
         print "Executing: %s " % command
 
         #print time limit
@@ -395,7 +391,7 @@ class Tester:
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def check(self, fname, fnameCheck, randomizeNum=0, newVar=False,
+    def check(self, fname, fnameCheck, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False):
 
         consoleOutput = ""
@@ -403,7 +399,7 @@ class Tester:
 
         #Do we need to solve the problem, or is it already solved?
         if needSolve:
-            consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
+            consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
         else:
             if (os.path.isfile(fname + ".out") == False) :
                 print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
@@ -422,7 +418,7 @@ class Tester:
             else:
                 print "Within time limit: %f s" % (time.time() - currTime)
 
-        print "filename: %s, random seed: %3d" % (fname[:20], randomizeNum)
+        print "filename: %s" % fname[:20]
 
         if (self.needDebugLib) :
             largestPart = -1
@@ -459,6 +455,7 @@ class Tester:
         if self.check_unsat and unsat:
             toexec = "../../lingeling-587f/lingeling -f %s" % fname
             print "Solving with other solver.."
+            currTime = time.time()
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                                  preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
@@ -470,6 +467,31 @@ class Tester:
             (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         if unsat == True:
+            if fnameDrup:
+                toexec = "drupcheck %s %s" % (fname, fnameDrup)
+                print "Checking DRUP...: ", toexec
+                p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
+                                     #,preexec_fn=setlimits)
+                consoleOutput2 = p.communicate()[0]
+                diffTime = time.time() - currTime
+                foundVerif = False
+                drupLine = ""
+                for line in consoleOutput2.split('\n') :
+                    if len(line) > 1 and line[:2] == "s " :
+                        #print "verif: " , line
+                        foundVerif = True
+                        if line[2:10] != "VERIFIED":
+                            print "DRUP verification error, it says:", consoleOutput2
+                        assert line[2:10] == "VERIFIED", "DRUP didn't verify problem!"
+                        drupLine = line
+
+                if foundVerif == False:
+                    print "verifier error! It says:", consoleOutput2
+                    assert foundVerif, "Cannot find DRUP verification code!"
+                else:
+                    print "OK, DRUP says:", drupLine
+
+
             if self.check_unsat == False:
                 print "Cannot check -- output is UNSAT"
             else :
@@ -520,6 +542,7 @@ class Tester:
             for fuzzer in fuzzers :
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
+                fnameDrup = "drupcheck"
 
                 #should the multi-fuzzer be called?
                 if len(fuzzer) == 2 and fuzzer[1] == "special":
@@ -565,10 +588,8 @@ class Tester:
 
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
-
-                for seednum in range(options.rndStart, options.rndStart+options.rndNum):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                            randomizeNum=seednum, needToLimitTime=True)
+                self.check(fname=file_name, fnameCheck=file_name, fnameDrup=fnameDrup,
+                            needToLimitTime=True)
 
                 os.unlink(file_name)
 
@@ -602,30 +623,26 @@ class Tester:
             dirList = os.listdir(self.testDirNewVar)
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    print options.rndStart
-                    for i in range(options.rndStart, options.rndStart + options.rndNum):
-                        self.check(fname=self.testDirNewVar + fname,
+                    self.check(fname=self.testDirNewVar + fname,
                                 fnameCheck=self.testDirNewVar +
-                                fname, randomizeNum=i, newVar=True)
+                                fname, newVar=True)
 
         dirList = os.listdir(self.testDir)
 
         #test stuff without newVar
         for fname in dirList:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                for i in range(options.rndStart, options.rndStart+options.rndNum):
-                    self.check(fname=self.testDir + fname,
-                               fnameCheck=self.testDir + fname,
-                               randomizeNum=i, newVar=False)
+                self.check(fname=self.testDir + fname,
+                fnameCheck=self.testDir + fname,
+                newVar=False)
 
     def checkFile(self, fname) :
         if os.path.isfile(fname) == False:
             print "Filename given '%s' is not a file!" % fname
             exit(-1)
 
-        for seednum in range(options.rndStart, options.rndStart+options.rndNum):
-            print "Checking fname %s" % fname
-            self.check(fname=fname, fnameCheck=fname, randomizeNum=seednum)
+        print "Checking fname %s" % fname
+        self.check(fname=fname, fnameCheck=fname)
 
 tester = Tester()
 

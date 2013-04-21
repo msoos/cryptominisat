@@ -22,6 +22,7 @@
 #ifndef SOLVERCONF_H
 #define SOLVERCONF_H
 
+#include <fstream>
 #include "solvertypes.h"
 #include "constants.h"
 #include "clause.h"
@@ -154,8 +155,8 @@ class SolverConf
 
         //Simplifier
         int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        int      doPreSimp;          //Perform simplification at startup
-        int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
+        int      doPreSimpProblem;          //Perform simplification at startup
+        int      doSchedSimpProblem;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doAsymmTE; ///< Do Asymtotic blocked clause elimination

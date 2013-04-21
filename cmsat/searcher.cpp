@@ -846,6 +846,13 @@ lbool Searcher::search(uint64_t* geom_max)
                 stats.transReduRemIrred += tmp.first;
                 stats.transReduRemRed += tmp.second;
                 solver->enqueue(~failed);
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << (~failed) << " 0"
+                    << endl;
+                }
+                #endif
 
                 if (!ok)
                     return l_False;
@@ -878,6 +885,11 @@ lbool Searcher::search(uint64_t* geom_max)
                     //So enqueue ~ancestor
                     if (taut) {
                         toEnqueue.push_back(~ancestor);
+                        #ifdef DRUP
+                        (*solver->drup)
+                        << (~ancestor) << " 0"
+                        << endl;
+                        #endif
                     }
                 }
             }
@@ -1312,6 +1324,13 @@ bool Searcher::handle_conflict(PropBy confl)
 
     //Set up everything to get the clause
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
+
+    //Handle DRUP
+    #ifdef DRUP
+    if (solver->drup) {
+        (*solver->drup) << learnt_clause << " 0" << endl;
+    }
+    #endif
 
     //Is there on-the-fly subsumption?
     if (cl == NULL) {
@@ -2452,8 +2471,9 @@ size_t Searcher::hyperBinResAll()
             << endl;
 
         //If binary is satisfied, skip
-        if (val1 == l_True || val2 == l_True)
+        if (val1 == l_True || val2 == l_True) {
             continue;
+        }
 
         assert(val1 == l_Undef && val2 == l_Undef);
         solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
@@ -2492,6 +2512,16 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
+
+            #ifdef DRUP
+            if (solver->drup) {
+                (*solver->drup)
+                << "d "
+                << it->getLit1() << " " << it->getLit2()
+                << " 0"
+                << endl;
+            }
+            #endif
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -2772,25 +2802,47 @@ void Searcher::bumpClauseAct(Clause* cl)
 }
 
 PropBy Searcher::propagate(
-    Solver* solver
+    Solver* solver2
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver != NULL
+    #ifdef DRUP
+    size_t origTrailSize = trail.size();
+    #endif
+
+    PropBy ret;
+    if (solver2 != NULL
         && conf.propBinFirst
     ) {
-        return propagateBinFirst(
-            solver
+        ret = propagateBinFirst(
+            solver2
             #ifdef STATS_NEEDED
             , AvgCalc<size_t>* watchListSizeTraversed
             //, AvgCalc<bool>* litPropagatedSomething
             #endif
         );
     } else {
-        return propagateAnyOrder();
+        ret = propagateAnyOrder();
     }
+
+    #ifdef DRUP
+    //If declevel 0 propagation, we have to add the unitaries
+    if (solver->drup && decisionLevel() == 0) {
+        for(size_t i = origTrailSize; i < trail.size(); i++) {
+            (*solver->drup)
+            << trail[i]
+            << " 0" << endl;
+        }
+        if (!ret.isNULL()) {
+            (*solver->drup)
+            << "0" << endl;
+        }
+    }
+    #endif
+
+    return ret;
 }
 
 uint64_t Searcher::memUsedSearch() const

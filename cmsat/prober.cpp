@@ -562,7 +562,15 @@ bool Prober::tryThis(const Lit lit, const bool first)
             if (propValue[var] == solver->value(var).getBool()) {
 
                 //they both imply the same
-                toEnqueue.push_back(Lit(var, !propValue[var]));
+                const Lit litToEnq = Lit(var, !propValue[var]);
+                toEnqueue.push_back(litToEnq);
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << litToEnq << " 0"
+                    << endl;
+                }
+                #endif
             }
         }
 
@@ -636,6 +644,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
         //~lit V OTHER, and ~lit V ~OTHER are technically in
         if (taut) {
             toEnqueue.push_back(~lit);
+            #ifdef DRUP
+            if (solver->drup) {
+                (*solver->drup)
+                << (~lit) << " 0"
+                << endl;
+            }
+            #endif
         }
     }
 

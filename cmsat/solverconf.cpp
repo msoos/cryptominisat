@@ -79,7 +79,11 @@ SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
+        #ifdef DRUP
+        , doOTFSubsume     (false)
+        #else
         , doOTFSubsume     (true)
+        #endif
         , doOTFGateShorten (true)
         , rewardShortenedClauseWithConfl(3)
 
@@ -108,8 +112,13 @@ SolverConf::SolverConf() :
         , probeMultiplier  (1.0)
         , doBothProp       (true)
         , doTransRed       (true)
+        #ifdef DRUP
+        , doStamp          (false)
+        , doCache          (false)
+        #else
         , doStamp          (true)
         , doCache          (true)
+        #endif
         , cacheUpdateCutoff(2000)
         , maxCacheSizeMB   (2048)
 
@@ -121,7 +130,11 @@ SolverConf::SolverConf() :
         , maxXORMatrix     (10LL*1000LL*1000LL)
 
         //Var-replacer
+        #ifdef DRUP
+        , doFindAndReplaceEqLits(false)
+        #else
         , doFindAndReplaceEqLits(true)
+        #endif
         , doExtendedSCC         (true)
         , sccFindPercent        (0.02)
 
@@ -132,9 +145,15 @@ SolverConf::SolverConf() :
         , flipPolarFreq    (300)
 
         //Simplifier
+        #ifdef DRUP
+        , doSimplify       (false)
+        , doSchedSimpProblem(false)
+        , doPreSimpProblem (false)
+        #else
         , doSimplify       (true)
-        , doPreSimp        (true)
-        , doSchedSimp      (true)
+        , doSchedSimpProblem(true)
+        , doPreSimpProblem (true)
+        #endif
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)
@@ -144,17 +163,29 @@ SolverConf::SolverConf() :
         , maxOccurRedLitLinkedM(50)
 
         //optimisations to do
+        #ifdef DRUP
+        , doRenumberVars   (false)
+        #else
         , doRenumberVars   (true)
+        #endif
 
         //Component finding
         , doFindComps     (false)
+        #ifdef DRUP
+        , doCompHandler    (false)
+        #else
         , doCompHandler    (true)
+        #endif
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
         , compFindLimitMega (500)
 
         , doExtBinSubs     (true)
+        #ifdef DRUP
+        , doClausVivif     (false)
+        #else
         , doClausVivif     (true)
+        #endif
         , doSortWatched    (true)
 
 
@@ -174,6 +205,5 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , origSeed(0)
-
 {
 }

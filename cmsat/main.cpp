@@ -36,6 +36,7 @@ number of benefits relative to MiniSat.
 #include <iomanip>
 #include <map>
 #include <set>
+#include <fstream>
 #include <signal.h>
 #include "constants.h"
 
@@ -65,6 +66,7 @@ Main::Main(int _argc, char** _argv) :
         , fileNamePresent (false)
         , argc(_argc)
         , argv(_argv)
+        , drupf(NULL)
 {
 }
 
@@ -263,6 +265,7 @@ void Main::parseCommandLine()
     }
 
     string typeclean;
+    string drupfilname;
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -278,12 +281,14 @@ void Main::parseCommandLine()
         , "Stop solving after this much time, print stats and exit")
     ("maxconfl", po::value<size_t>(&conf.maxConfl)->default_value(conf.maxConfl)
         , "Stop solving after this many conflicts, print stats and exit")
-    ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
+    ("simplify", po::value<int>(&conf.doSchedSimpProblem)->default_value(conf.doSchedSimpProblem)
         , "Perform regular simplification rounds")
     ("clbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
+    ("drup,d", po::value<string>(&drupfilname)->default_value("drup")
+        , "Put DRUP verification information into this file")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -536,7 +541,7 @@ void Main::parseCommandLine()
 
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
-    ("presimp", po::value<int>(&conf.doPreSimp)->default_value(conf.doPreSimp)
+    ("presimp", po::value<int>(&conf.doPreSimpProblem)->default_value(conf.doPreSimpProblem)
         , "Perform simplification at startup (turning this OFF can save you time for small instances)")
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("vivif", po::value<int>(&conf.doClausVivif)->default_value(conf.doClausVivif)
@@ -561,7 +566,8 @@ void Main::parseCommandLine()
         , "Limit how much time is spent in component-finding");
 
     po::positional_options_description p;
-    p.add("input", -1);
+    p.add("input", 1);
+    p.add("drup", 1);
 
     po::variables_map vm;
     po::options_description cmdline_options;
@@ -595,23 +601,79 @@ void Main::parseCommandLine()
     .add(miscOptions)
     ;
 
-    po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
-    po::notify(vm);
+     try {
+        po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
+        //po::store(po::parse_command_line(argc, argv, desc), vm);
+        if (vm.count("help"))
+        {
+            cout
+            << "USAGE: " << argv[0] << " [options] <input-files>" << endl
+            << " where input is "
+            #ifndef USE_ZLIB
+            << "plain"
+            #else
+            << "plain or gzipped"
+            #endif
+            << " DIMACS." << endl;
 
-    if (vm.count("help")) {
-        cout
-        << "USAGE: " << argv[0] << " [options] <input-files>" << endl
-        << " where input is "
-        #ifndef USE_ZLIB
-        << "plain"
-        #else
-        << "plain or gzipped"
-        #endif
-        << " DIMACS." << endl;
+            cout << cmdline_options << endl;
+            exit(0);
+        }
 
-        cout << cmdline_options << endl;
-        exit(0);
+        po::notify(vm);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::unknown_option> >& c
+    ) {
+        cout << "Some option you gave was wrong. Please give '--help' to get help" << endl;
+        cout << "Unkown option: " << c.what() << endl;
+        exit(-1);
+    } catch (boost::bad_any_cast &e) {
+        cerr << e.what() << endl;
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
+    ) {
+        cerr
+        << "Invalid value '" << what.what() << "'"
+        << " given to option '" << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
+    ) {
+        cerr
+        << "Error: " << what.what() << " of option '"
+        << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::required_option> > what
+    ) {
+        cerr
+        << "You forgot to give a required option '"
+        << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
     }
+
+    #ifdef DRUP
+    if (vm.count("drup")) {
+        drupf = new std::ofstream;
+        drupf->open(drupfilname.c_str(), std::ofstream::out);
+        if (!*drupf) {
+            cout
+            << "ERROR: Could not open DRUP file "
+            << drupfilname
+            << " for writing"
+            << endl;
+
+            exit(-1);
+        }
+    }
+    #endif
 
     if (conf.doLHBR
         && !conf.propBinFirst
@@ -792,6 +854,9 @@ int Main::solve()
 {
     solver = new Solver(conf);
     solverToInterrupt = solver;
+    #ifdef DRUP
+    solver->drup = drupf;
+    #endif
 
     std::ofstream resultfile;
 
