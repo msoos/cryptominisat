@@ -101,11 +101,7 @@ SolverConf::SolverConf() :
         , sqlDatabase("cmsat")
 
         //Var-elim
-        #ifdef DRUP
-        , doVarElim        (false)
-        #else
         , doVarElim        (true)
-        #endif
         , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimCostEstimateStrategy(0)

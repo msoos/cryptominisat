@@ -341,11 +341,11 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
 /**
 @brief Removes&free-s a clause from everywhere
 */
-void Simplifier::unlinkClause(const ClOffset offset)
+void Simplifier::unlinkClause(const ClOffset offset, bool drup)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
     #ifdef DRUP
-    if (solver->drup) {
+    if (solver->drup && drup) {
        (*solver->drup)
        << "d " << cl
        << endl;
@@ -1328,6 +1328,9 @@ bool Simplifier::simplify()
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
+    #ifdef DRUP
+    const size_t origBlockedSize = blockedClauses.size();
+    #endif
 
     //Checking
     checkForElimedVars();
@@ -1381,6 +1384,24 @@ bool Simplifier::simplify()
     assert(solver->ok);
 
 end:
+
+    #ifdef DRUP
+    //Remove clauses that have been blocked recently
+    if (solver->drup) {
+        for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
+            (*solver->drup)
+            << "d ";
+            for(vector<Lit>::const_iterator
+                it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
+                ; it != end
+                ; it++
+            ) {
+                (*solver->drup) << *it << " ";
+            }
+            (*solver->drup) << "0" << endl;
+        }
+    }
+    #endif
 
     finishUp(origTrailSize);
 
@@ -1885,15 +1906,6 @@ void Simplifier::blockImplicit(
                     assert(!ws[i].learnt());
                     solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
-                    #ifdef DRUP
-                    if (solver->drup) {
-                        *(solver->drup)
-                        << "d "
-                        << lit << " "
-                        << lit2 << " 0"
-                        << endl;
-                    }
-                    #endif
                 } else {
                     blockedTri++;
                     dummy.push_back(lit3);
@@ -1904,16 +1916,6 @@ void Simplifier::blockImplicit(
                     assert(!ws[i].learnt());
                     solver->binTri.irredLits -= 3;
                     solver->binTri.irredTris--;
-                    #ifdef DRUP
-                    if (solver->drup) {
-                        *(solver->drup)
-                        << "d "
-                        << lit << " "
-                        << lit2 << " "
-                        << lit3 << " 0"
-                        << endl;
-                    }
-                    #endif
                 }
 
                 blockedClauses.push_back(BlockedClause(tautOn, dummy));
@@ -2428,6 +2430,8 @@ void Simplifier::removeClausesHelper(
 
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
+        lits.clear();
+
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
             Clause& cl = *solver->clAllocator->getPointer(offset);
@@ -2444,8 +2448,9 @@ void Simplifier::removeClausesHelper(
                 blockedClauses.push_back(BlockedClause(lit, lits));
             }
 
-            //Remove
-            unlinkClause(offset);
+            //Remove -- only DRUP the ones that are learnt
+            //The non-learnt will be removed thanks to 'blocked' system
+            unlinkClause(offset, cl.learnt());
         }
 
         if (watch.isBinary()) {
@@ -2459,20 +2464,32 @@ void Simplifier::removeClausesHelper(
             }
 
             //Put clause into blocked status
+            lits.resize(2);
+            lits[0] = lit;
+            lits[1] = watch.lit1();
             if (!watch.learnt()) {
-                lits.resize(2);
-                lits[0] = lit;
-                lits[1] = watch.lit1();
                 blockedClauses.push_back(BlockedClause(lit, lits));
 
                 //touch removed lits
                 touched.touch(watch.lit1());
+            } else {
+                //If learnt, delayed blocked-based DRUP deletion will not work
+                //so delete explicitly
+                #ifdef DRUP
+                if (solver->drup) {
+                   *(solver->drup)
+                   << "d "
+                   << lits[0] << " "
+                   << lits[1] << " 0"
+                   << endl;
+                }
+                #endif
             }
 
             //Remove
-            *toDecrease -= solver->watches[lit.toInt()].size();
-            *toDecrease -= solver->watches[watch.lit1().toInt()].size();
-            solver->detachBinClause(lit, watch.lit1(), watch.learnt());
+            *toDecrease -= solver->watches[lits[0].toInt()].size();
+            *toDecrease -= solver->watches[lits[1].toInt()].size();
+            solver->detachBinClause(lits[0], lits[1], watch.learnt());
         }
 
         if (watch.isTri()) {
@@ -2486,23 +2503,36 @@ void Simplifier::removeClausesHelper(
             }
 
             //Put clause into blocked status
+            lits.resize(3);
+            lits[0] = lit;
+            lits[1] = watch.lit1();
+            lits[2] = watch.lit2();
             if (!watch.learnt()) {
-                lits.resize(3);
-                lits[0] = lit;
-                lits[1] = watch.lit1();
-                lits[2] = watch.lit2();
                 blockedClauses.push_back(BlockedClause(lit, lits));
 
                 //Touch removed lits
                 touched.touch(watch.lit1());
                 touched.touch(watch.lit2());
+            } else {
+                //If learnt, delayed blocked-based DRUP deletion will not work
+                //so delete explicitly
+                #ifdef DRUP
+                if (solver->drup) {
+                   *(solver->drup)
+                   << "d "
+                   << lits[0] << " "
+                   << lits[1] << " "
+                   << lits[2] << " 0"
+                   << endl;
+                }
+                #endif
             }
 
             //Remove
-            *toDecrease -= solver->watches[lit.toInt()].size();
-            *toDecrease -= solver->watches[watch.lit1().toInt()].size();
-            *toDecrease -= solver->watches[watch.lit2().toInt()].size();
-            solver->detachTriClause(lit, watch.lit1(), watch.lit2(), watch.learnt());
+            *toDecrease -= solver->watches[lits[0].toInt()].size();
+            *toDecrease -= solver->watches[lits[1].toInt()].size();
+            *toDecrease -= solver->watches[lits[2].toInt()].size();
+            solver->detachTriClause(lits[0], lits[1], lits[2], watch.learnt());
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {

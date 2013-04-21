@@ -175,11 +175,11 @@ class Tester:
         cmd += "--compslimit %d " % random.randint(0,3000)
         cmd += "--schedsimplify %d " % random.randint(0,1)
         cmd += "--preschedsimp %s " % random.randint(0,1)
+        cmd += "--varelim %s " % random.randint(0,1)
 
 
         if self.drup == False :
             cmd += "--simplify %s " % random.randint(0,1)
-            cmd += "--varelim %s " % random.randint(0,1)
             cmd += "--binpri %s " % random.randint(0,1)
             cmd += "--stamp %s " % random.randint(0,1)
             cmd += "--cache %s " % random.randint(0,1)

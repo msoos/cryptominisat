@@ -458,7 +458,7 @@ private:
     //Clause update
     void        strengthen(ClOffset c, const Lit toRemoveLit);
     lbool       cleanClause(ClOffset c);
-    void        unlinkClause(ClOffset cc);
+    void        unlinkClause(ClOffset cc, bool drup = true);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
