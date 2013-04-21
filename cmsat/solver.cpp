@@ -1318,7 +1318,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     //If still unknown, simplify
     if (status == l_Undef
         && nVars() > 0
-        && conf.doPreSimpProblem
+        && conf.doPreSchedSimpProblem
         && conf.doSchedSimpProblem
     ) {
         status = simplifyProblem();
@@ -1560,8 +1560,9 @@ lbool Solver::simplifyProblem()
 
     //PROBE
     updateDominators();
-    if (conf.doProbe && !prober->probe())
+    if (conf.doProbe && !prober->probe()) {
         goto end;
+    }
 
     //If we are over the limit, exit
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
@@ -1596,8 +1597,9 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Treat implicits
-    if (!clauseVivifier->strengthenImplicit())
+    if (!clauseVivifier->strengthenImplicit()) {
         goto end;
+    }
 
     clauseVivifier->subsumeImplicit();
 

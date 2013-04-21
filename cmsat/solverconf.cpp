@@ -101,7 +101,11 @@ SolverConf::SolverConf() :
         , sqlDatabase("cmsat")
 
         //Var-elim
+        #ifdef DRUP
+        , doVarElim        (false)
+        #else
         , doVarElim        (true)
+        #endif
         , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimCostEstimateStrategy(0)
@@ -147,8 +151,8 @@ SolverConf::SolverConf() :
         //Simplifier
         #ifdef DRUP
         , doSimplify       (false)
-        , doSchedSimpProblem(false)
-        , doPreSimpProblem (false)
+        , doSchedSimpProblem(true)
+        , doPreSchedSimpProblem (true)
         #else
         , doSimplify       (true)
         , doSchedSimpProblem(true)
@@ -181,11 +185,7 @@ SolverConf::SolverConf() :
         , compFindLimitMega (500)
 
         , doExtBinSubs     (true)
-        #ifdef DRUP
-        , doClausVivif     (false)
-        #else
         , doClausVivif     (true)
-        #endif
         , doSortWatched    (true)
 
 

@@ -726,16 +726,12 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Else either remove or shrink clause
         countTime += cl.size()*10;
-        solver->detachClause(cl);
-        if (isSubsumed) {
-            solver->clAllocator->clauseFree(offset);
-        } else {
+        if (!isSubsumed) {
             remLitCache += thisRemLitCache;
             remLitBinTri += thisRemLitBinTri;
             tmpStats.shrinked++;
             countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
-            solver->clAllocator->clauseFree(offset);
 
             if (c2 != NULL) {
                 clauses[j++] = solver->clAllocator->getOffset(c2);
@@ -745,6 +741,8 @@ bool ClauseVivifier::vivifyClausesCache(
                 needToFinish = true;
             }
         }
+        solver->detachClause(cl);
+        solver->clAllocator->clauseFree(offset);
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS

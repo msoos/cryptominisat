@@ -292,7 +292,10 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
         , subsLits
     );
 
-    for (size_t j = 0; j < subs.size(); j++) {
+    for (size_t j = 0
+        ; j < subs.size() && solver->okay()
+        ; j++
+    ) {
         ClOffset offset2 = subs[j];
         Clause& cl2 = *solver->clAllocator->getPointer(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
@@ -341,6 +344,13 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
 void Simplifier::unlinkClause(const ClOffset offset)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
+    #ifdef DRUP
+    if (solver->drup) {
+       (*solver->drup)
+       << "d " << cl
+       << endl;
+    }
+    #endif
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -411,8 +421,16 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->binTri.irredLits -= i-j;
 
-    if (solver->conf.verbosity >= 6)
+    if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
+    }
+    #ifdef DRUP
+    if (solver->drup) {
+        *(solver->drup)
+        << cl << " 0"
+        << endl;
+    }
+    #endif
 
     switch(cl.size()) {
         case 0:
@@ -461,7 +479,12 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     #endif
 
     *toDecrease -= 5;
+    #ifdef DRUP
+    vector<Lit> origCl(cl.size());
+    std::copy(cl.begin(), cl.end(), origCl.begin());
+    #endif
     cl.strengthen(toRemoveLit);
+
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
     if (cl.learnt())
@@ -469,9 +492,17 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     else
         solver->binTri.irredLits--;
 
-    cleanClause(offset);
+    lbool ret = cleanClause(offset);
+    #ifdef DRUP
+    //If ret is not l_Undef, we already unlinked it, so deleted already
+    if (solver->drup && ret == l_Undef) {
+        *(solver->drup)
+        << "d "
+        << origCl << " 0"
+        << endl;
+    }
+    #endif
 }
-
 
 void Simplifier::performSubsumption()
 {
@@ -532,6 +563,7 @@ bool Simplifier::performStrengthening()
     Sub1Ret ret;
     while(*toDecrease > 0
         && wenThrough < 1.5*(double)2*clauses.size()
+        && solver->okay()
     ) {
         *toDecrease -= 20;
         wenThrough++;
@@ -1853,6 +1885,15 @@ void Simplifier::blockImplicit(
                     assert(!ws[i].learnt());
                     solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        *(solver->drup)
+                        << "d "
+                        << lit << " "
+                        << lit2 << " 0"
+                        << endl;
+                    }
+                    #endif
                 } else {
                     blockedTri++;
                     dummy.push_back(lit3);
@@ -1863,6 +1904,16 @@ void Simplifier::blockImplicit(
                     assert(!ws[i].learnt());
                     solver->binTri.irredLits -= 3;
                     solver->binTri.irredTris--;
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        *(solver->drup)
+                        << "d "
+                        << lit << " "
+                        << lit2 << " "
+                        << lit3 << " 0"
+                        << endl;
+                    }
+                    #endif
                 }
 
                 blockedClauses.push_back(BlockedClause(tautOn, dummy));

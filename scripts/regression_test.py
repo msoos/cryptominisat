@@ -158,7 +158,6 @@ class Tester:
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
-        cmd += "--varelim %s " % random.randint(0,1)
         cmd += "--elimstrategy %s " % random.randint(0,1)
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
         cmd += "--subsume1 %s " % random.randint(0,1)
@@ -167,7 +166,6 @@ class Tester:
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)
-        cmd += "--presimp %s " % random.randint(0,1)
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
@@ -175,14 +173,17 @@ class Tester:
         cmd += "--compsfrom %d " % random.randint(0,2)
         cmd += "--compsvar %d " % random.randint(20000,500000)
         cmd += "--compslimit %d " % random.randint(0,3000)
+        cmd += "--schedsimplify %d " % random.randint(0,1)
+        cmd += "--preschedsimp %s " % random.randint(0,1)
 
 
         if self.drup == False :
+            cmd += "--simplify %s " % random.randint(0,1)
+            cmd += "--varelim %s " % random.randint(0,1)
             cmd += "--binpri %s " % random.randint(0,1)
             cmd += "--stamp %s " % random.randint(0,1)
             cmd += "--cache %s " % random.randint(0,1)
             cmd += "--otfsubsume %s " % random.randint(0,1)
-            cmd += "--simplify %s " % random.randint(0,1)
             cmd += "--scc %s " % random.randint(0,1)
             cmd += "--renumber %s " % random.randint(0,1)
             cmd += "--comps 1 "
