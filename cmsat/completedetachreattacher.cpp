@@ -97,8 +97,9 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     //Treat implicits
     solver->clauseCleaner->treatImplicitClauses();
 
-    if (solver->ok)
+    if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());
+    }
 
     return solver->ok;
 }

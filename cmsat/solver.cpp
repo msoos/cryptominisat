@@ -1286,6 +1286,12 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         && "You MUST give a short term history size (\"--gluehist\")  greater than 0!"
     );
 
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Solver::solve() called"
+        << endl;
+    }
+
     //Set up SQL writer
     if (conf.doSQL) {
         sqlStats->setup(this);
@@ -1501,6 +1507,12 @@ lbool Solver::simplifyProblem()
     checkStats();
     #endif
     reArrangeClauses();
+
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Solver::simplifyProblem() called"
+        << endl;
+    }
 
     if (conf.doFindComps
         && getNumFreeVars() < conf.compVarLimit
@@ -2018,7 +2030,9 @@ void Solver::printMinStats() const
         , memUsed()/(1024UL*1024UL)
         , "MB"
     );
-    implCache.printStatsSort(this);
+    if (conf.doCache) {
+        implCache.printStatsSort(this);
+    }
 }
 
 void Solver::printFullStats() const
@@ -2144,7 +2158,9 @@ void Solver::printFullStats() const
                     , "% time");
     clauseVivifier->getStats().print(nVars());
 
-    implCache.printStats(this);
+    if (conf.doCache) {
+        implCache.printStats(this);
+    }
 
     //Other stats
     printStatsLine("c Conflicts in UIP"

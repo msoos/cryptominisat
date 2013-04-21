@@ -63,8 +63,11 @@ bool CompFinder::findComps()
 
     solver->clauseCleaner->removeAndCleanAll();
 
-    if (!solver->varReplacer->performReplace())
+    if (solver->conf.doFindAndReplaceEqLits
+        && !solver->varReplacer->performReplace()
+    ) {
         return false;
+    }
 
     //Add the clauses to the sets
     timeUsed = 0;

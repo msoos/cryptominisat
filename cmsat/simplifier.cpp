@@ -1904,7 +1904,9 @@ void Simplifier::blockImplicit(
             << endl;
         }
 
-        solver->implCache.makeAllRed();
+        if (solver->conf.doCache) {
+            solver->implCache.makeAllRed();
+        }
     }
 }
 

@@ -515,8 +515,7 @@ Clause* Searcher::analyze(
     stats.recMinLitRem += origSize - learnt_clause.size();
 
     //Cache-based minimisation
-    if (conf.doStamp
-        && conf.doMinimLearntMore
+    if (conf.doMinimLearntMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
             || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
@@ -530,7 +529,9 @@ Clause* Searcher::analyze(
         minimiseLearntFurther(learnt_clause);
 
         //Stamp-based minimization
-        stampBasedLearntMinim(learnt_clause);
+        if (conf.doStamp) {
+            stampBasedLearntMinim(learnt_clause);
+        }
 
         stats.moreMinimLitsEnd += learnt_clause.size();
     }
@@ -1344,6 +1345,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
+        //Detach & delete subsumed clause
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -1900,6 +1902,12 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     assert(ok);
     assert(qhead == trail.size());
 
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Searcher::solve() called"
+        << endl;
+    }
+
     assumptions = assumps;
     resetStats();
 
@@ -2262,7 +2270,6 @@ form to carry out the forward-self-subsuming resolution
 */
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
-    assert(conf.doStamp);
     stats.furtherShrinkAttempt++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
@@ -2463,12 +2470,13 @@ size_t Searcher::hyperBinResAll()
         lbool val1 = value(it->getLit1());
         lbool val2 = value(it->getLit2());
 
-        if (conf.verbosity >= 6)
+        if (conf.verbosity >= 6) {
             cout
             << "c Attached hyper-bin: "
             << it->getLit1() << "(val: " << val1 << " )"
             << ", " << it->getLit2() << "(val: " << val2 << " )"
             << endl;
+        }
 
         //If binary is satisfied, skip
         if (val1 == l_True || val2 == l_True) {

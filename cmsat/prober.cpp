@@ -314,7 +314,7 @@ end:
 
     //More than 50% of the time is spent updating the cache... that's a lot
     //Disable and free
-    if (timeOnCache > 50.0)  {
+    if (timeOnCache > 50.0 && solver->conf.doCache)  {
         if (solver->conf.verbosity >= 2) {
             cout
             << "c [probe] too much time spent on updating cache: "
