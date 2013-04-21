@@ -355,7 +355,7 @@ class Prober {
                 return minOfPolarities > other.minOfPolarities;
             }
         };
-        vector<TwoSignVar> candidates;
+        //vector<TwoSignVar> candidates;
         void sortAndResetCandidates();
 
         //For bothprop

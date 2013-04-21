@@ -664,7 +664,7 @@ uint64_t Prober::memUsed() const
     mem += tmp.capacity()*sizeof(Lit);
     mem += propagated.getSize()/8;
     mem += propValue.getSize()/8;
-    mem += candidates.capacity()*sizeof(TwoSignVar);
+    //mem += candidates.capacity()*sizeof(TwoSignVar);
 
     return mem;
 }
