@@ -3145,9 +3145,16 @@ bool Simplifier::agressiveCheck(
     return false;
 }
 
-Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
-{
+Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
+    const Lit lit
+    , bool setit
+    , bool countIt
+    , unsigned otherSize
+    , bool unset
+) {
     HeuristicData ret;
+    unsigned char at = 1;
+    size_t count = 0;
 
     const vec<Watched>& ws = solver->watches[lit.toInt()];
     *toDecrease -= ws.size() + 100;
@@ -3163,8 +3170,20 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
             if (!it->learnt()) {
                 ret.bin++;
                 ret.lit += 2;
-            }
 
+                if (setit) {
+                    seen[it->lit1().toInt()] |= at;
+                    at <<= 1;
+                }
+
+                if (unset) {
+                    seen[it->lit1().toInt()] = 0;
+                }
+
+                if (countIt) {
+                    count += otherSize - __builtin_popcount(seen[(~it->lit1()).toInt()]);
+                }
+            }
             continue;
         }
 
@@ -3175,6 +3194,22 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
             if (!it->learnt()) {
                 ret.tri++;
                 ret.lit += 3;
+
+                if (setit) {
+                    seen[it->lit1().toInt()] |= at;
+                    seen[it->lit2().toInt()] |= at;
+                    at <<= 1;
+                }
+
+                if (unset) {
+                    seen[it->lit1().toInt()] = 0;
+                    seen[it->lit2().toInt()] = 0;
+                }
+
+                if (countIt) {
+                    unsigned tmp = seen[(~it->lit1()).toInt()] | seen[(~it->lit2()).toInt()];
+                    count += otherSize - __builtin_popcount(tmp);
+                }
             }
 
             continue;
@@ -3190,6 +3225,32 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
             if (!cl->learnt()) {
                 ret.longer++;
                 ret.lit += cl->size();
+
+                unsigned tmp = 0;
+                for(size_t i = 0; i < cl->size(); i++) {
+                    const Lit lit = (*cl)[i];
+                    if (setit) {
+                        seen[lit.toInt()] |= at;
+                    }
+
+                    if (unset) {
+                        seen[lit.toInt()] = 0;
+                    }
+
+                    if (countIt) {
+                        tmp |= seen[(~lit).toInt()];
+                    }
+                }
+
+                //move setit data along
+                if (setit) {
+                    at <<= 1;
+                }
+
+                //Count using tmp
+                if (countIt) {
+                    count += otherSize - __builtin_popcount(tmp);
+                }
             }
 
             continue;
@@ -3199,16 +3260,47 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit) const
         assert(false);
     }
 
+    if (countIt) {
+        ret.count = count;
+    }
 
     return ret;
 }
 
 
-pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var) const
+pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 {
     const Lit lit(var, false);
-    HeuristicData pos = calcDataForHeuristic(Lit(var, false));
-    HeuristicData neg = calcDataForHeuristic(Lit(var, true));
+    const HeuristicData pos = calcDataForHeuristic(
+        Lit(var, false)
+        , true
+    );
+
+    //Can only count if the POS was small enough
+    //otherwise 'seen' cannot properly store the data
+    bool countIt = ((pos.bin + pos.tri + pos.longer) <= sizeof(unsigned char)*8);
+    const HeuristicData neg = calcDataForHeuristic(
+        Lit(var, true)
+        , false
+        , countIt
+        , pos.bin + pos.tri + pos.longer
+    );
+
+    //Clear the 'seen' array
+    calcDataForHeuristic(
+        Lit(var, false)
+        , false
+        , false
+        , 0
+        , true //clear
+    );
+
+    //Okay, this would be great
+    if (neg.count == 0) {
+        assert(countIt && "count is initialised to MAX, this cannot be");
+        //cout << "OK, fun!!: " << neg.count << endl;
+        return std::make_pair(neg.count, 0);
+    }
 
     //Estimate cost
     int posTotalLonger = pos.longer + pos.tri;

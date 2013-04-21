@@ -422,8 +422,8 @@ private:
     //Main data
     Simplifier *subsumer;
     Solver *solver;
-    vector<char>& seen;
-    vector<char>& seen2;
+    vector<unsigned char>& seen;
+    vector<unsigned char>& seen2;
 };
 
 inline bool GateFinder::canElim(const Var var) const
