@@ -34,7 +34,7 @@ SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assign
     , assigns(_assigns)
 {
     solver->model.resize(nVars(), l_Undef);
-    for (Var var = 0; var != nVars(); var++) {
+    for (Var var = 0; var < nVars(); var++) {
         solver->model[var] = value(var);
     }
     release_assert(solver->verifyModel());
@@ -137,7 +137,7 @@ void SolutionExtender::extend()
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);
-    for (Var var = 0; var != nVars(); var++) {
+    for (Var var = 0; var < nVars(); var++) {
         solver->model[var] = value(var);
     }
 
