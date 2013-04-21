@@ -405,7 +405,7 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Stats
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 7ULL*1000ULL*100ULL*1000ULL;
+    uint64_t maxCountTime = 700ULL*1000ULL*1000ULL;
     if (!alsoStrengthen) {
         maxCountTime *= 4;
     }
