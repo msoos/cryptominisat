@@ -2819,7 +2819,8 @@ void Searcher::redoOrderHeap()
     for(size_t var = 0; var < nVars(); var++) {
         if (solver->decisionVar[var]
             && value(var) == l_Undef
-            && varData[var].elimed == ELIMED_NONE
+            && (varData[var].elimed == ELIMED_NONE
+                || varData[var].elimed == ELIMED_QUEUED_VARREPLACER)
         ) {
             insertVarOrder(var);
         }
