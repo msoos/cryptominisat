@@ -343,7 +343,7 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
-    #ifdef DRUP_DEBUG
+    #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
         for(size_t i = 0; i < cl.size(); i++) {
             *drup
@@ -369,7 +369,7 @@ void Solver::attachTriClause(
     , const Lit lit3
     , const bool learnt
 ) {
-    #ifdef DRUP_DEBUG
+    #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
         *drup
         << lit1 << " "
@@ -398,7 +398,7 @@ void Solver::attachBinClause(
     , const bool learnt
     , const bool checkUnassignedFirst
 ) {
-    #ifdef DRUP_DEBUG
+    #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
         *drup
         << lit1 << " "
