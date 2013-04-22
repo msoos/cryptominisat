@@ -280,6 +280,13 @@ bool VarReplacer::replaceImplicit()
                 ) {
                     //cout << "All 3 lits equal: " << lit1 << endl;
                     delayedEnqueue.push_back(lit1);
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        *(solver->drup)
+                        << lit1 << " 0"
+                        << endl;
+                    }
+                    #endif
                     remove = true;
                 }
 
@@ -287,17 +294,20 @@ bool VarReplacer::replaceImplicit()
                 if (!remove
                     && lit1 == lit2
                 ) {
-                    /*cout
-                    << "1st & 2nd the same: "
-                    << lit1 << ", " << lit2
-                    << " l: " << i->learnt()
-                    << endl;*/
+                    //1st & 2nd the same
 
                     //Only attach once
                     if (origLit1 < origLit2
                         && origLit2 < origLit3
                     ){
                         delayedAttach.push_back(BinaryClause(lit1, lit3, i->learnt()));
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            *(solver->drup)
+                            << lit1 << " " << lit3 << " 0"
+                            << endl;
+                        }
+                        #endif
                     }
                     remove = true;
                 }
@@ -306,27 +316,46 @@ bool VarReplacer::replaceImplicit()
                 if (!remove
                     && (lit1 == lit3 || (lit2 == lit3))
                 ) {
-                    /*cout
-                    << "1st&2nd OR 2nd&3rd the same: "
-                    << lit1 << ", " << lit2
-                    << " l: " << i->learnt()
-                    << endl;*/
+                    //1st&2nd OR 2nd&3rd the same
 
                     //Only attach once
                     if (origLit1 < origLit2
                         && origLit2 < origLit3
                     ){
                         delayedAttach.push_back(BinaryClause(lit1, lit2, i->learnt()));
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            *(solver->drup)
+                            << lit1 << " " << lit2 << " 0"
+                            << endl;
+                        }
+                        #endif
                     }
                     remove = true;
                 }
 
                 if (remove) {
                     //Update function-internal stats
-                    if (i->learnt())
+                    if (i->learnt()) {
                         removedLearntTri++;
-                    else
+                    } else {
                         removedNonLearntTri++;
+                    }
+
+                    #ifdef DRUP
+                    if (solver->drup
+                        //Only delete once
+                        && origLit1 < origLit2
+                        && origLit2 < origLit3
+                    ) {
+                        *(solver->drup)
+                        << "d "
+                        << origLit1 << " "
+                        << origLit2 << " "
+                        << origLit3 << " 0"
+                        << endl;
+                    }
+                    #endif
 
                     continue;
                 }
@@ -356,6 +385,31 @@ bool VarReplacer::replaceImplicit()
                 i->setLit1(lit2);
                 i->setLit2(lit3);
 
+                #ifdef DRUP
+                if (solver->drup
+                    //Changed
+                    && (lit1 != origLit1
+                        || lit2 != origLit2
+                        || lit3 != origLit3
+                    )
+                    //Remove&attach only once
+                    && (origLit1 < origLit2
+                        && origLit2 < origLit3
+                    )
+                ) {
+                    *(solver->drup)
+                    << lit1 << " "
+                    << lit2 << " "
+                    << lit3 << " 0"
+                    << endl
+                    << "d "
+                    << origLit1 << " "
+                    << origLit2 << " "
+                    << origLit3 << " 0"
+                    << endl;
+                }
+                #endif
+
                 if (lit1 != origLit1) {
                     solver->watches[lit1.toInt()].push(*i);
                 } else {
@@ -372,6 +426,13 @@ bool VarReplacer::replaceImplicit()
             //Two lits are the same in BIN
             if (lit1 == lit2) {
                 delayedEnqueue.push_back(lit2);
+                #ifdef DRUP
+                if (solver->drup) {
+                    *(solver->drup)
+                    << lit2 << " 0"
+                    << endl;
+                }
+                #endif
                 remove = true;
             }
 
@@ -381,13 +442,46 @@ bool VarReplacer::replaceImplicit()
 
             if (remove) {
                 //Update function-internal stats
-                if (i->learnt())
+                if (i->learnt()) {
                     removedLearntBin++;
-                else
+                } else {
                     removedNonLearntBin++;
+                }
+
+                #ifdef DRUP
+                if (solver->drup
+                    //Delete only once
+                     && origLit1 < origLit2
+                ) {
+                    *(solver->drup)
+                    << "d "
+                    << origLit1 << " "
+                    << origLit2 << " 0"
+                    << endl;
+                }
+                #endif
 
                 continue;
             }
+
+            #ifdef DRUP
+            if (solver->drup
+                //Changed
+                && (lit1 != origLit1
+                    || lit2 != origLit2)
+                //Delete&attach only once
+                && (origLit1 < origLit2)
+            ) {
+                *(solver->drup)
+                //Add replaced
+                << lit1 << " " << lit2 << " 0"
+                << endl
+                //Delete old
+                << "d " << origLit1 << " " << origLit2 << " 0"
+                << endl;
+            }
+
+            #endif
 
             if (lit1 != origLit1) {
                 solver->watches[lit1.toInt()].push(*i);
@@ -451,6 +545,10 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         bool changed = false;
         Lit origLit1 = c[0];
         Lit origLit2 = c[1];
+        #ifdef DRUP
+        vector<Lit> origCl(c.size());
+        std::copy(c.begin(), c.end(), origCl.begin());
+        #endif
 
         for (Lit *l = c.begin(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
@@ -469,6 +567,16 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         } else {
             *j++ = *i;
         }
+
+        #ifdef DRUP
+        if (solver->drup && changed) {
+            *(solver->drup)
+            << "d "
+            << origCl
+            << " 0"
+            << endl;
+        }
+        #endif
     }
     cs.resize(cs.size() - (i-j));
 
@@ -506,7 +614,16 @@ bool VarReplacer::handleUpdatedClause(
     cout << "clause after replacing: " << c << endl;
     #endif
 
-    if (satisfied) return true;
+    if (satisfied)
+        return true;
+
+    #ifdef DRUP
+    if (solver->drup) {
+        *(solver->drup)
+        << c << " 0"
+        << endl;
+    }
+    #endif
 
     switch(c.size()) {
     case 0:

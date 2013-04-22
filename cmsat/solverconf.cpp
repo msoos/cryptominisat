@@ -130,11 +130,7 @@ SolverConf::SolverConf() :
         , maxXORMatrix     (10LL*1000LL*1000LL)
 
         //Var-replacer
-        #ifdef DRUP
-        , doFindAndReplaceEqLits(false)
-        #else
         , doFindAndReplaceEqLits(true)
-        #endif
         , doExtendedSCC         (true)
         , sccFindPercent        (0.02)
 
@@ -183,6 +179,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
+        , doStrSubImplicit (true)
 
 
         , doGateFind       (false)

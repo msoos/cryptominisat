@@ -552,6 +552,8 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
+    ("implicitmanip", po::value<int>(&conf.doStrSubImplicit)->default_value(conf.doStrSubImplicit)
+        , "Subsume and strengthen implicit clauses with each other")
     ;
 
     po::options_description componentOptions("Component options");

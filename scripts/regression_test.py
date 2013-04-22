@@ -176,6 +176,8 @@ class Tester:
         cmd += "--schedsimplify %d " % random.randint(0,1)
         cmd += "--preschedsimp %s " % random.randint(0,1)
         cmd += "--varelim %s " % random.randint(0,1)
+        cmd += "--scc %s " % random.randint(0,1)
+        cmd += "--implicitmanip %s " % random.randint(0,1)
 
 
         if self.drup == False :
@@ -184,7 +186,6 @@ class Tester:
             cmd += "--stamp %s " % random.randint(0,1)
             cmd += "--cache %s " % random.randint(0,1)
             cmd += "--otfsubsume %s " % random.randint(0,1)
-            cmd += "--scc %s " % random.randint(0,1)
             cmd += "--renumber %s " % random.randint(0,1)
             cmd += "--comps 1 "
             cmd += "--moreminim %s " % random.randint(0,1)

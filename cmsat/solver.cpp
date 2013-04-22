@@ -1556,7 +1556,9 @@ lbool Solver::simplifyProblem()
     }
 
     //Treat implicits
-    clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        clauseVivifier->subsumeImplicit();
+    }
 
     //PROBE
     updateDominators();
@@ -1577,7 +1579,9 @@ lbool Solver::simplifyProblem()
     }
 
     //Treat implicits
-    clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        clauseVivifier->subsumeImplicit();
+    }
 
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
@@ -1597,11 +1601,13 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Treat implicits
-    if (!clauseVivifier->strengthenImplicit()) {
-        goto end;
-    }
+    if (conf.doStrSubImplicit) {
+        if (!clauseVivifier->strengthenImplicit()) {
+            goto end;
+        }
 
-    clauseVivifier->subsumeImplicit();
+        clauseVivifier->subsumeImplicit();
+    }
 
     //Clean cache before vivif
     if (conf.doCache && !implCache.clean(this))
@@ -3387,7 +3393,9 @@ void Solver::dumpIfNeeded() const
     }
 
     //Don't dump implicit clauses multiple times
-    solver->clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        solver->clauseVivifier->subsumeImplicit();
+    }
 
     if (conf.needToDumpLearnts) {
         std::ofstream outfile;

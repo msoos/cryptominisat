@@ -182,6 +182,7 @@ class SolverConf
 
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
+        int      doStrSubImplicit;
 
         //Gates
         int      doGateFind; ///< Find OR gates
