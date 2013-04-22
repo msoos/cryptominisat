@@ -148,7 +148,7 @@ SolverConf::SolverConf() :
         #else
         , doSimplify       (true)
         , doSchedSimpProblem(true)
-        , doPreSimpProblem (true)
+        , doPreSchedSimpProblem (true)
         #endif
         , doSubsume1       (true)
         , doBlockClauses   (true)
