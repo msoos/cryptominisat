@@ -3367,8 +3367,9 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
 pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 {
     const Lit lit(var, false);
+    #if 0
     const HeuristicData pos = calcDataForHeuristic(
-        Lit(var, false)
+        lit
         , true
     );
 
@@ -3376,7 +3377,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     //otherwise 'seen' cannot properly store the data
     bool countIt = ((pos.bin + pos.tri + pos.longer) <= sizeof(unsigned char)*8);
     const HeuristicData neg = calcDataForHeuristic(
-        Lit(var, true)
+        ~lit
         , false
         , countIt
         , pos.bin + pos.tri + pos.longer
@@ -3384,7 +3385,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 
     //Clear the 'seen' array
     calcDataForHeuristic(
-        Lit(var, false)
+        lit
         , false
         , false
         , 0
@@ -3397,6 +3398,10 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
         //cout << "OK, fun!!: " << neg.count << endl;
         return std::make_pair(neg.count, 0);
     }
+    #else
+    const HeuristicData pos = calcDataForHeuristic(lit);
+    const HeuristicData neg = calcDataForHeuristic(~lit);
+    #endif
 
     //Estimate cost
     int posTotalLonger = pos.longer + pos.tri;
