@@ -1127,8 +1127,9 @@ bool Searcher::handle_conflict(PropBy confl)
     if (conf.doPrintConflDot)
         genConfGraph(confl);
 
-    if (decisionLevel() == 0)
+    if (decisionLevel() == 0) {
         return false;
+    }
 
     Clause* cl = analyze(
         confl
