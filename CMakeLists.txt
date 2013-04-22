@@ -75,8 +75,17 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
-#MySQL
+
+#for DRUP
+#set(DRUP 1)
+if (DRUP)
+    add_definitions( -DDRUP )
+endif(DRUP)
+
+
 #SET(STATSNEEDED 1)
+
+#MySQL
 if (STATSNEEDED)
     find_package(MySQL)
     IF (MYSQL_FOUND)
