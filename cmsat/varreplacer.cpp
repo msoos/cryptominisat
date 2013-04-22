@@ -806,16 +806,16 @@ bool VarReplacer::replace(
 
     //exactly one l_Undef, exectly one l_True/l_False
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
-        if (val1 != l_Undef) {
-            solver->enqueue(lit2 ^ (val1 == l_False));
-        } else {
-            solver->enqueue(lit1 ^ (val2 == l_False));
-        }
-        #ifdef STATS_NEEDED
-        solver->propStats.propsUnit++;
-        #endif
-
         if (solver->ok) {
+            if (val1 != l_Undef) {
+                solver->enqueue(lit2 ^ (val1 == l_False));
+            } else {
+                solver->enqueue(lit1 ^ (val2 == l_False));
+            }
+            #ifdef STATS_NEEDED
+            solver->propStats.propsUnit++;
+            #endif
+
             solver->ok = (solver->propagate().isNULL());
         }
         return solver->ok;
