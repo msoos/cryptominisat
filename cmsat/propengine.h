@@ -267,7 +267,7 @@ public:
     void        resetClauseDataStats(size_t clause_num);
 
     #ifdef DRUP
-    std::ofstream* drup;
+    std::ostream* drup;
     #endif
 
 protected:

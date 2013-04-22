@@ -1705,7 +1705,7 @@ lbool Solver::simplifyProblem()
 
 end:
     if (conf.verbosity >= 3)
-        cout << "c Simplifying finished" << endl;
+        cout << "c Searcher::simplifyProblem() finished" << endl;
 
     testAllClauseAttach();
     checkNoWrongAttach();

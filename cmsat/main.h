@@ -83,8 +83,11 @@ class Main
         int argc;
         char** argv;
 
+        #ifdef DRUP
         //Drup checker
-        std::ofstream* drupf;
+        std::ostream* drupf;
+        bool drupDebug;
+        #endif
 };
 
 #endif //MAIN_H

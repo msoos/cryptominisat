@@ -1139,6 +1139,15 @@ bool Searcher::handle_conflict(PropBy confl)
         , false
     );
 
+    #ifdef DRUP_DEBUG
+    if (conf.verbosity >= 6) {
+        cout
+        << "c learnt clause: "
+        << learnt_clause
+        << endl;
+    }
+    #endif
+
     size_t orig_trail_size = trail.size();
     if (params.update) {
         //Update history

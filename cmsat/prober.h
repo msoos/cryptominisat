@@ -360,8 +360,8 @@ class Prober {
 
         //For bothprop
         vector<uint32_t> propagatedBitSet;
-        BitArray propagated; ///<These lits have been propagated by propagating the lit picked
-        BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
+        vector<bool> propagated; ///<These lits have been propagated by propagating the lit picked
+        vector<bool> propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> toEnqueue;
         vector<Lit> tmp;
 

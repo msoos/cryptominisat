@@ -155,8 +155,9 @@ bool Prober::probe()
     visitedAlready.clear();
     visitedAlready.resize(solver->nVars()*2, 0);
     propagatedBitSet.clear();
+    propagated.clear();
     propagated.resize(solver->nVars(), 0);
-    propValue.resize(solver->nVars(), 0);
+    propValue.resize(solver->nVars());
 
     //If failed var searching is going good, do successively more and more of it
     double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)numActiveVars * 100.0;
@@ -419,7 +420,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
     //Clean state if this is the 1st of two
     if (first) {
         extraTime += propagatedBitSet.size();
-        propagated.removeThese(propagatedBitSet);
+        for(vector<uint32_t>::const_iterator
+            it = propagatedBitSet.begin(), end = propagatedBitSet.end()
+            ; it != end
+            ; it++
+        ) {
+            propagated[*it] = false;
+        }
         propagatedBitSet.clear();
     }
     toEnqueue.clear();
@@ -483,7 +490,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
             runStats.removedIrredBin += tmp.first;
             runStats.removedRedBin += tmp.second;
 
-            propagated.removeThese(propagatedBitSet);
+            for(vector<uint32_t>::const_iterator
+                it = propagatedBitSet.begin(), end = propagatedBitSet.end()
+                ; it != end
+                ; it++
+            ) {
+                propagated[*it] = false;
+            }
             propagatedBitSet.clear();
             toEnqueue.clear();
             return solver->okay();
@@ -551,13 +564,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
             propagatedBitSet.push_back(var);
 
             //Set prop has been done
-            propagated.setBit(var);
+            propagated[var] = true;
 
             //Set propValue
             if (solver->assigns[var].getBool())
-                propValue.setBit(var);
+                propValue[var] = true;
             else
-                propValue.clearBit(var);
+                propValue[var] = false;
         } else if (propagated[var]) {
             if (propValue[var] == solver->value(var).getBool()) {
 
@@ -566,6 +579,14 @@ bool Prober::tryThis(const Lit lit, const bool first)
                 toEnqueue.push_back(litToEnq);
                 #ifdef DRUP
                 if (solver->drup) {
+                    #ifdef DRUP_DEBUG
+                    if (solver->conf.verbosity >= 6) {
+                        cout
+                        << "c bprop:"
+                        << litToEnq
+                        << endl;
+                    }
+                    #endif
                     (*solver->drup)
                     << litToEnq << " 0"
                     << endl;
@@ -677,8 +698,8 @@ uint64_t Prober::memUsed() const
     mem += propagatedBitSet.capacity()*sizeof(uint32_t);
     mem += toEnqueue.capacity()*sizeof(Lit);
     mem += tmp.capacity()*sizeof(Lit);
-    mem += propagated.getSize()/8;
-    mem += propValue.getSize()/8;
+    mem += propagated.capacity()/8;
+    mem += propValue.capacity()/8;
     //mem += candidates.capacity()*sizeof(TwoSignVar);
 
     return mem;

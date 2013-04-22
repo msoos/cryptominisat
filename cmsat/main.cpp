@@ -66,7 +66,9 @@ Main::Main(int _argc, char** _argv) :
         , fileNamePresent (false)
         , argc(_argc)
         , argv(_argv)
+        #ifdef DRUP
         , drupf(NULL)
+        #endif
 {
 }
 
@@ -265,7 +267,9 @@ void Main::parseCommandLine()
     }
 
     string typeclean;
+    #ifdef DRUP
     string drupfilname;
+    #endif
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -289,8 +293,12 @@ void Main::parseCommandLine()
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
+    #ifdef DRUP
     ("drup,d", po::value<string>(&drupfilname)->default_value("drup")
         , "Put DRUP verification information into this file")
+    ("drupdebug", po::bool_switch(&drupDebug)
+        , "Put DRUP verification information into this file")
+    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -571,7 +579,9 @@ void Main::parseCommandLine()
 
     po::positional_options_description p;
     p.add("input", 1);
+    #ifdef DRUP
     p.add("drup", 1);
+    #endif
 
     po::variables_map vm;
     po::options_description cmdline_options;
@@ -665,16 +675,21 @@ void Main::parseCommandLine()
 
     #ifdef DRUP
     if (vm.count("drup")) {
-        drupf = new std::ofstream;
-        drupf->open(drupfilname.c_str(), std::ofstream::out);
-        if (!*drupf) {
-            cout
-            << "ERROR: Could not open DRUP file "
-            << drupfilname
-            << " for writing"
-            << endl;
+        if (drupDebug) {
+            drupf = &std::cout;
+        } else {
+            std::ofstream* drupfTmp = new std::ofstream;
+            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
+            if (!*drupfTmp) {
+                cout
+                << "ERROR: Could not open DRUP file "
+                << drupfilname
+                << " for writing"
+                << endl;
 
-            exit(-1);
+                exit(-1);
+            }
+            drupf = drupfTmp;
         }
     }
     #endif
@@ -836,6 +851,17 @@ void Main::parseCommandLine()
     } else {
         fileNamePresent = false;
     }
+
+    #ifdef DRUP
+    if (!conf.otfHyperbin && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c OTF hyper-bin is needed for BProp, turning it back"
+            << endl;
+        }
+        conf.otfHyperbin = true;
+    }
+    #endif
 
     if (conf.verbosity >= 1) {
         cout << "c Outputting solution to console" << endl;
