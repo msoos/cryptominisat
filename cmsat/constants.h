@@ -21,6 +21,7 @@
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
+#define __builtin_popcount __popcnt16
 #else
 #include <stdint.h>
 #endif //_MSC_VER
