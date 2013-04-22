@@ -931,7 +931,11 @@ bool VarReplacer::addLaterAddBinXor()
     assert(solver->ok);
 
     vector<Lit> ps(2);
-    for(vector<LaterAddBinXor>::const_iterator it = laterAddBinXor.begin(), end = laterAddBinXor.end(); it != end; it++) {
+    for(vector<LaterAddBinXor>::const_iterator
+        it = laterAddBinXor.begin(), end = laterAddBinXor.end()
+        ; it != end
+        ; it++
+    ) {
         ps[0] = it->lit1;
         ps[1] = it->lit2;
         solver->addClauseInt(ps, false);

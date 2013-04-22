@@ -3600,15 +3600,15 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
     assert(ok);
     assert(decisionLevel() == 0);
     for(size_t i = 0; i < toEnqueue.size(); i++) {
-        const lbool val = solver->value(toEnqueue[i]);
+        const lbool val = value(toEnqueue[i]);
         if (val == l_Undef) {
-            solver->enqueue(toEnqueue[i]);
-            solver->ok = solver->propagate().isNULL();
-            if (!solver->okay()) {
+            enqueue(toEnqueue[i]);
+            ok = propagate().isNULL();
+            if (!ok) {
                 return false;
             }
         } else if (val == l_False) {
-            solver->ok = false;
+            ok = false;
             return false;
         }
     }
