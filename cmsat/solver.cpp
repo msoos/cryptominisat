@@ -343,6 +343,16 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
+    #ifdef DRUP_DEBUG
+    if (drup) {
+        for(size_t i = 0; i < cl.size(); i++) {
+            *drup
+            << cl[i] << " ";
+        }
+        *drup << "0" << endl;
+    }
+    #endif
+
     //Update stats
     if (cl.learnt())
         binTri.redLits += cl.size();
