@@ -2849,6 +2849,15 @@ PropBy Searcher::propagate(
     //If declevel 0 propagation, we have to add the unitaries
     if (solver->drup && decisionLevel() == 0) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
+            #ifdef DEBUG_DRUP
+            if (conf.verbosity >= 6) {
+                cout
+                << "c 0-level enqueue:"
+                << trail[i]
+                << endl;
+            }
+            #endif
+
             (*solver->drup)
             << trail[i]
             << " 0" << endl;
