@@ -359,6 +359,16 @@ void Solver::attachTriClause(
     , const Lit lit3
     , const bool learnt
 ) {
+    #ifdef DRUP_DEBUG
+    if (drup) {
+        *drup
+        << lit1 << " "
+        << lit2 << " "
+        << lit3 << " 0"
+        << endl;
+    }
+    #endif
+
     //Update stats
     if (learnt) {
         binTri.redLits += 3;
@@ -378,6 +388,15 @@ void Solver::attachBinClause(
     , const bool learnt
     , const bool checkUnassignedFirst
 ) {
+    #ifdef DRUP_DEBUG
+    if (drup) {
+        *drup
+        << lit1 << " "
+        << lit2 << " 0"
+        << endl;
+    }
+    #endif
+
     //Update stats
     if (learnt) {
         binTri.redLits += 2;
