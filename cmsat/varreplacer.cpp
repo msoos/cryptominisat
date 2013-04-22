@@ -107,26 +107,42 @@ bool VarReplacer::performReplace()
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
 
         //Was queued for replacement, but it's the top of the tree, so, it's normal again
-        if (it->var() == var && solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER)
+        if (it->var() == var
+            && solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER
+        ) {
             solver->varData[it->var()].elimed = ELIMED_NONE;
+        }
 
+        //Not replaced, or not replaceable, so skip
         if (it->var() == var
             || solver->varData[it->var()].elimed == ELIMED_DECOMPOSE
             || solver->varData[it->var()].elimed == ELIMED_VARELIM
-        ) continue;
-        solver->varData[var].elimed = ELIMED_VARREPLACER;
+        ) {
+            continue;
+        }
 
-        #ifdef VERBOSE_DEBUG
-        cout << "Setting var " << var+1 << " to a non-decision var" << endl;
-        #endif
-        solver->decisionVar[var] =  false;
-        solver->decisionVar[it->var()] = true;
+        //Has already been handled previously, just skip
+        if (solver->varData[var].elimed == ELIMED_VARREPLACER) {
+            continue;
+        }
+
+        //Okay, so unset decision, and set the other one decision
+        solver->varData[var].elimed = ELIMED_VARREPLACER;
+        assert(
+            (solver->varData[it->var()].elimed == ELIMED_NONE
+                || solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER)
+            && "It MUST have been queued for varreplacement so top couldn't have been elimed/decomposed/etc"
+        );
+        solver->unsetDecisionVar(var);;
+        solver->setDecisionVar(it->var());
 
         //Update activities. Top receives activities of the ones below
         uint32_t& activity1 = solver->activities[var];
         uint32_t& activity2 = solver->activities[it->var()];
         activity2 += activity1;
         activity1 = 0.0;
+
+        solver->order_heap.update(it->var());
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;

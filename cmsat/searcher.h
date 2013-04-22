@@ -31,6 +31,7 @@ namespace CMSat {
 
 class Solver;
 class SQLStats;
+class VarReplacer;
 
 using std::string;
 using std::cout;
@@ -629,6 +630,7 @@ class Searcher : public PropEngine
 
     protected:
         friend class CalcDefPolars;
+        friend class VarReplacer;
         void filterOrderHeap();
         void redoOrderHeap();
 
