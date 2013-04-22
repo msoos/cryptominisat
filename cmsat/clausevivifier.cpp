@@ -354,15 +354,14 @@ ClOffset ClauseVivifier::testVivify(
             remove(lits, uselessLits[i2]);
         }
 
+        //Make new clause
+        Clause *cl2 = solver->addClauseInt(lits, learnt);
 
-        //Detach and free clause if it's really a clause
+        //Detach and free old clause
         if (cl) {
             solver->detachClause(*cl);
             solver->clAllocator->clauseFree(offset);
         }
-
-        //Make new clause
-        Clause *cl2 = solver->addClauseInt(lits, learnt);
 
         //Print results
         if (solver->conf.verbosity >= 5) {
