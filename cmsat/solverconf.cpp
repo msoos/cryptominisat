@@ -52,8 +52,8 @@ SolverConf::SolverConf() :
         , restartType(auto_restart)
 
         //Clause minimisation
-        , doMinimLearntMore(true)
         , doRecursiveMinim (true)
+        , doMinimLearntMore(true)
         , doAlwaysFMinim   (false)
         , moreMinimLimit   (300)
 
