@@ -397,6 +397,7 @@ public:
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
+    void checkElimedUnassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
 

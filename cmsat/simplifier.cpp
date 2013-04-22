@@ -1374,12 +1374,17 @@ bool Simplifier::simplify()
         blockImplicit(false, true);
     }
 
+    if (!propImplicits()) {
+        goto end;
+    }
+
     /*if (solver->conf.doAsymmTE)
         asymmTE();*/
 
     //If no var elimination is needed, this IS fixedpoint
-    if (solver->conf.doVarElim &&!eliminateVars())
+    if (solver->conf.doVarElim &&!eliminateVars()) {
         goto end;
+    }
 
     assert(solver->ok);
 
@@ -1502,14 +1507,19 @@ void Simplifier::finishUp(
     double myTime = cpuTime();
 
     //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
-    if (somethingSet)
+    if (somethingSet) {
         cleanBlockedClauses();
+    }
+
 
     //Add back clauses to solver
     removeAllLongsFromWatches();
     addBackToSolver();
-    if (somethingSet)
+
+    //Propagate
+    if (solver->ok) {
         propImplicits();
+    }
 
     //We can now propagate from solver
     //since the clauses are now back normally
@@ -2287,16 +2297,6 @@ void Simplifier::setLimits()
     //numMaxElim     = std::numeric_limits<int64_t>::max();
 }
 
-/**
-@brief Remove variables from var_elimed if it has been set
-
-While doing, e.g. self-subsuming resolution, it might happen that the variable
-that we JUST eliminated has been assigned a value. This could happen for example
-if due to clause-cleaning some variable value got propagated that we just set.
-Therefore, we must check at the very end if any variables that we eliminated
-got set, and if so, the clauses linked to these variables can be fully removed
-from elimedOutVar[].
-*/
 void Simplifier::cleanBlockedClauses()
 {
     assert(solver->decisionLevel() == 0);
@@ -2309,7 +2309,18 @@ void Simplifier::cleanBlockedClauses()
         ; i != end
         ; i++, at++
     ) {
-        assert(var_elimed[i->blockedOn.var()] == false || solver->value(i->blockedOn) == l_Undef);
+        if (var_elimed[i->blockedOn.var()] == true
+            && solver->value(i->blockedOn) != l_Undef
+        ) {
+            cout
+            << "ERROR: lit " << *i << " elimed:"
+            << var_elimed[i->blockedOn.var()]
+            << " value: " << solver->value(i->blockedOn)
+            << endl;
+            assert(false);
+            exit(-1);
+        }
+
         if (blockedClauses[at].toRemove) {
             blockedMapBuilt = false;
         } else {
@@ -2739,8 +2750,9 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //Test if we should remove, and fill posAll&negAll
     runStats.testedToElimVars++;
-    if (testVarElim(var) == 1000)
+    if (testVarElim(var) == 1000) {
         return false;
+    }
 
     runStats.triedToElimVars++;
 
@@ -2901,6 +2913,7 @@ end:
     solver->varData[var].elimed = ELIMED_VARELIM;
     runStats.numVarsElimed++;
     solver->unsetDecisionVar(var);
+
     return solver->ok;
 }
 
@@ -3545,6 +3558,15 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
     }
 
     return true;
+}
+
+void Simplifier::checkElimedUnassigned() const
+{
+    for (size_t i = 0; i < var_elimed.size(); i++) {
+        if (var_elimed[i]) {
+            assert(solver->assigns[i] == l_Undef);
+        }
+    }
 }
 
 void Simplifier::checkElimedUnassignedAndStats() const
