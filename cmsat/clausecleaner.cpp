@@ -165,7 +165,7 @@ void ClauseCleaner::treatImplicitClauses()
             if (remove) {
                 #ifdef DRUP
                 if (solver->drup
-                    //Only remove once --> exactly when deleting
+                    //Only remove once --> exactly when adding
                     && lit < i->lit1()
                     && i->lit1() < i->lit2()
                 ) {
@@ -281,8 +281,10 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
 
     #ifdef DRUP
     if (solver->drup && i != j) {
-        (*solver->drup) << cl << " 0" << endl;
-        (*solver->drup) << "d " << origCl << " 0" << endl;
+        (*solver->drup)
+        << cl << " 0" << endl
+        << "d " << origCl << " 0" << endl
+        ;
     }
     #endif
 
