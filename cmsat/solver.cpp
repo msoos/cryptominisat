@@ -468,6 +468,12 @@ void Solver::detachClause(const Clause& cl)
     detachModifiedClause(cl[0], cl[1], cl.size(), &cl);
 }
 
+void Solver::detachClause(const ClOffset offset)
+{
+    Clause* cl = clAllocator->getPointer(offset);
+    detachClause(*cl);
+}
+
 void Solver::detachModifiedClause(
     const Lit lit1
     , const Lit lit2

@@ -319,6 +319,7 @@ class Solver : public Searcher
             , const bool learnt
         );
         virtual void  detachClause(const Clause& c);
+        virtual void  detachClause(const ClOffset offset);
         virtual void  detachModifiedClause(
             const Lit lit1
             , const Lit lit2

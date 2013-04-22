@@ -359,7 +359,7 @@ ClOffset ClauseVivifier::testVivify(
 
         //Detach and free old clause
         if (cl) {
-            solver->detachClause(*cl);
+            solver->detachClause(offset);
             solver->clAllocator->clauseFree(offset);
         }
 
@@ -740,7 +740,7 @@ bool ClauseVivifier::vivifyClausesCache(
                 needToFinish = true;
             }
         }
-        solver->detachClause(cl);
+        solver->detachClause(offset);
         solver->clAllocator->clauseFree(offset);
     }
     clauses.resize(clauses.size() - (i-j));
