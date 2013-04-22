@@ -538,12 +538,12 @@ void CompHandler::moveClausesImplicit(
                     //We need it sorted, because that's how we know what order
                     //it is in the Watched()
                     lits.resize(3);
-                    lits[0] = updateLit(lit);
-                    lits[1] = updateLit(lit2);
-                    lits[2] = updateLit(lit3);
+                    lits[0] = lit;
+                    lits[1] = lit2;
+                    lits[2] = lit3;
                     std::sort(lits.begin(), lits.end());
 
-                    //Remove only 2, the other gets removed by not copying it over
+                    //Remove only 2, the remaining gets removed by not copying it over
                     if (lits[0] != lit) {
                         removeWTri(solver->watches, lits[0], lits[1], lits[2], true);
                     }
