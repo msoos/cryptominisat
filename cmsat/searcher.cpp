@@ -826,6 +826,13 @@ lbool Searcher::search(uint64_t* geom_max)
             solver->varData[trail.back().var()].depth = 0;
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << (~failed) << " 0"
+                    << endl;
+                }
+                #endif
 
                 //Update conflict stats
                 stats.learntUnits++;
@@ -847,13 +854,6 @@ lbool Searcher::search(uint64_t* geom_max)
                 stats.transReduRemIrred += tmp.first;
                 stats.transReduRemRed += tmp.second;
                 solver->enqueue(~failed);
-                #ifdef DRUP
-                if (solver->drup) {
-                    (*solver->drup)
-                    << (~failed) << " 0"
-                    << endl;
-                }
-                #endif
 
                 if (!ok)
                     return l_False;
