@@ -173,8 +173,8 @@ void ClauseCleaner::treatImplicitClauses()
                     << "d "
                     << lit << " "
                     << i->lit1() << " "
-                    << i->lit2()
-                    << " 0" << endl;
+                    << i->lit2() << " 0"
+                    << endl;
                 }
                 #endif
 
