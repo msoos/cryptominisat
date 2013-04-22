@@ -89,6 +89,11 @@ parser.add_option("--testdirNewVar", dest="testDirNewVar"
                     , help="Directory where the tests are"
                     )
 
+parser.add_option("--drup", dest="drup"
+                    , default= False, action="store_true"
+                    , help="Directory where the tests are"
+                    )
+
 #check dir stuff
 parser.add_option("--checksol", dest="checkSol"
                     , default=False, action="store_true"
@@ -130,7 +135,6 @@ class Tester:
 
         self.ignoreNoSolution = False
         self.needDebugLib = True
-        self.drup = True
 
     def random_options(self) :
         cmd = " "
@@ -180,7 +184,7 @@ class Tester:
         cmd += "--implicitmanip %s " % random.randint(0,1)
 
 
-        if self.drup == False :
+        if options.drup == False :
             cmd += "--simplify %s " % random.randint(0,1)
             cmd += "--binpri %s " % random.randint(0,1)
             cmd += "--stamp %s " % random.randint(0,1)
@@ -544,7 +548,9 @@ class Tester:
             for fuzzer in fuzzers :
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                fnameDrup = "drupcheck"
+                fnameDrup = None
+                if options.drup :
+                    fnameDrup = "drupcheck"
 
                 #should the multi-fuzzer be called?
                 if len(fuzzer) == 2 and fuzzer[1] == "special":

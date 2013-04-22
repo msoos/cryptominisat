@@ -51,6 +51,8 @@ using std::endl;
 #include "mysqlstats.h"
 #endif
 
+//#define DRUP_DEBUG
+
 //#define DEBUG_RENUMBER
 
 //#define DEBUG_TRI_SORTED_SANITY
