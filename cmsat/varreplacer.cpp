@@ -156,11 +156,13 @@ bool VarReplacer::performReplace()
     solver->countNumBinClauses(false, true);
 #endif
 
-    if (!replaceImplicit())
+    //Replace implicits
+    if (!replaceImplicit()) {
         goto end;
+    }
 
     //While replacing the implicit clauses
-    //We cannot enqueue literals, so we do it now
+    //we cannot enqueue literals, so we do it now
     for(vector<Lit>::const_iterator
         it = delayedEnqueue.begin(), end = delayedEnqueue.end()
         ; it != end
@@ -183,8 +185,13 @@ bool VarReplacer::performReplace()
     if (!solver->ok)
         goto end;
 
-    if (!replace_set(solver->longIrredCls)) goto end;
-    if (!replace_set(solver->longRedCls)) goto end;
+    //Replace longs
+    if (!replace_set(solver->longIrredCls)) {
+        goto end;
+    }
+    if (!replace_set(solver->longRedCls)) {
+        goto end;
+    }
 
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
