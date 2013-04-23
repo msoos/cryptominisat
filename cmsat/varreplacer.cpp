@@ -985,13 +985,13 @@ bool VarReplacer::addLaterAddBinXor()
     ) {
         ps[0] = it->lit1;
         ps[1] = it->lit2;
-        solver->addClauseInt(ps, false);
+        solver->addClauseInt(ps);
         if (!solver->ok)
             return false;
 
         ps[0] ^= true;
         ps[1] ^= true;
-        solver->addClauseInt(ps, false);
+        solver->addClauseInt(ps);
         if (!solver->ok)
             return false;
     }
