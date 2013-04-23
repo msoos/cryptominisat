@@ -785,11 +785,35 @@ bool VarReplacer::replace(
     //Already inside?
     if (lit1.var() == lit2.var()) {
         if (lit1.sign() != lit2.sign()) {
+
+            //Add new (that is inverse) and fail
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << ~lit1 << " " << lit2 << " 0" << endl
+                << lit1 << " " << ~lit2 << " 0" << endl
+                << lit1 << " 0" << endl
+                << ~lit1 << " 0" << endl
+                << "0" << endl
+                ;
+            }
+            #endif
             solver->ok = false;
             return false;
         }
+
+        //Already inside in the correct way, return
         return true;
     }
+
+    //Not already inside
+    #ifdef DRUP
+    if (solver->drup) {
+        *(solver->drup)
+        << ~lit1 << " " << lit2 << " 0" << endl
+        << lit1 << " " << ~lit2 << " 0" << endl;
+    }
+    #endif
 
     //Even the moved-forward version must be unelimed
     assert(solver->varData[lit1.var()].elimed == ELIMED_NONE
@@ -800,18 +824,41 @@ bool VarReplacer::replace(
     lbool val1 = solver->value(lit1);
     lbool val2 = solver->value(lit2);
     if (val1 != l_Undef && val2 != l_Undef) {
-        if (val1 != val2) solver->ok = false;
+        if (val1 != val2) {
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << ~lit1 << " 0" << endl
+                << lit1 << " 0" << endl
+                << "0" << endl;
+            }
+            #endif
+            solver->ok = false;
+        }
+
+        //Already set, return with correct code
         return solver->ok;
     }
 
     //exactly one l_Undef, exectly one l_True/l_False
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
         if (solver->ok) {
+            Lit toEnqueue;
             if (val1 != l_Undef) {
-                solver->enqueue(lit2 ^ (val1 == l_False));
+                toEnqueue = lit2 ^ (val1 == l_False);
             } else {
-                solver->enqueue(lit1 ^ (val2 == l_False));
+                toEnqueue = lit1 ^ (val2 == l_False);
             }
+            solver->enqueue(toEnqueue);
+
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << toEnqueue << " 0"
+                << endl;
+            }
+            #endif
+
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
