@@ -321,10 +321,11 @@ Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
             unlinkClause(offset2);
             ret.sub++;
         } else { //Strengthen
-            if (solver->conf.verbosity >= 6)
+            if (solver->conf.verbosity >= 6) {
                 cout << "strenghtened clause " << cl2 << endl;
-
+            }
             strengthen(offset2, subsLits[j]);
+
             ret.str++;
             if (!solver->ok)
                 return ret;
