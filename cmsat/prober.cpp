@@ -579,14 +579,12 @@ bool Prober::tryThis(const Lit lit, const bool first)
                 toEnqueue.push_back(litToEnq);
                 #ifdef DRUP
                 if (solver->drup) {
-                    #ifdef DRUP_DEBUG
                     if (solver->conf.verbosity >= 6) {
                         cout
                         << "c bprop:"
                         << litToEnq
                         << endl;
                     }
-                    #endif
                     (*solver->drup)
                     << litToEnq << " 0"
                     << endl;

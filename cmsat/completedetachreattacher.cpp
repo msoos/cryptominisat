@@ -91,6 +91,11 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 {
+    #ifdef DRUP
+    if (solver->conf.verbosity >= 6) {
+        cout << "Cleaning and reattaching clauses" << endl;
+    }
+    #endif
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
 
