@@ -3280,6 +3280,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                 ret.bin++;
                 ret.lit += 2;
 
+                #if 0
                 if (setit) {
                     seen[it->lit1().toInt()] |= at;
                     at <<= 1;
@@ -3292,6 +3293,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                 if (countIt) {
                     count += otherSize - __builtin_popcount(seen[(~it->lit1()).toInt()]);
                 }
+                #endif
             }
             continue;
         }
@@ -3304,6 +3306,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                 ret.tri++;
                 ret.lit += 3;
 
+                #if 0
                 if (setit) {
                     seen[it->lit1().toInt()] |= at;
                     seen[it->lit2().toInt()] |= at;
@@ -3319,6 +3322,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                     unsigned tmp = seen[(~it->lit1()).toInt()] | seen[(~it->lit2()).toInt()];
                     count += otherSize - __builtin_popcount(tmp);
                 }
+                #endif
             }
 
             continue;
@@ -3335,6 +3339,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                 ret.longer++;
                 ret.lit += cl->size();
 
+                #if 0
                 unsigned tmp = 0;
                 for(size_t i = 0; i < cl->size(); i++) {
                     const Lit lit = (*cl)[i];
@@ -3360,6 +3365,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
                 if (countIt) {
                     count += otherSize - __builtin_popcount(tmp);
                 }
+                #endif
             }
 
             continue;
