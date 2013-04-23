@@ -133,16 +133,16 @@ bool VarReplacer::performReplace()
                 || solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER)
             && "It MUST have been queued for varreplacement so top couldn't have been elimed/decomposed/etc"
         );
-        solver->unsetDecisionVar(var);;
+        solver->unsetDecisionVar(var);
         solver->setDecisionVar(it->var());
 
         //Update activities. Top receives activities of the ones below
-        /*uint32_t& activity1 = solver->activities[var];
+        uint32_t& activity1 = solver->activities[var];
         uint32_t& activity2 = solver->activities[it->var()];
         activity2 += activity1;
         activity1 = 0.0;
-
-        solver->order_heap.update(it->var());*/
+        solver->order_heap.update(var);
+        solver->order_heap.update(it->var());
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
