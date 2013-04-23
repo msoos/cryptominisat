@@ -848,8 +848,8 @@ lbool Searcher::search(uint64_t* geom_max)
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
                 #ifdef DRUP
-                if (solver->drup) {
-                    (*solver->drup)
+                if (drup) {
+                    (*drup)
                     << (~failed) << " 0"
                     << endl;
                 }
@@ -911,9 +911,11 @@ lbool Searcher::search(uint64_t* geom_max)
                     ) {
                         toEnqueue.push_back(~ancestor);
                         #ifdef DRUP
-                        (*solver->drup)
-                        << (~ancestor) << " 0"
-                        << endl;
+                        if (drup) {
+                            (*drup)
+                            << (~ancestor) << " 0"
+                            << endl;
+                        }
                         #endif
                     }
                 }
@@ -1261,8 +1263,8 @@ bool Searcher::handle_conflict(PropBy confl)
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
                 #ifdef DRUP
-                if (solver->drup && decisionLevel() == 0) {
-                    *(solver->drup)
+                if (drup && decisionLevel() == 0) {
+                    *(drup)
                     << cl[0] << " 0"
                     << endl;
                 }
@@ -1336,8 +1338,8 @@ bool Searcher::handle_conflict(PropBy confl)
                     , by
                 );
                 #ifdef DRUP
-                if (solver->drup && decisionLevel() == 0) {
-                    *(solver->drup)
+                if (drup && decisionLevel() == 0) {
+                    *(drup)
                     << it->lits[0] << " 0"
                     << endl;
                 }
@@ -1376,8 +1378,9 @@ bool Searcher::handle_conflict(PropBy confl)
 
     //Handle DRUP
     #ifdef DRUP
-    if (solver->drup) {
-        (*solver->drup) << learnt_clause << " 0" << endl;
+    if (drup) {
+        (*drup)
+        << learnt_clause << " 0" << endl;
     }
     #endif
 
@@ -2570,8 +2573,8 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             }
 
             #ifdef DRUP
-            if (solver->drup) {
-                (*solver->drup)
+            if (drup) {
+                (*drup)
                 << "d "
                 << it->getLit1() << " " << it->getLit2()
                 << " 0"
@@ -2885,7 +2888,7 @@ PropBy Searcher::propagate(
 
     #ifdef DRUP
     //If declevel 0 propagation, we have to add the unitaries
-    if (solver->drup && decisionLevel() == 0) {
+    if (drup && decisionLevel() == 0) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRUP
             if (conf.verbosity >= 6) {
@@ -2896,12 +2899,12 @@ PropBy Searcher::propagate(
             }
             #endif
 
-            (*solver->drup)
+            (*drup)
             << trail[i]
             << " 0" << endl;
         }
         if (!ret.isNULL()) {
-            (*solver->drup)
+            (*drup)
             << "0" << endl;
         }
     }
