@@ -728,10 +728,10 @@ bool Simplifier::addFromSolver(
             numNotLinkedIn++;
         }
 
-        numLitsAdded += cl->size();
         clauses.push_back(*it);
     }
     toAdd.clear();
+    numLitsAdded += linkedInLits;
 
     if (solver->conf.verbosity >= 2
         && !irred
@@ -2276,16 +2276,17 @@ void Simplifier::setLimits()
     #ifdef BIT_MORE_VERBOSITY
     cout << "c addedClauseLits: " << addedClauseLits << endl;
     #endif
-    if (addedClauseLits < 10000000) {
+    if (addedClauseLits < 10ULL*1000ULL*1000ULL) {
         numMaxElim *= 2;
         numMaxSubsume0 *= 2;
         numMaxSubsume1 *= 2;
     }
 
-
-    numMaxElim *= 2;
-    numMaxSubsume0 *= 2;
-    numMaxSubsume1 *= 2;
+    if (addedClauseLits < 3ULL*1000ULL*1000ULL) {
+        numMaxElim *= 2;
+        numMaxSubsume0 *= 2;
+        numMaxSubsume1 *= 2;
+    }
 
     numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
