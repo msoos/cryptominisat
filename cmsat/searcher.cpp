@@ -1236,6 +1236,13 @@ bool Searcher::handle_conflict(PropBy confl)
                 addHyperBin(cl[0], cl);
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+                #ifdef DRUP
+                if (solver->drup && decisionLevel() == 0) {
+                    *(solver->drup)
+                    << cl[0] << " 0"
+                    << endl;
+                }
+                #endif
             }
         } else {
             //We have a non-propagating clause
@@ -1304,6 +1311,13 @@ bool Searcher::handle_conflict(PropBy confl)
                     it->lits[0]
                     , by
                 );
+                #ifdef DRUP
+                if (solver->drup && decisionLevel() == 0) {
+                    *(solver->drup)
+                    << it->lits[0] << " 0"
+                    << endl;
+                }
+                #endif
             }
         } else {
             //We have a non-propagating clause
