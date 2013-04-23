@@ -884,7 +884,10 @@ lbool Searcher::search(uint64_t* geom_max)
 
                     //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
                     //So enqueue ~ancestor
-                    if (taut) {
+                    if (taut
+                        && (solver->varData[ancestor.var()].elimed == ELIMED_NONE
+                            || solver->varData[ancestor.var()].elimed == ELIMED_QUEUED_VARREPLACER)
+                    ) {
                         toEnqueue.push_back(~ancestor);
                         #ifdef DRUP
                         (*solver->drup)

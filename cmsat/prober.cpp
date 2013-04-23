@@ -628,7 +628,10 @@ bool Prober::tryThis(const Lit lit, const bool first)
             //If tautology according to cache we can
             //enqueue ~ancestor at toplevel since both
             //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
-            if (taut) {
+            if (taut
+                && (solver->varData[ancestor.var()].elimed == ELIMED_NONE
+                    || solver->varData[ancestor.var()].elimed == ELIMED_QUEUED_VARREPLACER)
+            ) {
                 toEnqueue.push_back(~ancestor);
             }
 
