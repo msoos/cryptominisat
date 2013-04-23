@@ -347,7 +347,7 @@ void Simplifier::unlinkClause(const ClOffset offset, bool drup)
     #ifdef DRUP
     if (solver->drup && drup) {
        (*solver->drup)
-       << "d " << cl
+       << "d " << cl << " 0"
        << endl;
     }
     #endif
