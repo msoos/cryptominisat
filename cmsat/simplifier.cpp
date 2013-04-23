@@ -386,6 +386,10 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
     cout << endl;
     #endif
+    #ifdef DRUP
+    vector<Lit> origCL(cl.size());
+    std::copy(cl.begin(), cl.end(), origCL.begin());
+    #endif
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -412,7 +416,15 @@ lbool Simplifier::cleanClause(ClOffset offset)
         #ifdef VERBOSE_DEBUG
         cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
-        unlinkClause(offset);
+        #ifdef DRUP
+        if (solver->drup) {
+           *(solver->drup)
+           << "d " << origCL << " 0"
+           << endl;
+        }
+        #endif
+
+        unlinkClause(offset, false);
         return l_True;
     }
 
@@ -422,20 +434,20 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->binTri.irredLits -= i-j;
 
+    #ifdef DRUP
     if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
-    #ifdef DRUP
-    if (solver->drup) {
+    if (solver->drup && ((i-j > 0))) {
         *(solver->drup)
-        << cl << " 0"
-        << endl;
+        << cl << " 0" << endl;
+        *(solver->drup) << "d " << origCL << " 0" << endl;
     }
     #endif
 
     switch(cl.size()) {
         case 0:
-            unlinkClause(offset);
+            unlinkClause(offset, false);
             solver->ok = false;
             return l_False;
 
@@ -444,17 +456,17 @@ lbool Simplifier::cleanClause(ClOffset offset)
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            unlinkClause(offset);
+            unlinkClause(offset, false);
             return l_True;
 
         case 2:
             solver->attachBinClause(cl[0], cl[1], cl.learnt());
-            unlinkClause(offset);
+            unlinkClause(offset, false);
             return l_True;
 
         case 3:
             solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
-            unlinkClause(offset);
+            unlinkClause(offset, false);
             return l_True;
 
         default:
@@ -485,6 +497,14 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     std::copy(cl.begin(), cl.end(), origCl.begin());
     #endif
     cl.strengthen(toRemoveLit);
+    #ifdef DRUP
+    if (solver->drup) {
+        *(solver->drup)
+        << cl << " 0" << endl
+        << "d " << origCl << " 0"
+        << endl;
+    }
+    #endif
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
@@ -493,16 +513,7 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     else
         solver->binTri.irredLits--;
 
-    lbool ret = cleanClause(offset);
-    #ifdef DRUP
-    //If ret is not l_Undef, we already unlinked it, so deleted already
-    if (solver->drup && ret == l_Undef) {
-        *(solver->drup)
-        << "d "
-        << origCl << " 0"
-        << endl;
-    }
-    #endif
+    cleanClause(offset);
 }
 
 void Simplifier::performSubsumption()
