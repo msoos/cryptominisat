@@ -153,19 +153,11 @@ SolverConf::SolverConf() :
         , maxOccurRedLitLinkedM(50)
 
         //optimisations to do
-        #ifdef DRUP
-        , doRenumberVars   (false)
-        #else
         , doRenumberVars   (true)
-        #endif
 
         //Component finding
         , doFindComps     (false)
-        #ifdef DRUP
-        , doCompHandler    (false)
-        #else
         , doCompHandler    (true)
-        #endif
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
         , compFindLimitMega (500)

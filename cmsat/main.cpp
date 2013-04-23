@@ -870,6 +870,24 @@ void Main::parseCommandLine()
         }
         conf.doFindXors = false;
     }
+
+    if (conf.doRenumberVars && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Variable renumbering is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doRenumberVars = false;
+    }
+
+    if (conf.doCompHandler && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Component finding & solving is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doCompHandler = false;
+    }
     #endif
 
     if (conf.verbosity >= 1) {
