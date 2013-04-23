@@ -861,6 +861,15 @@ void Main::parseCommandLine()
         }
         conf.otfHyperbin = true;
     }
+
+    if (conf.doFindXors && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c XOR manipulation is not supported in DRUP, turning it off"
+            << endl;
+        }
+        conf.doFindXors = false;
+    }
     #endif
 
     if (conf.verbosity >= 1) {
