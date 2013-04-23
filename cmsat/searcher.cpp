@@ -249,6 +249,15 @@ void Searcher::doOTFSubsume(PropBy confl)
             }
         }
         otfMustAttach.push_back(newCl);
+        #ifdef DRUP
+        if (drup) {
+            for(unsigned  i = 0; i < newCl.size; i++) {
+                *(drup)
+                << newCl.lits[i] << " ";
+            }
+            cout << " 0" << endl;
+        }
+        #endif
 
         stats.otfSubsumed++;
         stats.otfSubsumedImplicit++;
@@ -258,6 +267,10 @@ void Searcher::doOTFSubsume(PropBy confl)
 
     //Final will not be implicit
     if (num > 3) {
+        #ifdef DRUP
+        vector<Lit> origCl(cl.size());
+        std::copy(cl.begin(), cl.end(), origCl.begin());
+        #endif
         solver->detachClause(cl);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
@@ -273,6 +286,14 @@ void Searcher::doOTFSubsume(PropBy confl)
         }
         cl.shrink(i-i2);
         assert(cl.size() == learnt_clause2_size);
+        #ifdef DRUP
+        if (drup) {
+            (*drup)
+            << cl << " 0" << endl
+            << "d " << origCl << " 0" << endl
+            ;
+        }
+        #endif
 
         toAttachLater.push_back(offset);
     }

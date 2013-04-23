@@ -79,11 +79,7 @@ SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        #ifdef DRUP
-        , doOTFSubsume     (false)
-        #else
         , doOTFSubsume     (true)
-        #endif
         , doOTFGateShorten (true)
         , rewardShortenedClauseWithConfl(3)
 
