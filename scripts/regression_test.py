@@ -157,15 +157,12 @@ class Tester:
         cmd += "--alwaysmoremin %s " % random.randint(0,1)
         cmd += "--rewardotfsubsume %s " % random.randint(0,100)
         cmd += "--bothprop %s " % random.randint(0,1)
-        cmd += "--probe %s " % random.randint(0,1)
         cmd += "--probemultip %s " % random.randint(0,10)
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
         cmd += "--elimstrategy %s " % random.randint(0,1)
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
-        cmd += "--subsume1 %s " % random.randint(0,1)
-        cmd += "--block %s " % random.randint(0,1)
         cmd += "--occlearntmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
@@ -173,15 +170,21 @@ class Tester:
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
-        #cmd += "--compss %s " % random.randint(0,1)
         cmd += "--compsfrom %d " % random.randint(0,2)
         cmd += "--compsvar %d " % random.randint(20000,500000)
         cmd += "--compslimit %d " % random.randint(0,3000)
-        cmd += "--schedsimplify %d " % random.randint(0,1)
         cmd += "--preschedsimp %s " % random.randint(0,1)
-        cmd += "--varelim %s " % random.randint(0,1)
-        cmd += "--scc %s " % random.randint(0,1)
         cmd += "--implicitmanip %s " % random.randint(0,1)
+
+        #the most buggy ones, don't turn them off much, please
+        if random.randint(0,1) == 1 :
+            cmd += "--scc %s " % random.randint(0,1)
+            cmd += "--schedsimplify %d " % random.randint(0,1)
+            cmd += "--varelim %s " % random.randint(0,1)
+            cmd += "--comps %s " % random.randint(0,1)
+            cmd += "--subsume1 %s " % random.randint(0,1)
+            cmd += "--block %s " % random.randint(0,1)
+            cmd += "--probe %s " % random.randint(0,1)
 
 
         if options.drup == False :
