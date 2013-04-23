@@ -250,14 +250,23 @@ void Searcher::doOTFSubsume(PropBy confl)
         }
         otfMustAttach.push_back(newCl);
         #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout << "New implicit clause that subsumes a long clause:";
+            for(unsigned  i = 0; i < newCl.size; i++) {
+                cout
+                << newCl.lits[i] << " ";
+            }
+            cout  << endl;
+        }
+
         if (drup) {
             for(unsigned  i = 0; i < newCl.size; i++) {
                 *(drup)
                 << newCl.lits[i] << " ";
             }
-            cout << " 0" << endl;
+            (*drup) << " 0" << endl;
         }
-        #endif
+        #endif //DRUP
 
         stats.otfSubsumed++;
         stats.otfSubsumedImplicit++;
@@ -271,7 +280,7 @@ void Searcher::doOTFSubsume(PropBy confl)
         vector<Lit> origCl(cl.size());
         std::copy(cl.begin(), cl.end(), origCl.begin());
         #endif
-        solver->detachClause(cl);
+        solver->detachClause(cl, false);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
         stats.otfSubsumedLearnt += cl.learnt();
@@ -287,6 +296,10 @@ void Searcher::doOTFSubsume(PropBy confl)
         cl.shrink(i-i2);
         assert(cl.size() == learnt_clause2_size);
         #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout
+            << "New smaller clause OTF:" << cl << endl;
+        }
         if (drup) {
             (*drup)
             << cl << " 0" << endl
@@ -1165,12 +1178,16 @@ bool Searcher::handle_conflict(PropBy confl)
         , false
     );
 
-    #ifdef DRUP_DEBUG
+    #ifdef DRUP
     if (conf.verbosity >= 6) {
         cout
         << "c learnt clause: "
         << learnt_clause
         << endl;
+    }
+    if (drup) {
+        (*drup)
+        << learnt_clause << " 0" << endl;
     }
     #endif
 
@@ -1376,14 +1393,6 @@ bool Searcher::handle_conflict(PropBy confl)
     //Set up everything to get the clause
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
 
-    //Handle DRUP
-    #ifdef DRUP
-    if (drup) {
-        (*drup)
-        << learnt_clause << " 0" << endl;
-    }
-    #endif
-
     //Is there on-the-fly subsumption?
     if (cl == NULL) {
 
@@ -1397,6 +1406,14 @@ bool Searcher::handle_conflict(PropBy confl)
 
     } else {
         //Detach & delete subsumed clause
+        #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout
+            << "Detaching OTF subsumed (LAST) clause:"
+            << *cl
+            << endl;
+        }
+        #endif
         solver->detachClause(*cl);
 
         //Shrink clause
