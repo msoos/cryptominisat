@@ -141,15 +141,9 @@ SolverConf::SolverConf() :
         , flipPolarFreq    (300)
 
         //Simplifier
-        #ifdef DRUP
-        , doSimplify       (false)
-        , doSchedSimpProblem(true)
-        , doPreSchedSimpProblem (true)
-        #else
         , doSimplify       (true)
         , doSchedSimpProblem(true)
         , doPreSchedSimpProblem (true)
-        #endif
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)
