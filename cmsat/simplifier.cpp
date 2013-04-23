@@ -1426,6 +1426,9 @@ bool Simplifier::simplify()
 end:
 
     #ifdef DRUP
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Deleting blocked clauses for DRUP" << endl;
+    }
     //Remove clauses that have been blocked recently
     if (solver->drup) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
