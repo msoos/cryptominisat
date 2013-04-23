@@ -133,7 +133,6 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 lits[2] = ws[i].lit2();
                 testVivify(
                     std::numeric_limits<ClOffset>::max()
-                    , NULL
                     , ws[i].learnt()
                     , 2
                 );
@@ -269,7 +268,6 @@ bool ClauseVivifier::asymmClausesLongIrred()
         //Try to vivify clause
         ClOffset offset2 = testVivify(
             offset
-            , &cl
             , cl.learnt()
             , queueByBy
         );
@@ -316,7 +314,6 @@ bool ClauseVivifier::asymmClausesLongIrred()
 
 ClOffset ClauseVivifier::testVivify(
     ClOffset offset
-    , Clause* cl
     , const bool learnt
     , const uint32_t queueByBy
 ) {
@@ -358,19 +355,15 @@ ClOffset ClauseVivifier::testVivify(
         //Make new clause
         Clause *cl2 = solver->addClauseInt(lits, learnt);
 
-        //Detach and free old clause
-        if (cl) {
-            solver->detachClause(offset);
-            solver->clAllocator->clauseFree(offset);
-        }
-
         //Print results
         if (solver->conf.verbosity >= 5) {
             cout
             << "c Assym branch effective." << endl;
-            if (cl) {
+            if (offset != std::numeric_limits<ClOffset>::max()) {
                 cout
-                << "c --> orig clause:" << *cl << endl;
+                << "c --> orig clause:" <<
+                 *solver->clAllocator->getPointer(offset)
+                 << endl;
             } else {
                 cout
                 << "c --> orig clause: TRI/BIN" << endl;
@@ -381,6 +374,12 @@ ClOffset ClauseVivifier::testVivify(
             << "c --> removing lits from end:" << origSize - done << endl
             << "c --> useless lits in middle:" << uselessLits.size()
             << endl;
+        }
+
+        //Detach and free old clause
+        if (offset != std::numeric_limits<ClOffset>::max()) {
+            solver->detachClause(offset);
+            solver->clAllocator->clauseFree(offset);
         }
 
         runStats.numLitsRem += origSize - lits.size();

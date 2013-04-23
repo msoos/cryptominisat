@@ -253,7 +253,6 @@ class ClauseVivifier {
 
         ClOffset testVivify(
             ClOffset offset
-            , Clause* cl
             , const bool learnt
             , const uint32_t queueByBy
         );
