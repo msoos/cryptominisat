@@ -486,9 +486,9 @@ class Tester:
                     if len(line) > 1 and line[:2] == "s " :
                         #print "verif: " , line
                         foundVerif = True
-                        if line[2:10] != "VERIFIED":
+                        if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
                             print "DRUP verification error, it says:", consoleOutput2
-                        assert line[2:10] == "VERIFIED", "DRUP didn't verify problem!"
+                        assert line[2:10] == "VERIFIED" or line[2:] != "TRIVIAL UNSAT", "DRUP didn't verify problem!"
                         drupLine = line
 
                 if foundVerif == False:
@@ -533,12 +533,12 @@ class Tester:
 
     def fuzz_test(self) :
         fuzzers = [
-            # ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            ["build/cnf-fuzz-biere"] \
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
             #, ["build/cnf-fuzz-nossum"] \
             #, ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
-            #, ["multipart.py", "special"] \
+            , ["multipart.py", "special"] \
             , ["build/sgen4 -unsat -n 50", "-s"] \
             #, ["build/sgen4 -sat -n 50", "-s"] \
         ]
