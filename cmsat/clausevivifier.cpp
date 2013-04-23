@@ -143,8 +143,9 @@ bool ClauseVivifier::vivifyClausesTriIrred()
             }
         }
 
-        if (!solver->okay())
+        if (!solver->okay()) {
             break;
+        }
     }
 
     if (solver->conf.verbosity >= 3) {
@@ -336,7 +337,7 @@ ClOffset ClauseVivifier::testVivify(
         }
         done += i2;
         extraTime += 5;
-        failed = (!solver->propagate(solver).isNULL());
+        failed = (!solver->propagate().isNULL());
         if (failed) break;
     }
     solver->cancelZeroLight();
@@ -367,16 +368,17 @@ ClOffset ClauseVivifier::testVivify(
         if (solver->conf.verbosity >= 5) {
             cout
             << "c Assym branch effective." << endl;
-            if (cl)
+            if (cl) {
                 cout
                 << "c --> orig clause:" << *cl << endl;
-            else
+            } else {
                 cout
                 << "c --> orig clause: TRI/BIN" << endl;
+            }
             cout
             << "c --> orig size:" << origSize << endl
             << "c --> new size:" << (cl2 == NULL ? 0 : cl2->size()) << endl
-            << "c --> removing lits from end:" << origSize - done
+            << "c --> removing lits from end:" << origSize - done << endl
             << "c --> useless lits in middle:" << uselessLits.size()
             << endl;
         }
