@@ -839,22 +839,45 @@ bool Simplifier::completeCleanClause(Clause& cl)
 
     //Remove all lits from stats
     //we will re-attach the clause either way
-    if (cl.learnt())
+    if (cl.learnt()) {
         solver->binTri.redLits -= cl.size();
-    else
+    } else {
         solver->binTri.irredLits -= cl.size();
+    }
+
+    #ifdef DRUP
+    vector<Lit> origCl(cl.size());
+    std::copy(cl.begin(), cl.end(), origCl.begin());
+    #endif
 
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
-        if (solver->value(*i) == l_True)
+        if (solver->value(*i) == l_True) {
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << "d " << origCl << " 0"
+                << endl;
+            }
+            #endif
             return false;
+        }
 
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
         }
     }
     cl.shrink(i-j);
+
+    #ifdef DRUP
+    if (solver->drup && (i - j > 0)) {
+        *(solver->drup)
+        << "d " << origCl << " 0" << endl
+        << cl << " 0" << endl
+        ;
+    }
+    #endif
 
     switch (cl.size()) {
         case 0:
