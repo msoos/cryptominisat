@@ -2057,7 +2057,7 @@ void Simplifier::blockClauses()
 
         if (toRemove) {
             //cout << "Blocking " << cl << endl;
-            unlinkClause(offset);
+            unlinkClause(offset, false);
         } else {
             //cout << "Not blocking " << cl << endl;
         }
