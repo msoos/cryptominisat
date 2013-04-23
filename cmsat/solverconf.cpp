@@ -105,7 +105,7 @@ SolverConf::SolverConf() :
         , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimCostEstimateStrategy(0)
-        , varElimRatioPerIter(0.14)
+        , varElimRatioPerIter(0.12)
 
         //Probing
         , doProbe          (true)
