@@ -108,13 +108,8 @@ SolverConf::SolverConf() :
         , probeMultiplier  (1.0)
         , doBothProp       (true)
         , doTransRed       (true)
-        #ifdef DRUP
-        , doStamp          (false)
-        , doCache          (false)
-        #else
         , doStamp          (true)
         , doCache          (true)
-        #endif
         , cacheUpdateCutoff(2000)
         , maxCacheSizeMB   (2048)
 
