@@ -294,7 +294,7 @@ void Main::parseCommandLine()
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
     #ifdef DRUP
-    ("drup,d", po::value<string>(&drupfilname)->default_value("drup")
+    ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Put DRUP verification information into this file")
