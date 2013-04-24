@@ -673,27 +673,6 @@ void Main::parseCommandLine()
         exit(-1);
     }
 
-    #ifdef DRUP
-    if (vm.count("drup")) {
-        if (drupDebug) {
-            drupf = &std::cout;
-        } else {
-            std::ofstream* drupfTmp = new std::ofstream;
-            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
-            if (!*drupfTmp) {
-                cout
-                << "ERROR: Could not open DRUP file "
-                << drupfilname
-                << " for writing"
-                << endl;
-
-                exit(-1);
-            }
-            drupf = drupfTmp;
-        }
-    }
-    #endif
-
     if (conf.doLHBR
         && !conf.propBinFirst
     ) {
@@ -853,6 +832,25 @@ void Main::parseCommandLine()
     }
 
     #ifdef DRUP
+    if (vm.count("drup")) {
+        if (drupDebug) {
+            drupf = &std::cout;
+        } else {
+            std::ofstream* drupfTmp = new std::ofstream;
+            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
+            if (!*drupfTmp) {
+                cout
+                << "ERROR: Could not open DRUP file "
+                << drupfilname
+                << " for writing"
+                << endl;
+
+                exit(-1);
+            }
+            drupf = drupfTmp;
+        }
+    }
+
     if (!conf.otfHyperbin && drupf) {
         if (conf.verbosity >= 2) {
             cout
