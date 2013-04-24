@@ -491,7 +491,7 @@ class Tester:
                         foundVerif = True
                         if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
                             print "DRUP verification error, it says:", consoleOutput2
-                        assert line[2:10] == "VERIFIED" or line[2:] != "TRIVIAL UNSAT", "DRUP didn't verify problem!"
+                        assert line[2:10] == "VERIFIED" or line[2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
                         drupLine = line
 
                 if foundVerif == False:
