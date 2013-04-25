@@ -185,17 +185,15 @@ class Tester:
             cmd += "--subsume1 %s " % random.randint(0,1)
             cmd += "--block %s " % random.randint(0,1)
             cmd += "--probe %s " % random.randint(0,1)
-
-
-        if options.drup == False :
             cmd += "--simplify %s " % random.randint(0,1)
             cmd += "--binpri %s " % random.randint(0,1)
             cmd += "--stamp %s " % random.randint(0,1)
             cmd += "--cache %s " % random.randint(0,1)
             cmd += "--otfsubsume %s " % random.randint(0,1)
             cmd += "--renumber %s " % random.randint(0,1)
-            cmd += "--comps 1 "
             cmd += "--moreminim %s " % random.randint(0,1)
+
+
 
         return cmd
 
