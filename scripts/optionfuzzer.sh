@@ -50,9 +50,14 @@ do
 
 		#--lhbr $(bool) \
 	# solve it
-	../build/cryptominisat \
+                
+        #--simplify $(bool) \
+        #--stamp $(bool) \
+        #--cache $(bool) \
+        #--scc $(bool) \
+        #--presimp $(bool) \
+        ../build/cryptominisat \
 		--random $RANDOM \
-		--simplify $(bool) \
 		--clbtwsimp $(int 0 3) \
 		--restart $(choice geom agility glue glueagility) \
 		--agilviollim $(int 0 40) \
@@ -76,8 +81,6 @@ do
 		--bothprop $(bool) \
 		--probe $(bool) \
 		--probemultip $(int 0 10) \
-		--stamp $(bool) \
-		--cache $(bool) \
 		--cachesize $(int 10 100) \
 		--calcreach $(bool) \
 		--cachecutoff $(int 0 2000) \
@@ -88,9 +91,7 @@ do
 		--block $(bool) \
 		--asymmte $(bool) \
 		--noextbinsubs $(bool) \
-		--scc $(bool) \
 		--extscc $(bool) \
-		--presimp $(bool) \
 		--vivif $(bool) \
 		--sortwatched $(bool) \
 		--renumber $(bool) \
