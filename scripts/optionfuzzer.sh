@@ -50,7 +50,7 @@ do
 
 		#--lhbr $(bool) \
 	# solve it
-                
+
         #--simplify $(bool) \
         #--stamp $(bool) \
         #--cache $(bool) \
