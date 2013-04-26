@@ -89,7 +89,9 @@ void Prober::checkOTFRatio()
             > 0.8*800LL*1000LL*1000LL
         && ratio < 0.3
         && solver->conf.otfHyperbin
+        #ifdef DRUP
         && !solver->drup
+        #endif
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
@@ -483,7 +485,11 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
         //If we timed out on ONE call, turn otf hyper-bin off
         //and return --> the "visitedAlready" will be wrong
-        if (solver->timedOutPropagateFull && !solver->drup) {
+        if (solver->timedOutPropagateFull
+            #ifdef DRUP
+            && !solver->drup
+            #endif
+        ) {
             if (solver->conf.verbosity >= 2) {
                 cout
                 << "c [probe] timeout during propagation,"
