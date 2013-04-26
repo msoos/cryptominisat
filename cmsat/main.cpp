@@ -1021,44 +1021,7 @@ int Main::correctReturnValue(const lbool ret) const
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
-
-    try {
-        main.parseCommandLine();
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::unknown_option> >& c
-    ) {
-        cout
-        << "ERROR! Some option you gave was wrong. Please give '--help' to get help"
-        << endl;
-
-        cout
-        << "Unparsed option: '" << c.get_option_name()
-        << "'"
-        << endl;
-
-        exit(-1);
-    } catch (boost::bad_any_cast &e) {
-        std::cerr
-        << "ERROR! You probably gave a wrong argument type (Bad cast): "
-        << e.what()
-        << endl;
-
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
-    ) {
-        std::cerr << "ERROR! " << what.what() << endl;
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::multiple_occurrences> >& c
-    ) {
-        std::cerr << "ERROR! Multiple occurrences of option: " << c.get_option_name() << endl;
-        exit(-1);
-    } catch (WrongParam& w) {
-        std::cerr << "ERROR! Option parameter '" << w.getParam() << "' is wrong" << endl;
-        std::cerr << "Specific error message: " << w.getMsg() << endl;
-        exit(-1);
-    }
+    main.parseCommandLine();
 
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
