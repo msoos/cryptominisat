@@ -184,12 +184,13 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     #ifdef DRUP
     if (solver->drup && i != j) {
         (*solver->drup)
-        << cl << " 0"
-        << endl
+        << cl
+        << " 0\n"
+
         //Delete old one
         << "d "
         << origCl
-        << endl;
+        << " 0\n";
     }
     #endif
 

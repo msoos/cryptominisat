@@ -288,7 +288,7 @@ Clause* Solver::addClauseInt(
 
     #ifdef DRUP
     if (drup) {
-        (*drup) << ps << " 0" << endl;
+        (*drup) << ps << " 0\n";
     }
     #endif
 
@@ -351,7 +351,7 @@ void Solver::attachClause(
             *drup
             << cl[i] << " ";
         }
-        *drup << "0" << endl;
+        *drup << "0\n";
     }
     #endif
 
@@ -460,7 +460,7 @@ void Solver::detachClause(const Clause& cl, const bool doDRUP)
 {
     #ifdef DRUP
     if (drup && doDRUP) {
-        (*drup) << "d " << cl << " 0" << endl;
+        (*drup) << "d " << cl << " 0\n";
     }
     #endif
 
@@ -625,7 +625,7 @@ bool Solver::addClause(const vector<Lit>& lits)
         if (!finalCl.empty()) {
             //Not nice to print stuff after UNSAT
             if (ok) {
-                (*drup) << "d " << origCl << " 0" << endl;
+                (*drup) << "d " << origCl << " 0\n";
             }
         }
     }

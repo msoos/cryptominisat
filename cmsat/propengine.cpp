@@ -387,8 +387,8 @@ PropResult PropEngine::propNormalClause(
                     if (solver->drup) {
                         (*solver->drup)
                         << other << " "
-                        << c[0] << " 0"
-                        << endl;
+                        << c[0]
+                        << " 0\n";
                     }
                     #endif
                     enqueue(c[0], PropBy(other));
@@ -669,8 +669,8 @@ void PropEngine::propTriHelper(
             if (solver->drup) {
                 (*solver->drup)
                 << lit << " "
-                << lit2 << " 0"
-                << endl;
+                << lit2
+                << " 0\n";
             }
             #endif
         } else {

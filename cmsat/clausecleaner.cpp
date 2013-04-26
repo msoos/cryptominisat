@@ -87,8 +87,8 @@ void ClauseCleaner::treatImplicitClauses()
                         (*solver->drup)
                         << "d "
                         << lit << " "
-                        << i->lit1() << " 0"
-                        << endl;
+                        << i->lit1()
+                        << " 0\n";
                     }
                     #endif
 
@@ -156,8 +156,8 @@ void ClauseCleaner::treatImplicitClauses()
                 if (solver->drup) {
                     (*solver->drup)
                     << lits[0] << " "
-                    << lits[1] << " 0"
-                    << endl;
+                    << lits[1]
+                    << " 0\n";
                 }
                 #endif
             }
@@ -173,8 +173,8 @@ void ClauseCleaner::treatImplicitClauses()
                     << "d "
                     << lit << " "
                     << i->lit1() << " "
-                    << i->lit2() << " 0"
-                    << endl;
+                    << i->lit2()
+                    << " 0\n";
                 }
                 #endif
 
@@ -271,7 +271,7 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
             #ifdef DRUP
             if (solver->drup) {
-                (*solver->drup) << "d " << origCl << " 0" << endl;
+                (*solver->drup) << "d " << origCl << " 0\n";
             }
             #endif
             return true;
@@ -283,8 +283,8 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     if (solver->drup && i != j) {
         (*solver->drup)
         << cl << " 0" << endl
-        << "d " << origCl << " 0" << endl
-        ;
+        << "d " << origCl
+        << " 0\n";
     }
     #endif
 

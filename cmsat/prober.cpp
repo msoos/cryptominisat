@@ -601,8 +601,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
                         << endl;
                     }
                     (*solver->drup)
-                    << litToEnq << " 0"
-                    << endl;
+                    << litToEnq
+                    << " 0\n";
                 }
                 #endif
             }
@@ -684,8 +684,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
             #ifdef DRUP
             if (solver->drup) {
                 (*solver->drup)
-                << (~lit) << " 0"
-                << endl;
+                << (~lit)
+                << " 0\n";
             }
             #endif
         }

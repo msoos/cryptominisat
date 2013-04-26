@@ -327,8 +327,8 @@ bool VarReplacer::replaceImplicit()
                         #ifdef DRUP
                         if (solver->drup) {
                             *(solver->drup)
-                            << lit1 << " " << lit3 << " 0"
-                            << endl;
+                            << lit1 << " " << lit3
+                            << " 0\n";
                         }
                         #endif
                     }
@@ -349,8 +349,8 @@ bool VarReplacer::replaceImplicit()
                         #ifdef DRUP
                         if (solver->drup) {
                             *(solver->drup)
-                            << lit1 << " " << lit2 << " 0"
-                            << endl;
+                            << lit1 << " " << lit2
+                            << " 0\n";
                         }
                         #endif
                     }
@@ -375,8 +375,8 @@ bool VarReplacer::replaceImplicit()
                         << "d "
                         << origLit1 << " "
                         << origLit2 << " "
-                        << origLit3 << " 0"
-                        << endl;
+                        << origLit3
+                        << " 0\n";
                     }
                     #endif
 
@@ -423,13 +423,15 @@ bool VarReplacer::replaceImplicit()
                     *(solver->drup)
                     << lit1 << " "
                     << lit2 << " "
-                    << lit3 << " 0"
-                    << endl
+                    << lit3
+                    << " 0\n"
+
+                    //Delete old one
                     << "d "
                     << origLit1 << " "
                     << origLit2 << " "
-                    << origLit3 << " 0"
-                    << endl;
+                    << origLit3
+                    << " 0\n";
                 }
                 #endif
 
@@ -452,8 +454,8 @@ bool VarReplacer::replaceImplicit()
                 #ifdef DRUP
                 if (solver->drup) {
                     *(solver->drup)
-                    << lit2 << " 0"
-                    << endl;
+                    << lit2
+                    << " 0\n";
                 }
                 #endif
                 remove = true;
@@ -479,8 +481,8 @@ bool VarReplacer::replaceImplicit()
                     *(solver->drup)
                     << "d "
                     << origLit1 << " "
-                    << origLit2 << " 0"
-                    << endl;
+                    << origLit2
+                    << " 0\n";
                 }
                 #endif
 
@@ -497,11 +499,12 @@ bool VarReplacer::replaceImplicit()
             ) {
                 *(solver->drup)
                 //Add replaced
-                << lit1 << " " << lit2 << " 0"
-                << endl
-                //Delete old
-                << "d " << origLit1 << " " << origLit2 << " 0"
-                << endl;
+                << lit1 << " " << lit2
+                << " 0\n"
+
+                //Delete old one
+                << "d " << origLit1 << " " << origLit2
+                << " 0\n";
             }
 
             #endif
@@ -643,8 +646,8 @@ bool VarReplacer::handleUpdatedClause(
     #ifdef DRUP
     if (solver->drup) {
         *(solver->drup)
-        << c << " 0"
-        << endl;
+        << c
+        << " 0\n";
     }
     #endif
 
@@ -790,11 +793,11 @@ bool VarReplacer::replace(
             #ifdef DRUP
             if (solver->drup) {
                 *(solver->drup)
-                << ~lit1 << " " << lit2 << " 0" << endl
-                << lit1 << " " << ~lit2 << " 0" << endl
-                << lit1 << " 0" << endl
-                << ~lit1 << " 0" << endl
-                << "0" << endl
+                << ~lit1 << " " << lit2 << " 0\n"
+                << lit1 << " " << ~lit2 << " 0\n"
+                << lit1 << " 0\n"
+                << ~lit1 << " 0\n"
+                << "0\n"
                 ;
             }
             #endif
@@ -810,8 +813,9 @@ bool VarReplacer::replace(
     #ifdef DRUP
     if (solver->drup) {
         *(solver->drup)
-        << ~lit1 << " " << lit2 << " 0" << endl
-        << lit1 << " " << ~lit2 << " 0" << endl;
+        << ~lit1 << " " << lit2 << " 0\n"
+        << lit1 << " " << ~lit2 << " 0\n"
+        ;
     }
     #endif
 
@@ -828,9 +832,9 @@ bool VarReplacer::replace(
             #ifdef DRUP
             if (solver->drup) {
                 *(solver->drup)
-                << ~lit1 << " 0" << endl
-                << lit1 << " 0" << endl
-                << "0" << endl;
+                << ~lit1 << " 0\n"
+                << lit1 << " 0\n"
+                << "0\n";
             }
             #endif
             solver->ok = false;
@@ -854,8 +858,8 @@ bool VarReplacer::replace(
             #ifdef DRUP
             if (solver->drup) {
                 *(solver->drup)
-                << toEnqueue << " 0"
-                << endl;
+                << toEnqueue
+                << " 0\n";
             }
             #endif
 

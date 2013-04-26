@@ -930,8 +930,8 @@ void ClauseVivifier::subsumeImplicit()
                         << "d "
                         << lit << " "
                         << i->lit1() << " "
-                        << i->lit2() << " 0"
-                        << endl;
+                        << i->lit2()
+                        << " 0\n";
                     }
                     #endif
                     continue;
@@ -972,8 +972,8 @@ void ClauseVivifier::subsumeImplicit()
                     (*solver->drup)
                     << "d "
                     << lit << " "
-                    << i->lit1() << " 0"
-                    << endl;
+                    << i->lit1()
+                    << " 0\n";
                 }
                 #endif
 
@@ -1072,8 +1072,8 @@ bool ClauseVivifier::strengthenImplicit()
                         #ifdef DRUP
                         if (solver->drup) {
                             (*solver->drup)
-                            << lits[0] << " 0"
-                            << endl;
+                            << lits[0]
+                            << " 0\n";
                         }
                         #endif
                         remLitFromBin++;
@@ -1116,8 +1116,8 @@ bool ClauseVivifier::strengthenImplicit()
                     #ifdef DRUP
                     if (solver->drup) {
                         (*solver->drup)
-                        << lit << " 0"
-                        << endl;
+                        << lit
+                        << " 0\n";
                     }
                     #endif
 
@@ -1174,16 +1174,14 @@ bool ClauseVivifier::strengthenImplicit()
                         //Add shortened
                         << i->lit1() << " "
                         << i->lit2()
-                        << " 0"
-                        << endl
+                        << " 0\n"
 
                         //Delete old
                         << "d "
                         << lit << " "
                         << i->lit1() << " "
                         << i->lit2()
-                        << " 0"
-                        << endl;
+                        << " 0\n";
                     }
                     #endif
 
@@ -1220,16 +1218,15 @@ bool ClauseVivifier::strengthenImplicit()
                             //Add shortened
                             << lits[0] << " "
                             << lits[1]
-                            << " 0"
-                            << endl
+                            << " 0\n"
 
                             //Delete old
                             << "d "
                             << lit << " "
                             << i->lit1() << " "
                             << i->lit2()
-                            << " 0"
-                            << endl;
+                            << " 0\n"
+                            ;
                         }
                         #endif
 
@@ -1242,16 +1239,16 @@ bool ClauseVivifier::strengthenImplicit()
                         if (solver->drup) {
                             (*solver->drup)
                             //Add shortened
-                            << lits[0] << " 0"
-                            << endl
+                            << lits[0]
+                            << " 0\n"
 
                             //Delete old
                             << "d "
                             << lit << " "
                             << i->lit1() << " "
                             << i->lit2()
-                            << " 0"
-                            << endl;
+                            << " 0\n"
+                            ;
                         }
                         #endif
 

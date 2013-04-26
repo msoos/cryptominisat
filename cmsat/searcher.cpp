@@ -264,7 +264,7 @@ void Searcher::doOTFSubsume(PropBy confl)
                 *(drup)
                 << newCl.lits[i] << " ";
             }
-            (*drup) << " 0" << endl;
+            (*drup) << " 0\n";
         }
         #endif //DRUP
 

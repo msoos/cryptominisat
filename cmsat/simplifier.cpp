@@ -348,8 +348,8 @@ void Simplifier::unlinkClause(const ClOffset offset, bool drup)
     #ifdef DRUP
     if (solver->drup && drup) {
        (*solver->drup)
-       << "d " << cl << " 0"
-       << endl;
+       << "d " << cl
+       << " 0\n";
     }
     #endif
 
@@ -419,8 +419,8 @@ lbool Simplifier::cleanClause(ClOffset offset)
         #ifdef DRUP
         if (solver->drup) {
            *(solver->drup)
-           << "d " << origCL << " 0"
-           << endl;
+           << "d " << origCL
+           << " 0\n";
         }
         #endif
 
@@ -440,8 +440,12 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
     if (solver->drup && ((i-j > 0))) {
         *(solver->drup)
-        << cl << " 0" << endl;
-        *(solver->drup) << "d " << origCL << " 0" << endl;
+        << cl
+        << " 0\n"
+
+        //Delete old one
+        << "d " << origCL
+        << " 0\n";
     }
     #endif
 
@@ -500,9 +504,10 @@ void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
     #ifdef DRUP
     if (solver->drup) {
         *(solver->drup)
-        << cl << " 0" << endl
-        << "d " << origCl << " 0"
-        << endl;
+        << cl
+        << " 0\n"
+        << "d " << origCl
+        << " 0\n";
     }
     #endif
 
@@ -857,8 +862,8 @@ bool Simplifier::completeCleanClause(Clause& cl)
             #ifdef DRUP
             if (solver->drup) {
                 *(solver->drup)
-                << "d " << origCl << " 0"
-                << endl;
+                << "d " << origCl
+                << " 0\n";
             }
             #endif
             return false;
@@ -873,9 +878,12 @@ bool Simplifier::completeCleanClause(Clause& cl)
     #ifdef DRUP
     if (solver->drup && (i - j > 0)) {
         *(solver->drup)
-        << "d " << origCl << " 0" << endl
-        << cl << " 0" << endl
-        ;
+        << cl
+        << " 0\n"
+
+        //Delete old one
+        << "d " << origCl
+        << " 0\n";
     }
     #endif
 
@@ -1452,7 +1460,7 @@ end:
             ) {
                 (*solver->drup) << *it << " ";
             }
-            (*solver->drup) << "0" << endl;
+            (*solver->drup) << "0\n";
         }
     }
     #endif
@@ -2586,8 +2594,8 @@ void Simplifier::removeClausesHelper(
                    << "d "
                    << lits[0] << " "
                    << lits[1] << " "
-                   << lits[2] << " 0"
-                   << endl;
+                   << lits[2]
+                   << " 0\n";
                 }
                 #endif
             }
