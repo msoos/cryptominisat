@@ -89,6 +89,7 @@ void Prober::checkOTFRatio()
             > 0.8*800LL*1000LL*1000LL
         && ratio < 0.3
         && solver->conf.otfHyperbin
+        && !solver->drup
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
