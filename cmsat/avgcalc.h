@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -30,7 +30,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace CMSat {
+namespace forl {
 using std::vector;
 
 template <class T, class T2 = uint64_t>

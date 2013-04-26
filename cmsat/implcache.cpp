@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -29,7 +29,7 @@
 #include "varupdatehelper.h"
 #include "time_mem.h"
 
-using namespace CMSat;
+using namespace forl;
 using std::cout;
 using std::endl;
 

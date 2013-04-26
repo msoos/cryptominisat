@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -26,7 +26,7 @@
 #ifndef __PROPBYFORGRAPH_H__
 #define __PROPBYFORGRAPH_H__
 
-namespace CMSat {
+namespace forl {
 
 class PropByForGraph
 {

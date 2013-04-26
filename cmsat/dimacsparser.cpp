@@ -1,9 +1,9 @@
 /*****************************************************************************
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+forl -- Copyright (c) 2009 Mate Soos
 
 Original code by MiniSat authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
+Modifications for forl are under GPLv3 licence.
 ******************************************************************************/
 
 #include "dimacsparser.h"
@@ -18,7 +18,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define DEBUG_COMMENT_PARSING
 #endif //VERBOSE_DEBUG
 
-using namespace CMSat;
+using namespace forl;
 using std::vector;
 using std::cout;
 using std::endl;

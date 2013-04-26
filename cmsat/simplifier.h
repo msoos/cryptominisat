@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -40,7 +40,7 @@
 #include "heap.h"
 #include "touchlist.h"
 
-namespace CMSat {
+namespace forl {
 
 using std::vector;
 using std::list;

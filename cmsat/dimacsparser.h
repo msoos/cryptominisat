@@ -1,9 +1,9 @@
 /*****************************************************************************
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+forl -- Copyright (c) 2009 Mate Soos
 
 Original code by MiniSat authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
+Modifications for forl are under GPLv3 licence.
 ******************************************************************************/
 
 #ifndef DIMACSPARSER_H
@@ -21,7 +21,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif
 
-namespace CMSat {
+namespace forl {
 
 class Solver;
 

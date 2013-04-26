@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -30,7 +30,7 @@
 #include "clause.h"
 #include "vec.h"
 
-namespace CMSat {
+namespace forl {
 
 //#define VERBOSE_DEBUG
 

@@ -5,7 +5,7 @@
 #include "clause.h"
 #include "boost/multi_array.hpp"
 
-namespace CMSat {
+namespace forl {
 
 class Solver;
 

@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -33,7 +33,7 @@
 #include "clausecleaner.h"
 #include "completedetachreattacher.h"
 
-using namespace CMSat;
+using namespace forl;
 using std::make_pair;
 using std::set;
 using std::cout;

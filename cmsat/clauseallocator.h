@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -34,7 +34,7 @@
 
 #define BASE_DATA_TYPE uint32_t
 
-namespace CMSat {
+namespace forl {
 
 struct Clause;
 class Solver;

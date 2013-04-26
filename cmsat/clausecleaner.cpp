@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -21,7 +21,7 @@
 
 #include "clausecleaner.h"
 
-using namespace CMSat;
+using namespace forl;
 
 //#define DEBUG_CLEAN
 //#define VERBOSE_DEBUG

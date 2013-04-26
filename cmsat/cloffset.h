@@ -3,7 +3,7 @@
 
 #include "constants.h"
 
-namespace CMSat {
+namespace forl {
 
 typedef uint32_t ClOffset;
 

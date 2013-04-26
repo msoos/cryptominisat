@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -39,7 +39,7 @@ using std::endl;
 #define VERBOSE_DEBUG_BIN_REPLACER
 #endif
 
-using namespace CMSat;
+using namespace forl;
 
 //#define VERBOSE_DEBUG
 //#define REPLACE_STATISTICS

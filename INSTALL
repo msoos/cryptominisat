@@ -1,7 +1,7 @@
 -----------
 GCC bug
 ----------
-Beware, GCC has a bug affecting propagation in CryptoMiniSat:
+Beware, GCC has a bug affecting propagation in forl:
 
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=47365
 

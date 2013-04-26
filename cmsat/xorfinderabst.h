@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -22,7 +22,7 @@
 #ifndef __XORFINDERABST_H__
 #define __XORFINDERABST_H__
 
-namespace CMSat {
+namespace forl {
 
 class Simplifier;
 class Solver;

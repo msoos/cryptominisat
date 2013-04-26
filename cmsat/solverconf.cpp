@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -21,7 +21,7 @@
 
 #include "solverconf.h"
 #include <limits>
-using namespace CMSat;
+using namespace forl;
 
 SolverConf::SolverConf() :
         //Variable activities

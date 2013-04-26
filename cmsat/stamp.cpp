@@ -1,7 +1,7 @@
 #include "stamp.h"
 #include "varreplacer.h"
 
-using namespace CMSat;
+using namespace forl;
 
 bool Stamp::stampBasedClRem(
     const vector<Lit>& lits

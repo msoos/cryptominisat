@@ -1,7 +1,7 @@
 /*
  * Based on SatELite -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
  * SatELite comes with MIT licence
- * Part of CryptoMiniSat, enhanced by Mate Soos & collaborators
+ * Part of forl, enhanced by Mate Soos & collaborators
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -30,7 +30,7 @@
 
 #include "clause.h"
 
-namespace CMSat {
+namespace forl {
 using std::vector;
 
 /**

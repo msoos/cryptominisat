@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -30,7 +30,7 @@
 
 #include "cloffset.h"
 
-namespace CMSat {
+namespace forl {
 
 enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 

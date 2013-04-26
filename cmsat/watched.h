@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -32,7 +32,7 @@
 
 #include <limits>
 
-namespace CMSat {
+namespace forl {
 
 enum WatchType {
     watch_clause_t = 0

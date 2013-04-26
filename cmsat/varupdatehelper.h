@@ -5,7 +5,7 @@
 #include <iostream>
 #include <set>
 
-namespace CMSat {
+namespace forl {
 
 Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper);
 Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);

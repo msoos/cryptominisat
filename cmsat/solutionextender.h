@@ -1,5 +1,5 @@
 /******************************************************************************
-CryptoMiniSat -- Copyright (c) 2011 Mate Soos
+forl -- Copyright (c) 2011 Mate Soos
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "solvertypes.h"
 #include "clause.h"
 
-namespace CMSat {
+namespace forl {
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_RECONSTRUCT

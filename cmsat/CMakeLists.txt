@@ -7,7 +7,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BIN
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
 
-set(cryptoms_lib_files
+set(forl_lib_files
     propengine.cpp
     packedrow.cpp
     varreplacer.cpp
@@ -32,45 +32,41 @@ set(cryptoms_lib_files
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-set(cryptoms_lib_link_libs "")
+set(forl_lib_link_libs "")
 
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 
-    #add_library(m4ri STATIC IMPORTED)
-    add_library(m4ri SHARED IMPORTED)
+    add_library(m4ri STATIC IMPORTED)
+    #add_library(m4ri SHARED IMPORTED)
     set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
-    SET(cryptoms_lib_files ${cryptoms_lib_files} xorfinder.cpp)
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} m4ri)
+    SET(forl_lib_files ${forl_lib_files} xorfinder.cpp)
+    SET(forl_lib_link_libs ${forl_lib_link_libs} m4ri)
 endif (M4RI_FOUND)
 
 if (MYSQL_FOUND AND STATSNEEDED)
-    SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
+    SET(forl_lib_files ${forl_lib_files} mysqlstats.cpp)
+    SET(forl_lib_link_libs ${forl_lib_link_libs} ${MYSQL_LIB})
 endif (MYSQL_FOUND AND STATSNEEDED)
 
-if (Perftools_FOUND)
-    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
-endif (Perftools_FOUND)
-
-#add_library(cryptoms STATIC
-add_library(cryptoms SHARED
-    ${cryptoms_lib_files}
+#add_library(forl SHARED
+add_library(forl_lib STATIC
+    ${forl_lib_files}
 )
 
-target_link_libraries(cryptoms
-    ${cryptoms_lib_link_libs}
+target_link_libraries(forl_lib
+    ${forl_lib_link_libs}
 )
 
-add_executable(cryptominisat
+add_executable(forl
     dimacsparser.cpp
     main.cpp
 )
 
-set(cryptoms_exec_link_libs
+set(forl_exec_link_libs
     ${Boost_LIBRARIES}
-    cryptoms
+    forl_lib
 #    vtkViews
 #    vtkInfovis
 #    vtkRendering
@@ -80,13 +76,13 @@ set(cryptoms_exec_link_libs
 )
 
 IF (ZLIB_FOUND)
-SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
+SET(forl_exec_link_libs ${forl_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF(ZLIB_FOUND)
 
 
-target_link_libraries(cryptominisat
-    ${cryptoms_exec_link_libs}
+target_link_libraries(forl
+    ${forl_exec_link_libs}
 )
 
 
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
+SET(CPACK_PACKAGE_EXECUTABLES "forl")

@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -29,7 +29,7 @@
 #include "constants.h"
 #include "solvertypes.h"
 
-namespace CMSat {
+namespace forl {
 
 class Solver;
 
@@ -272,7 +272,7 @@ private:
 namespace std
 {
     template <>
-    inline void swap (CMSat::TransCache& m1, CMSat::TransCache& m2)
+    inline void swap (forl::TransCache& m1, forl::TransCache& m2)
     {
          m1.lits.swap(m2.lits);
     }

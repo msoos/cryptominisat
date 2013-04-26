@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -24,7 +24,7 @@
 #include "varreplacer.h"
 #include "clausecleaner.h"
 
-using namespace CMSat;
+using namespace forl;
 
 CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
     solver(_solver)

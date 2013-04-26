@@ -11,7 +11,7 @@ ELSE()
   "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-PROJECT(cryptoms)
+PROJECT(forl)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
 
 # SET (CMAKE_CXX_COMPILER  "/usr/bin/clang")
@@ -34,9 +34,9 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # -----------------------------------------------------------------------------
 # Look for ZLIP (For reading zipped CNFs)
@@ -132,19 +132,19 @@ add_subdirectory(cmsat)
 add_custom_target(copy ALL COMMENT "Copying binaries from subdirs to build directory")
 add_custom_command(
     TARGET copy
-    COMMAND ${CMAKE_COMMAND} -E copy cmsat/cryptominisat .
+    COMMAND ${CMAKE_COMMAND} -E copy cmsat/forl .
 )
 add_dependencies(copy
-    cryptominisat
+    forl
 )
 
 
-set(CPACK_PACKAGE_NAME "cryptominisat")
+set(CPACK_PACKAGE_NAME "forl")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "3.0.0")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose SAT solver")
+set(CPACK_PACKAGE_VERSION "3.2.0")
 set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
@@ -152,7 +152,7 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME
 set(CPACK_SOURCE_IGNORE_FILES
   "/build/"
   "/.git/"
-  "/scripts/"
+  "/scripts*"
   "~$"
   "${CPACK_SOURCE_IGNORE_FILES}"
   "/tests/"
@@ -163,15 +163,20 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/matrixes/"
   "/man/"
   "/.kdev4/"
-  "/web/jquery/docs/"
-  "/web/jquery/examples/"
-  "/web/scriptaculous-js-1.9.0/test/"
+  #"/web/jquery/docs/"
+  #"/web/jquery/examples/"
+  #"/web/scriptaculous-js-1.9.0/test/"
+  "/web/"
   ".gitignore"
   ".git$"
   "tar.gz$"
   "tar.bz2$"
   ".kdev4$"
-
+  "HOWTO*"
+  "Doxyfile"
+  "README"
+  "NEWS"
+  "INSTALL"
 )
 include(CPack)
 

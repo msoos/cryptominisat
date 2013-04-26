@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -27,7 +27,7 @@
 #include <boost/multi_array.hpp>
 #include "time_mem.h"
 #include "avgcalc.h"
-namespace CMSat {
+namespace forl {
 
 class Solver;
 class SQLStats;

@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -33,7 +33,7 @@
 using std::string;
 using std::vector;
 
-namespace CMSat {
+namespace forl {
     class Solver;
 }
 
@@ -47,7 +47,7 @@ class Main
 
     private:
 
-        CMSat::Solver* solver;
+        forl::Solver* solver;
 
         //File reading
         void readInAFile(const string& filename);
@@ -58,14 +58,14 @@ class Main
         void printResultFunc(
             std::ostream* os
             , const bool toFile
-            , const CMSat::lbool ret
+            , const forl::lbool ret
             , const bool firstSolut
         );
         void printVersionInfo();
-        int correctReturnValue(const CMSat::lbool ret) const;
+        int correctReturnValue(const forl::lbool ret) const;
 
         //Config
-        CMSat::SolverConf conf;
+        forl::SolverConf conf;
         int numThreads;
         bool debugLib;
         bool debugNewVar;

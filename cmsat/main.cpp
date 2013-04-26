@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -20,10 +20,10 @@
 */
 
 /**
-@mainpage CryptoMiniSat
+@mainpage forl
 @author Mate Soos, and collaborators
 
-CryptoMiniSat is an award-winning SAT solver based on MiniSat. It brings a
+forl is an award-winning SAT solver based on MiniSat. It brings a
 number of benefits relative to MiniSat.
 */
 
@@ -50,7 +50,7 @@ number of benefits relative to MiniSat.
 
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
-using namespace CMSat;
+using namespace forl;
 using boost::lexical_cast;
 namespace po = boost::program_options;
 using std::cout;
@@ -903,7 +903,7 @@ void Main::parseCommandLine()
 
 void Main::printVersionInfo()
 {
-    cout << "c CryptoMiniSat version " << Solver::getVersion() << endl;
+    cout << "c forl version " << Solver::getVersion() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else

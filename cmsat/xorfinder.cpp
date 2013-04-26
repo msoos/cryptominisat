@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -27,7 +27,7 @@
 #include <limits>
 #include "m4ri.h"
 
-using namespace CMSat;
+using namespace forl;
 using std::cout;
 using std::endl;
 

@@ -7,7 +7,7 @@
 #ifndef __STAMP_H__
 #define __STAMP_H__
 
-namespace CMSat {
+namespace forl {
 
 using std::vector;
 class VarReplacer;

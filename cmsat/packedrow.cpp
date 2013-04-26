@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -21,7 +21,7 @@
 
 #include "packedrow.h"
 
-::std::ostream& operator << (std::ostream& os, const CMSat::PackedRow& m)
+::std::ostream& operator << (std::ostream& os, const forl::PackedRow& m)
 {
     for(uint32_t i = 0; i < m.getSize()*64; i++) {
         os << m[i];
@@ -30,7 +30,7 @@
     return os;
 }
 
-using namespace CMSat;
+using namespace forl;
 
 bool PackedRow::operator ==(const PackedRow& b) const
 {

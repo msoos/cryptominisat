@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -26,7 +26,7 @@
 #include "clause.h"
 #include <stack>
 
-namespace CMSat {
+namespace forl {
 
 class Solver;
 

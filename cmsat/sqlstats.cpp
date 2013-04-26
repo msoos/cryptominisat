@@ -1,5 +1,5 @@
 #include "sqlstats.h"
-using namespace CMSat;
+using namespace forl;
 
 
 #ifndef _MSC_VER

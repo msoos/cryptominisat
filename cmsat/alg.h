@@ -26,7 +26,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "watched.h"
 #include "constants.h"
 
-namespace CMSat {
+namespace forl {
 
 template<class V, class T>
 static inline void remove(V& ts, const T& t)

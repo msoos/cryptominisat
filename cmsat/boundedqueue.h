@@ -1,7 +1,7 @@
 /***************************************************************************
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 2008 - Gilles Audemard, Laurent Simon
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+forl -- Copyright (c) 2009 Mate Soos
 
 Original code by MiniSat and glucose authors are under an MIT licence
 Modifications also under MIT
@@ -18,7 +18,7 @@ Modifications also under MIT
 #include <sstream>
 #include <iomanip>
 
-namespace CMSat {
+namespace forl {
 using std::vector;
 
 template <class T, class T2 = uint64_t>

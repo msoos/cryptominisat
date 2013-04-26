@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -33,7 +33,7 @@
 #include "GitSHA1.h"
 #include <fstream>
 
-namespace CMSat {
+namespace forl {
 
 using std::vector;
 using std::pair;

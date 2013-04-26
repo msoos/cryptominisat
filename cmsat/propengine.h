@@ -1,5 +1,5 @@
 /*
- * CryptoMiniSat
+ * forl
  *
  * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
  *
@@ -44,7 +44,7 @@
 #include "clauseallocator.h"
 #include "stamp.h"
 
-namespace CMSat {
+namespace forl {
 
 using std::set;
 class Solver;
