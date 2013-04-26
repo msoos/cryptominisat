@@ -299,7 +299,7 @@ void Main::parseCommandLine()
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
     ("drupdebug", po::bool_switch(&drupDebug)
-        , "Put DRUP verification information into this file")
+        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
     #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
