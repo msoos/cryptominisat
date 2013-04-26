@@ -242,6 +242,7 @@ public:
         , const bool _updateGlues
         , const bool _doLHBR
     );
+    ~PropEngine();
 
     // Variable mode:
     //

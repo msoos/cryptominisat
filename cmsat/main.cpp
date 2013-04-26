@@ -991,6 +991,7 @@ int Main::solve()
     if (conf.verbosity >= 1) {
         solver->printStats();
     }
+    delete solver;
 
     //Final print of solution
     printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);

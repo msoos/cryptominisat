@@ -66,6 +66,15 @@ PropEngine::PropEngine(
 {
 }
 
+PropEngine::~PropEngine()
+{
+    #ifdef DRUP
+    if (drup) {
+        delete drup;
+    }
+    #endif
+}
+
 /**
 @brief Creates a new SAT variable
 */
