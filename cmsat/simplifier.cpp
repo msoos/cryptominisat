@@ -387,8 +387,8 @@ lbool Simplifier::cleanClause(ClOffset offset)
     cout << endl;
     #endif
     #ifdef DRUP
-    vector<Lit> origCL(cl.size());
-    std::copy(cl.begin(), cl.end(), origCL.begin());
+    vector<Lit> origCl(cl.size());
+    std::copy(cl.begin(), cl.end(), origCl.begin());
     #endif
 
     Lit* i = cl.begin();
@@ -419,7 +419,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
         #ifdef DRUP
         if (solver->drup) {
            *(solver->drup)
-           << "d " << origCL
+           << "d " << origCl
            << " 0\n";
         }
         #endif
@@ -444,7 +444,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
         << " 0\n"
 
         //Delete old one
-        << "d " << origCL
+        << "d " << origCl
         << " 0\n";
     }
     #endif
