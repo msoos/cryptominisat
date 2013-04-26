@@ -1432,6 +1432,17 @@ end:
     //Remove clauses that have been blocked recently
     if (solver->drup) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
+
+            //If doing stamping or caching, we cannot delete binary learnt
+            //clauses, because they are stored in the stamp/cache and so
+            //will be used -- and DRUP will complain when used
+            if (blockedClauses[i].lits.size() <= 2
+                && (solver->conf.doCache
+                    || solver->conf.doStamp)
+            ) {
+                continue;
+            }
+
             (*solver->drup)
             << "d ";
             for(vector<Lit>::const_iterator
@@ -2526,7 +2537,10 @@ void Simplifier::removeClausesHelper(
                 //If learnt, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
                 #ifdef DRUP
-                if (solver->drup) {
+                if (solver->drup
+                    && !solver->conf.doStamp
+                    && !solver->conf.doCache
+                ) {
                    *(solver->drup)
                    << "d "
                    << lits[0] << " "

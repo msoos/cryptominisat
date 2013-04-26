@@ -888,18 +888,6 @@ void Main::parseCommandLine()
         }
         conf.doCompHandler = false;
     }
-
-    if ((conf.doStamp || conf.doCache)
-        && drupf
-    ) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c Stamping and Implied caching is not supported during DRUP, turning them off"
-            << endl;
-        }
-        conf.doStamp = false;
-        conf.doCache = false;
-    }
     #endif
 
     if (conf.verbosity >= 1) {
