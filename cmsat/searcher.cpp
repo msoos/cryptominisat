@@ -1078,7 +1078,10 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
-                if (hist.trailDepthHist.isvalid()
+                //If not optimising for UNSAT, we might have SAT, indicated by
+                //a long trail
+                if (!conf.optimiseUnsat
+                    && hist.trailDepthHist.isvalid()
                     && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.8
                 ) {
                     //Nothing

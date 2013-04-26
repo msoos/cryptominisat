@@ -293,6 +293,8 @@ void Main::parseCommandLine()
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
+    ("unsat", po::value<int>(&conf.optimiseUnsat)->default_value(conf.optimiseUnsat)
+        , "Optimize for UNSAT solving")
     #ifdef DRUP
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")

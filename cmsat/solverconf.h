@@ -72,6 +72,7 @@ class SolverConf
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
         size_t    burstSearchLen;
         RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
+        int       optimiseUnsat;
 
         //Clause minimisation
         int doRecursiveMinim;
