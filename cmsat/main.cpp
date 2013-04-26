@@ -991,13 +991,16 @@ int Main::solve()
     if (conf.verbosity >= 1) {
         solver->printStats();
     }
-    delete solver;
 
     //Final print of solution
     printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
     if (conf.needResultFile) {
         printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
     }
+
+    //Delete solver
+    delete solver;
+    solver = NULL;
 
     return correctReturnValue(ret);
 }
