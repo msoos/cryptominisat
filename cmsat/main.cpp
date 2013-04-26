@@ -1015,10 +1015,6 @@ int Main::correctReturnValue(const lbool ret) const
         exit(-1);
     }
 
-    #ifdef NDEBUG
-    // (faster than "return", which will invoke the destructor for 'Solver')
-    exit(retval);
-    #endif
     return retval;
 }
 
