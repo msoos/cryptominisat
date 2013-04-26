@@ -142,7 +142,15 @@ bool Prober::probe()
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail.size();
+
+    //Clean clauses
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Cleaning clauses after probing.." << endl;
+    }
     solver->clauseCleaner->removeAndCleanAll();
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Cleaning clauses after probing finished." << endl;
+    }
 
     //Stats
     extraTime = 0;
