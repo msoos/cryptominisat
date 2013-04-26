@@ -33,18 +33,18 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
 desc = """Example usages:
 * check already computed SAT solutions (UNSAT cannot be checked):
-   python regression_test.py --checkdir ../../clusters/cluster93/
+   ./regression_test.py --checkdir ../../clusters/cluster93/
            --cnfdir ../../satcomp09/ -n 1
 
-* check file 'MYFILE' multiple times for correct answer:
-   python regression_test.py --file MYFILE --extraOptions="--nosubsume1 --noasymm"
-           --numStart 20 --num 100"
+* check already computed SAT solutions (UNSAT cannot be checked):
+   ./regression_test.py --check myfile.cnf
+           --solution sol.txt
 
 * fuzz the solver with precosat as solution-checker:
-   python regression_test.py --fuzz
+   ./regression_test.py --fuzz
 
 * go through regression listdir
-   python regression_test.py --regtest --checkdir ../tests/
+   ./regression_test.py --regtest --checkdir ../tests/
 """
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
@@ -106,6 +106,14 @@ parser.add_option("--soldir", dest="checkDirSol"
 parser.add_option("--probdir", dest="checkDirProb"
                     , default="/home/soos/media/sat/examples/satcomp09/"
                     , help="Directory of CNF files checked against"
+                    )
+parser.add_option("--check", dest="checkFile"
+                    , default=None
+                    , help="Check this file"
+                    )
+parser.add_option("--sol", dest="solutionFile"
+                    , default=None
+                    , help="Against this solution"
                     )
 
 (options, args) = parser.parse_args()
@@ -645,13 +653,19 @@ class Tester:
                 fnameCheck=self.testDir + fname,
                 newVar=False)
 
-    def checkFile(self, fname) :
-        if os.path.isfile(fname) == False:
-            print "Filename given '%s' is not a file!" % fname
+    def checkFile(self, problem, solution) :
+        if os.path.isfile(problem) == False:
+            print "Filename given '%s' is not a file!" % problem
             exit(-1)
 
-        print "Checking fname %s" % fname
-        self.check(fname=fname, fnameCheck=fname)
+        print "Checking CNF file '%s' against proposed solution '%s' " % (problem, solution)
+        #self.check(fname=problem, fnameCheck=problem)
+        output_lines = open(solution).readlines()
+        (unsat, value) = self.parse_solution_from_output(output_lines)
+        if not unsat:
+            self.test_found_solution(value, problem)
+        else:
+            print "Cannot check, UNSAT"
 
 tester = Tester()
 
@@ -660,6 +674,8 @@ if len(args) == 1:
     tester.check_unsat = True
     tester.checkFile(args[0])
 
+if options.checkFile :
+    tester.checkFile(options.checkFile, options.solutionFile)
 
 if options.fuzz_test:
     tester.needDebugLib = False
