@@ -1501,8 +1501,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
     //Handle found solution
     if (status == l_False) {
-        //Not much to do, just return l_False
-        return l_False;
+        //Not much to do
     } else if (status == l_True) {
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
