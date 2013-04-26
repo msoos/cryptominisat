@@ -644,7 +644,11 @@ void Main::parseCommandLine()
         cout << "Unkown option: " << c.what() << endl;
         exit(-1);
     } catch (boost::bad_any_cast &e) {
-        cerr << e.what() << endl;
+        std::cerr
+        << "ERROR! You probably gave a wrong argument type (Bad cast): "
+        << e.what()
+        << endl;
+
         exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::invalid_option_value> > what
