@@ -302,8 +302,8 @@ void Searcher::doOTFSubsume(PropBy confl)
         }
         if (drup) {
             (*drup)
-            << cl << " 0" << endl
-            << "d " << origCl << " 0" << endl
+            << cl << " 0\n"
+            << "d " << origCl << " 0\n"
             ;
         }
         #endif
@@ -863,8 +863,8 @@ lbool Searcher::search(uint64_t* geom_max)
                 #ifdef DRUP
                 if (drup) {
                     (*drup)
-                    << (~failed) << " 0"
-                    << endl;
+                    << (~failed)
+                    << " 0\n";
                 }
                 #endif
 
@@ -926,8 +926,7 @@ lbool Searcher::search(uint64_t* geom_max)
                         #ifdef DRUP
                         if (drup) {
                             (*drup)
-                            << (~ancestor) << " 0"
-                            << endl;
+                            << (~ancestor) << " 0\n";
                         }
                         #endif
                     }
@@ -1190,7 +1189,7 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     if (drup) {
         (*drup)
-        << learnt_clause << " 0" << endl;
+        << learnt_clause << " 0\n";
     }
     #endif
 
@@ -1285,8 +1284,8 @@ bool Searcher::handle_conflict(PropBy confl)
                 #ifdef DRUP
                 if (drup && decisionLevel() == 0) {
                     *(drup)
-                    << cl[0] << " 0"
-                    << endl;
+                    << cl[0]
+                    << " 0\n";
                 }
                 #endif
             }
@@ -1360,8 +1359,7 @@ bool Searcher::handle_conflict(PropBy confl)
                 #ifdef DRUP
                 if (drup && decisionLevel() == 0) {
                     *(drup)
-                    << it->lits[0] << " 0"
-                    << endl;
+                    << it->lits[0] << " 0\n";
                 }
                 #endif
             }
@@ -2597,8 +2595,7 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
                 (*drup)
                 << "d "
                 << it->getLit1() << " " << it->getLit2()
-                << " 0"
-                << endl;
+                << " 0\n";
             }
             #endif
 
@@ -2921,7 +2918,7 @@ PropBy Searcher::propagate(
 
             (*drup)
             << trail[i]
-            << " 0" << endl;
+            << " 0\n";
         }
         if (!ret.isNULL()) {
             (*drup)

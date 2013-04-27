@@ -306,8 +306,8 @@ bool VarReplacer::replaceImplicit()
                     #ifdef DRUP
                     if (solver->drup) {
                         *(solver->drup)
-                        << lit1 << " 0"
-                        << endl;
+                        << lit1
+                        << " 0\n";
                     }
                     #endif
                     remove = true;
@@ -599,8 +599,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
             *(solver->drup)
             << "d "
             << origCl
-            << " 0"
-            << endl;
+            << " 0\n";
         }
         #endif
     }

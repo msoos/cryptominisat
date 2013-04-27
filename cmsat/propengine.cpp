@@ -68,11 +68,6 @@ PropEngine::PropEngine(
 
 PropEngine::~PropEngine()
 {
-    #ifdef DRUP
-    if (drup) {
-        delete drup;
-    }
-    #endif
 }
 
 /**
@@ -1617,7 +1612,7 @@ void PropEngine::addHyperBin(const Lit p)
         if (drup) {
             (*drup)
             << p << " " << (~deepestAncestor)
-            << " 0" << endl;
+            << " 0\n";
         }
         #endif
         hyperBinNotAdded = false;

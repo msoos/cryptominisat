@@ -267,9 +267,6 @@ void Main::parseCommandLine()
     }
 
     string typeclean;
-    #ifdef DRUP
-    string drupfilname;
-    #endif
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -295,12 +292,6 @@ void Main::parseCommandLine()
         , "Perform recursive minimisation")
     ("unsat", po::value<int>(&conf.optimiseUnsat)->default_value(conf.optimiseUnsat)
         , "Optimize for UNSAT solving")
-    #ifdef DRUP
-    ("drup,d", po::value<string>(&drupfilname)
-        , "Put DRUP verification information into this file")
-    ("drupdebug", po::bool_switch(&drupDebug)
-        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
-    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -838,24 +829,7 @@ void Main::parseCommandLine()
     }
 
     #ifdef DRUP
-    if (vm.count("drup")) {
-        if (drupDebug) {
-            drupf = &std::cout;
-        } else {
-            std::ofstream* drupfTmp = new std::ofstream;
-            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
-            if (!*drupfTmp) {
-                cout
-                << "ERROR: Could not open DRUP file "
-                << drupfilname
-                << " for writing"
-                << endl;
-
-                exit(-1);
-            }
-            drupf = drupfTmp;
-        }
-    }
+    drupf = &std::cout;
 
     if (!conf.otfHyperbin && drupf) {
         if (conf.verbosity >= 2) {
@@ -903,7 +877,12 @@ void Main::parseCommandLine()
 
 void Main::printVersionInfo()
 {
-    cout << "c forl version " << Solver::getVersion() << endl;
+    #ifdef DRUP
+    cout << "c forl version 3.2.0-DRUP" << endl;
+    #else
+    cout << "c forl version 3.2.0-NODRUP" << endl;
+    #endif
+
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else
@@ -917,6 +896,7 @@ int Main::solve()
     solverToInterrupt = solver;
     #ifdef DRUP
     solver->drup = drupf;
+    *drupf << "o proof DRUP\n";
     #endif
 
     std::ofstream resultfile;
@@ -1001,6 +981,12 @@ int Main::solve()
     //Delete solver
     delete solver;
     solver = NULL;
+
+    #ifdef DRUP
+    //flush DRUP
+    *drupf << std::flush;
+    #endif
+
 
     return correctReturnValue(ret);
 }

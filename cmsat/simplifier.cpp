@@ -2552,8 +2552,8 @@ void Simplifier::removeClausesHelper(
                    *(solver->drup)
                    << "d "
                    << lits[0] << " "
-                   << lits[1] << " 0"
-                   << endl;
+                   << lits[1]
+                   << " 0\n";
                 }
                 #endif
             }

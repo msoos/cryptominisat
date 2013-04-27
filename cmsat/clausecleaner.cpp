@@ -282,9 +282,8 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     #ifdef DRUP
     if (solver->drup && i != j) {
         (*solver->drup)
-        << cl << " 0" << endl
-        << "d " << origCl
-        << " 0\n";
+        << cl << " 0\n"
+        << "d " << origCl << " 0\n";
     }
     #endif
 

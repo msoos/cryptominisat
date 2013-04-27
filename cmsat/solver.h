@@ -332,6 +332,7 @@ class Solver : public Searcher
             , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
+            , bool addDrup = true
         );
 
     private:
