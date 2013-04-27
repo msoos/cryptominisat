@@ -572,9 +572,6 @@ void Main::parseCommandLine()
 
     po::positional_options_description p;
     p.add("input", 1);
-    #ifdef DRUP
-    p.add("drup", 1);
-    #endif
 
     po::variables_map vm;
     po::options_description cmdline_options;
@@ -830,6 +827,7 @@ void Main::parseCommandLine()
 
     #ifdef DRUP
     drupf = &std::cout;
+    conf.optimiseUnsat = true;
 
     if (!conf.otfHyperbin && drupf) {
         if (conf.verbosity >= 2) {

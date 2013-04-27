@@ -69,7 +69,7 @@ public:
     #endif
 
     int  operator *  () {
-        return (pos >= size) ? EOF : buf[pos];
+        return (pos >= size) ? -1 : buf[pos];
     }
     void operator ++ () {
         pos++;

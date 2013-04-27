@@ -28,7 +28,7 @@ if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
         "-Werror -std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-Werror -std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O3 -g0 -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
+    SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 # -----------------------------------------------------------------------------
