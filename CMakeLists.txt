@@ -26,9 +26,9 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some li
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
+        "-Werror -std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_DEBUG "-Werror -std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
+    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O3 -g0 -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 # -----------------------------------------------------------------------------
@@ -111,7 +111,7 @@ IF (M4RI_FOUND)
     MESSAGE(STATUS "OK, Found M4RI!")
     add_definitions( -DUSE_M4RI )
 ELSE (M4RI_FOUND)
-    MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
+    MESSAGE(FATAL_ERROR "Did not find M4RI, XOR detection&manipulation would not work! Exiting!")
 ENDIF (M4RI_FOUND)
 
 # find_package(Perftools)
