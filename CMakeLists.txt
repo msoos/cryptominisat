@@ -166,7 +166,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   #"/web/jquery/docs/"
   #"/web/jquery/examples/"
   #"/web/scriptaculous-js-1.9.0/test/"
-  "/web/"
+  #"/web/"
   ".gitignore"
   ".git$"
   "tar.gz$"
@@ -177,6 +177,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   "README"
   "NEWS"
   "INSTALL"
+  #"cmsat_table*"
 )
 include(CPack)
 

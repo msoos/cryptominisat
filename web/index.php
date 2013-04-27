@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
-    <title>Cryptominisat 3 visualization</title>
+    <title>forl 3 visualization</title>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.js"></script>
@@ -39,7 +39,7 @@
 </head>
 
 <body>
-<h1>Cryptominisat 3</h1>
+<h1>forl 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
 <p>This webpage shows the partial solving of two SAT instances, visually.
@@ -129,7 +129,7 @@ not only to visually display dynamic solver behaviour. Rather, I
 think we could do dynamic analysis and heuristic adjustment instead
 of the static analysis and static heuristic selection as done by current
 <a href="http://www.jair.org/media/2490/live-2490-3923-jair.pdf">
-portifolio solvers</a>. Accordingly, CryptoMiniSat 3 has an extremely
+portifolio solvers</a>. Accordingly, forl 3 has an extremely
 large set of options - e.g. swithcing between cleaning using glues,
 activities, clause sizes, or number of propagations+conflicts made by
 a clause is only a matter of setting a variable, and can be done on-the-fly.
@@ -144,7 +144,7 @@ here</a> and send the link to a friend. Second, you can
 <a href="http://www.srlabs.de">contact my employer</a>, and he will be happy
 to find a way for us to help you with your SAT problems. Third, you can improve
 this system by cloning my
-<a href="https://github.com/msoos/cryptominisat">GIT</a> repository. It includes
+<a href="https://github.com/msoos/forl">GIT</a> repository. It includes
 everything i.e. SQL, PHP, HTML, CSS and more.
 </p>
 
