@@ -77,7 +77,7 @@ ENDIF (ZLIB_FOUND)
 
 
 #for DRUP
-set(DRUP 1)
+#set(DRUP 1)
 if (DRUP)
     add_definitions( -DDRUP )
     #add_definitions( -DDRUP_DEBUG )

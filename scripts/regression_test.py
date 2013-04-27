@@ -49,7 +49,7 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
-                    , default="../build/cryptominisat"
+                    , default="../build/forl-drup"
                     , help="SAT solver executable. Default: %default"
                     )
 
@@ -121,7 +121,7 @@ parser.add_option("--sol", dest="solutionFile"
 
 
 def setlimits():
-    sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+    #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -224,8 +224,6 @@ class Tester:
         command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += fname
-        if fnameDrup:
-            command += " " + fnameDrup
         print "Executing: %s " % command
 
         #print time limit
@@ -483,7 +481,23 @@ class Tester:
 
         if unsat == True:
             if fnameDrup:
-                toexec = "drupcheck %s %s" % (fname, fnameDrup)
+                f=open("drupcheck", "w")
+                f2=open("fullout", "w")
+                for l in consoleOutput.split('\n') :
+                    f2.write("%s\n" % l)
+                    if len(l) < 1 :
+                        continue
+                        print "line wrong: '%s'" % l
+                        #print consoleOutput
+                        exit()
+
+                    if l[0] == "c" or l[0] == "s" or l[0] == "v" or l[0] == "o" :
+                        continue
+                    f.write("%s\n" % l)
+
+                f.close()
+                f2.close()
+                toexec = "drupcheck %s %s" % (fname, "drupcheck")
                 print "Checking DRUP...: ", toexec
                 p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                      #,preexec_fn=setlimits)
@@ -562,6 +576,7 @@ class Tester:
                     fnameDrup = "drupcheck"
 
                 #should the multi-fuzzer be called?
+                file_names_multi = None
                 if len(fuzzer) == 2 and fuzzer[1] == "special":
                     #create N files
                     file_names_multi = []
@@ -609,6 +624,9 @@ class Tester:
                             needToLimitTime=True)
 
                 os.unlink(file_name)
+                if file_names_multi :
+                    for tounlink in file_names_multi :
+                        os.unlink(tounlink)
 
     def checkDir(self) :
         self.ignoreNoSolution = True
