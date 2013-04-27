@@ -482,9 +482,9 @@ class Tester:
         if unsat == True:
             if fnameDrup:
                 f=open("drupcheck", "w")
-                f2=open("fullout", "w")
+                #f2=open("fullout", "w")
                 for l in consoleOutput.split('\n') :
-                    f2.write("%s\n" % l)
+                    #f2.write("%s\n" % l)
                     if len(l) < 1 :
                         continue
                         print "line wrong: '%s'" % l
@@ -496,7 +496,7 @@ class Tester:
                     f.write("%s\n" % l)
 
                 f.close()
-                f2.close()
+                #f2.close()
                 toexec = "drupcheck %s %s" % (fname, "drupcheck")
                 print "Checking DRUP...: ", toexec
                 p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
