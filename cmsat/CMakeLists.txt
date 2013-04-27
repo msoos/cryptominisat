@@ -29,7 +29,7 @@ set(forl_lib_files
     stamp.cpp
     compfinder.cpp
     comphandler.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
+    #${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
 set(forl_lib_link_libs "")
@@ -59,10 +59,17 @@ target_link_libraries(forl_lib
     ${forl_lib_link_libs}
 )
 
-add_executable(forl
-    dimacsparser.cpp
-    main.cpp
-)
+if (DRUP)
+    add_executable(forl-drup
+        dimacsparser.cpp
+        main.cpp
+    )
+else(DRUP)
+    add_executable(forl-nodrup
+        dimacsparser.cpp
+        main.cpp
+    )
+endif(DRUP)
 
 set(forl_exec_link_libs
     ${Boost_LIBRARIES}
@@ -79,10 +86,14 @@ IF (ZLIB_FOUND)
 SET(forl_exec_link_libs ${forl_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF(ZLIB_FOUND)
 
+if (DRUP)
+    target_link_libraries(forl-drup
+        ${forl_exec_link_libs}
+    )
+else(DRUP)
+    target_link_libraries(forl-nodrup
+        ${forl_exec_link_libs}
+    )
+endif(DRUP)
 
-target_link_libraries(forl
-    ${forl_exec_link_libs}
-)
-
-
-SET(CPACK_PACKAGE_EXECUTABLES "forl")
+#SET(CPACK_PACKAGE_EXECUTABLES "forl")

@@ -71,13 +71,13 @@ ENDIF (ZLIB_FOUND)
 # -----------------------------------------------------------------------------
 # Add GIT version
 # -----------------------------------------------------------------------------
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+#include(GetGitRevisionDescription)
+#get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
 
 #for DRUP
-#set(DRUP 1)
+set(DRUP 1)
 if (DRUP)
     add_definitions( -DDRUP )
     #add_definitions( -DDRUP_DEBUG )
@@ -130,13 +130,24 @@ add_subdirectory(cmsat)
 # Copy built binaries to root (build) dir
 # -----------------------------------------------------------------------------
 add_custom_target(copy ALL COMMENT "Copying binaries from subdirs to build directory")
-add_custom_command(
-    TARGET copy
-    COMMAND ${CMAKE_COMMAND} -E copy cmsat/forl .
-)
-add_dependencies(copy
-    forl
-)
+
+if (DRUP)
+    add_custom_command(
+        TARGET copy
+        COMMAND ${CMAKE_COMMAND} -E copy cmsat/forl-drup .
+    )
+    add_dependencies(copy
+        forl-drup
+    )
+else(DRUP)
+    add_custom_command(
+        TARGET copy
+        COMMAND ${CMAKE_COMMAND} -E copy cmsat/forl-nodrup .
+    )
+    add_dependencies(copy
+        forl-nodrup
+    )
+endif(DRUP)
 
 
 set(CPACK_PACKAGE_NAME "forl")

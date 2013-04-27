@@ -3294,7 +3294,7 @@ const char* Solver::getVersion()
     #ifdef _MSC_VER
     return "MSVC-compiled, without GIT";
     #else
-    return get_git_version();
+    return "forl";
     #endif //_MSC_VER
 }
 
