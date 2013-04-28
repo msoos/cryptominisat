@@ -49,7 +49,7 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
-                    , default="../build/forl-drup"
+                    , default="../build/forl-nodrup"
                     , help="SAT solver executable. Default: %default"
                     )
 
@@ -117,7 +117,8 @@ parser.add_option("--sol", dest="solutionFile"
                     )
 
 (options, args) = parser.parse_args()
-
+if options.drup :
+    options.solver = "../build/forl-drup"
 
 
 def setlimits():
