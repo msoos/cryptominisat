@@ -147,11 +147,11 @@ bool Prober::probe()
 
     //Clean clauses
     if (solver->conf.verbosity >= 6) {
-        cout << "c Cleaning clauses after probing.." << endl;
+        cout << "c Cleaning clauses before probing." << endl;
     }
     solver->clauseCleaner->removeAndCleanAll();
     if (solver->conf.verbosity >= 6) {
-        cout << "c Cleaning clauses after probing finished." << endl;
+        cout << "c Cleaning clauses before probing finished." << endl;
     }
 
     //Stats
