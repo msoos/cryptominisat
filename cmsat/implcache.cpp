@@ -134,6 +134,12 @@ bool ImplCache::clean(Solver* solver)
 
                 if (taut) {
                     toEnqueue.push_back(lit);
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        *(solver->drup)
+                        << lit << " 0\n";
+                    }
+                    #endif
                 }
             }
         }
