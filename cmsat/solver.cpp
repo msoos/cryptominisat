@@ -191,18 +191,34 @@ bool Solver::addXorClauseInt(
 
     switch(ps.size()) {
         case 0:
-            if (rhs)
+            if (rhs) {
+                #ifdef DRUP
+                if (drup) {
+                    *drup
+                    << "0\n";
+                }
+                #endif
                 ok = false;
+            }
             return ok;
 
-        case 1:
-            enqueue(Lit(ps[0].var(), !rhs));
+        case 1: {
+            Lit lit = Lit(ps[0].var(), !rhs);
+            enqueue(lit);
+            #ifdef DRUP
+            if (drup) {
+                *drup
+                << lit << " 0\n";
+            }
+            #endif
+
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
             if (attach)
                 ok = propagate().isNULL();
             return ok;
+        }
 
         case 2:
             ps[0] ^= !rhs;
