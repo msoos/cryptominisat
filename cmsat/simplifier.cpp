@@ -2500,6 +2500,7 @@ void Simplifier::removeClausesHelper(
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
         lits.clear();
+        bool learnt = false;
 
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
@@ -2507,6 +2508,7 @@ void Simplifier::removeClausesHelper(
 
             //Update stats
             if (cl.learnt()) {
+                learnt = true;
                 runStats.longLearntClRemThroughElim++;
             } else {
                 runStats.clauses_elimed_long++;
@@ -2529,6 +2531,7 @@ void Simplifier::removeClausesHelper(
                 runStats.clauses_elimed_bin++;
                 runStats.clauses_elimed_sumsize += 2;
             } else {
+                learnt = true;
                 runStats.binLearntClRemThroughElim++;
             }
 
@@ -2552,8 +2555,8 @@ void Simplifier::removeClausesHelper(
                    *(solver->drup)
                    << "d "
                    << lits[0] << " "
-                   << lits[1] << " 0"
-                   << endl;
+                   << lits[1]
+                   << " 0\n";
                 }
                 #endif
             }
@@ -2571,6 +2574,7 @@ void Simplifier::removeClausesHelper(
                 runStats.clauses_elimed_tri++;
                 runStats.clauses_elimed_sumsize += 3;
             } else {
+                learnt = true;
                 runStats.triLearntClRemThroughElim++;
             }
 
@@ -2609,7 +2613,7 @@ void Simplifier::removeClausesHelper(
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
             cout
-            << "Eliminated clause " << lits
+            << "Eliminated clause " << lits << " (learnt: " << learnt << ")"
             << " on var " << lit.var()+1
             << endl;
         }

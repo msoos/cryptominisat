@@ -1002,6 +1002,18 @@ int Main::solve()
     delete solver;
     solver = NULL;
 
+    #ifdef DRUP
+    if (drupf) {
+        //flush DRUP
+        *drupf << std::flush;
+
+        //If it's not stdout, we have to delete the ofstream
+        if (drupf != &std::cout) {
+            delete drupf;
+        }
+    }
+    #endif
+
     return correctReturnValue(ret);
 }
 

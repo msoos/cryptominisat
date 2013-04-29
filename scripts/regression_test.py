@@ -34,7 +34,7 @@ usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
 desc = """Example usages:
 * check already computed SAT solutions (UNSAT cannot be checked):
    ./regression_test.py --checkdir ../../clusters/cluster93/
-           --cnfdir ../../satcomp09/ -n 1
+           --cnfdir ../../satcomp09/
 
 * check already computed SAT solutions (UNSAT cannot be checked):
    ./regression_test.py --check myfile.cnf
@@ -121,7 +121,7 @@ parser.add_option("--sol", dest="solutionFile"
 
 
 def setlimits():
-    sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+    #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -137,7 +137,7 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
     def __init__(self):
-        self.check_unsat = True
+        self.check_unsat = False
         self.testDir = options.testDir
         self.testDirNewVar = options.testDirNewVar
 
@@ -406,7 +406,7 @@ class Tester:
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def check(self, fname, fnameCheck, fnameDrup=None, newVar=False,
+    def check(self, fname, fnameSolution, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False):
 
         consoleOutput = ""
@@ -416,12 +416,13 @@ class Tester:
         if needSolve:
             consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
         else:
-            if (os.path.isfile(fname + ".out") == False) :
+            if (os.path.isfile(fnameSolution + ".out") == False) :
                 print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
                 exit(-1)
-            f = open(fname + ".out", "r")
+            f = open(fnameSolution + ".out", "r")
             consoleOutput = f.read()
             f.close()
+            print "Read solution from file " , fnameSolution + ".out"
 
         #if time was limited, we need to know if we were over the time limit
         #and that is why there is no solution
@@ -433,7 +434,7 @@ class Tester:
             else:
                 print "Within time limit: %f s" % (time.time() - currTime)
 
-        print "filename: %s" % fname[:20]
+        print "filename: %s" % fname
 
         if (self.needDebugLib) :
             largestPart = -1
@@ -460,7 +461,7 @@ class Tester:
 
                 (unsat, value) = self.parse_solution_from_output(output_lines)
                 if unsat == False:
-                    self.test_found_solution(value, fnameCheck, debugLibPart)
+                    self.test_found_solution(value, fname, debugLibPart)
                 else:
                     print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
@@ -518,7 +519,7 @@ class Tester:
                     print "UNSAT verified by other solver"
 
         else :
-            self.test_found_solution(value, fnameCheck)
+            self.test_found_solution(value, fname)
 
     def removeDebugLibParts(self) :
         dirList = os.listdir(".")
@@ -562,6 +563,7 @@ class Tester:
                     fnameDrup = "drupcheck"
 
                 #should the multi-fuzzer be called?
+                file_names_multi = []
                 if len(fuzzer) == 2 and fuzzer[1] == "special":
                     #create N files
                     file_names_multi = []
@@ -605,33 +607,36 @@ class Tester:
 
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
-                self.check(fname=file_name, fnameCheck=file_name, fnameDrup=fnameDrup,
+                self.check(fname=file_name, fnameSolution=file_name, fnameDrup=fnameDrup,
                             needToLimitTime=True)
 
                 os.unlink(file_name)
+                for tounlink in file_names_multi :
+                    os.unlink(tounlink)
 
     def checkDir(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
 
-        #check if options.checkDir has bee set
-        if options.checkDir == "":
+        #check if options.checkDirSol has bee set
+        if options.checkDirSol == "":
             print "When checking, you must give test dir"
             exit()
 
         print "You gave testdir (where solutions are):", options.checkDirSol
         print "You gave CNF dir (where problems are) :", options.checkDirProb
 
-        dirList = os.listdir(options.checkDir)
+        dirList = os.listdir(options.checkDirSol)
         for fname in dirList:
 
             if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
                 #add dir, remove trailing .out
-                fnameCheck = options.checkDirProb + fname[:len(fname) - 4]
+                fname = fname[:len(fname) - 4]
+                fnameSol = options.checkDirSol + "/" + fname
 
                 #check now
-                self.check(fname=self.testDir + fname, \
-                   fnameCheck=fnameCheck, needSolve=False)
+                self.check(fname=options.checkDirProb + "/" + fname, \
+                   fnameSolution=fnameSol, needSolve=False)
 
     def regressionTest(self) :
 
@@ -641,7 +646,7 @@ class Tester:
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
                     self.check(fname=self.testDirNewVar + fname,
-                                fnameCheck=self.testDirNewVar +
+                                fnameSolution=self.testDirNewVar +
                                 fname, newVar=True)
 
         dirList = os.listdir(self.testDir)
@@ -650,7 +655,7 @@ class Tester:
         for fname in dirList:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
                 self.check(fname=self.testDir + fname,
-                fnameCheck=self.testDir + fname,
+                fnameSolution=self.testDir + fname,
                 newVar=False)
 
     def checkFile(self, problem, solution) :
@@ -659,7 +664,7 @@ class Tester:
             exit(-1)
 
         print "Checking CNF file '%s' against proposed solution '%s' " % (problem, solution)
-        #self.check(fname=problem, fnameCheck=problem)
+        #self.check(fname=problem, fnameSolution=problem)
         output_lines = open(solution).readlines()
         (unsat, value) = self.parse_solution_from_output(output_lines)
         if not unsat:

@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifdef USE_ZLIB
 #include <zlib.h>
 #endif
+#include <stdio.h>
 
 class StreamBuffer
 {

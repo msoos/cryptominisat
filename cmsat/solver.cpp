@@ -191,18 +191,35 @@ bool Solver::addXorClauseInt(
 
     switch(ps.size()) {
         case 0:
-            if (rhs)
+            if (rhs) {
+                #ifdef DRUP
+                if (drup) {
+                    *drup
+                    << "0\n";
+                }
+                #endif
+
                 ok = false;
+            }
             return ok;
 
-        case 1:
-            enqueue(Lit(ps[0].var(), !rhs));
+        case 1: {
+            Lit lit = Lit(ps[0].var(), !rhs);
+            enqueue(lit);
+            #ifdef DRUP
+            if (drup) {
+                *drup
+                << lit << " 0\n";
+            }
+            #endif
+
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
             if (attach)
                 ok = propagate().isNULL();
             return ok;
+        }
 
         case 2:
             ps[0] ^= !rhs;
@@ -237,6 +254,7 @@ Clause* Solver::addClauseInt(
     , ClauseStats stats
     , const bool attach
     , vector<Lit>* finalLits
+    , bool addDrup
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -287,7 +305,7 @@ Clause* Solver::addClauseInt(
     }
 
     #ifdef DRUP
-    if (drup) {
+    if (drup && addDrup) {
         (*drup) << ps << " 0\n";
     }
     #endif
@@ -376,8 +394,7 @@ void Solver::attachTriClause(
         *drup
         << lit1 << " "
         << lit2 << " "
-        << lit3 << " 0"
-        << endl;
+        << lit3 << " 0\n";
     }
     #endif
 
@@ -404,8 +421,7 @@ void Solver::attachBinClause(
     if (drup) {
         *drup
         << lit1 << " "
-        << lit2 << " 0"
-        << endl;
+        << lit2 << " 0\n";
     }
     #endif
 
@@ -612,6 +628,7 @@ bool Solver::addClause(const vector<Lit>& lits)
         , true //yes, attach
         #ifdef DRUP
         , &finalCl
+        , false
         #endif
     );
 
@@ -621,13 +638,19 @@ bool Solver::addClause(const vector<Lit>& lits)
     if (drup
         && origCl != finalCl
     ) {
-        //Either really UNSAT, or not empty
+        //Dump only if non-empty (UNSAT handled later)
         if (!finalCl.empty()) {
-            //Not nice to print stuff after UNSAT
-            if (ok) {
-                (*drup) << "d " << origCl << " 0\n";
-            }
+            (*drup)
+            << finalCl << " 0\n";
         }
+
+        //Empty clause, it's UNSAT
+        if (!solver->okay()) {
+            (*drup)
+            << "0\n";
+        }
+        (*drup)
+        << "d " << origCl << " 0\n";
     }
     #endif
 
@@ -1169,8 +1192,8 @@ CleaningStats Solver::reduceDB()
                 if (drup) {
                     (*drup)
                     << "d "
-                    << *cl << " 0"
-                    << endl;
+                    << *cl
+                    << " 0\n";
                 }
                 #endif
                 clAllocator->clauseFree(offset);
@@ -1251,8 +1274,8 @@ CleaningStats Solver::reduceDB()
         if (drup) {
             (*drup)
             << "d "
-            << *cl << " 0"
-            << endl;
+            << *cl
+            << " 0\n";
         }
         #endif
         clAllocator->clauseFree(offset);
@@ -2431,11 +2454,9 @@ void Solver::dumpBinClauses(
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
-                    << tmpCl[0]
-                    << " "
+                    << tmpCl[0] << " "
                     << tmpCl[1]
-                    << " 0"
-                    << endl;
+                    << " 0\n";
                 }
             }
         }
@@ -2470,12 +2491,10 @@ void Solver::dumpTriClauses(
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
-                    << tmpCl[0]
-                    << " "
-                    << tmpCl[1]
-                    << " "
+                    << tmpCl[0] << " "
+                    << tmpCl[1] << " "
                     << tmpCl[2]
-                    << " 0" << endl;
+                    << " 0\n";
                 }
             }
         }
@@ -2562,21 +2581,17 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         std::sort(tmpCl.begin(), tmpCl.end());
 
         *os
-        << tmpCl[0]
-        << " "
+        << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0"
-        << endl;
+        << " 0\n";
 
         tmpCl[0] ^= true;
         tmpCl[1] ^= true;
 
         *os
-        << tmpCl[0]
-        << " "
+        << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0"
-        << endl;
+        << " 0\n";
     }
 }
 
@@ -2590,8 +2605,7 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
-        << " 0"
-        << endl;
+        << " 0\n";
     }
 }
 

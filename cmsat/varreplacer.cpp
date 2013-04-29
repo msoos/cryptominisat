@@ -306,8 +306,8 @@ bool VarReplacer::replaceImplicit()
                     #ifdef DRUP
                     if (solver->drup) {
                         *(solver->drup)
-                        << lit1 << " 0"
-                        << endl;
+                        << lit1
+                        << " 0\n";
                     }
                     #endif
                     remove = true;
@@ -599,8 +599,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
             *(solver->drup)
             << "d "
             << origCl
-            << " 0"
-            << endl;
+            << " 0\n";
         }
         #endif
     }
@@ -780,6 +779,15 @@ bool VarReplacer::replace(
             || solver->varData[lit1.var()].elimed == ELIMED_QUEUED_VARREPLACER);
     assert(solver->varData[lit2.var()].elimed == ELIMED_NONE
             || solver->varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
+
+    #ifdef DRUP_DEBUG
+    if (solver->drup) {
+        *(solver->drup)
+        << ~lit1 << " " << (lit2 ^!xorEqualFalse) << " 0\n"
+        << lit1 << " " << (~lit2 ^!xorEqualFalse) << " 0\n"
+        ;
+    }
+    #endif
 
     //Move forward circle
     lit1 = table[lit1.var()];

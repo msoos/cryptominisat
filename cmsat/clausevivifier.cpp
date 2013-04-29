@@ -94,6 +94,12 @@ end:
 
 bool ClauseVivifier::vivifyClausesTriIrred()
 {
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Doing asymm branch for tri irred clauses"
+        << endl;
+    }
+
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
     double myTime = cpuTime();
@@ -190,6 +196,11 @@ struct ClauseSizeSorter
 bool ClauseVivifier::asymmClausesLongIrred()
 {
     assert(solver->ok);
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Doing asymm branch for long irred clauses"
+        << endl;
+    }
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail.size();
@@ -317,6 +328,17 @@ ClOffset ClauseVivifier::testVivify(
     , const bool learnt
     , const uint32_t queueByBy
 ) {
+    #ifdef DRUP_DEBUG
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "Trying to vivify clause:";
+        for(size_t i = 0; i < lits.size(); i++) {
+            cout << lits[i] << " ";
+        }
+        cout << endl;
+    }
+    #endif
+
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
     bool failed = false;
     uint32_t done = 0;
@@ -335,7 +357,9 @@ ClOffset ClauseVivifier::testVivify(
         done += i2;
         extraTime += 5;
         failed = (!solver->propagate().isNULL());
-        if (failed) break;
+        if (failed) {
+            break;
+        }
     }
     solver->cancelZeroLight();
     assert(solver->ok);
@@ -358,7 +382,7 @@ ClOffset ClauseVivifier::testVivify(
         //Print results
         if (solver->conf.verbosity >= 5) {
             cout
-            << "c Assym branch effective." << endl;
+            << "c Asymm branch effective." << endl;
             if (offset != std::numeric_limits<ClOffset>::max()) {
                 cout
                 << "c --> orig clause:" <<
