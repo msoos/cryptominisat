@@ -38,6 +38,7 @@ number of benefits relative to MiniSat.
 #include <set>
 #include <fstream>
 #include <signal.h>
+#include <sys/stat.h>
 #include "constants.h"
 
 #include "main.h"
@@ -57,6 +58,22 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using boost::lexical_cast;
+
+/**
+ * Check if a file exists
+ * @param[in] filename - the name of the file to check
+ * @return    true if the file exists, else false
+*/
+bool fileExists(const std::string& filename)
+{
+    struct stat buf;
+    if (stat(filename.c_str(), &buf) != -1)
+    {
+        return true;
+    }
+    return false;
+}
+
 
 Main::Main(int _argc, char** _argv) :
         debugLib (false)
@@ -842,6 +859,16 @@ void Main::parseCommandLine()
         if (drupDebug) {
             drupf = &std::cout;
         } else {
+            if (fileExists(drupfilname)) {
+                cout
+                << "ERROR! File selected for DRUP output, '"
+                << drupfilname
+                << "' already exists. Please delete the file or pick another"
+                << endl
+                << "DRUP filename"
+                << endl;
+                exit(-1);
+            }
             std::ofstream* drupfTmp = new std::ofstream;
             drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
             if (!*drupfTmp) {
