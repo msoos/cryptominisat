@@ -24,6 +24,7 @@
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
+#include <cmath>
 using namespace forl;
 using std::cout;
 using std::endl;

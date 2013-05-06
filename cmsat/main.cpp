@@ -496,12 +496,8 @@ void Main::parseCommandLine()
         , "Use time stamping as per Heule&Jarvisalo&Biere paper")
     ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
         , "Use implication cache -- may use a lot of memory")
-    ("cachesize", po::value<size_t>(&conf.maxCacheSizeMB)->default_value(conf.maxCacheSizeMB)
-        , "Maximum size of the implication cache in MB. It may temporarily reach higher usage, but will be deleted&disabled if this limit is reached.")
     ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
         , "Calculate literal reachability")
-    ("cachecutoff", po::value<size_t>(&conf.cacheUpdateCutoff)->default_value(conf.cacheUpdateCutoff)
-        , "If the number of literals propagated by a literal is more than this, it's not included into the implication cache")
     ;
 
     po::options_description sqlOptions("SQL options");
@@ -532,8 +528,6 @@ void Main::parseCommandLine()
     printOptions.add_options()
     ("verb", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
         , "[0-10] Verbosity of solver. 0 = only solution")
-    ("verbstat", po::value<int>(&conf.verbStats)->default_value(conf.verbStats)
-        , "Turns off verbose stats if needed")
     ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
         , "Print more thorough, but different stats")
     ("printoften", po::bool_switch(&conf.printAllRestarts)
@@ -605,7 +599,6 @@ void Main::parseCommandLine()
     .add(miscOptions)
     ;
 
-     try {
         po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
         //po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help"))
@@ -625,47 +618,6 @@ void Main::parseCommandLine()
         }
 
         po::notify(vm);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::unknown_option> >& c
-    ) {
-        cout << "Some option you gave was wrong. Please give '--help' to get help" << endl;
-        cout << "Unkown option: " << c.what() << endl;
-        exit(-1);
-    } catch (boost::bad_any_cast &e) {
-        std::cerr
-        << "ERROR! You probably gave a wrong argument type (Bad cast): "
-        << e.what()
-        << endl;
-
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
-    ) {
-        cerr
-        << "Invalid value '" << what.what() << "'"
-        << " given to option '" << what.get_option_name() << "'"
-        << endl;
-
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
-    ) {
-        cerr
-        << "Error: " << what.what() << " of option '"
-        << what.get_option_name() << "'"
-        << endl;
-
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::required_option> > what
-    ) {
-        cerr
-        << "You forgot to give a required option '"
-        << what.get_option_name() << "'"
-        << endl;
-
-        exit(-1);
-    }
 
     if (conf.doLHBR
         && !conf.propBinFirst
