@@ -546,11 +546,12 @@ class Tester:
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             , ["build/cnf-fuzz-biere"] \
             #, ["build/cnf-fuzz-nossum"] \
-            #, ["build/largefuzzer"] \
+            , ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
             , ["multipart.py", "special"] \
             , ["build/sgen4 -unsat -n 50", "-s"] \
-            #, ["build/sgen4 -sat -n 50", "-s"] \
+            , ["cnf-fuzz-xor.py"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
