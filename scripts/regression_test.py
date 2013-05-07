@@ -225,7 +225,7 @@ class Tester:
         command += options.extra_options + " "
         command += fname
         if fnameDrup:
-            command += " " + fnameDrup
+            command += " --drupexistscheck 0 " + fnameDrup
         print "Executing: %s " % command
 
         #print time limit
@@ -561,7 +561,8 @@ class Tester:
                 fileopened.close()
                 fnameDrup = None
                 if options.drup :
-                    fnameDrup = "drupcheck"
+                    fileopened, fnameDrup = unique_fuzz_file("fuzzTest");
+                    fileopened.close()
 
                 #should the multi-fuzzer be called?
                 file_names_multi = []
@@ -614,6 +615,8 @@ class Tester:
                 os.unlink(file_name)
                 for tounlink in file_names_multi :
                     os.unlink(tounlink)
+                if fnameDrup != None :
+                    os.unlink(fnameDrup)
 
     def checkDir(self) :
         self.ignoreNoSolution = True

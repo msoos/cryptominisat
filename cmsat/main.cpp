@@ -286,6 +286,7 @@ void Main::parseCommandLine()
     string typeclean;
     #ifdef DRUP
     string drupfilname;
+    int drupExistsCheck = 1;
     #endif
 
     // Declare the supported options.
@@ -315,6 +316,8 @@ void Main::parseCommandLine()
     #ifdef DRUP
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
+    ("drupexistscheck", po::value<int>(&drupExistsCheck)->default_value(drupExistsCheck)
+        , "Check if the drup file provided already exists")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
     #endif
@@ -859,7 +862,7 @@ void Main::parseCommandLine()
         if (drupDebug) {
             drupf = &std::cout;
         } else {
-            if (fileExists(drupfilname)) {
+            if (drupExistsCheck && fileExists(drupfilname)) {
                 cout
                 << "ERROR! File selected for DRUP output, '"
                 << drupfilname
