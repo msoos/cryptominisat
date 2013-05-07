@@ -78,6 +78,7 @@ do
     chmod +x todo_rnd_$myi.sh
 done
 echo "Done."
+let myi=myi-1
 tail -n $remain todo_rnd >> todo_rnd_$myi.sh
 
 #check that todos match original
