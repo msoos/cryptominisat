@@ -10,6 +10,10 @@ import socket
 import sys
 import optparse
 import struct
+import pickle
+import threading
+import random
+import time
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -33,83 +37,106 @@ parser.add_option("--port", "-p"
                     , default=10000, dest="port"
                     , help="Port to use", type="int"
                     )
-parser.add_option("--solver"
-                    , default="cryptominisat/build/cryptominisat", dest="solver"
-                    , help="SAT solver to use"
-                    )
-parser.add_option("--basedir", "-b"
-                    , default="/home/soos", dest="basedir"
-                    , help="base directory"
-                    )
 
 (options, args) = parser.parse_args()
 
-def getN(connection, n) :
-    got = 0
-    fulldata = ""
-    while got < n :
-        data = connection.recv(n-got)
-        #print >>sys.stderr, 'received "%s"' % data
-        if data :
-            fulldata += data
-            got += len(data)
-        else :
-            print >>sys.stderr, 'no more data from', client_address, "ooops!"
+class solverThread (threading.Thread):
+    def __init__(self, threadID, name):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+
+    def getN(self, connection, n) :
+        got = 0
+        fulldata = ""
+        while got < n :
+            data = connection.recv(n-got)
+            #print >>sys.stderr, 'received "%s"' % data
+            if data :
+                fulldata += data
+                got += len(data)
+            else :
+                print >>sys.stderr, "no more data ooops!"
+                exit(-1)
+
+        return fulldata
+
+    def connectClient(self) :
+        # Create a socket object
+        sock = socket.socket()
+
+        # Get local machine name
+        #host = socket.gethostname()
+        if options.host == None :
+            print "You must supply the host to connect to as a client"
             exit(-1)
+        host = options.host
+        print "Connecting to host %s ..." % host
 
-    return fulldata
+        sock.connect((host, options.port))
 
-def connectClient() :
-    # Create a socket object
-    sock = socket.socket()
+        return sock
 
-    # Get local machine name
-    #host = socket.gethostname()
-    if options.host == None :
-        print "You must supply the host to connect to as a client"
-        exit(-1)
-    host = options.host
-    print "Connecting to host %s ..." % host
+    def run(self):
+        print "Starting " + self.name
 
-    sock.connect((host, options.port))
+        #as long as there is something to do
+        while True :
+            sock = self.connectClient()
 
-    return sock
+            #ask for stuff to solve
+            print "asking for stuff to solve..."
+            sock.sendall("need    ".format("ascii"))
 
-#as long as we are up and running
-while True :
-    sock = connectClient()
+            #get stuff to solve
+            data = self.getN(sock, 4)
+            assert len(data) == 4
+            length = struct.unpack('i', data)[0]
+            print "length of tosolve data: ", length
 
-    #ask for stuff to solve
-    print "asking for stuff to solve..."
-    sock.sendall("need    ".format("ascii"))
+            #nothing more to solve?
+            if length == 0 :
+                print "Client received that there is nothing more to solve, exiting"
+                return
 
-    #get stuff to solve
-    data = getN(sock, 4)
-    assert len(data) == 4
-    length = struct.unpack('i', data)[0]
-    print "length of file to solve: ", length
+            data = self.getN(sock, length)
+            tosolve = pickle.loads(data)
+            #print "Have to solve ", tosolve
+            sock.close()
 
-    #nothing more to solve?
-    if length == 0 :
-        print "Client received that there is nothing more to solve, exiting"
-        exit(0)
+            toexec = "%s/%s %s/cnfs/%s > %s/output/%s.out 2>&1" \
+            % (tosolve["basedir"], tosolve["solver"], tosolve["basedir"], \
+            tosolve["filename"], tosolve["basedir"], tosolve["filename"])
 
-    tosolve = getN(sock, length)
-    print "Have to solve ", tosolve
-    sock.close()
+            print "%s executing '%s' with timeout %d" % (self.name, toexec, tosolve["timeout"])
 
-    toexec = "%s/%s %s/cnfs/%s > %s/output/%s.out 2>&1" \
-    % (options.basedir, options.solver, options.basedir, tosolve, options.basedir, tosolve)
+            #solving 'name'
+            #....
+            tstart = time.time()
+            time.sleep(random.randint(10,50)/1000.0)
+            tend = time.time()
 
-    print "exiecuting '%s'" % toexec
+            print "solved '%s' in %f s by %s" % (tosolve["filename"], tend-tstart, self.name)
 
-    #solving 'name'
-    #....
-    print "solved '%s'" % tosolve
+            sock = self.connectClient()
+            tosend = "done" + struct.pack('i', len(tosolve["filename"])) + tosolve["filename"]
+            sock.sendall(tosend)
+            print "Sent that we finished", tosolve["filename"]
 
-    sock = connectClient()
-    tosolve = tosolve.format("ascii")
-    tosend = "done".format("ascii") + struct.pack('i', len(tosolve)) + tosolve
-    print "Sending that we finished", tosolve
-    sock.sendall(tosend)
-    print "Sent that we finished", tosolve
+# Create new threads
+thread1 = solverThread(1, "Thread-1")
+thread2 = solverThread(2, "Thread-2")
+
+# Start new Threads
+thread1.start()
+thread2.start()
+
+# Add threads to thread list
+threads = []
+threads.append(thread1)
+threads.append(thread2)
+
+# Wait for all threads to complete
+for t in threads:
+    t.join()
+print "Exiting Main Thread"

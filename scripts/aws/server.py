@@ -10,6 +10,7 @@ import socket
 import sys
 import optparse
 import struct
+import pickle
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -44,6 +45,10 @@ parser.add_option("--solver"
 parser.add_option("--basedir", "-b"
                     , default="/home/soos/", dest="basedir"
                     , help="base directory"
+                    )
+parser.add_option("--timeout", "-t"
+                    , default=1000, dest="timeout"
+                    , help="Timeout for the solver", type=int
                     )
 #parse options
 (options, args) = parser.parse_args()
@@ -121,10 +126,16 @@ while True:
                 connection.sendall(tosend)
             else :
                 #send filename that needs solving
-                print "sending that file '%s' needs to be solved" % tosolve
-                tosolve = tosolve.encode("ascii")
-                tosend = struct.pack('i', len(tosolve)) + tosolve
-                print ":".join("{0:x}".format(ord(c)) for c in tosend)
+                tosend = {}
+                tosend["basedir"] = options.basedir
+                tosend["solver"]  = options.solver
+                tosend["timeout"] = options.timeout
+                tosend["filename"] = tosolve
+                data = pickle.dumps(tosend)
+
+                print "sending that file '%s' needs to be solved" % tosend["filename"]
+                tosend = struct.pack('i', len(data)) + data
+                #print ":".join("{0:x}".format(ord(c)) for c in tosend)
                 connection.sendall(tosend)
 
     finally:
