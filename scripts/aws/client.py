@@ -14,6 +14,8 @@ import pickle
 import threading
 import random
 import time
+import subprocess
+import resource
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -46,6 +48,10 @@ class solverThread (threading.Thread):
         self.threadID = threadID
         self.name = name
 
+    def setlimits(self):
+        #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+        resource.setrlimit(resource.RLIMIT_CPU, (self.tosolve["timeout"], self.tosolve["timeout"]))
+
     def getN(self, connection, n) :
         got = 0
         fulldata = ""
@@ -77,6 +83,46 @@ class solverThread (threading.Thread):
 
         return sock
 
+    def execute(self) :
+        toexec = "%s/%s %s/%s/%s" \
+        % (self.tosolve["basedir"], \
+        self.tosolve["solver"], \
+        self.tosolve["basedir"], \
+        self.tosolve["dir"], \
+        self.tosolve["filename"] \
+        )
+
+        outfile = open("/tmp/%s.out" % self.tosolve["filename"], "w")
+
+        #limit time
+        tstart = time.time()
+        print "%s executing '%s' with timeout %d" % (self.name, toexec, self.tosolve["timeout"])
+        p = subprocess.Popen(toexec.rsplit(), stderr=outfile, stdout=outfile, preexec_fn=self.setlimits)
+        p.wait()
+        outfile.close()
+
+        time.sleep(random.randint(10,50)/1000.0)
+        tend = time.time()
+        print "solved '%s' in %f seconds by thread %s" % (self.tosolve["filename"], tend-tstart, self.name)
+        #print "stdout:", consoleOutput, " stderr:", err
+
+    def put_server(self) :
+        toexec = "scp /tmp/%s.out %s:%s/%s/" \
+        % (self.tosolve["filename"], \
+        options.host, \
+        self.tosolve["basedir"], \
+        self.tosolve["solutionto"] \
+        )
+        print "Executing '%s' to put the file to the right place" % toexec
+
+        p = subprocess.Popen(toexec.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        consoleOutput, err = p.communicate()
+        print "stdout:", consoleOutput, " stderr:", err
+
+        #remove temporary solution file
+        os.unlink("/tmp/%s.out" % self.tosolve["filename"])
+        return err == ""
+
     def run(self):
         print "Starting " + self.name
 
@@ -100,28 +146,17 @@ class solverThread (threading.Thread):
                 return
 
             data = self.getN(sock, length)
-            tosolve = pickle.loads(data)
+            self.tosolve = pickle.loads(data)
             #print "Have to solve ", tosolve
             sock.close()
 
-            toexec = "%s/%s %s/cnfs/%s > %s/output/%s.out 2>&1" \
-            % (tosolve["basedir"], tosolve["solver"], tosolve["basedir"], \
-            tosolve["filename"], tosolve["basedir"], tosolve["filename"])
-
-            print "%s executing '%s' with timeout %d" % (self.name, toexec, tosolve["timeout"])
-
-            #solving 'name'
-            #....
-            tstart = time.time()
-            time.sleep(random.randint(10,50)/1000.0)
-            tend = time.time()
-
-            print "solved '%s' in %f s by %s" % (tosolve["filename"], tend-tstart, self.name)
+            self.execute()
+            self.put_server()
 
             sock = self.connectClient()
-            tosend = "done" + struct.pack('i', len(tosolve["filename"])) + tosolve["filename"]
+            tosend = "done" + struct.pack('i', len(self.tosolve["filename"])) + self.tosolve["filename"]
             sock.sendall(tosend)
-            print "Sent that we finished", tosolve["filename"]
+            print "Sent that we finished", self.tosolve["filename"]
 
 # Create new threads
 thread1 = solverThread(1, "Thread-1")

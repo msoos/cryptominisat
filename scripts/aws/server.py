@@ -11,6 +11,8 @@ import sys
 import optparse
 import struct
 import pickle
+import time
+from collections import namedtuple
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -27,7 +29,7 @@ parser.add_option("--verbose", "-v", action="store_true"
                     )
 
 parser.add_option("--dir", "-d"
-                    , default="/home/soos/satcomp09/", dest="dir"
+                    , default="satcomp09/", dest="dir"
                     , help="Directory of files to solve"
                     )
 parser.add_option("--host"
@@ -50,8 +52,23 @@ parser.add_option("--timeout", "-t"
                     , default=1000, dest="timeout"
                     , help="Timeout for the solver", type=int
                     )
+
+parser.add_option("--solutionto"
+                    , default="output", dest="solutionto"
+                    , help="Put finished data here"
+                    )
+
+parser.add_option("--extratimeout"
+                    , default=300, dest="extratimeout"
+                    , help="Extra time to wait before slave reports that the problem has been solved"
+                    )
 #parse options
 (options, args) = parser.parse_args()
+
+def enum(**enums):
+    return type('Enum', (), enums)
+State = enum(unsent=1, sent=2, finished=3)
+SolveState = namedtuple('SolveSate', ['state', 'time'])
 
 def getN(connection, n) :
     got = 0
@@ -70,11 +87,11 @@ def getN(connection, n) :
 
 
 #files to solve
-files_to_solve = os.listdir(options.dir)
+files_to_solve = os.listdir("%s/%s" % (options.basedir, options.dir))
 print "Solving files from '%s', number of files: %d" % (options.dir, len(files_to_solve))
 solved = {}
 for f in files_to_solve :
-    solved[f] = False
+    solved[f] = SolveState(State.unsent, 0.0)
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -104,15 +121,23 @@ while True:
             finishedwith = getN(connection, length)
             print "Client finished with ", finishedwith
             assert finishedwith in solved
-            solved[finishedwith] = True
+            solved[finishedwith] = SolveState(State.finished, 0.0)
 
         elif data[:4] == "need" :
             #client needs something to solve
 
-            #find one that is unsolved
+            #find one that has never been sent
             tosolve = None
             for a,b in solved.items() :
-                if not b :
+                if b.state == State.unsent :
+                    tosolve = a
+                    break
+
+
+            #...or has timed out (slave died probably)
+            if tosolve == None:
+                for a,b in solved.items() :
+                 if b.state == State.sent and b.time > time.clock() + options.timeout + options.extratimeout :
                     #this needs to be solved
                     tosolve = a
                     break
@@ -125,11 +150,16 @@ while True:
                 tosend = struct.pack('i', 0)
                 connection.sendall(tosend)
             else :
-                #send filename that needs solving
+                #set timer that we have sent this to be solved
+                solved[tosolve] = SolveState(State.sent, time.clock())
+
+                #send data for solving
                 tosend = {}
                 tosend["basedir"] = options.basedir
                 tosend["solver"]  = options.solver
                 tosend["timeout"] = options.timeout
+                tosend["solutionto"] = options.solutionto
+                tosend["dir"] = options.dir
                 tosend["filename"] = tosolve
                 data = pickle.dumps(tosend)
 
