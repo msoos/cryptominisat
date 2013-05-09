@@ -174,7 +174,7 @@ for the class that it can hold the literals as well. I.e. it malloc()-s
     sizeof(Clause)+LENGHT*sizeof(Lit)
 to hold the clause.
 */
-struct Clause
+class Clause
 {
 protected:
 

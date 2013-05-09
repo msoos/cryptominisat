@@ -36,7 +36,7 @@
 
 namespace CMSat {
 
-struct Clause;
+class Clause;
 class Solver;
 class PropEngine;
 

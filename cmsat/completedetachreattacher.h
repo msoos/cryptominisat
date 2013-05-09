@@ -29,7 +29,7 @@
 namespace CMSat {
 
 class Solver;
-struct Clause;
+class Clause;
 
 /**
 @brief Helper class to completely detaches all(or only non-native) clauses
