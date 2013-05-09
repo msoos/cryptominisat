@@ -3314,7 +3314,9 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
     , bool unset
 ) {
     HeuristicData ret;
+    #if 0
     unsigned char at = 1;
+    #endif
     size_t count = 0;
 
     const vec<Watched>& ws = solver->watches[lit.toInt()];

@@ -53,7 +53,6 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
     interToOuter.resize(solver->nVars());
     outerToInter.resize(solver->nVars());
 
-    size_t at = 0;
     for(size_t i = 0, size = vars.size()
         ; i < size
         ; i++
@@ -414,7 +413,6 @@ void CompHandler::moveClausesImplicit(
     uint32_t numRemovedThirdNonLearnt = 0;
     uint32_t numRemovedThirdLearnt = 0;
 
-    uint32_t wsLit = 0;
     for (vector<Var>::const_iterator
         it = vars.begin(), end = vars.end()
         ; it != end
