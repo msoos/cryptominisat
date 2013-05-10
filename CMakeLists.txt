@@ -26,7 +26,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some li
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-Werror -std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
+        "-pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-Werror -std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
@@ -77,7 +77,7 @@ ENDIF (ZLIB_FOUND)
 
 
 #for DRUP
-set(DRUP 1)
+#set(DRUP 1)
 if (DRUP)
     add_definitions( -DDRUP )
     #add_definitions( -DDRUP_DEBUG )
