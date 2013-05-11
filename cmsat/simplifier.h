@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -397,6 +397,7 @@ public:
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
+    void checkElimedUnassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
 
@@ -414,8 +415,8 @@ private:
     vector<bool>    var_elimed;           ///<Contains TRUE if var has been eliminated
 
     //Temporaries
-    vector<char>    seen;        ///<Used in various places to help perform algorithms
-    vector<char>    seen2;       ///<Used in various places to help perform algorithms
+    vector<unsigned char>    seen;        ///<Used in various places to help perform algorithms
+    vector<unsigned char>    seen2;       ///<Used in various places to help perform algorithms
     vector<Lit>     dummy;       ///<Used by merge()
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
@@ -458,7 +459,7 @@ private:
     //Clause update
     void        strengthen(ClOffset c, const Lit toRemoveLit);
     lbool       cleanClause(ClOffset c);
-    void        unlinkClause(ClOffset cc);
+    void        unlinkClause(ClOffset cc, bool drup = true);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
@@ -518,12 +519,20 @@ private:
     /**
     @brief Sort clauses according to size
     */
-    struct sortBySize
+    struct MySorter
     {
-        bool operator () (const Clause* x, const Clause* y)
+        MySorter(const ClauseAllocator* _clAllocator) :
+            clAllocator(_clAllocator)
+        {}
+
+        bool operator () (const ClOffset x, const ClOffset y)
         {
-            return (x->size() < y->size());
+            Clause* cl1 = clAllocator->getPointer(x);
+            Clause* cl2 = clAllocator->getPointer(y);
+            return (cl1->size() < cl2->size());
         }
+
+        const ClauseAllocator* clAllocator;
     };
 
     /////////////////////
@@ -612,7 +621,7 @@ private:
             , tri(0)
             , longer(0)
             , lit(0)
-
+            , count(std::numeric_limits<uint32_t>::max()) //resolution count (if can be counted, otherwise MAX)
         {};
 
         size_t totalCls() const
@@ -620,15 +629,22 @@ private:
             return bin + tri + longer;
         }
 
-        size_t bin;
-        size_t tri;
-        size_t longer;
-        size_t lit;
+        uint32_t bin;
+        uint32_t tri;
+        uint32_t longer;
+        uint32_t lit;
+        uint32_t count;
     };
-    HeuristicData calcDataForHeuristic(const Lit lit) const;
+    HeuristicData calcDataForHeuristic(
+        const Lit lit
+        , bool setit = false
+        , bool countIt = false
+        , unsigned otherSize = 0
+        , bool unset = false
+    );
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
-    pair<int, int>  heuristicCalcVarElimScore(const Var var) const;
+    pair<int, int>  heuristicCalcVarElimScore(const Var var);
     bool merge(
         const Watched& ps
         , const Watched& qs

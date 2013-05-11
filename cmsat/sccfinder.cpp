@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -110,7 +110,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
         //Go through the watch
         const vec<Watched>& ws = solver->watches[(~vertLit).toInt()];
-        for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+        for (vec<Watched>::const_iterator
+            it = ws.begin(), end = ws.end()
+            ; it != end
+            ; it++
+        ) {
             //Only binary clauses matter
             if (!it->isBinary())
                 continue;
@@ -121,8 +125,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
         }
 
         if (transCache) {
-            vector<LitExtra>::iterator it = transCache->begin();
-            for (vector<LitExtra>::iterator end = transCache->end(); it != end; it++) {
+            for (vector<LitExtra>::iterator
+                it = transCache->begin(), end = transCache->end()
+                ; it != end
+                ; it++
+            ) {
                 Lit lit = it->getLit();
                 if (lit != ~vertLit) doit(lit, vertex);
             }
@@ -156,14 +163,14 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     && solver->value(lits[1]) == l_Undef
                 ) {
                     runStats.foundXors++;
-#ifdef VERBOSE_DEBUG
+                    #ifdef VERBOSE_DEBUG
                     cout << "SCC says: "
                     << lits[0]
                     << " XOR "
                     << lits[1]
                     << " = " << !xorEqualsFalse
                     << endl;
-#endif
+                    #endif
                     solver->varReplacer->replace(
                         lits[0]
                         , lits[1]

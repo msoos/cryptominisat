@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -422,8 +422,8 @@ private:
     //Main data
     Simplifier *subsumer;
     Solver *solver;
-    vector<char>& seen;
-    vector<char>& seen2;
+    vector<unsigned char>& seen;
+    vector<unsigned char>& seen2;
 };
 
 inline bool GateFinder::canElim(const Var var) const

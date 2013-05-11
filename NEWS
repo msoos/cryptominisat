@@ -1,3 +1,9 @@
+ver 3.2 29/04/2013
+-> git rev bcbdc7ff6f2217eb4fb7446a2ee765a79526a7f8
+* DRUP support
+* fixed a number of variable replacement bugs
+* added cache-based Stalmarck detection
+
 ver 3.0 1/03/2011
 -> git rev 988b0b3b320e830f7285212f342186b41f04ebf6 
 * A redesigned architecture with many options and web statistics

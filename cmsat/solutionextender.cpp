@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,14 +28,13 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assigns) :
+SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _solution) :
     solver(_solver)
     , qhead (0)
-    , assigns(_assigns)
+    , assigns(_solution)
 {
     solver->model.resize(nVars(), l_Undef);
-
-    for (Var var = 0; var < solver->nVars(); var++) {
+    for (Var var = 0; var < nVars(); var++) {
         solver->model[var] = value(var);
     }
     for(Var var = solver->nVars(); var < nVars(); var++) {
@@ -83,26 +82,6 @@ void SolutionExtender::extend()
     }
     solver->varReplacer->extendModel(this);
 
-    //Add normal clauses to occur
-    for (vector<ClOffset>::iterator
-        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause* cl = solver->clAllocator->getPointer(*it);
-        assert(!cl->learnt());
-
-        //Add to occur each lit
-        for (const Lit
-            *it2 = cl->begin(), *end2 = cl->end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //lit_Undef because it's a non-blocked clause
-            solver->watches[it2->toInt()].push(Watched(*it, lit_Undef));
-        }
-    }
-
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
     }
@@ -141,7 +120,7 @@ void SolutionExtender::extend()
 
     //Copy&check model
     solver->model.resize(nVars(), l_Undef);
-    for (Var var = 0; var != nVars(); var++) {
+    for (Var var = 0; var < nVars(); var++) {
         solver->model[var] = value(var);
     }
 

@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -89,6 +89,9 @@ void Prober::checkOTFRatio()
             > 0.8*800LL*1000LL*1000LL
         && ratio < 0.3
         && solver->conf.otfHyperbin
+        #ifdef DRUP
+        && !solver->drup
+        #endif
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
@@ -141,7 +144,15 @@ bool Prober::probe()
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail.size();
+
+    //Clean clauses
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Cleaning clauses before probing." << endl;
+    }
     solver->clauseCleaner->removeAndCleanAll();
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Cleaning clauses before probing finished." << endl;
+    }
 
     //Stats
     extraTime = 0;
@@ -155,8 +166,9 @@ bool Prober::probe()
     visitedAlready.clear();
     visitedAlready.resize(solver->nVars()*2, 0);
     propagatedBitSet.clear();
+    propagated.clear();
     propagated.resize(solver->nVars(), 0);
-    propValue.resize(solver->nVars(), 0);
+    propValue.resize(solver->nVars());
 
     //If failed var searching is going good, do successively more and more of it
     double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)numActiveVars * 100.0;
@@ -314,7 +326,7 @@ end:
 
     //More than 50% of the time is spent updating the cache... that's a lot
     //Disable and free
-    if (timeOnCache > 50.0)  {
+    if (timeOnCache > 50.0 && solver->conf.doCache)  {
         if (solver->conf.verbosity >= 2) {
             cout
             << "c [probe] too much time spent on updating cache: "
@@ -419,7 +431,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
     //Clean state if this is the 1st of two
     if (first) {
         extraTime += propagatedBitSet.size();
-        propagated.removeThese(propagatedBitSet);
+        for(vector<uint32_t>::const_iterator
+            it = propagatedBitSet.begin(), end = propagatedBitSet.end()
+            ; it != end
+            ; it++
+        ) {
+            propagated[*it] = false;
+        }
         propagatedBitSet.clear();
     }
     toEnqueue.clear();
@@ -467,7 +485,11 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
         //If we timed out on ONE call, turn otf hyper-bin off
         //and return --> the "visitedAlready" will be wrong
-        if (solver->timedOutPropagateFull) {
+        if (solver->timedOutPropagateFull
+            #ifdef DRUP
+            && !solver->drup
+            #endif
+        ) {
             if (solver->conf.verbosity >= 2) {
                 cout
                 << "c [probe] timeout during propagation,"
@@ -483,7 +505,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
             runStats.removedIrredBin += tmp.first;
             runStats.removedRedBin += tmp.second;
 
-            propagated.removeThese(propagatedBitSet);
+            for(vector<uint32_t>::const_iterator
+                it = propagatedBitSet.begin(), end = propagatedBitSet.end()
+                ; it != end
+                ; it++
+            ) {
+                propagated[*it] = false;
+            }
             propagatedBitSet.clear();
             toEnqueue.clear();
             return solver->okay();
@@ -551,18 +579,32 @@ bool Prober::tryThis(const Lit lit, const bool first)
             propagatedBitSet.push_back(var);
 
             //Set prop has been done
-            propagated.setBit(var);
+            propagated[var] = true;
 
             //Set propValue
             if (solver->assigns[var].getBool())
-                propValue.setBit(var);
+                propValue[var] = true;
             else
-                propValue.clearBit(var);
+                propValue[var] = false;
         } else if (propagated[var]) {
             if (propValue[var] == solver->value(var).getBool()) {
 
                 //they both imply the same
-                toEnqueue.push_back(Lit(var, !propValue[var]));
+                const Lit litToEnq = Lit(var, !propValue[var]);
+                toEnqueue.push_back(litToEnq);
+                #ifdef DRUP
+                if (solver->drup) {
+                    if (solver->conf.verbosity >= 6) {
+                        cout
+                        << "c bprop:"
+                        << litToEnq
+                        << endl;
+                    }
+                    (*solver->drup)
+                    << litToEnq
+                    << " 0\n";
+                }
+                #endif
             }
         }
 
@@ -599,7 +641,10 @@ bool Prober::tryThis(const Lit lit, const bool first)
             //If tautology according to cache we can
             //enqueue ~ancestor at toplevel since both
             //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
-            if (taut) {
+            if (taut
+                && (solver->varData[ancestor.var()].elimed == ELIMED_NONE
+                    || solver->varData[ancestor.var()].elimed == ELIMED_QUEUED_VARREPLACER)
+            ) {
                 toEnqueue.push_back(~ancestor);
             }
 
@@ -636,6 +681,13 @@ bool Prober::tryThis(const Lit lit, const bool first)
         //~lit V OTHER, and ~lit V ~OTHER are technically in
         if (taut) {
             toEnqueue.push_back(~lit);
+            #ifdef DRUP
+            if (solver->drup) {
+                (*solver->drup)
+                << (~lit)
+                << " 0\n";
+            }
+            #endif
         }
     }
 
@@ -662,9 +714,9 @@ uint64_t Prober::memUsed() const
     mem += propagatedBitSet.capacity()*sizeof(uint32_t);
     mem += toEnqueue.capacity()*sizeof(Lit);
     mem += tmp.capacity()*sizeof(Lit);
-    mem += propagated.getSize()/8;
-    mem += propValue.getSize()/8;
-    mem += candidates.capacity()*sizeof(TwoSignVar);
+    mem += propagated.capacity()/8;
+    mem += propValue.capacity()/8;
+    //mem += candidates.capacity()*sizeof(TwoSignVar);
 
     return mem;
 }

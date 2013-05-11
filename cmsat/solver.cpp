@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,6 +50,8 @@ using std::endl;
 #ifdef USE_MYSQL
 #include "mysqlstats.h"
 #endif
+
+//#define DRUP_DEBUG
 
 //#define DEBUG_RENUMBER
 
@@ -101,6 +103,7 @@ Solver::Solver(const SolverConf& _conf) :
     if (conf.doCompHandler) {
         compHandler = new CompHandler(this);
     }
+    Searcher::solver = this;
 }
 
 Solver::~Solver()
@@ -189,18 +192,35 @@ bool Solver::addXorClauseInt(
 
     switch(ps.size()) {
         case 0:
-            if (rhs)
+            if (rhs) {
+                #ifdef DRUP
+                if (drup) {
+                    *drup
+                    << "0\n";
+                }
+                #endif
+
                 ok = false;
+            }
             return ok;
 
-        case 1:
-            enqueue(Lit(ps[0].var(), !rhs));
+        case 1: {
+            Lit lit = Lit(ps[0].var(), !rhs);
+            enqueue(lit);
+            #ifdef DRUP
+            if (drup) {
+                *drup
+                << lit << " 0\n";
+            }
+            #endif
+
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
             if (attach)
                 ok = propagate().isNULL();
             return ok;
+        }
 
         case 2:
             ps[0] ^= !rhs;
@@ -235,6 +255,7 @@ Clause* Solver::addClauseInt(
     , ClauseStats stats
     , const bool attach
     , vector<Lit>* finalLits
+    , bool addDrup
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -247,8 +268,7 @@ Clause* Solver::addClauseInt(
     stats.conflictNumIntroduced = std::min<uint64_t>(Searcher::sumConflicts(), stats.conflictNumIntroduced);
 
     vector<Lit>& ps = addClIntTmpLits;
-    ps.resize(lits.size());
-    std::copy(lits.begin(), lits.end(), ps.begin());
+    ps = lits;
 
     std::sort(ps.begin(), ps.end());
     Lit p = lit_Undef;
@@ -285,6 +305,12 @@ Clause* Solver::addClauseInt(
         *finalLits = ps;
     }
 
+    #ifdef DRUP
+    if (drup && addDrup) {
+        (*drup) << ps << " 0\n";
+    }
+    #endif
+
     //Handle special cases
     switch (ps.size()) {
         case 0:
@@ -295,8 +321,9 @@ Clause* Solver::addClauseInt(
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
-            if (attach)
-                ok = (propagate().isNULL());
+            if (attach) {
+                ok = (solver->propagate().isNULL());
+            }
 
             return NULL;
         case 2:
@@ -337,6 +364,16 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
+    #if defined(DRUP_DEBUG) && defined(DRUP)
+    if (drup) {
+        for(size_t i = 0; i < cl.size(); i++) {
+            *drup
+            << cl[i] << " ";
+        }
+        *drup << "0\n";
+    }
+    #endif
+
     //Update stats
     if (cl.learnt())
         binTri.redLits += cl.size();
@@ -353,6 +390,15 @@ void Solver::attachTriClause(
     , const Lit lit3
     , const bool learnt
 ) {
+    #if defined(DRUP_DEBUG) && defined(DRUP)
+    if (drup) {
+        *drup
+        << lit1 << " "
+        << lit2 << " "
+        << lit3 << " 0\n";
+    }
+    #endif
+
     //Update stats
     if (learnt) {
         binTri.redLits += 3;
@@ -372,6 +418,14 @@ void Solver::attachBinClause(
     , const bool learnt
     , const bool checkUnassignedFirst
 ) {
+    #if defined(DRUP_DEBUG) && defined(DRUP)
+    if (drup) {
+        *drup
+        << lit1 << " "
+        << lit2 << " 0\n";
+    }
+    #endif
+
     //Update stats
     if (learnt) {
         binTri.redLits += 2;
@@ -419,10 +473,22 @@ void Solver::detachBinClause(
     PropEngine::detachBinClause(lit1, lit2, learnt);
 }
 
-void Solver::detachClause(const Clause& c)
+void Solver::detachClause(const Clause& cl, const bool doDRUP)
 {
-    assert(c.size() > 3);
-    detachModifiedClause(c[0], c[1], c.size(), &c);
+    #ifdef DRUP
+    if (drup && doDRUP) {
+        (*drup) << "d " << cl << " 0\n";
+    }
+    #endif
+
+    assert(cl.size() > 3);
+    detachModifiedClause(cl[0], cl[1], cl.size(), &cl);
+}
+
+void Solver::detachClause(const ClOffset offset, const bool doDRUP)
+{
+    Clause* cl = clAllocator->getPointer(offset);
+    detachClause(*cl, doDRUP);
 }
 
 void Solver::detachModifiedClause(
@@ -547,12 +613,47 @@ bool Solver::addClause(const vector<Lit>& lits)
     if (!addClauseHelper(ps)) {
         return false;
     }
+    #ifdef DRUP
+    vector<Lit> origCl = ps;
+    vector<Lit> finalCl;
+    #endif
 
     if (!replacevar_uneliminate_clause(ps)) {
         return false;
     }
 
-    Clause* cl = addClauseInt(ps);
+    Clause* cl = addClauseInt(
+        ps
+        , false //non-learnt
+        , ClauseStats() //default stats
+        , true //yes, attach
+        #ifdef DRUP
+        , &finalCl
+        , false
+        #endif
+    );
+
+    #ifdef DRUP
+    //We manipulated the clause, delete
+    std::sort(origCl.begin(), origCl.end());
+    if (drup
+        && origCl != finalCl
+    ) {
+        //Dump only if non-empty (UNSAT handled later)
+        if (!finalCl.empty()) {
+            (*drup)
+            << finalCl << " 0\n";
+        }
+
+        //Empty clause, it's UNSAT
+        if (!solver->okay()) {
+            (*drup)
+            << "0\n";
+        }
+        (*drup)
+        << "d " << origCl << " 0\n";
+    }
+    #endif
 
     if (cl != NULL) {
         ClOffset offset = clAllocator->getOffset(cl);
@@ -1041,14 +1142,14 @@ CleaningStats Solver::reduceDB()
     tmpStats.origNumLits = binTri.redLits - binTri.redBins*2;
 
     //Calculate how many to remove
-    size_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
+    uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
-    size_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300)
-        * solveStats.nbReduceDB
+    uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
+        * (double)solveStats.nbReduceDB
         * conf.maxNumLearntsRatio;
-    size_t removeNum = std::max<long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
+    uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
 
     if (removeNum != origRemoveNum) {
         if (conf.verbosity >= 2) {
@@ -1074,6 +1175,10 @@ CleaningStats Solver::reduceDB()
         << std::setprecision(3) << cpuTime()-myTime
         << endl;
     }
+
+    //Complete detach&reattach of OK clauses will be *much* faster
+    CompleteDetachReatacher detachReattach(this);
+    detachReattach.detachNonBinsNonTris();
 
     //pre-remove
     if (conf.doPreClauseCleanPropAndConfl) {
@@ -1103,7 +1208,14 @@ CleaningStats Solver::reduceDB()
                 }
 
                 //detach&free
-                detachClause(*cl);
+                #ifdef DRUP
+                if (drup) {
+                    (*drup)
+                    << "d "
+                    << *cl
+                    << " 0\n";
+                }
+                #endif
                 clAllocator->clauseFree(offset);
 
             } else {
@@ -1153,10 +1265,6 @@ CleaningStats Solver::reduceDB()
     }
     #endif
 
-    //Complete detach&reattach of OK clauses will be *much* faster
-    CompleteDetachReatacher detachReattach(this);
-    detachReattach.detachNonBinsNonTris();
-
     //Remove clauses
     size_t i, j;
     for (i = j = 0
@@ -1182,6 +1290,14 @@ CleaningStats Solver::reduceDB()
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
         //free clause
+        #ifdef DRUP
+        if (drup) {
+            (*drup)
+            << "d "
+            << *cl
+            << " 0\n";
+        }
+        #endif
         clAllocator->clauseFree(offset);
     }
 
@@ -1250,6 +1366,12 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         && "You MUST give a short term history size (\"--gluehist\")  greater than 0!"
     );
 
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Solver::solve() called"
+        << endl;
+    }
+
     //Set up SQL writer
     if (conf.doSQL) {
         sqlStats->setup(this);
@@ -1263,13 +1385,21 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     }
 
     //Check if adding the clauses caused UNSAT
-    lbool status = ok ? l_Undef : l_False;
+    lbool status = l_Undef;
+    if (!ok) {
+        status = l_False;
+        if (conf.verbosity >= 6) {
+            cout
+            << "c Solver status l_Fase on startup of solve()"
+            << endl;
+        }
+    }
 
     //If still unknown, simplify
     if (status == l_Undef
         && nVars() > 0
-        && conf.doPreSimp
-        && conf.doSchedSimp
+        && conf.doPreSchedSimpProblem
+        && conf.doSchedSimpProblem
     ) {
         status = simplifyProblem();
     }
@@ -1407,15 +1537,14 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         //Simplify
-        if (conf.doSchedSimp) {
+        if (conf.doSchedSimpProblem) {
             status = simplifyProblem();
         }
     }
 
     //Handle found solution
     if (status == l_False) {
-        //Not much to do, just return l_False
-        return l_False;
+        //Not much to do
     } else if (status == l_True) {
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
@@ -1462,6 +1591,12 @@ lbool Solver::simplifyProblem()
     #endif
     reArrangeClauses();
 
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Solver::simplifyProblem() called"
+        << endl;
+    }
+
     if (conf.doFindComps
         && getNumFreeVars() < conf.compVarLimit
     ) {
@@ -1504,12 +1639,15 @@ lbool Solver::simplifyProblem()
     }
 
     //Treat implicits
-    clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        clauseVivifier->subsumeImplicit();
+    }
 
     //PROBE
     updateDominators();
-    if (conf.doProbe && !prober->probe())
+    if (conf.doProbe && !prober->probe()) {
         goto end;
+    }
 
     //If we are over the limit, exit
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
@@ -1524,7 +1662,9 @@ lbool Solver::simplifyProblem()
     }
 
     //Treat implicits
-    clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        clauseVivifier->subsumeImplicit();
+    }
 
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
@@ -1544,10 +1684,13 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Treat implicits
-    if (!clauseVivifier->strengthenImplicit())
-        goto end;
+    if (conf.doStrSubImplicit) {
+        if (!clauseVivifier->strengthenImplicit()) {
+            goto end;
+        }
 
-    clauseVivifier->subsumeImplicit();
+        clauseVivifier->subsumeImplicit();
+    }
 
     //Clean cache before vivif
     if (conf.doCache && !implCache.clean(this))
@@ -1608,7 +1751,7 @@ lbool Solver::simplifyProblem()
 
 end:
     if (conf.verbosity >= 3)
-        cout << "c Simplifying finished" << endl;
+        cout << "c Searcher::simplifyProblem() finished" << endl;
 
     testAllClauseAttach();
     checkNoWrongAttach();
@@ -1978,7 +2121,9 @@ void Solver::printMinStats() const
         , memUsed()/(1024UL*1024UL)
         , "MB"
     );
-    implCache.printStatsSort(this);
+    if (conf.doCache) {
+        implCache.printStatsSort(this);
+    }
 }
 
 void Solver::printFullStats() const
@@ -2104,7 +2249,9 @@ void Solver::printFullStats() const
                     , "% time");
     clauseVivifier->getStats().print(nVars());
 
-    implCache.printStats(this);
+    if (conf.doCache) {
+        implCache.printStats(this);
+    }
 
     //Other stats
     printStatsLine("c Conflicts in UIP"
@@ -2126,7 +2273,7 @@ uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
     printStatsLine("c Mem for watches"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.
+        , (double)mem/(double)totalMem*100.0
         , "%"
     );
 
@@ -2331,11 +2478,9 @@ void Solver::dumpBinClauses(
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
-                    << tmpCl[0]
-                    << " "
+                    << tmpCl[0] << " "
                     << tmpCl[1]
-                    << " 0"
-                    << endl;
+                    << " 0\n";
                 }
             }
         }
@@ -2370,12 +2515,10 @@ void Solver::dumpTriClauses(
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
-                    << tmpCl[0]
-                    << " "
-                    << tmpCl[1]
-                    << " "
+                    << tmpCl[0] << " "
+                    << tmpCl[1] << " "
                     << tmpCl[2]
-                    << " 0" << endl;
+                    << " 0\n";
                 }
             }
         }
@@ -2462,21 +2605,17 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         std::sort(tmpCl.begin(), tmpCl.end());
 
         *os
-        << tmpCl[0]
-        << " "
+        << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0"
-        << endl;
+        << " 0\n";
 
         tmpCl[0] ^= true;
         tmpCl[1] ^= true;
 
         *os
-        << tmpCl[0]
-        << " "
+        << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0"
-        << endl;
+        << " 0\n";
     }
 }
 
@@ -2490,8 +2629,7 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
-        << " 0"
-        << endl;
+        << " 0\n";
     }
 }
 
@@ -3334,7 +3472,9 @@ void Solver::dumpIfNeeded() const
     }
 
     //Don't dump implicit clauses multiple times
-    solver->clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit) {
+        solver->clauseVivifier->subsumeImplicit();
+    }
 
     if (conf.needToDumpLearnts) {
         std::ofstream outfile;
@@ -3502,15 +3642,15 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
     assert(ok);
     assert(decisionLevel() == 0);
     for(size_t i = 0; i < toEnqueue.size(); i++) {
-        const lbool val = solver->value(toEnqueue[i]);
+        const lbool val = value(toEnqueue[i]);
         if (val == l_Undef) {
-            solver->enqueue(toEnqueue[i]);
-            solver->ok = solver->propagate().isNULL();
-            if (!solver->okay()) {
+            enqueue(toEnqueue[i]);
+            ok = propagate().isNULL();
+            if (!ok) {
                 return false;
             }
         } else if (val == l_False) {
-            solver->ok = false;
+            ok = false;
             return false;
         }
     }

@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <fstream>
 
 #include "solvertypes.h"
 #include "solverconf.h"
@@ -81,6 +82,12 @@ class Main
         //Command line arguments
         int argc;
         char** argv;
+
+        #ifdef DRUP
+        //Drup checker
+        std::ostream* drupf;
+        bool drupDebug;
+        #endif
 };
 
 #endif //MAIN_H

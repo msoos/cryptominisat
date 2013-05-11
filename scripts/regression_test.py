@@ -33,31 +33,21 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
 desc = """Example usages:
 * check already computed SAT solutions (UNSAT cannot be checked):
-   python regression_test.py --checkdir ../../clusters/cluster93/
-           --cnfdir ../../satcomp09/ -n 1
+   ./regression_test.py --checkdir ../../clusters/cluster93/
+           --cnfdir ../../satcomp09/
 
-* check file 'MYFILE' multiple times for correct answer:
-   python regression_test.py --file MYFILE --extraOptions="--nosubsume1 --noasymm"
-           --numStart 20 --num 100"
+* check already computed SAT solutions (UNSAT cannot be checked):
+   ./regression_test.py --check myfile.cnf
+           --solution sol.txt
 
 * fuzz the solver with precosat as solution-checker:
-   python regression_test.py --fuzz
+   ./regression_test.py --fuzz
 
 * go through regression listdir
-   python regression_test.py --regtest --checkdir ../tests/
+   ./regression_test.py --regtest --checkdir ../tests/
 """
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
-parser.add_option("--rndstart", dest="rndStart", default=0
-                    , type = "int", metavar="SEEDSTART"
-                    , help="Start randomize from this random seed. Default: %default"
-                    )
-
-parser.add_option("--rndnum", dest="rndNum", default=1
-                    , type="int", metavar="SEEDS"
-                    , help="Go through this many random seeds. Default: %default"
-                    )
-
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
                     , default="../build/cryptominisat"
                     , help="SAT solver executable. Default: %default"
@@ -99,6 +89,11 @@ parser.add_option("--testdirNewVar", dest="testDirNewVar"
                     , help="Directory where the tests are"
                     )
 
+parser.add_option("--drup", dest="drup"
+                    , default= False, action="store_true"
+                    , help="Directory where the tests are"
+                    )
+
 #check dir stuff
 parser.add_option("--checksol", dest="checkSol"
                     , default=False, action="store_true"
@@ -112,13 +107,21 @@ parser.add_option("--probdir", dest="checkDirProb"
                     , default="/home/soos/media/sat/examples/satcomp09/"
                     , help="Directory of CNF files checked against"
                     )
+parser.add_option("--check", dest="checkFile"
+                    , default=None
+                    , help="Check this file"
+                    )
+parser.add_option("--sol", dest="solutionFile"
+                    , default=None
+                    , help="Against this solution"
+                    )
 
 (options, args) = parser.parse_args()
 
 
 
 def setlimits():
-    sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
+    #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -134,7 +137,7 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
     def __init__(self):
-        self.check_unsat = True
+        self.check_unsat = False
         self.testDir = options.testDir
         self.testDirNewVar = options.testDirNewVar
 
@@ -142,15 +145,13 @@ class Tester:
         self.needDebugLib = True
 
     def random_options(self) :
-        cmd = ""
+        cmd = " "
 
-        cmd += "--simplify %s " % random.randint(0,1)
         cmd += "--clbtwsimp %s " % random.randint(0,3)
         cmd += "--restart %s " % random.choice(["geom", "agility", "glue", "glueagility"])
         cmd += "--agilviollim %s " % random.randint(0,40)
         cmd += "--gluehist %s " % random.randint(1,500)
         cmd += "--updateglue %s " % random.randint(0,1)
-        cmd += "--binpri %s " % random.randint(0,1)
         cmd += "--otfhyper %s " % random.randint(0,1)
         cmd += "--clean %s " % random.choice(["size", "glue", "activity", "propconfl"])
         cmd += "--preclean %s " % random.randint(0,1)
@@ -161,42 +162,50 @@ class Tester:
         cmd += "--maxredratio %s " % random.randint(2,20)
         cmd += "--dompickf %s " % random.randint(1,20)
         cmd += "--flippolf %s " % random.randint(1,3000)
-        cmd += "--moreminim %s " % random.randint(0,1)
         cmd += "--alwaysmoremin %s " % random.randint(0,1)
-        cmd += "--otfsubsume %s " % random.randint(0,1)
         cmd += "--rewardotfsubsume %s " % random.randint(0,100)
         cmd += "--bothprop %s " % random.randint(0,1)
-        cmd += "--probe %s " % random.randint(0,1)
         cmd += "--probemultip %s " % random.randint(0,10)
-        cmd += "--stamp %s " % random.randint(0,1)
-        cmd += "--cache %s " % random.randint(0,1)
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
-        cmd += "--varelim %s " % random.randint(0,1)
         cmd += "--elimstrategy %s " % random.randint(0,1)
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
-        cmd += "--subsume1 %s " % random.randint(0,1)
-        cmd += "--block %s " % random.randint(0,1)
         cmd += "--occlearntmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
-        cmd += "--scc %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)
-        cmd += "--presimp %s " % random.randint(0,1)
         cmd += "--vivif %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
-        cmd += "--renumber %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
-        #cmd += "--compss %s " % random.randint(0,1)
-        cmd += "--comps 1 "
         cmd += "--compsfrom %d " % random.randint(0,2)
         cmd += "--compsvar %d " % random.randint(20000,500000)
         cmd += "--compslimit %d " % random.randint(0,3000)
+        cmd += "--preschedsimp %s " % random.randint(0,1)
+        cmd += "--implicitmanip %s " % random.randint(0,1)
+
+        #the most buggy ones, don't turn them off much, please
+        if random.randint(0,1) == 1 :
+            cmd += "--scc %s " % random.randint(0,1)
+            cmd += "--schedsimplify %d " % random.randint(0,1)
+            cmd += "--varelim %s " % random.randint(0,1)
+            cmd += "--comps %s " % random.randint(0,1)
+            cmd += "--subsume1 %s " % random.randint(0,1)
+            cmd += "--block %s " % random.randint(0,1)
+            cmd += "--probe %s " % random.randint(0,1)
+            cmd += "--simplify %s " % random.randint(0,1)
+            cmd += "--binpri %s " % random.randint(0,1)
+            cmd += "--stamp %s " % random.randint(0,1)
+            cmd += "--cache %s " % random.randint(0,1)
+            cmd += "--otfsubsume %s " % random.randint(0,1)
+            cmd += "--renumber %s " % random.randint(0,1)
+            cmd += "--moreminim %s " % random.randint(0,1)
+
+
 
         return cmd
 
-    def execute(self, fname, randomizeNum, newVar, needToLimitTime):
+    def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None):
         if os.path.isfile(options.solver) != True:
             print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
                 options.solver
@@ -204,7 +213,7 @@ class Tester:
             exit(300)
 
         #construct command
-        command = "%s --random=%d " % (options.solver, randomizeNum)
+        command = options.solver
         command += self.random_options()
         if self.needDebugLib :
             command += "--debuglib "
@@ -215,6 +224,8 @@ class Tester:
         command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += fname
+        if fnameDrup:
+            command += " --drupexistscheck 0 " + fnameDrup
         print "Executing: %s " % command
 
         #print time limit
@@ -395,7 +406,7 @@ class Tester:
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def check(self, fname, fnameCheck, randomizeNum=0, newVar=False,
+    def check(self, fname, fnameSolution, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False):
 
         consoleOutput = ""
@@ -403,14 +414,15 @@ class Tester:
 
         #Do we need to solve the problem, or is it already solved?
         if needSolve:
-            consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
+            consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
         else:
-            if (os.path.isfile(fname + ".out") == False) :
+            if (os.path.isfile(fnameSolution + ".out") == False) :
                 print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
                 exit(-1)
-            f = open(fname + ".out", "r")
+            f = open(fnameSolution + ".out", "r")
             consoleOutput = f.read()
             f.close()
+            print "Read solution from file " , fnameSolution + ".out"
 
         #if time was limited, we need to know if we were over the time limit
         #and that is why there is no solution
@@ -422,7 +434,7 @@ class Tester:
             else:
                 print "Within time limit: %f s" % (time.time() - currTime)
 
-        print "filename: %s, random seed: %3d" % (fname[:20], randomizeNum)
+        print "filename: %s" % fname
 
         if (self.needDebugLib) :
             largestPart = -1
@@ -449,7 +461,7 @@ class Tester:
 
                 (unsat, value) = self.parse_solution_from_output(output_lines)
                 if unsat == False:
-                    self.test_found_solution(value, fnameCheck, debugLibPart)
+                    self.test_found_solution(value, fname, debugLibPart)
                 else:
                     print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
@@ -459,6 +471,7 @@ class Tester:
         if self.check_unsat and unsat:
             toexec = "../../lingeling-587f/lingeling -f %s" % fname
             print "Solving with other solver.."
+            currTime = time.time()
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                                  preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
@@ -470,6 +483,31 @@ class Tester:
             (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         if unsat == True:
+            if fnameDrup:
+                toexec = "drupcheck %s %s" % (fname, fnameDrup)
+                print "Checking DRUP...: ", toexec
+                p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
+                                     #,preexec_fn=setlimits)
+                consoleOutput2 = p.communicate()[0]
+                diffTime = time.time() - currTime
+                foundVerif = False
+                drupLine = ""
+                for line in consoleOutput2.split('\n') :
+                    if len(line) > 1 and line[:2] == "s " :
+                        #print "verif: " , line
+                        foundVerif = True
+                        if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
+                            print "DRUP verification error, it says:", consoleOutput2
+                        assert line[2:10] == "VERIFIED" or line[2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
+                        drupLine = line
+
+                if foundVerif == False:
+                    print "verifier error! It says:", consoleOutput2
+                    assert foundVerif, "Cannot find DRUP verification code!"
+                else:
+                    print "OK, DRUP says:", drupLine
+
+
             if self.check_unsat == False:
                 print "Cannot check -- output is UNSAT"
             else :
@@ -481,7 +519,7 @@ class Tester:
                     print "UNSAT verified by other solver"
 
         else :
-            self.test_found_solution(value, fnameCheck)
+            self.test_found_solution(value, fname)
 
     def removeDebugLibParts(self) :
         dirList = os.listdir(".")
@@ -508,11 +546,12 @@ class Tester:
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             , ["build/cnf-fuzz-biere"] \
             #, ["build/cnf-fuzz-nossum"] \
-            #, ["build/largefuzzer"] \
+            , ["build/largefuzzer"] \
             , ["cnf-fuzz-brummayer.py"] \
             , ["multipart.py", "special"] \
-            #, ["build/sgen4 -unsat -n 50", "-s"] \
-            #, ["build/sgen4 -sat -n 50", "-s"] \
+            , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["cnf-fuzz-xor.py"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
         ]
 
         directory = "../../cnf-utils/"
@@ -520,8 +559,13 @@ class Tester:
             for fuzzer in fuzzers :
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
+                fnameDrup = None
+                if options.drup :
+                    fileopened, fnameDrup = unique_fuzz_file("fuzzTest");
+                    fileopened.close()
 
                 #should the multi-fuzzer be called?
+                file_names_multi = []
                 if len(fuzzer) == 2 and fuzzer[1] == "special":
                     #create N files
                     file_names_multi = []
@@ -565,35 +609,38 @@ class Tester:
 
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
-
-                for seednum in range(options.rndStart, options.rndStart+options.rndNum):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                            randomizeNum=seednum, needToLimitTime=True)
+                self.check(fname=file_name, fnameSolution=file_name, fnameDrup=fnameDrup,
+                            needToLimitTime=True)
 
                 os.unlink(file_name)
+                for tounlink in file_names_multi :
+                    os.unlink(tounlink)
+                if fnameDrup != None :
+                    os.unlink(fnameDrup)
 
     def checkDir(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
 
-        #check if options.checkDir has bee set
-        if options.checkDir == "":
+        #check if options.checkDirSol has bee set
+        if options.checkDirSol == "":
             print "When checking, you must give test dir"
             exit()
 
         print "You gave testdir (where solutions are):", options.checkDirSol
         print "You gave CNF dir (where problems are) :", options.checkDirProb
 
-        dirList = os.listdir(options.checkDir)
+        dirList = os.listdir(options.checkDirSol)
         for fname in dirList:
 
             if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
                 #add dir, remove trailing .out
-                fnameCheck = options.checkDirProb + fname[:len(fname) - 4]
+                fname = fname[:len(fname) - 4]
+                fnameSol = options.checkDirSol + "/" + fname
 
                 #check now
-                self.check(fname=self.testDir + fname, \
-                   fnameCheck=fnameCheck, needSolve=False)
+                self.check(fname=options.checkDirProb + "/" + fname, \
+                   fnameSolution=fnameSol, needSolve=False)
 
     def regressionTest(self) :
 
@@ -602,30 +649,32 @@ class Tester:
             dirList = os.listdir(self.testDirNewVar)
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    print options.rndStart
-                    for i in range(options.rndStart, options.rndStart + options.rndNum):
-                        self.check(fname=self.testDirNewVar + fname,
-                                fnameCheck=self.testDirNewVar +
-                                fname, randomizeNum=i, newVar=True)
+                    self.check(fname=self.testDirNewVar + fname,
+                                fnameSolution=self.testDirNewVar +
+                                fname, newVar=True)
 
         dirList = os.listdir(self.testDir)
 
         #test stuff without newVar
         for fname in dirList:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                for i in range(options.rndStart, options.rndStart+options.rndNum):
-                    self.check(fname=self.testDir + fname,
-                               fnameCheck=self.testDir + fname,
-                               randomizeNum=i, newVar=False)
+                self.check(fname=self.testDir + fname,
+                fnameSolution=self.testDir + fname,
+                newVar=False)
 
-    def checkFile(self, fname) :
-        if os.path.isfile(fname) == False:
-            print "Filename given '%s' is not a file!" % fname
+    def checkFile(self, problem, solution) :
+        if os.path.isfile(problem) == False:
+            print "Filename given '%s' is not a file!" % problem
             exit(-1)
 
-        for seednum in range(options.rndStart, options.rndStart+options.rndNum):
-            print "Checking fname %s" % fname
-            self.check(fname=fname, fnameCheck=fname, randomizeNum=seednum)
+        print "Checking CNF file '%s' against proposed solution '%s' " % (problem, solution)
+        #self.check(fname=problem, fnameSolution=problem)
+        output_lines = open(solution).readlines()
+        (unsat, value) = self.parse_solution_from_output(output_lines)
+        if not unsat:
+            self.test_found_solution(value, problem)
+        else:
+            print "Cannot check, UNSAT"
 
 tester = Tester()
 
@@ -634,6 +683,8 @@ if len(args) == 1:
     tester.check_unsat = True
     tester.checkFile(args[0])
 
+if options.checkFile :
+    tester.checkFile(options.checkFile, options.solutionFile)
 
 if options.fuzz_test:
     tester.needDebugLib = False

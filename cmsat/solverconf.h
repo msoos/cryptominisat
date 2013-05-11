@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #ifndef SOLVERCONF_H
 #define SOLVERCONF_H
 
+#include <fstream>
 #include "solvertypes.h"
 #include "constants.h"
 #include "clause.h"
@@ -71,6 +72,7 @@ class SolverConf
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
         size_t    burstSearchLen;
         RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
+        int       optimiseUnsat;
 
         //Clause minimisation
         int doRecursiveMinim;
@@ -154,14 +156,15 @@ class SolverConf
 
         //Simplifier
         int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        int      doPreSimp;          //Perform simplification at startup
-        int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
+        int      doSchedSimpProblem;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
+        int      doPreSchedSimpProblem;          //Perform simplification at startup
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
         unsigned maxRedLinkInSize;
         uint64_t maxOccurIrredMB;
         uint64_t maxOccurRedMB;
+        uint64_t maxOccurRedLitLinkedM;
 
 
         //Optimisations to do
@@ -180,6 +183,7 @@ class SolverConf
 
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
+        int      doStrSubImplicit;
 
         //Gates
         int      doGateFind; ///< Find OR gates

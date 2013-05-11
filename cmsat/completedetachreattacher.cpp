@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -91,14 +91,20 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 {
+    #ifdef DRUP
+    if (solver->conf.verbosity >= 6) {
+        cout << "Cleaning and reattaching clauses" << endl;
+    }
+    #endif
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
 
     //Treat implicits
     solver->clauseCleaner->treatImplicitClauses();
 
-    if (solver->ok)
+    if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());
+    }
 
     return solver->ok;
 }
@@ -149,16 +155,44 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
         << endl;
     }
     assert(ps.size() > 3);
+    #ifdef DRUP
+    vector<Lit> origCl(cl->size());
+    std::copy(cl->begin(), cl->end(), origCl.begin());
+    #endif
 
     Lit *i = ps.begin();
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
-        if (solver->value(*i) == l_True) return false;
+        if (solver->value(*i) == l_True) {
+            #ifdef DRUP
+            if (solver->drup && i != j) {
+                (*solver->drup)
+                << "d "
+                << origCl
+                << endl;
+            }
+            #endif
+
+            return false;
+        }
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
         }
     }
     ps.shrink(i-j);
+
+    #ifdef DRUP
+    if (solver->drup && i != j) {
+        (*solver->drup)
+        << cl
+        << " 0\n"
+
+        //Delete old one
+        << "d "
+        << origCl
+        << " 0\n";
+    }
+    #endif
 
     switch (ps.size()) {
         case 0:

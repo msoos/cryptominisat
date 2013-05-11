@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@ namespace CMSat {
 
 class Solver;
 class SQLStats;
+class VarReplacer;
 
 using std::string;
 using std::cout;
@@ -629,6 +630,7 @@ class Searcher : public PropEngine
 
     protected:
         friend class CalcDefPolars;
+        friend class VarReplacer;
         void filterOrderHeap();
         void redoOrderHeap();
 

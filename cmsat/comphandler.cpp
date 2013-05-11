@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,7 +53,6 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
     interToOuter.resize(solver->nVars());
     outerToInter.resize(solver->nVars());
 
-    size_t at = 0;
     for(size_t i = 0, size = vars.size()
         ; i < size
         ; i++
@@ -184,7 +183,7 @@ bool CompHandler::handle()
             //the variables, so we must take this into account
             Var newSolverInternalVar;
             if (!newSolver.interToOuter.empty()) {
-                newSolverInternalVar = newSolver.interToOuter[i];
+                newSolverInternalVar = newSolver.interToOuterMain[i];
             } else {
                 newSolverInternalVar = i;
             }
@@ -198,6 +197,11 @@ bool CompHandler::handle()
                 Var var = vars[i];
                 Lit lit(var, val == l_False);
                 solver->enqueue(lit);
+
+                /*cout
+                << "0-level enqueueing var "
+                << solver->interToOuterMain[var]
+                << endl;*/
 
                 //These vars are not meant to be in the orig solver
                 //so they cannot cause UNSAT
@@ -270,12 +274,12 @@ void CompHandler::configureNewSolver(
     newSolver->conf = solver->conf;
     newSolver->mtrand.seed(solver->mtrand.randInt());
     if (numVars < 60) {
-        newSolver->conf.doSchedSimp = false;
-        newSolver->conf.doSimplify = false;
+        newSolver->conf.doSchedSimpProblem = false;
         newSolver->conf.doStamp = false;
         newSolver->conf.doCache = false;
         newSolver->conf.doProbe = false;
-        newSolver->conf.verbosity = 1;
+        newSolver->conf.otfHyperbin = false;
+        newSolver->conf.verbosity = std::min(solver->conf.verbosity, 1);
     }
 
     //To small, don't clogger up the screen
@@ -409,7 +413,6 @@ void CompHandler::moveClausesImplicit(
     uint32_t numRemovedThirdNonLearnt = 0;
     uint32_t numRemovedThirdLearnt = 0;
 
-    uint32_t wsLit = 0;
     for (vector<Var>::const_iterator
         it = vars.begin(), end = vars.end()
         ; it != end
@@ -533,12 +536,12 @@ void CompHandler::moveClausesImplicit(
                     //We need it sorted, because that's how we know what order
                     //it is in the Watched()
                     lits.resize(3);
-                    lits[0] = updateLit(lit);
-                    lits[1] = updateLit(lit2);
-                    lits[2] = updateLit(lit3);
+                    lits[0] = lit;
+                    lits[1] = lit2;
+                    lits[2] = lit3;
                     std::sort(lits.begin(), lits.end());
 
-                    //Remove only 2, the other gets removed by not copying it over
+                    //Remove only 2, the remaining gets removed by not copying it over
                     if (lits[0] != lit) {
                         removeWTri(solver->watches, lits[0], lits[1], lits[2], true);
                     }

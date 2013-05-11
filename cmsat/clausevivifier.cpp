@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,11 +52,19 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
 
     solver->clauseCleaner->cleanClauses(solver->longIrredCls);
 
-    if (!vivifyClausesCache(solver->longIrredCls, false, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longIrredCls, false, false))
         goto end;
 
-    if (!vivifyClausesCache(solver->longRedCls, true, alsoStrengthen))
+    if (!vivifyClausesCache(solver->longRedCls, true, false))
         goto end;
+
+    if (alsoStrengthen) {
+        if (!vivifyClausesCache(solver->longIrredCls, false, true))
+            goto end;
+
+        if (!vivifyClausesCache(solver->longRedCls, true, true))
+            goto end;
+    }
 
     if (alsoStrengthen
         && !asymmClausesLongIrred()
@@ -86,6 +94,12 @@ end:
 
 bool ClauseVivifier::vivifyClausesTriIrred()
 {
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Doing asymm branch for tri irred clauses"
+        << endl;
+    }
+
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
     double myTime = cpuTime();
@@ -125,7 +139,6 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 lits[2] = ws[i].lit2();
                 testVivify(
                     std::numeric_limits<ClOffset>::max()
-                    , NULL
                     , ws[i].learnt()
                     , 2
                 );
@@ -135,8 +148,9 @@ bool ClauseVivifier::vivifyClausesTriIrred()
             }
         }
 
-        if (!solver->okay())
+        if (!solver->okay()) {
             break;
+        }
     }
 
     if (solver->conf.verbosity >= 3) {
@@ -182,6 +196,11 @@ struct ClauseSizeSorter
 bool ClauseVivifier::asymmClausesLongIrred()
 {
     assert(solver->ok);
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Doing asymm branch for long irred clauses"
+        << endl;
+    }
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail.size();
@@ -260,7 +279,6 @@ bool ClauseVivifier::asymmClausesLongIrred()
         //Try to vivify clause
         ClOffset offset2 = testVivify(
             offset
-            , &cl
             , cl.learnt()
             , queueByBy
         );
@@ -307,10 +325,20 @@ bool ClauseVivifier::asymmClausesLongIrred()
 
 ClOffset ClauseVivifier::testVivify(
     ClOffset offset
-    , Clause* cl
     , const bool learnt
     , const uint32_t queueByBy
 ) {
+    #ifdef DRUP_DEBUG
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "Trying to vivify clause:";
+        for(size_t i = 0; i < lits.size(); i++) {
+            cout << lits[i] << " ";
+        }
+        cout << endl;
+    }
+    #endif
+
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
     bool failed = false;
     uint32_t done = 0;
@@ -328,8 +356,10 @@ ClOffset ClauseVivifier::testVivify(
         }
         done += i2;
         extraTime += 5;
-        failed = (!solver->propagate(solver).isNULL());
-        if (failed) break;
+        failed = (!solver->propagate().isNULL());
+        if (failed) {
+            break;
+        }
     }
     solver->cancelZeroLight();
     assert(solver->ok);
@@ -346,32 +376,34 @@ ClOffset ClauseVivifier::testVivify(
             remove(lits, uselessLits[i2]);
         }
 
-
-        //Detach and free clause if it's really a clause
-        if (cl) {
-            solver->detachClause(*cl);
-            solver->clAllocator->clauseFree(offset);
-        }
-
         //Make new clause
         Clause *cl2 = solver->addClauseInt(lits, learnt);
 
         //Print results
         if (solver->conf.verbosity >= 5) {
             cout
-            << "c Assym branch effective." << endl;
-            if (cl)
+            << "c Asymm branch effective." << endl;
+            if (offset != std::numeric_limits<ClOffset>::max()) {
                 cout
-                << "c --> orig clause:" << *cl << endl;
-            else
+                << "c --> orig clause:" <<
+                 *solver->clAllocator->getPointer(offset)
+                 << endl;
+            } else {
                 cout
                 << "c --> orig clause: TRI/BIN" << endl;
+            }
             cout
             << "c --> orig size:" << origSize << endl
             << "c --> new size:" << (cl2 == NULL ? 0 : cl2->size()) << endl
-            << "c --> removing lits from end:" << origSize - done
+            << "c --> removing lits from end:" << origSize - done << endl
             << "c --> useless lits in middle:" << uselessLits.size()
             << endl;
+        }
+
+        //Detach and free old clause
+        if (offset != std::numeric_limits<ClOffset>::max()) {
+            solver->detachClause(offset);
+            solver->clAllocator->clauseFree(offset);
         }
 
         runStats.numLitsRem += origSize - lits.size();
@@ -397,7 +429,10 @@ bool ClauseVivifier::vivifyClausesCache(
 
     //Stats
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 700000000;
+    uint64_t maxCountTime = 700ULL*1000ULL*1000ULL;
+    if (!alsoStrengthen) {
+        maxCountTime *= 4;
+    }
 
     double myTime = cpuTime();
 
@@ -715,16 +750,12 @@ bool ClauseVivifier::vivifyClausesCache(
 
         //Else either remove or shrink clause
         countTime += cl.size()*10;
-        solver->detachClause(cl);
-        if (isSubsumed) {
-            solver->clAllocator->clauseFree(offset);
-        } else {
+        if (!isSubsumed) {
             remLitCache += thisRemLitCache;
             remLitBinTri += thisRemLitBinTri;
             tmpStats.shrinked++;
             countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.learnt(), cl.stats);
-            solver->clAllocator->clauseFree(offset);
 
             if (c2 != NULL) {
                 clauses[j++] = solver->clAllocator->getOffset(c2);
@@ -734,6 +765,8 @@ bool ClauseVivifier::vivifyClausesCache(
                 needToFinish = true;
             }
         }
+        solver->detachClause(offset);
+        solver->clAllocator->clauseFree(offset);
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS
@@ -914,6 +947,17 @@ void ClauseVivifier::subsumeImplicit()
                     timeAvailable -= solver->watches[i->lit2().toInt()].size();
                     removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                     remTris++;
+
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        << "d "
+                        << lit << " "
+                        << i->lit1() << " "
+                        << i->lit2()
+                        << " 0\n";
+                    }
+                    #endif
                     continue;
                 }
 
@@ -946,6 +990,17 @@ void ClauseVivifier::subsumeImplicit()
                     solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
                 }
+
+                #ifdef DRUP
+                if (solver->drup) {
+                    (*solver->drup)
+                    << "d "
+                    << lit << " "
+                    << i->lit1()
+                    << " 0\n";
+                }
+                #endif
+
                 continue;
             } else {
                 lastBin = j;
@@ -1037,6 +1092,14 @@ bool ClauseVivifier::strengthenImplicit()
                     assert(!lits.empty());
                     if (lits.size() == 1) {
                         toEnqueue.push_back(lits[0]);
+
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            << lits[0]
+                            << " 0\n";
+                        }
+                        #endif
                         remLitFromBin++;
                         stampRem++;
                         *j++ = *i;
@@ -1074,6 +1137,14 @@ bool ClauseVivifier::strengthenImplicit()
                 if (rem) {
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        << lit
+                        << " 0\n";
+                    }
+                    #endif
+
                 }
                 *j++ = *i;
                 continue;
@@ -1121,6 +1192,24 @@ bool ClauseVivifier::strengthenImplicit()
                     removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit1(), i->lit2(), i->learnt()));
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        //Add shortened
+                        << i->lit1() << " "
+                        << i->lit2()
+                        << " 0\n"
+
+                        //Delete old
+                        << "d "
+                        << lit << " "
+                        << i->lit1() << " "
+                        << i->lit2()
+                        << " 0\n";
+                    }
+                    #endif
+
+
                     continue;
                 }
 
@@ -1147,11 +1236,46 @@ bool ClauseVivifier::strengthenImplicit()
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri++;
                         binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->learnt()));
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            //Add shortened
+                            << lits[0] << " "
+                            << lits[1]
+                            << " 0\n"
+
+                            //Delete old
+                            << "d "
+                            << lit << " "
+                            << i->lit1() << " "
+                            << i->lit2()
+                            << " 0\n"
+                            ;
+                        }
+                        #endif
+
                         continue;
                     } else if (lits.size() == 1) {
                         removeTri(lit, i->lit1(), i->lit2(), i->learnt());
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
+                        #ifdef DRUP
+                        if (solver->drup) {
+                            (*solver->drup)
+                            //Add shortened
+                            << lits[0]
+                            << " 0\n"
+
+                            //Delete old
+                            << "d "
+                            << lit << " "
+                            << i->lit1() << " "
+                            << i->lit2()
+                            << " 0\n"
+                            ;
+                        }
+                        #endif
+
                         continue;
                     }
                 }

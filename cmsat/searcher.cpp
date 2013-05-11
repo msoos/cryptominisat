@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -249,6 +249,24 @@ void Searcher::doOTFSubsume(PropBy confl)
             }
         }
         otfMustAttach.push_back(newCl);
+        #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout << "New implicit clause that subsumes a long clause:";
+            for(unsigned  i = 0; i < newCl.size; i++) {
+                cout
+                << newCl.lits[i] << " ";
+            }
+            cout  << endl;
+        }
+
+        if (drup) {
+            for(unsigned  i = 0; i < newCl.size; i++) {
+                *(drup)
+                << newCl.lits[i] << " ";
+            }
+            (*drup) << " 0\n";
+        }
+        #endif //DRUP
 
         stats.otfSubsumed++;
         stats.otfSubsumedImplicit++;
@@ -258,7 +276,11 @@ void Searcher::doOTFSubsume(PropBy confl)
 
     //Final will not be implicit
     if (num > 3) {
-        solver->detachClause(cl);
+        #ifdef DRUP
+        vector<Lit> origCl(cl.size());
+        std::copy(cl.begin(), cl.end(), origCl.begin());
+        #endif
+        solver->detachClause(cl, false);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
         stats.otfSubsumedLearnt += cl.learnt();
@@ -273,6 +295,18 @@ void Searcher::doOTFSubsume(PropBy confl)
         }
         cl.shrink(i-i2);
         assert(cl.size() == learnt_clause2_size);
+        #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout
+            << "New smaller clause OTF:" << cl << endl;
+        }
+        if (drup) {
+            (*drup)
+            << cl << " 0\n"
+            << "d " << origCl << " 0\n"
+            ;
+        }
+        #endif
 
         toAttachLater.push_back(offset);
     }
@@ -515,8 +549,7 @@ Clause* Searcher::analyze(
     stats.recMinLitRem += origSize - learnt_clause.size();
 
     //Cache-based minimisation
-    if (conf.doStamp
-        && conf.doMinimLearntMore
+    if (conf.doMinimLearntMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
             || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
@@ -530,7 +563,9 @@ Clause* Searcher::analyze(
         minimiseLearntFurther(learnt_clause);
 
         //Stamp-based minimization
-        stampBasedLearntMinim(learnt_clause);
+        if (conf.doStamp) {
+            stampBasedLearntMinim(learnt_clause);
+        }
 
         stats.moreMinimLitsEnd += learnt_clause.size();
     }
@@ -825,6 +860,13 @@ lbool Searcher::search(uint64_t* geom_max)
             solver->varData[trail.back().var()].depth = 0;
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
+                #ifdef DRUP
+                if (drup) {
+                    (*drup)
+                    << (~failed)
+                    << " 0\n";
+                }
+                #endif
 
                 //Update conflict stats
                 stats.learntUnits++;
@@ -876,8 +918,17 @@ lbool Searcher::search(uint64_t* geom_max)
 
                     //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
                     //So enqueue ~ancestor
-                    if (taut) {
+                    if (taut
+                        && (solver->varData[ancestor.var()].elimed == ELIMED_NONE
+                            || solver->varData[ancestor.var()].elimed == ELIMED_QUEUED_VARREPLACER)
+                    ) {
                         toEnqueue.push_back(~ancestor);
+                        #ifdef DRUP
+                        if (drup) {
+                            (*drup)
+                            << (~ancestor) << " 0\n";
+                        }
+                        #endif
                     }
                 }
             }
@@ -1026,7 +1077,10 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
-                if (hist.trailDepthHist.isvalid()
+                //If not optimising for UNSAT, we might have SAT, indicated by
+                //a long trail
+                if (!conf.optimiseUnsat
+                    && hist.trailDepthHist.isvalid()
                     && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.8
                 ) {
                     //Nothing
@@ -1114,8 +1168,9 @@ bool Searcher::handle_conflict(PropBy confl)
     if (conf.doPrintConflDot)
         genConfGraph(confl);
 
-    if (decisionLevel() == 0)
+    if (decisionLevel() == 0) {
         return false;
+    }
 
     Clause* cl = analyze(
         confl
@@ -1124,6 +1179,19 @@ bool Searcher::handle_conflict(PropBy confl)
         , resolutions   //return number of resolutions made here
         , false
     );
+
+    #ifdef DRUP
+    if (conf.verbosity >= 6) {
+        cout
+        << "c learnt clause: "
+        << learnt_clause
+        << endl;
+    }
+    if (drup) {
+        (*drup)
+        << learnt_clause << " 0\n";
+    }
+    #endif
 
     size_t orig_trail_size = trail.size();
     if (params.update) {
@@ -1213,6 +1281,13 @@ bool Searcher::handle_conflict(PropBy confl)
                 addHyperBin(cl[0], cl);
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+                #ifdef DRUP
+                if (drup && decisionLevel() == 0) {
+                    *(drup)
+                    << cl[0]
+                    << " 0\n";
+                }
+                #endif
             }
         } else {
             //We have a non-propagating clause
@@ -1281,6 +1356,12 @@ bool Searcher::handle_conflict(PropBy confl)
                     it->lits[0]
                     , by
                 );
+                #ifdef DRUP
+                if (drup && decisionLevel() == 0) {
+                    *(drup)
+                    << it->lits[0] << " 0\n";
+                }
+                #endif
             }
         } else {
             //We have a non-propagating clause
@@ -1325,6 +1406,15 @@ bool Searcher::handle_conflict(PropBy confl)
         }
 
     } else {
+        //Detach & delete subsumed clause
+        #ifdef DRUP
+        if (conf.verbosity >= 6) {
+            cout
+            << "Detaching OTF subsumed (LAST) clause:"
+            << *cl
+            << endl;
+        }
+        #endif
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -1881,6 +1971,12 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     assert(ok);
     assert(qhead == trail.size());
 
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Searcher::solve() called"
+        << endl;
+    }
+
     assumptions = assumps;
     resetStats();
 
@@ -2243,7 +2339,6 @@ form to carry out the forward-self-subsuming resolution
 */
 void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
-    assert(conf.doStamp);
     stats.furtherShrinkAttempt++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
@@ -2444,16 +2539,18 @@ size_t Searcher::hyperBinResAll()
         lbool val1 = value(it->getLit1());
         lbool val2 = value(it->getLit2());
 
-        if (conf.verbosity >= 6)
+        if (conf.verbosity >= 6) {
             cout
             << "c Attached hyper-bin: "
             << it->getLit1() << "(val: " << val1 << " )"
             << ", " << it->getLit2() << "(val: " << val2 << " )"
             << endl;
+        }
 
         //If binary is satisfied, skip
-        if (val1 == l_True || val2 == l_True)
+        if (val1 == l_True || val2 == l_True) {
             continue;
+        }
 
         assert(val1 == l_Undef && val2 == l_Undef);
         solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
@@ -2492,6 +2589,15 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
+
+            #ifdef DRUP
+            if (drup) {
+                (*drup)
+                << "d "
+                << it->getLit1() << " " << it->getLit2()
+                << " 0\n";
+            }
+            #endif
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -2772,25 +2878,56 @@ void Searcher::bumpClauseAct(Clause* cl)
 }
 
 PropBy Searcher::propagate(
-    Solver* solver
+    Solver* solver2
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    if (solver != NULL
+    #ifdef DRUP
+    size_t origTrailSize = trail.size();
+    #endif
+
+    PropBy ret;
+    if (solver2 != NULL
         && conf.propBinFirst
     ) {
-        return propagateBinFirst(
-            solver
+        ret = propagateBinFirst(
+            solver2
             #ifdef STATS_NEEDED
             , AvgCalc<size_t>* watchListSizeTraversed
             //, AvgCalc<bool>* litPropagatedSomething
             #endif
         );
     } else {
-        return propagateAnyOrder();
+        ret = propagateAnyOrder();
     }
+
+    #ifdef DRUP
+    //If declevel 0 propagation, we have to add the unitaries
+    if (drup && decisionLevel() == 0) {
+        for(size_t i = origTrailSize; i < trail.size(); i++) {
+            #ifdef DEBUG_DRUP
+            if (conf.verbosity >= 6) {
+                cout
+                << "c 0-level enqueue:"
+                << trail[i]
+                << endl;
+            }
+            #endif
+
+            (*drup)
+            << trail[i]
+            << " 0\n";
+        }
+        if (!ret.isNULL()) {
+            (*drup)
+            << "0\n";
+        }
+    }
+    #endif
+
+    return ret;
 }
 
 uint64_t Searcher::memUsedSearch() const
@@ -2819,7 +2956,8 @@ void Searcher::redoOrderHeap()
     for(size_t var = 0; var < nVars(); var++) {
         if (solver->decisionVar[var]
             && value(var) == l_Undef
-            && varData[var].elimed == ELIMED_NONE
+            && (varData[var].elimed == ELIMED_NONE
+                || varData[var].elimed == ELIMED_QUEUED_VARREPLACER)
         ) {
             insertVarOrder(var);
         }

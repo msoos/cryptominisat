@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,9 @@ number of benefits relative to MiniSat.
 #include <iomanip>
 #include <map>
 #include <set>
+#include <fstream>
 #include <signal.h>
+#include <sys/stat.h>
 #include "constants.h"
 
 #include "main.h"
@@ -57,6 +59,22 @@ using std::cerr;
 using std::endl;
 using boost::lexical_cast;
 
+/**
+ * Check if a file exists
+ * @param[in] filename - the name of the file to check
+ * @return    true if the file exists, else false
+*/
+bool fileExists(const std::string& filename)
+{
+    struct stat buf;
+    if (stat(filename.c_str(), &buf) != -1)
+    {
+        return true;
+    }
+    return false;
+}
+
+
 Main::Main(int _argc, char** _argv) :
         debugLib (false)
         , debugNewVar (false)
@@ -65,6 +83,9 @@ Main::Main(int _argc, char** _argv) :
         , fileNamePresent (false)
         , argc(_argc)
         , argv(_argv)
+        #ifdef DRUP
+        , drupf(NULL)
+        #endif
 {
 }
 
@@ -263,6 +284,10 @@ void Main::parseCommandLine()
     }
 
     string typeclean;
+    #ifdef DRUP
+    string drupfilname;
+    int drupExistsCheck = 1;
+    #endif
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -278,12 +303,24 @@ void Main::parseCommandLine()
         , "Stop solving after this much time, print stats and exit")
     ("maxconfl", po::value<size_t>(&conf.maxConfl)->default_value(conf.maxConfl)
         , "Stop solving after this many conflicts, print stats and exit")
-    ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
+    ("schedsimplify", po::value<int>(&conf.doSchedSimpProblem)->default_value(conf.doSchedSimpProblem)
         , "Perform regular simplification rounds")
+    ("simplify", po::value<int>(&conf.doSimplify)->default_value(conf.doSimplify)
+        , "Perform occurrence-list-based optimisations (var-elim, subsumption, blocking, etc)")
     ("clbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
+    ("unsat", po::value<int>(&conf.optimiseUnsat)->default_value(conf.optimiseUnsat)
+        , "Optimize for UNSAT solving")
+    #ifdef DRUP
+    ("drup,d", po::value<string>(&drupfilname)
+        , "Put DRUP verification information into this file")
+    ("drupexistscheck", po::value<int>(&drupExistsCheck)->default_value(drupExistsCheck)
+        , "Check if the drup file provided already exists")
+    ("drupdebug", po::bool_switch(&drupDebug)
+        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
+    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -536,7 +573,7 @@ void Main::parseCommandLine()
 
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
-    ("presimp", po::value<int>(&conf.doPreSimp)->default_value(conf.doPreSimp)
+    ("preschedsimp", po::value<int>(&conf.doPreSchedSimpProblem)->default_value(conf.doPreSchedSimpProblem)
         , "Perform simplification at startup (turning this OFF can save you time for small instances)")
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("vivif", po::value<int>(&conf.doClausVivif)->default_value(conf.doClausVivif)
@@ -545,6 +582,8 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
+    ("implicitmanip", po::value<int>(&conf.doStrSubImplicit)->default_value(conf.doStrSubImplicit)
+        , "Subsume and strengthen implicit clauses with each other")
     ;
 
     po::options_description componentOptions("Component options");
@@ -561,7 +600,10 @@ void Main::parseCommandLine()
         , "Limit how much time is spent in component-finding");
 
     po::positional_options_description p;
-    p.add("input", -1);
+    p.add("input", 1);
+    #ifdef DRUP
+    p.add("drup", 1);
+    #endif
 
     po::variables_map vm;
     po::options_description cmdline_options;
@@ -595,22 +637,66 @@ void Main::parseCommandLine()
     .add(miscOptions)
     ;
 
-    po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
-    po::notify(vm);
+     try {
+        po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
+        //po::store(po::parse_command_line(argc, argv, desc), vm);
+        if (vm.count("help"))
+        {
+            cout
+            << "USAGE: " << argv[0] << " [options] <input-files>" << endl
+            << " where input is "
+            #ifndef USE_ZLIB
+            << "plain"
+            #else
+            << "plain or gzipped"
+            #endif
+            << " DIMACS." << endl;
 
-    if (vm.count("help")) {
-        cout
-        << "USAGE: " << argv[0] << " [options] <input-files>" << endl
-        << " where input is "
-        #ifndef USE_ZLIB
-        << "plain"
-        #else
-        << "plain or gzipped"
-        #endif
-        << " DIMACS." << endl;
+            cout << cmdline_options << endl;
+            exit(0);
+        }
 
-        cout << cmdline_options << endl;
-        exit(0);
+        po::notify(vm);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::unknown_option> >& c
+    ) {
+        cout << "Some option you gave was wrong. Please give '--help' to get help" << endl;
+        cout << "Unkown option: " << c.what() << endl;
+        exit(-1);
+    } catch (boost::bad_any_cast &e) {
+        std::cerr
+        << "ERROR! You probably gave a wrong argument type (Bad cast): "
+        << e.what()
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
+    ) {
+        cerr
+        << "Invalid value '" << what.what() << "'"
+        << " given to option '" << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
+    ) {
+        cerr
+        << "Error: " << what.what() << " of option '"
+        << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::required_option> > what
+    ) {
+        cerr
+        << "You forgot to give a required option '"
+        << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
     }
 
     if (conf.doLHBR
@@ -771,6 +857,73 @@ void Main::parseCommandLine()
         fileNamePresent = false;
     }
 
+    #ifdef DRUP
+    if (vm.count("drup")) {
+        if (drupDebug) {
+            drupf = &std::cout;
+        } else {
+            if (drupExistsCheck && fileExists(drupfilname)) {
+                cout
+                << "ERROR! File selected for DRUP output, '"
+                << drupfilname
+                << "' already exists. Please delete the file or pick another"
+                << endl
+                << "DRUP filename"
+                << endl;
+                exit(-1);
+            }
+            std::ofstream* drupfTmp = new std::ofstream;
+            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
+            if (!*drupfTmp) {
+                cout
+                << "ERROR: Could not open DRUP file "
+                << drupfilname
+                << " for writing"
+                << endl;
+
+                exit(-1);
+            }
+            drupf = drupfTmp;
+        }
+    }
+
+    if (!conf.otfHyperbin && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c OTF hyper-bin is needed for BProp, turning it back"
+            << endl;
+        }
+        conf.otfHyperbin = true;
+    }
+
+    if (conf.doFindXors && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c XOR manipulation is not supported in DRUP, turning it off"
+            << endl;
+        }
+        conf.doFindXors = false;
+    }
+
+    if (conf.doRenumberVars && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Variable renumbering is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doRenumberVars = false;
+    }
+
+    if (conf.doCompHandler && drupf) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Component finding & solving is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doCompHandler = false;
+    }
+    #endif
+
     if (conf.verbosity >= 1) {
         cout << "c Outputting solution to console" << endl;
     }
@@ -792,6 +945,9 @@ int Main::solve()
 {
     solver = new Solver(conf);
     solverToInterrupt = solver;
+    #ifdef DRUP
+    solver->drup = drupf;
+    #endif
 
     std::ofstream resultfile;
 
@@ -872,6 +1028,22 @@ int Main::solve()
         printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
     }
 
+    //Delete solver
+    delete solver;
+    solver = NULL;
+
+    #ifdef DRUP
+    if (drupf) {
+        //flush DRUP
+        *drupf << std::flush;
+
+        //If it's not stdout, we have to delete the ofstream
+        if (drupf != &std::cout) {
+            delete drupf;
+        }
+    }
+    #endif
+
     return correctReturnValue(ret);
 }
 
@@ -889,54 +1061,13 @@ int Main::correctReturnValue(const lbool ret) const
         exit(-1);
     }
 
-    #ifdef NDEBUG
-    // (faster than "return", which will invoke the destructor for 'Solver')
-    exit(retval);
-    #endif
     return retval;
 }
 
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
-
-    try {
-        main.parseCommandLine();
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::unknown_option> >& c
-    ) {
-        cout
-        << "ERROR! Some option you gave was wrong. Please give '--help' to get help"
-        << endl;
-
-        cout
-        << "Unparsed option: '" << c.get_option_name()
-        << "'"
-        << endl;
-
-        exit(-1);
-    } catch (boost::bad_any_cast &e) {
-        std::cerr
-        << "ERROR! You probably gave a wrong argument type (Bad cast): "
-        << e.what()
-        << endl;
-
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
-    ) {
-        std::cerr << "ERROR! " << what.what() << endl;
-        exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::multiple_occurrences> >& c
-    ) {
-        std::cerr << "ERROR! Multiple occurrences of option: " << c.get_option_name() << endl;
-        exit(-1);
-    } catch (WrongParam& w) {
-        std::cerr << "ERROR! Option parameter '" << w.getParam() << "' is wrong" << endl;
-        std::cerr << "Specific error message: " << w.getMsg() << endl;
-        exit(-1);
-    }
+    main.parseCommandLine();
 
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);

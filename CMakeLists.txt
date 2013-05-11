@@ -14,22 +14,35 @@ ENDIF()
 PROJECT(cryptoms)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
 
-# SET (CMAKE_CXX_COMPILER  "/usr/bin/clang")
-# SET (CMAKE_AR      "/usr/bin/llvm-ar-3.1")
-# SET (CMAKE_LINKER  "/usr/bin/llvm-ld-3.1" CACHE INTERNAL STRING)
-# SET (CMAKE_NM      "/usr/bin/llvm-nm-3.1")
-# SET (CMAKE_OBJDUMP "/usr/bin/llvm-objdump-3.1")
-# SET (CMAKE_RANLIB  "/usr/bin/llvm-ranlib-3.1")
+#set(LLVM 1)
+if (LLVM)
+    SET (CMAKE_C_COMPILER             "/usr/bin/clang")
+    SET (CMAKE_C_FLAGS                "-Wall -std=c99")
+    SET (CMAKE_C_FLAGS_DEBUG          "-g")
+    SET (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+    SET (CMAKE_C_FLAGS_RELEASE        "-O4 -DNDEBUG")
+    SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
 
-# -----------------------------------------------------------------------------
-# Set build flags if compiler if gcc
-# -----------------------------------------------------------------------------
-if (CMAKE_COMPILER_IS_GNUCC)
+    SET (CMAKE_CXX_COMPILER             "/usr/bin/clang++")
+    SET (CMAKE_CXX_FLAGS                "-Wall")
+    SET (CMAKE_CXX_FLAGS_DEBUG          "-g")
+    SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+    SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
+    SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+
+    SET (CMAKE_AR      "/usr/bin/llvm-ar")
+    SET (CMAKE_LINKER  "/usr/bin/llvm-ld")
+    SET (CMAKE_NM      "/usr/bin/llvm-nm")
+    SET (CMAKE_OBJDUMP "/usr/bin/llvm-objdump")
+    SET (CMAKE_RANLIB  "/usr/bin/llvm-ranlib")
+
+else (LLVM)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-std=c++0x  -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
+        "-std=c++0x -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
-endif(CMAKE_COMPILER_IS_GNUCC)
+    SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O2 -g -DNDEBUG -mtune=native")
+
+endif(LLVM)
 
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
@@ -75,8 +88,18 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 
-#MySQL
+
+#for DRUP
+#set(DRUP 1)
+if (DRUP)
+    add_definitions( -DDRUP )
+    #add_definitions( -DDRUP_DEBUG )
+endif(DRUP)
+
+
 #SET(STATSNEEDED 1)
+
+#MySQL
 if (STATSNEEDED)
     find_package(MySQL)
     IF (MYSQL_FOUND)
@@ -105,11 +128,11 @@ ELSE (M4RI_FOUND)
 ENDIF (M4RI_FOUND)
 
 # find_package(Perftools)
-IF (Perftools_FOUND)
-    MESSAGE(STATUS "OK, Found Google Perftools")
-else (Perftools_FOUND)
-    MESSAGE(WARNING "Did NOT find Perftools, memory allocation will be terrible")
-endif (Perftools_FOUND)
+# IF (Perftools_FOUND)
+#     MESSAGE(STATUS "OK, Found Google Perftools")
+# else (Perftools_FOUND)
+#     MESSAGE(WARNING "Did NOT find Perftools, memory allocation will be terrible")
+# endif (Perftools_FOUND)
 
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
@@ -132,9 +155,9 @@ add_dependencies(copy
 set(CPACK_PACKAGE_NAME "cryptominisat")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "3.0.0")
+set(CPACK_PACKAGE_VERSION "3.2.0")
 set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
@@ -142,7 +165,7 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME
 set(CPACK_SOURCE_IGNORE_FILES
   "/build/"
   "/.git/"
-  "/scripts/"
+  "/scripts.*/"
   "~$"
   "${CPACK_SOURCE_IGNORE_FILES}"
   "/tests/"
@@ -166,5 +189,3 @@ set(CPACK_SOURCE_IGNORE_FILES
 include(CPack)
 
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-
-

@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -355,13 +355,13 @@ class Prober {
                 return minOfPolarities > other.minOfPolarities;
             }
         };
-        vector<TwoSignVar> candidates;
+        //vector<TwoSignVar> candidates;
         void sortAndResetCandidates();
 
         //For bothprop
         vector<uint32_t> propagatedBitSet;
-        BitArray propagated; ///<These lits have been propagated by propagating the lit picked
-        BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
+        vector<bool> propagated; ///<These lits have been propagated by propagating the lit picked
+        vector<bool> propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> toEnqueue;
         vector<Lit> tmp;
 

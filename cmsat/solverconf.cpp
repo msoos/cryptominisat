@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,10 +50,11 @@ SolverConf::SolverConf() :
         , restart_inc(2)
         , burstSearchLen(300)
         , restartType(auto_restart)
+        , optimiseUnsat(0)
 
         //Clause minimisation
-        , doMinimLearntMore(true)
         , doRecursiveMinim (true)
+        , doMinimLearntMore(true)
         , doAlwaysFMinim   (false)
         , moreMinimLimit   (300)
 
@@ -101,7 +102,7 @@ SolverConf::SolverConf() :
         , updateVarElimComplexityOTF(true)
         , varelimStrategy  (0)
         , varElimCostEstimateStrategy(0)
-        , varElimRatioPerIter(0.14)
+        , varElimRatioPerIter(0.12)
 
         //Probing
         , doProbe          (true)
@@ -133,14 +134,15 @@ SolverConf::SolverConf() :
 
         //Simplifier
         , doSimplify       (true)
-        , doPreSimp        (true)
-        , doSchedSimp      (true)
+        , doSchedSimpProblem(true)
+        , doPreSchedSimpProblem (true)
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)
         , maxRedLinkInSize (200)
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
+        , maxOccurRedLitLinkedM(50)
 
         //optimisations to do
         , doRenumberVars   (true)
@@ -155,6 +157,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doClausVivif     (true)
         , doSortWatched    (true)
+        , doStrSubImplicit (true)
 
 
         , doGateFind       (false)
@@ -173,6 +176,5 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , origSeed(0)
-
 {
 }

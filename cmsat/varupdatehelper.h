@@ -33,7 +33,7 @@ void updateArrayRev(T& toUpdate, const vector< uint32_t >& mapper)
 template<typename T>
 void updateArrayMapCopy(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() >= mapper.size());
+    //assert(toUpdate.size() == mapper.size());
     T backup = toUpdate;
     for(size_t i = 0; i < toUpdate.size(); i++) {
         if (backup[i] < mapper.size()) {

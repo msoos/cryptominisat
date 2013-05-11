@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,8 +63,11 @@ bool CompFinder::findComps()
 
     solver->clauseCleaner->removeAndCleanAll();
 
-    if (!solver->varReplacer->performReplace())
+    if (solver->conf.doFindAndReplaceEqLits
+        && !solver->varReplacer->performReplace()
+    ) {
         return false;
+    }
 
     //Add the clauses to the sets
     timeUsed = 0;
@@ -76,7 +79,7 @@ bool CompFinder::findComps()
     if (timedout) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c Timed out fiding components, BP: "
+            << "c Timed out finding components, BP: "
             << std::setprecision(2) << std::fixed
             << (double)timeUsed/(1000.0*1000.0)
             << " T: "

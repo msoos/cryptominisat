@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -134,6 +134,13 @@ bool ImplCache::clean(Solver* solver)
 
                 if (taut) {
                     toEnqueue.push_back(lit);
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        *(solver->drup)
+                        << lit << " 0\n";
+                    }
+                    #endif
+
                 }
             }
         }

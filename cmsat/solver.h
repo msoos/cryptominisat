@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -318,7 +318,8 @@ class Solver : public Searcher
             , const Lit lit2
             , const bool learnt
         );
-        virtual void  detachClause(const Clause& c);
+        virtual void  detachClause(const Clause& c, const bool doDRUP = true);
+        virtual void  detachClause(const ClOffset offset, const bool doDRUP = true);
         virtual void  detachModifiedClause(
             const Lit lit1
             , const Lit lit2
@@ -331,6 +332,7 @@ class Solver : public Searcher
             , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
+            , bool addDrup = true
         );
 
     private:

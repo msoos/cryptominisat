@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -242,6 +242,7 @@ public:
         , const bool _updateGlues
         , const bool _doLHBR
     );
+    ~PropEngine();
 
     // Variable mode:
     //
@@ -265,6 +266,10 @@ public:
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
+
+    #ifdef DRUP
+    std::ostream* drup;
+    #endif
 
 protected:
 
@@ -840,40 +845,6 @@ inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
     }
 
     addHyperBin(p);
-}
-
-//Add binary clause to deepest common ancestor
-inline void PropEngine::addHyperBin(const Lit p)
-{
-    propStats.otfHyperTime += 2;
-
-    Lit deepestAncestor = lit_Undef;
-    bool hyperBinNotAdded = true;
-    if (currAncestors.size() > 1) {
-        deepestAncestor = deepestCommonAcestor();
-
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
-        #endif
-        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        hyperBinNotAdded = false;
-    } else {
-        //0-level propagation is NEVER made by propFull
-        assert(currAncestors.size() > 0);
-
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout
-        << "Not adding hyper-bin because only ONE lit is not set at"
-        << "level 0 in long clause, but that long clause needs to be cleaned"
-        << endl;
-        #endif
-        deepestAncestor = currAncestors[0];
-        hyperBinNotAdded = true;
-    }
-
-    enqueueComplex(p, deepestAncestor, true);
-    varData[p.var()].reason.setHyperbin(true);
-    varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
 
 //Analyze why did we fail at decision level 1

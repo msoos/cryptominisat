@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,6 +52,9 @@ PropEngine::PropEngine(
     , const bool _doLHBR
 ) :
         // Stats
+        #ifdef DRUP
+        drup(NULL),
+        #endif
         updateGlues(_updateGlues)
         , doLHBR (_doLHBR)
 
@@ -60,6 +63,10 @@ PropEngine::PropEngine(
         , qhead(0)
         , agility(agilityData)
         , stampingTime(0)
+{
+}
+
+PropEngine::~PropEngine()
 {
 }
 
@@ -380,6 +387,14 @@ PropResult PropEngine::propNormalClause(
                     #ifdef STATS_NEEDED
                     propStats.longLHBR++;
                     #endif
+                    #ifdef DRUP
+                    if (solver->drup) {
+                        (*solver->drup)
+                        << other << " "
+                        << c[0]
+                        << " 0\n";
+                    }
+                    #endif
                     enqueue(c[0], PropBy(other));
                 } else {
                     //no, not possible, just enqueue as normal
@@ -653,6 +668,14 @@ void PropEngine::propTriHelper(
             enqueue(lit2, PropBy(lit));
             #ifdef STATS_NEEDED
             propStats.triLHBR++;
+            #endif
+            #ifdef DRUP
+            if (solver->drup) {
+                (*solver->drup)
+                << lit << " "
+                << lit2
+                << " 0\n";
+            }
             #endif
         } else {
             //Lazy hyper-bin is not possibe
@@ -1569,4 +1592,45 @@ inline void PropEngine::updateWatch(
             );
         }
     }
+}
+
+//Add binary clause to deepest common ancestor
+void PropEngine::addHyperBin(const Lit p)
+{
+    propStats.otfHyperTime += 2;
+
+    Lit deepestAncestor = lit_Undef;
+    bool hyperBinNotAdded = true;
+    if (currAncestors.size() > 1) {
+        deepestAncestor = deepestCommonAcestor();
+
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
+        #endif
+        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
+        #ifdef DRUP
+        if (drup) {
+            (*drup)
+            << p << " " << (~deepestAncestor)
+            << " 0\n";
+        }
+        #endif
+        hyperBinNotAdded = false;
+    } else {
+        //0-level propagation is NEVER made by propFull
+        assert(currAncestors.size() > 0);
+
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        cout
+        << "Not adding hyper-bin because only ONE lit is not set at"
+        << "level 0 in long clause, but that long clause needs to be cleaned"
+        << endl;
+        #endif
+        deepestAncestor = currAncestors[0];
+        hyperBinNotAdded = true;
+    }
+
+    enqueueComplex(p, deepestAncestor, true);
+    varData[p.var()].reason.setHyperbin(true);
+    varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }

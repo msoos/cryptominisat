@@ -85,14 +85,16 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     int32_t val = 0;
     bool    neg = false;
     skipWhitespace(in);
-    if      (*in == '-')
-        neg = true, ++in;
-    else if (*in == '+')
+    if (*in == '-') {
+        neg = true;
         ++in;
+    } else if (*in == '+') {
+        ++in;
+    }
 
     if (*in < '0' || *in > '9') {
         cout
-        << "PARSE ERROR! Unexpected char: '" << *in << "'"
+        << "PARSE ERROR! Unexpected char (dec: '" << (char)*in << ")"
         << " At line " << lineNum
         << " we expected a number"
         << endl;

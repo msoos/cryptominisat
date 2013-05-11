@@ -1,7 +1,7 @@
 /*
  * CryptoMiniSat
  *
- * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ * Copyright (c) 2009-2013, Mate Soos and collaborators. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -174,7 +174,7 @@ for the class that it can hold the literals as well. I.e. it malloc()-s
     sizeof(Clause)+LENGHT*sizeof(Lit)
 to hold the clause.
 */
-struct Clause
+class Clause
 {
 protected:
 
