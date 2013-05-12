@@ -23,15 +23,16 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "vec.h"
 #include "constants.h"
 #include <algorithm>
-
+#include <vector>
+using std::vector;
 
 
 // A heap implementation with support for decrease/increase key.
 template<class Comp>
 class Heap {
     Comp     lt;
-    vec<uint32_t> heap;     // heap of ints
-    vec<uint32_t> indices;  // int -> index in heap
+    std::vector<uint32_t> heap;     // heap of ints
+    std::vector<uint32_t> indices;  // int -> index in heap
 
     // Index "traversal" functions
     static inline uint32_t left  (uint32_t i) { return i*2+1; }
@@ -75,30 +76,29 @@ class Heap {
   public:
     Heap(const Comp& c) : lt(c) { }
     Heap(const Heap<Comp>& other) : lt(other.lt) {
-        heap.growTo(other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
-        indices.growTo(other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
     void operator=(const Heap<Comp>& other)
     {
-        if (other.heap.size() > heap.size())
-            heap.growTo(other.heap.size());
-        else
-            heap.shrink(heap.size()-other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
 
-        if (other.indices.size() > indices.size())
-            indices.growTo(other.indices.size());
-        else
-            indices.shrink(indices.size() - other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
     size_t memUsed() const
     {
         return heap.capacity()*sizeof(uint32_t)
             + indices.capacity()*sizeof(uint32_t);
+    }
+    void shrink_to_fit()
+    {
+        heap.shrink_to_fit();
+        indices.shrink_to_fit();
     }
 
     uint32_t  size      ()          const { return heap.size(); }
@@ -114,11 +114,11 @@ class Heap {
 
     void insert(uint32_t n)
     {
-        indices.growTo(n+1, std::numeric_limits<uint32_t>::max());
+        indices.resize(n+1, std::numeric_limits<uint32_t>::max());
         assert(!inHeap(n));
 
         indices[n] = heap.size();
-        heap.push(n);
+        heap.push_back(n);
         percolateUp(indices[n]);
     }
 
@@ -129,21 +129,25 @@ class Heap {
         heap[0]          = heap.back();
         indices[heap[0]] = 0;
         indices[x]       = std::numeric_limits<uint32_t>::max();
-        heap.pop();
+        heap.pop_back();
         if (heap.size() > 1) percolateDown(0);
         return x;
     }
 
 
-    void clear(bool dealloc = false)
+    void clear()
     {
-        for (uint32_t i = 0; i != heap.size(); i++)
+        for (size_t i = 0; i < heap.size(); i++) {
             indices[heap[i]] = std::numeric_limits<uint32_t>::max();
-#ifndef NDEBUG
-        for (uint32_t i = 0; i != indices.size(); i++)
+        }
+
+        #ifndef NDEBUG
+        for (size_t i = 0; i < indices.size(); i++) {
             assert(indices[i] == std::numeric_limits<uint32_t>::max());
-#endif
-        heap.clear(dealloc);
+        }
+        #endif
+
+        heap.clear();
     }
 
 
@@ -163,17 +167,24 @@ class Heap {
     // *** this could probaly be replaced with a more general "buildHeap(vec<int>&)" method ***
     template <class F>
     void filter(const F& filt) {
-        uint32_t i,j;
-        for (i = j = 0; i != heap.size(); i++)
-            if (filt(heap[i])){
-                heap[j]          = heap[i];
+        uint32_t i = 0;
+        uint32_t j = 0;
+        for (uint32_t size = heap.size()
+            ; i < size
+            ; i++
+        ) {
+            if (filt(heap[i])) {
+                heap[j] = heap[i];
                 indices[heap[i]] = j++;
-            }else
+            } else {
                 indices[heap[i]] = std::numeric_limits<uint32_t>::max();
+            }
+        }
+        heap.resize(j);
 
-        heap.shrink(i - j);
-        for (int i = ((int)heap.size()) / 2 - 1; i >= 0; i--)
+        for (int i = ((int)heap.size()) / 2 - 1; i >= 0; i--) {
             percolateDown(i);
+        }
 
         assert(heapProperty());
     }
