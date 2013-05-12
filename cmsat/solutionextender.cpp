@@ -63,6 +63,9 @@ void SolutionExtender::extend()
     CompleteDetachReatacher detachReattach(solver);
     detachReattach.detachNonBinsNonTris();
 
+    //Make watches large enough to fit occur of all
+    solver->watches.resize(nVarsReal()*2);
+
     //Sanity check
     if (solver->simplifier) {
         solver->simplifier->checkElimedUnassignedAndStats();
@@ -77,9 +80,6 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
     }
-
-    //Make watches large enough to fit occur of all
-    solver->watches.resize(nVarsReal()*2);
 
     //Pick branches as long as we can
     for (Var var = 0; var < nVarsReal(); var++) {
