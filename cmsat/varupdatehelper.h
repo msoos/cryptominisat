@@ -15,8 +15,8 @@ void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
 {
     assert(toUpdate.size() >= mapper.size());
     T backup = toUpdate;
-    for(size_t i = 0; i < mapper.size(); i++) {
-        toUpdate[i] = backup[mapper[i]];
+    for(size_t i = 0; i < toUpdate.size(); i++) {
+        toUpdate.at(i) = backup.at(mapper.at(i));
     }
 }
 
