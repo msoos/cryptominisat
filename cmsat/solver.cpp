@@ -1526,9 +1526,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Back up activities, polairties and var_inc
         backupActivity.clear();
         backupPolarity.clear();
-        backupActivity.resize(varData.size());
-        backupPolarity.resize(varData.size());
-        for (size_t i = 0; i < varData.size(); i++) {
+        backupActivity.resize(nVarsReal(), 0);
+        backupPolarity.resize(nVarsReal(), false);
+        for (size_t i = 0; i < nVars(); i++) {
             backupPolarity[i] = varData[i].polarity;
             backupActivity[i] = Searcher::getSavedActivity(i);
         }
