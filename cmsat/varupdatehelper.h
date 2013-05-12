@@ -13,7 +13,6 @@ Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
 template<typename T>
 void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
 {
-    assert(toUpdate.size() >= mapper.size());
     T backup = toUpdate;
     for(size_t i = 0; i < toUpdate.size(); i++) {
         toUpdate.at(i) = backup.at(mapper.at(i));
@@ -65,7 +64,7 @@ inline Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper)
 template<typename T, typename T2>
 inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper)
 {
-    for(size_t i = 0; i < mapper.size(); i++) {
+    for(size_t i = 0; i < toUpdate.size(); i++) {
         //Already updated
         if (seen[i])
             continue;
