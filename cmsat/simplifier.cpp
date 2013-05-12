@@ -3655,7 +3655,7 @@ void Simplifier::checkElimedUnassignedAndStats() const
     for (size_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
-            assert(solver->assigns[i] == l_Undef);
+            assert(solver->value(i) == l_Undef);
         }
     }
     if (globalStats.numVarsElimed != checkNumElimed) {
