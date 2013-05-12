@@ -240,7 +240,7 @@ void Main::printResultFunc(
     if (ret == l_True && (printResult || toFile)) {
 
         if(!toFile) *os << "v ";
-        for (Var var = 0; var != solver->nVars(); var++) {
+        for (Var var = 0; var != solver->nVarsReal(); var++) {
             if (solver->model[var] != l_Undef)
                 *os << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
         }

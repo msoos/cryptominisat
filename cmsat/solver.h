@@ -400,7 +400,6 @@ class Solver : public Searcher
         void renumberVariables();
         void freeUnusedWatches();
         void saveVarMem(uint32_t newNumVars);
-        Var realNumVars;
 
         /////////////////////////////
         // SAT solution verification

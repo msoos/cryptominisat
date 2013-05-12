@@ -61,6 +61,7 @@ PropEngine::PropEngine(
         , clAllocator(_clAllocator)
         , ok(true)
         , qhead(0)
+        , minNumVars(0)
         , agility(agilityData)
         , stampingTime(0)
 {
@@ -81,6 +82,7 @@ Var PropEngine::newVar(const bool)
         exit(-1);
     }
 
+    minNumVars++;
     watches.resize(watches.size() + 2);  // (list for positive&negative literals)
     assigns.push_back(l_Undef);
     varData.push_back(VarData());

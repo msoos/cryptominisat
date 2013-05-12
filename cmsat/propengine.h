@@ -254,6 +254,7 @@ public:
     lbool   value      (const Lit p) const;       ///<The current value of a literal.
     uint32_t nAssigns   () const;         ///<The current number of assigned literals.
     uint32_t nVars      () const;         ///<The current number of variables.
+    uint32_t nVarsReal() const;
 
     //Get state
     bool        okay() const; ///<FALSE means solver is in a conflicting state
@@ -298,6 +299,7 @@ protected:
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
     vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
     Stamp stamp;
+    uint32_t minNumVars;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -522,6 +524,11 @@ inline uint32_t PropEngine::nAssigns() const
 }
 
 inline uint32_t PropEngine::nVars() const
+{
+    return minNumVars;
+}
+
+inline uint32_t PropEngine::nVarsReal() const
 {
     return assigns.size();
 }

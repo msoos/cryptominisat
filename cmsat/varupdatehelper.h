@@ -54,12 +54,12 @@ void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
 
 inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
 {
-    return Lit(mapper[toUpdate.var()], toUpdate.sign());
+    return Lit(getUpdatedVar(toUpdate.var(), mapper), toUpdate.sign());
 }
 
 inline Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper)
 {
-    return mapper[toUpdate];
+    return mapper.at(toUpdate);
 }
 
 template<typename T, typename T2>

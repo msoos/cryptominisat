@@ -63,7 +63,6 @@ Solver::Solver(const SolverConf& _conf) :
     , prober(NULL)
     , simplifier(NULL)
     , compHandler(NULL)
-    , realNumVars(0)
     , mtrand(_conf.origSeed)
     , needToInterrupt(false)
 
@@ -763,9 +762,9 @@ void Solver::renumberVariables()
 
     //Fill the first part of interToOuter with vars that are used
     interToOuter.clear();
-    interToOuter.resize(nVars());
+    interToOuter.resize(nVarsReal());
     outerToInter.clear();
-    outerToInter.resize(nVars());
+    outerToInter.resize(nVarsReal());
     size_t at = 0;
     vector<Var> useless;
     size_t numEffectiveVars = 0;
@@ -796,6 +795,12 @@ void Solver::renumberVariables()
         at++;
     }
     assert(at == nVars());
+
+    //Extend to nVarsReal() --> these are just the identity transformation
+    for(size_t i = nVars(); i < nVarsReal(); i++) {
+        outerToInter[i] = i;
+        interToOuter[i] = i;
+    }
 
     //Create temporary outerToInter2
     interToOuter2.clear();
@@ -912,20 +917,20 @@ void Solver::renumberVariables()
 
     //Test for reflectivity of interToOuterMain & outerToInterMain
     #ifndef NDEBUG
-    vector<Var> test(nVars());
-    for(size_t i = 0; i  < nVars(); i++) {
+    vector<Var> test(nVarsReal());
+    for(size_t i = 0; i  < nVarsReal(); i++) {
         test[i] = i;
     }
     updateArrayRev(test, interToOuterMain);
     #ifdef DEBUG_RENUMBER
-    for(size_t i = 0; i < nVars(); i++) {
+    for(size_t i = 0; i < nVarsReal(); i++) {
         cout << i << ": "
         << std::setw(2) << test[i] << ", "
         << std::setw(2) << outerToInterMain[i]
         << endl;
     }
     #endif
-    for(size_t i = 0; i < nVars(); i++) {
+    for(size_t i = 0; i < nVarsReal(); i++) {
         assert(test[i] == outerToInterMain[i]);
     }
     #ifdef DEBUG_RENUMBER
@@ -938,22 +943,22 @@ void Solver::renumberVariables()
 
 void Solver::saveVarMem(const uint32_t newNumVars)
 {
-    //never resize varData
+    //never resize varData --> contains info about what is replaced/etc.
+    //never resize assigns --> contains 0-level assigns
     //never resize interToOuterMain, outerToInterMain
 
-    printMemStats();
-    assigns.resize(newNumVars);
+    //printMemStats();
     watches.resize(newNumVars*2);
     watches.shrink_to_fit();
     implCache.newNumVars(newNumVars);
     stamp.newNumVars(newNumVars);
-    printMemStats();
+    //printMemStats();
+    minNumVars = newNumVars;
 }
 
 Var Solver::newVar(const bool dvar)
 {
     const Var var = decisionVar.size();
-    realNumVars++;
 
     if (conf.doStamp
         && nVars() > 15ULL*1000ULL*1000ULL
@@ -1549,10 +1554,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //If literal stats are wrong, the solution is probably wrong
         checkStats();
 
-        for(size_t i = 0; i < realNumVars - nVars(); i++) {
-            solution.push_back(l_Undef);
-        }
-
+        //Extend solution to stored solution in component handler
         if (conf.doCompHandler) {
             compHandler->addSavedState(solution);
         }

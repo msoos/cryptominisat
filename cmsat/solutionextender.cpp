@@ -33,12 +33,9 @@ SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _soluti
     , qhead (0)
     , assigns(_solution)
 {
-    solver->model.resize(nVars(), l_Undef);
-    for (Var var = 0; var < nVars(); var++) {
+    solver->model.resize(nVarsReal(), l_Undef);
+    for (Var var = 0; var < nVarsReal(); var++) {
         solver->model[var] = value(var);
-    }
-    for(Var var = solver->nVars(); var < nVars(); var++) {
-        solver->model[var] = l_Undef;
     }
     release_assert(solver->verifyModel());
 }
@@ -86,8 +83,11 @@ void SolutionExtender::extend()
         cout << "c Picking braches and propagating" << endl;
     }
 
+    //Make watches large enough to fit occur of all
+    solver->watches.resize(nVarsReal()*2);
+
     //Pick branches as long as we can
-    for (Var var = 0; var < nVars(); var++) {
+    for (Var var = 0; var < nVarsReal(); var++) {
         if (value(var) == l_Undef
             //Don't pick replaced variables
             && solver->varData[var].elimed != ELIMED_VARREPLACER
@@ -119,8 +119,8 @@ void SolutionExtender::extend()
     }
 
     //Copy&check model
-    solver->model.resize(nVars(), l_Undef);
-    for (Var var = 0; var < nVars(); var++) {
+    solver->model.resize(nVarsReal(), l_Undef);
+    for (Var var = 0; var < nVarsReal(); var++) {
         solver->model[var] = value(var);
     }
 
@@ -135,6 +135,9 @@ void SolutionExtender::extend()
         solver->clAllocator->clauseFree(*it);
     }
     clausesToFree.clear();
+
+    //Reset watch size to smaller one
+    solver->watches.resize(solver->nVars()*2);
 
     //Remove occur, go back to 0, and
     detachReattach.detachNonBinsNonTris();
