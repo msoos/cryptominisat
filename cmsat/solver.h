@@ -318,8 +318,8 @@ class Solver : public Searcher
             , const Lit lit2
             , const bool learnt
         );
-        virtual void  detachClause(const Clause& c, const bool doDRUP = true);
-        virtual void  detachClause(const ClOffset offset, const bool doDRUP = true);
+        virtual void  detachClause(const Clause& c, const bool removeDrup = true);
+        virtual void  detachClause(const ClOffset offset, const bool removeDrup = true);
         virtual void  detachModifiedClause(
             const Lit lit1
             , const Lit lit2

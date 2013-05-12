@@ -473,7 +473,7 @@ void Solver::detachBinClause(
     PropEngine::detachBinClause(lit1, lit2, learnt);
 }
 
-void Solver::detachClause(const Clause& cl, const bool doDRUP)
+void Solver::detachClause(const Clause& cl, const bool removeDrup)
 {
     #ifdef DRUP
     if (drup && doDRUP) {
@@ -485,10 +485,10 @@ void Solver::detachClause(const Clause& cl, const bool doDRUP)
     detachModifiedClause(cl[0], cl[1], cl.size(), &cl);
 }
 
-void Solver::detachClause(const ClOffset offset, const bool doDRUP)
+void Solver::detachClause(const ClOffset offset, const bool removeDrup)
 {
     Clause* cl = clAllocator->getPointer(offset);
-    detachClause(*cl, doDRUP);
+    detachClause(*cl, removeDrup);
 }
 
 void Solver::detachModifiedClause(
