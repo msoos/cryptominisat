@@ -28,7 +28,10 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _solution) :
+SolutionExtender::SolutionExtender(
+    Solver* _solver
+    , const vector<lbool>& _solution
+) :
     solver(_solver)
     , qhead (0)
     , assigns(_solution)
