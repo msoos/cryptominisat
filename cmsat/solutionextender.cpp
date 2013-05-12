@@ -57,14 +57,6 @@ void SolutionExtender::extend()
         cout << "c Extending solution" << endl;
     }
 
-    //Memory might be low... remove stamps to make way for occur list
-    if (solver->nVars() > 1ULL*1000ULL*1000ULL
-        && solver->conf.doStamp
-    ) {
-        solver->conf.doStamp = false;
-        solver->stamp.freeMem();
-    }
-
     assert(clausesToFree.empty());
 
     //First detach all long clauses
