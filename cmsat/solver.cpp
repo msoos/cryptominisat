@@ -3097,7 +3097,7 @@ void Solver::checkNoWrongAttach() const
 size_t Solver::getNumFreeVars() const
 {
     assert(decisionLevel() == 0);
-    uint32_t freeVars = nVars();
+    uint32_t freeVars = nVarsReal();
     freeVars -= trail.size();
     if (conf.doSimplify) {
         freeVars -= simplifier->getStats().numVarsElimed;
