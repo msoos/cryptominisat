@@ -1717,10 +1717,6 @@ lbool Solver::simplifyProblem()
     if (conf.doSortWatched)
         sortWatched();
 
-    if (conf.doRenumberVars) {
-        renumberVariables();
-    }
-
     //Re-calculate reachability after re-numbering and new cache data
     if (conf.doCache) {
         calcReachability();
@@ -1742,6 +1738,15 @@ lbool Solver::simplifyProblem()
             litReachable.swap(tmp);
             conf.doCache = false;
         }
+    }
+
+    if (conf.doRenumberVars) {
+        //Clean cache before renumber -- very important, otherwise
+        //we will be left with lits inside the cache that are out-of-bounds
+        if (conf.doCache && !implCache.clean(this))
+            goto end;
+
+        renumberVariables();
     }
 
     //Free unused watch memory
