@@ -1987,7 +1987,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     status = burstSearch();
     if (status == l_Undef) {
         //Restore polarities and activities
-        for(size_t i = 0; i < solver->nVars(); i++) {
+        for(size_t i = 0; i < nVars(); i++) {
             varData[i].polarity = solver->getSavedPolarity(i);
             activities[i] = solver->getSavedActivity(i);
         }
