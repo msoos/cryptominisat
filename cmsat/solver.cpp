@@ -948,12 +948,26 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     //never resize interToOuterMain, outerToInterMain
 
     //printMemStats();
+
     watches.resize(newNumVars*2);
     watches.shrink_to_fit();
     implCache.newNumVars(newNumVars);
     stamp.newNumVars(newNumVars);
-    //printMemStats();
+
+    varDataLT.resize(newNumVars);
+    varDataLT.shrink_to_fit();
+
+    //Resize 'seen'
+    seen.resize(newNumVars*2);
+    seen.shrink_to_fit();
+    seen2.resize(newNumVars*2);
+    seen2.shrink_to_fit();
+
+    activities.resize(newNumVars);
+    activities.shrink_to_fit();
     minNumVars = newNumVars;
+
+    //printMemStats();
 }
 
 Var Solver::newVar(const bool dvar)
