@@ -170,7 +170,7 @@ bool CompHandler::handle()
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
             if (newSolver.model[updateVar(var)] != l_Undef) {
-                assert(solver->assigns[var] == l_Undef);
+                assert(solver->value(var) == l_Undef);
             }
         }
 
@@ -251,7 +251,7 @@ bool CompHandler::handle()
     for (Var var = 0; var < solver->nVars(); var++) {
         if (savedState[var] != l_Undef) {
             assert(solver->decisionVar[var] == false);
-            assert(solver->assigns[var] == l_Undef || solver->varData[var].level == 0);
+            assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
         }
     }
 

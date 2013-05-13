@@ -582,7 +582,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
             propagated[var] = true;
 
             //Set propValue
-            if (solver->assigns[var].getBool())
+            if (solver->value(var).getBool())
                 propValue[var] = true;
             else
                 propValue[var] = false;
