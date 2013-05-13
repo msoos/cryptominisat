@@ -2946,6 +2946,63 @@ uint64_t Searcher::memUsedSearch() const
     mem += analyze_stack.capacity()*sizeof(Lit);
     mem += solution.capacity()*sizeof(lbool);
 
+    if (conf.verbosity >= 3) {
+        cout
+        << "c otfMustAttach bytes: "
+        << otfMustAttach.capacity()*sizeof(OTFClause)
+        << endl;
+
+        cout
+        << "c toAttachLater bytes: "
+        << toAttachLater.capacity()*sizeof(ClOffset)
+        << endl;
+
+        cout
+        << "c toclear bytes: "
+        << toClear.capacity()*sizeof(Lit)
+        << endl;
+
+        cout
+        << "c trail bytes: "
+        << trail.capacity()*sizeof(Lit)
+        << endl;
+
+        cout
+        << "c trail_lim bytes: "
+        << trail_lim.capacity()*sizeof(Lit)
+        << endl;
+
+        cout
+        << "c activities bytes: "
+        << activities.capacity()*sizeof(uint32_t)
+        << endl;
+
+        cout
+        << "c order_heap bytes: "
+        << order_heap.memUsed()
+        << endl;
+
+        cout
+        << "c learnt clause bytes: "
+        << learnt_clause.capacity()*sizeof(Lit)
+        << endl;
+
+        cout
+        << "c hist bytes: "
+        << hist.memUsed()
+        << endl;
+
+        cout
+        << "c conflict bytes: "
+        << conflict.capacity()*sizeof(Lit)
+        << endl;
+
+        cout
+        << "c Stack bytes: "
+        << analyze_stack.capacity()*sizeof(Lit)
+        << endl;
+    }
+
     return mem;
 }
 

@@ -2375,6 +2375,11 @@ void Solver::printMemStats() const
 
     mem = memUsedSearch();
     mem += model.capacity()*sizeof(lbool);
+    if (conf.verbosity >= 3) {
+        cout << "model bytes: "
+        << model.capacity()*sizeof(lbool)
+        << endl;
+    }
     printStatsLine("c Mem for search"
         , mem/(1024UL*1024UL)
         , "MB"
