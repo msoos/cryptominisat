@@ -388,9 +388,7 @@ void CompHandler::moveClausesLong(
         tmp.resize(cl.size());
         for (size_t i = 0; i < cl.size(); i++) {
             tmp[i] = updateLit(cl[i]);
-            removedClauses.lits.push_back(getUpdatedLit(cl[i], solver->interToOuter));
         }
-        removedClauses.sizes.push_back(cl.size());
 
         //Add 'tmp' to the new solver
         if (cl.learnt()) {
