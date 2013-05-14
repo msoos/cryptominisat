@@ -644,7 +644,7 @@ template<class T>
 void CompHandler::saveClause(T lits)
 {
     for (Lit lit : lits ) {
-        removedClauses.lits.push_back(getUpdatedLit(lit, solver->interToOuter));
+        removedClauses.lits.push_back(getUpdatedLit(lit, solver->interToOuterMain));
     }
     removedClauses.sizes.push_back(lits.size());
     needToReaddClauses = true;
@@ -685,7 +685,7 @@ void CompHandler::readdRemovedClauses()
         tmp.clear();
         for(size_t i = at; i < at + *it; i++) {
             tmp.push_back(
-                getUpdatedLit(removedClauses.lits[i], solver->outerToInter)
+                getUpdatedLit(removedClauses.lits[i], solver->outerToInterMain)
             );
         }
         solver->addClause(tmp);
