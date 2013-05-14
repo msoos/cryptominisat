@@ -574,6 +574,13 @@ bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
             if (!simplifier->unEliminate(lit.var()))
                 return false;
         }
+
+        //Undo comp handler if need be
+        if (conf.doCompHandler) {
+            if (varData[lit.toInt()].elimed == ELIMED_DECOMPOSE) {
+                compHandler->readdRemovedClauses();
+            }
+        }
     }
 
     return true;

@@ -384,14 +384,20 @@ void CompHandler::moveClausesLong(
         cout << "clause in this comp:" << cl << endl;;
         #endif
 
+        //Create temporary space 'tmp' and copy to backup
         tmp.resize(cl.size());
         for (size_t i = 0; i < cl.size(); i++) {
             tmp[i] = updateLit(cl[i]);
+            removedClauses.lits.push_back(getUpdatedLit(cl[i], solver->interToOuter));
         }
+        removedClauses.sizes.push_back(cl.size());
+
+        //Add 'tmp' to the new solver
         if (cl.learnt()) {
             cl.stats.conflictNumIntroduced = 0;
             newSolver->addLearntClause(tmp, cl.stats);
         } else {
+            saveClause(cl);
             newSolver->addClause(tmp);
         }
 
@@ -476,11 +482,15 @@ void CompHandler::moveClausesImplicit(
                     lits = {updateLit(lit), updateLit(lit2)};
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
+
+                    //Add new clause
                     if (i->learnt()) {
                         newSolver->addLearntClause(lits);
                         numRemovedHalfLearnt++;
                     } else {
-                        //binClausesRemoved.push_back(BinClause(lit, lit2));
+                        //Save backup
+                        saveClause(vector<Lit>{lit, lit2});
+
                         newSolver->addClause(lits);
                         numRemovedHalfNonLearnt++;
                     }
@@ -561,11 +571,15 @@ void CompHandler::moveClausesImplicit(
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
                     assert(compFinder->getVarComp(lit3.var()) == comp);
+
+                    //Add new clause
                     if (i->learnt()) {
                         newSolver->addLearntClause(lits);
                         numRemovedThirdLearnt++;
                     } else {
-                        //triClausesRemoved.push_back(TriClause(lit, lit2, lit3));
+                        //Save backup
+                        saveClause(vector<Lit>{lit, lit2, lit3});
+
                         newSolver->addClause(lits);
                         numRemovedThirdNonLearnt++;
                     }
@@ -628,62 +642,65 @@ void CompHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
     updateArray(savedState, interToOuter_nonlocal);
 }
 
-/*void CompHandler::readdRemovedClauses()
-{
-    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
-    solver.libraryCNFFile = NULL;
-    for (Clause **it = clausesRemoved.getData(), **end = clausesRemoved.getDataEnd(); it != end; it++) {
-        solver.addClause(**it, (*it)->getGroup());
-        assert(solver.ok);
-    }
-    clausesRemoved.clear();
-
-    for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {
-        solver.addXorClause(**it, (**it).xorEqualFalse(), (*it)->getGroup());
-        assert(solver.ok);
-    }
-    xorClausesRemoved.clear();
-
-    for (vector<pair<Lit, Lit> >::const_iterator it = binClausesRemoved.begin(), end = binClausesRemoved.end(); it != end; it++) {
-        vec<Lit> lits(2);
-        lits[0] = it->first;
-        lits[1] = it->second;
-        solver.addClause(lits);
-        assert(solver.ok);
-    }
-    binClausesRemoved.clear();
-
-    solver.libraryCNFFile = backup_libraryCNFfile;
-}
-
-const bool CompHandler::checkClauseMovement(
-    const Solver& thisSolver
-    , const uint32_t comp
-) const {
-    if (!checkOnlyThisCompLong(thisSolver.longIrredCls, comp))
-        return false;
-
-    if (!checkOnlyThisCompLong(thisSolver.longRedCls, comp))
-        return false;
-
-    if (!checkOnlyThisCompImplicit(thisSolver, comp))
-        return false;
-
-    return true;
-}
-
-
 template<class T>
-const bool CompHandler::checkOnlyThisComp(const vec<T*>& cs, const uint32_t comp, const CompFinder& compFinder) const
+void CompHandler::saveClause(T lits)
 {
-    for(T * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
-        const T& c = **it;
-        for(const Lit *l = c.getData(), *end2 = l + c.size(); l != end2; l++) {
-            if (compFinder->getVarComp(l->var()) != comp) return false;
-        }
+    for (Lit lit : lits ) {
+        removedClauses.lits.push_back(getUpdatedLit(lit, solver->interToOuter));
+    }
+    removedClauses.sizes.push_back(lits.size());
+    needToReaddClauses = true;
+}
+bool CompHandler::getNeedToReaddClauses() const
+{
+    return needToReaddClauses;
+
+}
+
+void CompHandler::readdRemovedClauses()
+{
+    //Avoid recursion
+    needToReaddClauses = false;
+
+    //Clear saved state
+    for(lbool& val: savedState) {
+        val = l_Undef;
     }
 
-    return true;
+    //Clear varData 'elimed' status and set it as decision var
+    size_t var = 0;
+    for(VarData& dat: solver->varData) {
+        if (dat.elimed == ELIMED_DECOMPOSE) {
+            dat.elimed = ELIMED_NONE;
+            solver->setDecisionVar(var);
+        }
+        var++;
+    }
+
+    vector<Lit> tmp;
+    size_t at = 0;
+    for (vector<uint32_t>::const_iterator
+        it = removedClauses.sizes.begin(), end = removedClauses.sizes.end()
+        ; it != end
+        ; it++
+    ) {
+        tmp.clear();
+        for(size_t i = at; i < at + *it; i++) {
+            tmp.push_back(
+                getUpdatedLit(removedClauses.lits[i], solver->outerToInter)
+            );
+        }
+        solver->addClause(tmp);
+
+        assert(solver->okay());
+
+        //Move 'at' along
+        at += *it;
+    }
+
+    //Clear added data
+    removedClauses.lits.clear();
+    removedClauses.sizes.clear();
 }
 
 

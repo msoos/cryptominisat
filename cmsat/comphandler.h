@@ -55,6 +55,7 @@ class CompHandler
         void newVar();
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();
+        bool getNeedToReaddClauses() const;
         void updateVars(const vector<Var>& interToOuter);
 
         friend class ClauseAllocator;
@@ -116,6 +117,16 @@ class CompHandler
         {
             return outerToInter[var];
         }
+
+        //Saving clauses
+        template<class T>
+        void saveClause(T lits);
+        struct RemovedClauses {
+            vector<Lit> lits;
+            vector<uint32_t> sizes;
+        };
+        RemovedClauses removedClauses;
+        bool needToReaddClauses;
 
         //Clauses that have been moved to other comps
         //vector<ClOffset> clausesRemoved;
