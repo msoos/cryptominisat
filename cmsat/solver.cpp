@@ -519,19 +519,15 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         cout << "Too long clause!" << endl;
         exit(-1);
     }
-    for (vector<Lit>::const_iterator
-        it = ps.begin(), end = ps.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->var() >= nVars()) {
+    for (Lit lit: ps) {
+        if (lit.var() >= nVars()) {
             cout
-            << "Variable (internal numbering:)" << it->var()
+            << "Variable (internal numbering:)" << lit.var()
             << " inserted, but max var (internal numbering) is "
             << nVars()
             << endl;
         }
-        release_assert(it->var() < nVars()
+        release_assert(lit.var() < nVars()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
@@ -557,27 +553,25 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
 {
     //Update replace, uneliminate
-    for (size_t i = 0; i < ps.size(); i++) {
+    for (Lit& lit: ps) {
         //Update to correct lit -- replacer
-        Lit origLit = ps[i];
-        ps[i] = varReplacer->getLitReplacedWith(ps[i]);
+        Lit origLit = lit;
+        lit = varReplacer->getLitReplacedWith(lit);
         #ifdef VERBOSE_DEBUG
         cout
-        << "EqLit updating lit "
-        << origLit
-        << " to lit "
-        << ps[i]
+        << "EqLit updating lit " << origLit
+        << " to lit " << lit
         << endl;
         #endif
 
         //Uneliminate var if need be
         if (conf.doSimplify
-            && simplifier->getVarElimed()[ps[i].var()]
+            && simplifier->getVarElimed()[lit.var()]
         ) {
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            cout << "Uneliminating var " << ps[i].var() + 1 << endl;
+            cout << "Uneliminating var " << lit.var() + 1 << endl;
             #endif
-            if (!simplifier->unEliminate(ps[i].var()))
+            if (!simplifier->unEliminate(lit.var()))
                 return false;
         }
     }

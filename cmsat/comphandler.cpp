@@ -473,9 +473,7 @@ void CompHandler::moveClausesImplicit(
                 if (lit < lit2) {
 
                     //Add clause
-                    lits.resize(2);
-                    lits[0] = updateLit(lit);
-                    lits[1] = updateLit(lit2);
+                    lits = {updateLit(lit), updateLit(lit2)};
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
                     if (i->learnt()) {
@@ -535,10 +533,7 @@ void CompHandler::moveClausesImplicit(
 
                     //We need it sorted, because that's how we know what order
                     //it is in the Watched()
-                    lits.resize(3);
-                    lits[0] = lit;
-                    lits[1] = lit2;
-                    lits[2] = lit3;
+                    lits = {lit, lit2, lit3};
                     std::sort(lits.begin(), lits.end());
 
                     //Remove only 2, the remaining gets removed by not copying it over
@@ -562,10 +557,7 @@ void CompHandler::moveClausesImplicit(
                 ) {
 
                     //Add clause
-                    lits.resize(3);
-                    lits[0] = updateLit(lit);
-                    lits[1] = updateLit(lit2);
-                    lits[2] = updateLit(lit3);
+                    lits = {updateLit(lit), updateLit(lit2), updateLit(lit3)};
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
                     assert(compFinder->getVarComp(lit3.var()) == comp);
@@ -694,25 +686,4 @@ const bool CompHandler::checkOnlyThisComp(const vec<T*>& cs, const uint32_t comp
     return true;
 }
 
-const bool CompHandler::checkOnlyThisCompBin(const Solver& thisSolver, const uint32_t comp, const CompFinder& compFinder) const
-{
-    bool retval = true;
-    uint32_t wsLit = 0;
-    for (const vec<Watched> *it = thisSolver.watches.getData(), *end = thisSolver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        const Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary()) {
-                if (compFinder->getVarComp(lit.var()) != comp
-                    || compFinder->getVarComp(it2->getOtherLit().var()) != comp
-                    ) {
-                    cout << "bin incorrectly moved to this comp:" << lit << " , " << it2->getOtherLit() << endl;
-                    retval = false;
-                }
-            }
-        }
-    }
-
-    return retval;
-}*/
 
