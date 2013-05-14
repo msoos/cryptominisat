@@ -385,7 +385,7 @@ void CompHandler::moveClausesLong(
         #endif
 
         tmp.resize(cl.size());
-        for (size_t i = 0;i < cl.size(); i++) {
+        for (size_t i = 0; i < cl.size(); i++) {
             tmp[i] = updateLit(cl[i]);
         }
         if (cl.learnt()) {
