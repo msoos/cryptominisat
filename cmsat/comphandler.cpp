@@ -395,7 +395,9 @@ void CompHandler::moveClausesLong(
             cl.stats.conflictNumIntroduced = 0;
             newSolver->addLearntClause(tmp, cl.stats);
         } else {
-            saveClause(cl);
+            vector<Lit> tosave(cl.size());
+            std::copy(cl.begin(), cl.end(), tosave.begin());
+            saveClause(tosave);
             newSolver->addClause(tmp);
         }
 
