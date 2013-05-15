@@ -50,6 +50,11 @@ class CompHandler
         CompHandler(Solver* solver);
         ~CompHandler();
 
+        struct RemovedClauses {
+            vector<Lit> lits;
+            vector<uint32_t> sizes;
+        };
+
         bool handle();
         const vector<lbool>& getSavedState();
         void newVar();
@@ -57,6 +62,7 @@ class CompHandler
         void readdRemovedClauses();
         bool getNeedToReaddClauses() const;
         void updateVars(const vector<Var>& interToOuter);
+        const RemovedClauses& getRemovedClauses() const;
 
         friend class ClauseAllocator;
 
@@ -121,10 +127,6 @@ class CompHandler
         //Saving clauses
         template<class T>
         void saveClause(T lits);
-        struct RemovedClauses {
-            vector<Lit> lits;
-            vector<uint32_t> sizes;
-        };
         RemovedClauses removedClauses;
         bool needToReaddClauses;
 
@@ -150,6 +152,11 @@ default the value is l_Undef, i.e. no solution has been saved there.
 inline void CompHandler::newVar()
 {
     savedState.push_back(l_Undef);
+}
+
+inline const CompHandler::RemovedClauses& CompHandler::getRemovedClauses() const
+{
+    return removedClauses;
 }
 
 } //end of namespace
