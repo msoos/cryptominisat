@@ -2730,12 +2730,14 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     }
 
     //binary XOR clauses
-    const vector<Lit>& table = varReplacer->getReplaceTable();
-    for (Var var = 0; var != table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
-        numClauses += 2;
+    if (varReplacer) {
+        const vector<Lit>& table = varReplacer->getReplaceTable();
+        for (Var var = 0; var != table.size(); var++) {
+            Lit lit = table[var];
+            if (lit.var() == var)
+                continue;
+            numClauses += 2;
+        }
     }
 
     //binary normal clauses
