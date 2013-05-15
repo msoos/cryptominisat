@@ -2744,6 +2744,9 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     numClauses += binTri.irredBins;
     numClauses += binTri.irredTris;
     numClauses += longIrredCls.size();
+    if (conf.doCompHandler) {
+        compHandler->getRemovedClauses().sizes.size();
+    }
 
     //previously eliminated clauses
     if (conf.doSimplify) {
@@ -2813,6 +2816,30 @@ void Solver::dumpIrredClauses(std::ostream* os) const
             << clauseBackNumbered(it->lits)
             << " 0"
             << endl;
+        }
+    }
+
+    if (conf.doCompHandler) {
+        *os
+        << "c " << endl
+        << "c ---------------" << endl
+        << "c clauses in components" << endl
+        << "c ---------------" << endl;
+
+        const CompHandler::RemovedClauses& removedClauses = compHandler->getRemovedClauses();
+
+        vector<Lit> tmp;
+        size_t at = 0;
+        for (uint32_t size :removedClauses.sizes) {
+            tmp.clear();
+            for(size_t i = at; i < at + size; i++) {
+                tmp.push_back(removedClauses.lits[i]);
+            }
+            std::sort(tmp.begin(), tmp.end());
+            *os << tmp << " 0" << endl;
+
+            //Move 'at' along
+            at += size;
         }
     }
 }
