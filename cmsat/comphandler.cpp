@@ -651,6 +651,7 @@ void CompHandler::saveClause(T lits)
     removedClauses.sizes.push_back(lits.size());
     needToReaddClauses = true;
 }
+
 bool CompHandler::getNeedToReaddClauses() const
 {
     return needToReaddClauses;
