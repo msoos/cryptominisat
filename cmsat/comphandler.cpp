@@ -700,5 +700,3 @@ void CompHandler::readdRemovedClauses()
     removedClauses.lits.clear();
     removedClauses.sizes.clear();
 }
-
-
