@@ -126,7 +126,7 @@ class CompHandler
 
         //Saving clauses
         template<class T>
-        void saveClause(T lits);
+        void saveClause(const T& lits);
         RemovedClauses removedClauses;
         bool needToReaddClauses;
 

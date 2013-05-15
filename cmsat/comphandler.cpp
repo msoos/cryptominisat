@@ -395,9 +395,7 @@ void CompHandler::moveClausesLong(
             cl.stats.conflictNumIntroduced = 0;
             newSolver->addLearntClause(tmp, cl.stats);
         } else {
-            vector<Lit> tosave(cl.size());
-            std::copy(cl.begin(), cl.end(), tosave.begin());
-            saveClause(tosave);
+            saveClause(cl);
             newSolver->addClause(tmp);
         }
 
@@ -643,7 +641,7 @@ void CompHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
 }
 
 template<class T>
-void CompHandler::saveClause(T lits)
+void CompHandler::saveClause(const T& lits)
 {
     for (Lit lit : lits ) {
         removedClauses.lits.push_back(getUpdatedLit(lit, solver->interToOuterMain));
