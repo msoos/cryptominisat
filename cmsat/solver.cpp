@@ -2740,10 +2740,9 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         }
     }
 
-    //binary normal clauses
-    numClauses += countNumBinClauses(false, true);
-
-    //normal clauses
+    //Normal clauses
+    numClauses += binTri.irredBins;
+    numClauses += binTri.irredTris;
     numClauses += longIrredCls.size();
 
     //previously eliminated clauses
