@@ -231,9 +231,16 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         }
     } else if (debugLib && str == "Solver::solve()") {
         lbool ret = solver->solve();
+
+        //Open file for writing
         std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
         std::ofstream partFile;
         partFile.open(s.c_str());
+        if (!partFile) {
+            cout << "ERROR: Cannot open part file '" << s << "'";
+            exit(-1);
+        }
+
         if (ret == l_True) {
             partFile << "s SAT" << endl;
             partFile << "v ";
