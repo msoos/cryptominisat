@@ -313,7 +313,6 @@ void DimacsParser::parseClauseParameters(
 */
 void DimacsParser::readFullClause(StreamBuffer& in)
 {
-    bool xor_clause = false;
     bool learnt = false;
     ClauseStats stats;
     stats.conflictNumIntroduced = 0;
@@ -322,8 +321,8 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 
     //Is it an XOR clause?
     if ( *in == 'x') {
-        xor_clause = true;
-        ++in;
+        cout << "ERROR: Cannot read XOR clause!" << endl;
+        exit(-1);
     }
 
     //read in the actual clause
@@ -341,16 +340,12 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         }
     }
 
-    if (xor_clause) {
-        assert(false && "Cannot read XOR clause!");
+    if (learnt) {
+        solver->addLearntClause(lits, stats);
+        numLearntClauses++;
     } else {
-        if (learnt) {
-            solver->addLearntClause(lits, stats);
-            numLearntClauses++;
-        } else {
-            solver->addClause(lits);
-            numNormClauses++;
-        }
+        solver->addClause(lits);
+        numNormClauses++;
     }
 
     if (needToParseComments) {
