@@ -170,6 +170,7 @@ class SolverConf
         //Optimisations to do
         bool      printAllRestarts;
         int       doRenumberVars;
+        int       doSaveMem;
 
         //Component handling
         int       doFindComps;

@@ -940,7 +940,9 @@ void Solver::renumberVariables()
     #endif
     #endif
 
-    saveVarMem(numEffectiveVars);
+    if (conf.doSaveMem) {
+        saveVarMem(numEffectiveVars);
+    }
 
     //Update order heap -- needed due to decisionVar update
     redoOrderHeap();

@@ -146,6 +146,7 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doRenumberVars   (true)
+        , doSaveMem        (true)
 
         //Component finding
         , doFindComps     (false)
