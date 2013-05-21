@@ -241,8 +241,9 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
             exit(-1);
         }
 
+        //Output to part file the result
         if (ret == l_True) {
-            partFile << "s SAT" << endl;
+            partFile << "s SATISFIABLE" << endl;
             partFile << "v ";
             for (Var i = 0; i != solver->nVars(); i++) {
                 if (solver->model[i] != l_Undef)
