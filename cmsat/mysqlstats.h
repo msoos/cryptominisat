@@ -8,6 +8,8 @@
 #include <mysql/mysql.h>
 #endif
 
+using namespace CMSat;
+
 
 class MySQLStats: public SQLStats
 {

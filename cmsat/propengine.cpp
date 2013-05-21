@@ -460,9 +460,15 @@ bool PropEngine::propNormalClauseAnyOrder(
     }
 
     // Look for new watch:
+    #ifdef STATS_NEEDED
+    uint numLitVisited = 2;
+    #endif
     for (Lit *k = c.begin() + 2, *end2 = c.end()
         ; k != end2
         ; k++
+        #ifdef STATS_NEEDED
+        , numLitVisited++
+        #endif
     ) {
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
@@ -627,12 +633,26 @@ inline bool PropEngine::propTriClauseAnyOrder(
         return false;
     }
     if (val2 == l_Undef && val3 == l_False) {
-        propTriHelperAnyOrder(lit1, lit2, lit3);
+        propTriHelperAnyOrder(
+            lit1
+            , lit2
+            , lit3
+            #ifdef STATS_NEEDED
+            , i->learnt()
+            #endif
+        );
         return true;
     }
 
     if (val3 == l_Undef && val2 == l_False) {
-        propTriHelperAnyOrder(lit1, lit3, lit2);
+        propTriHelperAnyOrder(
+            lit1
+            , lit3
+            , lit2
+            #ifdef STATS_NEEDED
+            , i->learnt()
+            #endif
+        );
         return true;
     }
 
@@ -693,6 +713,9 @@ inline void PropEngine::propTriHelperAnyOrder(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
+    #ifdef STATS_NEEDED
+    , const bool learnt
+    #endif
 ) {
     #ifdef STATS_NEEDED
     if (learnt)

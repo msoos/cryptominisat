@@ -202,7 +202,7 @@ class Searcher : public PropEngine
         PropBy propagate(
             Solver* solver = NULL
             #ifdef STATS_NEEDED
-            , AvgCalc<size_t>* watchListSizeTraversed
+            , AvgCalc<size_t>* watchListSizeTraversed = NULL
             //, AvgCalc<bool>* litPropagatedSomething
             #endif
         );

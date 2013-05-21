@@ -101,6 +101,7 @@ endif(DRUP)
 
 #MySQL
 if (STATSNEEDED)
+    add_definitions( -DSTATS_NEEDED )
     find_package(MySQL)
     IF (MYSQL_FOUND)
       MESSAGE(STATUS "OK, Found MySQL!")

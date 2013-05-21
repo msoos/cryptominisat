@@ -8,6 +8,7 @@
 #include <string>
 #include <time.h>
 
+using namespace CMSat;
 using std::cout;
 using std::endl;
 using std::string;

@@ -379,6 +379,9 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
+        #ifdef STATS_NEEDED
+        , const bool learnt
+        #endif
     );
 
     template<bool simple>

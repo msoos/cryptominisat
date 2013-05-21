@@ -30,6 +30,11 @@
 #include "clausecleaner.h"
 #include "propbyforgraph.h"
 #include <algorithm>
+#include <cstddef>
+
+#ifdef STATS_NEEDED
+#include "sqlstats.h"
+#endif
 
 using namespace CMSat;
 using std::cout;
@@ -2895,7 +2900,7 @@ PropBy Searcher::propagate(
         ret = propagateBinFirst(
             solver2
             #ifdef STATS_NEEDED
-            , AvgCalc<size_t>* watchListSizeTraversed
+            , watchListSizeTraversed
             //, AvgCalc<bool>* litPropagatedSomething
             #endif
         );
