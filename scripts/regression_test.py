@@ -199,6 +199,7 @@ class Tester:
             cmd += "--cache %s " % random.randint(0,1)
             cmd += "--otfsubsume %s " % random.randint(0,1)
             cmd += "--renumber %s " % random.randint(0,1)
+            cmd += "--savemem %s " % random.randint(0,1)
             cmd += "--moreminim %s " % random.randint(0,1)
 
 
