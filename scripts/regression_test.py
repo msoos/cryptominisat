@@ -407,6 +407,69 @@ class Tester:
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
+    def checkUNSAT(self, fname) :
+        #execute with the other solver
+        toexec = "../../lingeling-587f/lingeling -f %s" % fname
+        print "Solving with other solver.."
+        currTime = time.time()
+        p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
+                             preexec_fn=setlimits)
+        consoleOutput2 = p.communicate()[0]
+
+        #if other solver was out of time, then we can't say anything
+        diffTime = time.time() - currTime
+        if diffTime > maxTimeLimit:
+            print "Other solver: too much time to solve, aborted!"
+            return
+
+        #extract output from the other solver
+        print "Checking other solver output..."
+        (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
+
+        #check if the other solver agrees with us
+        return otherSolverUNSAT
+
+    def checkDebugLib(self, fname) :
+        largestPart = -1
+        dirList2 = os.listdir(".")
+        for fname_debug in dirList2:
+            if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+                debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
+                largestPart = max(largestPart, debugLibPart)
+
+        for debugLibPart in range(1, largestPart + 1):
+            fname_debug = "debugLibPart%d.output" % debugLibPart
+            print "Checking debug lib part ", debugLibPart
+
+            if (os.path.isfile(fname_debug) == False) :
+                print "Error: Filename to be read '%s' is not a file!" % fname_debug
+                print "Error code 400"
+                exit(400)
+
+            #take file into mem and delete it
+            f = open(fname_debug, "r")
+            text = f.read()
+            output_lines = text.splitlines()
+            f.close()
+            os.unlink(fname_debug)
+
+            (unsat, value) = self.parse_solution_from_output(output_lines)
+            if unsat == False:
+                self.test_found_solution(value, fname, debugLibPart)
+            else:
+                self.extractLibPart(fname, debugLibPart, "tmp")
+
+                #check with other solver
+                if self.checkUNSAT("tmp") :
+                    print "UNSAT verified by other solver"
+                else :
+                    print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+                    exit()
+
+                #delete temporary file
+                os.unlink("tmp")
+
+
     def check(self, fname, fnameSolution, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False):
 
@@ -437,90 +500,58 @@ class Tester:
 
         print "filename: %s" % fname
 
+        #if library debug is set, check it
         if (self.needDebugLib) :
-            largestPart = -1
-            dirList2 = os.listdir(".")
-            for fname_debug in dirList2:
-                if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
-                    debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
-                    largestPart = max(largestPart, debugLibPart)
-
-            for debugLibPart in range(1, largestPart + 1):
-                fname_debug = "debugLibPart%d.output" % debugLibPart
-                print "Checking debug lib part ", debugLibPart
-
-                if (os.path.isfile(fname_debug) == False) :
-                    print "Error: Filename to be read '%s' is not a file!" % fname_debug
-                    print "Error code 400"
-                    exit(400);
-
-                f = open(fname_debug, "r")
-                text = f.read()
-                output_lines = text.splitlines()
-                f.close()
-                os.unlink(fname_debug)
-
-                (unsat, value) = self.parse_solution_from_output(output_lines)
-                if unsat == False:
-                    self.test_found_solution(value, fname, debugLibPart)
-                else:
-                    print "Not examining part %d -- it is UNSAT" % (debugLibPart)
+            self.checkDebugLib(fname)
 
         print "Checking console output..."
         (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
-        if self.check_unsat and unsat:
-            toexec = "../../lingeling-587f/lingeling -f %s" % fname
-            print "Solving with other solver.."
-            currTime = time.time()
-            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
-                                 preexec_fn=setlimits)
+
+        if not unsat :
+            self.test_found_solution(value, fname)
+            return;
+
+        #it's UNSAT and we should not check, so exit
+        if self.check_unsat == False:
+            print "Cannot check -- output is UNSAT"
+            return
+
+        #it's UNSAT, let's check with DRUP
+        if fnameDrup:
+            toexec = "drupcheck %s %s" % (fname, fnameDrup)
+            print "Checking DRUP...: ", toexec
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
+                                 #,preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
             diffTime = time.time() - currTime
-            if diffTime > maxTimeLimit:
-                print "Other solver: too much time to solve, aborted!"
-                return
-            print "Checking other solver output..."
-            (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
-        if unsat == True:
-            if fnameDrup:
-                toexec = "drupcheck %s %s" % (fname, fnameDrup)
-                print "Checking DRUP...: ", toexec
-                p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
-                                     #,preexec_fn=setlimits)
-                consoleOutput2 = p.communicate()[0]
-                diffTime = time.time() - currTime
-                foundVerif = False
-                drupLine = ""
-                for line in consoleOutput2.split('\n') :
-                    if len(line) > 1 and line[:2] == "s " :
-                        #print "verif: " , line
-                        foundVerif = True
-                        if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
-                            print "DRUP verification error, it says:", consoleOutput2
-                        assert line[2:10] == "VERIFIED" or line[2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
-                        drupLine = line
+            #find verification code
+            foundVerif = False
+            drupLine = ""
+            for line in consoleOutput2.split('\n') :
+                if len(line) > 1 and line[:2] == "s " :
+                    #print "verif: " , line
+                    foundVerif = True
+                    if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
+                        print "DRUP verification error, it says:", consoleOutput2
+                    assert line[2:10] == "VERIFIED" or line[2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
+                    drupLine = line
 
-                if foundVerif == False:
-                    print "verifier error! It says:", consoleOutput2
-                    assert foundVerif, "Cannot find DRUP verification code!"
-                else:
-                    print "OK, DRUP says:", drupLine
+            #Check whether we have found a verification code
+            if foundVerif == False:
+                print "verifier error! It says:", consoleOutput2
+                assert foundVerif, "Cannot find DRUP verification code!"
+            else:
+                print "OK, DRUP says:", drupLine
 
-
-            if self.check_unsat == False:
-                print "Cannot check -- output is UNSAT"
-            else :
-                if otherSolverUNSAT == False:
-                    print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
-                    print "Console output: " , consoleOutput
-                    exit()
-                else:
-                    print "UNSAT verified by other solver"
-
+        #check with other solver
+        if self.checkUNSAT(fname) :
+            print "UNSAT verified by other solver"
         else :
-            self.test_found_solution(value, fname)
+            print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+            exit()
+
 
     def removeDebugLibParts(self) :
         dirList = os.listdir(".")
