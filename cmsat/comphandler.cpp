@@ -678,13 +678,9 @@ void CompHandler::readdRemovedClauses()
 
     vector<Lit> tmp;
     size_t at = 0;
-    for (vector<uint32_t>::const_iterator
-        it = removedClauses.sizes.begin(), end = removedClauses.sizes.end()
-        ; it != end
-        ; it++
-    ) {
+    for (uint32_t sz: removedClauses.sizes) {
         tmp.clear();
-        for(size_t i = at; i < at + *it; i++) {
+        for(size_t i = at; i < at + sz; i++) {
             tmp.push_back(
                 getUpdatedLit(removedClauses.lits[i], solver->outerToInterMain)
             );
@@ -694,7 +690,7 @@ void CompHandler::readdRemovedClauses()
         assert(solver->okay());
 
         //Move 'at' along
-        at += *it;
+        at += sz;
     }
 
     //Clear added data
