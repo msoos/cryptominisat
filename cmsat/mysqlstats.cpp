@@ -1129,10 +1129,10 @@ void MySQLStats::restart(
     stmtRst.glueHistMin      = searchHist.glueHist.getLongtTerm().getMin();
     stmtRst.glueHistMax      = searchHist.glueHist.getLongtTerm().getMax();
 
-    stmtRst.conflSizeHist   = searchHist.conflSizeHist.getLongtTerm().avg();
-    stmtRst.conflSizeHistSD = sqrt(searchHist.conflSizeHist.getLongtTerm().var());
-    stmtRst.conflSizeHistMin = searchHist.conflSizeHist.getLongtTerm().getMin();
-    stmtRst.conflSizeHistMax = searchHist.conflSizeHist.getLongtTerm().getMax();
+    stmtRst.conflSizeHist   = searchHist.conflSizeHist.avg();
+    stmtRst.conflSizeHistSD = sqrt(searchHist.conflSizeHist.var());
+    stmtRst.conflSizeHistMin = searchHist.conflSizeHist.getMin();
+    stmtRst.conflSizeHistMax = searchHist.conflSizeHist.getMax();
 
     stmtRst.numResolutionsHist =
         searchHist.numResolutionsHist.avg();
@@ -1153,10 +1153,10 @@ void MySQLStats::restart(
     stmtRst.branchDepthHistMax      = searchHist.branchDepthHist.getMax();
 
 
-    stmtRst.branchDepthDeltaHist    = searchHist.branchDepthDeltaHist.getLongtTerm().avg();
-    stmtRst.branchDepthDeltaHistSD  = sqrt(searchHist.branchDepthDeltaHist.getLongtTerm().var());
-    stmtRst.branchDepthDeltaHistMin  = searchHist.branchDepthDeltaHist.getLongtTerm().getMin();
-    stmtRst.branchDepthDeltaHistMax  = searchHist.branchDepthDeltaHist.getLongtTerm().getMax();
+    stmtRst.branchDepthDeltaHist    = searchHist.branchDepthDeltaHist.avg();
+    stmtRst.branchDepthDeltaHistSD  = sqrt(searchHist.branchDepthDeltaHist.var());
+    stmtRst.branchDepthDeltaHistMin  = searchHist.branchDepthDeltaHist.getMin();
+    stmtRst.branchDepthDeltaHistMax  = searchHist.branchDepthDeltaHist.getMax();
 
     stmtRst.trailDepthHist          = searchHist.trailDepthHist.avg();
     stmtRst.trailDepthHistSD        = sqrt(searchHist.trailDepthHist.var());
