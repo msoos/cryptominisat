@@ -13,7 +13,8 @@ class SQLStats
 {
 public:
 
-    virtual ~SQLStats() = 0;
+    virtual ~SQLStats()
+    {}
 
     virtual void restart(
         const PropStats& thisPropStats

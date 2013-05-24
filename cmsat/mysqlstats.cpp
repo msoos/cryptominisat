@@ -18,6 +18,37 @@ MySQLStats::MySQLStats() :
 {
 }
 
+MySQLStats::~MySQLStats()
+{
+	//Free all the prepared statements
+    my_bool ret = mysql_stmt_close(stmtRst.stmt);
+	if (ret) {
+		cout << "Error closing prepared statement" << endl;
+		exit(-1);
+	}
+
+    ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
+	if (ret) {
+		cout << "Error closing prepared statement" << endl;
+		exit(-1);
+	}
+
+    ret = mysql_stmt_close(stmtClsDistribSize.stmt);
+	if (ret) {
+		cout << "Error closing prepared statement" << endl;
+		exit(-1);
+	}
+
+    ret = mysql_stmt_close(stmtClsDistribGlue.stmt);
+	if (ret) {
+		cout << "Error closing prepared statement" << endl;
+		exit(-1);
+	}
+
+	//Close clonnection
+	mysql_close(serverConn);
+}
+
 void MySQLStats::setup(const Solver* solver)
 {
     connectServer(solver);

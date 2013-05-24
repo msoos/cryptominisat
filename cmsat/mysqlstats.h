@@ -15,8 +15,9 @@ class MySQLStats: public SQLStats
 {
 public:
     MySQLStats();
+	virtual ~MySQLStats();
 
-        virtual void restart(
+    virtual void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
         , const VariableVariance& varVarStats
