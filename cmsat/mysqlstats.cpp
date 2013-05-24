@@ -1189,10 +1189,10 @@ void MySQLStats::restart(
     stmtRst.branchDepthDeltaHistMin  = searchHist.branchDepthDeltaHist.getMin();
     stmtRst.branchDepthDeltaHistMax  = searchHist.branchDepthDeltaHist.getMax();
 
-    stmtRst.trailDepthHist          = searchHist.trailDepthHist.avg();
-    stmtRst.trailDepthHistSD        = sqrt(searchHist.trailDepthHist.var());
-    stmtRst.trailDepthHistMin       = searchHist.trailDepthHist.getMin();
-    stmtRst.trailDepthHistMax       = searchHist.trailDepthHist.getMax();
+    stmtRst.trailDepthHist          = searchHist.trailDepthHist.getLongtTerm().avg();
+    stmtRst.trailDepthHistSD        = sqrt(searchHist.trailDepthHist.getLongtTerm().var());
+    stmtRst.trailDepthHistMin       = searchHist.trailDepthHist.getLongtTerm().getMin();
+    stmtRst.trailDepthHistMax       = searchHist.trailDepthHist.getLongtTerm().getMax();
 
     stmtRst.trailDepthDeltaHist     = searchHist.trailDepthDeltaHist.avg();
     stmtRst.trailDepthDeltaHistSD   = sqrt(searchHist.trailDepthDeltaHist.var());
