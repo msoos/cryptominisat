@@ -297,9 +297,13 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
-    vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
     Stamp stamp;
     uint32_t minNumVars;
+
+
+    #ifdef STATS_NEEDED
+    vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
+    #endif
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.

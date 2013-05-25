@@ -961,9 +961,6 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     implCache.newNumVars(newNumVars);
     stamp.newNumVars(newNumVars);
 
-    varDataLT.resize(newNumVars);
-    varDataLT.shrink_to_fit();
-
     //Resize 'seen'
     seen.resize(newNumVars*2);
     seen.shrink_to_fit();
@@ -2334,7 +2331,9 @@ void Solver::printMemStats() const
     mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
     mem += varData.capacity()*sizeof(VarData);
+    #ifdef STATS_NEEDED
     mem += varDataLT.capacity()*sizeof(VarData::Stats);
+    #endif
     mem += backupActivity.capacity()*sizeof(uint32_t);
     mem += backupPolarity.capacity()*sizeof(bool);
     mem += decisionVar.capacity()*sizeof(char);

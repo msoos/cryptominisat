@@ -86,7 +86,10 @@ Var PropEngine::newVar(const bool)
     watches.resize(watches.size() + 2);  // (list for positive&negative literals)
     assigns.push_back(l_Undef);
     varData.push_back(VarData());
+
+    #ifdef STATS_NEEDED
     varDataLT.push_back(VarData::Stats());
+    #endif
 
     //Temporaries
     seen      .push_back(0);
@@ -1566,7 +1569,9 @@ void PropEngine::updateVars(
     , const vector<uint32_t>& interToOuter2
 ) {
     updateArray(varData, interToOuter);
+    #ifdef STATS_NEEDED
     updateArray(varDataLT, interToOuter);
+    #endif
     updateArray(assigns, interToOuter);
     updateLitsMap(trail, outerToInter);
     updateBySwap(watches, seen, interToOuter2);
