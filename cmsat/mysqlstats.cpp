@@ -103,20 +103,21 @@ void MySQLStats::connectServer(const Solver* solver)
         , NULL
         , 0)
     ) {
-      cout
-      << "ERROR while connecting to MySQL server:"
-      << mysql_error(serverConn)
-      << endl;
+        cout
+        << "ERROR while connecting to MySQL server:"
+        << mysql_error(serverConn)
+        << endl;
 
-      cout
-      << "If your MySQL server is running then you did not create the database" << endl
-      << "and/or didn't add the correct user. You can fix this by executing: " << endl
-      << "$ mysql -u root -p" << endl
-      << "mysql> create database cmsat;" << endl
-      << "mysql> grant all on cryptoms.* to user 'cmsat_solver'@localhost identified by '';" << endl
-      << "mysql> quit;" << endl
-      << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
-      ;
+        cout
+        << "If your MySQL server is running then you did not create the database" << endl
+        << "and/or didn't add the correct user. You can fix this by executing: " << endl
+        << "$ mysql -u root -p" << endl
+        << "mysql> create database cmsat;" << endl
+        << "mysql> grant all on cryptoms.* to user 'cmsat_solver'@localhost identified by '';" << endl
+        << "mysql> grant all on cryptoms.* to user 'cmsat_presenter'@localhost identified by '';" << endl
+        << "mysql> quit;" << endl
+        << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
+        ;
 
       exit(1);
     }
