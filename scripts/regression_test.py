@@ -130,7 +130,8 @@ def unique_fuzz_file(file_name_begin):
         file_name = file_name_begin + '_' + str(counter) + ".cnf"
         try:
             fd = os.open(file_name, os.O_CREAT | os.O_EXCL)
-            return os.fdopen(fd), file_name
+            os.fdopen(fd).close()
+            return file_name
         except OSError:
             pass
         counter += 1
@@ -366,8 +367,8 @@ class Tester:
             print "Error: xor-clause '%s' not satisfied." % line
             exit(-1)
 
-    def test_found_solution(self, value, fname, debugLibPart=1000000):
-        if debugLibPart == 1000000:
+    def test_found_solution(self, value, fname, debugLibPart=None):
+        if debugLibPart == None:
             print "Verifying solution for CNF file %s" % fname
         else:
             print "Verifying solution for CNF file %s, part %d" % (fname, debugLibPart)
@@ -390,8 +391,8 @@ class Tester:
             if line[0] == 'c' and "Solver::solve()" in line:
                 thisDebugLibPart += 1
 
-            #if we are over, exit
-            if thisDebugLibPart >= debugLibPart:
+            #if we are over debugLibPart, exit
+            if debugLibPart != None and thisDebugLibPart >= debugLibPart:
                 f.close()
                 return
 
@@ -428,6 +429,64 @@ class Tester:
 
         #check if the other solver agrees with us
         return otherSolverUNSAT
+
+    def extractLibPart(self, fname, debug_num, tofile) :
+        fromf = open(fname, "r")
+        thisDebugLibPart = 0
+        maxvar = 0
+        numcls = 0
+        for line in fromf :
+            line = line.strip()
+
+            #ignore empty strings and headers
+            if not line or line[0] == "p" :
+                continue
+
+            #process (potentially special) comments
+            if line[0] == "c" :
+                if "Solver::solve()" in line:
+                    thisDebugLibPart += 1
+
+                continue
+
+            #break out if we reached the debug lib part
+            if thisDebugLibPart >= debug_num :
+                break
+
+            #count clauses and get max var number
+            numcls += 1
+            for l in line.split() :
+                maxvar = max(maxvar, abs(l))
+
+        fromf.close()
+
+        #now we can create the new CNF file
+        fromf = open(fname, "r")
+        tof = open(tofile, "w")
+        tof.write("p cnf %d %d\n" % (maxvar, numcls))
+
+        thisDebugLibPart = 0
+        for line in fromf :
+            line = line.strip()
+            #skip empty lines and headers
+            if not line or line[0] == "p" :
+                continue
+
+            #parse up special header
+            if line[0] == "c" :
+                if "Solver::solve()" in line:
+                    thisDebugLibPart += 1
+
+                continue
+
+            #break out if we reached the debug lib part
+            if thisDebugLibPart >= debug_num :
+                break
+
+            tof.write(line + '\n')
+
+        fromf.close()
+        tof.close()
 
     def checkDebugLib(self, fname) :
         largestPart = -1
@@ -470,7 +529,7 @@ class Tester:
                 os.unlink("tmp")
 
 
-    def check(self, fname, fnameSolution, fnameDrup=None, newVar=False,
+    def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False):
 
         consoleOutput = ""
@@ -573,6 +632,100 @@ class Tester:
 
         return call
 
+    def create_fuzz(self, fuzzers, fuzzer, directory, file_name) :
+
+        #handle special fuzzer
+        file_names_multi = []
+        if len(fuzzer) == 2 and fuzzer[1] == "special":
+            #create N files
+            file_names_multi = []
+
+            #sometimes just fuzz with all SAT problems
+            if random.getrandbits(1)  == 1 :
+                fixed = 1
+            else:
+                fixed = 0
+
+            for i in range(random.randrange(2,4)) :
+                file_name2 = unique_fuzz_file("fuzzTest");
+                file_names_multi.append(file_name2)
+
+                #chose a ranom fuzzer, not multipart
+                fuzzer2 = ["multipart.py", "special"]
+                while (fuzzer2[0] == "multipart.py") :
+                    fuzzer2 = choice(fuzzers)
+
+                #sometimes fuzz with SAT problems only
+                if (fixed) :
+                    fuzzer2 = fuzzers[0]
+
+                print "fuzzer2 used: ", fuzzer2
+                call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                print "calling sub-fuzzer:", call
+                out = commands.getstatusoutput(call)
+
+            #construct multi-fuzzer call
+            call = ""
+            call += directory
+            call += fuzzer[0]
+            call += " "
+            for name in file_names_multi :
+                call += " " + name
+            call += " > " + file_name
+
+            #remove temporary filenames
+            for tounlink in file_names_multi :
+                os.unlink(tounlink)
+
+            return call
+
+        #handle normal fuzzer
+        else :
+            return self.callFromFuzzer(directory, fuzzer, file_name)
+
+    def file_len_no_comment(self, fname):
+        i = 0;
+        with open(fname) as f:
+            for l in f :
+                #ignore comments and empty lines and header
+                if not l or l[0] == "c" or l[0] == "p":
+                    continue
+                i += 1
+
+        return i
+
+    def intersperse_with_debuglib(self, fname1, fname2) :
+
+        #approx number of solve()-s to add
+        numtodo = random.randint(0,10)
+
+        #based on length and number of solve()-s to add, intersperse
+        #file with ::solve()
+        file_len = self.file_len_no_comment(fname1)
+        nextToAdd = random.randint(1,numtodo*2)
+
+        fin = open(fname1, "r")
+        fout = open(fname2, "w")
+        at = 0
+        for line in fin :
+            line = line.strip()
+
+            #ignore comments (but write them out)
+            if not line or line[0] == "c" :
+                fout.write(line + '\n')
+                continue
+
+            at += 1
+            if at >= nextToAdd :
+                fout.write("c Solver::solve()\n")
+                nextToAdd = at + random.randint(1,(file_len/numtodo)*2+1)
+
+            #copy line over
+            fout.write(line + '\n')
+        fout.close()
+        fin.close()
+
+
     def fuzz_test(self) :
         fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
@@ -589,64 +742,26 @@ class Tester:
         directory = "../../cnf-utils/"
         while True:
             for fuzzer in fuzzers :
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
+                file_name = unique_fuzz_file("fuzzTest");
                 fnameDrup = None
                 if options.drup :
-                    fileopened, fnameDrup = unique_fuzz_file("fuzzTest");
-                    fileopened.close()
+                    fnameDrup = unique_fuzz_file("fuzzTest");
 
-                #should the multi-fuzzer be called?
-                file_names_multi = []
-                if len(fuzzer) == 2 and fuzzer[1] == "special":
-                    #create N files
-                    file_names_multi = []
-
-                    #sometimes just fuzz with all SAT problems
-                    if random.getrandbits(1)  == 1 :
-                        fixed = 1
-                    else:
-                        fixed = 0
-
-                    for i in range(random.randrange(2,4)) :
-                        fileopened2, file_name2 = unique_fuzz_file("fuzzTest");
-                        fileopened2.close()
-                        file_names_multi.append(file_name2)
-
-                        #chose a ranom fuzzer, not multipart
-                        fuzzer2 = ["multipart.py", "special"]
-                        while (fuzzer2[0] == "multipart.py") :
-                            fuzzer2 = choice(fuzzers)
-
-                        #sometimes fuzz with SAT problems only
-                        if (fixed) :
-                            fuzzer2 = fuzzers[0]
-
-                        print "fuzzer2 used: ", fuzzer2
-                        call = self.callFromFuzzer(directory, fuzzer2, file_name2)
-                        print "calling sub-fuzzer:", call
-                        out = commands.getstatusoutput(call)
-
-                    #construct multi-fuzzer call
-                    call = ""
-                    call += directory
-                    call += fuzzer[0]
-                    call += " "
-                    for name in file_names_multi :
-                        call += " " + name
-                    call += " > " + file_name
-
-                else :
-                    call = self.callFromFuzzer(directory, fuzzer, file_name)
-
+                #create the fuzz file
+                call = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
-                self.check(fname=file_name, fnameSolution=file_name, fnameDrup=fnameDrup,
-                            needToLimitTime=True)
 
+                #adding debuglib to fuzz file
+                self.needDebugLib = True
+                file_name2 = unique_fuzz_file("fuzzTest");
+                self.intersperse_with_debuglib(file_name, file_name2)
                 os.unlink(file_name)
-                for tounlink in file_names_multi :
-                    os.unlink(tounlink)
+
+                #check file
+                self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
+
+                os.unlink(file_name2)
                 if fnameDrup != None :
                     os.unlink(fnameDrup)
 
@@ -681,18 +796,14 @@ class Tester:
             dirList = os.listdir(self.testDirNewVar)
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    self.check(fname=self.testDirNewVar + fname,
-                                fnameSolution=self.testDirNewVar +
-                                fname, newVar=True)
+                    self.check(fname=self.testDirNewVar + fname, newVar=True)
 
         dirList = os.listdir(self.testDir)
 
         #test stuff without newVar
         for fname in dirList:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                self.check(fname=self.testDir + fname,
-                fnameSolution=self.testDir + fname,
-                newVar=False)
+                self.check(fname=self.testDir + fname, newVar=False)
 
     def checkFile(self, problem, solution) :
         if os.path.isfile(problem) == False:
@@ -700,7 +811,7 @@ class Tester:
             exit(-1)
 
         print "Checking CNF file '%s' against proposed solution '%s' " % (problem, solution)
-        #self.check(fname=problem, fnameSolution=problem)
+        #self.check(fname=problem)
         output_lines = open(solution).readlines()
         (unsat, value) = self.parse_solution_from_output(output_lines)
         if not unsat:
