@@ -930,7 +930,10 @@ void Main::parseCommandLine()
         cout << "c Outputting solution to console" << endl;
     }
 
-    if (!debugLib) conf.libraryUsage = false;
+    if (debugLib) {
+        //In case we are debugging the library, blocking must be disabled
+        conf.doBlockClauses = false;
+    }
 }
 
 void Main::printVersionInfo()
