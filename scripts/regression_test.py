@@ -674,8 +674,8 @@ class Tester:
             call += " > " + file_name
 
             #remove temporary filenames
-            for tounlink in file_names_multi :
-                os.unlink(tounlink)
+            for name in file_names_multi :
+                os.unlink(name)
 
             return call
 
