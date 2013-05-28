@@ -321,10 +321,10 @@ void CompHandler::moveVariablesBetweenSolvers(
 
         //Remove from old solver
         if (solver->decisionVar[var]) {
-            solver->unsetDecisionVar(var);
             decisionVarRemoved.push_back(var);
-            solver->varData[var].elimed = ELIMED_DECOMPOSE;
         }
+        solver->unsetDecisionVar(var);
+        solver->varData[var].elimed = ELIMED_DECOMPOSE;
     }
 }
 
