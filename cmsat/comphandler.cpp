@@ -685,6 +685,9 @@ void CompHandler::readdRemovedClauses()
                 getUpdatedLit(removedClauses.lits[i], solver->outerToInterMain)
             );
         }
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Adding back component clause " << tmp << endl;
+        }
         solver->addClause(tmp);
 
         assert(solver->okay());
