@@ -508,7 +508,7 @@ class Tester:
             text = f.read()
             output_lines = text.splitlines()
             f.close()
-            os.unlink(fname_debug)
+            #os.unlink(fname_debug)
 
             (unsat, value) = self.parse_solution_from_output(output_lines)
             if unsat == False:
@@ -537,13 +537,13 @@ class Tester:
         if needSolve:
             consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
         else:
-            if (os.path.isfile(fnameSolution + ".out") == False) :
-                print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
+            if not os.path.isfile(fnameSolution) :
+                print "ERROR! Solution file '%s' is not a file!" % fnameSolution
                 exit(-1)
-            f = open(fnameSolution + ".out", "r")
+            f = open(fnameSolution, "r")
             consoleOutput = f.read()
             f.close()
-            print "Read solution from file " , fnameSolution + ".out"
+            print "Read solution from file " , fnameSolution
 
         #if time was limited, we need to know if we were over the time limit
         #and that is why there is no solution
@@ -803,29 +803,11 @@ class Tester:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
                 self.check(fname=self.testDir + fname, newVar=False)
 
-    def checkFile(self, problem, solution) :
-        if os.path.isfile(problem) == False:
-            print "Filename given '%s' is not a file!" % problem
-            exit(-1)
-
-        print "Checking CNF file '%s' against proposed solution '%s' " % (problem, solution)
-        #self.check(fname=problem)
-        output_lines = open(solution).readlines()
-        (unsat, value) = self.parse_solution_from_output(output_lines)
-        if not unsat:
-            self.test_found_solution(value, problem)
-        else:
-            print "Cannot check, UNSAT"
-
 tester = Tester()
 
-if len(args) == 1:
-    print "Checking filename", args[0]
-    tester.check_unsat = True
-    tester.checkFile(args[0])
-
 if options.checkFile :
-    tester.checkFile(options.checkFile, options.solutionFile)
+    tester.check_unsat = True
+    tester.check(options.checkFile, options.solutionFile, needSolve=False)
 
 if options.fuzz_test:
     tester.needDebugLib = False
