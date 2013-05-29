@@ -33,15 +33,13 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
 desc = """Example usages:
 * check already computed SAT solutions (UNSAT cannot be checked):
-   ./regression_test.py --checkdir ../../clusters/cluster93/
-           --cnfdir ../../satcomp09/
+   ./regression_test.py --checkdir ../../clusters/cluster93/ --cnfdir ../../satcomp09/
 
 * check already computed SAT solutions (UNSAT cannot be checked):
-   ./regression_test.py --check myfile.cnf
-           --solution sol.txt
+   ./regression_test.py -c myfile.cnf -s sol.txt
 
-* fuzz the solver with precosat as solution-checker:
-   ./regression_test.py --fuzz
+* fuzz the solver with fuzz-generator
+   ./regression_test.py -f
 
 * go through regression listdir
    ./regression_test.py --regtest --checkdir ../tests/
@@ -107,11 +105,11 @@ parser.add_option("--probdir", dest="checkDirProb"
                     , default="/home/soos/media/sat/examples/satcomp09/"
                     , help="Directory of CNF files checked against"
                     )
-parser.add_option("--check", dest="checkFile"
+parser.add_option("-c", "--check", dest="checkFile"
                     , default=None
                     , help="Check this file"
                     )
-parser.add_option("--sol", dest="solutionFile"
+parser.add_option("-s", "--sol", dest="solutionFile"
                     , default=None
                     , help="Against this solution"
                     )
