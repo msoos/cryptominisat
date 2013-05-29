@@ -175,7 +175,7 @@ bool Solver::addXorClauseInt(
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
-            assert(!conf.doSimplify || !simplifier->getVarElimed()[p.var()]);
+            assert(!conf.doSimplify || !simplifier->getVarElimed(p.var()));
         } else {
             //modify rhs instead of adding
             assert(value(ps[i]) != l_Undef);
@@ -569,7 +569,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Uneliminate vars
     for (Lit& lit: ps) {
         if (conf.doSimplify
-            && simplifier->getVarElimed()[lit.var()]
+            && simplifier->getVarElimed(lit.var())
         ) {
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "Uneliminating var " << lit.var() + 1 << endl;

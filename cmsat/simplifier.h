@@ -413,7 +413,7 @@ public:
         uint64_t zeroDepthAssings;
     };
 
-    const vector<bool>& getVarElimed() const;
+    bool getVarElimed(const Var var) const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
     const GateFinder* getGateFinder() const;
@@ -839,9 +839,9 @@ inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
     return blockedClauses;
 }
 
-inline const vector<bool>& Simplifier::getVarElimed() const
+inline bool Simplifier::getVarElimed(const Var var) const
 {
-    return var_elimed;
+    return var_elimed[var];
 }
 
 inline const Simplifier::Stats& Simplifier::getStats() const
