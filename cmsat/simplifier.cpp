@@ -123,17 +123,6 @@ void Simplifier::updateVars(
     , const vector<uint32_t>& interToOuter
 ) {
     updateArray(var_elimed, interToOuter);
-
-    for(vector<BlockedClause>::iterator
-        it = blockedClauses.begin(), end = blockedClauses.end()
-        ; it != end
-        ; it++
-    ) {
-        it->blockedOn = getUpdatedLit(it->blockedOn, outerToInter);
-        for(size_t i = 0; i < it->lits.size(); i++) {
-            it->lits[i] = getUpdatedLit(it->lits[i], outerToInter);
-        }
-    }
 }
 
 void Simplifier::print_blocked_clauses_reverse() const
@@ -143,9 +132,13 @@ void Simplifier::print_blocked_clauses_reverse() const
         ; it != end
         ; it++
     ) {
+        //Display the internal variable numbers
+        vector<Lit> tmp(it->lits);
+        updateLitsMap(tmp, solver->outerToInterMain);
+
         cout
-        << "blocked clause " << it->lits
-        << " blocked on var " << it->blockedOn.var()+1
+        << "blocked clause " << tmp
+        << " blocked on var " << getUpdatedVar(it->blockedOn.var(), solver->outerToInterMain)+1
         << endl;
     }
 }
@@ -169,7 +162,10 @@ void Simplifier::extendModel(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
-        bool ret = extender->addClause(it->lits, it->blockedOn);
+        vector<Lit> lits(it->lits);
+        updateLitsMap(lits, solver->outerToInterMain);
+        Lit blockedOn = getUpdatedLit(it->blockedOn, solver->outerToInterMain);
+        bool ret = extender->addClause(lits, blockedOn);
         assert(ret);
     }
 }
@@ -1479,7 +1475,7 @@ end:
     return solver->ok;
 }
 
-bool Simplifier::unEliminate(const Var var)
+bool Simplifier::unEliminate(Var var)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
@@ -1503,6 +1499,7 @@ bool Simplifier::unEliminate(const Var var)
     solver->stamp.remove_from_stamps(var);
 
     //Find if variable is really needed to be eliminated
+    var = getUpdatedVar(var, solver->interToOuterMain);
     map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
     if (it == blk_var_to_cl.end())
         return solver->okay();
@@ -1521,15 +1518,7 @@ bool Simplifier::unEliminate(const Var var)
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
         cout << "Uneliminating " << cl << " on var " << var+1 << endl;
         #endif
-        vector<Lit> tmp(cl);
-        bool ret = solver->replacevar_uneliminate_clause(tmp);
-        if (ret) {
-            Clause* cl = solver->addClauseInt(tmp);
-            if (cl) {
-                solver->longIrredCls.push_back(solver->clAllocator->getOffset(cl));
-            }
-        }
-
+        bool ret = solver->addClause(cl);
         if (!solver->okay())
             return false;
     }
@@ -1986,7 +1975,7 @@ void Simplifier::blockImplicit(
                     solver->binTri.irredTris--;
                 }
 
-                blockedClauses.push_back(BlockedClause(tautOn, dummy));
+                blockedClauses.push_back(BlockedClause(tautOn, dummy, solver->interToOuterMain));
                 anythingHasBeenBlocked = true;
             } else {
                 //Not blocked, so just go through
@@ -2082,7 +2071,7 @@ void Simplifier::blockClauses()
             if (allTautologySlim(*l)) {
                 vector<Lit> remCl(cl.size());
                 std::copy(cl.begin(), cl.end(), remCl.begin());
-                blockedClauses.push_back(BlockedClause(*l, remCl));
+                blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
                 anythingHasBeenBlocked = true;
 
                 blocked++;
@@ -2229,7 +2218,7 @@ void Simplifier::asymmTE()
                 if (allTautologySlim(*l)) {
                     vector<Lit> remCl(cl.size());
                     std::copy(cl.begin(), cl.end(), remCl.begin());
-                    blockedClauses.push_back(BlockedClause(*l, remCl));
+                    blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
                     anythingHasBeenBlocked = true;
 
                     blocked++;
@@ -2368,13 +2357,14 @@ void Simplifier::cleanBlockedClauses()
         ; i != end
         ; i++, at++
     ) {
-        if (var_elimed[i->blockedOn.var()] == true
-            && solver->value(i->blockedOn) != l_Undef
+        const Var blockedOn = getUpdatedVar(i->blockedOn.var(), solver->outerToInterMain);
+        if (var_elimed[blockedOn] == true
+            && solver->value(blockedOn) != l_Undef
         ) {
             cout
             << "ERROR: lit " << *i << " elimed:"
-            << var_elimed[i->blockedOn.var()]
-            << " value: " << solver->value(i->blockedOn)
+            << var_elimed[blockedOn]
+            << " value: " << solver->value(blockedOn)
             << endl;
             assert(false);
             exit(-1);
@@ -2517,7 +2507,7 @@ void Simplifier::removeClausesHelper(
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
-                blockedClauses.push_back(BlockedClause(lit, lits));
+                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
             }
 
             //Remove -- only DRUP the ones that are learnt
@@ -2541,7 +2531,7 @@ void Simplifier::removeClausesHelper(
             lits[0] = lit;
             lits[1] = watch.lit1();
             if (!watch.learnt()) {
-                blockedClauses.push_back(BlockedClause(lit, lits));
+                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //touch removed lits
                 touched.touch(watch.lit1());
@@ -2585,7 +2575,7 @@ void Simplifier::removeClausesHelper(
             lits[1] = watch.lit1();
             lits[2] = watch.lit2();
             if (!watch.learnt()) {
-                blockedClauses.push_back(BlockedClause(lit, lits));
+                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //Touch removed lits
                 touched.touch(watch.lit1());

@@ -234,28 +234,6 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
     return cout;
 }
 
-struct BlockedClause {
-    BlockedClause()
-    {}
-
-    BlockedClause(const Lit _blockedOn, const vector<Lit>& _lits) :
-        blockedOn(_blockedOn)
-        , toRemove(false)
-        , lits(_lits)
-    {}
-
-    Lit blockedOn;
-    bool toRemove;
-    vector<Lit> lits;
-};
-
-inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
-{
-    os << bl.lits << " blocked on: " << bl.blockedOn;
-
-    return os;
-}
-
 class BinaryClause {
     public:
         BinaryClause(const Lit _lit1, const Lit _lit2, const bool _learnt) :

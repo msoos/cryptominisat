@@ -39,6 +39,7 @@
 #include "solvertypes.h"
 #include "heap.h"
 #include "touchlist.h"
+#include "varupdatehelper.h"
 
 namespace CMSat {
 
@@ -53,6 +54,27 @@ class SolutionExtender;
 class Solver;
 class GateFinder;
 class XorFinderAbst;
+
+struct BlockedClause {
+    BlockedClause()
+    {}
+
+    BlockedClause(
+        const Lit _blockedOn
+        , const vector<Lit>& _lits
+        , const vector<uint32_t>& interToOuterMain
+    ) :
+        blockedOn( getUpdatedLit(_blockedOn, interToOuterMain))
+        , toRemove(false)
+        , lits(_lits)
+    {
+        updateLitsMap(lits, interToOuterMain);
+    }
+
+    Lit blockedOn;
+    bool toRemove;
+    vector<Lit> lits;
+};
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -951,6 +973,13 @@ template<class T> void Simplifier::findSubsumed0(
 inline bool Simplifier::getAnythingHasBeenBlocked() const
 {
     return anythingHasBeenBlocked;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
+{
+    os << bl.lits << " blocked on: " << bl.blockedOn;
+
+    return os;
 }
 
 /*inline const XorFinder* Simplifier::getXorFinder() const

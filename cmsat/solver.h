@@ -472,7 +472,6 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool replacevar_uneliminate_clause(vector<Lit>& ps);
         vector<char>        decisionVar;
         vector<ClOffset>    longIrredCls;          ///< List of problem clauses that are larger than 2
         vector<ClOffset>    longRedCls;          ///< List of learnt clauses.
@@ -485,7 +484,7 @@ class Solver : public Searcher
 
         //////////////////
         // Stamping
-        Lit updateLit(Lit lit) const;
+        Lit updateLitForDomin(Lit lit) const;
         void updateDominators();
 
         /////////////////

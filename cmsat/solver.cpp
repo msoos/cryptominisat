@@ -38,6 +38,7 @@
 #include "completedetachreattacher.h"
 #include "compfinder.h"
 #include "comphandler.h"
+#include "varupdatehelper.h"
 
 using namespace CMSat;
 using std::cout;
@@ -131,10 +132,6 @@ bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
 
     if (!addClauseHelper(ps))
         return false;
-
-    if (!replacevar_uneliminate_clause(ps)) {
-        return false;
-    }
 
     if (!addXorClauseInt(ps, rhs, true))
         return false;
@@ -519,10 +516,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Sanity checks
     assert(decisionLevel() == 0);
     assert(qhead == trail.size());
+
+    //Check for too long clauses
     if (ps.size() > (0x01UL << 18)) {
         cout << "Too long clause!" << endl;
         exit(-1);
     }
+
+    //Check for too large variable number
     for (Lit lit: ps) {
         if (lit.var() >= nVars()) {
             cout
@@ -535,11 +536,12 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
-    for (size_t i = 0; i < ps.size(); i++) {
-        Lit origLit = ps[i];
+    //External var number -> Internal var number
+    for (Lit& lit: ps) {
+        Lit origLit = lit;
 
         //Update variable numbering
-        ps[i] = Lit(outerToInterMain[ps[i].var()], ps[i].sign());
+        lit = getUpdatedLit(lit, outerToInterMain);
 
         #ifdef VERBOSE_DEBUG
         cout
@@ -551,14 +553,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         #endif
     }
 
-    return true;
-}
-
-bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
-{
-    //Update replace, uneliminate
+    //Undo var replacement
     for (Lit& lit: ps) {
-        //Update to correct lit -- replacer
+        //Varreplacer
         Lit origLit = lit;
         lit = varReplacer->getLitReplacedWith(lit);
         #ifdef VERBOSE_DEBUG
@@ -567,8 +564,10 @@ bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
         << " to lit " << lit
         << endl;
         #endif
+    }
 
-        //Uneliminate var if need be
+    //Uneliminate vars
+    for (Lit& lit: ps) {
         if (conf.doSimplify
             && simplifier->getVarElimed()[lit.var()]
         ) {
@@ -578,8 +577,10 @@ bool Solver::replacevar_uneliminate_clause(vector<Lit>& ps)
             if (!simplifier->unEliminate(lit.var()))
                 return false;
         }
+    }
 
-        //Undo comp handler if need be
+    //Undo comp handler
+    for (Lit& lit: ps) {
         if (conf.doCompHandler) {
             if (varData[lit.var()].elimed == ELIMED_DECOMPOSE) {
                 compHandler->readdRemovedClauses();
@@ -604,6 +605,8 @@ bool Solver::addClause(const vector<Lit>& lits)
         cout
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
+        << " (note: current state of blocking enabled: "
+        << conf.doBlockClauses << " )"
         << endl;
         exit(-1);
     }
@@ -614,15 +617,12 @@ bool Solver::addClause(const vector<Lit>& lits)
     const size_t origTrailSize = trail.size();
 
     vector<Lit> ps = lits;
-    if (!addClauseHelper(ps)) {
-        return false;
-    }
     #ifdef DRUP
     vector<Lit> origCl = ps;
     vector<Lit> finalCl;
     #endif
 
-    if (!replacevar_uneliminate_clause(ps)) {
+    if (!addClauseHelper(ps)) {
         return false;
     }
 
@@ -3582,7 +3582,7 @@ void Solver::dumpIfNeeded() const
     }
 }
 
-Lit Solver::updateLit(Lit lit) const
+Lit Solver::updateLitForDomin(Lit lit) const
 {
     //Nothing to update
     if (lit == lit_Undef)
@@ -3604,7 +3604,7 @@ void Solver::updateDominators()
         ; it++
     ) {
         for(size_t i = 0; i < 2; i++) {
-            Lit newLit = updateLit(it->dominator[i]);
+            Lit newLit = updateLitForDomin(it->dominator[i]);
             it->dominator[i] = newLit;
             if (newLit == lit_Undef)
                 it->numDom[i] = 0;
