@@ -2897,7 +2897,7 @@ void Solver::printAllClauses() const
     }
 }
 
-bool Solver::verifyBinClauses() const
+bool Solver::verifyImplicitClauses() const
 {
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator
@@ -2908,20 +2908,43 @@ bool Solver::verifyBinClauses() const
         Lit lit = Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
 
-        for (vec<Watched>::const_iterator i = ws.begin(), end = ws.end() ; i != end; i++) {
-            if (i->isBinary()
+        for (Watched w: ws) {
+            if (w.isBinary()
                 && modelValue(lit) != l_True
-                && modelValue(i->lit1()) != l_True
+                && modelValue(w.lit1()) != l_True
             ) {
                 cout
                 << "bin clause: "
-                << lit << " , " << i->lit1()
+                << lit << " , " << w.lit1()
                 << " not satisfied!"
                 << endl;
 
                 cout
                 << "value of unsat bin clause: "
-                << value(lit) << " , " << value(i->lit1())
+                << value(lit) << " , " << value(w.lit1())
+                << endl;
+
+                return false;
+            }
+
+             if (w.isTri()
+                && modelValue(lit) != l_True
+                && modelValue(w.lit1()) != l_True
+                && modelValue(w.lit2()) != l_True
+            ) {
+                cout
+                << "tri clause: "
+                << lit
+                << " , " << w.lit1()
+                << " , " << w.lit2()
+                << " not satisfied!"
+                << endl;
+
+                cout
+                << "value of unsat tri clause: "
+                << value(lit)
+                << " , " << value(w.lit1())
+                << " , " << value(w.lit2())
                 << endl;
 
                 return false;
@@ -2964,11 +2987,15 @@ bool Solver::verifyModel() const
     bool verificationOK = true;
     verificationOK &= verifyClauses(longIrredCls);
     verificationOK &= verifyClauses(longRedCls);
-    verificationOK &= verifyBinClauses();
+    verificationOK &= verifyImplicitClauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
         cout
-        << "c Verified " << longIrredCls.size() << " clauses."
+        << "c Verified "
+        << longIrredCls.size() + longRedCls.size()
+            + binTri.irredBins + binTri.redBins
+            + binTri.irredTris + binTri.redTris
+        << " clause(s)."
         << endl;
     }
 

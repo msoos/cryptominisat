@@ -404,9 +404,9 @@ class Solver : public Searcher
 
         /////////////////////////////
         // SAT solution verification
-        bool verifyModel() const;                            ///<Verify model[]
-        bool verifyBinClauses() const;                       ///<Verify model[] for binary clauses
-        bool verifyClauses(const vector<ClOffset>& cs) const; ///<Verify model[] for normal clauses
+        bool verifyModel() const;
+        bool verifyImplicitClauses() const;
+        bool verifyClauses(const vector<ClOffset>& cs) const;
 
         ///////////////////////////
         // Clause cleaning
