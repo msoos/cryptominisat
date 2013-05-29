@@ -1591,8 +1591,21 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);
     }
+    checkDecisionVarCorrectness();
 
     return status;
+}
+
+void Solver::checkDecisionVarCorrectness() const
+{
+    //Check for var deicisonness
+    for(size_t var = 0; var < nVarsReal(); var++) {
+        if (varData[var].elimed != ELIMED_NONE
+            && varData[var].elimed != ELIMED_QUEUED_VARREPLACER
+        ) {
+            assert(!decisionVar[var]);
+        }
+    }
 }
 
 /**

@@ -336,6 +336,7 @@ class Solver : public Searcher
         );
 
     private:
+        void checkDecisionVarCorrectness() const;
         bool enqueueThese(const vector<Lit>& toEnqueue);
 
         //Stats printing

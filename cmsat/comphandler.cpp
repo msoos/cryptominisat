@@ -304,6 +304,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 ) {
     for(size_t i = 0; i < vars.size(); i++) {
         Var var = interToOuter[i];
+        assert(var == vars[i]);
 
         //Misc check
         #ifdef VERBOSE_DEBUG
@@ -321,7 +322,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
         //Remove from old solver
         if (solver->decisionVar[var]) {
-            decisionVarRemoved.push_back(var);
+            decisionVarRemoved.push_back(getUpdatedVar(var, solver->interToOuterMain));
         }
         solver->unsetDecisionVar(var);
         solver->varData[var].elimed = ELIMED_DECOMPOSE;
@@ -627,12 +628,6 @@ void CompHandler::addSavedState(vector<lbool>& solution)
             solver->varData[var].polarity = (savedState[var] == l_True);
         }
     }
-
-    //Re-set them to be decision vars
-    for (size_t i = 0; i < decisionVarRemoved.size(); i++) {
-        solver->setDecisionVar(decisionVarRemoved[i]);
-    }
-    decisionVarRemoved.clear();
 }
 
 void CompHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
@@ -666,12 +661,19 @@ void CompHandler::readdRemovedClauses()
         val = l_Undef;
     }
 
+    //Re-set them to be decision vars
+    for (size_t i = 0; i < decisionVarRemoved.size(); i++) {
+        Var var = decisionVarRemoved[i];
+        var = getUpdatedVar(var, solver->outerToInterMain);
+        solver->setDecisionVar(var);
+    }
+    decisionVarRemoved.clear();
+
     //Clear varData 'elimed' status and set it as decision var
     size_t var = 0;
     for(VarData& dat: solver->varData) {
         if (dat.elimed == ELIMED_DECOMPOSE) {
             dat.elimed = ELIMED_NONE;
-            solver->setDecisionVar(var);
         }
         var++;
     }
