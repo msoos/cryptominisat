@@ -1480,7 +1480,7 @@ bool Simplifier::unEliminate(Var var)
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
-    //Sanity check
+    //Check that it was really eliminated
     assert(var_elimed[var]);
     assert(solver->varData[var].elimed == ELIMED_VARELIM);
     assert(!solver->decisionVar[var]);
