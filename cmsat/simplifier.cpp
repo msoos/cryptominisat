@@ -1520,7 +1520,7 @@ bool Simplifier::unEliminate(Var var)
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
         cout << "Uneliminating " << cl << " on var " << var+1 << endl;
         #endif
-        bool ret = solver->addClause(cl);
+        solver->addClause(cl);
         if (!solver->okay())
             return false;
     }
