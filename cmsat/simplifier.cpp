@@ -1496,7 +1496,9 @@ bool Simplifier::unEliminate(Var var)
     globalStats.numVarsElimed--;
     solver->varData[var].elimed = ELIMED_NONE;
     solver->setDecisionVar(var);
-    solver->stamp.remove_from_stamps(var);
+    if (solver->conf.doStamp) {
+        solver->stamp.remove_from_stamps(var);
+    }
 
     //Find if variable is really needed to be eliminated
     var = getUpdatedVar(var, solver->interToOuterMain);
