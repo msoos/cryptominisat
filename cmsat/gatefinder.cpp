@@ -24,15 +24,6 @@
 #include "solver.h"
 #include "simplifier.h"
 
-#ifdef USE_VTK
-#include "vtkGraphLayoutView.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkMutableDirectedGraph.h"
-#include "vtkMutableUndirectedGraph.h"
-#include "vtkMutableGraphHelper.h"
-#endif //USE_VTK
-
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -1022,76 +1013,6 @@ void GateFinder::printDot2()
 void GateFinder::printDot()
 {
     printDot2();
-
-    #ifdef USE_VTK
-    vtkSmartPointer<vtkMutableDirectedGraph> g =
-    vtkSmartPointer<vtkMutableDirectedGraph>::New();
-
-    vtkSmartPointer<vtkMutableGraphHelper> graphHelper =
-    vtkSmartPointer<vtkMutableGraphHelper>::New();
-    graphHelper->SetGraph(g);
-
-    vector<size_t> gateUsed;
-    gateUsed.resize(orGates.size(), 0);
-    vector<vtkIdType> vertexes(orGates.size());
-    uint64_t edgesAdded = 0;
-
-    //Go through each gate
-    uint32_t index = 0;
-    for (vector<OrGate>::const_iterator
-        it = orGates.begin(), end = orGates.end()
-        ; it != end
-        ; it++, index++
-    ) {
-        //Each literal in the LHS
-        for (vector<Lit>::const_iterator
-            it2 = it->lits.begin(), end2 = it->lits.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //See if it is connected as an output(RHS) to another gate
-            const vector<uint32_t>& occ = gateOccEq[it2->toInt()];
-            for (vector<uint32_t>::const_iterator
-                it3 = occ.begin(), end3 = occ.end()
-                ; it3 != end3
-                ; it3++
-            ) {
-                //It's this gate, ignore
-                if (*it3 == index)
-                    continue;
-
-                //Add vertexes if not present
-                if (!gateUsed[*it3])
-                    vertexes[*it3] = graphHelper->AddVertex();
-                gateUsed[*it3]++;;
-
-                if (!gateUsed[index])
-                    vertexes[index] = graphHelper->AddVertex();
-                gateUsed[index]++;
-
-                //Add edge
-                graphHelper->AddEdge(vertexes[*it3], vertexes[index]);
-                edgesAdded++;
-            }
-        }
-    }
-
-
-    // Can also do this:
-    //graphHelper->RemoveEdge(0);
-
-    cout << "c Edges added: " << edgesAdded << endl;
-    vtkSmartPointer<vtkGraphLayoutView> graphLayoutView =
-    vtkSmartPointer<vtkGraphLayoutView>::New();
-    graphLayoutView->AddRepresentationFromInput(graphHelper->GetGraph());
-    //graphLayoutView->SetLayoutStrategyToForceDirected();
-    //graphLayoutView->SetLayoutStrategyToClustering2D();
-    graphLayoutView->SetLayoutStrategyToFast2D();
-    graphLayoutView->ResetCamera();
-    graphLayoutView->Render();
-    graphLayoutView->GetInteractor()->Start();
-
-    #endif //USE_VTK
 }
 
 void GateFinder::newVar()
