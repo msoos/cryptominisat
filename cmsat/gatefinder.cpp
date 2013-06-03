@@ -218,16 +218,12 @@ void GateFinder::findOrGates()
 
     findOrGates(true);
 
-    for(vector<OrGate>::const_iterator
-        it = orGates.begin(), end = orGates.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->learnt) {
-            runStats.learntGatesSize += it->lits.size();
+    for(const auto orgate: orGates) {
+        if (orgate.learnt) {
+            runStats.learntGatesSize += orgate.lits.size();
             runStats.numLearnt++;
         } else  {
-            runStats.nonLearntGatesSize += it->lits.size();
+            runStats.nonLearntGatesSize += orgate.lits.size();
             runStats.numNonLearnt++;
         }
     }
@@ -305,22 +301,22 @@ bool GateFinder::doAllOptimisationWithGates()
             - solver->binTri.redBins*2 - solver->binTri.irredBins;
 
         //Go through each gate, see if we can do something with it
-        for (vector<OrGate>::const_iterator
-            it = orGates.begin(), end = orGates.end()
-            ; it != end
-            ; it++
-        ) {
+        for (const auto& gate: orGates) {
             //Gate removed, skip
-            if (it->removed)
+            if (gate.removed)
                 continue;
 
             //Time is up!
             if (*subsumer->toDecrease < 0) {
-                cout << "c No more time left for shortening with gates" << endl;
+                if (solver->conf.verbosity >= 2) {
+                    cout
+                    << "c No more time left for shortening with gates"
+                    << endl;
+                }
                 break;
             }
 
-            if (!shortenWithOrGate(*it))
+            if (!shortenWithOrGate(gate))
                 break;
         }
 
@@ -343,20 +339,17 @@ bool GateFinder::doAllOptimisationWithGates()
         uint64_t numOp = 0;
 
         //Go through each gate, see if we can do something with it
-        for (vector<OrGate>::const_iterator
-            it = orGates.begin(), end = orGates.end()
-            ; it != end
-            ; it++
-        ) {
-            const OrGate& gate = *it;
-
+        for (const auto& gate: orGates) {
             //Gate has been removed, or is too large
             if (gate.removed || gate.lits.size() >2)
                 continue;
 
             //Time's up?
             if (*subsumer->toDecrease < 0) {
-                cout << "c No more time left for cl-removal with gates" << endl;
+                if (solver->conf.verbosity >= 2) {
+                    cout
+                    << "c No more time left for cl-removal with gates" << endl;
+                }
                 break;
             }
 
