@@ -61,16 +61,16 @@ class SolverConf
         uint32_t  preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
         double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round
-        size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
-        size_t    startClean;
+        uint64_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
+        uint64_t    startClean;
         double    increaseClean;
         double    maxNumLearntsRatio; ///<Number of red clauses must not be more than red*maxNumLearntsRatio
         double    clauseDecayActivity;
 
         //For restarting
-        size_t    restart_first;      ///<The initial restart limit.                                                                (default 100)
+        uint64_t    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
-        size_t    burstSearchLen;
+        uint64_t    burstSearchLen;
         RestartType  restartType;   ///<If set, the solver will always choose the given restart strategy
         int       optimiseUnsat;
 
@@ -78,7 +78,7 @@ class SolverConf
         int doRecursiveMinim;
         int doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
-        size_t moreMinimLimit;
+        uint64_t moreMinimLimit;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
@@ -89,7 +89,7 @@ class SolverConf
 
         //Limits
         double   maxTime;
-        size_t   maxConfl;
+        uint64_t   maxConfl;
 
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities
@@ -108,12 +108,12 @@ class SolverConf
 
         //SQL
         int       doSQL;
-        size_t    dumpTopNVars; //Only dump information about the "top" N active variables
-        size_t    dumpClauseDistribPer;
-        size_t    dumpClauseDistribMaxSize;
-        size_t    dumpClauseDistribMaxGlue;
-        size_t    preparedDumpSizeScatter;
-        size_t    preparedDumpSizeVarData;
+        uint64_t    dumpTopNVars; //Only dump information about the "top" N active variables
+        uint64_t    dumpClauseDistribPer;
+        uint64_t    dumpClauseDistribMaxSize;
+        uint64_t    dumpClauseDistribMaxGlue;
+        uint64_t    preparedDumpSizeScatter;
+        uint64_t    preparedDumpSizeVarData;
         string    sqlServer;
         string    sqlUser;
         string    sqlPass;
@@ -133,8 +133,8 @@ class SolverConf
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;
         int      doCache;
-        size_t   cacheUpdateCutoff;
-        size_t   maxCacheSizeMB;
+        uint64_t   cacheUpdateCutoff;
+        uint64_t   maxCacheSizeMB;
 
         //XORs
         int      doFindXors;
@@ -175,8 +175,8 @@ class SolverConf
         //Component handling
         int       doFindComps;
         int       doCompHandler;
-        size_t    handlerFromSimpNum;
-        size_t    compVarLimit;
+        uint64_t    handlerFromSimpNum;
+        uint64_t    compVarLimit;
         uint64_t  compFindLimitMega;
 
 
@@ -188,7 +188,7 @@ class SolverConf
 
         //Gates
         int      doGateFind; ///< Find OR gates
-        size_t    maxGateSize;
+        uint64_t    maxGateSize;
 
         int      doER; ///< Perform Extended Resolution (ER)
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
