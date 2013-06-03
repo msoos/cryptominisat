@@ -151,9 +151,9 @@ bool XorFinder::extractInfo()
     size_t origTrailSize = solver->trail.size();
 
     vector<uint32_t> varsIn(solver->nVars(), 0);
-    for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++) {
-        for(vector<Var>::const_iterator it2 = it->vars.begin(), end2 = it->vars.end(); it2 != end2; it2++) {
-            varsIn[*it2]++;
+    for(const Xor& x: xors) {
+        for(const Var v: x.vars) {
+            varsIn[v]++;
         }
     }
 
@@ -161,11 +161,10 @@ bool XorFinder::extractInfo()
     //other XOR. These cannot be XOR-ed with anything anyway
     size_t i = 0;
     vector<size_t> xorsToUse;
-    for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++, i++) {
-        const Xor& thisXor = *it;
+    for(const Xor& thisXor: xors) {
         bool makeItIn = false;
-        for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
-            if (varsIn[*it] > 1) {
+        for(Var v: thisXor.vars) {
+            if (varsIn[v] > 1) {
                 makeItIn = true;
                 break;
             }
