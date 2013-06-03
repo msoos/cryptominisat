@@ -530,18 +530,14 @@ bool ClauseVivifier::vivifyClausesCache(
                 && seen[lit.toInt()] //We haven't yet removed it
              ) {
                  countTime += 2*solver->implCache[lit.toInt()].lits.size();
-                 for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
-                     , end2 = solver->implCache[lit.toInt()].lits.end()
-                     ; it2 != end2
-                     ; it2++
-                 ) {
-                     if (seen[(~(it2->getLit())).toInt()]) {
-                        seen[(~(it2->getLit())).toInt()] = 0;
+                 for (const auto elit: solver->implCache[lit.toInt()].lits) {
+                     if (seen[(~(elit.getLit())).toInt()]) {
+                        seen[(~(elit.getLit())).toInt()] = 0;
                         thisRemLitCache++;
                      }
 
-                     if (seen_subs[it2->getLit().toInt()]
-                         && it2->getOnlyNLBin()
+                     if (seen_subs[elit.getLit().toInt()]
+                         && elit.getOnlyNLBin()
                      ) {
                          isSubsumed = true;
                          subCache++;

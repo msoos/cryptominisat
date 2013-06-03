@@ -254,21 +254,17 @@ void ClauseAllocator::consolidate(
 
     assert(sizeof(Clause) % sizeof(BASE_DATA_TYPE) == 0);
     assert(sizeof(Lit) % sizeof(BASE_DATA_TYPE) == 0);
-    for (vector<uint32_t>::iterator
-        it = origClauseSizes.begin(), end = origClauseSizes.end()
-        ; it != end
-        ; it++
-    ) {
+    for (auto size: origClauseSizes) {
         Clause* clause = (Clause*)tmpDataStart;
         //Already freed, so skip entirely
         if (clause->freed()) {
-            tmpDataStart += *it;
+            tmpDataStart += size;
             continue;
         }
 
         //Move to new position
         uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
-        assert(sizeNeeded <= *it && "New clause size must not be bigger than orig clause size");
+        assert(sizeNeeded <= size && "New clause size must not be bigger than orig clause size");
         memmove(newDataStart, tmpDataStart, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
         //Record position
@@ -280,7 +276,7 @@ void ClauseAllocator::consolidate(
 
         //Move pointers along
         newDataStart += sizeNeeded;
-        tmpDataStart += *it;
+        tmpDataStart += size;
     }
 
     if (solver->conf.verbosity >= 3) {
@@ -309,13 +305,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     assert(solver->decisionLevel() == 0);
 
     //We are at decision level 0, so we can reset all PropBy-s
-    Var var = 0;
-    for (vector<VarData>::iterator
-        it = solver->varData.begin(), end = solver->varData.end()
-        ; it != end
-        ; it++, var++
-    ) {
-        it->reason = PropBy();
+    for (auto& vdata: solver->varData) {
+        vdata.reason = PropBy();
     }
 
     //Detach long clauses
@@ -345,19 +336,15 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     solver->longRedCls.clear();
 
     //Add back to the solver the correct red & irred clauses
-    for(vector<ClOffset>::const_iterator
-        it = offsets.begin(), end = offsets.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause* cl = getPointer(*it);
+    for(auto offset: offsets) {
+        Clause* cl = getPointer(offset);
         assert(!cl->getFreed());
 
         //Put it in the right bucket
         if (cl->learnt()) {
-            solver->longRedCls.push_back(*it);
+            solver->longRedCls.push_back(offset);
         } else {
-            solver->longIrredCls.push_back(*it);
+            solver->longIrredCls.push_back(offset);
         }
     }
 

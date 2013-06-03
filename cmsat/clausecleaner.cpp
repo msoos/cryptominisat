@@ -190,14 +190,10 @@ void ClauseCleaner::treatImplicitClauses()
     }
 
     //Attach delayed binary clauses
-    for(vector<BinaryClause>::const_iterator
-        it = toAttach.begin(), end = toAttach.end()
-        ; it != end
-        ; it++
-    ) {
-        assert(solver->value(it->getLit1()) == l_Undef);
-        assert(solver->value(it->getLit2()) == l_Undef);
-        solver->attachBinClause(it->getLit1(), it->getLit2(), it->getLearnt());
+    for(auto bincl: toAttach) {
+        assert(solver->value(bincl.getLit1()) == l_Undef);
+        assert(solver->value(bincl.getLit2()) == l_Undef);
+        solver->attachBinClause(bincl.getLit1(), bincl.getLit2(), bincl.getLearnt());
     }
 
     assert(remNonLBin % 2 == 0);
