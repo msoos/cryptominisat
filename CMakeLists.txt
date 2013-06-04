@@ -47,9 +47,11 @@ endif(LLVM)
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#set (STATICCOMPILE 1)
+IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 
 # -----------------------------------------------------------------------------
 # Look for ZLIP (For reading zipped CNFs)

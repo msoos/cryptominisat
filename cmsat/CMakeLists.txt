@@ -37,8 +37,12 @@ set(cryptoms_lib_link_libs "")
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 
-    #add_library(m4ri STATIC IMPORTED)
-    add_library(m4ri SHARED IMPORTED)
+    if (STATICCOMPILE)
+        add_library(m4ri STATIC IMPORTED)
+    else (STATICCOMPILE)
+        add_library(m4ri SHARED IMPORTED)
+    endif (STATICCOMPILE)
+
     set_property(TARGET m4ri PROPERTY IMPORTED_LOCATION ${M4RI_LIBRARIES})
 
     SET(cryptoms_lib_files ${cryptoms_lib_files} xorfinder.cpp)
@@ -54,10 +58,16 @@ if (Perftools_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
 endif (Perftools_FOUND)
 
-#add_library(cryptoms STATIC
-add_library(cryptoms SHARED
-    ${cryptoms_lib_files}
-)
+
+if (STATICCOMPILE)
+    add_library(cryptoms STATIC
+        ${cryptoms_lib_files}
+    )
+else (STATICCOMPILE)
+    add_library(cryptoms SHARED
+        ${cryptoms_lib_files}
+    )
+endif (STATICCOMPILE)
 
 target_link_libraries(cryptoms
     ${cryptoms_lib_link_libs}
