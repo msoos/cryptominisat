@@ -161,7 +161,12 @@ bool XorFinder::extractInfo()
     //other XOR. These cannot be XOR-ed with anything anyway
     size_t i = 0;
     vector<size_t> xorsToUse;
-    for(const Xor& thisXor: xors) {
+    for(vector<Xor>::const_iterator
+        it = xors.begin(), end = xors.end()
+        ; it != end
+        ; it++, i++
+    ) {
+        const Xor& thisXor = *it;
         bool makeItIn = false;
         for(Var v: thisXor.vars) {
             if (varsIn[v] > 1) {
