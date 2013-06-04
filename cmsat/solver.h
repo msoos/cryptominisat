@@ -120,7 +120,6 @@ class Solver : public Searcher
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpSimplified() const;
         int      getVerbosity() const;
-        int      getverbStatsosity() const;
         void     printStats() const;
         void     printClauseStats() const;
         void     addInPartialSolvingStat();
@@ -545,11 +544,6 @@ inline uint64_t Solver::getNumLongClauses() const
 inline int Solver::getVerbosity() const
 {
     return conf.verbosity;
-}
-
-inline int Solver::getverbStatsosity() const
-{
-    return conf.verbStats;
 }
 
 inline const Searcher::Stats& Solver::getStats() const
