@@ -419,7 +419,7 @@ class Tester:
         diffTime = time.time() - currTime
         if diffTime > maxTimeLimit:
             print "Other solver: too much time to solve, aborted!"
-            return
+            return None
 
         #extract output from the other solver
         print "Checking other solver output..."
@@ -517,7 +517,10 @@ class Tester:
                 self.extractLibPart(fname, debugLibPart, "tmp")
 
                 #check with other solver
-                if self.checkUNSAT("tmp") :
+                ret = self.checkUNSAT("tmp")
+                if ret == None :
+                    print "Cannot check, other solver took too much time"
+                elif ret == True :
                     print "UNSAT verified by other solver"
                 else :
                     print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
@@ -603,7 +606,10 @@ class Tester:
                 print "OK, DRUP says:", drupLine
 
         #check with other solver
-        if self.checkUNSAT(fname) :
+        ret = self.checkUNSAT(fname)
+        if ret == None :
+            print "Other solver time-outed, cannot check"
+        elif ret == True:
             print "UNSAT verified by other solver"
         else :
             print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
