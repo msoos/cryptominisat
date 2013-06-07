@@ -850,10 +850,6 @@ void Solver::renumberVariables()
         updateBySwap(stamp.tstamp, seen, interToOuter2);
     }
 
-    if (conf.doCompHandler) {
-        compHandler->updateVars(interToOuter);
-    }
-
     //Update clauses
     //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < longIrredCls.size(); i++) {

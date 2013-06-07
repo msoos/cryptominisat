@@ -213,11 +213,12 @@ bool CompHandler::handle()
         //Save the solution as savedState
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
+            Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
             if (newSolver.model[updateVar(var)] != l_Undef) {
-                assert(savedState[var] == l_Undef);
+                assert(savedState[outerVar] == l_Undef);
                 assert(compFinder->getVarComp(var) == comp);
 
-                savedState[var] = newSolver.model[updateVar(var)];
+                savedState[outerVar] = newSolver.model[updateVar(var)];
             }
         }
 
@@ -249,7 +250,8 @@ bool CompHandler::handle()
     //Checking that all variables that are not in the remaining comp are all
     //non-decision vars, and none have been assigned
     for (Var var = 0; var < solver->nVars(); var++) {
-        if (savedState[var] != l_Undef) {
+        const Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
+        if (savedState[outerVar] != l_Undef) {
             assert(solver->decisionVar[var] == false);
             assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
         }
@@ -418,13 +420,9 @@ void CompHandler::moveClausesImplicit(
     uint32_t numRemovedThirdNonLearnt = 0;
     uint32_t numRemovedThirdLearnt = 0;
 
-    for (vector<Var>::const_iterator
-        it = vars.begin(), end = vars.end()
-        ; it != end
-        ; it++
-    ) {
-        for(unsigned sign = 0; sign < 2; sign++) {
-        const Lit lit = Lit(*it, sign == 0);
+    for(const Var var: vars) {
+    for(unsigned sign = 0; sign < 2; sign++) {
+        const Lit lit = Lit(var, sign == 0);
         vec<Watched>& ws = solver->watches[lit.toInt()];
 
         //If empty, nothing to to, skip
@@ -624,15 +622,12 @@ void CompHandler::addSavedState(vector<lbool>& solution)
     //manipulating "model" may not be good enough
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
-            solution[var] = savedState[var];
-            solver->varData[var].polarity = (savedState[var] == l_True);
+            const lbool val = savedState[var];
+            const Var interVar = getUpdatedVar(var, solver->outerToInterMain);
+            solution[interVar] = val;
+            solver->varData[interVar].polarity = (val == l_True);
         }
     }
-}
-
-void CompHandler::updateVars(const vector<Var>& interToOuter_nonlocal)
-{
-    updateArray(savedState, interToOuter_nonlocal);
 }
 
 template<class T>
