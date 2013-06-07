@@ -657,10 +657,9 @@ void CompHandler::readdRemovedClauses()
     }
 
     //Re-set them to be decision vars
-    for (size_t i = 0; i < decisionVarRemoved.size(); i++) {
-        Var var = decisionVarRemoved[i];
-        var = getUpdatedVar(var, solver->outerToInterMain);
-        solver->setDecisionVar(var);
+    for (const Var var: decisionVarRemoved) {
+        const Var intervar = getUpdatedVar(var, solver->outerToInterMain);
+        solver->setDecisionVar(intervar);
     }
     decisionVarRemoved.clear();
 
