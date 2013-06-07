@@ -674,15 +674,11 @@ class Tester:
                 call += " " + name
             call += " > " + file_name
 
-            #remove temporary filenames
-            for name in file_names_multi :
-                os.unlink(name)
-
-            return call
+            return call, file_names_multi
 
         #handle normal fuzzer
         else :
-            return self.callFromFuzzer(directory, fuzzer, file_name)
+            return self.callFromFuzzer(directory, fuzzer, file_name), []
 
     def file_len_no_comment(self, fname):
         i = 0;
@@ -749,12 +745,19 @@ class Tester:
                     fnameDrup = unique_fuzz_file("fuzzTest");
 
                 #create the fuzz file
-                call = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
+                call, todel = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
 
                 #adding debuglib to fuzz file
                 self.needDebugLib = True
+
+                #delete old debugLibPart files
+                dirList = os.listdir(".")
+                for fname in dirList:
+                    if fnmatch.fnmatch(fname, 'debugLibPart*'):
+                        os.unlink(fname)
+
                 file_name2 = unique_fuzz_file("fuzzTest");
                 self.intersperse_with_debuglib(file_name, file_name2)
                 os.unlink(file_name)
@@ -762,7 +765,10 @@ class Tester:
                 #check file
                 self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
 
+                #remove temporary filenames
                 os.unlink(file_name2)
+                for name in todel :
+                    os.unlink(name)
                 if fnameDrup != None :
                     os.unlink(fnameDrup)
 
