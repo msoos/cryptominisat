@@ -645,10 +645,7 @@ class Tester:
             file_names_multi = []
 
             #sometimes just fuzz with all SAT problems
-            if random.getrandbits(1)  == 1 :
-                fixed = 1
-            else:
-                fixed = 0
+            fixed = random.getrandbits(1)  == 1
 
             for i in range(random.randrange(2,4)) :
                 file_name2 = unique_fuzz_file("fuzzTest");
