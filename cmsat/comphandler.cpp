@@ -673,11 +673,11 @@ void CompHandler::readdRemovedClauses()
     vector<Lit> tmp;
     size_t at = 0;
     for (uint32_t sz: removedClauses.sizes) {
+
+        //addClause() needs *outer* literals, so just do that
         tmp.clear();
         for(size_t i = at; i < at + sz; i++) {
-            tmp.push_back(
-                getUpdatedLit(removedClauses.lits[i], solver->outerToInterMain)
-            );
+            tmp.push_back(removedClauses.lits[i]);
         }
         if (solver->conf.verbosity >= 6) {
             cout << "c Adding back component clause " << tmp << endl;
