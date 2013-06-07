@@ -663,13 +663,11 @@ void CompHandler::readdRemovedClauses()
     }
     decisionVarRemoved.clear();
 
-    //Clear varData 'elimed' status and set it as decision var
-    size_t var = 0;
+    //Clear varData 'elimed' status
     for(VarData& dat: solver->varData) {
         if (dat.elimed == ELIMED_DECOMPOSE) {
             dat.elimed = ELIMED_NONE;
         }
-        var++;
     }
 
     vector<Lit> tmp;
