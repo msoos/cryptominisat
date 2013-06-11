@@ -85,7 +85,7 @@ void SolutionExtender::extend()
     for (Var var = 0; var < nVarsReal(); var++) {
         if (value(var) == l_Undef
             //Don't pick replaced variables
-            && solver->varData[var].elimed != Elimed::replaced
+            && solver->varData[var].removed != Elimed::replaced
         ) {
             Lit toEnqueue = Lit(var, false);
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
@@ -405,7 +405,7 @@ bool SolutionExtender::propagateCl(
 
     assert(
         (solver->varData[blockedOn.var()].level != 0
-            //|| solver->varData[blockedOn.var()].elimed == Elimed::decomposed
+            //|| solver->varData[blockedOn.var()].removed == Elimed::decomposed
         )
         && "We cannot flip 0-level vars"
     );

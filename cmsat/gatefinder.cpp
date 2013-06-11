@@ -96,18 +96,18 @@ end:
         const Var var1 = solver->mtrand.randInt(size);
         const Var var2 = solver->mtrand.randInt(size);
 
-        //Check that var1 & var2 are sane choices (not equivalent, not elimed, etc.)
+        //Check that var1 & var2 are sane choices (not equivalent, not removed, etc.)
         if (var1 == var2)
             continue;
 
         if (solver->value(var1) != l_Undef
             || !solver->decisionVar[var1]
-            || solver->varData[var1].elimed != Elimed::none
+            || solver->varData[var1].removed != Elimed::none
             ) continue;
 
         if (solver->value(var2) != l_Undef
             || !solver->decisionVar[var2]
-            || solver->varData[var2].elimed != Elimed::none
+            || solver->varData[var2].removed != Elimed::none
             ) continue;
 
         //Pick sign randomly

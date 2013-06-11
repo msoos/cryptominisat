@@ -1002,7 +1002,7 @@ int Main::solve()
                 << endl;
             }
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            solver->print_elimed_vars();
+            solver->print_removed_vars();
             #endif
 
             //Banning found solution

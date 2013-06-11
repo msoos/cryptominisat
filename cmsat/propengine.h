@@ -164,7 +164,7 @@ struct VarData
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
         , reason(PropBy())
-        , elimed(Elimed::none)
+        , removed(Elimed::none)
         , polarity(false)
     {}
 
@@ -178,7 +178,7 @@ struct VarData
     PropBy reason;
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
-    Elimed elimed;
+    Elimed removed;
 
     ///The preferred polarity of each variable.
     bool polarity;
@@ -561,7 +561,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 
     #ifdef ENQUEUE_DEBUG
     assert(trail.size() <= nVarsReal());
-    assert(decisionLevel() == 0 || varData[p.var()].elimed != Elimed::varelim);
+    assert(decisionLevel() == 0 || varData[p.var()].removed != Elimed::varelim);
     #endif
 
     const Var v = p.var();

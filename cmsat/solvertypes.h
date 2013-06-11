@@ -88,10 +88,10 @@ enum class Elimed {
     , decomposed
 };
 
-inline std::string elimed_type_to_string(const Elimed elimed) {
-    switch(elimed) {
+inline std::string removed_type_to_string(const Elimed removed) {
+    switch(removed) {
         case Elimed::none:
-            return "not elimed";
+            return "not removed";
 
         case Elimed::varelim:
             return "variable elimination";

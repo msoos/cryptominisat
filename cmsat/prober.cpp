@@ -214,8 +214,8 @@ bool Prober::probe()
     vector<Var> possCh;
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
-            && (solver->varData[i].elimed == Elimed::none
-                || solver->varData[i].elimed == Elimed::queued_replacer)
+            && (solver->varData[i].removed == Elimed::none
+                || solver->varData[i].removed == Elimed::queued_replacer)
         ) {
             possCh.push_back(i);
         }
@@ -642,8 +642,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
             //enqueue ~ancestor at toplevel since both
             //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
             if (taut
-                && (solver->varData[ancestor.var()].elimed == Elimed::none
-                    || solver->varData[ancestor.var()].elimed == Elimed::queued_replacer)
+                && (solver->varData[ancestor.var()].removed == Elimed::none
+                    || solver->varData[ancestor.var()].removed == Elimed::queued_replacer)
             ) {
                 toEnqueue.push_back(~ancestor);
             }
@@ -815,8 +815,8 @@ void Prober::testBinRemoval(const Lit origLit)
 //     while(true) {
 //         Var var = solver->negPosDist[solver->mtrand.randInt(max)].var;
 //         if (solver->value(var) != l_Undef
-//             || (solver->varData[var].elimed != Elimed::none
-//                 && solver->varData[var].elimed != Elimed::queued_replacer)
+//             || (solver->varData[var].removed != Elimed::none
+//                 && solver->varData[var].removed != Elimed::queued_replacer)
 //             ) continue;
 //
 //         bool OK = true;

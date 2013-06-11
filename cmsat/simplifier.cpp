@@ -788,21 +788,21 @@ void Simplifier::addBackToSolver()
             //The clause was too long, and wasn't linked in
             //but has been var-elimed, so remove it
             if (!cl->getOccurLinked()
-                && solver->varData[it2->var()].elimed == Elimed::varelim
+                && solver->varData[it2->var()].removed == Elimed::varelim
             ) {
                 notLinkedNeedFree = true;
             }
 
             if (cl->getOccurLinked()
-                && solver->varData[it2->var()].elimed != Elimed::none
-                && solver->varData[it2->var()].elimed != Elimed::queued_replacer
+                && solver->varData[it2->var()].removed != Elimed::none
+                && solver->varData[it2->var()].removed != Elimed::queued_replacer
             ) {
                 cout
                 << "ERROR! Clause " << *cl
                 << " learnt: " << cl->learnt()
                 << " contains lit " << *it2
-                << " which has elimed status"
-                << elimed_type_to_string(solver->varData[it2->var()].elimed)
+                << " which has removed status"
+                << removed_type_to_string(solver->varData[it2->var()].removed)
                 << endl;
 
                 assert(false);
@@ -974,7 +974,7 @@ bool Simplifier::eliminateVars()
 
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
-            || solver->varData[var].elimed != Elimed::none
+            || solver->varData[var].removed != Elimed::none
             //|| !gateFinder->canElim(var)
         ) {
             continue;
@@ -1483,7 +1483,7 @@ bool Simplifier::unEliminate(Var var)
 
     //Check that it was really eliminated
     assert(var_elimed[var]);
-    assert(solver->varData[var].elimed == Elimed::varelim);
+    assert(solver->varData[var].removed == Elimed::varelim);
     assert(!solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
@@ -1495,7 +1495,7 @@ bool Simplifier::unEliminate(Var var)
     //Uneliminate it in theory
     var_elimed[var] = false;
     globalStats.numVarsElimed--;
-    solver->varData[var].elimed = Elimed::none;
+    solver->varData[var].removed = Elimed::none;
     solver->setDecisionVar(var);
     if (solver->conf.doStamp) {
         solver->stamp.remove_from_stamps(var);
@@ -2068,7 +2068,7 @@ void Simplifier::blockClauses()
 
         //Blocked clause elimination
         for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-            if (solver->varData[l->var()].elimed != Elimed::none)
+            if (solver->varData[l->var()].removed != Elimed::none)
                 continue;
 
             if (allTautologySlim(*l)) {
@@ -2215,7 +2215,7 @@ void Simplifier::asymmTE()
         if (solver->conf.doBlockClauses && numMaxBlocked > 0) {
             toDecrease = &numMaxBlocked;
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-                if (solver->varData[l->var()].elimed != Elimed::none)
+                if (solver->varData[l->var()].removed != Elimed::none)
                     continue;
 
                 if (allTautologySlim(*l)) {
@@ -2629,7 +2629,7 @@ int Simplifier::testVarElim(const Var var)
 {
     assert(solver->ok);
     assert(!var_elimed[var]);
-    assert(solver->varData[var].elimed == Elimed::none);
+    assert(solver->varData[var].removed == Elimed::none);
     //assert(solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
@@ -2953,7 +2953,7 @@ bool Simplifier::maybeEliminate(const Var var)
             if (*it == var
                 || !varElimOrder.inHeap(*it)
                 || solver->value(*it) != l_Undef
-                || solver->varData[*it].elimed != Elimed::none
+                || solver->varData[*it].removed != Elimed::none
             ) {
                 continue;
             }
@@ -2969,7 +2969,7 @@ end:
     }
 
     var_elimed[var] = true;
-    solver->varData[var].elimed = Elimed::varelim;
+    solver->varData[var].removed = Elimed::varelim;
     runStats.numVarsElimed++;
     solver->unsetDecisionVar(var);
 
@@ -3534,7 +3534,7 @@ void Simplifier::orderVarsForElimInit()
 
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
-            || solver->varData[var].elimed != Elimed::none
+            || solver->varData[var].removed != Elimed::none
             //|| !gateFinder->canElim(var)
         ) {
             continue;

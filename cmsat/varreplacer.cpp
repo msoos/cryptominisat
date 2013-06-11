@@ -108,30 +108,30 @@ bool VarReplacer::performReplace()
 
         //Was queued for replacement, but it's the top of the tree, so, it's normal again
         if (it->var() == var
-            && solver->varData[it->var()].elimed == Elimed::queued_replacer
+            && solver->varData[it->var()].removed == Elimed::queued_replacer
         ) {
-            solver->varData[it->var()].elimed = Elimed::none;
+            solver->varData[it->var()].removed = Elimed::none;
         }
 
         //Not replaced, or not replaceable, so skip
         if (it->var() == var
-            || solver->varData[it->var()].elimed == Elimed::decomposed
-            || solver->varData[it->var()].elimed == Elimed::varelim
+            || solver->varData[it->var()].removed == Elimed::decomposed
+            || solver->varData[it->var()].removed == Elimed::varelim
         ) {
             continue;
         }
 
         //Has already been handled previously, just skip
-        if (solver->varData[var].elimed == Elimed::replaced) {
+        if (solver->varData[var].removed == Elimed::replaced) {
             continue;
         }
 
         //Okay, so unset decision, and set the other one decision
-        solver->varData[var].elimed = Elimed::replaced;
+        solver->varData[var].removed = Elimed::replaced;
         assert(
-            (solver->varData[it->var()].elimed == Elimed::none
-                || solver->varData[it->var()].elimed == Elimed::queued_replacer)
-            && "It MUST have been queued for varreplacement so top couldn't have been elimed/decomposed/etc"
+            (solver->varData[it->var()].removed == Elimed::none
+                || solver->varData[it->var()].removed == Elimed::queued_replacer)
+            && "It MUST have been queued for varreplacement so top couldn't have been removed/decomposed/etc"
         );
         solver->unsetDecisionVar(var);
         solver->setDecisionVar(it->var());
@@ -610,7 +610,7 @@ bool VarReplacer::handleUpdatedClause(
     uint32_t i, j;
     const uint32_t origSize = c.size();
     for (i = j = 0, p = lit_Undef; i != origSize; i++) {
-        assert(solver->varData[c[i].var()].elimed == Elimed::none);
+        assert(solver->varData[c[i].var()].removed == Elimed::none);
         if (solver->value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
             break;
@@ -763,10 +763,10 @@ bool VarReplacer::replace(
     assert(solver->value(lit1.var()) == l_Undef);
     assert(solver->value(lit2.var()) == l_Undef);
 
-    assert(solver->varData[lit1.var()].elimed == Elimed::none
-            || solver->varData[lit1.var()].elimed == Elimed::queued_replacer);
-    assert(solver->varData[lit2.var()].elimed == Elimed::none
-            || solver->varData[lit2.var()].elimed == Elimed::queued_replacer);
+    assert(solver->varData[lit1.var()].removed == Elimed::none
+            || solver->varData[lit1.var()].removed == Elimed::queued_replacer);
+    assert(solver->varData[lit2.var()].removed == Elimed::none
+            || solver->varData[lit2.var()].removed == Elimed::queued_replacer);
 
     #ifdef DRUP_DEBUG
     if (solver->drup) {
@@ -815,11 +815,11 @@ bool VarReplacer::replace(
     }
     #endif
 
-    //Even the moved-forward version must be unelimed
-    assert(solver->varData[lit1.var()].elimed == Elimed::none
-            || solver->varData[lit1.var()].elimed == Elimed::queued_replacer);
-    assert(solver->varData[lit2.var()].elimed == Elimed::none
-            || solver->varData[lit2.var()].elimed == Elimed::queued_replacer);
+    //Even the moved-forward version must be unremoved
+    assert(solver->varData[lit1.var()].removed == Elimed::none
+            || solver->varData[lit1.var()].removed == Elimed::queued_replacer);
+    assert(solver->varData[lit2.var()].removed == Elimed::none
+            || solver->varData[lit2.var()].removed == Elimed::queued_replacer);
 
     lbool val1 = solver->value(lit1);
     lbool val2 = solver->value(lit2);
@@ -873,8 +873,8 @@ bool VarReplacer::replace(
     if (addLaterAsTwoBins)
         laterAddBinXor.push_back(LaterAddBinXor(lit1, lit2^true));
 
-    solver->varData[lit1.var()].elimed = Elimed::queued_replacer;
-    solver->varData[lit2.var()].elimed = Elimed::queued_replacer;
+    solver->varData[lit1.var()].removed = Elimed::queued_replacer;
+    solver->varData[lit2.var()].removed = Elimed::queued_replacer;
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
         table[lit1.var()] = lit2 ^ lit1.sign();

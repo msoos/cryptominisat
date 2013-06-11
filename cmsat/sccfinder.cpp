@@ -88,8 +88,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (solver->varData[vertexVar].elimed == Elimed::none
-        || solver->varData[vertexVar].elimed == Elimed::queued_replacer
+    if (solver->varData[vertexVar].removed == Elimed::none
+        || solver->varData[vertexVar].removed == Elimed::queued_replacer
     ) {
         Lit vertLit = Lit::toLit(vertex);
 
