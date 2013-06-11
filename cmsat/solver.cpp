@@ -525,15 +525,25 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Check for too large variable number
     for (Lit lit: ps) {
-        if (lit.var() >= nVars()) {
+        if (lit.var() >= nVarsReal()) {
             cout
-            << "Variable (internal numbering:)" << lit.var()
-            << " inserted, but max var (internal numbering) is "
-            << nVars()
+            << "ERROR: Variable " << lit.var() + 1
+            << " inserted, but max var is "
+            << nVarsReal() +1
             << endl;
+            exit(-1);
         }
-        release_assert(lit.var() < nVars()
+        assert(lit.var() < nVarsReal()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+
+        //It's not too large, but larger than the saved memory size
+        //then expand everything to normal size. This will take memory
+        //but it's the easiest thing to do
+        if (lit.var() >= nVars()) {
+            unSaveVarMem();
+            assert(lit.var() < nVars()
+            && "After memory expansion, the variable must fit");
+        }
     }
 
     //External var number -> Internal var number
@@ -966,6 +976,25 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     activities.resize(newNumVars);
     activities.shrink_to_fit();
     minNumVars = newNumVars;
+
+    //printMemStats();
+}
+
+void Solver::unSaveVarMem()
+{
+    //printMemStats();
+
+    watches.resize(nVarsReal()*2);
+    implCache.newNumVars(nVarsReal());
+    stamp.newNumVars(nVarsReal());
+
+    //Resize 'seen'
+    seen.resize(nVarsReal()*2);
+    seen2.resize(nVarsReal()*2);
+
+    activities.resize(nVarsReal());
+    minNumVars = nVarsReal();
+    minNumVars = nVarsReal();
 
     //printMemStats();
 }
