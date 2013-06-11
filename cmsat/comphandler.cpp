@@ -633,8 +633,12 @@ void CompHandler::addSavedState(vector<lbool>& solution)
 template<class T>
 void CompHandler::saveClause(const T& lits)
 {
+    //Update variable number to 'outer' number. This means we will not have
+    //to update the variables every time the internal variable numbering changes
     for (Lit lit : lits ) {
-        removedClauses.lits.push_back(getUpdatedLit(lit, solver->interToOuterMain));
+        removedClauses.lits.push_back(
+            getUpdatedLit(lit, solver->interToOuterMain)
+        );
     }
     removedClauses.sizes.push_back(lits.size());
     needToReaddClauses = true;
@@ -648,12 +652,14 @@ bool CompHandler::getNeedToReaddClauses() const
 
 void CompHandler::readdRemovedClauses()
 {
-    //Avoid recursion
-    needToReaddClauses = false;
+    assert(solver->okay());
 
-    //Clear saved state
-    for(lbool& val: savedState) {
-        val = l_Undef;
+    //Avoid recursion, clear 'elimed' status
+    needToReaddClauses = false;
+    for(VarData& dat: solver->varData) {
+        if (dat.elimed == ELIMED_DECOMPOSE) {
+            dat.elimed = ELIMED_NONE;
+        }
     }
 
     //Re-set them to be decision vars
@@ -663,11 +669,9 @@ void CompHandler::readdRemovedClauses()
     }
     decisionVarRemoved.clear();
 
-    //Clear varData 'elimed' status
-    for(VarData& dat: solver->varData) {
-        if (dat.elimed == ELIMED_DECOMPOSE) {
-            dat.elimed = ELIMED_NONE;
-        }
+     //Clear saved state
+    for(lbool& val: savedState) {
+        val = l_Undef;
     }
 
     vector<Lit> tmp;
