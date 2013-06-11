@@ -110,7 +110,12 @@ inline std::string removed_type_to_string(const Removed removed) {
     return "Oops, undefined!";
 }
 
-enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
+enum class PolarityMode {
+    pos
+    , neg
+    , rnd
+    , automatic
+};
 
 /**
 @brief A Literal, i.e. a variable with a sign

@@ -733,10 +733,10 @@ void Main::parseCommandLine()
     if (vm.count("polar")) {
         string mode = vm["polar"].as<string>();
 
-        if (mode == "true") conf.polarity_mode = polarity_true;
-        else if (mode == "false") conf.polarity_mode = polarity_false;
-        else if (mode == "rnd") conf.polarity_mode = polarity_rnd;
-        else if (mode == "auto") conf.polarity_mode = polarity_auto;
+        if (mode == "true") conf.polarity_mode = PolarityMode::pos;
+        else if (mode == "false") conf.polarity_mode = PolarityMode::neg;
+        else if (mode == "rnd") conf.polarity_mode = PolarityMode::rnd;
+        else if (mode == "auto") conf.polarity_mode = PolarityMode::automatic;
         else throw WrongParam(mode, "unknown polarity-mode");
     }
 

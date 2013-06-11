@@ -30,7 +30,7 @@ SolverConf::SolverConf() :
         , var_inc_divider(10)
         , var_inc_variability(0)
         , random_var_freq(0)
-        , polarity_mode(polarity_auto)
+        , polarity_mode(PolarityMode::automatic)
 
         //Clause cleaning
         , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)

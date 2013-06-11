@@ -52,7 +52,7 @@ class SolverConf
         /**
          * Controls which polarity the decision heuristic chooses.
         **/
-        int       polarity_mode;
+        PolarityMode polarity_mode;
 
         //Clause cleaning
         clauseCleaningTypes clauseCleaningType;

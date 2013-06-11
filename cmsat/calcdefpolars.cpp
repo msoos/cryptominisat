@@ -113,7 +113,7 @@ void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
 /**
 @brief Tallies votes for a TRUE/FALSE default polarity using Jeroslow-Wang
 
-Voting is only used if polarity_mode is "polarity_auto". This is the default.
+Voting is only used if polarity_mode is "PolarityMode::automatic". This is the default.
 Uses the tallyVotes() functions to tally the votes
 */
 const vector<char> CalcDefPolars::calculate()

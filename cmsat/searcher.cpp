@@ -1585,13 +1585,13 @@ lbool Searcher::burstSearch()
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
-    const int backup_polar_mode = conf.polarity_mode;
+    const PolarityMode backup_polar_mode = conf.polarity_mode;
     uint32_t backup_var_inc_divider = var_inc_divider;
     uint32_t backup_var_inc_multiplier = var_inc_multiplier;
 
     //Set burst config
     conf.random_var_freq = 1;
-    conf.polarity_mode = polarity_rnd;
+    conf.polarity_mode = PolarityMode::rnd;
     var_inc_divider = 1;
     var_inc_multiplier = 1;
 
@@ -2219,16 +2219,16 @@ inline int64_t abs64(int64_t a)
 bool Searcher::pickPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
-        case polarity_false:
+        case PolarityMode::neg:
             return false;
 
-        case polarity_true:
+        case PolarityMode::pos:
             return true;
 
-        case polarity_rnd:
+        case PolarityMode::rnd:
             return mtrand.randInt(1);
 
-        case polarity_auto:
+        case PolarityMode::automatic:
             return getStoredPolarity(var);
         default:
             assert(false);
