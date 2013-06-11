@@ -327,7 +327,7 @@ void CompHandler::moveVariablesBetweenSolvers(
             decisionVarRemoved.push_back(getUpdatedVar(var, solver->interToOuterMain));
         }
         solver->unsetDecisionVar(var);
-        solver->varData[var].removed = Elimed::decomposed;
+        solver->varData[var].removed = Removed::decomposed;
     }
 }
 
@@ -657,8 +657,8 @@ void CompHandler::readdRemovedClauses()
     //Avoid recursion, clear 'removed' status
     needToReaddClauses = false;
     for(VarData& dat: solver->varData) {
-        if (dat.removed == Elimed::decomposed) {
-            dat.removed = Elimed::none;
+        if (dat.removed == Removed::decomposed) {
+            dat.removed = Removed::none;
         }
     }
 

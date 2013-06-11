@@ -79,8 +79,8 @@ inline std::string restart_type_to_string(const Restart type)
     return "Ooops, undefined!";
 }
 
-//Elimed by which algorithm. NONE = not eliminated
-enum class Elimed {
+//Removed by which algorithm. NONE = not eliminated
+enum class Removed {
     none
     , varelim
     , replaced
@@ -88,21 +88,21 @@ enum class Elimed {
     , decomposed
 };
 
-inline std::string removed_type_to_string(const Elimed removed) {
+inline std::string removed_type_to_string(const Removed removed) {
     switch(removed) {
-        case Elimed::none:
+        case Removed::none:
             return "not removed";
 
-        case Elimed::varelim:
+        case Removed::varelim:
             return "variable elimination";
 
-        case Elimed::replaced:
+        case Removed::replaced:
             return "variable replacement";
 
-        case Elimed::queued_replacer:
+        case Removed::queued_replacer:
             return "queued for replacement (but not yet replaced)";
 
-        case Elimed::decomposed:
+        case Removed::decomposed:
             return "decomposed into another component";
     }
 

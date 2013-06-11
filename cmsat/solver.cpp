@@ -279,8 +279,8 @@ Clause* Solver::addClauseInt(
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (varData[p.var()].removed != Elimed::none
-                && varData[p.var()].removed != Elimed::queued_replacer
+            if (varData[p.var()].removed != Removed::none
+                && varData[p.var()].removed != Removed::queued_replacer
             ) {
                 cout << "ERROR: clause " << lits << " contains literal "
                 << p << " whose variable has been eliminated (elim number "
@@ -290,8 +290,8 @@ Clause* Solver::addClauseInt(
 
             //Variables that have been eliminated cannot be added internally
             //as part of a clause. That's a bug
-            assert(varData[p.var()].removed == Elimed::none
-                    || varData[p.var()].removed == Elimed::queued_replacer);
+            assert(varData[p.var()].removed == Removed::none
+                    || varData[p.var()].removed == Removed::queued_replacer);
         }
     }
     ps.resize(ps.size() - (i - j));
@@ -599,7 +599,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Undo comp handler
     if (conf.doCompHandler) {
         for (Lit& lit: ps) {
-            if (varData[lit.var()].removed == Elimed::decomposed) {
+            if (varData[lit.var()].removed == Removed::decomposed) {
                 compHandler->readdRemovedClauses();
             }
         }
@@ -792,9 +792,9 @@ void Solver::renumberVariables()
     size_t numEffectiveVars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
-            || varData[i].removed == Elimed::varelim
-            || varData[i].removed == Elimed::replaced
-            || varData[i].removed == Elimed::decomposed
+            || varData[i].removed == Removed::varelim
+            || varData[i].removed == Removed::replaced
+            || varData[i].removed == Removed::decomposed
         ) {
             useless.push_back(i);
             continue;
@@ -900,9 +900,9 @@ void Solver::renumberVariables()
         if (value(i)  != l_Undef)
             uninteresting = true;
 
-        if (varData[i].removed == Elimed::varelim
-            || varData[i].removed == Elimed::replaced
-            || varData[i].removed == Elimed::decomposed
+        if (varData[i].removed == Removed::varelim
+            || varData[i].removed == Removed::replaced
+            || varData[i].removed == Removed::decomposed
         ) {
             uninteresting = true;
             //cout << " removed" << endl;
@@ -911,9 +911,9 @@ void Solver::renumberVariables()
         }
 
         if (value(i) == l_Undef
-            && varData[i].removed != Elimed::varelim
-            && varData[i].removed != Elimed::replaced
-            && varData[i].removed != Elimed::decomposed
+            && varData[i].removed != Removed::varelim
+            && varData[i].removed != Removed::replaced
+            && varData[i].removed != Removed::decomposed
             && uninteresting
         ) {
             problem = true;
@@ -1632,8 +1632,8 @@ void Solver::checkDecisionVarCorrectness() const
 {
     //Check for var deicisonness
     for(size_t var = 0; var < nVarsReal(); var++) {
-        if (varData[var].removed != Elimed::none
-            && varData[var].removed != Elimed::queued_replacer
+        if (varData[var].removed != Removed::none
+            && varData[var].removed != Removed::queued_replacer
         ) {
             assert(!decisionVar[var]);
         }
@@ -3662,7 +3662,7 @@ Lit Solver::updateLitForDomin(Lit lit) const
 
     lit = varReplacer->getLitReplacedWith(lit);
 
-    if (varData[lit.var()].removed != Elimed::none)
+    if (varData[lit.var()].removed != Removed::none)
         return lit_Undef;
 
     return lit;
@@ -3705,7 +3705,7 @@ void Solver::calcReachability()
 
         //Check if it's a good idea to look at the variable as a dominator
         if (value(var) != l_Undef
-            || varData[var].removed != Elimed::none
+            || varData[var].removed != Removed::none
             || !decisionVar[var]
         ) {
             continue;
@@ -3757,9 +3757,9 @@ void Solver::freeUnusedWatches()
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        if (varData[lit.var()].removed == Elimed::varelim
-            || varData[lit.var()].removed == Elimed::replaced
-            || varData[lit.var()].removed == Elimed::decomposed
+        if (varData[lit.var()].removed == Removed::varelim
+            || varData[lit.var()].removed == Removed::replaced
+            || varData[lit.var()].removed == Removed::decomposed
         ) {
             assert(it->empty());
             it->clear(true);
