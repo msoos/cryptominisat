@@ -249,9 +249,9 @@ inline bool PropEngine::propBinaryClause(
     } else if (val == l_False) {
         //Update stats
         if (i->learnt())
-            lastConflictCausedBy = CONFL_BY_BIN_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::binred;
         else
-            lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::binirred;
 
         confl = PropBy(~p);
         failBinLit = i->lit1();
@@ -343,9 +343,9 @@ PropResult PropEngine::propNormalClause(
         //Update stats
         c.stats.numConfl++;
         if (c.learnt())
-            lastConflictCausedBy = CONFL_BY_LONG_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::longred;
         else
-            lastConflictCausedBy = CONFL_BY_LONG_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::longirred;
 
         qhead = trail.size();
         return PROP_FAIL;
@@ -497,9 +497,9 @@ bool PropEngine::propNormalClauseAnyOrder(
         //Update stats
         c.stats.numConfl++;
         if (c.learnt())
-            lastConflictCausedBy = CONFL_BY_LONG_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::longred;
         else
-            lastConflictCausedBy = CONFL_BY_LONG_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::longirred;
 
         qhead = trail.size();
         return false;
@@ -567,9 +567,9 @@ PropResult PropEngine::propTriClause(
 
         //Update stats
         if (i->learnt())
-            lastConflictCausedBy = CONFL_BY_TRI_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::trired;
         else
-            lastConflictCausedBy = CONFL_BY_TRI_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::triirred;
 
         failBinLit = i->lit1();
         qhead = trail.size();
@@ -618,9 +618,9 @@ inline bool PropEngine::propTriClauseAnyOrder(
 
         //Update stats
         if (i->learnt())
-            lastConflictCausedBy = CONFL_BY_TRI_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::trired;
         else
-            lastConflictCausedBy = CONFL_BY_TRI_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::triirred;
 
         failBinLit = i->lit1();
         qhead = trail.size();
@@ -1380,9 +1380,9 @@ PropResult PropEngine::propBin(
 
         //Update stats
         if (k->learnt())
-            lastConflictCausedBy = CONFL_BY_BIN_RED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::binred;
         else
-            lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
+            lastConflictCausedBy = ConflCausedBy::binirred;
 
         failBinLit = lit;
         confl = PropBy(~p);

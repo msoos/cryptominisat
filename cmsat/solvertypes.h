@@ -651,13 +651,13 @@ struct PropStats
     uint64_t varFlipped;
 };
 
-enum ConflCausedBy {
-    CONFL_BY_LONG_IRRED_CLAUSE
-    , CONFL_BY_LONG_RED_CLAUSE
-    , CONFL_BY_BIN_RED_CLAUSE
-    , CONFL_BY_BIN_IRRED_CLAUSE
-    , CONFL_BY_TRI_IRRED_CLAUSE
-    , CONFL_BY_TRI_RED_CLAUSE
+enum class ConflCausedBy {
+    longirred
+    , longred
+    , binred
+    , binirred
+    , triirred
+    , trired
 };
 
 struct ConflStats
@@ -709,22 +709,22 @@ struct ConflStats
     void update(const ConflCausedBy lastConflictCausedBy)
     {
         switch(lastConflictCausedBy) {
-            case CONFL_BY_BIN_IRRED_CLAUSE :
+            case ConflCausedBy::binirred :
                 conflsBinIrred++;
                 break;
-            case CONFL_BY_BIN_RED_CLAUSE :
+            case ConflCausedBy::binred :
                 conflsBinRed++;
                 break;
-            case CONFL_BY_TRI_IRRED_CLAUSE :
+            case ConflCausedBy::triirred :
                 conflsTriIrred++;
                 break;
-            case CONFL_BY_TRI_RED_CLAUSE :
+            case ConflCausedBy::trired :
                 conflsTriRed++;
                 break;
-            case CONFL_BY_LONG_IRRED_CLAUSE :
+            case ConflCausedBy::longirred :
                 conflsLongIrred++;
                 break;
-            case CONFL_BY_LONG_RED_CLAUSE :
+            case ConflCausedBy::longred :
                 conflsLongRed++;
                 break;
             default:
