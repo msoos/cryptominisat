@@ -905,12 +905,18 @@ PropBy PropEngine::propagateNonLearntBin()
         Lit p = trail[qhead++];
         vec<Watched> & ws = watches[(~p).toInt()];
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
-            if (!k->isBinary() || k->learnt()) continue;
 
-            if (!propBinaryClause(k, p, confl)) return confl;
+            //If not binary, or is learnt, skip
+            if (!k->isBinary() || k->learnt())
+                continue;
+
+            //Propagate, if conflict, exit
+            if (!propBinaryClause(k, p, confl))
+                return confl;
         }
     }
 
+    //No conflict, propagation done
     return PropBy();
 }
 Lit PropEngine::propagateFullBFS(const uint64_t timeout)

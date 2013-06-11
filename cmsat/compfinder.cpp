@@ -150,17 +150,13 @@ bool CompFinder::findComps()
 
 void CompFinder::addToCompClauses(const vector<ClOffset>& cs)
 {
-    for (vector<ClOffset>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; it++
-    ) {
+    for (ClOffset offset: cs) {
         if (timeUsed/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
             timedout = true;
             break;
         }
         timeUsed += 10;
-        Clause* cl = solver->clAllocator->getPointer(*it);
+        Clause* cl = solver->clAllocator->getPointer(offset);
         addToCompClause(*cl);
     }
 }

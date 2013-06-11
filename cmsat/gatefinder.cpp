@@ -839,13 +839,13 @@ bool GateFinder::treatAndGate(
     }
 
     //Clear from seen2 bits that have been set
-    for(vector<size_t>::const_iterator it = seen2Set.begin(), end = seen2Set.end(); it != end; it++) {
-        seen2[*it] = false;
+    for(size_t at: seen2Set) {
+        seen2[at] = false;
     }
 
     //Now that all is computed, remove those that need removal
-    for(std::set<ClOffset>::const_iterator it2 = clToUnlink.begin(), end2 = clToUnlink.end(); it2 != end2; it2++) {
-        subsumer->unlinkClause(*it2);
+    for(ClOffset offset: clToUnlink) {
+        subsumer->unlinkClause(offset);
     }
     clToUnlink.clear();
 
