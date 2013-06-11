@@ -291,8 +291,6 @@ bool VarReplacer::replaceImplicit()
                     || lit1 == ~lit3
                     || lit2 == ~lit3
                 ) {
-                    /*cout << "Tautological 3-long: "
-                    << lit1 << ", " << lit2 << ", " << lit3 << endl;*/
                     remove = true;
                 }
 
@@ -301,7 +299,6 @@ bool VarReplacer::replaceImplicit()
                     && lit1 == lit2
                     && lit2 == lit3
                 ) {
-                    //cout << "All 3 lits equal: " << lit1 << endl;
                     delayedEnqueue.push_back(lit1);
                     #ifdef DRUP
                     if (solver->drup) {
@@ -317,8 +314,6 @@ bool VarReplacer::replaceImplicit()
                 if (!remove
                     && lit1 == lit2
                 ) {
-                    //1st & 2nd the same
-
                     //Only attach once
                     if (origLit1 < origLit2
                         && origLit2 < origLit3
