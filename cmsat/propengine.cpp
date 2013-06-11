@@ -111,10 +111,10 @@ void PropEngine::attachTriClause(
     assert(value(lit1.var()) == l_Undef);
     assert(value(lit2) == l_Undef || value(lit2) == l_False);
 
-    assert(varData[lit1.var()].elimed == ELIMED_NONE
-            || varData[lit1.var()].elimed == ELIMED_QUEUED_VARREPLACER);
-    assert(varData[lit2.var()].elimed == ELIMED_NONE
-            || varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
+    assert(varData[lit1.var()].elimed == Elimed::none
+            || varData[lit1.var()].elimed == Elimed::queued_replacer);
+    assert(varData[lit2.var()].elimed == Elimed::none
+            || varData[lit2.var()].elimed == Elimed::queued_replacer);
     #endif //DEBUG_ATTACH
 
     //Order them
@@ -164,10 +164,10 @@ void PropEngine::attachBinClause(
         assert(value(lit2) == l_Undef || value(lit2) == l_False);
     }
 
-    assert(varData[lit1.var()].elimed == ELIMED_NONE
-            || varData[lit1.var()].elimed == ELIMED_QUEUED_VARREPLACER);
-    assert(varData[lit2.var()].elimed == ELIMED_NONE
-            || varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
+    assert(varData[lit1.var()].elimed == Elimed::none
+            || varData[lit1.var()].elimed == Elimed::queued_replacer);
+    assert(varData[lit2.var()].elimed == Elimed::none
+            || varData[lit2.var()].elimed == Elimed::queued_replacer);
     #endif //DEBUG_ATTACH
 
     watches[lit1.toInt()].push(Watched(lit2, learnt));
@@ -192,8 +192,8 @@ void PropEngine::attachClause(
 
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].elimed == ELIMED_NONE
-                || varData[c[i].var()].elimed == ELIMED_QUEUED_VARREPLACER);
+        assert(varData[c[i].var()].elimed == Elimed::none
+                || varData[c[i].var()].elimed == Elimed::queued_replacer);
     }
     #endif //DEBUG_ATTACH
 

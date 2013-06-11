@@ -62,15 +62,6 @@ class SQLStats;
 class Solver;
 class ClauseAllocator;
 
-//Elimed by which algorithm. NONE = not eliminated
-enum ElimedBy {
-    ELIMED_NONE = 0
-    , ELIMED_VARELIM = 1
-    , ELIMED_VARREPLACER = 3
-    , ELIMED_QUEUED_VARREPLACER = 4 //Only queued for removal. NOT actually removed
-    , ELIMED_DECOMPOSE = 5
-};
-
 enum PropResult {
     PROP_FAIL = 0
     , PROP_NOTHING = 1
@@ -173,7 +164,7 @@ struct VarData
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
         , reason(PropBy())
-        , elimed(ELIMED_NONE)
+        , elimed(Elimed::none)
         , polarity(false)
     {}
 
@@ -187,7 +178,7 @@ struct VarData
     PropBy reason;
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
-    char elimed;
+    Elimed elimed;
 
     ///The preferred polarity of each variable.
     bool polarity;
@@ -570,7 +561,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 
     #ifdef ENQUEUE_DEBUG
     assert(trail.size() <= nVarsReal());
-    assert(decisionLevel() == 0 || varData[p.var()].elimed != ELIMED_VARELIM);
+    assert(decisionLevel() == 0 || varData[p.var()].elimed != Elimed::varelim);
     #endif
 
     const Var v = p.var();

@@ -102,12 +102,12 @@ end:
 
         if (solver->value(var1) != l_Undef
             || !solver->decisionVar[var1]
-            || solver->varData[var1].elimed != ELIMED_NONE
+            || solver->varData[var1].elimed != Elimed::none
             ) continue;
 
         if (solver->value(var2) != l_Undef
             || !solver->decisionVar[var2]
-            || solver->varData[var2].elimed != ELIMED_NONE
+            || solver->varData[var2].elimed != Elimed::none
             ) continue;
 
         //Pick sign randomly

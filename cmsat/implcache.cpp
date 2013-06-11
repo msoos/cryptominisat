@@ -117,7 +117,7 @@ bool ImplCache::clean(Solver* solver)
     for (Var var = 0; var < solver->nVars(); var++) {
 
         //If replaced, merge it into the one that replaced it
-        if (solver->varData[var].elimed == ELIMED_VARREPLACER) {
+        if (solver->varData[var].elimed == Elimed::replaced) {
             for(int i = 0; i < 2; i++) {
                 const Lit litOrig = Lit(var, i);
                 if (implCache[litOrig.toInt()].lits.empty())
@@ -147,9 +147,9 @@ bool ImplCache::clean(Solver* solver)
 
         //Free it
         if (solver->value(var) != l_Undef
-            || solver->varData[var].elimed == ELIMED_VARELIM
-            || solver->varData[var].elimed == ELIMED_VARREPLACER
-            || solver->varData[var].elimed == ELIMED_DECOMPOSE
+            || solver->varData[var].elimed == Elimed::varelim
+            || solver->varData[var].elimed == Elimed::replaced
+            || solver->varData[var].elimed == Elimed::decomposed
         ) {
             vector<LitExtra> tmp1;
             numFreed += implCache[Lit(var, false).toInt()].lits.capacity();
@@ -186,8 +186,8 @@ bool ImplCache::clean(Solver* solver)
                 continue;
 
             //Update to its replaced version
-            if (solver->varData[lit.var()].elimed == ELIMED_VARREPLACER
-                || solver->varData[lit.var()].elimed == ELIMED_QUEUED_VARREPLACER
+            if (solver->varData[lit.var()].elimed == Elimed::replaced
+                || solver->varData[lit.var()].elimed == Elimed::queued_replacer
             ) {
                 lit = solver->varReplacer->getLitReplacedWith(lit);
 
@@ -198,7 +198,7 @@ bool ImplCache::clean(Solver* solver)
             }
 
             //If updated version is eliminated, skip
-            if (solver->varData[lit.var()].elimed != ELIMED_NONE)
+            if (solver->varData[lit.var()].elimed != Elimed::none)
                 continue;
 
             //If we have already visited this var, just skip over, but update nonLearnt
@@ -289,8 +289,8 @@ bool ImplCache::addDelayedClauses(Solver* solver)
                 ; it2 != end2
                 ; it2++
             ) {
-                if (solver->varData[it2->var()].elimed != ELIMED_NONE
-                    && solver->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
+                if (solver->varData[it2->var()].elimed != Elimed::none
+                    && solver->varData[it2->var()].elimed != Elimed::queued_replacer
                 ) {
                     //Var has been eliminated one way or another. Don't add this clause
                     OK = false;
@@ -351,8 +351,8 @@ bool ImplCache::tryBoth(Solver* solver)
 
         //If value is set or eliminated, skip
         if (solver->value(var) != l_Undef
-            || (solver->varData[var].elimed != ELIMED_NONE
-                && solver->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
+            || (solver->varData[var].elimed != Elimed::none
+                && solver->varData[var].elimed != Elimed::queued_replacer)
            )
             continue;
 
@@ -404,8 +404,8 @@ void ImplCache::tryVar(
         const Var var2 = it->getLit().var();
 
         //A variable that has been really eliminated, skip
-        if (solver->varData[var2].elimed != ELIMED_NONE
-            && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        if (solver->varData[var2].elimed != Elimed::none
+            && solver->varData[var2].elimed != Elimed::queued_replacer
         ) {
             continue;
         }
@@ -450,8 +450,8 @@ void ImplCache::tryVar(
             continue;
 
         //If var has been elimed, skip
-        if (solver->varData[var2].elimed != ELIMED_NONE
-            && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        if (solver->varData[var2].elimed != Elimed::none
+            && solver->varData[var2].elimed != Elimed::queued_replacer
         ) continue;
 
         handleNewData(val, var, it->getLit());

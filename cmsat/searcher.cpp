@@ -143,8 +143,8 @@ void Searcher::analyzeHelper(
     , bool fromProber
 ) {
     const Var var = lit.var();
-    assert(varData[var].elimed == ELIMED_NONE
-        || varData[var].elimed == ELIMED_QUEUED_VARREPLACER
+    assert(varData[var].elimed == Elimed::none
+        || varData[var].elimed == Elimed::queued_replacer
     );
 
     //If var is at level 0, don't do anything with it, just skip
@@ -924,8 +924,8 @@ lbool Searcher::search(uint64_t* geom_max)
                     //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
                     //So enqueue ~ancestor
                     if (taut
-                        && (solver->varData[ancestor.var()].elimed == ELIMED_NONE
-                            || solver->varData[ancestor.var()].elimed == ELIMED_QUEUED_VARREPLACER)
+                        && (solver->varData[ancestor.var()].elimed == Elimed::none
+                            || solver->varData[ancestor.var()].elimed == Elimed::queued_replacer)
                     ) {
                         toEnqueue.push_back(~ancestor);
                         #ifdef DRUP
@@ -3018,8 +3018,8 @@ void Searcher::redoOrderHeap()
     for(size_t var = 0; var < nVars(); var++) {
         if (solver->decisionVar[var]
             && value(var) == l_Undef
-            && (varData[var].elimed == ELIMED_NONE
-                || varData[var].elimed == ELIMED_QUEUED_VARREPLACER)
+            && (varData[var].elimed == Elimed::none
+                || varData[var].elimed == Elimed::queued_replacer)
         ) {
             insertVarOrder(var);
         }

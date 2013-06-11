@@ -76,7 +76,38 @@ inline std::string restart_type_to_string(const Restart type)
 
     assert(false && "oops, one of the restart types has no string name");
 
-    return "Ooops, none defined!";
+    return "Ooops, undefined!";
+}
+
+//Elimed by which algorithm. NONE = not eliminated
+enum class Elimed {
+    none
+    , varelim
+    , replaced
+    , queued_replacer //Only queued for removal. NOT actually removed
+    , decomposed
+};
+
+inline std::string elimed_type_to_string(const Elimed elimed) {
+    switch(elimed) {
+        case Elimed::none:
+            return "not elimed";
+
+        case Elimed::varelim:
+            return "variable elimination";
+
+        case Elimed::replaced:
+            return "variable replacement";
+
+        case Elimed::queued_replacer:
+            return "queued for replacement (but not yet replaced)";
+
+        case Elimed::decomposed:
+            return "decomposed into another component";
+    }
+
+    assert(false && "oops, one of the elim types has no string name");
+    return "Oops, undefined!";
 }
 
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
