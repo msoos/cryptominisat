@@ -147,7 +147,7 @@ bool ImplCache::clean(Solver* solver)
 
         //Free it
         if (solver->value(var) != l_Undef
-            || solver->varData[var].removed == Removed::varelim
+            || solver->varData[var].removed == Removed::elimed
             || solver->varData[var].removed == Removed::replaced
             || solver->varData[var].removed == Removed::decomposed
         ) {

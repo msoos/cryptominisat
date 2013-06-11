@@ -788,7 +788,7 @@ void Simplifier::addBackToSolver()
             //The clause was too long, and wasn't linked in
             //but has been var-elimed, so remove it
             if (!cl->getOccurLinked()
-                && solver->varData[it2->var()].removed == Removed::varelim
+                && solver->varData[it2->var()].removed == Removed::elimed
             ) {
                 notLinkedNeedFree = true;
             }
@@ -1483,7 +1483,7 @@ bool Simplifier::unEliminate(Var var)
 
     //Check that it was really eliminated
     assert(var_elimed[var]);
-    assert(solver->varData[var].removed == Removed::varelim);
+    assert(solver->varData[var].removed == Removed::elimed);
     assert(!solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
@@ -2969,7 +2969,7 @@ end:
     }
 
     var_elimed[var] = true;
-    solver->varData[var].removed = Removed::varelim;
+    solver->varData[var].removed = Removed::elimed;
     runStats.numVarsElimed++;
     solver->unsetDecisionVar(var);
 

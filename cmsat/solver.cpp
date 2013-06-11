@@ -792,7 +792,7 @@ void Solver::renumberVariables()
     size_t numEffectiveVars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
-            || varData[i].removed == Removed::varelim
+            || varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
             || varData[i].removed == Removed::decomposed
         ) {
@@ -900,7 +900,7 @@ void Solver::renumberVariables()
         if (value(i)  != l_Undef)
             uninteresting = true;
 
-        if (varData[i].removed == Removed::varelim
+        if (varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
             || varData[i].removed == Removed::decomposed
         ) {
@@ -911,7 +911,7 @@ void Solver::renumberVariables()
         }
 
         if (value(i) == l_Undef
-            && varData[i].removed != Removed::varelim
+            && varData[i].removed != Removed::elimed
             && varData[i].removed != Removed::replaced
             && varData[i].removed != Removed::decomposed
             && uninteresting
@@ -3757,7 +3757,7 @@ void Solver::freeUnusedWatches()
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        if (varData[lit.var()].removed == Removed::varelim
+        if (varData[lit.var()].removed == Removed::elimed
             || varData[lit.var()].removed == Removed::replaced
             || varData[lit.var()].removed == Removed::decomposed
         ) {

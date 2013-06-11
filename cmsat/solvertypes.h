@@ -82,7 +82,7 @@ inline std::string restart_type_to_string(const Restart type)
 //Removed by which algorithm. NONE = not eliminated
 enum class Removed {
     none
-    , varelim
+    , elimed
     , replaced
     , queued_replacer //Only queued for removal. NOT actually removed
     , decomposed
@@ -93,7 +93,7 @@ inline std::string removed_type_to_string(const Removed removed) {
         case Removed::none:
             return "not removed";
 
-        case Removed::varelim:
+        case Removed::elimed:
             return "variable elimination";
 
         case Removed::replaced:

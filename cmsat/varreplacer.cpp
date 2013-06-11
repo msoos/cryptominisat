@@ -116,7 +116,7 @@ bool VarReplacer::performReplace()
         //Not replaced, or not replaceable, so skip
         if (it->var() == var
             || solver->varData[it->var()].removed == Removed::decomposed
-            || solver->varData[it->var()].removed == Removed::varelim
+            || solver->varData[it->var()].removed == Removed::elimed
         ) {
             continue;
         }
