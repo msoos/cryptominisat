@@ -166,7 +166,7 @@ void Searcher::analyzeHelper(
 
             //Glucose 2.1
             if (!fromProber
-                && params.rest_type != geom_restart
+                && params.rest_type != Restart::geom
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
@@ -601,7 +601,7 @@ Clause* Searcher::analyze(
 
     //Glucose 2.1
     if (!fromProber
-        && params.rest_type == glue_restart
+        && params.rest_type == Restart::glue
     ) {
         for (vector<pair<Lit, size_t> >::const_iterator
             it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
@@ -1067,18 +1067,18 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
 
     switch (params.rest_type) {
 
-        case no_restart:
+        case Restart::never:
             //Just don't restart no matter what
             break;
 
-        case geom_restart:
+        case Restart::geom:
             assert(geom_max != NULL);
             if (params.conflictsDoneThisRestart > *geom_max)
                 params.needToStopSearch = true;
 
             break;
 
-        case glue_restart:
+        case Restart::glue:
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
@@ -1096,7 +1096,7 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
 
             break;
 
-        case glue_agility_restart:
+        case Restart::glue_agility:
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
                 && agility.getAgility() < conf.agilityLimit
@@ -1112,7 +1112,7 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
 
             break;
 
-        case agility_restart:
+        case Restart::agility:
             if (agility.getAgility() < conf.agilityLimit) {
                 params.numAgilityNeedRestart++;
                 if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
@@ -1132,8 +1132,8 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
     //If agility was used and it's too high, print it if need be
     if (conf.verbosity >= 4
         && params.needToStopSearch
-        && (conf.restartType == agility_restart
-            || conf.restartType == glue_agility_restart)
+        && (conf.restartType == Restart::agility
+            || conf.restartType == Restart::glue_agility)
     ) {
         cout << "c Agility was too low, restarting asap";
         printAgilityStats();
@@ -1598,7 +1598,7 @@ lbool Searcher::burstSearch()
     //Do burst
     params.clear();
     params.conflictsToDo = conf.burstSearchLen;
-    params.rest_type = no_restart;
+    params.rest_type = Restart::never;
     lbool status = search(NULL);
 
     //Restore config
@@ -1902,14 +1902,14 @@ void Searcher::printClauseDistribSQL()
 }
 #endif
 
-RestartType Searcher::decide_restart_type() const
+Restart Searcher::decide_restart_type() const
 {
-    RestartType rest_type = conf.restartType;
-    if (rest_type == auto_restart) {
+    Restart rest_type = conf.restartType;
+    if (rest_type == Restart::automatic) {
         if (solver->sumPropStats.propagations == 0) {
 
-            //If no data yet, default to glue_restart
-            rest_type = glue_restart;
+            //If no data yet, default to Restart::glue
+            rest_type = Restart::glue;
         } else {
             //Otherwise, choose according to % of pos/neg polarities
             double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
@@ -1917,9 +1917,9 @@ RestartType Searcher::decide_restart_type() const
             if (percent > 60.0
                 || percent < 40.0
             ) {
-                rest_type = glue_restart;
+                rest_type = Restart::glue;
             } else {
-                rest_type = geom_restart;
+                rest_type = Restart::geom;
             }
 
             if (conf.verbosity >= 1) {

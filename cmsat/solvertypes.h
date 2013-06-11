@@ -43,34 +43,34 @@ using std::string;
 //Typedefs
 typedef uint32_t Var;
 static const Var var_Undef(~0U);
-enum RestartType {
-    glue_restart
-    , glue_agility_restart
-    , geom_restart
-    , agility_restart
-    , no_restart
-    , auto_restart
+enum class Restart {
+    glue
+    , glue_agility
+    , geom
+    , agility
+    , never
+    , automatic
 };
 
-inline std::string restart_type_to_string(const RestartType type)
+inline std::string restart_type_to_string(const Restart type)
 {
     switch(type) {
-        case glue_restart:
+        case Restart::glue:
             return "glue-based";
 
-        case glue_agility_restart:
+        case Restart::glue_agility:
             return "glue&agility based";
 
-        case geom_restart:
+        case Restart::geom:
             return "geometric";
 
-        case  agility_restart:
+        case  Restart::agility:
             return "agility-based";
 
-        case no_restart:
+        case Restart::never:
             return "never restart";
 
-        case auto_restart:
+        case Restart::automatic:
             return "automatic";
     }
 

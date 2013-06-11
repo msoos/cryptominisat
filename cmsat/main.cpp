@@ -825,13 +825,13 @@ void Main::parseCommandLine()
     if (vm.count("restart")) {
         string type = vm["restart"].as<string>();
         if (type == "geom")
-            conf.restartType = geom_restart;
+            conf.restartType = Restart::geom;
         else if (type == "glue")
-            conf.restartType = glue_restart;
+            conf.restartType = Restart::glue;
         else if (type == "agility")
-            conf.restartType = agility_restart;
+            conf.restartType = Restart::agility;
         else if (type == "glueagility")
-            conf.restartType = glue_agility_restart;
+            conf.restartType = Restart::glue_agility;
         else throw WrongParam("restart", "unknown restart type");
     }
 

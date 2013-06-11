@@ -669,7 +669,7 @@ class Searcher : public PropEngine
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
         void  checkNeedRestart(uint64_t* geom_max);     // Helper function to decide if we need to restart during search
-        RestartType decide_restart_type() const;
+        Restart decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
 
         ///////////////
@@ -677,7 +677,7 @@ class Searcher : public PropEngine
         struct SearchParams
         {
             SearchParams() :
-                rest_type(no_restart)
+                rest_type(Restart::never)
             {
                 clear();
             }
@@ -695,7 +695,7 @@ class Searcher : public PropEngine
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
             uint64_t numAgilityNeedRestart;
-            RestartType rest_type;
+            Restart rest_type;
         };
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.

@@ -49,7 +49,7 @@ SolverConf::SolverConf() :
         , restart_first(300)
         , restart_inc(2)
         , burstSearchLen(300)
-        , restartType(auto_restart)
+        , restartType(Restart::automatic)
         , optimiseUnsat(0)
 
         //Clause minimisation
