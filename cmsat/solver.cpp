@@ -2634,28 +2634,6 @@ void Solver::printClauseSizeDistrib()
         }
     }
 
-    /*for(vector<Clause*>::const_iterator it = learnts.begin(), end = learnts.end(); it != end; it++) {
-        switch((*it)->size()) {
-            case 0:
-            case 1:
-            case 2:
-                assert(false);
-                break;
-            case 3:
-                size3++;
-                break;
-            case 4:
-                size4++;
-                break;
-            case 5:
-                size5++;
-                break;
-            default:
-                sizeLarge++;
-                break;
-        }
-    }*/
-
     cout
     << "c"
     << " size4: " << size4
