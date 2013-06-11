@@ -560,14 +560,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         //Update variable numbering
         lit = getUpdatedLit(lit, outerToInterMain);
 
-        #ifdef VERBOSE_DEBUG
-        cout
-        << "var-renumber updating lit "
-        << origLit
-        << " to lit "
-        << ps[i]
-        << endl;
-        #endif
+        if (conf.verbosity >= 12) {
+            cout
+            << "var-renumber updating lit "
+            << origLit
+            << " to lit "
+            << lit
+            << endl;
+        }
     }
 
     //Undo var replacement
