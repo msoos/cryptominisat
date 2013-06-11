@@ -315,6 +315,13 @@ Clause* Solver::addClauseInt(
     switch (ps.size()) {
         case 0:
             ok = false;
+            if (conf.verbosity >= 6) {
+                cout
+                << "c solver received clause through addClause(): "
+                << lits
+                << " that became an empty clause at toplevel --> UNSAT"
+                << endl;
+            }
             return NULL;
         case 1:
             enqueue(ps[0]);
