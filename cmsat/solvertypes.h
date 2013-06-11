@@ -773,6 +773,25 @@ struct ConflStats
     uint64_t  numConflicts;
 };
 
+inline void orderLits(
+    Lit& lit1
+    , Lit& lit2
+    , Lit& lit3
+ ) {
+    if (lit1 > lit3)
+        std::swap(lit1, lit3);
+
+    if (lit1 > lit2)
+        std::swap(lit1, lit2);
+
+    if (lit2 > lit3)
+        std::swap(lit2, lit3);
+
+    //They are now ordered
+    assert(lit1 < lit2);
+    assert(lit2 < lit3);
+}
+
 } //end namespace
 
 #endif //SOLVERTYPES_H

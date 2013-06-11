@@ -384,14 +384,7 @@ bool VarReplacer::replaceImplicit()
                 }
 
                 //Order literals
-                if (lit1 > lit3) {
-                    std::swap(lit1, lit3);
-                }
-                if (lit1 > lit2) {
-                    std::swap(lit1, lit2);
-                }
-                if (lit2 > lit3)
-                    std::swap(lit2, lit3);
+                orderLits(lit1, lit2, lit3);
 
                 //Now make into the order this TRI was in
                 if (origLit1 > origLit2

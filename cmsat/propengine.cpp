@@ -118,16 +118,7 @@ void PropEngine::attachTriClause(
     #endif //DEBUG_ATTACH
 
     //Order them
-    if (lit1 > lit3)
-        std::swap(lit1, lit3);
-    if (lit1 > lit2)
-        std::swap(lit1, lit2);
-    if (lit2 > lit3)
-        std::swap(lit2, lit3);
-
-    //They are now ordered
-    assert(lit1 < lit2);
-    assert(lit2 < lit3);
+    orderLits(lit1, lit2, lit3);
 
     //And now they are attached, ordered
     watches[lit1.toInt()].push(Watched(lit2, lit3, learnt));
