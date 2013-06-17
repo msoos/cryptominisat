@@ -304,10 +304,7 @@ void CompHandler::moveVariablesBetweenSolvers(
     , vector<Var>& vars
     , const uint32_t comp
 ) {
-    for(size_t i = 0; i < vars.size(); i++) {
-        Var var = interToOuter[i];
-        assert(var == vars[i]);
-
+    for(const Var var: vars) {
         //Misc check
         #ifdef VERBOSE_DEBUG
         if (!solver->decisionVar[var]) {
