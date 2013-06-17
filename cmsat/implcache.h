@@ -39,7 +39,7 @@ public:
 
     LitExtra(const Lit l, const bool onlyNLBin)
     {
-        x = onlyNLBin + (l.toInt() << 1);
+        x = ((uint32_t)onlyNLBin) | (l.toInt() << 1);
     }
 
     const Lit getLit() const
