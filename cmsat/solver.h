@@ -388,7 +388,6 @@ class Solver : public Searcher
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
-        vector<Lit> addClIntTmpLits;
 
         /////////////////////////////
         //Renumberer

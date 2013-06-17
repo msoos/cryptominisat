@@ -267,8 +267,7 @@ Clause* Solver::addClauseInt(
     //Make stats sane
     stats.conflictNumIntroduced = std::min<uint64_t>(Searcher::sumConflicts(), stats.conflictNumIntroduced);
 
-    vector<Lit>& ps = addClIntTmpLits;
-    ps = lits;
+    vector<Lit> ps = lits;
 
     std::sort(ps.begin(), ps.end());
     Lit p = lit_Undef;
