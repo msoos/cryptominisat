@@ -60,7 +60,6 @@ class CompHandler
         void newVar();
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();
-        bool getNeedToReaddClauses() const;
         const RemovedClauses& getRemovedClauses() const;
 
         friend class ClauseAllocator;
