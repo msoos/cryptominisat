@@ -674,8 +674,9 @@ void CompHandler::readdRemovedClauses()
         if (solver->conf.verbosity >= 6) {
             cout << "c Adding back component clause " << tmp << endl;
         }
-        solver->addClause(tmp);
 
+        //Add the clause to the system
+        solver->addClause(tmp);
         assert(solver->okay());
 
         //Move 'at' along
