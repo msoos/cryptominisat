@@ -232,7 +232,9 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     } else if (debugLib && str == "Solver::solve()") {
         if (solver->getVerbosity()>= 2) {
             cout
-            << "c -----------> Solver::solve() called <-----------"
+            << "c -----------> Solver::solve() called (number: "
+            << std::setw(3) << debugLibPart << ")"
+            << "<-----------"
             << endl;
         }
         lbool ret = solver->solve();

@@ -236,7 +236,7 @@ bool CompHandler::handle()
     if (solver->conf.verbosity  >= 1) {
         cout
         << "c Coming back to original instance, solved "
-        << num_comps_solved << " component, "
+        << num_comps_solved << " component(s), "
         << vars_solved << " vars"
         << " T: "
         << std::setprecision(2) << std::fixed
