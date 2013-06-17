@@ -181,8 +181,8 @@ bool CompHandler::handle()
             //This is *tricky*. The newSolver might have internally re-numbered
             //the variables, so we must take this into account
             Var newSolverInternalVar;
-            if (!newSolver.interToOuter.empty()) {
-                newSolverInternalVar = newSolver.interToOuterMain[i];
+            if (!newSolver.interToOuterMain.empty()) {
+                newSolverInternalVar = getUpdatedVar(i, newSolver.outerToInterMain);
             } else {
                 newSolverInternalVar = i;
             }
