@@ -597,7 +597,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Undo comp handler
     if (conf.doCompHandler) {
-        for (Lit& lit: ps) {
+        for (const Lit lit: ps) {
             if (varData[lit.var()].removed == Removed::decomposed) {
                 compHandler->readdRemovedClauses();
             }
