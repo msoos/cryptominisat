@@ -126,7 +126,6 @@ class CompHandler
         template<class T>
         void saveClause(const T& lits);
         RemovedClauses removedClauses;
-        bool needToReaddClauses;
 
         //Clauses that have been moved to other comps
         //vector<ClOffset> clausesRemoved;

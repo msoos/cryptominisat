@@ -645,7 +645,6 @@ void CompHandler::readdRemovedClauses()
     assert(solver->okay());
 
     //Avoid recursion, clear 'removed' status
-    needToReaddClauses = false;
     for(VarData& dat: solver->varData) {
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
