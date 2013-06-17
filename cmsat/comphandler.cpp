@@ -419,7 +419,7 @@ void CompHandler::moveClausesImplicit(
 
     for(const Var var: vars) {
     for(unsigned sign = 0; sign < 2; sign++) {
-        const Lit lit = Lit(var, sign == 0);
+        const Lit lit = Lit(var, sign);
         vec<Watched>& ws = solver->watches[lit.toInt()];
 
         //If empty, nothing to to, skip
@@ -632,7 +632,7 @@ void CompHandler::saveClause(const T& lits)
 {
     //Update variable number to 'outer' number. This means we will not have
     //to update the variables every time the internal variable numbering changes
-    for (Lit lit : lits ) {
+    for (const Lit lit : lits ) {
         removedClauses.lits.push_back(
             getUpdatedLit(lit, solver->interToOuterMain)
         );
