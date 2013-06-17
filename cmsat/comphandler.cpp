@@ -177,8 +177,7 @@ bool CompHandler::handle()
         //Move decision level 0 vars over
         assert(newSolver.decisionLevel() == 0);
         assert(solver->decisionLevel() == 0);
-         for (size_t i = 0; i < vars.size(); i++) {
-
+        for (size_t i = 0; i < vars.size(); i++) {
             //This is *tricky*. The newSolver might have internally re-numbered
             //the variables, so we must take this into account
             Var newSolverInternalVar;
