@@ -199,7 +199,7 @@ bool CompHandler::handle()
 
                 /*cout
                 << "0-level enqueueing var "
-                << solver->interToOuterMain[var]
+                << solver->interToOuterMain[var] + 1
                 << endl;*/
 
                 //These vars are not meant to be in the orig solver
