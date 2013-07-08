@@ -19,14 +19,6 @@
  * MA 02110-1301  USA
 */
 
-/**
-@mainpage CryptoMiniSat
-@author Mate Soos, and collaborators
-
-CryptoMiniSat is an award-winning SAT solver based on MiniSat. It brings a
-number of benefits relative to MiniSat.
-*/
-
 #include <ctime>
 #include <cstring>
 #include <errno.h>
@@ -59,11 +51,6 @@ using std::cerr;
 using std::endl;
 using boost::lexical_cast;
 
-/**
- * Check if a file exists
- * @param[in] filename - the name of the file to check
- * @return    true if the file exists, else false
-*/
 bool fileExists(const std::string& filename)
 {
     struct stat buf;
