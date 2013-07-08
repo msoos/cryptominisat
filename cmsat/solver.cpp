@@ -1002,13 +1002,17 @@ void Solver::unSaveVarMem()
 
     activities.resize(nVarsReal());
     minNumVars = nVarsReal();
-    minNumVars = nVarsReal();
 
     //printMemStats();
 }
 
 Var Solver::newVar(const bool dvar)
 {
+    //For adding the variable to all sorts of places, we need to increment
+    //the sizes of the vectors/heaps
+    if (nVars() != nVarsReal())
+        unSaveVarMem();
+
     const Var var = decisionVar.size();
 
     if (conf.doStamp
