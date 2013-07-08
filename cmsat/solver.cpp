@@ -1627,6 +1627,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         updateArrayRev(model, interToOuterMain);
     }
     checkDecisionVarCorrectness();
+    checkImplicitStats();
 
     return status;
 }
