@@ -20,7 +20,7 @@ from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 
-maxTime = 300
+maxTime = 100
 maxTimeLimit = 40
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
