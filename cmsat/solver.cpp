@@ -541,15 +541,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
         assert(lit.var() < nVarsReal()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
-
-        //It's not too large, but larger than the saved memory size
-        //then expand everything to normal size. This will take memory
-        //but it's the easiest thing to do
-        if (lit.var() >= nVars()) {
-            unSaveVarMem();
-            assert(lit.var() < nVars()
-            && "After memory expansion, the variable must fit");
-        }
     }
 
     //External var number -> Internal var number
@@ -580,6 +571,17 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         << " to lit " << lit
         << endl;
         #endif
+    }
+
+    for (const Lit lit:ps) {
+        //It's not too large, but larger than the saved memory size
+        //then expand everything to normal size. This will take memory
+        //but it's the easiest thing to do
+        if (lit.var() >= nVars()) {
+            unSaveVarMem();
+            assert(lit.var() < nVars()
+            && "After memory expansion, the variable must fit");
+        }
     }
 
     //Uneliminate vars
