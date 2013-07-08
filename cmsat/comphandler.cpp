@@ -642,6 +642,7 @@ void CompHandler::saveClause(const T& lits)
 void CompHandler::readdRemovedClauses()
 {
     assert(solver->okay());
+    double myTime = cpuTime();
 
     //Avoid recursion, clear 'removed' status
     for(VarData& dat: solver->varData) {
@@ -681,6 +682,16 @@ void CompHandler::readdRemovedClauses()
 
         //Move 'at' along
         at += sz;
+    }
+
+    //Explain what we just did
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c Re-added components. Lits: "
+        << removedClauses.lits.size()
+        << " cls:" << removedClauses.sizes.size()
+        << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
+        << endl;
     }
 
     //Clear added data
