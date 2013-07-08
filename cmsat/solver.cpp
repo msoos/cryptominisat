@@ -585,7 +585,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Uneliminate vars
-    for (Lit& lit: ps) {
+    for (const Lit lit: ps) {
         if (conf.doSimplify
             && simplifier->getVarElimed(lit.var())
         ) {
