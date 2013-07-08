@@ -109,7 +109,7 @@ bool CompFinder::findComps()
         || (solver->conf.verbosity  >=1 && used_comp_no > 1)
     ) {
         cout
-        << "c Found components: " <<  reverseTable.size()
+        << "c Found component(s): " <<  reverseTable.size()
         << " BP: "
         << std::setprecision(2) << std::fixed
         << (double)timeUsed/(1000.0*1000.0)<< "M"
