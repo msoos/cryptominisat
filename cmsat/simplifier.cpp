@@ -210,12 +210,6 @@ uint32_t Simplifier::subsume0(ClOffset offset)
 
 /**
 @brief Backward-subsumption using given clause
-
-@note Use helper function
-
-@param ps The clause to use to backward-subsume
-@param[in] abs The abstraction of the clause
-@return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
 template<class T>
 Simplifier::Sub0Ret Simplifier::subsume0AndUnlink(
@@ -268,8 +262,6 @@ Simplifier::Sub0Ret Simplifier::subsume0AndUnlink(
 
 Performs backward subsumption AND
 self-subsuming resolution using backward-subsumption
-
-@param[in] ps The clause to use for backw-subsumption and self-subs. resolution
 */
 Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
 {
@@ -479,10 +471,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
 /**
 @brief Removes a literal from a clause
 
-May return with solver->ok being FALSE, and may set&propagate variable values.
-
-@param c Clause to be cleaned of the literal
-@param[in] toRemoveLit The literal to be removed from the clause
+May return with solver->ok becoming FALSE, and may set&propagate variable values.
 */
 void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
 {
@@ -2389,8 +2378,6 @@ Checks if:
 * any clause is subsumed with given clause
 * the given clause could perform self-subsuming resolution on any other clause
 
-Only takes into consideration clauses that are in the occurrence lists.
-
 @param[in] ps The clause to perform the above listed algos with
 @param[in] abs The abstraction of clause ps
 @param[out] out_subsumed The clauses that could be modified by ps
@@ -3018,10 +3005,6 @@ Clause ps must contain without_p
 Clause ps must contain without_q
 And without_p = ~without_q
 
-@note: 'seen' is assumed to be cleared.
-
-@param[in] var The variable that is being eliminated
-@param useCache Use the cache to try to find that the resulting clause is a tautology
 @return FALSE if clause is always satisfied ('out_clause' should not be used)
 */
 bool Simplifier::merge(

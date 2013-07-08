@@ -853,10 +853,7 @@ inline const Simplifier::Stats& Simplifier::getStats() const
 @brief Finds clauses that are backward-subsumed by given clause
 
 Only handles backward-subsumption. Uses occurrence lists
-
-@param[in] ps The clause to backward-subsume with.
-@param[in] abs Abstraction of the clause ps
-@param[out] out_subsumed The set of clauses subsumed by this clause
+@param[out] out_subsumed The set of clauses subsumed by the given
 */
 template<class T> void Simplifier::findSubsumed0(
     const ClOffset offset //Will not match with index of the name value
