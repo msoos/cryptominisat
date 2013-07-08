@@ -20,8 +20,8 @@ from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 
-maxTime = 100
-maxTimeLimit = 40
+maxTime = 200
+maxTimeDiff = 20
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -417,7 +417,7 @@ class Tester:
 
         #if other solver was out of time, then we can't say anything
         diffTime = time.time() - currTime
-        if diffTime > maxTimeLimit:
+        if diffTime > maxTime-maxTimeDiff:
             print "Other solver: too much time to solve, aborted!"
             return None
 
@@ -552,7 +552,7 @@ class Tester:
         #and that is why there is no solution
         if needToLimitTime:
             diffTime = time.time() - currTime
-            if diffTime > maxTimeLimit/options.num_threads:
+            if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
