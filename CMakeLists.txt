@@ -187,7 +187,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   "tar.gz$"
   "tar.bz2$"
   ".kdev4$"
-
+  ".directory$"
 )
 include(CPack)
 
