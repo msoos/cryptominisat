@@ -1,3 +1,12 @@
+ver 3.3 9/07/2013
+-> git rev 6138d6b30ede0cd2f11477aa4487f887422327b9
+* Memory saving whenever possible
+* A serious bug with disconnected components and satisfiable instances has
+  been solved. Luckily it did not affect UNSAT instances
+* A lot of bugs that could have come up if used as a library have been
+  fixed. Library usage, however, may still contain bugs, though probably
+  very few.
+
 ver 3.2 29/04/2013
 -> git rev bcbdc7ff6f2217eb4fb7446a2ee765a79526a7f8
 * DRUP support
