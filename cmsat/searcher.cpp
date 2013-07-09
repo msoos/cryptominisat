@@ -1017,7 +1017,11 @@ lbool Searcher::new_decision()
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
         Lit p = assumptions[decisionLevel()];
-        if (value(p) == l_True) {
+        p = solver->varReplacer->getLitReplacedWith(p);
+        if ((varData[p.var()].removed != Removed::none
+                && varData[p.var()].removed != Removed::queued_replacer)
+            || value(p) == l_True
+        ) {
             // Dummy decision level:
             newDecisionLevel();
         } else if (value(p) == l_False) {
