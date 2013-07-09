@@ -1625,6 +1625,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);
+    } else {
+        //Back-number the conflict
+        updateLitsMap(conflict, interToOuterMain);
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
