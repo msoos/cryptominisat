@@ -408,7 +408,7 @@ void CompFinder::calcInBins(vector<uint32_t>& numClauseInComp, vector<uint32_t>&
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary() && lit < it2->getOtherLit()) {
                 if (it2->getLearnt()) continue;
 
                 const uint32_t comp = table[lit.var()];

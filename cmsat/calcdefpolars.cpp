@@ -77,7 +77,7 @@ void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
 
             //Only count bins once
             if (it2->isBinary()
-                && lit.toInt() < it2->lit2().toInt()
+                && lit < it2->lit2()
                 && !it2->learnt()
             ) {
 
@@ -91,8 +91,8 @@ void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
 
             //Only count TRI-s once
             if (it2->isTri()
-                && lit.toInt() < it2->lit2().toInt()
-                && it2->lit2().toInt() < it2->lit3().toInt()
+                && lit < it2->lit2()
+                && it2->lit2() < it2->lit3()
                 && it2->learnt()
             ) {
                 if (lit.sign()) votes[lit.var()] += 0.3;
