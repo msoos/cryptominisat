@@ -47,9 +47,9 @@ class PropByForGraph
         {
             if (orig.getType() == binary_t || orig.getType() == tertiary_t) {
                 lits[0] = otherLit;
-                lits[1] = orig.lit1();
+                lits[1] = orig.lit2();
                 if (orig.getType() == tertiary_t) {
-                    lits[2] = orig.lit2();
+                    lits[2] = orig.lit3();
                     type = 2;
                     isize = 3;
                 } else {

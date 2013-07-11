@@ -139,7 +139,7 @@ class PropBy
             return (PropByType)type;
         }
 
-        Lit lit1() const
+        Lit lit2() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(type == tertiary_t || type == binary_t);
@@ -147,7 +147,7 @@ class PropBy
             return Lit::toLit(data1);
         }
 
-        Lit lit2() const
+        Lit lit3() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(type == tertiary_t);
@@ -185,11 +185,11 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 {
     switch (pb.getType()) {
         case binary_t :
-            os << " binary, other lit= " << pb.lit1();
+            os << " binary, other lit= " << pb.lit2();
             break;
 
         case tertiary_t :
-            os << " tri, other 2 lits= " << pb.lit1() << " , "<< pb.lit2();
+            os << " tri, other 2 lits= " << pb.lit2() << " , "<< pb.lit3();
             break;
 
         case clause_t :

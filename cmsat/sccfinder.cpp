@@ -119,7 +119,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             if (!it->isBinary())
                 continue;
 
-            const Lit lit = it->lit1();
+            const Lit lit = it->lit2();
 
             doit(lit, vertex);
         }

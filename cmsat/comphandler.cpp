@@ -435,10 +435,10 @@ void CompHandler::moveClausesImplicit(
             //At least one variable inside comp
             if (i->isBinary()
                 && (compFinder->getVarComp(lit.var()) == comp
-                    || compFinder->getVarComp(i->lit1().var()) == comp
+                    || compFinder->getVarComp(i->lit2().var()) == comp
                 )
             ) {
-                const Lit lit2 = i->lit1();
+                const Lit lit2 = i->lit2();
 
                 //Unless learnt, cannot be in 2 comps at once
                 assert((compFinder->getVarComp(lit.var()) == comp
@@ -503,12 +503,12 @@ void CompHandler::moveClausesImplicit(
 
             if (i->isTri()
                 && (compFinder->getVarComp(lit.var()) == comp
-                    || compFinder->getVarComp(i->lit1().var()) == comp
                     || compFinder->getVarComp(i->lit2().var()) == comp
+                    || compFinder->getVarComp(i->lit3().var()) == comp
                 )
             ) {
-                const Lit lit2 = i->lit1();
-                const Lit lit3 = i->lit2();
+                const Lit lit2 = i->lit2();
+                const Lit lit3 = i->lit3();
 
                 //Unless learnt, cannot be in 2 comps at once
                 assert((compFinder->getVarComp(lit.var()) == comp

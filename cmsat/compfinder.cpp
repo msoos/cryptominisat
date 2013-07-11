@@ -194,11 +194,11 @@ void CompFinder::addToCompImplicits()
                     //Only non-learnt
                     && !it2->learnt()
                     //Only do each binary once
-                    && lit < it2->lit1()
+                    && lit < it2->lit2()
                 ) {
-                    if (!seen[it2->lit1().var()]) {
-                        lits.push_back(it2->lit1());
-                        seen[it2->lit1().var()] = 1;
+                    if (!seen[it2->lit2().var()]) {
+                        lits.push_back(it2->lit2());
+                        seen[it2->lit2().var()] = 1;
                     }
                 }
 
@@ -206,17 +206,17 @@ void CompFinder::addToCompImplicits()
                     //Non-learnt
                     && !it2->learnt()
                     //Only do each tri once
-                    && lit < it2->lit2()
-                    && it2->lit1() < it2->lit2()
+                    && lit < it2->lit3()
+                    && it2->lit2() < it2->lit3()
                 ) {
-                    if (!seen[it2->lit1().var()]) {
-                        lits.push_back(it2->lit1());
-                        seen[it2->lit1().var()] = 1;
-                    }
-
                     if (!seen[it2->lit2().var()]) {
                         lits.push_back(it2->lit2());
                         seen[it2->lit2().var()] = 1;
+                    }
+
+                    if (!seen[it2->lit3().var()]) {
+                        lits.push_back(it2->lit3());
+                        seen[it2->lit3().var()] = 1;
                     }
                 }
             }

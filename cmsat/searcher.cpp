@@ -358,14 +358,14 @@ void Searcher::normalClMinim()
                     break;
 
                 case binary_t:
-                    p = reason.lit1();
+                    p = reason.lit2();
                     break;
 
                 case tertiary_t:
                     if (k == 0) {
-                        p = reason.lit1();
-                    } else {
                         p = reason.lit2();
+                    } else {
+                        p = reason.lit3();
                     }
                     break;
 
@@ -439,9 +439,9 @@ Clause* Searcher::analyze(
                 resolutions.tri++;
                 stats.resolvs.tri++;
                 #ifdef DEBUG_RESOLV
-                cout << "resolv (tri): " << confl.lit2() << endl;
+                cout << "resolv (tri): " << confl.lit3() << endl;
                 #endif
-                analyzeHelper(confl.lit2(), pathC, fromProber);
+                analyzeHelper(confl.lit3(), pathC, fromProber);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
@@ -457,9 +457,9 @@ Clause* Searcher::analyze(
                     analyzeHelper(failBinLit, pathC, fromProber);
                 }
 
-                analyzeHelper(confl.lit1(), pathC, fromProber);
+                analyzeHelper(confl.lit2(), pathC, fromProber);
                 #ifdef DEBUG_RESOLV
-                cout << "resolv (bin/tri): " << confl.lit1() << endl;
+                cout << "resolv (bin/tri): " << confl.lit2() << endl;
                 #endif
                 break;
             }
@@ -697,14 +697,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     break;
 
                 case binary_t:
-                    p = reason.lit1();
+                    p = reason.lit2();
                     break;
 
                 case tertiary_t:
                     if (i == 0) {
-                        p = reason.lit1();
-                    } else {
                         p = reason.lit2();
+                    } else {
+                        p = reason.lit3();
                     }
                     break;
 
@@ -787,7 +787,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
             PropBy confl = varData[x].reason;
             switch(confl.getType()) {
                 case tertiary_t : {
-                    const Lit lit2 = confl.lit2();
+                    const Lit lit2 = confl.lit3();
                     if (varData[lit2.var()].level > 0)
                         seen[lit2.var()] = 1;
 
@@ -795,7 +795,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
                 }
 
                 case binary_t : {
-                    const Lit lit1 = confl.lit1();
+                    const Lit lit1 = confl.lit2();
                     if (varData[lit1.var()].level > 0)
                         seen[lit1.var()] = 1;
                     break;
@@ -2399,24 +2399,24 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         ) {
             timeSpent++;
             if (i->isBinary()) {
-                if (seen[(~i->lit1()).toInt()]) {
+                if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
-                    seen[(~i->lit1()).toInt()] = 0;
+                    seen[(~i->lit2()).toInt()] = 0;
                 }
                 continue;
             }
 
             if (i->isTri()) {
-                if (seen[i->lit2().toInt()]) {
-                    if (seen[(~i->lit1()).toInt()]) {
-                        stats.binTriShrinkedClause++;
-                        seen[(~i->lit1()).toInt()] = 0;
-                    }
-                }
-                if (seen[i->lit1().toInt()]) {
+                if (seen[i->lit3().toInt()]) {
                     if (seen[(~i->lit2()).toInt()]) {
                         stats.binTriShrinkedClause++;
                         seen[(~i->lit2()).toInt()] = 0;
+                    }
+                }
+                if (seen[i->lit2().toInt()]) {
+                    if (seen[(~i->lit3()).toInt()]) {
+                        stats.binTriShrinkedClause++;
+                        seen[(~i->lit3()).toInt()] = 0;
                     }
                 }
             }

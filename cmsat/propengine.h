@@ -864,14 +864,14 @@ inline Lit PropEngine::analyzeFail(const PropBy propBy)
     //'currAncestors' variable
     switch(propBy.getType()) {
         case tertiary_t : {
-            const Lit lit = ~propBy.lit2();
+            const Lit lit = ~propBy.lit3();
             if (varData[lit.var()].level != 0)
                 currAncestors.push_back(lit);
             //intentionally falling through here
             //i.e. there is no 'break' here for a reason
         }
         case binary_t: {
-            const Lit lit = ~propBy.lit1();
+            const Lit lit = ~propBy.lit2();
             if (varData[lit.var()].level != 0)
                 currAncestors.push_back(lit);
 

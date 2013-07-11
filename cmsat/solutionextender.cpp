@@ -227,16 +227,16 @@ inline bool SolutionExtender::propBinaryClause(
     const vec<Watched>::const_iterator i
     , const Lit p
 ) {
-    const lbool val = value(i->lit1());
+    const lbool val = value(i->lit2());
     if (val == l_Undef) {
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
         cout
         << "c Due to cl "
-        << ~p << ", " << i->lit1()
+        << ~p << ", " << i->lit2()
         << " propagate enqueueing "
-        << i->lit1() << endl;
+        << i->lit2() << endl;
         #endif
-        enqueue(i->lit1());
+        enqueue(i->lit2());
     } else if (val == l_False){
         return false;
     }
@@ -248,14 +248,14 @@ inline bool SolutionExtender::propTriClause(
     const vec<Watched>::const_iterator i
     , const Lit p
 ) {
-    const Lit lit2 = i->lit1();
+    const Lit lit2 = i->lit2();
     lbool val2 = value(lit2);
 
     //literal is already satisfied, nothing to do
     if (val2 == l_True)
         return true;
 
-    const Lit lit3 = i->lit2();
+    const Lit lit3 = i->lit3();
     lbool val3 = value(lit3);
 
     //literal is already satisfied, nothing to do
@@ -270,8 +270,8 @@ inline bool SolutionExtender::propTriClause(
         cout
         << "c Due to cl "
         << ~p << ", "
-        << i->lit1() << ", "
-        << i->lit2()
+        << i->lit2() << ", "
+        << i->lit3()
         << " propagate enqueueing "
         << lit2 << endl;
         #endif
@@ -284,8 +284,8 @@ inline bool SolutionExtender::propTriClause(
         cout
         << "c Due to cl "
         << ~p << ", "
-        << i->lit1() << ", "
-        << i->lit2()
+        << i->lit2() << ", "
+        << i->lit3()
         << " propagate enqueueing "
         << lit3 << endl;
         #endif
@@ -314,7 +314,7 @@ bool SolutionExtender::propagate()
                     cout
                     << "Problem with implicit binary clause: "
                     << ~p
-                    << ", " << it->lit1()
+                    << ", " << it->lit2()
                     << endl;
                 }
 
@@ -329,8 +329,8 @@ bool SolutionExtender::propagate()
                     cout
                     << "Problem with implicit tertiary clause: "
                     << ~p
-                    << ", " << it->lit1()
                     << ", " << it->lit2()
+                    << ", " << it->lit3()
                     << endl;
                 }
 

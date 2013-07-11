@@ -105,7 +105,7 @@ class Watched {
         }
 
         /**
-        @brief To update the example literal (blocked literal) of a >3-long normal clause
+        @brief To update the blocked literal of a >3-long normal clause
         */
         void setBlockedLit(const Lit blockedLit)
         {
@@ -143,7 +143,7 @@ class Watched {
         /**
         @brief Get the sole other lit of the binary clause, or get lit2 of the tertiary clause
         */
-        Lit lit1() const
+        Lit lit2() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
@@ -187,7 +187,7 @@ class Watched {
         /**
         @brief Get the 3rd literal of a 3-long clause
         */
-        Lit lit2() const
+        Lit lit3() const
         {
             #ifdef DEBUG_WATCHED
             assert(isTri());
@@ -248,12 +248,12 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
     }
 
     if (ws.isBinary()) {
-        os << "Bin: " << ws.lit1() << " (learnt: " << ws.learnt() << " )";
+        os << "Bin: " << ws.lit2() << " (learnt: " << ws.learnt() << " )";
     }
 
     if (ws.isTri()) {
         os << "Tri: "
-        << ws.lit1() << ", " << ws.lit2()
+        << ws.lit2() << ", " << ws.lit3()
         << " (learnt: " << ws.learnt() << " )";
     }
 
@@ -318,8 +318,8 @@ static inline Watched& findWatchedOfTri(
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isTri()
-            && i->lit1() == lit2
-            && i->lit2() == lit3
+            && i->lit2() == lit2
+            && i->lit3() == lit3
             && i->learnt() == learnt
         ) {
             return *i;
@@ -344,8 +344,8 @@ static inline const Watched& findWatchedOfTri(
         ; it++
     ) {
         if (it->isTri()
-            && it->lit1() == lit2
-            && it->lit2() == lit3
+            && it->lit2() == lit2
+            && it->lit3() == lit3
             && it->learnt() == learnt
         ) {
             return *it;
@@ -369,8 +369,8 @@ static inline void removeWTri(
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isTri()
-        || i->lit1() != lit2
-        || i->lit2() != lit3
+        || i->lit2() != lit2
+        || i->lit3() != lit3
         || i->learnt() != learnt
     ); i++);
 
@@ -406,7 +406,7 @@ inline bool findWBin(
 ) {
     vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
     vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
-    for (; i != end && (!i->isBinary() || i->lit1() != lit2); i++);
+    for (; i != end && (!i->isBinary() || i->lit2() != lit2); i++);
     return i != end;
 }
 
@@ -420,7 +420,7 @@ inline bool findWBin(
     vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
     for (; i != end && (
         !i->isBinary()
-        || i->lit1() != lit2
+        || i->lit2() != lit2
         || i->learnt() != learnt
     ); i++);
 
@@ -437,7 +437,7 @@ inline void removeWBin(
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isBinary()
-        || i->lit1() != lit2
+        || i->lit2() != lit2
         || i->learnt() != learnt
     ); i++);
 
@@ -456,7 +456,7 @@ inline Watched& findWatchedOfBin(
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isBinary() && i->lit1() == lit2 && i->learnt() == learnt)
+        if (i->isBinary() && i->lit2() == lit2 && i->learnt() == learnt)
             return *i;
     }
 

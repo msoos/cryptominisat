@@ -423,7 +423,7 @@ void ImplCache::tryVar(
         if (!it->isBinary())
             continue;
 
-        const Lit otherLit = it->lit1();
+        const Lit otherLit = it->lit2();
 
         if (!seen[otherLit.var()]) {
             seen[otherLit.var()] = 1;
@@ -463,15 +463,15 @@ void ImplCache::tryVar(
         if (!it->isBinary())
             continue;
 
-        assert(it->lit1().var() != var);
-        const Var var2 = it->lit1().var();
+        assert(it->lit2().var() != var);
+        const Var var2 = it->lit2().var();
         assert(var2 < solver->nVars());
 
         //Only if the other one also contained it
         if (!seen[var2])
             continue;
 
-        handleNewData(val, var, it->lit1());
+        handleNewData(val, var, it->lit2());
     }
 
     //Clear 'seen' and 'val'
@@ -484,8 +484,8 @@ void ImplCache::tryVar(
         if (!it->isBinary())
             continue;
 
-        seen[it->lit1().var()] = false;
-        val[it->lit1().var()] = false;
+        seen[it->lit2().var()] = false;
+        val[it->lit2().var()] = false;
     }
 }
 

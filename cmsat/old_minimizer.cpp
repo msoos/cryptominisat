@@ -69,7 +69,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
     const PropBy rp = varData[p.var()].reason;
     switch (rp.getType()) {
         case tertiary_t : {
-            const Lit q = rp.lit2();
+            const Lit q = rp.lit3();
             if (varData[q.var()].level > 0) {
                 if ((seen[q.var()] & (2|4|8)) == 0) {
                     found_some |= dfs_removable(q, abstract_level);
@@ -85,7 +85,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
         }
 
         case binary_t: {
-            const Lit q = rp.lit1();
+            const Lit q = rp.lit2();
             if (varData[q.var()].level > 0) {
                 if ((seen[q.var()] & (2|4|8)) == 0) {
                     found_some |= dfs_removable(q, abstract_level);
@@ -145,7 +145,7 @@ void Searcher::mark_needed_removable(const Lit p)
     const PropBy rp = varData[p.var()].reason;
     switch (rp.getType()) {
         case tertiary_t : {
-            const Lit q = rp.lit2();
+            const Lit q = rp.lit3();
             if (varData[q.var()].level > 0) {
                 const int qseen = seen[q.var()];
                 if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {
@@ -157,7 +157,7 @@ void Searcher::mark_needed_removable(const Lit p)
         }
 
         case binary_t : {
-            const Lit q  = rp.lit1();
+            const Lit q  = rp.lit2();
             if (varData[q.var()].level > 0) {
                 const int qseen = seen[q.var()];
                 if ((qseen & (1)) == 0 && !varData[q.var()].reason.isNULL()) {

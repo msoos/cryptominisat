@@ -279,8 +279,8 @@ class ClauseVivifier {
                     return true;
                 //Now nothing is clause
 
-                if (first.lit1() < second.lit1()) return true;
-                if (first.lit1() > second.lit1()) return false;
+                if (first.lit2() < second.lit2()) return true;
+                if (first.lit2() > second.lit2()) return false;
                 if (first.isBinary() && second.isTri()) return true;
                 if (first.isTri() && second.isBinary()) return false;
                 //At this point either both are BIN or both are TRI
@@ -296,8 +296,8 @@ class ClauseVivifier {
 
                 //Both are Tri
                 assert(first.isTri() && second.isTri());
-                if (first.lit2() < second.lit2()) return true;
-                if (first.lit2() > second.lit2()) return false;
+                if (first.lit3() < second.lit3()) return true;
+                if (first.lit3() > second.lit3()) return false;
                 if (first.learnt() == second.learnt()) return false;
                 if (!first.learnt()) return true;
                 return false;

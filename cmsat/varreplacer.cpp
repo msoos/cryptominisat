@@ -251,7 +251,7 @@ bool VarReplacer::replaceImplicit()
 
             assert(solver->value(origLit1) == l_Undef);
             Lit lit1 = origLit1;
-            Lit lit2 = i->lit1();
+            Lit lit2 = i->lit2();
             const Lit origLit2 = lit2;
             assert(solver->value(origLit2) == l_Undef);
             assert(origLit1.var() != origLit2.var());
@@ -270,7 +270,7 @@ bool VarReplacer::replaceImplicit()
             }
 
             if (i->isTri()) {
-                Lit lit3 = i->lit2();
+                Lit lit3 = i->lit3();
                 Lit origLit3 = lit3;
                 assert(origLit1.var() != origLit3.var());
                 assert(origLit2.var() != origLit3.var());

@@ -35,7 +35,7 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBinary());
     if (solver->value(lit) == l_True) return true;
-    if (solver->value(watched.lit1()) == l_True) return true;
+    if (solver->value(watched.lit2()) == l_True) return true;
     return false;
 }
 
@@ -82,12 +82,12 @@ void ClauseCleaner::treatImplicitClauses()
                 if (satisfied(*i, lit)) {
                     #ifdef DRUP
                     if (solver->drup
-                        && lit < i->lit1()
+                        && lit < i->lit2()
                     ) {
                         (*solver->drup)
                         << "d "
                         << lit << " "
-                        << i->lit1()
+                        << i->lit2()
                         << " 0\n";
                     }
                     #endif
@@ -98,7 +98,7 @@ void ClauseCleaner::treatImplicitClauses()
                         remNonLBin++;
                     }
                 } else {
-                    assert(solver->value(i->lit1()) == l_Undef);
+                    assert(solver->value(i->lit2()) == l_Undef);
                     assert(solver->value(lit) == l_Undef);
                     *j++ = *i;
                 }
@@ -111,8 +111,8 @@ void ClauseCleaner::treatImplicitClauses()
 
             //Satisfied?
             if (solver->value(lit) == l_True
-                || solver->value(i->lit1()) == l_True
                 || solver->value(i->lit2()) == l_True
+                || solver->value(i->lit3()) == l_True
             ) {
                 remove = true;
             }
@@ -123,19 +123,9 @@ void ClauseCleaner::treatImplicitClauses()
             if (!remove
                 && solver->value(lit) == l_False
             ) {
-                if (lit < i->lit1()) {
-                    lits[0] = i->lit1();
-                    lits[1] = i->lit2();
-                    needAttach = true;
-                }
-                remove = true;
-            }
-            if (!remove
-                && solver->value(i->lit1()) == l_False
-            ) {
-                if (lit < i->lit1()) {
-                    lits[0] = lit;
-                    lits[1] = i->lit2();
+                if (lit < i->lit2()) {
+                    lits[0] = i->lit2();
+                    lits[1] = i->lit3();
                     needAttach = true;
                 }
                 remove = true;
@@ -143,9 +133,19 @@ void ClauseCleaner::treatImplicitClauses()
             if (!remove
                 && solver->value(i->lit2()) == l_False
             ) {
-                if (lit < i->lit1()) {
+                if (lit < i->lit2()) {
                     lits[0] = lit;
-                    lits[1] = i->lit1();
+                    lits[1] = i->lit3();
+                    needAttach = true;
+                }
+                remove = true;
+            }
+            if (!remove
+                && solver->value(i->lit3()) == l_False
+            ) {
+                if (lit < i->lit2()) {
+                    lits[0] = lit;
+                    lits[1] = i->lit2();
                     needAttach = true;
                 }
                 remove = true;
@@ -166,14 +166,14 @@ void ClauseCleaner::treatImplicitClauses()
                 #ifdef DRUP
                 if (solver->drup
                     //Only remove once --> exactly when adding
-                    && lit < i->lit1()
-                    && i->lit1() < i->lit2()
+                    && lit < i->lit2()
+                    && i->lit2() < i->lit3()
                 ) {
                     (*solver->drup)
                     << "d "
                     << lit << " "
-                    << i->lit1() << " "
-                    << i->lit2()
+                    << i->lit2() << " "
+                    << i->lit3()
                     << " 0\n";
                 }
                 #endif

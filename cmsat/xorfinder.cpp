@@ -101,16 +101,16 @@ bool XorFinder::findXors()
                 continue;
 
             //Only bother about each tri-clause once
-            if (lit > it2->lit1()
-                || it2->lit1() > it2->lit2()
+            if (lit > it2->lit2()
+                || it2->lit2() > it2->lit3()
             ) {
                 continue;
             }
 
             lits.resize(3);
             lits[0] = lit;
-            lits[1] = it2->lit1();
-            lits[2] = it2->lit2();
+            lits[1] = it2->lit2();
+            lits[2] = it2->lit3();
 
             findXor(lits, calcAbstraction(lits));
         }
@@ -571,10 +571,10 @@ void XorFinder::findXorMatchExt(
     ) {
         //Deal with binary
         if (it->isBinary()) {
-            if (seen[it->lit1().var()]) {
+            if (seen[it->lit2().var()]) {
                 tmpClause.clear();
                 tmpClause.push_back(lit);
-                tmpClause.push_back(it->lit1());
+                tmpClause.push_back(it->lit2());
                 if (tmpClause[0] > tmpClause[1])
                     std::swap(tmpClause[0], tmpClause[1]);
 
@@ -678,13 +678,13 @@ void XorFinder::findXorMatch(
         //Deal with binary
         if (it->isBinary()) {
             if (//Only once per binary
-                lit < it->lit1()
+                lit < it->lit2()
                 //only for correct binary
-                && seen[it->lit1().var()]
+                && seen[it->lit2().var()]
             ) {
                 tmpClause.clear();
                 tmpClause.push_back(lit);
-                tmpClause.push_back(it->lit1());
+                tmpClause.push_back(it->lit2());
 
                 foundCls.add(tmpClause, varsMissing);
                 maxTimeFindXors-=5;
@@ -698,21 +698,21 @@ void XorFinder::findXorMatch(
         //Deal with tertiary
         if (it->isTri()) {
             if (//Only once per tri
-                lit < it->lit1() && it->lit1() < it->lit2()
+                lit < it->lit2() && it->lit2() < it->lit3()
 
                 //Only for correct tri
-                && seen[it->lit1().var()] && seen[it->lit2().var()]
+                && seen[it->lit2().var()] && seen[it->lit3().var()]
             ) {
                 bool rhs = true;
                 rhs ^= lit.sign();
-                rhs ^= it->lit1().sign();
                 rhs ^= it->lit2().sign();
+                rhs ^= it->lit3().sign();
 
                 if (rhs == foundCls.getRHS() || foundCls.getSize() > 3) {
                     tmpClause.clear();
                     tmpClause.push_back(lit);
-                    tmpClause.push_back(it->lit1());
                     tmpClause.push_back(it->lit2());
+                    tmpClause.push_back(it->lit3());
 
                     foundCls.add(tmpClause, varsMissing);
                     maxTimeFindXors-=5;

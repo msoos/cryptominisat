@@ -519,7 +519,7 @@ void GateFinder::findOrGate(
                 continue;
 
             if ((learntGatesToo || !wsIt->learnt())
-                 && wsIt->lit1() == eqLit
+                 && wsIt->lit2() == eqLit
             ) {
                 wasLearnt |= wsIt->learnt();
                 OK = true;

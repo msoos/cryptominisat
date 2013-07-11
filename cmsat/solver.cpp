@@ -2550,14 +2550,14 @@ void Solver::dumpBinClauses(
             ; it2++
         ) {
             //Only dump binaries
-            if (it2->isBinary() && lit < it2->lit1()) {
+            if (it2->isBinary() && lit < it2->lit2()) {
                 bool toDump = false;
                 if (it2->learnt() && dumpLearnt) toDump = true;
                 if (!it2->learnt() && dumpNonLearnt) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
-                    tmpCl.push_back(getUpdatedLit(it2->lit1(), interToOuterMain));
+                    tmpCl.push_back(getUpdatedLit(it2->lit2(), interToOuterMain));
                     tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
                     std::sort(tmpCl.begin(), tmpCl.end());
 
@@ -2586,15 +2586,15 @@ void Solver::dumpTriClauses(
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             //Only one instance of tri clause
-            if (it2->isTri() && lit < it2->lit1()) {
+            if (it2->isTri() && lit < it2->lit2()) {
                 bool toDump = false;
                 if (it2->learnt() && alsoLearnt) toDump = true;
                 if (!it2->learnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
-                    tmpCl.push_back(getUpdatedLit(it2->lit1(), interToOuterMain));
                     tmpCl.push_back(getUpdatedLit(it2->lit2(), interToOuterMain));
+                    tmpCl.push_back(getUpdatedLit(it2->lit3(), interToOuterMain));
                     tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
                     std::sort(tmpCl.begin(), tmpCl.end());
 
@@ -2901,14 +2901,14 @@ void Solver::printAllClauses() const
         cout << "watches[" << lit << "]" << endl;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                cout << "Binary clause part: " << lit << " , " << it2->lit1() << endl;
+                cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
             } else if (it2->isClause()) {
                 cout << "Normal clause offs " << it2->getOffset() << endl;
             } else if (it2->isTri()) {
                 cout << "Tri clause:"
                 << lit << " , "
-                << it2->lit1() << " , "
-                << it2->lit2() << endl;
+                << it2->lit2() << " , "
+                << it2->lit3() << endl;
             }
         }
     }
@@ -2928,17 +2928,17 @@ bool Solver::verifyImplicitClauses() const
         for (Watched w: ws) {
             if (w.isBinary()
                 && modelValue(lit) != l_True
-                && modelValue(w.lit1()) != l_True
+                && modelValue(w.lit2()) != l_True
             ) {
                 cout
                 << "bin clause: "
-                << lit << " , " << w.lit1()
+                << lit << " , " << w.lit2()
                 << " not satisfied!"
                 << endl;
 
                 cout
                 << "value of unsat bin clause: "
-                << value(lit) << " , " << value(w.lit1())
+                << value(lit) << " , " << value(w.lit2())
                 << endl;
 
                 return false;
@@ -2946,22 +2946,22 @@ bool Solver::verifyImplicitClauses() const
 
              if (w.isTri()
                 && modelValue(lit) != l_True
-                && modelValue(w.lit1()) != l_True
                 && modelValue(w.lit2()) != l_True
+                && modelValue(w.lit3()) != l_True
             ) {
                 cout
                 << "tri clause: "
                 << lit
-                << " , " << w.lit1()
                 << " , " << w.lit2()
+                << " , " << w.lit3()
                 << " not satisfied!"
                 << endl;
 
                 cout
                 << "value of unsat tri clause: "
                 << value(lit)
-                << " , " << value(w.lit1())
                 << " , " << value(w.lit2())
+                << " , " << value(w.lit3())
                 << endl;
 
                 return false;
@@ -3326,14 +3326,14 @@ void Solver::checkImplicitStats() const
             }
 
             if (it2->isTri()) {
-                assert(it2->lit1() < it2->lit2());
-                assert(it2->lit1().var() != it2->lit2().var());
+                assert(it2->lit2() < it2->lit3());
+                assert(it2->lit2().var() != it2->lit3().var());
 
                 #ifdef DEBUG_TRI_SORTED_SANITY
                 Lit lits[3];
                 lits[0] = lit;
-                lits[1] = it2->lit1();
-                lits[2] = it2->lit2();
+                lits[1] = it2->lit2();
+                lits[2] = it2->lit3();
                 std::sort(lits, lits + 3);
                 findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->learnt());
                 findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->learnt());
@@ -3475,13 +3475,13 @@ void Solver::printWatchlist(const vec<Watched>& ws, const Lit lit) const
 
         if (it->isBinary()) {
             cout
-            << "BIN: " << lit << ", " << it->lit1()
+            << "BIN: " << lit << ", " << it->lit2()
             << " (l: " << it->learnt() << ")";
         }
 
         if (it->isTri()) {
             cout
-            << "TRI: " << lit << ", " << it->lit1() << ", " << it->lit2()
+            << "TRI: " << lit << ", " << it->lit2() << ", " << it->lit3()
             << " (l: " << it->learnt() << ")";
         }
 
@@ -3512,14 +3512,14 @@ void Solver::checkImplicitPropagated() const
             }
 
             const lbool val1 = value(lit);
-            const lbool val2 = value(it2->lit1());
+            const lbool val2 = value(it2->lit2());
 
             //Handle binary
             if (it2->isBinary()) {
                 if (val1 == l_False) {
                     if (val2 != l_True) {
                         cout << "not prop BIN: "
-                        << lit << ", " << it2->lit1()
+                        << lit << ", " << it2->lit2()
                         << " (learnt: " << it2->learnt()
                         << endl;
                     }
@@ -3532,7 +3532,7 @@ void Solver::checkImplicitPropagated() const
 
             //Handle 3-long clause
             if (it2->isTri()) {
-                const lbool val3 = value(it2->lit2());
+                const lbool val3 = value(it2->lit3());
 
                 if (val1 == l_False
                     && val2 == l_False

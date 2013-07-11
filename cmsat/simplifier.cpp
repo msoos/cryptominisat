@@ -1065,7 +1065,7 @@ bool Simplifier::propagate()
             }
 
             if (it->isBinary()) {
-                const lbool val = solver->value(it->lit1());
+                const lbool val = solver->value(it->lit2());
 
                 //UNSAT
                 if (val == l_False) {
@@ -1075,7 +1075,7 @@ bool Simplifier::propagate()
 
                 //Propagation
                 if (val == l_Undef) {
-                    solver->enqueue(it->lit1());
+                    solver->enqueue(it->lit2());
                     #ifdef STATS_NEEDED
                     if (it->learnt())
                         solver->propStats.propsBinRed++;
@@ -1155,14 +1155,14 @@ bool Simplifier::propagate()
 //         ) {
 //             //Each TRI only once
 //             if (ws[i].isTri()
-//                 && lit < ws[i].lit1()
-//                 && ws[i].lit1() < ws[i].lit2()
+//                 && lit < ws[i].lit2()
+//                 && ws[i].lit2() < ws[i].lit3()
 //             ) {
 //                 tried++;
 //                 lits.resize(3);
 //                 lits[0] = lit;
-//                 lits[1] = ws[i].lit1();
-//                 lits[2] = ws[i].lit2();
+//                 lits[1] = ws[i].lit2();
+//                 lits[2] = ws[i].lit3();
 //                 CL_ABST_TYPE abstr = calcAbstraction(lits);
 //
 //                 Sub0Ret ret = subsume0Final(
@@ -1181,8 +1181,8 @@ bool Simplifier::propagate()
 //                     solver->binTri.irredLits += 3;
 //                     solver->binTri.redTris--;
 //                     solver->binTri.irredTris++;
-//                     findWatchedOfTri(solver->watches, ws[i].lit1(), lit, ws[i].lit2(), true).setLearnt(false);
-//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit1(), true).setLearnt(false);
+//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setLearnt(false);
+//                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setLearnt(false);
 //                 }
 //             }
 //         }
@@ -1612,7 +1612,7 @@ bool Simplifier::propImplicits()
 
             assert(ws[i].isBinary());
 
-            const Lit lit2 = ws[i].lit1();
+            const Lit lit2 = ws[i].lit2();
 
             //Satisfied, remove
             if (solver->value(lit) == l_True
@@ -1739,10 +1739,10 @@ void Simplifier::checkForElimedVars()
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (var_elimed[lit.var()] || var_elimed[it2->lit1().var()]) {
+                if (var_elimed[lit.var()] || var_elimed[it2->lit2().var()]) {
                     cout
                     << "Error: A var is elimed in a binary clause: "
-                    << lit << " , " << it2->lit1()
+                    << lit << " , " << it2->lit2()
                     << endl;
 
                     exit(-1);
@@ -1914,17 +1914,17 @@ void Simplifier::blockImplicit(
                 || (!tris && ws[i].isTri())
                 //Don't go through the same binary/tri twice
                 || (ws[i].isBinary()
-                    && lit >= ws[i].lit1())
+                    && lit >= ws[i].lit2())
                 || (ws[i].isTri()
-                    && (lit >= ws[i].lit1() || ws[i].lit1() >= ws[i].lit2()))
+                    && (lit >= ws[i].lit2() || ws[i].lit2() >= ws[i].lit3()))
             ) {
                 ws[j++] = ws[i];
                 continue;
             }
 
             tried++;
-            const Lit lit2 = ws[i].lit1();
-            const Lit lit3 = ws[i].isTri() ? ws[i].lit2() : lit_Undef;
+            const Lit lit2 = ws[i].lit2();
+            const Lit lit3 = ws[i].isTri() ? ws[i].lit3() : lit_Undef;
 
             *toDecrease -= 2;
             seen[lit.toInt()] = 1;
@@ -2519,12 +2519,12 @@ void Simplifier::removeClausesHelper(
             //Put clause into blocked status
             lits.resize(2);
             lits[0] = lit;
-            lits[1] = watch.lit1();
+            lits[1] = watch.lit2();
             if (!watch.learnt()) {
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //touch removed lits
-                touched.touch(watch.lit1());
+                touched.touch(watch.lit2());
             } else {
                 //If learnt, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
@@ -2562,14 +2562,14 @@ void Simplifier::removeClausesHelper(
             //Put clause into blocked status
             lits.resize(3);
             lits[0] = lit;
-            lits[1] = watch.lit1();
-            lits[2] = watch.lit2();
+            lits[1] = watch.lit2();
+            lits[2] = watch.lit3();
             if (!watch.learnt()) {
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //Touch removed lits
-                touched.touch(watch.lit1());
                 touched.touch(watch.lit2());
+                touched.touch(watch.lit3());
             } else {
                 //If learnt, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
@@ -2752,7 +2752,7 @@ void Simplifier::printOccur(const Lit lit) const
             cout
             << "Bin   --> "
             << lit << ", "
-            << w.lit1()
+            << w.lit2()
             << "(learnt: " << w.learnt()
             << ")"
             << endl;
@@ -2762,7 +2762,7 @@ void Simplifier::printOccur(const Lit lit) const
             cout
             << "Tri   --> "
             << lit << ", "
-            << w.lit1() << " , " << w.lit2()
+            << w.lit2() << " , " << w.lit3()
             << "(learnt: " << w.learnt()
             << ")"
             << endl;
@@ -2852,27 +2852,27 @@ bool Simplifier::maybeEliminate(const Var var)
                 ; it2++
             ) {
                 if (it2->isTri() && !it2->learnt()
-                    && (it2->lit1() == finalLits[1]
-                        || it2->lit2() == finalLits[1])
+                    && (it2->lit2() == finalLits[1]
+                        || it2->lit3() == finalLits[1])
                 ) {
                     if (solver->conf.verbosity >= 6) {
                         cout
                         << "Removing non-learnt tri-clause due to addition of"
                         << " non-learnt bin: "
                         << finalLits[0]
-                        << ", " << it2->lit1()
                         << ", " << it2->lit2()
+                        << ", " << it2->lit3()
                         << endl;
                     }
 
-                    touched.touch(it2->lit1());
                     touched.touch(it2->lit2());
+                    touched.touch(it2->lit3());
 
                     runStats.subsumedByVE++;
                     solver->detachTriClause(
                         finalLits[0]
-                        , it2->lit1()
                         , it2->lit2()
+                        , it2->lit3()
                         , it2->learnt()
                     );
 
@@ -2973,7 +2973,7 @@ end:
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
         const bool numOneIsLearnt = w1->learnt();
-        const Lit lit1 = w1->lit1();
+        const Lit lit1 = w1->lit2();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
@@ -2984,7 +2984,7 @@ end:
                 continue;
             }
 
-            const Lit lit2 = w2->lit1();
+            const Lit lit2 = w2->lit2();
             if (solver->value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
 
             tmp[0] = lit1;
@@ -3032,17 +3032,17 @@ bool Simplifier::merge(
     bool retval = true;
     if (ps.isBinary() || ps.isTri()) {
         *toDecrease -= 1;
-        assert(ps.lit1() != noPosLit);
-
-        seen[ps.lit1().toInt()] = 1;
-        dummy.push_back(ps.lit1());
-    }
-
-    if (ps.isTri()) {
-        assert(ps.lit1() < ps.lit2());
+        assert(ps.lit2() != noPosLit);
 
         seen[ps.lit2().toInt()] = 1;
         dummy.push_back(ps.lit2());
+    }
+
+    if (ps.isTri()) {
+        assert(ps.lit2() < ps.lit3());
+
+        seen[ps.lit3().toInt()] = 1;
+        dummy.push_back(ps.lit3());
     }
 
     if (ps.isClause()) {
@@ -3062,21 +3062,7 @@ bool Simplifier::merge(
     //Handle QS
     if (qs.isBinary() || qs.isTri()) {
         *toDecrease -= 2;
-        assert(qs.lit1() != ~noPosLit);
-
-        if (seen[(~qs.lit1()).toInt()]) {
-            retval = false;
-            toClear = dummy;
-            goto end;
-        }
-        if (!seen[qs.lit1().toInt()]) {
-            dummy.push_back(qs.lit1());
-            seen[qs.lit1().toInt()] = 1;
-        }
-    }
-
-    if (qs.isTri()) {
-        assert(qs.lit1() < qs.lit2());
+        assert(qs.lit2() != ~noPosLit);
 
         if (seen[(~qs.lit2()).toInt()]) {
             retval = false;
@@ -3086,6 +3072,20 @@ bool Simplifier::merge(
         if (!seen[qs.lit2().toInt()]) {
             dummy.push_back(qs.lit2());
             seen[qs.lit2().toInt()] = 1;
+        }
+    }
+
+    if (qs.isTri()) {
+        assert(qs.lit2() < qs.lit3());
+
+        if (seen[(~qs.lit3()).toInt()]) {
+            retval = false;
+            toClear = dummy;
+            goto end;
+        }
+        if (!seen[qs.lit3().toInt()]) {
+            dummy.push_back(qs.lit3());
+            seen[qs.lit3().toInt()] = 1;
         }
     }
 
@@ -3227,13 +3227,13 @@ bool Simplifier::agressiveCheck(
             //See if any of the literals is in
             Lit otherLit = lit_Undef;
             unsigned inside = 0;
-            if (seen[it->lit1().toInt()]) {
-                otherLit = it->lit2();
+            if (seen[it->lit2().toInt()]) {
+                otherLit = it->lit3();
                 inside++;
             }
 
-            if (seen[it->lit2().toInt()]) {
-                otherLit = it->lit1();
+            if (seen[it->lit3().toInt()]) {
+                otherLit = it->lit2();
                 inside++;
             }
 
@@ -3261,7 +3261,7 @@ bool Simplifier::agressiveCheck(
 
         //Handle binary
         if (it->isBinary() && !it->learnt()) {
-            const Lit otherLit = it->lit1();
+            const Lit otherLit = it->lit2();
             if (otherLit.var() == noPosLit.var())
                 continue;
 
@@ -3313,16 +3313,16 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
 
                 #if 0
                 if (setit) {
-                    seen[it->lit1().toInt()] |= at;
+                    seen[it->lit2().toInt()] |= at;
                     at <<= 1;
                 }
 
                 if (unset) {
-                    seen[it->lit1().toInt()] = 0;
+                    seen[it->lit2().toInt()] = 0;
                 }
 
                 if (countIt) {
-                    count += otherSize - __builtin_popcount(seen[(~it->lit1()).toInt()]);
+                    count += otherSize - __builtin_popcount(seen[(~it->lit2()).toInt()]);
                 }
                 #endif
             }
@@ -3339,18 +3339,18 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
 
                 #if 0
                 if (setit) {
-                    seen[it->lit1().toInt()] |= at;
                     seen[it->lit2().toInt()] |= at;
+                    seen[it->lit3().toInt()] |= at;
                     at <<= 1;
                 }
 
                 if (unset) {
-                    seen[it->lit1().toInt()] = 0;
                     seen[it->lit2().toInt()] = 0;
+                    seen[it->lit3().toInt()] = 0;
                 }
 
                 if (countIt) {
-                    unsigned tmp = seen[(~it->lit1()).toInt()] | seen[(~it->lit2()).toInt()];
+                    unsigned tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
                     count += otherSize - __builtin_popcount(tmp);
                 }
                 #endif
@@ -3571,8 +3571,8 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
 
         //Handle binary
         if (it->isBinary() && !it->learnt()) {
-            if (seen[(~it->lit1()).toInt()]) {
-                assert(it->lit1() != ~lit);
+            if (seen[(~it->lit2()).toInt()]) {
+                assert(it->lit2() != ~lit);
                 continue;
             }
             return false;
@@ -3580,9 +3580,9 @@ inline bool Simplifier::allTautologySlim(const Lit lit)
 
         //Handle tertiary
         if (it->isTri() && !it->learnt()) {
-            assert(it->lit1() < it->lit2());
-            if (seen[(~it->lit1()).toInt()]
-                || seen[(~it->lit2()).toInt()]
+            assert(it->lit2() < it->lit3());
+            if (seen[(~it->lit2()).toInt()]
+                || seen[(~it->lit3()).toInt()]
             ) {
                 continue;
             }

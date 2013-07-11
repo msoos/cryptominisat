@@ -893,18 +893,18 @@ template<class T> void Simplifier::findSubsumed0(
         if (removeImplicit) {
             if (it->isBinary()
                 && ps.size() == 2
-                && ps[!min_i] == it->lit1()
+                && ps[!min_i] == it->lit2()
                 && !it->learnt()
             ) {
                 /*cout
                 << "ps " << ps << " could subsume this bin: "
-                << ps[min_i] << ", " << it->lit1()
+                << ps[min_i] << ", " << it->lit2()
                 << endl;*/
                 numBinFound++;
 
                 //We cannot remove ourselves
                 if (numBinFound > 1) {
-                    removeWBin(solver->watches, it->lit1(), ps[min_i], it->learnt());
+                    removeWBin(solver->watches, it->lit2(), ps[min_i], it->learnt());
                     solver->binTri.irredBins--;
                     solver->binTri.irredLits-=2;
                     continue;
@@ -913,17 +913,17 @@ template<class T> void Simplifier::findSubsumed0(
 
             if (it->isTri()
                 && ps.size() == 2
-                && (ps[!min_i] == it->lit1() || ps[!min_i] == it->lit2())
+                && (ps[!min_i] == it->lit2() || ps[!min_i] == it->lit3())
             ) {
                 /*cout
                 << "ps " << ps << " could subsume this tri: "
-                << ps[min_i] << ", " << it->lit1() << ", " << it->lit2()
+                << ps[min_i] << ", " << it->lit2() << ", " << it->lit3()
                 << endl;
                 */
                 Lit lits[3];
                 lits[0] = ps[min_i];
-                lits[1] = it->lit1();
-                lits[2] = it->lit2();
+                lits[1] = it->lit2();
+                lits[2] = it->lit3();
                 std::sort(lits + 0, lits + 3);
                 removeTriAllButOne(solver->watches, ps[min_i], lits, it->learnt());
                 if (it->learnt()) {
