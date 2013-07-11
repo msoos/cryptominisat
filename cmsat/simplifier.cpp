@@ -1331,13 +1331,18 @@ bool Simplifier::simplify()
         , addedClauseLits
     );
 
-    //Memory limit would have been reached, irreduntant clauses cannot
-    //be added to occur, so exit, we can't do most of the good stuff
-    //like var-elim
+    //Memory limit reached, irreduntant clauses cannot
+    //be added to occur --> exit
     if (!ret) {
         CompleteDetachReatacher detRet(solver);;
         detRet.reattachLongs(true);
         return solver->okay();
+    }
+
+    //Do blocked clause elimination
+    if (solver->conf.doBlockClauses) {
+        blockClauses();
+        blockImplicit(false, true);
     }
 
     //Add learnt to occur
@@ -1394,13 +1399,6 @@ bool Simplifier::simplify()
         goto end;
     }
     #endif
-
-    //Do asymtotic tautology elimination
-    if (solver->conf.doBlockClauses) {
-        blockClauses();
-        //Call it first time, and that's it
-        blockImplicit(false, true);
-    }
 
     if (!propImplicits()) {
         goto end;
