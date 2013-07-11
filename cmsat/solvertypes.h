@@ -201,7 +201,6 @@ inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
     return co;
 }
 
-
 ///Class that can hold: True, False, Undef
 class lbool
 {
