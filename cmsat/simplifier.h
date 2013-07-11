@@ -705,7 +705,7 @@ private:
     GateFinder *gateFinder;
 
     //validity checking
-    void checkForElimedVars();
+    void sanityCheckElimedVars();
     void printOccur(const Lit lit) const;
 
     ///Stats from this run

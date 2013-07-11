@@ -1349,6 +1349,7 @@ bool Simplifier::simplify()
     );
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
+    sanityCheckElimedVars();
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity >= 2) {
@@ -1361,9 +1362,6 @@ bool Simplifier::simplify()
     #ifdef DRUP
     const size_t origBlockedSize = blockedClauses.size();
     #endif
-
-    //Checking
-    checkForElimedVars();
 
     //Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
@@ -1701,7 +1699,7 @@ bool Simplifier::propImplicits()
     return solver->ok;
 }
 
-void Simplifier::checkForElimedVars()
+void Simplifier::sanityCheckElimedVars()
 {
     //First, sanity-check the long clauses
     for (vector<ClOffset>::const_iterator
