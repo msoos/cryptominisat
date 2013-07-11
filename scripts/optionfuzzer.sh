@@ -96,7 +96,7 @@ do
 		--sortwatched $(bool) \
 		--renumber $(bool) \
                 --recur $(bool) \
-		--verb 1 \
+		--verb 2 \
 		--comps 1 \
         --compsfrom $(int 0 2) \
         --compsvar $(int 20000 500000) \
