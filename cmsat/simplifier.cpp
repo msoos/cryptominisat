@@ -1930,15 +1930,17 @@ void Simplifier::blockImplicit(
             if (lit3 != lit_Undef)
                 seen[lit3.toInt()] = 1;
 
-            Lit tautOn = lit;
-            bool taut = allTautologySlim(lit);
-            if (!taut) {
-                tautOn = lit2;
-                taut = allTautologySlim(lit2);
-            }
-            if (!taut && lit3 != lit_Undef) {
-                tautOn = lit3;
-                taut = allTautologySlim(lit3);
+            //Try all two/three
+            bool taut = false;
+            Lit tautOn = lit_Undef;
+            for(Lit l: {lit, lit2, lit3}) {
+                if (l != lit_Undef) {
+                    taut = checkBlocked(l);
+                    if (taut) {
+                        tautOn = l;
+                        break;
+                    }
+                }
             }
 
             if (taut) {
@@ -2058,7 +2060,7 @@ void Simplifier::blockClauses()
             if (solver->varData[l->var()].removed != Removed::none)
                 continue;
 
-            if (allTautologySlim(*l)) {
+            if (checkBlocked(*l)) {
                 vector<Lit> remCl(cl.size());
                 std::copy(cl.begin(), cl.end(), remCl.begin());
                 blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
@@ -2205,7 +2207,7 @@ void Simplifier::asymmTE()
                 if (solver->varData[l->var()].removed != Removed::none)
                     continue;
 
-                if (allTautologySlim(*l)) {
+                if (checkBlocked(*l)) {
                     vector<Lit> remCl(cl.size());
                     std::copy(cl.begin(), cl.end(), remCl.begin());
                     blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
@@ -3556,7 +3558,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     return cost;
 }
 
-inline bool Simplifier::allTautologySlim(const Lit lit)
+inline bool Simplifier::checkBlocked(const Lit lit)
 {
     //clauses which contain '~lit'
     const vec<Watched>& ws = solver->watches[(~lit).toInt()];

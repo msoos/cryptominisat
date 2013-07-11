@@ -692,7 +692,7 @@ private:
     bool anythingHasBeenBlocked;
     void blockClauses();
     void blockImplicit(bool bins = false, bool tris = true);
-    bool allTautologySlim(const Lit lit);
+    bool checkBlocked(const Lit lit);
     vector<BlockedClause> blockedClauses;
     map<Var, vector<size_t> > blk_var_to_cl;
     bool blockedMapBuilt;
