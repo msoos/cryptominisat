@@ -54,6 +54,7 @@ class SolutionExtender;
 class Solver;
 //class GateFinder;
 class XorFinderAbst;
+class SubsumeStrengthen;
 
 struct BlockedClause {
     BlockedClause()
@@ -113,8 +114,6 @@ public:
             , linkInTime(0)
             , blockTime(0)
             , asymmTime(0)
-            , subsumeTime(0)
-            , strengthenTime(0)
             , varElimTime(0)
             , finalCleanupTime(0)
 
@@ -128,10 +127,7 @@ public:
             , blocked(0)
             , blockedSumLits(0)
             , asymmSubs(0)
-            , subsumedBySub(0)
-            , subsumedByStr(0)
             , subsumedByVE(0)
-            , litsRemStrengthen(0)
 
             //Elimination
             , numVarsElimed(0)
@@ -156,7 +152,6 @@ public:
         double totalTime() const
         {
             return linkInTime + blockTime + asymmTime
-                + subsumeTime + strengthenTime
                 + varElimTime + finalCleanupTime;
         }
 
@@ -174,8 +169,6 @@ public:
             linkInTime += other.linkInTime;
             blockTime += other.blockTime;
             asymmTime += other.asymmTime;
-            subsumeTime += other.subsumeTime;
-            strengthenTime += other.strengthenTime;
             varElimTime += other.varElimTime;
             finalCleanupTime += other.finalCleanupTime;
 
@@ -189,10 +182,7 @@ public:
             blocked += other.blocked;
             blockedSumLits += other.blockedSumLits;
             asymmSubs += other.asymmSubs;
-            subsumedBySub += other.subsumedBySub;
-            subsumedByStr += other.subsumedByStr;
             subsumedByVE  += other.subsumedByVE;
-            litsRemStrengthen += other.litsRemStrengthen;
 
             //Elim
             numVarsElimed += other.numVarsElimed;
@@ -215,23 +205,10 @@ public:
             return *this;
         }
 
-        void printShortSubStr() const
-        {
-            //STRENGTH + SUBSUME
-            cout << "c [subs] long"
-            << " subBySub: " << subsumedBySub
-            << " subByStr: " << subsumedByStr
-            << " lits-rem-str: " << litsRemStrengthen
-            << " T: " << std::fixed << std::setprecision(2)
-            << (subsumeTime+strengthenTime+linkInTime+finalCleanupTime)
-            << "(" << linkInTime+finalCleanupTime << " is overhead)"
-            << " s"
-            << endl;
-        }
-
         void printShort(const bool print_var_elim = true) const
         {
-            printShortSubStr();
+
+            cout << " [occur] " << linkInTime+finalCleanupTime << " is overhead";
 
             //About elimination
             if (print_var_elim) {
@@ -295,7 +272,8 @@ public:
             printStatsLine("c v-elimed"
                 , numVarsElimed
                 , (double)numVarsElimed/(double)nVars*100.0
-                , "% vars");
+                , "% vars"
+            );
 
             cout << "c"
             << " v-elimed: " << numVarsElimed
@@ -321,13 +299,6 @@ public:
                 , triedToElimVars
                 , (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
                 , "% agressively"
-            );
-
-            printStatsLine("c cl-subs"
-                , subsumedBySub + subsumedByStr + subsumedByVE
-                , (double)(subsumedBySub + subsumedByStr + subsumedByVE)
-                /(double)(origNumIrredLongClauses+origNumRedLongClauses)
-                , "% clauses"
             );
 
             printStatsLine("c blocked"
@@ -364,6 +335,11 @@ public:
                 ((double)clauses_elimed_sumsize
                 /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
             );
+
+            printStatsLine("c v-elim-sub"
+                , subsumedByVE
+            );
+
             cout << "c -------- Simplifier STATS END ----------" << endl;
         }
 
@@ -373,8 +349,6 @@ public:
         double linkInTime;
         double blockTime;
         double asymmTime;
-        double subsumeTime;
-        double strengthenTime;
         double varElimTime;
         double finalCleanupTime;
 
@@ -388,8 +362,6 @@ public:
         uint64_t blocked;
         uint64_t blockedSumLits;
         uint64_t asymmSubs;
-        uint64_t subsumedBySub;
-        uint64_t subsumedByStr;
         uint64_t subsumedByVE;
         uint64_t litsRemStrengthen;
 
@@ -418,6 +390,7 @@ public:
     const vector<BlockedClause>& getBlockedClauses() const;
     //const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
+    const SubsumeStrengthen* getSubsumeStrengthen() const;
     void checkElimedUnassignedAndStats() const;
     void checkElimedUnassigned() const;
     bool getAnythingHasBeenBlocked() const;
@@ -425,7 +398,11 @@ public:
 
 private:
 
+    friend class SubsumeStrengthen;
+    SubsumeStrengthen* subsumeStrengthen;
+
     //debug
+    bool subsetReverse(const Clause& B) const;
     void checkAllLinkedIn();
 
     void finishUp(size_t origTrailSize);
@@ -442,8 +419,6 @@ private:
     vector<Lit>     dummy;       ///<Used by merge()
     vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
-    vector<ClOffset> subs;
-    vector<Lit> subsLits;
 
     //Limits
     uint64_t addedClauseLits;
@@ -469,8 +444,6 @@ private:
         , uint64_t& numLitsAdded
     );
     void setLimits();
-    void performSubsumption();
-    bool performStrengthening();
 
     //Finish-up
     void addBackToSolver();
@@ -479,48 +452,10 @@ private:
     bool completeCleanClause(Clause& ps);
 
     //Clause update
-    void        strengthen(ClOffset c, const Lit toRemoveLit);
     lbool       cleanClause(ClOffset c);
     void        unlinkClause(ClOffset cc, bool drup = true);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
-
-    //Findsubsumed
-    template<class T>
-    void findSubsumed0(
-        const ClOffset offset
-        , const T& ps
-        , const CL_ABST_TYPE abs
-        , vector<ClOffset>& out_subsumed
-        , const bool removeImplicit = false
-    );
-
-    template<class T>
-    void findStrengthened(
-        const ClOffset offset
-        , const T& ps
-        , const CL_ABST_TYPE abs
-        , vector<ClOffset>& out_subsumed
-        , vector<Lit>& out_lits
-    );
-
-    template<class T>
-    void fillSubs(
-        const ClOffset offset
-        , const T& ps
-        , CL_ABST_TYPE abs
-        , vector<ClOffset>& out_subsumed
-        , vector<Lit>& out_lits
-        , const Lit lit
-    );
-
-    template<class T1, class T2>
-    bool subset(const T1& A, const T2& B);
-    bool subsetReverse(const Clause& B) const;
-
-    template<class T1, class T2>
-    Lit subset1(const T1& A, const T2& B);
-    bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
 
     struct WatchSorter {
         bool operator()(const Watched& first, const Watched& second)
@@ -556,50 +491,6 @@ private:
 
         const ClauseAllocator* clAllocator;
     };
-
-    /////////////////////
-    //subsume0
-    struct Sub0Ret {
-        Sub0Ret() :
-            subsumedNonLearnt(false)
-            , numSubsumed(0)
-        {};
-
-        bool subsumedNonLearnt;
-        ClauseStats stats;
-        uint32_t numSubsumed;
-    };
-    uint32_t subsume0(ClOffset offset);
-//     bool subsumeWithTris();
-
-    template<class T>
-    Sub0Ret subsume0AndUnlink(
-        const ClOffset offset
-        , const T& ps
-        , const CL_ABST_TYPE abs
-        , const bool removeImplicit = false
-    );
-
-    /////////////////////
-    //subsume1
-    struct Sub1Ret {
-        Sub1Ret() :
-            sub(0)
-            , str(0)
-        {};
-
-        Sub1Ret& operator+=(const Sub1Ret& other)
-        {
-            sub += other.sub;
-            str += other.str;
-
-            return *this;
-        }
-
-        size_t sub;
-        size_t str;
-    };
-    Sub1Ret subsume1(ClOffset offset);
 
     /////////////////////
     //Variable elimination
@@ -715,125 +606,6 @@ private:
     Stats globalStats;
 };
 
-/**
-@brief Decides only using abstraction if clause A could subsume clause B
-
-@note: It can give false positives. Never gives false negatives.
-
-For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
-contains even one bit, it means that A contains something that B doesn't. So
-A may be a subset of B only if (A & ~B) == 0
-*/
-inline bool Simplifier::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
-{
-    return ((A & ~B) == 0);
-}
-
-//A subsumes B (A <= B)
-template<class T1, class T2>
-bool Simplifier::subset(const T1& A, const T2& B)
-{
-    #ifdef MORE_DEUBUG
-    cout << "A:" << A << endl;
-    for(size_t i = 1; i < A.size(); i++) {
-        assert(A[i-1] < A[i]);
-    }
-
-    cout << "B:" << B << endl;
-    for(size_t i = 1; i < B.size(); i++) {
-        assert(B[i-1] < B[i]);
-    }
-    #endif
-
-    bool ret;
-    uint16_t i = 0;
-    uint16_t i2;
-    Lit lastB = lit_Undef;
-    for (i2 = 0; i2 != B.size(); i2++) {
-        if (lastB != lit_Undef)
-            assert(lastB < B[i2]);
-
-        lastB = B[i2];
-        //Literals are ordered
-        if (A[i] < B[i2]) {
-            ret = false;
-            goto end;
-        }
-        else if (A[i] == B[i2]) {
-            i++;
-
-            //went through the whole of A now, so A subsumes B
-            if (i == A.size()) {
-                ret = true;
-                goto end;
-            }
-        }
-    }
-    ret = false;
-
-    end:
-    *toDecrease -= i2*4 + i*4;
-    return ret;
-}
-
-inline bool Simplifier::subsetReverse(const Clause& B) const
-{
-    for (uint32_t i = 0; i != B.size(); i++) {
-        if (!seen[B[i].toInt()]) return false;
-    }
-    return true;
-}
-
-/**
-@brief Decides if A subsumes B, or if not, if A could strenghten B
-
-@note: Assumes 'seen' is cleared (will leave it cleared)
-
-Helper function findSubsumed1. Does two things in one go:
-1) decides if clause A could subsume clause B
-2) decides if clause A could be used to perform self-subsuming resoltuion on
-clause B
-
-@return lit_Error, if neither (1) or (2) is true. Returns lit_Undef (1) is true,
-and returns the literal to remove if (2) is true
-*/
-template<class T1, class T2>
-Lit Simplifier::subset1(const T1& A, const T2& B)
-{
-    Lit retLit = lit_Undef;
-
-    uint16_t i = 0;
-    uint16_t i2;
-    for (i2 = 0; i2 != B.size(); i2++) {
-        if (A[i] == ~B[i2] && retLit == lit_Undef) {
-            retLit = B[i2];
-            i++;
-            if (i == A.size())
-                goto end;
-
-            continue;
-        }
-
-        //Literals are ordered
-        if (A[i] < B[i2]) {
-            retLit = lit_Error;
-            goto end;
-        }
-
-        if (A[i] == B[i2]) {
-            i++;
-
-            if (i == A.size())
-                goto end;
-        }
-    }
-    retLit = lit_Error;
-
-    end:
-    *toDecrease -= i2*4 + i*4;
-    return retLit;
-}
-
 inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
 {
     return blockedClauses;
@@ -849,124 +621,6 @@ inline const Simplifier::Stats& Simplifier::getStats() const
     return globalStats;
 }
 
-/**
-@brief Finds clauses that are backward-subsumed by given clause
-
-Only handles backward-subsumption. Uses occurrence lists
-@param[out] out_subsumed The set of clauses subsumed by the given
-*/
-template<class T> void Simplifier::findSubsumed0(
-    const ClOffset offset //Will not match with index of the name value
-    , const T& ps //Literals in clause
-    , const CL_ABST_TYPE abs //Abstraction of literals in clause
-    , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
-    , bool removeImplicit
-) {
-    #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed0: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        cout << ps[i] << " , ";
-    }
-    cout << endl;
-    #endif
-
-    //Which literal in the clause has the smallest occur list? -- that will be picked to go through
-    size_t min_i = 0;
-    for (uint32_t i = 1; i < ps.size(); i++){
-        if (solver->watches[ps[i].toInt()].size() < solver->watches[ps[min_i].toInt()].size())
-            min_i = i;
-    }
-    *toDecrease -= ps.size();
-
-    //Go through the occur list of the literal that has the smallest occur list
-    vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
-    *toDecrease -= occ.size()*8 + 40;
-
-    vec<Watched>::iterator it = occ.begin();
-    vec<Watched>::iterator it2 = occ.begin();
-    size_t numBinFound = 0;
-    for (vec<Watched>::const_iterator
-        end = occ.end()
-        ; it != end
-        ; it++
-    ) {
-        if (removeImplicit) {
-            if (it->isBinary()
-                && ps.size() == 2
-                && ps[!min_i] == it->lit2()
-                && !it->learnt()
-            ) {
-                /*cout
-                << "ps " << ps << " could subsume this bin: "
-                << ps[min_i] << ", " << it->lit2()
-                << endl;*/
-                numBinFound++;
-
-                //We cannot remove ourselves
-                if (numBinFound > 1) {
-                    removeWBin(solver->watches, it->lit2(), ps[min_i], it->learnt());
-                    solver->binTri.irredBins--;
-                    solver->binTri.irredLits-=2;
-                    continue;
-                }
-            }
-
-            if (it->isTri()
-                && ps.size() == 2
-                && (ps[!min_i] == it->lit2() || ps[!min_i] == it->lit3())
-            ) {
-                /*cout
-                << "ps " << ps << " could subsume this tri: "
-                << ps[min_i] << ", " << it->lit2() << ", " << it->lit3()
-                << endl;
-                */
-                Lit lits[3];
-                lits[0] = ps[min_i];
-                lits[1] = it->lit2();
-                lits[2] = it->lit3();
-                std::sort(lits + 0, lits + 3);
-                removeTriAllButOne(solver->watches, ps[min_i], lits, it->learnt());
-                if (it->learnt()) {
-                    solver->binTri.redTris--;
-                    solver->binTri.redLits-=3;
-                } else {
-                    solver->binTri.irredTris--;
-                    solver->binTri.irredLits-=3;
-                }
-                continue;
-            }
-        }
-        *it2++ = *it;
-
-        if (!it->isClause()) {
-            continue;
-        }
-
-        *toDecrease -= 15;
-
-        if (it->getOffset() == offset
-            || !subsetAbst(abs, it->getAbst())
-        ) {
-            continue;
-        }
-
-        ClOffset offset2 = it->getOffset();
-        const Clause& cl2 = *solver->clAllocator->getPointer(offset2);
-
-        if (ps.size() > cl2.size())
-            continue;
-
-        *toDecrease -= 50;
-        if (subset(ps, cl2)) {
-            out_subsumed.push_back(it->getOffset());
-            #ifdef VERBOSE_DEBUG
-            cout << "subsumed cl offset: " << it->getOffset() << endl;
-            #endif
-        }
-    }
-    occ.shrink(it-it2);
-}
-
 inline bool Simplifier::getAnythingHasBeenBlocked() const
 {
     return anythingHasBeenBlocked;
@@ -977,6 +631,20 @@ inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
     os << bl.lits << " blocked on: " << bl.blockedOn;
 
     return os;
+}
+
+inline bool Simplifier::subsetReverse(const Clause& B) const
+{
+    for (uint32_t i = 0; i != B.size(); i++) {
+        if (!seen[B[i].toInt()])
+            return false;
+    }
+    return true;
+}
+
+inline const SubsumeStrengthen* Simplifier::getSubsumeStrengthen() const
+{
+    return subsumeStrengthen;
 }
 
 /*inline const XorFinder* Simplifier::getXorFinder() const

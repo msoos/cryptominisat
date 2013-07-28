@@ -42,6 +42,7 @@
 #include "varreplacer.h"
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
+#include "subsumestrengthen.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -168,164 +169,6 @@ void Simplifier::extendModel(SolutionExtender* extender)
         bool ret = extender->addClause(lits, blockedOn);
         assert(ret);
     }
-}
-
-/**
-@brief Backward-subsumption using given clause
-
-@p c The clause to use
-@p cl The clause to use
-
-*/
-uint32_t Simplifier::subsume0(ClOffset offset)
-{
-    Clause& cl = *solver->clAllocator->getPointer(offset);
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume0-ing with clause: " << cl << endl;
-    #endif
-
-    Sub0Ret ret = subsume0AndUnlink(
-        offset
-        , cl
-        , cl.abst
-    );
-
-    //If non-learnt is subsumed by learnt, make the learnt into non-learnt
-    if (cl.learnt()
-        && ret.subsumedNonLearnt
-    ) {
-        cl.makeNonLearnt();
-        solver->binTri.redLits -= cl.size();
-        solver->binTri.irredLits += cl.size();
-        if (!cl.getOccurLinked()) {
-            linkInClause(cl);
-        }
-    }
-
-    //Combine stats
-    cl.combineStats(ret.stats);
-
-    return ret.numSubsumed;
-}
-
-/**
-@brief Backward-subsumption using given clause
-*/
-template<class T>
-Simplifier::Sub0Ret Simplifier::subsume0AndUnlink(
-    const ClOffset offset
-    , const T& ps
-    , const CL_ABST_TYPE abs
-    , const bool removeImplicit
-) {
-    Sub0Ret ret;
-
-    subs.clear();
-    findSubsumed0(offset, ps, abs, subs, removeImplicit);
-
-    //Go through each clause that can be subsumed
-    for (vector<ClOffset>::const_iterator
-        it = subs.begin(), end = subs.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause *tmp = solver->clAllocator->getPointer(*it);
-        #ifdef VERBOSE_DEBUG
-        cout << "-> subsume0 removing:" << *tmp << endl;
-        #endif
-
-        //Combine stats
-        ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
-
-        //At least one is non-learnt. Indicate this to caller.
-        if (!tmp->learnt())
-            ret.subsumedNonLearnt = true;
-
-        /*cout
-        << "This " << ps << " (offset: " << offset << ") subsumed this: "
-        << *tmp << "(offset: " << *it << ")"
-        << endl;*/
-
-        unlinkClause(*it);
-        ret.numSubsumed++;
-
-        //If we are waaay over time, just exit
-        if (*toDecrease < -20LL*1000LL*1000LL)
-            break;
-    }
-
-    return ret;
-}
-
-/**
-@brief Backward subsumption and self-subsuming resolution
-
-Performs backward subsumption AND
-self-subsuming resolution using backward-subsumption
-*/
-Simplifier::Sub1Ret Simplifier::subsume1(const ClOffset offset)
-{
-    subs.clear();
-    subsLits.clear();
-    Sub1Ret ret;
-    Clause& cl = *solver->clAllocator->getPointer(offset);
-
-    if (solver->conf.verbosity >= 6)
-        cout << "subsume1-ing with clause:" << cl << endl;
-
-    findStrengthened(
-        offset
-        , cl
-        , cl.abst
-        , subs
-        , subsLits
-    );
-
-    for (size_t j = 0
-        ; j < subs.size() && solver->okay()
-        ; j++
-    ) {
-        ClOffset offset2 = subs[j];
-        Clause& cl2 = *solver->clAllocator->getPointer(offset2);
-        if (subsLits[j] == lit_Undef) {  //Subsume
-
-            if (solver->conf.verbosity >= 6)
-                cout << "subsumed clause " << cl2 << endl;
-
-            //If subsumes a non-learnt, and is learnt, make it non-learnt
-            if (cl.learnt()
-                && !cl2.learnt()
-            ) {
-                cl.makeNonLearnt();
-                solver->binTri.redLits -= cl.size();
-                solver->binTri.irredLits += cl.size();
-                if (!cl.getOccurLinked()) {
-                    linkInClause(cl);
-                }
-            }
-
-            //Update stats
-            cl.combineStats(cl2.stats);
-
-            unlinkClause(offset2);
-            ret.sub++;
-        } else { //Strengthen
-            if (solver->conf.verbosity >= 6) {
-                cout << "strenghtened clause " << cl2 << endl;
-            }
-            strengthen(offset2, subsLits[j]);
-
-            ret.str++;
-            if (!solver->ok)
-                return ret;
-
-            //If we are waaay over time, just exit
-            if (*toDecrease < -20LL*1000LL*1000LL)
-                break;
-        }
-    }
-
-    return ret;
 }
 
 /**
@@ -466,160 +309,6 @@ lbool Simplifier::cleanClause(ClOffset offset)
             cl.setStrenghtened();
             return l_Undef;
     }
-}
-
-/**
-@brief Removes a literal from a clause
-
-May return with solver->ok becoming FALSE, and may set&propagate variable values.
-*/
-void Simplifier::strengthen(ClOffset offset, const Lit toRemoveLit)
-{
-    Clause& cl = *solver->clAllocator->getPointer(offset);
-    #ifdef VERBOSE_DEBUG
-    cout << "-> Strenghtening clause :" << cl;
-    cout << " with lit: " << toRemoveLit << endl;
-    #endif
-
-    *toDecrease -= 5;
-    #ifdef DRUP
-    vector<Lit> origCl(cl.size());
-    std::copy(cl.begin(), cl.end(), origCl.begin());
-    #endif
-    cl.strengthen(toRemoveLit);
-    #ifdef DRUP
-    if (solver->drup) {
-        *(solver->drup)
-        << cl
-        << " 0\n"
-        << "d " << origCl
-        << " 0\n";
-    }
-    #endif
-
-    runStats.litsRemStrengthen++;
-    removeWCl(solver->watches[toRemoveLit.toInt()], offset);
-    if (cl.learnt())
-        solver->binTri.redLits--;
-    else
-        solver->binTri.irredLits--;
-
-    cleanClause(offset);
-}
-
-void Simplifier::performSubsumption()
-{
-    //If clauses are empty, the system below segfaults
-    if (clauses.empty())
-        return;
-
-    double myTime = cpuTime();
-    size_t wenThrough = 0;
-    size_t subsumed = 0;
-    toDecrease = &numMaxSubsume0;
-    while (*toDecrease > 0
-        && wenThrough < 1.5*(double)clauses.size()
-    ) {
-        *toDecrease -= 2;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *toDecrease << endl;
-        }
-
-        size_t num = solver->mtrand.randInt(clauses.size()-1);
-        ClOffset offset = clauses[num];
-        Clause* cl = solver->clAllocator->getPointer(offset);
-
-        //Has already been removed
-        if (cl->getFreed())
-            continue;
-
-        wenThrough++;
-        *toDecrease -= 20;
-
-        subsumed += subsume0(offset);
-    }
-
-    if (solver->conf.verbosity >= 3) {
-        cout
-        << "c subs: " << subsumed
-        << " tried: " << wenThrough
-        << " T: " << cpuTime() - myTime
-        << endl;
-    }
-
-    //Update time used
-    runStats.subsumedBySub += subsumed;
-    runStats.subsumeTime += cpuTime() - myTime;
-}
-
-bool Simplifier::performStrengthening()
-{
-    assert(solver->ok);
-
-    double myTime = cpuTime();
-    size_t wenThrough = 0;
-    toDecrease = &numMaxSubsume1;
-    Sub1Ret ret;
-    while(*toDecrease > 0
-        && wenThrough < 1.5*(double)2*clauses.size()
-        && solver->okay()
-    ) {
-        *toDecrease -= 20;
-        wenThrough++;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *toDecrease << endl;
-        }
-
-        size_t num = solver->mtrand.randInt(clauses.size()-1);
-        ClOffset offset = clauses[num];
-        Clause* cl = solver->clAllocator->getPointer(offset);
-
-        //Has already been removed
-        if (cl->getFreed())
-            continue;
-
-        ret += subsume1(offset);
-
-    }
-
-    if (solver->conf.verbosity >= 3) {
-        cout
-        << "c streng sub: " << ret.sub
-        << " str: " << ret.str
-        << " tried: " << wenThrough
-        << " T: " << cpuTime() - myTime
-        << endl;
-    }
-
-    //Update time used
-    runStats.subsumedByStr += ret.sub;
-    runStats.litsRemStrengthen += ret.str;
-    runStats.strengthenTime += cpuTime() - myTime;
-
-    return solver->ok;
-}
-
-void Simplifier::linkInClause(Clause& cl)
-{
-    assert(cl.size() > 3);
-    ClOffset offset = solver->clAllocator->getOffset(&cl);
-    std::sort(cl.begin(), cl.end());
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        vec<Watched>& ws = solver->watches[cl[i].toInt()];
-        *toDecrease -= ws.size();
-
-        ws.push(Watched(offset, cl.abst));
-    }
-    assert(cl.abst == calcAbstraction(cl));
-    cl.setOccurLinked(true);
 }
 
 /**
@@ -1090,124 +779,6 @@ bool Simplifier::propagate()
     return true;
 }
 
-// struct WatchTriFirst
-// {
-//     bool operator()(const Watched& a, const Watched& b)
-//     {
-//         WatchType aType = a.getType();
-//         WatchType bType = b.getType();
-//
-//         //Equal? Undecidable
-//         if (aType == bType)
-//             return false;
-//
-//         //One is binary, but the other isn't? Return that
-//         if (aType == watch_binary_t)
-//             return true;
-//         if (bType == watch_binary_t)
-//             return false;
-//
-//         //At this point neither is binary, and they are unequal
-//
-//         //One is tri, but the other isn't? Return that
-//         if (aType == watch_tertiary_t)
-//             return true;
-//         if (bType == watch_tertiary_t)
-//             return false;
-//
-//         //At this point, both must be clause, but that's impossible
-//         assert(false);
-//     }
-// };
-
-// bool Simplifier::subsumeWithTris()
-// {
-//     vector<Lit> lits;
-//     size_t strSucceed = 0;
-//
-//     //Stats
-//     toDecrease = &numMaxTriSub;
-//     const size_t origTrailSize = solver->trail.size();
-//     double myTime = cpuTime();
-//     size_t subsumed = 0;
-//
-//     //Randomize start in the watchlist
-//     size_t upI;
-//     upI = solver->mtrand.randInt(solver->watches.size()-1);
-//
-//     size_t tried = 0;
-//     size_t numDone = 0;
-//     for (; numDone < solver->watches.size() && *toDecrease > 0
-//         ; upI = (upI +1) % solver->watches.size(), numDone++
-//
-//     ) {
-//         Lit lit = Lit::toLit(upI);
-//         vec<Watched>& ws = solver->watches[upI];
-//
-//         //Must re-order so that TRI-s are first
-//         //Otherwise we might re-order list while looking through.. very messy
-//         WatchTriFirst sorter;
-//         std::sort(ws.begin(), ws.end(), sorter);
-//
-//         for (size_t i = 0
-//             ; i < ws.size() && *toDecrease > 0
-//             ; i++
-//         ) {
-//             //Each TRI only once
-//             if (ws[i].isTri()
-//                 && lit < ws[i].lit2()
-//                 && ws[i].lit2() < ws[i].lit3()
-//             ) {
-//                 tried++;
-//                 lits.resize(3);
-//                 lits[0] = lit;
-//                 lits[1] = ws[i].lit2();
-//                 lits[2] = ws[i].lit3();
-//                 CL_ABST_TYPE abstr = calcAbstraction(lits);
-//
-//                 Sub0Ret ret = subsume0Final(
-//                     std::numeric_limits<ClOffset>::max()
-//                     , lits
-//                     , abstr
-//                 );
-//
-//                 subsumed += ret.numSubsumed;
-//
-//                 if (ws[i].learnt()
-//                     && ret.subsumedNonLearnt
-//                 ) {
-//                     ws[i].setLearnt(false);
-//                     solver->binTri.redLits -= 3;
-//                     solver->binTri.irredLits += 3;
-//                     solver->binTri.redTris--;
-//                     solver->binTri.irredTris++;
-//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setLearnt(false);
-//                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setLearnt(false);
-//                 }
-//             }
-//         }
-//
-//         if (!solver->okay())
-//             break;
-//     }
-//
-//     if (solver->conf.verbosity >= 2) {
-//         cout
-//         << "c [subs] tri"
-//         << " subs: " << subsumed
-//         << " tried: " << tried
-//         << " str: " << strSucceed
-//         << " toDecrease: " << *toDecrease
-//         << " 0-depth ass: " << solver->trail.size() - origTrailSize
-//         << " time: " << cpuTime() - myTime
-//         << endl;
-//     }
-//
-//     //runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
-//
-//     return solver->ok;
-// }
-
 void Simplifier::subsumeLearnts()
 {
     double myTime = cpuTime();
@@ -1250,7 +821,7 @@ void Simplifier::subsumeLearnts()
     runStats.linkInTime += linkInTime;
 
     //Carry out subsume0
-    performSubsumption();
+    subsumeStrengthen->performSubsumption();
 
     //Add irred to occur, but only temporarily
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
@@ -1265,7 +836,7 @@ void Simplifier::subsumeLearnts()
     finishUp(origTrailSize);
 
     if (solver->conf.verbosity >= 1) {
-        runStats.printShortSubStr();
+        subsumeStrengthen->getRunStats().printShort();
     }
 }
 
@@ -1381,13 +952,13 @@ bool Simplifier::simplify()
     //Do subsumption & var-elim in loop
     assert(solver->ok);
 
-//     subsumeWithTris();
+//   subsumeStrengthen->subsumeWithTris();
 
     //Carry out subsume0
-    performSubsumption();
+    subsumeStrengthen->performSubsumption();
 
     //Carry out strengthening
-    if (!performStrengthening())
+    if (!subsumeStrengthen->performStrengthening())
         goto end;
 
     //XOR-finding
@@ -1573,6 +1144,7 @@ void Simplifier::finishUp(
     //Update global stats
     runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
+    subsumeStrengthen->finishedRun();
 
     if (solver->ok) {
         checkElimedUnassignedAndStats();
@@ -2369,106 +1941,6 @@ void Simplifier::cleanBlockedClauses()
     blockedClauses.resize(blockedClauses.size()-(i-j));
 }
 
-/**
-@brief Checks if clauses are subsumed or could be strenghtened with given clause
-
-Checks if:
-* any clause is subsumed with given clause
-* the given clause could perform self-subsuming resolution on any other clause
-
-@param[in] ps The clause to perform the above listed algos with
-@param[in] abs The abstraction of clause ps
-@param[out] out_subsumed The clauses that could be modified by ps
-@param[out] out_lits Defines HOW these clauses could be modified. By removing
-literal, or by subsumption (in this case, there is lit_Undef here)
-*/
-template<class T>
-void Simplifier::findStrengthened(
-    ClOffset offset
-    , const T& cl
-    , const CL_ABST_TYPE abs
-    , vector<ClOffset>& out_subsumed
-    , vector<Lit>& out_lits
-)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "findStrengthened: " << cl << endl;
-    #endif
-
-    Var minVar = var_Undef;
-    uint32_t bestSize = std::numeric_limits<uint32_t>::max();
-    for (uint32_t i = 0; i < cl.size(); i++){
-        uint32_t newSize =
-            solver->watches[cl[i].toInt()].size()
-                + solver->watches[(~cl[i]).toInt()].size();
-
-        if (newSize < bestSize) {
-            minVar = cl[i].var();
-            bestSize = newSize;
-        }
-    }
-    assert(minVar != var_Undef);
-    *toDecrease -= cl.size();
-
-    fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, true));
-    fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
-}
-
-/**
-@brief Helper function for findStrengthened
-
-Used to avoid duplication of code
-*/
-template<class T>
-void inline Simplifier::fillSubs(
-    const ClOffset offset
-    , const T& cl
-    , const CL_ABST_TYPE abs
-    , vector<ClOffset>& out_subsumed
-    , vector<Lit>& out_lits
-    , const Lit lit
-) {
-    Lit litSub;
-    const vec<Watched>& cs = solver->watches[lit.toInt()];
-    *toDecrease -= cs.size()*15 + 40;
-    for (vec<Watched>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; it++
-    ) {
-        if (!it->isClause())
-            continue;
-
-        if (it->getOffset() == offset
-            || !subsetAbst(abs, it->getAbst())
-        ) {
-            continue;
-        }
-
-        ClOffset offset2 = it->getOffset();
-        const Clause& cl2 = *solver->clAllocator->getPointer(offset2);
-
-        if (cl.size() > cl2.size())
-            continue;
-
-        *toDecrease -= cl.size() + cl2.size();
-        litSub = subset1(cl, cl2);
-        if (litSub != lit_Error) {
-            out_subsumed.push_back(it->getOffset());
-            out_lits.push_back(litSub);
-
-            #ifdef VERBOSE_DEBUG
-            if (litSub == lit_Undef) cout << "subsume0-d: ";
-            else cout << "subsume1-ed (lit: "
-                << litSub
-                << ") clause offset: "
-                << it->getOffset()
-                << endl;
-            #endif
-        }
-    }
-}
-
 void Simplifier::removeClausesHelper(
     const vec<Watched>& todo
     , const Lit lit
@@ -2897,10 +2369,10 @@ bool Simplifier::maybeEliminate(const Var var)
             linkInClause(*newCl);
             ClOffset offset = solver->clAllocator->getOffset(newCl);
             clauses.push_back(offset);
-            runStats.subsumedByVE += subsume0(offset);
+            runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
         } else if (finalLits.size() == 3 || finalLits.size() == 2) {
             //Subsume long
-            Sub0Ret ret = subsume0AndUnlink(
+            SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
                 std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
                 , finalLits //Literals in this binary clause
                 , calcAbstraction(finalLits) //Abstraction of literals
@@ -3660,8 +3132,8 @@ uint64_t Simplifier::memUsed() const
     b += dummy.capacity()*sizeof(char);
     b += toClear.capacity()*sizeof(Lit);
     b += finalLits.capacity()*sizeof(Lit);
-    b += subs.capacity()*sizeof(ClOffset);
-    b += subsLits.capacity()*sizeof(Lit);
+    b += subsumeStrengthen->memUsed();
+
     b += var_elimed.capacity()*sizeof(char); //TODO wrong, because of template specialization of bit-array
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
@@ -3704,6 +3176,21 @@ void Simplifier::freeXorMem()
 {
     delete xorFinder;
     xorFinder = NULL;
+}
+
+void Simplifier::linkInClause(Clause& cl)
+{
+    assert(cl.size() > 3);
+    ClOffset offset = solver->clAllocator->getOffset(&cl);
+    std::sort(cl.begin(), cl.end());
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        vec<Watched>& ws = solver->watches[cl[i].toInt()];
+        *toDecrease -= ws.size();
+
+        ws.push(Watched(offset, cl.abst));
+    }
+    assert(cl.abst == calcAbstraction(cl));
+    cl.setOccurLinked(true);
 }
 
 /*const GateFinder* Simplifier::getGateFinder() const

@@ -51,6 +51,7 @@ class SQLStats;
 class ImplCache;
 class CompFinder;
 class CompHandler;
+class SubsumeStrengthen;
 
 class LitReachData {
     public:
@@ -366,6 +367,7 @@ class Solver : public Searcher
         friend class Prober;
         friend class ClauseVivifier;
         friend class Simplifier;
+        friend class SubsumeStrengthen;
         friend class ClauseCleaner;
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;

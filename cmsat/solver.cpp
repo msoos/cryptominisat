@@ -38,6 +38,7 @@
 #include "completedetachreattacher.h"
 #include "compfinder.h"
 #include "comphandler.h"
+#include "subsumestrengthen.h"
 #include "varupdatehelper.h"
 
 using namespace CMSat;
@@ -2284,6 +2285,8 @@ void Solver::printFullStats() const
     subsumer->getXorFinder()->getStats().print(
         subsumer->getXorFinder()->getNumCalls()
     );*/
+
+    simplifier->getSubsumeStrengthen()->getStats().print();
 
     //VarReplacer stats
     printStatsLine("c SCC time"

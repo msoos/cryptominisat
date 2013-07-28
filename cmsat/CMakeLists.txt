@@ -14,6 +14,7 @@ set(cryptoms_lib_files
     clausecleaner.cpp
     prober.cpp
     simplifier.cpp
+    subsumestrengthen.cpp
     clauseallocator.cpp
     sccfinder.cpp
     solverconf.cpp
