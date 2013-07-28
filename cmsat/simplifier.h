@@ -52,7 +52,7 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-class GateFinder;
+//class GateFinder;
 class XorFinderAbst;
 
 struct BlockedClause {
@@ -416,7 +416,7 @@ public:
     bool getVarElimed(const Var var) const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
-    const GateFinder* getGateFinder() const;
+    //const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     void checkElimedUnassignedAndStats() const;
     void checkElimedUnassigned() const;
@@ -701,8 +701,8 @@ private:
 
     /////////////////////
     //Gate extraction
-    friend class GateFinder;
-    GateFinder *gateFinder;
+    //friend class GateFinder;
+    //GateFinder *gateFinder;
 
     //validity checking
     void sanityCheckElimedVars();

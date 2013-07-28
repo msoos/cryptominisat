@@ -84,7 +84,7 @@ Simplifier::Simplifier(Solver* _solver):
     }
     #endif
 
-    gateFinder = new GateFinder(this, solver);
+    //gateFinder = new GateFinder(this, solver);
 }
 
 Simplifier::~Simplifier()
@@ -93,7 +93,7 @@ Simplifier::~Simplifier()
     delete xorFinder;
     #endif
 
-    delete gateFinder;
+    //delete gateFinder;
 }
 
 /**
@@ -110,9 +110,9 @@ void Simplifier::newVar()
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
 
-    if (solver->conf.doGateFind) {
-        gateFinder->newVar();
-    }
+//     if (solver->conf.doGateFind) {
+//         gateFinder->newVar();
+//     }
 
     //variable status
     var_elimed .push_back(false);
@@ -1341,6 +1341,7 @@ bool Simplifier::simplify()
 
     //Do blocked clause elimination
     if (solver->conf.doBlockClauses) {
+        toDecrease = &numMaxBlocked;
         blockClauses();
         blockImplicit(false, true);
     }
@@ -1369,11 +1370,10 @@ bool Simplifier::simplify()
     #endif
 
     //Gate-finding
-    if (solver->conf.doCache && solver->conf.doGateFind) {
-        if (!gateFinder->doAll())
-            goto end;
-    }
-    toDecrease = &numMaxBlocked;
+//     if (solver->conf.doCache && solver->conf.doGateFind) {
+//         if (!gateFinder->doAll())
+//             goto end;
+//     }
 
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     origTrailSize = solver->trail.size();
