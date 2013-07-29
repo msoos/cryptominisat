@@ -84,6 +84,7 @@ Simplifier::Simplifier(Solver* _solver):
         xorFinder = new XorFinder(this, solver);
     }
     #endif
+    subsumeStrengthen = new SubsumeStrengthen(this, solver);
 
     //gateFinder = new GateFinder(this, solver);
 }
@@ -93,6 +94,7 @@ Simplifier::~Simplifier()
     #ifdef USE_M4RI
     delete xorFinder;
     #endif
+    delete subsumeStrengthen;
 
     //delete gateFinder;
 }

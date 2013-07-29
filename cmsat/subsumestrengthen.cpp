@@ -4,6 +4,15 @@
 
 using namespace CMSat;
 
+SubsumeStrengthen::SubsumeStrengthen(
+    Simplifier* _simplifier
+    , Solver* _solver
+) :
+    simplifier(_simplifier)
+    , solver(_solver)
+{
+}
+
 /**
 @brief Backward-subsumption using given clause
 

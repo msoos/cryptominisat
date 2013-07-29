@@ -10,6 +10,7 @@ class Simplifier;
 class SubsumeStrengthen
 {
 public:
+    SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
     uint64_t memUsed() const;
     void performSubsumption();
     bool performStrengthening();
