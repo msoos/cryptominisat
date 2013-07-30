@@ -714,9 +714,8 @@ class Searcher : public PropEngine
         vector<ClOffset> toAttachLater;
         void doOTFSubsume(PropBy confl);
         vector<OTFClause> otfMustAttach;
-        //set<Lit> learnt_clause2;
-        size_t learnt_clause2_size;
-        CL_ABST_TYPE learnt_clause2_abst;
+        size_t tmp_learnt_clause_size;
+        CL_ABST_TYPE tmp_learnt_clause_abst;
 
         void analyzeHelper(
             Lit lit

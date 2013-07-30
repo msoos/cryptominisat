@@ -156,10 +156,9 @@ void Searcher::analyzeHelper(
         seen[var] = 1;
 
         varBumpActivity(var);
-        //learnt_clause2.insert(lit);
-        learnt_clause2_size++;
+        tmp_learnt_clause_size++;
         seen2[lit.toInt()] = 1;
-        learnt_clause2_abst |= abst_var(lit.var());
+        tmp_learnt_clause_abst |= abst_var(lit.var());
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
@@ -204,7 +203,7 @@ void Searcher::recursiveConfClauseMin()
     learnt_clause.resize(j);
 }
 
-void Searcher::doOTFSubsume(PropBy confl)
+void Searcher::doOTFSubsume(const PropBy confl)
 {
     ClOffset offset = confl.getClause();
     Clause& cl = *clAllocator->getPointer(offset);
@@ -218,25 +217,8 @@ void Searcher::doOTFSubsume(PropBy confl)
     }
 
     //Does not subsume
-    if (num != learnt_clause2_size)
+    if (num != tmp_learnt_clause_size)
         return;
-
-    /*
-    cout
-    << "MATCH!"
-    << " cl: " << cl << "red: " << cl.red() << endl
-    << " learnt cl: ";
-    for(const Lit
-        *it = cl.begin(), *end = cl.end()
-        ; it != end
-        ; it++
-    ) {
-        if (seen2[it->toInt()]) {
-            cout << *it << ", ";
-        }
-    }
-    cout << endl;
-    */
 
     //Final will be implicit
     if (num <= 3) {
@@ -289,7 +271,7 @@ void Searcher::doOTFSubsume(PropBy confl)
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
         stats.otfSubsumedRed += cl.red();
-        stats.otfSubsumedLitsGained += cl.size() - learnt_clause2_size;
+        stats.otfSubsumedLitsGained += cl.size() - tmp_learnt_clause_size;
 
         size_t i = 0;
         size_t i2 = 0;
@@ -299,7 +281,7 @@ void Searcher::doOTFSubsume(PropBy confl)
             }
         }
         cl.shrink(i-i2);
-        assert(cl.size() == learnt_clause2_size);
+        assert(cl.size() == tmp_learnt_clause_size);
         #ifdef DRUP
         if (conf.verbosity >= 6) {
             cout
@@ -402,9 +384,8 @@ Clause* Searcher::analyze(
     lastDecisionLevel.clear();
     otfMustAttach.clear();
     toAttachLater.clear();
-    //learnt_clause2.clear();
-    learnt_clause2_size = 0;
-    learnt_clause2_abst = 0;
+    tmp_learnt_clause_size = 0;
+    tmp_learnt_clause_abst = 0;
     assert(decisionLevel() > 0);
 
     int pathC = 0;
@@ -421,15 +402,14 @@ Clause* Searcher::analyze(
         #endif
 
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
+        //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            //assert(learnt_clause2.find(~p) != learnt_clause2.end());
-            //learnt_clause2.erase(~p);
-            learnt_clause2_size--;
+            tmp_learnt_clause_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
 
             //We MUST under-estimate
-            learnt_clause2_abst &= ~(abst_var((~p).var()));
+            tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
         //Add literals from 'confl' to clause
@@ -510,10 +490,12 @@ Clause* Searcher::analyze(
 
         if (!fromProber
             && conf.doOTFSubsume
+            //A long clause
             && cl != NULL
-            && cl->size() > learnt_clause2_size
+            //Must subsume, so must be smaller
+            && cl->size() > tmp_learnt_clause_size
             //Everything in learnt_cl_2 seems to be also in cl
-            && ((cl->abst & learnt_clause2_abst) ==  learnt_clause2_abst)
+            && ((cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
             && pathC > 1
         ) {
             doOTFSubsume(confl);
