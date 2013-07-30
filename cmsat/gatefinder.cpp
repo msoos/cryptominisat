@@ -297,8 +297,7 @@ bool GateFinder::doAllOptimisationWithGates()
         subsumer->toDecrease = &numMaxShortenWithGates;
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = solver->binTri.irredLits + solver->binTri.redLits
-            - solver->binTri.redBins*2 - solver->binTri.irredBins;
+        runStats.numLongClsLits = solver->binTri.irredLits + solver->binTri.redLits;
 
         //Go through each gate, see if we can do something with it
         for (const auto& gate: orGates) {

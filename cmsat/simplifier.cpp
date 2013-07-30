@@ -1263,8 +1263,6 @@ bool Simplifier::propImplicits()
 
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
-    solver->binTri.irredLits -= numRemovedHalfNonLearnt;
-    solver->binTri.redLits -= numRemovedHalfLearnt;
     solver->binTri.redBins -= numRemovedHalfLearnt/2;
     solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
 
@@ -1525,7 +1523,6 @@ void Simplifier::blockImplicit(
                     *toDecrease -= solver->watches[lit2.toInt()].size();
                     removeWBin(solver->watches, lit2, lit, false);
                     assert(!ws[i].learnt());
-                    solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
                 } else {
                     blockedTri++;
@@ -1535,7 +1532,6 @@ void Simplifier::blockImplicit(
                     removeWTri(solver->watches, lit2, lit, lit3, false);
                     removeWTri(solver->watches, lit3, lit, lit2, false);
                     assert(!ws[i].learnt());
-                    solver->binTri.irredLits -= 3;
                     solver->binTri.irredTris--;
                 }
 

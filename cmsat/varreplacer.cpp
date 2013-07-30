@@ -520,15 +520,17 @@ bool VarReplacer::replaceImplicit()
     #endif
 
     assert(removedLearntBin % 2 == 0);
-    assert(removedNonLearntBin % 2 == 0);
-    assert(removedLearntTri % 3 == 0);
-    assert(removedNonLearntTri % 3 == 0);
-    solver->binTri.redLits -= removedLearntBin + removedLearntTri;
-    solver->binTri.irredLits -= removedNonLearntBin + removedNonLearntTri;
     solver->binTri.redBins -= removedLearntBin/2;
+
+    assert(removedNonLearntBin % 2 == 0);
     solver->binTri.irredBins -= removedNonLearntBin/2;
+
+    assert(removedLearntTri % 3 == 0);
     solver->binTri.redTris -= removedLearntTri/3;
+
+    assert(removedNonLearntTri % 3 == 0);
     solver->binTri.irredTris -= removedNonLearntTri/3;
+
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
     #endif

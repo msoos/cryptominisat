@@ -470,7 +470,6 @@ protected:
 
     // Debug & etc:
     void     printAllClauses();
-    void     checkLiteralCount();
     void     checkNoWrongAttach() const;
     void     printWatchList(const Lit lit) const;
     bool     satisfied(const BinaryClause& bin);

@@ -200,8 +200,6 @@ void ClauseCleaner::treatImplicitClauses()
     assert(remLBin % 2 == 0);
     assert(remNonLTri % 3 == 0);
     assert(remLTri % 3 == 0);
-    solver->binTri.irredLits -= remNonLBin + remNonLTri;
-    solver->binTri.redLits -= remLBin + remLTri;
     solver->binTri.irredBins -= remNonLBin/2;
     solver->binTri.redBins -= remLBin/2;
     solver->binTri.irredTris -= remNonLTri/3;

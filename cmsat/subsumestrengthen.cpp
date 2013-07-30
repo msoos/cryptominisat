@@ -578,7 +578,6 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
                 if (numBinFound > 1) {
                     removeWBin(solver->watches, it->lit2(), ps[min_i], it->learnt());
                     solver->binTri.irredBins--;
-                    solver->binTri.irredLits-=2;
                     continue;
                 }
             }
@@ -600,10 +599,8 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
                 removeTriAllButOne(solver->watches, ps[min_i], lits, it->learnt());
                 if (it->learnt()) {
                     solver->binTri.redTris--;
-                    solver->binTri.redLits-=3;
                 } else {
                     solver->binTri.irredTris--;
-                    solver->binTri.irredLits-=3;
                 }
                 continue;
             }
@@ -741,8 +738,6 @@ void SubsumeStrengthen::finishedRun()
 //                     && ret.subsumedNonLearnt
 //                 ) {
 //                     ws[i].setLearnt(false);
-//                     solver->binTri.redLits -= 3;
-//                     solver->binTri.irredLits += 3;
 //                     solver->binTri.redTris--;
 //                     solver->binTri.irredTris++;
 //                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setLearnt(false);

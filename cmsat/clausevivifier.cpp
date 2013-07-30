@@ -603,8 +603,6 @@ bool ClauseVivifier::vivifyClausesCache(
                         findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setLearnt(false);
                         solver->binTri.redBins--;
                         solver->binTri.irredBins++;
-                        solver->binTri.redLits -= 2;
-                        solver->binTri.irredLits += 2;
                     }
                     subBinTri++;
                     isSubsumed = true;
@@ -639,8 +637,6 @@ bool ClauseVivifier::vivifyClausesCache(
                         findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setLearnt(false);
                         solver->binTri.redTris--;
                         solver->binTri.irredTris++;
-                        solver->binTri.redLits -= 3;
-                        solver->binTri.irredLits += 3;
                     }
                     subBinTri++;
                     isSubsumed = true;
@@ -875,8 +871,6 @@ void ClauseVivifier::subsumeImplicit()
                         timeAvailable -= 20;
                         timeAvailable -= solver->watches[lastLit2.toInt()].size();
                         findWatchedOfBin(solver->watches, lastLit2, lit, true).setLearnt(false);
-                        solver->binTri.redLits -= 2;
-                        solver->binTri.irredLits += 2;
                         solver->binTri.redBins--;
                         solver->binTri.irredBins++;
                         lastLearnt = false;
@@ -980,10 +974,8 @@ void ClauseVivifier::subsumeImplicit()
                 timeAvailable -= solver->watches[i->lit2().toInt()].size();
                 removeWBin(solver->watches, i->lit2(), lit, i->learnt());
                 if (i->learnt()) {
-                    solver->binTri.redLits -= 2;
                     solver->binTri.redBins--;
                 } else {
-                    solver->binTri.irredLits -= 2;
                     solver->binTri.irredBins--;
                 }
 
@@ -1350,10 +1342,8 @@ void ClauseVivifier::removeTri(
 
     //Update stats for tri
     if (learnt) {
-        solver->binTri.redLits -= 3;
         solver->binTri.redTris--;
     } else {
-        solver->binTri.irredLits -= 3;
         solver->binTri.irredTris--;
     }
 }

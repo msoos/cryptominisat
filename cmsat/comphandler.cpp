@@ -462,7 +462,6 @@ void CompHandler::moveClausesImplicit(
 
                     //Update stats
                     solver->binTri.redBins--;
-                    solver->binTri.redLits -= 2;
 
                     //Not copy, that's the other Watched removed
                     continue;
@@ -532,7 +531,6 @@ void CompHandler::moveClausesImplicit(
 
                     //Update stats
                     solver->binTri.redTris--;
-                    solver->binTri.redLits -= 3;
 
                     //We need it sorted, because that's how we know what order
                     //it is in the Watched()
@@ -597,19 +595,15 @@ void CompHandler::moveClausesImplicit(
 
     assert(numRemovedHalfNonLearnt % 2 == 0);
     solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
-    solver->binTri.irredLits -= numRemovedHalfNonLearnt;
 
     assert(numRemovedThirdNonLearnt % 3 == 0);
     solver->binTri.irredTris -= numRemovedThirdNonLearnt/3;
-    solver->binTri.irredLits -= numRemovedThirdNonLearnt;
 
     assert(numRemovedHalfLearnt % 2 == 0);
     solver->binTri.redBins -= numRemovedHalfLearnt/2;
-    solver->binTri.redLits -= numRemovedHalfLearnt;
 
     assert(numRemovedThirdLearnt % 3 == 0);
     solver->binTri.redTris -= numRemovedThirdLearnt/3;
-    solver->binTri.redLits -= numRemovedThirdLearnt;
 }
 
 void CompHandler::addSavedState(vector<lbool>& solution)

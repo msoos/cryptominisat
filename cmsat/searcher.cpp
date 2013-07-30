@@ -2590,11 +2590,9 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
 
             //Update stats
             if (it->getLearnt()) {
-                solver->binTri.redLits -= 2;
                 solver->binTri.redBins--;
                 removedRed++;
             } else {
-                solver->binTri.irredLits -= 2;
                 solver->binTri.irredBins--;
                 removedIrred++;
             }

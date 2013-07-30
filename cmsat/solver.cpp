@@ -408,10 +408,8 @@ void Solver::attachTriClause(
 
     //Update stats
     if (learnt) {
-        binTri.redLits += 3;
         binTri.redTris++;
     } else {
-        binTri.irredLits += 3;
         binTri.irredTris++;
     }
 
@@ -435,10 +433,8 @@ void Solver::attachBinClause(
 
     //Update stats
     if (learnt) {
-        binTri.redLits += 2;
         binTri.redBins++;
     } else {
-        binTri.irredLits += 2;
         binTri.irredBins++;
     }
     binTri.numNewBinsSinceSCC++;
@@ -454,10 +450,8 @@ void Solver::detachTriClause(
     , const bool learnt
 ) {
     if (learnt) {
-        binTri.redLits -= 3;
         binTri.redTris--;
     } else {
-        binTri.irredLits -= 3;
         binTri.irredTris--;
     }
 
@@ -470,10 +464,8 @@ void Solver::detachBinClause(
     , const bool learnt
 ) {
     if (learnt) {
-        binTri.redLits -= 2;
         binTri.redBins--;
     } else {
-        binTri.irredLits -= 2;
         binTri.irredBins--;
     }
 
@@ -563,7 +555,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Undo var replacement
     for (Lit& lit: ps) {
-        //Varreplacer
         Lit origLit = lit;
         lit = varReplacer->getLitReplacedWith(lit);
         #ifdef VERBOSE_DEBUG
@@ -1200,7 +1191,7 @@ CleaningStats Solver::reduceDB()
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = longRedCls.size();
-    tmpStats.origNumLits = binTri.redLits - binTri.redBins*2;
+    tmpStats.origNumLits = binTri.redLits;
 
     //Calculate how many to remove
     uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
@@ -3022,32 +3013,6 @@ bool Solver::verifyModel() const
     return verificationOK;
 }
 
-
-void Solver::checkLiteralCount() const
-{
-    // Check that sizes are calculated correctly:
-    uint64_t cnt = 0;
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        const Clause* cl = clAllocator->getPointer(*it);
-        cnt += cl->size();
-    }
-
-    if (binTri.irredLits != cnt) {
-        cout
-        << "c ERROR! literal count: "
-        << binTri.irredLits
-        << " , real value = "
-        << cnt
-        << endl;
-
-        assert(binTri.irredLits == cnt);
-    }
-}
-
 size_t Solver::getNumDecisionVars() const
 {
     return numDecisionVars;
@@ -3405,7 +3370,7 @@ void Solver::checkStats(const bool allowFreed) const
     checkImplicitStats();
 
     //Count number of non-learnt literals
-    uint64_t numLitsNonLearnt = binTri.irredBins*2 + binTri.irredTris*3;
+    uint64_t numLitsNonLearnt = 0;
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
@@ -3420,7 +3385,7 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Count number of learnt literals
-    uint64_t numLitsLearnt = binTri.redBins*2 + binTri.redTris*3;
+    uint64_t numLitsLearnt = 0;
     for(vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end

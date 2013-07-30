@@ -480,7 +480,6 @@ class Solver : public Searcher
         BinTriStats binTri;
         void                reArrangeClauses();
         void                reArrangeClause(ClOffset offset);
-        void                checkLiteralCount() const;
         void                printAllClauses() const;
         void                consolidateMem();
 
