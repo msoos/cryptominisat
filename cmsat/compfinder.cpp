@@ -289,19 +289,15 @@ void CompFinder::addToCompClause(const T& cl)
 
     //no trees to merge, only merge the clause into one tree
     if (tomerge.size() == 1) {
-        const uint32_t into = *tomerge.begin();
+        const uint32_t into = tomerge[0];
         seen[into] = 0;
         map<uint32_t, vector<Var> >::iterator intoReverse
             = reverseTable.find(into);
 
         //Put the new lits into this set
-        for (vector<Var>::const_iterator
-            it = newSet.begin(), end = newSet.end()
-            ; it != end
-            ; it++
-        ) {
-            intoReverse->second.push_back(*it);
-            table[*it] = into;
+        for (Var v: newSet) {
+            intoReverse->second.push_back(v);
+            table[v] = into;
         }
         return;
     }
@@ -310,18 +306,13 @@ void CompFinder::addToCompClause(const T& cl)
     timeUsed += 20;
 
     //Delete tables to merge and put their elements into newSet
-    for (vector<uint32_t>::iterator
-        it = tomerge.begin(), end = tomerge.end()
-        ; it != end
-        ; it++
-    ) {
+    for (const uint32_t merge: tomerge) {
         //Clear seen
-        seen[*it] = 0;
+        seen[merge] = 0;
 
         //Find in reverseTable
         timeUsed += reverseTable.size()*2;
-        map<uint32_t, vector<Var> >::iterator it2 =
-            reverseTable.find(*it);
+        map<uint32_t, vector<Var> >::iterator it2 = reverseTable.find(merge);
         assert(it2 != reverseTable.end());
 
         //Add them all
@@ -338,10 +329,14 @@ void CompFinder::addToCompClause(const T& cl)
         used_comp_no--;
     }
 
-    //Mark all these lits as belonging to comp_no
+    //No literals lie outside of already seen components
+    if (newSet.empty())
+        return;
+
+    //Mark all lits not belonging to seen components as belonging to comp_no
     timeUsed += newSet.size();
-    for (size_t i = 0; i < newSet.size(); i++) {
-        table[newSet[i]] = comp_no;
+    for (const Var v: newSet) {
+        table[v] = comp_no;
     }
 
     reverseTable[comp_no] = newSet;
