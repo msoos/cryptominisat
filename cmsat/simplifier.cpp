@@ -193,11 +193,11 @@ void Simplifier::unlinkClause(const ClOffset offset, bool drup)
 
         removeWCl(solver->watches[cl[i].toInt()], offset);
 
-        if (!cl.learnt())
+        if (!cl.red())
             touched.touch(cl[i]);
     }
 
-    if (cl.learnt()) {
+    if (cl.red()) {
         solver->binTri.redLits -= cl.size();
     } else {
         solver->binTri.irredLits -= cl.size();
@@ -263,7 +263,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
 
     //Update lits stat
-    if (cl.learnt())
+    if (cl.red())
         solver->binTri.redLits -= i-j;
     else
         solver->binTri.irredLits -= i-j;
@@ -298,12 +298,12 @@ lbool Simplifier::cleanClause(ClOffset offset)
             return l_True;
 
         case 2:
-            solver->attachBinClause(cl[0], cl[1], cl.learnt());
+            solver->attachBinClause(cl[0], cl[1], cl.red());
             unlinkClause(offset, false);
             return l_True;
 
         case 3:
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
             unlinkClause(offset, false);
             return l_True;
 
@@ -390,8 +390,8 @@ bool Simplifier::addFromSolver(
 
         //Sanity check that the value given as irred is correct
         assert(
-            (irred && !cl->learnt())
-            || (!irred && cl->learnt())
+            (irred && !cl->red())
+            || (!irred && cl->red())
         );
 
         if (alsoOccur
@@ -405,7 +405,7 @@ bool Simplifier::addFromSolver(
             numLinkedIn++;
             linkedInLits += cl->size();
         } else {
-            assert(cl->learnt());
+            assert(cl->red());
             cl->setOccurLinked(false);
             numNotLinkedIn++;
         }
@@ -479,7 +479,7 @@ void Simplifier::addBackToSolver()
             ) {
                 cout
                 << "ERROR! Clause " << *cl
-                << " learnt: " << cl->learnt()
+                << " red: " << cl->red()
                 << " contains lit " << *it2
                 << " which has removed status"
                 << removed_type_to_string(solver->varData[it2->var()].removed)
@@ -492,7 +492,7 @@ void Simplifier::addBackToSolver()
 
         //The clause wasn't linked in but needs removal now
         if (notLinkedNeedFree) {
-            if (cl->learnt()) {
+            if (cl->red()) {
                 solver->binTri.redLits -= cl->size();
             } else {
                 solver->binTri.irredLits -= cl->size();
@@ -505,7 +505,7 @@ void Simplifier::addBackToSolver()
 
         if (completeCleanClause(*cl)) {
             solver->attachClause(*cl);
-            if (cl->learnt()) {
+            if (cl->red()) {
                 solver->longRedCls.push_back(*it);
             } else {
                 solver->longIrredCls.push_back(*it);
@@ -522,7 +522,7 @@ bool Simplifier::completeCleanClause(Clause& cl)
 
     //Remove all lits from stats
     //we will re-attach the clause either way
-    if (cl.learnt()) {
+    if (cl.red()) {
         solver->binTri.redLits -= cl.size();
     } else {
         solver->binTri.irredLits -= cl.size();
@@ -578,11 +578,11 @@ bool Simplifier::completeCleanClause(Clause& cl)
             return false;
 
         case 2:
-            solver->attachBinClause(cl[0], cl[1], cl.learnt());
+            solver->attachBinClause(cl[0], cl[1], cl.red());
             return false;
 
         case 3:
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
             return false;
 
         default:
@@ -741,12 +741,12 @@ bool Simplifier::propagate()
                     //Update stats
                     #ifdef STATS_NEEDED
                     if (cl.size() == 3)
-                        if (cl.learnt())
+                        if (cl.red())
                             solver->propStats.propsTriRed++;
                         else
                             solver->propStats.propsTriIrred++;
                     else {
-                        if (cl.learnt())
+                        if (cl.red())
                             solver->propStats.propsLongRed++;
                         else
                             solver->propStats.propsLongIrred++;
@@ -768,7 +768,7 @@ bool Simplifier::propagate()
                 if (val == l_Undef) {
                     solver->enqueue(it->lit2());
                     #ifdef STATS_NEEDED
-                    if (it->learnt())
+                    if (it->red())
                         solver->propStats.propsBinRed++;
                     else
                         solver->propStats.propsBinIrred++;
@@ -781,7 +781,7 @@ bool Simplifier::propagate()
     return true;
 }
 
-void Simplifier::subsumeLearnts()
+void Simplifier::subsumeReds()
 {
     double myTime = cpuTime();
 
@@ -851,8 +851,8 @@ void Simplifier::checkAllLinkedIn()
     ) {
         Clause& cl = *solver->clAllocator->getPointer(*it);
 
-        assert(cl.learnt() || cl.getOccurLinked());
-        if (cl.freed() || cl.learnt())
+        assert(cl.red() || cl.getOccurLinked());
+        if (cl.freed() || cl.red())
             continue;
 
         for(size_t i = 0; i < cl.size(); i++) {
@@ -919,7 +919,7 @@ bool Simplifier::simplify()
         blockImplicit(false, true);
     }
 
-    //Add learnt to occur
+    //Add redundant to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
     addFromSolver(solver->longRedCls
         , true //try to add to occur list
@@ -997,7 +997,7 @@ end:
     if (solver->drup) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
 
-            //If doing stamping or caching, we cannot delete binary learnt
+            //If doing stamping or caching, we cannot delete binary redundant
             //clauses, because they are stored in the stamp/cache and so
             //will be used -- and DRUP will complain when used
             if (blockedClauses[i].lits.size() <= 2
@@ -1155,8 +1155,8 @@ void Simplifier::finishUp(
 
 bool Simplifier::propImplicits()
 {
-    size_t numRemovedHalfNonLearnt = 0;
-    size_t numRemovedHalfLearnt = 0;
+    size_t numRemovedHalfNonRed = 0;
+    size_t numRemovedHalfRed = 0;
 
     //Delayed enqueue for correct binary clause removal
     vector<Lit> toEnqueue;
@@ -1188,10 +1188,10 @@ bool Simplifier::propImplicits()
             if (solver->value(lit) == l_True
                 || solver->value(lit2) == l_True)
             {
-                if (ws[i].learnt())
-                    numRemovedHalfLearnt++;
+                if (ws[i].red())
+                    numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonLearnt++;
+                    numRemovedHalfNonRed++;
 
                 continue;
             }
@@ -1212,10 +1212,10 @@ bool Simplifier::propImplicits()
                 toEnqueue.push_back(lit);
 
                 //Remove binary clause
-                if (ws[i].learnt())
-                    numRemovedHalfLearnt++;
+                if (ws[i].red())
+                    numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonLearnt++;
+                    numRemovedHalfNonRed++;
 
                 continue;
             }
@@ -1227,10 +1227,10 @@ bool Simplifier::propImplicits()
                 toEnqueue.push_back(lit2);
 
                 //Remove binary clause
-                if (ws[i].learnt())
-                    numRemovedHalfLearnt++;
+                if (ws[i].red())
+                    numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonLearnt++;
+                    numRemovedHalfNonRed++;
 
                 continue;
             }
@@ -1261,10 +1261,10 @@ bool Simplifier::propImplicits()
             solver->ok = false;
     }
 
-    assert(numRemovedHalfLearnt % 2 == 0);
-    assert(numRemovedHalfNonLearnt % 2 == 0);
-    solver->binTri.redBins -= numRemovedHalfLearnt/2;
-    solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
+    assert(numRemovedHalfRed % 2 == 0);
+    assert(numRemovedHalfNonRed % 2 == 0);
+    solver->binTri.redBins -= numRemovedHalfRed/2;
+    solver->binTri.irredBins -= numRemovedHalfNonRed/2;
 
     return solver->ok;
 }
@@ -1475,7 +1475,7 @@ void Simplifier::blockImplicit(
         ) {
             //Blocking of clauses is handled elsewhere
             if (ws[i].isClause()
-                || ws[i].learnt()
+                || ws[i].red()
                 //If binary, and we don't want to remove binaries, continue
                 || (!bins && ws[i].isBinary())
                 //If tri, and we don't want to remove tertiaries, continue
@@ -1522,7 +1522,7 @@ void Simplifier::blockImplicit(
                     blockedBin++;
                     *toDecrease -= solver->watches[lit2.toInt()].size();
                     removeWBin(solver->watches, lit2, lit, false);
-                    assert(!ws[i].learnt());
+                    assert(!ws[i].red());
                     solver->binTri.irredBins--;
                 } else {
                     blockedTri++;
@@ -1531,7 +1531,7 @@ void Simplifier::blockImplicit(
                     *toDecrease -= solver->watches[lit3.toInt()].size();
                     removeWTri(solver->watches, lit2, lit, lit3, false);
                     removeWTri(solver->watches, lit3, lit, lit2, false);
-                    assert(!ws[i].learnt());
+                    assert(!ws[i].red());
                     solver->binTri.irredTris--;
                 }
 
@@ -1607,12 +1607,12 @@ void Simplifier::blockClauses()
         ClOffset offset = clauses[num];
         Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        //Already removed or learnt
-        if (cl.getFreed() || cl.learnt())
+        //Already removed or redundant
+        if (cl.getFreed() || cl.red())
             continue;
 
-        //Cannot be learnt
-        assert(!cl.learnt());
+        //Cannot be redundant
+        assert(!cl.red());
 
         tried++;
 
@@ -1709,8 +1709,8 @@ void Simplifier::asymmTE()
         ClOffset offset = clauses[num];
         Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        //Already removed or learnt
-        if (cl.getFreed() || cl.learnt())
+        //Already removed or redundant
+        if (cl.getFreed() || cl.red())
             continue;
 
 
@@ -1724,13 +1724,13 @@ void Simplifier::asymmTE()
         }
 
         //add to tmpCl literals that could be added through reverse strengthening
-        //ONLY non-learnt
+        //ONLY irred
         //TODO stamping
         /*for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
             const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
             *toDecrease -= cache.size();
             for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                if (cacheLit->getOnlyNLBin()
+                if (cacheLit->getOnlyIrredBin()
                     && !seen[(~cacheLit->getLit()).toInt()]
                 ) {
                     const Lit toAdd = ~(cacheLit->getLit());
@@ -1751,7 +1751,7 @@ void Simplifier::asymmTE()
                 /*const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
                 *toDecrease -= cache.size();
                 for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                    if ((cacheLit->getOnlyNLBin() || cl.learnt()) //subsume non-learnt with non-learnt
+                    if ((cacheLit->getOnlyIrredBin() || cl.red()) //subsume irred with irred
                         && seen[cacheLit->getLit().toInt()]
                     ) {
                         toRemove = true;
@@ -1765,7 +1765,7 @@ void Simplifier::asymmTE()
 //            }
         }
 
-        if (cl.learnt())
+        if (cl.red())
             goto next;
 
         //Blocked clause elimination
@@ -1791,7 +1791,7 @@ void Simplifier::asymmTE()
         }
 
         /*
-        //subsumption with non-learnt larger clauses
+        //subsumption with irred larger clauses
         CL_ABST_TYPE abst;
         abst = calcAbstraction(tmpCl);
         *toDecrease -= tmpCl.size()*2;
@@ -1802,7 +1802,7 @@ void Simplifier::asymmTE()
                 if (it2->index != index
                     && subsetAbst(clauseData[it2->index].abst, abst)
                     && clauses[it2->index] != NULL
-                    && !clauses[it2->index]->learnt()
+                    && !clauses[it2->index]->red()
                     && subsetReverse(*clauses[it2->index])
                 )  {
                     #ifdef VERBOSE_DEBUG_ASYMTE
@@ -1949,16 +1949,16 @@ void Simplifier::removeClausesHelper(
     for (uint32_t i = 0; i < todo.size(); i++) {
         const Watched& watch = todo[i];
         lits.clear();
-        bool learnt = false;
+        bool red = false;
 
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
             Clause& cl = *solver->clAllocator->getPointer(offset);
 
             //Update stats
-            if (cl.learnt()) {
-                learnt = true;
-                runStats.longLearntClRemThroughElim++;
+            if (cl.red()) {
+                red = true;
+                runStats.longRedClRemThroughElim++;
             } else {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
@@ -1968,33 +1968,33 @@ void Simplifier::removeClausesHelper(
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
             }
 
-            //Remove -- only DRUP the ones that are learnt
-            //The non-learnt will be removed thanks to 'blocked' system
-            unlinkClause(offset, cl.learnt());
+            //Remove -- only DRUP the ones that are redundant
+            //The irred will be removed thanks to 'blocked' system
+            unlinkClause(offset, cl.red());
         }
 
         if (watch.isBinary()) {
 
             //Update stats
-            if (!watch.learnt()) {
+            if (!watch.red()) {
                 runStats.clauses_elimed_bin++;
                 runStats.clauses_elimed_sumsize += 2;
             } else {
-                learnt = true;
-                runStats.binLearntClRemThroughElim++;
+                red = true;
+                runStats.binRedClRemThroughElim++;
             }
 
             //Put clause into blocked status
             lits.resize(2);
             lits[0] = lit;
             lits[1] = watch.lit2();
-            if (!watch.learnt()) {
+            if (!watch.red()) {
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //touch removed lits
                 touched.touch(watch.lit2());
             } else {
-                //If learnt, delayed blocked-based DRUP deletion will not work
+                //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
                 #ifdef DRUP
                 if (solver->drup
@@ -2013,18 +2013,18 @@ void Simplifier::removeClausesHelper(
             //Remove
             *toDecrease -= solver->watches[lits[0].toInt()].size();
             *toDecrease -= solver->watches[lits[1].toInt()].size();
-            solver->detachBinClause(lits[0], lits[1], watch.learnt());
+            solver->detachBinClause(lits[0], lits[1], watch.red());
         }
 
         if (watch.isTri()) {
 
             //Update stats
-            if (!watch.learnt()) {
+            if (!watch.red()) {
                 runStats.clauses_elimed_tri++;
                 runStats.clauses_elimed_sumsize += 3;
             } else {
-                learnt = true;
-                runStats.triLearntClRemThroughElim++;
+                red = true;
+                runStats.triRedClRemThroughElim++;
             }
 
             //Put clause into blocked status
@@ -2032,14 +2032,14 @@ void Simplifier::removeClausesHelper(
             lits[0] = lit;
             lits[1] = watch.lit2();
             lits[2] = watch.lit3();
-            if (!watch.learnt()) {
+            if (!watch.red()) {
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
 
                 //Touch removed lits
                 touched.touch(watch.lit2());
                 touched.touch(watch.lit3());
             } else {
-                //If learnt, delayed blocked-based DRUP deletion will not work
+                //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
                 #ifdef DRUP
                 if (solver->drup) {
@@ -2057,24 +2057,24 @@ void Simplifier::removeClausesHelper(
             *toDecrease -= solver->watches[lits[0].toInt()].size();
             *toDecrease -= solver->watches[lits[1].toInt()].size();
             *toDecrease -= solver->watches[lits[2].toInt()].size();
-            solver->detachTriClause(lits[0], lits[1], lits[2], watch.learnt());
+            solver->detachTriClause(lits[0], lits[1], lits[2], watch.red());
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
             cout
-            << "Eliminated clause " << lits << " (learnt: " << learnt << ")"
+            << "Eliminated clause " << lits << " (red: " << red << ")"
             << " on var " << lit.var()+1
             << endl;
         }
     }
 }
 
-uint32_t Simplifier::numNonLearntBins(const Lit lit) const
+uint32_t Simplifier::numNonRedBins(const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = solver->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-        if (it->isBinary() && !it->learnt()) num++;
+        if (it->isBinary() && !it->red()) num++;
     }
 
     return num;
@@ -2110,7 +2110,7 @@ int Simplifier::testVarElim(const Var var)
     resolvents.clear();
 
     //Pure literal, no resolvents
-    //we look at "pos" and "neg" (and not poss&negs) because we don't care about learnt clauses
+    //we look at "pos" and "neg" (and not poss&negs) because we don't care about redundant clauses
     if (pos.totalCls() == 0 || neg.totalCls() == 0) {
         return -100;
     }
@@ -2134,9 +2134,9 @@ int Simplifier::testVarElim(const Var var)
         //Decrement available time
         *toDecrease -= 3;
 
-        //Ignore learnt
-        if (((it->isBinary() || it->isTri()) && it->learnt())
-            || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->learnt())
+        //Ignore redundant
+        if (((it->isBinary() || it->isTri()) && it->red())
+            || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->red())
         ) {
             continue;
         }
@@ -2149,12 +2149,12 @@ int Simplifier::testVarElim(const Var var)
             //Decrement available time
             *toDecrease -= 3;
 
-            //Ignore learnt
+            //Ignore redundant
             if (
                 ((it2->isBinary() || it2->isTri())
-                    && it2->learnt())
+                    && it2->red())
                 || (it2->isClause()
-                    && solver->clAllocator->getPointer(it2->getOffset())->learnt())
+                    && solver->clAllocator->getPointer(it2->getOffset())->red())
             ) {
                 continue;
             }
@@ -2221,7 +2221,7 @@ void Simplifier::printOccur(const Lit lit) const
             << "Bin   --> "
             << lit << ", "
             << w.lit2()
-            << "(learnt: " << w.learnt()
+            << "(red: " << w.red()
             << ")"
             << endl;
         }
@@ -2231,7 +2231,7 @@ void Simplifier::printOccur(const Lit lit) const
             << "Tri   --> "
             << lit << ", "
             << w.lit2() << " , " << w.lit3()
-            << "(learnt: " << w.learnt()
+            << "(red: " << w.red()
             << ")"
             << endl;
         }
@@ -2240,7 +2240,7 @@ void Simplifier::printOccur(const Lit lit) const
             cout
             << "Clause--> "
             << *solver->clAllocator->getPointer(w.getOffset())
-            << "(learnt: " << solver->clAllocator->getPointer(w.getOffset())->learnt()
+            << "(red: " << solver->clAllocator->getPointer(w.getOffset())->red()
             << ")"
             << endl;
         }
@@ -2319,14 +2319,14 @@ bool Simplifier::maybeEliminate(const Var var)
                 ; it2 != end2
                 ; it2++
             ) {
-                if (it2->isTri() && !it2->learnt()
+                if (it2->isTri() && !it2->red()
                     && (it2->lit2() == finalLits[1]
                         || it2->lit3() == finalLits[1])
                 ) {
                     if (solver->conf.verbosity >= 6) {
                         cout
-                        << "Removing non-learnt tri-clause due to addition of"
-                        << " non-learnt bin: "
+                        << "Removing irred tri-clause due to addition of"
+                        << " irred bin: "
                         << finalLits[0]
                         << ", " << it2->lit2()
                         << ", " << it2->lit3()
@@ -2341,7 +2341,7 @@ bool Simplifier::maybeEliminate(const Var var)
                         finalLits[0]
                         , it2->lit2()
                         , it2->lit3()
-                        , it2->learnt()
+                        , it2->red()
                     );
 
                     //We have to break: we just modified the stuff we are
@@ -2354,7 +2354,7 @@ bool Simplifier::maybeEliminate(const Var var)
         //Add clause and do subsumption
         Clause* newCl = solver->addClauseInt(
             it->first //Literals in new clause
-            , false //Is the new clause learnt?
+            , false //Is the new clause redundant?
             , it->second //Statistics for this new clause (usage, etc.)
             , false //Should clause be attached?
             , &finalLits //Return final set of literals here
@@ -2431,7 +2431,7 @@ end:
     return solver->ok;
 }
 
-/*void Simplifier::addLearntBinaries(const Var var)
+/*void Simplifier::addRedBinaries(const Var var)
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
@@ -2440,15 +2440,15 @@ end:
 
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
-        const bool numOneIsLearnt = w1->learnt();
+        const bool numOneIsRed = w1->red();
         const Lit lit1 = w1->lit2();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
             if (!w2->isBinary()) continue;
-            const bool numTwoIsLearnt = w2->learnt();
-            if (!numOneIsLearnt && !numTwoIsLearnt) {
-                //At least one must be learnt
+            const bool numTwoIsRed = w2->red();
+            if (!numOneIsRed && !numTwoIsRed) {
+                //At least one must be redundant
                 continue;
             }
 
@@ -2458,7 +2458,7 @@ end:
             tmp[0] = lit1;
             tmp[1] = lit2;
             Clause* tmpOK = solver->addClauseInt(tmp, true);
-            runStats.numLearntBinVarRemAdded++;
+            runStats.numRedBinVarRemAdded++;
             release_assert(tmpOK == NULL);
             release_assert(solver->ok);
         }
@@ -2608,8 +2608,8 @@ bool Simplifier::merge(
                     ; it != end
                     ; it++
                 ) {
-                    //If learnt, that doesn't help
-                    if (!it->getOnlyNLBin())
+                    //If redundant, that doesn't help
+                    if (!it->getOnlyIrredBin())
                         continue;
 
                     const Lit otherLit = it->getLit();
@@ -2623,7 +2623,7 @@ bool Simplifier::merge(
                         seen[(~otherLit).toInt()] = 1;
                     }
 
-                    //If (a V b) is non-learnt in the clause, then done
+                    //If (a V b) is irred in the clause, then done
                     if (seen[otherLit.toInt()]) {
                         retval = false;
                         goto end;
@@ -2690,7 +2690,7 @@ bool Simplifier::agressiveCheck(
             continue;
 
         //handle tri
-        if (it->isTri() && !it->learnt()) {
+        if (it->isTri() && !it->red()) {
 
             //See if any of the literals is in
             Lit otherLit = lit_Undef;
@@ -2728,12 +2728,12 @@ bool Simplifier::agressiveCheck(
         }
 
         //Handle binary
-        if (it->isBinary() && !it->learnt()) {
+        if (it->isBinary() && !it->red()) {
             const Lit otherLit = it->lit2();
             if (otherLit.var() == noPosLit.var())
                 continue;
 
-            //If (a V b) is non-learnt, and in the clause, then we can remove
+            //If (a V b) is irred, and in the clause, then we can remove
             if (seen[otherLit.toInt()]) {
                 retval = false;
                 return true;
@@ -2774,8 +2774,8 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
         //Handle binary
         if (it->isBinary())
         {
-            //Only count non-learnt
-            if (!it->learnt()) {
+            //Only count irred
+            if (!it->red()) {
                 ret.bin++;
                 ret.lit += 2;
 
@@ -2800,8 +2800,8 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
         //Handle tertiary
         if (it->isTri())
         {
-            //Only count non-learnt
-            if (!it->learnt()) {
+            //Only count irred
+            if (!it->red()) {
                 ret.tri++;
                 ret.lit += 3;
 
@@ -2833,8 +2833,8 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
             //If in occur then it cannot be freed
             assert(!cl->freed());
 
-            //Only non-learnt is of relevance
-            if (!cl->learnt()) {
+            //Only irred is of relevance
+            if (!cl->red()) {
                 ret.longer++;
                 ret.lit += cl->size();
 
@@ -3038,7 +3038,7 @@ inline bool Simplifier::checkBlocked(const Lit lit)
         *toDecrease -= 2;
 
         //Handle binary
-        if (it->isBinary() && !it->learnt()) {
+        if (it->isBinary() && !it->red()) {
             if (seen[(~it->lit2()).toInt()]) {
                 assert(it->lit2() != ~lit);
                 continue;
@@ -3047,7 +3047,7 @@ inline bool Simplifier::checkBlocked(const Lit lit)
         }
 
         //Handle tertiary
-        if (it->isTri() && !it->learnt()) {
+        if (it->isTri() && !it->red()) {
             assert(it->lit2() < it->lit3());
             if (seen[(~it->lit2()).toInt()]
                 || seen[(~it->lit3()).toInt()]
@@ -3061,8 +3061,8 @@ inline bool Simplifier::checkBlocked(const Lit lit)
         if (it->isClause()) {
             const Clause& cl = *solver->clAllocator->getPointer(it->getOffset());
 
-            //Only non-learnt
-            if (cl.learnt())
+            //Only irred
+            if (cl.red())
                 continue;
 
             *toDecrease -= 10;

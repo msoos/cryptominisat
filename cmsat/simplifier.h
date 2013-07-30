@@ -90,7 +90,7 @@ public:
 
     //Called from main
     bool simplify();
-    void subsumeLearnts();
+    void subsumeReds();
     void newVar();
     void print_elimed_vars() const;
     void updateVars(
@@ -136,10 +136,10 @@ public:
             , clauses_elimed_tri(0)
             , clauses_elimed_bin(0)
             , clauses_elimed_sumsize(0)
-            , longLearntClRemThroughElim(0)
-            , triLearntClRemThroughElim(0)
-            , binLearntClRemThroughElim(0)
-            , numLearntBinVarRemAdded(0)
+            , longRedClRemThroughElim(0)
+            , triRedClRemThroughElim(0)
+            , binRedClRemThroughElim(0)
+            , numRedBinVarRemAdded(0)
             , testedToElimVars(0)
             , triedToElimVars(0)
             , usedAgressiveCheckToELim(0)
@@ -191,10 +191,10 @@ public:
             clauses_elimed_tri += other.clauses_elimed_tri;
             clauses_elimed_bin += other.clauses_elimed_bin;
             clauses_elimed_sumsize += other.clauses_elimed_sumsize;
-            longLearntClRemThroughElim += other.longLearntClRemThroughElim;
-            triLearntClRemThroughElim += other.triLearntClRemThroughElim;
-            binLearntClRemThroughElim += other.binLearntClRemThroughElim;
-            numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
+            longRedClRemThroughElim += other.longRedClRemThroughElim;
+            triRedClRemThroughElim += other.triRedClRemThroughElim;
+            binRedClRemThroughElim += other.binRedClRemThroughElim;
+            numRedBinVarRemAdded += other.numRedBinVarRemAdded;
             testedToElimVars += other.testedToElimVars;
             triedToElimVars += other.triedToElimVars;
             usedAgressiveCheckToELim += other.usedAgressiveCheckToELim;
@@ -236,9 +236,9 @@ public:
                 cout
                 << "c [v-elim]"
                 << " subs: "  << subsumedByVE
-                << " learnt-bin rem: " << binLearntClRemThroughElim
-                << " learnt-tri rem: " << triLearntClRemThroughElim
-                << " learnt-long rem: " << longLearntClRemThroughElim
+                << " red-bin rem: " << binRedClRemThroughElim
+                << " red-tri rem: " << triRedClRemThroughElim
+                << " red-long rem: " << longRedClRemThroughElim
                 << " v-fix: " << std::setw(4) << zeroDepthAssings
                 << endl;
             }
@@ -311,16 +311,16 @@ public:
                 , asymmSubs);
 
             printStatsLine("c elim-bin-lt-cl"
-                , binLearntClRemThroughElim);
+                , binRedClRemThroughElim);
 
             printStatsLine("c elim-tri-lt-cl"
-                , triLearntClRemThroughElim);
+                , triRedClRemThroughElim);
 
             printStatsLine("c elim-long-lt-cl"
-                , longLearntClRemThroughElim);
+                , longRedClRemThroughElim);
 
             printStatsLine("c lt-bin added due to v-elim"
-                , numLearntBinVarRemAdded);
+                , numRedBinVarRemAdded);
 
             printStatsLine("c cl-elim-bin"
                 , clauses_elimed_bin);
@@ -372,10 +372,10 @@ public:
         uint64_t clauses_elimed_tri;
         uint64_t clauses_elimed_bin;
         uint64_t clauses_elimed_sumsize;
-        uint64_t longLearntClRemThroughElim;
-        uint64_t triLearntClRemThroughElim;
-        uint64_t binLearntClRemThroughElim;
-        uint64_t numLearntBinVarRemAdded;
+        uint64_t longRedClRemThroughElim;
+        uint64_t triRedClRemThroughElim;
+        uint64_t binRedClRemThroughElim;
+        uint64_t numRedBinVarRemAdded;
         uint64_t testedToElimVars;
         uint64_t triedToElimVars;
         uint64_t usedAgressiveCheckToELim;
@@ -516,8 +516,8 @@ private:
     };
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
-    uint32_t    numNonLearntBins(const Lit lit) const;
-    //void        addLearntBinaries(const Var var);
+    uint32_t    numNonRedBins(const Lit lit) const;
+    //void        addRedBinaries(const Var var);
     void        removeClausesHelper(const vec<Watched>& todo, const Lit lit);
 
 

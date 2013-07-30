@@ -86,7 +86,7 @@ class Solver : public Searcher
         Var  newVar(const bool dvar = true); ///< Add new variable
         bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
         bool addXorClause(const vector<Var>& vars, bool rhs);
-        bool addLearntClause(
+        bool addRedClause(
             const vector<Lit>& ps
             , const ClauseStats& stats = ClauseStats()
         );
@@ -103,8 +103,8 @@ class Solver : public Searcher
                 , numNewBinsSinceSCC(0)
             {};
 
-            uint64_t irredLits;  ///< Number of literals in non-learnt clauses
-            uint64_t redLits;  ///< Number of literals in learnt clauses
+            uint64_t irredLits;  ///< Number of literals in irred clauses
+            uint64_t redLits;  ///< Number of literals in redundant clauses
             uint64_t irredBins;
             uint64_t redBins;
             uint64_t irredTris;
@@ -116,10 +116,9 @@ class Solver : public Searcher
         //Stats
         static const char* getVersion();
 
-        ///Return number of ALL clauses: non-learnt, learnt, bin
         uint64_t getNumLongClauses() const;
-        bool     getNeedToDumpLearnts() const;
-        bool     getNeedToDumpSimplified() const;
+        bool     getNeedToDumpReds() const;
+        bool     getNeedToDumpIrredundant() const;
         int      getVerbosity() const;
         void     printStats() const;
         void     printClauseStats() const;
@@ -156,24 +155,24 @@ class Solver : public Searcher
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
-            const bool dumpLearnt
-            , const bool dumpNonLearnt
+            const bool dumpRed
+            , const bool dumpNonRed
             , std::ostream* outfile
         ) const;
 
         void dumpTriClauses(
-            const bool alsoLearnt
-            , const bool alsoNonLearnt
+            const bool alsoRed
+            , const bool alsoNonRed
             , std::ostream* outfile
         ) const;
 
-        ///Dump all irredundant(=learnt) clauses into file
+        ///Dump all redundant clauses into a file
         void dumpRedClauses(
             std::ostream* os
             , const uint32_t maxSize
         ) const;
 
-        ///Dump (simplified) irredundant system
+        ///Dump irredundant clasues intto a file
         void dumpIrredClauses(
             std::ostream* os
         ) const;
@@ -298,25 +297,25 @@ class Solver : public Searcher
         virtual void attachBinClause(
             const Lit lit1
             , const Lit lit2
-            , const bool learnt
+            , const bool red
             , const bool checkUnassignedFirst = true
         );
         virtual void attachTriClause(
             const Lit lit1
             , const Lit lit2
             , const Lit lit3
-            , const bool learnt
+            , const bool red
         );
         virtual void detachTriClause(
             const Lit lit1
             , const Lit lit2
             , const Lit lit3
-            , const bool learnt
+            , const bool red
         );
         virtual void detachBinClause(
             const Lit lit1
             , const Lit lit2
-            , const bool learnt
+            , const bool red
         );
         virtual void  detachClause(const Clause& c, const bool removeDrup = true);
         virtual void  detachClause(const ClOffset offset, const bool removeDrup = true);
@@ -328,7 +327,7 @@ class Solver : public Searcher
         );
         Clause* addClauseInt(
             const vector<Lit>& lits
-            , const bool learnt = false
+            , const bool red = false
             , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
@@ -413,7 +412,7 @@ class Solver : public Searcher
         // Clause cleaning
         void fullReduce();
         void clearClauseStats(vector<ClOffset>& clauseset);
-        CleaningStats reduceDB();           ///<Reduce the set of learnt clauses.
+        CleaningStats reduceDB();           ///<Reduce the set of redundant clauses.
         struct reduceDBStructGlue
         {
             reduceDBStructGlue(ClauseAllocator* _clAllocator) :
@@ -476,7 +475,7 @@ class Solver : public Searcher
         bool addClauseHelper(vector<Lit>& ps);
         vector<char>        decisionVar;
         vector<ClOffset>    longIrredCls;          ///< List of problem clauses that are larger than 2
-        vector<ClOffset>    longRedCls;          ///< List of learnt clauses.
+        vector<ClOffset>    longRedCls;          ///< List of redundant clauses.
         BinTriStats binTri;
         void                reArrangeClauses();
         void                reArrangeClause(ClOffset offset);
@@ -500,7 +499,7 @@ class Solver : public Searcher
         void printClauseSizeDistrib();
         ClauseUsageStats sumClauseData(
             const vector<ClOffset>& toprint
-            , bool learnt
+            , bool red
         ) const;
         void printPropConflStats(
             std::string name
@@ -527,14 +526,14 @@ inline void Solver::unsetDecisionVar(const uint32_t var)
     }
 }
 
-inline bool Solver::getNeedToDumpLearnts() const
+inline bool Solver::getNeedToDumpReds() const
 {
-    return conf.needToDumpLearnts;
+    return !conf.redDumpFname.empty();
 }
 
-inline bool Solver::getNeedToDumpSimplified() const
+inline bool Solver::getNeedToDumpIrredundant() const
 {
-    return conf.needToDumpSimplified;
+    return !conf.irredDumpFname.empty();
 }
 
 inline uint64_t Solver::getNumLongClauses() const

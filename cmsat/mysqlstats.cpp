@@ -449,7 +449,7 @@ void MySQLStats::initRestartSTMT(
     << ", `conflTriIrred`, `conflTriRed`"
     << ", `conflLongIrred`, `conflLongRed`"
 
-    //Learnts
+    //Reds
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Misc
@@ -590,10 +590,10 @@ void MySQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.conflsLongIrred);
     bindTo(stmtRst, stmtRst.conflsLongRed);
 
-    //Learnt
+    //Red
     bindTo(stmtRst, stmtRst.learntUnits);
-    bindTo(stmtRst, stmtRst.learntBins);
-    bindTo(stmtRst, stmtRst.learntTris);
+    bindTo(stmtRst, stmtRst.redBins);
+    bindTo(stmtRst, stmtRst.redTris);
     bindTo(stmtRst, stmtRst.learntLongs);
 
     //Misc
@@ -1218,10 +1218,10 @@ void MySQLStats::restart(
     stmtRst.conflsLongIrred = thisStats.conflStats.conflsLongIrred;
     stmtRst.conflsLongRed   = thisStats.conflStats.conflsLongRed;
 
-    //Learnt
+    //Red
     stmtRst.learntUnits = thisStats.learntUnits;
-    stmtRst.learntBins  = thisStats.learntBins;
-    stmtRst.learntTris  = thisStats.learntTris;
+    stmtRst.redBins  = thisStats.redBins;
+    stmtRst.redTris  = thisStats.redTris;
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Misc

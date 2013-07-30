@@ -47,20 +47,20 @@ public:
         return Lit::toLit(x>>1);
     }
 
-    bool getOnlyNLBin() const
+    bool getOnlyIrredBin() const
     {
         return x&1;
     }
 
-    void setOnlyNLBin()
+    void setOnlyIrredBin()
     {
         x  |= 0x1;
     }
 
     bool operator<(const LitExtra other) const
     {
-        if (getOnlyNLBin() && !other.getOnlyNLBin()) return false;
-        if (!getOnlyNLBin() && other.getOnlyNLBin()) return true;
+        if (getOnlyIrredBin() && !other.getOnlyIrredBin()) return false;
+        if (!getOnlyIrredBin() && other.getOnlyIrredBin()) return true;
         return (getLit() < other.getLit());
     }
 
@@ -87,14 +87,14 @@ public:
     bool merge(
         const vector<LitExtra>& otherLits
         , const Lit extraLit
-        , const bool learnt
+        , const bool red
         , const Var leaveOut
         , vector<uint16_t>& seen
     );
     bool merge(
         const vector<Lit>& otherLits //Lits to add
         , const Lit extraLit //Add this, too to the list of lits
-        , const bool learnt //The step was a learnt step?
+        , const bool red //The step was a redundant-dependent step?
         , const Var leaveOut //Leave this literal out
         , vector<uint16_t>& seen
     );
@@ -108,7 +108,7 @@ public:
 private:
     bool mergeHelper(
         const Lit extraLit //Add this, too to the list of lits
-        , const bool learnt //The step was a learnt step?
+        , const bool red //The step was a redundant-dependent step?
         , vector<uint16_t>& seen
     );
 };
@@ -117,7 +117,7 @@ inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 {
     for (size_t i = 0; i < tc.lits.size(); i++) {
         os << tc.lits[i].getLit()
-        << "(" << (tc.lits[i].getOnlyNLBin() ? "NL" : "L") << ") ";
+        << "(" << (tc.lits[i].getOnlyIrredBin() ? "NL" : "L") << ") ";
     }
     return os;
 }

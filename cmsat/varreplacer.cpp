@@ -219,10 +219,10 @@ end:
 
 bool VarReplacer::replaceImplicit()
 {
-    size_t removedLearntBin = 0;
-    size_t removedNonLearntBin = 0;
-    size_t removedLearntTri = 0;
-    size_t removedNonLearntTri = 0;
+    size_t removedRedBin = 0;
+    size_t removedNonRedBin = 0;
+    size_t removedRedTri = 0;
+    size_t removedNonRedTri = 0;
 
     vector<BinaryClause> delayedAttach;
 
@@ -318,7 +318,7 @@ bool VarReplacer::replaceImplicit()
                     if (origLit1 < origLit2
                         && origLit2 < origLit3
                     ){
-                        delayedAttach.push_back(BinaryClause(lit1, lit3, i->learnt()));
+                        delayedAttach.push_back(BinaryClause(lit1, lit3, i->red()));
                         #ifdef DRUP
                         if (solver->drup) {
                             *(solver->drup)
@@ -340,7 +340,7 @@ bool VarReplacer::replaceImplicit()
                     if (origLit1 < origLit2
                         && origLit2 < origLit3
                     ){
-                        delayedAttach.push_back(BinaryClause(lit1, lit2, i->learnt()));
+                        delayedAttach.push_back(BinaryClause(lit1, lit2, i->red()));
                         #ifdef DRUP
                         if (solver->drup) {
                             *(solver->drup)
@@ -354,10 +354,10 @@ bool VarReplacer::replaceImplicit()
 
                 if (remove) {
                     //Update function-internal stats
-                    if (i->learnt()) {
-                        removedLearntTri++;
+                    if (i->red()) {
+                        removedRedTri++;
                     } else {
-                        removedNonLearntTri++;
+                        removedNonRedTri++;
                     }
 
                     #ifdef DRUP
@@ -455,10 +455,10 @@ bool VarReplacer::replaceImplicit()
 
             if (remove) {
                 //Update function-internal stats
-                if (i->learnt()) {
-                    removedLearntBin++;
+                if (i->red()) {
+                    removedRedBin++;
                 } else {
-                    removedNonLearntBin++;
+                    removedNonRedBin++;
                 }
 
                 #ifdef DRUP
@@ -511,7 +511,7 @@ bool VarReplacer::replaceImplicit()
         ; it != end
         ; it++
     ) {
-        solver->attachBinClause(it->getLit1(), it->getLit2(), it->getLearnt());
+        solver->attachBinClause(it->getLit1(), it->getLit2(), it->isRed());
     }
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
@@ -519,25 +519,25 @@ bool VarReplacer::replaceImplicit()
     cout << "c debug bin replacer end" << endl;
     #endif
 
-    assert(removedLearntBin % 2 == 0);
-    solver->binTri.redBins -= removedLearntBin/2;
+    assert(removedRedBin % 2 == 0);
+    solver->binTri.redBins -= removedRedBin/2;
 
-    assert(removedNonLearntBin % 2 == 0);
-    solver->binTri.irredBins -= removedNonLearntBin/2;
+    assert(removedNonRedBin % 2 == 0);
+    solver->binTri.irredBins -= removedNonRedBin/2;
 
-    assert(removedLearntTri % 3 == 0);
-    solver->binTri.redTris -= removedLearntTri/3;
+    assert(removedRedTri % 3 == 0);
+    solver->binTri.redTris -= removedRedTri/3;
 
-    assert(removedNonLearntTri % 3 == 0);
-    solver->binTri.irredTris -= removedNonLearntTri/3;
+    assert(removedNonRedTri % 3 == 0);
+    solver->binTri.irredTris -= removedNonRedTri/3;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
     #endif
 
     //Global stats update
-    runStats.removedBinClauses += removedLearntBin/2 + removedNonLearntBin/2;
-    runStats.removedTriClauses += removedLearntTri/3 + removedNonLearntTri/3;
+    runStats.removedBinClauses += removedRedBin/2 + removedNonRedBin/2;
+    runStats.removedTriClauses += removedRedTri/3 + removedNonRedTri/3;
 
     return solver->ok;
 }
@@ -653,12 +653,12 @@ bool VarReplacer::handleUpdatedClause(
         runStats.removedLongLits += origSize;
         return true;
     case 2:
-        solver->attachBinClause(c[0], c[1], c.learnt());
+        solver->attachBinClause(c[0], c[1], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
     case 3:
-        solver->attachTriClause(c[0], c[1], c[2], c.learnt());
+        solver->attachTriClause(c[0], c[1], c[2], c.red());
         runStats.removedLongLits += origSize;
         return true;
 

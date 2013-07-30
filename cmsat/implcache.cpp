@@ -127,7 +127,7 @@ bool ImplCache::clean(Solver* solver)
                 bool taut = implCache[lit.toInt()].merge(
                     implCache[litOrig.toInt()].lits
                     , lit_Undef //nothing to add
-                    , false //replaced, so 'non-learnt'
+                    , false //replaced, so 'irred'
                     , lit.var() //exclude the literal itself
                     , solver->seen
                 );
@@ -162,7 +162,7 @@ bool ImplCache::clean(Solver* solver)
     }
 
     vector<uint16_t>& inside = solver->seen;
-    vector<uint16_t>& nonLearnt = solver->seen2;
+    vector<uint16_t>& irred = solver->seen2;
     size_t wsLit = 0;
     for(vector<TransCache>::iterator
         trans = implCache.begin(), transEnd = implCache.end()
@@ -201,35 +201,35 @@ bool ImplCache::clean(Solver* solver)
             if (solver->varData[lit.var()].removed != Removed::none)
                 continue;
 
-            //If we have already visited this var, just skip over, but update nonLearnt
+            //If we have already visited this var, just skip over, but update irred
             if (inside[lit.toInt()]) {
-                nonLearnt[lit.toInt()] |= (char)it2->getOnlyNLBin();
+                irred[lit.toInt()] |= (char)it2->getOnlyIrredBin();
                 continue;
             }
 
             inside[lit.toInt()] = true;
-            nonLearnt[lit.toInt()] |= (char)it->getOnlyNLBin();
-            *it2++ = LitExtra(lit, it->getOnlyNLBin());
+            irred[lit.toInt()] |= (char)it->getOnlyIrredBin();
+            *it2++ = LitExtra(lit, it->getOnlyIrredBin());
             newSize++;
         }
         trans->lits.resize(newSize);
 
         //Now that we have gone through the list, go through once more to:
-        //1) set nonLearnt right (above we might have it set later)
+        //1) set irred right (above we might have it set later)
         //2) clear 'inside'
-        //3) clear 'nonLearnt'
+        //3) clear 'irred'
         for (vector<LitExtra>::iterator it = trans->lits.begin(), end = trans->lits.end(); it != end; it++) {
             Lit lit = it->getLit();
 
             //Clear 'inside'
             inside[lit.toInt()] = false;
 
-            //Clear 'nonLearnt'
-            const bool nLearnt = nonLearnt[lit.toInt()];
-            nonLearnt[lit.toInt()] = false;
+            //Clear 'irred'
+            const bool nRed = irred[lit.toInt()];
+            irred[lit.toInt()] = false;
 
             //Set non-leartness correctly
-            LitExtra(lit, nLearnt);
+            LitExtra(lit, nRed);
         }
         numCleaned += origSize-trans->lits.size();
     }
@@ -492,26 +492,26 @@ void ImplCache::tryVar(
 bool TransCache::merge(
     const vector<LitExtra>& otherLits //Lits to add
     , const Lit extraLit //Add this, too to the list of lits
-    , const bool learnt //The step was a learnt step?
+    , const bool red //The step was a redundant-dependent step?
     , const Var leaveOut //Leave this literal out
     , vector<uint16_t>& seen
 ) {
     //Mark every literal that is to be added in 'seen'
     for (size_t i = 0, size = otherLits.size(); i < size; i++) {
         const Lit lit = otherLits[i].getLit();
-        const bool onlyNonLearnt = otherLits[i].getOnlyNLBin();
+        const bool onlyNonRed = otherLits[i].getOnlyIrredBin();
 
-        seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
+        seen[lit.toInt()] = 1 + (int)onlyNonRed;
     }
 
-    bool taut = mergeHelper(extraLit, learnt, seen);
+    bool taut = mergeHelper(extraLit, red, seen);
 
     //Whatever rests needs to be added
     for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
         const Lit lit = otherLits[i].getLit();
         if (seen[lit.toInt()]) {
             if (lit.var() != leaveOut)
-                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
+                lits.push_back(LitExtra(lit, !red && otherLits[i].getOnlyIrredBin()));
             seen[lit.toInt()] = 0;
         }
     }
@@ -519,7 +519,7 @@ bool TransCache::merge(
     //Handle extra lit
     if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
         if (extraLit.var() != leaveOut)
-            lits.push_back(LitExtra(extraLit, !learnt));
+            lits.push_back(LitExtra(extraLit, !red));
         seen[extraLit.toInt()] = 0;
     }
 
@@ -529,7 +529,7 @@ bool TransCache::merge(
 bool TransCache::merge(
     const vector<Lit>& otherLits //Lits to add
     , const Lit extraLit //Add this, too to the list of lits
-    , const bool learnt //The step was a learnt step?
+    , const bool red //The step was a redundant-dependent step?
     , const Var leaveOut //Leave this literal out
     , vector<uint16_t>& seen
 ) {
@@ -539,7 +539,7 @@ bool TransCache::merge(
         seen[lit.toInt()] = 1;
     }
 
-    bool taut = mergeHelper(extraLit, learnt, seen);
+    bool taut = mergeHelper(extraLit, red, seen);
 
     //Whatever rests needs to be added
     for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
@@ -554,7 +554,7 @@ bool TransCache::merge(
     //Handle extra lit
     if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
         if (extraLit.var() != leaveOut)
-            lits.push_back(LitExtra(extraLit, !learnt));
+            lits.push_back(LitExtra(extraLit, !red));
         seen[extraLit.toInt()] = 0;
     }
 
@@ -563,24 +563,24 @@ bool TransCache::merge(
 
 bool TransCache::mergeHelper(
     const Lit extraLit //Add this, too to the list of lits
-    , const bool learnt //The step was a learnt step?
+    , const bool red //The step was a redundant-dependent step?
     , vector<uint16_t>& seen
 ) {
     bool taut = false;
 
     //Handle extra lit
     if (extraLit != lit_Undef)
-        seen[extraLit.toInt()] = 1 + (int)!learnt;
+        seen[extraLit.toInt()] = 1 + (int)!red;
 
     //Everything that's already in the cache, set seen[] to zero
-    //Also, if seen[] is 2, but it's marked learnt in the cache
-    //mark it as non-learnt
+    //Also, if seen[] is 2, but it's marked redundant in the cache
+    //mark it as irred
     for (size_t i = 0, size = lits.size(); i < size; i++) {
-        if (!learnt
-            && !lits[i].getOnlyNLBin()
+        if (!red
+            && !lits[i].getOnlyIrredBin()
             && seen[lits[i].getLit().toInt()] == 2
         ) {
-            lits[i].setOnlyNLBin();
+            lits[i].setOnlyIrredBin();
         }
 
         seen[lits[i].getLit().toInt()] = 0;
@@ -606,7 +606,7 @@ void TransCache::makeAllRed()
 void TransCache::updateVars(const std::vector< uint32_t >& outerToInter)
 {
     for(size_t i = 0; i < lits.size(); i++) {
-        lits[i] = LitExtra(getUpdatedLit(lits[i].getLit(), outerToInter), lits[i].getOnlyNLBin());
+        lits[i] = LitExtra(getUpdatedLit(lits[i].getLit(), outerToInter), lits[i].getOnlyIrredBin());
     }
 
 }

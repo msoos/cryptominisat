@@ -114,7 +114,7 @@ struct ClauseStats
     uint32_t numUsedUIP; ///Number of times the claue was using during 1st UIP conflict generation
 
     ///Number of resolutions it took to make the clause when it was
-    ///originally learnt. Only makes sense for learnt clauses
+    ///originally learnt. Only makes sense for redundant clauses
     ResolutionTypes<uint16_t> resolutions;
 
     void clearAfterReduceDB()
@@ -178,7 +178,7 @@ class Clause
 {
 protected:
 
-    uint16_t isLearnt:1; ///<Is the clause a learnt clause?
+    uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t isAsymmed:1;
@@ -211,7 +211,7 @@ public:
         defOfOrGate = false;
         isFreed = false;
         mySize = ps.size();
-        isLearnt = false;
+        isRed = false;
         isRemoved = false;
         isAsymmed = false;
 
@@ -252,9 +252,9 @@ public:
         setStrenghtened();
     }
 
-    bool learnt() const
+    bool red() const
     {
-        return isLearnt;
+        return isRed;
     }
 
     bool freed() const
@@ -282,16 +282,16 @@ public:
         return *(getData() + i);
     }
 
-    void makeNonLearnt()
+    void makeNonRed()
     {
-        assert(isLearnt);
-        isLearnt = false;
+        assert(isRed);
+        isRed = false;
     }
 
-    void makeLearnt(const uint32_t newGlue)
+    void makeRed(const uint32_t newGlue)
     {
         stats.glue = newGlue;
-        isLearnt = true;
+        isRed = true;
     }
 
     void strengthen(const Lit p)
@@ -579,13 +579,13 @@ struct CleaningStats
         printStatsLine("c pre-removed"
             , preRemove.num
             , (double)preRemove.num/(double)origNumClauses*100.0
-            , "% long learnt clauses"
+            , "% long redundant clauses"
         );
 
         printStatsLine("c pre-removed lits"
             , preRemove.lits
             , (double)preRemove.lits/(double)origNumLits*100.0
-            , "% long learnt lits"
+            , "% long red lits"
         );
         printStatsLine("c pre-removed cl avg size"
             , (double)preRemove.lits/(double)preRemove.num
@@ -620,12 +620,12 @@ struct CleaningStats
         printStatsLine("c cleaned cls"
             , removed.num
             , (double)removed.num/(double)origNumClauses*100.0
-            , "% long learnt clauses"
+            , "% long redundant clauses"
         );
         printStatsLine("c cleaned lits"
             , removed.lits
             , (double)removed.lits/(double)origNumLits*100.0
-            , "% long learnt lits"
+            , "% long red lits"
         );
         printStatsLine("c cleaned cl avg size"
             , (double)removed.lits/(double)removed.num
@@ -638,12 +638,12 @@ struct CleaningStats
         printStatsLine("c remain cls"
             , remain.num
             , (double)remain.num/(double)origNumClauses*100.0
-            , "% long learnt clauses"
+            , "% long redundant clauses"
         );
         printStatsLine("c remain lits"
             , remain.lits
             , (double)remain.lits/(double)origNumLits*100.0
-            , "% long learnt lits"
+            , "% long red lits"
         );
         printStatsLine("c remain cl avg size"
             , (double)remain.lits/(double)remain.num

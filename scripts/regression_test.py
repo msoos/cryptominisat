@@ -170,7 +170,7 @@ class Tester:
         cmd += "--cachecutoff %s " % random.randint(0,2000)
         cmd += "--elimstrategy %s " % random.randint(0,1)
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
-        cmd += "--occlearntmax %s " % random.randint(0,100)
+        cmd += "--occredmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)

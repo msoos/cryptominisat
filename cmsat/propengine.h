@@ -250,11 +250,11 @@ public:
     //Get state
     bool        okay() const; ///<FALSE means solver is in a conflicting state
     uint32_t    getVerbosity() const;
-    uint32_t    getBinWatchSize(const bool alsoLearnt, const Lit lit) const;
+    uint32_t    getBinWatchSize(const bool alsoRed, const Lit lit) const;
     uint32_t    decisionLevel() const;      ///<Returns current decision level
     vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses
     uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
-    uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
+    uint32_t    countNumBinClauses(const bool alsoRed, const bool alsoNonRed) const;
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
@@ -310,9 +310,9 @@ protected:
     // Enqueue
     ////////////////
     void  enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
-    void  enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep);
-    Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
-    bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
+    void  enqueueComplex(const Lit p, const Lit ancestor, const bool redStep);
+    Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepRed);
+    bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepRed, const bool onlyNonRed, const Lit lookingForAncestor);
 
     vector<Lit> currAncestors;
 
@@ -367,7 +367,7 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
-        , const bool learnt
+        , const bool red
         , Solver* solver
     );
     void propTriHelperAnyOrder(
@@ -375,7 +375,7 @@ protected:
         , const Lit lit2
         , const Lit lit3
         #ifdef STATS_NEEDED
-        , const bool learnt
+        , const bool red
         #endif
     );
 
@@ -423,7 +423,7 @@ protected:
     void closeAllTimestamps(const StampType stampType);
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
-    PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
+    PropBy      propagateNonRedBin();  ///<For debug purposes, to test binary clause removal
 
     /////////////////
     // Operations on clauses:
@@ -436,24 +436,24 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
-        , const bool learnt
+        , const bool red
     );
     virtual void detachBinClause(
         const Lit lit1
         , const Lit lit2
-        , const bool learnt
+        , const bool red
     );
     virtual void attachBinClause(
         const Lit lit1
         , const Lit lit2
-        , const bool learnt
+        , const bool red
         , const bool checkUnassignedFirst = true
     );
     virtual void attachTriClause(
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
-        , const bool learnt
+        , const bool red
     );
     virtual void detachModifiedClause(
         const Lit lit1
@@ -611,9 +611,9 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 inline void PropEngine::enqueueComplex(
     const Lit p
     , const Lit ancestor
-    , const bool learntStep
+    , const bool redStep
 ) {
-    enqueue(p, PropBy(~ancestor, learntStep, false, false));
+    enqueue(p, PropBy(~ancestor, redStep, false, false));
 
     assert(varData[ancestor.var()].level != 0);
 
@@ -636,12 +636,12 @@ Return which one is to be removed
 inline Lit PropEngine::removeWhich(
     Lit conflict
     , Lit thisAncestor
-    , bool thisStepLearnt
+    , bool thisStepRed
 ) {
     propStats.otfHyperTime += 1;
     const PropBy& data = varData[conflict.var()].reason;
 
-    bool onlyNonLearnt = !data.getLearntStep();
+    bool onlyNonRed = !data.isRedStep();
     Lit lookingForAncestor = data.getAncestor();
 
     if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
@@ -667,8 +667,8 @@ inline Lit PropEngine::removeWhich(
         isAncestorOf(
         conflict
         , thisAncestor
-        , thisStepLearnt
-        , onlyNonLearnt
+        , thisStepRed
+        , onlyNonRed
         , lookingForAncestor
         )
     ) {
@@ -679,15 +679,15 @@ inline Lit PropEngine::removeWhich(
         return thisAncestor;
     }
 
-    onlyNonLearnt = !thisStepLearnt;
-    thisStepLearnt = data.getLearntStep();
+    onlyNonRed = !thisStepRed;
+    thisStepRed = data.isRedStep();
     std::swap(lookingForAncestor, thisAncestor);
     if ((ambivalent || second_is_deeper) &&
         isAncestorOf(
         conflict
         , thisAncestor
-        , thisStepLearnt
-        , onlyNonLearnt
+        , thisStepRed
+        , onlyNonRed
         , lookingForAncestor
         )
     ) {
@@ -713,8 +713,8 @@ hop backwards from thisAncestor until:
 inline bool PropEngine::isAncestorOf(
     const Lit conflict
     , Lit thisAncestor
-    , const bool thisStepLearnt
-    , const bool onlyNonLearnt
+    , const bool thisStepRed
+    , const bool onlyNonRed
     , const Lit lookingForAncestor
 ) {
     propStats.otfHyperTime += 1;
@@ -722,8 +722,8 @@ inline bool PropEngine::isAncestorOf(
     cout << "isAncestorOf."
     << "conflict: " << conflict
     << " thisAncestor: " << thisAncestor
-    << " thisStepLearnt: " << thisStepLearnt
-    << " onlyNonLearnt: " << onlyNonLearnt
+    << " thisStepRed: " << thisStepRed
+    << " onlyNonRed: " << onlyNonRed
     << " lookingForAncestor: " << lookingForAncestor << endl;
     #endif
 
@@ -741,14 +741,14 @@ inline bool PropEngine::isAncestorOf(
 
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << endl;
-    cout << "This step is learnt? " << (thisStepLearnt ? "yes" : "false") << endl;
-    cout << "Only non-learnt is acceptable?" << (onlyNonLearnt ? "yes" : "no") << endl;
-    cout << "This step would be learnt?" << (thisStepLearnt ? "yes" : "no") << endl;
+    cout << "This step based on redundant cl? " << (thisStepRed ? "yes" : "false") << endl;
+    cout << "Only irred is acceptable?" << (onlyNonRed ? "yes" : "no") << endl;
+    cout << "This step would be based on redundant cl?" << (thisStepRed ? "yes" : "no") << endl;
     #endif
 
-    if (onlyNonLearnt && thisStepLearnt) {
+    if (onlyNonRed && thisStepRed) {
         #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "This step doesn't work -- is learnt but needs non-learnt" << endl;
+        cout << "This step doesn't work -- is redundant but needs irred" << endl;
         #endif
         return false;
     }
@@ -763,7 +763,7 @@ inline bool PropEngine::isAncestorOf(
 
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
-        << " its learnt-ness: " << varData[thisAncestor.var()].reason.getLearntStep()
+        << " redundant step? " << varData[thisAncestor.var()].reason.isRedStep()
         << endl;
         #endif
 
@@ -783,13 +783,13 @@ inline bool PropEngine::isAncestorOf(
         }
 
         const PropBy& data = varData[thisAncestor.var()].reason;
-        if ((onlyNonLearnt && data.getLearntStep())
+        if ((onlyNonRed && data.isRedStep())
             || data.getHyperbinNotAdded()
         ) {
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Wrong kind of hop would be needed" << endl;
             #endif
-            return false;  //reached learnt hop (but this is non-learnt)
+            return false;  //reached would-be redundant hop (but this is irred)
         }
 
         thisAncestor = data.getAncestor();

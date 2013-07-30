@@ -104,7 +104,7 @@ void PropEngine::attachTriClause(
     Lit lit1
     , Lit lit2
     , Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
@@ -121,40 +121,40 @@ void PropEngine::attachTriClause(
     orderLits(lit1, lit2, lit3);
 
     //And now they are attached, ordered
-    watches[lit1.toInt()].push(Watched(lit2, lit3, learnt));
-    watches[lit2.toInt()].push(Watched(lit1, lit3, learnt));
-    watches[lit3.toInt()].push(Watched(lit1, lit2, learnt));
+    watches[lit1.toInt()].push(Watched(lit2, lit3, red));
+    watches[lit2.toInt()].push(Watched(lit1, lit3, red));
+    watches[lit3.toInt()].push(Watched(lit1, lit2, red));
 }
 
 void PropEngine::detachTriClause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     Lit lits[3];
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits, lits+3);
-    removeWTri(watches, lits[0], lits[1], lits[2], learnt);
-    removeWTri(watches, lits[1], lits[0], lits[2], learnt);
-    removeWTri(watches, lits[2], lits[0], lits[1], learnt);
+    removeWTri(watches, lits[0], lits[1], lits[2], red);
+    removeWTri(watches, lits[1], lits[0], lits[2], red);
+    removeWTri(watches, lits[2], lits[0], lits[1], red);
 }
 
 void PropEngine::detachBinClause(
     const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
 ) {
-    removeWBin(watches, lit1, lit2, learnt);
-    removeWBin(watches, lit2, lit1, learnt);
+    removeWBin(watches, lit1, lit2, red);
+    removeWBin(watches, lit2, lit1, red);
 }
 
 void PropEngine::attachBinClause(
     const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
     , const bool checkUnassignedFirst
 ) {
     #ifdef DEBUG_ATTACH
@@ -170,8 +170,8 @@ void PropEngine::attachBinClause(
             || varData[lit2.var()].removed == Removed::queued_replacer);
     #endif //DEBUG_ATTACH
 
-    watches[lit1.toInt()].push(Watched(lit2, learnt));
-    watches[lit2.toInt()].push(Watched(lit1, learnt));
+    watches[lit1.toInt()].push(Watched(lit2, red));
+    watches[lit2.toInt()].push(Watched(lit1, red));
 }
 
 /**
@@ -239,7 +239,7 @@ inline bool PropEngine::propBinaryClause(
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
         #ifdef STATS_NEEDED
-        if (i->learnt())
+        if (i->red())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
@@ -248,7 +248,7 @@ inline bool PropEngine::propBinaryClause(
         enqueue(i->lit2(), PropBy(~p));
     } else if (val == l_False) {
         //Update stats
-        if (i->learnt())
+        if (i->red())
             lastConflictCausedBy = ConflCausedBy::binred;
         else
             lastConflictCausedBy = ConflCausedBy::binirred;
@@ -342,7 +342,7 @@ PropResult PropEngine::propNormalClause(
 
         //Update stats
         c.stats.numConfl++;
-        if (c.learnt())
+        if (c.red())
             lastConflictCausedBy = ConflCausedBy::longred;
         else
             lastConflictCausedBy = ConflCausedBy::longirred;
@@ -354,7 +354,7 @@ PropResult PropEngine::propNormalClause(
         //Update stats
         c.stats.numProp++;
         #ifdef STATS_NEEDED
-        if (c.learnt())
+        if (c.red())
             propStats.propsLongRed++;
         else
             propStats.propsLongIrred++;
@@ -403,7 +403,7 @@ PropResult PropEngine::propNormalClause(
 
 
             //Update glues?
-            if (c.learnt()
+            if (c.red()
                 && c.stats.glue > 2
                 && updateGlues
             ) {
@@ -496,7 +496,7 @@ bool PropEngine::propNormalClauseAnyOrder(
 
         //Update stats
         c.stats.numConfl++;
-        if (c.learnt())
+        if (c.red())
             lastConflictCausedBy = ConflCausedBy::longred;
         else
             lastConflictCausedBy = ConflCausedBy::longirred;
@@ -508,7 +508,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         //Update stats
         c.stats.numProp++;
         #ifdef STATS_NEEDED
-        if (c.learnt())
+        if (c.red())
             propStats.propsLongRed++;
         else
             propStats.propsLongIrred++;
@@ -516,7 +516,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         enqueue(c[0], PropBy(offset));
 
         //Update glues?
-        if (c.learnt()
+        if (c.red()
             && c.stats.glue > 2
             && updateGlues
         ) {
@@ -566,7 +566,7 @@ PropResult PropEngine::propTriClause(
         confl = PropBy(~lit1, i->lit3());
 
         //Update stats
-        if (i->learnt())
+        if (i->red())
             lastConflictCausedBy = ConflCausedBy::trired;
         else
             lastConflictCausedBy = ConflCausedBy::triirred;
@@ -576,12 +576,12 @@ PropResult PropEngine::propTriClause(
         return PROP_FAIL;
     }
     if (val2 == l_Undef && val3 == l_False) {
-        propTriHelper<simple>(lit1, lit2, lit3, i->learnt(), solver);
+        propTriHelper<simple>(lit1, lit2, lit3, i->red(), solver);
         return PROP_SOMETHING;
     }
 
     if (val3 == l_Undef && val2 == l_False) {
-        propTriHelper<simple>(lit1, lit3, lit2, i->learnt(), solver);
+        propTriHelper<simple>(lit1, lit3, lit2, i->red(), solver);
         return PROP_SOMETHING;
     }
 
@@ -617,7 +617,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
         confl = PropBy(~lit1, i->lit3());
 
         //Update stats
-        if (i->learnt())
+        if (i->red())
             lastConflictCausedBy = ConflCausedBy::trired;
         else
             lastConflictCausedBy = ConflCausedBy::triirred;
@@ -632,7 +632,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
             , lit2
             , lit3
             #ifdef STATS_NEEDED
-            , i->learnt()
+            , i->red()
             #endif
         );
         return true;
@@ -644,7 +644,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
             , lit3
             , lit2
             #ifdef STATS_NEEDED
-            , i->learnt()
+            , i->red()
             #endif
         );
         return true;
@@ -658,11 +658,11 @@ void PropEngine::propTriHelper(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
     , Solver* solver
 ) {
     #ifdef STATS_NEEDED
-    if (learnt)
+    if (red)
         propStats.propsTriRed++;
     else
         propStats.propsTriIrred++;
@@ -708,11 +708,11 @@ inline void PropEngine::propTriHelperAnyOrder(
     , const Lit lit2
     , const Lit lit3
     #ifdef STATS_NEEDED
-    , const bool learnt
+    , const bool red
     #endif
 ) {
     #ifdef STATS_NEEDED
-    if (learnt)
+    if (red)
         propStats.propsTriRed++;
     else
         propStats.propsTriIrred++;
@@ -898,7 +898,7 @@ PropBy PropEngine::propagateBinFirst(
     return confl;
 }
 
-PropBy PropEngine::propagateNonLearntBin()
+PropBy PropEngine::propagateNonRedBin()
 {
     PropBy confl;
     while (qhead < trail.size()) {
@@ -906,8 +906,8 @@ PropBy PropEngine::propagateNonLearntBin()
         vec<Watched> & ws = watches[(~p).toInt()];
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
-            //If not binary, or is learnt, skip
-            if (!k->isBinary() || k->learnt())
+            //If not binary, or is redundant, skip
+            if (!k->isBinary() || k->red())
                 continue;
 
             //Propagate, if conflict, exit
@@ -955,15 +955,15 @@ Lit PropEngine::propagateFullBFS(const uint64_t timeout)
         return lit_Undef;
     }
 
-    //Propagate binary non-learnt
+    //Propagate binary irred
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
         const vec<Watched>& ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
-            //If something other than non-learnt binary, skip
-            if (!k->isBinary() || k->learnt())
+            //If something other than irred binary, skip
+            if (!k->isBinary() || k->red())
                 continue;
 
             ret = propBin(p, k, confl);
@@ -974,7 +974,7 @@ Lit PropEngine::propagateFullBFS(const uint64_t timeout)
         propStats.bogoProps += ws.size()*4;
     }
 
-    //Propagate binary learnt
+    //Propagate binary redundant
     ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
@@ -984,8 +984,8 @@ Lit PropEngine::propagateFullBFS(const uint64_t timeout)
 
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++, done++) {
 
-            //If something other than learnt binary, skip
-            if (!k->isBinary() || !k->learnt())
+            //If something other than redundant binary, skip
+            if (!k->isBinary() || !k->red())
                 continue;
 
             ret = propBin(p, k, confl);
@@ -1120,7 +1120,7 @@ Lit PropEngine::propagateFullDFS(
 
     propStats.bogoProps += 3;
 
-    //Propagate binary non-learnt
+    //Propagate binary irred
     while (!toPropBin.empty()) {
         const Lit p = toPropBin.top();
         const vec<Watched>& ws = watches[(~p).toInt()];
@@ -1147,7 +1147,7 @@ Lit PropEngine::propagateFullDFS(
 
             //If stamping only irred, go over red binaries
             if (stampType == STAMP_IRRED
-                && k->learnt()
+                && k->red()
             ) {
                 continue;
             }
@@ -1209,8 +1209,8 @@ Lit PropEngine::propagateFullDFS(
             ) {
                 propStats.bogoProps += 1;
 
-                //If something other than learnt binary, skip
-                if (!k->isBinary() || !k->learnt())
+                //If something other than redundant binary, skip
+                if (!k->isBinary() || !k->red())
                     continue;
 
                 ret = propBin(p, k, confl);
@@ -1368,14 +1368,14 @@ PropResult PropEngine::propBin(
     const lbool val = value(lit);
     if (val == l_Undef) {
         #ifdef STATS_NEEDED
-        if (k->learnt())
+        if (k->red())
             propStats.propsBinRed++;
         else
             propStats.propsBinIrred++;
         #endif
 
         //Never propagated before
-        enqueueComplex(lit, p, k->learnt());
+        enqueueComplex(lit, p, k->red());
         return PROP_SOMETHING;
 
     } else if (val == l_False) {
@@ -1385,7 +1385,7 @@ PropResult PropEngine::propBin(
         #endif //VERBOSE_DEBUG_FULLPROP
 
         //Update stats
-        if (k->learnt())
+        if (k->red())
             lastConflictCausedBy = ConflCausedBy::binred;
         else
             lastConflictCausedBy = ConflCausedBy::binirred;
@@ -1401,7 +1401,7 @@ PropResult PropEngine::propBin(
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Lit " << p << " also wants to propagate " << lit << endl;
         #endif
-        Lit remove = removeWhich(lit, p, k->learnt());
+        Lit remove = removeWhich(lit, p, k->red());
 
         //Remove this one
         if (remove == p) {
@@ -1412,7 +1412,7 @@ PropResult PropEngine::propBin(
             const BinaryClause clauseToRemove(
                 ~varData[lit.var()].reason.getAncestor()
                 , lit
-                , varData[lit.var()].reason.getLearntStep()
+                , varData[lit.var()].reason.isRedStep()
             );
 
             //We now remove the clause
@@ -1444,20 +1444,20 @@ PropResult PropEngine::propBin(
             }
 
             //Update data indicating what lead to lit
-            varData[lit.var()].reason = PropBy(~p, k->learnt(), false, false);
+            varData[lit.var()].reason = PropBy(~p, k->red(), false, false);
             assert(varData[p.var()].level != 0);
             varData[lit.var()].depth = varData[p.var()].depth + 1;
             //NOTE: we don't update the levels of other literals... :S
 
             //for correctness, we would need this, but that would need re-writing of history :S
-            //if (!onlyNonLearnt) return PropBy();
+            //if (!onlyNonRed) return PropBy();
 
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removing this bin clause" << endl;
             #endif
             propStats.otfHyperTime += 2;
-            uselessBin.insert(BinaryClause(~p, lit, k->learnt()));
+            uselessBin.insert(BinaryClause(~p, lit, k->red()));
         }
     }
 
@@ -1517,7 +1517,7 @@ void PropEngine::printWatchList(const Lit lit) const
         ; it2++
     ) {
         if (it2->isBinary()) {
-            cout << "bin: " << lit << " , " << it2->lit2() << " learnt : " <<  (it2->learnt()) << endl;
+            cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
         } else if (it2->isTri()) {
             cout << "tri: " << lit << " , " << it2->lit2() << " , " <<  (it2->lit3()) << endl;
         } else if (it2->isClause()) {
@@ -1540,7 +1540,7 @@ vector<Lit> PropEngine::getUnitaries() const
     return unitaries;
 }
 
-uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+uint32_t PropEngine::countNumBinClauses(const bool alsoRed, const bool alsoNonRed) const
 {
     uint32_t num = 0;
 
@@ -1550,8 +1550,8 @@ uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNo
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (it2->learnt()) num += alsoLearnt;
-                else num+= alsoNonLearnt;
+                if (it2->red()) num += alsoRed;
+                else num+= alsoNonRed;
             }
         }
     }

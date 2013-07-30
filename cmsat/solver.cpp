@@ -252,7 +252,7 @@ and only internally
 */
 Clause* Solver::addClauseInt(
     const vector<Lit>& lits
-    , const bool learnt
+    , const bool red
     , ClauseStats stats
     , const bool attach
     , vector<Lit>* finalLits
@@ -334,7 +334,7 @@ Clause* Solver::addClauseInt(
 
             return NULL;
         case 2:
-            attachBinClause(ps[0], ps[1], learnt);
+            attachBinClause(ps[0], ps[1], red);
             return NULL;
 
         case 3:
@@ -344,20 +344,20 @@ Clause* Solver::addClauseInt(
             << ps[2]
             << endl;*/
 
-            attachTriClause(ps[0], ps[1], ps[2], learnt);
+            attachTriClause(ps[0], ps[1], ps[2], red);
             return NULL;
 
         default:
             Clause* c = clAllocator->Clause_new(ps, sumStats.conflStats.numConflicts);
-            if (learnt)
-                c->makeLearnt(stats.glue);
+            if (red)
+                c->makeRed(stats.glue);
             c->stats = stats;
 
             //In class 'Simplifier' we don't need to attach normall
             if (attach)
                 attachClause(*c);
             else {
-                if (learnt)
+                if (red)
                     binTri.redLits += ps.size();
                 else
                     binTri.irredLits += ps.size();
@@ -382,7 +382,7 @@ void Solver::attachClause(
     #endif
 
     //Update stats
-    if (cl.learnt())
+    if (cl.red())
         binTri.redLits += cl.size();
     else
         binTri.irredLits += cl.size();
@@ -395,7 +395,7 @@ void Solver::attachTriClause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
@@ -407,20 +407,20 @@ void Solver::attachTriClause(
     #endif
 
     //Update stats
-    if (learnt) {
+    if (red) {
         binTri.redTris++;
     } else {
         binTri.irredTris++;
     }
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachTriClause(lit1, lit2, lit3, learnt);
+    PropEngine::attachTriClause(lit1, lit2, lit3, red);
 }
 
 void Solver::attachBinClause(
     const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
     , const bool checkUnassignedFirst
 ) {
     #if defined(DRUP_DEBUG) && defined(DRUP)
@@ -432,7 +432,7 @@ void Solver::attachBinClause(
     #endif
 
     //Update stats
-    if (learnt) {
+    if (red) {
         binTri.redBins++;
     } else {
         binTri.irredBins++;
@@ -440,36 +440,36 @@ void Solver::attachBinClause(
     binTri.numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
+    PropEngine::attachBinClause(lit1, lit2, red, checkUnassignedFirst);
 }
 
 void Solver::detachTriClause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
-    if (learnt) {
+    if (red) {
         binTri.redTris--;
     } else {
         binTri.irredTris--;
     }
 
-    PropEngine::detachTriClause(lit1, lit2, lit3, learnt);
+    PropEngine::detachTriClause(lit1, lit2, lit3, red);
 }
 
 void Solver::detachBinClause(
     const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
 ) {
-    if (learnt) {
+    if (red) {
         binTri.redBins--;
     } else {
         binTri.irredBins--;
     }
 
-    PropEngine::detachBinClause(lit1, lit2, learnt);
+    PropEngine::detachBinClause(lit1, lit2, red);
 }
 
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
@@ -497,7 +497,7 @@ void Solver::detachModifiedClause(
     , const Clause* address
 ) {
     //Update stats
-    if (address->learnt())
+    if (address->red())
         binTri.redLits -= origSize;
     else
         binTri.irredLits -= origSize;
@@ -638,7 +638,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     Clause* cl = addClauseInt(
         ps
-        , false //non-learnt
+        , false //irred
         , ClauseStats() //default stats
         , true //yes, attach
         #ifdef DRUP
@@ -679,7 +679,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     return ok;
 }
 
-bool Solver::addLearntClause(
+bool Solver::addRedClause(
     const vector<Lit>& lits
     , const ClauseStats& stats
 ) {
@@ -1176,10 +1176,7 @@ bool Solver::reduceDBStructPropConfl::operator() (
 }
 
 /**
-@brief Removes learnt clauses that have been found not to be too good
-
-Either based on glue or MiniSat-style learnt clause activities, the clauses are
-sorted and then removed
+@brief Removes redundant clauses that have been found not to be too good
 */
 CleaningStats Solver::reduceDB()
 {
@@ -1200,7 +1197,7 @@ CleaningStats Solver::reduceDB()
     //then increase the removeNum accordingly
     uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
         * (double)solveStats.nbReduceDB
-        * conf.maxNumLearntsRatio;
+        * conf.maxNumRedsRatio;
     uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
 
     if (removeNum != origRemoveNum) {
@@ -1220,7 +1217,7 @@ CleaningStats Solver::reduceDB()
 
     //Subsume
     uint64_t sumConfl = sumConflicts();
-    //simplifier->subsumeLearnts();
+    //simplifier->subsumeReds();
     if (conf.verbosity >= 3) {
         cout
         << "c Time wasted on clean&replace&sub: "
@@ -1310,7 +1307,7 @@ CleaningStats Solver::reduceDB()
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Cleaning learnt clauses. Learnt clauses after sort: " << endl;
+    cout << "Cleaning redundant clauses. Red clauses after sort: " << endl;
     for (uint32_t i = 0; i != longRedCls.size(); i++) {
         const Clause* cl = clAllocator->getPointer(longRedCls[i]);
         cout << *cl << endl;
@@ -1389,7 +1386,7 @@ CleaningStats Solver::reduceDB()
         longRedCls[j++] = offset;
     }
 
-    //Resize learnt datastruct
+    //Resize long redundant clause array
     longRedCls.resize(longRedCls.size() - (i - j));
 
     //Reattach what's left
@@ -1490,7 +1487,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         ) {
             const Searcher::Stats& stats = Searcher::getStats();
             double remPercent =
-                (double)stats.recMinLitRem/(double)stats.litsLearntNonMin*100.0;
+                (double)stats.recMinLitRem/(double)stats.litsRedNonMin*100.0;
 
             double costPerGained = (double)stats.recMinimCost/remPercent;
             if (costPerGained > 200ULL*1000ULL*1000ULL) {
@@ -1515,7 +1512,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
         //If more minimization isn't helping much, disable
         if (status == l_Undef
-            && conf.doMinimLearntMore
+            && conf.doMinimRedMore
         ) {
             const Searcher::Stats& stats = Searcher::getStats();
             double remPercent =
@@ -1523,7 +1520,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
                     (double)(stats.moreMinimLitsStart)*100.0;
 
             if (remPercent < 1.0) {
-                conf.doMinimLearntMore = false;
+                conf.doMinimRedMore = false;
                 if (conf.verbosity >= 2) {
                     cout
                     << "c more minimization effectiveness low: "
@@ -1845,7 +1842,7 @@ end:
 
 ClauseUsageStats Solver::sumClauseData(
     const vector<ClOffset>& toprint
-    , const bool learnt
+    , const bool red
 ) const {
     vector<ClauseUsageStats> perSizeStats;
     vector<ClauseUsageStats> perGlueStats;
@@ -1877,8 +1874,8 @@ ClauseUsageStats Solver::sumClauseData(
 
         perSizeStats[clause_size].addStat(cl);
 
-        //If learnt, sum up GLUE-based stats
-        if (learnt) {
+        //If redundant, sum up GLUE-based stats
+        if (red) {
             const size_t glue = cl.stats.glue;
             assert(glue != std::numeric_limits<uint32_t>::max());
             if (perSizeStats.size() < glue + 1) {
@@ -1893,7 +1890,7 @@ ClauseUsageStats Solver::sumClauseData(
             //Print clause data
             cout
             << "Clause size " << std::setw(4) << cl.size();
-            if (cl.learnt()) {
+            if (cl.red()) {
                 cout << " glue : " << std::setw(4) << cl.stats.glue;
             }
             cout
@@ -1917,7 +1914,7 @@ ClauseUsageStats Solver::sumClauseData(
 
     if (conf.verbosity >= 1) {
         //Print SUM stats
-        if (learnt) {
+        if (red) {
             cout << "c red  ";
         } else {
             cout << "c irred";
@@ -1951,7 +1948,7 @@ ClauseUsageStats Solver::sumClauseData(
     if (conf.verbosity >= 4) {
         printPropConflStats("clause-len", perSizeStats);
 
-        if (learnt) {
+        if (red) {
             printPropConflStats("clause-glue", perGlueStats);
         }
     }
@@ -2523,8 +2520,8 @@ void Solver::printMemStats() const
 }
 
 void Solver::dumpBinClauses(
-    const bool dumpLearnt
-    , const bool dumpNonLearnt
+    const bool dumpRed
+    , const bool dumpNonRed
     , std::ostream* outfile
 ) const {
     //Go trough each watchlist
@@ -2546,8 +2543,8 @@ void Solver::dumpBinClauses(
             //Only dump binaries
             if (it2->isBinary() && lit < it2->lit2()) {
                 bool toDump = false;
-                if (it2->learnt() && dumpLearnt) toDump = true;
-                if (!it2->learnt() && dumpNonLearnt) toDump = true;
+                if (it2->red() && dumpRed) toDump = true;
+                if (!it2->red() && dumpNonRed) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
@@ -2566,8 +2563,8 @@ void Solver::dumpBinClauses(
 }
 
 void Solver::dumpTriClauses(
-    const bool alsoLearnt
-    , const bool alsoNonLearnt
+    const bool alsoRed
+    , const bool alsoNonRed
     , std::ostream* outfile
 ) const {
     uint32_t wsLit = 0;
@@ -2582,8 +2579,8 @@ void Solver::dumpTriClauses(
             //Only one instance of tri clause
             if (it2->isTri() && lit < it2->lit2()) {
                 bool toDump = false;
-                if (it2->learnt() && alsoLearnt) toDump = true;
-                if (!it2->learnt() && alsoNonLearnt) toDump = true;
+                if (it2->red() && alsoRed) toDump = true;
+                if (!it2->red() && alsoNonRed) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
@@ -2699,7 +2696,7 @@ void Solver::dumpRedClauses(
     *os
     << "c " << endl
     << "c ---------------------------------" << endl
-    << "c learnt binary clauses (extracted from watchlists)" << endl
+    << "c redundant binary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
     if (maxSize >= 2) {
         dumpBinClauses(true, false, os);
@@ -2708,7 +2705,7 @@ void Solver::dumpRedClauses(
     *os
     << "c " << endl
     << "c ---------------------------------" << endl
-    << "c learnt tertiary clauses (extracted from watchlists)" << endl
+    << "c redundant tertiary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
     if (maxSize >= 2) {
         dumpTriClauses(true, false, os);
@@ -2721,7 +2718,7 @@ void Solver::dumpRedClauses(
     *os
     << "c " << endl
     << "c --------------------" << endl
-    << "c clauses from learnts" << endl
+    << "c redundant long clauses" << endl
     << "c --------------------" << endl;
     for (vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
@@ -2735,8 +2732,8 @@ void Solver::dumpRedClauses(
 
             //Dump the information about the clause
             *os
-            << "c clause learnt "
-            << (cl->learnt() ? "yes" : "no")
+            << "c clause redundant "
+            << (cl->red() ? "yes" : "no")
             << " stats "  << cl->stats << endl;
         }
     }
@@ -2812,7 +2809,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         ; it++
     ) {
         Clause* cl = clAllocator->getPointer(*it);
-        assert(!cl->learnt());
+        assert(!cl->red());
         *os << clauseBackNumbered(*cl) << " 0" << endl;
     }
 
@@ -3116,7 +3113,7 @@ void Solver::findAllAttach(const vector<ClOffset>& cs) const
         if (!ret) {
             cout
             << "Clause " << cl
-            << " (learnt: " << cl.learnt() << ")"
+            << " (red: " << cl.red() << ")"
             << " doesn't have its 1st watch attached!"
             << endl;
 
@@ -3128,7 +3125,7 @@ void Solver::findAllAttach(const vector<ClOffset>& cs) const
         if (!ret) {
             cout
             << "Clause " << cl
-            << " (learnt: " << cl.learnt() << ")"
+            << " (red: " << cl.red() << ")"
             << " doesn't have its 2nd watch attached!"
             << endl;
 
@@ -3262,11 +3259,11 @@ void Solver::checkImplicitStats() const
     return;
     #endif
 
-    //Check number of learnt & non-learnt binary clauses
-    uint64_t thisNumLearntBins = 0;
-    uint64_t thisNumNonLearntBins = 0;
-    uint64_t thisNumLearntTris = 0;
-    uint64_t thisNumNonLearntTris = 0;
+    //Check number of red & irred binary clauses
+    uint64_t thisNumRedBins = 0;
+    uint64_t thisNumNonRedBins = 0;
+    uint64_t thisNumRedTris = 0;
+    uint64_t thisNumNonRedTris = 0;
 
     size_t wsLit = 0;
     for(vector<vec<Watched> >::const_iterator
@@ -3285,10 +3282,10 @@ void Solver::checkImplicitStats() const
             ; it2++
         ) {
             if (it2->isBinary()) {
-                if (it2->learnt())
-                    thisNumLearntBins++;
+                if (it2->red())
+                    thisNumRedBins++;
                 else
-                    thisNumNonLearntBins++;
+                    thisNumNonRedBins++;
 
                 continue;
             }
@@ -3303,61 +3300,61 @@ void Solver::checkImplicitStats() const
                 lits[1] = it2->lit2();
                 lits[2] = it2->lit3();
                 std::sort(lits, lits + 3);
-                findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->learnt());
-                findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->learnt());
-                findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->learnt());
+                findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
+                findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
+                findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());
                 #endif //DEBUG_TRI_SORTED_SANITY
 
-                if (it2->learnt())
-                    thisNumLearntTris++;
+                if (it2->red())
+                    thisNumRedTris++;
                 else
-                    thisNumNonLearntTris++;
+                    thisNumNonRedTris++;
 
                 continue;
             }
         }
     }
 
-    if (thisNumNonLearntBins/2 != binTri.irredBins) {
+    if (thisNumNonRedBins/2 != binTri.irredBins) {
         cout
         << "ERROR:"
-        << " thisNumNonLearntBins/2: " << thisNumNonLearntBins/2
+        << " thisNumNonRedBins/2: " << thisNumNonRedBins/2
         << " binTri.irredBins: " << binTri.irredBins
-        << "thisNumNonLearntBins: " << thisNumNonLearntBins
-        << "thisNumLearntBins: " << thisNumLearntBins << endl;
+        << "thisNumNonRedBins: " << thisNumNonRedBins
+        << "thisNumRedBins: " << thisNumRedBins << endl;
     }
-    assert(thisNumNonLearntBins % 2 == 0);
-    assert(thisNumNonLearntBins/2 == binTri.irredBins);
+    assert(thisNumNonRedBins % 2 == 0);
+    assert(thisNumNonRedBins/2 == binTri.irredBins);
 
-    if (thisNumLearntBins/2 != binTri.redBins) {
+    if (thisNumRedBins/2 != binTri.redBins) {
         cout
         << "ERROR:"
-        << " thisNumLearntBins/2: " << thisNumLearntBins/2
+        << " thisNumRedBins/2: " << thisNumRedBins/2
         << " binTri.redBins: " << binTri.redBins
         << endl;
     }
-    assert(thisNumLearntBins % 2 == 0);
-    assert(thisNumLearntBins/2 == binTri.redBins);
+    assert(thisNumRedBins % 2 == 0);
+    assert(thisNumRedBins/2 == binTri.redBins);
 
-    if (thisNumNonLearntTris/3 != binTri.irredTris) {
+    if (thisNumNonRedTris/3 != binTri.irredTris) {
         cout
         << "ERROR:"
-        << " thisNumNonLearntTris/3: " << thisNumNonLearntTris/3
+        << " thisNumNonRedTris/3: " << thisNumNonRedTris/3
         << " binTri.irredTris: " << binTri.irredTris
         << endl;
     }
-    assert(thisNumNonLearntTris % 3 == 0);
-    assert(thisNumNonLearntTris/3 == binTri.irredTris);
+    assert(thisNumNonRedTris % 3 == 0);
+    assert(thisNumNonRedTris/3 == binTri.irredTris);
 
-    if (thisNumLearntTris/3 != binTri.redTris) {
+    if (thisNumRedTris/3 != binTri.redTris) {
         cout
         << "ERROR:"
-        << " thisNumLearntTris/3: " << thisNumLearntTris/3
+        << " thisNumRedTris/3: " << thisNumRedTris/3
         << " binTri.redTris: " << binTri.redTris
         << endl;
     }
-    assert(thisNumLearntTris % 3 == 0);
-    assert(thisNumLearntTris/3 == binTri.redTris);
+    assert(thisNumRedTris % 3 == 0);
+    assert(thisNumRedTris/3 == binTri.redTris);
 }
 
 void Solver::checkStats(const bool allowFreed) const
@@ -3369,8 +3366,8 @@ void Solver::checkStats(const bool allowFreed) const
 
     checkImplicitStats();
 
-    //Count number of non-learnt literals
-    uint64_t numLitsNonLearnt = 0;
+    //Count number of irred clauses' literals
+    uint64_t numLitsNonRed = 0;
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
@@ -3380,12 +3377,12 @@ void Solver::checkStats(const bool allowFreed) const
         if (cl.freed()) {
             assert(allowFreed);
         } else {
-            numLitsNonLearnt += cl.size();
+            numLitsNonRed += cl.size();
         }
     }
 
-    //Count number of learnt literals
-    uint64_t numLitsLearnt = 0;
+    //Count number of redundant clauses' literals
+    uint64_t numLitsRed = 0;
     for(vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
@@ -3395,23 +3392,23 @@ void Solver::checkStats(const bool allowFreed) const
         if (cl.freed()) {
             assert(allowFreed);
         } else {
-            numLitsLearnt += cl.size();
+            numLitsRed += cl.size();
         }
     }
 
     //Check counts
-    if (numLitsNonLearnt != binTri.irredLits) {
+    if (numLitsNonRed != binTri.irredLits) {
         cout << "ERROR: " << endl;
-        cout << "->numLitsNonLearnt: " << numLitsNonLearnt << endl;
+        cout << "->numLitsNonRed: " << numLitsNonRed << endl;
         cout << "->binTri.irredLits: " << binTri.irredLits << endl;
     }
-    if (numLitsLearnt != binTri.redLits) {
+    if (numLitsRed != binTri.redLits) {
         cout << "ERROR: " << endl;
-        cout << "->numLitsLearnt: " << numLitsLearnt << endl;
+        cout << "->numLitsRed: " << numLitsRed << endl;
         cout << "->binTri.redLits: " << binTri.redLits << endl;
     }
-    assert(numLitsNonLearnt == binTri.irredLits);
-    assert(numLitsLearnt == binTri.redLits);
+    assert(numLitsNonRed == binTri.irredLits);
+    assert(numLitsRed == binTri.redLits);
 }
 
 size_t Solver::getNewToReplaceVars() const
@@ -3444,13 +3441,13 @@ void Solver::printWatchlist(const vec<Watched>& ws, const Lit lit) const
         if (it->isBinary()) {
             cout
             << "BIN: " << lit << ", " << it->lit2()
-            << " (l: " << it->learnt() << ")";
+            << " (l: " << it->red() << ")";
         }
 
         if (it->isTri()) {
             cout
             << "TRI: " << lit << ", " << it->lit2() << ", " << it->lit3()
-            << " (l: " << it->learnt() << ")";
+            << " (l: " << it->red() << ")";
         }
 
         cout << endl;
@@ -3488,7 +3485,7 @@ void Solver::checkImplicitPropagated() const
                     if (val2 != l_True) {
                         cout << "not prop BIN: "
                         << lit << ", " << it2->lit2()
-                        << " (learnt: " << it2->learnt()
+                        << " (red: " << it2->red()
                         << endl;
                     }
                     assert(val2 == l_True);
@@ -3540,8 +3537,8 @@ size_t Solver::getNumVarsReplaced() const
 
 void Solver::dumpIfNeeded() const
 {
-    if (!conf.needToDumpLearnts
-        && !conf.needToDumpSimplified
+    if (conf.redDumpFname.empty()
+        && !conf.irredDumpFname.empty()
     ) {
         //Nothing to do, return
         return;
@@ -3550,7 +3547,7 @@ void Solver::dumpIfNeeded() const
     //Handle UNSAT
     if (!solver->okay()) {
         cout
-        << "c Problem is UNSAT, so simplified and/or learnt clauses cannot be dumped"
+        << "c Problem is UNSAT, so irred and/or redundant clauses cannot be dumped"
         << endl;
 
         return;
@@ -3561,36 +3558,36 @@ void Solver::dumpIfNeeded() const
         solver->clauseVivifier->subsumeImplicit();
     }
 
-    if (conf.needToDumpLearnts) {
+    if (!conf.redDumpFname.empty()) {
         std::ofstream outfile;
-        outfile.open(conf.learntsDumpFilename.c_str());
+        outfile.open(conf.redDumpFname.c_str());
         if (!outfile) {
             cout
             << "ERROR: Couldn't open file '"
-            << conf.learntsDumpFilename
-            << "' for writing, cannot dump learnt clauses!"
+            << conf.redDumpFname
+            << "' for writing, cannot dump redundant clauses!"
             << endl;
         } else {
-            solver->dumpRedClauses(&outfile, conf.maxDumpLearntsSize);
+            solver->dumpRedClauses(&outfile, conf.maxDumpRedsSize);
         }
 
-        cout << "Dumped redundant (~learnt) clauses" << endl;
+        cout << "Dumped redundant clauses" << endl;
     }
 
-    if (conf.needToDumpSimplified) {
+    if (!conf.irredDumpFname.empty()) {
         if (conf.verbosity >= 1) {
             cout
-            << "c Dumping simplified original clauses to file '"
-            << conf.simplifiedDumpFilename << "'"
+            << "c Dumping irred irredundant clauses to file '"
+            << conf.irredDumpFname << "'"
             << endl;
         }
 
         std::ofstream outfile;
-        outfile.open(conf.simplifiedDumpFilename.c_str());
+        outfile.open(conf.irredDumpFname.c_str());
         if (!outfile) {
             cout
             << "Cannot open file '"
-            << conf.simplifiedDumpFilename
+            << conf.irredDumpFname
             << "' for writing. exiting"
             << endl;
             exit(-1);
@@ -3603,7 +3600,7 @@ void Solver::dumpIfNeeded() const
             outfile << "0";
         }
 
-        cout << "Dumped irredundant (~non-learnt) clauses" << endl;
+        cout << "Dumped irredundant (~irred) clauses" << endl;
     }
 }
 

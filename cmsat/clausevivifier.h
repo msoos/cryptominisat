@@ -73,7 +73,7 @@ class ClauseVivifier {
                 potentialClauses += other.potentialClauses;
                 numCalled += other.numCalled;
 
-                //Cache-based learnt
+                //Cache-based
                 irredCacheBased += other.irredCacheBased;
                 redCacheBased += other.redCacheBased;
 
@@ -149,7 +149,6 @@ class ClauseVivifier {
             uint64_t potentialClauses;
             uint64_t numCalled;
 
-            //Cache learnt
             struct CacheBased
             {
                 double cpu_time;
@@ -253,7 +252,7 @@ class ClauseVivifier {
 
         ClOffset testVivify(
             ClOffset offset
-            , const bool learnt
+            , const bool red
             , const uint32_t queueByBy
         );
 
@@ -262,7 +261,7 @@ class ClauseVivifier {
         bool vivifyClausesTriIrred();
         bool vivifyClausesCache(
             vector<ClOffset>& clauses
-            , bool learnt
+            , bool red
             , bool alsoStrengthen
         );
         int64_t timeAvailable;
@@ -289,8 +288,8 @@ class ClauseVivifier {
                 //Both are BIN
                 if (first.isBinary()) {
                     assert(second.isBinary());
-                    if (first.learnt() == second.learnt()) return false;
-                    if (!first.learnt()) return true;
+                    if (first.red() == second.red()) return false;
+                    if (!first.red()) return true;
                     return false;
                 }
 
@@ -298,12 +297,12 @@ class ClauseVivifier {
                 assert(first.isTri() && second.isTri());
                 if (first.lit3() < second.lit3()) return true;
                 if (first.lit3() > second.lit3()) return false;
-                if (first.learnt() == second.learnt()) return false;
-                if (!first.learnt()) return true;
+                if (first.red() == second.red()) return false;
+                if (!first.red()) return true;
                 return false;
             }
         };
-        void removeTri(Lit lit1, Lit lit2, Lit lit3, bool learnt);
+        void removeTri(Lit lit1, Lit lit2, Lit lit3, bool red);
 
         //Working set
         Solver* solver;

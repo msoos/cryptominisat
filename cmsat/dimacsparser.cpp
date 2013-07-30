@@ -290,28 +290,28 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 }
 
 /**
-@brief Parses clause parameters given as e.g. "c clause learnt yes"
+@brief Parses clause parameters given as e.g. "c clause red yes"
 */
 void DimacsParser::parseClauseParameters(
     StreamBuffer& in
-    , bool& learnt
+    , bool& red
 ) {
     std::string str;
 
-    //Parse in if we are a learnt clause or not
+    //Parse in if we are a redundant clause or not
     ++in;
     parseString(in, str);
-    if (str != "learnt") goto addTheClause;
+    if (str != "red") goto addTheClause;
 
     ++in;
     parseString(in, str);
-    if (str == "yes") learnt = true;
+    if (str == "yes") red = true;
     else if (str == "no") {
-        learnt = false;
+        red = false;
         goto addTheClause;
     } else {
         cout
-        << "c WARNING parsed for 'learnt' instead of yes/no: '"
+        << "c WARNING parsed for 'red' instead of yes/no: '"
         << str << "'"
         << endl;
 
@@ -328,7 +328,7 @@ void DimacsParser::parseClauseParameters(
 */
 void DimacsParser::readFullClause(StreamBuffer& in)
 {
-    bool learnt = false;
+    bool red = false;
     ClauseStats stats;
     stats.conflictNumIntroduced = 0;
     std::string str;
@@ -344,20 +344,20 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     readClause(in, lits);
     skipLine(in);
 
-    //Parse comments or parse clause type (learnt, glue value, etc.)
+    //Parse comments or parse clause type (redundant, glue value, etc.)
     if (*in == 'c') {
         ++in;
         parseString(in, str);
         if (str == "clause") {
-            parseClauseParameters(in, learnt);
+            parseClauseParameters(in, red);
         } else {
             needToParseComments = true;
         }
     }
 
-    if (learnt) {
-        solver->addLearntClause(lits, stats);
-        numLearntClauses++;
+    if (red) {
+        solver->addRedClause(lits, stats);
+        numRedClauses++;
     } else {
         solver->addClause(lits);
         numNormClauses++;
@@ -406,7 +406,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
-    numLearntClauses = 0;
+    numRedClauses = 0;
     numNormClauses = 0;
     const uint32_t origNumVars = solver->nVars();
 
@@ -415,10 +415,10 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 
     if (solver->getVerbosity() >= 1) {
         cout << "c -- clauses added: "
-        << std::setw(12) << numLearntClauses
-        << " learnts, "
+        << std::setw(12) << numRedClauses
+        << " redundant "
         << std::setw(12) << numNormClauses
-        << " normals "
+        << " irredundant"
         << endl;
 
         cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)

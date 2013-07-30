@@ -191,8 +191,8 @@ void CompFinder::addToCompImplicits()
                 ; it2++
             ) {
                 if (it2->isBinary()
-                    //Only non-learnt
-                    && !it2->learnt()
+                    //Only irred
+                    && !it2->red()
                     //Only do each binary once
                     && lit < it2->lit2()
                 ) {
@@ -203,8 +203,8 @@ void CompFinder::addToCompImplicits()
                 }
 
                 if (it2->isTri()
-                    //Non-learnt
-                    && !it2->learnt()
+                    //irredundant
+                    && !it2->red()
                     //Only do each tri once
                     && lit < it2->lit3()
                     && it2->lit2() < it2->lit3()
@@ -409,7 +409,7 @@ void CompFinder::calcInBins(vector<uint32_t>& numClauseInComp, vector<uint32_t>&
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit < it2->getOtherLit()) {
-                if (it2->getLearnt()) continue;
+                if (it2->isRed()) continue;
 
                 const uint32_t comp = table[lit.var()];
                 assert(comp < comp_no);
@@ -424,7 +424,7 @@ template<class T>
 void CompFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp)
 {
     for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
-        if ((*c)->learnt()) continue;
+        if ((*c)->red()) continue;
         T& x = **c;
         const uint32_t comp = table[x[0].var()];
         assert(comp < comp_no);

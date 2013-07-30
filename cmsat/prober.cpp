@@ -445,7 +445,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     //Start-up cleaning
     runStats.numProbed++;
 
-    //Test removal of non-learnt binary clauses
+    //Test removal of irred binary clauses
     #ifdef DEBUG_REMOVE_USELESS_BIN
     fillTestUselessBinRemoval(lit);
     #endif
@@ -626,14 +626,14 @@ bool Prober::tryThis(const Lit lit, const bool first)
             extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
             extraTimeCache += solver->implCache[(~thisLit).toInt()].lits.size()/30;
 
-            const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
+            const bool redStep = solver->varData[thisLit.var()].reason.isRedStep();
 
             //Update the cache now
             assert(ancestor != lit_Undef);
             bool taut = solver->implCache[(~ancestor).toInt()].merge(
                 solver->implCache[(~thisLit).toInt()].lits
                 , thisLit
-                , learntStep
+                , redStep
                 , ancestor.var()
                 , solver->seen
             );
@@ -671,7 +671,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         bool taut = solver->implCache[(~lit).toInt()].merge(
             tmp
             , lit_Undef
-            , true //Learnt step -- we don't know, so we assume
+            , true //Red step -- we don't know, so we assume
             , lit.var()
             , solver->seen
         );
@@ -760,7 +760,7 @@ void Prober::fillTestUselessBinRemoval(const Lit lit)
     origNLBEnqueuedVars.clear();
     solver->newDecisionLevel();
     solver->enqueue(lit);
-    failed = (!solver->propagateNonLearntBin().isNULL());
+    failed = (!solver->propagateNonRedBin().isNULL());
     for (int c = solver->trail.size()-1; c >= (int)solver->trail_lim[0]; c--) {
         Var x = solver->trail[c].var();
         origNLBEnqueuedVars.push_back(x);
@@ -791,20 +791,20 @@ void Prober::testBinRemoval(const Lit origLit)
             wrong = true;
         }
     }
-    assert(!wrong && "Learnt/Non-learnt bin removal is incorrect");
+    assert(!wrong && "Redundant bin clause removal is incorrect");
     solver->cancelZeroLight();
 
     solver->newDecisionLevel();
     solver->enqueue(origLit);
-    ok = solver->propagateNonLearntBin().isNULL();
+    ok = solver->propagateNonRedBin().isNULL();
     assert(ok && "Prop failed after hyper-bin adding&bin removal. We never reach this point in that case.");
     for (vector<Var>::const_iterator it = origNLBEnqueuedVars.begin(), end = origNLBEnqueuedVars.end(); it != end; it++) {
         if (solver->value(*it) == l_Undef) {
-            cout << "Value of var " << Lit(*it, false) << " is unset, but was set before when propagating non-learnt!" << endl;
+            cout << "Value of var " << Lit(*it, false) << " is unset, but was set before when propagating irred!" << endl;
             wrong = true;
         }
     }
-    assert(!wrong && "Non-learnt bin removal is incorrect");
+    assert(!wrong && "Irredundant bin clause removal is incorrect");
     solver->cancelZeroLight();
 }
 #endif

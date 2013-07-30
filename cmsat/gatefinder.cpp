@@ -219,12 +219,12 @@ void GateFinder::findOrGates()
     findOrGates(true);
 
     for(const auto orgate: orGates) {
-        if (orgate.learnt) {
+        if (orgate.red) {
             runStats.learntGatesSize += orgate.lits.size();
-            runStats.numLearnt++;
+            runStats.numRed++;
         } else  {
-            runStats.nonLearntGatesSize += orgate.lits.size();
-            runStats.numNonLearnt++;
+            runStats.irredGatesSize += orgate.lits.size();
+            runStats.numNonRed++;
         }
     }
     runStats.findGateTime += cpuTime() - myTime;
@@ -411,7 +411,7 @@ size_t GateFinder::findEqOrGates()
     return foundRep;
 }
 
-void GateFinder::findOrGates(const bool learntGatesToo)
+void GateFinder::findOrGates(const bool redGatesToo)
 {
     //Goi through each clause
     for (vector<ClOffset>::iterator
@@ -438,10 +438,10 @@ void GateFinder::findOrGates(const bool learntGatesToo)
             continue;
 
         //if no learnt gates are allowed and this is learnt, skip
-        if (!learntGatesToo && cl.learnt())
+        if (!learntGatesToo && cl.red())
             continue;
 
-        const bool wasLearnt = cl.learnt();
+        const bool wasRed = cl.red();
 
         //Check how many literals have zero cache&binary clause
         //If too many, it cannot possibly be an OR gate
@@ -466,15 +466,15 @@ void GateFinder::findOrGates(const bool learntGatesToo)
         //Try to find a gate with eqlit (~*l)
         ClOffset offset = solver->clAllocator->getOffset(&cl);
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
-            findOrGate(~*l, offset, learntGatesToo, wasLearnt);
+            findOrGate(~*l, offset, learntGatesToo, wasRed);
     }
 }
 
 void GateFinder::findOrGate(
     const Lit eqLit
     , const ClOffset offset
-    , const bool learntGatesToo
-    , bool wasLearnt
+    , const bool redGatesToo
+    , bool wasRed
 ) {
     Clause& cl = *solver->clAllocator->getPointer(offset);
     bool isEqual = true;
@@ -497,10 +497,10 @@ void GateFinder::findOrGate(
             ; cacheLit != endCache && !OK
             ; cacheLit++
         ) {
-            if ((learntGatesToo || cacheLit->getOnlyNLBin())
+            if ((learntGatesToo || cacheLit->getOnlyIrredBin())
                  && cacheLit->getLit() == eqLit
             ) {
-                wasLearnt |= !cacheLit->getOnlyNLBin();
+                wasRed |= !cacheLit->getOnlyIrredBin();
                 OK = true;
             }
         }*/
@@ -517,10 +517,10 @@ void GateFinder::findOrGate(
             if (!wsIt->isBinary())
                 continue;
 
-            if ((learntGatesToo || !wsIt->learnt())
+            if ((learntGatesToo || !wsIt->red())
                  && wsIt->lit2() == eqLit
             ) {
-                wasLearnt |= wsIt->learnt();
+                wasRed |= wsIt->red();
                 OK = true;
             }
         }
@@ -546,7 +546,7 @@ void GateFinder::findOrGate(
 
         lits.push_back(*l2);
     }
-    OrGate gate(lits, eqLit, wasLearnt);
+    OrGate gate(lits, eqLit, wasRed);
 
     //Find if there are any gates that are the same
     const vector<uint32_t>& similar = gateOccEq[gate.eqLit.toInt()];
@@ -561,7 +561,7 @@ void GateFinder::findOrGate(
     orGates.push_back(gate);
     cl.defOfOrGate = true;
     gateOccEq[gate.eqLit.toInt()].push_back(orGates.size()-1);
-    if (!wasLearnt) {
+    if (!wasRed) {
         for (uint32_t i = 0; i < gate.lits.size(); i++) {
             Lit lit = gate.lits[i];
             gateOcc[lit.toInt()].push_back(orGates.size()-1);
@@ -592,10 +592,10 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Don't shorten definitions of OR gates
         // -- we could be manipulating the definition of the gate itself
-        //Don't shorten non-learnt clauses with learnt gates
+        //Don't shorten irred clauses with learnt gates
         // -- potential loss if e.g. learnt clause is removed later
         if (cl.defOfOrGate
-            || (!cl.learnt() && gate.learnt))
+            || (!cl.red() && gate.learnt))
             continue;
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -656,7 +656,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         }
 
         //Future clause's stat
-        const bool learnt = cl.learnt();
+        const bool red = cl.red();
         ClauseStats stats = cl.stats;
 
         //Free the old clause and allocate new one
@@ -711,7 +711,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
         const Clause& cl = *solver->clAllocator->getPointer(offset);
 
         if (cl.defOfOrGate //We might be removing the definition. Info loss
-            || (!cl.learnt() && gate.learnt)) //We might be contracting 2 non-learnt clauses based on a learnt gate. Info loss
+            || (!cl.red() && gate.learnt)) //We might be contracting 2 irred clauses based on a learnt gate. Info loss
             continue;
 
         numOp += cl.size();
@@ -782,8 +782,8 @@ bool GateFinder::treatAndGate(
             continue;
         }
 
-        //Check that we are not removing non-learnt info based on learnt gate
-        if (!cl.learnt() && gate.learnt)
+        //Check that we are not removing irred info based on learnt gate
+        if (!cl.red() && gate.learnt)
             continue;
 
         //Check that ~lits[1] is not inside this clause, and that eqLit is not inside, either
@@ -881,7 +881,7 @@ void GateFinder::treatAndGateClause(
     //Calculate learnt & glue
     Clause& otherCl = *solver->clAllocator->getPointer(other);
     *subsumer->toDecrease -= otherCl.size()*2;
-    bool learnt = otherCl.learnt() && cl.learnt();
+    bool red = otherCl.red() && cl.red();
     ClauseStats stats = ClauseStats::combineStats(cl.stats, otherCl.stats);
 
     #ifdef VERBOSE_ORGATE_REPLACE

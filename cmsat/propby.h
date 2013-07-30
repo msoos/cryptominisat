@@ -67,7 +67,7 @@ class PropBy
         //For hyper-bin, etc.
         PropBy(
             const Lit lit
-            , bool learntStep //Step that lead here from ancestor is learnt
+            , bool redStep //Step that lead here from ancestor is redundant
             , bool hyperBin //It's a hyper-binary clause
             , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
         ) :
@@ -82,7 +82,7 @@ class PropBy
             if (lit == ~lit_Undef)
                 type = null_clause_t;
 
-            data2 = (uint32_t)learntStep
+            data2 = (uint32_t)redStep
                 | ((uint32_t)hyperBin) << 1
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
@@ -94,7 +94,7 @@ class PropBy
         {
         }
 
-        bool getLearntStep() const
+        bool isRedStep() const
         {
             return data2 & 1U;
         }

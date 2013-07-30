@@ -341,7 +341,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(!cl->getFreed());
 
         //Put it in the right bucket
-        if (cl->learnt()) {
+        if (cl->red()) {
             solver->longRedCls.push_back(offset);
         } else {
             solver->longIrredCls.push_back(offset);

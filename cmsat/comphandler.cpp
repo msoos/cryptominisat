@@ -342,7 +342,7 @@ void CompHandler::moveClausesLong(
         Clause& cl = *solver->clAllocator->getPointer(*i);
 
         //Irred, different comp
-        if (!cl.learnt()) {
+        if (!cl.red()) {
             if (compFinder->getVarComp(cl[0].var()) != comp) {
                 //different comp, move along
                 *j++ = *i;
@@ -350,7 +350,7 @@ void CompHandler::moveClausesLong(
             }
         }
 
-        if (cl.learnt()) {
+        if (cl.red()) {
             //Check which comp(s) it belongs to
             bool thisComp = false;
             bool otherComp = false;
@@ -390,9 +390,9 @@ void CompHandler::moveClausesLong(
         }
 
         //Add 'tmp' to the new solver
-        if (cl.learnt()) {
+        if (cl.red()) {
             cl.stats.conflictNumIntroduced = 0;
-            newSolver->addLearntClause(tmp, cl.stats);
+            newSolver->addRedClause(tmp, cl.stats);
         } else {
             saveClause(cl);
             newSolver->addClause(tmp);
@@ -411,10 +411,10 @@ void CompHandler::moveClausesImplicit(
     , const vector<Var>& vars
 ) {
     vector<Lit> lits;
-    uint32_t numRemovedHalfNonLearnt = 0;
-    uint32_t numRemovedHalfLearnt = 0;
-    uint32_t numRemovedThirdNonLearnt = 0;
-    uint32_t numRemovedThirdLearnt = 0;
+    uint32_t numRemovedHalfNonRed = 0;
+    uint32_t numRemovedHalfRed = 0;
+    uint32_t numRemovedThirdNonRed = 0;
+    uint32_t numRemovedThirdRed = 0;
 
     for(const Var var: vars) {
     for(unsigned sign = 0; sign < 2; sign++) {
@@ -440,19 +440,19 @@ void CompHandler::moveClausesImplicit(
             ) {
                 const Lit lit2 = i->lit2();
 
-                //Unless learnt, cannot be in 2 comps at once
+                //Unless redundant, cannot be in 2 comps at once
                 assert((compFinder->getVarComp(lit.var()) == comp
                             && compFinder->getVarComp(lit2.var()) == comp
-                       ) || i->learnt()
+                       ) || i->red()
                 );
 
-                //If it's learnt and the lits are in different comps, remove it.
+                //If it's redundant and the lits are in different comps, remove it.
                 if (compFinder->getVarComp(lit.var()) != comp
                     || compFinder->getVarComp(lit2.var()) != comp
                 ) {
-                    //Can only be learnt, otherwise it would be in the same
+                    //Can only be redundant, otherwise it would be in the same
                     //component
-                    assert(i->learnt());
+                    assert(i->red());
 
                     //The way we go through this, it's definitely going to be
                     //lit2 that's in the other component
@@ -476,23 +476,23 @@ void CompHandler::moveClausesImplicit(
                     assert(compFinder->getVarComp(lit2.var()) == comp);
 
                     //Add new clause
-                    if (i->learnt()) {
-                        newSolver->addLearntClause(lits);
-                        numRemovedHalfLearnt++;
+                    if (i->red()) {
+                        newSolver->addRedClause(lits);
+                        numRemovedHalfRed++;
                     } else {
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2});
 
                         newSolver->addClause(lits);
-                        numRemovedHalfNonLearnt++;
+                        numRemovedHalfNonRed++;
                     }
                 } else {
 
                     //Just remove, already added above
-                    if (i->learnt()) {
-                        numRemovedHalfLearnt++;
+                    if (i->red()) {
+                        numRemovedHalfRed++;
                     } else {
-                        numRemovedHalfNonLearnt++;
+                        numRemovedHalfNonRed++;
                     }
                 }
 
@@ -509,19 +509,19 @@ void CompHandler::moveClausesImplicit(
                 const Lit lit2 = i->lit2();
                 const Lit lit3 = i->lit3();
 
-                //Unless learnt, cannot be in 2 comps at once
+                //Unless redundant, cannot be in 2 comps at once
                 assert((compFinder->getVarComp(lit.var()) == comp
                             && compFinder->getVarComp(lit2.var()) == comp
                             && compFinder->getVarComp(lit3.var()) == comp
-                       ) || i->learnt()
+                       ) || i->red()
                 );
 
-                //If it's learnt and the lits are in different comps, remove it.
+                //If it's redundant and the lits are in different comps, remove it.
                 if (compFinder->getVarComp(lit.var()) != comp
                     || compFinder->getVarComp(lit2.var()) != comp
                     || compFinder->getVarComp(lit3.var()) != comp
                 ) {
-                    assert(i->learnt());
+                    assert(i->red());
 
                     //The way we go through this, it's definitely going to be
                     //either lit2 or lit3, not lit, that's in the other comp
@@ -564,23 +564,23 @@ void CompHandler::moveClausesImplicit(
                     assert(compFinder->getVarComp(lit3.var()) == comp);
 
                     //Add new clause
-                    if (i->learnt()) {
-                        newSolver->addLearntClause(lits);
-                        numRemovedThirdLearnt++;
+                    if (i->red()) {
+                        newSolver->addRedClause(lits);
+                        numRemovedThirdRed++;
                     } else {
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2, lit3});
 
                         newSolver->addClause(lits);
-                        numRemovedThirdNonLearnt++;
+                        numRemovedThirdNonRed++;
                     }
                 } else {
 
                     //Just remove, already added above
-                    if (i->learnt()) {
-                        numRemovedThirdLearnt++;
+                    if (i->red()) {
+                        numRemovedThirdRed++;
                     } else {
-                        numRemovedThirdNonLearnt++;
+                        numRemovedThirdNonRed++;
                     }
                 }
 
@@ -593,17 +593,17 @@ void CompHandler::moveClausesImplicit(
         ws.shrink_(i-j);
     }}
 
-    assert(numRemovedHalfNonLearnt % 2 == 0);
-    solver->binTri.irredBins -= numRemovedHalfNonLearnt/2;
+    assert(numRemovedHalfNonRed % 2 == 0);
+    solver->binTri.irredBins -= numRemovedHalfNonRed/2;
 
-    assert(numRemovedThirdNonLearnt % 3 == 0);
-    solver->binTri.irredTris -= numRemovedThirdNonLearnt/3;
+    assert(numRemovedThirdNonRed % 3 == 0);
+    solver->binTri.irredTris -= numRemovedThirdNonRed/3;
 
-    assert(numRemovedHalfLearnt % 2 == 0);
-    solver->binTri.redBins -= numRemovedHalfLearnt/2;
+    assert(numRemovedHalfRed % 2 == 0);
+    solver->binTri.redBins -= numRemovedHalfRed/2;
 
-    assert(numRemovedThirdLearnt % 3 == 0);
-    solver->binTri.redTris -= numRemovedThirdLearnt/3;
+    assert(numRemovedThirdRed % 3 == 0);
+    solver->binTri.redTris -= numRemovedThirdRed/3;
 }
 
 void CompHandler::addSavedState(vector<lbool>& solution)

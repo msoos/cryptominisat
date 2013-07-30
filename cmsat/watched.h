@@ -79,20 +79,20 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool learnt) :
+        Watched(const Lit lit, const bool red) :
             data1(lit.toInt())
             , type(watch_binary_t)
-            , data2(learnt)
+            , data2(red)
         {
         }
 
         /**
         @brief Constructor for a 3-long clause
         */
-        Watched(const Lit lit1, const Lit lit2, const bool learnt) :
+        Watched(const Lit lit1, const Lit lit2, const bool red) :
             data1(lit1.toInt())
             , type(watch_tertiary_t)
-            , data2((lit2.toInt() << 1) | (uint32_t)learnt)
+            , data2((lit2.toInt() << 1) | (uint32_t)red)
         {
         }
 
@@ -162,7 +162,7 @@ class Watched {
             data1 = lit.toInt();
         }
 
-        bool learnt() const
+        bool red() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
@@ -170,12 +170,12 @@ class Watched {
             return data2 & 1;
         }
 
-        void setLearnt(const bool toSet)
+        void setRed(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
             assert(toSet == false);
-            assert(learnt());
+            assert(red());
             #endif
             if (toSet) {
                 data2 |= 1U;
@@ -248,13 +248,13 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
     }
 
     if (ws.isBinary()) {
-        os << "Bin: " << ws.lit2() << " (learnt: " << ws.learnt() << " )";
+        os << "Bin: " << ws.lit2() << " (red: " << ws.red() << " )";
     }
 
     if (ws.isTri()) {
         os << "Tri: "
         << ws.lit2() << ", " << ws.lit3()
-        << " (learnt: " << ws.learnt() << " )";
+        << " (red: " << ws.red() << " )";
     }
 
     return os;
@@ -313,14 +313,14 @@ static inline Watched& findWatchedOfTri(
     , const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isTri()
             && i->lit2() == lit2
             && i->lit3() == lit3
-            && i->learnt() == learnt
+            && i->red() == red
         ) {
             return *i;
         }
@@ -335,7 +335,7 @@ static inline const Watched& findWatchedOfTri(
     , const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     const vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::const_iterator
@@ -346,7 +346,7 @@ static inline const Watched& findWatchedOfTri(
         if (it->isTri()
             && it->lit2() == lit2
             && it->lit3() == lit3
-            && it->learnt() == learnt
+            && it->red() == red
         ) {
             return *it;
         }
@@ -361,7 +361,7 @@ static inline void removeWTri(
     , const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool learnt
+    , const bool red
 ) {
     assert(lit2 < lit3);
 
@@ -371,7 +371,7 @@ static inline void removeWTri(
         !i->isTri()
         || i->lit2() != lit2
         || i->lit3() != lit3
-        || i->learnt() != learnt
+        || i->red() != red
     ); i++);
 
     assert(i != end);
@@ -385,14 +385,14 @@ inline void removeTriAllButOne(
     vector<vec<Watched> >& wsFull
     , const Lit lit
     , const Lit* lits
-    , const bool learnt
+    , const bool red
 ) {
     if (lit != lits[0])
-        removeWTri(wsFull, lits[0], lits[1], lits[2], learnt);
+        removeWTri(wsFull, lits[0], lits[1], lits[2], red);
     if (lit != lits[1])
-        removeWTri(wsFull, lits[1], lits[0], lits[2], learnt);
+        removeWTri(wsFull, lits[1], lits[0], lits[2], red);
     if (lit != lits[2])
-        removeWTri(wsFull, lits[2], lits[0], lits[1], learnt);
+        removeWTri(wsFull, lits[2], lits[0], lits[1], red);
 }
 
 //////////////////
@@ -414,14 +414,14 @@ inline bool findWBin(
     const vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
 ) {
     vec<Watched>::const_iterator i = wsFull[lit1.toInt()].begin();
     vec<Watched>::const_iterator end = wsFull[lit1.toInt()].end();
     for (; i != end && (
         !i->isBinary()
         || i->lit2() != lit2
-        || i->learnt() != learnt
+        || i->red() != red
     ); i++);
 
     return i != end;
@@ -431,14 +431,14 @@ inline void removeWBin(
     vector<vec<Watched> > &wsFull
     , const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isBinary()
         || i->lit2() != lit2
-        || i->learnt() != learnt
+        || i->red() != red
     ); i++);
 
     assert(i != end);
@@ -452,11 +452,11 @@ inline Watched& findWatchedOfBin(
     vector<vec<Watched> >& wsFull
     , const Lit lit1
     , const Lit lit2
-    , const bool learnt
+    , const bool red
 ) {
     vec<Watched>& ws = wsFull[lit1.toInt()];
     for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isBinary() && i->lit2() == lit2 && i->learnt() == learnt)
+        if (i->isBinary() && i->lit2() == lit2 && i->red() == red)
             return *i;
     }
 

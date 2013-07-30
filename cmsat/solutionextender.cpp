@@ -307,7 +307,7 @@ bool SolutionExtender::propagate()
             ; it != end
             ; it++
         ) {
-            if (it->isBinary() && !it->learnt()) {
+            if (it->isBinary() && !it->red()) {
                 bool thisret = propBinaryClause(it, p);
                 ret &= thisret;
                 if (!thisret) {
@@ -322,7 +322,7 @@ bool SolutionExtender::propagate()
             }
 
             //Propagate tri clause
-            if (it->isTri() && !it->learnt()) {
+            if (it->isTri() && !it->red()) {
                 bool thisret = propTriClause(it, p);
                 ret &= thisret;
                 if (!thisret) {

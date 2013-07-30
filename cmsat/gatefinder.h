@@ -71,10 +71,10 @@ struct SecondSorter
 
 class OrGate {
     public:
-        OrGate(const std::vector<Lit>& _lits, const Lit& _eqLit, const bool _learnt) :
+        OrGate(const std::vector<Lit>& _lits, const Lit& _eqLit, const bool _red) :
             lits(_lits)
             , eqLit(_eqLit)
-            , learnt(_learnt)
+            , red(_red)
             , removed(false)
         {
             std::sort(lits.begin(), lits.end());
@@ -86,7 +86,7 @@ class OrGate {
         }
         std::vector<Lit> lits; //LHS
         Lit eqLit; //RHS
-        bool learnt;
+        bool red;
         bool removed;
 };
 
@@ -99,7 +99,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
         os << gate.lits[i] << " ";
     }
     os << " eqLit: " << gate.eqLit;
-    os << " learnt " << gate.learnt;
+    os << " learnt " << gate.red;
     os << " removed: " << gate.removed;
     return os;
 }
@@ -161,9 +161,9 @@ public:
 
             //Gate
             , learntGatesSize(0)
-            , numLearnt(0)
-            , nonLearntGatesSize(0)
-            , numNonLearnt(0)
+            , numRed(0)
+            , irredGatesSize(0)
+            , numNonRed(0)
         {}
 
         void clear()
@@ -202,9 +202,9 @@ public:
 
             //Gates
             learntGatesSize += other.learntGatesSize;
-            numLearnt += other.numLearnt;
-            nonLearntGatesSize += other.nonLearntGatesSize;
-            numNonLearnt += other.numNonLearnt;
+            numRed += other.numRed;
+            irredGatesSize += other.irredGatesSize;
+            numNonRed += other.numNonRed;
 
             return *this;
         }
@@ -277,12 +277,12 @@ public:
         {
             //Gate find
             cout << "c Gate find"
-            << " nlearnt:" << numNonLearnt
+            << " irred:" << numNonRed
             << " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)nonLearntGatesSize/(double)numNonLearnt)
-            << " learnt: " << numLearnt
+            << ((double)irredGatesSize/(double)numNonRed)
+            << " red: " << numRed
             << " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)learntGatesSize/(double)numLearnt)
+            << ((double)learntGatesSize/(double)numRed)
             << " T: " << std::fixed << std::setprecision(2)
             << findGateTime
             << endl;
@@ -336,9 +336,9 @@ public:
 
         //Gates
         uint64_t learntGatesSize;
-        uint64_t numLearnt;
-        uint64_t nonLearntGatesSize;
-        uint64_t numNonLearnt;
+        uint64_t numRed;
+        uint64_t irredGatesSize;
+        uint64_t numNonRed;
     };
 
     const Stats& getStats() const;
@@ -352,12 +352,12 @@ private:
     uint32_t createNewVars();
 
     //Helpers to find
-    void findOrGates(const bool learntGatesToo);
+    void findOrGates(const bool redGatesToo);
     void findOrGate(
         const Lit eqLit
         , const ClOffset offset
-        , const bool learntGatesToo
-        , bool wasLearnt
+        , const bool redGatesToo
+        , bool wasRed
     );
 
     bool doAllOptimisationWithGates();

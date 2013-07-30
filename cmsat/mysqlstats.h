@@ -271,10 +271,10 @@ private:
         uint64_t conflsLongIrred;
         uint64_t conflsLongRed;
 
-        //Learnt
+        //Red
         uint64_t learntUnits;
-        uint64_t learntBins;
-        uint64_t learntTris;
+        uint64_t redBins;
+        uint64_t redTris;
         uint64_t learntLongs;
 
         //Misc

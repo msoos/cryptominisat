@@ -19,11 +19,11 @@ public:
 
     struct Sub0Ret {
         Sub0Ret() :
-            subsumedNonLearnt(false)
+            subsumedNonRed(false)
             , numSubsumed(0)
         {};
 
-        bool subsumedNonLearnt;
+        bool subsumedNonRed;
         ClauseStats stats;
         uint32_t numSubsumed;
     };

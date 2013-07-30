@@ -171,7 +171,7 @@ void Searcher::analyzeHelper(
                 && varData[var].reason.getType() == clause_t
             ) {
                 Clause* cl = clAllocator->getPointer(varData[var].reason.getClause());
-                if (cl->learnt()) {
+                if (cl->red()) {
                     lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
                 }
             }
@@ -224,7 +224,7 @@ void Searcher::doOTFSubsume(PropBy confl)
     /*
     cout
     << "MATCH!"
-    << " cl: " << cl << "learnt: " << cl.learnt() << endl
+    << " cl: " << cl << "red: " << cl.red() << endl
     << " learnt cl: ";
     for(const Lit
         *it = cl.begin(), *end = cl.end()
@@ -275,7 +275,7 @@ void Searcher::doOTFSubsume(PropBy confl)
 
         stats.otfSubsumed++;
         stats.otfSubsumedImplicit++;
-        stats.otfSubsumedLearnt += cl.learnt();
+        stats.otfSubsumedRed += cl.red();
         stats.otfSubsumedLitsGained += cl.size() - newCl.size;
     }
 
@@ -288,7 +288,7 @@ void Searcher::doOTFSubsume(PropBy confl)
         solver->detachClause(cl, false);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
-        stats.otfSubsumedLearnt += cl.learnt();
+        stats.otfSubsumedRed += cl.red();
         stats.otfSubsumedLitsGained += cl.size() - learnt_clause2_size;
 
         size_t i = 0;
@@ -470,7 +470,7 @@ Clause* Searcher::analyze(
                 cout << "resolv (long): " << *cl << endl;
                 #endif
 
-                if (cl->learnt()) {
+                if (cl->red()) {
                     resolutions.redL++;
                     stats.resolvs.redL++;
                 } else {
@@ -480,7 +480,7 @@ Clause* Searcher::analyze(
 
                 //Update stats
                 cl->stats.numUsedUIP++;
-                if (cl->learnt() && !fromProber) {
+                if (cl->red() && !fromProber) {
                     bumpClauseAct(cl);
                 }
 
@@ -532,7 +532,7 @@ Clause* Searcher::analyze(
     learnt_clause[0] = ~p;
 
     assert(pathC == 0);
-    stats.litsLearntNonMin += learnt_clause.size();
+    stats.litsRedNonMin += learnt_clause.size();
     const size_t origSize = learnt_clause.size();
 
     //Recursive cc min
@@ -554,7 +554,7 @@ Clause* Searcher::analyze(
     stats.recMinLitRem += origSize - learnt_clause.size();
 
     //Cache-based minimisation
-    if (conf.doMinimLearntMore
+    if (conf.doMinimRedMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
             || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
@@ -565,11 +565,11 @@ Clause* Searcher::analyze(
         stats.moreMinimLitsStart += learnt_clause.size();
 
         //Binary&cache-based minim
-        minimiseLearntFurther(learnt_clause);
+        minimiseRedFurther(learnt_clause);
 
         //Stamp-based minimization
         if (conf.doStamp) {
-            stampBasedLearntMinim(learnt_clause);
+            stampBasedRedMinim(learnt_clause);
         }
 
         stats.moreMinimLitsEnd += learnt_clause.size();
@@ -577,7 +577,7 @@ Clause* Searcher::analyze(
 
     //Calc stats
     glue = calcGlue(learnt_clause);
-    stats.litsLearntFinal += learnt_clause.size();
+    stats.litsRedFinal += learnt_clause.size();
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
@@ -636,7 +636,7 @@ Clause* Searcher::analyze(
     //on-the-fly subsumed the original clause
     stats.otfSubsumed++;
     stats.otfSubsumedLong++;
-    stats.otfSubsumedLearnt += cl->learnt();
+    stats.otfSubsumedRed += cl->red();
     stats.otfSubsumedLitsGained += cl->size() - learnt_clause.size();
     return cl;
 
@@ -825,7 +825,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
 @brief Search for a model
 
 Limits: must be below the specified number of conflicts and must keep the
-number of learnt clauses below the provided limit
+number of redundant clauses below the provided limit
 
 Use negative value for 'nof_conflicts' or 'nof_learnts' to indicate infinity.
 
@@ -883,8 +883,8 @@ lbool Searcher::search(uint64_t* geom_max)
                 #endif
 
                 cancelUntil(0);
-                stats.litsLearntNonMin += 1;
-                stats.litsLearntFinal += 1;
+                stats.litsRedNonMin += 1;
+                stats.litsRedFinal += 1;
                 #ifdef STATS_NEEDED
                 propStats.propsUnit++;
                 #endif
@@ -910,13 +910,13 @@ lbool Searcher::search(uint64_t* geom_max)
                     const Lit thisLit = trail[c];
                     const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
                     assert(thisLit != trail[trail_lim[0]]);
-                    const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
+                    const bool redStep = varData[thisLit.var()].reason.isRedStep();
 
                     assert(ancestor != lit_Undef);
                     bool taut = solver->implCache[(~ancestor).toInt()].merge(
                         solver->implCache[(~thisLit).toInt()].lits
                         , thisLit
-                        , learntStep
+                        , redStep
                         , ancestor.var()
                         , solver->seen
                     );
@@ -1409,7 +1409,7 @@ bool Searcher::handle_conflict(PropBy confl)
         //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
             cl = clAllocator->Clause_new(learnt_clause, Searcher::sumConflicts());
-            cl->makeLearnt(glue);
+            cl->makeRed(glue);
             ClOffset offset = clAllocator->getOffset(cl);
             solver->longRedCls.push_back(offset);
         }
@@ -1434,7 +1434,7 @@ bool Searcher::handle_conflict(PropBy confl)
         assert(cl->size() == learnt_clause.size());
 
         //Update stats
-        if (cl->learnt() && cl->stats.glue > glue) {
+        if (cl->red() && cl->stats.glue > glue) {
             cl->stats.glue = glue;
         }
         cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
@@ -1484,7 +1484,7 @@ bool Searcher::handle_conflict(PropBy confl)
             break;
 
         default:
-            //Normal learnt
+            //Long learnt
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
             std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
@@ -2346,7 +2346,7 @@ Lit Searcher::pickBranchLit()
 Only uses binary and tertiary clauses already in the watchlists in native
 form to carry out the forward-self-subsuming resolution
 */
-void Searcher::minimiseLearntFurther(vector<Lit>& cl)
+void Searcher::minimiseRedFurther(vector<Lit>& cl)
 {
     stats.furtherShrinkAttempt++;
 
@@ -2445,7 +2445,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
     cl.resize(cl.size() - (i-j));
 }
 
-void Searcher::stampBasedLearntMinim(vector<Lit>& cl)
+void Searcher::stampBasedRedMinim(vector<Lit>& cl)
 {
     //Stamp-based minimization
     stats.stampShrinkAttempt++;
@@ -2585,11 +2585,11 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             //cout << "Removing binary clause: " << *it << endl;
             propStats.otfHyperTime += solver->watches[it->getLit1().toInt()].size()/2;
             propStats.otfHyperTime += solver->watches[it->getLit2().toInt()].size()/2;
-            removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->getLearnt());
-            removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->getLearnt());
+            removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
+            removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
 
             //Update stats
-            if (it->getLearnt()) {
+            if (it->isRed()) {
                 solver->binTri.redBins--;
                 removedRed++;
             } else {
@@ -2609,7 +2609,7 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
             << it->getLit1() << " , " << it->getLit2()
-            << " , learnt: " << it->getLearnt() << endl;
+            << " , red: " << it->isRed() << endl;
             #endif
         }
     }

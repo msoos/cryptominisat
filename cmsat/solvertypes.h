@@ -271,10 +271,10 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 class BinaryClause {
     public:
-        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _learnt) :
+        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _red) :
             lit1(_lit1)
             , lit2(_lit2)
-            , learnt(_learnt)
+            , red(_red)
         {
             if (lit1 > lit2) std::swap(lit1, lit2);
         }
@@ -286,14 +286,14 @@ class BinaryClause {
 
             if (lit2 < other.lit2) return true;
             if (lit2 > other.lit2) return false;
-            return (learnt && !other.learnt);
+            return (red && !other.red);
         }
 
         bool operator==(const BinaryClause& other) const
         {
             return (lit1 == other.lit1
                     && lit2 == other.lit2
-                    && learnt == other.learnt);
+                    && red == other.red);
         }
 
         const Lit getLit1() const
@@ -306,22 +306,22 @@ class BinaryClause {
             return lit2;
         }
 
-        bool getLearnt() const
+        bool isRed() const
         {
-            return learnt;
+            return red;
         }
 
     private:
         Lit lit1;
         Lit lit2;
-        bool learnt;
+        bool red;
 };
 
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
     os << val.getLit1() << " , " << val.getLit2()
-    << " learnt: " << std::boolalpha << val.getLearnt() << std::noboolalpha;
+    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha;
     return os;
 }
 

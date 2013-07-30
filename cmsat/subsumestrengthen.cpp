@@ -33,11 +33,11 @@ uint32_t SubsumeStrengthen::subsume0(ClOffset offset)
         , cl.abst
     );
 
-    //If non-learnt is subsumed by learnt, make the learnt into non-learnt
-    if (cl.learnt()
-        && ret.subsumedNonLearnt
+    //If irred is subsumed by redundant, make the redundant into irred
+    if (cl.red()
+        && ret.subsumedNonRed
     ) {
-        cl.makeNonLearnt();
+        cl.makeNonRed();
         solver->binTri.redLits -= cl.size();
         solver->binTri.irredLits += cl.size();
         if (!cl.getOccurLinked()) {
@@ -86,9 +86,9 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume0AndUnlink(
         //Combine stats
         ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
 
-        //At least one is non-learnt. Indicate this to caller.
-        if (!tmp->learnt())
-            ret.subsumedNonLearnt = true;
+        //At least one is irred. Indicate this to caller.
+        if (!tmp->red())
+            ret.subsumedNonRed = true;
 
         /*cout
         << "This " << ps << " (offset: " << offset << ") subsumed this: "
@@ -141,11 +141,11 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::subsume1(const ClOffset offset)
             if (solver->conf.verbosity >= 6)
                 cout << "subsumed clause " << cl2 << endl;
 
-            //If subsumes a non-learnt, and is learnt, make it non-learnt
-            if (cl.learnt()
-                && !cl2.learnt()
+            //If subsumes a irred, and is redundant, make it irred
+            if (cl.red()
+                && !cl2.red()
             ) {
-                cl.makeNonLearnt();
+                cl.makeNonRed();
                 solver->binTri.redLits -= cl.size();
                 solver->binTri.irredLits += cl.size();
                 if (!cl.getOccurLinked()) {
@@ -403,7 +403,7 @@ void SubsumeStrengthen::strengthen(ClOffset offset, const Lit toRemoveLit)
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
-    if (cl.learnt())
+    if (cl.red())
         solver->binTri.redLits--;
     else
         solver->binTri.irredLits--;
@@ -566,7 +566,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
             if (it->isBinary()
                 && ps.size() == 2
                 && ps[!min_i] == it->lit2()
-                && !it->learnt()
+                && !it->red()
             ) {
                 /*cout
                 << "ps " << ps << " could subsume this bin: "
@@ -576,7 +576,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
 
                 //We cannot remove ourselves
                 if (numBinFound > 1) {
-                    removeWBin(solver->watches, it->lit2(), ps[min_i], it->learnt());
+                    removeWBin(solver->watches, it->lit2(), ps[min_i], it->red());
                     solver->binTri.irredBins--;
                     continue;
                 }
@@ -596,8 +596,8 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
                 lits[1] = it->lit2();
                 lits[2] = it->lit3();
                 std::sort(lits + 0, lits + 3);
-                removeTriAllButOne(solver->watches, ps[min_i], lits, it->learnt());
-                if (it->learnt()) {
+                removeTriAllButOne(solver->watches, ps[min_i], lits, it->red());
+                if (it->red()) {
                     solver->binTri.redTris--;
                 } else {
                     solver->binTri.irredTris--;
@@ -734,14 +734,14 @@ void SubsumeStrengthen::finishedRun()
 //
 //                 subsumed += ret.numSubsumed;
 //
-//                 if (ws[i].learnt()
-//                     && ret.subsumedNonLearnt
+//                 if (ws[i].red()
+//                     && ret.subsumedNonRed
 //                 ) {
-//                     ws[i].setLearnt(false);
+//                     ws[i].setRed(false);
 //                     solver->binTri.redTris--;
 //                     solver->binTri.irredTris++;
-//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setLearnt(false);
-//                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setLearnt(false);
+//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
+//                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
 //                 }
 //             }
 //         }

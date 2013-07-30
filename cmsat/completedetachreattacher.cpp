@@ -49,17 +49,17 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
     solver->binTri.redLits = 0;
     solver->binTri.irredLits = 0;
 
-    assert(stay.learntBins % 2 == 0);
-    solver->binTri.redBins = stay.learntBins/2;
+    assert(stay.redBins % 2 == 0);
+    solver->binTri.redBins = stay.redBins/2;
 
-    assert(stay.nonLearntBins % 2 == 0);
-    solver->binTri.irredBins = stay.nonLearntBins/2;
+    assert(stay.irredBins % 2 == 0);
+    solver->binTri.irredBins = stay.irredBins/2;
 
-    assert(stay.learntTris % 3 == 0);
-    solver->binTri.redTris = stay.learntTris/3;
+    assert(stay.redTris % 3 == 0);
+    solver->binTri.redTris = stay.redTris/3;
 
-    assert(stay.nonLearntTris % 3 == 0);
-    solver->binTri.irredTris = stay.nonLearntTris/3;
+    assert(stay.irredTris % 3 == 0);
+    solver->binTri.irredTris = stay.irredTris/3;
 }
 
 /**
@@ -74,17 +74,17 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     vec<Watched>::iterator j = i;
     for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
         if (i->isBinary()) {
-            if (i->learnt())
-                stay.learntBins++;
+            if (i->red())
+                stay.redBins++;
             else
-                stay.nonLearntBins++;
+                stay.irredBins++;
 
             *j++ = *i;
         } else if (i->isTri()) {
-            if (i->learnt())
-                stay.learntTris++;
+            if (i->red())
+                stay.redTris++;
             else
-                stay.nonLearntTris++;
+                stay.irredTris++;
 
             *j++ = *i;
         }
@@ -133,7 +133,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 
         //Handle stat removal if need be
         if (removeStatsFirst) {
-            if (cl->learnt()) {
+            if (cl->red()) {
                 solver->binTri.redLits -= cl->size();
             } else {
                 solver->binTri.irredLits -= cl->size();
@@ -215,12 +215,12 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
             return false;
 
         case 2: {
-            solver->attachBinClause(ps[0], ps[1], ps.learnt());
+            solver->attachBinClause(ps[0], ps[1], ps.red());
             return false;
         }
 
         case 3: {
-            solver->attachTriClause(ps[0], ps[1], ps[2], ps.learnt());
+            solver->attachTriClause(ps[0], ps[1], ps[2], ps.red());
             return false;
         }
 

@@ -60,24 +60,24 @@ class CompleteDetachReatacher
         class ClausesStay {
             public:
                 ClausesStay() :
-                    learntBins(0)
-                    , nonLearntBins(0)
-                    , learntTris(0)
-                    , nonLearntTris(0)
+                    redBins(0)
+                    , irredBins(0)
+                    , redTris(0)
+                    , irredTris(0)
                 {}
 
                 ClausesStay& operator+=(const ClausesStay& other) {
-                    learntBins += other.learntBins;
-                    nonLearntBins += other.nonLearntBins;
-                    learntTris += other.learntTris;
-                    nonLearntTris += other.nonLearntTris;
+                    redBins += other.redBins;
+                    irredBins += other.irredBins;
+                    redTris += other.redTris;
+                    irredTris += other.irredTris;
                     return *this;
                 }
 
-                uint64_t learntBins;
-                uint64_t nonLearntBins;
-                uint64_t learntTris;
-                uint64_t nonLearntTris;
+                uint64_t redBins;
+                uint64_t irredBins;
+                uint64_t redTris;
+                uint64_t irredTris;
         };
         ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws);
 

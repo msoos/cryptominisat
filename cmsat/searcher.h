@@ -238,8 +238,8 @@ class Searcher : public PropEngine
                 , decisionFlippedPolar(0)
 
                 //Conflict generation
-                , litsLearntNonMin(0)
-                , litsLearntFinal(0)
+                , litsRedNonMin(0)
+                , litsRedFinal(0)
                 , recMinCl(0)
                 , recMinLitRem(0)
                 , furtherShrinkAttempt(0)
@@ -253,7 +253,7 @@ class Searcher : public PropEngine
                 , moreMinimLitsEnd(0)
                 , recMinimCost(0)
 
-                //Learnt stats
+                //Red stats
                 , learntUnits(0)
                 , learntBins(0)
                 , learntTris(0)
@@ -261,7 +261,7 @@ class Searcher : public PropEngine
                 , otfSubsumed(0)
                 , otfSubsumedImplicit(0)
                 , otfSubsumedLong(0)
-                , otfSubsumedLearnt(0)
+                , otfSubsumedRed(0)
                 , otfSubsumedLitsGained(0)
 
                 //Hyper-bin & transitive reduction
@@ -292,8 +292,8 @@ class Searcher : public PropEngine
                 decisionFlippedPolar += other.decisionFlippedPolar;
 
                 //Conflict minimisation stats
-                litsLearntNonMin += other.litsLearntNonMin;
-                litsLearntFinal += other.litsLearntFinal;
+                litsRedNonMin += other.litsRedNonMin;
+                litsRedFinal += other.litsRedFinal;
                 recMinCl += other.recMinCl;
                 recMinLitRem += other.recMinLitRem;
 
@@ -310,7 +310,7 @@ class Searcher : public PropEngine
                 moreMinimLitsEnd += other.moreMinimLitsEnd;
                 recMinimCost += other.recMinimCost;
 
-                //Learnt stats
+                //Red stats
                 learntUnits += other.learntUnits;
                 learntBins += other.learntBins;
                 learntTris += other.learntTris;
@@ -318,7 +318,7 @@ class Searcher : public PropEngine
                 otfSubsumed += other.otfSubsumed;
                 otfSubsumedImplicit += other.otfSubsumedImplicit;
                 otfSubsumedLong += other.otfSubsumedLong;
-                otfSubsumedLearnt += other.otfSubsumedLearnt;
+                otfSubsumedRed += other.otfSubsumedRed;
                 otfSubsumedLitsGained += other.otfSubsumedLitsGained;
 
                 //Hyper-bin & transitive reduction
@@ -348,8 +348,8 @@ class Searcher : public PropEngine
                 decisionFlippedPolar -= other.decisionFlippedPolar;
 
                 //Conflict minimisation stats
-                litsLearntNonMin -= other.litsLearntNonMin;
-                litsLearntFinal -= other.litsLearntFinal;
+                litsRedNonMin -= other.litsRedNonMin;
+                litsRedFinal -= other.litsRedFinal;
                 recMinCl -= other.recMinCl;
                 recMinLitRem -= other.recMinLitRem;
 
@@ -365,7 +365,7 @@ class Searcher : public PropEngine
                 moreMinimLitsEnd -= other.moreMinimLitsEnd;
                 recMinimCost -= other.recMinimCost;
 
-                //Learnt stats
+                //Red stats
                 learntUnits -= other.learntUnits;
                 learntBins -= other.learntBins;
                 learntTris -= other.learntTris;
@@ -373,7 +373,7 @@ class Searcher : public PropEngine
                 otfSubsumed -= other.otfSubsumed;
                 otfSubsumedImplicit -= other.otfSubsumedImplicit;
                 otfSubsumedLong -= other.otfSubsumedLong;
-                otfSubsumedLearnt -= other.otfSubsumedLearnt;
+                otfSubsumedRed -= other.otfSubsumedRed;
                 otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
 
                 //Hyper-bin & transitive reduction
@@ -425,13 +425,13 @@ class Searcher : public PropEngine
                 conflStats.printShort(cpu_time);
 
                 printStatsLine("c conf lits non-minim"
-                    , litsLearntNonMin
-                    , (double)litsLearntNonMin/(double)conflStats.numConflicts
+                    , litsRedNonMin
+                    , (double)litsRedNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
                 printStatsLine("c conf lits final"
-                    , (double)litsLearntFinal/(double)conflStats.numConflicts
+                    , (double)litsRedFinal/(double)conflStats.numConflicts
                 );
             }
 
@@ -485,8 +485,8 @@ class Searcher : public PropEngine
                 );
 
                 printStatsLine("c otf-subs learnt"
-                    , otfSubsumedLearnt
-                    , (double)otfSubsumedLearnt/(double)otfSubsumed*100.0
+                    , otfSubsumedRed
+                    , (double)otfSubsumedRed/(double)otfSubsumed*100.0
                     , "% otf subsumptions"
                 );
 
@@ -518,8 +518,8 @@ class Searcher : public PropEngine
 
                 cout << "c CONFL LITS stats" << endl;
                 printStatsLine("c orig "
-                    , litsLearntNonMin
-                    , (double)litsLearntNonMin/(double)conflStats.numConflicts
+                    , litsRedNonMin
+                    , (double)litsRedNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
@@ -531,7 +531,7 @@ class Searcher : public PropEngine
 
                 printStatsLine("c rec-min lits"
                     , recMinLitRem
-                    , (double)recMinLitRem/(double)litsLearntNonMin*100.0
+                    , (double)recMinLitRem/(double)litsRedNonMin*100.0
                     , "% less overall"
                 );
 
@@ -543,13 +543,13 @@ class Searcher : public PropEngine
 
                 printStatsLine("c bintri-min lits"
                     , binTriShrinkedClause
-                    , (double)binTriShrinkedClause/(double)litsLearntNonMin*100.0
+                    , (double)binTriShrinkedClause/(double)litsRedNonMin*100.0
                     , "% less overall"
                 );
 
                 printStatsLine("c cache-min lits"
                     , cacheShrinkedClause
-                    , (double)cacheShrinkedClause/(double)litsLearntNonMin*100.0
+                    , (double)cacheShrinkedClause/(double)litsRedNonMin*100.0
                     , "% less overall"
                 );
 
@@ -561,12 +561,12 @@ class Searcher : public PropEngine
 
                 printStatsLine("c stamp-min lits"
                     , stampShrinkLit
-                    , (double)stampShrinkLit/(double)litsLearntNonMin*100.0
+                    , (double)stampShrinkLit/(double)litsRedNonMin*100.0
                     , "% less overall"
                 );
 
                 printStatsLine("c final avg"
-                    , (double)litsLearntFinal/(double)conflStats.numConflicts
+                    , (double)litsRedFinal/(double)conflStats.numConflicts
                 );
 
                 //General stats
@@ -586,8 +586,8 @@ class Searcher : public PropEngine
             uint64_t  decisionsRand;    ///<Numer of random decisions made
             uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
 
-            uint64_t litsLearntNonMin;
-            uint64_t litsLearntFinal;
+            uint64_t litsRedNonMin;
+            uint64_t litsRedFinal;
             uint64_t recMinCl;
             uint64_t recMinLitRem;
             uint64_t furtherShrinkAttempt;
@@ -601,7 +601,7 @@ class Searcher : public PropEngine
             uint64_t moreMinimLitsEnd;
             uint64_t recMinimCost;
 
-            //Learnt stats
+            //Red stats
             uint64_t learntUnits;
             uint64_t learntBins;
             uint64_t learntTris;
@@ -609,7 +609,7 @@ class Searcher : public PropEngine
             uint64_t otfSubsumed;
             uint64_t otfSubsumedImplicit;
             uint64_t otfSubsumedLong;
-            uint64_t otfSubsumedLearnt;
+            uint64_t otfSubsumedRed;
             uint64_t otfSubsumedLitsGained;
 
             //Hyper-bin & transitive reduction
@@ -756,8 +756,8 @@ class Searcher : public PropEngine
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
-        void   minimiseLearntFurther(vector<Lit>& cl);
-        void   stampBasedLearntMinim(vector<Lit>& cl);
+        void   minimiseRedFurther(vector<Lit>& cl);
+        void   stampBasedRedMinim(vector<Lit>& cl);
         const Stats& getStats() const;
         uint64_t memUsedSearch() const;
 

@@ -92,7 +92,7 @@ void ClauseCleaner::treatImplicitClauses()
                     }
                     #endif
 
-                    if (i->learnt()) {
+                    if (i->red()) {
                         remLBin++;
                     } else {
                         remNonLBin++;
@@ -151,7 +151,7 @@ void ClauseCleaner::treatImplicitClauses()
                 remove = true;
             }
             if (needAttach) {
-                toAttach.push_back(BinaryClause(lits[0], lits[1], i->learnt()));
+                toAttach.push_back(BinaryClause(lits[0], lits[1], i->red()));
                 #ifdef DRUP
                 if (solver->drup) {
                     (*solver->drup)
@@ -178,7 +178,7 @@ void ClauseCleaner::treatImplicitClauses()
                 }
                 #endif
 
-                if (i->learnt())
+                if (i->red())
                     remLTri++;
                 else
                     remNonLTri++;
@@ -193,7 +193,7 @@ void ClauseCleaner::treatImplicitClauses()
     for(auto bincl: toAttach) {
         assert(solver->value(bincl.getLit1()) == l_Undef);
         assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attachBinClause(bincl.getLit1(), bincl.getLit2(), bincl.getLearnt());
+        solver->attachBinClause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
     }
 
     assert(remNonLBin % 2 == 0);
@@ -285,14 +285,14 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     if (i != j) {
         if (cl.size() == 2) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            solver->attachBinClause(cl[0], cl[1], cl.learnt());
+            solver->attachBinClause(cl[0], cl[1], cl.red());
             return true;
         } else if (cl.size() == 3) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.learnt());
+            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
             return true;
         } else {
-            if (cl.learnt())
+            if (cl.red())
                 solver->binTri.redLits -= i-j;
             else
                 solver->binTri.irredLits -= i-j;

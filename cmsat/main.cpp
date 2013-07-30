@@ -81,8 +81,8 @@ Solver* solverToInterrupt;
 /**
 @brief For correctly and gracefully exiting
 
-It can happen that the user requests a dump of the learnt clauses. In this case,
-the program must wait until it gets to a state where the learnt clauses are in
+It can happen that the user requests a dump of the redundant clauses. In this case,
+the program must wait until it gets to a state where the redundant clauses are in
 a correct state, then dump these and quit normally. This interrupt hander
 is used to achieve this
 */
@@ -91,7 +91,7 @@ void SIGINT_handler(int)
     Solver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (solver->getNeedToDumpLearnts() || solver->getNeedToDumpSimplified()) {
+    if (solver->getNeedToDumpReds() || solver->getNeedToDumpIrredundant()) {
         solver->setNeedToInterrupt();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl
@@ -329,17 +329,17 @@ void Main::parseCommandLine()
     ("agilviollim", po::value<uint64_t>(&conf.agilityViolationLimit)->default_value(conf.agilityViolationLimit)
         , "Number of agility limit violations over which to demand a restart")
     ("gluehist", po::value<uint32_t>(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
-        , "The size of the moving window for short-term glue history of learnt clauses. If higher, the minimal number of conflicts between restarts is longer")
+        , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ;
 
-    po::options_description reduceDBOptions("Learnt clause removal options");
+    po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
-        , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
+        , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
     ("clean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
         , "Metric to use to clean clauses: 'size', 'glue', 'activity' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
     ("preclean", po::value<int>(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
-        , "Before cleaning clauses with whatever sorting strategy, remove learnt clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
+        , "Before cleaning clauses with whatever sorting strategy, remove redundant clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
     ("precleanlim", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
         , "Limit of sum of propagation&conflicts for pre-cleaning of clauses. See previous option")
     ("precleantime", po::value<uint32_t>(&conf.preCleanMinConflTime)->default_value(conf.preCleanMinConflTime)
@@ -350,8 +350,8 @@ void Main::parseCommandLine()
         , "Clean first time after this many conflicts")
     ("incclean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
         , "Clean increment cleaning by this factor for next cleaning")
-    ("maxredratio", po::value<double>(&conf.maxNumLearntsRatio)->default_value(conf.maxNumLearntsRatio)
-        , "Don't ever have more than maxNumLearntsRatio*(irred_clauses) redundant clauses")
+    ("maxredratio", po::value<double>(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
+        , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ;
 
     po::options_description varPickOptions("Variable branching options");
@@ -379,12 +379,12 @@ void Main::parseCommandLine()
     iterativeOptions.add_options()
     ("maxsol", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
-    ("dumplearnts", po::value<string>(&conf.learntsDumpFilename)
-        , "If stopped dump learnt clauses here")
-    ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)
-        , "Maximum length of learnt clause dumped")
-    ("dumpsimplified", po::value<string>()
-        , "If stopped, dump simplified original problem here")
+    ("dumpreds", po::value<string>(&conf.redDumpFname)
+        , "If stopped dump redundant clauses here")
+    ("maxdump", po::value<uint32_t>(&conf.maxDumpRedsSize)
+        , "Maximum length of redundant clause dumped")
+    ("dumpirred", po::value<string>(&conf.irredDumpFname)
+        , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
         , "Solve at specific 'solve()' points in CNF file")
     ("debugnewvar", po::bool_switch(&debugNewVar)
@@ -428,8 +428,8 @@ void Main::parseCommandLine()
         , "No extended subsumption with binary clauses")
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
-    ("occlearntmax", po::value<unsigned>(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
-        , "Don't add to occur list any learnt clause larger than this")
+    ("occredmax", po::value<unsigned>(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
+        , "Don't add to occur list any redundant clause larger than this")
     ;
 
     std::ostringstream sccFindPercent;
@@ -480,7 +480,7 @@ void Main::parseCommandLine()
 
     po::options_description conflOptions("Conflict options");
     conflOptions.add_options()
-    ("moreminim", po::value<int>(&conf.doMinimLearntMore)->default_value(conf.doMinimLearntMore)
+    ("moreminim", po::value<int>(&conf.doMinimRedMore)->default_value(conf.doMinimRedMore)
         , "Perform strong minimisation at conflict gen.")
     ("alwaysmoremin", po::value<int>(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
@@ -525,11 +525,11 @@ void Main::parseCommandLine()
     ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
         , "Write to SQL")
     ("cldistribper", po::value<uint64_t>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
-        , "Dump learnt clause size distribution every N conflicts")
+        , "Dump redundant clause size distribution every N conflicts")
     ("cldistmaxsize", po::value<uint64_t>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
-        , "Dumped learnt clause size maximum -- longer will be 'truncated' in the statistics output")
+        , "Dumped redundant clause size maximum -- longer will be 'truncated' in the statistics output")
     ("cldistmaxglue", po::value<uint64_t>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
-        , "Dumped learnt clause glue maximum -- longer will be 'truncated' in the statistics output")
+        , "Dumped redundant clause glue maximum -- longer will be 'truncated' in the statistics output")
     ("prepstmtscatter", po::value<uint64_t>(&conf.preparedDumpSizeScatter)->default_value(conf.preparedDumpSizeScatter)
         , "When dumping scatter data, dump by chunks of this size (depends on SQL server, default should be safe)")
     ("topnvars", po::value<uint64_t>(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
@@ -732,18 +732,8 @@ void Main::parseCommandLine()
     }
 
     //Conflict
-    if (vm.count("dumplearnts")) {
-        conf.needToDumpLearnts = true;
-    }
-
-    if (vm.count("dumpsimplified")) {
-        conf.simplifiedDumpFilename = vm["dumpsimplified"].as<string>();
-        conf.needToDumpSimplified = true;
-    }
-
-    if (vm.count("maxdump")) {
-        if (!conf.needToDumpLearnts)
-            throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing --maxdumplearnts=<size>");
+    if (vm.count("maxdump") && conf.redDumpFname.empty()) {
+        throw WrongParam("maxdumpredss", "--dumpreds=<filename> must be first activated before issuing --maxdumpreds=<size>");
     }
 
     if (typeclean == "glue") {

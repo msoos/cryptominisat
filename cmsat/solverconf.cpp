@@ -42,7 +42,7 @@ SolverConf::SolverConf() :
         , numCleanBetweenSimplify(2)
         , startClean(10000)
         , increaseClean(1.1)
-        , maxNumLearntsRatio(10)
+        , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
 
         //Restarting
@@ -54,7 +54,7 @@ SolverConf::SolverConf() :
 
         //Clause minimisation
         , doRecursiveMinim (true)
-        , doMinimLearntMore(true)
+        , doMinimRedMore(true)
         , doAlwaysFMinim   (false)
         , moreMinimLimit   (300)
 
@@ -171,10 +171,8 @@ SolverConf::SolverConf() :
         , doFindEqLitsWithGates(true)
         , doMixXorAndGates (false)
 
-        , needToDumpLearnts(false)
-        , needToDumpSimplified (false)
         , needResultFile       (false)
-        , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
+        , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
 {
 }

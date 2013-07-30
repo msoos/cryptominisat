@@ -64,7 +64,7 @@ class SolverConf
         uint64_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         uint64_t    startClean;
         double    increaseClean;
-        double    maxNumLearntsRatio; ///<Number of red clauses must not be more than red*maxNumLearntsRatio
+        double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;
 
         //For restarting
@@ -76,7 +76,7 @@ class SolverConf
 
         //Clause minimisation
         int doRecursiveMinim;
-        int doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
+        int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         uint64_t moreMinimLimit;
 
@@ -103,7 +103,7 @@ class SolverConf
         //OTF stuff
         int       otfHyperbin;
         int       doOTFSubsume;
-        int       doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
+        int       doOTFGateShorten; ///<Shorten redundant clauses on the fly with gates
         int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
 
         //SQL
@@ -200,13 +200,11 @@ class SolverConf
         int      doMixXorAndGates; ///<Try to gain knowledge by mixing XORs and gates
 
         //interrupting & dumping
-        bool      needToDumpLearnts;  ///<If set to TRUE, learnt clauses will be dumped to the file speified by "learntsFilename"
-        bool      needToDumpSimplified;     ///<If set to TRUE, a simplified version of the original clause-set will be dumped to the file speified by "origFilename". The solution to this file should perfectly satisfy the problem
         bool      needResultFile;     ///<If set to TRUE, result will be written to a file
         std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
-        std::string learntsDumpFilename;    ///<Dump sorted learnt clauses to this file. Only active if "needToDumpLearnts" is set to TRUE
-        std::string simplifiedDumpFilename;       ///<Dump simplified original problem CNF to this file. Only active if "needToDumpOrig" is set to TRUE
-        uint32_t  maxDumpLearntsSize; ///<When dumping the learnt clauses, this is the maximum clause size that should be dumped
+        std::string redDumpFname;    ///<Dump sorted redundant clauses to this file. Only active if "needToDumpReds" is set to TRUE
+        std::string irredDumpFname;       ///<Dump irred original problem CNF to this file. Only active if "needToDumpOrig" is set to TRUE
+        uint32_t  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
 
         uint32_t origSeed;
 };

@@ -48,8 +48,8 @@ void CalcDefPolars::tallyVotes(const vector<ClOffset>& cs)
     ) {
         const Clause& cl = *solver->clAllocator->getPointer(*it);
 
-        //Only count non-learnt
-        if (cl.learnt())
+        //Only count irred
+        if (cl.red())
             continue;
 
         double divider;
@@ -78,7 +78,7 @@ void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
             //Only count bins once
             if (it2->isBinary()
                 && lit < it2->lit2()
-                && !it2->learnt()
+                && !it2->red()
             ) {
 
                 if (lit.sign()) votes[lit.var()] += 0.5;
@@ -93,7 +93,7 @@ void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
             if (it2->isTri()
                 && lit < it2->lit2()
                 && it2->lit2() < it2->lit3()
-                && it2->learnt()
+                && it2->red()
             ) {
                 if (lit.sign()) votes[lit.var()] += 0.3;
                 else votes[lit.var()] -= 0.3;
