@@ -82,7 +82,7 @@ bool CompFinder::findComps()
             << "c Timed out finding components, BP: "
             << std::setprecision(2) << std::fixed
             << (double)timeUsed/(1000.0*1000.0)
-            << " T: "
+            << "M T: "
             << std::setprecision(2) << std::fixed
             << cpuTime() - myTime
             << endl;
