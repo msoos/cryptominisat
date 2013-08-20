@@ -2279,8 +2279,6 @@ void Solver::printFullStats() const
         subsumer->getXorFinder()->getNumCalls()
     );*/
 
-    simplifier->getSubsumeStrengthen()->getStats().print();
-
     //VarReplacer stats
     printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
