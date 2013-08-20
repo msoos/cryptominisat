@@ -203,14 +203,15 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
             if (solver->varData[lit.var()].removed != Removed::none)
                 continue;
 
+            //Mark irred
+            irred[lit.toInt()] |= (char)it->getOnlyIrredBin();
+
             //If we have already visited this var, just skip over, but update irred
             if (inside[lit.toInt()]) {
-                irred[lit.toInt()] |= (char)it2->getOnlyIrredBin();
                 continue;
             }
 
             inside[lit.toInt()] = true;
-            irred[lit.toInt()] |= (char)it->getOnlyIrredBin();
             *it2++ = LitExtra(lit, it->getOnlyIrredBin());
             newSize++;
         }
