@@ -974,6 +974,12 @@ void VarReplacer::updateVars(
     reverseTable.swap(newReverseTable);
 }
 
+void VarReplacer::checkUnsetSanity()
+{
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        assert(solver->value(i) == solver->value(getLitReplacedWith(Lit(i, false))));
+    }
+}
 
 bool VarReplacer::addLaterAddBinXor()
 {

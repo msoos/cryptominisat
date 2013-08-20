@@ -82,6 +82,7 @@ class VarReplacer
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
+        void checkUnsetSanity();
 
         //Stats
         size_t getNumReplacedVars() const;
