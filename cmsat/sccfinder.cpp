@@ -175,7 +175,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
                         lits[0]
                         , lits[1]
                         , xorEqualsFalse
-                        , solver->conf.doExtendedSCC || solver->conf.doStamp
+                        //Because otherwise queued varreplacer could be reducible
+                        //and during var-elim, we would remove one of the binary clauses
+                        //and then we would be in a giant mess: the equivalence is stored in replacer
+                        //but if its parent/child is set, the child/parent won't be set :S
+                        , true
                     );
                 }
             }
