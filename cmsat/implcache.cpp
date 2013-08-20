@@ -232,7 +232,9 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
             irred[lit.toInt()] = false;
 
             //Set non-leartness correctly
-            LitExtra(lit, nRed);
+            *it = LitExtra(lit, nRed);
+            assert(solver->varData[it->getLit().var()].removed == Removed::none);
+            assert(solver->value(it->getLit()) == l_Undef);
         }
         numCleaned += origSize-trans->lits.size();
     }
