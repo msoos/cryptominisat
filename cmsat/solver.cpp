@@ -1802,8 +1802,13 @@ lbool Solver::simplifyProblem()
     if (conf.doRenumberVars) {
         //Clean cache before renumber -- very important, otherwise
         //we will be left with lits inside the cache that are out-of-bounds
-        if (conf.doCache && !implCache.clean(this))
-            goto end;
+        if (conf.doCache) {
+            bool setSomething = true;
+            while(setSomething) {
+                if (!implCache.clean(this, &setSomething))
+                    goto end;
+            }
+        }
 
         renumberVariables();
     }

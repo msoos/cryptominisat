@@ -102,7 +102,7 @@ void ImplCache::printStatsSort(const Solver* solver) const
     );
 }
 
-bool ImplCache::clean(Solver* solver)
+bool ImplCache::clean(Solver* solver, bool* setSomething)
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
@@ -236,7 +236,11 @@ bool ImplCache::clean(Solver* solver)
         numCleaned += origSize-trans->lits.size();
     }
 
+    size_t origTrailDepth = solver->trail.size();
     solver->enqueueThese(toEnqueue);
+    if (setSomething) {
+        *setSomething = (solver->trail.size() != origTrailDepth);
+    }
 
     if (solver->conf.verbosity >= 1) {
         cout << "c Cache cleaned."
