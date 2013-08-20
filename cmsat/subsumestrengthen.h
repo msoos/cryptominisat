@@ -6,6 +6,7 @@ using std::vector;
 namespace CMSat {
 
 class Simplifier;
+class GateFinder;
 
 class SubsumeStrengthen
 {
@@ -132,6 +133,7 @@ private:
     Solver* solver;
 
     void strengthen(ClOffset c, const Lit toRemoveLit);
+    friend class GateFinder;
 
     template<class T>
     void findSubsumed0(
