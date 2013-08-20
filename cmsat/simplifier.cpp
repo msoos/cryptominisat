@@ -916,6 +916,7 @@ bool Simplifier::simplify()
     }
 
     //Do blocked clause elimination
+    setLimits();
     if (solver->conf.doBlockClauses) {
         toDecrease = &numMaxBlocked;
         blockClauses();
