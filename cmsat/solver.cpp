@@ -880,7 +880,7 @@ void Solver::renumberVariables()
     }
     varReplacer->updateVars(outerToInter, interToOuter);
     if (conf.doCache) {
-        implCache.updateVars(seen, outerToInter, interToOuter2);
+        implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
     }
 
     //Check if we renumbered the varibles in the order such as to make
