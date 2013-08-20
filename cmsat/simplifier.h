@@ -208,7 +208,9 @@ public:
         void printShort(const bool print_var_elim = true) const
         {
 
-            cout << " [occur] " << linkInTime+finalCleanupTime << " is overhead";
+            cout
+            << "c [occur] " << linkInTime+finalCleanupTime << " is overhead"
+            << endl;
 
             //About elimination
             if (print_var_elim) {
