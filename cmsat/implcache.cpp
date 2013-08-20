@@ -609,10 +609,13 @@ void TransCache::makeAllRed()
 
 }
 
-void TransCache::updateVars(const std::vector< uint32_t >& outerToInter)
-{
+void TransCache::updateVars(
+    const std::vector< uint32_t >& outerToInter
+    , const size_t newMaxVars
+) {
     for(size_t i = 0; i < lits.size(); i++) {
         lits[i] = LitExtra(getUpdatedLit(lits[i].getLit(), outerToInter), lits[i].getOnlyIrredBin());
+        assert(lits[i].getLit().var() < newMaxVars);
     }
 
 }
@@ -621,10 +624,11 @@ void ImplCache::updateVars(
     vector<uint16_t>& seen
     , const std::vector< uint32_t >& outerToInter
     , const std::vector< uint32_t >& interToOuter2
+    , const size_t newMaxVar
 ) {
     updateBySwap(implCache, seen, interToOuter2);
     for(size_t i = 0; i < implCache.size(); i++) {
-        implCache[i].updateVars(outerToInter);
+        implCache[i].updateVars(outerToInter, newMaxVar);
     }
 }
 

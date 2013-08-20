@@ -100,7 +100,10 @@ public:
     );
     void makeAllRed();
 
-    void updateVars(const std::vector< uint32_t >& outerToInter);
+    void updateVars(
+        const std::vector< uint32_t >& outerToInter
+        , const size_t newMaxVars
+    );
 
     std::vector<LitExtra> lits;
     //uint64_t conflictLastUpdated;
@@ -181,6 +184,7 @@ public:
         vector<uint16_t>& seen
         , const std::vector< uint32_t >& outerToInter
         , const std::vector< uint32_t >& interToOuter2
+        , const size_t newMaxVars
     );
 
     bool clean(Solver* solver);
