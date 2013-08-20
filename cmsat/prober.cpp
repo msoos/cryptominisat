@@ -382,7 +382,7 @@ end:
             (runStats.zeroDepthAssigns > 100 || advancedCleanup)
         ) {
             cout
-            << "c Cleaning up after probing: "
+            << "c [probe] cleaning up after T: "
             << std::setw(8) << std::fixed << std::setprecision(2)
             << cpuTime() - time << " s "
             << endl;
