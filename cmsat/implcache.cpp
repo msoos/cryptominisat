@@ -197,7 +197,9 @@ bool ImplCache::clean(Solver* solver)
                 numUpdated++;
             }
 
-            //If updated version is eliminated, skip
+            assert(solver->value(lit.var()) == l_Undef && "Its child was unset, the parent must be unset, too");
+
+            //If updated version is eliminated/decomposed, skip
             if (solver->varData[lit.var()].removed != Removed::none)
                 continue;
 
