@@ -24,11 +24,14 @@
 
 #include "solvertypes.h"
 #include "cset.h"
+#include <boost/array.hpp>
+#include <set>
 
 namespace CMSat {
 
 class Solver;
 class Simplifier;
+using std::set;
 
 class NewGateData
 {
@@ -71,53 +74,63 @@ struct SecondSorter
 
 class OrGate {
     public:
-        OrGate(const std::vector<Lit>& _lits, const Lit& _eqLit, const bool _red) :
-            lits(_lits)
+        OrGate(const Lit& _eqLit, Lit _lit1, Lit _lit2, const bool _red) :
+            lit1(_lit1)
+            , lit2(_lit2)
             , eqLit(_eqLit)
             , red(_red)
-            , removed(false)
         {
-            std::sort(lits.begin(), lits.end());
+            if (lit1 > lit2)
+                std::swap(lit1, lit2);
+        }
+
+        bool operator<(const OrGate& other) const
+        {
+            if (eqLit != other.eqLit) {
+                return (eqLit < other.eqLit);
+            }
+
+            if (lit1 != other.lit1) {
+                return (lit1 < other.lit1);
+            }
+
+            return (lit2 < other.lit2);
         }
 
         bool operator==(const OrGate& other) const
         {
-            return (eqLit == other.eqLit && lits == other.lits);
+            return
+                eqLit == other.eqLit
+                && lit1 == other.lit1
+                && lit2 == other.lit2
+                ;
         }
-        std::vector<Lit> lits; //LHS
-        Lit eqLit; //RHS
+        boost::array<Lit, 2> getLits() const
+        {
+            return boost::array<Lit, 2>{{lit1, lit2}};
+        }
+
+        //LHS
+        Lit lit1;
+        Lit lit2;
+
+        //RHS
+        Lit eqLit;
+
+        //Data about gate
         bool red;
-        bool removed;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
-    os << " gate ";
-    //os << " no. " << std::setw(4) << gate.num;
-    os << " lits: ";
-    for (uint32_t i = 0; i < gate.lits.size(); i++) {
-        os << gate.lits[i] << " ";
-    }
-    os << " eqLit: " << gate.eqLit;
-    os << " learnt " << gate.red;
-    os << " removed: " << gate.removed;
+    os
+    << " gate "
+    << " lits: " << gate.lit1 << ", " << gate.lit2
+    << " eqLit: " << gate.eqLit
+    << " learnt " << gate.red
+    ;
     return os;
 }
-
-struct OrGateSorter2 {
-    bool operator() (const OrGate& gate1, const OrGate& gate2) {
-        if (gate1.lits.size() > gate2.lits.size()) return true;
-        if (gate1.lits.size() < gate2.lits.size()) return false;
-
-        assert(gate1.lits.size() == gate2.lits.size());
-        for (uint32_t i = 0; i < gate1.lits.size(); i++) {
-            if (gate1.lits[i] < gate2.lits[i]) return true;
-            if (gate1.lits[i] > gate2.lits[i]) return false;
-        }
-
-        return false;
-    }
-};
 
 class GateFinder
 {
@@ -276,35 +289,35 @@ public:
         void printShort()
         {
             //Gate find
-            cout << "c Gate find"
+            cout << "c [gate] found"
             << " irred:" << numNonRed
             << " avg-s: " << std::fixed << std::setprecision(1)
             << ((double)irredGatesSize/(double)numNonRed)
             << " red: " << numRed
-            << " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)learntGatesSize/(double)numRed)
+            /*<< " avg-s: " << std::fixed << std::setprecision(1)
+            << ((double)learntGatesSize/(double)numRed)*/
             << " T: " << std::fixed << std::setprecision(2)
             << findGateTime
             << endl;
 
             //gate-based shorten
-            cout << "c gate-based shorten"
-            << " cl-sh: " << std::setw(5) << orGateUseful
+            cout << "c [gate] shorten"
+            << " cl: " << std::setw(5) << orGateUseful
             << " l-rem: " << std::setw(6) << litsRem
-            << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<
-            orBasedTime
+            << " T: " << std::fixed << std::setw(7) << std::setprecision(2)
+            << orBasedTime
             << endl;
 
             //gate-based cl-rem
-            cout << "c gate-based cl-rem"
-            << " cl-rem: " << andGateUseful
+            cout << "c [gate] rem"
+            << " cl: " << andGateUseful
             << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
             << " T: " << std::fixed << std::setprecision(2)
             << andBasedTime
             << endl;
 
             //var-replace
-            cout << "c OR-based"
+            cout << "c [gate] eqlit"
             << " v-rep: " << std::setw(3) << varReplaced
             << " T: " << std::fixed << std::setprecision(2)
             << varReplaceTime
@@ -355,7 +368,8 @@ private:
     void findOrGates(const bool redGatesToo);
     void findOrGate(
         const Lit eqLit
-        , const ClOffset offset
+        , const Lit lit1
+        , const Lit lit2
         , const bool redGatesToo
         , bool wasRed
     );
@@ -365,18 +379,16 @@ private:
     size_t findEqOrGates();
 
     //And gate treatment
-    bool    treatAndGate(
+    bool tryAndGate(
         const OrGate& gate
         , const bool reallyRemove
         , uint32_t& foundPotential
-        , uint64_t& numOp
     );
 
     CL_ABST_TYPE  calculateSortedOcc(
         const OrGate& gate
         , uint16_t& maxSize
-        , vector<size_t>& seen2Set
-        , uint64_t& numOp
+        , uint16_t& minSize
     );
 
     void treatAndGateClause(
@@ -397,11 +409,15 @@ private:
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
-    vector<vector<uint32_t> > gateOcc; //LHS of every NON-LEARNT gate is in this occur list
-    vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list
+    vector<vector<uint32_t> > gateOcc; //LHS of every NON-LEARNT gate is in this occur list (a = b V c, so 'a' is LHS)
+    vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list (a = b V c, so 'b' and 'c' are LHS)
 
     //Extended resolution
     vector<char>   dontElim; ///<These vars should not be eliminated, because they have been added through ER
+
+    //For temporaries
+    vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
+    set<ClOffset> clToUnlink;
 
     //Graph
     void printDot2(); ///<Print Graphviz DOT file describing the gates
@@ -420,7 +436,7 @@ private:
     uint64_t numDotPrinted;
 
     //Main data
-    Simplifier *subsumer;
+    Simplifier *simplifier;
     Solver *solver;
     vector<unsigned char>& seen;
     vector<unsigned char>& seen2;

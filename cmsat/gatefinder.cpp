@@ -23,17 +23,18 @@
 #include "time_mem.h"
 #include "solver.h"
 #include "simplifier.h"
+#include "subsumestrengthen.h"
 
 using namespace CMSat;
 using std::cout;
 using std::endl;
 
-GateFinder::GateFinder(Simplifier *_subsumer, Solver *_solver) :
+GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
     numDotPrinted(0)
-    , subsumer(_subsumer)
+    , simplifier(_simplifier)
     , solver(_solver)
-    , seen(_subsumer->seen)
-    , seen2(_subsumer->seen2)
+    , seen(_simplifier->seen)
+    , seen2(_simplifier->seen2)
 {}
 
 bool GateFinder::doAll()
@@ -83,13 +84,13 @@ end:
     vector<Lit> tmp;
     vector<ClOffset> subs;
     uint64_t numOp = 0;
-    subsumer->toDecrease = &numMaxCreateNewVars;
+    simplifier->toDecrease = &numMaxCreateNewVars;
 
     const size_t size = solver->getNumFreeVars()-1;
 
     size_t tries = 0;
     for (; tries < std::min<size_t>(100000U, size*size/2); tries++) {
-        if (*subsumer->toDecrease < 50LL*1000LL*1000LL)
+        if (*simplifier->toDecrease < 50LL*1000LL*1000LL)
             break;
 
         //Take some variables randomly
@@ -123,7 +124,7 @@ end:
         tmp.push_back(lit1);
         tmp.push_back(lit2);
         subs.clear();
-        subsumer->findSubsumed0(std::numeric_limits< uint32_t >::max(), tmp, calcAbstraction(tmp), subs);
+        simplifier->findSubsumed0(std::numeric_limits< uint32_t >::max(), tmp, calcAbstraction(tmp), subs);
 
         //See how many clauses this binary gate would allow us to remove
         uint32_t potential = 0;
@@ -189,7 +190,7 @@ end:
         assert(cl != NULL);
         assert(solver->ok);
         cl->stats.conflictNumIntroduced = solver->sumStats.conflStats.numConflicts;
-        subsumer->linkInClause(*cl);
+        simplifier->linkInClause(*cl);
         cl->defOfOrGate = true;
 
         addedVars++;
@@ -214,16 +215,16 @@ void GateFinder::findOrGates()
     double myTime = cpuTime();
     clearIndexes();
     numMaxGateFinder = 100LL*1000LL*1000LL;
-    subsumer->toDecrease = &numMaxGateFinder;
+    simplifier->toDecrease = &numMaxGateFinder;
 
-    findOrGates(true);
+    findOrGates(false);
 
     for(const auto orgate: orGates) {
         if (orgate.red) {
-            runStats.learntGatesSize += orgate.lits.size();
+            runStats.learntGatesSize += 2;
             runStats.numRed++;
         } else  {
-            runStats.irredGatesSize += orgate.lits.size();
+            runStats.irredGatesSize += 2;
             runStats.numNonRed++;
         }
     }
@@ -250,33 +251,13 @@ void GateFinder::printGateStats() const
         gateOccEqNum += it->size();
     }
 
-    uint32_t gateNum = 0;
-    for (vector<OrGate>::const_iterator
-        it = orGates.begin(), end = orGates.end()
-        ; it != end
-        ; it++
-    ) {
-        gateNum += !it->removed;
-    }
-
     cout << "c gateOcc num: " << gateOccNum
     << " gateOccEq num: " << gateOccEqNum
-    << " gates size: " << gateNum << endl;
+    << " gates size: " << orGates.size() << endl;
 }
 
 void GateFinder::clearIndexes()
 {
-    //Clear gate definitions -- this will let us do more, because essentially
-    //the other gates are not fully forgotten, so they don't bother us at all
-    for (vector<ClOffset>::iterator
-        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause* cl = solver->clAllocator->getPointer(*it);
-        cl->defOfOrGate = false;
-    }
-
     //Clear gate statistics
     orGates.clear();
     for (size_t i = 0; i < gateOcc.size(); i++)
@@ -294,19 +275,15 @@ bool GateFinder::doAllOptimisationWithGates()
         //Setup
         double myTime = cpuTime();
         numMaxShortenWithGates = 100LL*1000LL*1000LL;
-        subsumer->toDecrease = &numMaxShortenWithGates;
-        runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
-            subsumer->runStats.origNumRedLongClauses;
+        simplifier->toDecrease = &numMaxShortenWithGates;
+        runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
+            simplifier->runStats.origNumRedLongClauses;
         runStats.numLongClsLits = solver->binTri.irredLits + solver->binTri.redLits;
 
         //Go through each gate, see if we can do something with it
-        for (const auto& gate: orGates) {
-            //Gate removed, skip
-            if (gate.removed)
-                continue;
-
+        for (const OrGate& gate: orGates) {
             //Time is up!
-            if (*subsumer->toDecrease < 0) {
+            if (*simplifier->toDecrease < 0) {
                 if (solver->conf.verbosity >= 2) {
                     cout
                     << "c No more time left for shortening with gates"
@@ -330,21 +307,20 @@ bool GateFinder::doAllOptimisationWithGates()
     if (solver->conf.doRemClWithAndGates) {
         //Setup
         numMaxClRemWithGates = 100LL*1000LL*1000LL;
-        subsumer->toDecrease = &numMaxClRemWithGates;
+        simplifier->toDecrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
 
         //Do clause removal
         uint32_t foundPotential;
-        uint64_t numOp = 0;
 
         //Go through each gate, see if we can do something with it
-        for (const auto& gate: orGates) {
-            //Gate has been removed, or is too large
-            if (gate.removed || gate.lits.size() >2)
-                continue;
+        size_t at = 0;
+        for (const OrGate& gate: orGates) {
+            //cout << "At AND-gate no. " << at << "/" << orGates.size() << endl;
+            at++;
 
             //Time's up?
-            if (*subsumer->toDecrease < 0) {
+            if (*simplifier->toDecrease < 0) {
                 if (solver->conf.verbosity >= 2) {
                     cout
                     << "c No more time left for cl-removal with gates" << endl;
@@ -352,7 +328,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 break;
             }
 
-            if (!treatAndGate(gate, true, foundPotential, numOp))
+            if (!tryAndGate(gate, true, foundPotential))
                 break;
         }
 
@@ -387,15 +363,15 @@ size_t GateFinder::findEqOrGates()
     assert(solver->ok);
     size_t foundRep = 0;
     vector<OrGate> gates = orGates;
-    std::sort(gates.begin(), gates.end(), OrGateSorter2());
+    std::sort(gates.begin(), gates.end());
 
     vector<Lit> tmp(2);
     for (uint32_t i = 1; i < gates.size(); i++) {
         const OrGate& gate1 = gates[i-1];
         const OrGate& gate2 = gates[i];
-        if (gate1.removed || gate2.removed) continue;
 
-        if (gate1.lits == gate2.lits
+        if (gate1.lit1 == gate2.lit1
+            && gate1.lit2 == gate2.lit2
             && gate1.eqLit.var() != gate2.eqLit.var()
        ) {
             foundRep++;
@@ -404,110 +380,145 @@ size_t GateFinder::findEqOrGates()
             const bool RHS = gate1.eqLit.sign() ^ gate2.eqLit.sign();
             if (!solver->addXorClauseInt(tmp, RHS, false))
                 return foundRep;
-            tmp.resize(2);
         }
     }
 
     return foundRep;
 }
 
+/*void GateFinder::largeGate()
+{
+    //Ran out of time?
+            if (*simplifier->toDecrease < 0) {
+                if (solver->conf.verbosity >= 1) {
+                    cout << "c Finishing gate-finding: ran out of time" << endl;
+                }
+                break;
+            }
+
+            //Clause removed
+            if (cl.freed())
+                continue;
+
+            //If clause is larger than the cap on gate size, skip. Only for speed reasons.
+            if (cl.size() > solver->conf.maxGateSize)
+                continue;
+
+            //if no learnt gates are allowed and this is learnt, skip
+            if (!redGatesToo && cl.red())
+                continue;
+
+            const bool wasRed = cl.red();
+
+            //Check how many literals have zero cache&binary clause
+            //If too many have 0, it cannot possibly be an OR gate
+            uint8_t numSizeZero = 0;
+            for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
+                Lit lit = *l;
+                //TODO stamping
+                const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
+                const vec<Watched>& ws = solver->watches[(~lit).toInt()];
+
+                if (
+                    cache.size() == 0 &&
+                    ws.size() == 0) {
+                    numSizeZero++;
+                    if (numSizeZero > 1)
+                        break;
+                }
+            }
+            if (numSizeZero > 1)
+                continue;
+
+            //Try to find a gate with eqlit (~*l)
+            ClOffset offset = solver->clAllocator->getOffset(&cl);
+            for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
+                findOrGate(~*l, offset, learntGatesToo, wasRed);
+        }
+}*/
+
 void GateFinder::findOrGates(const bool redGatesToo)
 {
-    //Goi through each clause
-    for (vector<ClOffset>::iterator
-        it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        //Ran out of time
-        if (*subsumer->toDecrease < 0) {
-            if (solver->conf.verbosity >= 1) {
-                cout << "c Finishing gate-finding: ran out of time" << endl;
+    //Go through each TRI clause
+    for(size_t i = 0; i < solver->watches.size(); i++) {
+        const Lit lit = Lit::toLit(i);
+        for(const Watched ws: solver->watches[i]) {
+            *simplifier->toDecrease -= 1;
+
+            //Ran out of time?
+            if (*simplifier->toDecrease < 0) {
+                if (solver->conf.verbosity >= 1) {
+                    cout << "c Finishing gate-finding: ran out of time" << endl;
+                }
+                break;
             }
-            break;
-        }
 
-        const Clause& cl = *solver->clAllocator->getPointer(*it);
+            if (!ws.isTri())
+                continue;
 
-        //Clause removed
-        if (cl.freed())
-            continue;
+            //if no learnt gates are allowed and this is learnt, skip
+            if (!redGatesToo && ws.red())
+                continue;
 
-        //If clause is larger than the cap on gate size, skip. Only for speed reasons.
-        if (cl.size() > solver->conf.maxGateSize)
-            continue;
+            const bool wasRed = ws.red();
 
-        //if no learnt gates are allowed and this is learnt, skip
-        if (!learntGatesToo && cl.red())
-            continue;
+            //Check how many literals have zero cache&binary clause
+            //If too many have 0, it cannot possibly be an OR gate
+            bool OK = true;
+            for (const Lit l: ws) {
+                //TODO stamping
+                const vector<LitExtra>& cache = solver->implCache[(~l).toInt()].lits;
+                const vec<Watched>& ws = solver->watches[(~l).toInt()];
 
-        const bool wasRed = cl.red();
-
-        //Check how many literals have zero cache&binary clause
-        //If too many, it cannot possibly be an OR gate
-        uint8_t numSizeZero = 0;
-        for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
-            Lit lit = *l;
-            //TODO stamping
-            //const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
-            const vec<Watched>& ws = solver->watches[(~lit).toInt()];
-
-            if (
-                //cache.size() == 0 &&
-                ws.size() == 0) {
-                numSizeZero++;
-                if (numSizeZero > 1)
+                if (cache.size() == 0
+                    && ws.size() == 0
+                ) {
+                    OK = false;
                     break;
+                }
             }
-        }
-        if (numSizeZero > 1)
-            continue;
 
-        //Try to find a gate with eqlit (~*l)
-        ClOffset offset = solver->clAllocator->getOffset(&cl);
-        for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
-            findOrGate(~*l, offset, learntGatesToo, wasRed);
+            //Too many zeroes
+            if (!OK)
+                continue;
+
+            //Try to find a gate with eqlit (~*l)
+            findOrGate(~lit, ws.lit2(), ws.lit3(), redGatesToo, wasRed);
+        }
     }
 }
 
 void GateFinder::findOrGate(
     const Lit eqLit
-    , const ClOffset offset
+    , const Lit lit1
+    , const Lit lit2
     , const bool redGatesToo
     , bool wasRed
 ) {
-    Clause& cl = *solver->clAllocator->getPointer(offset);
     bool isEqual = true;
-    for (const Lit *l2 = cl.begin(), *end3 = cl.end(); l2 != end3; l2++) {
-        //We are NOT looking for the literal that is on the RHS
-        if (*l2 == ~eqLit)
-            continue;
-
+    for (Lit otherLit: boost::array<Lit, 2>{{lit1, lit2}}) {
         //This is the other lineral in the binary clause
-        //We are looking for a binary clause '~otherlit V eqLit'
-        const Lit otherLit = *l2;
+        //We are looking for a binary clause '~otherlit V ~eqLit'
         bool OK = false;
 
-        //Try to find corresponding binary clause in cache
         //TODO stamping
-        /*const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
-        *subsumer->toDecrease -= cache.size();
-        for (vector<LitExtra>::const_iterator
-            cacheLit = cache.begin(), endCache = cache.end()
-            ; cacheLit != endCache && !OK
-            ; cacheLit++
-        ) {
-            if ((learntGatesToo || cacheLit->getOnlyIrredBin())
-                 && cacheLit->getLit() == eqLit
+
+        //Try to find corresponding binary clause in cache
+        const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
+        *simplifier->toDecrease -= cache.size();
+        for (LitExtra cacheLit: cache) {
+            if ((redGatesToo || cacheLit.getOnlyIrredBin())
+                 && cacheLit.getLit() == eqLit
             ) {
-                wasRed |= !cacheLit->getOnlyIrredBin();
+                wasRed |= !cacheLit.getOnlyIrredBin();
                 OK = true;
+                break;
             }
-        }*/
+        }
 
         //Try to find corresponding binary clause in watchlist
         const vec<Watched>& ws = solver->watches[(~otherLit).toInt()];
-        *subsumer->toDecrease -= ws.size();
+        *simplifier->toDecrease -= ws.size();
         for (vec<Watched>::const_iterator
             wsIt = ws.begin(), endWS = ws.end()
             ; wsIt != endWS && !OK
@@ -517,7 +528,7 @@ void GateFinder::findOrGate(
             if (!wsIt->isBinary())
                 continue;
 
-            if ((learntGatesToo || !wsIt->red())
+            if ((redGatesToo || !wsIt->red())
                  && wsIt->lit2() == eqLit
             ) {
                 wasRed |= wsIt->red();
@@ -537,34 +548,22 @@ void GateFinder::findOrGate(
         return;
 
     //Create gate
-    vector<Lit> lits;
-    for (const Lit *l2 = cl.begin(), *end3 = cl.end(); l2 != end3; l2++) {
-
-        //Don't include RHS
-        if (*l2 == ~eqLit)
-            continue;
-
-        lits.push_back(*l2);
-    }
-    OrGate gate(lits, eqLit, wasRed);
+    OrGate gate(eqLit, lit1, lit2, wasRed);
 
     //Find if there are any gates that are the same
-    const vector<uint32_t>& similar = gateOccEq[gate.eqLit.toInt()];
-    for (vector<uint32_t>::const_iterator it = similar.begin(), end = similar.end(); it != end; it++) {
+    for (uint32_t at: gateOccEq[gate.eqLit.toInt()]) {
         //The same gate? Then froget about this
-        if (orGates[*it] == gate)
+        if (orGates[at] == gate)
             return;
     }
 
     //Add gate
-    *subsumer->toDecrease -= gate.lits.size()*2;
+    const size_t at = orGates.size();
     orGates.push_back(gate);
-    cl.defOfOrGate = true;
-    gateOccEq[gate.eqLit.toInt()].push_back(orGates.size()-1);
+    gateOccEq[gate.eqLit.toInt()].push_back(at);
     if (!wasRed) {
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            Lit lit = gate.lits[i];
-            gateOcc[lit.toInt()].push_back(orGates.size()-1);
+        for (Lit lit: boost::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
+            gateOcc[lit.toInt()].push_back(at);
         }
     }
 
@@ -579,10 +578,10 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
     //Find clauses that potentially could be shortened
     vector<ClOffset> subs;
-    subsumer->findSubsumed0(
+    simplifier->subsumeStrengthen->findSubsumed0(
         std::numeric_limits< uint32_t >::max()
-        , gate.lits
-        , calcAbstraction(gate.lits)
+        , gate.getLits()
+        , calcAbstraction(gate.getLits())
         , subs
     );
 
@@ -590,12 +589,13 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         ClOffset offset = subs[i];
         Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        //Don't shorten definitions of OR gates
-        // -- we could be manipulating the definition of the gate itself
-        //Don't shorten irred clauses with learnt gates
-        // -- potential loss if e.g. learnt clause is removed later
-        if (cl.defOfOrGate
-            || (!cl.red() && gate.learnt))
+        // OLD STUFF
+        //  //Don't shorten definitions of OR gates
+        //  // -- we could be manipulating the definition of the gate itself
+
+        //Don't shorten irred clauses with red gates
+        // -- potential loss if e.g. red clause is removed later
+        if ((!cl.red() && gate.red))
             continue;
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -609,38 +609,25 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         //Go through clause, check if RHS (eqLit) is inside the clause
         //If it is, we have two possibilities:
         //1) a = b V c , clause: a V b V c V d
-        //2) a = b V c , clause: -a V b V c V d --> clause can be safely removed
-        bool removedClause = false;
+        //2) a = b V c , clause: -a V b V c V d
+        //But we will simply ignore this. One of these clauses can be strengthened
+        //the other subsumed. But let's ignore these, subsumption/strenghtening will take care of this
         bool eqLitInside = false;
-        for (Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            if (gate.eqLit.var() == l->var()) {
-                if (gate.eqLit == *l) {
-                    eqLitInside = true;
-                    break;
-                } else {
-                    assert(gate.eqLit == ~*l);
-                    subsumer->unlinkClause(offset);
-                    removedClause = true;
-                    break;
-                }
+        for (Lit lit: cl) {
+            if (gate.eqLit.var() == lit.var()) {
+                eqLitInside = true;
+                break;
             }
         }
-
-        //This clause got removed. Moving on to next clause
-        if (removedClause)
+        if (eqLitInside)
             continue;
 
         //Set up future clause's lits
         vector<Lit> lits;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            const Lit lit = cl[i];
+        for (const Lit lit: cl) {
             bool inGate = false;
-            for (vector<Lit>::const_iterator
-                it = gate.lits.begin(), end = gate.lits.end()
-                ; it != end
-                ; it++
-            ) {
-                if (*it == lit) {
+            for (Lit lit2: gate.getLits()) {
+                if (lit == lit2) {
                     inGate = true;
                     runStats.litsRem++;
                     break;
@@ -660,22 +647,18 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         ClauseStats stats = cl.stats;
 
         //Free the old clause and allocate new one
-        subsumer->unlinkClause(offset);
-        Clause* cl2 = solver->addClauseInt(lits, learnt, stats, false);
+        simplifier->unlinkClause(offset);
+        Clause* cl2 = solver->addClauseInt(lits, red, stats, false);
         if (!solver->ok)
             return false;
 
-        //If this clause is NULL, then just ignore
+        //If the clause is implicit, it's already linked in, ignore
         if (cl2 == NULL)
             continue;
 
-        subsumer->linkInClause(*cl2);
+        simplifier->linkInClause(*cl2);
         ClOffset offset2 = solver->clAllocator->getOffset(cl2);
-        if (learnt)
-            solver->longRedCls.push_back(offset2);
-        else
-            solver->longIrredCls.push_back(offset2);
-
+        simplifier->clauses.push_back(offset2);
 
         #ifdef VERBOSE_ORGATE_REPLACE
         cout << "new  Clause : " << cl << endl;
@@ -689,41 +672,47 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 CL_ABST_TYPE GateFinder::calculateSortedOcc(
     const OrGate& gate
     , uint16_t& maxSize
-    , vector<size_t>& seen2Set
-    , uint64_t& numOp
+    , uint16_t& minSize
 ) {
+    assert(seen2Set.empty());
     CL_ABST_TYPE abstraction = 0;
 
     //Initialise sizeSortedOcc, which s a temporary to save memory frees&requests
     for (uint32_t i = 0; i < sizeSortedOcc.size(); i++)
         sizeSortedOcc[i].clear();
 
-    const vec<Watched>& csOther = solver->watches[(~(gate.lits[1])).toInt()];
+    const vec<Watched>& csOther = solver->watches[(~(gate.lit2)).toInt()];
     //cout << "csother: " << csOther.size() << endl;
-    *subsumer->toDecrease -= csOther.size()*3;
-    for (vec<Watched>::const_iterator it = csOther.begin(), end = csOther.end(); it != end; it++) {
-
+    *simplifier->toDecrease -= csOther.size()*3;
+    for (const Watched ws: csOther) {
         //Check if it's a long clause
-        if (!it->isClause())
+        if (!ws.isClause())
             continue;
 
-        ClOffset offset = it->getOffset();
+        ClOffset offset = ws.getOffset();
         const Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        if (cl.defOfOrGate //We might be removing the definition. Info loss
-            || (!cl.red() && gate.learnt)) //We might be contracting 2 irred clauses based on a learnt gate. Info loss
+        //We might be contracting 2 irred clauses based on a learnt gate
+        //would lead to UNSAT->SAT
+        if (!cl.red() && gate.red)
             continue;
 
-        numOp += cl.size();
+        //Clause too long, skip
+        if (cl.size() > solver->conf.maxGateBasedClReduceSize)
+            continue;
+
+        *simplifier->toDecrease -= cl.size();
 
         //Make sure sizeSortedOcc is enough, and add this clause to it
         maxSize = std::max(maxSize, cl.size());
-        if (sizeSortedOcc.size() < (uint32_t)maxSize+1)
+        if (sizeSortedOcc.size() < (uint32_t)maxSize+1) {
             sizeSortedOcc.resize(maxSize+1);
-
+        }
         sizeSortedOcc[cl.size()].push_back(offset);
+        minSize = std::min(minSize, cl.size());
 
-        //Set seen2 & abstraction, which are optimisations to speed up and-gate-based-contraction
+        //Set seen2 & abstraction, which is an optimisations to speed up
+        //gate-based clause removal
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (!seen2[cl[i].toInt()]) {
                 seen2[cl[i].toInt()] = true;
@@ -732,69 +721,77 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
             abstraction |= 1UL << (cl[i].var() % CLAUSE_ABST_SIZE);
         }
     }
-    abstraction |= 1UL << (gate.lits[0].var() % CLAUSE_ABST_SIZE);
+    abstraction |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
 
     return abstraction;
 }
 
-bool GateFinder::treatAndGate(
+bool GateFinder::tryAndGate(
     const OrGate& gate
     , const bool reallyRemove
     , uint32_t& foundPotential
-    , uint64_t& numOp
 ) {
-    assert(gate.lits.size() == 2);
+    assert(clToUnlink.empty());
 
-    //If there are no clauses that contain the opposite of the literals on the LHS, there is nothing we can do
-    if (solver->watches[(~(gate.lits[0])).toInt()].empty()
-        || solver->watches[(~(gate.lits[1])).toInt()].empty())
+    //If there are no clauses that contain the opposite of the literals
+    //on the LHS, there is nothing we can do
+    if (solver->watches[(~(gate.lit1)).toInt()].empty()
+        || solver->watches[(~(gate.lit2)).toInt()].empty()
+    ) {
+        cout << "Nothing in one of the watchlists" << endl;
         return true;
+    }
 
-    //Set up sorted occurrance list of the other lit (lits[1]) in the gate
+    //Set up sorted occurrance list of the other lit (lit2) in the gate
     uint16_t maxSize = 0; //Maximum clause size in this occur
-    vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
-    CL_ABST_TYPE abstraction = calculateSortedOcc(gate, maxSize, seen2Set, numOp);
+    uint16_t minSize = std::numeric_limits<uint16_t>::max(); //Minimum clause size in this occur
+    CL_ABST_TYPE abstraction = calculateSortedOcc(gate, maxSize, minSize);
 
-    //Setup
-    set<ClOffset> clToUnlink;
     ClOffset other;
     foundPotential = 0;
 
-    //Now go through lits[0] and see if anything matches
-    vec<Watched>& cs = solver->watches[(~(gate.lits[0])).toInt()];
-    *subsumer->toDecrease -= cs.size()*3;
-    for (vec<Watched>::const_iterator
-        it2 = cs.begin(), end2 = cs.end()
-        ; it2 != end2
-        ; it2++
-    ) {
-        //Only look through clauses
-        if (!it2->isClause())
+    //Now go through lit1 and see if anything matches
+    vec<Watched>& cs = solver->watches[(~(gate.lit1)).toInt()];
+    *simplifier->toDecrease -= cs.size()*3;
+    for (const Watched ws: cs) {
+        //Only look through long clauses
+        if (!ws.isClause()) {
+            //cout << "Not long" << endl;
             continue;
+        } else {
+            //cout << "OK, long" << endl;
+        }
 
-        ClOffset offset = it2->getOffset();
+        ClOffset offset = ws.getOffset();
         Clause& cl = *solver->clAllocator->getPointer(offset);
-        if ((it2->getAbst() | abstraction) != abstraction //Abstraction must be OK
-            || cl.defOfOrGate //Don't remove definition by accident
-            || cl.size() > maxSize //Size must be less than maxSize
+        if ((ws.getAbst() | abstraction) != abstraction //Abstraction must be OK
+            || cl.size() > solver->conf.maxGateBasedClReduceSize
+            || cl.size() > maxSize //Size must be smaller or equal to maxSize
+            || cl.size() < minSize //Size must be larger or equal than minsize
             || sizeSortedOcc[cl.size()].empty()) //this bracket for sizeSortedOcc must be non-empty
         {
+            //cout << "Not even possible, this clause cannot match any other" << endl;
             continue;
         }
 
         //Check that we are not removing irred info based on learnt gate
-        if (!cl.red() && gate.learnt)
+        if (!cl.red() && gate.red)
             continue;
 
-        //Check that ~lits[1] is not inside this clause, and that eqLit is not inside, either
+        //Check that ~lits2 is not inside this clause, and that eqLit is not inside, either
         //Also check that all literals inside have at least been set by seen2 (otherwise, no chance of exact match)
         bool OK = true;
-        numOp += cl.size();
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (cl[i] == ~(gate.lits[0])) continue;
-            if (   cl[i].var() == ~(gate.lits[1].var())
-                || cl[i].var() == gate.eqLit.var()
-                || !seen2[cl[i].toInt()]
+        *(simplifier->toDecrease) -= cl.size();
+        for (const Lit lit: cl) {
+            //We know this is inside, skip
+            if (lit == ~(gate.lit1))
+                continue;
+
+            //If some weird variable is inside, skip
+            if (   lit.var() == gate.lit2.var()
+                || lit.var() == gate.eqLit.var()
+                //A var is inside this clause isn't inside the others
+                || !seen2[lit.toInt()]
             ) {
                 OK = false;
                 break;
@@ -802,29 +799,40 @@ bool GateFinder::treatAndGate(
         }
 
         //Not possible, continue
-        if (!OK)
+        if (!OK) {
+            //cout << "Has weird literal inside, skip" << endl;
             continue;
+        }
 
         //Calculate abstraction and set 'seen'
         CL_ABST_TYPE abst2 = 0;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            //Lit0 doesn't count into abstraction
-            if (cl[i] == ~(gate.lits[0]))
+        for (const Lit lit: cl) {
+            //lit1 doesn't count into abstraction
+            if (lit == ~(gate.lit1))
                 continue;
 
-            seen[cl[i].toInt()] = true;
-            abst2 |= 1UL << (cl[i].var() % CLAUSE_ABST_SIZE);
+            seen[lit.toInt()] = true;
+            abst2 |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
         }
-        abst2 |= 1UL << ((~(gate.lits[1])).var() % CLAUSE_ABST_SIZE);
+        abst2 |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
 
         //Find matching pair
-        numOp += sizeSortedOcc[cl.size()].size()*5;
-        const bool foundOther = findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, other);
+        const bool foundOther = findAndGateOtherCl(
+            sizeSortedOcc[cl.size()] //in this occur list that contains clauses of specific size
+            , ~(gate.lit2) //this is the LIT that is meant to be in the clause
+            , abst2 //clause MUST match this abst
+            , other
+        );
+        if (!foundOther) {
+            //cout << "Wrong, looked through sizeSortedOcc, but no." << endl;
+        }
+
         foundPotential += foundOther;
         if (reallyRemove && foundOther) {
             assert(other != offset);
             clToUnlink.insert(other);
             clToUnlink.insert(offset);
+
             //Add new clause that is shorter and represents both of the clauses above
             treatAndGateClause(other, gate, cl);
             if (!solver->ok)
@@ -832,8 +840,8 @@ bool GateFinder::treatAndGate(
         }
 
         //Clear 'seen' from bits set
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            seen[cl[i].toInt()] = false;
+        for (Lit lit: cl) {
+            seen[lit.toInt()] = false;
         }
     }
 
@@ -841,10 +849,11 @@ bool GateFinder::treatAndGate(
     for(size_t at: seen2Set) {
         seen2[at] = false;
     }
+    seen2Set.clear();
 
     //Now that all is computed, remove those that need removal
     for(ClOffset offset: clToUnlink) {
-        subsumer->unlinkClause(offset);
+        simplifier->unlinkClause(offset);
     }
     clToUnlink.clear();
 
@@ -866,21 +875,22 @@ void GateFinder::treatAndGateClause(
     //Update stats
     runStats.andGateUseful++;
     runStats.clauseSizeRem += cl.size();
+    const Clause& otherCl = *solver->clAllocator->getPointer(other);
+    runStats.clauseSizeRem += otherCl.size();
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
     lits.clear();
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        if (cl[i] != ~(gate.lits[0]))
-            lits.push_back(cl[i]);
+    *simplifier->toDecrease -= cl.size()*2;
+    for (const Lit lit: cl) {
+        if (lit != ~(gate.lit1))
+            lits.push_back(lit);
 
-        assert(cl[i].var() != gate.eqLit.var());
+        assert(lit.var() != gate.eqLit.var());
     }
     lits.push_back(~(gate.eqLit));
 
     //Calculate learnt & glue
-    Clause& otherCl = *solver->clAllocator->getPointer(other);
-    *subsumer->toDecrease -= otherCl.size()*2;
     bool red = otherCl.red() && cl.red();
     ClauseStats stats = ClauseStats::combineStats(cl.stats, otherCl.stats);
 
@@ -890,49 +900,39 @@ void GateFinder::treatAndGateClause(
     #endif
 
     //Create and link in new clause
-    Clause* clNew = solver->addClauseInt(lits, learnt, stats, false);
+    Clause* clNew = solver->addClauseInt(lits, red, stats, false);
     if (clNew != NULL) {
-        subsumer->linkInClause(*clNew);
+        simplifier->linkInClause(*clNew);
         ClOffset offsetNew = solver->clAllocator->getOffset(clNew);
-        if (learnt)
-            solver->longRedCls.push_back(offsetNew);
-        else
-            solver->longIrredCls.push_back(offsetNew);
+        simplifier->clauses.push_back(offsetNew);
     }
 }
 
 inline bool GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& sizeSortedOcc
-    , const Lit lit
-    , const CL_ABST_TYPE abst2
+    , const Lit otherLit
+    , const CL_ABST_TYPE abst
     , ClOffset& other
 ) {
-    *subsumer->toDecrease -= sizeSortedOcc.size();
-    for (vector<ClOffset>::const_iterator
-        it = sizeSortedOcc.begin(), end = sizeSortedOcc.end()
-        ; it != end
-        ; it++
-    ) {
-        ClOffset offset = *it;
-        Clause& cl = *solver->clAllocator->getPointer(offset);
+    *(simplifier->toDecrease) += sizeSortedOcc.size()*5;
+    for (const ClOffset offset: sizeSortedOcc) {
+        const Clause& cl = *solver->clAllocator->getPointer(offset);
 
-        if (cl.abst != abst2 //abstraction must match
-            || cl.defOfOrGate //Don't potentially remove clause that is the definition itself
-        ) {
+        //abstraction must match
+        if (cl.abst != abst)
             continue;
-        }
 
-        for (uint32_t i = 0; i < cl.size(); i++) {
+        for (const Lit lit: cl) {
             //we skip the other lit in the gate
-            if (cl[i] == lit)
+            if (lit == otherLit)
                 continue;
 
-            //Seen is correct, so this one is not the one we are searching for
-            if (!seen[cl[i].toInt()])
+            //Seen is perfectly correct, everything must match
+            if (!seen[lit.toInt()])
                 goto next;
 
         }
-        other = *it;
+        other = offset;
         return true;
 
         next:;
@@ -948,18 +948,19 @@ void GateFinder::printDot2()
     std::string filenename = ss.str();
     std::ofstream file(filenename.c_str(), std::ios::out);
     file << "digraph G {" << endl;
-    uint32_t index = 0;
     vector<bool> gateUsed;
     gateUsed.resize(orGates.size(), false);
-    index = 0;
-    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
-        for (vector<Lit>::const_iterator it2 = it->lits.begin(), end2 = it->lits.end(); it2 != end2; it2++) {
-            vector<uint32_t>& occ = gateOccEq[it2->toInt()];
-            for (vector<uint32_t>::const_iterator it3 = occ.begin(), end3 = occ.end(); it3 != end3; it3++) {
-                if (*it3 == index) continue;
+    size_t index = 0;
+    for (const OrGate orGate: orGates) {
+        index++;
+        for (const Lit lit: orGate.getLits()) {
+            for (uint32_t at: gateOccEq[lit.toInt()]) {
+                //The same one, skip
+                if (at == index)
+                    continue;
 
-                file << "Gate" << *it3;
-                gateUsed[*it3] = true;
+                file << "Gate" << at;
+                gateUsed[at] = true;
                 file << " -> ";
 
                 file << "Gate" << index;
@@ -985,14 +986,18 @@ void GateFinder::printDot2()
     }
 
     index = 0;
-    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
+    for (const OrGate orGate: orGates) {
+        index++;
 
         if (gateUsed[index]) {
             file << "Gate" << index << " [ shape=\"point\"";
             file << ", size = 0.8";
             file << ", style=\"filled\"";
-            if (it->learnt) file << ", color=\"darkseagreen4\"";
-            else file << ", color=\"darkseagreen\"";
+            if (orGate.red)
+                file << ", color=\"darkseagreen4\"";
+            else
+                file << ", color=\"darkseagreen\"";
+
             file << "];" << endl;
         }
     }

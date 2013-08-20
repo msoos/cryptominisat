@@ -52,7 +52,7 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-//class GateFinder;
+class GateFinder;
 class XorFinderAbst;
 class SubsumeStrengthen;
 
@@ -572,9 +572,11 @@ private:
     bool        loopSubsumeVarelim();
 
     /////////////////////
-    //XOR finding
+    //Helpers
     friend class XorFinder;
+    friend class GateFinder;
     XorFinderAbst *xorFinder;
+    GateFinder *gateFinder;
 
     /////////////////////
     //Blocked clause elimination
@@ -588,11 +590,6 @@ private:
     bool blockedMapBuilt;
     void buildBlockedMap();
     void cleanBlockedClauses();
-
-    /////////////////////
-    //Gate extraction
-    //friend class GateFinder;
-    //GateFinder *gateFinder;
 
     //validity checking
     void sanityCheckElimedVars();

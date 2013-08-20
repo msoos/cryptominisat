@@ -161,8 +161,9 @@ SolverConf::SolverConf() :
         , doStrSubImplicit (true)
 
 
-        , doGateFind       (false)
+        , doGateFind       (true)
         , maxGateSize      (20)
+        , maxGateBasedClReduceSize(20)
 
         , doER             (false)
         , doCalcReach      (true)

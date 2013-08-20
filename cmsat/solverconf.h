@@ -189,6 +189,7 @@ class SolverConf
         //Gates
         int      doGateFind; ///< Find OR gates
         uint64_t    maxGateSize;
+        unsigned maxGateBasedClReduceSize;
 
         int      doER; ///< Perform Extended Resolution (ER)
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that

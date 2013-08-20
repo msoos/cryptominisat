@@ -76,6 +76,7 @@ Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
     , varElimOrder(VarOrderLt(varElimComplexity))
     , xorFinder(NULL)
+    , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
@@ -86,7 +87,9 @@ Simplifier::Simplifier(Solver* _solver):
     #endif
     subsumeStrengthen = new SubsumeStrengthen(this, solver);
 
-    //gateFinder = new GateFinder(this, solver);
+    if (solver->conf.doGateFind) {
+        gateFinder = new GateFinder(this, solver);
+    }
 }
 
 Simplifier::~Simplifier()
@@ -96,7 +99,7 @@ Simplifier::~Simplifier()
     #endif
     delete subsumeStrengthen;
 
-    //delete gateFinder;
+    delete gateFinder;
 }
 
 /**
@@ -113,9 +116,9 @@ void Simplifier::newVar()
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
 
-//     if (solver->conf.doGateFind) {
-//         gateFinder->newVar();
-//     }
+    if (solver->conf.doGateFind) {
+        gateFinder->newVar();
+    }
 
     //variable status
     var_elimed .push_back(false);
@@ -943,10 +946,10 @@ bool Simplifier::simplify()
     #endif
 
     //Gate-finding
-//     if (solver->conf.doCache && solver->conf.doGateFind) {
-//         if (!gateFinder->doAll())
-//             goto end;
-//     }
+    if (solver->conf.doCache && solver->conf.doGateFind) {
+        if (!gateFinder->doAll())
+            goto end;
+    }
 
     //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     origTrailSize = solver->trail.size();

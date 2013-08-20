@@ -613,10 +613,7 @@ void Main::parseCommandLine()
     #ifdef USE_M4RI
     .add(xorOptions)
     #endif
-
-    //Currently unimplemented
-    //.add(gateOptions)
-
+    .add(gateOptions)
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
