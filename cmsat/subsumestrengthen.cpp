@@ -635,6 +635,13 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
     }
     occ.shrink(it-it2);
 }
+template void SubsumeStrengthen::findSubsumed0(
+    const ClOffset offset
+    , const boost::array<Lit, 2>& ps
+    , const CL_ABST_TYPE abs //Abstraction of literals in clause
+    , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
+    , bool removeImplicit
+);
 
 uint64_t SubsumeStrengthen::memUsed() const
 {
