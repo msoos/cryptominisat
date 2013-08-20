@@ -377,6 +377,7 @@ class Solver : public Searcher
         friend class PropEngine;
         friend class CompFinder;
         friend class CompHandler;
+        friend class TransCache;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
