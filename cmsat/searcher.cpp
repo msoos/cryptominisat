@@ -2346,27 +2346,30 @@ void Searcher::minimiseRedFurther(vector<Lit>& cl)
     //one-by-one on the literals. Order could be enforced to get smallest
     //clause, but it doesn't really matter, I think
     size_t timeSpent = 0;
-    for (vector<Lit>::iterator
-        l = cl.begin(), end = cl.end()
-        ; l != end && timeSpent < conf.moreMinimLimit
-        ; l++
-    ) {
-        if (seen[l->toInt()] == 0)
+    for (const Lit lit: cl) {
+        //Timeout
+        if (timeSpent > conf.moreMinimLimit)
+            break;
+
+        //Already removed this literal
+        if (seen[lit.toInt()] == 0)
             continue;
 
-        Lit lit = *l;
-
         if (conf.doCache) {
-            const TransCache& cache1 = solver->implCache[l->toInt()];
+            assert(solver->implCache.size() > lit.toInt());
+            const TransCache& cache1 = solver->implCache[lit.toInt()];
             timeSpent += cache1.lits.size()/2;
-            for (vector<LitExtra>::const_iterator
-                it = cache1.lits.begin(), end2 = cache1.lits.end()
-                ; it != end2
-                ; it++
-            ) {
-                if (seen[(~(it->getLit())).toInt()]) {
+            for (const LitExtra litExtra: cache1.lits) {
+//                 cout
+//                 << "Seen size: " << seen.size()
+//                 << ", litExtra.getLit().toInt(): " << litExtra.getLit().toInt()
+//                 << ", nVars: " << nVars()
+//                 << endl;
+
+                assert(seen.size() > litExtra.getLit().toInt());
+                if (seen[(~(litExtra.getLit())).toInt()]) {
                     stats.cacheShrinkedClause++;
-                    seen[(~(it->getLit())).toInt()] = 0;
+                    seen[(~(litExtra.getLit())).toInt()] = 0;
                 }
             }
         }
