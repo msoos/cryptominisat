@@ -187,7 +187,7 @@ public:
         , const size_t newMaxVars
     );
 
-    bool clean(Solver* solver);
+    bool clean(Solver* solver, bool* setSomething = NULL);
     bool tryBoth(Solver* solver);
 
     struct TryBothStats
