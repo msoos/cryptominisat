@@ -233,6 +233,59 @@ class Watched {
             return data2;
         }
 
+        class Iterator
+        {
+        public:
+            //end iterator
+            Iterator() :
+                at(2)
+            {}
+
+            //Begin iterator
+            Iterator(Lit lit2, Lit lit3) :
+                at(0)
+            {
+                lits[0] = lit2;
+                lits[1] = lit3;
+            }
+
+            Lit operator*()
+            {
+                return lits[at];
+            }
+
+            void operator++()
+            {
+                at++;
+            }
+
+            bool operator==(const Iterator& other) const
+            {
+                return (at == other.at);
+            }
+
+            bool operator!=(const Iterator& other) const
+            {
+                return (at != other.at);
+            }
+
+        private:
+            unsigned at;
+            Lit lits[2];
+        };
+
+        Iterator begin() const
+        {
+            assert(isTri());
+            return Iterator(lit2(), lit3());
+        }
+
+        Iterator end() const
+        {
+            assert(isTri());
+            return Iterator();
+        }
+
     private:
         uint32_t data1;
         //binary, tertiary or long, as per WatchType
