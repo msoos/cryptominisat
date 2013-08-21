@@ -3611,8 +3611,10 @@ Lit Solver::updateLitForDomin(Lit lit) const
     if (lit == lit_Undef)
         return lit;
 
+    //Update to parent
     lit = varReplacer->getLitReplacedWith(lit);
 
+    //If parent is removed, then this dominator cannot be updated
     if (varData[lit.var()].removed != Removed::none)
         return lit_Undef;
 
