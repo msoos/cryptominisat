@@ -196,6 +196,12 @@ void XorSubsumer::addBackToSolver()
 void XorSubsumer::fillCannotEliminate()
 {
     std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
+    //Assumptions cannot be eliminated
+    for(size_t i = 0; i < solver.assumptions.size(); i++) {
+        Lit lit = solver.assumptions[i];
+        cannot_eliminate[lit.var()] = true;
+    }
+
     for (uint32_t i = 0; i < solver.clauses.size(); i++)
         addToCannotEliminate(solver.clauses[i]);
 

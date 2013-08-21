@@ -833,6 +833,12 @@ cannot be eliminated. This is enforced by the vector cannot_elimnate
 void Subsumer::fillCannotEliminate()
 {
     std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
+    //Fill assumptions
+    for(size_t i = 0; i < solver.assumptions.size(); i++) {
+        Lit lit = solver.assumptions[i];
+        cannot_eliminate[lit.var()] = true;
+    }
+
     for (uint32_t i = 0; i < solver.xorclauses.size(); i++) {
         const XorClause& c = *solver.xorclauses[i];
         for (uint32_t i2 = 0; i2 < c.size(); i2++)

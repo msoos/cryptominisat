@@ -132,6 +132,12 @@ bool VarReplacer::performReplaceInternal()
     solver.countNumBinClauses(true, false);
     solver.countNumBinClauses(false, true);
 
+    //Update assumptions
+    for(size_t i = 0; i < solver.assumptions.size(); i++) {
+        Lit& lit = solver.assumptions[i];
+        lit = table[lit.var()] ^ lit.sign();
+    }
+
     if (!replaceBins()) goto end;
     if (!replace_set(solver.clauses)) goto end;
     if (!replace_set(solver.learnts)) goto end;
