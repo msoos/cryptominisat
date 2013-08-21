@@ -72,6 +72,7 @@ that problems don't creep up
 bool VarReplacer::performReplace()
 {
     assert(solver->ok);
+    checkUnsetSanity();
 
     //Set up stats
     runStats.clear();
@@ -199,6 +200,9 @@ bool VarReplacer::performReplace()
 
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
+    if (solver->okay()) {
+        checkUnsetSanity();
+    }
 
     //Update stamp dominators
     solver->stamp.updateDominators(this);
