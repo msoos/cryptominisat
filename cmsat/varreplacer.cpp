@@ -565,10 +565,10 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         std::copy(c.begin(), c.end(), origCl.begin());
         #endif
 
-        for (Lit *l = c.begin(), *end2 = l + c.size();  l != end2; l++) {
-            if (table[l->var()].var() != l->var()) {
+        for (Lit& l: c) {
+            if (isReplaced(l)) {
                 changed = true;
-                *l = table[l->var()] ^ l->sign();
+                l = getLitReplacedWith(l);
                 runStats.replacedLits++;
             }
         }
