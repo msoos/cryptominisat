@@ -364,6 +364,12 @@ class Prober {
         vector<bool> propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> toEnqueue;
         vector<Lit> tmp;
+        void clearUpBeforeFirstSet();
+
+        void updateCache(Lit thisLit, Lit lit, size_t numElemsSet);
+        void checkAndSetBothProp(Var var, bool first);
+        void addRestOfLitsToCache(Lit lit);
+        void handleFailedLit(Lit lit, Lit failed);
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN

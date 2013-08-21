@@ -426,19 +426,163 @@ end:
     return solver->ok;
 }
 
+void Prober::clearUpBeforeFirstSet()
+{
+    extraTime += propagatedBitSet.size();
+    for(size_t varset: propagatedBitSet) {
+        propagated[varset] = false;
+    }
+    propagatedBitSet.clear();
+}
+
+void Prober::updateCache(Lit thisLit, Lit lit, size_t numElemsSet)
+{
+    //Update cache, if the trail was within limits (cacheUpdateCutoff)
+    const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
+    if (solver->conf.doCache
+        && thisLit != lit
+        && numElemsSet <= solver->conf.cacheUpdateCutoff
+        //&& cacheUpdated[(~ancestor).toInt()] == 0
+    ) {
+        //Update stats/markings
+        //cacheUpdated[(~ancestor).toInt()]++;
+        extraTime += 1;
+        extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
+        extraTimeCache += solver->implCache[(~thisLit).toInt()].lits.size()/30;
+
+        const bool redStep = solver->varData[thisLit.var()].reason.isRedStep();
+
+        //Update the cache now
+        assert(ancestor != lit_Undef);
+        bool taut = solver->implCache[(~ancestor).toInt()].merge(
+            solver->implCache[(~thisLit).toInt()].lits
+            , thisLit
+            , redStep
+            , ancestor.var()
+            , solver->seen
+        );
+
+        //If tautology according to cache we can
+        //enqueue ~ancestor at toplevel since both
+        //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
+        if (taut
+            && (solver->varData[ancestor.var()].removed == Removed::none
+                || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
+        ) {
+            toEnqueue.push_back(~ancestor);
+            if (solver->conf.verbosity >= 10)
+                cout << "c Tautology from cache indicated we can enqueue " << (~ancestor) << endl;
+        }
+
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        cout << "The impl cache of " << (~ancestor) << " is now: ";
+        cout << solver->implCache[(~ancestor).toInt()] << endl;
+        #endif
+    }
+}
+
+void Prober::checkAndSetBothProp(Var var, bool first)
+{
+    //If this is the first, set what is propagated
+    if (first) {
+        //Visited this var, needs clear later on
+        propagatedBitSet.push_back(var);
+
+        //Set prop has been done
+        propagated[var] = true;
+
+        //Set propValue
+        if (solver->value(var).getBool())
+            propValue[var] = true;
+        else
+            propValue[var] = false;
+    } else if (propagated[var]) {
+        if (propValue[var] == solver->value(var).getBool()) {
+
+            //they both imply the same
+            const Lit litToEnq = Lit(var, !propValue[var]);
+            toEnqueue.push_back(litToEnq);
+            #ifdef DRUP
+            if (solver->drup) {
+                if (solver->conf.verbosity >= 6) {
+                    cout
+                    << "c bprop:"
+                    << litToEnq
+                    << endl;
+                }
+                (*solver->drup)
+                << litToEnq
+                << " 0\n";
+            }
+            #endif
+            if (solver->conf.verbosity >= 10)
+                cout << "c Bothprop indicated to enqueue " << litToEnq << endl;
+        }
+    }
+}
+
+void Prober::addRestOfLitsToCache(Lit lit)
+{
+    tmp.clear();
+    for (int64_t c = solver->trail.size()-1
+        ; c != (int64_t)solver->trail_lim[0] - 1
+        ; c--
+    ) {
+        extraTime += 2;
+        const Lit thisLit = solver->trail[c];
+        tmp.push_back(thisLit);
+    }
+
+    bool taut = solver->implCache[(~lit).toInt()].merge(
+        tmp
+        , lit_Undef
+        , true //Red step -- we don't know, so we assume
+        , lit.var()
+        , solver->seen
+    );
+
+    //If tautology according to cache we can
+    //enqueue ~lit at toplevel since both
+    //~lit V OTHER, and ~lit V ~OTHER are technically in
+    if (taut) {
+        toEnqueue.push_back(~lit);
+        #ifdef DRUP
+        if (solver->drup) {
+            (*solver->drup)
+            << (~lit)
+            << " 0\n";
+        }
+        #endif
+    }
+}
+
+void Prober::handleFailedLit(Lit lit, Lit failed)
+{
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Failed on lit " << lit << endl;
+    }
+    solver->cancelZeroLight();
+
+    //Update conflict stats
+    runStats.numFailed++;
+    runStats.conflStats.update(solver->lastConflictCausedBy);
+    runStats.conflStats.numConflicts++;
+    runStats.addedBin += solver->hyperBinResAll();
+    std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+    runStats.removedIrredBin += tmp.first;
+    runStats.removedRedBin += tmp.second;
+
+    vector<Lit> lits;
+    lits.push_back(~failed);
+    solver->addClauseInt(lits, true);
+    clearUpBeforeFirstSet();
+}
+
 bool Prober::tryThis(const Lit lit, const bool first)
 {
     //Clean state if this is the 1st of two
     if (first) {
-        extraTime += propagatedBitSet.size();
-        for(vector<uint32_t>::const_iterator
-            it = propagatedBitSet.begin(), end = propagatedBitSet.end()
-            ; it != end
-            ; it++
-        ) {
-            propagated[*it] = false;
-        }
-        propagatedBitSet.clear();
+        clearUpBeforeFirstSet();
     }
     toEnqueue.clear();
 
@@ -541,25 +685,11 @@ bool Prober::tryThis(const Lit lit, const bool first)
     }
 
     if (failed != lit_Undef) {
-        if (solver->conf.verbosity >= 6) {
-            cout << "c Failed on lit " << lit << endl;
-        }
-        solver->cancelZeroLight();
-
-        //Update conflict stats
-        runStats.numFailed++;
-        runStats.conflStats.update(solver->lastConflictCausedBy);
-        runStats.conflStats.numConflicts++;
-        runStats.addedBin += solver->hyperBinResAll();
-        std::pair<size_t, size_t> tmp = solver->removeUselessBins();
-        runStats.removedIrredBin += tmp.first;
-        runStats.removedRedBin += tmp.second;
-
-        vector<Lit> lits;
-        lits.push_back(~failed);
-        solver->addClauseInt(lits, true);
-
+        handleFailedLit(lit, failed);
         return solver->ok;
+    } else {
+        if (solver->conf.verbosity >= 6)
+            cout << "c Did not fail on lit " << lit << endl;
     }
 
     //Fill bothprop, cache
@@ -573,122 +703,17 @@ bool Prober::tryThis(const Lit lit, const bool first)
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
 
-        //If this is the first, set what is propagated
-        if (first) {
-            //Visited this var, needs clear later on
-            propagatedBitSet.push_back(var);
-
-            //Set prop has been done
-            propagated[var] = true;
-
-            //Set propValue
-            if (solver->value(var).getBool())
-                propValue[var] = true;
-            else
-                propValue[var] = false;
-        } else if (propagated[var]) {
-            if (propValue[var] == solver->value(var).getBool()) {
-
-                //they both imply the same
-                const Lit litToEnq = Lit(var, !propValue[var]);
-                toEnqueue.push_back(litToEnq);
-                #ifdef DRUP
-                if (solver->drup) {
-                    if (solver->conf.verbosity >= 6) {
-                        cout
-                        << "c bprop:"
-                        << litToEnq
-                        << endl;
-                    }
-                    (*solver->drup)
-                    << litToEnq
-                    << " 0\n";
-                }
-                #endif
-            }
-        }
-
+        checkAndSetBothProp(var, first);
         visitedAlready[thisLit.toInt()] = 1;
-
         if (!solver->conf.otfHyperbin)
             continue;
-
-        //Update cache, if the trail was within limits (cacheUpdateCutoff)
-        const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
-        if (solver->conf.doCache
-            && thisLit != lit
-            && numElemsSet <= solver->conf.cacheUpdateCutoff
-            //&& cacheUpdated[(~ancestor).toInt()] == 0
-        ) {
-            //Update stats/markings
-            //cacheUpdated[(~ancestor).toInt()]++;
-            extraTime += 1;
-            extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
-            extraTimeCache += solver->implCache[(~thisLit).toInt()].lits.size()/30;
-
-            const bool redStep = solver->varData[thisLit.var()].reason.isRedStep();
-
-            //Update the cache now
-            assert(ancestor != lit_Undef);
-            bool taut = solver->implCache[(~ancestor).toInt()].merge(
-                solver->implCache[(~thisLit).toInt()].lits
-                , thisLit
-                , redStep
-                , ancestor.var()
-                , solver->seen
-            );
-
-            //If tautology according to cache we can
-            //enqueue ~ancestor at toplevel since both
-            //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
-            if (taut
-                && (solver->varData[ancestor.var()].removed == Removed::none
-                    || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
-            ) {
-                toEnqueue.push_back(~ancestor);
-            }
-
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "The impl cache of " << (~ancestor) << " is now: ";
-            cout << solver->implCache[(~ancestor).toInt()] << endl;
-            #endif
-        }
+        updateCache(thisLit, lit, numElemsSet);
     }
 
     if (!solver->conf.otfHyperbin
         && solver->conf.doCache
     ) {
-        tmp.clear();
-        for (int64_t c = solver->trail.size()-1
-            ; c != (int64_t)solver->trail_lim[0] - 1
-            ; c--
-        ) {
-            extraTime += 2;
-            const Lit thisLit = solver->trail[c];
-            tmp.push_back(thisLit);
-        }
-
-        bool taut = solver->implCache[(~lit).toInt()].merge(
-            tmp
-            , lit_Undef
-            , true //Red step -- we don't know, so we assume
-            , lit.var()
-            , solver->seen
-        );
-
-        //If tautology according to cache we can
-        //enqueue ~lit at toplevel since both
-        //~lit V OTHER, and ~lit V ~OTHER are technically in
-        if (taut) {
-            toEnqueue.push_back(~lit);
-            #ifdef DRUP
-            if (solver->drup) {
-                (*solver->drup)
-                << (~lit)
-                << " 0\n";
-            }
-            #endif
-        }
+        addRestOfLitsToCache(lit);
     }
 
     solver->cancelZeroLight();
