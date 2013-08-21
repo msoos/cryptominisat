@@ -623,8 +623,15 @@ bool XorSubsumer::checkElimedUnassigned() const
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
-            assert(solver.assigns[i] == l_Undef);
-            if (solver.assigns[i] != l_Undef) return false;
+            if (solver.assigns[i] != l_Undef) {
+                std::cout
+                << "Var " << i+1
+                << " is assigned even though it's eliminated by XorSubsumer!"
+                << std::endl;
+
+                assert(solver.assigns[i] == l_Undef);
+                return false;
+            }
         }
     }
     assert(numElimed == checkNumElimed);
