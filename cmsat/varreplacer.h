@@ -71,7 +71,8 @@ class VarReplacer
 
         vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
-        const Lit getLitReplacedWith(Lit lit) const;
+        Lit getLitReplacedWith(Lit lit) const;
+        Var getVarReplacedWith(const Var var) const;
         const map<Var, vector<Var> >&getReverseTable() const;
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
@@ -243,9 +244,14 @@ inline const vector<Lit>& VarReplacer::getReplaceTable() const
     return table;
 }
 
-inline const Lit VarReplacer::getLitReplacedWith(const Lit lit) const
+inline Lit VarReplacer::getLitReplacedWith(const Lit lit) const
 {
     return table[lit.var()] ^ lit.sign();
+}
+
+inline Var VarReplacer::getVarReplacedWith(const Var var) const
+{
+    return table[var].var();
 }
 
 inline bool VarReplacer::replacingVar(const Var var) const
