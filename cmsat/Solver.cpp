@@ -2924,6 +2924,21 @@ elimination, etc.) and output the solution.
 */
 lbool Solver::solve(const vec<Lit>& assumps)
 {
+    assumps.copyTo(assumptions);
+    for(size_t i = 0; i < assumptions.size(); i++) {
+        Lit& lit = assumptions[i];
+
+        //Update to parent
+        lit = varReplacer->getReplaceTable()[lit.var()] ^ lit.sign();
+        const Var var = lit.var();
+
+        //Uneliminate
+        if (subsumer->getVarElimed()[var] && !subsumer->unEliminate(var))
+            return l_False;
+        if (xorSubsumer->getVarElimed()[var] && !xorSubsumer->unEliminate(var))
+            return l_False;
+    }
+
     #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() called" << std::endl;
     #endif
@@ -2936,7 +2951,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::solve() called\n");
 
-    assumps.copyTo(assumptions);
     initialiseSolver();
     uint64_t  nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
     uint64_t  nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
