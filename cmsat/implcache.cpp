@@ -197,7 +197,10 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
                 numUpdated++;
             }
 
-            assert(solver->value(lit.var()) == l_Undef && "Its child was unset, the parent must be unset, too");
+            //Yes, it's possible that the child was not set, but the parent is set
+            //This is because there is a delay between replacement and cache cleaning
+            if (solver->value(lit.var()) != l_Undef)
+                continue;
 
             //If updated version is eliminated/decomposed, skip
             if (solver->varData[lit.var()].removed != Removed::none)
