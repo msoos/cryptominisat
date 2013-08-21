@@ -3724,11 +3724,14 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 {
     assert(ok);
     assert(decisionLevel() == 0);
-    for(size_t i = 0; i < toEnqueue.size(); i++) {
-        const lbool val = value(toEnqueue[i]);
+    for(const Lit lit: toEnqueue) {
+
+        const lbool val = value(lit);
         if (val == l_Undef) {
-            enqueue(toEnqueue[i]);
+            enqueue(lit);
+            assert(varReplacer->getLitReplacedWith(lit) == lit);
             ok = propagate().isNULL();
+
             if (!ok) {
                 return false;
             }
