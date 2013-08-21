@@ -36,7 +36,7 @@ struct Timestamp
 
     Timestamp& operator=(const Timestamp& other)
     {
-        memcpy(this, &other, sizeof(Timestamp));
+        memmove(this, &other, sizeof(Timestamp));
 
         return *this;
     }
