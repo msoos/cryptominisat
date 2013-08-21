@@ -3623,16 +3623,12 @@ Lit Solver::updateLitForDomin(Lit lit) const
 
 void Solver::updateDominators()
 {
-    for(vector<Timestamp>::iterator
-        it = stamp.tstamp.begin(), end = stamp.tstamp.end()
-        ; it != end
-        ; it++
-    ) {
+    for(Timestamp& tstamp: stamp.tstamp) {
         for(size_t i = 0; i < 2; i++) {
-            Lit newLit = updateLitForDomin(it->dominator[i]);
-            it->dominator[i] = newLit;
+            Lit newLit = updateLitForDomin(tstamp.dominator[i]);
+            tstamp.dominator[i] = newLit;
             if (newLit == lit_Undef)
-                it->numDom[i] = 0;
+                tstamp.numDom[i] = 0;
         }
     }
 }
