@@ -976,7 +976,27 @@ void VarReplacer::updateVars(
 void VarReplacer::checkUnsetSanity()
 {
     for(size_t i = 0; i < solver->nVars(); i++) {
-        assert(solver->value(i) == solver->value(getLitReplacedWith(Lit(i, false))));
+        const Lit repLit = getLitReplacedWith(Lit(i, false));
+        const Var repVar = getVarReplacedWith(i);
+
+        if ((solver->varData[i].removed == Removed::none
+                || solver->varData[i].removed == Removed::queued_replacer)
+            && (solver->varData[repVar].removed == Removed::none
+                || solver->varData[repVar].removed == Removed::queued_replacer)
+            && solver->value(i) != solver->value(repLit)
+        ) {
+            cout
+            << "Variable " << (i+1)
+            << " has been set to " << solver->value(i)
+            << " but it has been replaced with lit "
+            << getLitReplacedWith(Lit(i, false))
+            << " and that has been set to "
+            << solver->value(getLitReplacedWith(Lit(i, false)))
+            << endl;
+
+            assert(solver->value(i) == solver->value(repLit));
+            exit(-1);
+        }
     }
 }
 
