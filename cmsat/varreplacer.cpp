@@ -551,14 +551,9 @@ bool VarReplacer::replaceImplicit()
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs)
 {
-    size_t at = 0;
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = i + cs.size(); i != end; i++, at++) {
-        if (at + 1 < cs.size()) {
-            Clause* cl = solver->clAllocator->getPointer(cs[at+1]);
-            __builtin_prefetch(cl);
-        }
+    for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
         Clause& c = *solver->clAllocator->getPointer(*i);
         assert(c.size() > 3);
 
