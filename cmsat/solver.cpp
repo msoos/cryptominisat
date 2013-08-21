@@ -3539,7 +3539,7 @@ size_t Solver::getNumVarsReplaced() const
 void Solver::dumpIfNeeded() const
 {
     if (conf.redDumpFname.empty()
-        && !conf.irredDumpFname.empty()
+        && conf.irredDumpFname.empty()
     ) {
         //Nothing to do, return
         return;
