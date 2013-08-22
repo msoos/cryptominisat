@@ -761,7 +761,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
         const Var x = trail[i].var();
         if (!seen[x])
-            break;
+            continue;
 
         if (varData[x].reason.isNULL()) {
             assert(varData[x].level > 0);
