@@ -756,7 +756,11 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     if (decisionLevel() == 0)
         return;
 
-    seen[p.var()] = 1;
+    //Guard it because of memory savings
+    //seen[] can be small in case the variable has been set at level 0
+    if (p.var() < nVars()) {
+        seen[p.var()] = 1;
+    }
 
     for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
         const Var x = trail[i].var();
@@ -801,7 +805,11 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
         seen[x] = 0;
     }
 
-    seen[p.var()] = 0;
+    //Guard it because of memory savings
+    //seen[] can be small in case the variable has been set at level 0
+    if (p.var() < nVars()) {
+        seen[p.var()] = 0;
+    }
 }
 
 /**
@@ -1003,15 +1011,17 @@ lbool Searcher::new_decision()
         assert(varData[p.var()].removed == Removed::none
             || varData[p.var()].removed == Removed::queued_replacer
         );
-        assert(p.var() < nVars());
 
         if (value(p) == l_True) {
             // Dummy decision level:
             newDecisionLevel();
         } else if (value(p) == l_False) {
+            //NOTE at this point, 'p.var()' can actually be larger than seen.size()
+            //That is now guarded against in analyzeFinal()
             analyzeFinal(~p, conflict);
             return l_False;
         } else {
+            assert(p.var() < nVars());
             stats.decisionsAssump++;
             next = p;
             break;
