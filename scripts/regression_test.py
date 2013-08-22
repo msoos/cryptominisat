@@ -185,21 +185,17 @@ class Tester:
 
         #the most buggy ones, don't turn them off much, please
         if random.randint(0,1) == 1 :
-            cmd += "--scc %s " % random.randint(0,1)
-            cmd += "--schedsimplify %d " % random.randint(0,1)
-            cmd += "--varelim %s " % random.randint(0,1)
-            cmd += "--comps %s " % random.randint(0,1)
-            cmd += "--subsume1 %s " % random.randint(0,1)
-            cmd += "--block %s " % random.randint(0,1)
-            cmd += "--probe %s " % random.randint(0,1)
-            cmd += "--simplify %s " % random.randint(0,1)
-            cmd += "--binpri %s " % random.randint(0,1)
-            cmd += "--stamp %s " % random.randint(0,1)
-            cmd += "--cache %s " % random.randint(0,1)
-            cmd += "--otfsubsume %s " % random.randint(0,1)
-            cmd += "--renumber %s " % random.randint(0,1)
-            cmd += "--savemem %s " % random.randint(0,1)
-            cmd += "--moreminim %s " % random.randint(0,1)
+            opts = ["scc", "schedsimplify", "varelim" \
+            , "comps", "subsume1", "block", "probe"
+            , "simplify", "binpri", "stamp", "cache"
+            , "otfsubsume", "renumber", "savemem"
+            , "moreminim", "gates"
+            , "gorshort", "gandrem", "gateeqlit"]
+
+            for opt in opts:
+                cmd += "--%s %d " % (opt, random.randint(0,1))
+
+            cmd += "--maxgatesz %d " % random.randint(3,20)
 
 
 
