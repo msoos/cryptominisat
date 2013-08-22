@@ -386,7 +386,7 @@ class Tester:
                 continue
 
             #count debug lib parts
-            if line[0] == 'c' and "Solver::solve()" in line:
+            if line[0] == 'c' and "Solver::solve" in line:
                 thisDebugLibPart += 1
 
             #if we are over debugLibPart, exit
@@ -423,12 +423,12 @@ class Tester:
 
         #extract output from the other solver
         print "Checking other solver output..."
-        (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2.split("\n"))
+        (otherSolverUNSAT, otherSolverSolution) = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         #check if the other solver agrees with us
         return otherSolverUNSAT
 
-    def extractLibPart(self, fname, debug_num, tofile) :
+    def extractLibPart(self, fname, debug_num, assumps, tofile) :
         fromf = open(fname, "r")
         thisDebugLibPart = 0
         maxvar = 0
@@ -442,7 +442,7 @@ class Tester:
 
             #process (potentially special) comments
             if line[0] == "c" :
-                if "Solver::solve()" in line:
+                if "Solver::solve" in line:
                     thisDebugLibPart += 1
 
                 continue
@@ -461,7 +461,7 @@ class Tester:
         #now we can create the new CNF file
         fromf = open(fname, "r")
         tof = open(tofile, "w")
-        tof.write("p cnf %d %d\n" % (maxvar, numcls))
+        tof.write("p cnf %d %d\n" % (maxvar, numcls + len(assumps)))
 
         thisDebugLibPart = 0
         for line in fromf :
@@ -472,7 +472,7 @@ class Tester:
 
             #parse up special header
             if line[0] == "c" :
-                if "Solver::solve()" in line:
+                if "Solver::solve" in line:
                     thisDebugLibPart += 1
 
                 continue
@@ -483,8 +483,45 @@ class Tester:
 
             tof.write(line + '\n')
 
+        #add assumptions
+        for lit in assumps:
+            tof.write("%d 0\n" % lit)
+
         fromf.close()
         tof.close()
+
+    def get_assumps(self, fname, debugLibPart) :
+        f = open(fname, "r")
+
+        thispart = 0
+        solveline = None
+        for line in f :
+            if "Solver::solve" in line :
+                thispart += 1
+                if thispart == debugLibPart :
+                    solveline = line
+                    break
+        f.close()
+
+        assert solveline != None
+        ret = re.match("c.*Solver::solve\((.*)\)", solveline)
+        assert ret != None
+        assumps = ret.group(1).strip().split()
+        assumps = [int(x) for x in assumps]
+
+        print "Assumptions: ", assumps
+        return assumps
+
+    def check_assumps_inside_solution(self, assumps, solution) :
+        for lit in assumps:
+            var = abs(lit)
+            val = lit > 0
+            if var in solution :
+                if solution[var] != val :
+                    print "Solution pinted has literal %s but assumptions contained the inverse: '%s'" % (-1*lit, assumps)
+                    exit(-100)
+
+        print "OK, all assumptions inside solution"
 
     def checkDebugLib(self, fname) :
         largestPart = -1
@@ -503,18 +540,21 @@ class Tester:
                 print "Error code 400"
                 exit(400)
 
-            #take file into mem and delete it
+            #take file into mem
             f = open(fname_debug, "r")
             text = f.read()
             output_lines = text.splitlines()
             f.close()
-            #os.unlink(fname_debug)
 
             (unsat, solution) = self.parse_solution_from_output(output_lines)
+            assumps = self.get_assumps(fname, debugLibPart)
             if unsat == False:
+                print "debugLib is SAT"
+                self.check_assumps_inside_solution(assumps, solution)
                 self.test_found_solution(solution, fname, debugLibPart)
             else:
-                self.extractLibPart(fname, debugLibPart, "tmp")
+                print "debugLib is UNSAT"
+                self.extractLibPart(fname, debugLibPart, assumps, "tmp")
 
                 #check with other solver
                 ret = self.checkUNSAT("tmp")
@@ -565,11 +605,11 @@ class Tester:
             self.checkDebugLib(fname)
 
         print "Checking console output..."
-        (unsat, value) = self.parse_solution_from_output(consoleOutput.split("\n"))
+        (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
 
         if not unsat :
-            self.test_found_solution(value, fname)
+            self.test_found_solution(solution, fname)
             return;
 
         #it's UNSAT and we should not check, so exit
@@ -710,12 +750,14 @@ class Tester:
         varsInside = set()
 
         #use a distribution so that few will be in assumps
-        while (num < maxvar and random.randint(0,4) == 4) :
+        while (num < maxvar and random.randint(0,4) > 0) :
 
             #get a var that is not already inside the assumps
             thisVar = random.randint(1, maxvar)
             while (thisVar in varsInside) :
                 thisVar = random.randint(1, maxvar)
+
+            varsInside.add(thisVar)
 
             #random sign
             if random.randint(0,1) :
@@ -747,14 +789,15 @@ class Tester:
                 fout.write(line + '\n')
                 continue
 
-            #calculate max variable
-            maxvar = max(maxvar, self.get_max_var_from_clause(line))
-
             at += 1
             if at >= nextToAdd :
                 assumps = self.generate_random_assumps(maxvar)
+                #assumps = " "
                 fout.write("c Solver::solve( %s )\n" % assumps)
                 nextToAdd = at + random.randint(1,(file_len/numtodo)*2+1)
+
+            #calculate max variable
+            maxvar = max(maxvar, self.get_max_var_from_clause(line))
 
             #copy line over
             fout.write(line + '\n')

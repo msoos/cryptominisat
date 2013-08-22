@@ -842,7 +842,15 @@ void Solver::renumberVariables()
     updateArray(backupPolarity, interToOuter);
     updateArray(decisionVar, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
+
+    //Update assumptions
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = false;
+    }
     updateLitsMap(assumptions, outerToInter);
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = true;
+    }
 
     //Update stamps
     if (conf.doStamp) {
@@ -1405,6 +1413,32 @@ CleaningStats Solver::reduceDB()
     return tmpStats;
 }
 
+void Solver::treatAssumptions(const vector<Lit>* _assumptions)
+{
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = false;
+    }
+    assumptions.clear();
+
+    if (_assumptions == NULL) {
+        return;
+    }
+
+    assumptions = *_assumptions;
+    addClauseHelper(assumptions);
+    for(Lit lit: assumptions) {
+        if (assumptionsSet[lit.var()]) {
+            cout
+            << "ERROR, the assumptions have the same variable inside"
+            << " more than once!"
+            << endl;
+
+            exit(-1);
+        }
+        assumptionsSet[lit.var()] = true;
+    }
+}
+
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
@@ -1426,12 +1460,10 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         sqlStats->setup(this);
     }
 
-    //Initialise stuff
+    //Initialise
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
-    if (_assumptions != NULL) {
-        assumptions = *_assumptions;
-    }
+    treatAssumptions(_assumptions);
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
@@ -1478,7 +1510,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         numConfls = std::min<uint32_t>(numConfls, conf.maxConfl - sumStats.conflStats.numConflicts);
 
         //Solve and update stats
-        status = Searcher::solve(assumptions, numConfls);
+        status = Searcher::solve(numConfls);
 
         //If stats indicate that recursive minimization is not helping
         //turn it off

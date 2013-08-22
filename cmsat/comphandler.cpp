@@ -62,6 +62,19 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
     }
 }
 
+bool CompHandler::assumpsInsideComponent(const vector<Var>& vars)
+{
+    bool inside = false;
+    for(Var var: vars) {
+        if (solver->assumptionsSet[var]) {
+            inside = true;
+            break;
+        }
+    }
+
+    return inside;
+}
+
 bool CompHandler::handle()
 {
     assert(solver->okay());
@@ -128,6 +141,10 @@ bool CompHandler::handle()
         if (vars.size() > 100ULL*1000ULL) {
             continue;
         }
+
+        //Components with assumptions should not be removed
+        if (assumpsInsideComponent(vars))
+            continue;
 
         //Sort and renumber
         std::sort(vars.begin(), vars.end());

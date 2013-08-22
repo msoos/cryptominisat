@@ -2266,6 +2266,11 @@ bool Simplifier::maybeEliminate(const Var var)
         << endl;
     }
 
+    //Cannot eliminate variables that are in the assumptions
+    if (solver->assumptionsSet[var]) {
+        return false;
+    }
+
     //Test if we should remove, and fill posAll&negAll
     runStats.testedToElimVars++;
     if (testVarElim(var) == 1000) {

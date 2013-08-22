@@ -85,6 +85,7 @@ Var Searcher::newVar(const bool dvar)
     if (dvar) {
         insertVarOrder(var);
     }
+    assumptionsSet.push_back(false);
 
     return var;
 }
@@ -999,11 +1000,12 @@ lbool Searcher::new_decision()
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
         Lit p = assumptions[decisionLevel()];
-        p = solver->varReplacer->getLitReplacedWith(p);
-        if ((varData[p.var()].removed != Removed::none
-                && varData[p.var()].removed != Removed::queued_replacer)
-            || value(p) == l_True
-        ) {
+        assert(varData[p.var()].removed == Removed::none
+            || varData[p.var()].removed == Removed::queued_replacer
+        );
+        assert(p.var() < nVars());
+
+        if (value(p) == l_True) {
             // Dummy decision level:
             newDecisionLevel();
         } else if (value(p) == l_False) {
@@ -1957,7 +1959,7 @@ polarities, and start the loop. Finally, we either report UNSAT or extend the
 found solution with all the intermediary simplifications (e.g. variable
 elimination, etc.) and output the solution.
 */
-lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
+lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -1968,7 +1970,6 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         << endl;
     }
 
-    assumptions = assumps;
     resetStats();
 
     //Current solving status

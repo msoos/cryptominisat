@@ -189,12 +189,6 @@ class Searcher : public PropEngine
         // Solving:
         ///Search for a model that respects a given set of assumptions.
         lbool solve(
-            const vector<Lit>& assumps
-            , const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
-        );
-
-        ///Search without assumptions.
-        lbool solve(
             const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
@@ -629,6 +623,9 @@ class Searcher : public PropEngine
         };
 
     protected:
+        vector<bool> assumptionsSet;
+        vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
+
         friend class CalcDefPolars;
         friend class VarReplacer;
         void filterOrderHeap();
@@ -819,9 +816,6 @@ class Searcher : public PropEngine
         );
         #endif
 
-        //Assumptions
-        vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
-
         //Picking polarity when doing decision
         bool     pickPolarity(const Var var);
 
@@ -885,12 +879,6 @@ inline void Searcher::varBumpActivity(Var var)
 inline uint32_t Searcher::abstractLevel(const Var x) const
 {
     return ((uint32_t)1) << (varData[x].level % 32);
-}
-
-inline lbool Searcher::solve(const uint64_t maxConfls)
-{
-    vector<Lit> tmp;
-    return solve(tmp, maxConfls);
 }
 
 inline uint32_t Searcher::getSavedActivity(Var var) const

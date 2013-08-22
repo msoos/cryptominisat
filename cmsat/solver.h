@@ -507,7 +507,7 @@ class Solver : public Searcher
             , const vector<ClauseUsageStats>& stats
         ) const;
 
-        vector<Lit> assumptions;
+        void treatAssumptions(const vector<Lit>* _assumptions);
 };
 
 inline void Solver::setDecisionVar(const uint32_t var)

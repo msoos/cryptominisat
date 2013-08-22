@@ -73,6 +73,7 @@ class CompHandler
                 return left.second < right.second;
             }
         };
+        bool assumpsInsideComponent(const vector<Var>& vars);
 
         void configureNewSolver(
             Solver* newSolver

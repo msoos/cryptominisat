@@ -194,6 +194,13 @@ bool VarReplacer::performReplace()
         goto end;
     }
 
+    //Update assumptions
+    for(Lit& lit: solver->assumptions) {
+        solver->assumptionsSet[lit.var()] = false;
+        lit = getLitReplacedWith(lit);
+        solver->assumptionsSet[lit.var()] = true;
+    }
+
     solver->testAllClauseAttach();
     solver->checkNoWrongAttach();
     solver->checkStats();
