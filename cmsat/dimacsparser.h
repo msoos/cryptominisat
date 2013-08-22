@@ -52,6 +52,7 @@ class DimacsParser
         void printHeader(StreamBuffer& in);
         void parseComments(StreamBuffer& in, const std::string str);
         std::string stringify(uint32_t x);
+        void parseSolveComment(StreamBuffer& in);
 
 
         Solver *solver;

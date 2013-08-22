@@ -691,6 +691,40 @@ class Tester:
 
         return i
 
+    def get_max_var_from_clause(self, line) :
+        maxvar = 0
+        for lit in line.split() :
+            num = 0
+            try :
+                num = int(lit)
+            except ValueError:
+                print "line '%s' contains a non-integer variable" % line
+
+            maxvar = max(maxvar, abs(num))
+
+        return maxvar
+
+    def generate_random_assumps(self, maxvar) :
+        assumps = ""
+        num = 0
+        varsInside = set()
+
+        #use a distribution so that few will be in assumps
+        while (num < maxvar and random.randint(0,4) == 4) :
+
+            #get a var that is not already inside the assumps
+            thisVar = random.randint(1, maxvar)
+            while (thisVar in varsInside) :
+                thisVar = random.randint(1, maxvar)
+
+            #random sign
+            if random.randint(0,1) :
+                thisVar *= -1
+
+            assumps += "%d " % thisVar
+
+        return assumps
+
     def intersperse_with_debuglib(self, fname1, fname2) :
 
         #approx number of solve()-s to add
@@ -704,17 +738,22 @@ class Tester:
         fin = open(fname1, "r")
         fout = open(fname2, "w")
         at = 0
+        maxvar = 0
         for line in fin :
             line = line.strip()
 
             #ignore comments (but write them out)
-            if not line or line[0] == "c" :
+            if not line or line[0] == "c" or line[0] == 'p':
                 fout.write(line + '\n')
                 continue
 
+            #calculate max variable
+            maxvar = max(maxvar, self.get_max_var_from_clause(line))
+
             at += 1
             if at >= nextToAdd :
-                fout.write("c Solver::solve()\n")
+                assumps = self.generate_random_assumps(maxvar)
+                fout.write("c Solver::solve( %s )\n" % assumps)
                 nextToAdd = at + random.randint(1,(file_len/numtodo)*2+1)
 
             #copy line over

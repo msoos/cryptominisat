@@ -202,6 +202,66 @@ void DimacsParser::printHeader(StreamBuffer& in)
     }
 }
 
+void DimacsParser::parseSolveComment(StreamBuffer& in)
+{
+    vector<Lit> assumps;
+    skipWhitespace(in);
+    while(*in != ')') {
+        uint32_t len = 0;
+        int lit = parseInt(in, len);
+        assumps.push_back(Lit(std::abs(lit)-1, lit < 0));
+        skipWhitespace(in);
+    }
+
+    if (solver->getVerbosity()>= 2) {
+        cout
+        << "c -----------> Solver::solve() called (number: "
+        << std::setw(3) << debugLibPart << ") with assumps :";
+        for(Lit lit: assumps) {
+            cout << lit << " ";
+        }
+        cout
+        << "<-----------"
+        << endl;
+    }
+
+    lbool ret = solver->solve(&assumps);
+
+    //Open file for writing
+    std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
+    std::ofstream partFile;
+    partFile.open(s.c_str());
+    if (!partFile) {
+        cout << "ERROR: Cannot open part file '" << s << "'";
+        exit(-1);
+    }
+
+    //Output to part file the result
+    if (ret == l_True) {
+        partFile << "s SATISFIABLE" << endl;
+        partFile << "v ";
+        for (Var i = 0; i != solver->nVarsReal(); i++) {
+            if (solver->model[i] != l_Undef)
+                partFile
+                << ((solver->model[i]==l_True) ? "" : "-")
+                << (i+1) <<  " ";
+        }
+        partFile << "0" << endl;;
+    } else if (ret == l_False) {
+        partFile << "s UNSAT" << endl;
+    } else if (ret == l_Undef) {
+        assert(false);
+    } else {
+        assert(false);
+    }
+    partFile.close();
+    debugLibPart++;
+
+    if (solver->getConf().verbosity >= 6) {
+        cout << "c Parsed Solver::solve()" << endl;
+    }
+}
+
 /**
 @brief Parse up comment lines which could contain important information
 */
@@ -211,67 +271,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     #ifdef DEBUG_COMMENT_PARSING
     cout << "Parsing comments" << endl;
     #endif //DEBUG_COMMENT_PARSING
-
-    if (str == "v" || str == "var") {
-        int var = parseInt(in, len);
-        skipWhitespace(in);
-        if (var <= 0) {
-            cout
-            << "PARSE ERROR! Var number (after 'c v' or 'c var'"
-            << " must be a positive integer"
-            << endl;
-
-            exit(3);
-        }
-        std::string name = untilEnd(in);
-        //solver->setVariableName(var-1, name.c_str());
-
-        if (solver->getConf().verbosity >= 6) {
-            cout << "c Parsed 'c var'" << endl;
-        }
-    } else if (debugLib && str == "Solver::solve()") {
-        if (solver->getVerbosity()>= 2) {
-            cout
-            << "c -----------> Solver::solve() called (number: "
-            << std::setw(3) << debugLibPart << ")"
-            << "<-----------"
-            << endl;
-        }
-        lbool ret = solver->solve();
-
-        //Open file for writing
-        std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
-        std::ofstream partFile;
-        partFile.open(s.c_str());
-        if (!partFile) {
-            cout << "ERROR: Cannot open part file '" << s << "'";
-            exit(-1);
-        }
-
-        //Output to part file the result
-        if (ret == l_True) {
-            partFile << "s SATISFIABLE" << endl;
-            partFile << "v ";
-            for (Var i = 0; i != solver->nVarsReal(); i++) {
-                if (solver->model[i] != l_Undef)
-                    partFile
-                    << ((solver->model[i]==l_True) ? "" : "-")
-                    << (i+1) <<  " ";
-            }
-            partFile << "0" << endl;;
-        } else if (ret == l_False) {
-            partFile << "s UNSAT" << endl;
-        } else if (ret == l_Undef) {
-            assert(false);
-        } else {
-            assert(false);
-        }
-        partFile.close();
-        debugLibPart++;
-
-        if (solver->getConf().verbosity >= 6) {
-            cout << "c Parsed Solver::solve()" << endl;
-        }
+    if (debugLib && str.substr(0, 13) == "Solver::solve") {
+        parseSolveComment(in);
     } else if (debugNewVar && str == "Solver::newVar()") {
         solver->newVar();
 
