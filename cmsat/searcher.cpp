@@ -770,17 +770,17 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
             PropBy confl = varData[x].reason;
             switch(confl.getType()) {
                 case tertiary_t : {
-                    const Lit lit2 = confl.lit3();
-                    if (varData[lit2.var()].level > 0)
-                        seen[lit2.var()] = 1;
+                    const Lit lit3 = confl.lit3();
+                    if (varData[lit3.var()].level > 0)
+                        seen[lit3.var()] = 1;
 
                     //Intentionally no break, since tertiary is similar to binary
                 }
 
                 case binary_t : {
-                    const Lit lit1 = confl.lit2();
-                    if (varData[lit1.var()].level > 0)
-                        seen[lit1.var()] = 1;
+                    const Lit lit2 = confl.lit2();
+                    if (varData[lit2.var()].level > 0)
+                        seen[lit2.var()] = 1;
                     break;
                 }
 
