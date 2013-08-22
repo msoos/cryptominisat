@@ -263,7 +263,7 @@ class Tester:
         #solution will be put here
         satunsatfound = False
         vlinefound = False
-        value = {}
+        solution = {}
 
         #parse in solution
         for line in output_lines:
@@ -298,8 +298,8 @@ class Tester:
                     if (var == 'v') : continue;
                     if (int(var) == 0) : break;
                     vvar = int(var)
-                    value[abs(vvar)] = (vvar < 0) == False
-        #print "Parsed values:", value
+                    solution[abs(vvar)] = (vvar >= 0)
+        #print "Parsed values:", solution
 
         if (self.ignoreNoSolution == False and
                 (satunsatfound == False or (unsat == False and vlinefound == False))
@@ -328,19 +328,19 @@ class Tester:
             print "Error code 500"
             exit(500)
 
-        return (unsat, value)
+        return (unsat, solution)
 
-    def check_regular_clause(self, line, value):
+    def check_regular_clause(self, line, solution):
         lits = line.split()
         final = False
         for lit in lits:
             numlit = int(lit)
             if numlit != 0:
-                if (abs(numlit) not in value): continue
+                if (abs(numlit) not in solution): continue
                 if numlit < 0:
-                    final |= ~value[abs(numlit)]
+                    final |= ~solution[abs(numlit)]
                 else:
-                    final |= value[numlit]
+                    final |= solution[numlit]
                 if final == True:
                     break
         if final == False:
@@ -348,24 +348,24 @@ class Tester:
             print "Error code 100"
             exit(100)
 
-    def check_xor_clause(self, line, value):
+    def check_xor_clause(self, line, solution):
         line = line.lstrip('x')
         lits = line.split()
         final = False
         for lit in lits:
             numlit = int(lit)
             if numlit != 0:
-                if abs(numlit) not in value:
+                if abs(numlit) not in solution:
                     print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
                     print "Error code 200"
                     exit(200)
-                final ^= value[abs(numlit)]
+                final ^= solution[abs(numlit)]
                 final ^= numlit < 0
         if final == False:
             print "Error: xor-clause '%s' not satisfied." % line
             exit(-1)
 
-    def test_found_solution(self, value, fname, debugLibPart=None):
+    def test_found_solution(self, solution, fname, debugLibPart=None):
         if debugLibPart == None:
             print "Verifying solution for CNF file %s" % fname
         else:
@@ -397,9 +397,9 @@ class Tester:
             #check solution against clause
             if line[0] != 'c' and line[0] != 'p':
                 if line[0] != 'x':
-                    self.check_regular_clause(line, value)
+                    self.check_regular_clause(line, solution)
                 else:
-                    self.check_xor_clause(line, value)
+                    self.check_xor_clause(line, solution)
 
                 clauses += 1
 
@@ -510,9 +510,9 @@ class Tester:
             f.close()
             #os.unlink(fname_debug)
 
-            (unsat, value) = self.parse_solution_from_output(output_lines)
+            (unsat, solution) = self.parse_solution_from_output(output_lines)
             if unsat == False:
-                self.test_found_solution(value, fname, debugLibPart)
+                self.test_found_solution(solution, fname, debugLibPart)
             else:
                 self.extractLibPart(fname, debugLibPart, "tmp")
 
