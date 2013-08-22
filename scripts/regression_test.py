@@ -749,6 +749,10 @@ class Tester:
         num = 0
         varsInside = set()
 
+        #Half of the time, no assumptions at all
+        if random.randint(0,1) == 1:
+            return assumps
+
         #use a distribution so that few will be in assumps
         while (num < maxvar and random.randint(0,4) > 0) :
 
