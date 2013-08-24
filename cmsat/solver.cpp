@@ -851,6 +851,7 @@ void Solver::renumberVariables()
     for(Lit lit: assumptions) {
         assumptionsSet[lit.var()] = true;
     }
+    updateLitsMap(origAssumptions, outerToInter);
 
     //Update stamps
     if (conf.doStamp) {
@@ -1425,17 +1426,18 @@ void Solver::treatAssumptions(const vector<Lit>* _assumptions)
     }
 
     assumptions = *_assumptions;
+    origAssumptions = assumptions;
     addClauseHelper(assumptions);
     for(Lit lit: assumptions) {
         if (assumptionsSet[lit.var()]) {
-            cout
+            /*cout
             << "ERROR, the assumptions have the same variable inside"
             << " more than once!"
-            << endl;
-
-            exit(-1);
+            << endl;*/
+            //Yes, it can happen... due to variable replacement
+        } else {
+            assumptionsSet[lit.var()] = true;
         }
-        assumptionsSet[lit.var()] = true;
     }
 }
 
@@ -1647,6 +1649,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Renumber model back to original variable numbering
         updateArrayRev(model, interToOuterMain);
     } else {
+        //TODO
+        //update_conflict_to_orig_assumptions();
+
         //Back-number the conflict
         updateLitsMap(conflict, interToOuterMain);
     }
