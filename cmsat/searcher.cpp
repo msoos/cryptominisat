@@ -328,6 +328,7 @@ void Searcher::normalClMinim()
                 break;
 
             case null_clause_t:
+            default:
                 release_assert(false);
                 exit(-1);
                 break;
@@ -692,6 +693,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     break;
 
                 case null_clause_t:
+                default:
                     release_assert(false);
                     exit(-1);
                     break;

@@ -149,6 +149,7 @@ class XorFinder: public XorFinderAbst
 {
 public:
     XorFinder(Simplifier* subsumer, Solver* solver);
+    virtual ~XorFinder() {};
     virtual bool findXors();
 
     struct Stats
@@ -273,9 +274,6 @@ public:
 
         size_t zeroDepthAssigns;
     };
-
-    virtual ~XorFinder()
-    {}
 
     const Stats& getStats() const;
     size_t getNumCalls() const;
