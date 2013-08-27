@@ -584,7 +584,6 @@ void Main::parseCommandLine()
             conf.doHeuleProcess = false;
             conf.doSatELite = false;
             conf.doXorSubsumption = false;
-            printResult = false;
             conf.doVarElim = false;
             //nomatrixfind
             gaussconfig.orderCols = false;
