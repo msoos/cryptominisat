@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from __future__ import with_statement  # Required in 2.5
@@ -13,13 +13,113 @@ import sys
 import signal
 import resource
 import time
+import struct
+import random
+from random import choice
 from subprocess import Popen, PIPE, STDOUT
+#from optparse import OptionParser
+import optparse
 
-maxTime = 50
-maxTimeLimit = 40
+maxTime = 40
+maxTimeDiff = 20
+
+class PlainHelpFormatter(optparse.IndentedHelpFormatter):
+    def format_description(self, description):
+        if description:
+            return description + "\n"
+        else:
+            return ""
+
+usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
+desc = """Example usages:
+* check already computed SAT solutions (UNSAT cannot be checked):
+   ./regression_test.py --checkdir ../../clusters/cluster93/ --cnfdir ../../satcomp09/
+
+* check already computed SAT solutions (UNSAT cannot be checked):
+   ./regression_test.py -c myfile.cnf -s sol.txt
+
+* fuzz the solver with fuzz-generator
+   ./regression_test.py -f
+
+* go through regression listdir
+   ./regression_test.py --regtest --checkdir ../tests/
+"""
+
+parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
+parser.add_option("--exec", metavar= "SOLVER", dest="solver"
+                    , default="../build/cryptominisat"
+                    , help="SAT solver executable. Default: %default"
+                    )
+
+parser.add_option("--extraopts", "-e", metavar= "OPTS", dest="extra_options"
+                    , default=""
+                    , help="Extra options to give to SAT solver"
+                    )
+
+parser.add_option("--verbose", "-v", action="store_true"
+                    , default=False, dest="verbose"
+                    , help="Print more output"
+                    )
+
+parser.add_option("-t", "--threads", dest="num_threads", metavar="NUM"
+                    , default=1, type="int"
+                    , help="Number of threads"
+                    )
+
+#for fuzz-testing
+parser.add_option("-f", "--fuzz", dest="fuzz_test"
+                    , default=False, action="store_true"
+                    , help="Fuzz-test"
+                    )
+
+#for regression testing
+parser.add_option("--regtest", dest="regressionTest"
+                    , default=False, action="store_true"
+                    , help="Regression test"
+                    )
+parser.add_option("--testdir", dest="testDir"
+                    , default= "../tests/"
+                    , help="Directory where the tests are"
+                    )
+
+parser.add_option("--testdirNewVar", dest="testDirNewVar"
+                    , default= "../tests/newVar/"
+                    , help="Directory where the tests are"
+                    )
+
+parser.add_option("--drup", dest="drup"
+                    , default= False, action="store_true"
+                    , help="Directory where the tests are"
+                    )
+
+#check dir stuff
+parser.add_option("--checksol", dest="checkSol"
+                    , default=False, action="store_true"
+                    , help="Check solution at specified dir against problems at specified dir"
+                    )
+
+parser.add_option("--soldir", dest="checkDirSol"
+                    ,  help="Check solutions found here"
+                    )
+parser.add_option("--probdir", dest="checkDirProb"
+                    , default="/home/soos/media/sat/examples/satcomp09/"
+                    , help="Directory of CNF files checked against"
+                    )
+parser.add_option("-c", "--check", dest="checkFile"
+                    , default=None
+                    , help="Check this file"
+                    )
+parser.add_option("-s", "--sol", dest="solutionFile"
+                    , default=None
+                    , help="Against this solution"
+                    )
+
+(options, args) = parser.parse_args()
+
+
 
 def setlimits():
-    sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
+    #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def unique_fuzz_file(file_name_begin):
@@ -28,216 +128,189 @@ def unique_fuzz_file(file_name_begin):
         file_name = file_name_begin + '_' + str(counter) + ".cnf"
         try:
             fd = os.open(file_name, os.O_CREAT | os.O_EXCL)
-            return os.fdopen(fd), file_name
+            os.fdopen(fd).close()
+            return file_name
         except OSError:
             pass
         counter += 1
 
 class Tester:
-
     def __init__(self):
-        self.sumTime = 0.0
-        self.sumProp = 0
-        self.verbose = False
-        self.gaussUntil = 100
-        self.testDir = "../tests/"
-        self.testDirNewVar = "../tests/newVar/"
-        self.cryptominisat = "../build/cryptominisat"
-        self.checkDirOnly = False
-        self.checkDirDifferent = False
-        self.differentDirForCheck = \
-            "/home/soos/Development/sat_solvers/satcomp09/"
-        self.ignoreNoSolution = False
-        self.arminFuzzer = False
-        self.extraOptions = ""
-        self.needDebugLib = True
-        self.numThreads = 4
+        self.check_unsat = False
+        self.testDir = options.testDir
+        self.testDirNewVar = options.testDirNewVar
 
-    def execute(self, fname, randomizeNum, newVar, needToLimitTime):
-        if os.path.isfile(self.cryptominisat) != True:
+        self.ignoreNoSolution = False
+        self.needDebugLib = True
+
+    def random_options(self) :
+        cmd = " "
+
+        #extra = ["polarity-mode","rnd-freq","verbosity","randomize"
+                #,,"maxmatrixrows","minmatrixrows","savematrix"
+                #,,"threads", "maxconfl"]
+
+        #"maxsolutions"
+        opts = ["nonormxorfind","nobinxorfind"
+                ,"noregbxorfind","doextendedscc","noconglomerate"
+                ,"nosimplify","greedyunbound"
+                ,"novarreplace"
+                ,"pavgbranch"
+                ,"nofailedlit","noheuleprocess","nosatelite","noxorsubs"
+                ,"novarelim","nosubsume1","nomatrixfind"
+                ,"noordercol","noiterreduce"
+                ,"nohyperbinres","noremovebins"
+                ,"noremlbins","nosubswithbins","nosubswithnbins"
+                ,"noclausevivif","nosortwatched","nolfminim","nocalcreach"
+                ,"nobxor","norecotfssr","nocacheotfssr","nootfsubsume"
+                ,"plain"]
+
+        for opt in opts:
+            if random.randint(0,3) == 1 :
+                cmd += "--%s " % (opt)
+
+        cmd += "--gaussuntil=%d " % random.randint(0,50)
+        cmd += "--maxnummatrixes=%d " % random.randint(0,10)
+        cmd += "--restart=%s " % random.choice(["auto", "static", "dynamic"])
+
+        return cmd
+
+    def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None):
+        if os.path.isfile(options.solver) != True:
             print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
-                self.cryptominisat
+                options.solver
             print "Error code 300"
             exit(300)
 
-        command = "%s --randomize=%d " % (self.cryptominisat,randomizeNum)
-        command += "--gaussuntil=%d " % self.gaussUntil
-        if (self.needDebugLib) :
+        #construct command
+        command = options.solver
+        command += self.random_options()
+        if self.needDebugLib :
             command += "--debuglib "
-        if self.verbose == False:
+        if options.verbose == False:
             command += "--verbosity=0 "
-        if (newVar) :
-            command += "--debugnewvar "
-        command += "--threads=%d " % self.numThreads
-        command += self.extraOptions + " "
+        if newVar :
+            command += "--debugnewVar "
+        command += "--threads=%d " % options.num_threads
+        command += options.extra_options + " "
         command += fname
-
+        if fnameDrup:
+            command += " --drupexistscheck 0 " + fnameDrup
         print "Executing: %s " % command
-        if self.verbose:
+
+        #print time limit
+        if options.verbose:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+
+        #if need time limit, then limit
         if (needToLimitTime) :
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE, preexec_fn=setlimits)
         else:
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
-        if self.verbose:
+            p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+
+        #print time limit after child startup
+        if options.verbose:
             print "CPU limit of parent (pid %d) after startup of child" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-        consoleOutput = p.communicate()[0]
-        if self.verbose:
+
+        #Get solver output
+        consoleOutput, err = p.communicate()
+        if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         return consoleOutput
 
-    def parse_consoleOutput(self, consoleOutput):
-        s3 = consoleOutput.splitlines()
-        for l in s3:
-            if "CPU time" in l:
-                self.sumTime += float(l[l.index(":") + 1:l.rindex(" s")])
-            if "propagations" in l:
-                self.sumProp += int(l[l.index(":") + 1:l.rindex("(")])
-
-    def read_found(self, filename):
-        if (os.path.isfile(filename) == False) :
-            print "Error: Filename to be read '%s' is not a file!" % filename
-            print "Error code 400"
-            exit(400);
-        f = open(filename, "r")
-        text = f.read()
-        mylines = text.splitlines()
-        f.close()
-
-        if len(mylines) == 0:
-            print "Error! CryptoMiniSat output is empty!"
-            print "output lines: ", mylines
+    def parse_solution_from_output(self, output_lines):
+        if len(output_lines) == 0:
+            print "Error! SAT solver output is empty!"
+            print "output lines: ", output_lines
             print "Error code 500"
             exit(500)
 
-        satunsatfound = False;
 
-        value = {}
-        for line in mylines:
-            if 'UNSAT' in line:
-                unsat = True
-                satunsatfound = True
+        #solution will be put here
+        satunsatfound = False
+        vlinefound = False
+        solution = {}
+
+        #parse in solution
+        for line in output_lines:
+            #skip comment
+            if (re.match('^c ', line)):
                 continue;
-            if 'SAT' in line:
-                unsat = False
-                satunsatfound = True;
-                continue;
-            if (re.match('^c ', line)):  continue;
-            myvars = line.split(' ')
-            for var in myvars:
-                if (var == 'v') : continue;
-                if (int(var) == 0) : break;
-                vvar = int(var)
-                value[abs(vvar)] = (vvar < 0) == False
-        #print "Parsed values:", value
-        if (satunsatfound == False) :
-            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
-            print "Error code 500"
-            exit(500)
 
-        os.unlink(filename)
-        return (unsat, value)
+            #solution
+            if (re.match('^s ', line)):
+                if (satunsatfound) :
+                    print "ERROR: solution twice in solver output!"
+                    exit(400)
 
-    def read_found_output(self, output):
-        lines = output.splitlines()
+                if 'UNSAT' in line:
+                    unsat = True
+                    satunsatfound = True
+                    continue;
 
-        if len(lines) == 0:
-            if self.checkDirOnly == True:
-                print "Solving probably timed out"
-                return (True, {})
-            else:
-                print "Error! Output is empty!"
-                print "output : ", output
-                print "Error code 500"
-                exit(500)
+                if 'SAT' in line:
+                    unsat = False
+                    satunsatfound = True;
+                    continue;
 
-        value = {}
-        unsat = False
-        sLineFound = False
-        vLineFound = False
-        for line in lines:
-            if line == 's UNSATISFIABLE':
-                unsat = True
-                sLineFound = True
-            elif line == 's SATISFIABLE':
-                unsat = False
-                sLineFound = True
-            elif re.match('^v ', line):
-                vars = line.split(' ')
-                vLineFound = True
-                for var in vars:
-                    if var == "v":
-                        continue
+                print "ERROR: line starts with 's' but no SAT/UNSAT on line"
+                exit(400)
+
+            #parse in solution
+            if (re.match('^v ', line)):
+                vlinefound = True
+                myvars = line.split(' ')
+                for var in myvars:
+                    if (var == 'v') : continue;
+                    if (int(var) == 0) : break;
                     vvar = int(var)
-                    value[abs(vvar)] = (vvar < 0) == False
+                    solution[abs(vvar)] = (vvar >= 0)
+        #print "Parsed values:", solution
 
-        if self.ignoreNoSolution == False and (sLineFound == False or
-                unsat == False and vLineFound == False):
+        if (self.ignoreNoSolution == False and
+                (satunsatfound == False or (unsat == False and vlinefound == False))
+                ):
             print "Error: Cannot find line starting with 's' or 'v' in output!"
-            print output
+            print output_lines
             print "Error code 500"
             exit(500)
 
-        if self.ignoreNoSolution == True and (sLineFound == False or
-                unsat == False and vLineFound == False):
+        if (self.ignoreNoSolution == True and
+                (satunsatfound == False or (unsat == False and vlinefound == False))
+            ):
             print "Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc."
             print "Making it look like an UNSAT, so no checks!"
             return (True, [])
 
-        if self.verbose:
-            print "Found sat ? ",  (not unsat)
-            #for (k, v) in value.iteritems():
-            #    print "var: %d, value: %s" % (k, v)
+        if (satunsatfound == False) :
+            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
+            print output_lines
+            print "Error code 500"
+            exit(500)
 
-        return (unsat, value)
+        if (unsat == False and vlinefound == False) :
+            print "Error: Solution is SAT, but no 'v' line"
+            print output_lines
+            print "Error code 500"
+            exit(500)
 
-    def test_expect(self, unsat, value, expectOutputFile):
-        if os.path.isfile(expectOutputFile) != True:
-            return
+        return (unsat, solution)
 
-        f = gzip.open(expectOutputFile, "r")
-        text = f.read()
-        f.close()
-
-        indicated_value = {}
-        indicated_unsat = False
-        lines = text.splitlines()
-        for line in lines:
-            if 'UNSAT' in line:
-                indicated_unsat = True
-            elif 'SAT' in line:
-                indicated_unsat = False
-            else:
-                stuff = line.split()
-                indicated_value[int(stuff[0])] = stuff[1].lstrip().rstrip() == \
-                    'true'
-
-        if unsat != indicated_unsat:
-            print "Error: UNSAT vs. SAT problem!"
-            print "Error code 700"
-            exit(700)
-        else:
-            for (k, v) in indicated_value.iteritems():
-                if indicated_value[k] != value[k]:
-                    print "Error: Problem of found values: values %d: '%s', '%s' don't match with those pre-indicated in solution file" % \
-                        (k, value[k], indicated_value[k])
-                    print "Error code 800"
-                    exit(800)
-
-    def check_regular_clause(self, line, value):
+    def check_regular_clause(self, line, solution):
         lits = line.split()
         final = False
         for lit in lits:
             numlit = int(lit)
             if numlit != 0:
-                if (abs(numlit) not in value): continue
+                if (abs(numlit) not in solution): continue
                 if numlit < 0:
-                    final |= ~value[abs(numlit)]
+                    final |= ~solution[abs(numlit)]
                 else:
-                    final |= value[numlit]
+                    final |= solution[numlit]
                 if final == True:
                     break
         if final == False:
@@ -245,25 +318,25 @@ class Tester:
             print "Error code 100"
             exit(100)
 
-    def check_xor_clause(self, line, value):
+    def check_xor_clause(self, line, solution):
         line = line.lstrip('x')
         lits = line.split()
         final = False
         for lit in lits:
             numlit = int(lit)
             if numlit != 0:
-                if abs(numlit) not in value:
+                if abs(numlit) not in solution:
                     print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
                     print "Error code 200"
                     exit(200)
-                final ^= value[abs(numlit)]
+                final ^= solution[abs(numlit)]
                 final ^= numlit < 0
         if final == False:
             print "Error: xor-clause '%s' not satisfied." % line
             exit(-1)
 
-    def test_found(self, unsat, value, fname, debugLibPart=1000000):
-        if debugLibPart == 1000000:
+    def test_found_solution(self, solution, fname, debugLibPart=None):
+        if debugLibPart == None:
             print "Verifying solution for CNF file %s" % fname
         else:
             print "Verifying solution for CNF file %s, part %d" % (fname, debugLibPart)
@@ -276,292 +349,538 @@ class Tester:
         thisDebugLibPart = 0
 
         for line in f:
-
             line = line.rstrip()
+
+            #skip empty lines
             if len(line) == 0:
                 continue
-            if line[0] == 'c' and "Solver::solve()" in line:
-                thisDebugLibPart += 1
-            if thisDebugLibPart >= debugLibPart:
-                f.close()
 
+            #count debug lib parts
+            if line[0] == 'c' and "Solver::solve" in line:
+                thisDebugLibPart += 1
+
+            #if we are over debugLibPart, exit
+            if debugLibPart != None and thisDebugLibPart >= debugLibPart:
+                f.close()
                 return
+
+            #check solution against clause
             if line[0] != 'c' and line[0] != 'p':
                 if line[0] != 'x':
-                    self.check_regular_clause(line, value)
+                    self.check_regular_clause(line, solution)
                 else:
-                    self.check_xor_clause(line, value)
+                    self.check_xor_clause(line, solution)
 
                 clauses += 1
 
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def check(self, fname, fnameCheck, randomizeNum=0, newVar=False,
-              needSolve=True, needToLimitTime=False):
-        consoleOutput = ""
-        None
+    def checkUNSAT(self, fname) :
+        #execute with the other solver
+        toexec = "../../lingeling-587f/lingeling -f %s" % fname
+        print "Solving with other solver.."
         currTime = time.time()
-        if needSolve:
-            consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
-        else:
-            if (os.path.isfile(fname + ".out") == False) :
-                print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
-                exit(-1)
-            f = open(fname + ".out", "r")
-            consoleOutput = f.read()
+        p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
+                             preexec_fn=setlimits)
+        consoleOutput2 = p.communicate()[0]
+
+        #if other solver was out of time, then we can't say anything
+        diffTime = time.time() - currTime
+        if diffTime > maxTime-maxTimeDiff:
+            print "Other solver: too much time to solve, aborted!"
+            return None
+
+        #extract output from the other solver
+        print "Checking other solver output..."
+        (otherSolverUNSAT, otherSolverSolution) = self.parse_solution_from_output(consoleOutput2.split("\n"))
+
+        #check if the other solver agrees with us
+        return otherSolverUNSAT
+
+    def extractLibPart(self, fname, debug_num, assumps, tofile) :
+        fromf = open(fname, "r")
+        thisDebugLibPart = 0
+        maxvar = 0
+        numcls = 0
+        for line in fromf :
+            line = line.strip()
+
+            #ignore empty strings and headers
+            if not line or line[0] == "p" :
+                continue
+
+            #process (potentially special) comments
+            if line[0] == "c" :
+                if "Solver::solve" in line:
+                    thisDebugLibPart += 1
+
+                continue
+
+            #break out if we reached the debug lib part
+            if thisDebugLibPart >= debug_num :
+                break
+
+            #count clauses and get max var number
+            numcls += 1
+            for l in line.split() :
+                maxvar = max(maxvar, abs(int(l)))
+
+        fromf.close()
+
+        #now we can create the new CNF file
+        fromf = open(fname, "r")
+        tof = open(tofile, "w")
+        tof.write("p cnf %d %d\n" % (maxvar, numcls + len(assumps)))
+
+        thisDebugLibPart = 0
+        for line in fromf :
+            line = line.strip()
+            #skip empty lines and headers
+            if not line or line[0] == "p" :
+                continue
+
+            #parse up special header
+            if line[0] == "c" :
+                if "Solver::solve" in line:
+                    thisDebugLibPart += 1
+
+                continue
+
+            #break out if we reached the debug lib part
+            if thisDebugLibPart >= debug_num :
+                break
+
+            tof.write(line + '\n')
+
+        #add assumptions
+        for lit in assumps:
+            tof.write("%d 0\n" % lit)
+
+        fromf.close()
+        tof.close()
+
+    def get_assumps(self, fname, debugLibPart) :
+        f = open(fname, "r")
+
+        thispart = 0
+        solveline = None
+        for line in f :
+            if "Solver::solve" in line :
+                thispart += 1
+                if thispart == debugLibPart :
+                    solveline = line
+                    break
+        f.close()
+
+        assert solveline != None
+        ret = re.match("c.*Solver::solve\((.*)\)", solveline)
+        assert ret != None
+        assumps = ret.group(1).strip().split()
+        assumps = [int(x) for x in assumps]
+
+        print "Assumptions: ", assumps
+        return assumps
+
+    def check_assumps_inside_solution(self, assumps, solution) :
+        for lit in assumps:
+            var = abs(lit)
+            val = lit > 0
+            if var in solution :
+                if solution[var] != val :
+                    print "Solution pinted has literal %s but assumptions contained the inverse: '%s'" % (-1*lit, assumps)
+                    exit(-100)
+
+        print "OK, all assumptions inside solution"
+
+    def checkDebugLib(self, fname) :
+        largestPart = -1
+        dirList2 = os.listdir(".")
+        for fname_debug in dirList2:
+            if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+                debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
+                largestPart = max(largestPart, debugLibPart)
+
+        for debugLibPart in range(1, largestPart + 1):
+            fname_debug = "debugLibPart%d.output" % debugLibPart
+            print "Checking debug lib part ", debugLibPart
+
+            if (os.path.isfile(fname_debug) == False) :
+                print "Error: Filename to be read '%s' is not a file!" % fname_debug
+                print "Error code 400"
+                exit(400)
+
+            #take file into mem
+            f = open(fname_debug, "r")
+            text = f.read()
+            output_lines = text.splitlines()
             f.close()
 
-        if needToLimitTime == True:
+            (unsat, solution) = self.parse_solution_from_output(output_lines)
+            assumps = self.get_assumps(fname, debugLibPart)
+            if unsat == False:
+                print "debugLib is SAT"
+                self.check_assumps_inside_solution(assumps, solution)
+                self.test_found_solution(solution, fname, debugLibPart)
+            else:
+                print "debugLib is UNSAT"
+                self.extractLibPart(fname, debugLibPart, assumps, "tmp")
+
+                #check with other solver
+                ret = self.checkUNSAT("tmp")
+                if ret == None :
+                    print "Cannot check, other solver took too much time"
+                elif ret == True :
+                    print "UNSAT verified by other solver"
+                else :
+                    print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+                    exit()
+
+                #delete temporary file
+                os.unlink("tmp")
+
+
+    def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
+              needSolve=True, needToLimitTime=False):
+
+        consoleOutput = ""
+        currTime = time.time()
+
+        #Do we need to solve the problem, or is it already solved?
+        if needSolve:
+            consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
+        else:
+            if not os.path.isfile(fnameSolution) :
+                print "ERROR! Solution file '%s' is not a file!" % fnameSolution
+                exit(-1)
+            f = open(fnameSolution, "r")
+            consoleOutput = f.read()
+            f.close()
+            print "Read solution from file " , fnameSolution
+
+        #if time was limited, we need to know if we were over the time limit
+        #and that is why there is no solution
+        if needToLimitTime:
             diffTime = time.time() - currTime
-            if diffTime > maxTimeLimit/self.numThreads:
+            if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
-                print "Not too much time: %d s" % (time.time() - currTime)
+                print "Within time limit: %f s" % (time.time() - currTime)
 
-        self.parse_consoleOutput(consoleOutput)
-        print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" % \
-            (fname[:20] + "....cnf.gz", randomizeNum, self.sumProp, self.sumTime)
+        print "filename: %s" % fname
 
+        #if library debug is set, check it
         if (self.needDebugLib) :
-            largestPart = -1
-            dirList2 = os.listdir(".")
-            for fname_debug in dirList2:
-                if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
-                    debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
-                    largestPart = max(largestPart, debugLibPart)
-
-            for debugLibPart in range(1, largestPart + 1):
-                fname_debug = "debugLibPart%d.output" % debugLibPart
-
-                (unsat, value) = self.read_found(fname_debug)
-                if unsat == False:
-                    self.test_found(unsat, value, fnameCheck, debugLibPart)
-                else:
-                    print "Not examining part %d -- it is UNSAT" % (debugLibPart)
+            self.checkDebugLib(fname)
 
         print "Checking console output..."
-        (unsat, value) = self.read_found_output(consoleOutput)
+        (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
-        if self.arminFuzzer and unsat:
-            toexec = "./PrecoSat %s" % fname
-            None
-            print "Solving with other solver.."
-            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
-                                 preexec_fn=setlimits)
+
+        if not unsat :
+            self.test_found_solution(solution, fname)
+            return;
+
+        #it's UNSAT and we should not check, so exit
+        if self.check_unsat == False:
+            print "Cannot check -- output is UNSAT"
+            return
+
+        #it's UNSAT, let's check with DRUP
+        if fnameDrup:
+            toexec = "drupcheck %s %s" % (fname, fnameDrup)
+            print "Checking DRUP...: ", toexec
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
+                                 #,preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
             diffTime = time.time() - currTime
-            if diffTime > maxTimeLimit:
-                print "Other solver: too much time to solve, aborted!"
-                return
-            print "Checking other solver output..."
-            (otherSolverUNSAT, otherSolverValue) = self.read_found_output(consoleOutput2)
-        if unsat == True:
-            if self.arminFuzzer == False:
-                print "Cannot check -- output is UNSAT"
-            elif self.arminFuzzer == True:
-                if otherSolverUNSAT == False:
-                    print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
-                    print "Console output: " , consoleOutput
-                    exit()
-                else:
-                    print "UNSAT verified by other solver"
-        self.test_expect(unsat, value, fname[:len(fname) - 6] + "output.gz")
-        if unsat == False:
-            self.test_found(unsat, value, fnameCheck)
 
-    @staticmethod
-    def usage():
-        print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
-        print "--numStart         The rand number we should start at (default 0)"
-        print "--extraOptions     Add this as extra options to the solver (e.g. \"--novarelim\")"
-        print "--verbose (-v)     Verbose output"
-        print "--file    (-f)     The file to solve. Default: all files under ../tests/"
-        print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
-        print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
-        print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
-        print "--checkDirOnly(-c) Check all solutions in directory"
-        print "--diffCheckDir(-d) Use with -c. The original files are at a different place"
-        print "--ignore  (-i)     If no solution found, (timeout), ignore"
-        print "--armin   (-a)     Use Armin Biere's fuzzer"
-        print "--threads          Use this number of threads (default: 4)"
-        print "--help    (-h)     Print this help screen"
-        print ""
-        print "Example usage:"
-        print "1) check already computed SAT solutions (UNSAT cannot be checked):"
-        print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ \\"
-        print "        --ignore -n 1"
-        print ""
-        print "2) check file 'MYFILE' multiple times for correct answer:"
-        print "   python regression_test.py --file MYFILE --extraOptions=\"--nosubsume1 --noasymm\" \\"
-        print "       --numStart 20 --num 100"
-        print ""
-        print "3) fuzz the solver with PrecoSat as solution-checker:"
-        print "   python regression_test.py --armin -n 1"
+            #find verification code
+            foundVerif = False
+            drupLine = ""
+            for line in consoleOutput2.split('\n') :
+                if len(line) > 1 and line[:2] == "s " :
+                    #print "verif: " , line
+                    foundVerif = True
+                    if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT" :
+                        print "DRUP verification error, it says:", consoleOutput2
+                    assert line[2:10] == "VERIFIED" or line[2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
+                    drupLine = line
 
-
-    def main(self):
-        try:
-            (opts, args) = getopt.getopt((sys.argv)[1:],
-                    "vscihag:n:f:t:e:d:", [
-                "help",
-                "checkDirOnly",
-                "file=",
-                "numStart=",
-                "num=",
-                "gauss=",
-                "testdir=",
-                "exe=",
-                "verbose",
-                "diffCheckDir",
-                "ignore",
-                "armin",
-                "nodebuglib",
-                "extraOptions=",
-                "threads="
-                ])
-        except getopt.GetoptError, err:
-            print str(err)
-            self.usage()
-            sys.exit(2)
-
-        fname = None
-        debugLib = False
-        numStart = 0
-        num = 3
-        testDirSet = False
-        for (opt, arg) in opts:
-            if opt in ("-v", "--verbose"):
-                self.verbose = True
-            elif opt in ("-h", "--help"):
-                self.usage()
-                sys.exit()
-            elif opt in ("-f", "--file"):
-                fname = arg
-            elif opt in ("-n", "--num"):
-                num = int(arg)
-            elif opt in ("--numStart"):
-                numStart = int(arg)
-            elif opt in ("-g", "--gauss"):
-                self.gaussUntil = int(arg)
-            elif opt in ("-t", "--testdir"):
-                self.testDir = arg
-                testDirSet = True
-            elif opt in ("-e", "--exe"):
-                self.cryptominisat = arg
-            elif opt in ("--extraOptions"):
-                self.extraOptions = arg
-            elif opt in ("-c", "--checkDirOnly"):
-                self.checkDirOnly = True
-            elif opt in ("-d", "--diffCheckDir"):
-                self.differentDirForCheck = arg
-                self.checkDirDifferent = True
-            elif opt in ("-i", "--ignore"):
-                self.ignoreNoSolution = True
-            elif opt in ("--nodebuglib"):
-                self.needDebugLib = False
-            elif opt in ("-a", "--armin"):
-                self.arminFuzzer = True
-                self.needDebugLib = False
-            elif opt in ("--threads"):
-                self.numThreads = int(arg)
+            #Check whether we have found a verification code
+            if foundVerif == False:
+                print "verifier error! It says:", consoleOutput2
+                assert foundVerif, "Cannot find DRUP verification code!"
             else:
-                assert False, "unhandled option"
+                print "OK, DRUP says:", drupLine
 
-        dirList2 = os.listdir(".")
-        for fname_unlink in dirList2:
+        #check with other solver
+        ret = self.checkUNSAT(fname)
+        if ret == None :
+            print "Other solver time-outed, cannot check"
+        elif ret == True:
+            print "UNSAT verified by other solver"
+        else :
+            print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+            exit()
+
+
+    def removeDebugLibParts(self) :
+        dirList = os.listdir(".")
+        for fname_unlink in dirList:
             if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
                 os.unlink(fname_unlink)
                 None
 
-        if self.arminFuzzer:
-            i = 0
+    def callFromFuzzer(self, directory, fuzzer, file_name) :
+        if (len(fuzzer) == 1) :
+            call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+        elif(len(fuzzer) == 2) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+        elif(len(fuzzer) == 3) :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            hashbits = (random.getrandbits(20) % 79) + 1
+            call = "%s %s %d %s %d > %s" % (fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
 
-            while i < 100000000:
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
-                commands.getstatusoutput("./fuzzsat > %s" %(file_name))
+        return call
 
-                for i3 in range(num):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                               randomizeNum=i3, needToLimitTime=True)
+    def create_fuzz(self, fuzzers, fuzzer, directory, file_name) :
 
-                os.unlink(file_name)
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
-                commands.getstatusoutput("./cnffuzz > %s" % (file_name))
+        #handle special fuzzer
+        file_names_multi = []
+        if len(fuzzer) == 2 and fuzzer[1] == "special":
+            #create N files
+            file_names_multi = []
 
-                for i3 in range(num):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                               randomizeNum=i3, needToLimitTime=True)
+            #sometimes just fuzz with all SAT problems
+            fixed = random.getrandbits(1)  == 1
 
-                    i = i + 1
-                os.unlink(file_name)
+            for i in range(random.randrange(2,4)) :
+                file_name2 = unique_fuzz_file("fuzzTest");
+                file_names_multi.append(file_name2)
 
-            exit()
+                #chose a ranom fuzzer, not multipart
+                fuzzer2 = ["multipart.py", "special"]
+                while (fuzzer2[0] == "multipart.py") :
+                    fuzzer2 = choice(fuzzers)
 
-        if self.checkDirOnly:
-            print "Checking already solved solutions"
-            if testDirSet == False:
-                print "When checking, you must give test dir"
-                exit()
-            else:
-                print "You gave testdir (where solutions are):", self.testDir
-            
-            if self.checkDirDifferent == False:
-                print "You must give checkDirDifferent when testing solutions"
-                exit()
+                #sometimes fuzz with SAT problems only
+                if (fixed) :
+                    fuzzer2 = fuzzers[0]
 
-            dirList = os.listdir(self.testDir)
-            for fname in dirList:
-                myMatch = ""
-                if self.checkDirDifferent == True:
-                    myMatch = '*.cnf.gz.out'
-                else:
-                    myMatch = '*.cnf.gz'
-                if fnmatch.fnmatch(fname, myMatch):
-                    myDir = self.testDir
-                    if self.checkDirDifferent:
-                        fname = fname[:len(fname) - 4]  #remove trailing .out
-                        self.check(fname=self.testDir + fname
-                                   , fnameCheck=self.differentDirForCheck + fname
-                                   , needSolve=False)
-            exit()
+                print "fuzzer2 used: ", fuzzer2
+                call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                print "calling sub-fuzzer:", call
+                out = commands.getstatusoutput(call)
 
-        if fname == None:
-            if testDirSet == False:
-                dirList = os.listdir(self.testDirNewVar)
-                if self.testDirNewVar == ".":
-                    self.testDirNewVar = ""
+            #construct multi-fuzzer call
+            call = ""
+            call += directory
+            call += fuzzer[0]
+            call += " "
+            for name in file_names_multi :
+                call += " " + name
+            call += " > " + file_name
+
+            return call, file_names_multi
+
+        #handle normal fuzzer
+        else :
+            return self.callFromFuzzer(directory, fuzzer, file_name), []
+
+    def file_len_no_comment(self, fname):
+        i = 0;
+        with open(fname) as f:
+            for l in f :
+                #ignore comments and empty lines and header
+                if not l or l[0] == "c" or l[0] == "p":
+                    continue
+                i += 1
+
+        return i
+
+    def get_max_var_from_clause(self, line) :
+        maxvar = 0
+        for lit in line.split() :
+            num = 0
+            try :
+                num = int(lit)
+            except ValueError:
+                print "line '%s' contains a non-integer variable" % line
+
+            maxvar = max(maxvar, abs(num))
+
+        return maxvar
+
+    def generate_random_assumps(self, maxvar) :
+        assumps = ""
+        num = 0
+        varsInside = set()
+
+        #Half of the time, no assumptions at all
+        if random.randint(0,1) == 1:
+            return assumps
+
+        #use a distribution so that few will be in assumps
+        while (num < maxvar and random.randint(0,4) > 0) :
+
+            #get a var that is not already inside the assumps
+            thisVar = random.randint(1, maxvar)
+            while (thisVar in varsInside) :
+                thisVar = random.randint(1, maxvar)
+
+            varsInside.add(thisVar)
+
+            #random sign
+            if random.randint(0,1) :
+                thisVar *= -1
+
+            assumps += "%d " % thisVar
+
+        return assumps
+
+    def intersperse_with_debuglib(self, fname1, fname2) :
+
+        #approx number of solve()-s to add
+        numtodo = random.randint(1,10)
+
+        #based on length and number of solve()-s to add, intersperse
+        #file with ::solve()
+        file_len = self.file_len_no_comment(fname1)
+        nextToAdd = random.randint(1,(file_len/numtodo)*2+1)
+
+        fin = open(fname1, "r")
+        fout = open(fname2, "w")
+        at = 0
+        maxvar = 0
+        for line in fin :
+            line = line.strip()
+
+            #ignore comments (but write them out)
+            if not line or line[0] == "c" or line[0] == 'p':
+                fout.write(line + '\n')
+                continue
+
+            at += 1
+            if at >= nextToAdd :
+                assumps = self.generate_random_assumps(maxvar)
+                #assumps = " "
+                fout.write("c Solver::solve( %s )\n" % assumps)
+                nextToAdd = at + random.randint(1,(file_len/numtodo)*2+1)
+
+            #calculate max variable
+            maxvar = max(maxvar, self.get_max_var_from_clause(line))
+
+            #copy line over
+            fout.write(line + '\n')
+        fout.close()
+        fin.close()
+
+
+    def fuzz_test(self) :
+        fuzzers = [
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
+            #, ["build/cnf-fuzz-nossum"] \
+            #, ["build/largefuzzer"] \
+            , ["cnf-fuzz-brummayer.py"] \
+            , ["multipart.py", "special"] \
+            , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["cnf-fuzz-xor.py"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
+        ]
+
+        directory = "../../cnf-utils/"
+        while True:
+            for fuzzer in fuzzers :
+                file_name = unique_fuzz_file("fuzzTest");
+                fnameDrup = None
+                if options.drup :
+                    fnameDrup = unique_fuzz_file("fuzzTest");
+
+                #create the fuzz file
+                call, todel = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
+                print "calling ", fuzzer, " : ", call
+                out = commands.getstatusoutput(call)
+
+                #adding debuglib to fuzz file
+                self.needDebugLib = True
+
+                #delete old debugLibPart files
+                dirList = os.listdir(".")
                 for fname in dirList:
-                    if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                        for i in range(numStart, numStart+num):
-                            self.check(fname=self.testDirNewVar + fname,
-                                    fnameCheck=self.testDirNewVar +
-                                    fname, randomizeNum=i, newVar=True)
+                    if fnmatch.fnmatch(fname, 'debugLibPart*'):
+                        os.unlink(fname)
 
-            dirList = os.listdir(self.testDir)
-            if self.testDir == ".":
-                self.testDir = ""
+                file_name2 = unique_fuzz_file("fuzzTest");
+                self.intersperse_with_debuglib(file_name, file_name2)
+                os.unlink(file_name)
+
+                #check file
+                self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
+
+                #remove temporary filenames
+                os.unlink(file_name2)
+                for name in todel :
+                    os.unlink(name)
+                if fnameDrup != None :
+                    os.unlink(fnameDrup)
+
+    def checkDir(self) :
+        self.ignoreNoSolution = True
+        print "Checking already solved solutions"
+
+        #check if options.checkDirSol has bee set
+        if options.checkDirSol == "":
+            print "When checking, you must give test dir"
+            exit()
+
+        print "You gave testdir (where solutions are):", options.checkDirSol
+        print "You gave CNF dir (where problems are) :", options.checkDirProb
+
+        dirList = os.listdir(options.checkDirSol)
+        for fname in dirList:
+
+            if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
+                #add dir, remove trailing .out
+                fname = fname[:len(fname) - 4]
+                fnameSol = options.checkDirSol + "/" + fname
+
+                #check now
+                self.check(fname=options.checkDirProb + "/" + fname, \
+                   fnameSolution=fnameSol, needSolve=False)
+
+    def regressionTest(self) :
+
+        if False:
+            #first, test stuff with newVar
+            dirList = os.listdir(self.testDirNewVar)
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    for i in range(numStart, numStart+num):
-                        self.check(fname=self.testDir + fname,
-                                   fnameCheck=self.testDir + fname,
-                                   randomizeNum=i, newVar=False)
-        else:
+                    self.check(fname=self.testDirNewVar + fname, newVar=True)
 
-            if os.path.isfile(fname) == False:
-                print "Filename given '%s' is not a file!" % fname
-                exit(-1)
+        dirList = os.listdir(self.testDir)
 
-            for i in range(numStart, numStart+num):
-                print "Checking fname %s" % fname
-                self.check(fname=fname, fnameCheck=fname, randomizeNum=i)
+        #test stuff without newVar
+        for fname in dirList:
+            if fnmatch.fnmatch(fname, '*.cnf.gz'):
+                self.check(fname=self.testDir + fname, newVar=False)
 
-test = Tester()
-test.main()
-print "Everything went ok."
-print "Exit code 0"
-exit(0)
+tester = Tester()
+
+if options.checkFile :
+    tester.check_unsat = True
+    tester.check(options.checkFile, options.solutionFile, needSolve=False)
+
+if options.fuzz_test:
+    tester.needDebugLib = False
+    tester.check_unsat = True
+    tester.fuzz_test()
+
+if options.checkSol:
+    tester.checkDir()
+
+if options.regressionTest:
+    tester.regressionTest()
