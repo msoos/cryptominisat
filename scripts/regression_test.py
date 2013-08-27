@@ -885,7 +885,7 @@ class Tester:
             dirList = os.listdir(self.testDirNewVar)
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    self.check(fname=self.testDirNewVar + fname, newVar=True)
+                    self.check(fname=self.testDirNewVar + fname, newVar=True, needToLimitTime=True)
 
         dirList = os.listdir(self.testDir)
 
