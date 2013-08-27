@@ -3606,7 +3606,15 @@ void Solver::dumpIfNeeded() const
             << "' for writing, cannot dump redundant clauses!"
             << endl;
         } else {
-            solver->dumpRedClauses(&outfile, conf.maxDumpRedsSize);
+            outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try {
+                solver->dumpRedClauses(&outfile, conf.maxDumpRedsSize);
+            } catch (std::ifstream::failure e) {
+                cout
+                << "Error writing redcible clause file dump: " << e.what()
+                << endl;
+                exit(-1);
+            }
         }
 
         cout << "Dumped redundant clauses" << endl;
@@ -3632,7 +3640,15 @@ void Solver::dumpIfNeeded() const
         }
 
         if (okay()) {
-            solver->dumpIrredClauses(&outfile);
+            outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try {
+                solver->dumpIrredClauses(&outfile);
+            } catch (std::ifstream::failure e) {
+                cout
+                << "Error writing irredcible clause file dump: " << e.what()
+                << endl;
+                exit(-1);
+            }
         } else {
             outfile << "p cnf 0 1" << endl;
             outfile << "0";
