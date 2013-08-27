@@ -72,6 +72,7 @@ class DimacsParser
         void printHeader(StreamBuffer& in) throw (DimacsParseError);
         void parseComments(StreamBuffer& in, const std::string str) throw (DimacsParseError);
         std::string stringify(uint32_t x);
+        void parseSolveComment(StreamBuffer& in);
 
 
         size_t lineNum;

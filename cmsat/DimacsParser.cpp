@@ -23,6 +23,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 #include "cmsat/Solver.h"
 
@@ -220,6 +221,62 @@ void DimacsParser::printHeader(StreamBuffer& in) throw (DimacsParseError)
     }
 }
 
+void DimacsParser::parseSolveComment(StreamBuffer& in)
+{
+    vec<Lit> assumps;
+    skipWhitespace(in);
+    while(*in != ')') {
+        uint32_t len = 0;
+        int lit = parseInt(in, len);
+        assumps.push(Lit(std::abs(lit)-1, lit < 0));
+        skipWhitespace(in);
+    }
+
+    if (solver->conf.verbosity>= 2) {
+        std::cout
+        << "c -----------> Solver::solve() called (number: "
+        << std::setw(3) << debugLibPart << ") with assumps :";
+        for(size_t i = 0; i  < assumps.size(); i ++) {
+            std::cout << assumps[i] << " ";
+        }
+        std::cout
+        << "<-----------"
+        << std::endl;
+    }
+
+    lbool ret = solver->solve(assumps);
+
+    //Open file for writing
+    std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
+    std::ofstream partFile;
+    partFile.open(s.c_str());
+    if (!partFile) {
+        std::cout << "ERROR: Cannot open part file '" << s << "'";
+        exit(-1);
+    }
+
+    //Output to part file the result
+    if (ret == l_True) {
+        partFile << "s SATISFIABLE" << std::endl;
+        partFile << "v ";
+        for (Var i = 0; i != solver->nVars(); i++) {
+            if (solver->model[i] != l_Undef)
+                partFile
+                << ((solver->model[i]==l_True) ? "" : "-")
+                << (i+1) <<  " ";
+        }
+        partFile << "0" << std::endl;;
+    } else if (ret == l_False) {
+        partFile << "s UNSAT" << std::endl;
+    } else if (ret == l_Undef) {
+        assert(false);
+    } else {
+        assert(false);
+    }
+    partFile.close();
+    debugLibPart++;
+}
+
 /**
 @brief Parse up comment lines which could contain important information
 
@@ -250,30 +307,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str) throw 
         #ifdef DEBUG_COMMENT_PARSING
         std::cout << "Parsed 'c var'" << std::endl;
         #endif //DEBUG_COMMENT_PARSING
-    } else if (debugLib && str == "Solver::solve()") {
-        lbool ret = solver->solve();
-        std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
-        FILE* res = fopen(s.c_str(), "w");
-        if (ret == l_True) {
-            fprintf(res, "SAT\n");
-            for (Var i = 0; i != solver->nVars(); i++) {
-                if (solver->model[i] != l_Undef)
-                    fprintf(res, "%s%d ", (solver->model[i]==l_True)?"":"-", i+1);
-            }
-            fprintf(res, "0\n");
-        } else if (ret == l_False) {
-            fprintf(res, "UNSAT\n");
-        } else if (ret == l_Undef) {
-            assert(false);
-        } else {
-            assert(false);
-        }
-        fclose(res);
-        debugLibPart++;
-
-        #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "Parsed Solver::solve()" << std::endl;
-        #endif //DEBUG_COMMENT_PARSING
+    } else if (debugLib && str.substr(0, 13) == "Solver::solve") {
+        parseSolveComment(in);
     } else if (debugNewVar && str == "Solver::newVar()") {
         solver->newVar();
 
