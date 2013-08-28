@@ -433,14 +433,14 @@ struct ClauseUsageStats
     }
 };
 
-enum clauseCleaningTypes {
+enum ClauseCleaningTypes {
     CLEAN_CLAUSES_GLUE_BASED
     , CLEAN_CLAUSES_SIZE_BASED
     , CLEAN_CLAUSES_PROPCONFL_BASED
     ,  CLEAN_CLAUSES_ACTIVITY_BASED
 };
 
-inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
+inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
 {
     switch(clauseCleaningType) {
         case CLEAN_CLAUSES_GLUE_BASED :
@@ -703,7 +703,7 @@ struct CleaningStats
     Data preRemove;
 
     //Clean type
-    clauseCleaningTypes clauseCleaningType;
+    ClauseCleaningTypes clauseCleaningType;
     size_t glueBasedClean;
     size_t sizeBasedClean;
     size_t propConflBasedClean;

@@ -55,7 +55,7 @@ class SolverConf
         PolarityMode polarity_mode;
 
         //Clause cleaning
-        clauseCleaningTypes clauseCleaningType;
+        ClauseCleaningTypes clauseCleaningType;
         int       doPreClauseCleanPropAndConfl;
         uint32_t  preClauseCleanLimit;
         uint32_t  preCleanMinConflTime;
