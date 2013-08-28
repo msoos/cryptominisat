@@ -423,8 +423,7 @@ class Tester:
 
             #count clauses and get max var number
             numcls += 1
-            for l in line.split() :
-                maxvar = max(maxvar, abs(int(l)))
+            maxvar = max(maxvar, self.get_max_var_from_clause(l))
 
         fromf.close()
 
