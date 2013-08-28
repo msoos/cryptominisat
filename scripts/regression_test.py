@@ -703,12 +703,17 @@ class Tester:
 
     def get_max_var_from_clause(self, line) :
         maxvar = 0
-        for lit in line.split() :
+        #strip leading 'x'
+        line2 = line.strip()
+        if len(line2) > 0 and line2[0] == 'x' :
+            line2 = line2[1:]
+
+        for lit in line2.split() :
             num = 0
             try :
                 num = int(lit)
             except ValueError:
-                print "line '%s' contains a non-integer variable" % line
+                print "line '%s' contains a non-integer variable" % line2
 
             maxvar = max(maxvar, abs(num))
 
