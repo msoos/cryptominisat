@@ -14,7 +14,7 @@ target_link_libraries(basic_test
 )
 
 add_executable(assump_test
-        basic_test.cpp
+    assump_test.cpp
 )
 
 target_link_libraries(assump_test
