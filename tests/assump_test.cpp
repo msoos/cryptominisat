@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE basic_tests
+#define BOOST_TEST_MODULE assumptions
 #include <boost/test/unit_test.hpp>
 
 #include "solver.h"
