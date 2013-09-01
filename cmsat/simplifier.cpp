@@ -2760,18 +2760,9 @@ bool Simplifier::agressiveCheck(
     return false;
 }
 
-Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
-    const Lit lit
-    , bool setit
-    , bool countIt
-    , unsigned otherSize
-    , bool unset
-) {
+Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
+{
     HeuristicData ret;
-    #if 0
-    unsigned char at = 1;
-    #endif
-    size_t count = 0;
 
     const vec<Watched>& ws = solver->watches[lit.toInt()];
     *toDecrease -= ws.size() + 100;
@@ -2787,50 +2778,16 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
             if (!it->red()) {
                 ret.bin++;
                 ret.lit += 2;
-
-                #if 0
-                if (setit) {
-                    seen[it->lit2().toInt()] |= at;
-                    at <<= 1;
-                }
-
-                if (unset) {
-                    seen[it->lit2().toInt()] = 0;
-                }
-
-                if (countIt) {
-                    count += otherSize - __builtin_popcount(seen[(~it->lit2()).toInt()]);
-                }
-                #endif
             }
             continue;
         }
 
         //Handle tertiary
-        if (it->isTri())
-        {
+        if (it->isTri()) {
             //Only count irred
             if (!it->red()) {
                 ret.tri++;
                 ret.lit += 3;
-
-                #if 0
-                if (setit) {
-                    seen[it->lit2().toInt()] |= at;
-                    seen[it->lit3().toInt()] |= at;
-                    at <<= 1;
-                }
-
-                if (unset) {
-                    seen[it->lit2().toInt()] = 0;
-                    seen[it->lit3().toInt()] = 0;
-                }
-
-                if (countIt) {
-                    unsigned tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
-                    count += otherSize - __builtin_popcount(tmp);
-                }
-                #endif
             }
 
             continue;
@@ -2846,34 +2803,6 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
             if (!cl->red()) {
                 ret.longer++;
                 ret.lit += cl->size();
-
-                #if 0
-                unsigned tmp = 0;
-                for(size_t i = 0; i < cl->size(); i++) {
-                    const Lit lit = (*cl)[i];
-                    if (setit) {
-                        seen[lit.toInt()] |= at;
-                    }
-
-                    if (unset) {
-                        seen[lit.toInt()] = 0;
-                    }
-
-                    if (countIt) {
-                        tmp |= seen[(~lit).toInt()];
-                    }
-                }
-
-                //move setit data along
-                if (setit) {
-                    at <<= 1;
-                }
-
-                //Count using tmp
-                if (countIt) {
-                    count += otherSize - __builtin_popcount(tmp);
-                }
-                #endif
             }
 
             continue;
@@ -2883,52 +2812,179 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(
         assert(false);
     }
 
-    if (countIt) {
-        ret.count = count;
-    }
-
     return ret;
 }
+
+bool Simplifier::checkEmptyResolvent(const Lit lit)
+{
+    size_t num_bits_set = checkEmptyResolventHelper(
+        lit
+        , ResolventCountAction::set
+        , 0
+    );
+
+    size_t num_resolvents = std::numeric_limits<size_t>::max();
+
+    //Can only count if the POS was small enough
+    //otherwise 'seen' cannot properly store the data
+    if (num_bits_set > sizeof(unsigned char)*8) {
+        num_resolvents = checkEmptyResolventHelper(
+            ~lit
+            , ResolventCountAction::count
+            , num_bits_set
+        );
+    }
+
+    //Clear the 'seen' array
+    checkEmptyResolventHelper(
+        lit
+        , ResolventCountAction::unset
+        , 0
+    );
+
+    //Okay, this would be great
+    if (num_resolvents == 0) {
+        return true;
+    }
+}
+
+
+bool Simplifier::checkEmptyResolventHelper(
+    const Lit lit
+    , ResolventCountAction action
+    , size_t otherSize
+) {
+    unsigned char at = 1;
+    size_t count = 0;
+    size_t numCls = 0;
+
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    *toDecrease -= ws.size() + 100;
+    for (vec<Watched>::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        //Handle binary
+        if (it->isBinary()){
+            //Only count irred
+            if (!it->red()) {
+                numCls++;
+
+                switch(action) {
+                    case ResolventCountAction::set:
+                        seen[it->lit2().toInt()] |= at;
+                        at <<= 1;
+                        break;
+
+                    case ResolventCountAction::unset:
+                        seen[it->lit2().toInt()] = 0;
+                        break;
+
+                    case ResolventCountAction::count:
+                        count += otherSize - __builtin_popcount(seen[(~it->lit2()).toInt()]);
+                        break;
+                }
+            }
+            continue;
+        }
+
+        //Handle tertiary
+        if (it->isTri()) {
+            //Only count irred
+            if (!it->red()) {
+                numCls++;
+
+                switch(action) {
+                    case ResolventCountAction::set:
+                        seen[it->lit2().toInt()] |= at;
+                        seen[it->lit3().toInt()] |= at;
+                        at <<= 1;
+                        break;
+
+                    case ResolventCountAction::unset:
+                        seen[it->lit2().toInt()] = 0;
+                        seen[it->lit3().toInt()] = 0;
+                        break;
+
+                    case ResolventCountAction::count:
+                        unsigned tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
+                        count += otherSize - __builtin_popcount(tmp);
+                        break;
+                }
+            }
+
+            continue;
+        }
+
+        if (it->isClause()) {
+            const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
+
+            //If in occur then it cannot be freed
+            assert(!cl->freed());
+
+            //Only irred is of relevance
+            if (!cl->red()) {
+                numCls++;
+                unsigned tmp = 0;
+                for(size_t i = 0; i < cl->size(); i++) {
+                    const Lit lit = (*cl)[i];
+
+                    switch (action) {
+                        case ResolventCountAction::set:
+                            seen[lit.toInt()] |= at;
+                            break;
+
+                        case ResolventCountAction::unset:
+                            seen[lit.toInt()] = 0;
+                            break;
+
+                        case ResolventCountAction::count:
+                            tmp |= seen[(~lit).toInt()];
+                            break;
+                    }
+                }
+
+                //move setit data along
+                if (action == ResolventCountAction::set) {
+                    at <<= 1;
+                }
+
+                //Count using tmp
+                if (action == ResolventCountAction::count) {
+                    count += otherSize - __builtin_popcount(tmp);
+                }
+            }
+
+            continue;
+        }
+
+        //Only these types are possible
+        assert(false);
+    }
+
+
+    switch(action) {
+        case ResolventCountAction::count:
+            return numCls;
+
+        case ResolventCountAction::set:
+            return 0;
+
+        case ResolventCountAction::unset:
+            return 0;
+    }
+
+    return count;
+}
+
 
 
 pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 {
     const Lit lit(var, false);
-    #if 0
-    const HeuristicData pos = calcDataForHeuristic(
-        lit
-        , true
-    );
-
-    //Can only count if the POS was small enough
-    //otherwise 'seen' cannot properly store the data
-    bool countIt = ((pos.bin + pos.tri + pos.longer) <= sizeof(unsigned char)*8);
-    const HeuristicData neg = calcDataForHeuristic(
-        ~lit
-        , false
-        , countIt
-        , pos.bin + pos.tri + pos.longer
-    );
-
-    //Clear the 'seen' array
-    calcDataForHeuristic(
-        lit
-        , false
-        , false
-        , 0
-        , true //clear
-    );
-
-    //Okay, this would be great
-    if (neg.count == 0) {
-        assert(countIt && "count is initialised to MAX, this cannot be");
-        //cout << "OK, fun!!: " << neg.count << endl;
-        return std::make_pair(neg.count, 0);
-    }
-    #else
     const HeuristicData pos = calcDataForHeuristic(lit);
     const HeuristicData neg = calcDataForHeuristic(~lit);
-    #endif
 
     //Estimate cost
     int posTotalLonger = pos.longer + pos.tri;

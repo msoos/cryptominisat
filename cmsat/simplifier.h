@@ -549,14 +549,17 @@ private:
         uint32_t lit;
         uint32_t count;
     };
-    HeuristicData calcDataForHeuristic(
-        const Lit lit
-        , bool setit = false
-        , bool countIt = false
-        , unsigned otherSize = 0
-        , bool unset = false
-    );
+    HeuristicData calcDataForHeuristic(const Lit lit);
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
+
+    //For empty resolvents
+    enum class ResolventCountAction{count, set, unset};
+    bool checkEmptyResolvent(const Lit lit);
+    bool checkEmptyResolventHelper(
+        const Lit lit
+        , ResolventCountAction action
+        , size_t otherSize
+    );
 
     pair<int, int>  heuristicCalcVarElimScore(const Var var);
     bool merge(
