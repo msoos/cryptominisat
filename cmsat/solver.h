@@ -67,7 +67,7 @@ class LitReachData {
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf& _conf);
+        Solver(const SolverConf _conf = SolverConf());
         ~Solver();
 
         //////////

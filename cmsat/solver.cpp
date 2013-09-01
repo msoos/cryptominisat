@@ -59,7 +59,7 @@ using std::endl;
 
 //#define DEBUG_TRI_SORTED_SANITY
 
-Solver::Solver(const SolverConf& _conf) :
+Solver::Solver(const SolverConf _conf) :
     Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
     , prober(NULL)
