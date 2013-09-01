@@ -119,7 +119,7 @@ ENDIF (STATSNEEDED)
 
 # Look for Boost program options
 #SET(Boost_USE_STATIC_LIBS ON)
-find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
+find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
 
 #M4RI
 find_package(M4RI)
@@ -154,6 +154,11 @@ add_dependencies(copy
     cryptominisat
 )
 
+add_subdirectory(tests)
+
+enable_testing()
+ADD_TEST (basic_test tests/basic_test)
+ADD_TEST (assump_test tests/assump_test)
 
 set(CPACK_PACKAGE_NAME "cryptominisat")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
