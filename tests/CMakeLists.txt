@@ -5,7 +5,7 @@ include_directories(
 
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
 add_executable(basic_test
-        basic_test.cpp
+    basic_test.cpp
 )
 
 target_link_libraries(basic_test

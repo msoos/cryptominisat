@@ -99,5 +99,4 @@ target_link_libraries(cryptominisat
     ${cryptoms_exec_link_libs}
 )
 
-
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
