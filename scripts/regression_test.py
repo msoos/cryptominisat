@@ -42,7 +42,7 @@ desc = """Example usages:
    ./regression_test.py -f
 
 * go through regression listdir
-   ./regression_test.py --regtest --checkdir ../tests/
+   ./regression_test.py --regtest --checkdir ../tests/cnfs/
 """
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
@@ -78,12 +78,12 @@ parser.add_option("--regtest", dest="regressionTest"
                     , help="Regression test"
                     )
 parser.add_option("--testdir", dest="testDir"
-                    , default= "../tests/"
+                    , default= "../tests/cnfs/"
                     , help="Directory where the tests are"
                     )
 
 parser.add_option("--testdirNewVar", dest="testDirNewVar"
-                    , default= "../tests/newVar/"
+                    , default= "../tests/cnfs/newVar/"
                     , help="Directory where the tests are"
                     )
 
