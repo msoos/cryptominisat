@@ -267,7 +267,6 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
 */
 void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
-    uint32_t len;
     #ifdef DEBUG_COMMENT_PARSING
     cout << "Parsing comments" << endl;
     #endif //DEBUG_COMMENT_PARSING
