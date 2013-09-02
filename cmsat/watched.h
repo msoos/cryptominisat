@@ -154,7 +154,7 @@ class Watched {
         /**
         @brief Set the sole other lit of the binary clause
         */
-        void setLit1(const Lit lit)
+        void setLit2(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());

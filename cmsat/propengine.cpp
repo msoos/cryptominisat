@@ -1592,7 +1592,7 @@ inline void PropEngine::updateWatch(
         ; it++
     ) {
         if (it->isBinary()) {
-            it->setLit1(
+            it->setLit2(
                 getUpdatedLit(it->lit2(), outerToInter)
             );
 
@@ -1607,7 +1607,7 @@ inline void PropEngine::updateWatch(
             if (lit1 > lit2)
                 std::swap(lit1, lit2);
 
-            it->setLit1(lit1);
+            it->setLit2(lit1);
             it->setLit3(lit2);
 
             continue;
