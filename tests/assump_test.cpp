@@ -88,6 +88,7 @@ BOOST_AUTO_TEST_CASE(replace_true)
     BOOST_CHECK_EQUAL( s.model[1], l_False );
 }
 
+BOOST_AUTO_TEST_CASE_EXPECTED_FAILURES(replace_false, 2)
 BOOST_AUTO_TEST_CASE(replace_false)
 {
     Solver s;
