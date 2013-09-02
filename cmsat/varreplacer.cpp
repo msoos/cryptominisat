@@ -291,7 +291,7 @@ bool VarReplacer::replaceImplicit()
                 //Update lit3
                 if (table[lit3.var()].var() != lit3.var()) {
                     lit3 = table[lit3.var()] ^ lit3.sign();
-                    i->setLit2(lit3);
+                    i->setLit3(lit3);
                     runStats.replacedLits++;
                 }
 
@@ -405,7 +405,7 @@ bool VarReplacer::replaceImplicit()
                     std::swap(lit2, lit3);
                 }
                 i->setLit1(lit2);
-                i->setLit2(lit3);
+                i->setLit3(lit3);
 
                 #ifdef DRUP
                 if (solver->drup

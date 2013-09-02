@@ -195,7 +195,7 @@ class Watched {
             return Lit::toLit(data2>>1);
         }
 
-        void setLit2(const Lit lit2)
+        void setLit3(const Lit lit2)
         {
             #ifdef DEBUG_WATCHED
             assert(isTri());
