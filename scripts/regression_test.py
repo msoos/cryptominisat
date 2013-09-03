@@ -19,6 +19,7 @@ from random import choice
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
+from xor_to_cnf_class import *
 
 maxTime = 200
 maxTimeDiff = 20
@@ -403,13 +404,17 @@ class Tester:
         print "Verified %d original xor&regular clauses" % clauses
 
     def checkUNSAT(self, fname) :
+        a = XorToCNF()
+        tmpfname = unique_fuzz_file("tmp_for_xor_to_cnf_convert")
+        a.convert(fname, tmpfname )
         #execute with the other solver
-        toexec = "../../lingeling-587f/lingeling -f %s" % fname
+        toexec = "../../lingeling-587f/lingeling -f %s" % tmpfname
         print "Solving with other solver.."
         currTime = time.time()
         p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                              preexec_fn=setlimits)
         consoleOutput2 = p.communicate()[0]
+        os.unlink(tmpfname)
 
         #if other solver was out of time, then we can't say anything
         diffTime = time.time() - currTime
@@ -549,10 +554,11 @@ class Tester:
                 self.test_found_solution(solution, fname, debugLibPart)
             else:
                 print "debugLib is UNSAT"
-                self.extractLibPart(fname, debugLibPart, assumps, "tmp")
+                tmpfname = unique_fuzz_file("tempfile_for_extract_libpart")
+                self.extractLibPart(fname, debugLibPart, assumps, tmpfname)
 
                 #check with other solver
-                ret = self.checkUNSAT("tmp")
+                ret = self.checkUNSAT(tmpfname)
                 if ret == None :
                     print "Cannot check, other solver took too much time"
                 elif ret == True :
@@ -562,7 +568,7 @@ class Tester:
                     exit()
 
                 #delete temporary file
-                os.unlink("tmp")
+                os.unlink(tmpfname)
 
 
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
@@ -812,6 +818,7 @@ class Tester:
     def fuzz_test(self) :
         fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             , ["build/cnf-fuzz-biere"] \
             #, ["build/cnf-fuzz-nossum"] \
             #, ["build/largefuzzer"] \
