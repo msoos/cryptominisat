@@ -218,6 +218,7 @@ class VarReplacer
         map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
 
         //Stats
+        void printReplaceStats() const;
         uint64_t replacedVars; ///<Num vars replaced during var-replacement
         uint64_t lastReplacedVars;
         Stats runStats;

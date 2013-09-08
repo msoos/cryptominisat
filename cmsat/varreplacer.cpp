@@ -57,6 +57,18 @@ VarReplacer::~VarReplacer()
 {
 }
 
+void VarReplacer::printReplaceStats() const
+{
+    uint32_t i = 0;
+    for (vector<Lit>::const_iterator
+        it = table.begin(); it != table.end()
+        ; it++, i++
+    ) {
+        if (it->var() == i) continue;
+        cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
+    }
+}
+
 /**
 @brief Replaces variables, clears internal clauses, and reports stats
 
@@ -94,15 +106,8 @@ bool VarReplacer::performReplace()
     solver->testAllClauseAttach();
 
     //Printing stats
-    #ifdef VERBOSE_DEBUG
-    {
-        uint32_t i = 0;
-        for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-            if (it->var() == i) continue;
-            cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
-        }
-    }
-    #endif
+    if (solver->conf.verbosity >= 5)
+        printReplaceStats();
 
     Var var = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
