@@ -234,6 +234,29 @@ end:
     return solver->ok;
 }
 
+void VarReplacer::newBinClause(
+    Lit origLit1
+    , Lit origLit2
+    , Lit origLit3
+    , Lit lit1
+    , Lit lit2
+    , bool red
+) {
+    //Only attach once
+    if (origLit1 < origLit2
+        && origLit2 < origLit3
+    ){
+        delayedAttach.push_back(BinaryClause(lit1, lit2, red));
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << lit1 << " " << lit2
+            << " 0\n";
+        }
+        #endif
+    }
+}
+
 void VarReplacer::updateTri(
     vec<Watched>::iterator& i
     , vec<Watched>::iterator& j
@@ -286,19 +309,7 @@ void VarReplacer::updateTri(
     if (!remove
         && lit1 == lit2
     ) {
-        //Only attach once
-        if (origLit1 < origLit2
-            && origLit2 < origLit3
-        ){
-            delayedAttach.push_back(BinaryClause(lit1, lit3, i->red()));
-            #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << lit1 << " " << lit3
-                << " 0\n";
-            }
-            #endif
-        }
+        newBinClause(origLit1, origLit2, origLit3, lit1, lit3, i->red());
         remove = true;
     }
 
@@ -306,21 +317,7 @@ void VarReplacer::updateTri(
     if (!remove
         && (lit1 == lit3 || (lit2 == lit3))
     ) {
-        //1st&2nd OR 2nd&3rd the same
-
-        //Only attach once
-        if (origLit1 < origLit2
-            && origLit2 < origLit3
-        ){
-            delayedAttach.push_back(BinaryClause(lit1, lit2, i->red()));
-            #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << lit1 << " " << lit2
-                << " 0\n";
-            }
-            #endif
-        }
+        newBinClause(origLit1, origLit2, origLit3, lit1, lit2, i->red());
         remove = true;
     }
 
