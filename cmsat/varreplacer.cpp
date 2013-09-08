@@ -159,6 +159,10 @@ bool VarReplacer::performReplace()
     solver->testAllClauseAttach();
     assert(solver->qhead == solver->trail.size());
 
+    #ifdef DEBUG_IMPLICIT_STATS
+    solver->checkImplicitStats();
+    #endif
+
     //Replace implicits
     if (!replaceImplicit()) {
         goto end;
