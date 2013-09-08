@@ -404,6 +404,105 @@ void VarReplacer::updateTri(
     return;
 }
 
+void VarReplacer::updateBin(
+    vec<Watched>::iterator& i
+    , vec<Watched>::iterator& j
+    , const Lit origLit1
+    , const Lit origLit2
+    , Lit lit1
+    , Lit lit2
+) {
+    bool remove = false;
+
+    //Two lits are the same in BIN
+    if (lit1 == lit2) {
+        delayedEnqueue.push_back(lit2);
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << lit2
+            << " 0\n";
+        }
+        #endif
+        remove = true;
+    }
+
+    //Tautology
+    if (lit1 == ~lit2)
+        remove = true;
+
+    if (remove) {
+        //Update function-internal stats
+        if (i->red()) {
+            impl_tmp_stats.removedRedBin++;
+        } else {
+            impl_tmp_stats.removedNonRedBin++;
+        }
+
+        #ifdef DRUP
+        if (solver->drup
+            //Delete only once
+             && origLit1 < origLit2
+        ) {
+            *(solver->drup)
+            << "d "
+            << origLit1 << " "
+            << origLit2
+            << " 0\n";
+        }
+        #endif
+
+        return;
+    }
+
+    #ifdef DRUP
+    if (solver->drup
+        //Changed
+        && (lit1 != origLit1
+            || lit2 != origLit2)
+        //Delete&attach only once
+        && (origLit1 < origLit2)
+    ) {
+        *(solver->drup)
+        //Add replaced
+        << lit1 << " " << lit2
+        << " 0\n"
+
+        //Delete old one
+        << "d " << origLit1 << " " << origLit2
+        << " 0\n";
+    }
+
+    #endif
+
+    if (lit1 != origLit1) {
+        solver->watches[lit1.toInt()].push(*i);
+    } else {
+        *j++ = *i;
+    }
+}
+
+void VarReplacer::updateStatsFromImplStats()
+{
+    assert(impl_tmp_stats.removedRedBin % 2 == 0);
+    solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
+
+    assert(impl_tmp_stats.removedNonRedBin % 2 == 0);
+    solver->binTri.irredBins -= impl_tmp_stats.removedNonRedBin/2;
+
+    assert(impl_tmp_stats.removedRedTri % 3 == 0);
+    solver->binTri.redTris -= impl_tmp_stats.removedRedTri/3;
+
+    assert(impl_tmp_stats.removedNonRedTri % 3 == 0);
+    solver->binTri.irredTris -= impl_tmp_stats.removedNonRedTri/3;
+
+    #ifdef DEBUG_IMPLICIT_STATS
+    solver->checkImplicitStats();
+    #endif
+
+    impl_tmp_stats.clear();
+}
+
 bool VarReplacer::replaceImplicit()
 {
     impl_tmp_stats.clear();
@@ -450,78 +549,9 @@ bool VarReplacer::replaceImplicit()
 
             if (i->isTri()) {
                 updateTri(i, j, origLit1, origLit2, lit1, lit2);
-                continue;
-            }
-
-            //Only binary are here
-            assert(i->isBinary());
-            bool remove = false;
-
-            //Two lits are the same in BIN
-            if (lit1 == lit2) {
-                delayedEnqueue.push_back(lit2);
-                #ifdef DRUP
-                if (solver->drup) {
-                    *(solver->drup)
-                    << lit2
-                    << " 0\n";
-                }
-                #endif
-                remove = true;
-            }
-
-            //Tautology
-            if (lit1 == ~lit2)
-                remove = true;
-
-            if (remove) {
-                //Update function-internal stats
-                if (i->red()) {
-                    impl_tmp_stats.removedRedBin++;
-                } else {
-                    impl_tmp_stats.removedNonRedBin++;
-                }
-
-                #ifdef DRUP
-                if (solver->drup
-                    //Delete only once
-                     && origLit1 < origLit2
-                ) {
-                    *(solver->drup)
-                    << "d "
-                    << origLit1 << " "
-                    << origLit2
-                    << " 0\n";
-                }
-                #endif
-
-                continue;
-            }
-
-            #ifdef DRUP
-            if (solver->drup
-                //Changed
-                && (lit1 != origLit1
-                    || lit2 != origLit2)
-                //Delete&attach only once
-                && (origLit1 < origLit2)
-            ) {
-                *(solver->drup)
-                //Add replaced
-                << lit1 << " " << lit2
-                << " 0\n"
-
-                //Delete old one
-                << "d " << origLit1 << " " << origLit2
-                << " 0\n";
-            }
-
-            #endif
-
-            if (lit1 != origLit1) {
-                solver->watches[lit1.toInt()].push(*i);
             } else {
-                *j++ = *i;
+                assert(i->isBinary());
+                updateBin(i, j, origLit1, origLit2, lit1, lit2);
             }
         }
         ws.shrink_(i-j);
@@ -541,21 +571,7 @@ bool VarReplacer::replaceImplicit()
     cout << "c debug bin replacer end" << endl;
     #endif
 
-    assert(impl_tmp_stats.removedRedBin % 2 == 0);
-    solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
-
-    assert(impl_tmp_stats.removedNonRedBin % 2 == 0);
-    solver->binTri.irredBins -= impl_tmp_stats.removedNonRedBin/2;
-
-    assert(impl_tmp_stats.removedRedTri % 3 == 0);
-    solver->binTri.redTris -= impl_tmp_stats.removedRedTri/3;
-
-    assert(impl_tmp_stats.removedNonRedTri % 3 == 0);
-    solver->binTri.irredTris -= impl_tmp_stats.removedNonRedTri/3;
-
-    #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
-    #endif
+    updateStatsFromImplStats();
 
     //Global stats update
     runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedNonRedBin/2;

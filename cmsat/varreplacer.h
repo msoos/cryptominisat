@@ -232,6 +232,15 @@ class VarReplacer
             , Lit lit1
             , Lit lit2
         );
+        void updateBin(
+            vec<Watched>::iterator& i
+            , vec<Watched>::iterator& j
+            , const Lit origLit1
+            , const Lit origLit2
+            , Lit lit1
+            , Lit lit2
+        );
+        void updateStatsFromImplStats();
 
         bool handleUpdatedClause(
             Clause& c
