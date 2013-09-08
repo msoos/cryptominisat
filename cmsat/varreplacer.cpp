@@ -261,11 +261,6 @@ bool VarReplacer::replaceImplicit()
                 continue;
             }
 
-            /*cout << "--------" << endl;
-            cout << "ws size: " << ws.size() << endl;
-            cout << "solver->value(origLit1): " << solver->value(origLit1) << endl;
-            cout << "watch: " << *i << endl;*/
-
             assert(solver->value(origLit1) == l_Undef);
             Lit lit1 = origLit1;
             Lit lit2 = i->lit2();
