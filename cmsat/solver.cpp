@@ -209,10 +209,7 @@ bool Solver::addXorClauseInt(
             Lit lit = Lit(ps[0].var(), !rhs);
             enqueue(lit);
             #ifdef DRUP
-            if (drup) {
-                *drup
-                << lit << " 0\n";
-            }
+            drupNewUnit(lit);
             #endif
 
             #ifdef STATS_NEEDED
@@ -1267,12 +1264,7 @@ CleaningStats Solver::reduceDB()
 
                 //detach&free
                 #ifdef DRUP
-                if (drup) {
-                    (*drup)
-                    << "d "
-                    << *cl
-                    << " 0\n";
-                }
+                drupRemCl(cl);
                 #endif
                 clAllocator->clauseFree(offset);
 
@@ -1349,12 +1341,7 @@ CleaningStats Solver::reduceDB()
 
         //free clause
         #ifdef DRUP
-        if (drup) {
-            (*drup)
-            << "d "
-            << *cl
-            << " 0\n";
-        }
+        drupRemCl(cl);
         #endif
         clAllocator->clauseFree(offset);
     }

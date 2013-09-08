@@ -861,11 +861,7 @@ lbool Searcher::search(uint64_t* geom_max)
             failed = propagateFullBFS();
             if (failed != lit_Undef) {
                 #ifdef DRUP
-                if (drup) {
-                    (*drup)
-                    << (~failed)
-                    << " 0\n";
-                }
+                drupNewUnit(~failed);
                 #endif
 
                 //Update conflict stats

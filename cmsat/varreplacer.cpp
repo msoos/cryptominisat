@@ -406,11 +406,7 @@ void VarReplacer::updateBin(
     if (lit1 == lit2) {
         delayedEnqueue.push_back(lit2);
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << lit2
-            << " 0\n";
-        }
+        solver->drupNewUnit(lit2);
         #endif
         remove = true;
     }

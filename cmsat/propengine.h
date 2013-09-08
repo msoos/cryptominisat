@@ -265,6 +265,7 @@ public:
 protected:
     #ifdef DRUP
     void drupNewUnit(const Lit lit);
+    void drupRemCl(const Clause* cl);
     #endif
 
     //Non-categorised functions
@@ -1041,6 +1042,27 @@ inline bool PropEngine::getStoredPolarity(const Var var)
 {
     return varData[var].polarity;
 }
+
+#ifdef DRUP
+inline void PropEngine::drupNewUnit(const Lit lit)
+{
+    if (drup) {
+        *(drup)
+        << lit
+        << " 0\n";
+    }
+}
+
+inline void PropEngine::drupRemCl(const Clause* cl)
+{
+    if (drup) {
+        (*drup)
+        << "d "
+        << *cl
+        << " 0\n";
+    }
+}
+#endif
 
 } //end namespace
 

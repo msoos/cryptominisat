@@ -1641,14 +1641,3 @@ void PropEngine::addHyperBin(const Lit p)
     varData[p.var()].reason.setHyperbin(true);
     varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
-
-#ifdef DRUP
-void PropEngine::drupNewUnit(const Lit lit)
-{
-    if (drup) {
-        *(drup)
-        << lit
-        << " 0\n";
-    }
-}
-#endif DRUP
