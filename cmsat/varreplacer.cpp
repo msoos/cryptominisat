@@ -234,14 +234,181 @@ end:
     return solver->ok;
 }
 
+void VarReplacer::updateTri(
+    vec<Watched>::iterator& i
+    , vec<Watched>::iterator& j
+    , const Lit origLit1
+    , const Lit origLit2
+    , Lit lit1
+    , Lit lit2
+) {
+    Lit lit3 = i->lit3();
+    Lit origLit3 = lit3;
+    assert(origLit1.var() != origLit3.var());
+    assert(origLit2.var() != origLit3.var());
+    assert(origLit2 < origLit3);
+    assert(solver->value(origLit3) == l_Undef);
+
+    //Update lit3
+    if (table[lit3.var()].var() != lit3.var()) {
+        lit3 = table[lit3.var()] ^ lit3.sign();
+        i->setLit3(lit3);
+        runStats.replacedLits++;
+    }
+
+    bool remove = false;
+
+    //Tautology, remove
+    if (lit1 == ~lit2
+        || lit1 == ~lit3
+        || lit2 == ~lit3
+    ) {
+        remove = true;
+    }
+
+    //All 3 lits are the same
+    if (!remove
+        && lit1 == lit2
+        && lit2 == lit3
+    ) {
+        delayedEnqueue.push_back(lit1);
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << lit1
+            << " 0\n";
+        }
+        #endif
+        remove = true;
+    }
+
+    //1st and 2nd lits are the same
+    if (!remove
+        && lit1 == lit2
+    ) {
+        //Only attach once
+        if (origLit1 < origLit2
+            && origLit2 < origLit3
+        ){
+            delayedAttach.push_back(BinaryClause(lit1, lit3, i->red()));
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << lit1 << " " << lit3
+                << " 0\n";
+            }
+            #endif
+        }
+        remove = true;
+    }
+
+    //1st and 3rd lits  OR 2nd and 3rd lits are the same
+    if (!remove
+        && (lit1 == lit3 || (lit2 == lit3))
+    ) {
+        //1st&2nd OR 2nd&3rd the same
+
+        //Only attach once
+        if (origLit1 < origLit2
+            && origLit2 < origLit3
+        ){
+            delayedAttach.push_back(BinaryClause(lit1, lit2, i->red()));
+            #ifdef DRUP
+            if (solver->drup) {
+                *(solver->drup)
+                << lit1 << " " << lit2
+                << " 0\n";
+            }
+            #endif
+        }
+        remove = true;
+    }
+
+    if (remove) {
+        //Update function-internal stats
+        if (i->red()) {
+            impl_tmp_stats.removedRedTri++;
+        } else {
+            impl_tmp_stats.removedNonRedTri++;
+        }
+
+        #ifdef DRUP
+        if (solver->drup
+            //Only delete once
+            && origLit1 < origLit2
+            && origLit2 < origLit3
+        ) {
+            *(solver->drup)
+            << "d "
+            << origLit1 << " "
+            << origLit2 << " "
+            << origLit3
+            << " 0\n";
+        }
+        #endif
+
+        return;
+    }
+
+    //Order literals
+    orderLits(lit1, lit2, lit3);
+
+    //Now make into the order this TRI was in
+    if (origLit1 > origLit2
+        && origLit1 < origLit3
+    ) {
+        std::swap(lit1, lit2);
+    }
+    if (origLit1 > origLit2
+        && origLit1 > origLit3
+    ) {
+        std::swap(lit1, lit3);
+        std::swap(lit2, lit3);
+    }
+    i->setLit2(lit2);
+    i->setLit3(lit3);
+
+    #ifdef DRUP
+    if (solver->drup
+        //Changed
+        && (lit1 != origLit1
+            || lit2 != origLit2
+            || lit3 != origLit3
+        )
+        //Remove&attach only once
+        && (origLit1 < origLit2
+            && origLit2 < origLit3
+        )
+    ) {
+        *(solver->drup)
+        << lit1 << " "
+        << lit2 << " "
+        << lit3
+        << " 0\n"
+
+        //Delete old one
+        << "d "
+        << origLit1 << " "
+        << origLit2 << " "
+        << origLit3
+        << " 0\n";
+    }
+    #endif
+
+    if (lit1 != origLit1) {
+        solver->watches[lit1.toInt()].push(*i);
+    } else {
+        *j++ = *i;
+    }
+
+    return;
+}
+
 bool VarReplacer::replaceImplicit()
 {
-    size_t removedRedBin = 0;
-    size_t removedNonRedBin = 0;
-    size_t removedRedTri = 0;
-    size_t removedNonRedTri = 0;
-
-    vector<BinaryClause> delayedAttach;
+    impl_tmp_stats.clear();
+    delayedEnqueue.clear();
+    delayedAttach.clear();
 
     size_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
@@ -282,165 +449,7 @@ bool VarReplacer::replaceImplicit()
             }
 
             if (i->isTri()) {
-                Lit lit3 = i->lit3();
-                Lit origLit3 = lit3;
-                assert(origLit1.var() != origLit3.var());
-                assert(origLit2.var() != origLit3.var());
-                assert(origLit2 < origLit3);
-                assert(solver->value(origLit3) == l_Undef);
-
-                //Update lit3
-                if (table[lit3.var()].var() != lit3.var()) {
-                    lit3 = table[lit3.var()] ^ lit3.sign();
-                    i->setLit3(lit3);
-                    runStats.replacedLits++;
-                }
-
-                bool remove = false;
-
-                //Tautology, remove
-                if (lit1 == ~lit2
-                    || lit1 == ~lit3
-                    || lit2 == ~lit3
-                ) {
-                    remove = true;
-                }
-
-                //All 3 lits are the same
-                if (!remove
-                    && lit1 == lit2
-                    && lit2 == lit3
-                ) {
-                    delayedEnqueue.push_back(lit1);
-                    #ifdef DRUP
-                    if (solver->drup) {
-                        *(solver->drup)
-                        << lit1
-                        << " 0\n";
-                    }
-                    #endif
-                    remove = true;
-                }
-
-                //1st and 2nd lits are the same
-                if (!remove
-                    && lit1 == lit2
-                ) {
-                    //Only attach once
-                    if (origLit1 < origLit2
-                        && origLit2 < origLit3
-                    ){
-                        delayedAttach.push_back(BinaryClause(lit1, lit3, i->red()));
-                        #ifdef DRUP
-                        if (solver->drup) {
-                            *(solver->drup)
-                            << lit1 << " " << lit3
-                            << " 0\n";
-                        }
-                        #endif
-                    }
-                    remove = true;
-                }
-
-                //1st and 3rd lits  OR 2nd and 3rd lits are the same
-                if (!remove
-                    && (lit1 == lit3 || (lit2 == lit3))
-                ) {
-                    //1st&2nd OR 2nd&3rd the same
-
-                    //Only attach once
-                    if (origLit1 < origLit2
-                        && origLit2 < origLit3
-                    ){
-                        delayedAttach.push_back(BinaryClause(lit1, lit2, i->red()));
-                        #ifdef DRUP
-                        if (solver->drup) {
-                            *(solver->drup)
-                            << lit1 << " " << lit2
-                            << " 0\n";
-                        }
-                        #endif
-                    }
-                    remove = true;
-                }
-
-                if (remove) {
-                    //Update function-internal stats
-                    if (i->red()) {
-                        removedRedTri++;
-                    } else {
-                        removedNonRedTri++;
-                    }
-
-                    #ifdef DRUP
-                    if (solver->drup
-                        //Only delete once
-                        && origLit1 < origLit2
-                        && origLit2 < origLit3
-                    ) {
-                        *(solver->drup)
-                        << "d "
-                        << origLit1 << " "
-                        << origLit2 << " "
-                        << origLit3
-                        << " 0\n";
-                    }
-                    #endif
-
-                    continue;
-                }
-
-                //Order literals
-                orderLits(lit1, lit2, lit3);
-
-                //Now make into the order this TRI was in
-                if (origLit1 > origLit2
-                    && origLit1 < origLit3
-                ) {
-                    std::swap(lit1, lit2);
-                }
-                if (origLit1 > origLit2
-                    && origLit1 > origLit3
-                ) {
-                    std::swap(lit1, lit3);
-                    std::swap(lit2, lit3);
-                }
-                i->setLit2(lit2);
-                i->setLit3(lit3);
-
-                #ifdef DRUP
-                if (solver->drup
-                    //Changed
-                    && (lit1 != origLit1
-                        || lit2 != origLit2
-                        || lit3 != origLit3
-                    )
-                    //Remove&attach only once
-                    && (origLit1 < origLit2
-                        && origLit2 < origLit3
-                    )
-                ) {
-                    *(solver->drup)
-                    << lit1 << " "
-                    << lit2 << " "
-                    << lit3
-                    << " 0\n"
-
-                    //Delete old one
-                    << "d "
-                    << origLit1 << " "
-                    << origLit2 << " "
-                    << origLit3
-                    << " 0\n";
-                }
-                #endif
-
-                if (lit1 != origLit1) {
-                    solver->watches[lit1.toInt()].push(*i);
-                } else {
-                    *j++ = *i;
-                }
-
+                updateTri(i, j, origLit1, origLit2, lit1, lit2);
                 continue;
             }
 
@@ -468,9 +477,9 @@ bool VarReplacer::replaceImplicit()
             if (remove) {
                 //Update function-internal stats
                 if (i->red()) {
-                    removedRedBin++;
+                    impl_tmp_stats.removedRedBin++;
                 } else {
-                    removedNonRedBin++;
+                    impl_tmp_stats.removedNonRedBin++;
                 }
 
                 #ifdef DRUP
@@ -525,31 +534,32 @@ bool VarReplacer::replaceImplicit()
     ) {
         solver->attachBinClause(it->getLit1(), it->getLit2(), it->isRed());
     }
+    delayedAttach.clear();
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
     cout << "c debug bin replacer start" << endl;
     cout << "c debug bin replacer end" << endl;
     #endif
 
-    assert(removedRedBin % 2 == 0);
-    solver->binTri.redBins -= removedRedBin/2;
+    assert(impl_tmp_stats.removedRedBin % 2 == 0);
+    solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
 
-    assert(removedNonRedBin % 2 == 0);
-    solver->binTri.irredBins -= removedNonRedBin/2;
+    assert(impl_tmp_stats.removedNonRedBin % 2 == 0);
+    solver->binTri.irredBins -= impl_tmp_stats.removedNonRedBin/2;
 
-    assert(removedRedTri % 3 == 0);
-    solver->binTri.redTris -= removedRedTri/3;
+    assert(impl_tmp_stats.removedRedTri % 3 == 0);
+    solver->binTri.redTris -= impl_tmp_stats.removedRedTri/3;
 
-    assert(removedNonRedTri % 3 == 0);
-    solver->binTri.irredTris -= removedNonRedTri/3;
+    assert(impl_tmp_stats.removedNonRedTri % 3 == 0);
+    solver->binTri.irredTris -= impl_tmp_stats.removedNonRedTri/3;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
     #endif
 
     //Global stats update
-    runStats.removedBinClauses += removedRedBin/2 + removedNonRedBin/2;
-    runStats.removedTriClauses += removedRedTri/3 + removedNonRedTri/3;
+    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedNonRedBin/2;
+    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedNonRedTri/3;
 
     return solver->ok;
 }

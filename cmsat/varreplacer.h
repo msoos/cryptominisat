@@ -199,7 +199,40 @@ class VarReplacer
         Solver* solver; ///<The solver we are working with
 
         bool replace_set(vector<ClOffset>& cs);
+
+        //Temporary used in replaceImplicit
+        vector<BinaryClause> delayedAttach;
         bool replaceImplicit();
+        struct ImplicitTmpStats
+        {
+            ImplicitTmpStats() :
+                removedRedBin(0)
+                , removedNonRedBin(0)
+                , removedRedTri(0)
+                , removedNonRedTri(0)
+            {
+            }
+
+            void clear()
+            {
+                *this = ImplicitTmpStats();
+            }
+
+            size_t removedRedBin;
+            size_t removedNonRedBin;;
+            size_t removedRedTri;;
+            size_t removedNonRedTri;
+        };
+        ImplicitTmpStats impl_tmp_stats;
+        void updateTri(
+            vec<Watched>::iterator& i
+            , vec<Watched>::iterator& j
+            , const Lit origLit1
+            , const Lit origLit2
+            , Lit lit1
+            , Lit lit2
+        );
+
         bool handleUpdatedClause(
             Clause& c
             , const Lit origLit1
