@@ -213,14 +213,33 @@ class VarReplacer
             {
             }
 
+            void remove(const Watched& ws)
+            {
+                if (ws.isTri()) {
+                    if (ws.red()) {
+                        removedRedTri++;
+                    } else {
+                        removedNonRedTri++;
+                    }
+                } else if (ws.isBinary()) {
+                    if (ws.red()) {
+                        removedRedBin++;
+                    } else {
+                        removedNonRedBin++;
+                    }
+                } else {
+                    assert(false);
+                }
+            }
+
             void clear()
             {
                 *this = ImplicitTmpStats();
             }
 
             size_t removedRedBin;
-            size_t removedNonRedBin;;
-            size_t removedRedTri;;
+            size_t removedNonRedBin;
+            size_t removedRedTri;
             size_t removedNonRedTri;
         };
         ImplicitTmpStats impl_tmp_stats;

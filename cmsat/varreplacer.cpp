@@ -325,12 +325,7 @@ void VarReplacer::updateTri(
     }
 
     if (remove) {
-        //Update function-internal stats
-        if (i->red()) {
-            impl_tmp_stats.removedRedTri++;
-        } else {
-            impl_tmp_stats.removedNonRedTri++;
-        }
+        impl_tmp_stats.remove(*i);
 
         #ifdef DRUP
         if (solver->drup
@@ -432,12 +427,7 @@ void VarReplacer::updateBin(
         remove = true;
 
     if (remove) {
-        //Update function-internal stats
-        if (i->red()) {
-            impl_tmp_stats.removedRedBin++;
-        } else {
-            impl_tmp_stats.removedNonRedBin++;
-        }
+        impl_tmp_stats.remove(*i);
 
         #ifdef DRUP
         if (solver->drup
