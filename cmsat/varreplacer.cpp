@@ -147,12 +147,10 @@ bool VarReplacer::performReplace()
         solver->setDecisionVar(it->var());
 
         //Update activities. Top receives activities of the ones below
-        uint32_t& activity1 = solver->activities[var];
-        uint32_t& activity2 = solver->activities[it->var()];
-        activity2 += activity1;
-        activity1 = 0.0;
+        //The activities of the others don't need to be updated -- they are not
+        //set to be decision vars anyway
+        solver->activities[it->var()] += solver->activities[var];
         solver->order_heap.update(var);
-        solver->order_heap.update(it->var());
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
