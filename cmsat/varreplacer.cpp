@@ -477,14 +477,14 @@ void VarReplacer::updateStatsFromImplStats()
     assert(impl_tmp_stats.removedRedBin % 2 == 0);
     solver->binTri.redBins -= impl_tmp_stats.removedRedBin/2;
 
-    assert(impl_tmp_stats.removedNonRedBin % 2 == 0);
-    solver->binTri.irredBins -= impl_tmp_stats.removedNonRedBin/2;
+    assert(impl_tmp_stats.removedIrredBin % 2 == 0);
+    solver->binTri.irredBins -= impl_tmp_stats.removedIrredBin/2;
 
     assert(impl_tmp_stats.removedRedTri % 3 == 0);
     solver->binTri.redTris -= impl_tmp_stats.removedRedTri/3;
 
-    assert(impl_tmp_stats.removedNonRedTri % 3 == 0);
-    solver->binTri.irredTris -= impl_tmp_stats.removedNonRedTri/3;
+    assert(impl_tmp_stats.removedIrredTri % 3 == 0);
+    solver->binTri.irredTris -= impl_tmp_stats.removedIrredTri/3;
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
@@ -564,8 +564,8 @@ bool VarReplacer::replaceImplicit()
     updateStatsFromImplStats();
 
     //Global stats update
-    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedNonRedBin/2;
-    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedNonRedTri/3;
+    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
+    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedIrredTri/3;
 
     return solver->ok;
 }

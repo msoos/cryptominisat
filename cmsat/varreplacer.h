@@ -207,9 +207,9 @@ class VarReplacer
         {
             ImplicitTmpStats() :
                 removedRedBin(0)
-                , removedNonRedBin(0)
+                , removedIrredBin(0)
                 , removedRedTri(0)
-                , removedNonRedTri(0)
+                , removedIrredTri(0)
             {
             }
 
@@ -219,13 +219,13 @@ class VarReplacer
                     if (ws.red()) {
                         removedRedTri++;
                     } else {
-                        removedNonRedTri++;
+                        removedIrredTri++;
                     }
                 } else if (ws.isBinary()) {
                     if (ws.red()) {
                         removedRedBin++;
                     } else {
-                        removedNonRedBin++;
+                        removedIrredBin++;
                     }
                 } else {
                     assert(false);
@@ -238,9 +238,9 @@ class VarReplacer
             }
 
             size_t removedRedBin;
-            size_t removedNonRedBin;
+            size_t removedIrredBin;
             size_t removedRedTri;
-            size_t removedNonRedTri;
+            size_t removedIrredTri;
         };
         ImplicitTmpStats impl_tmp_stats;
         void updateTri(
