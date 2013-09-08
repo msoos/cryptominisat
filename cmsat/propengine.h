@@ -263,6 +263,9 @@ public:
     #endif
 
 protected:
+    #ifdef DRUP
+    void drupNewUnit(const Lit lit);
+    #endif
 
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.

@@ -296,11 +296,7 @@ void VarReplacer::updateTri(
     ) {
         delayedEnqueue.push_back(lit1);
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << lit1
-            << " 0\n";
-        }
+        solver->drupNewUnit(lit1);
         #endif
         remove = true;
     }
