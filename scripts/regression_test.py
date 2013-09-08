@@ -19,6 +19,7 @@ from random import choice
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
+sys.path.append('../../cnf-utils/')
 from xor_to_cnf_class import *
 
 maxTime = 40
