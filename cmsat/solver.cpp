@@ -472,7 +472,7 @@ void Solver::detachBinClause(
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
 {
     #ifdef DRUP
-    if (drup && doDRUP) {
+    if (drup && removeDrup) {
         (*drup) << "d " << cl << " 0\n";
     }
     #endif
