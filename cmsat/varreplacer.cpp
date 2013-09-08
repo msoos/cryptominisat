@@ -114,8 +114,8 @@ bool VarReplacer::performReplace()
         it = table.begin(); it != table.end()
         ; it++, var++
     ) {
-
-        //Was queued for replacement, but it's the top of the tree, so, it's normal again
+        //Was queued for replacement, but it's the top of the tree, so
+        //it's normal again
         if (it->var() == var
             && solver->varData[it->var()].removed == Removed::queued_replacer
         ) {
