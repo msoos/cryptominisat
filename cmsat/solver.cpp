@@ -2561,7 +2561,7 @@ void Solver::printMemStats() const
 
 void Solver::dumpBinClauses(
     const bool dumpRed
-    , const bool dumpNonRed
+    , const bool dumpIrred
     , std::ostream* outfile
 ) const {
     //Go trough each watchlist
@@ -2584,7 +2584,7 @@ void Solver::dumpBinClauses(
             if (it2->isBinary() && lit < it2->lit2()) {
                 bool toDump = false;
                 if (it2->red() && dumpRed) toDump = true;
-                if (!it2->red() && dumpNonRed) toDump = true;
+                if (!it2->red() && dumpIrred) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
@@ -2604,7 +2604,7 @@ void Solver::dumpBinClauses(
 
 void Solver::dumpTriClauses(
     const bool alsoRed
-    , const bool alsoNonRed
+    , const bool alsoIrred
     , std::ostream* outfile
 ) const {
     uint32_t wsLit = 0;
@@ -2620,7 +2620,7 @@ void Solver::dumpTriClauses(
             if (it2->isTri() && lit < it2->lit2()) {
                 bool toDump = false;
                 if (it2->red() && alsoRed) toDump = true;
-                if (!it2->red() && alsoNonRed) toDump = true;
+                if (!it2->red() && alsoIrred) toDump = true;
 
                 if (toDump) {
                     tmpCl.clear();
@@ -3299,9 +3299,9 @@ void Solver::checkImplicitStats() const
 
     //Check number of red & irred binary clauses
     uint64_t thisNumRedBins = 0;
-    uint64_t thisNumNonRedBins = 0;
+    uint64_t thisNumIrredBins = 0;
     uint64_t thisNumRedTris = 0;
-    uint64_t thisNumNonRedTris = 0;
+    uint64_t thisNumIrredTris = 0;
 
     size_t wsLit = 0;
     for(vector<vec<Watched> >::const_iterator
@@ -3323,7 +3323,7 @@ void Solver::checkImplicitStats() const
                 if (it2->red())
                     thisNumRedBins++;
                 else
-                    thisNumNonRedBins++;
+                    thisNumIrredBins++;
 
                 continue;
             }
@@ -3346,23 +3346,23 @@ void Solver::checkImplicitStats() const
                 if (it2->red())
                     thisNumRedTris++;
                 else
-                    thisNumNonRedTris++;
+                    thisNumIrredTris++;
 
                 continue;
             }
         }
     }
 
-    if (thisNumNonRedBins/2 != binTri.irredBins) {
+    if (thisNumIrredBins/2 != binTri.irredBins) {
         cout
         << "ERROR:"
-        << " thisNumNonRedBins/2: " << thisNumNonRedBins/2
+        << " thisNumIrredBins/2: " << thisNumIrredBins/2
         << " binTri.irredBins: " << binTri.irredBins
-        << "thisNumNonRedBins: " << thisNumNonRedBins
+        << "thisNumIrredBins: " << thisNumIrredBins
         << "thisNumRedBins: " << thisNumRedBins << endl;
     }
-    assert(thisNumNonRedBins % 2 == 0);
-    assert(thisNumNonRedBins/2 == binTri.irredBins);
+    assert(thisNumIrredBins % 2 == 0);
+    assert(thisNumIrredBins/2 == binTri.irredBins);
 
     if (thisNumRedBins/2 != binTri.redBins) {
         cout
@@ -3374,15 +3374,15 @@ void Solver::checkImplicitStats() const
     assert(thisNumRedBins % 2 == 0);
     assert(thisNumRedBins/2 == binTri.redBins);
 
-    if (thisNumNonRedTris/3 != binTri.irredTris) {
+    if (thisNumIrredTris/3 != binTri.irredTris) {
         cout
         << "ERROR:"
-        << " thisNumNonRedTris/3: " << thisNumNonRedTris/3
+        << " thisNumIrredTris/3: " << thisNumIrredTris/3
         << " binTri.irredTris: " << binTri.irredTris
         << endl;
     }
-    assert(thisNumNonRedTris % 3 == 0);
-    assert(thisNumNonRedTris/3 == binTri.irredTris);
+    assert(thisNumIrredTris % 3 == 0);
+    assert(thisNumIrredTris/3 == binTri.irredTris);
 
     if (thisNumRedTris/3 != binTri.redTris) {
         cout
@@ -3405,7 +3405,7 @@ void Solver::checkStats(const bool allowFreed) const
     checkImplicitStats();
 
     //Count number of irred clauses' literals
-    uint64_t numLitsNonRed = 0;
+    uint64_t numLitsIrred = 0;
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
@@ -3415,7 +3415,7 @@ void Solver::checkStats(const bool allowFreed) const
         if (cl.freed()) {
             assert(allowFreed);
         } else {
-            numLitsNonRed += cl.size();
+            numLitsIrred += cl.size();
         }
     }
 
@@ -3435,9 +3435,9 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Check counts
-    if (numLitsNonRed != binTri.irredLits) {
+    if (numLitsIrred != binTri.irredLits) {
         cout << "ERROR: " << endl;
-        cout << "->numLitsNonRed: " << numLitsNonRed << endl;
+        cout << "->numLitsIrred: " << numLitsIrred << endl;
         cout << "->binTri.irredLits: " << binTri.irredLits << endl;
     }
     if (numLitsRed != binTri.redLits) {
@@ -3445,7 +3445,7 @@ void Solver::checkStats(const bool allowFreed) const
         cout << "->numLitsRed: " << numLitsRed << endl;
         cout << "->binTri.redLits: " << binTri.redLits << endl;
     }
-    assert(numLitsNonRed == binTri.irredLits);
+    assert(numLitsIrred == binTri.irredLits);
     assert(numLitsRed == binTri.redLits);
 }
 

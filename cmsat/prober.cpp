@@ -785,7 +785,7 @@ void Prober::fillTestUselessBinRemoval(const Lit lit)
     origNLBEnqueuedVars.clear();
     solver->newDecisionLevel();
     solver->enqueue(lit);
-    failed = (!solver->propagateNonRedBin().isNULL());
+    failed = (!solver->propagateIrredBin().isNULL());
     for (int c = solver->trail.size()-1; c >= (int)solver->trail_lim[0]; c--) {
         Var x = solver->trail[c].var();
         origNLBEnqueuedVars.push_back(x);
@@ -821,7 +821,7 @@ void Prober::testBinRemoval(const Lit origLit)
 
     solver->newDecisionLevel();
     solver->enqueue(origLit);
-    ok = solver->propagateNonRedBin().isNULL();
+    ok = solver->propagateIrredBin().isNULL();
     assert(ok && "Prop failed after hyper-bin adding&bin removal. We never reach this point in that case.");
     for (vector<Var>::const_iterator it = origNLBEnqueuedVars.begin(), end = origNLBEnqueuedVars.end(); it != end; it++) {
         if (solver->value(*it) == l_Undef) {

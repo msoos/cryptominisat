@@ -225,7 +225,7 @@ void GateFinder::findOrGates()
             runStats.numRed++;
         } else  {
             runStats.irredGatesSize += 2;
-            runStats.numNonRed++;
+            runStats.numIrred++;
         }
     }
     runStats.findGateTime += cpuTime() - myTime;

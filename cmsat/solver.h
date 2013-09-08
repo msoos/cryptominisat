@@ -156,13 +156,13 @@ class Solver : public Searcher
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
             const bool dumpRed
-            , const bool dumpNonRed
+            , const bool dumpIrred
             , std::ostream* outfile
         ) const;
 
         void dumpTriClauses(
             const bool alsoRed
-            , const bool alsoNonRed
+            , const bool alsoIrred
             , std::ostream* outfile
         ) const;
 

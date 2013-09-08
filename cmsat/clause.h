@@ -282,7 +282,7 @@ public:
         return *(getData() + i);
     }
 
-    void makeNonRed()
+    void makeIrred()
     {
         assert(isRed);
         isRed = false;

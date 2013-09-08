@@ -176,7 +176,7 @@ public:
             , learntGatesSize(0)
             , numRed(0)
             , irredGatesSize(0)
-            , numNonRed(0)
+            , numIrred(0)
         {}
 
         void clear()
@@ -217,7 +217,7 @@ public:
             learntGatesSize += other.learntGatesSize;
             numRed += other.numRed;
             irredGatesSize += other.irredGatesSize;
-            numNonRed += other.numNonRed;
+            numIrred += other.numIrred;
 
             return *this;
         }
@@ -290,9 +290,9 @@ public:
         {
             //Gate find
             cout << "c [gate] found"
-            << " irred:" << numNonRed
+            << " irred:" << numIrred
             << " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)irredGatesSize/(double)numNonRed)
+            << ((double)irredGatesSize/(double)numIrred)
             << " red: " << numRed
             /*<< " avg-s: " << std::fixed << std::setprecision(1)
             << ((double)learntGatesSize/(double)numRed)*/
@@ -351,7 +351,7 @@ public:
         uint64_t learntGatesSize;
         uint64_t numRed;
         uint64_t irredGatesSize;
-        uint64_t numNonRed;
+        uint64_t numIrred;
     };
 
     const Stats& getStats() const;

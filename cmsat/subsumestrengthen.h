@@ -20,11 +20,11 @@ public:
 
     struct Sub0Ret {
         Sub0Ret() :
-            subsumedNonRed(false)
+            subsumedIrred(false)
             , numSubsumed(0)
         {};
 
-        bool subsumedNonRed;
+        bool subsumedIrred;
         ClauseStats stats;
         uint32_t numSubsumed;
     };

@@ -35,9 +35,9 @@ uint32_t SubsumeStrengthen::subsume0(ClOffset offset)
 
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red()
-        && ret.subsumedNonRed
+        && ret.subsumedIrred
     ) {
-        cl.makeNonRed();
+        cl.makeIrred();
         solver->binTri.redLits -= cl.size();
         solver->binTri.irredLits += cl.size();
         if (!cl.getOccurLinked()) {
@@ -88,7 +88,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume0AndUnlink(
 
         //At least one is irred. Indicate this to caller.
         if (!tmp->red())
-            ret.subsumedNonRed = true;
+            ret.subsumedIrred = true;
 
         /*cout
         << "This " << ps << " (offset: " << offset << ") subsumed this: "
@@ -145,7 +145,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::subsume1(const ClOffset offset)
             if (cl.red()
                 && !cl2.red()
             ) {
-                cl.makeNonRed();
+                cl.makeIrred();
                 solver->binTri.redLits -= cl.size();
                 solver->binTri.irredLits += cl.size();
                 if (!cl.getOccurLinked()) {
@@ -742,7 +742,7 @@ void SubsumeStrengthen::finishedRun()
 //                 subsumed += ret.numSubsumed;
 //
 //                 if (ws[i].red()
-//                     && ret.subsumedNonRed
+//                     && ret.subsumedIrred
 //                 ) {
 //                     ws[i].setRed(false);
 //                     solver->binTri.redTris--;

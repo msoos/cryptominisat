@@ -428,9 +428,9 @@ void CompHandler::moveClausesImplicit(
     , const vector<Var>& vars
 ) {
     vector<Lit> lits;
-    uint32_t numRemovedHalfNonRed = 0;
+    uint32_t numRemovedHalfIrred = 0;
     uint32_t numRemovedHalfRed = 0;
-    uint32_t numRemovedThirdNonRed = 0;
+    uint32_t numRemovedThirdIrred = 0;
     uint32_t numRemovedThirdRed = 0;
 
     for(const Var var: vars) {
@@ -501,7 +501,7 @@ void CompHandler::moveClausesImplicit(
                         saveClause(vector<Lit>{lit, lit2});
 
                         newSolver->addClause(lits);
-                        numRemovedHalfNonRed++;
+                        numRemovedHalfIrred++;
                     }
                 } else {
 
@@ -509,7 +509,7 @@ void CompHandler::moveClausesImplicit(
                     if (i->red()) {
                         numRemovedHalfRed++;
                     } else {
-                        numRemovedHalfNonRed++;
+                        numRemovedHalfIrred++;
                     }
                 }
 
@@ -589,7 +589,7 @@ void CompHandler::moveClausesImplicit(
                         saveClause(vector<Lit>{lit, lit2, lit3});
 
                         newSolver->addClause(lits);
-                        numRemovedThirdNonRed++;
+                        numRemovedThirdIrred++;
                     }
                 } else {
 
@@ -597,7 +597,7 @@ void CompHandler::moveClausesImplicit(
                     if (i->red()) {
                         numRemovedThirdRed++;
                     } else {
-                        numRemovedThirdNonRed++;
+                        numRemovedThirdIrred++;
                     }
                 }
 
@@ -610,11 +610,11 @@ void CompHandler::moveClausesImplicit(
         ws.shrink_(i-j);
     }}
 
-    assert(numRemovedHalfNonRed % 2 == 0);
-    solver->binTri.irredBins -= numRemovedHalfNonRed/2;
+    assert(numRemovedHalfIrred % 2 == 0);
+    solver->binTri.irredBins -= numRemovedHalfIrred/2;
 
-    assert(numRemovedThirdNonRed % 3 == 0);
-    solver->binTri.irredTris -= numRemovedThirdNonRed/3;
+    assert(numRemovedThirdIrred % 3 == 0);
+    solver->binTri.irredTris -= numRemovedThirdIrred/3;
 
     assert(numRemovedHalfRed % 2 == 0);
     solver->binTri.redBins -= numRemovedHalfRed/2;

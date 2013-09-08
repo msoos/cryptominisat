@@ -1159,7 +1159,7 @@ void Simplifier::finishUp(
 
 bool Simplifier::propImplicits()
 {
-    size_t numRemovedHalfNonRed = 0;
+    size_t numRemovedHalfIrred = 0;
     size_t numRemovedHalfRed = 0;
 
     //Delayed enqueue for correct binary clause removal
@@ -1195,7 +1195,7 @@ bool Simplifier::propImplicits()
                 if (ws[i].red())
                     numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonRed++;
+                    numRemovedHalfIrred++;
 
                 continue;
             }
@@ -1219,7 +1219,7 @@ bool Simplifier::propImplicits()
                 if (ws[i].red())
                     numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonRed++;
+                    numRemovedHalfIrred++;
 
                 continue;
             }
@@ -1234,7 +1234,7 @@ bool Simplifier::propImplicits()
                 if (ws[i].red())
                     numRemovedHalfRed++;
                 else
-                    numRemovedHalfNonRed++;
+                    numRemovedHalfIrred++;
 
                 continue;
             }
@@ -1266,9 +1266,9 @@ bool Simplifier::propImplicits()
     }
 
     assert(numRemovedHalfRed % 2 == 0);
-    assert(numRemovedHalfNonRed % 2 == 0);
+    assert(numRemovedHalfIrred % 2 == 0);
     solver->binTri.redBins -= numRemovedHalfRed/2;
-    solver->binTri.irredBins -= numRemovedHalfNonRed/2;
+    solver->binTri.irredBins -= numRemovedHalfIrred/2;
 
     return solver->ok;
 }
@@ -2073,7 +2073,7 @@ void Simplifier::removeClausesHelper(
     }
 }
 
-uint32_t Simplifier::numNonRedBins(const Lit lit) const
+uint32_t Simplifier::numIrredBins(const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = solver->watches[lit.toInt()];

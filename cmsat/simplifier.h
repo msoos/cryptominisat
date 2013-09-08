@@ -518,7 +518,7 @@ private:
     };
     void        orderVarsForElimInit();
     Heap<VarOrderLt> varElimOrder;
-    uint32_t    numNonRedBins(const Lit lit) const;
+    uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);
     void        removeClausesHelper(const vec<Watched>& todo, const Lit lit);
 

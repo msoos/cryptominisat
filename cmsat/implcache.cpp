@@ -511,9 +511,9 @@ bool TransCache::merge(
     //Mark every literal that is to be added in 'seen'
     for (size_t i = 0, size = otherLits.size(); i < size; i++) {
         const Lit lit = otherLits[i].getLit();
-        const bool onlyNonRed = otherLits[i].getOnlyIrredBin();
+        const bool onlyIrred = otherLits[i].getOnlyIrredBin();
 
-        seen[lit.toInt()] = 1 + (int)onlyNonRed;
+        seen[lit.toInt()] = 1 + (int)onlyIrred;
     }
 
     bool taut = mergeHelper(extraLit, red, seen);

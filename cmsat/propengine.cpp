@@ -898,7 +898,7 @@ PropBy PropEngine::propagateBinFirst(
     return confl;
 }
 
-PropBy PropEngine::propagateNonRedBin()
+PropBy PropEngine::propagateIrredBin()
 {
     PropBy confl;
     while (qhead < trail.size()) {
@@ -1450,7 +1450,7 @@ PropResult PropEngine::propBin(
             //NOTE: we don't update the levels of other literals... :S
 
             //for correctness, we would need this, but that would need re-writing of history :S
-            //if (!onlyNonRed) return PropBy();
+            //if (!onlyIrred) return PropBy();
 
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP

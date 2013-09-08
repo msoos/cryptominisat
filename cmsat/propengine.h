@@ -311,7 +311,7 @@ protected:
     void  enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void  enqueueComplex(const Lit p, const Lit ancestor, const bool redStep);
     Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepRed);
-    bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepRed, const bool onlyNonRed, const Lit lookingForAncestor);
+    bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepRed, const bool onlyIrred, const Lit lookingForAncestor);
 
     vector<Lit> currAncestors;
 
@@ -422,7 +422,7 @@ protected:
     void closeAllTimestamps(const StampType stampType);
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
-    PropBy      propagateNonRedBin();  ///<For debug purposes, to test binary clause removal
+    PropBy      propagateIrredBin();  ///<For debug purposes, to test binary clause removal
 
     /////////////////
     // Operations on clauses:
@@ -640,7 +640,7 @@ inline Lit PropEngine::removeWhich(
     propStats.otfHyperTime += 1;
     const PropBy& data = varData[conflict.var()].reason;
 
-    bool onlyNonRed = !data.isRedStep();
+    bool onlyIrred = !data.isRedStep();
     Lit lookingForAncestor = data.getAncestor();
 
     if (thisAncestor == lit_Undef || lookingForAncestor == lit_Undef)
@@ -667,7 +667,7 @@ inline Lit PropEngine::removeWhich(
         conflict
         , thisAncestor
         , thisStepRed
-        , onlyNonRed
+        , onlyIrred
         , lookingForAncestor
         )
     ) {
@@ -678,7 +678,7 @@ inline Lit PropEngine::removeWhich(
         return thisAncestor;
     }
 
-    onlyNonRed = !thisStepRed;
+    onlyIrred = !thisStepRed;
     thisStepRed = data.isRedStep();
     std::swap(lookingForAncestor, thisAncestor);
     if ((ambivalent || second_is_deeper) &&
@@ -686,7 +686,7 @@ inline Lit PropEngine::removeWhich(
         conflict
         , thisAncestor
         , thisStepRed
-        , onlyNonRed
+        , onlyIrred
         , lookingForAncestor
         )
     ) {
@@ -713,7 +713,7 @@ inline bool PropEngine::isAncestorOf(
     const Lit conflict
     , Lit thisAncestor
     , const bool thisStepRed
-    , const bool onlyNonRed
+    , const bool onlyIrred
     , const Lit lookingForAncestor
 ) {
     propStats.otfHyperTime += 1;
@@ -722,7 +722,7 @@ inline bool PropEngine::isAncestorOf(
     << "conflict: " << conflict
     << " thisAncestor: " << thisAncestor
     << " thisStepRed: " << thisStepRed
-    << " onlyNonRed: " << onlyNonRed
+    << " onlyIrred: " << onlyIrred
     << " lookingForAncestor: " << lookingForAncestor << endl;
     #endif
 
@@ -741,11 +741,11 @@ inline bool PropEngine::isAncestorOf(
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << endl;
     cout << "This step based on redundant cl? " << (thisStepRed ? "yes" : "false") << endl;
-    cout << "Only irred is acceptable?" << (onlyNonRed ? "yes" : "no") << endl;
+    cout << "Only irred is acceptable?" << (onlyIrred ? "yes" : "no") << endl;
     cout << "This step would be based on redundant cl?" << (thisStepRed ? "yes" : "no") << endl;
     #endif
 
-    if (onlyNonRed && thisStepRed) {
+    if (onlyIrred && thisStepRed) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "This step doesn't work -- is redundant but needs irred" << endl;
         #endif
@@ -782,7 +782,7 @@ inline bool PropEngine::isAncestorOf(
         }
 
         const PropBy& data = varData[thisAncestor.var()].reason;
-        if ((onlyNonRed && data.isRedStep())
+        if ((onlyIrred && data.isRedStep())
             || data.getHyperbinNotAdded()
         ) {
             #ifdef VERBOSE_DEBUG_FULLPROP
