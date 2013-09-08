@@ -136,6 +136,7 @@ bool VarReplacer::performReplace()
         }
 
         //Okay, so unset decision, and set the other one decision
+        assert(var != it->var());
         solver->varData[var].removed = Removed::replaced;
         assert(
             (solver->varData[it->var()].removed == Removed::none
