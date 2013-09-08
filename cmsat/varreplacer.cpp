@@ -110,7 +110,10 @@ bool VarReplacer::performReplace()
         printReplaceStats();
 
     Var var = 0;
-    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
+    for (vector<Lit>::const_iterator
+        it = table.begin(); it != table.end()
+        ; it++, var++
+    ) {
 
         //Was queued for replacement, but it's the top of the tree, so, it's normal again
         if (it->var() == var
