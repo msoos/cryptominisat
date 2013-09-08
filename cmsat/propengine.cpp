@@ -1540,26 +1540,6 @@ vector<Lit> PropEngine::getUnitaries() const
     return unitaries;
 }
 
-uint32_t PropEngine::countNumBinClauses(const bool alsoRed, const bool alsoNonRed) const
-{
-    uint32_t num = 0;
-
-    size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
-        it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
-        const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
-            if (it2->isBinary()) {
-                if (it2->red()) num += alsoRed;
-                else num+= alsoNonRed;
-            }
-        }
-    }
-
-    assert(num % 2 == 0);
-    return num/2;
-}
-
 void PropEngine::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter

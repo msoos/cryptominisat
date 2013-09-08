@@ -254,7 +254,6 @@ public:
     uint32_t    decisionLevel() const;      ///<Returns current decision level
     vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses
     uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
-    uint32_t    countNumBinClauses(const bool alsoRed, const bool alsoNonRed) const;
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);

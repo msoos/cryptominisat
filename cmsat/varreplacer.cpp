@@ -159,11 +159,6 @@ bool VarReplacer::performReplace()
     solver->testAllClauseAttach();
     assert(solver->qhead == solver->trail.size());
 
-#ifdef DEBUG_BIN_CLAUSE_NUM
-    solver->countNumBinClauses(true, false);
-    solver->countNumBinClauses(false, true);
-#endif
-
     //Replace implicits
     if (!replaceImplicit()) {
         goto end;
