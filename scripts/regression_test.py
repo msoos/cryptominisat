@@ -818,7 +818,7 @@ class Tester:
     def fuzz_test(self) :
         fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            #, ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             , ["build/cnf-fuzz-biere"] \
             #, ["build/cnf-fuzz-nossum"] \
             #, ["build/largefuzzer"] \
