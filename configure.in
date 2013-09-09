@@ -157,38 +157,6 @@ AC_DEFINE([USE_GAUSS])
 #search for openmp
 AC_OPENMP
 
-# mysql
-#AC_ARG_WITH(mysql_config,
-#        AC_HELP_STRING(
-#                [--with-mysql_config=PROGRAM],
-#                [location of the mysql_config program]),
-#        [mysql_config_prog=$withval])
-#AC_PATH_PROG(MYSQL_CONFIG, mysql_config, $mysql_config_prog)
-#
-#if test "x$MYSQL_CONFIG" != "x"; then
-#    AC_MSG_CHECKING([mysql version])
-#
-#    # now that we've found the libraries, check for MySQL < 4.0
-#    MYSQL_VERSION=$($MYSQL_CONFIG --version)
-#
-#    if test "x${MYSQL_VERSION//.*/}" = "x3"; then
-#        AC_MSG_RESULT([too old, please install version 3 or later])
-#    else
-#        AC_MSG_RESULT([OK])
-#        # Determine MySQL library path
-#        MYSQL_LIBS=$($MYSQL_CONFIG --libs)
-#        LIBS="$LIBS $MYSQL_LIBS"
-#
-#        # set that we have mysql
-#        AC_DEFINE(CMSAT_HAVE_MYSQL, 1,
-#        [Define if your system has mysql libs (dev package) installed.])
-#
-#        ## Determine MySQL include path
-#        MYSQL_INCLUDE=$($MYSQL_CONFIG --cflags)
-#        CPPFLAGS="$CPPFLAGS $MYSQL_INCLUDE"
-#    fi
-#fi
-
 #check zlib
 AC_CHECK_LIB([z], [gzread], ,
                  [AC_MSG_ERROR([zlib not found, see http://www.zlib.net])])
