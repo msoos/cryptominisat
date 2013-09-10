@@ -208,6 +208,18 @@ class VarReplacer
         //Helpers for replace()
         void replaceChecks(const Lit lit1, const Lit lit2) const;
         bool handleAlreadyReplaced(const Lit lit1, const Lit lit2);
+        bool handleBothAlreadySet(
+            const Lit lit1
+            , const lbool val1
+            , const Lit lit2
+            , const lbool val2
+        );
+        bool handleOnlyOneSet(
+            const Lit lit1
+            , const lbool val1
+            , const Lit lit2
+            , const lbool val2
+        );
 
         //Temporary used in replaceImplicit
         vector<BinaryClause> delayedAttach;

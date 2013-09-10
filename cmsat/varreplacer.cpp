@@ -785,6 +785,60 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     return true;
 }
 
+bool VarReplacer::handleBothAlreadySet(
+    const Lit lit1
+    , const lbool val1
+    , const Lit lit2
+    , const lbool val2
+) {
+    if (val1 != val2) {
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << ~lit1 << " 0\n"
+            << lit1 << " 0\n"
+            << "0\n";
+        }
+        #endif
+        solver->ok = false;
+    }
+
+    //Already set, return with correct code
+    return solver->ok;
+}
+
+bool VarReplacer::handleOnlyOneSet(
+    const Lit lit1
+    , const lbool val1
+    , const Lit lit2
+    , const lbool val2
+) {
+    if (solver->ok) {
+        Lit toEnqueue;
+        if (val1 != l_Undef) {
+            toEnqueue = lit2 ^ (val1 == l_False);
+        } else {
+            toEnqueue = lit1 ^ (val2 == l_False);
+        }
+        solver->enqueue(toEnqueue);
+
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << toEnqueue
+            << " 0\n";
+        }
+        #endif
+
+        #ifdef STATS_NEEDED
+        solver->propStats.propsUnit++;
+        #endif
+
+        solver->ok = (solver->propagate().isNULL());
+    }
+    return solver->ok;
+}
+
 /**
 @brief Replaces two two lits with one another
 */
@@ -816,7 +870,7 @@ bool VarReplacer::replace(
 
     //Already inside?
     if (lit1.var() == lit2.var()) {
-        return handleAlreadyReplaced();
+        return handleAlreadyReplaced(lit1, lit2);
     }
 
     //Not already inside
@@ -838,48 +892,14 @@ bool VarReplacer::replace(
     lbool val1 = solver->value(lit1);
     lbool val2 = solver->value(lit2);
     if (val1 != l_Undef && val2 != l_Undef) {
-        if (val1 != val2) {
-            #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << ~lit1 << " 0\n"
-                << lit1 << " 0\n"
-                << "0\n";
-            }
-            #endif
-            solver->ok = false;
-        }
-
-        //Already set, return with correct code
-        return solver->ok;
+        return handleBothAlreadySet(lit1, val1, lit2, val2);
     }
 
-    //exactly one l_Undef, exectly one l_True/l_False
-    if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
-        if (solver->ok) {
-            Lit toEnqueue;
-            if (val1 != l_Undef) {
-                toEnqueue = lit2 ^ (val1 == l_False);
-            } else {
-                toEnqueue = lit1 ^ (val2 == l_False);
-            }
-            solver->enqueue(toEnqueue);
-
-            #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << toEnqueue
-                << " 0\n";
-            }
-            #endif
-
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
-
-            solver->ok = (solver->propagate().isNULL());
-        }
-        return solver->ok;
+    //exactly one set
+    if ((val1 != l_Undef && val2 == l_Undef)
+        || (val2 != l_Undef && val1 == l_Undef)
+    ) {
+        return handleOnlyOneSet(lit1, val1, lit2, val2);
     }
 
     assert(val1 == l_Undef && val2 == l_Undef);
