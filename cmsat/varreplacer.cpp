@@ -112,6 +112,32 @@ void VarReplacer::update_vardata_and_decisionvar(
     solver->order_heap.update(orig);
 }
 
+bool VarReplacer::enqueueDelayedEnqueue()
+{
+    for(vector<Lit>::const_iterator
+        it = delayedEnqueue.begin(), end = delayedEnqueue.end()
+        ; it != end
+        ; it++
+    ) {
+        if (solver->value(*it) == l_Undef) {
+            solver->enqueue(*it);
+            #ifdef STATS_NEEDED
+            solver->propStats.propsUnit++;
+            #endif
+        } else if (solver->value(*it) == l_False) {
+            solver->ok = false;
+            break;
+        }
+    }
+    delayedEnqueue.clear();
+
+    if (!solver->ok)
+        return false;
+
+    solver->ok = solver->propagate().isNULL();
+    return solver->ok;
+}
+
 bool VarReplacer::performReplace()
 {
     assert(solver->ok);
@@ -165,26 +191,7 @@ bool VarReplacer::performReplace()
 
     //While replacing the implicit clauses
     //we cannot enqueue literals, so we do it now
-    for(vector<Lit>::const_iterator
-        it = delayedEnqueue.begin(), end = delayedEnqueue.end()
-        ; it != end
-        ; it++
-    ) {
-        if (solver->value(*it) == l_Undef) {
-            solver->enqueue(*it);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
-        } else if (solver->value(*it) == l_False) {
-            solver->ok = false;
-            break;
-        }
-    }
-    delayedEnqueue.clear();
-    if (!solver->ok)
-        goto end;
-    solver->ok = solver->propagate().isNULL();
-    if (!solver->ok)
+    if (!enqueueDelayedEnqueue())
         goto end;
 
     //Replace longs

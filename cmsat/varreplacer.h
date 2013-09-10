@@ -203,6 +203,7 @@ class VarReplacer
             const Var orig
             , const Var replaced
         );
+        bool enqueueDelayedEnqueue();
 
         //Temporary used in replaceImplicit
         vector<BinaryClause> delayedAttach;
