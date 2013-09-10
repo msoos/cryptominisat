@@ -518,16 +518,16 @@ bool VarReplacer::replaceImplicit()
             assert(solver->value(origLit2) == l_Undef);
             assert(origLit1.var() != origLit2.var());
 
+            //Update main lit
+            if (table[lit1.var()].var() != lit1.var()) {
+                lit1 = table[lit1.var()] ^ lit1.sign();
+                runStats.replacedLits++;
+            }
+
             //Update lit2
             if (table[lit2.var()].var() != lit2.var()) {
                 lit2 = table[lit2.var()] ^ lit2.sign();
                 i->setLit2(lit2);
-                runStats.replacedLits++;
-            }
-
-            //Update main lit
-            if (table[lit1.var()].var() != lit1.var()) {
-                lit1 = table[lit1.var()] ^ lit1.sign();
                 runStats.replacedLits++;
             }
 
