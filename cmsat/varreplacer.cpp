@@ -481,6 +481,9 @@ void VarReplacer::updateStatsFromImplStats()
     solver->checkImplicitStats();
     #endif
 
+    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
+    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedIrredTri/3;
+
     impl_tmp_stats.clear();
 }
 
@@ -553,10 +556,6 @@ bool VarReplacer::replaceImplicit()
     #endif
 
     updateStatsFromImplStats();
-
-    //Global stats update
-    runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
-    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedIrredTri/3;
 
     return solver->ok;
 }
