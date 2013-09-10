@@ -883,7 +883,7 @@ bool VarReplacer::replace(
     }
     #endif
 
-    //Even the moved-forward version must be unremoved
+    //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none
             || solver->varData[lit1.var()].removed == Removed::queued_replacer);
     assert(solver->varData[lit2.var()].removed == Removed::none
