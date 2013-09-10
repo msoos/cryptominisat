@@ -762,6 +762,29 @@ void VarReplacer::replaceChecks(const Lit lit1, const Lit lit2) const
             || solver->varData[lit2.var()].removed == Removed::queued_replacer);
 }
 
+bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
+{
+    //OOps, already inside, but with inverse polarity, UNSAT
+    if (lit1.sign() != lit2.sign()) {
+        #ifdef DRUP
+        if (solver->drup) {
+            *(solver->drup)
+            << ~lit1 << " " << lit2 << " 0\n"
+            << lit1 << " " << ~lit2 << " 0\n"
+            << lit1 << " 0\n"
+            << ~lit1 << " 0\n"
+            << "0\n"
+            ;
+        }
+        #endif
+        solver->ok = false;
+        return false;
+    }
+
+    //Already inside in the correct way, return
+    return true;
+}
+
 /**
 @brief Replaces two two lits with one another
 */
@@ -793,26 +816,7 @@ bool VarReplacer::replace(
 
     //Already inside?
     if (lit1.var() == lit2.var()) {
-        if (lit1.sign() != lit2.sign()) {
-
-            //Add new (that is inverse) and fail
-            #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << ~lit1 << " " << lit2 << " 0\n"
-                << lit1 << " " << ~lit2 << " 0\n"
-                << lit1 << " 0\n"
-                << ~lit1 << " 0\n"
-                << "0\n"
-                ;
-            }
-            #endif
-            solver->ok = false;
-            return false;
-        }
-
-        //Already inside in the correct way, return
-        return true;
+        return handleAlreadyReplaced();
     }
 
     //Not already inside

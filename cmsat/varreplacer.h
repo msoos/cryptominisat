@@ -207,6 +207,7 @@ class VarReplacer
 
         //Helpers for replace()
         void replaceChecks(const Lit lit1, const Lit lit2) const;
+        bool handleAlreadyReplaced(const Lit lit1, const Lit lit2);
 
         //Temporary used in replaceImplicit
         vector<BinaryClause> delayedAttach;
