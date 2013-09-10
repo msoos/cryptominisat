@@ -6,7 +6,7 @@
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 3.0 of the License, or (at your option) any later version.
+ * version 2.0 of the License, or (at your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -69,18 +69,6 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
-/**
-@brief Replaces variables, clears internal clauses, and reports stats
-
-When replacing, it is imperative not to make variables decision variables
-which have been removed by other methods:
-\li variable removal at the xor-sphere
-\li disconnected component finding and solving
-\li variable elimination
-
-NOTE: If any new such algoirhtms are added, this part MUST be updated such
-that problems don't creep up
-*/
 bool VarReplacer::performReplace()
 {
     assert(solver->ok);
