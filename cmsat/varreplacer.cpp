@@ -75,14 +75,14 @@ void VarReplacer::update_vardata_and_decisionvar(
 ) {
      //Was queued for replacement, but it's the top of the tree, so
     //it's normal again
-    if (replaced_with == orig
+    if (orig == replaced_with
         && solver->varData[replaced_with].removed == Removed::queued_replacer
     ) {
         solver->varData[replaced_with].removed = Removed::none;
     }
 
     //Not replaced_with, or not replaceable, so skip
-    if (replaced_with == orig
+    if (orig == replaced_with
         || solver->varData[replaced_with].removed == Removed::decomposed
         || solver->varData[replaced_with].removed == Removed::elimed
     ) {
