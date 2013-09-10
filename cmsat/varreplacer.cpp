@@ -69,6 +69,49 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
+void VarReplacer::update_vardata_and_decisionvar(
+    const Var orig
+    , const Var replaced_with
+) {
+     //Was queued for replacement, but it's the top of the tree, so
+    //it's normal again
+    if (replaced_with == orig
+        && solver->varData[replaced_with].removed == Removed::queued_replacer
+    ) {
+        solver->varData[replaced_with].removed = Removed::none;
+    }
+
+    //Not replaced_with, or not replaceable, so skip
+    if (replaced_with == orig
+        || solver->varData[replaced_with].removed == Removed::decomposed
+        || solver->varData[replaced_with].removed == Removed::elimed
+    ) {
+        return;
+    }
+
+    //Has already been handled previously, just skip
+    if (solver->varData[orig].removed == Removed::replaced) {
+        return;
+    }
+
+    //Okay, so unset decision, and set the other one decision
+    assert(orig != replaced_with);
+    solver->varData[orig].removed = Removed::replaced;
+    assert(
+        (solver->varData[replaced_with].removed == Removed::none
+            || solver->varData[replaced_with].removed == Removed::queued_replacer)
+        && "It MUST have been queued for varreplacement so top couldn't have been removed/decomposed/etc"
+    );
+    solver->unsetDecisionVar(orig);
+    solver->setDecisionVar(replaced_with);
+
+    //Update activities. Top receives activities of the ones below
+    //The activities of the others don't need to be updated -- they are not
+    //set to be decision vars anyway
+    solver->activities[replaced_with] += solver->activities[orig];
+    solver->order_heap.update(orig);
+}
+
 bool VarReplacer::performReplace()
 {
     assert(solver->ok);
@@ -102,43 +145,7 @@ bool VarReplacer::performReplace()
         it = table.begin(); it != table.end()
         ; it++, var++
     ) {
-        //Was queued for replacement, but it's the top of the tree, so
-        //it's normal again
-        if (it->var() == var
-            && solver->varData[it->var()].removed == Removed::queued_replacer
-        ) {
-            solver->varData[it->var()].removed = Removed::none;
-        }
-
-        //Not replaced, or not replaceable, so skip
-        if (it->var() == var
-            || solver->varData[it->var()].removed == Removed::decomposed
-            || solver->varData[it->var()].removed == Removed::elimed
-        ) {
-            continue;
-        }
-
-        //Has already been handled previously, just skip
-        if (solver->varData[var].removed == Removed::replaced) {
-            continue;
-        }
-
-        //Okay, so unset decision, and set the other one decision
-        assert(var != it->var());
-        solver->varData[var].removed = Removed::replaced;
-        assert(
-            (solver->varData[it->var()].removed == Removed::none
-                || solver->varData[it->var()].removed == Removed::queued_replacer)
-            && "It MUST have been queued for varreplacement so top couldn't have been removed/decomposed/etc"
-        );
-        solver->unsetDecisionVar(var);
-        solver->setDecisionVar(it->var());
-
-        //Update activities. Top receives activities of the ones below
-        //The activities of the others don't need to be updated -- they are not
-        //set to be decision vars anyway
-        solver->activities[it->var()] += solver->activities[var];
-        solver->order_heap.update(var);
+       update_vardata_and_decisionvar(var, it->var());
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;

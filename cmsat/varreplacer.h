@@ -199,6 +199,10 @@ class VarReplacer
         Solver* solver; ///<The solver we are working with
 
         bool replace_set(vector<ClOffset>& cs);
+        void update_vardata_and_decisionvar(
+            const Var orig
+            , const Var replaced
+        );
 
         //Temporary used in replaceImplicit
         vector<BinaryClause> delayedAttach;
