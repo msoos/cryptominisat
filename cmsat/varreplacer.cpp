@@ -746,30 +746,8 @@ void VarReplacer::extendModel(SolutionExtender* extender) const
     }
 }
 
-/**
-@brief Replaces two two vars in "ps" with one another. xorEqualFalse defines anti/equivalence
-
-It can be tricky to do this. For example, if:
-
-\li a replaces: b, c
-\li f replaces: f, h
-\li we just realised that c = h
-This is the most difficult case, but there are other cases, e.g. if we already
-know that c=h, in which case we don't do anything
-
-@p ps must contain 2 variables(!), i.e literals with no sign
-@p xorEqualFalse if True, the two variables are equivalent. Otherwise, they are antivalent
-*/
-bool VarReplacer::replace(
-    Lit lit1
-    , Lit lit2
-    , const bool xorEqualFalse
-    , bool addLaterAsTwoBins
-)
+void VarReplacer::replaceChecks(const Lit lit1, const Lit lit2) const
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << endl;
-    #endif
 
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
@@ -782,6 +760,23 @@ bool VarReplacer::replace(
             || solver->varData[lit1.var()].removed == Removed::queued_replacer);
     assert(solver->varData[lit2.var()].removed == Removed::none
             || solver->varData[lit2.var()].removed == Removed::queued_replacer);
+}
+
+/**
+@brief Replaces two two lits with one another
+*/
+bool VarReplacer::replace(
+    Lit lit1
+    , Lit lit2
+    , const bool xorEqualFalse
+    , bool addLaterAsTwoBins
+)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << endl;
+    #endif
+
+    replaceChecks(lit1, lit2);
 
     #ifdef DRUP_DEBUG
     if (solver->drup) {

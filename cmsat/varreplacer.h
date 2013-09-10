@@ -205,6 +205,9 @@ class VarReplacer
         );
         bool enqueueDelayedEnqueue();
 
+        //Helpers for replace()
+        void replaceChecks(const Lit lit1, const Lit lit2) const;
+
         //Temporary used in replaceImplicit
         vector<BinaryClause> delayedAttach;
         bool replaceImplicit();
