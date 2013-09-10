@@ -785,7 +785,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     return true;
 }
 
-bool VarReplacer::handleBothAlreadySet(
+bool VarReplacer::handleBothSet(
     const Lit lit1
     , const lbool val1
     , const Lit lit2
@@ -807,7 +807,7 @@ bool VarReplacer::handleBothAlreadySet(
     return solver->ok;
 }
 
-bool VarReplacer::handleOnlyOneSet(
+bool VarReplacer::handleOneSet(
     const Lit lit1
     , const lbool val1
     , const Lit lit2
@@ -891,15 +891,17 @@ bool VarReplacer::replace(
 
     lbool val1 = solver->value(lit1);
     lbool val2 = solver->value(lit2);
+
+    //Both are set
     if (val1 != l_Undef && val2 != l_Undef) {
-        return handleBothAlreadySet(lit1, val1, lit2, val2);
+        return handleBothSet(lit1, val1, lit2, val2);
     }
 
     //exactly one set
     if ((val1 != l_Undef && val2 == l_Undef)
         || (val2 != l_Undef && val1 == l_Undef)
     ) {
-        return handleOnlyOneSet(lit1, val1, lit2, val2);
+        return handleOneSet(lit1, val1, lit2, val2);
     }
 
     assert(val1 == l_Undef && val2 == l_Undef);
