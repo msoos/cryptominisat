@@ -2433,6 +2433,21 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
         if (value(p) == l_True) {
             // Dummy decision level:
             newDecisionLevel();
+
+            //To store matrix in case it needs to be stored. No new information is meant to be available at this point.
+            #ifdef USE_GAUSS
+            //These are not supposed to be changed *at all* by the funciton
+            //since it has already been called before
+            vec<Lit>    learnt_clause;
+            uint64_t conflictC;
+
+            for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
+                llbool ret = (*gauss)->find_truths(learnt_clause, conflictC);
+                assert(ret == l_Nothing);
+            }
+            #endif //USE_GAUSS
+
+
         } else if (value(p) == l_False) {
             analyzeFinal(~p, conflict);
             return l_False;
