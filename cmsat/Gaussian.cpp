@@ -393,9 +393,24 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
         return ret;
     }
 
+    /*cout << "ret is :";
+    if (ret == nothing) {
+        cout << "nothing" << endl;
+    } else if (ret == conflict) {
+        cout << "conflict" << endl;
+    } else if (ret == unit_conflict) {
+        cout << "unit_conflict";
+    } else if (ret == propagation) {
+        cout << "propagation";
+    } else if (ret == unit_propagation) {
+        cout << "unit propagation";
+    }*/
+
     if (ret == nothing &&
-        solver.decisionLevel() % config.only_nth_gauss_save == 0)
+        solver.decisionLevel() % config.only_nth_gauss_save == 0
+    ) {
         set_matrixset_to_cur();
+    }
 
     #ifdef VERBOSE_DEBUG
     if (ret == nothing)
