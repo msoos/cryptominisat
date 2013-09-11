@@ -348,15 +348,21 @@ inline void Gaussian::update_last_one_in_col(matrixset& m)
 
 Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 {
-    if (solver.decisionLevel() >= badlevel)
+    //cout << ">>G-----" << endl;
+    if (solver.decisionLevel() >= badlevel) {
+        //cout << "Over badlevel" << endl;
+        //cout << "<<----G" << endl;
         return nothing;
+    }
+
+    const uint32_t level = solver.decisionLevel() / config.only_nth_gauss_save;
+    //cout << "level: " << level << " matrix_sets.size(): " << matrix_sets.size() << endl;
 
     if (messed_matrix_vars_since_reversal) {
         #ifdef VERBOSE_DEBUG
         cout << "(" << matrix_no << ")matrix needs copy before update" << endl;
         #endif
 
-        const uint32_t level = solver.decisionLevel() / config.only_nth_gauss_save;
         assert(level < matrix_sets.size());
         cur_matrixset = matrix_sets[level];
     }
@@ -390,6 +396,8 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
         badlevel = solver.decisionLevel();
+        //cout << "Set badlevel to " << badlevel << endl;
+        //cout << "<<----G" << endl;
         return ret;
     }
 
@@ -421,6 +429,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
     cout << "(" << matrix_no << ")Useful confl in " << ((double)useful_confl/(double)called)*100.0 << "%" << endl;
     #endif
 
+    //cout << "<<----G" << endl;
     return ret;
 }
 
