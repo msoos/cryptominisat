@@ -1,4 +1,4 @@
-m4_define([gettext_version], [2.9.7])
+m4_define([gettext_version], [2.9.8])
 
 AC_INIT(cmsat, gettext_version)
 AC_PREREQ([2.62])

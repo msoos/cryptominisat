@@ -1,3 +1,6 @@
+ver 2.9.8
+* Fixed problems with Gaussian elimination in case assumptions were used
+
 ver 2.9.7
 * Adding missing function definitions
 * Converting all 3-long XORs into 4-long XORs before dumping simplified
