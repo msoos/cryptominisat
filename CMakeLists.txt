@@ -51,6 +51,7 @@ endif(LLVM)
 IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     SET(CMAKE_EXE_LINKER_FLAGS "-static")
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    SET(Boost_USE_STATIC_LIBS ON)
 ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 
 # -----------------------------------------------------------------------------
@@ -118,7 +119,6 @@ ELSE (STATSNEEDED)
 ENDIF (STATSNEEDED)
 
 # Look for Boost program options
-#SET(Boost_USE_STATIC_LIBS ON)
 find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
 
 #M4RI
