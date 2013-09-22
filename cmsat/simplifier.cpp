@@ -2843,9 +2843,7 @@ bool Simplifier::checkEmptyResolvent(const Lit lit)
     );
 
     //Okay, this would be great
-    if (num_resolvents == 0) {
-        return true;
-    }
+    return (num_resolvents == 0);
 }
 
 
