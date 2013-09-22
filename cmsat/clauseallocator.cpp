@@ -266,7 +266,8 @@ void ClauseAllocator::consolidate(
         }
 
         //Move to new position
-        uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+        uint32_t bytesNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
+        uint32_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
         assert(sizeNeeded <= size && "New clause size must not be bigger than orig clause size");
         memmove(newDataStart, tmpDataStart, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
