@@ -32,7 +32,7 @@
 
 #include "watched.h"
 
-#define BASE_DATA_TYPE uint32_t
+#define BASE_DATA_TYPE uint64_t
 
 namespace CMSat {
 

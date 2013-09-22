@@ -185,7 +185,7 @@ rerturns a 32-bit value that is a concatenation of these two
 */
 ClOffset ClauseAllocator::getOffset(const Clause* ptr) const
 {
-    return ((uint32_t*)ptr - dataStart);
+    return ((BASE_DATA_TYPE*)ptr - dataStart);
 }
 
 /**
