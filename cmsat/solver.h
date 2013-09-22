@@ -68,7 +68,7 @@ class Solver : public Searcher
 {
     public:
         Solver(const SolverConf _conf = SolverConf());
-        ~Solver();
+        virtual ~Solver();
 
         //////////
         //External stats

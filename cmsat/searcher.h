@@ -55,7 +55,7 @@ class Searcher : public PropEngine
 {
     public:
         Searcher(const SolverConf& _conf, Solver* solver);
-        ~Searcher();
+        virtual ~Searcher();
 
         //History
         struct Hist {
