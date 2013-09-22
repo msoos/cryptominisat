@@ -114,8 +114,9 @@ void* ClauseAllocator::allocEnough(
     );
 
     //Try to quickly find a place at the end of a dataStart
+    uint32_t neededbytes = (sizeof(Clause) + sizeof(Lit)*clauseSize);
     uint32_t needed
-        = (sizeof(Clause) + sizeof(Lit)*clauseSize) /sizeof(BASE_DATA_TYPE);
+        = neededbytes/sizeof(BASE_DATA_TYPE) + (bool)(neededbytes % sizeof(BASE_DATA_TYPE));
 
     if (size + needed > maxSize) {
         //Grow by default, but don't go under or over the limits
@@ -206,7 +207,9 @@ void ClauseAllocator::clauseFree(Clause* cl)
     assert(!cl->getFreed());
 
     cl->setFreed();
-    currentlyUsedSize -= (sizeof(Clause) + cl->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+    size_t bytes_freed = (sizeof(Clause) + cl->size()*sizeof(Lit));
+    size_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
+    currentlyUsedSize -= elems_freed;
 }
 
 void ClauseAllocator::clauseFree(ClOffset offset)
