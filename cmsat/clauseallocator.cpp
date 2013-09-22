@@ -256,7 +256,7 @@ void ClauseAllocator::consolidate(
     BASE_DATA_TYPE* tmpDataStart = dataStart;
 
     assert(sizeof(Clause) % sizeof(BASE_DATA_TYPE) == 0);
-    assert(sizeof(Lit) % sizeof(BASE_DATA_TYPE) == 0);
+    assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
     for (auto size: origClauseSizes) {
         Clause* clause = (Clause*)tmpDataStart;
         //Already freed, so skip entirely
