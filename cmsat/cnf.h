@@ -89,6 +89,27 @@ struct VarData
 
 struct CNF
 {
+    struct BinTriStats
+    {
+        BinTriStats() :
+            irredLits(0)
+            , redLits(0)
+            , irredBins(0)
+            , redBins(0)
+            , irredTris(0)
+            , redTris(0)
+            , numNewBinsSinceSCC(0)
+        {};
+
+        uint64_t irredLits;  ///< Number of literals in irred clauses
+        uint64_t redLits;  ///< Number of literals in redundant clauses
+        uint64_t irredBins;
+        uint64_t redBins;
+        uint64_t irredTris;
+        uint64_t redTris;
+        uint64_t numNewBinsSinceSCC;
+    };
+
     CNF(ClauseAllocator* _clAllocator) :
         clAllocator(_clAllocator)
         , ok(true)
@@ -106,6 +127,10 @@ struct CNF
     #endif
     Stamp stamp;
     uint32_t minNumVars;
+    vector<char> decisionVar;
+    vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
+    vector<ClOffset> longRedCls;          ///< List of redundant clauses.
+    BinTriStats binTri;
 
     uint32_t nVars() const
     {
