@@ -538,7 +538,7 @@ private:
             , count(std::numeric_limits<uint32_t>::max()) //resolution count (if can be counted, otherwise MAX)
         {};
 
-        size_t totalCls() const
+        uint32_t totalCls() const
         {
             return bin + tri + longer;
         }
