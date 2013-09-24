@@ -14,6 +14,10 @@ ENDIF()
 PROJECT(cryptoms)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
 
+macro(add_cxx_flag flagname)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+endmacro()
+
 #set(LLVM 1)
 if (LLVM)
     SET (CMAKE_C_COMPILER             "clang")
@@ -24,18 +28,55 @@ if (LLVM)
     SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
 
     SET (CMAKE_CXX_COMPILER             "clang++")
-    SET (CMAKE_CXX_FLAGS                "-Wall -Wextra -std=c++11 -fsanitize=return -fsanitize=bounds -fsanitize=integer") #-fsanitize=address -fsanitize=undefined (this one is wrong?)
+    SET (CMAKE_CXX_FLAGS                "--std=c++11")
     SET (CMAKE_CXX_FLAGS_DEBUG          "-g")
     SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
     SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
     SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+
+    #sanitizer
+    add_cxx_flag("-fsanitize=return")
+    add_cxx_flag("-fsanitize=bounds")
+    add_cxx_flag("-fsanitize=integer")
+    add_cxx_flag("-fsanitize=undefined")
+    add_cxx_flag("-fsanitize=float-divide-by-zero")
+    add_cxx_flag("-fsanitize=integer-divide-by-zero")
+    add_cxx_flag("-fsanitize=null")
+    add_cxx_flag("-fsanitize=unsigned-integer-overflow")
+    add_cxx_flag("-fsanitize=address")
+    add_cxx_flag("-Wno-bitfield-constant-conversion")
+
 else (LLVM)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        "-std=c++0x -pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O4 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O4 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O2 -g -DNDEBUG -mtune=native")
 
 endif(LLVM)
+
+
+include(CheckCXXCompilerFlag)
+macro(add_cxx_flag_if_supported flagname)
+  check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
+
+  if(HAVE_FLAG_${flagname})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+    message(STATUS "flag ${flagname} supported")
+  else()
+    message(STATUS "flag ${flagname} NOT supported")
+  endif()
+endmacro()
+
+add_cxx_flag_if_supported("-Wall")
+add_cxx_flag_if_supported("-Wextra")
+add_cxx_flag_if_supported("-Wunused")
+add_cxx_flag_if_supported("-pedantic")
+add_cxx_flag_if_supported("-Wsign-compare")
+add_cxx_flag_if_supported("-fno-omit-frame-pointer")
+add_cxx_flag_if_supported("-Wtype-limits")
+add_cxx_flag_if_supported("-Wuninitialized")
+add_cxx_flag_if_supported("-Wno-deprecated")
+add_cxx_flag_if_supported("-Wstrict-aliasing")
+add_cxx_flag_if_supported("-Wpointer-arith")
 
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
