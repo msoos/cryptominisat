@@ -122,7 +122,7 @@ enum class PolarityMode {
 */
 class Lit
 {
-    uint32_t     x;
+    uint32_t x;
     explicit Lit(uint32_t i) : x(i) { };
 public:
     Lit() : x(2*var_Undef) {}   // (lit_Undef)
