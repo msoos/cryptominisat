@@ -31,6 +31,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <limits>
 #include "assert.h"
 
 namespace CMSat {
@@ -42,7 +43,7 @@ using std::string;
 
 //Typedefs
 typedef uint32_t Var;
-static const Var var_Undef(~0U);
+static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
 enum class Restart {
     glue
     , glue_agility
