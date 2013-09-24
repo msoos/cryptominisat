@@ -37,12 +37,9 @@
 #include "heap.h"
 #include "alg.h"
 #include "MersenneTwister.h"
-#include "solvertypes.h"
 #include "clause.h"
 #include "boundedqueue.h"
-#include "solverconf.h"
-#include "clauseallocator.h"
-#include "stamp.h"
+#include "cnf.h"
 
 namespace CMSat {
 
@@ -107,87 +104,6 @@ private:
     vector<T> inter;
 };
 
-struct VarData
-{
-    struct Stats
-    {
-        Stats() :
-            posPolarSet(0)
-            , negPolarSet(0)
-            #ifdef STATS_NEEDED
-            , posDecided(0)
-            , negDecided(0)
-            , flippedPolarity(0)
-            #endif
-        {}
-
-        void addData(VarData::Stats& other)
-        {
-            posPolarSet += other.posPolarSet;
-            negPolarSet += other.negPolarSet;
-            #ifdef STATS_NEEDED
-            posDecided += other.posDecided;
-            negDecided += other.negDecided;
-            flippedPolarity += other.flippedPolarity;
-
-            trailLevelHist.addData(other.trailLevelHist);
-            decLevelHist.addData(other.decLevelHist);
-            #endif
-        }
-
-        void reset()
-        {
-            Stats tmp;
-            *this = tmp;
-        }
-
-        ///Number of times positive/negative polarity has been set
-        uint32_t posPolarSet;
-        uint32_t negPolarSet;
-
-        #ifdef STATS_NEEDED
-        ///Decided on
-        uint32_t posDecided;
-        uint32_t negDecided;
-
-        ///Number of times polarity has been flipped
-        uint32_t flippedPolarity;
-
-        ///The history of levels it was assigned
-        AvgCalc<uint32_t> trailLevelHist;
-
-        ///The history of levels it was assigned
-        AvgCalc<uint32_t> decLevelHist;
-        #endif
-    };
-
-    VarData() :
-        level(std::numeric_limits< uint32_t >::max())
-        , reason(PropBy())
-        , removed(Removed::none)
-        , polarity(false)
-    {}
-
-    ///contains the decision level at which the assignment was made.
-    uint32_t level;
-
-    //Used during hyper-bin and trans-reduction for speed
-    uint32_t depth;
-
-    //Reason this got propagated. NULL means decision/toplevel
-    PropBy reason;
-
-    ///Whether var has been eliminated (var-elim, different component, etc.)
-    Removed removed;
-
-    ///The preferred polarity of each variable.
-    bool polarity;
-
-    #ifdef STATS_NEEDED
-    Stats stats;
-    #endif
-};
-
 struct PolaritySorter
 {
     PolaritySorter(const vector<VarData>& _varData) :
@@ -221,7 +137,7 @@ struct PolaritySorter
 
 Handles watchlists, conflict analysis, propagation, variable settings, etc.
 */
-class PropEngine
+class PropEngine: public CNF
 {
 public:
 
@@ -241,14 +157,9 @@ public:
 
     // Read state:
     //
-    lbool   value      (const Var x) const;       ///<The current value of a variable.
-    lbool   value      (const Lit p) const;       ///<The current value of a literal.
     uint32_t nAssigns   () const;         ///<The current number of assigned literals.
-    uint32_t nVars      () const;         ///<The current number of variables.
-    uint32_t nVarsReal() const;
 
     //Get state
-    bool        okay() const; ///<FALSE means solver is in a conflicting state
     uint32_t    getVerbosity() const;
     uint32_t    getBinWatchSize(const bool alsoRed, const Lit lit) const;
     uint32_t    decisionLevel() const;      ///<Returns current decision level
@@ -276,28 +187,15 @@ protected:
     friend class SQLStats;
     PropStats propStats;
 
-
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
 
     // Solver state:
     //
-    ClauseAllocator*    clAllocator;
-    bool                ok;               ///< If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
-    vector<vec<Watched> > watches;        ///< 'watches[lit]' is a list of constraints watching 'lit'
-    vector<lbool>       assigns;          ///< The current assignments
     vector<Lit>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
-    vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
-    Stamp stamp;
-    uint32_t minNumVars;
-
-
-    #ifdef STATS_NEEDED
-    vector<VarData::Stats>     varDataLT;         ///< Stores info about variable, like 'varData' but long-term
-    #endif
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -508,34 +406,9 @@ inline uint32_t PropEngine::decisionLevel() const
     return trail_lim.size();
 }
 
-inline lbool PropEngine::value (const Var x) const
-{
-    return assigns[x];
-}
-
-inline lbool PropEngine::value (const Lit p) const
-{
-    return assigns[p.var()] ^ p.sign();
-}
-
 inline uint32_t PropEngine::nAssigns() const
 {
     return trail.size();
-}
-
-inline uint32_t PropEngine::nVars() const
-{
-    return minNumVars;
-}
-
-inline uint32_t PropEngine::nVarsReal() const
-{
-    return assigns.size();
-}
-
-inline bool PropEngine::okay() const
-{
-    return ok;
 }
 
 /**

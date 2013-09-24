@@ -51,17 +51,14 @@ PropEngine::PropEngine(
     , const bool _updateGlues
     , const bool _doLHBR
 ) :
+        CNF(_clAllocator)
         // Stats
         #ifdef DRUP
-        drup(NULL),
+        , drup(NULL),
         #endif
-        updateGlues(_updateGlues)
+        , updateGlues(_updateGlues)
         , doLHBR (_doLHBR)
-
-        , clAllocator(_clAllocator)
-        , ok(true)
         , qhead(0)
-        , minNumVars(0)
         , agility(agilityData)
         , stampingTime(0)
 {
