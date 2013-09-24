@@ -773,10 +773,8 @@ void Solver::renumberVariables()
     #endif
 
     //Fill the first part of interToOuter with vars that are used
-    interToOuter.clear();
-    interToOuter.resize(nVarsReal());
-    outerToInter.clear();
-    outerToInter.resize(nVarsReal());
+    vector<Var> outerToInter(nVarsReal());
+    vector<Var> interToOuter(nVarsReal());
     size_t at = 0;
     vector<Var> useless;
     size_t numEffectiveVars = 0;
@@ -815,8 +813,7 @@ void Solver::renumberVariables()
     }
 
     //Create temporary outerToInter2
-    interToOuter2.clear();
-    interToOuter2.resize(interToOuter.size()*2);
+    vector<uint32_t> interToOuter2(interToOuter.size()*2);
     for(size_t i = 0; i < interToOuter.size(); i++) {
         interToOuter2[i*2] = interToOuter[i]*2;
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
@@ -2479,9 +2476,6 @@ void Solver::printMemStats() const
 
     mem = 0;
     mem += interToOuterMain.capacity()*sizeof(Var);
-    mem += interToOuter.capacity()*sizeof(Var);
-    mem += interToOuter2.capacity()*sizeof(Var);
-    mem += outerToInter.capacity()*sizeof(Var);
     mem += outerToInterMain.capacity()*sizeof(Var);
     printStatsLine("c Mem for renumberer"
         , mem/(1024UL*1024UL)
