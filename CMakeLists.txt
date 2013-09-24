@@ -24,7 +24,7 @@ if (LLVM)
     SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
 
     SET (CMAKE_CXX_COMPILER             "clang++")
-    SET (CMAKE_CXX_FLAGS                "-Wall -std=c++11 -fsanitize=undefined")
+    SET (CMAKE_CXX_FLAGS                "-Wall -Wextra -std=c++11 -fsanitize=return -fsanitize=bounds -fsanitize=integer") #-fsanitize=address -fsanitize=undefined (this one is wrong?)
     SET (CMAKE_CXX_FLAGS_DEBUG          "-g")
     SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
     SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
