@@ -2,6 +2,7 @@
 #include "clauseallocator.h"
 #include "stamp.h"
 #include "solvertypes.h"
+#include "implcache.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -126,6 +127,7 @@ struct CNF
     vector<VarData::Stats> varDataLT;
     #endif
     Stamp stamp;
+    ImplCache implCache;
     uint32_t minNumVars;
     vector<char> decisionVar;
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2

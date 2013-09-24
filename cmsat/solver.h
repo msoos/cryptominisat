@@ -427,9 +427,9 @@ class Solver : public Searcher
             bool operator () (const ClOffset x, const ClOffset y);
         };
 
+
         /////////////////////
         // Data
-        ImplCache            implCache;
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
