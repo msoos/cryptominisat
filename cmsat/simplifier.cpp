@@ -2208,10 +2208,10 @@ int Simplifier::testVarElim(const Var var)
     }
 
     //Smaller value returned, the better
-    int cost = after_long + after_tri + after_bin*3
-        - pos.longer - neg.longer
-        - pos.tri - neg.tri
-        - pos.bin*3 - neg.bin*3;
+    int cost = (int)after_long + (int)after_tri + (int)after_bin*(int)3
+        - (int)pos.longer - (int)neg.longer
+        - (int)pos.tri - (int)neg.tri
+        - (int)pos.bin*3 - (int)neg.bin*(int)3;
 
     return cost;
 }
