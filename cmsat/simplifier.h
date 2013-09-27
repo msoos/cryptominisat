@@ -57,7 +57,9 @@ class XorFinderAbst;
 class SubsumeStrengthen;
 
 struct BlockedClause {
-    BlockedClause()
+    BlockedClause() :
+        blockedOn(lit_Undef)
+        , toRemove(false)
     {}
 
     BlockedClause(
