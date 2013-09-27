@@ -35,6 +35,7 @@ using std::endl;
 
 SCCFinder::SCCFinder(Solver* _solver) :
     solver(_solver)
+    , globalIndex(0)
 {}
 
 bool SCCFinder::find2LongXors()
