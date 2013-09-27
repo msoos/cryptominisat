@@ -54,9 +54,8 @@ if (LLVM)
     add_cxx_flag("-Wno-bitfield-constant-conversion")
 else (LLVM)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O4 -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
+    SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O2 -g -DNDEBUG -mtune=native")
-
 endif(LLVM)
 
 
