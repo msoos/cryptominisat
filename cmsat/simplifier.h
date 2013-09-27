@@ -291,10 +291,6 @@ public:
                 , "% vars"
             );
 
-            printStatsLine("c lit-rem-str"
-                , litsRemStrengthen
-            );
-
             printStatsLine("c cl-new"
                 , newClauses
             );
@@ -367,7 +363,6 @@ public:
         uint64_t blockedSumLits;
         uint64_t asymmSubs;
         uint64_t subsumedByVE;
-        uint64_t litsRemStrengthen;
 
         //Stats for var-elim
         int64_t numVarsElimed;
