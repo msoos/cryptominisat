@@ -34,8 +34,8 @@ using std::cout;
 using std::endl;
 
 SCCFinder::SCCFinder(Solver* _solver) :
-    solver(_solver)
-    , globalIndex(0)
+    globalIndex(0)
+    , solver(_solver)
 {}
 
 bool SCCFinder::performSCC()
