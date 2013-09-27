@@ -1702,7 +1702,7 @@ lbool Solver::simplifyProblem()
     if (solveStats.numSimplify > 0
         && conf.doFindAndReplaceEqLits
     ) {
-        if (!sCCFinder->find2LongXors())
+        if (!sCCFinder->performSCC())
             goto end;
 
         if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {
@@ -1750,7 +1750,7 @@ lbool Solver::simplifyProblem()
 
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
-        if (!sCCFinder->find2LongXors())
+        if (!sCCFinder->performSCC())
             goto end;
 
         if (!varReplacer->performReplace())
@@ -1785,7 +1785,7 @@ lbool Solver::simplifyProblem()
 
     //Search & replace 2-long XORs
     if (conf.doFindAndReplaceEqLits) {
-        if (!sCCFinder->find2LongXors())
+        if (!sCCFinder->performSCC())
             goto end;
 
         if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {

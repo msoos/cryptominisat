@@ -2123,7 +2123,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
             solver->clauseCleaner->removeAndCleanAll();
 
             //Find eq lits
-            if (!solver->sCCFinder->find2LongXors()) {
+            if (!solver->sCCFinder->performSCC()) {
                 status = l_False;
                 break;
             }

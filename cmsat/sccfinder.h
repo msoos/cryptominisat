@@ -33,7 +33,7 @@ class Solver;
 class SCCFinder {
     public:
         SCCFinder(Solver* _solver);
-        bool find2LongXors();
+        bool performSCC();
 
         struct Stats
         {
