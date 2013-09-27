@@ -174,6 +174,7 @@ SolverConf::SolverConf() :
 
         , needResultFile       (false)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
+        , printAllRestarts(0)
         , origSeed(0)
 {
 }

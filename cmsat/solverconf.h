@@ -168,7 +168,6 @@ class SolverConf
 
 
         //Optimisations to do
-        bool      printAllRestarts;
         int       doRenumberVars;
         int       doSaveMem;
 
@@ -207,6 +206,7 @@ class SolverConf
         std::string irredDumpFname;       ///<Dump irred original problem CNF to this file. Only active if "needToDumpOrig" is set to TRUE
         uint32_t  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
 
+        int printAllRestarts;
         uint32_t origSeed;
 };
 
