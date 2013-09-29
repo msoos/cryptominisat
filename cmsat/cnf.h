@@ -12,34 +12,27 @@ struct CNF
 {
     struct BinTriStats
     {
-        BinTriStats() :
-            irredLits(0)
-            , redLits(0)
-            , irredBins(0)
-            , redBins(0)
-            , irredTris(0)
-            , redTris(0)
-            , numNewBinsSinceSCC(0)
-        {};
+        uint64_t irredBins = 0;
+        uint64_t redBins = 0;
+        uint64_t irredTris = 0;
+        uint64_t redTris = 0;
+        uint64_t numNewBinsSinceSCC = 0;
+    };
 
-        uint64_t irredLits;  ///< Number of literals in irred clauses
-        uint64_t redLits;  ///< Number of literals in redundant clauses
-        uint64_t irredBins;
-        uint64_t redBins;
-        uint64_t irredTris;
-        uint64_t redTris;
-        uint64_t numNewBinsSinceSCC;
+    struct LitStats
+    {
+        uint64_t irredLits = 0;
+        uint64_t redLits = 0;
     };
 
     CNF(ClauseAllocator* _clAllocator) :
         clAllocator(_clAllocator)
-        , ok(true)
         , minNumVars(0)
     {}
 
     ClauseAllocator* clAllocator;
     //If FALSE, state of CNF is UNSAT
-    bool ok;
+    bool ok = true;
     vector<vec<Watched> > watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<lbool> assigns;
     vector<VarData> varData;
@@ -53,6 +46,7 @@ struct CNF
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
+    LitStats litStats;
 
     uint32_t nVars() const
     {

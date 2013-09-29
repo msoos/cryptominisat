@@ -120,19 +120,19 @@ bool Prober::probe()
     if (numActiveVars < 50LL*1000LL) {
         numPropsTodo *= 1.2;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits  < 2LL*1000LL*1000LL) {
+    if (solver->litStats.redLits + solver->litStats.irredLits  < 2LL*1000LL*1000LL) {
         numPropsTodo *= 1.2;
     }
     if (numActiveVars > 600LL*1000LL) {
         numPropsTodo *= 0.8;
     }
-    if (solver->binTri.redLits + solver->binTri.irredLits > 20LL*1000LL*1000LL) {
+    if (solver->litStats.redLits + solver->litStats.irredLits > 20LL*1000LL*1000LL) {
         numPropsTodo *= 0.8;
     }
     if (solver->conf.verbosity >= 2) {
     cout
         << "c [probe] lits : "
-        << std::setprecision(2) << (double)(solver->binTri.redLits + solver->binTri.irredLits)/(1000.0*1000.0)
+        << std::setprecision(2) << (double)(solver->litStats.redLits + solver->litStats.irredLits)/(1000.0*1000.0)
         << "M"
         << " act vars: "
         << std::setprecision(2) << (double)numActiveVars/1000.0 << "K"

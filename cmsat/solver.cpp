@@ -355,9 +355,9 @@ Clause* Solver::addClauseInt(
                 attachClause(*c);
             else {
                 if (red)
-                    binTri.redLits += ps.size();
+                    litStats.redLits += ps.size();
                 else
-                    binTri.irredLits += ps.size();
+                    litStats.irredLits += ps.size();
             }
 
             return c;
@@ -380,9 +380,9 @@ void Solver::attachClause(
 
     //Update stats
     if (cl.red())
-        binTri.redLits += cl.size();
+        litStats.redLits += cl.size();
     else
-        binTri.irredLits += cl.size();
+        litStats.irredLits += cl.size();
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachClause(cl, checkAttach);
@@ -495,9 +495,9 @@ void Solver::detachModifiedClause(
 ) {
     //Update stats
     if (address->red())
-        binTri.redLits -= origSize;
+        litStats.redLits -= origSize;
     else
-        binTri.irredLits -= origSize;
+        litStats.irredLits -= origSize;
 
     //Call heavy-lifter
     PropEngine::detachModifiedClause(lit1, lit2, origSize, address);
@@ -1191,7 +1191,7 @@ CleaningStats Solver::reduceDB()
     solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = longRedCls.size();
-    tmpStats.origNumLits = binTri.redLits;
+    tmpStats.origNumLits = litStats.redLits;
 
     //Calculate how many to remove
     uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
@@ -3235,7 +3235,7 @@ void Solver::printClauseStats() const
     //LITERALS irred
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
-    << (double)binTri.irredLits/(double)(longIrredCls.size());
+    << (double)litStats.irredLits/(double)(longIrredCls.size());
 
     //LONG red
     if (longRedCls.size() > 20000) {
@@ -3267,7 +3267,7 @@ void Solver::printClauseStats() const
     //LITERALS red
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
-    << (double)binTri.redLits/(double)(longRedCls.size())
+    << (double)litStats.redLits/(double)(longRedCls.size())
     ;
 }
 
@@ -3416,18 +3416,18 @@ void Solver::checkStats(const bool allowFreed) const
     }
 
     //Check counts
-    if (numLitsIrred != binTri.irredLits) {
+    if (numLitsIrred != litStats.irredLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsIrred: " << numLitsIrred << endl;
-        cout << "->binTri.irredLits: " << binTri.irredLits << endl;
+        cout << "->litStats.irredLits: " << litStats.irredLits << endl;
     }
-    if (numLitsRed != binTri.redLits) {
+    if (numLitsRed != litStats.redLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsRed: " << numLitsRed << endl;
-        cout << "->binTri.redLits: " << binTri.redLits << endl;
+        cout << "->litStats.redLits: " << litStats.redLits << endl;
     }
-    assert(numLitsIrred == binTri.irredLits);
-    assert(numLitsRed == binTri.redLits);
+    assert(numLitsIrred == litStats.irredLits);
+    assert(numLitsRed == litStats.redLits);
 }
 
 size_t Solver::getNewToReplaceVars() const

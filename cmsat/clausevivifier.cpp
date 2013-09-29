@@ -207,7 +207,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
 
     //Time-limiting
     uint64_t maxNumProps = 20LL*1000LL*1000LL;
-    if (solver->binTri.irredLits + solver->binTri.redLits < 500000)
+    if (solver->litStats.irredLits + solver->litStats.redLits < 500000)
         maxNumProps *=2;
 
     extraTime = 0;
@@ -222,7 +222,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
-        && (solver->binTri.irredLits + solver->binTri.redLits < 4000000)
+        && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
         && (solver->longIrredCls.size() < 50000))
         queueByBy = 1;
 

@@ -46,8 +46,8 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
         stay += clearWatchNotBinNotTri(*it);
     }
 
-    solver->binTri.redLits = 0;
-    solver->binTri.irredLits = 0;
+    solver->litStats.redLits = 0;
+    solver->litStats.irredLits = 0;
 
     assert(stay.redBins % 2 == 0);
     solver->binTri.redBins = stay.redBins/2;
@@ -134,9 +134,9 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
         //Handle stat removal if need be
         if (removeStatsFirst) {
             if (cl->red()) {
-                solver->binTri.redLits -= cl->size();
+                solver->litStats.redLits -= cl->size();
             } else {
-                solver->binTri.irredLits -= cl->size();
+                solver->litStats.irredLits -= cl->size();
             }
         }
 

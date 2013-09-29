@@ -201,9 +201,9 @@ void Simplifier::unlinkClause(const ClOffset offset, bool drup)
     }
 
     if (cl.red()) {
-        solver->binTri.redLits -= cl.size();
+        solver->litStats.redLits -= cl.size();
     } else {
-        solver->binTri.irredLits -= cl.size();
+        solver->litStats.irredLits -= cl.size();
     }
 
     //Free and set to NULL
@@ -267,9 +267,9 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
     //Update lits stat
     if (cl.red())
-        solver->binTri.redLits -= i-j;
+        solver->litStats.redLits -= i-j;
     else
-        solver->binTri.irredLits -= i-j;
+        solver->litStats.irredLits -= i-j;
 
     #ifdef DRUP
     if (solver->conf.verbosity >= 6) {
@@ -496,9 +496,9 @@ void Simplifier::addBackToSolver()
         //The clause wasn't linked in but needs removal now
         if (notLinkedNeedFree) {
             if (cl->red()) {
-                solver->binTri.redLits -= cl->size();
+                solver->litStats.redLits -= cl->size();
             } else {
-                solver->binTri.irredLits -= cl->size();
+                solver->litStats.irredLits -= cl->size();
             }
 
             //Free
@@ -526,9 +526,9 @@ bool Simplifier::completeCleanClause(Clause& cl)
     //Remove all lits from stats
     //we will re-attach the clause either way
     if (cl.red()) {
-        solver->binTri.redLits -= cl.size();
+        solver->litStats.redLits -= cl.size();
     } else {
-        solver->binTri.irredLits -= cl.size();
+        solver->litStats.irredLits -= cl.size();
     }
 
     #ifdef DRUP
@@ -796,7 +796,7 @@ void Simplifier::subsumeReds()
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 10000000UL
-        || solver->binTri.irredLits > 50000000UL
+        || solver->litStats.irredLits > 50000000UL
     )  return;
 
     //Setup
@@ -882,7 +882,7 @@ bool Simplifier::simplify()
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 10ULL*1000ULL*1000ULL
-        || solver->binTri.irredLits > 50ULL*1000ULL*1000ULL
+        || solver->litStats.irredLits > 50ULL*1000ULL*1000ULL
     ) {
         return solver->okay();
     }

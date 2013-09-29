@@ -293,9 +293,9 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
             return true;
         } else {
             if (cl.red())
-                solver->binTri.redLits -= i-j;
+                solver->litStats.redLits -= i-j;
             else
-                solver->binTri.irredLits -= i-j;
+                solver->litStats.irredLits -= i-j;
         }
     }
 

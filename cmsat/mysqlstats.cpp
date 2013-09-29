@@ -1149,11 +1149,11 @@ void MySQLStats::restart(
     stmtRst.numIrredBins  = binTri.irredBins;
     stmtRst.numIrredTris  = binTri.irredTris;
     stmtRst.numIrredLongs = solver->getNumLongIrredCls();
-    stmtRst.numIrredLits  = binTri.irredLits;
+    stmtRst.numIrredLits  = litStats.irredLits;
     stmtRst.numRedBins    = binTri.redBins;
     stmtRst.numRedTris    = binTri.redTris;
     stmtRst.numRedLongs   = solver->getNumLongRedCls();
-    stmtRst.numRedLits    = binTri.redLits;
+    stmtRst.numRedLits    = litStats.redLits;
 
     //Conflict stats
     stmtRst.glueHist        = searchHist.glueHist.getLongtTerm().avg();

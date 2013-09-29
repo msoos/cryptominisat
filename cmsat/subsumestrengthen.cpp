@@ -38,8 +38,8 @@ uint32_t SubsumeStrengthen::subsume0(ClOffset offset)
         && ret.subsumedIrred
     ) {
         cl.makeIrred();
-        solver->binTri.redLits -= cl.size();
-        solver->binTri.irredLits += cl.size();
+        solver->litStats.redLits -= cl.size();
+        solver->litStats.irredLits += cl.size();
         if (!cl.getOccurLinked()) {
             simplifier->linkInClause(cl);
         }
@@ -146,8 +146,8 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::subsume1(const ClOffset offset)
                 && !cl2.red()
             ) {
                 cl.makeIrred();
-                solver->binTri.redLits -= cl.size();
-                solver->binTri.irredLits += cl.size();
+                solver->litStats.redLits -= cl.size();
+                solver->litStats.irredLits += cl.size();
                 if (!cl.getOccurLinked()) {
                     simplifier->linkInClause(cl);
                 }
@@ -404,9 +404,9 @@ void SubsumeStrengthen::strengthen(ClOffset offset, const Lit toRemoveLit)
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);
     if (cl.red())
-        solver->binTri.redLits--;
+        solver->litStats.redLits--;
     else
-        solver->binTri.irredLits--;
+        solver->litStats.irredLits--;
 
     simplifier->cleanClause(offset);
 }
