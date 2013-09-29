@@ -1,11 +1,11 @@
+#ifndef __STAMP_H__
+#define __STAMP_H__
+
 #include <vector>
 #include <algorithm>
 #include "solvertypes.h"
 #include "clause.h"
 #include "constants.h"
-
-#ifndef __STAMP_H__
-#define __STAMP_H__
 
 namespace CMSat {
 
