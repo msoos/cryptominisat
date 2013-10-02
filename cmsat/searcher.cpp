@@ -2893,7 +2893,6 @@ PropBy Searcher::propagate(
         && conf.propBinFirst
     ) {
         ret = propagateBinFirst(
-            solver2
             #ifdef STATS_NEEDED
             , watchListSizeTraversed
             //, AvgCalc<bool>* litPropagatedSomething

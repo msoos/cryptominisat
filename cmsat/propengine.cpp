@@ -258,7 +258,6 @@ inline bool PropEngine::propBinaryClause(
 void PropEngine::lazy_hyper_bin_resolve(
     const Clause& c
     , ClOffset offset
-    , Solver* solver
 ) {
     //Do lazy hyper-binary resolution if possible
     const Lit other = varData[c[1].var()].reason.lit2();
@@ -385,7 +384,6 @@ PropResult PropEngine::propNormalClause(
     , vec<Watched>::iterator &j
     , const Lit p
     , PropBy& confl
-    , Solver* solver
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     if (value(i->getBlockedLit()).getBool()) {
@@ -418,10 +416,9 @@ PropResult PropEngine::propNormalClause(
     #endif
 
     if (doLHBR
-        && solver != NULL
         && varData[c[1].var()].reason.getType() == binary_t
     ) {
-        lazy_hyper_bin_resolve(c, offset, solver);
+        lazy_hyper_bin_resolve(c, offset);
     } else {
         enqueue(c[0], PropBy(offset));
     }
@@ -568,7 +565,6 @@ PropResult PropEngine::propTriClause(
     const vec<Watched>::const_iterator i
     , const Lit lit1
     , PropBy& confl
-    , Solver* solver
 ) {
     const Lit lit2 = i->lit2();
     lbool val2 = value(lit2);
@@ -589,11 +585,11 @@ PropResult PropEngine::propTriClause(
     }
 
     if (val2 == l_Undef && val3 == l_False) {
-        return propTriHelperSimple(lit1, lit2, lit3, i->red(), solver);
+        return propTriHelperSimple(lit1, lit2, lit3, i->red());
     }
 
     if (val3 == l_Undef && val2 == l_False) {
-        return propTriHelperSimple(lit1, lit3, lit2, i->red(), solver);
+        return propTriHelperSimple(lit1, lit3, lit2, i->red());
     }
 
     return PROP_NOTHING;
@@ -699,7 +695,6 @@ PropResult PropEngine::propTriHelperSimple(
     , const Lit lit2
     , const Lit lit3
     , const bool red
-    , Solver* solver
 ) {
     #ifdef STATS_NEEDED
     if (red)
@@ -710,7 +705,6 @@ PropResult PropEngine::propTriHelperSimple(
 
     //Check if we could do lazy hyper-binary resoution
     if (doLHBR
-        && solver != NULL
         && can_do_lazy_hyper_bin(lit1, lit2, lit3)
     ) {
         lazy_hyper_bin_resolve(lit1, lit2);
@@ -939,7 +933,6 @@ inline void PropEngine::updateWatch(
 }
 
 PropBy PropEngine::propagateBinFirst(
-    Solver* solver
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
@@ -1009,7 +1002,7 @@ PropBy PropEngine::propagateBinFirst(
             if (i->isTri()) {
                 *j++ = *i;
                 //Propagate tri clause
-                ret = propTriClause(i, p, confl, solver);
+                ret = propTriClause(i, p, confl);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;
@@ -1022,7 +1015,7 @@ PropBy PropEngine::propagateBinFirst(
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                ret = propNormalClause(i, j, p, confl, solver);
+                ret = propNormalClause(i, j, p, confl);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;

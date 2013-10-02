@@ -176,7 +176,6 @@ protected:
     void         newDecisionLevel();                       ///<Begins a new decision level.
     PropBy propagateAnyOrder();
     PropBy propagateBinFirst(
-        Solver* solver = NULL
         #ifdef STATS_NEEDED
         ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
@@ -267,7 +266,6 @@ private:
         , const Lit lit2
         , const Lit lit3
         , const bool red
-        , Solver* solver
     );
     void propTriHelperAnyOrder(
         const Lit lit1
@@ -285,7 +283,6 @@ private:
         const vec<Watched>::const_iterator i
         , const Lit p
         , PropBy& confl
-        , Solver* solver
     );
     bool propTriClauseAnyOrder(
         const vec<Watched>::const_iterator i
@@ -299,7 +296,6 @@ private:
         , vec<Watched>::iterator &j
         , const Lit p
         , PropBy& confl
-        , Solver* solver
     );
     bool propNormalClauseAnyOrder(
         const vec<Watched>::iterator i
@@ -310,7 +306,6 @@ private:
     void lazy_hyper_bin_resolve(
         const Clause& c
         , ClOffset offset
-        , Solver* solver
     );
 };
 
