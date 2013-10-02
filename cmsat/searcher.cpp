@@ -54,16 +54,13 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
-        PropEngine(
+        HyperEngine(
             _solver->clAllocator
-            , AgilityData(_conf.agilityG, _conf.agilityLimit)
-            , _conf.updateGlues
-            , _conf.doLHBR
+            , _conf
         )
 
         //variables
         , solver(_solver)
-        , conf(_conf)
         , needToInterrupt(false)
         , var_inc(_conf.var_inc_start)
         , order_heap(VarOrderLt(activities))
@@ -2946,7 +2943,6 @@ uint64_t Searcher::memUsedSearch() const
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.memUsed();
     mem += conflict.capacity()*sizeof(Lit);
-    mem += analyze_stack.capacity()*sizeof(Lit);
     mem += solution.capacity()*sizeof(lbool);
 
     if (conf.verbosity >= 3) {

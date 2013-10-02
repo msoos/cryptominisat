@@ -1,3 +1,7 @@
+#ifndef __CNF_H__
+#define __CNF_H__
+
+#include "propby.h"
 #include "solverconf.h"
 #include "clauseallocator.h"
 #include "stamp.h"
@@ -25,12 +29,14 @@ struct CNF
         uint64_t redLits = 0;
     };
 
-    CNF(ClauseAllocator* _clAllocator) :
+    CNF(ClauseAllocator* _clAllocator, const SolverConf& _conf) :
         clAllocator(_clAllocator)
+        , conf(_conf)
         , minNumVars(0)
     {}
 
     ClauseAllocator* clAllocator;
+    SolverConf conf;
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
     vector<vec<Watched> > watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
@@ -76,3 +82,5 @@ struct CNF
 };
 
 }
+
+#endif //__CNF_H__

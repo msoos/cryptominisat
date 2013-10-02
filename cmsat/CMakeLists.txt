@@ -30,6 +30,7 @@ set(cryptoms_lib_files
     stamp.cpp
     compfinder.cpp
     comphandler.cpp
+    hyperengine.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

@@ -27,6 +27,7 @@
 #include <boost/multi_array.hpp>
 #include "time_mem.h"
 #include "avgcalc.h"
+#include "hyperengine.h"
 namespace CMSat {
 
 class Solver;
@@ -51,7 +52,7 @@ struct VariableVariance
     double avgTrailLevelVar;
 };
 
-class Searcher : public PropEngine
+class Searcher : public HyperEngine
 {
     public:
         Searcher(const SolverConf& _conf, Solver* solver);
@@ -651,7 +652,6 @@ class Searcher : public PropEngine
         //Settings
         Solver*   solver;          ///< Thread control class
         MTRand           mtrand;           ///< random number generator
-        SolverConf       conf;             ///< Solver config for this thread
         bool             needToInterrupt;  ///<If set to TRUE, interrupt cleanly ASAP
 
         //Stats printing
