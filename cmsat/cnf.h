@@ -79,6 +79,7 @@ struct CNF
         return assigns[p.var()] ^ p.sign();
     }
 
+    size_t print_mem_used_longclauses(size_t totalMem) const;
 };
 
 }

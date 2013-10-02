@@ -8,6 +8,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BIN
 
 
 set(cryptoms_lib_files
+    cnf.cpp
     propengine.cpp
     packedrow.cpp
     varreplacer.cpp

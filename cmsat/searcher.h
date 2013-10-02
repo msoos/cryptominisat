@@ -98,9 +98,9 @@ class Searcher : public HyperEngine
             AvgCalc<bool>       litPropagatedSomethingLT;
             #endif
 
-            size_t getMemUsed() const
+            size_t memUsed() const
             {
-                size_t used = 0;
+                uint64_t used = sizeof(Hist);
                 used += sizeof(AvgCalc<uint32_t>)*16;
                 used += sizeof(AvgCalc<bool>)*4;
                 used += sizeof(AvgCalc<size_t>)*2;
@@ -172,13 +172,6 @@ class Searcher : public HyperEngine
                 ;
 
                 cout << std::right;
-            }
-
-            uint64_t memUsed() const
-            {
-                uint64_t mem = sizeof(Hist);
-                mem += glueHist.usedMem();
-                return mem;
             }
         };
 
@@ -432,7 +425,6 @@ class Searcher : public HyperEngine
 
             void print() const
             {
-                uint64_t mem_used = memUsed();
                 printCommon();
                 conflStats.print(cpu_time);
 
@@ -565,7 +557,7 @@ class Searcher : public HyperEngine
                 );
 
                 //General stats
-                printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
+                //printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
                 #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
                 printStatsLine("c single-thread CPU time", cpu_time, " s");
                 #else
@@ -756,7 +748,7 @@ class Searcher : public HyperEngine
         void   minimiseRedFurther(vector<Lit>& cl);
         void   stampBasedRedMinim(vector<Lit>& cl);
         const Stats& getStats() const;
-        uint64_t memUsedSearch() const;
+        size_t memUsed() const;
 
     private:
 

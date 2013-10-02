@@ -2929,14 +2929,11 @@ PropBy Searcher::propagate(
     return ret;
 }
 
-uint64_t Searcher::memUsedSearch() const
+uint64_t Searcher::memUsed() const
 {
-    uint64_t mem = 0;
+    uint64_t mem = HyperEngine::memUsed();
     mem += otfMustAttach.capacity()*sizeof(OTFClause);
     mem += toAttachLater.capacity()*sizeof(ClOffset);
-    mem += toClear.capacity()*sizeof(Lit);
-    mem += trail.capacity()*sizeof(Lit);
-    mem += trail_lim.capacity()*sizeof(uint32_t);
     mem += activities.capacity()*sizeof(uint32_t);
     mem += order_heap.memUsed();
     mem += learnt_clause.capacity()*sizeof(Lit);

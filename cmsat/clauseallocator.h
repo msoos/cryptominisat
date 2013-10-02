@@ -86,7 +86,7 @@ class ClauseAllocator {
             , const bool force = false
         );
 
-        uint64_t getMemUsed() const;
+        size_t memUsed() const;
 
     private:
         void updateAllOffsetsAndPointers(

@@ -253,6 +253,15 @@ protected:
     );
     void updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter);
 
+    virtual size_t memUsed() const
+    {
+        size_t mem = 0;
+        mem += trail.capacity()*sizeof(Lit);
+        mem += trail_lim.capacity()*sizeof(uint32_t);
+        mem += toClear.capacity()*sizeof(Lit);
+        return mem;
+    }
+
 private:
     bool propBinaryClause(
         const vec<Watched>::const_iterator i

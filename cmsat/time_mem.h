@@ -78,7 +78,7 @@ static inline int memReadStat(int field)
     fclose(in);
     return value;
 }
-static inline uint64_t memUsed()
+static inline uint64_t memUsedTotal()
 {
     return (uint64_t)memReadStat(0) * (uint64_t)getpagesize();
 }

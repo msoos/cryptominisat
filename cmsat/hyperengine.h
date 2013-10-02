@@ -13,21 +13,29 @@ using std::set;
 namespace CMSat {
 using namespace CMSat;
 
-struct HyperEngine : public PropEngine {
+class HyperEngine : public PropEngine {
+public:
     HyperEngine(ClauseAllocator* clAllocator, const SolverConf& _conf);
+    size_t print_stamp_mem(size_t totalMem) const;
 
-    //For proiorty propagations
-    //
-    MyStack<Lit> toPropNorm;
-    MyStack<Lit> toPropBin;
-    MyStack<Lit> toPropRedBin;
+    bool timedOutPropagateFull;
+    Lit propagateFullBFS(const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max());
+    Lit propagateFullDFS(
+        StampType stampType
+        , uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
+    );
+    set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
+    set<BinaryClause> uselessBin;
 
-    vector<Lit> currAncestors;
+    virtual size_t memUsed() const
+    {
+        size_t mem = PropEngine::memUsed();
+        return mem;
+    }
 
-    //Find lowest common ancestor, once 'currAncestors' has been filled
-    Lit deepestCommonAcestor();
+    uint64_t stampingTime;
 
-    ///Add hyper-binary clause given the ancestor filled in 'currAncestors'
+    ///Add hyper-binary clause given this bin clause
     void  addHyperBin(Lit p);
 
     ///Add hyper-binary clause given this tri-clause
@@ -35,6 +43,22 @@ struct HyperEngine : public PropEngine {
 
     ///Add hyper-binary clause given this large clause
     void  addHyperBin(Lit p, const Clause& cl);
+
+private:
+    Lit   analyzeFail(PropBy propBy);
+    void  closeAllTimestamps(const StampType stampType);
+    Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepRed);
+    void  remove_bin_clause(Lit lit);
+    bool  isAncestorOf(
+        const Lit conflict
+        , Lit thisAncestor
+        , const bool thisStepRed
+        , const bool onlyIrred
+        , const Lit lookingForAncestor
+    );
+
+    //Find lowest common ancestor, once 'currAncestors' has been filled
+    Lit deepestCommonAcestor();
 
     PropResult propBin(
         const Lit p
@@ -67,41 +91,13 @@ struct HyperEngine : public PropEngine {
         , bool& restart
     );
 
-    bool timedOutPropagateFull;
-    Lit propagateFullBFS(const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max());
-    Lit propagateFullDFS(
-        StampType stampType
-        , uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
-    );
-    void closeAllTimestamps(const StampType stampType);
-    set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
-    set<BinaryClause> uselessBin;
+    //For proiorty propagations
+    //
+    MyStack<Lit> toPropNorm;
+    MyStack<Lit> toPropBin;
+    MyStack<Lit> toPropRedBin;
 
-    ///Find which literal should be set when we have failed
-    ///i.e. reached conflict at decision at decision lvl 1
-    Lit analyzeFail(PropBy propBy);
-
-    Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepRed);
-    void  remove_bin_clause(Lit lit);
-    bool  isAncestorOf(
-        const Lit conflict
-        , Lit thisAncestor
-        , const bool thisStepRed
-        , const bool onlyIrred
-        , const Lit lookingForAncestor
-    );
-
-    size_t getUsedMem()
-    {
-        size_t mem;
-        mem += toPropNorm.capacity()*sizeof(Lit);
-        mem += toPropBin.capacity()*sizeof(Lit);
-        mem += toPropRedBin.capacity()*sizeof(Lit);
-
-        return mem;
-    }
-
-    uint64_t stampingTime;
+    vector<Lit> currAncestors;
 };
 
 }

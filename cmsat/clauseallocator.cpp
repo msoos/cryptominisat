@@ -356,7 +356,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     detachReattach.reattachLongs();
 }
 
-uint64_t ClauseAllocator::getMemUsed() const
+uint64_t ClauseAllocator::memUsed() const
 {
     uint64_t mem = 0;
     mem += maxSize*sizeof(BASE_DATA_TYPE);

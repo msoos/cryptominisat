@@ -2374,28 +2374,17 @@ uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
 
 void Solver::printMemStats() const
 {
-    const uint64_t totalMem = memUsed();
+    const uint64_t totalMem = memUsedTotal();
     printStatsLine("c Mem used"
         , totalMem/(1024UL*1024UL)
         , "MB"
     );
     uint64_t account = 0;
 
-    size_t mem = 0;
-    mem += clAllocator->getMemUsed();
-    mem += longIrredCls.capacity()*sizeof(ClOffset);
-    mem += longRedCls.capacity()*sizeof(ClOffset);
-    printStatsLine("c Mem for longclauses"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , (double)mem/(double)totalMem*100.0
-        , "%"
-    );
-    account += mem;
-
+    account += print_mem_used_longclauses(totalMem);
     account += printWatchMemUsed(totalMem);
 
-    mem = 0;
+    size_t mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
     mem += varData.capacity()*sizeof(VarData);
     #ifdef STATS_NEEDED
@@ -2414,18 +2403,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = 0;
-    mem += toPropNorm.capacity()*sizeof(Lit);
-    mem += toPropBin.capacity()*sizeof(Lit);
-    mem += toPropRedBin.capacity()*sizeof(Lit);
-    mem += stamp.getMemUsed();
-    printStatsLine("c Mem for stamps"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , (double)mem/(double)totalMem*100.0
-        , "%"
-    );
-    account += mem;
+    account += print_stamp_mem(totalMem);
 
     mem = implCache.memUsed();
     mem += litReachable.capacity()*sizeof(LitReachData);
@@ -2437,7 +2415,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = hist.getMemUsed();
+    mem = hist.memUsed();
     printStatsLine("c Mem for history stats"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2446,14 +2424,14 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = memUsedSearch();
+    mem = memUsed();
     mem += model.capacity()*sizeof(lbool);
     if (conf.verbosity >= 3) {
         cout << "model bytes: "
         << model.capacity()*sizeof(lbool)
         << endl;
     }
-    printStatsLine("c Mem for search"
+    printStatsLine("c Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
         , (double)mem/(double)totalMem*100.0

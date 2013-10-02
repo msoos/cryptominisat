@@ -1058,3 +1058,21 @@ PropResult HyperEngine::propTriHelperComplex(
     addHyperBin(lit2, ~lit1, lit3);
     return PROP_SOMETHING;
 }
+
+size_t HyperEngine::print_stamp_mem(size_t totalMem) const
+{
+    size_t mem = 0;
+    mem += toPropNorm.capacity()*sizeof(Lit);
+    mem += toPropBin.capacity()*sizeof(Lit);
+    mem += toPropRedBin.capacity()*sizeof(Lit);
+    mem += currAncestors.capacity()*sizeof(Lit);
+    mem += stamp.getMemUsed();
+    printStatsLine("c Mem for stamps"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , (double)mem/(double)totalMem*100.0
+        , "%"
+    );
+
+    return mem;
+}
