@@ -1966,14 +1966,6 @@ void Searcher::restore_activities_and_polarities()
     var_inc = solver->getSavedActivityInc();
 }
 
-/**
-@brief The main solve loop that glues everything together
-
-We clear everything needed, pre-simplify the problem, calculate default
-polarities, and start the loop. Finally, we either report UNSAT or extend the
-found solution with all the intermediary simplifications (e.g. variable
-elimination, etc.) and output the solution.
-*/
 lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
