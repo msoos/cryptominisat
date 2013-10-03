@@ -1957,6 +1957,14 @@ void Searcher::check_if_print_restart_stat(const lbool status)
     }
 }
 
+void Searcher::restore_activities_and_polarities()
+{
+    for(size_t i = 0; i < nVars(); i++) {
+        varData[i].polarity = solver->getSavedPolarity(i);
+        activities[i] = solver->getSavedActivity(i);
+    }
+    var_inc = solver->getSavedActivityInc();
+}
 
 /**
 @brief The main solve loop that glues everything together
@@ -1985,12 +1993,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
     //Burst seach
     status = burstSearch();
     if (status == l_Undef) {
-        //Restore polarities and activities
-        for(size_t i = 0; i < nVars(); i++) {
-            varData[i].polarity = solver->getSavedPolarity(i);
-            activities[i] = solver->getSavedActivity(i);
-        }
-        var_inc = solver->getSavedActivityInc();
+        restore_activities_and_polarities();
 
         //Restore order_heap
         order_heap.clear();
@@ -2016,6 +2019,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
     }
 
     //Search loop final setup
+    restore_activities_and_polarities();
     size_t loopNum = 0;
     uint64_t geom_max = conf.restart_first;
     while (status == l_Undef

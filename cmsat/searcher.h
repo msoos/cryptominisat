@@ -180,8 +180,9 @@ class Searcher : public HyperEngine
         Var newVar(bool dvar = true); // Add a new variable that can be decided on or not
 
         ///////////////////////////////
-        // Solving:
-        ///Search for a model that respects a given set of assumptions.
+        // Solving
+        //
+        void restore_activities_and_polarities();
         lbool solve(
             const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );

@@ -1425,6 +1425,19 @@ void Solver::treatAssumptions(const vector<Lit>* _assumptions)
     }
 }
 
+void Solver::backup_activities_and_polarities()
+{
+    backupActivity.clear();
+    backupPolarity.clear();
+    backupActivity.resize(nVarsReal(), 0);
+    backupPolarity.resize(nVarsReal(), false);
+    for (size_t i = 0; i < nVars(); i++) {
+        backupPolarity[i] = varData[i].polarity;
+        backupActivity[i] = Searcher::getSavedActivity(i);
+    }
+    backupActivityInc = Searcher::getVarInc();
+}
+
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
@@ -1586,15 +1599,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         //Back up activities, polairties and var_inc
-        backupActivity.clear();
-        backupPolarity.clear();
-        backupActivity.resize(nVarsReal(), 0);
-        backupPolarity.resize(nVarsReal(), false);
-        for (size_t i = 0; i < nVars(); i++) {
-            backupPolarity[i] = varData[i].polarity;
-            backupActivity[i] = Searcher::getSavedActivity(i);
-        }
-        backupActivityInc = Searcher::getVarInc();
+        backup_activities_and_polarities();
 
         if (status != l_False) {
             Searcher::resetStats();

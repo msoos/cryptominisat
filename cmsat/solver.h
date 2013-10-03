@@ -76,6 +76,8 @@ class Solver : public Searcher
 
         //////////////////////////////
         //Solving
+        //
+        void backup_activities_and_polarities();
         lbool solve(const vector<Lit>* _assumptions = NULL);
         void        setNeedToInterrupt();
         vector<lbool>  model;
