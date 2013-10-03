@@ -90,6 +90,22 @@ private:
         , Lit& root
         , bool& restart
     );
+    Lit prop_norm_bin_dfs(
+       StampType stampType
+        , PropBy& confl
+        , const Lit root
+        , bool& restart
+    );
+    Lit prop_norm_cl_dfs(
+        StampType stampType
+        , PropBy& confl
+        , Lit& root
+        , bool& restart
+    );
+    bool need_early_abort_dfs(
+        StampType stampType
+        , const size_t timeout
+    );
 
     //For proiorty propagations
     //

@@ -214,6 +214,185 @@ Lit HyperEngine::prop_red_bin_dfs(
     return lit_Undef;
 }
 
+Lit HyperEngine::prop_norm_bin_dfs(
+    StampType stampType
+    , PropBy& confl
+    , const Lit root
+    , bool& restart
+) {
+    const Lit p = toPropBin.top();
+    const vec<Watched>& ws = watches[(~p).toInt()];
+    size_t done = 0;
+    for(vec<Watched>::const_iterator
+        k = ws.begin(), end = ws.end()
+        ; k != end
+        ; k++, done++
+    ) {
+        propStats.bogoProps += 1;
+        //Pre-fetch long clause
+        if (k->isClause()) {
+            if (value(k->getBlockedLit()) != l_True) {
+                const ClOffset offset = k->getOffset();
+                __builtin_prefetch(clAllocator->getPointer(offset));
+            }
+
+            continue;
+        } //end CLAUSE
+
+        //If something other than binary, skip
+        if (!k->isBinary())
+            continue;
+
+        //If stamping only irred, go over red binaries
+        if (stampType == STAMP_IRRED
+            && k->red()
+        ) {
+            continue;
+        }
+
+        PropResult ret = propBin(p, k, confl);
+        switch(ret) {
+            case PROP_FAIL:
+                closeAllTimestamps(stampType);
+                return analyzeFail(confl);
+
+            case PROP_SOMETHING:
+                propStats.bogoProps += 8;
+                stampingTime++;
+                stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+                stamp.tstamp[trail.back().toInt()].dominator[stampType] = root;
+                #ifdef DEBUG_STAMPING
+                cout
+                << "From " << p << " enqueued " << trail.back()
+                << " for stampingTime " << stampingTime
+                << endl;
+                #endif
+
+                toPropNorm.push(trail.back());
+                toPropBin.push(trail.back());
+                if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
+                propStats.bogoProps += done*4;
+                restart = true;
+                return lit_Undef;
+
+            case PROP_NOTHING:
+                break;
+        }
+    }
+
+    //Finished with this literal
+    propStats.bogoProps += ws.size()*4;
+    toPropBin.pop();
+    stampingTime++;
+    stamp.tstamp[p.toInt()].end[stampType] = stampingTime;
+    #ifdef DEBUG_STAMPING
+    cout
+    << "End time for " << p
+    << " is " << stampingTime
+    << endl;
+    #endif
+
+    return lit_Undef;
+}
+
+Lit HyperEngine::prop_norm_cl_dfs(
+    StampType stampType
+    , PropBy& confl
+    , Lit& root
+    , bool& restart
+) {
+    PropResult ret = PROP_NOTHING;
+    const Lit p = toPropNorm.top();
+    vec<Watched> & ws = watches[(~p).toInt()];
+    propStats.bogoProps += 1;
+
+    vec<Watched>::iterator i = ws.begin();
+    vec<Watched>::iterator j = ws.begin();
+    const vec<Watched>::iterator end = ws.end();
+    for(; i != end; i++) {
+        propStats.bogoProps += 1;
+        if (i->isBinary()) {
+            *j++ = *i;
+            continue;
+        }
+
+        if (i->isTri()) {
+            *j++ = *i;
+            ret = propTriClauseComplex(i, p, confl, NULL);
+            if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                i++;
+                break;
+            } else {
+                assert(ret == PROP_NOTHING);
+                continue;
+            }
+        }
+
+        if (i->isClause()) {
+            ret = propNormalClauseComplex(i, j, p, confl, NULL);
+            if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                i++;
+                break;
+            } else {
+                assert(ret == PROP_NOTHING);
+                continue;
+            }
+        }
+    }
+    while(i != end)
+        *j++ = *i++;
+    ws.shrink_(end-j);
+
+    switch(ret) {
+        case PROP_FAIL:
+            closeAllTimestamps(stampType);
+            return analyzeFail(confl);
+
+        case PROP_SOMETHING:
+            propStats.bogoProps += 8;
+            stampingTime++;
+            #ifdef DEBUG_STAMPING
+            cout
+            << "From (long-reduced) " << p << " enqueued << " << trail.back()
+            << " for stampingTime " << stampingTime
+            << endl;
+            #endif
+            stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+            if (stampType == STAMP_IRRED) {
+                //Root for literals propagated afterwards will be this literal
+                root = trail.back();
+                toPropRedBin.push(trail.back());
+            }
+
+            toPropNorm.push(trail.back());
+            toPropBin.push(trail.back());
+            propStats.bogoProps += ws.size()*8;
+            restart = true;
+            return lit_Undef;
+
+        case PROP_NOTHING:
+            break;
+    }
+
+    //Finished with this literal
+    propStats.bogoProps += ws.size()*8;
+    toPropNorm.pop();
+
+    return lit_Undef;
+}
+
+bool HyperEngine::need_early_abort_dfs(
+    StampType stampType
+    , const size_t timeout
+) {
+    //Early-abort if too much time was used (from prober)
+    if (propStats.otfHyperTime + propStats.bogoProps > timeout) {
+        closeAllTimestamps(stampType);
+        timedOutPropagateFull = true;
+        return true;
+    }
+    return false;
+}
 
 Lit HyperEngine::propagateFullDFS(
     const StampType stampType
@@ -265,182 +444,50 @@ Lit HyperEngine::propagateFullDFS(
     << endl;
     #endif
 
-    start:
-    //Early-abort if too much time was used (from prober)
-    if (propStats.otfHyperTime + propStats.bogoProps > timeout) {
-        closeAllTimestamps(stampType);
-        timedOutPropagateFull = true;
-        return lit_Undef;
-    }
+    while(true) {
+        propStats.bogoProps += 3;
+        if (need_early_abort_dfs(stampType, timeout))
+            return lit_Undef;
 
-    propStats.bogoProps += 3;
-
-    //Propagate binary irred
-    while (!toPropBin.empty()) {
-        const Lit p = toPropBin.top();
-        const vec<Watched>& ws = watches[(~p).toInt()];
-        size_t done = 0;
-        for(vec<Watched>::const_iterator
-            k = ws.begin(), end = ws.end()
-            ; k != end
-            ; k++, done++
-        ) {
-            propStats.bogoProps += 1;
-            //Pre-fetch long clause
-            if (k->isClause()) {
-                if (value(k->getBlockedLit()) != l_True) {
-                    const ClOffset offset = k->getOffset();
-                    __builtin_prefetch(clAllocator->getPointer(offset));
-                }
-
-                continue;
-            } //end CLAUSE
-
-            //If something other than binary, skip
-            if (!k->isBinary())
-                continue;
-
-            //If stamping only irred, go over red binaries
-            if (stampType == STAMP_IRRED
-                && k->red()
-            ) {
-                continue;
-            }
-
-            ret = propBin(p, k, confl);
-            switch(ret) {
-                case PROP_FAIL:
-                    closeAllTimestamps(stampType);
-                    return analyzeFail(confl);
-
-                case PROP_SOMETHING:
-                    propStats.bogoProps += 8;
-                    stampingTime++;
-                    stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
-                    stamp.tstamp[trail.back().toInt()].dominator[stampType] = root;
-                    #ifdef DEBUG_STAMPING
-                    cout
-                    << "From " << p << " enqueued " << trail.back()
-                    << " for stampingTime " << stampingTime
-                    << endl;
-                    #endif
-
-                    toPropNorm.push(trail.back());
-                    toPropBin.push(trail.back());
-                    if (stampType == STAMP_IRRED) toPropRedBin.push(trail.back());
-                    propStats.bogoProps += done*4;
-                    goto start;
-
-                case PROP_NOTHING:
-                    break;
-            }
-        }
-
-        //Finished with this literal
-        propStats.bogoProps += ws.size()*4;
-        toPropBin.pop();
-        stampingTime++;
-        stamp.tstamp[p.toInt()].end[stampType] = stampingTime;
-        #ifdef DEBUG_STAMPING
-        cout
-        << "End time for " << p
-        << " is " << stampingTime
-        << endl;
-        #endif
-    }
-
-    if (stampType == STAMP_IRRED) {
-        while (!toPropRedBin.empty()) {
-            bool restart = false;
-            Lit ret = prop_red_bin_dfs(stampType, confl, root, restart);
-
-            //Fail
+        //Propagate binary irred
+        bool restart = false;
+        while (!toPropBin.empty()) {
+            Lit ret = prop_norm_bin_dfs(stampType, confl, root, restart);
             if (ret != lit_Undef)
                 return ret;
-
-            //Propagated, goto beginning
             if (restart)
-                goto start;
-        }
-    }
-
-    ret = PROP_NOTHING;
-    while (!toPropNorm.empty()) {
-        const Lit p = toPropNorm.top();
-        vec<Watched> & ws = watches[(~p).toInt()];
-        propStats.bogoProps += 1;
-
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.begin();
-        const vec<Watched>::iterator end = ws.end();
-        for(; i != end; i++) {
-            propStats.bogoProps += 1;
-            if (i->isBinary()) {
-                *j++ = *i;
-                continue;
-            }
-
-            if (i->isTri()) {
-                *j++ = *i;
-                ret = propTriClauseComplex(i, p, confl, NULL);
-                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
-                    i++;
-                    break;
-                } else {
-                    assert(ret == PROP_NOTHING);
-                    continue;
-                }
-            }
-
-            if (i->isClause()) {
-                ret = propNormalClauseComplex(i, j, p, confl, NULL);
-                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
-                    i++;
-                    break;
-                } else {
-                    assert(ret == PROP_NOTHING);
-                    continue;
-                }
-            }
-        }
-        while(i != end)
-            *j++ = *i++;
-        ws.shrink_(end-j);
-
-        switch(ret) {
-            case PROP_FAIL:
-                closeAllTimestamps(stampType);
-                return analyzeFail(confl);
-
-            case PROP_SOMETHING:
-                propStats.bogoProps += 8;
-                stampingTime++;
-                #ifdef DEBUG_STAMPING
-                cout
-                << "From (long-reduced) " << p << " enqueued << " << trail.back()
-                << " for stampingTime " << stampingTime
-                << endl;
-                #endif
-                stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
-                if (stampType == STAMP_IRRED) {
-                    //Root for literals propagated afterwards will be this literal
-                    root = trail.back();
-                    toPropRedBin.push(trail.back());
-                }
-
-                toPropNorm.push(trail.back());
-                toPropBin.push(trail.back());
-                propStats.bogoProps += ws.size()*8;
-                goto start;
-
-            case PROP_NOTHING:
                 break;
         }
+        if (restart)
+            continue;
 
-        //Finished with this literal
-        propStats.bogoProps += ws.size()*8;
-        toPropNorm.pop();
-        qhead++;
+        if (stampType == STAMP_IRRED) {
+            while (!toPropRedBin.empty()) {
+                Lit ret = prop_red_bin_dfs(stampType, confl, root, restart);
+                if (ret != lit_Undef)
+                    return ret;
+                if (restart)
+                    break;
+            }
+        }
+        if (restart)
+            continue;
+
+        ret = PROP_NOTHING;
+        while (!toPropNorm.empty()) {
+            Lit ret = prop_norm_cl_dfs(stampType, confl, root, restart);
+            if (ret != lit_Undef)
+                return ret;
+            if (restart)
+                break;
+
+            qhead++;
+        }
+        if (restart)
+            continue;
+
+        //Nothing more to propagate
+        break;
     }
 
     stamp.tstamp[trail.back().toInt()].numDom[stampType] = trail.size() - origTrailSize;
