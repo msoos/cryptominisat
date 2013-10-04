@@ -155,9 +155,9 @@ class SolverConf
         uint32_t  flipPolarFreq;
 
         //Simplifier
-        int      doSimplify;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        int      doSchedSimpProblem;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-        int      doPreSchedSimpProblem;          //Perform simplification at startup
+        int      simplify_at_startup;
+        int      regularly_simplify_problem;
+        int      perform_occur_based_simp;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doBlockClauses;    ///<Should try to remove blocked clauses
         int      doAsymmTE; ///< Do Asymtotic blocked clause elimination

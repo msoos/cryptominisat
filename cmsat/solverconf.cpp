@@ -133,9 +133,9 @@ SolverConf::SolverConf() :
         , flipPolarFreq    (300)
 
         //Simplifier
-        , doSimplify       (true)
-        , doSchedSimpProblem(true)
-        , doPreSchedSimpProblem (true)
+        , simplify_at_startup(false)
+        , regularly_simplify_problem(true)
+        , perform_occur_based_simp(true)
         , doSubsume1       (true)
         , doBlockClauses   (true)
         , doAsymmTE        (true)

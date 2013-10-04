@@ -97,7 +97,7 @@ Solver::Solver(const SolverConf _conf) :
     if (conf.doProbe) {
         prober = new Prober(this);
     }
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         simplifier = new Simplifier(this);
     }
     sCCFinder = new SCCFinder(this);
@@ -176,7 +176,7 @@ bool Solver::addXorClauseInt(
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
-            assert(!conf.doSimplify || !simplifier->getVarElimed(p.var()));
+            assert(!conf.perform_occur_based_simp || !simplifier->getVarElimed(p.var()));
         } else {
             //modify rhs instead of adding
             assert(value(ps[i]) != l_Undef);
@@ -575,7 +575,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Uneliminate vars
     for (const Lit lit: ps) {
-        if (conf.doSimplify
+        if (conf.perform_occur_based_simp
             && simplifier->getVarElimed(lit.var())
         ) {
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
@@ -608,7 +608,7 @@ the heavy-lifting
 */
 bool Solver::addClause(const vector<Lit>& lits)
 {
-    if (conf.doSimplify && simplifier->getAnythingHasBeenBlocked()) {
+    if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
         cout
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
@@ -878,7 +878,7 @@ void Solver::renumberVariables()
     }
 
     //Update sub-elements' vars
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         simplifier->updateVars(outerToInter, interToOuter);
     }
     varReplacer->updateVars(outerToInter, interToOuter);
@@ -1035,7 +1035,7 @@ Var Solver::newVar(const bool dvar)
         }
     }
 
-    if (conf.doSimplify
+    if (conf.perform_occur_based_simp
         && conf.doFindXors
         && nVars() > 1ULL*1000ULL*1000ULL
     ) {
@@ -1071,7 +1071,7 @@ Var Solver::newVar(const bool dvar)
     Searcher::newVar(dvar);
 
     varReplacer->newVar();
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         simplifier->newVar();
     }
 
@@ -1477,9 +1477,9 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
     //If still unknown, simplify
     if (status == l_Undef
+        && conf.simplify_at_startup
         && nVars() > 0
-        && conf.doPreSchedSimpProblem
-        && conf.doSchedSimpProblem
+        && conf.regularly_simplify_problem
     ) {
         status = simplifyProblem();
     }
@@ -1609,7 +1609,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         //Simplify
-        if (conf.doSchedSimpProblem) {
+        if (conf.regularly_simplify_problem) {
             status = simplifyProblem();
         }
     }
@@ -1625,7 +1625,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         }
 
         //Extend solution
-        if (conf.doSimplify
+        if (conf.perform_occur_based_simp
             || conf.doFindAndReplaceEqLits
         ) {
             SolutionExtender extender(this, solution);
@@ -1767,7 +1767,7 @@ lbool Solver::simplifyProblem()
         return l_Undef;
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.doSimplify && !simplifier->simplify())
+    if (conf.perform_occur_based_simp && !simplifier->simplify())
         goto end;
 
     //Treat implicits
@@ -2163,7 +2163,7 @@ void Solver::printMinStats() const
         prober->getStats().printShort();
     }
     //Simplifier stats
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         printStatsLine("c Simplifier time"
             , simplifier->getStats().totalTime()
             , simplifier->getStats().totalTime()/cpu_time*100.0
@@ -2278,7 +2278,7 @@ void Solver::printFullStats() const
     }
 
     //Simplifier stats
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         printStatsLine("c Simplifier time"
             , simplifier->getStats().totalTime()
             , simplifier->getStats().totalTime()/cpu_time*100.0
@@ -2468,7 +2468,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         mem = simplifier->memUsed();
         printStatsLine("c Mem for simplifier"
             , mem/(1024UL*1024UL)
@@ -2775,7 +2775,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     }
 
     //previously eliminated clauses
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
         numClauses += blockedClauses.size();
     }
@@ -2817,7 +2817,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         *os << clauseBackNumbered(*cl) << " 0" << endl;
     }
 
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         const vector<BlockedClause>& blockedClauses
             = simplifier->getBlockedClauses();
 
@@ -3178,7 +3178,7 @@ size_t Solver::getNumFreeVars() const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVarsReal();
     freeVars -= trail.size();
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         freeVars -= simplifier->getStats().numVarsElimed;
     }
     freeVars -= varReplacer->getNumReplacedVars();
@@ -3525,7 +3525,7 @@ void Solver::checkImplicitPropagated() const
 
 size_t Solver::getNumVarsElimed() const
 {
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         return simplifier->getStats().numVarsElimed;
     } else {
         return 0;
@@ -3652,7 +3652,7 @@ void Solver::updateDominators()
 
 void Solver::print_elimed_vars() const
 {
-    if (conf.doSimplify) {
+    if (conf.perform_occur_based_simp) {
         simplifier->print_elimed_vars();
     }
 }
