@@ -182,7 +182,6 @@ class Searcher : public HyperEngine
         ///////////////////////////////
         // Solving
         //
-        void restore_activities_and_polarities();
         lbool solve(
             const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );
@@ -211,8 +210,6 @@ class Searcher : public HyperEngine
         const Hist& getHistory() const;
 
         void     setNeedToInterrupt();
-        uint32_t getSavedActivity(Var var) const;
-        uint32_t getVarInc() const;
 
         struct Stats
         {
@@ -617,6 +614,7 @@ class Searcher : public HyperEngine
         };
 
     protected:
+        void updateVars(const vector<uint32_t>& interToOuter);
         vector<bool> assumptionsSet;
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         vector<Lit> origAssumptions;
@@ -753,6 +751,31 @@ class Searcher : public HyperEngine
 
     private:
 
+        struct ActPolarBackup
+        {
+            ActPolarBackup() :
+                saved(0)
+            {}
+
+            vector<uint32_t> activity;
+            vector<bool>     polarity;
+            uint32_t         var_inc;
+            bool             saved;
+
+            size_t memUsed() const
+            {
+                size_t mem = 0;
+                mem += activity.capacity()*sizeof(uint32_t);
+                mem += polarity.capacity();
+                mem += sizeof(ActPolarBackup);
+
+                return mem;
+            }
+        };
+        ActPolarBackup act_polar_backup;
+        void backup_activities_and_polarities();
+        void restore_activities_and_polarities();
+
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const Searcher* cc;
@@ -873,16 +896,6 @@ inline void Searcher::varBumpActivity(Var var)
 inline uint32_t Searcher::abstractLevel(const Var x) const
 {
     return ((uint32_t)1) << (varData[x].level % 32);
-}
-
-inline uint32_t Searcher::getSavedActivity(Var var) const
-{
-    return activities[var];
-}
-
-inline uint32_t Searcher::getVarInc() const
-{
-    return var_inc;
 }
 
 inline const Searcher::Stats& Searcher::getStats() const

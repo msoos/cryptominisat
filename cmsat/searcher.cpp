@@ -1957,15 +1957,6 @@ void Searcher::check_if_print_restart_stat(const lbool status)
     }
 }
 
-void Searcher::restore_activities_and_polarities()
-{
-    for(size_t i = 0; i < nVars(); i++) {
-        varData[i].polarity = solver->getSavedPolarity(i);
-        activities[i] = solver->getSavedActivity(i);
-    }
-    var_inc = solver->getSavedActivityInc();
-}
-
 lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
@@ -2197,6 +2188,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 
+    backup_activities_and_polarities();
     return status;
 }
 
@@ -2928,6 +2920,7 @@ PropBy Searcher::propagate(
 uint64_t Searcher::memUsed() const
 {
     uint64_t mem = HyperEngine::memUsed();
+    mem += act_polar_backup.memUsed();
     mem += otfMustAttach.capacity()*sizeof(OTFClause);
     mem += toAttachLater.capacity()*sizeof(ClOffset);
     mem += activities.capacity()*sizeof(uint32_t);
@@ -3012,3 +3005,34 @@ void Searcher::redoOrderHeap()
     }
 }
 
+void Searcher::updateVars(const vector<uint32_t>& interToOuter)
+{
+    updateArray(act_polar_backup.activity, interToOuter);
+    updateArray(act_polar_backup.polarity, interToOuter);
+}
+
+void Searcher::backup_activities_and_polarities()
+{
+    act_polar_backup.activity.clear();
+    act_polar_backup.polarity.clear();
+    act_polar_backup.activity.resize(nVarsReal(), 0);
+    act_polar_backup.polarity.resize(nVarsReal(), false);
+    for (size_t i = 0; i < nVars(); i++) {
+        act_polar_backup.polarity[i] = varData[i].polarity;
+        act_polar_backup.activity[i] = activities[i];
+    }
+    act_polar_backup.var_inc = var_inc;
+    act_polar_backup.saved = true;
+}
+
+void Searcher::restore_activities_and_polarities()
+{
+    if (!act_polar_backup.saved)
+        return;
+
+    for(size_t i = 0; i < nVars(); i++) {
+        varData[i].polarity = act_polar_backup.polarity[i];
+        activities[i] = act_polar_backup.activity[i];
+    }
+    var_inc = act_polar_backup.var_inc;
+}

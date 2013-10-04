@@ -77,7 +77,6 @@ class Solver : public Searcher
         //////////////////////////////
         //Solving
         //
-        void backup_activities_and_polarities();
         lbool solve(const vector<Lit>* _assumptions = NULL);
         void        setNeedToInterrupt();
         vector<lbool>  model;
@@ -125,9 +124,6 @@ class Solver : public Searcher
         size_t getNewToReplaceVars() const;
         const Stats& getStats() const;
         uint64_t getNextCleanLimit() const;
-        bool     getSavedPolarity(Var var) const;
-        uint32_t getSavedActivity(const Var var) const;
-        uint32_t getSavedActivityInc() const;
 
         ///////////////////////////////////
         // State Dumping
@@ -332,12 +328,6 @@ class Solver : public Searcher
         SolveStats solveStats;
 
         /////////////////////
-        //Stats
-        vector<uint32_t> backupActivity;
-        vector<bool>     backupPolarity;
-        uint32_t         backupActivityInc;
-
-        /////////////////////
         // Objects that help us accomplish the task
         friend class ClauseAllocator;
         friend class StateSaver;
@@ -529,21 +519,6 @@ inline const Searcher::Stats& Solver::getStats() const
 inline uint64_t Solver::getNextCleanLimit() const
 {
     return nextCleanLimit;
-}
-
-inline bool Solver::getSavedPolarity(const Var var) const
-{
-    return backupPolarity[var];
-}
-
-inline uint32_t Solver::getSavedActivity(const Var var) const
-{
-    return backupActivity[var];
-}
-
-inline uint32_t Solver::getSavedActivityInc() const
-{
-    return backupActivityInc;
 }
 
 inline void Solver::addInPartialSolvingStat()

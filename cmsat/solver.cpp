@@ -61,7 +61,6 @@ using std::endl;
 
 Solver::Solver(const SolverConf _conf) :
     Searcher(_conf, this)
-    , backupActivityInc(_conf.var_inc_start)
     , prober(NULL)
     , simplifier(NULL)
     , sCCFinder(NULL)
@@ -832,10 +831,9 @@ void Solver::renumberVariables()
 
 
     //Update local data
-    updateArray(backupActivity, interToOuter);
-    updateArray(backupPolarity, interToOuter);
     updateArray(decisionVar, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
+    Searcher::updateVars(interToOuter);
 
     //Update assumptions
     for(Lit lit: assumptions) {
@@ -1064,9 +1062,6 @@ Var Solver::newVar(const bool dvar)
         litReachable.push_back(LitReachData());
         litReachable.push_back(LitReachData());
     }
-
-    backupActivity.push_back(0);
-    backupPolarity.push_back(false);
 
     Searcher::newVar(dvar);
 
@@ -1425,19 +1420,6 @@ void Solver::treatAssumptions(const vector<Lit>* _assumptions)
     }
 }
 
-void Solver::backup_activities_and_polarities()
-{
-    backupActivity.clear();
-    backupPolarity.clear();
-    backupActivity.resize(nVarsReal(), 0);
-    backupPolarity.resize(nVarsReal(), false);
-    for (size_t i = 0; i < nVars(); i++) {
-        backupPolarity[i] = varData[i].polarity;
-        backupActivity[i] = Searcher::getSavedActivity(i);
-    }
-    backupActivityInc = Searcher::getVarInc();
-}
-
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
@@ -1597,9 +1579,6 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
             status = l_Undef;
             break;
         }
-
-        //Back up activities, polairties and var_inc
-        backup_activities_and_polarities();
 
         if (status != l_False) {
             Searcher::resetStats();
@@ -2395,8 +2374,6 @@ void Solver::printMemStats() const
     #ifdef STATS_NEEDED
     mem += varDataLT.capacity()*sizeof(VarData::Stats);
     #endif
-    mem += backupActivity.capacity()*sizeof(uint32_t);
-    mem += backupPolarity.capacity()*sizeof(bool);
     mem += decisionVar.capacity()*sizeof(char);
     mem += assumptions.capacity()*sizeof(Lit);
     printStatsLine("c Mem for vars"
