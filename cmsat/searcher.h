@@ -617,7 +617,6 @@ class Searcher : public HyperEngine
         void updateVars(const vector<uint32_t>& interToOuter);
         vector<bool> assumptionsSet;
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
-        vector<Lit> origAssumptions;
 
         friend class CalcDefPolars;
         friend class VarReplacer;

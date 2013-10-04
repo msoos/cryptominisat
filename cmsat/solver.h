@@ -312,6 +312,7 @@ class Solver : public Searcher
         );
 
     private:
+        vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;
         bool enqueueThese(const vector<Lit>& toEnqueue);
 
