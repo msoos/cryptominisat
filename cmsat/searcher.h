@@ -183,8 +183,12 @@ class Searcher : public HyperEngine
         // Solving
         //
         lbool solve(
-            const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
+            uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );
+        void finish_up_solve(lbool status, uint64_t maxConfls);
+        void restore_order_heap();
+        void setup_restart_print();
+
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         PropBy propagate(

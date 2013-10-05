@@ -1959,6 +1959,29 @@ void Searcher::check_if_print_restart_stat(const lbool status)
     }
 }
 
+void Searcher::setup_restart_print()
+{
+    //Set up restart printing status
+    lastRestartPrint = stats.conflStats.numConflicts;
+    lastRestartPrintHeader = stats.conflStats.numConflicts;
+    if (conf.verbosity >= 1) {
+        printRestartStats();
+    }
+}
+
+void Searcher::restore_order_heap()
+{
+    order_heap.clear();
+    for(size_t var = 0; var < nVars(); var++) {
+        if (solver->decisionVar[var]
+            && value(var) == l_Undef
+        ) {
+            insertVarOrder(var);
+        }
+    }
+    assert(order_heap.heapProperty());
+}
+
 lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
@@ -1977,34 +2000,18 @@ lbool Searcher::solve(const uint64_t maxConfls)
 
     //Burst seach
     status = burstSearch();
-    if (status == l_Undef) {
-        restore_activities_and_polarities();
-
-        //Restore order_heap
-        order_heap.clear();
-        for(size_t var = 0; var < nVars(); var++) {
-            if (solver->decisionVar[var]
-                && value(var) == l_Undef
-            ) {
-                insertVarOrder(var);
-            }
-        }
-        assert(order_heap.heapProperty());
-
-        //Set up data for search
-        params.rest_type = decide_restart_type();
-        genRandomVarActMultDiv();
-
-        //Set up restart printing status
-        lastRestartPrint = stats.conflStats.numConflicts;
-        lastRestartPrintHeader = stats.conflStats.numConflicts;
-        if (conf.verbosity >= 1) {
-            printRestartStats();
-        }
+    if (status != l_Undef) {
+        finish_up_solve(status, maxConfls);
+        return status;
     }
 
-    //Search loop final setup
     restore_activities_and_polarities();
+    restore_order_heap();
+    params.rest_type = decide_restart_type();
+    genRandomVarActMultDiv();
+    setup_restart_print();
+
+    //Search loop final setup
     size_t loopNum = 0;
     uint64_t geom_max = conf.restart_first;
     while (status == l_Undef
@@ -2138,6 +2145,12 @@ lbool Searcher::solve(const uint64_t maxConfls)
         #endif
     }
 
+    finish_up_solve(status, maxConfls);
+    return status;
+}
+
+void Searcher::finish_up_solve(const lbool status, const uint64_t maxConfls)
+{
     #ifdef VERBOSE_DEBUG
     if (status == l_True)
         cout << "Solution  is SAT" << endl;
@@ -2191,7 +2204,6 @@ lbool Searcher::solve(const uint64_t maxConfls)
     }
 
     backup_activities_and_polarities();
-    return status;
 }
 
 inline int64_t abs64(int64_t a)
