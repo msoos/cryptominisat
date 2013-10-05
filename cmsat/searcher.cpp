@@ -2163,7 +2163,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
 
         reduce_db_if_needed(maxConfls);
         clean_clauses_if_needed();
-        status = perform_scc_and_varreplace_if_needed(status);
+        status = perform_scc_and_varreplace_if_needed();
         if (status != l_Undef)
             break;
 
