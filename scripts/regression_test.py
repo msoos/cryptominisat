@@ -181,17 +181,17 @@ class Tester:
         cmd += "--compsfrom %d " % random.randint(0,2)
         cmd += "--compsvar %d " % random.randint(20000,500000)
         cmd += "--compslimit %d " % random.randint(0,3000)
-        cmd += "--preschedsimp %s " % random.randint(0,1)
         cmd += "--implicitmanip %s " % random.randint(0,1)
+        cmd += "--occsimp %s " % random.randint(0,1)
 
         #the most buggy ones, don't turn them off much, please
         if random.randint(0,1) == 1 :
-            opts = ["scc", "schedsimplify", "varelim" \
+            opts = ["scc", "varelim" \
             , "comps", "subsume1", "block", "probe"
-            , "simplify", "binpri", "stamp", "cache"
+            , "binpri", "stamp", "cache"
             , "otfsubsume", "renumber", "savemem"
             , "moreminim", "gates"
-            , "gorshort", "gandrem", "gateeqlit"]
+            , "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0,1))
