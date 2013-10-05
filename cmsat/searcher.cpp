@@ -1982,6 +1982,97 @@ void Searcher::restore_order_heap()
     assert(order_heap.heapProperty());
 }
 
+void Searcher::reduce_db_if_needed(uint64_t maxConfls)
+{
+    //Check if we should do DBcleaning
+    if (sumConflicts() > solver->getNextCleanLimit()) {
+        if (conf.verbosity >= 3) {
+            cout
+            << "c th "
+            #ifdef USE_OMP
+            << omp_get_thread_num()
+            #else
+            << "1"
+            #endif
+            << " cleaning"
+            << " getNextCleanLimit(): " << solver->getNextCleanLimit()
+            << " numConflicts : " << stats.conflStats.numConflicts
+            << " SumConfl: " << sumConflicts()
+            << " maxConfls:" << maxConfls
+            << " Trail size: " << trail.size() << endl;
+        }
+        solver->fullReduce();
+
+        genRandomVarActMultDiv();
+    }
+}
+
+void Searcher::clean_clauses_if_needed()
+{
+    const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
+    if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.005))  {
+        if (conf.verbosity >= 2) {
+            cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
+        }
+
+        lastCleanZeroDepthAssigns = trail.size();
+        solver->clauseCleaner->removeAndCleanAll();
+    }
+}
+
+lbool Searcher::perform_scc_and_varreplace_if_needed()
+{
+    if (conf.doFindAndReplaceEqLits
+            && (solver->binTri.numNewBinsSinceSCC
+                > ((double)solver->getNumFreeVars()*conf.sccFindPercent))
+    ) {
+        if (conf.verbosity >= 1) {
+            cout
+            << "c new bins since last SCC: "
+            << std::setw(2)
+            << solver->binTri.numNewBinsSinceSCC
+            << " free vars %:"
+            << std::fixed << std::setprecision(2) << std::setw(4)
+            << (double)solver->binTri.numNewBinsSinceSCC
+            /(double)solver->getNumFreeVars()*100.0
+            << endl;
+        }
+
+        solver->clauseCleaner->removeAndCleanAll();
+
+        //Find eq lits
+        if (!solver->sCCFinder->performSCC()) {
+            return l_False;
+        }
+        lastCleanZeroDepthAssigns = trail.size();
+
+        //If enough new variables have been found to be replaced, replace them
+        if (solver->varReplacer->getNewToReplaceVars() > ((double)solver->getNumFreeVars()*0.001)) {
+            //Perform equivalent variable replacement
+            if (!solver->varReplacer->performReplace()) {
+                return l_False;
+            }
+        }
+    }
+
+    return l_Undef;
+}
+
+void Searcher::save_search_loop_stats()
+{
+    #ifdef STATS_NEEDED
+    if (conf.doSQL) {
+        printRestartSQL();
+    }
+
+    //Update varDataLT
+    for(size_t i = 0; i < varData.size(); i++) {
+        varDataLT[i].addData(varData[i].stats);
+        varData[i].stats.reset();
+    }
+    #endif
+}
+
 lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
@@ -1992,13 +2083,8 @@ lbool Searcher::solve(const uint64_t maxConfls)
         << "c Searcher::solve() called"
         << endl;
     }
-
     resetStats();
-
-    //Current solving status
     lbool status = l_Undef;
-
-    //Burst seach
     status = burstSearch();
     if (status != l_Undef) {
         finish_up_solve(status, maxConfls);
@@ -2014,8 +2100,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
     //Search loop final setup
     size_t loopNum = 0;
     uint64_t geom_max = conf.restart_first;
-    while (status == l_Undef
-        && !needToInterrupt
+    while (!needToInterrupt
         && stats.conflStats.numConflicts < maxConfls
         && cpuTime() < conf.maxTime
     ) {
@@ -2061,88 +2146,13 @@ lbool Searcher::solve(const uint64_t maxConfls)
             break;
         }
 
-        //Check if we should do DBcleaning
-        if (sumConflicts() > solver->getNextCleanLimit()) {
-            if (conf.verbosity >= 3) {
-                cout
-                << "c th "
-                #ifdef USE_OMP
-                << omp_get_thread_num()
-                #else
-                << "1"
-                #endif
-                << " cleaning"
-                << " getNextCleanLimit(): " << solver->getNextCleanLimit()
-                << " numConflicts : " << stats.conflStats.numConflicts
-                << " SumConfl: " << sumConflicts()
-                << " maxConfls:" << maxConfls
-                << " Trail size: " << trail.size() << endl;
-            }
-            solver->fullReduce();
+        reduce_db_if_needed(maxConfls);
+        clean_clauses_if_needed();
+        status = perform_scc_and_varreplace_if_needed(status);
+        if (status != l_Undef)
+            break;
 
-            genRandomVarActMultDiv();
-        }
-
-        //Check if we should do SCC
-        //cout << "numNewBinsSinceSCC: " << solver->numNewBinsSinceSCC << endl;
-        const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-        if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.005))  {
-            if (conf.verbosity >= 2) {
-                cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
-            }
-
-            lastCleanZeroDepthAssigns = trail.size();
-            solver->clauseCleaner->removeAndCleanAll();
-        }
-
-        //Eq-lit finding has been enabled? If so, let's see if there might be
-        //a reason to do it
-        if (conf.doFindAndReplaceEqLits
-            && (solver->binTri.numNewBinsSinceSCC
-                > ((double)solver->getNumFreeVars()*conf.sccFindPercent))
-        ) {
-            if (conf.verbosity >= 1) {
-                cout
-                << "c new bins since last SCC: "
-                << std::setw(2)
-                << solver->binTri.numNewBinsSinceSCC
-                << " free vars %:"
-                << std::fixed << std::setprecision(2) << std::setw(4)
-                << (double)solver->binTri.numNewBinsSinceSCC
-                /(double)solver->getNumFreeVars()*100.0
-                << endl;
-            }
-
-            solver->clauseCleaner->removeAndCleanAll();
-
-            //Find eq lits
-            if (!solver->sCCFinder->performSCC()) {
-                status = l_False;
-                break;
-            }
-            lastCleanZeroDepthAssigns = trail.size();
-
-            //If enough new variables have been found to be replaced, replace them
-            if (solver->varReplacer->getNewToReplaceVars() > ((double)solver->getNumFreeVars()*0.001)) {
-                //Perform equivalent variable replacement
-                if (!solver->varReplacer->performReplace()) {
-                    status = l_False;
-                    break;
-                }
-            }
-        }
-
-        #ifdef STATS_NEEDED
-        if (conf.doSQL) {
-            printRestartSQL();
-        }
-
-        //Update varDataLT
-        for(size_t i = 0; i < varData.size(); i++) {
-            varDataLT[i].addData(varData[i].stats);
-            varData[i].stats.reset();
-        }
-        #endif
+        save_search_loop_stats();
     }
 
     finish_up_solve(status, maxConfls);

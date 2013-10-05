@@ -188,6 +188,10 @@ class Searcher : public HyperEngine
         void finish_up_solve(lbool status, uint64_t maxConfls);
         void restore_order_heap();
         void setup_restart_print();
+        void reduce_db_if_needed(uint64_t maxConfls);
+        void clean_clauses_if_needed();
+        lbool perform_scc_and_varreplace_if_needed(lbool& status);
+        void save_search_loop_stats();
 
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
