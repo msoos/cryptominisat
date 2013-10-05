@@ -192,6 +192,7 @@ class Searcher : public HyperEngine
         void clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed(lbool& status);
         void save_search_loop_stats();
+        uint64_t geom_max;
 
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
@@ -658,13 +659,11 @@ class Searcher : public HyperEngine
         /////////////////
         // Searching
         /// Search for a given number of conflicts.
-        lbool search(
-            uint64_t* geom_max
-        );
+        lbool search();
         lbool burstSearch();
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
-        void  checkNeedRestart(uint64_t* geom_max);     // Helper function to decide if we need to restart during search
+        void  checkNeedRestart();     // Helper function to decide if we need to restart during search
         Restart decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
 

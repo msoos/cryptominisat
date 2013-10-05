@@ -828,7 +828,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Searcher::search(uint64_t* geom_max)
+lbool Searcher::search()
 {
     assert(ok);
 
@@ -965,7 +965,7 @@ lbool Searcher::search(uint64_t* geom_max)
             stats.conflStats.update(lastConflictCausedBy);
 
             //If restart is needed, set it as so
-            checkNeedRestart(geom_max);
+            checkNeedRestart();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(lastWasConflict);
             lastWasConflict = true;
@@ -1054,7 +1054,7 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::checkNeedRestart(uint64_t* geom_max)
+void Searcher::checkNeedRestart()
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
@@ -1069,8 +1069,7 @@ void Searcher::checkNeedRestart(uint64_t* geom_max)
             break;
 
         case Restart::geom:
-            assert(geom_max != NULL);
-            if (params.conflictsDoneThisRestart > *geom_max)
+            if (params.conflictsDoneThisRestart > geom_max)
                 params.needToStopSearch = true;
 
             break;
@@ -1596,7 +1595,7 @@ lbool Searcher::burstSearch()
     params.clear();
     params.conflictsToDo = conf.burstSearchLen;
     params.rest_type = Restart::never;
-    lbool status = search(NULL);
+    lbool status = search();
 
     //Restore config
     conf.random_var_freq = backup_rand;
@@ -2096,13 +2095,11 @@ lbool Searcher::solve(const uint64_t maxConfls)
     params.rest_type = decide_restart_type();
     genRandomVarActMultDiv();
     setup_restart_print();
-
-    //Search loop final setup
-    size_t loopNum = 0;
-    uint64_t geom_max = conf.restart_first;
-    while (!needToInterrupt
-        && stats.conflStats.numConflicts < maxConfls
-        && cpuTime() < conf.maxTime
+    geom_max = conf.restart_first;
+    for(size_t loopNum = 0
+        ; !needToInterrupt
+          && stats.conflStats.numConflicts < maxConfls
+        ; loopNum ++
     ) {
         //Print search loop number if needed
         if (conf.verbosity >= 6) {
@@ -2110,7 +2107,6 @@ lbool Searcher::solve(const uint64_t maxConfls)
             << "c search loop " << loopNum
             << endl;
         }
-        loopNum++;
 
         assert(stats.conflStats.numConflicts < maxConfls);
 
@@ -2119,7 +2115,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
         //Set up params
         params.clear();
         params.conflictsToDo = maxConfls-stats.conflStats.numConflicts;
-        status = search(&geom_max);
+        status = search();
         geom_max *= conf.restart_inc;
         check_if_print_restart_stat(status);
 
