@@ -2146,12 +2146,9 @@ lbool Searcher::solve(const uint64_t maxConfls)
             << "c search loop " << loopNum
             << endl;
         }
-
         assert(stats.conflStats.numConflicts < maxConfls);
 
         lastRestartConfl = sumConflicts();
-
-        //Set up params
         params.clear();
         params.conflictsToDo = maxConfls-stats.conflStats.numConflicts;
         status = search();
