@@ -1938,7 +1938,7 @@ Restart Searcher::decide_restart_type() const
     return rest_type;
 }
 
-void Searcher::check_if_print_restart_stat(const lbool status)
+void Searcher::print_restart_stat(const lbool status)
 {
     //Print restart stat
     if (conf.verbosity >= 2
@@ -2072,9 +2072,7 @@ void Searcher::save_search_loop_stats()
     #endif
 }
 
-bool Searcher::must_abort(
-    const lbool status
-) {
+bool Searcher::must_abort(const lbool status) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
             cout
@@ -2087,7 +2085,6 @@ bool Searcher::must_abort(
         return true;
     }
 
-    //Check if we should abort
     if (stats.conflStats.numConflicts >= max_conflicts) {
         if (conf.verbosity >= 3) {
             cout
@@ -2153,7 +2150,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
         max_conflicts_geometric *= conf.restart_inc;
-        check_if_print_restart_stat(status);
+        print_restart_stat(status);
         if (must_abort(status))
             goto end;
 
