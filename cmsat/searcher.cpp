@@ -2072,6 +2072,45 @@ void Searcher::save_search_loop_stats()
     #endif
 }
 
+bool Searcher::must_abort(
+    const lbool status
+    , const size_t loopNum
+    , const uint64_t maxConfls
+) {
+    if (status != l_Undef) {
+        if (conf.verbosity >= 6) {
+            cout
+            << "c Returned status of search() is non-l_Undef at loop "
+            << loopNum
+            << " confl:"
+            << sumConflicts()
+            << endl;
+        }
+        return true;
+    }
+
+    //Check if we should abort
+    if (stats.conflStats.numConflicts >= maxConfls) {
+        if (conf.verbosity >= 3) {
+            cout
+            << "c search over max conflicts"
+            << endl;
+        }
+        return true;
+    }
+
+    if (cpuTime() >= conf.maxTime) {
+        if (conf.verbosity >= 3) {
+            cout
+            << "c search over max time"
+            << endl;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 lbool Searcher::solve(const uint64_t maxConfls)
 {
     assert(ok);
@@ -2118,27 +2157,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
         status = search();
         geom_max *= conf.restart_inc;
         check_if_print_restart_stat(status);
-
-        if (status != l_Undef) {
-            if (conf.verbosity >= 6) {
-                cout
-                << "c Returned status of search() is non-l_Undef at loop "
-                << loopNum
-                << " confl:"
-                << sumConflicts()
-                << endl;
-            }
-            break;
-        }
-
-        //Check if we should abort
-        if (stats.conflStats.numConflicts >= maxConfls) {
-            if (conf.verbosity >= 3) {
-                cout
-                << "c thread(maxconfl) Trail size: " << trail.size()
-                << " over maxConfls"
-                << endl;
-            }
+        if (must_abort(status, loopNum, maxConfls)) {
             break;
         }
 

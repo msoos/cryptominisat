@@ -192,6 +192,7 @@ class Searcher : public HyperEngine
         void clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed(lbool& status);
         void save_search_loop_stats();
+        bool must_abort(lbool status, size_t loopNum, uint64_t maxConfls);
         uint64_t geom_max;
 
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
