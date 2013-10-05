@@ -201,7 +201,6 @@ class Searcher : public HyperEngine
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         PropBy propagate(
-            Solver* solver = NULL
             #ifdef STATS_NEEDED
             , AvgCalc<size_t>* watchListSizeTraversed = NULL
             //, AvgCalc<bool>* litPropagatedSomething

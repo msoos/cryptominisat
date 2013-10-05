@@ -948,7 +948,7 @@ lbool Searcher::search()
 
         } else {
             //Decision level is higher than 1, so must do normal propagation
-            confl = propagate(solver
+            confl = propagate(
                 #ifdef STATS_NEEDED
                 , &hist.watchListSizeTraversed
                 //, &hist.litPropagatedSomething
@@ -2904,7 +2904,6 @@ void Searcher::bumpClauseAct(Clause* cl)
 }
 
 PropBy Searcher::propagate(
-    Solver* solver2
     #ifdef STATS_NEEDED
     , AvgCalc<size_t>* watchListSizeTraversed
     //, AvgCalc<bool>* litPropagatedSomething
@@ -2915,9 +2914,7 @@ PropBy Searcher::propagate(
     #endif
 
     PropBy ret;
-    if (solver2 != NULL
-        && conf.propBinFirst
-    ) {
+    if (conf.propBinFirst) {
         ret = propagateBinFirst(
             #ifdef STATS_NEEDED
             , watchListSizeTraversed
