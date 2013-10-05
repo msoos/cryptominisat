@@ -2132,10 +2132,8 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     resetStats();
     lbool status = l_Undef;
     status = burstSearch();
-    if (status != l_Undef) {
-        finish_up_solve(status);
-        return status;
-    }
+    if (status != l_Undef)
+        goto end;
 
     restore_activities_and_polarities();
     restore_order_heap();
@@ -2156,19 +2154,19 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         status = search();
         max_conflicts_geometric *= conf.restart_inc;
         check_if_print_restart_stat(status);
-        if (must_abort(status)) {
-            break;
-        }
+        if (must_abort(status))
+            goto end;
 
         reduce_db_if_needed();
         clean_clauses_if_needed();
         status = perform_scc_and_varreplace_if_needed();
         if (status != l_Undef)
-            break;
+            goto end;
 
         save_search_loop_stats();
     }
 
+    end:
     finish_up_solve(status);
     return status;
 }
