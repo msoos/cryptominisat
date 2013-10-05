@@ -1981,7 +1981,7 @@ void Searcher::restore_order_heap()
     assert(order_heap.heapProperty());
 }
 
-void Searcher::reduce_db_if_needed(uint64_t maxConfls)
+void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
     if (sumConflicts() > solver->getNextCleanLimit()) {
@@ -2074,8 +2074,7 @@ void Searcher::save_search_loop_stats()
 
 bool Searcher::must_abort(
     const lbool status
-    , const size_t loopNum
-    , const uint64_t maxConfls
+    , const uint64_t loopNum
 ) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
@@ -2111,10 +2110,20 @@ bool Searcher::must_abort(
     return false;
 }
 
-lbool Searcher::solve(const uint64_t maxConfls)
+void Searcher::print_search_loop_num(uint64_t loopNum)
+{
+    if (conf.verbosity >= 6) {
+        cout
+        << "c search loop " << loopNum
+        << endl;
+    }
+}
+
+lbool Searcher::solve(const uint64_t _maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
+    maxConfls = _maxConfls;
 
     if (solver->conf.verbosity >= 6) {
         cout
@@ -2125,7 +2134,7 @@ lbool Searcher::solve(const uint64_t maxConfls)
     lbool status = l_Undef;
     status = burstSearch();
     if (status != l_Undef) {
-        finish_up_solve(status, maxConfls);
+        finish_up_solve(status);
         return status;
     }
 
@@ -2135,18 +2144,12 @@ lbool Searcher::solve(const uint64_t maxConfls)
     genRandomVarActMultDiv();
     setup_restart_print();
     geom_max = conf.restart_first;
-    for(size_t loopNum = 0
+    for(uint64_t loopNum = 0
         ; !needToInterrupt
           && stats.conflStats.numConflicts < maxConfls
         ; loopNum ++
     ) {
-        //Print search loop number if needed
-        if (conf.verbosity >= 6) {
-            cout
-            << "c search loop " << loopNum
-            << endl;
-        }
-        assert(stats.conflStats.numConflicts < maxConfls);
+        print_search_loop_num(loopNum);
 
         lastRestartConfl = sumConflicts();
         params.clear();
@@ -2154,11 +2157,11 @@ lbool Searcher::solve(const uint64_t maxConfls)
         status = search();
         geom_max *= conf.restart_inc;
         check_if_print_restart_stat(status);
-        if (must_abort(status, loopNum, maxConfls)) {
+        if (must_abort(status, loopNum)) {
             break;
         }
 
-        reduce_db_if_needed(maxConfls);
+        reduce_db_if_needed();
         clean_clauses_if_needed();
         status = perform_scc_and_varreplace_if_needed();
         if (status != l_Undef)
@@ -2167,11 +2170,11 @@ lbool Searcher::solve(const uint64_t maxConfls)
         save_search_loop_stats();
     }
 
-    finish_up_solve(status, maxConfls);
+    finish_up_solve(status);
     return status;
 }
 
-void Searcher::finish_up_solve(const lbool status, const uint64_t maxConfls)
+void Searcher::finish_up_solve(const lbool status)
 {
     #ifdef VERBOSE_DEBUG
     if (status == l_True)
