@@ -83,6 +83,8 @@ Var Searcher::newVar(const bool dvar)
         insertVarOrder(var);
     }
     assumptionsSet.push_back(false);
+    act_polar_backup.activity.push_back(0);
+    act_polar_backup.polarity.push_back(false);
 
     return var;
 }
@@ -3007,15 +3009,22 @@ void Searcher::redoOrderHeap()
 
 void Searcher::updateVars(const vector<uint32_t>& interToOuter)
 {
-    updateArray(act_polar_backup.activity, interToOuter);
-    updateArray(act_polar_backup.polarity, interToOuter);
+    if (act_polar_backup.saved) {
+        cout << "nvars: " << nVars() << endl;
+        cout << "nvarsreal: " << nVarsReal() << endl;
+        cout << "act size: " << act_polar_backup.activity.size() << endl;
+
+        updateArray(act_polar_backup.activity, interToOuter);
+        cout << "polar size: " << act_polar_backup.polarity.size() << endl;
+        updateArray(act_polar_backup.polarity, interToOuter);
+    }
 }
 
 void Searcher::backup_activities_and_polarities()
 {
     act_polar_backup.activity.clear();
-    act_polar_backup.polarity.clear();
     act_polar_backup.activity.resize(nVarsReal(), 0);
+    act_polar_backup.polarity.clear();
     act_polar_backup.polarity.resize(nVarsReal(), false);
     for (size_t i = 0; i < nVars(); i++) {
         act_polar_backup.polarity[i] = varData[i].polarity;
