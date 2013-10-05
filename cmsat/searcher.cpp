@@ -1069,7 +1069,7 @@ void Searcher::checkNeedRestart()
             break;
 
         case Restart::geom:
-            if (params.conflictsDoneThisRestart > geom_max)
+            if (params.conflictsDoneThisRestart > max_conflicts_geometric)
                 params.needToStopSearch = true;
 
             break;
@@ -1997,7 +1997,7 @@ void Searcher::reduce_db_if_needed()
             << " getNextCleanLimit(): " << solver->getNextCleanLimit()
             << " numConflicts : " << stats.conflStats.numConflicts
             << " SumConfl: " << sumConflicts()
-            << " maxConfls:" << maxConfls
+            << " maxConfls:" << max_conflicts
             << " Trail size: " << trail.size() << endl;
         }
         solver->fullReduce();
@@ -2074,13 +2074,12 @@ void Searcher::save_search_loop_stats()
 
 bool Searcher::must_abort(
     const lbool status
-    , const uint64_t loopNum
 ) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
             cout
             << "c Returned status of search() is non-l_Undef at loop "
-            << loopNum
+            << loop_num
             << " confl:"
             << sumConflicts()
             << endl;
@@ -2089,7 +2088,7 @@ bool Searcher::must_abort(
     }
 
     //Check if we should abort
-    if (stats.conflStats.numConflicts >= maxConfls) {
+    if (stats.conflStats.numConflicts >= max_conflicts) {
         if (conf.verbosity >= 3) {
             cout
             << "c search over max conflicts"
@@ -2110,11 +2109,11 @@ bool Searcher::must_abort(
     return false;
 }
 
-void Searcher::print_search_loop_num(uint64_t loopNum)
+void Searcher::print_search_loop_num()
 {
     if (conf.verbosity >= 6) {
         cout
-        << "c search loop " << loopNum
+        << "c search loop " << loop_num
         << endl;
     }
 }
@@ -2123,7 +2122,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
-    maxConfls = _maxConfls;
+    max_conflicts = _maxConfls;
 
     if (solver->conf.verbosity >= 6) {
         cout
@@ -2143,21 +2142,21 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     params.rest_type = decide_restart_type();
     genRandomVarActMultDiv();
     setup_restart_print();
-    geom_max = conf.restart_first;
-    for(uint64_t loopNum = 0
+    max_conflicts_geometric = conf.restart_first;
+    for(loop_num = 0
         ; !needToInterrupt
-          && stats.conflStats.numConflicts < maxConfls
-        ; loopNum ++
+          && stats.conflStats.numConflicts < max_conflicts
+        ; loop_num ++
     ) {
-        print_search_loop_num(loopNum);
+        print_search_loop_num();
 
         lastRestartConfl = sumConflicts();
         params.clear();
-        params.conflictsToDo = maxConfls-stats.conflStats.numConflicts;
+        params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
-        geom_max *= conf.restart_inc;
+        max_conflicts_geometric *= conf.restart_inc;
         check_if_print_restart_stat(status);
-        if (must_abort(status, loopNum)) {
+        if (must_abort(status)) {
             break;
         }
 
@@ -2200,7 +2199,7 @@ void Searcher::finish_up_solve(const lbool status)
         << " solver->getNextCleanLimit(): " << solver->getNextCleanLimit()
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
-        << " maxConfls:" << maxConfls
+        << " maxConfls:" << max_conflicts
         << endl;
     }
 

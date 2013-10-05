@@ -192,10 +192,11 @@ class Searcher : public HyperEngine
         void clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed();
         void save_search_loop_stats();
-        bool must_abort(lbool status, size_t loopNum);
-        void print_search_loop_num(uint64_t loopNum);
-        uint64_t geom_max;
-        uint64_t maxConfls;
+        bool must_abort(lbool status);
+        void print_search_loop_num();
+        uint64_t max_conflicts_geometric;
+        uint64_t max_conflicts;
+        uint64_t loop_num;
 
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
