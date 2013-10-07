@@ -293,7 +293,7 @@ class Prober {
         };
 
         const Stats& getStats() const;
-        uint64_t memUsed() const;
+        size_t memUsed() const;
 
     private:
         //Main

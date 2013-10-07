@@ -94,7 +94,7 @@ static inline uint64_t memUsed(void)
 
 
 #else
-static inline uint64_t memUsed()
+static inline size_t memUsed()
 {
     return 0;
 }

@@ -770,9 +770,9 @@ void XorFinder::findXorMatch(
     }
 }
 
-uint64_t XorFinder::memUsed() const
+size_t XorFinder::memUsed() const
 {
-    uint64_t mem = 0;
+    size_t mem = 0;
     mem += xors.capacity()*sizeof(Xor);
     mem += xorOcc.capacity()*sizeof(vector<uint32_t>);
     for(size_t i = 0; i < xorOcc.size(); i++) {

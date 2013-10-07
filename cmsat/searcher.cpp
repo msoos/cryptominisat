@@ -2947,9 +2947,9 @@ PropBy Searcher::propagate(
     return ret;
 }
 
-uint64_t Searcher::memUsed() const
+size_t Searcher::memUsed() const
 {
-    uint64_t mem = HyperEngine::memUsed();
+    size_t mem = HyperEngine::memUsed();
     mem += act_polar_backup.memUsed();
     mem += otfMustAttach.capacity()*sizeof(OTFClause);
     mem += toAttachLater.capacity()*sizeof(ClOffset);

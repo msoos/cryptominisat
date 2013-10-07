@@ -193,7 +193,7 @@ class VarReplacer
             uint64_t removedLongLits;
         };
         const Stats& getStats() const;
-        uint64_t bytesMemUsed() const;
+        size_t bytesMemUsed() const;
 
     private:
         Solver* solver; ///<The solver we are working with

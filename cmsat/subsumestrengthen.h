@@ -12,7 +12,7 @@ class SubsumeStrengthen
 {
 public:
     SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
-    uint64_t memUsed() const;
+    size_t memUsed() const;
     void performSubsumption();
     bool performStrengthening();
     uint32_t subsume0(ClOffset offset);

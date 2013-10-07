@@ -1062,9 +1062,9 @@ bool VarReplacer::addLaterAddBinXor()
     return true;
 }
 
-uint64_t VarReplacer::bytesMemUsed() const
+size_t VarReplacer::bytesMemUsed() const
 {
-    uint64_t b = 0;
+    size_t b = 0;
     b += delayedEnqueue.capacity()*sizeof(Lit);
     b += laterAddBinXor.capacity()*sizeof(LaterAddBinXor);
     b += table.capacity()*sizeof(Lit);

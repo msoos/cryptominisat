@@ -732,9 +732,9 @@ bool Prober::tryThis(const Lit lit, const bool first)
     return solver->enqueueThese(toEnqueue);
 }
 
-uint64_t Prober::memUsed() const
+size_t Prober::memUsed() const
 {
-    uint64_t mem = 0;
+    size_t mem = 0;
     mem += visitedAlready.capacity()*sizeof(char);
     mem += propagatedBitSet.capacity()*sizeof(uint32_t);
     mem += toEnqueue.capacity()*sizeof(Lit);

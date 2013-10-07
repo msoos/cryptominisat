@@ -71,7 +71,7 @@ public:
         tstamp.push_back(Timestamp());
         tstamp.push_back(Timestamp());
     }
-    uint64_t getMemUsed() const
+    size_t getMemUsed() const
     {
         return tstamp.capacity()*sizeof(Timestamp);
     }

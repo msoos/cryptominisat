@@ -3185,9 +3185,9 @@ void Simplifier::print_elimed_vars() const
     }
 }
 
-uint64_t Simplifier::memUsed() const
+size_t Simplifier::memUsed() const
 {
-    uint64_t b = 0;
+    size_t b = 0;
     b += seen.capacity()*sizeof(char);
     b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);

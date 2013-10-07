@@ -33,7 +33,7 @@ class XorFinderAbst
         virtual bool findXors() = 0;
         virtual ~XorFinderAbst()
         {}
-        virtual uint64_t memUsed() const = 0;
+        virtual size_t memUsed() const = 0;
 };
 
 }

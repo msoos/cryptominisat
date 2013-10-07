@@ -643,9 +643,9 @@ template void SubsumeStrengthen::findSubsumed0(
     , bool removeImplicit
 );
 
-uint64_t SubsumeStrengthen::memUsed() const
+size_t SubsumeStrengthen::memUsed() const
 {
-    uint64_t b = 0;
+    size_t b = 0;
     b += subs.capacity()*sizeof(ClOffset);
     b += subsLits.capacity()*sizeof(Lit);
 
