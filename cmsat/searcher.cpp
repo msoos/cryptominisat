@@ -2209,6 +2209,13 @@ void Searcher::finish_up_solve(const lbool status)
     }
     #endif
 
+    print_iteration_solving_stats();
+
+    backup_activities_and_polarities();
+}
+
+void Searcher::print_iteration_solving_stats()
+{
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
@@ -2221,8 +2228,6 @@ void Searcher::finish_up_solve(const lbool status)
         );
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
-
-    backup_activities_and_polarities();
 }
 
 inline int64_t abs64(int64_t a)
