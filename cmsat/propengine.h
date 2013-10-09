@@ -223,12 +223,6 @@ protected:
         , const Clause* address
     );
 
-    /////////////////////////
-    //Classes that must be friends, since they accomplish things on our datastructures
-    /////////////////////////
-    friend class CompleteDetachReatacher;
-    friend class ClauseAllocator;
-
     // Debug & etc:
     void     printAllClauses();
     void     checkNoWrongAttach() const;
