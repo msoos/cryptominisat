@@ -164,15 +164,8 @@ protected:
     vector<uint16_t>       seen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<Lit>            toClear; ///<Temporary, used in some places
 
-    /////////////////
-    // Enqueue
-    ////////////////
-    void  enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
-
-    /////////////////
-    // Propagating
-    ////////////////
-    void         newDecisionLevel();                       ///<Begins a new decision level.
+    void   enqueue (const Lit p, const PropBy from = PropBy());
+    void   newDecisionLevel();
     PropBy propagateAnyOrder();
     PropBy propagateBinFirst(
         #ifdef STATS_NEEDED
