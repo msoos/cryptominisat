@@ -1123,3 +1123,23 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
 
     return mem;
 }
+
+void HyperEngine::enqueueComplex(
+    const Lit p
+    , const Lit ancestor
+    , const bool redStep
+) {
+    enqueue(p, PropBy(~ancestor, redStep, false, false));
+
+    assert(varData[ancestor.var()].level != 0);
+
+    varData[p.var()].depth = varData[ancestor.var()].depth + 1;
+    #ifdef DEBUG_DEPTH
+    cout
+    << "Enqueued "
+    << std::setw(6) << (p)
+    << " by " << std::setw(6) << (~ancestor)
+    << " at depth " << std::setw(4) << varData[p.var()].depth
+    << endl;
+    #endif
+}

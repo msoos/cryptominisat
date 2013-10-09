@@ -44,6 +44,8 @@ public:
     ///Add hyper-binary clause given this large clause
     void  addHyperBin(Lit p, const Clause& cl);
 
+    void  enqueueComplex(const Lit p, const Lit ancestor, const bool redStep);
+
 private:
     Lit   analyzeFail(PropBy propBy);
     void  closeAllTimestamps(const StampType stampType);
