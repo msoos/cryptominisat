@@ -1109,7 +1109,7 @@ bool ClauseVivifier::strengthenImplicit()
                 vec<Watched>::const_iterator i2 = i;
                 while(i2 != end
                     && (i2->isBinary() || i2->isTri())
-                    && i2->lit2().var() == i2->lit2().var()
+                    && i->lit2().var() == i2->lit2().var()
                 ) {
                     timeAvailable -= 2;
                     //Yay, we have found what we needed!
