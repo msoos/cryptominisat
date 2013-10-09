@@ -3043,12 +3043,7 @@ void Searcher::redoOrderHeap()
 void Searcher::updateVars(const vector<uint32_t>& interToOuter)
 {
     if (act_polar_backup.saved) {
-        cout << "nvars: " << nVars() << endl;
-        cout << "nvarsreal: " << nVarsReal() << endl;
-        cout << "act size: " << act_polar_backup.activity.size() << endl;
-
         updateArray(act_polar_backup.activity, interToOuter);
-        cout << "polar size: " << act_polar_backup.polarity.size() << endl;
         updateArray(act_polar_backup.polarity, interToOuter);
     }
 }
