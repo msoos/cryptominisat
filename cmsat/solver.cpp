@@ -2757,7 +2757,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         numClauses += blockedClauses.size();
     }
 
-    *os << "p cnf " << nVars() << " " << numClauses << endl;
+    *os << "p cnf " << nVarsReal() << " " << numClauses << endl;
 
     ////////////////////////////////////////////////////////////////////
 
