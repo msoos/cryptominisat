@@ -3595,7 +3595,12 @@ void Solver::dumpIfNeeded() const
             outfile << "0";
         }
 
-        cout << "Dumped irredundant (~irred) clauses" << endl;
+        cout
+        << "c [solver] Dumped irredundant clauses to file "
+        << "'" << conf.irredDumpFname << "'."
+        << " Note that these are NOT the original CNF, but"
+        << " *describe the same problem* with the *same variables*"
+        << endl;
     }
 }
 
