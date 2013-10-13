@@ -576,7 +576,6 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
     for(size_t i = 0; i < cl.size(); i++) {
         tmpCl.push_back(getUpdatedLit(cl[i], interToOuterMain));
     }
-    std::sort(tmpCl.begin(), tmpCl.end());
 
     return tmpCl;
 }
