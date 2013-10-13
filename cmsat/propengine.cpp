@@ -51,9 +51,6 @@ PropEngine::PropEngine(
 ) :
         CNF(_clAllocator, _conf)
         // Stats
-        #ifdef DRUP
-        , drup(NULL),
-        #endif
         , qhead(0)
         , agility(_conf.agilityG, _conf.agilityLimit)
 {

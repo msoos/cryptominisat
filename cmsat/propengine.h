@@ -130,10 +130,6 @@ public:
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
 
-    #ifdef DRUP
-    std::ostream* drup;
-    #endif
-
 protected:
     #ifdef DRUP
     void drupNewUnit(const Lit lit);

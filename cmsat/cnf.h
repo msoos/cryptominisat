@@ -14,6 +14,10 @@ using namespace CMSat;
 
 struct CNF
 {
+    CNF() :
+        drup(NULL)
+    {}
+
     struct BinTriStats
     {
         uint64_t irredBins = 0;
@@ -53,6 +57,8 @@ struct CNF
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
     LitStats litStats;
+
+    std::ostream* drup;
 
     uint32_t nVars() const
     {
