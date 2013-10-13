@@ -179,12 +179,12 @@ void Simplifier::extendModel(SolutionExtender* extender)
 /**
 @brief Removes&free-s a clause from everywhere
 */
-void Simplifier::unlinkClause(const ClOffset offset, bool drup)
+void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
     #ifdef DRUP
-    if (solver->drup && drup) {
-       (*solver->drup)
+    if (solver->drup.enabled() && doDrup) {
+       solver->drup
        << "d " << cl
        << " 0\n";
     }
@@ -254,11 +254,9 @@ lbool Simplifier::cleanClause(ClOffset offset)
         cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
         #ifdef DRUP
-        if (solver->drup) {
-           *(solver->drup)
-           << "d " << origCl
-           << " 0\n";
-        }
+        (solver->drup)
+        << "d " << origCl
+        << " 0\n";
         #endif
 
         unlinkClause(offset, false);
@@ -275,8 +273,8 @@ lbool Simplifier::cleanClause(ClOffset offset)
     if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
-    if (solver->drup && ((i-j > 0))) {
-        *(solver->drup)
+    if (i-j > 0) {
+        solver->drup
         << cl
         << " 0\n"
 
@@ -541,11 +539,9 @@ bool Simplifier::completeCleanClause(Clause& cl)
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
             #ifdef DRUP
-            if (solver->drup) {
-                *(solver->drup)
-                << "d " << origCl
-                << " 0\n";
-            }
+            (solver->drup)
+            << "d " << origCl
+            << " 0\n";
             #endif
             return false;
         }
@@ -557,8 +553,8 @@ bool Simplifier::completeCleanClause(Clause& cl)
     cl.shrink(i-j);
 
     #ifdef DRUP
-    if (solver->drup && (i - j > 0)) {
-        *(solver->drup)
+    if (i - j > 0) {
+        solver->drup
         << cl
         << " 0\n"
 
@@ -998,7 +994,7 @@ end:
         cout << "c Deleting blocked clauses for DRUP" << endl;
     }
     //Remove clauses that have been blocked recently
-    if (solver->drup) {
+    if (solver->drup.enabled()) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
 
             //If doing stamping or caching, we cannot delete binary redundant
@@ -1011,16 +1007,17 @@ end:
                 continue;
             }
 
-            (*solver->drup)
+            solver->drup
             << "d ";
+
             for(vector<Lit>::const_iterator
                 it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
                 ; it != end
                 ; it++
             ) {
-                (*solver->drup) << *it << " ";
+                solver->drup << *it << " ";
             }
-            (*solver->drup) << "0\n";
+            solver->drup << "0\n";
         }
     }
     #endif
@@ -2001,11 +1998,10 @@ void Simplifier::removeClausesHelper(
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
                 #ifdef DRUP
-                if (solver->drup
-                    && !solver->conf.doStamp
+                if (!solver->conf.doStamp
                     && !solver->conf.doCache
                 ) {
-                   *(solver->drup)
+                   solver->drup
                    << "d "
                    << lits[0] << " "
                    << lits[1]
@@ -2046,14 +2042,12 @@ void Simplifier::removeClausesHelper(
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
                 #ifdef DRUP
-                if (solver->drup) {
-                   *(solver->drup)
-                   << "d "
-                   << lits[0] << " "
-                   << lits[1] << " "
-                   << lits[2]
-                   << " 0\n";
-                }
+               solver->drup
+               << "d "
+               << lits[0] << " "
+               << lits[1] << " "
+               << lits[2]
+               << " 0\n";
                 #endif
             }
 

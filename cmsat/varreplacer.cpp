@@ -250,11 +250,9 @@ void VarReplacer::newBinClause(
     ){
         delayedAttach.push_back(BinaryClause(lit1, lit2, red));
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << lit1 << " " << lit2
-            << " 0\n";
-        }
+        solver->drup
+        << lit1 << " " << lit2
+        << " 0\n";
         #endif
     }
 }
@@ -323,12 +321,11 @@ void VarReplacer::updateTri(
         impl_tmp_stats.remove(*i);
 
         #ifdef DRUP
-        if (solver->drup
-            //Only delete once
-            && origLit1 < origLit2
+        //Only delete once
+        if (origLit1 < origLit2
             && origLit2 < origLit3
         ) {
-            *(solver->drup)
+            (solver->drup)
             << "d "
             << origLit1 << " "
             << origLit2 << " "
@@ -359,9 +356,8 @@ void VarReplacer::updateTri(
     i->setLit3(lit3);
 
     #ifdef DRUP
-    if (solver->drup
-        //Changed
-        && (lit1 != origLit1
+    if (//Changed
+        (lit1 != origLit1
             || lit2 != origLit2
             || lit3 != origLit3
         )
@@ -370,7 +366,7 @@ void VarReplacer::updateTri(
             && origLit2 < origLit3
         )
     ) {
-        *(solver->drup)
+        solver->drup
         << lit1 << " "
         << lit2 << " "
         << lit3
@@ -421,11 +417,9 @@ void VarReplacer::updateBin(
         impl_tmp_stats.remove(*i);
 
         #ifdef DRUP
-        if (solver->drup
-            //Delete only once
-             && origLit1 < origLit2
-        ) {
-            *(solver->drup)
+        //Delete only once
+        if (origLit1 < origLit2) {
+            (solver->drup)
             << "d "
             << origLit1 << " "
             << origLit2
@@ -437,14 +431,13 @@ void VarReplacer::updateBin(
     }
 
     #ifdef DRUP
-    if (solver->drup
-        //Changed
-        && (lit1 != origLit1
+    if (//Changed
+        (lit1 != origLit1
             || lit2 != origLit2)
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
-        *(solver->drup)
+        (solver->drup)
         //Add replaced
         << lit1 << " " << lit2
         << " 0\n"
@@ -598,8 +591,8 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         }
 
         #ifdef DRUP
-        if (solver->drup && changed) {
-            *(solver->drup)
+        if (changed) {
+            solver->drup
             << "d "
             << origCl
             << " 0\n";
@@ -646,11 +639,9 @@ bool VarReplacer::handleUpdatedClause(
         return true;
 
     #ifdef DRUP
-    if (solver->drup) {
-        *(solver->drup)
-        << c
-        << " 0\n";
-    }
+    (solver->drup)
+    << c
+    << " 0\n";
     #endif
 
     switch(c.size()) {
@@ -767,15 +758,13 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << ~lit1 << " " << lit2 << " 0\n"
-            << lit1 << " " << ~lit2 << " 0\n"
-            << lit1 << " 0\n"
-            << ~lit1 << " 0\n"
-            << "0\n"
-            ;
-        }
+        (solver->drup)
+        << ~lit1 << " " << lit2 << " 0\n"
+        << lit1 << " " << ~lit2 << " 0\n"
+        << lit1 << " 0\n"
+        << ~lit1 << " 0\n"
+        << "0\n"
+        ;
         #endif
         solver->ok = false;
         return false;
@@ -793,12 +782,10 @@ bool VarReplacer::handleBothSet(
 ) {
     if (val1 != val2) {
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << ~lit1 << " 0\n"
-            << lit1 << " 0\n"
-            << "0\n";
-        }
+        (solver->drup)
+        << ~lit1 << " 0\n"
+        << lit1 << " 0\n"
+        << "0\n";
         #endif
         solver->ok = false;
     }
@@ -823,11 +810,9 @@ bool VarReplacer::handleOneSet(
         solver->enqueue(toEnqueue);
 
         #ifdef DRUP
-        if (solver->drup) {
-            *(solver->drup)
-            << toEnqueue
-            << " 0\n";
-        }
+        (solver->drup)
+        << toEnqueue
+        << " 0\n";
         #endif
 
         #ifdef STATS_NEEDED
@@ -856,12 +841,10 @@ bool VarReplacer::replace(
     replaceChecks(lit1, lit2);
 
     #ifdef DRUP_DEBUG
-    if (solver->drup) {
-        *(solver->drup)
-        << ~lit1 << " " << (lit2 ^!xorEqualFalse) << " 0\n"
-        << lit1 << " " << (~lit2 ^!xorEqualFalse) << " 0\n"
-        ;
-    }
+    (solver->drup)
+    << ~lit1 << " " << (lit2 ^!xorEqualFalse) << " 0\n"
+    << lit1 << " " << (~lit2 ^!xorEqualFalse) << " 0\n"
+    ;
     #endif
 
     //Move forward circle
@@ -875,12 +858,10 @@ bool VarReplacer::replace(
 
     //Not already inside
     #ifdef DRUP
-    if (solver->drup) {
-        *(solver->drup)
-        << ~lit1 << " " << lit2 << " 0\n"
-        << lit1 << " " << ~lit2 << " 0\n"
-        ;
-    }
+    (solver->drup)
+    << ~lit1 << " " << lit2 << " 0\n"
+    << lit1 << " " << ~lit2 << " 0\n"
+    ;
     #endif
 
     //None should be removed, only maybe queued for replacement

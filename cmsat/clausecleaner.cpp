@@ -81,10 +81,8 @@ void ClauseCleaner::treatImplicitClauses()
             if (i->isBinary()) {
                 if (satisfied(*i, lit)) {
                     #ifdef DRUP
-                    if (solver->drup
-                        && lit < i->lit2()
-                    ) {
-                        (*solver->drup)
+                    if (lit < i->lit2()) {
+                        solver->drup
                         << "d "
                         << lit << " "
                         << i->lit2()
@@ -153,23 +151,20 @@ void ClauseCleaner::treatImplicitClauses()
             if (needAttach) {
                 toAttach.push_back(BinaryClause(lits[0], lits[1], i->red()));
                 #ifdef DRUP
-                if (solver->drup) {
-                    (*solver->drup)
-                    << lits[0] << " "
-                    << lits[1]
-                    << " 0\n";
-                }
+                solver->drup
+                << lits[0] << " "
+                << lits[1]
+                << " 0\n";
                 #endif
             }
 
             if (remove) {
                 #ifdef DRUP
-                if (solver->drup
-                    //Only remove once --> exactly when adding
-                    && lit < i->lit2()
+                if (//Only remove once --> exactly when adding
+                    lit < i->lit2()
                     && i->lit2() < i->lit3()
                 ) {
-                    (*solver->drup)
+                    solver->drup
                     << "d "
                     << lit << " "
                     << i->lit2() << " "
@@ -264,9 +259,7 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
         if (val == l_True) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
             #ifdef DRUP
-            if (solver->drup) {
-                (*solver->drup) << "d " << origCl << " 0\n";
-            }
+            solver->drup << "d " << origCl << " 0\n";
             #endif
             return true;
         }
@@ -274,8 +267,8 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     cl.shrink(i-j);
 
     #ifdef DRUP
-    if (solver->drup && i != j) {
-        (*solver->drup)
+    if (i != j) {
+        solver->drup
         << cl << " 0\n"
         << "d " << origCl << " 0\n";
     }

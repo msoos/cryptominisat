@@ -173,11 +173,11 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     for (Lit *end = ps.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
             #ifdef DRUP
-            if (solver->drup && i != j) {
-                (*solver->drup)
+            if (i != j) {
+                solver->drup
                 << "d "
                 << origCl
-                << endl;
+                << "\n";
             }
             #endif
 
@@ -190,9 +190,9 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     ps.shrink(i-j);
 
     #ifdef DRUP
-    if (solver->drup && i != j) {
-        (*solver->drup)
-        << cl
+    if (i != j) {
+        (solver->drup)
+        << *cl
         << " 0\n"
 
         //Delete old one

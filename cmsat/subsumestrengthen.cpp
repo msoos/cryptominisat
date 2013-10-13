@@ -390,15 +390,15 @@ void SubsumeStrengthen::strengthen(ClOffset offset, const Lit toRemoveLit)
     vector<Lit> origCl(cl.size());
     std::copy(cl.begin(), cl.end(), origCl.begin());
     #endif
+
     cl.strengthen(toRemoveLit);
+
     #ifdef DRUP
-    if (solver->drup) {
-        *(solver->drup)
-        << cl
-        << " 0\n"
-        << "d " << origCl
-        << " 0\n";
-    }
+    solver->drup
+    << cl
+    << " 0\n"
+    << "d " << origCl
+    << " 0\n";
     #endif
 
     runStats.litsRemStrengthen++;

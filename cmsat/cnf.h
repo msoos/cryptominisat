@@ -12,12 +12,41 @@
 namespace CMSat {
 using namespace CMSat;
 
+struct Drup
+{
+    void setFile(std::ostream*)
+    {
+    }
+
+    bool enabled()
+    {
+        return true;
+    }
+
+    Drup operator<<(const Lit) const
+    {
+
+        return *this;
+    }
+
+    Drup operator<<(const char*) const
+    {
+        return *this;
+    }
+
+    Drup operator<<(const Clause&) const
+    {
+        return *this;
+    }
+
+    Drup operator<<(const vector<Lit>&) const
+    {
+        return *this;
+    }
+};
+
 struct CNF
 {
-    CNF() :
-        drup(NULL)
-    {}
-
     struct BinTriStats
     {
         uint64_t irredBins = 0;
@@ -57,8 +86,7 @@ struct CNF
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
     LitStats litStats;
-
-    std::ostream* drup;
+    Drup drup;
 
     uint32_t nVars() const
     {

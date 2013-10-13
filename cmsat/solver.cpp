@@ -194,10 +194,7 @@ bool Solver::addXorClauseInt(
         case 0:
             if (rhs) {
                 #ifdef DRUP
-                if (drup) {
-                    *drup
-                    << "0\n";
-                }
+                drup << "0\n";
                 #endif
 
                 ok = false;
@@ -302,8 +299,8 @@ Clause* Solver::addClauseInt(
     }
 
     #ifdef DRUP
-    if (drup && addDrup) {
-        (*drup) << ps << " 0\n";
+    if (addDrup) {
+        drup << ps << " 0\n";
     }
     #endif
 
@@ -471,8 +468,8 @@ void Solver::detachBinClause(
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
 {
     #ifdef DRUP
-    if (drup && removeDrup) {
-        (*drup) << "d " << cl << " 0\n";
+    if (removeDrup) {
+        drup << "d " << cl << " 0\n";
     }
     #endif
 
@@ -646,22 +643,19 @@ bool Solver::addClause(const vector<Lit>& lits)
     #ifdef DRUP
     //We manipulated the clause, delete
     std::sort(origCl.begin(), origCl.end());
-    if (drup
+    if (drup.enabled()
         && origCl != finalCl
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl.empty()) {
-            (*drup)
-            << finalCl << " 0\n";
+            drup << finalCl << " 0\n";
         }
 
         //Empty clause, it's UNSAT
         if (!solver->okay()) {
-            (*drup)
-            << "0\n";
+            drup << "0\n";
         }
-        (*drup)
-        << "d " << origCl << " 0\n";
+        drup << "d " << origCl << " 0\n";
     }
     #endif
 

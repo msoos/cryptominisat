@@ -530,11 +530,9 @@ void HyperEngine::addHyperBin(const Lit p)
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
         #ifdef DRUP
-        if (drup) {
-            (*drup)
-            << p << " " << (~deepestAncestor)
-            << " 0\n";
-        }
+        drup
+        << p << " " << (~deepestAncestor)
+        << " 0\n";
         #endif
         hyperBinNotAdded = false;
     } else {

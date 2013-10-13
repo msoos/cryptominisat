@@ -275,12 +275,10 @@ void PropEngine::lazy_hyper_bin_resolve(
         propStats.longLHBR++;
         #endif
         #ifdef DRUP
-        if (drup) {
-            (*drup)
-            << other << " "
-            << c[0]
-            << " 0\n";
-        }
+        drup
+        << other << " "
+        << c[0]
+        << " 0\n";
         #endif
         enqueue(c[0], PropBy(other));
     } else {
@@ -667,12 +665,10 @@ void PropEngine::lazy_hyper_bin_resolve(Lit lit1, Lit lit2)
     propStats.triLHBR++;
     #endif
     #ifdef DRUP
-    if (drup) {
-        (*drup)
-        << lit << " "
-        << lit2
-        << " 0\n";
-    }
+    drup
+    << lit << " "
+    << lit2
+    << " 0\n";
     #endif
 }
 

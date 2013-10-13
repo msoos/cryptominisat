@@ -246,12 +246,11 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout  << endl;
         }
 
-        if (drup) {
+        if (drup.enabled()) {
             for(unsigned  i = 0; i < newCl.size; i++) {
-                *(drup)
-                << newCl.lits[i] << " ";
+                drup << newCl.lits[i] << " ";
             }
-            (*drup) << " 0\n";
+            drup << " 0\n";
         }
         #endif //DRUP
 
@@ -287,12 +286,10 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout
             << "New smaller clause OTF:" << cl << endl;
         }
-        if (drup) {
-            (*drup)
-            << cl << " 0\n"
-            << "d " << origCl << " 0\n"
-            ;
-        }
+        drup
+        << cl << " 0\n"
+        << "d " << origCl << " 0\n"
+        ;
         #endif
 
         toAttachLater.push_back(offset);
@@ -919,10 +916,7 @@ lbool Searcher::search()
                     ) {
                         toEnqueue.push_back(~ancestor);
                         #ifdef DRUP
-                        if (drup) {
-                            (*drup)
-                            << (~ancestor) << " 0\n";
-                        }
+                        drup << (~ancestor) << " 0\n";
                         #endif
                     }
                 }
@@ -1188,10 +1182,7 @@ bool Searcher::handle_conflict(PropBy confl)
         << learnt_clause
         << endl;
     }
-    if (drup) {
-        (*drup)
-        << learnt_clause << " 0\n";
-    }
+    drup << learnt_clause << " 0\n";
     #endif
 
     size_t orig_trail_size = trail.size();
@@ -1283,8 +1274,8 @@ bool Searcher::handle_conflict(PropBy confl)
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
                 #ifdef DRUP
-                if (drup && decisionLevel() == 0) {
-                    *(drup)
+                if (decisionLevel() == 0) {
+                    drup
                     << cl[0]
                     << " 0\n";
                 }
@@ -1358,8 +1349,8 @@ bool Searcher::handle_conflict(PropBy confl)
                     , by
                 );
                 #ifdef DRUP
-                if (drup && decisionLevel() == 0) {
-                    *(drup)
+                if (decisionLevel() == 0) {
+                    drup
                     << it->lits[0] << " 0\n";
                 }
                 #endif
@@ -2617,12 +2608,10 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
             }
 
             #ifdef DRUP
-            if (drup) {
-                (*drup)
-                << "d "
-                << it->getLit1() << " " << it->getLit2()
-                << " 0\n";
-            }
+            drup
+            << "d "
+            << it->getLit1() << " " << it->getLit2()
+            << " 0\n";
             #endif
 
             #ifdef VERBOSE_DEBUG_FULLPROP
@@ -2927,7 +2916,7 @@ PropBy Searcher::propagate(
 
     #ifdef DRUP
     //If declevel 0 propagation, we have to add the unitaries
-    if (drup && decisionLevel() == 0) {
+    if (drup.enabled() && decisionLevel() == 0) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRUP
             if (conf.verbosity >= 6) {
@@ -2938,12 +2927,12 @@ PropBy Searcher::propagate(
             }
             #endif
 
-            (*drup)
+            drup
             << trail[i]
             << " 0\n";
         }
         if (!ret.isNULL()) {
-            (*drup)
+            drup
             << "0\n";
         }
     }

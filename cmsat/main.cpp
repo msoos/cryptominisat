@@ -925,7 +925,7 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
     #ifdef DRUP
-    solver->drup = drupf;
+    solver->drup.setFile(drupf);
     #endif
 
     std::ofstream resultfile;

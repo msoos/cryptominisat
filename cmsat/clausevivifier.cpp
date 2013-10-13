@@ -939,14 +939,12 @@ void ClauseVivifier::subsumeImplicit()
                     remTris++;
 
                     #ifdef DRUP
-                    if (solver->drup) {
-                        (*solver->drup)
-                        << "d "
-                        << lit << " "
-                        << i->lit2() << " "
-                        << i->lit3()
-                        << " 0\n";
-                    }
+                    (solver->drup)
+                    << "d "
+                    << lit << " "
+                    << i->lit2() << " "
+                    << i->lit3()
+                    << " 0\n";
                     #endif
                     continue;
                 }
@@ -980,13 +978,11 @@ void ClauseVivifier::subsumeImplicit()
                 }
 
                 #ifdef DRUP
-                if (solver->drup) {
-                    (*solver->drup)
-                    << "d "
-                    << lit << " "
-                    << i->lit2()
-                    << " 0\n";
-                }
+                solver->drup
+                << "d "
+                << lit << " "
+                << i->lit2()
+                << " 0\n";
                 #endif
 
                 continue;
@@ -1082,11 +1078,9 @@ bool ClauseVivifier::strengthenImplicit()
                         toEnqueue.push_back(lits[0]);
 
                         #ifdef DRUP
-                        if (solver->drup) {
-                            (*solver->drup)
-                            << lits[0]
-                            << " 0\n";
-                        }
+                        solver->drup
+                        << lits[0]
+                        << " 0\n";
                         #endif
                         remLitFromBin++;
                         stampRem++;
@@ -1126,11 +1120,9 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
                     #ifdef DRUP
-                    if (solver->drup) {
-                        (*solver->drup)
-                        << lit
-                        << " 0\n";
-                    }
+                    (solver->drup)
+                    << lit
+                    << " 0\n";
                     #endif
 
                 }
@@ -1181,20 +1173,18 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
                     #ifdef DRUP
-                    if (solver->drup) {
-                        (*solver->drup)
-                        //Add shortened
-                        << i->lit2() << " "
-                        << i->lit3()
-                        << " 0\n"
+                    (solver->drup)
+                    //Add shortened
+                    << i->lit2() << " "
+                    << i->lit3()
+                    << " 0\n"
 
-                        //Delete old
-                        << "d "
-                        << lit << " "
-                        << i->lit2() << " "
-                        << i->lit3()
-                        << " 0\n";
-                    }
+                    //Delete old
+                    << "d "
+                    << lit << " "
+                    << i->lit2() << " "
+                    << i->lit3()
+                    << " 0\n";
                     #endif
 
 
@@ -1225,21 +1215,19 @@ bool ClauseVivifier::strengthenImplicit()
                         remLitFromTri++;
                         binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
                         #ifdef DRUP
-                        if (solver->drup) {
-                            (*solver->drup)
-                            //Add shortened
-                            << lits[0] << " "
-                            << lits[1]
-                            << " 0\n"
+                        (solver->drup)
+                        //Add shortened
+                        << lits[0] << " "
+                        << lits[1]
+                        << " 0\n"
 
-                            //Delete old
-                            << "d "
-                            << lit << " "
-                            << i->lit2() << " "
-                            << i->lit3()
-                            << " 0\n"
-                            ;
-                        }
+                        //Delete old
+                        << "d "
+                        << lit << " "
+                        << i->lit2() << " "
+                        << i->lit3()
+                        << " 0\n"
+                        ;
                         #endif
 
                         continue;
@@ -1248,20 +1236,18 @@ bool ClauseVivifier::strengthenImplicit()
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
                         #ifdef DRUP
-                        if (solver->drup) {
-                            (*solver->drup)
-                            //Add shortened
-                            << lits[0]
-                            << " 0\n"
+                        (solver->drup)
+                        //Add shortened
+                        << lits[0]
+                        << " 0\n"
 
-                            //Delete old
-                            << "d "
-                            << lit << " "
-                            << i->lit2() << " "
-                            << i->lit3()
-                            << " 0\n"
-                            ;
-                        }
+                        //Delete old
+                        << "d "
+                        << lit << " "
+                        << i->lit2() << " "
+                        << i->lit3()
+                        << " 0\n"
+                        ;
                         #endif
 
                         continue;
