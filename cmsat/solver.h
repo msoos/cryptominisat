@@ -128,7 +128,7 @@ class Solver : public Searcher
         ///////////////////////////////////
         // State Dumping
         template<class T>
-        string clauseBackNumbered(const T& cl) const;
+        vector<Lit> clauseBackNumbered(const T& cl) const;
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
@@ -570,7 +570,7 @@ inline const Solver::BinTriStats& Solver::getBinTriStats() const
 }
 
 template<class T>
-inline string Solver::clauseBackNumbered(const T& cl) const
+inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
 {
     tmpCl.clear();
     for(size_t i = 0; i < cl.size(); i++) {
@@ -578,15 +578,7 @@ inline string Solver::clauseBackNumbered(const T& cl) const
     }
     std::sort(tmpCl.begin(), tmpCl.end());
 
-    std::stringstream ss;
-    for(size_t i = 0; i < cl.size(); i++) {
-        ss << tmpCl[i];
-
-        if (i+1 != cl.size())
-            ss << " ";
-    }
-
-    return ss.str();
+    return tmpCl;
 }
 
 inline Var Solver::numActiveVars() const

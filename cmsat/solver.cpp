@@ -2709,7 +2709,7 @@ void Solver::dumpRedClauses(
         const Clause* cl = clAllocator->getPointer(*it);
 
         if (cl->size() <= maxSize) {
-            *os << clauseBackNumbered(*cl) << " 0" << endl;
+            *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
 
             //Dump the information about the clause
             *os
@@ -2791,7 +2791,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     ) {
         Clause* cl = clAllocator->getPointer(*it);
         assert(!cl->red());
-        *os << clauseBackNumbered(*cl) << " 0" << endl;
+        *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
     }
 
     if (conf.perform_occur_based_simp) {
@@ -2816,7 +2816,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
 
             //Print clause
             *os
-            << clauseBackNumbered(it->lits)
+            << sortLits(it->lits)
             << " 0"
             << endl;
         }

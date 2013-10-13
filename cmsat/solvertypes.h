@@ -828,6 +828,15 @@ inline void orderLits(
     assert(lit2 < lit3);
 }
 
+inline vector<Lit> sortLits(const vector<Lit>& lits)
+{
+    vector<Lit> tmp(lits);
+
+    std::sort(tmp.begin(), tmp.end());
+    return tmp;
+}
+
+
 } //end namespace
 
 #endif //SOLVERTYPES_H
