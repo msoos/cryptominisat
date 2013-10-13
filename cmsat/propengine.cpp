@@ -296,7 +296,7 @@ void PropEngine::update_glue(Clause& c)
 {
     if (c.red()
         && c.stats.glue > 2
-        && updateGlues
+        && conf.updateGlues
     ) {
         uint16_t newGlue = calcGlue(c);
         c.stats.glue = std::min(c.stats.glue, newGlue);
@@ -527,7 +527,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         //Update glues?
         if (c.red()
             && c.stats.glue > 2
-            && updateGlues
+            && conf.updateGlues
         ) {
             uint16_t newGlue = calcGlue(c);
             c.stats.glue = std::min(c.stats.glue, newGlue);
