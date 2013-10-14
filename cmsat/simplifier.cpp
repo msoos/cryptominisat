@@ -118,6 +118,20 @@ void Simplifier::newVar()
         gateFinder->newVar();
     }
 
+    if (solver->conf.doGateFind
+        && solver->nVars() > 10ULL*1000ULL*100ULL
+    ) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [simp] gate finder switched off due to"
+            << " excessive number of variables (we may run out of memory)"
+            << endl;
+        }
+        delete gateFinder;
+        gateFinder = NULL;
+        solver->conf.doGateFind = false;
+    }
+
     //variable status
     var_elimed .push_back(false);
 }
