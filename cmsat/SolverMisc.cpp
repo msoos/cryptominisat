@@ -822,7 +822,7 @@ void Solver::printStats()
     printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
 
     //Multi-threading
-    if (numThreads > 1) {
+    if (numThreads > 1 && dataSync) {
         printStatsLine("c unit cls received", dataSync->getRecvUnitData(), (double)dataSync->getRecvUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c unit cls sent", dataSync->getSentUnitData(), (double)dataSync->getSentUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c bin cls received", dataSync->getRecvBinData());

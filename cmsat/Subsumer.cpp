@@ -494,7 +494,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
             solver.numNewBin++;
-            solver.dataSync->signalNewBinClause(*c.clause);
+            if (solver.dataSync) solver.dataSync->signalNewBinClause(*c.clause);
             clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
             unlinkClause(c);
             c.clause = NULL;

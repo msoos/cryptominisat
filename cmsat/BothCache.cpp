@@ -44,7 +44,7 @@ bool BothCache::tryBoth()
 
     for (Var var = 0; var < solver.nVars(); var++) {
         if (solver.value(var) != l_Undef
-            || solver.subsumer->getVarElimed()[var]
+            || (solver.subsumer && solver.subsumer->getVarElimed()[var])
             || solver.xorSubsumer->getVarElimed()[var]
             || solver.varReplacer->getReplaceTable()[var].var() != var)
             continue;
@@ -74,7 +74,7 @@ bool BothCache::tryBoth()
         for (vector<Lit>::const_iterator it = cache2->begin(), end = cache2->end(); it != end; it++) {
             if (seen[it->var()]) {
                 Var var2 = it->var();
-                if (solver.subsumer->getVarElimed()[var2]
+                if ((solver.subsumer && solver.subsumer->getVarElimed()[var2])
                     || solver.xorSubsumer->getVarElimed()[var2]
                     || solver.varReplacer->getReplaceTable()[var2].var() != var2)
                     continue;

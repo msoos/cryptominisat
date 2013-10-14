@@ -94,11 +94,14 @@ bool VarReplacer::performReplaceInternal()
 
     Var var = 0;
     const vec<char>& removedVars = solver.xorSubsumer->getVarElimed();
-    const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
+    const vec<char>* removedVars3 = NULL;
+    if (solver.subsumer) {
+        removedVars3 = &solver.subsumer->getVarElimed();
+    }
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
             || removedVars[it->var()]
-            || removedVars3[it->var()]
+            || (removedVars3 && (*removedVars3)[it->var()])
         ) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
@@ -108,7 +111,7 @@ bool VarReplacer::performReplaceInternal()
         //cannot_eliminate[var] = true;
         solver.setDecisionVar(it->var(), true);
         assert(!removedVars[var]);
-        assert(!removedVars3[var]);
+        assert(!removedVars3 || !(*removedVars3)[var]);
 
         uint32_t& activity1 = solver.activity[var];
         uint32_t& activity2 = solver.activity[it->var()];
@@ -455,7 +458,7 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
         solver.numNewBin++;
-        solver.dataSync->signalNewBinClause(c);
+        if (solver.dataSync) solver.dataSync->signalNewBinClause(c);
         return true;
     default:
         solver.attachClause(c);
@@ -581,10 +584,10 @@ bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const bool addBinAsLe
     assert(solver.assigns[ps[0].var()].isUndef());
     assert(solver.assigns[ps[1].var()].isUndef());
 
-    assert(!solver.subsumer->getVarElimed()[ps[0].var()]);
+    assert(!solver.subsumer || !solver.subsumer->getVarElimed()[ps[0].var()]);
     assert(!solver.xorSubsumer->getVarElimed()[ps[0].var()]);
 
-    assert(!solver.subsumer->getVarElimed()[ps[1].var()]);
+    assert(!solver.subsumer ||!solver.subsumer->getVarElimed()[ps[1].var()]);
     assert(!solver.xorSubsumer->getVarElimed()[ps[1].var()]);
     #endif
 
@@ -604,9 +607,9 @@ bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const bool addBinAsLe
     }
 
     #ifdef DEBUG_REPLACER
-    assert(!solver.subsumer->getVarElimed()[lit1.var()]);
+    assert(!solver.subsumer ||!solver.subsumer->getVarElimed()[lit1.var()]);
     assert(!solver.xorSubsumer->getVarElimed()[lit1.var()]);
-    assert(!solver.subsumer->getVarElimed()[lit2.var()]);
+    assert(!solver.subsumer ||!solver.subsumer->getVarElimed()[lit2.var()]);
     assert(!solver.xorSubsumer->getVarElimed()[lit2.var()]);
     #endif
 
@@ -674,12 +677,12 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const bool addBinAsLearnt)
 {
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.dataSync->signalNewBinClause(lit1, lit2);
+    if (solver.dataSync) solver.dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 ^= true;
     lit2 ^= true;
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.dataSync->signalNewBinClause(lit1, lit2);
+    if (solver.dataSync) solver.dataSync->signalNewBinClause(lit1, lit2);
 }
 
 /**

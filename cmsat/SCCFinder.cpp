@@ -33,14 +33,20 @@ using namespace CMSat;
 
 SCCFinder::SCCFinder(Solver& _solver) :
     solver(_solver)
-    , varElimed1(_solver.subsumer->getVarElimed())
+    , varElimed1(NULL)
     , varElimed2(_solver.xorSubsumer->getVarElimed())
     , replaceTable(_solver.varReplacer->getReplaceTable())
     , totalTime(0.0)
-{}
+{
+}
 
 bool SCCFinder::find2LongXors()
 {
+    if (solver.subsumer)
+        varElimed1 = &solver.subsumer->getVarElimed();
+    else
+        varElimed1 = NULL;
+
     double myTime = cpuTime();
     uint32_t oldNumReplace = solver.varReplacer->getNewToReplaceVars();
 
@@ -83,7 +89,9 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (!varElimed1[vertexVar] && !varElimed2[vertexVar]) {
+    if ((!varElimed1 || !(*varElimed1)[vertexVar])
+        && !varElimed2[vertexVar]
+    ) {
         const vec<Watched>& ws = solver.watches[vertex];
         for (vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
             if (!it->isBinary()) continue;
@@ -102,7 +110,10 @@ void SCCFinder::tarjan(const uint32_t vertex)
             for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = *it;
                 lit = replaceTable[lit.var()] ^ lit.sign();
-                if (lit == prevLit || lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()])
+                if (lit == prevLit
+                    || lit == vertLit
+                    || (varElimed1 && (*varElimed1)[lit.var()])
+                    || varElimed2[lit.var()])
                     continue;
 
                 *it2++ = lit;

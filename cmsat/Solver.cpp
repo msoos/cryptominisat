@@ -125,7 +125,11 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     sCCFinder = new SCCFinder(*this);
     clauseVivifier = new ClauseVivifier(*this);
     matrixFinder = new MatrixFinder(*this);
-    dataSync = new DataSync(*this, sharedData);
+
+    if (sharedData)
+        dataSync = new DataSync(*this, sharedData);
+    else
+        dataSync = NULL;
 
     #ifdef HAVE_MYSQL
     //Init SQL
@@ -335,10 +339,11 @@ Var Solver::newVar(bool dvar) throw (std::out_of_range)
     //Transitive OTF self-subsuming resolution
     seen2     .push_back(0);
     seen2     .push_back(0);
-    transOTFCache.push_back(TransCache());
-    transOTFCache.push_back(TransCache());
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
+    transOTFCache.push_back(TransCache());
+    transOTFCache.push_back(TransCache());
+
 
     polarity  .push_back(defaultPolarity());
 
@@ -346,9 +351,18 @@ Var Solver::newVar(bool dvar) throw (std::out_of_range)
     insertVarOrder(v);
 
     varReplacer->newVar();
-    subsumer->newVar();
+    if (nVars() > 1000ULL) {//10ULL*1000ULL*1000ULL) {
+        delete subsumer;
+        subsumer = NULL;
+    }
+
+    if (subsumer)
+        subsumer->newVar();
+
     xorSubsumer->newVar();
-    dataSync->newVar();
+
+    if (dataSync)
+        dataSync->newVar();
 
     insertVarOrder(v);
 
@@ -385,7 +399,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const bool learnt)
                 xorEqualFalse ^= assigns[ps[i].var()].getBool();
         } else if (assigns[ps[i].var()].isUndef()) { //just add
             ps[j++] = p = ps[i];
-            assert(!subsumer->getVarElimed()[p.var()]);
+            assert(!subsumer || !subsumer->getVarElimed()[p.var()]);
             assert(!xorSubsumer->getVarElimed()[p.var()]);
         } else //modify xorEqualFalse instead of adding
             xorEqualFalse ^= (assigns[ps[i].var()].getBool());
@@ -459,15 +473,19 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse) throw (std::out_of_range)
     }
     #endif
 
-    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
+    if (varReplacer->getNumLastReplacedVars()
+        || (subsumer && subsumer->getNumElimed())
+        || xorSubsumer->getNumElimed()
+    ) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             Lit otherLit = varReplacer->getReplaceTable()[ps[i].var()];
             if (otherLit.var() != ps[i].var()) {
                 ps[i] = Lit(otherLit.var(), false);
                 xorEqualFalse ^= otherLit.sign();
             }
-            if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+            if (subsumer && subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
                 return false;
+
             else if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
                 return false;
         }
@@ -513,7 +531,7 @@ Clause* Solver::addClauseInt(T& ps
             return NULL;
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
-            assert(!subsumer->getVarElimed()[p.var()]);
+            assert(!subsumer || !subsumer->getVarElimed()[p.var()]);
             assert(!xorSubsumer->getVarElimed()[p.var()]);
         }
     }
@@ -535,7 +553,8 @@ Clause* Solver::addClauseInt(T& ps
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        if (!inOriginalInput) dataSync->signalNewBinClause(ps);
+        if (dataSync && !inOriginalInput)
+            dataSync->signalNewBinClause(ps);
         numNewBin++;
         return NULL;
     }
@@ -564,11 +583,16 @@ template<class T> bool Solver::addClauseHelper(T& ps) throw (std::out_of_range)
     #endif
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
+    if (varReplacer->getNumLastReplacedVars()
+        || (subsumer && subsumer->getNumElimed())
+        || xorSubsumer->getNumElimed()
+    ) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
-            if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+
+            if (subsumer && subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
                 return false;
+
             if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
                 return false;
         }
@@ -635,7 +659,7 @@ void Solver::attachClause(XorClause& c)
     assert(assigns[c[1].var()] == l_Undef);
 
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(!subsumer->getVarElimed()[c[i].var()]);
+        assert(!subsumer || !subsumer->getVarElimed()[c[i].var()]);
         assert(!xorSubsumer->getVarElimed()[c[i].var()]);
     }
     #endif //DEBUG_ATTACH
@@ -655,8 +679,8 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     assert(assigns[lit1.var()] == l_Undef);
     assert(value(lit2) == l_Undef || value(lit2) == l_False);
 
-    assert(!subsumer->getVarElimed()[lit1.var()]);
-    assert(!subsumer->getVarElimed()[lit2.var()]);
+    assert(!subsumer || !subsumer->getVarElimed()[lit1.var()]);
+    assert(!subsumer || !subsumer->getVarElimed()[lit2.var()]);
 
     assert(!xorSubsumer->getVarElimed()[lit1.var()]);
     assert(!xorSubsumer->getVarElimed()[lit2.var()]);
@@ -694,7 +718,7 @@ void Solver::attachClause(Clause& c)
     assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
 
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(!subsumer->getVarElimed()[c[i].var()]);
+        assert(!subsumer || !subsumer->getVarElimed()[c[i].var()]);
         assert(!xorSubsumer->getVarElimed()[c[i].var()]);
     }
     #endif //DEBUG_ATTACH
@@ -1045,7 +1069,7 @@ void Solver::calcReachability()
     for (uint32_t i = 0; i < order_heap.size(); i++) for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
         Lit lit = Lit(order_heap[i], sig1);
         if (value(lit.var()) != l_Undef
-            || subsumer->getVarElimed()[lit.var()]
+            || (subsumer && subsumer->getVarElimed()[lit.var()])
             || xorSubsumer->getVarElimed()[lit.var()]
             || !decision_var[lit.var()])
             continue;
@@ -1126,9 +1150,10 @@ Lit Solver::pickBranchLit()
     for (unsigned int i = decisionLevel(); i < branching_variables.size(); ++i) {
         Var v = branching_variables[i];
         if (v < nVars()
-	    && !subsumer->getVarElimed()[v]
-	    && !xorSubsumer->getVarElimed()[v]
-	    && assigns[v] == l_Undef) {
+            && (subsumer && !subsumer->getVarElimed()[v])
+            && !xorSubsumer->getVarElimed()[v]
+            && assigns[v] == l_Undef
+        ) {
             next = v;
             break;
         }
@@ -2415,7 +2440,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
 
     // Simplify the set of problem clauses:
     if (decisionLevel() == 0) {
-        if (!dataSync->syncData()) return l_False;
+        if (dataSync && !dataSync->syncData()) return l_False;
         if (!simplify()) return l_False;
     }
 
@@ -2589,7 +2614,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         if (learnt_clause.size() == 2) {
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
-            dataSync->signalNewBinClause(learnt_clause);
+            if (dataSync) {
+                dataSync->signalNewBinClause(learnt_clause);
+            }
             uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             goto end;
         }
@@ -2746,7 +2773,8 @@ lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
+    if (conf.doSatELite && subsumer && !subsumer->simplifyBySubsumption())
+        goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2867,8 +2895,11 @@ void Solver::performStepsBeforeSolve()
     if (conf.doSatELite
         && !conf.libraryUsage
         && clauses.size() < 4800000
-        && !subsumer->simplifyBySubsumption())
+        && subsumer
+        && !subsumer->simplifyBySubsumption()
+    ) {
         return;
+    }
 
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;
@@ -2948,8 +2979,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
         const Var var = lit.var();
 
         //Uneliminate
-        if (subsumer->getVarElimed()[var] && !subsumer->unEliminate(var))
+        if (subsumer && subsumer->getVarElimed()[var] && !subsumer->unEliminate(var))
             return l_False;
+
         if (xorSubsumer->getVarElimed()[var] && !xorSubsumer->unEliminate(var))
             return l_False;
     }
@@ -2960,7 +2992,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     assert(decisionLevel() == 0);
     if (!ok) return l_False;
     assert(qhead == trail.size());
-    assert(subsumer->checkElimedUnassigned());
+    assert(!subsumer || subsumer->checkElimedUnassigned());
     assert(xorSubsumer->checkElimedUnassigned());
 
     if (libraryCNFFile)
@@ -2990,7 +3022,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < conf.maxRestarts) {
         #ifdef DEBUG_VARELIM
-        assert(subsumer->checkElimedUnassigned());
+        assert(!subsumer || subsumer->checkElimedUnassigned());
         assert(xorSubsumer->checkElimedUnassigned());
         #endif //DEBUG_VARELIM
 
@@ -3084,13 +3116,13 @@ void Solver::handleSATSolution()
         if (conf.verbosity >= 1)
             printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
     }*/
-    assert(subsumer->checkElimedUnassigned());
+    assert(!subsumer || subsumer->checkElimedUnassigned());
     assert(xorSubsumer->checkElimedUnassigned());
 
     varReplacer->extendModelPossible();
     checkSolution();
 
-    if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
+    if ((subsumer && subsumer->getNumElimed()) || xorSubsumer->getNumElimed()) {
         if (conf.verbosity >= 1) {
             std::cout << "c Solution needs extension. Extending." << std::endl;
         }
@@ -3111,7 +3143,7 @@ void Solver::handleSATSolution()
         vec<Lit> tmp;
         for (Var var = 0; var < nVars(); var++) {
             s.newVar(decision_var[var]
-            || subsumer->getVarElimed()[var]
+            || (subsumer && subsumer->getVarElimed()[var])
             || varReplacer->varHasBeenReplaced(var)
             || xorSubsumer->getVarElimed()[var]
             );
@@ -3129,7 +3161,10 @@ void Solver::handleSATSolution()
             }
         }
         varReplacer->extendModelImpossible(s);
-        subsumer->extendModel(s);
+
+        if (subsumer)
+            subsumer->extendModel(s);
+
         xorSubsumer->extendModel(s);
 
         lbool status = s.solve();
@@ -3168,7 +3203,9 @@ void Solver::handleUNSATSolution()
 void Solver::cleanCache()
 {
     for(uint32_t i = 0; i < nVars(); i++) {
-        if (subsumer->getVarElimed()[i] || value(i) != l_Undef) {
+        if ((subsumer && subsumer->getVarElimed()[i])
+            || value(i) != l_Undef
+        ) {
             vector<Lit> tmp1;
             transOTFCache[Lit(i, false).toInt()].lits.swap(tmp1);
             vector<Lit> tmp2;
@@ -3197,8 +3234,8 @@ void Solver::cleanCachePart(const Lit vertLit)
         lit = varReplacer->getReplaceTable()[lit.var()] ^ lit.sign();
         if (lit == vertLit
             || seen[lit.toInt()]
-            || subsumer->getVarElimed()[lit.var()]
-            || subsumer->getVarElimed()[lit.var()]
+            || (subsumer && subsumer->getVarElimed()[lit.var()])
+            || (subsumer && subsumer->getVarElimed()[lit.var()])
         ) continue;
 
         *it2++ = lit;
