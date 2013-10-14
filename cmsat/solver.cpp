@@ -2459,7 +2459,7 @@ void Solver::printMemStats() const
         account += mem;
     }
 
-    mem = varReplacer->bytesMemUsed();
+    mem = varReplacer->memUsed();
     printStatsLine("c Mem for varReplacer"
         , mem/(1024UL*1024UL)
         , "MB"
