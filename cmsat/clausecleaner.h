@@ -69,7 +69,7 @@ inline void ClauseCleaner::removeAndCleanAll()
     //Once we have cleaned the watchlists
     //no watchlist whose lit is set may be non-empty
     size_t wsLit = 0;
-    for(vector<vec<Watched> >::const_iterator
+    for(watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++

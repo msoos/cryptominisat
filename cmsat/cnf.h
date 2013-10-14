@@ -8,6 +8,7 @@
 #include "solvertypes.h"
 #include "implcache.h"
 #include "vardata.h"
+#include "watcharray.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -80,7 +81,7 @@ struct CNF
     SolverConf conf;
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
-    vector<vec<Watched> > watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
+    watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<lbool> assigns;
     vector<VarData> varData;
     #ifdef STATS_NEEDED

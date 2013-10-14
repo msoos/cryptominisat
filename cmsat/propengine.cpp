@@ -33,6 +33,7 @@
 #include "clause.h"
 #include "time_mem.h"
 #include "varupdatehelper.h"
+#include "watchalgos.h"
 
 using namespace CMSat;
 using std::cout;
@@ -106,9 +107,9 @@ void PropEngine::attachTriClause(
     orderLits(lit1, lit2, lit3);
 
     //And now they are attached, ordered
-    watches[lit1.toInt()].push(Watched(lit2, lit3, red));
-    watches[lit2.toInt()].push(Watched(lit1, lit3, red));
-    watches[lit3.toInt()].push(Watched(lit1, lit2, red));
+    watches[lit1.toInt()].push_back(Watched(lit2, lit3, red));
+    watches[lit2.toInt()].push_back(Watched(lit1, lit3, red));
+    watches[lit3.toInt()].push_back(Watched(lit1, lit2, red));
 }
 
 void PropEngine::detachTriClause(

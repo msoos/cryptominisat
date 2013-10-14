@@ -382,7 +382,7 @@ void VarReplacer::updateTri(
     #endif
 
     if (lit1 != origLit1) {
-        solver->watches[lit1.toInt()].push(*i);
+        solver->watches[lit1.toInt()].push_back(*i);
     } else {
         *j++ = *i;
     }
@@ -487,7 +487,7 @@ bool VarReplacer::replaceImplicit()
     delayedAttach.clear();
 
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
+    for (auto
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
