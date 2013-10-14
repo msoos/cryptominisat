@@ -351,7 +351,7 @@ Var Solver::newVar(bool dvar) throw (std::out_of_range)
     insertVarOrder(v);
 
     varReplacer->newVar();
-    if (nVars() > 1000ULL) {//10ULL*1000ULL*1000ULL) {
+    if (nVars() > 10ULL*1000ULL*1000ULL) {
         delete subsumer;
         subsumer = NULL;
     }
