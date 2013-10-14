@@ -66,7 +66,7 @@ PropEngine::~PropEngine()
 Var PropEngine::newVar(const bool)
 {
     const Var v = nVars();
-    if (v >= 1<<30) {
+    if (v >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
         exit(-1);
     }
