@@ -410,12 +410,12 @@ private:
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
     vector<bool>    var_elimed;           ///<Contains TRUE if var has been eliminated
+    vector<uint16_t>& seen;
+    vector<uint16_t>& seen2;
+    vector<Lit>& toClear;
 
     //Temporaries
-    vector<unsigned char>    seen;        ///<Used in various places to help perform algorithms
-    vector<unsigned char>    seen2;       ///<Used in various places to help perform algorithms
     vector<Lit>     dummy;       ///<Used by merge()
-    vector<Lit>     toClear;      ///<Used by merge()
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits

@@ -79,6 +79,9 @@ Simplifier::Simplifier(Solver* _solver):
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
+    , seen(solver->seen)
+    , seen2(solver->seen2)
+    , toClear(solver->toClear)
 {
     #ifdef USE_M4RI
     if (solver->conf.doFindXors) {
@@ -111,11 +114,6 @@ Adds occurrence list places, increments seen, etc.
 */
 void Simplifier::newVar()
 {
-    seen    .push_back(0);       // (one for each polarity)
-    seen    .push_back(0);
-    seen2   .push_back(0);       // (one for each polarity)
-    seen2   .push_back(0);
-
     if (solver->conf.doGateFind) {
         gateFinder->newVar();
     }

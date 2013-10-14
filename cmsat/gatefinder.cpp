@@ -33,8 +33,8 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
     numDotPrinted(0)
     , simplifier(_simplifier)
     , solver(_solver)
-    , seen(_simplifier->seen)
-    , seen2(_simplifier->seen2)
+    , seen(_solver->seen)
+    , seen2(_solver->seen2)
 {}
 
 bool GateFinder::doAll()

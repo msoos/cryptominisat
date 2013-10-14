@@ -35,8 +35,8 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     subsumer(_subsumer)
     , solver(_solver)
     , numCalls(0)
-    , seen(_subsumer->seen)
-    , seen2(_subsumer->seen2)
+    , seen(_solver->seen)
+    , seen2(_solver->seen2)
 {}
 
 bool XorFinder::findXors()

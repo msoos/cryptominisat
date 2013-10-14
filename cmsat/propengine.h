@@ -153,12 +153,6 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
 
-    // Temporaries (to reduce allocation overhead).
-    //
-    vector<uint16_t>       seen;  ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
-    vector<uint16_t>       seen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
-    vector<Lit>            toClear; ///<Temporary, used in some places
-
     void   enqueue (const Lit p, const PropBy from = PropBy());
     void   newDecisionLevel();
     PropBy propagateAnyOrder();

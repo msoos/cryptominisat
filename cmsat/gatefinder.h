@@ -438,8 +438,8 @@ private:
     //Main data
     Simplifier *simplifier;
     Solver *solver;
-    vector<unsigned char>& seen;
-    vector<unsigned char>& seen2;
+    vector<uint16_t>& seen;
+    vector<uint16_t>& seen2;
 };
 
 inline bool GateFinder::canElim(const Var var) const

@@ -80,7 +80,7 @@ class FoundXors
         FoundXors(
             const vector<Lit>& cl
             , CL_ABST_TYPE abst
-            , vector<unsigned char>& seen
+            , vector<uint16_t>& seen
         ) :
             abst(abst)
             , size(cl.size())
@@ -109,7 +109,7 @@ class FoundXors
         template<class T> void add(const T& cl, vector<uint32_t>& varsMissing);
 
     private:
-        void calcClauseData(vector<unsigned char>& seen)
+        void calcClauseData(vector<uint16_t>& seen)
         {
             //Calculate parameters of base clause.
             //Also set 'seen' for easy check in 'findXorMatch()'
@@ -343,8 +343,8 @@ private:
     vector<size_t> interToOUterVarMap;
 
     //Other temporaries
-    vector<unsigned char>& seen;
-    vector<unsigned char>& seen2;
+    vector<uint16_t>& seen;
+    vector<uint16_t>& seen2;
 };
 
 

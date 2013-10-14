@@ -80,11 +80,7 @@ Var PropEngine::newVar(const bool)
     varDataLT.push_back(VarData::Stats());
     #endif
 
-    //Temporaries
-    seen      .push_back(0);
-    seen      .push_back(0);
-    seen2     .push_back(0);
-    seen2     .push_back(0);
+    CNF::newVar();
 
     return v;
 }

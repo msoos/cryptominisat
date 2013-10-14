@@ -47,6 +47,14 @@ struct Drup
 
 struct CNF
 {
+    void newVar()
+    {
+        seen      .push_back(0);
+        seen      .push_back(0);
+        seen2     .push_back(0);
+        seen2     .push_back(0);
+    }
+
     struct BinTriStats
     {
         uint64_t irredBins = 0;
@@ -81,12 +89,17 @@ struct CNF
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars;
-    vector<char> decisionVar;
+    vector<bool> decisionVar;
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
     LitStats litStats;
     Drup drup;
+
+    //Temporaries
+    vector<uint16_t> seen;
+    vector<uint16_t> seen2;
+    vector<Lit>      toClear;
 
     uint32_t nVars() const
     {
