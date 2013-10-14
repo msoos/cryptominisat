@@ -81,7 +81,7 @@ inline std::string restart_type_to_string(const Restart type)
 }
 
 //Removed by which algorithm. NONE = not eliminated
-enum class Removed {
+enum class Removed : unsigned char {
     none
     , elimed
     , replaced
