@@ -441,6 +441,9 @@ void GateFinder::findOrGates(const bool redGatesToo)
 {
     //Go through each TRI clause
     for(size_t i = 0; i < solver->watches.size(); i++) {
+        if (*simplifier->toDecrease < 0)
+            break;
+
         const Lit lit = Lit::toLit(i);
         for(const Watched ws: solver->watches[i]) {
             *simplifier->toDecrease -= 1;
