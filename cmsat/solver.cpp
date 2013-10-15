@@ -1166,61 +1166,10 @@ bool Solver::reduceDBStructPropConfl::operator() (
     return x->size() > y->size();
 }
 
-/**
-@brief Removes redundant clauses that have been found not to be too good
-*/
-CleaningStats Solver::reduceDB()
-{
-    //Clean the clause database before doing cleaning
-    //varReplacer->performReplace();
-    clauseCleaner->removeAndCleanAll();
-
-    const double myTime = cpuTime();
-    solveStats.nbReduceDB++;
-    CleaningStats tmpStats;
-    tmpStats.origNumClauses = longRedCls.size();
-    tmpStats.origNumLits = litStats.redLits;
-
-    //Calculate how many to remove
-    uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
-
-    //If there is a ratio limit, and we are over it
-    //then increase the removeNum accordingly
-    uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
-        * (double)solveStats.nbReduceDB
-        * conf.maxNumRedsRatio;
-    uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
-
-    if (removeNum != origRemoveNum) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c [DBclean] Hard upper limit reached, removing more than normal: "
-            << origRemoveNum << " --> " << removeNum
-            << endl;
-        }
-    } else {
-        if (conf.verbosity >= 2) {
-        cout
-        << "c [DBclean] Hard long cls limit would be: " << maxToHave/1000 << "K"
-        << endl;
-        }
-    }
-
-    //Subsume
-    uint64_t sumConfl = sumConflicts();
-    //simplifier->subsumeReds();
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time wasted on clean&replace&sub: "
-        << std::setprecision(3) << cpuTime()-myTime
-        << endl;
-    }
-
-    //Complete detach&reattach of OK clauses will be *much* faster
-    CompleteDetachReatacher detachReattach(this);
-    detachReattach.detachNonBinsNonTris();
-
-    //pre-remove
+void Solver::pre_clean_clause_db(
+    CleaningStats& tmpStats
+    , uint64_t sumConfl
+) {
     if (conf.doPreClauseCleanPropAndConfl) {
         //Reduce based on props&confls
         size_t i, j;
@@ -1259,48 +1208,13 @@ CleaningStats Solver::reduceDB()
         }
         longRedCls.resize(longRedCls.size() -(i-j));
     }
+}
 
-    //Clean according to type
-    tmpStats.clauseCleaningType = conf.clauseCleaningType;
-    switch (conf.clauseCleaningType) {
-        case CLEAN_CLAUSES_GLUE_BASED :
-            //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end()
-                , reduceDBStructGlue(clAllocator));
-            tmpStats.glueBasedClean = 1;
-            break;
-
-        case CLEAN_CLAUSES_SIZE_BASED :
-            //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end()
-                , reduceDBStructSize(clAllocator));
-            tmpStats.sizeBasedClean = 1;
-            break;
-
-        case CLEAN_CLAUSES_ACTIVITY_BASED :
-            //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end()
-                , reduceDBStructActivity(clAllocator));
-            tmpStats.actBasedClean = 1;
-            break;
-
-        case CLEAN_CLAUSES_PROPCONFL_BASED :
-            //Sort for glue-based removal
-            std::sort(longRedCls.begin(), longRedCls.end()
-                , reduceDBStructPropConfl(clAllocator));
-            tmpStats.propConflBasedClean = 1;
-            break;
-    }
-
-    #ifdef VERBOSE_DEBUG
-    cout << "Cleaning redundant clauses. Red clauses after sort: " << endl;
-    for (uint32_t i = 0; i != longRedCls.size(); i++) {
-        const Clause* cl = clAllocator->getPointer(longRedCls[i]);
-        cout << *cl << endl;
-    }
-    #endif
-
-    //Remove clauses
+void Solver::real_clean_clause_db(
+    CleaningStats& tmpStats
+    , uint64_t sumConfl
+    , uint64_t removeNum
+) {
     size_t i, j;
     for (i = j = 0
         ; i < longRedCls.size() && tmpStats.removed.num < removeNum
@@ -1336,21 +1250,6 @@ CleaningStats Solver::reduceDB()
         ClOffset offset = longRedCls[i];
         Clause* cl = clAllocator->getPointer(offset);
 
-        /*
-        //No use at all? Remove!
-        if (cl->stats.numPropAndConfl() == 0
-            && cl->stats.conflictNumIntroduced + 20000
-                < sumStats.conflStats.numConflicts
-        ) {
-            //Stats Update
-            tmpStats.removed.incorporate(cl);
-            tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
-
-            //free clause
-            clAllocator->clauseFree(offset);
-            continue;
-        }*/
-
         //Stats Update
         tmpStats.remain.incorporate(cl);
         tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
@@ -1369,6 +1268,102 @@ CleaningStats Solver::reduceDB()
 
     //Resize long redundant clause array
     longRedCls.resize(longRedCls.size() - (i - j));
+}
+
+uint64_t Solver::calc_how_many_to_remove()
+{
+    //Calculate how many to remove
+    uint64_t origRemoveNum = (double)longRedCls.size() *conf.ratioRemoveClauses;
+
+    //If there is a ratio limit, and we are over it
+    //then increase the removeNum accordingly
+    uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
+        * (double)solveStats.nbReduceDB
+        * conf.maxNumRedsRatio;
+    uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
+
+    if (removeNum != origRemoveNum) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c [DBclean] Hard upper limit reached, removing more than normal: "
+            << origRemoveNum << " --> " << removeNum
+            << endl;
+        }
+    } else {
+        if (conf.verbosity >= 2) {
+        cout
+        << "c [DBclean] Hard long cls limit would be: " << maxToHave/1000 << "K"
+        << endl;
+        }
+    }
+
+    return removeNum;
+}
+
+void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
+{
+    switch (conf.clauseCleaningType) {
+    case CLEAN_CLAUSES_GLUE_BASED :
+        //Sort for glue-based removal
+        std::sort(longRedCls.begin(), longRedCls.end()
+            , reduceDBStructGlue(clAllocator));
+        tmpStats.glueBasedClean = 1;
+        break;
+
+    case CLEAN_CLAUSES_SIZE_BASED :
+        //Sort for glue-based removal
+        std::sort(longRedCls.begin(), longRedCls.end()
+            , reduceDBStructSize(clAllocator));
+        tmpStats.sizeBasedClean = 1;
+        break;
+
+    case CLEAN_CLAUSES_ACTIVITY_BASED :
+        //Sort for glue-based removal
+        std::sort(longRedCls.begin(), longRedCls.end()
+            , reduceDBStructActivity(clAllocator));
+        tmpStats.actBasedClean = 1;
+        break;
+
+    case CLEAN_CLAUSES_PROPCONFL_BASED :
+        //Sort for glue-based removal
+        std::sort(longRedCls.begin(), longRedCls.end()
+            , reduceDBStructPropConfl(clAllocator));
+        tmpStats.propConflBasedClean = 1;
+        break;
+    }
+}
+
+CleaningStats Solver::reduceDB()
+{
+    //Clean the clause database before doing cleaning
+    //varReplacer->performReplace();
+    clauseCleaner->removeAndCleanAll();
+
+    const double myTime = cpuTime();
+    solveStats.nbReduceDB++;
+    CleaningStats tmpStats;
+    tmpStats.origNumClauses = longRedCls.size();
+    tmpStats.origNumLits = litStats.redLits;
+    uint64_t removeNum = calc_how_many_to_remove();
+
+    //Subsume
+    uint64_t sumConfl = sumConflicts();
+    //simplifier->subsumeReds();
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Time wasted on clean&replace&sub: "
+        << std::setprecision(3) << cpuTime()-myTime
+        << endl;
+    }
+
+    //Complete detach&reattach of OK clauses will be *much* faster
+    CompleteDetachReatacher detachReattach(this);
+    detachReattach.detachNonBinsNonTris();
+
+    pre_clean_clause_db(tmpStats, sumConfl);
+    tmpStats.clauseCleaningType = conf.clauseCleaningType;
+    sort_red_cls_as_required(tmpStats);
+    real_clean_clause_db(tmpStats, sumConfl, removeNum);
 
     //Reattach what's left
     detachReattach.reattachLongs();
@@ -1486,6 +1481,28 @@ void Solver::check_minimization_effectiveness(const lbool status)
     }
 }
 
+void Solver::extend_solution()
+{
+    //If literal stats are wrong, the solution is probably wrong
+    checkStats();
+
+    //Extend solution to stored solution in component handler
+    if (conf.doCompHandler) {
+        compHandler->addSavedState(solution);
+    }
+
+    //Extend solution
+    if (conf.perform_occur_based_simp
+        || conf.doFindAndReplaceEqLits
+    ) {
+        SolutionExtender extender(this, solution);
+        extender.extend();
+    } else {
+        model = solution;
+    }
+    updateArrayRev(model, interToOuterMain);
+}
+
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
@@ -1555,13 +1572,13 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
         //Abide by maxConfl limit
         numConfls = std::min<uint32_t>(numConfls, conf.maxConfl - sumStats.conflStats.numConflicts);
-
-        //Solve and update stats
         status = Searcher::solve(numConfls);
 
+        //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
         check_minimization_effectiveness(status);
 
+        //Update stats
         sumStats += Searcher::getStats();
         sumPropStats += propStats;
         propStats.clear();
@@ -1594,27 +1611,8 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
 
     //Handle found solution
     if (status == l_True) {
-        //If literal stats are wrong, the solution is probably wrong
-        checkStats();
-
-        //Extend solution to stored solution in component handler
-        if (conf.doCompHandler) {
-            compHandler->addSavedState(solution);
-        }
-
-        //Extend solution
-        if (conf.perform_occur_based_simp
-            || conf.doFindAndReplaceEqLits
-        ) {
-            SolutionExtender extender(this, solution);
-            extender.extend();
-        } else {
-            model = solution;
-        }
+        extend_solution();
         cancelUntil(0);
-
-        //Renumber model back to original variable numbering
-        updateArrayRev(model, interToOuterMain);
     } else {
         //TODO
         //update_conflict_to_orig_assumptions();

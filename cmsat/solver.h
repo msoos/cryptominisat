@@ -329,6 +329,7 @@ class Solver : public Searcher
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
+        void extend_solution();
 
         /////////////////////
         // Objects that help us accomplish the task
@@ -419,6 +420,14 @@ class Solver : public Searcher
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
+        void pre_clean_clause_db(CleaningStats& tmpStats, uint64_t sumConfl);
+        void real_clean_clause_db(
+            CleaningStats& tmpStats
+            , uint64_t sumConflicts
+            , uint64_t removeNum
+        );
+        uint64_t calc_how_many_to_remove();
+        void sort_red_cls_as_required(CleaningStats& tmpStats);
 
 
         /////////////////////
