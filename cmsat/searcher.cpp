@@ -851,6 +851,107 @@ void Searcher::handle_longest_decision_trail()
     }
 }
 
+void Searcher::hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel)
+{
+    size_t numElems = trail.size() - trail_lim[0];
+    if (conf.doCache
+        && numElems <= conf.cacheUpdateCutoff
+    ) {
+        for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
+            const Lit thisLit = trail[c];
+            const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
+            assert(thisLit != trail[trail_lim[0]]);
+            const bool redStep = varData[thisLit.var()].reason.isRedStep();
+
+            assert(ancestor != lit_Undef);
+            bool taut = solver->implCache[(~ancestor).toInt()].merge(
+                solver->implCache[(~thisLit).toInt()].lits
+                , thisLit
+                , redStep
+                , ancestor.var()
+                , solver->seen
+            );
+
+            //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
+            //So enqueue ~ancestor
+            if (taut
+                && (solver->varData[ancestor.var()].removed == Removed::none
+                    || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
+            ) {
+                to_enqueue_toplevel.push_back(~ancestor);
+                #ifdef DRUP
+                drup << (~ancestor) << " 0\n";
+                #endif
+            }
+        }
+    }
+}
+
+lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
+{
+    assert(decisionLevel() == 1);
+
+    must_continue = false;
+    stats.advancedPropCalled++;
+    solver->varData[trail.back().var()].depth = 0;
+    Lit failed = propagateFullBFS();
+    if (failed != lit_Undef) {
+        #ifdef DRUP
+        drupNewUnit(~failed);
+        #endif
+
+        //Update conflict stats
+        stats.learntUnits++;
+        stats.conflStats.numConflicts++;
+        stats.conflStats.update(lastConflictCausedBy);
+        #ifdef STATS_NEEDED
+        hist.conflictAfterConflict.push(lastWasConflict);
+        lastWasConflict = true;
+        #endif
+
+        cancelUntil(0);
+        stats.litsRedNonMin += 1;
+        stats.litsRedFinal += 1;
+        #ifdef STATS_NEEDED
+        propStats.propsUnit++;
+        #endif
+        stats.hyperBinAdded += hyperBinResAll();
+        std::pair<size_t, size_t> tmp = removeUselessBins();
+        stats.transReduRemIrred += tmp.first;
+        stats.transReduRemRed += tmp.second;
+        solver->enqueue(~failed);
+
+        if (!ok)
+            return l_False;
+
+        must_continue = true;
+        return l_Undef;
+    }
+
+    vector<Lit> to_enqueue_toplevel;
+    hyper_bin_update_cache(to_enqueue_toplevel);
+
+    stats.hyperBinAdded += hyperBinResAll();
+    std::pair<size_t, size_t> tmp = removeUselessBins();
+    stats.transReduRemIrred += tmp.first;
+    stats.transReduRemRed += tmp.second;
+
+    //There are things to enqueue at top-level
+    if (!to_enqueue_toplevel.empty()) {
+        solver->cancelUntil(0);
+        bool ret = solver->enqueueThese(to_enqueue_toplevel);
+        if (!ret) {
+            return l_False;
+        }
+
+        //Start from beginning
+        must_continue = true;
+        return l_Undef;
+    }
+
+    return l_Undef;
+}
+
 /**
 @brief Search for a model
 
@@ -886,99 +987,16 @@ lbool Searcher::search()
     #endif
     while (true) {
         assert(ok);
-        Lit failed;
         PropBy confl;
 
         //If decision level==1, then do hyperbin & transitive reduction
         if (conf.otfHyperbin && decisionLevel() == 1) {
-            stats.advancedPropCalled++;
-            solver->varData[trail.back().var()].depth = 0;
-            failed = propagateFullBFS();
-            if (failed != lit_Undef) {
-                #ifdef DRUP
-                drupNewUnit(~failed);
-                #endif
-
-                //Update conflict stats
-                stats.learntUnits++;
-                stats.conflStats.numConflicts++;
-                stats.conflStats.update(lastConflictCausedBy);
-                #ifdef STATS_NEEDED
-                hist.conflictAfterConflict.push(lastWasConflict);
-                lastWasConflict = true;
-                #endif
-
-                cancelUntil(0);
-                stats.litsRedNonMin += 1;
-                stats.litsRedFinal += 1;
-                #ifdef STATS_NEEDED
-                propStats.propsUnit++;
-                #endif
-                stats.hyperBinAdded += hyperBinResAll();
-                std::pair<size_t, size_t> tmp = removeUselessBins();
-                stats.transReduRemIrred += tmp.first;
-                stats.transReduRemRed += tmp.second;
-                solver->enqueue(~failed);
-
-                if (!ok)
-                    return l_False;
-
+            bool must_continue;
+            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
+            if (ret != l_Undef)
+                return ret;
+            if (must_continue)
                 continue;
-            }
-
-            //Update cache
-            vector<Lit> toEnqueue;
-            size_t numElems = trail.size() - trail_lim[0];
-            if (conf.doCache
-                && numElems <= conf.cacheUpdateCutoff
-            ) {
-                for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
-                    const Lit thisLit = trail[c];
-                    const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
-                    assert(thisLit != trail[trail_lim[0]]);
-                    const bool redStep = varData[thisLit.var()].reason.isRedStep();
-
-                    assert(ancestor != lit_Undef);
-                    bool taut = solver->implCache[(~ancestor).toInt()].merge(
-                        solver->implCache[(~thisLit).toInt()].lits
-                        , thisLit
-                        , redStep
-                        , ancestor.var()
-                        , solver->seen
-                    );
-
-                    //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
-                    //So enqueue ~ancestor
-                    if (taut
-                        && (solver->varData[ancestor.var()].removed == Removed::none
-                            || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
-                    ) {
-                        toEnqueue.push_back(~ancestor);
-                        #ifdef DRUP
-                        drup << (~ancestor) << " 0\n";
-                        #endif
-                    }
-                }
-            }
-
-            //Lit lit = trail[trail_lim[0]];
-            stats.hyperBinAdded += hyperBinResAll();
-            std::pair<size_t, size_t> tmp = removeUselessBins();
-            stats.transReduRemIrred += tmp.first;
-            stats.transReduRemRed += tmp.second;
-
-            //There are things to enqueue at top-level
-            if (!toEnqueue.empty()) {
-                solver->cancelUntil(0);
-                bool ret = solver->enqueueThese(toEnqueue);
-                if (!ret) {
-                    return l_False;
-                }
-
-                //Start from beginning
-                continue;
-            }
-
         } else {
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(

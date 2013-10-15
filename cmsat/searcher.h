@@ -670,6 +670,8 @@ class Searcher : public HyperEngine
         void  checkNeedRestart();     // Helper function to decide if we need to restart during search
         Restart decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
+        lbool otf_hyper_prop_first_dec_level(bool& must_continue);
+        void  hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel);
 
         ///////////////
         // Conflicting
