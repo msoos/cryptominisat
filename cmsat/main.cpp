@@ -558,6 +558,8 @@ void Main::parseCommandLine()
         , "Print a stat line for every restart")
     ("printsol,s", po::value<int>(&printResult)->default_value(printResult)
         , "Print assignment if solution is SAT")
+    ("printtrail", po::value<int>(&conf.doPrintLongestTrail)->default_value(conf.doPrintLongestTrail)
+        , "Print longest decision trail of the last N conflicts. Value '0' means never print it")
     ;
 
     po::options_description miscOptions("Misc options");

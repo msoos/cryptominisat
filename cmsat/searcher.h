@@ -760,6 +760,10 @@ class Searcher : public HyperEngine
         size_t memUsed() const;
 
     private:
+        //For printint longest decision trail
+        vector<Lit> longest_dec_trail;
+        size_t last_confl_longest_dec_trail_printed = 0;
+        void handle_longest_decision_trail();
 
         struct ActPolarBackup
         {

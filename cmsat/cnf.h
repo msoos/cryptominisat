@@ -54,6 +54,9 @@ struct CNF
         seen      .push_back(0);
         seen2     .push_back(0);
         seen2     .push_back(0);
+
+        outerToInterMain.push_back(outerToInterMain.size());
+        interToOuterMain.push_back(interToOuterMain.size());
     }
 
     struct BinTriStats
@@ -96,6 +99,8 @@ struct CNF
     BinTriStats binTri;
     LitStats litStats;
     Drup drup;
+    vector<Var> outerToInterMain;
+    vector<Var> interToOuterMain;
 
     //Temporaries
     vector<uint16_t> seen;

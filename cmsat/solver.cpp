@@ -1047,8 +1047,6 @@ Var Solver::newVar(const bool dvar)
         stamp.newVar();
     }
 
-    outerToInterMain.push_back(var);
-    interToOuterMain.push_back(var);
     decisionVar.push_back(dvar);
     numDecisionVars += dvar;
 

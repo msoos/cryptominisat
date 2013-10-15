@@ -64,6 +64,7 @@ SolverConf::SolverConf() :
         , doPrintConflDot  (false)
         , printFullStats   (false)
         , verbStats        (0)
+        , doPrintLongestTrail(0)
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())

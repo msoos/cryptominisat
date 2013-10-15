@@ -365,8 +365,6 @@ class Solver : public Searcher
 
         /////////////////////////////
         //Renumberer
-        vector<Var> outerToInterMain;
-        vector<Var> interToOuterMain;
         void renumberVariables();
         void freeUnusedWatches();
         void saveVarMem(uint32_t newNumVars);

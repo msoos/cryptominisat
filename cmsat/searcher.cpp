@@ -812,6 +812,45 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     }
 }
 
+void Searcher::handle_longest_decision_trail()
+{
+    if (conf.doPrintLongestTrail == 0)
+        return;
+
+    //This comparision is NOT perfect, but it's fast. See below for exceptions
+    if (decisionLevel() > longest_dec_trail.size()) {
+        longest_dec_trail.clear();
+        for(size_t i = 0; i < trail_lim.size(); i++) {
+
+            //Avoid to print dummy decision levels' stuff
+            if (trail_lim.size() > i+1
+                && trail_lim[i+1] == trail_lim[i]
+            ) {
+                continue;
+            }
+
+            //Just in case there are some dummy decision levels, etc.
+            if (trail.size() > i+1) {
+                longest_dec_trail.push_back(trail[i+1]);
+            }
+        }
+    }
+
+    size_t diff = sumConflicts() - last_confl_longest_dec_trail_printed;
+    if (diff >= conf.doPrintLongestTrail) {
+        cout
+        << "c [long-dec-trail] ";
+
+        for(Lit lit: longest_dec_trail) {
+            cout
+            << getUpdatedLit(lit, interToOuterMain) << " ";
+        }
+        cout << endl;
+
+        last_confl_longest_dec_trail_printed = sumConflicts();
+    }
+}
+
 /**
 @brief Search for a model
 
@@ -964,6 +1003,8 @@ lbool Searcher::search()
             hist.conflictAfterConflict.push(lastWasConflict);
             lastWasConflict = true;
             #endif
+
+            handle_longest_decision_trail();
 
             if (!handle_conflict(confl))
                 return l_False;
@@ -3035,6 +3076,8 @@ void Searcher::updateVars(const vector<uint32_t>& interToOuter)
         updateArray(act_polar_backup.activity, interToOuter);
         updateArray(act_polar_backup.polarity, interToOuter);
     }
+
+    updateLitsMap(longest_dec_trail, interToOuter);
 }
 
 void Searcher::backup_activities_and_polarities()
