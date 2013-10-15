@@ -971,9 +971,8 @@ lbool Searcher::search()
 
     //Stats reset & update
     if (params.update)
-        stats.numRestarts ++;
+        stats.numRestarts++;
     agility.reset(conf.agilityLimit);
-
     hist.clear();
 
     //Debug
@@ -982,9 +981,7 @@ lbool Searcher::search()
     #endif //VERBOSE_DEBUG
 
     //Loop until restart or finish (SAT/UNSAT)
-    #ifdef STATS_NEEDED
     bool lastWasConflict = false;
-    #endif
     while (true) {
         assert(ok);
         PropBy confl;
@@ -1007,10 +1004,6 @@ lbool Searcher::search()
             );
         }
 
-        #ifdef VERBOSE_DEBUG
-        cout << "c Searcher::search() has finished propagation" << endl;
-        #endif //VERBOSE_DEBUG
-
         if (!confl.isNULL()) {
             //Update conflict stats based on lastConflictCausedBy
             stats.conflStats.update(lastConflictCausedBy);
@@ -1029,9 +1022,7 @@ lbool Searcher::search()
 
         } else {
             assert(ok);
-            #ifdef STATS_NEEDED
             lastWasConflict = false;
-            #endif
 
             //If restart is needed, restart here
             if (params.needToStopSearch
