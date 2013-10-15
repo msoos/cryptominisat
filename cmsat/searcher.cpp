@@ -982,7 +982,9 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     bool lastWasConflict = false;
-    while (true) {
+    while (!params.needToStopSearch
+        && sumConflicts() <= solver->getNextCleanLimit()
+    ) {
         assert(ok);
         PropBy confl;
 
@@ -1016,27 +1018,19 @@ lbool Searcher::search()
             #endif
 
             handle_longest_decision_trail();
-
             if (!handle_conflict(confl))
                 return l_False;
-
         } else {
             assert(ok);
             lastWasConflict = false;
-
-            //If restart is needed, restart here
-            if (params.needToStopSearch
-                || sumConflicts() > solver->getNextCleanLimit()
-            ) {
-                cancelUntil(0);
-                return l_Undef;
-            }
-
             const lbool ret = new_decision();
             if (ret != l_Undef)
                 return ret;
         }
     }
+
+    cancelUntil(0);
+    return l_Undef;
 }
 
 /**
