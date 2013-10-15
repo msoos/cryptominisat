@@ -3267,6 +3267,14 @@ void Simplifier::linkInClause(Clause& cl)
     cl.setOccurLinked(true);
 }
 
+
+void Simplifier::printGateFinderStats() const
+{
+    if (gateFinder) {
+        gateFinder->getStats().print(solver->nVarsReal());
+    }
+}
+
 /*const GateFinder* Simplifier::getGateFinder() const
 {
     return gateFinder;

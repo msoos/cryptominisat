@@ -102,6 +102,7 @@ public:
     bool unEliminate(const Var var);
     size_t memUsed() const;
     size_t memUsedXor() const;
+    void printGateFinderStats() const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;

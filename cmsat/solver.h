@@ -327,6 +327,8 @@ class Solver : public Searcher
         );
         lbool simplifyProblem();
         SolveStats solveStats;
+        void check_minimization_effectiveness(lbool status);
+        void check_recursive_minimization_effectiveness(const lbool status);
 
         /////////////////////
         // Objects that help us accomplish the task

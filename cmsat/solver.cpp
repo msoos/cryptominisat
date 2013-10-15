@@ -1413,6 +1413,79 @@ void Solver::treatAssumptions(const vector<Lit>* _assumptions)
     }
 }
 
+void Solver::check_recursive_minimization_effectiveness(const lbool status)
+{
+    if (status == l_Undef
+        && conf.doRecursiveMinim
+    ) {
+        const Searcher::Stats& stats = Searcher::getStats();
+        double remPercent =
+            (double)stats.recMinLitRem/(double)stats.litsRedNonMin*100.0;
+
+        double costPerGained = (double)stats.recMinimCost/remPercent;
+        if (costPerGained > 200ULL*1000ULL*1000ULL) {
+            conf.doRecursiveMinim = false;
+            if (conf.verbosity >= 2) {
+                cout
+                << "c recursive minimization too costly: "
+                << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
+                << "Kcost/(% lits removed) --> disabling"
+                << endl;
+            }
+        } else {
+            if (conf.verbosity >= 2) {
+                cout
+                << "c recursive minimization cost OK: "
+                << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
+                << "Kcost/(% lits removed)"
+                << endl;
+            }
+        }
+    }
+}
+
+void Solver::check_minimization_effectiveness(const lbool status)
+{
+ if (status == l_Undef
+        && conf.doMinimRedMore
+    ) {
+        const Searcher::Stats& stats = Searcher::getStats();
+        double remPercent =
+            (double)(stats.moreMinimLitsStart-stats.moreMinimLitsEnd)/
+                (double)(stats.moreMinimLitsStart)*100.0;
+
+        if (remPercent < 1.0) {
+            conf.doMinimRedMore = false;
+            if (conf.verbosity >= 2) {
+                cout
+                << "c more minimization effectiveness low: "
+                << std::fixed << std::setprecision(2) << remPercent
+                << " % lits removed --> disabling"
+                << endl;
+            }
+        } else if (remPercent > 7.0) {
+            conf.moreMinimLimit = 800;
+            if (conf.verbosity >= 2) {
+                cout
+                << "c more minimization effectiveness good: "
+                << std::fixed << std::setprecision(2) << remPercent
+                << " % --> increasing limit to " << conf.moreMinimLimit
+                << endl;
+            }
+        } else {
+            conf.moreMinimLimit = 300;
+            if (conf.verbosity >= 2) {
+                cout
+                << "c more minimization effectiveness OK: "
+                << std::fixed << std::setprecision(2) << remPercent
+                << " % --> setting limit to norm " << conf.moreMinimLimit
+                << endl;
+            }
+            conf.moreMinimLimit = 300;
+        }
+    }
+}
+
 lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
@@ -1486,75 +1559,8 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //Solve and update stats
         status = Searcher::solve(numConfls);
 
-        //If stats indicate that recursive minimization is not helping
-        //turn it off
-        if (status == l_Undef
-            && conf.doRecursiveMinim
-        ) {
-            const Searcher::Stats& stats = Searcher::getStats();
-            double remPercent =
-                (double)stats.recMinLitRem/(double)stats.litsRedNonMin*100.0;
-
-            double costPerGained = (double)stats.recMinimCost/remPercent;
-            if (costPerGained > 200ULL*1000ULL*1000ULL) {
-                conf.doRecursiveMinim = false;
-                if (conf.verbosity >= 2) {
-                    cout
-                    << "c recursive minimization too costly: "
-                    << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
-                    << "Kcost/(% lits removed) --> disabling"
-                    << endl;
-                }
-            } else {
-                if (conf.verbosity >= 2) {
-                    cout
-                    << "c recursive minimization cost OK: "
-                    << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
-                    << "Kcost/(% lits removed)"
-                    << endl;
-                }
-            }
-        }
-
-        //If more minimization isn't helping much, disable
-        if (status == l_Undef
-            && conf.doMinimRedMore
-        ) {
-            const Searcher::Stats& stats = Searcher::getStats();
-            double remPercent =
-                (double)(stats.moreMinimLitsStart-stats.moreMinimLitsEnd)/
-                    (double)(stats.moreMinimLitsStart)*100.0;
-
-            if (remPercent < 1.0) {
-                conf.doMinimRedMore = false;
-                if (conf.verbosity >= 2) {
-                    cout
-                    << "c more minimization effectiveness low: "
-                    << std::fixed << std::setprecision(2) << remPercent
-                    << " % lits removed --> disabling"
-                    << endl;
-                }
-            } else if (remPercent > 7.0) {
-                conf.moreMinimLimit = 800;
-                if (conf.verbosity >= 2) {
-                    cout
-                    << "c more minimization effectiveness good: "
-                    << std::fixed << std::setprecision(2) << remPercent
-                    << " % --> increasing limit to " << conf.moreMinimLimit
-                    << endl;
-                }
-            } else {
-                conf.moreMinimLimit = 300;
-                if (conf.verbosity >= 2) {
-                    cout
-                    << "c more minimization effectiveness OK: "
-                    << std::fixed << std::setprecision(2) << remPercent
-                    << " % --> setting limit to norm " << conf.moreMinimLimit
-                    << endl;
-                }
-                conf.moreMinimLimit = 300;
-            }
-        }
+        check_recursive_minimization_effectiveness(status);
+        check_minimization_effectiveness(status);
 
         sumStats += Searcher::getStats();
         sumPropStats += propStats;
@@ -2260,13 +2266,14 @@ void Solver::printFullStats() const
         simplifier->getStats().print(nVars());
     }
 
-    //GateFinder stats
-    /*printStatsLine("c gatefinder time"
-                    , subsumer->getGateFinder()->getStats().totalTime()
-                    , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
-                    , "% time");
-    subsumer->getGateFinder()->getStats().print(nVars());
+    if (simplifier && conf.doGateFind) {
+        simplifier->printGateFinderStats();
+    }
 
+    //GateFinder stats
+
+
+    /*
     //XOR stats
     printStatsLine("c XOR time"
         , subsumer->getXorFinder()->getStats().totalTime()
