@@ -517,7 +517,7 @@ private:
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);
-    void        removeClausesHelper(const vec<Watched>& todo, const Lit lit);
+    void        removeClausesHelper(watch_subarray_const todo, const Lit lit);
 
 
     TouchList   touched;

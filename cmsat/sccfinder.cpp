@@ -110,8 +110,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
 
         //Go through the watch
-        const vec<Watched>& ws = solver->watches[(~vertLit).toInt()];
-        for (vec<Watched>::const_iterator
+        watch_subarray_const ws = solver->watches[(~vertLit).toInt()];
+        for (watch_subarray_const::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
             ; it++

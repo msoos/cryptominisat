@@ -64,18 +64,18 @@ private:
 
     PropResult propBin(
         const Lit p
-        , vec<Watched>::const_iterator k
+        , watch_subarray::const_iterator k
         , PropBy& confl
     );
     PropResult propTriClauseComplex(
-        const vec<Watched>::const_iterator i
+        watch_subarray_const::const_iterator i
         , const Lit lit1
         , PropBy& confl
         , Solver* solver
     );
     PropResult propNormalClauseComplex(
-        const vec<Watched>::iterator i
-        , vec<Watched>::iterator &j
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
         , Solver* solver

@@ -58,7 +58,7 @@ void ClauseCleaner::treatImplicitClauses()
         ; wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        vec<Watched>& ws = solver->watches[wsLit];;
+        watch_subarray ws = solver->watches[wsLit];;
         /*if (wsLit+5 < solver->watches.size()) {
             __builtin_prefetch(solver->watches[wsLit+5].begin());
         }*/
@@ -67,9 +67,9 @@ void ClauseCleaner::treatImplicitClauses()
         if (ws.empty())
             continue;
 
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = i;
-        for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = i;
+        for (watch_subarray::iterator end2 = ws.end(); i != end2; i++) {
 
             //Skip clauses
             if (i->isClause()) {

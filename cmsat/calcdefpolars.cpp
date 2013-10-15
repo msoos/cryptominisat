@@ -63,17 +63,21 @@ void CalcDefPolars::tallyVotes(const vector<ClOffset>& cs)
     }
 }
 
-void CalcDefPolars::tallyVotesBinTri(const vector<vec<Watched> >& watches)
+void CalcDefPolars::tallyVotesBinTri(const watch_array& watches)
 {
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+        watch_subarray_const ws = *it;
+        for (watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
 
             //Only count bins once
             if (it2->isBinary()

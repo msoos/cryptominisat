@@ -38,7 +38,7 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
 {
     ClausesStay stay;
 
-    for (vector<vec<Watched> >::iterator
+    for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++
@@ -66,13 +66,13 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
 @brief Helper function for detachPointerUsingClauses()
 */
 CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(
-    vec<Watched>& ws
+    watch_subarray ws
 ) {
     ClausesStay stay;
 
-    vec<Watched>::iterator i = ws.begin();
-    vec<Watched>::iterator j = i;
-    for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+    watch_subarray::iterator i = ws.begin();
+    watch_subarray::iterator j = i;
+    for (watch_subarray::iterator end = ws.end(); i != end; i++) {
         if (i->isBinary()) {
             if (i->red())
                 stay.redBins++;

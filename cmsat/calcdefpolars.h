@@ -24,8 +24,10 @@
 
 #include "vec.h"
 #include "clause.h"
+#include "watchalgos.h"
 
 namespace CMSat {
+using namespace CMSat;
 
 class Solver;
 
@@ -37,7 +39,7 @@ class CalcDefPolars
 
     private:
         void tallyVotes(const vector<ClOffset>& cs);
-        void tallyVotesBinTri(const vector<vec<Watched> >& watched);
+        void tallyVotesBinTri(const watch_array& watched);
 
         vector<double> votes;
 

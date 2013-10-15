@@ -2400,8 +2400,8 @@ void Searcher::minimiseRedFurther(vector<Lit>& cl)
         }
 
         //Watchlist-based minimisation
-        const vec<Watched>& ws = watches[lit.toInt()];
-        for (vec<Watched>::const_iterator
+        watch_subarray_const ws = watches[lit.toInt()];
+        for (watch_subarray_const::const_iterator
             i = ws.begin()
             , end = ws.end()
             ; i != end && timeSpent < conf.moreMinimLimit

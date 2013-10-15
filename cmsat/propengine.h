@@ -165,12 +165,12 @@ protected:
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
-        , vec<Watched>::iterator &j
+        , watch_subarray::iterator &j
         , const Lit p
     );
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
     PropResult handle_prop_tri_fail(
-        const vec<Watched>::const_iterator i
+        watch_subarray_const::const_iterator i
         , Lit lit1
         , PropBy& confl
     );
@@ -226,7 +226,7 @@ protected:
         , const vector<uint32_t>& interToOuter
         , const vector<uint32_t>& interToOuter2
     );
-    void updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter);
+    void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
 
     virtual size_t memUsed() const
     {
@@ -239,7 +239,7 @@ protected:
 
 private:
     bool propBinaryClause(
-        const vec<Watched>::const_iterator i
+        watch_subarray_const::const_iterator i
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
@@ -264,26 +264,26 @@ private:
     void update_glue(Clause& c);
 
     PropResult propTriClause (
-        const vec<Watched>::const_iterator i
+        watch_subarray_const::const_iterator i
         , const Lit p
         , PropBy& confl
     );
     bool propTriClauseAnyOrder(
-        const vec<Watched>::const_iterator i
+        watch_subarray_const::const_iterator i
         , const Lit lit1
         , PropBy& confl
     );
 
     ///Propagate >3-long clause
     PropResult propNormalClause(
-        const vec<Watched>::iterator i
-        , vec<Watched>::iterator &j
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
     );
     bool propNormalClauseAnyOrder(
-        const vec<Watched>::iterator i
-        , vec<Watched>::iterator &j
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
     );

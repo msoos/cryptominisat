@@ -417,7 +417,7 @@ size_t GateFinder::findEqOrGates()
                 Lit lit = *l;
                 //TODO stamping
                 const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
-                const vec<Watched>& ws = solver->watches[(~lit).toInt()];
+                watch_subarray_const ws = solver->watches[(~lit).toInt()];
 
                 if (
                     cache.size() == 0 &&
@@ -468,7 +468,7 @@ void GateFinder::findOrGates(const bool redGatesToo)
             for (const Lit l: ws) {
                 //TODO stamping
                 const vector<LitExtra>& cache = solver->implCache[(~l).toInt()].lits;
-                const vec<Watched>& ws = solver->watches[(~l).toInt()];
+                watch_subarray_const ws = solver->watches[(~l).toInt()];
 
                 if (cache.size() == 0
                     && ws.size() == 0
@@ -517,9 +517,9 @@ void GateFinder::findOrGate(
         }
 
         //Try to find corresponding binary clause in watchlist
-        const vec<Watched>& ws = solver->watches[(~otherLit).toInt()];
+        watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
         *simplifier->toDecrease -= ws.size();
-        for (vec<Watched>::const_iterator
+        for (watch_subarray::const_iterator
             wsIt = ws.begin(), endWS = ws.end()
             ; wsIt != endWS && !OK
             ; wsIt++
@@ -681,7 +681,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
     for (uint32_t i = 0; i < sizeSortedOcc.size(); i++)
         sizeSortedOcc[i].clear();
 
-    const vec<Watched>& csOther = solver->watches[(~(gate.lit2)).toInt()];
+    watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
     //cout << "csother: " << csOther.size() << endl;
     *simplifier->toDecrease -= csOther.size()*3;
     for (const Watched ws: csOther) {
@@ -751,7 +751,7 @@ bool GateFinder::tryAndGate(
     foundPotential = 0;
 
     //Now go through lit1 and see if anything matches
-    vec<Watched>& cs = solver->watches[(~(gate.lit1)).toInt()];
+    watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->toDecrease -= cs.size()*3;
     for (const Watched ws: cs) {
         //Only look through long clauses

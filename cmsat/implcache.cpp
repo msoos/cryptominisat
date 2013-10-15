@@ -401,9 +401,9 @@ void ImplCache::tryVar(
 
     const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
     assert(solver->watches.size() > (lit.toInt()));
-    const vec<Watched>& ws1 = solver->watches[lit.toInt()];
+    watch_subarray_const ws1 = solver->watches[lit.toInt()];
     const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
-    const vec<Watched>& ws2 = solver->watches[(~lit).toInt()];
+    watch_subarray_const ws2 = solver->watches[(~lit).toInt()];
 
     //Fill 'seen' and 'val' from cache
     for (vector<LitExtra>::const_iterator
@@ -425,7 +425,7 @@ void ImplCache::tryVar(
     }
 
     //Fill 'seen' and 'val' from watch
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = ws1.begin(), end = ws1.end()
         ; it != end
         ; it++
@@ -469,7 +469,7 @@ void ImplCache::tryVar(
 
     //Try to see if we propagate the same or opposite from the other end
     //Using binary clauses
-    for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
+    for (watch_subarray::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
         if (!it->isBinary())
             continue;
 
@@ -490,7 +490,7 @@ void ImplCache::tryVar(
         val[it->getLit().var()] = false;
     }
 
-    for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
+    for (watch_subarray::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
         if (!it->isBinary())
             continue;
 

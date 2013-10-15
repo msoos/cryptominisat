@@ -40,6 +40,7 @@
 #include "comphandler.h"
 #include "subsumestrengthen.h"
 #include "varupdatehelper.h"
+#include "watchalgos.h"
 
 using namespace CMSat;
 using std::cout;
@@ -2336,10 +2337,7 @@ void Solver::printFullStats() const
 uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
 {
     size_t mem = 0;
-    mem += watches.capacity()*sizeof(vec<Watched>);
-    for(size_t i = 0; i < watches.size(); i++) {
-        mem += watches[i].capacity()*sizeof(Watched);
-    }
+    mem += watches.memUsed();
     printStatsLine("c Mem for watches"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2501,16 +2499,16 @@ void Solver::dumpBinClauses(
 ) const {
     //Go trough each watchlist
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        watch_subarray_const ws = *it;
 
         //Each element in the watchlist
-        for (vec<Watched>::const_iterator
+        for (watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
             ; it2++
@@ -2543,14 +2541,18 @@ void Solver::dumpTriClauses(
     , std::ostream* outfile
 ) const {
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+        watch_subarray_const ws = *it;
+        for (watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //Only one instance of tri clause
             if (it2->isTri() && lit < it2->lit2()) {
                 bool toDump = false;
@@ -2857,15 +2859,19 @@ void Solver::printAllClauses() const
 
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        watch_subarray_const ws = *it;
         cout << "watches[" << lit << "]" << endl;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+        for (watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             if (it2->isBinary()) {
                 cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
             } else if (it2->isClause()) {
@@ -2883,13 +2889,13 @@ void Solver::printAllClauses() const
 bool Solver::verifyImplicitClauses() const
 {
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        watch_subarray_const ws = *it;
 
         for (Watched w: ws) {
             if (w.isBinary()
@@ -3239,7 +3245,7 @@ void Solver::checkImplicitStats() const
     uint64_t thisNumIrredTris = 0;
 
     size_t wsLit = 0;
-    for(vector<vec<Watched> >::const_iterator
+    for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
@@ -3248,8 +3254,8 @@ void Solver::checkImplicitStats() const
         const Lit lit = Lit::toLit(wsLit);
         #endif //DEBUG_TRI_SORTED_SANITY
 
-        const vec<Watched>& ws = *it;
-        for(vec<Watched>::const_iterator
+        watch_subarray_const ws = *it;
+        for(watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
             ; it2++
@@ -3399,9 +3405,9 @@ const char* Solver::getVersion()
 }
 
 
-void Solver::printWatchlist(const vec<Watched>& ws, const Lit lit) const
+void Solver::printWatchlist(watch_subarray_const ws, const Lit lit) const
 {
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -3431,14 +3437,15 @@ void Solver::printWatchlist(const vec<Watched>& ws, const Lit lit) const
 void Solver::checkImplicitPropagated() const
 {
     size_t wsLit = 0;
-    for(vector<vec<Watched> >::const_iterator
+    for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
-        for(vec<Watched>::const_iterator
-            it2 = it->begin(), end2 = it->end()
+        watch_subarray_const ws = *it;
+        for(watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -3693,7 +3700,7 @@ void Solver::calcReachability()
 void Solver::freeUnusedWatches()
 {
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
+    for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
@@ -3703,12 +3710,12 @@ void Solver::freeUnusedWatches()
             || varData[lit.var()].removed == Removed::replaced
             || varData[lit.var()].removed == Removed::decomposed
         ) {
-            assert(it->empty());
-            it->clear(true);
+            watch_subarray ws = *it;
+            assert(ws.empty());
+            ws.clear();
         }
-
-        it->fitToSize();
     }
+    solver->watches.fitToSize();
 }
 
 bool Solver::enqueueThese(const vector<Lit>& toEnqueue)

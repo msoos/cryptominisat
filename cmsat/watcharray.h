@@ -20,59 +20,10 @@ struct watch_subarray
         return array[at];
     }
 
-    struct iterator
+    void clear()
     {
-        explicit iterator(vector<Watched>::iterator _it) :
-            it(_it)
-        {}
-
-        vector<Watched>::iterator it;
-
-        iterator operator++()
-        {
-            it++;
-            return *this;
-        }
-
-        iterator operator++(int)
-        {
-            iterator tmp = *this;
-            it++;
-            return tmp;
-        }
-
-        Watched& operator*()
-        {
-            return *it;
-        }
-    };
-
-    struct const_iterator
-    {
-        explicit const_iterator(vector<Watched>::const_iterator _it) :
-            it(_it)
-        {}
-
-        vector<Watched>::const_iterator it;
-
-        const_iterator operator++()
-        {
-            it++;
-            return *this;
-        }
-
-        const_iterator operator++(int)
-        {
-            const_iterator tmp = *this;
-            it++;
-            return tmp;
-        }
-
-        const Watched& operator*() const
-        {
-            return *it;
-        }
-    };
+        array.clear();
+    }
 
     size_t size() const
     {
@@ -84,35 +35,48 @@ struct watch_subarray
         return array.empty();
     }
 
-    iterator begin()
+    Watched* begin()
     {
-        return iterator(array.begin());
+        return array.data();
     }
 
-    iterator end()
+    Watched* end()
     {
-        return iterator(array.end());
+        return array.data()+array.size();
     }
 
-    const_iterator begin() const
+    const Watched* begin() const
     {
-        return const_iterator(array.begin());
+        return array.data();
     }
 
-    const_iterator end() const
+    const Watched* end() const
     {
-        return const_iterator(array.end());
+        return array.data()+array.size();
     }
 
     void shrink(const size_t num)
     {
-        array.resize(array.size()-1);
+        array.resize(array.size()-num);
     }
 
     void shrink_(const size_t num)
     {
         shrink(num);
     }
+
+    void push(const Watched& watched)
+    {
+        array.push_back(watched);
+    }
+
+    /*watch_subarray* operator->()
+    {
+        return this;
+    }*/
+
+    typedef Watched* iterator;
+    typedef const Watched* const_iterator;
 };
 
 struct watch_subarray_const
@@ -122,37 +86,15 @@ struct watch_subarray_const
     {}
 
     const vector<Watched>& array;
+
+    watch_subarray_const(const watch_subarray& other) :
+        array(other.array)
+    {}
+
     const Watched& operator[](const size_t at) const
     {
         return array[at];
     }
-
-    struct const_iterator
-    {
-        explicit const_iterator(vector<Watched>::const_iterator _it) :
-            it(_it)
-        {}
-
-        vector<Watched>::const_iterator it;
-
-        const_iterator operator++()
-        {
-            it++;
-            return *this;
-        }
-
-        const_iterator operator++(int)
-        {
-            const_iterator tmp = *this;
-            it++;
-            return tmp;
-        }
-
-        const Watched& operator*() const
-        {
-            return *it;
-        }
-    };
 
     size_t size() const
     {
@@ -164,15 +106,22 @@ struct watch_subarray_const
         return array.empty();
     }
 
-    const_iterator begin() const
+    const Watched* begin() const
     {
-        return const_iterator(array.begin());
+        return array.data();
     }
 
-    const_iterator end() const
+    const Watched* end() const
     {
-        return const_iterator(array.end());
+        return array.data() + array.size();
     }
+
+    typedef const Watched* const_iterator;
+
+    /*watch_subarray_const* operator->()
+    {
+        return this;
+    }*/
 };
 
 struct watch_array
@@ -189,19 +138,18 @@ struct watch_array
         return watch_subarray_const(watches[at]);
     }
 
-    void new_var()
-    {
-        watches.resize(watches.size()+2);
-    }
-
     void resize(const size_t new_size)
     {
         watches.resize(new_size);
     }
 
-    size_t capacity() const
+    size_t memUsed() const
     {
-        return watches.capacity();
+        size_t mem = watches.capacity()*sizeof(vector<Watched>);
+        for(size_t i = 0; i < watches.size(); i++) {
+            mem += watches[i].capacity()*sizeof(Watched);
+        }
+        return mem;
     }
 
     size_t size() const
@@ -239,9 +187,9 @@ struct watch_array
             return tmp;
         }
 
-        vector<Watched>& operator*()
+        watch_subarray operator*()
         {
-            return *it;
+            return watch_subarray(*it);
         }
 
         bool operator==(const iterator& it2) const
@@ -254,10 +202,12 @@ struct watch_array
             return it != it2.it;
         }
 
-        vector<Watched>& operator->()
+        /*watch_subarray operator->()
         {
-            return *it;
-        }
+            return watch_subarray(*it);
+        }*/
+
+        friend size_t operator-(const iterator& lhs, const iterator& rhs);
     };
 
     struct const_iterator
@@ -265,6 +215,10 @@ struct watch_array
         vector<vector<Watched> >::const_iterator it;
         explicit const_iterator(vector<vector<Watched> >::const_iterator _it) :
             it(_it)
+        {}
+
+        const_iterator(const iterator& other) :
+            it(other.it)
         {}
 
         const_iterator operator++()
@@ -280,9 +234,9 @@ struct watch_array
             return tmp;
         }
 
-        const vector<Watched>& operator*() const
+        const watch_subarray_const operator*() const
         {
-            return *it;
+            return watch_subarray_const(*it);
         }
 
         bool operator==(const const_iterator& it2) const
@@ -295,10 +249,12 @@ struct watch_array
             return it != it2.it;
         }
 
-        const vector<Watched>& operator->() const
+        /*const watch_subarray_const operator->() const
         {
-            return *it;
-        }
+            return watch_subarray_const(*it);
+        }*/
+
+        friend size_t operator-(const const_iterator& lhs, const const_iterator& rhs);
     };
 
     iterator begin()
@@ -320,7 +276,28 @@ struct watch_array
     {
         return const_iterator(watches.end());
     }
+
+    void fitToSize()
+    {
+        //TODO shirnk
+    }
 };
+
+inline size_t operator-(const watch_array::iterator& lhs, const watch_array::iterator& rhs)
+{
+    return lhs.it-rhs.it;
+}
+
+inline size_t operator-(const watch_array::const_iterator& lhs, const watch_array::const_iterator& rhs)
+{
+    return lhs.it-rhs.it;
+}
+
+inline void swap(watch_subarray a, watch_subarray b)
+{
+    a.array.swap(b.array);
+}
+
 
 } //End of namespace
 

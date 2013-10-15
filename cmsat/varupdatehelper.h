@@ -76,7 +76,8 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
             uint32_t swapwith = mapper[var];
             assert(seen[swapwith] == 0);
             //std::cout << "Swapping " << var << " with " << swapwith << std::endl;
-            std::swap(toUpdate[var], toUpdate[swapwith]);
+            using std::swap;
+            swap(toUpdate[var], toUpdate[swapwith]);
             seen[swapwith] = 1;
             var = swapwith;
 

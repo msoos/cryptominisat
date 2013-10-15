@@ -25,6 +25,7 @@
 #include "constants.h"
 #include "vec.h"
 #include "watched.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -79,7 +80,7 @@ class CompleteDetachReatacher
                 uint64_t redTris;
                 uint64_t irredTris;
         };
-        ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws);
+        ClausesStay clearWatchNotBinNotTri(watch_subarray ws);
 
         Solver* solver;
 };

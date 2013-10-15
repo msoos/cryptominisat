@@ -29,6 +29,7 @@
 #include <set>
 #include "cset.h"
 #include "xorfinderabst.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -288,17 +289,17 @@ private:
 
     ///Normal finding of matching clause for XOR
     void findXorMatch(
-        const vec<Watched>& occ
+        watch_subarray_const occ
         , FoundXors& foundCls);
 
     ///Finding of matching clause for XOR with the twist that cache can be used to replace lits
     void findXorMatch(
-        const vec<Watched>& ws
+        watch_subarray_const ws
         , const Lit lit
         , FoundXors& foundCls
     );
     void findXorMatchExt(
-        const vec<Watched>& occ
+        watch_subarray_const occ
         , const Lit lit
         , FoundXors& foundCls
     );

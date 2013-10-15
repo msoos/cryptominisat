@@ -76,7 +76,7 @@ inline void ClauseCleaner::removeAndCleanAll()
     ) {
         const Lit lit = Lit::toLit(wsLit);
         if (solver->value(lit) != l_Undef) {
-            assert(it->empty());
+            assert((*it).empty());
         }
     }
 #endif

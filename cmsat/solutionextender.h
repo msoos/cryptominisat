@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "solvertypes.h"
 #include "clause.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -53,11 +54,11 @@ class SolutionExtender
         bool propagateCl(const Clause* cl, const Lit blockedOn);
         bool propagate();
         bool propBinaryClause(
-            const vec<Watched>::const_iterator i
+            watch_subarray_const::const_iterator i
             , const Lit p
         );
         bool propTriClause(
-            const vec<Watched>::const_iterator i
+            watch_subarray_const::const_iterator i
             , const Lit p
         );
         bool satisfiedNorm(const vector<Lit>& lits) const;

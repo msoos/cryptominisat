@@ -23,6 +23,7 @@
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
+#include "watchalgos.h"
 #include <iomanip>
 using namespace CMSat;
 using std::cout;
@@ -120,7 +121,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
         }
 
         Lit lit = Lit::toLit(upI);
-        const vec<Watched>& ws = solver->watches[upI];
+        watch_subarray_const ws = solver->watches[upI];
         for (size_t i = 0; i < ws.size(); i++) {
             if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
                 break;
@@ -550,9 +551,9 @@ bool ClauseVivifier::vivifyClausesCache(
                  break;
 
             //Go through the watchlist
-            vec<Watched>& thisW = solver->watches[lit.toInt()];
+            watch_subarray thisW = solver->watches[lit.toInt()];
             countTime += thisW.size()*2 + 5;
-            for(vec<Watched>::iterator
+            for(watch_subarray::iterator
                 wit = thisW.begin(), wend = thisW.end()
                 ; wit != wend
                 ; wit++
@@ -821,7 +822,7 @@ void ClauseVivifier::subsumeImplicit()
     ) {
         numWatchesLooked++;
         Lit lit = Lit::toLit(upI);
-        vec<Watched>& ws = solver->watches[upI];
+        watch_subarray ws = solver->watches[upI];
 
         //We can't do much when there is nothing, or only one
         if (ws.size() < 2)
@@ -839,7 +840,7 @@ void ClauseVivifier::subsumeImplicit()
         Lit lastLit2 = lit_Undef;
         Lit lastLit3 = lit_Undef;
         bool lastRed = false;
-        for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
+        for (watch_subarray::iterator end = ws.end(); i != end; i++) {
 
             //Don't care about long clauses
             if (i->isClause() || timeAvailable < 0) {
@@ -1044,11 +1045,11 @@ bool ClauseVivifier::strengthenImplicit()
     ) {
         numWatchesLooked++;
         Lit lit = Lit::toLit(upI);
-        vec<Watched>& ws = solver->watches[upI];
+        watch_subarray ws = solver->watches[upI];
 
         Watched* i = ws.begin();
         Watched* j = i;
-        for (vec<Watched>::iterator
+        for (watch_subarray::iterator
             end = ws.end()
             ; i != end
             ; i++
@@ -1100,7 +1101,7 @@ bool ClauseVivifier::strengthenImplicit()
                 //that has ~i->lit2() inside. Everything is sorted, so we are
                 //lucky, this is speedy
                 bool rem = false;
-                vec<Watched>::const_iterator i2 = i;
+                watch_subarray::const_iterator i2 = i;
                 while(i2 != end
                     && (i2->isBinary() || i2->isTri())
                     && i->lit2().var() == i2->lit2().var()
@@ -1137,7 +1138,7 @@ bool ClauseVivifier::strengthenImplicit()
                 bool rem = false;
 
                 timeAvailable -= solver->watches[(~lit).toInt()].size();
-                for(vec<Watched>::const_iterator
+                for(watch_subarray::const_iterator
                     it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
                     ; it2 != end2 && timeAvailable > 0
                     ; it2++

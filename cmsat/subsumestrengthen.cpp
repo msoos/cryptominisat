@@ -293,9 +293,9 @@ void inline SubsumeStrengthen::fillSubs(
     , const Lit lit
 ) {
     Lit litSub;
-    const vec<Watched>& cs = solver->watches[lit.toInt()];
+    watch_subarray_const cs = solver->watches[lit.toInt()];
     *simplifier->toDecrease -= cs.size()*15 + 40;
-    for (vec<Watched>::const_iterator
+    for (watch_subarray_const::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
         ; it++
@@ -552,13 +552,13 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
     *simplifier->toDecrease -= ps.size();
 
     //Go through the occur list of the literal that has the smallest occur list
-    vec<Watched>& occ = solver->watches[ps[min_i].toInt()];
+    watch_subarray occ = solver->watches[ps[min_i].toInt()];
     *simplifier->toDecrease -= occ.size()*8 + 40;
 
-    vec<Watched>::iterator it = occ.begin();
-    vec<Watched>::iterator it2 = occ.begin();
+    watch_subarray::iterator it = occ.begin();
+    watch_subarray::iterator it2 = occ.begin();
     size_t numBinFound = 0;
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         end = occ.end()
         ; it != end
         ; it++
@@ -711,7 +711,7 @@ void SubsumeStrengthen::finishedRun()
 //
 //     ) {
 //         Lit lit = Lit::toLit(upI);
-//         vec<Watched>& ws = solver->watches[upI];
+//         watch_subarray ws = solver->watches[upI];
 //
 //         //Must re-order so that TRI-s are first
 //         //Otherwise we might re-order list while looking through.. very messy

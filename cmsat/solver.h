@@ -461,7 +461,7 @@ class Solver : public Searcher
         void findAllAttach(const vector<ClOffset>& cs) const;
         bool findClause(const ClOffset offset) const;
         void checkNoWrongAttach() const;
-        void printWatchlist(const vec<Watched>& ws, const Lit lit) const;
+        void printWatchlist(watch_subarray_const ws, const Lit lit) const;
         void printClauseSizeDistrib();
         ClauseUsageStats sumClauseData(
             const vector<ClOffset>& toprint

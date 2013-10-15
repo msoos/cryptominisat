@@ -29,6 +29,7 @@
 #include "solvertypes.h"
 #include "clause.h"
 #include "vec.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -265,16 +266,16 @@ class VarReplacer
         };
         ImplicitTmpStats impl_tmp_stats;
         void updateTri(
-            vec<Watched>::iterator& i
-            , vec<Watched>::iterator& j
+            watch_subarray::iterator& i
+            , watch_subarray::iterator& j
             , const Lit origLit1
             , const Lit origLit2
             , Lit lit1
             , Lit lit2
         );
         void updateBin(
-            vec<Watched>::iterator& i
-            , vec<Watched>::iterator& j
+            watch_subarray::iterator& i
+            , watch_subarray::iterator& j
             , const Lit origLit1
             , const Lit origLit2
             , Lit lit1

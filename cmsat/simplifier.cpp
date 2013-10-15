@@ -43,6 +43,7 @@
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
 #include "subsumestrengthen.h"
+#include "watchalgos.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -605,16 +606,16 @@ bool Simplifier::completeCleanClause(Clause& cl)
 
 void Simplifier::removeAllLongsFromWatches()
 {
-    for (vector<vec<Watched> >::iterator
+    for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++
     ) {
-        vec<Watched>& ws = *it;
+        watch_subarray ws = *it;
 
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = i;
-        for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = i;
+        for (watch_subarray::iterator end2 = ws.end(); i != end2; i++) {
             if (i->isClause()) {
                 continue;
             } else {
@@ -704,10 +705,10 @@ bool Simplifier::propagate()
     while (solver->qhead < solver->trail.size()) {
         Lit p = solver->trail[solver->qhead];
         solver->qhead++;
-        vec<Watched>& ws = solver->watches[(~p).toInt()];
+        watch_subarray ws = solver->watches[(~p).toInt()];
 
         //Go through each occur
-        for (vec<Watched>::const_iterator
+        for (watch_subarray::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
             ; it++
@@ -1175,13 +1176,13 @@ bool Simplifier::propImplicits()
     vector<Lit> toEnqueue;
 
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator
+    for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
-        vec<Watched>& ws = *it;
+        watch_subarray ws = *it;
 
         size_t i, j;
         for(i = 0, j = 0
@@ -1311,14 +1312,18 @@ void Simplifier::sanityCheckElimedVars()
 
     //Then, sanity-check the binary clauses
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
+        watch_subarray_const ws = *it;
+        for (watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             if (it2->isBinary()) {
                 if (var_elimed[lit.var()] || var_elimed[it2->lit2().var()]) {
                     cout
@@ -1479,7 +1484,7 @@ void Simplifier::blockImplicit(
 
         //Set-up
         const Lit lit = Lit::toLit(upI);
-        vec<Watched>& ws = solver->watches[upI];
+        watch_subarray ws = solver->watches[upI];
 
         size_t i, j;
         for(i = 0, j = 0
@@ -1953,14 +1958,20 @@ void Simplifier::cleanBlockedClauses()
 }
 
 void Simplifier::removeClausesHelper(
-    const vec<Watched>& todo
+    watch_subarray_const todo
     , const Lit lit
 ) {
     blockedMapBuilt = false;
     vector<Lit> lits;
 
-    for (uint32_t i = 0; i < todo.size(); i++) {
-        const Watched& watch = todo[i];
+    //Copy todo --> it will be manipulated below
+    vector<Watched> todo_copy;
+    for(Watched tmp: todo) {
+        todo_copy.push_back(tmp);
+    }
+
+    for (uint32_t i = 0; i < todo_copy.size(); i++) {
+        const Watched& watch = todo_copy[i];
         lits.clear();
         bool red = false;
 
@@ -2082,8 +2093,8 @@ void Simplifier::removeClausesHelper(
 uint32_t Simplifier::numIrredBins(const Lit lit) const
 {
     uint32_t num = 0;
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
-    for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+    watch_subarray_const ws = solver->watches[lit.toInt()];
+    for (watch_subarray::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         if (it->isBinary() && !it->red()) num++;
     }
 
@@ -2113,8 +2124,8 @@ int Simplifier::testVarElim(const Var var)
 
     //set-up
     const Lit lit = Lit(var, false);
-    vec<Watched>& poss = solver->watches[lit.toInt()];
-    vec<Watched>& negs = solver->watches[(~lit).toInt()];
+    watch_subarray poss = solver->watches[lit.toInt()];
+    watch_subarray negs = solver->watches[(~lit).toInt()];
     std::sort(poss.begin(), poss.end(), WatchSorter());
     std::sort(negs.begin(), negs.end(), WatchSorter());
     resolvents.clear();
@@ -2136,7 +2147,7 @@ int Simplifier::testVarElim(const Var var)
     uint32_t after_bin = 0;
     uint32_t after_tri = 0;
     uint32_t after_literals = 0;
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
         ; it++
@@ -2151,7 +2162,7 @@ int Simplifier::testVarElim(const Var var)
             continue;
         }
 
-        for (vec<Watched>::const_iterator
+        for (watch_subarray::const_iterator
             it2 = negs.begin(), end2 = negs.end()
             ; it2 != end2
             ; it2++
@@ -2303,14 +2314,10 @@ bool Simplifier::maybeEliminate(const Var var)
         printOccur(~lit);
     }
 
-    //Save original state
-    const vec<Watched> poss = solver->watches[lit.toInt()];
-    const vec<Watched> negs = solver->watches[(~lit).toInt()];
-
     //Remove clauses
     touched.clear();
-    removeClausesHelper(poss, lit);
-    removeClausesHelper(negs, ~lit);
+    removeClausesHelper(solver->watches[lit.toInt()], lit);
+    removeClausesHelper(solver->watches[(~lit).toInt()], ~lit);
 
     //Occur is cleared
     assert(solver->watches[lit.toInt()].empty());
@@ -2328,7 +2335,7 @@ bool Simplifier::maybeEliminate(const Var var)
 
         //Check if a new 2-long would subsume a 3-long
         if (finalLits.size() == 2) {
-            for(vec<Watched>::const_iterator
+            for(watch_subarray::const_iterator
                 it2 = solver->watches[finalLits[0].toInt()].begin()
                 , end2 = solver->watches[finalLits[0].toInt()].end()
                 ; it2 != end2
@@ -2450,16 +2457,16 @@ end:
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
-    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
-    const vec<Watched>& ws2 = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[(~lit).toInt()];
+    watch_subarray_const ws2 = solver->watches[lit.toInt()];
 
-    for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
+    for (watch_subarray::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
         const bool numOneIsRed = w1->red();
         const Lit lit1 = w1->lit2();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
-        for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
+        for (watch_subarray::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
             if (!w2->isBinary()) continue;
             const bool numTwoIsRed = w2->red();
             if (!numOneIsRed && !numTwoIsRed) {
@@ -2693,9 +2700,9 @@ bool Simplifier::agressiveCheck(
     , const Lit noPosLit
     , bool& retval
 ) {
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit.toInt()];
     numMaxVarElimAgressiveCheck -= ws.size()/3 + 2;
-    for(vec<Watched>::const_iterator it =
+    for(watch_subarray::const_iterator it =
         ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -2770,9 +2777,9 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
 {
     HeuristicData ret;
 
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit.toInt()];
     *toDecrease -= ws.size() + 100;
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -2862,9 +2869,9 @@ bool Simplifier::checkEmptyResolventHelper(
     size_t count = 0;
     size_t numCls = 0;
 
-    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit.toInt()];
     *toDecrease -= ws.size() + 100;
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -3098,8 +3105,8 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
 inline bool Simplifier::checkBlocked(const Lit lit)
 {
     //clauses which contain '~lit'
-    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
-    for (vec<Watched>::const_iterator
+    watch_subarray_const ws = solver->watches[(~lit).toInt()];
+    for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -3251,7 +3258,7 @@ void Simplifier::linkInClause(Clause& cl)
     ClOffset offset = solver->clAllocator->getOffset(&cl);
     std::sort(cl.begin(), cl.end());
     for (uint32_t i = 0; i < cl.size(); i++) {
-        vec<Watched>& ws = solver->watches[cl[i].toInt()];
+        watch_subarray ws = solver->watches[cl[i].toInt()];
         *toDecrease -= ws.size();
 
         ws.push(Watched(offset, cl.abst));

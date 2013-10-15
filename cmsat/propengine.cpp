@@ -107,9 +107,9 @@ void PropEngine::attachTriClause(
     orderLits(lit1, lit2, lit3);
 
     //And now they are attached, ordered
-    watches[lit1.toInt()].push_back(Watched(lit2, lit3, red));
-    watches[lit2.toInt()].push_back(Watched(lit1, lit3, red));
-    watches[lit3.toInt()].push_back(Watched(lit1, lit2, red));
+    watches[lit1.toInt()].push(Watched(lit2, lit3, red));
+    watches[lit2.toInt()].push(Watched(lit1, lit3, red));
+    watches[lit3.toInt()].push(Watched(lit1, lit2, red));
 }
 
 void PropEngine::detachTriClause(
@@ -218,7 +218,7 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 inline bool PropEngine::propBinaryClause(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit p
     , PropBy& confl
 ) {
@@ -298,7 +298,7 @@ void PropEngine::update_glue(Clause& c)
 PropResult PropEngine::prop_normal_helper(
     Clause& c
     , ClOffset offset
-    , vec<Watched>::iterator &j
+    , watch_subarray::iterator &j
     , const Lit p
 ) {
     #ifdef STATS_NEEDED
@@ -372,8 +372,8 @@ PropResult PropEngine::handle_normal_prop_fail(
 }
 
 PropResult PropEngine::propNormalClause(
-    const vec<Watched>::iterator i
-    , vec<Watched>::iterator &j
+    watch_subarray_const::const_iterator i
+    , watch_subarray::iterator &j
     , const Lit p
     , PropBy& confl
 ) {
@@ -422,8 +422,8 @@ PropResult PropEngine::propNormalClause(
 
 
 bool PropEngine::propNormalClauseAnyOrder(
-    const vec<Watched>::iterator i
-    , vec<Watched>::iterator &j
+    watch_subarray_const::const_iterator i
+    , watch_subarray::iterator &j
     , const Lit p
     , PropBy& confl
 ) {
@@ -530,7 +530,7 @@ bool PropEngine::propNormalClauseAnyOrder(
 }
 
 PropResult PropEngine::handle_prop_tri_fail(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , Lit lit1
     , PropBy& confl
 ) {
@@ -554,7 +554,7 @@ PropResult PropEngine::handle_prop_tri_fail(
 }
 
 PropResult PropEngine::propTriClause(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
 ) {
@@ -588,7 +588,7 @@ PropResult PropEngine::propTriClause(
 }
 
 inline bool PropEngine::propTriClauseAnyOrder(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
 ) {
@@ -735,10 +735,10 @@ PropBy PropEngine::propagateAnyOrder()
 
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
-        vec<Watched>& ws = watches[(~p).toInt()];
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.begin();
-        const vec<Watched>::iterator end = ws.end();
+        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = ws.begin();
+        watch_subarray_const::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             if (i->isBinary()) {
@@ -792,14 +792,16 @@ void PropEngine::sortWatched()
     #endif
 
     //double myTime = cpuTime();
-    for (vector<vec<Watched> >::iterator
+    for (watch_array::iterator
         i = watches.begin(), end = watches.end()
         ; i != end
         ; i++
     ) {
-        if (i->size() == 0) continue;
+        watch_subarray ws = *i;
+        if (ws.size() == 0)
+            continue;
+
         #ifdef VERBOSE_DEBUG
-        vec<Watched>& ws = *i;
         cout << "Before sorting:" << endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) cout << "Binary,";
@@ -809,7 +811,7 @@ void PropEngine::sortWatched()
         cout << endl;
         #endif //VERBOSE_DEBUG
 
-        std::sort(i->begin(), i->end(), WatchedSorter());
+        std::sort(ws.begin(), ws.end(), WatchedSorter());
 
         #ifdef VERBOSE_DEBUG
         cout << "After sorting:" << endl;
@@ -831,8 +833,8 @@ void PropEngine::sortWatched()
 
 void PropEngine::printWatchList(const Lit lit) const
 {
-    const vec<Watched>& ws = watches[lit.toInt()];
-    for (vec<Watched>::const_iterator
+    watch_subarray_const ws = watches[lit.toInt()];
+    for (watch_subarray_const::const_iterator
         it2 = ws.begin(), end2 = ws.end()
         ; it2 != end2
         ; it2++
@@ -875,8 +877,11 @@ void PropEngine::updateVars(
     updateBySwap(watches, seen, interToOuter2);
 
     for(size_t i = 0; i < watches.size(); i++) {
+        /*
+        //TODO
         if (i+10 < watches.size())
             __builtin_prefetch(watches[i+10].begin());
+        */
 
         if (!watches[i].empty())
             updateWatch(watches[i], outerToInter);
@@ -884,10 +889,10 @@ void PropEngine::updateVars(
 }
 
 inline void PropEngine::updateWatch(
-    vec<Watched>& ws
+    watch_subarray ws
     , const vector<uint32_t>& outerToInter
 ) {
-    for(vec<Watched>::iterator
+    for(watch_subarray::iterator
         it = ws.begin(), end = ws.end()
         ; it != end
         ; it++
@@ -940,14 +945,14 @@ PropBy PropEngine::propagateBinFirst(
     //Propagate binary clauses first
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        const vec<Watched>& ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[(~p).toInt()];
         #ifdef STATS_NEEDED
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
         #endif
 
-        vec<Watched>::const_iterator i = ws.begin();
-        const vec<Watched>::const_iterator end = ws.end();
+        watch_subarray::const_iterator i = ws.begin();
+        watch_subarray_const::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;
         for (; i != end; i++) {
 
@@ -977,10 +982,10 @@ PropBy PropEngine::propagateBinFirst(
     PropResult ret = PROP_NOTHING;
     while (qheadlong < qhead && confl.isNULL()) {
         const Lit p = trail[qheadlong];     // 'p' is enqueued fact to propagate.
-        vec<Watched>& ws = watches[(~p).toInt()];
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.begin();
-        const vec<Watched>::iterator end = ws.end();
+        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = ws.begin();
+        watch_subarray_const::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             //Skip binary clauses
@@ -1042,8 +1047,8 @@ PropBy PropEngine::propagateIrredBin()
     PropBy confl;
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
-        vec<Watched> & ws = watches[(~p).toInt()];
-        for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+        watch_subarray ws = watches[(~p).toInt()];
+        for(watch_subarray::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
             //If not binary, or is redundant, skip
             if (!k->isBinary() || k->red())

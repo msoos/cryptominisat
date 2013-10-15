@@ -82,16 +82,16 @@ bool XorFinder::findXors()
     }
 
     size_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator
+    for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end && maxTimeFindXors > 0
         ; it++, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        watch_subarray_const ws = *it;
 
         maxTimeFindXors -= ws.size()*3;
-        for (vec<Watched>::const_iterator
+        for (watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
             ; it2++
@@ -558,13 +558,13 @@ void XorFinder::findXor(vector<Lit>& lits, CL_ABST_TYPE abst)
 }*/
 
 void XorFinder::findXorMatchExt(
-    const vec<Watched>& occ
+    watch_subarray_const occ
     , Lit lit
     , FoundXors& foundCls
 ) {
     //seen2 is clear
 
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
         ; it++
@@ -665,12 +665,12 @@ void XorFinder::findXorMatchExt(
 }
 
 void XorFinder::findXorMatch(
-    const vec<Watched>& occ
+    watch_subarray_const occ
     , const Lit lit
     , FoundXors& foundCls
 ) {
     maxTimeFindXors -= occ.size();
-    for (vec<Watched>::const_iterator
+    for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
         ; it++

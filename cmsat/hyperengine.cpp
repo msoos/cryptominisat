@@ -48,9 +48,13 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
     //Propagate binary irred
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
-        const vec<Watched>& ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
-        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+        for(watch_subarray_const::const_iterator
+            k = ws.begin(), end = ws.end()
+            ; k != end
+            ; k++
+        ) {
 
             //If something other than irred binary, skip
             if (!k->isBinary() || k->red())
@@ -68,11 +72,11 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
     ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
-        const vec<Watched>& ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
         size_t done = 0;
 
-        for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++, done++) {
+        for(watch_subarray::const_iterator k = ws.begin(), end = ws.end(); k != end; k++, done++) {
 
             //If something other than redundant binary, skip
             if (!k->isBinary() || !k->red())
@@ -95,12 +99,12 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
     ret = PROP_NOTHING;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead];
-        vec<Watched> & ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[(~p).toInt()];
         propStats.bogoProps += 1;
 
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.begin();
-        const vec<Watched>::iterator end = ws.end();
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = ws.begin();
+        watch_subarray_const::const_iterator end = ws.end();
         for(; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
@@ -158,9 +162,9 @@ Lit HyperEngine::prop_red_bin_dfs(
     propStats.bogoProps += 1;
 
     const Lit p = toPropRedBin.top();
-    const vec<Watched>& ws = watches[(~p).toInt()];
+    watch_subarray_const ws = watches[(~p).toInt()];
     size_t done = 0;
-    for(vec<Watched>::const_iterator
+    for(watch_subarray::const_iterator
         k = ws.begin(), end = ws.end()
         ; k != end
         ; k++, done++
@@ -221,9 +225,9 @@ Lit HyperEngine::prop_norm_bin_dfs(
     , bool& restart
 ) {
     const Lit p = toPropBin.top();
-    const vec<Watched>& ws = watches[(~p).toInt()];
+    watch_subarray_const ws = watches[(~p).toInt()];
     size_t done = 0;
-    for(vec<Watched>::const_iterator
+    for(watch_subarray::const_iterator
         k = ws.begin(), end = ws.end()
         ; k != end
         ; k++, done++
@@ -303,12 +307,12 @@ Lit HyperEngine::prop_norm_cl_dfs(
 ) {
     PropResult ret = PROP_NOTHING;
     const Lit p = toPropNorm.top();
-    vec<Watched> & ws = watches[(~p).toInt()];
+    watch_subarray ws = watches[(~p).toInt()];
     propStats.bogoProps += 1;
 
-    vec<Watched>::iterator i = ws.begin();
-    vec<Watched>::iterator j = ws.begin();
-    const vec<Watched>::iterator end = ws.end();
+    watch_subarray::iterator i = ws.begin();
+    watch_subarray::iterator j = ws.begin();
+    watch_subarray_const::const_iterator end = ws.end();
     for(; i != end; i++) {
         propStats.bogoProps += 1;
         if (i->isBinary()) {
@@ -938,7 +942,7 @@ void HyperEngine::remove_bin_clause(Lit lit)
 
 PropResult HyperEngine::propBin(
     const Lit p
-    , vec<Watched>::const_iterator k
+    , watch_subarray::const_iterator k
     , PropBy& confl
 ) {
     const Lit lit = k->lit2();
@@ -1010,8 +1014,8 @@ PropResult HyperEngine::propBin(
 
 
 PropResult HyperEngine::propNormalClauseComplex(
-    const vec<Watched>::iterator i
-    , vec<Watched>::iterator &j
+    watch_subarray_const::const_iterator i
+    , watch_subarray::iterator &j
     , const Lit p
     , PropBy& confl
     , Solver* solver
@@ -1052,7 +1056,7 @@ PropResult HyperEngine::propNormalClauseComplex(
 }
 
 PropResult HyperEngine::propTriClauseComplex(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
     , Solver* solver

@@ -224,7 +224,7 @@ bool SolutionExtender::addClause(
 }
 
 inline bool SolutionExtender::propBinaryClause(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit p
 ) {
     const lbool val = value(i->lit2());
@@ -245,7 +245,7 @@ inline bool SolutionExtender::propBinaryClause(
 }
 
 inline bool SolutionExtender::propTriClause(
-    const vec<Watched>::const_iterator i
+    watch_subarray_const::const_iterator i
     , const Lit p
 ) {
     const Lit lit2 = i->lit2();
@@ -301,8 +301,8 @@ bool SolutionExtender::propagate()
     bool ret = true;
     while(qhead < trail.size()) {
         const Lit p = trail[qhead++];
-        const vec<Watched>& ws = solver->watches[(~p).toInt()];
-        for(vec<Watched>::const_iterator
+        watch_subarray_const ws = solver->watches[(~p).toInt()];
+        for(watch_subarray::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
             ; it++

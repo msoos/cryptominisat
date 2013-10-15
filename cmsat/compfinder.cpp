@@ -178,14 +178,14 @@ void CompFinder::addToCompImplicits()
         lits.push_back(lit);
         for(int sign = 0; sign < 2; sign++) {
             lit = Lit(var, sign);
-            vec<Watched>& ws = solver->watches[lit.toInt()];
+            watch_subarray ws = solver->watches[lit.toInt()];
 
             //If empty, skip
             if (ws.empty())
                 continue;
 
             timeUsed += ws.size() + 10;
-            for(vec<Watched>::const_iterator
+            for(watch_subarray::const_iterator
                 it2 = ws.begin(), end2 = ws.end()
                 ; it2 != end2
                 ; it2++

@@ -24,6 +24,7 @@
 #include "varreplacer.h"
 #include "solver.h"
 #include "varupdatehelper.h"
+#include "watchalgos.h"
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
@@ -436,7 +437,7 @@ void CompHandler::moveClausesImplicit(
     for(const Var var: vars) {
     for(unsigned sign = 0; sign < 2; sign++) {
         const Lit lit = Lit(var, sign);
-        vec<Watched>& ws = solver->watches[lit.toInt()];
+        watch_subarray ws = solver->watches[lit.toInt()];
 
         //If empty, nothing to to, skip
         if (ws.empty()) {
