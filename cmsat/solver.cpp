@@ -1201,7 +1201,7 @@ CleaningStats Solver::reduceDB()
     } else {
         if (conf.verbosity >= 2) {
         cout
-        << "c [DBclean] Hard limit would be: " << maxToHave
+        << "c [DBclean] Hard long cls limit would be: " << maxToHave/1000 << "K"
         << endl;
         }
     }
