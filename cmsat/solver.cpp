@@ -2608,7 +2608,7 @@ void Solver::printClauseSizeDistrib()
     }
 
     cout
-    << "c"
+    << "c clause size stats."
     << " size4: " << size4
     << " size5: " << size5
     << " larger: " << sizeLarge << endl;
