@@ -120,7 +120,7 @@ void Simplifier::newVar()
     }
 
     if (solver->conf.doGateFind
-        && solver->nVars() > 10ULL*1000ULL*100ULL
+        && solver->nVars() > 10ULL*1000ULL*1000ULL
     ) {
         if (solver->conf.verbosity >= 2) {
             cout
