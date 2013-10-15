@@ -945,7 +945,7 @@ bool Simplifier::simplify()
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity >= 2) {
-        solver->printWatchMemUsed(memUsed());
+        solver->printWatchMemUsed(memUsedTotal());
     }
 
     //Print link-in and startup time
