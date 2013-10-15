@@ -1014,9 +1014,8 @@ lbool Searcher::search()
             checkNeedRestart();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(lastWasConflict);
-            lastWasConflict = true;
             #endif
-
+            lastWasConflict = true;
             handle_longest_decision_trail();
             if (!handle_conflict(confl))
                 return l_False;
