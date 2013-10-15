@@ -1115,7 +1115,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
     mem += toPropBin.capacity()*sizeof(Lit);
     mem += toPropRedBin.capacity()*sizeof(Lit);
     mem += currAncestors.capacity()*sizeof(Lit);
-    mem += stamp.getMemUsed();
+    mem += stamp.memUsed();
     printStatsLine("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"
