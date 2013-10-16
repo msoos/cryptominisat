@@ -87,6 +87,7 @@ class SolverConf
         int  printFullStats;
         int  verbStats;
         int  doPrintLongestTrail;
+        int  doPrintBestRedClauses;
 
         //Limits
         double   maxTime;

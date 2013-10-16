@@ -1333,6 +1333,31 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
     }
 }
 
+void Solver::print_best_irred_clauses_if_required() const
+{
+    if (longRedCls.empty()
+        || conf.doPrintBestRedClauses == 0
+    ) {
+        return;
+    }
+
+    size_t at = 0;
+    for(long i = ((long)longRedCls.size())-1
+        ; i > ((long)longRedCls.size())-1-conf.doPrintBestRedClauses && i >= 0
+        ; i--
+    ) {
+        ClOffset offset = longRedCls[i];
+        const Clause* cl = clAllocator->getPointer(offset);
+        cout
+        << "c [best-red-cl] Red " << solveStats.nbReduceDB
+        << " No. " << at << " > "
+        << clauseBackNumbered(*cl)
+        << endl;
+
+        at++;
+    }
+}
+
 CleaningStats Solver::reduceDB()
 {
     //Clean the clause database before doing cleaning
@@ -1363,6 +1388,7 @@ CleaningStats Solver::reduceDB()
     pre_clean_clause_db(tmpStats, sumConfl);
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
     sort_red_cls_as_required(tmpStats);
+    print_best_irred_clauses_if_required();
     real_clean_clause_db(tmpStats, sumConfl, removeNum);
 
     //Reattach what's left

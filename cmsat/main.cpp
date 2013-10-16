@@ -560,6 +560,8 @@ void Main::parseCommandLine()
         , "Print assignment if solution is SAT")
     ("printtrail", po::value<int>(&conf.doPrintLongestTrail)->default_value(conf.doPrintLongestTrail)
         , "Print longest decision trail of the last N conflicts. Value '0' means never print it")
+    ("printbest", po::value<int>(&conf.doPrintBestRedClauses)->default_value(conf.doPrintBestRedClauses)
+        , "Print the best N irredundant longer-than-3 learnt clauses. Value '0' means not to print anything.")
     ;
 
     po::options_description miscOptions("Misc options");

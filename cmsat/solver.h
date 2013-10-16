@@ -428,6 +428,7 @@ class Solver : public Searcher
         );
         uint64_t calc_how_many_to_remove();
         void sort_red_cls_as_required(CleaningStats& tmpStats);
+        void print_best_irred_clauses_if_required() const;
 
 
         /////////////////////
