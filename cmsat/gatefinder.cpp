@@ -451,7 +451,9 @@ void GateFinder::findOrGates(const bool redGatesToo)
             //Ran out of time?
             if (*simplifier->toDecrease < 0) {
                 if (solver->conf.verbosity >= 1) {
-                    cout << "c Finishing gate-finding: ran out of time" << endl;
+                    cout
+                    << "c [gate] Finishing gate-finding: ran out of time"
+                    << endl;
                 }
                 break;
             }
