@@ -70,11 +70,6 @@ struct watch_subarray
         array.push_back(watched);
     }
 
-    /*watch_subarray* operator->()
-    {
-        return this;
-    }*/
-
     typedef Watched* iterator;
     typedef const Watched* const_iterator;
 };
@@ -117,11 +112,6 @@ struct watch_subarray_const
     }
 
     typedef const Watched* const_iterator;
-
-    /*watch_subarray_const* operator->()
-    {
-        return this;
-    }*/
 };
 
 struct watch_array
