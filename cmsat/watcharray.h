@@ -8,67 +8,35 @@ namespace CMSat {
 using namespace CMSat;
 using std::vector;
 
+struct watch_array;
+
+struct Elem
+{
+    uint32_t offset = 0;
+    uint32_t size = 0;
+    uint32_t alloc = 0;
+};
+
 struct watch_subarray
 {
-    explicit watch_subarray(vector<Watched>& _array) :
-        array(_array)
+    vector<Elem>::iterator base_at;
+    watch_array* base;
+    explicit watch_subarray(vector<Elem>::iterator _base_at, watch_array* _base) :
+        base_at(_base_at)
+        , base(_base)
     {}
 
-    vector<Watched>& array;
-    Watched& operator[](const size_t at)
-    {
-        return array[at];
-    }
-
-    void clear()
-    {
-        array.clear();
-    }
-
-    size_t size() const
-    {
-        return array.size();
-    }
-
-    bool empty() const
-    {
-        return array.empty();
-    }
-
-    Watched* begin()
-    {
-        return array.data();
-    }
-
-    Watched* end()
-    {
-        return array.data()+array.size();
-    }
-
-    const Watched* begin() const
-    {
-        return array.data();
-    }
-
-    const Watched* end() const
-    {
-        return array.data()+array.size();
-    }
-
-    void shrink(const size_t num)
-    {
-        array.resize(array.size()-num);
-    }
-
-    void shrink_(const size_t num)
-    {
-        shrink(num);
-    }
-
-    void push(const Watched& watched)
-    {
-        array.push_back(watched);
-    }
+    Watched& operator[](const uint32_t at);
+    void clear();
+    uint32_t size() const;
+    bool empty() const;
+    Watched* begin();
+    Watched* end();
+    const Watched* begin() const;
+    const Watched* end() const;
+    void shrink(const uint32_t num);
+    void shrink_(const uint32_t num);
+    void push(const Watched& watched);
 
     typedef Watched* iterator;
     typedef const Watched* const_iterator;
@@ -76,56 +44,87 @@ struct watch_subarray
 
 struct watch_subarray_const
 {
-    explicit watch_subarray_const(const vector<Watched>& _array) :
-        array(_array)
+    vector<Elem>::const_iterator base_at;
+    const watch_array* base;
+    explicit watch_subarray_const(vector<Elem>::const_iterator _base_at, const watch_array* _base) :
+        base_at(_base_at)
+        , base(_base)
     {}
-
-    const vector<Watched>& array;
 
     watch_subarray_const(const watch_subarray& other) :
-        array(other.array)
+        base_at(other.base_at)
+        , base(other.base)
     {}
 
-    const Watched& operator[](const size_t at) const
-    {
-        return array[at];
-    }
-
-    size_t size() const
-    {
-        return array.size();
-    }
-
-    bool empty() const
-    {
-        return array.empty();
-    }
-
-    const Watched* begin() const
-    {
-        return array.data();
-    }
-
-    const Watched* end() const
-    {
-        return array.data() + array.size();
-    }
-
+    const Watched& operator[](const uint32_t at) const;
+    uint32_t size() const;
+    bool empty() const;
+    const Watched* begin() const;
+    const Watched* end() const;
     typedef const Watched* const_iterator;
 };
 
 struct watch_array
 {
-    vector<vector<Watched> > watches;
+    uint32_t alloc = 0;
+    Watched* base_ptr = NULL;
+    uint32_t next_space_offset = 0;
+    vector<Elem> watches;
+
+    ~watch_array()
+    {
+        delete base_ptr;
+    }
+
+    uint32_t get_space(uint32_t num)
+    {
+        //cout << "geting: " << num << endl;
+        //print_stat();
+
+        if (next_space_offset + num >= alloc) {
+            uint32_t toalloc = alloc*2 + num*2 + 100;
+            base_ptr = (Watched*)realloc(base_ptr, toalloc*sizeof(Watched));
+            alloc = toalloc;
+        }
+        assert(next_space_offset + num < alloc);
+
+        uint32_t toret = next_space_offset;
+        next_space_offset += num;
+
+        //cout << "got it, returning offset:" << toret << endl;
+        //print_stat();
+
+        return toret;
+    }
+
+    void print_stat()
+    {
+        cout
+        << "alloc: " << alloc
+        << " next_space_offset: " << next_space_offset
+        << " watches.size(): " << watches.size()
+        << " base_ptr: " << base_ptr
+        << endl;
+    }
+
+    void delete_offset(uint32_t offs)
+    {
+        //TODO
+    }
+
+    size_t memUsed() const
+    {
+        return alloc*sizeof(Watched);
+    }
 
     watch_subarray operator[](size_t at)
     {
-        return watch_subarray(watches[at]);
+        return watch_subarray(watches.begin() + at, this);
     }
 
     watch_subarray_const operator[](size_t at) const
     {
-        return watch_subarray_const(watches[at]);
+        return watch_subarray_const(watches.begin() + at, this);
     }
 
     void resize(const size_t new_size)
@@ -133,16 +132,7 @@ struct watch_array
         watches.resize(new_size);
     }
 
-    size_t memUsed() const
-    {
-        size_t mem = watches.capacity()*sizeof(vector<Watched>);
-        for(size_t i = 0; i < watches.size(); i++) {
-            mem += watches[i].capacity()*sizeof(Watched);
-        }
-        return mem;
-    }
-
-    size_t size() const
+    uint32_t size() const
     {
         return watches.size();
     }
@@ -154,14 +144,16 @@ struct watch_array
 
     void prefetch(const size_t at) const
     {
-        __builtin_prefetch(watches[at].data());
+        //__builtin_prefetch(watches[at].data());
     }
 
     struct iterator
     {
-        vector<vector<Watched> >::iterator it;
-        explicit iterator(vector<vector<Watched> >::iterator _it) :
+        vector<Elem>::iterator it;
+        watch_array* base;
+        explicit iterator(vector<Elem>::iterator _it, watch_array* _base) :
             it(_it)
+            , base(_base)
         {}
 
         iterator operator++()
@@ -172,7 +164,7 @@ struct watch_array
 
         watch_subarray operator*()
         {
-            return watch_subarray(*it);
+            return watch_subarray(it, base);
         }
 
         bool operator==(const iterator& it2) const
@@ -190,9 +182,11 @@ struct watch_array
 
     struct const_iterator
     {
-        vector<vector<Watched> >::const_iterator it;
-        explicit const_iterator(vector<vector<Watched> >::const_iterator _it) :
+        vector<Elem>::const_iterator it;
+        const watch_array* base;
+        explicit const_iterator(vector<Elem>::const_iterator _it, const watch_array* _base) :
             it(_it)
+            , base(_base)
         {}
 
         const_iterator(const iterator& other) :
@@ -207,7 +201,7 @@ struct watch_array
 
         const watch_subarray_const operator*() const
         {
-            return watch_subarray_const(*it);
+            return watch_subarray_const(it, base);
         }
 
         bool operator==(const const_iterator& it2) const
@@ -225,22 +219,22 @@ struct watch_array
 
     iterator begin()
     {
-        return iterator(watches.begin());
+        return iterator(watches.begin(), this);
     }
 
     iterator end()
     {
-        return iterator(watches.end());
+        return iterator(watches.end(), this);
     }
 
     const_iterator begin() const
     {
-        return const_iterator(watches.begin());
+        return const_iterator(watches.begin(), this);
     }
 
     const_iterator end() const
     {
-        return const_iterator(watches.end());
+        return const_iterator(watches.end(), this);
     }
 
     void fitToSize()
@@ -259,9 +253,113 @@ inline size_t operator-(const watch_array::const_iterator& lhs, const watch_arra
     return lhs.it-rhs.it;
 }
 
+inline Watched& watch_subarray::operator[](const uint32_t at)
+{
+    *(base->base_ptr + base_at->offset + at);
+}
+
+inline void watch_subarray::clear()
+{
+    base_at->size = 0;
+}
+
+inline uint32_t watch_subarray::size() const
+{
+    return base_at->size;
+}
+
+inline bool watch_subarray::empty() const
+{
+    return size() == 0;
+}
+
+inline Watched* watch_subarray::begin()
+{
+    return base->base_ptr + base_at->offset;
+}
+
+inline Watched* watch_subarray::end()
+{
+    return base->base_ptr + base_at->offset + base_at->size;
+}
+
+inline const Watched* watch_subarray::begin() const
+{
+    return base->base_ptr + base_at->offset;
+}
+
+inline const Watched* watch_subarray::end() const
+{
+    return base->base_ptr + base_at->offset + base_at->size;
+}
+
+inline void watch_subarray::shrink(const uint32_t num)
+{
+    base_at->size -= num;
+}
+
+inline void watch_subarray::shrink_(const uint32_t num)
+{
+    shrink(num);
+}
+
+inline void watch_subarray::push(const Watched& watched)
+{
+    //Make space
+    if (base_at->alloc <= base_at->size) {
+        uint32_t new_alloc = base_at->alloc*2+2;
+        uint32_t new_offset = base->get_space(new_alloc);
+
+        //Copy
+        if (base_at->size > 0) {
+            Watched* newptr = base->base_ptr + new_offset;
+            Watched* oldptr = base->base_ptr + base_at->offset;
+            memcpy(newptr, oldptr, base_at->size * sizeof(Watched));
+            base->delete_offset(base_at->offset);
+        }
+
+        //Update
+        base_at->offset = new_offset;
+        base_at->alloc = new_alloc;
+    }
+
+    //There is enough space
+    assert(base_at->alloc > base_at->size);
+
+    //Append to the end
+    *(base->base_ptr + base_at->offset + base_at->size) = watched;
+    base_at->size++;
+}
+
+inline const Watched& watch_subarray_const::operator[](const uint32_t at) const
+{
+    *(base->base_ptr + base_at->offset + at);
+}
+inline uint32_t watch_subarray_const::size() const
+{
+    return base_at->size;
+}
+
+inline bool watch_subarray_const::empty() const
+{
+    return size() == 0;
+}
+inline const Watched* watch_subarray_const::begin() const
+{
+    return base->base_ptr + base_at->offset;
+}
+
+inline const Watched* watch_subarray_const::end() const
+{
+    return base->base_ptr + base_at->offset + base_at->size;
+}
+
 inline void swap(watch_subarray a, watch_subarray b)
 {
-    a.array.swap(b.array);
+    Elem tmp;
+    tmp = *(a.base_at);
+    *(a.base_at) = *(b.base_at);
+    *(b.base_at) = tmp;
 }
 
 
