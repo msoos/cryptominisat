@@ -192,11 +192,6 @@ struct watch_array
             return it != it2.it;
         }
 
-        /*watch_subarray operator->()
-        {
-            return watch_subarray(*it);
-        }*/
-
         friend size_t operator-(const iterator& lhs, const iterator& rhs);
     };
 
@@ -238,11 +233,6 @@ struct watch_array
         {
             return it != it2.it;
         }
-
-        /*const watch_subarray_const operator->() const
-        {
-            return watch_subarray_const(*it);
-        }*/
 
         friend size_t operator-(const const_iterator& lhs, const const_iterator& rhs);
     };
