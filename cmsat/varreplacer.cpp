@@ -490,7 +490,7 @@ bool VarReplacer::replaceImplicit()
     for (auto
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         const Lit origLit1 = Lit::toLit(wsLit);
         watch_subarray ws = *it;

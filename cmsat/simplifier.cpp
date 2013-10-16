@@ -609,7 +609,7 @@ void Simplifier::removeAllLongsFromWatches()
     for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         watch_subarray ws = *it;
 
@@ -1179,7 +1179,7 @@ bool Simplifier::propImplicits()
     for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray ws = *it;
@@ -1315,7 +1315,7 @@ void Simplifier::sanityCheckElimedVars()
     for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;

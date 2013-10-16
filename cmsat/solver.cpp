@@ -2531,7 +2531,7 @@ void Solver::dumpBinClauses(
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
@@ -2573,7 +2573,7 @@ void Solver::dumpTriClauses(
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
@@ -2891,7 +2891,7 @@ void Solver::printAllClauses() const
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
@@ -2921,7 +2921,7 @@ bool Solver::verifyImplicitClauses() const
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
@@ -3277,7 +3277,7 @@ void Solver::checkImplicitStats() const
     for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         #ifdef DEBUG_TRI_SORTED_SANITY
         const Lit lit = Lit::toLit(wsLit);
@@ -3469,7 +3469,7 @@ void Solver::checkImplicitPropagated() const
     for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
@@ -3732,7 +3732,7 @@ void Solver::freeUnusedWatches()
     for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         if (varData[lit.var()].removed == Removed::elimed

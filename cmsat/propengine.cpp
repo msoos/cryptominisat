@@ -795,7 +795,7 @@ void PropEngine::sortWatched()
     for (watch_array::iterator
         i = watches.begin(), end = watches.end()
         ; i != end
-        ; i++
+        ; ++i
     ) {
         watch_subarray ws = *i;
         if (ws.size() == 0)

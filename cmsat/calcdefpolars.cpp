@@ -69,7 +69,7 @@ void CalcDefPolars::tallyVotesBinTri(const watch_array& watches)
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
         ; it != end
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;

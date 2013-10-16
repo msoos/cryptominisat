@@ -170,13 +170,6 @@ struct watch_array
             return *this;
         }
 
-        iterator operator++(int)
-        {
-            iterator tmp = *this;
-            ++it;
-            return tmp;
-        }
-
         watch_subarray operator*()
         {
             return watch_subarray(*it);
@@ -210,13 +203,6 @@ struct watch_array
         {
             ++it;
             return *this;
-        }
-
-        const_iterator operator++(int)
-        {
-            const_iterator tmp = *this;
-            ++it;
-            return tmp;
         }
 
         const watch_subarray_const operator*() const

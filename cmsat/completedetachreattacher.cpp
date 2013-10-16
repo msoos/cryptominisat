@@ -41,7 +41,7 @@ void CompleteDetachReatacher::detachNonBinsNonTris()
     for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         stay += clearWatchNotBinNotTri(*it);
     }

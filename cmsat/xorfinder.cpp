@@ -85,7 +85,7 @@ bool XorFinder::findXors()
     for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end && maxTimeFindXors > 0
-        ; it++, wsLit++
+        ; ++it, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
