@@ -35,6 +35,12 @@ Please read help
 For help, build the program, and issue:
 './cryptominisat -h'
 
+----------
+Fuzzing
+----------
+You will need cnf-utils from github.com/msoos/ There, the XOR-to-CNF
+converter is available that is needed for the fuzzer to run.
+
 --------------------------
 Windows binary generation
 -------------------------
