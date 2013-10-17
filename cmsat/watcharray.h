@@ -161,7 +161,7 @@ struct watch_array
         size_t needed = 0;
         for(size_t i = 0; i < watches.size(); i++) {
             if (watches[i].size)
-                needed += watches[i].size*1.5 + 3;
+                needed += watches[i].size*1.5 + 2;
         }
 
         Mem newmem;
@@ -182,7 +182,7 @@ struct watch_array
             Elem& ws = watches[i];
 
             //Allow for some space to breathe
-            ws.alloc = ws.size*1.5 + 3;
+            ws.alloc = ws.size*1.5 + 2;
 
             Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
             Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
