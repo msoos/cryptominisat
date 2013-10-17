@@ -18,10 +18,10 @@ struct Elem
         , offset(0)
     {}
 
-    uint32_t num:8;
+    uint8_t num:8;
     uint32_t offset:24;
-    uint32_t size = 0;
-    uint32_t alloc = 0;
+    uint16_t size = 0;
+    uint16_t alloc = 0;
 
     void print_stat() const
     {
@@ -110,7 +110,7 @@ struct watch_array
     {
         //We need at least 1
         Mem new_mem;
-        size_t elems = 1000;
+        size_t elems = 10ULL*1000ULL*1000ULL;
         new_mem.base_ptr = (Watched*)malloc(elems*sizeof(Watched));
         new_mem.alloc = elems;
         mems.push_back(new_mem);
@@ -127,7 +127,8 @@ struct watch_array
     {
         //print_stat();
 
-        size_t last_alloc = 1000;
+        assert(mems.size() > 0);
+        size_t last_alloc = mems[0].alloc;
         for(size_t i = 0; i < mems.size(); i++) {
             if (mems[i].next_space_offset + elems < mems[i].alloc) {
                 return i;
@@ -137,7 +138,7 @@ struct watch_array
         assert(mems.size() < 255);
 
         Mem new_mem;
-        new_mem.alloc = 2*last_alloc + 2*elems;
+        new_mem.alloc = 2*last_alloc;
         new_mem.base_ptr = (Watched*)malloc(new_mem.alloc*sizeof(Watched));
         assert(new_mem.base_ptr != NULL);
         mems.push_back(new_mem);
@@ -156,12 +157,18 @@ struct watch_array
         return OffsAndNum(off_to_ret, num);
     }
 
+    size_t extra_space_during_consolidate(size_t orig_size)
+    {
+        return std::max<double>((double)orig_size*1.5 + 2, 3);
+    }
+
     void consolidate()
     {
         size_t needed = 0;
         for(size_t i = 0; i < watches.size(); i++) {
-            if (watches[i].size)
-                needed += watches[i].size*1.5 + 2;
+            if (watches[i].size != 0) {
+                needed += extra_space_during_consolidate(watches[i].size);
+            }
         }
 
         Mem newmem;
@@ -182,7 +189,7 @@ struct watch_array
             Elem& ws = watches[i];
 
             //Allow for some space to breathe
-            ws.alloc = ws.size*1.5 + 2;
+            ws.alloc = extra_space_during_consolidate(ws.size);
 
             Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
             Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
