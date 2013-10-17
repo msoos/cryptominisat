@@ -121,26 +121,27 @@ bool ClauseVivifier::vivifyClausesTriIrred()
         }
 
         Lit lit = Lit::toLit(upI);
-        watch_subarray_const ws = solver->watches[upI];
-        for (size_t i = 0; i < ws.size(); i++) {
+        for (size_t i = 0; i < solver->watches[upI].size(); i++) {
             if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
                 break;
             }
 
+            Watched ws = solver->watches[upI][i];
+
             //Only irred TRI and each TRI only once
-            if (ws[i].isTri()
-                && !ws[i].red()
-                && lit < ws[i].lit2()
-                && ws[i].lit2() < ws[i].lit3()
+            if (ws.isTri()
+                && !ws.red()
+                && lit < ws.lit2()
+                && ws.lit2() < ws.lit3()
             ) {
                 uselessLits.clear();
                 lits.resize(3);
                 lits[0] = lit;
-                lits[1] = ws[i].lit2();
-                lits[2] = ws[i].lit3();
+                lits[1] = ws.lit2();
+                lits[2] = ws.lit3();
                 testVivify(
                     std::numeric_limits<ClOffset>::max()
-                    , ws[i].red()
+                    , ws.red()
                     , 2
                 );
 
