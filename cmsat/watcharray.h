@@ -84,6 +84,7 @@ struct watch_array
         if (next_space_offset + num >= alloc) {
             uint32_t toalloc = alloc*2 + num*2 + 100;
             base_ptr = (Watched*)realloc(base_ptr, toalloc*sizeof(Watched));
+            assert(base_ptr != NULL);
             alloc = toalloc;
         }
         assert(next_space_offset + num < alloc);
@@ -255,7 +256,7 @@ inline size_t operator-(const watch_array::const_iterator& lhs, const watch_arra
 
 inline Watched& watch_subarray::operator[](const uint32_t at)
 {
-    *(base->base_ptr + base_at->offset + at);
+    return *(base->base_ptr + base_at->offset + at);
 }
 
 inline void watch_subarray::clear()
@@ -280,7 +281,7 @@ inline Watched* watch_subarray::begin()
 
 inline Watched* watch_subarray::end()
 {
-    return base->base_ptr + base_at->offset + base_at->size;
+    return begin() + base_at->size;
 }
 
 inline const Watched* watch_subarray::begin() const
@@ -290,7 +291,7 @@ inline const Watched* watch_subarray::begin() const
 
 inline const Watched* watch_subarray::end() const
 {
-    return base->base_ptr + base_at->offset + base_at->size;
+    return begin() + base_at->size;
 }
 
 inline void watch_subarray::shrink(const uint32_t num)
@@ -314,7 +315,7 @@ inline void watch_subarray::push(const Watched& watched)
         if (base_at->size > 0) {
             Watched* newptr = base->base_ptr + new_offset;
             Watched* oldptr = base->base_ptr + base_at->offset;
-            memcpy(newptr, oldptr, base_at->size * sizeof(Watched));
+            memmove(newptr, oldptr, base_at->size * sizeof(Watched));
             base->delete_offset(base_at->offset);
         }
 
@@ -333,7 +334,7 @@ inline void watch_subarray::push(const Watched& watched)
 
 inline const Watched& watch_subarray_const::operator[](const uint32_t at) const
 {
-    *(base->base_ptr + base_at->offset + at);
+    return *(base->base_ptr + base_at->offset + at);
 }
 inline uint32_t watch_subarray_const::size() const
 {
@@ -351,7 +352,7 @@ inline const Watched* watch_subarray_const::begin() const
 
 inline const Watched* watch_subarray_const::end() const
 {
-    return base->base_ptr + base_at->offset + base_at->size;
+    return begin() + base_at->size;
 }
 
 inline void swap(watch_subarray a, watch_subarray b)
