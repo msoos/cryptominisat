@@ -2037,6 +2037,14 @@ void Searcher::reduce_db_if_needed()
         solver->fullReduce();
 
         genRandomVarActMultDiv();
+
+
+        //watch consolidate
+        cout < "c watches stats:";
+        watches.print_stat();
+        watches.consolidate();
+        cout < "c watches stats:";
+        watches.print_stat();
     }
 }
 
@@ -2165,6 +2173,14 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     status = burstSearch();
     if (status != l_Undef)
         goto end;
+
+
+    //watch consolidate
+    cout < "c watches stats:";
+    watches.print_stat();
+    watches.consolidate();
+    cout < "c watches stats:";
+    watches.print_stat();
 
     restore_activities_and_polarities();
     restore_order_heap();
