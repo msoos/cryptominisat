@@ -1,6 +1,7 @@
 #ifndef __WATCHARRAY_H__
 #define __WATCHARRAY_H__
 
+#include <stdlib.h>
 #include "watched.h"
 #include <vector>
 
@@ -12,9 +13,44 @@ struct watch_array;
 
 struct Elem
 {
-    uint32_t offset = 0;
+    Elem() :
+        num(0)
+        , offset(0)
+    {}
+
+    uint32_t num:8;
+    uint32_t offset:24;
     uint32_t size = 0;
     uint32_t alloc = 0;
+
+    void print_stat() const
+    {
+        cout
+        << "elem."
+        << " num: " << num
+        << " offset:" << offset
+        << " size" << size
+        << " alloc" << alloc
+        << endl;
+    }
+};
+
+struct Mem
+{
+    uint32_t alloc = 0;
+    Watched* base_ptr = NULL;
+    uint32_t next_space_offset = 0;
+};
+
+struct OffsAndNum
+{
+    OffsAndNum(uint32_t _offset, uint32_t _num) :
+        offset(_offset)
+        , num(_num)
+    {}
+
+    uint32_t offset;
+    uint32_t num;
 };
 
 struct watch_subarray
@@ -56,6 +92,7 @@ struct watch_subarray_const
         , base(other.base)
     {}
 
+    void print_stat() const;
     const Watched& operator[](const uint32_t at) const;
     uint32_t size() const;
     bool empty() const;
@@ -66,65 +103,99 @@ struct watch_subarray_const
 
 struct watch_array
 {
-    uint32_t alloc = 0;
-    Watched* base_ptr = NULL;
-    uint32_t next_space_offset = 0;
     vector<Elem> watches;
+    vector<Mem> mems;
+
+    watch_array()
+    {
+        //We need at least 1
+        Mem new_mem;
+        size_t elems = 1000;
+        new_mem.base_ptr = (Watched*)malloc(elems*sizeof(Watched));
+        new_mem.alloc = elems;
+        mems.push_back(new_mem);
+    }
 
     ~watch_array()
     {
-        delete base_ptr;
-    }
-
-    uint32_t get_space(uint32_t num)
-    {
-        //cout << "geting: " << num << endl;
-        //print_stat();
-
-        if (next_space_offset + num >= alloc) {
-            uint32_t toalloc = alloc*2 + num*2 + 100;
-            base_ptr = (Watched*)realloc(base_ptr, toalloc*sizeof(Watched));
-            assert(base_ptr != NULL);
-            alloc = toalloc;
+        for(size_t i = 0; i < mems.size(); i++) {
+            free(mems[i].base_ptr);
         }
-        assert(next_space_offset + num < alloc);
-
-        uint32_t toret = next_space_offset;
-        next_space_offset += num;
-
-        //cout << "got it, returning offset:" << toret << endl;
-        //print_stat();
-
-        return toret;
     }
 
-    void print_stat()
+    uint32_t get_suitable_base(uint32_t elems)
+    {
+        //print_stat();
+
+        size_t last_alloc = 1000;
+        for(size_t i = 0; i < mems.size(); i++) {
+            if (mems[i].next_space_offset + elems < mems[i].alloc) {
+                return i;
+            }
+            last_alloc = mems[i].alloc;
+        }
+        assert(mems.size() < 255);
+
+        Mem new_mem;
+        new_mem.alloc = 2*last_alloc + 2*elems;
+        new_mem.base_ptr = (Watched*)malloc(new_mem.alloc*sizeof(Watched));
+        assert(new_mem.base_ptr != NULL);
+        mems.push_back(new_mem);
+        return mems.size()-1;
+    }
+
+    OffsAndNum get_space(uint32_t elems)
+    {
+        uint32_t num = get_suitable_base(elems);
+        Mem& mem = mems[num];
+        assert(mem.next_space_offset + elems < mem.alloc);
+
+        uint32_t off_to_ret = mem.next_space_offset;
+        mem.next_space_offset += elems;
+
+        return OffsAndNum(off_to_ret, num);
+    }
+
+    void print_stat() const
     {
         cout
-        << "alloc: " << alloc
-        << " next_space_offset: " << next_space_offset
         << " watches.size(): " << watches.size()
-        << " base_ptr: " << base_ptr
+        << " mems.size(): " << mems.size()
         << endl;
+        for(size_t i = 0; i < mems.size(); i++) {
+            const Mem& mem = mems[i];
+            cout
+            << " -- mem " << i
+            << " alloc: " << mem.alloc
+            << " next_space_offset: " << mem.next_space_offset
+            << " base_ptr: " << mem.base_ptr
+            << endl;
+        }
     }
 
-    void delete_offset(uint32_t offs)
+    void delete_offset(uint32_t num, uint32_t offs)
     {
         //TODO
     }
 
     size_t memUsed() const
     {
-        return alloc*sizeof(Watched);
+        size_t total = 0;
+        for(size_t i = 0; i < mems.size(); i++) {
+            total += mems[i].alloc*sizeof(Watched);
+        }
+        return total;
     }
 
     watch_subarray operator[](size_t at)
     {
+        assert(watches.size() > at);
         return watch_subarray(watches.begin() + at, this);
     }
 
     watch_subarray_const operator[](size_t at) const
     {
+        assert(watches.size() > at);
         return watch_subarray_const(watches.begin() + at, this);
     }
 
@@ -192,6 +263,7 @@ struct watch_array
 
         const_iterator(const iterator& other) :
             it(other.it)
+            , base(other.base)
         {}
 
         const_iterator operator++()
@@ -256,7 +328,7 @@ inline size_t operator-(const watch_array::const_iterator& lhs, const watch_arra
 
 inline Watched& watch_subarray::operator[](const uint32_t at)
 {
-    return *(base->base_ptr + base_at->offset + at);
+    return *(begin() + at);
 }
 
 inline void watch_subarray::clear()
@@ -276,22 +348,22 @@ inline bool watch_subarray::empty() const
 
 inline Watched* watch_subarray::begin()
 {
-    return base->base_ptr + base_at->offset;
+    return base->mems[base_at->num].base_ptr + base_at->offset;
 }
 
 inline Watched* watch_subarray::end()
 {
-    return begin() + base_at->size;
+    return begin() + size();
 }
 
 inline const Watched* watch_subarray::begin() const
 {
-    return base->base_ptr + base_at->offset;
+    return base->mems[base_at->num].base_ptr + base_at->offset;
 }
 
 inline const Watched* watch_subarray::end() const
 {
-    return begin() + base_at->size;
+    return begin() + size();
 }
 
 inline void watch_subarray::shrink(const uint32_t num)
@@ -309,18 +381,19 @@ inline void watch_subarray::push(const Watched& watched)
     //Make space
     if (base_at->alloc <= base_at->size) {
         uint32_t new_alloc = base_at->alloc*2+2;
-        uint32_t new_offset = base->get_space(new_alloc);
+        OffsAndNum off_and_num = base->get_space(new_alloc);
 
         //Copy
         if (base_at->size > 0) {
-            Watched* newptr = base->base_ptr + new_offset;
-            Watched* oldptr = base->base_ptr + base_at->offset;
-            memmove(newptr, oldptr, base_at->size * sizeof(Watched));
-            base->delete_offset(base_at->offset);
+            Watched* newptr = base->mems[off_and_num.num].base_ptr + off_and_num.offset;
+            Watched* oldptr = begin();
+            memmove(newptr, oldptr, size() * sizeof(Watched));
+            base->delete_offset(base_at->num, base_at->offset);
         }
 
         //Update
-        base_at->offset = new_offset;
+        base_at->num = off_and_num.num;
+        base_at->offset = off_and_num.offset;
         base_at->alloc = new_alloc;
     }
 
@@ -328,13 +401,13 @@ inline void watch_subarray::push(const Watched& watched)
     assert(base_at->alloc > base_at->size);
 
     //Append to the end
-    *(base->base_ptr + base_at->offset + base_at->size) = watched;
+    operator[](size()) = watched;
     base_at->size++;
 }
 
 inline const Watched& watch_subarray_const::operator[](const uint32_t at) const
 {
-    return *(base->base_ptr + base_at->offset + at);
+    return *(begin() + at);
 }
 inline uint32_t watch_subarray_const::size() const
 {
@@ -347,12 +420,18 @@ inline bool watch_subarray_const::empty() const
 }
 inline const Watched* watch_subarray_const::begin() const
 {
-    return base->base_ptr + base_at->offset;
+    return base->mems[base_at->num].base_ptr + base_at->offset;
 }
 
 inline const Watched* watch_subarray_const::end() const
 {
-    return begin() + base_at->size;
+    return begin() + size();
+}
+
+inline void watch_subarray_const::print_stat() const
+{
+    base->print_stat();
+    base_at->print_stat();
 }
 
 inline void swap(watch_subarray a, watch_subarray b)
