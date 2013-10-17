@@ -2096,6 +2096,12 @@ void Solver::fullReduce()
     CleaningStats iterCleanStat = reduceDB();
     consolidateMem();
 
+    cout < "c watches stats:";
+    watches.print_stat();
+    watches.consolidate();
+    cout < "c watches stats:";
+    watches.print_stat();
+
     if (conf.doSQL) {
         sqlStats->reduceDB(irredStats, redStats, iterCleanStat, solver);
     }

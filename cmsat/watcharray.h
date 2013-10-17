@@ -156,6 +156,50 @@ struct watch_array
         return OffsAndNum(off_to_ret, num);
     }
 
+    void consolidate()
+    {
+        size_t needed = 0;
+        for(size_t i = 0; i < watches.size(); i++) {
+            if (watches[i].size)
+                needed += watches[i].size*1.5 + 3;
+        }
+
+        Mem newmem;
+        newmem.alloc = (double)needed*1.2;
+        newmem.base_ptr = (Watched*)malloc(newmem.alloc*sizeof(Watched));
+        for(size_t i = 0; i < watches.size(); i++) {
+            //Never used
+            if (watches[i].alloc == 0)
+                continue;
+
+            //Freeing this up
+            if (watches[i].size == 0) {
+                watches[i] = Elem();
+                continue;
+            }
+
+
+            Elem& ws = watches[i];
+
+            //Allow for some space to breathe
+            ws.alloc = ws.size*1.5 + 3;
+
+            Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
+            Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
+            memmove(new_ptr, orig_ptr, ws.size * sizeof(Watched));
+            ws.num = 0;
+            ws.offset = newmem.next_space_offset;
+            newmem.next_space_offset += ws.alloc;
+        }
+
+        for(size_t i = 0; i < mems.size(); i++) {
+            free(mems[i].base_ptr);
+        }
+        mems.clear();
+
+        mems.push_back(newmem);
+    }
+
     void print_stat() const
     {
         cout
