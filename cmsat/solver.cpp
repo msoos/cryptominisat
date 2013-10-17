@@ -2368,16 +2368,23 @@ void Solver::printFullStats() const
 
 uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
 {
-    size_t mem = 0;
-    mem += watches.memUsed();
-    printStatsLine("c Mem for watches"
-        , mem/(1024UL*1024UL)
+    size_t alloc = watches.mem_used_alloc();
+    printStatsLine("c Mem for watch alloc"
+        , alloc/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , (double)alloc/(double)totalMem*100.0
         , "%"
     );
 
-    return mem;
+    size_t array = watches.mem_used_array();
+    printStatsLine("c Mem for watch array"
+        , array/(1024UL*1024UL)
+        , "MB"
+        , (double)array/(double)totalMem*100.0
+        , "%"
+    );
+
+    return alloc + array;
 }
 
 void Solver::printMemStats() const

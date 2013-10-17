@@ -178,12 +178,20 @@ struct watch_array
         //TODO
     }
 
-    size_t memUsed() const
+    size_t mem_used_alloc() const
     {
         size_t total = 0;
         for(size_t i = 0; i < mems.size(); i++) {
             total += mems[i].alloc*sizeof(Watched);
         }
+        return total;
+    }
+
+    size_t mem_used_array() const
+    {
+        size_t total = 0;
+        total += watches.capacity() * sizeof(Elem);
+        total += mems.capacity() * sizeof(Mem);
         return total;
     }
 
