@@ -128,7 +128,7 @@ struct watch_array
         new_mem.alloc = elems;
         mems.push_back(new_mem);
 
-        free_mem.resize(10);
+        free_mem.resize(20);
     }
 
     ~watch_array()
