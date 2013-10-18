@@ -170,9 +170,11 @@ struct watch_array
                 needed += extra_space_during_consolidate(watches[i].size);
             }
         }
+        needed *= 1.2;
+        needed = std::max<size_t>(needed, 10ULL*1000ULL*1000ULL);
 
         Mem newmem;
-        newmem.alloc = (double)needed*1.2;
+        newmem.alloc = needed;
         newmem.base_ptr = (Watched*)malloc(newmem.alloc*sizeof(Watched));
         for(size_t i = 0; i < watches.size(); i++) {
             //Never used
