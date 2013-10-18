@@ -46,6 +46,11 @@ struct Mem
 
 struct OffsAndNum
 {
+    OffsAndNum() :
+        offset(0)
+        , num(0)
+    {}
+
     OffsAndNum(uint32_t _offset, uint32_t _num) :
         offset(_offset)
         , num(_num)
@@ -107,6 +112,11 @@ struct watch_array
 {
     vector<Elem> watches;
     vector<Mem> mems;
+    size_t free_mem_used = 0;
+    size_t free_mem_not_used = 0;
+
+    //at least 2**N elements in there
+    vector<vector<OffsAndNum> > free_mem;
 
     watch_array()
     {
@@ -116,6 +126,8 @@ struct watch_array
         new_mem.base_ptr = (Watched*)malloc(elems*sizeof(Watched));
         new_mem.alloc = elems;
         mems.push_back(new_mem);
+
+        free_mem.resize(10);
     }
 
     ~watch_array()
@@ -147,8 +159,34 @@ struct watch_array
         return mems.size()-1;
     }
 
+    bool find_free_space(OffsAndNum& toret, uint32_t size)
+    {
+        size_t bucket;
+        if (size == 2) {
+            bucket = 0;
+        } else {
+             bucket = get_bucket(size);
+            bucket++;
+        }
+        if (free_mem.size() <= bucket
+            || free_mem[bucket].empty()
+        ) {
+            free_mem_not_used++;
+            return false;
+        }
+
+        toret = free_mem[bucket].back();
+        free_mem[bucket].pop_back();
+        free_mem_used++;
+        return true;
+    }
+
     OffsAndNum get_space(uint32_t elems)
     {
+        OffsAndNum toret;
+        if (find_free_space(toret, elems))
+            return toret;
+
         uint32_t num = get_suitable_base(elems);
         Mem& mem = mems[num];
         assert(mem.next_space_offset + elems < mem.alloc);
@@ -156,7 +194,8 @@ struct watch_array
         uint32_t off_to_ret = mem.next_space_offset;
         mem.next_space_offset += elems;
 
-        return OffsAndNum(off_to_ret, num);
+        toret = OffsAndNum(off_to_ret, num);
+        return toret;
     }
 
     size_t extra_space_during_consolidate(size_t orig_size)
@@ -232,6 +271,11 @@ struct watch_array
         }
 
         mems = newmems;
+        for(auto& mem: free_mem) {
+            mem.clear();
+        }
+        free_mem_used = 0;
+        free_mem_not_used = 0;
     }
 
     void print_stat() const
@@ -249,11 +293,39 @@ struct watch_array
             << " base_ptr: " << mem.base_ptr
             << endl;
         }
+
+        cout << "free stats:" << endl;
+        for(size_t i = 0; i < free_mem.size(); i++)
+        {
+            cout << "->free_mem[" << i << "]: " << free_mem[i].size() << endl;
+        }
+
+        cout
+        << "free mem used:" << free_mem_used
+        << " free mem not used: " << free_mem_not_used
+        << " perc: "
+        << std::fixed << std::setprecision(2) << (double)free_mem_used/(double)(free_mem_not_used+free_mem_used)*100.0
+        << "%"
+        << endl;
     }
 
-    void delete_offset(uint32_t num, uint32_t offs)
+    unsigned get_bucket(unsigned size)
     {
-        //TODO
+        assert(size >= 2);
+        int at = ((int)((sizeof(unsigned)*8))-__builtin_clz(size))-2;
+        assert(at >= 0);
+        return at;
+    }
+
+    void delete_offset(uint32_t num, uint32_t offs, uint32_t size)
+    {
+        size_t bucket = get_bucket(size);
+
+        if (bucket >= free_mem.size()) {
+            return;
+        }
+
+        free_mem[bucket].push_back(OffsAndNum(offs, num));
     }
 
     size_t mem_used_alloc() const
@@ -474,7 +546,7 @@ inline void watch_subarray::push(const Watched& watched)
             Watched* newptr = base->mems[off_and_num.num].base_ptr + off_and_num.offset;
             Watched* oldptr = begin();
             memmove(newptr, oldptr, size() * sizeof(Watched));
-            base->delete_offset(base_at->num, base_at->offset);
+            base->delete_offset(base_at->num, base_at->offset, base_at->alloc);
         }
 
         //Update
