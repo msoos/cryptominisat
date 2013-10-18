@@ -110,7 +110,8 @@ struct watch_subarray_const
 
 struct watch_array
 {
-    const static size_t WATCH_MIN_SIZE_ONE_ALLOC = 10ULL*1000ULL*1000ULL;
+    const static size_t WATCH_MIN_SIZE_ONE_ALLOC_FIRST = 1ULL*1000ULL*1000ULL;
+    const static size_t WATCH_MIN_SIZE_ONE_ALLOC_LATER = 50ULL*1000ULL*1000ULL;
     const static size_t WATCH_MAX_SIZE_ONE_ALLOC = (1ULL<<24)-1;
 
     vector<Elem> watches;
@@ -125,7 +126,7 @@ struct watch_array
     {
         //We need at least 1
         Mem new_mem;
-        size_t elems = WATCH_MIN_SIZE_ONE_ALLOC;
+        size_t elems = WATCH_MIN_SIZE_ONE_ALLOC_FIRST;
         new_mem.base_ptr = (Watched*)malloc(elems*sizeof(Watched));
         new_mem.alloc = elems;
         mems.push_back(new_mem);
@@ -155,7 +156,8 @@ struct watch_array
         assert(mems.size() < 255);
 
         Mem new_mem;
-        new_mem.alloc = std::min<size_t>(2*last_alloc, WATCH_MAX_SIZE_ONE_ALLOC);
+        new_mem.alloc = std::max<size_t>(3*last_alloc, WATCH_MIN_SIZE_ONE_ALLOC_LATER);
+        new_mem.alloc = std::min<size_t>(3*last_alloc, WATCH_MAX_SIZE_ONE_ALLOC);
         new_mem.base_ptr = (Watched*)malloc(new_mem.alloc*sizeof(Watched));
         assert(new_mem.base_ptr != NULL);
         mems.push_back(new_mem);
@@ -216,7 +218,7 @@ struct watch_array
             }
         }
         total_needed *= 1.2;
-        total_needed = std::max<size_t>(total_needed, WATCH_MIN_SIZE_ONE_ALLOC);
+        total_needed = std::max<size_t>(total_needed, WATCH_MIN_SIZE_ONE_ALLOC_FIRST);
 
         return total_needed;
     }
