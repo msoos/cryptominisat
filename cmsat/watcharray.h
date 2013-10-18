@@ -10,6 +10,8 @@ using namespace CMSat;
 using std::vector;
 
 struct watch_array;
+#define WATCH_MIN_SIZE_ONE_ALLOC (10ULL*1000ULL*1000ULL)
+#define WATCH_MAX_SIZE_ONE_ALLOC ((1ULL<<24)-1)
 
 struct Elem
 {
@@ -110,7 +112,7 @@ struct watch_array
     {
         //We need at least 1
         Mem new_mem;
-        size_t elems = 10ULL*1000ULL*1000ULL;
+        size_t elems = WATCH_MIN_SIZE_ONE_ALLOC;
         new_mem.base_ptr = (Watched*)malloc(elems*sizeof(Watched));
         new_mem.alloc = elems;
         mems.push_back(new_mem);
@@ -138,7 +140,7 @@ struct watch_array
         assert(mems.size() < 255);
 
         Mem new_mem;
-        new_mem.alloc = 2*last_alloc;
+        new_mem.alloc = std::min<size_t>(2*last_alloc, WATCH_MAX_SIZE_ONE_ALLOC);
         new_mem.base_ptr = (Watched*)malloc(new_mem.alloc*sizeof(Watched));
         assert(new_mem.base_ptr != NULL);
         mems.push_back(new_mem);
@@ -162,51 +164,69 @@ struct watch_array
         return std::max<double>((double)orig_size*1.5 + 2, 3);
     }
 
-    void consolidate()
+    size_t total_needed_during_consolidate()
     {
-        size_t needed = 0;
+        size_t total_needed = 0;
         for(size_t i = 0; i < watches.size(); i++) {
             if (watches[i].size != 0) {
-                needed += extra_space_during_consolidate(watches[i].size);
+                total_needed += extra_space_during_consolidate(watches[i].size);
             }
         }
-        needed *= 1.2;
-        needed = std::max<size_t>(needed, 10ULL*1000ULL*1000ULL);
+        total_needed *= 1.2;
+        total_needed = std::max<size_t>(total_needed, WATCH_MIN_SIZE_ONE_ALLOC);
 
-        Mem newmem;
-        newmem.alloc = needed;
-        newmem.base_ptr = (Watched*)malloc(newmem.alloc*sizeof(Watched));
-        for(size_t i = 0; i < watches.size(); i++) {
-            //Never used
-            if (watches[i].alloc == 0)
-                continue;
+        return total_needed;
+    }
 
-            //Freeing this up
-            if (watches[i].size == 0) {
-                watches[i] = Elem();
-                continue;
+    void consolidate()
+    {
+        size_t total_needed = total_needed_during_consolidate();
+
+        vector<Mem> newmems;
+        size_t at_watches = 0;
+        while(total_needed > 0) {
+            Mem newmem;
+            size_t needed = std::min<size_t>(total_needed, WATCH_MAX_SIZE_ONE_ALLOC);
+            assert(needed > 0);
+            total_needed -= needed;
+
+            newmem.alloc = needed;
+            newmem.base_ptr = (Watched*)malloc(newmem.alloc*sizeof(Watched));
+            for(; at_watches < watches.size(); at_watches++) {
+                //Not used
+                if (watches[at_watches].size == 0) {
+                    watches[at_watches] = Elem();
+                    continue;
+                }
+
+                Elem& ws = watches[at_watches];
+
+                //Allow for some space to breathe
+                size_t toalloc = extra_space_during_consolidate(ws.size);
+
+                //Does not fit into this 'newmem'
+                if (newmem.next_space_offset + toalloc > newmem.alloc) {
+                    break;
+                }
+
+                ws.alloc = toalloc;
+                Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
+                Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
+                memmove(new_ptr, orig_ptr, ws.size * sizeof(Watched));
+                ws.num = newmems.size();
+                ws.offset = newmem.next_space_offset;
+                newmem.next_space_offset += ws.alloc;
             }
-
-
-            Elem& ws = watches[i];
-
-            //Allow for some space to breathe
-            ws.alloc = extra_space_during_consolidate(ws.size);
-
-            Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
-            Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
-            memmove(new_ptr, orig_ptr, ws.size * sizeof(Watched));
-            ws.num = 0;
-            ws.offset = newmem.next_space_offset;
-            newmem.next_space_offset += ws.alloc;
+            newmems.push_back(newmem);
         }
+        assert(at_watches == watches.size());
+        assert(total_needed == 0);
 
         for(size_t i = 0; i < mems.size(); i++) {
             free(mems[i].base_ptr);
         }
-        mems.clear();
 
-        mems.push_back(newmem);
+        mems = newmems;
     }
 
     void print_stat() const
