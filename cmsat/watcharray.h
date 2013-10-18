@@ -162,13 +162,7 @@ struct watch_array
 
     bool find_free_space(OffsAndNum& toret, uint32_t size)
     {
-        size_t bucket;
-        if (size == 2) {
-            bucket = 0;
-        } else {
-             bucket = get_bucket(size);
-            bucket++;
-        }
+        size_t bucket = get_bucket(size);
         if (free_mem.size() <= bucket
             || free_mem[bucket].empty()
         ) {
@@ -201,7 +195,14 @@ struct watch_array
 
     size_t extra_space_during_consolidate(size_t orig_size)
     {
-        return std::max<double>((double)orig_size*1.5 + 2, 3);
+        if (orig_size == 1)
+            return 2;
+
+        unsigned bucket = get_bucket(orig_size);
+        if (2U<<bucket == orig_size)
+            return orig_size;
+        else
+            return 2U<<(bucket+1);
     }
 
     size_t total_needed_during_consolidate()
@@ -321,6 +322,7 @@ struct watch_array
     void delete_offset(uint32_t num, uint32_t offs, uint32_t size)
     {
         size_t bucket = get_bucket(size);
+        assert(size == 2U<<bucket);
 
         if (bucket >= free_mem.size()) {
             return;
@@ -539,7 +541,7 @@ inline void watch_subarray::push(const Watched& watched)
 {
     //Make space
     if (base_at->alloc <= base_at->size) {
-        uint32_t new_alloc = base_at->alloc*2+2;
+        uint32_t new_alloc = std::max<uint32_t>(base_at->alloc*2, 2U);
         OffsAndNum off_and_num = base->get_space(new_alloc);
 
         //Copy
