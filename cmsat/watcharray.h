@@ -10,8 +10,6 @@ using namespace CMSat;
 using std::vector;
 
 struct watch_array;
-#define WATCH_MIN_SIZE_ONE_ALLOC (10ULL*1000ULL*1000ULL)
-#define WATCH_MAX_SIZE_ONE_ALLOC ((1ULL<<24)-1)
 
 struct Elem
 {
@@ -110,6 +108,9 @@ struct watch_subarray_const
 
 struct watch_array
 {
+    const static size_t WATCH_MIN_SIZE_ONE_ALLOC = 10ULL*1000ULL*1000ULL;
+    const static size_t WATCH_MAX_SIZE_ONE_ALLOC = (1ULL<<24)-1;
+
     vector<Elem> watches;
     vector<Mem> mems;
     size_t free_mem_used = 0;
