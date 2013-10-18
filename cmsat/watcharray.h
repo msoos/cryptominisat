@@ -184,10 +184,15 @@ struct watch_array
 
         vector<Mem> newmems;
         size_t at_watches = 0;
+        //size_t last_needed = 0;
         while(total_needed > 0) {
             Mem newmem;
             size_t needed = std::min<size_t>(total_needed, WATCH_MAX_SIZE_ONE_ALLOC);
             assert(needed > 0);
+
+            //If last one was larger than this, let's take the last one
+            //needed = std::max<size_t>(needed, last_needed/2);
+            //last_needed = needed;
             total_needed -= needed;
 
             newmem.alloc = needed;
