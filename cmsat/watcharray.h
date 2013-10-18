@@ -22,6 +22,7 @@ struct Elem
     uint32_t offset:24;
     uint32_t size = 0;
     uint32_t alloc = 0;
+    //uint32_t accessed = 0;
 
     void print_stat() const
     {
@@ -78,6 +79,7 @@ struct watch_subarray
     void shrink(const uint32_t num);
     void shrink_(const uint32_t num);
     void push(const Watched& watched);
+    void get_space_for_push();
 
     typedef Watched* iterator;
     typedef const Watched* const_iterator;
@@ -219,110 +221,21 @@ struct watch_array
         return total_needed;
     }
 
-    void consolidate()
-    {
-        size_t total_needed = total_needed_during_consolidate();
-
-        vector<Mem> newmems;
-        size_t at_watches = 0;
-        //size_t last_needed = 0;
-        while(total_needed > 0) {
-            Mem newmem;
-            size_t needed = std::min<size_t>(total_needed, WATCH_MAX_SIZE_ONE_ALLOC);
-            assert(needed > 0);
-
-            //If last one was larger than this, let's take the last one
-            //needed = std::max<size_t>(needed, last_needed/2);
-            //last_needed = needed;
-            total_needed -= needed;
-
-            newmem.alloc = needed;
-            newmem.base_ptr = (Watched*)malloc(newmem.alloc*sizeof(Watched));
-            for(; at_watches < watches.size(); at_watches++) {
-                //Not used
-                if (watches[at_watches].size == 0) {
-                    watches[at_watches] = Elem();
-                    continue;
-                }
-
-                Elem& ws = watches[at_watches];
-
-                //Allow for some space to breathe
-                size_t toalloc = extra_space_during_consolidate(ws.size);
-
-                //Does not fit into this 'newmem'
-                if (newmem.next_space_offset + toalloc > newmem.alloc) {
-                    break;
-                }
-
-                ws.alloc = toalloc;
-                Watched* orig_ptr = mems[ws.num].base_ptr + ws.offset;
-                Watched* new_ptr = newmem.base_ptr + newmem.next_space_offset;
-                memmove(new_ptr, orig_ptr, ws.size * sizeof(Watched));
-                ws.num = newmems.size();
-                ws.offset = newmem.next_space_offset;
-                newmem.next_space_offset += ws.alloc;
-            }
-            newmems.push_back(newmem);
-        }
-        assert(at_watches == watches.size());
-        assert(total_needed == 0);
-
-        for(size_t i = 0; i < mems.size(); i++) {
-            free(mems[i].base_ptr);
-        }
-
-        mems = newmems;
-        for(auto& mem: free_mem) {
-            mem.clear();
-        }
-        free_mem_used = 0;
-        free_mem_not_used = 0;
-    }
-
-    void print_stat() const
-    {
-        cout
-        << " watches.size(): " << watches.size()
-        << " mems.size(): " << mems.size()
-        << endl;
-        for(size_t i = 0; i < mems.size(); i++) {
-            const Mem& mem = mems[i];
-            cout
-            << " -- mem " << i
-            << " alloc: " << mem.alloc
-            << " next_space_offset: " << mem.next_space_offset
-            << " base_ptr: " << mem.base_ptr
-            << endl;
-        }
-
-        cout << "free stats:" << endl;
-        for(size_t i = 0; i < free_mem.size(); i++)
-        {
-            cout << "->free_mem[" << i << "]: " << free_mem[i].size() << endl;
-        }
-
-        cout
-        << "free mem used:" << free_mem_used
-        << " free mem not used: " << free_mem_not_used
-        << " perc: "
-        << std::fixed << std::setprecision(2) << (double)free_mem_used/(double)(free_mem_not_used+free_mem_used)*100.0
-        << "%"
-        << endl;
-    }
+    void consolidate();
+    void print_stat(bool detailed = false) const;
 
     unsigned get_bucket(unsigned size)
     {
-        assert(size >= 2);
+        //assert(size >= 2);
         int at = ((int)((sizeof(unsigned)*8))-__builtin_clz(size))-2;
-        assert(at >= 0);
+        //assert(at >= 0);
         return at;
     }
 
     void delete_offset(uint32_t num, uint32_t offs, uint32_t size)
     {
         size_t bucket = get_bucket(size);
-        assert(size == 2U<<bucket);
+        //assert(size == 2U<<bucket);
 
         if (bucket >= free_mem.size()) {
             return;
@@ -489,6 +402,7 @@ inline size_t operator-(const watch_array::const_iterator& lhs, const watch_arra
 
 inline Watched& watch_subarray::operator[](const uint32_t at)
 {
+    //base_at->accessed++;
     return *(begin() + at);
 }
 
@@ -537,29 +451,34 @@ inline void watch_subarray::shrink_(const uint32_t num)
     shrink(num);
 }
 
+inline void watch_subarray::get_space_for_push()
+{
+    uint32_t new_alloc = std::max<uint32_t>(base_at->alloc*2, 2U);
+    OffsAndNum off_and_num = base->get_space(new_alloc);
+
+    //Copy
+    if (base_at->size > 0) {
+        Watched* newptr = base->mems[off_and_num.num].base_ptr + off_and_num.offset;
+        Watched* oldptr = begin();
+        memmove(newptr, oldptr, size() * sizeof(Watched));
+        base->delete_offset(base_at->num, base_at->offset, base_at->alloc);
+    }
+
+    //Update
+    base_at->num = off_and_num.num;
+    base_at->offset = off_and_num.offset;
+    base_at->alloc = new_alloc;
+}
+
 inline void watch_subarray::push(const Watched& watched)
 {
     //Make space
     if (base_at->alloc <= base_at->size) {
-        uint32_t new_alloc = std::max<uint32_t>(base_at->alloc*2, 2U);
-        OffsAndNum off_and_num = base->get_space(new_alloc);
-
-        //Copy
-        if (base_at->size > 0) {
-            Watched* newptr = base->mems[off_and_num.num].base_ptr + off_and_num.offset;
-            Watched* oldptr = begin();
-            memmove(newptr, oldptr, size() * sizeof(Watched));
-            base->delete_offset(base_at->num, base_at->offset, base_at->alloc);
-        }
-
-        //Update
-        base_at->num = off_and_num.num;
-        base_at->offset = off_and_num.offset;
-        base_at->alloc = new_alloc;
+        get_space_for_push();
     }
 
     //There is enough space
-    assert(base_at->alloc > base_at->size);
+    //assert(base_at->alloc > base_at->size);
 
     //Append to the end
     operator[](size()) = watched;

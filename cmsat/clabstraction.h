@@ -3,6 +3,7 @@
 
 #define CL_ABST_TYPE uint32_t
 #define CLAUSE_ABST_SIZE 32
+#include "constants.h"
 
 inline CL_ABST_TYPE abst_var(const uint32_t v)
 {
