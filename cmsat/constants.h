@@ -19,6 +19,9 @@
  * MA 02110-1301  USA
 */
 
+#ifndef __CONSTANTS_H__
+#define __CONSTANTS_H__
+
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #define __builtin_popcount __popcnt16
@@ -95,3 +98,5 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif //HAVE_CONFIG_H
+
+#endif //__CONSTANTS_H__
