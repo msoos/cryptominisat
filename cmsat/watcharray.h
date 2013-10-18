@@ -20,8 +20,8 @@ struct Elem
 
     uint8_t num:8;
     uint32_t offset:24;
-    uint16_t size = 0;
-    uint16_t alloc = 0;
+    uint32_t size = 0;
+    uint32_t alloc = 0;
 
     void print_stat() const
     {
