@@ -127,8 +127,6 @@ public:
             , origNumRedLongClauses(0)
 
             //Each algo
-            , blocked(0)
-            , blockedSumLits(0)
             , asymmSubs(0)
             , subsumedByVE(0)
 
@@ -182,8 +180,6 @@ public:
             origNumRedLongClauses += other.origNumRedLongClauses;
 
             //Each algo
-            blocked += other.blocked;
-            blockedSumLits += other.blockedSumLits;
             asymmSubs += other.asymmSubs;
             subsumedByVE  += other.subsumedByVE;
 
@@ -302,12 +298,6 @@ public:
                 , "% agressively"
             );
 
-            printStatsLine("c blocked"
-                , blocked
-                , (double)blocked/(double)origNumIrredLongClauses
-                , "% of irred clauses"
-            );
-
             printStatsLine("c asymmSub"
                 , asymmSubs);
 
@@ -360,8 +350,6 @@ public:
         uint64_t origNumRedLongClauses;
 
         //Each algorithm
-        uint64_t blocked;
-        uint64_t blockedSumLits;
         uint64_t asymmSubs;
         uint64_t subsumedByVE;
 
@@ -427,8 +415,6 @@ private:
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
     int64_t  numMaxAsymm;
-    int64_t  numMaxBlocked;
-    int64_t  numMaxBlockedImpl;
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
 
@@ -585,9 +571,6 @@ private:
     //Blocked clause elimination
     void asymmTE();
     bool anythingHasBeenBlocked;
-    void blockClauses();
-    void blockImplicit(bool bins = false, bool tris = true);
-    bool checkBlocked(const Lit lit);
     vector<BlockedClause> blockedClauses;
     map<Var, vector<size_t> > blk_var_to_cl;
     bool blockedMapBuilt;

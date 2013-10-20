@@ -924,14 +924,6 @@ bool Simplifier::simplify()
         return solver->okay();
     }
 
-    //Do blocked clause elimination
-    setLimits();
-    if (solver->conf.doBlockClauses) {
-        toDecrease = &numMaxBlocked;
-        blockClauses();
-        blockImplicit(false, true);
-    }
-
     //Add redundant to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
     addFromSolver(solver->longRedCls
@@ -1454,242 +1446,6 @@ void Simplifier::sanityCheckElimedVars()
     return solver->ok;
 }*/
 
-void Simplifier::blockImplicit(
-    const bool bins
-    , const bool tris
-) {
-    blockedMapBuilt = false;
-
-    const double myTime = cpuTime();
-    size_t tried = 0;
-    size_t blockedBin = 0;
-    size_t blockedTri = 0;
-    toDecrease = &numMaxBlockedImpl;
-
-    //Randomize start in the watchlist
-    size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
-    size_t numDone = 0;
-    for (
-        ; numDone < solver->watches.size() && *toDecrease > 0
-        ; upI = (upI +1) % solver->watches.size(), numDone++
-    ) {
-        //Stats
-        *toDecrease -= 2;
-        if (solver->conf.verbosity >= 5
-            && tried % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *toDecrease << endl;
-        }
-
-        //Set-up
-        const Lit lit = Lit::toLit(upI);
-        watch_subarray ws = solver->watches[upI];
-
-        size_t i, j;
-        for(i = 0, j = 0
-            ; i < ws.size()
-            ; i++
-        ) {
-            //Blocking of clauses is handled elsewhere
-            if (ws[i].isClause()
-                || ws[i].red()
-                //If binary, and we don't want to remove binaries, continue
-                || (!bins && ws[i].isBinary())
-                //If tri, and we don't want to remove tertiaries, continue
-                || (!tris && ws[i].isTri())
-                //Don't go through the same binary/tri twice
-                || (ws[i].isBinary()
-                    && lit >= ws[i].lit2())
-                || (ws[i].isTri()
-                    && (lit >= ws[i].lit2() || ws[i].lit2() >= ws[i].lit3()))
-            ) {
-                ws[j++] = ws[i];
-                continue;
-            }
-
-            tried++;
-            const Lit lit2 = ws[i].lit2();
-            const Lit lit3 = ws[i].isTri() ? ws[i].lit3() : lit_Undef;
-
-            *toDecrease -= 2;
-            seen[lit.toInt()] = 1;
-            seen[lit2.toInt()] = 1;
-            if (lit3 != lit_Undef)
-                seen[lit3.toInt()] = 1;
-
-            //Try all two/three
-            bool taut = false;
-            Lit tautOn = lit_Undef;
-            for(Lit l: {lit, lit2, lit3}) {
-                if (l != lit_Undef) {
-                    taut = checkBlocked(l);
-                    if (taut) {
-                        tautOn = l;
-                        break;
-                    }
-                }
-            }
-
-            if (taut) {
-                dummy.clear();
-                dummy.push_back(lit);
-                dummy.push_back(lit2);
-
-                if (lit3 == lit_Undef) {
-                    blockedBin++;
-                    *toDecrease -= solver->watches[lit2.toInt()].size();
-                    removeWBin(solver->watches, lit2, lit, false);
-                    assert(!ws[i].red());
-                    solver->binTri.irredBins--;
-                } else {
-                    blockedTri++;
-                    dummy.push_back(lit3);
-                    *toDecrease -= solver->watches[lit2.toInt()].size();
-                    *toDecrease -= solver->watches[lit3.toInt()].size();
-                    removeWTri(solver->watches, lit2, lit, lit3, false);
-                    removeWTri(solver->watches, lit3, lit, lit2, false);
-                    assert(!ws[i].red());
-                    solver->binTri.irredTris--;
-                }
-
-                blockedClauses.push_back(BlockedClause(tautOn, dummy, solver->interToOuterMain));
-                anythingHasBeenBlocked = true;
-            } else {
-                //Not blocked, so just go through
-                ws[j++] = ws[i];
-            }
-
-            seen[lit.toInt()] = 0;
-            seen[lit2.toInt()] = 0;
-            if (lit3 != lit_Undef)
-                seen[lit3.toInt()] = 0;
-        }
-        ws.shrink(i-j);
-    }
-
-    if (solver->conf.verbosity >= 1) {
-        cout
-        << "c [block] implicit"
-        << " tried: " << tried
-        << " bin: " << blockedBin
-        << " tri: " << blockedTri
-        << " t-out: " << (numDone == solver->watches.size() ? "N" : "Y")
-        << " T : " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
-        << endl;
-    }
-    runStats.blocked += blockedBin + blockedTri;
-    runStats.blockedSumLits += blockedBin*2 + blockedTri*3;
-    runStats.blockTime += cpuTime() - myTime;
-
-    //If any binary has been blocked, clear the stamps
-    if (blockedBin) {
-        solver->stamp.clearStamps();
-
-        if (solver->conf.verbosity >= 2) {
-            cout
-            << "c [stamping] cleared stamps because of blocked binaries"
-            << endl;
-        }
-
-        if (solver->conf.doCache) {
-            solver->implCache.makeAllRed();
-        }
-    }
-}
-
-void Simplifier::blockClauses()
-{
-    blockedMapBuilt = false;
-
-    const double myTime = cpuTime();
-    size_t blocked = 0;
-    size_t blockedLits = 0;
-    size_t wenThrough = 0;
-    size_t tried = 0;
-    toDecrease = &numMaxBlocked;
-    while(*toDecrease > 0
-        && wenThrough < 2*clauses.size()
-    ) {
-        wenThrough++;
-        *toDecrease -= 2;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *toDecrease << endl;
-        }
-
-        size_t num = solver->mtrand.randInt(clauses.size()-1);
-        ClOffset offset = clauses[num];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
-
-        //Already removed or redundant
-        if (cl.getFreed() || cl.red())
-            continue;
-
-        //Cannot be redundant
-        assert(!cl.red());
-
-        tried++;
-
-        //Fill up temps
-        bool toRemove = false;
-        *toDecrease -= cl.size();
-        for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            seen[l->toInt()] = 1;
-        }
-
-        //Blocked clause elimination
-        for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-            if (solver->varData[l->var()].removed != Removed::none)
-                continue;
-
-            if (checkBlocked(*l)) {
-                vector<Lit> remCl(cl.size());
-                std::copy(cl.begin(), cl.end(), remCl.begin());
-                blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
-                anythingHasBeenBlocked = true;
-
-                blocked++;
-                blockedLits += cl.size();
-                toRemove = true;
-                break;
-            }
-        }
-
-        //Clear seen
-        for (Clause::const_iterator
-            l = cl.begin(), end = cl.end()
-            ; l != end
-            ; l++
-        ) {
-            seen[l->toInt()] = 0;
-        }
-
-        if (toRemove) {
-            //cout << "Blocking " << cl << endl;
-            unlinkClause(offset, false);
-        } else {
-            //cout << "Not blocking " << cl << endl;
-        }
-    }
-
-    if (solver->conf.verbosity >= 1) {
-        cout
-        << "c [block] long"
-        << " through: " << wenThrough
-        << " tried: " << tried
-        << " blocked: " << blocked
-        << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
-        << endl;
-    }
-    runStats.blocked += blocked;
-    runStats.blockedSumLits += blockedLits;
-    runStats.blockTime += cpuTime() - myTime;
-}
-
 void Simplifier::asymmTE()
 {
     assert(false && "asymmTE has a bug (unknown), cannot be used");
@@ -1702,8 +1458,6 @@ void Simplifier::asymmTE()
     }
 
     const double myTime = cpuTime();
-    uint32_t blocked = 0;
-    size_t blockedLits = 0;
     uint32_t asymmSubsumed = 0;
     uint32_t removed = 0;
     size_t wenThrough = 0;
@@ -1786,28 +1540,6 @@ void Simplifier::asymmTE()
         if (cl.red())
             goto next;
 
-        //Blocked clause elimination
-        if (solver->conf.doBlockClauses && numMaxBlocked > 0) {
-            toDecrease = &numMaxBlocked;
-            for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-                if (solver->varData[l->var()].removed != Removed::none)
-                    continue;
-
-                if (checkBlocked(*l)) {
-                    vector<Lit> remCl(cl.size());
-                    std::copy(cl.begin(), cl.end(), remCl.begin());
-                    blockedClauses.push_back(BlockedClause(*l, remCl, solver->interToOuterMain));
-                    anythingHasBeenBlocked = true;
-
-                    blocked++;
-                    blockedLits += cl.size();
-                    toRemove = true;
-                    toDecrease = &numMaxAsymm;
-                    goto next;
-                }
-            }
-        }
-
         /*
         //subsumption with irred larger clauses
         CL_ABST_TYPE abst;
@@ -1847,13 +1579,10 @@ void Simplifier::asymmTE()
     if (solver->conf.verbosity >= 1) {
         cout << "c AsymmTElim"
         << " asymm subsumed: " << asymmSubsumed
-        << " blocked: " << blocked
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
     }
     runStats.asymmSubs += asymmSubsumed;
-    runStats.blocked += blocked;
-    runStats.blockedSumLits += blockedLits;
     runStats.asymmTime += cpuTime() - myTime;
 }
 
@@ -1872,8 +1601,6 @@ void Simplifier::setLimits()
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
     numMaxElim        = 800LL*1000LL*1000LL;
     numMaxAsymm       = 40LL *1000LL*1000LL;
-    numMaxBlocked     = 40LL *1000LL*1000LL;
-    numMaxBlockedImpl = 1800LL *1000LL*1000LL;
     numMaxVarElimAgressiveCheck  = 300LL *1000LL*1000LL;
 
     //numMaxElim = 0;
@@ -3100,63 +2827,6 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     }
 
     return cost;
-}
-
-inline bool Simplifier::checkBlocked(const Lit lit)
-{
-    //clauses which contain '~lit'
-    watch_subarray_const ws = solver->watches[(~lit).toInt()];
-    for (watch_subarray::const_iterator
-        it = ws.begin(), end = ws.end()
-        ; it != end
-        ; it++
-    ) {
-        *toDecrease -= 2;
-
-        //Handle binary
-        if (it->isBinary() && !it->red()) {
-            if (seen[(~it->lit2()).toInt()]) {
-                assert(it->lit2() != ~lit);
-                continue;
-            }
-            return false;
-        }
-
-        //Handle tertiary
-        if (it->isTri() && !it->red()) {
-            assert(it->lit2() < it->lit3());
-            if (seen[(~it->lit2()).toInt()]
-                || seen[(~it->lit3()).toInt()]
-            ) {
-                continue;
-            }
-            return false;
-        }
-
-        //Handle long clause
-        if (it->isClause()) {
-            const Clause& cl = *solver->clAllocator->getPointer(it->getOffset());
-
-            //Only irred
-            if (cl.red())
-                continue;
-
-            *toDecrease -= 10;
-            for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
-                *toDecrease -= 1;
-                if (seen[(~(*l)).toInt()] && *l != ~lit) {
-                    goto next;
-                }
-            }
-
-            return false;
-        }
-
-        next:
-        ;
-    }
-
-    return true;
 }
 
 void Simplifier::checkElimedUnassigned() const
