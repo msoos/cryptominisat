@@ -1680,9 +1680,6 @@ lbool Solver::simplifyProblem()
     #endif
     reArrangeClauses();
 
-    cout << "c watches stat:" << endl;
-    watches.print_stat();
-
     if (conf.verbosity >= 6) {
         cout
         << "c Solver::simplifyProblem() called"

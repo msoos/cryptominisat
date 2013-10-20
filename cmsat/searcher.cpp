@@ -2040,11 +2040,10 @@ void Searcher::reduce_db_if_needed()
 
 
         //watch consolidate
-        cout < "c watches stats:";
-        watches.print_stat();
+        if (conf.verbosity >= 2)
+            watches.print_stat();
+
         watches.consolidate();
-        cout < "c watches stats:";
-        watches.print_stat();
     }
 }
 
@@ -2176,11 +2175,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
 
     //watch consolidate
-    cout < "c watches stats:";
-    watches.print_stat();
+    if (conf.verbosity >= 2)
+        watches.print_stat();
     watches.consolidate();
-    cout < "c watches stats:";
-    watches.print_stat();
 
     restore_activities_and_polarities();
     restore_order_heap();

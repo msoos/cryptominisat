@@ -67,36 +67,34 @@ void watch_array::consolidate()
 void watch_array::print_stat(bool detailed) const
 {
     cout
-    << " watches.size(): " << watches.size()
-    << " mems.size(): " << mems.size()
+    << "c [watch] mems.size(): " << mems.size()
+    << " free mem used/unused:"
+    << free_mem_used << "/" << free_mem_not_used
+    << " ("
+    << std::fixed << std::setprecision(2)
+    << (double)free_mem_used/(double)(free_mem_not_used+free_mem_used)*100.0
+    << "%)"
     << endl;
-    for(size_t i = 0; i < mems.size(); i++) {
-        const Mem& mem = mems[i];
-        cout
-        << " -- mem " << i
-        << " alloc: " << mem.alloc
-        << " next_space_offset: " << mem.next_space_offset
-        << " base_ptr: " << mem.base_ptr
-        << endl;
-    }
 
     if (detailed) {
-        cout << "free stats:" << endl;
-        for(size_t i = 0; i < free_mem.size(); i++)
-        {
-            cout << "->free_mem[" << i << "]: " << free_mem[i].size() << endl;
+        for(size_t i = 0; i < mems.size(); i++) {
+            const Mem& mem = mems[i];
+            cout
+            << " c [watch] mem " << i
+            << " alloc: " << mem.alloc
+            << " next_space_offset: " << mem.next_space_offset
+            << " base_ptr: " << mem.base_ptr
+            << endl;
         }
-    }
+
+            cout << "c [watch] free stats:" << endl;
+            for(size_t i = 0; i < free_mem.size(); i++)
+            {
+                cout << "c [watch] ->free_mem[" << i << "]: " << free_mem[i].size() << endl;
+            }
+        }
 
     /*for(size_t i = 0; i < watches.size(); i++) {
         cout << "ws[" << i << "] accessed: " << watches[i].accessed << " size: " << watches[i].size << endl;
     }*/
-
-    cout
-    << "free mem used:" << free_mem_used
-    << " free mem not used: " << free_mem_not_used
-    << " perc: "
-    << std::fixed << std::setprecision(2) << (double)free_mem_used/(double)(free_mem_not_used+free_mem_used)*100.0
-    << "%"
-    << endl;
 }

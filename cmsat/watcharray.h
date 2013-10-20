@@ -27,7 +27,7 @@ struct Elem
     void print_stat() const
     {
         cout
-        << "elem."
+        << "c elem."
         << " num: " << num
         << " offset:" << offset
         << " size" << size
