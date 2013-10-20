@@ -3233,7 +3233,7 @@ size_t Simplifier::memUsed() const
     return b;
 }
 
-uint64_t Simplifier::memUsedXor() const
+size_t Simplifier::memUsedXor() const
 {
     #ifdef USE_M4RI
     if (xorFinder) {
