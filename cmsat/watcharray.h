@@ -18,7 +18,7 @@ struct Elem
         , offset(0)
     {}
 
-    uint8_t num:8;
+    uint32_t num:8;
     uint32_t offset:24;
     uint32_t size = 0;
     uint32_t alloc = 0;
