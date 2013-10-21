@@ -371,6 +371,31 @@ public:
     {
         occurLinked = toset;
     }
+
+    void print_extra_stats() const
+    {
+        cout
+        << "Clause size " << std::setw(4) << size();
+        if (red()) {
+            cout << " glue : " << std::setw(4) << stats.glue;
+        }
+        cout
+        << " Props: " << std::setw(10) << stats.numProp
+        << " Confls: " << std::setw(10) << stats.numConfl
+        #ifdef STATS_NEEDED
+        << " Lit visited: " << std::setw(10)<< stats.numLitVisited
+        << " Looked at: " << std::setw(10)<< stats.numLookedAt
+        << " Props&confls/Litsvisited*10: ";
+        if (stats.numLitVisited > 0) {
+            cout
+            << std::setw(6) << std::fixed << std::setprecision(4)
+            << (10.0*(double)stats.numPropAndConfl()/(double)stats.numLitVisited);
+        }
+        #endif
+        ;
+        cout << " UIP used: " << std::setw(10)<< stats.numUsedUIP;
+        cout << endl;
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
@@ -430,6 +455,33 @@ struct ClauseUsageStats
         sumLookedAt += cl.stats.numLookedAt;
         #endif
         sumUsedUIP += cl.stats.numUsedUIP;
+    }
+
+    void print() const
+    {
+        cout
+        #ifdef STATS_NEEDED
+        << " lits visit: "
+        << std::setw(8) << sumLitVisited/1000UL
+        << "K"
+
+        << " cls visit: "
+        << std::setw(7) << sumLookedAt/1000UL
+        << "K"
+        #endif
+
+        << " prop: "
+        << std::setw(5) << sumProp/1000UL
+        << "K"
+
+        << " conf: "
+        << std::setw(5) << sumConfl/1000UL
+        << "K"
+
+        << " UIP used: "
+        << std::setw(5) << sumUsedUIP/1000UL
+        << "K"
+        << endl;
     }
 };
 

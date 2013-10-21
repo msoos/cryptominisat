@@ -1898,7 +1898,6 @@ ClauseUsageStats Solver::sumClauseData(
         if (cl.size() == 3)
             continue;
 
-        //Sum stats
         stats.addStat(cl);
 
         //Update size statistics
@@ -1918,31 +1917,8 @@ ClauseUsageStats Solver::sumClauseData(
             perSizeStats[glue].addStat(cl);
         }
 
-        //If lots of verbosity, print clause's individual stat
-        if (conf.verbosity >= 4) {
-            //Print clause data
-            cout
-            << "Clause size " << std::setw(4) << cl.size();
-            if (cl.red()) {
-                cout << " glue : " << std::setw(4) << cl.stats.glue;
-            }
-            cout
-            << " Props: " << std::setw(10) << cl.stats.numProp
-            << " Confls: " << std::setw(10) << cl.stats.numConfl
-            #ifdef STATS_NEEDED
-            << " Lit visited: " << std::setw(10)<< cl.stats.numLitVisited
-            << " Looked at: " << std::setw(10)<< cl.stats.numLookedAt
-            << " Props&confls/Litsvisited*10: ";
-            if (cl.stats.numLitVisited > 0) {
-                cout
-                << std::setw(6) << std::fixed << std::setprecision(4)
-                << (10.0*(double)cl.stats.numPropAndConfl()/(double)cl.stats.numLitVisited);
-            }
-            #endif
-            ;
-            cout << " UIP used: " << std::setw(10)<< cl.stats.numUsedUIP;
-            cout << endl;
-        }
+        if (conf.verbosity >= 4)
+            cl.print_extra_stats();
     }
 
     if (conf.verbosity >= 1) {
@@ -1952,29 +1928,7 @@ ClauseUsageStats Solver::sumClauseData(
         } else {
             cout << "c irred";
         }
-        cout
-        #ifdef STATS_NEEDED
-        << " lits visit: "
-        << std::setw(8) << stats.sumLitVisited/1000UL
-        << "K"
-
-        << " cls visit: "
-        << std::setw(7) << stats.sumLookedAt/1000UL
-        << "K"
-        #endif
-
-        << " prop: "
-        << std::setw(5) << stats.sumProp/1000UL
-        << "K"
-
-        << " conf: "
-        << std::setw(5) << stats.sumConfl/1000UL
-        << "K"
-
-        << " UIP used: "
-        << std::setw(5) << stats.sumUsedUIP/1000UL
-        << "K"
-        << endl;
+        stats.print();
     }
 
     //Print more stats
