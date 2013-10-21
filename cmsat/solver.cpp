@@ -3335,6 +3335,27 @@ void Solver::checkImplicitStats() const
     assert(thisNumRedTris/3 == binTri.redTris);
 }
 
+uint64_t Solver::countLits(
+    const vector<ClOffset>& clause_array
+    , bool allowFreed
+) const {
+    uint64_t lits = 0;
+    for(vector<ClOffset>::const_iterator
+        it = clause_array.begin(), end = clause_array.end()
+        ; it != end
+        ; it++
+    ) {
+        const Clause& cl = *clAllocator->getPointer(*it);
+        if (cl.freed()) {
+            assert(allowFreed);
+        } else {
+            lits += cl.size();
+        }
+    }
+
+    return lits;
+}
+
 void Solver::checkStats(const bool allowFreed) const
 {
     //If in crazy mode, don't check
@@ -3344,48 +3365,20 @@ void Solver::checkStats(const bool allowFreed) const
 
     checkImplicitStats();
 
-    //Count number of irred clauses' literals
-    uint64_t numLitsIrred = 0;
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        const Clause& cl = *clAllocator->getPointer(*it);
-        if (cl.freed()) {
-            assert(allowFreed);
-        } else {
-            numLitsIrred += cl.size();
-        }
-    }
-
-    //Count number of redundant clauses' literals
-    uint64_t numLitsRed = 0;
-    for(vector<ClOffset>::const_iterator
-        it = longRedCls.begin(), end = longRedCls.end()
-        ; it != end
-        ; it++
-    ) {
-        const Clause& cl = *clAllocator->getPointer(*it);
-        if (cl.freed()) {
-            assert(allowFreed);
-        } else {
-            numLitsRed += cl.size();
-        }
-    }
-
-    //Check counts
+    uint64_t numLitsIrred = countLits(longIrredCls, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsIrred: " << numLitsIrred << endl;
         cout << "->litStats.irredLits: " << litStats.irredLits << endl;
     }
+    assert(numLitsIrred == litStats.irredLits);
+
+    uint64_t numLitsRed = countLits(longRedCls, allowFreed);
     if (numLitsRed != litStats.redLits) {
         cout << "ERROR: " << endl;
         cout << "->numLitsRed: " << numLitsRed << endl;
         cout << "->litStats.redLits: " << litStats.redLits << endl;
     }
-    assert(numLitsIrred == litStats.irredLits);
     assert(numLitsRed == litStats.redLits);
 }
 
