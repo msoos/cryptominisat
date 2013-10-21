@@ -870,6 +870,12 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     }
     assert(at == nVars());
 
+    //Extend to nVarsReal() --> these are just the identity transformation
+    for(size_t i = nVars(); i < nVarsReal(); i++) {
+        outerToInter[i] = i;
+        interToOuter[i] = i;
+    }
+
     return numEffectiveVars;
 }
 
@@ -910,12 +916,6 @@ void Solver::renumberVariables()
     vector<Var> interToOuter(nVarsReal());
     size_t numEffectiveVars =
         calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
-
-    //Extend to nVarsReal() --> these are just the identity transformation
-    for(size_t i = nVars(); i < nVarsReal(); i++) {
-        outerToInter[i] = i;
-        interToOuter[i] = i;
-    }
 
     //Create temporary outerToInter2
     vector<uint32_t> interToOuter2(interToOuter.size()*2);
