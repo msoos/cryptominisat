@@ -2723,23 +2723,7 @@ void Solver::dumpRedClauses(
     << "c --------------------" << endl
     << "c redundant long clauses" << endl
     << "c --------------------" << endl;
-    for (vector<ClOffset>::const_iterator
-        it = longRedCls.begin(), end = longRedCls.end()
-        ; it != end
-        ; it++
-    ) {
-        const Clause* cl = clAllocator->getPointer(*it);
-
-        if (cl->size() <= maxSize) {
-            *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
-
-            //Dump the information about the clause
-            *os
-            << "c clause redundant "
-            << (cl->red() ? "yes" : "no")
-            << " stats "  << cl->stats << endl;
-        }
-    }
+    dump_clauses(longRedCls, os);
 }
 
 uint64_t Solver::count_irred_clauses_for_dump() const
@@ -2782,10 +2766,10 @@ uint64_t Solver::count_irred_clauses_for_dump() const
     return numClauses;
 }
 
-void Solver::dump_normal_irred_clauses(std::ostream* os) const
+void Solver::dump_clauses(const vector<ClOffset>& cls, std::ostream* os) const
 {
     for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
+        it = cls.begin(), end = cls.end()
         ; it != end
         ; it++
     ) {
@@ -2883,7 +2867,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     << "c ---------------" << endl
     << "c normal clauses" << endl
     << "c ---------------" << endl;
-    dump_normal_irred_clauses(os);
+    dump_clauses(longIrredCls, os);
 
     *os
     << "c " << endl
