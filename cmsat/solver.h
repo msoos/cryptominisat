@@ -102,6 +102,7 @@ class Solver : public Searcher
         int      getVerbosity() const;
         void     printStats() const;
         void     printClauseStats() const;
+        void     print_value_kilo_mega(uint64_t value) const;
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;

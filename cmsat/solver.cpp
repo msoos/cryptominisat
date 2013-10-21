@@ -3199,68 +3199,31 @@ size_t Solver::getNumFreeVars() const
     return freeVars;
 }
 
+void Solver::print_value_kilo_mega(const uint64_t value) const
+{
+    if (value > 20*1000ULL*1000ULL) {
+        cout << " " << std::setw(4) << value/(1000ULL*1000ULL) << "M";
+    } else if (value > 20ULL*1000ULL) {
+        cout << " " << std::setw(4) << value/1000 << "K";
+    } else {
+        cout << " " << std::setw(5) << value;
+    }
+}
+
 void Solver::printClauseStats() const
 {
-    //LONG irred
-    if (longIrredCls.size() > 20000) {
-        cout
-        << " " << std::setw(4) << longIrredCls.size()/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << longIrredCls.size();
-    }
-
-    //TRI irred
-    if (binTri.irredTris > 20000) {
-        cout
-        << " " << std::setw(4) << binTri.irredTris/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << binTri.irredTris;
-    }
-
-    //BIN irred
-    if (binTri.irredBins > 20000) {
-        cout
-        << " " << std::setw(4) << binTri.irredBins/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << binTri.irredBins;
-    }
-
-    //LITERALS irred
+    //Irredundant
+    print_value_kilo_mega(longIrredCls.size());
+    print_value_kilo_mega(binTri.irredTris);
+    print_value_kilo_mega(binTri.irredBins);
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
     << (double)litStats.irredLits/(double)(longIrredCls.size());
 
-    //LONG red
-    if (longRedCls.size() > 20000) {
-        cout
-        << " " << std::setw(4) << longRedCls.size()/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << longRedCls.size();
-    }
-
-    //TRI red
-    if (binTri.redTris > 20000) {
-        cout
-        << " " << std::setw(4) << binTri.redTris/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << binTri.redTris;
-    }
-
-    //BIN red
-    if (binTri.redBins > 20000) {
-        cout
-        << " " << std::setw(4) << binTri.redBins/1000 << "K";
-    } else {
-        cout
-        << " " << std::setw(5) << binTri.redBins;
-    }
-
-    //LITERALS red
+    //Redundant
+    print_value_kilo_mega(longRedCls.size());
+    print_value_kilo_mega(binTri.redTris);
+    print_value_kilo_mega(binTri.redBins);
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
     << (double)litStats.redLits/(double)(longRedCls.size())
