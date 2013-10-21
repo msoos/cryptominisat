@@ -753,22 +753,92 @@ static void printArray(const vector<Var>& array, const std::string& str)
 }
 #endif
 
-//Beware. Cannot be called while Searcher is running.
-void Solver::renumberVariables()
+void Solver::test_renumbering() const
 {
-    double myTime = cpuTime();
-    clauseCleaner->removeAndCleanAll();
+    //Check if we renumbered the varibles in the order such as to make
+    //the unknown ones first and the known/eliminated ones second
+    bool uninteresting = false;
+    bool problem = false;
+    for(size_t i = 0; i < nVars(); i++) {
+        //cout << "val[" << i << "]: " << value(i);
 
-    //outerToInter[10] = 0 ---> what was 10 is now 0.
+        if (value(i)  != l_Undef)
+            uninteresting = true;
 
-    #ifdef DEBUG_RENUMBER
-    printArray(interToOuterMain, "interToOuterMain");
-    printArray(outerToInterMain, "outerToInterMain");
-    #endif
+        if (varData[i].removed == Removed::elimed
+            || varData[i].removed == Removed::replaced
+            || varData[i].removed == Removed::decomposed
+        ) {
+            uninteresting = true;
+            //cout << " removed" << endl;
+        } else {
+            //cout << " non-removed" << endl;
+        }
 
-    //Fill the first part of interToOuter with vars that are used
-    vector<Var> outerToInter(nVarsReal());
-    vector<Var> interToOuter(nVarsReal());
+        if (value(i) == l_Undef
+            && varData[i].removed != Removed::elimed
+            && varData[i].removed != Removed::replaced
+            && varData[i].removed != Removed::decomposed
+            && uninteresting
+        ) {
+            problem = true;
+        }
+    }
+    assert(!problem && "We renumbered the variables in the wrong order!");
+}
+
+void Solver::renumber_clauses(const vector<Var>& outerToInter)
+{
+    //Clauses' abstractions have to be re-calculated
+    for(size_t i = 0; i < longIrredCls.size(); i++) {
+        Clause* cl = clAllocator->getPointer(longIrredCls[i]);
+        updateLitsMap(*cl, outerToInter);
+        cl->reCalcAbstraction();
+    }
+
+    for(size_t i = 0; i < longRedCls.size(); i++) {
+        Clause* cl = clAllocator->getPointer(longRedCls[i]);
+        updateLitsMap(*cl, outerToInter);
+        cl->reCalcAbstraction();
+    }
+}
+
+void Solver::renumber_stamps(
+    const vector<Var>& outerToInter
+    , const vector<Var>& interToOuter2
+) {
+    if (!conf.doStamp)
+        return;
+
+    //Update both dominators
+    for(size_t i = 0; i < stamp.tstamp.size(); i++) {
+        for(size_t i2 = 0; i2 < 2; i2++) {
+            if (stamp.tstamp[i].dominator[i2] != lit_Undef)
+                stamp.tstamp[i].dominator[i2]
+                    = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
+        }
+    }
+
+    //Update the stamp. Stamp can be very large, so update by swapping
+    updateBySwap(stamp.tstamp, seen, interToOuter2);
+}
+
+void Solver::renumber_assumptions(const vector<Var>& outerToInter)
+{
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = false;
+    }
+    updateLitsMap(assumptions, outerToInter);
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = true;
+    }
+    updateLitsMap(origAssumptions, outerToInter);
+}
+
+size_t Solver::calculate_interToOuter_and_outerToInter(
+    vector<Var>& outerToInter
+    , vector<Var>& interToOuter
+) {
     size_t at = 0;
     vector<Var> useless;
     size_t numEffectiveVars = 0;
@@ -800,125 +870,11 @@ void Solver::renumberVariables()
     }
     assert(at == nVars());
 
-    //Extend to nVarsReal() --> these are just the identity transformation
-    for(size_t i = nVars(); i < nVarsReal(); i++) {
-        outerToInter[i] = i;
-        interToOuter[i] = i;
-    }
+    return numEffectiveVars;
+}
 
-    //Create temporary outerToInter2
-    vector<uint32_t> interToOuter2(interToOuter.size()*2);
-    for(size_t i = 0; i < interToOuter.size(); i++) {
-        interToOuter2[i*2] = interToOuter[i]*2;
-        interToOuter2[i*2+1] = interToOuter[i]*2+1;
-    }
-
-    //Update updater data
-    updateArray(interToOuterMain, interToOuter);
-    updateArrayMapCopy(outerToInterMain, outerToInter);
-
-    #ifdef DEBUG_RENUMBER
-    printArray(interToOuter, "interToOuter");
-    printArray(outerToInter, "outerToInter");
-    printArray(interToOuterMain, "interToOuterMain");
-    printArray(outerToInterMain, "outerToInterMain");
-    #endif
-
-
-    //Update local data
-    updateArray(decisionVar, interToOuter);
-    PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
-    Searcher::updateVars(interToOuter);
-
-    //Update assumptions
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = false;
-    }
-    updateLitsMap(assumptions, outerToInter);
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = true;
-    }
-    updateLitsMap(origAssumptions, outerToInter);
-
-    //Update stamps
-    if (conf.doStamp) {
-
-        //Update both dominators
-        for(size_t i = 0; i < stamp.tstamp.size(); i++) {
-            for(size_t i2 = 0; i2 < 2; i2++) {
-                if (stamp.tstamp[i].dominator[i2] != lit_Undef)
-                    stamp.tstamp[i].dominator[i2]
-                        = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
-            }
-        }
-
-        //Update the stamp. Stamp can be very large, so update by swapping
-        updateBySwap(stamp.tstamp, seen, interToOuter2);
-    }
-
-    //Update clauses
-    //Clauses' abstractions have to be re-calculated
-    for(size_t i = 0; i < longIrredCls.size(); i++) {
-        Clause* cl = clAllocator->getPointer(longIrredCls[i]);
-        updateLitsMap(*cl, outerToInter);
-        cl->reCalcAbstraction();
-    }
-
-    for(size_t i = 0; i < longRedCls.size(); i++) {
-        Clause* cl = clAllocator->getPointer(longRedCls[i]);
-        updateLitsMap(*cl, outerToInter);
-        cl->reCalcAbstraction();
-    }
-
-    //Update sub-elements' vars
-    if (conf.perform_occur_based_simp) {
-        simplifier->updateVars(outerToInter, interToOuter);
-    }
-    varReplacer->updateVars(outerToInter, interToOuter);
-    if (conf.doCache) {
-        implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
-    }
-
-    //Check if we renumbered the varibles in the order such as to make
-    //the unknown ones first and the known/eliminated ones second
-    bool uninteresting = false;
-    bool problem = false;
-    for(size_t i = 0; i < nVars(); i++) {
-        //cout << "val[" << i << "]: " << value(i);
-
-        if (value(i)  != l_Undef)
-            uninteresting = true;
-
-        if (varData[i].removed == Removed::elimed
-            || varData[i].removed == Removed::replaced
-            || varData[i].removed == Removed::decomposed
-        ) {
-            uninteresting = true;
-            //cout << " removed" << endl;
-        } else {
-            //cout << " non-removed" << endl;
-        }
-
-        if (value(i) == l_Undef
-            && varData[i].removed != Removed::elimed
-            && varData[i].removed != Removed::replaced
-            && varData[i].removed != Removed::decomposed
-            && uninteresting
-        ) {
-            problem = true;
-        }
-    }
-    assert(!problem && "We renumbered the variables in the wrong order!");
-
-    //Print results
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Reordered variables T: "
-        << std::fixed << std::setw(5) << std::setprecision(2)
-        << (cpuTime() - myTime)
-        << endl;
-    }
-
+void Solver::test_reflectivity_of_renumbering() const
+{
     //Test for reflectivity of interToOuterMain & outerToInterMain
     #ifndef NDEBUG
     vector<Var> test(nVarsReal());
@@ -941,6 +897,67 @@ void Solver::renumberVariables()
     cout << "Passed test" << endl;
     #endif
     #endif
+}
+
+//Beware. Cannot be called while Searcher is running.
+void Solver::renumberVariables()
+{
+    double myTime = cpuTime();
+    clauseCleaner->removeAndCleanAll();
+
+    //outerToInter[10] = 0 ---> what was 10 is now 0.
+    vector<Var> outerToInter(nVarsReal());
+    vector<Var> interToOuter(nVarsReal());
+    size_t numEffectiveVars =
+        calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
+
+    //Extend to nVarsReal() --> these are just the identity transformation
+    for(size_t i = nVars(); i < nVarsReal(); i++) {
+        outerToInter[i] = i;
+        interToOuter[i] = i;
+    }
+
+    //Create temporary outerToInter2
+    vector<uint32_t> interToOuter2(interToOuter.size()*2);
+    for(size_t i = 0; i < interToOuter.size(); i++) {
+        interToOuter2[i*2] = interToOuter[i]*2;
+        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+    }
+
+    //Update updater data
+    updateArray(interToOuterMain, interToOuter);
+    updateArrayMapCopy(outerToInterMain, outerToInter);
+
+    //Update local data
+    updateArray(decisionVar, interToOuter);
+    PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
+    Searcher::updateVars(interToOuter);
+
+    renumber_assumptions(outerToInter);
+    renumber_stamps(outerToInter, interToOuter2);
+    renumber_clauses(outerToInter);
+
+    //Update sub-elements' vars
+    if (conf.perform_occur_based_simp) {
+        simplifier->updateVars(outerToInter, interToOuter);
+    }
+    varReplacer->updateVars(outerToInter, interToOuter);
+    if (conf.doCache) {
+        implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
+    }
+
+    test_renumbering();
+
+    //Print results
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Reordered variables T: "
+        << std::fixed << std::setw(5) << std::setprecision(2)
+        << (cpuTime() - myTime)
+        << endl;
+    }
+
+    test_reflectivity_of_renumbering();
 
     if (conf.doSaveMem) {
         saveVarMem(numEffectiveVars);

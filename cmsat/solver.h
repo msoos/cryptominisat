@@ -381,6 +381,20 @@ class Solver : public Searcher
         void freeUnusedWatches();
         void saveVarMem(uint32_t newNumVars);
         void unSaveVarMem();
+        void test_reflectivity_of_renumbering() const;
+        size_t calculate_interToOuter_and_outerToInter(
+            vector<Var>& outerToInter
+            , vector<Var>& interToOuter
+        );
+        void renumber_assumptions(const vector<Var>& outerToInter);
+        void renumber_stamps(
+            const vector<Var>& outerToInter
+            , const vector<Var>& interToOuter2
+        );
+        void renumber_clauses(const vector<Var>& outerToInter);
+        void test_renumbering() const;
+
+
 
         /////////////////////////////
         // SAT solution verification
