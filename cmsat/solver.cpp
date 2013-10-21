@@ -959,7 +959,7 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     //printMemStats();
 
     watches.resize(newNumVars*2);
-    watches.shrink_to_fit();
+    watches.consolidate();
     implCache.newNumVars(newNumVars);
     stamp.newNumVars(newNumVars);
 
@@ -3751,7 +3751,7 @@ void Solver::freeUnusedWatches()
             ws.clear();
         }
     }
-    solver->watches.fitToSize();
+    solver->watches.consolidate();
 }
 
 bool Solver::enqueueThese(const vector<Lit>& toEnqueue)

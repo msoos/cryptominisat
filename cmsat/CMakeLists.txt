@@ -32,7 +32,7 @@ set(cryptoms_lib_files
     compfinder.cpp
     comphandler.cpp
     hyperengine.cpp
-    watcharray.cpp
+#    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
