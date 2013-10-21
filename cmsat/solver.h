@@ -154,6 +154,10 @@ class Solver : public Searcher
         void dumpIrredClauses(
             std::ostream* os
         ) const;
+        uint64_t count_irred_clauses_for_dump() const;
+        void dump_normal_irred_clauses(std::ostream* os) const;
+        void dump_blocked_clauses(std::ostream* os) const;
+        void dump_component_clauses(std::ostream* os) const;
 
         struct SolveStats
         {

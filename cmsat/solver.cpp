@@ -2654,11 +2654,6 @@ void Solver::printClauseSizeDistrib()
 
 void Solver::dumpEquivalentLits(std::ostream* os) const
 {
-    *os
-    << "c " << endl
-    << "c ---------------------------------------" << endl
-    << "c clauses representing 2-long XOR clauses" << endl
-    << "c ---------------------------------------" << endl;
     const vector<Lit>& table = varReplacer->getReplaceTable();
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
@@ -2687,11 +2682,6 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
 
 void Solver::dumpUnitaryClauses(std::ostream* os) const
 {
-    *os
-    << "c " << endl
-    << "c ---------" << endl
-    << "c unitaries" << endl
-    << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
@@ -2752,9 +2742,9 @@ void Solver::dumpRedClauses(
     }
 }
 
-void Solver::dumpIrredClauses(std::ostream* os) const
+uint64_t Solver::count_irred_clauses_for_dump() const
 {
-    size_t numClauses = 0;
+    uint64_t numClauses = 0;
 
     //unitary clauses
     for (size_t
@@ -2789,12 +2779,89 @@ void Solver::dumpIrredClauses(std::ostream* os) const
         numClauses += blockedClauses.size();
     }
 
-    *os << "p cnf " << nVarsReal() << " " << numClauses << endl;
+    return numClauses;
+}
 
-    ////////////////////////////////////////////////////////////////////
+void Solver::dump_normal_irred_clauses(std::ostream* os) const
+{
+    for(vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; it++
+    ) {
+        Clause* cl = clAllocator->getPointer(*it);
+        assert(!cl->red());
+        *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
+    }
+}
 
+void Solver::dump_blocked_clauses(std::ostream* os) const
+{
+    if (conf.perform_occur_based_simp) {
+        const vector<BlockedClause>& blockedClauses
+            = simplifier->getBlockedClauses();
+
+        for (vector<BlockedClause>::const_iterator
+            it = blockedClauses.begin(); it != blockedClauses.end()
+            ; it++
+        ) {
+
+            //Print info about clause
+            *os
+            << "c next clause is eliminated/blocked on lit "
+            << getUpdatedLit(it->blockedOn, interToOuterMain)
+            << endl;
+
+            //Print clause
+            *os
+            << sortLits(it->lits)
+            << " 0"
+            << endl;
+        }
+    }
+}
+
+void Solver::dump_component_clauses(std::ostream* os) const
+{
+    if (conf.doCompHandler) {
+        const CompHandler::RemovedClauses& removedClauses = compHandler->getRemovedClauses();
+
+        vector<Lit> tmp;
+        size_t at = 0;
+        for (uint32_t size :removedClauses.sizes) {
+            tmp.clear();
+            for(size_t i = at; i < at + size; i++) {
+                tmp.push_back(removedClauses.lits[i]);
+            }
+            std::sort(tmp.begin(), tmp.end());
+            *os << tmp << " 0" << endl;
+
+            //Move 'at' along
+            at += size;
+        }
+    }
+}
+
+void Solver::dumpIrredClauses(std::ostream* os) const
+{
+    *os
+    << "p cnf "
+    << nVarsReal()
+    << " " << count_irred_clauses_for_dump()
+    << endl;
+
+    *os
+    << "c " << endl
+    << "c ---------" << endl
+    << "c unitaries" << endl
+    << "c ---------" << endl;
     dumpUnitaryClauses(os);
 
+    *os
+    << "c " << endl
+    << "c ---------------------------------------" << endl
+    << "c clauses representing 2-long XOR clauses" << endl
+    << "c ---------------------------------------" << endl;
     dumpEquivalentLits(os);
 
     *os
@@ -2816,67 +2883,21 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     << "c ---------------" << endl
     << "c normal clauses" << endl
     << "c ---------------" << endl;
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause* cl = clAllocator->getPointer(*it);
-        assert(!cl->red());
-        *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
-    }
+    dump_normal_irred_clauses(os);
 
-    if (conf.perform_occur_based_simp) {
-        const vector<BlockedClause>& blockedClauses
-            = simplifier->getBlockedClauses();
+    *os
+    << "c " << endl
+    << "c -------------------------------" << endl
+    << "c previously eliminated variables" << endl
+    << "c -------------------------------" << endl;
+    dump_blocked_clauses(os);
 
-        *os
-        << "c " << endl
-        << "c -------------------------------" << endl
-        << "c previously eliminated variables" << endl
-        << "c -------------------------------" << endl;
-        for (vector<BlockedClause>::const_iterator
-            it = blockedClauses.begin(); it != blockedClauses.end()
-            ; it++
-        ) {
-
-            //Print info about clause
-            *os
-            << "c next clause is eliminated/blocked on lit "
-            << getUpdatedLit(it->blockedOn, interToOuterMain)
-            << endl;
-
-            //Print clause
-            *os
-            << sortLits(it->lits)
-            << " 0"
-            << endl;
-        }
-    }
-
-    if (conf.doCompHandler) {
-        *os
-        << "c " << endl
-        << "c ---------------" << endl
-        << "c clauses in components" << endl
-        << "c ---------------" << endl;
-
-        const CompHandler::RemovedClauses& removedClauses = compHandler->getRemovedClauses();
-
-        vector<Lit> tmp;
-        size_t at = 0;
-        for (uint32_t size :removedClauses.sizes) {
-            tmp.clear();
-            for(size_t i = at; i < at + size; i++) {
-                tmp.push_back(removedClauses.lits[i]);
-            }
-            std::sort(tmp.begin(), tmp.end());
-            *os << tmp << " 0" << endl;
-
-            //Move 'at' along
-            at += size;
-        }
-    }
+    *os
+    << "c " << endl
+    << "c ---------------" << endl
+    << "c clauses in components" << endl
+    << "c ---------------" << endl;
+    dump_component_clauses(os);
 }
 
 void Solver::printAllClauses() const
