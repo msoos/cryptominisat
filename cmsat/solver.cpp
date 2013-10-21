@@ -946,7 +946,9 @@ void Solver::renumberVariables()
         implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
     }
 
+    //Tests
     test_renumbering();
+    test_reflectivity_of_renumbering();
 
     //Print results
     if (conf.verbosity >= 3) {
@@ -956,8 +958,6 @@ void Solver::renumberVariables()
         << (cpuTime() - myTime)
         << endl;
     }
-
-    test_reflectivity_of_renumbering();
 
     if (conf.doSaveMem) {
         saveVarMem(numEffectiveVars);
