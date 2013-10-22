@@ -70,9 +70,7 @@ Main::Main(int _argc, char** _argv) :
         , fileNamePresent (false)
         , argc(_argc)
         , argv(_argv)
-        #ifdef DRUP
         , drupf(NULL)
-        #endif
 {
 }
 
@@ -271,10 +269,8 @@ void Main::parseCommandLine()
     }
 
     string typeclean;
-    #ifdef DRUP
     string drupfilname;
     int drupExistsCheck = 1;
-    #endif
 
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
@@ -298,14 +294,12 @@ void Main::parseCommandLine()
         , "Perform recursive minimisation")
     ("unsat", po::value<int>(&conf.optimiseUnsat)->default_value(conf.optimiseUnsat)
         , "Optimize for UNSAT solving")
-    #ifdef DRUP
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
     ("drupexistscheck", po::value<int>(&drupExistsCheck)->default_value(drupExistsCheck)
         , "Check if the drup file provided already exists")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
-    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -594,9 +588,7 @@ void Main::parseCommandLine()
 
     po::positional_options_description p;
     p.add("input", 1);
-    #ifdef DRUP
     p.add("drup", 1);
-    #endif
 
     po::variables_map vm;
     po::options_description cmdline_options;
@@ -837,7 +829,6 @@ void Main::parseCommandLine()
         fileNamePresent = false;
     }
 
-    #ifdef DRUP
     if (vm.count("drup")) {
         if (drupDebug) {
             drupf = &std::cout;
@@ -902,7 +893,6 @@ void Main::parseCommandLine()
         }
         conf.doCompHandler = false;
     }
-    #endif
 
     if (conf.verbosity >= 1) {
         cout << "c Outputting solution to console" << endl;
@@ -928,13 +918,11 @@ int Main::solve()
 {
     solver = new Solver(conf);
     solverToInterrupt = solver;
-    #ifdef DRUP
     if (drupf) {
         DrupFile* drup = new DrupFile();
         drup->setFile(drupf);
         solver->drup = drup;
     }
-    #endif
 
     std::ofstream resultfile;
 
@@ -1019,7 +1007,6 @@ int Main::solve()
     delete solver;
     solver = NULL;
 
-    #ifdef DRUP
     if (drupf) {
         //flush DRUP
         *drupf << std::flush;
@@ -1029,7 +1016,6 @@ int Main::solve()
             delete drupf;
         }
     }
-    #endif
 
     return correctReturnValue(ret);
 }

@@ -99,11 +99,10 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 {
-    #ifdef DRUP
     if (solver->conf.verbosity >= 6) {
         cout << "Cleaning and reattaching clauses" << endl;
     }
-    #endif
+
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
 
@@ -163,23 +162,22 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
         << endl;
     }
     assert(ps.size() > 3);
-    #ifdef DRUP
+
+    //Drup
     vector<Lit> origCl(cl->size());
     std::copy(cl->begin(), cl->end(), origCl.begin());
-    #endif
 
     Lit *i = ps.begin();
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            #ifdef DRUP
+
+            //Drup
             if (i != j) {
                 (*solver->drup)
                 << "d "
                 << origCl;
             }
-            #endif
-
             return false;
         }
         if (solver->value(*i) == l_Undef) {
@@ -188,7 +186,7 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     }
     ps.shrink(i-j);
 
-    #ifdef DRUP
+    //Drup
     if (i != j) {
         (*solver->drup)
         << *cl
@@ -197,7 +195,6 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
         << "d "
         << origCl;
     }
-    #endif
 
     switch (ps.size()) {
         case 0:

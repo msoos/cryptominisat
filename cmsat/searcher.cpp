@@ -236,7 +236,6 @@ void Searcher::doOTFSubsume(const PropBy confl)
             }
         }
         otfMustAttach.push_back(newCl);
-        #ifdef DRUP
         if (conf.verbosity >= 6) {
             cout << "New implicit clause that subsumes a long clause:";
             for(unsigned  i = 0; i < newCl.size; i++) {
@@ -246,13 +245,13 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout  << endl;
         }
 
+        //Drup
         if (drup->enabled()) {
             for(unsigned  i = 0; i < newCl.size; i++) {
                 *drup << newCl.lits[i] << " ";
             }
             *drup << " 0\n";
         }
-        #endif //DRUP
 
         stats.otfSubsumed++;
         stats.otfSubsumedImplicit++;
@@ -262,10 +261,11 @@ void Searcher::doOTFSubsume(const PropBy confl)
 
     //Final will not be implicit
     if (num > 3) {
-        #ifdef DRUP
+
+        //Drup
         vector<Lit> origCl(cl.size());
         std::copy(cl.begin(), cl.end(), origCl.begin());
-        #endif
+
         solver->detachClause(cl, false);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
@@ -281,16 +281,14 @@ void Searcher::doOTFSubsume(const PropBy confl)
         }
         cl.shrink(i-i2);
         assert(cl.size() == tmp_learnt_clause_size);
-        #ifdef DRUP
         if (conf.verbosity >= 6) {
             cout
             << "New smaller clause OTF:" << cl << endl;
         }
+        //Drup
         *drup
         << cl
         << "d " << origCl;
-        ;
-        #endif
 
         toAttachLater.push_back(offset);
     }
@@ -879,9 +877,9 @@ void Searcher::hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel)
                     || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
             ) {
                 to_enqueue_toplevel.push_back(~ancestor);
-                #ifdef DRUP
+
+                //Drup
                 *drup << (~ancestor) << " 0\n";
-                #endif
             }
         }
     }
@@ -896,9 +894,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     solver->varData[trail.back().var()].depth = 0;
     Lit failed = propagateFullBFS();
     if (failed != lit_Undef) {
-        #ifdef DRUP
         drupNewUnit(~failed);
-        #endif
 
         //Update conflict stats
         stats.learntUnits++;
@@ -1218,7 +1214,6 @@ bool Searcher::handle_conflict(PropBy confl)
         , false
     );
 
-    #ifdef DRUP
     if (conf.verbosity >= 6) {
         cout
         << "c learnt clause: "
@@ -1226,7 +1221,6 @@ bool Searcher::handle_conflict(PropBy confl)
         << endl;
     }
     *drup << learnt_clause;
-    #endif
 
     size_t orig_trail_size = trail.size();
     if (params.update) {
@@ -1316,13 +1310,13 @@ bool Searcher::handle_conflict(PropBy confl)
                 addHyperBin(cl[0], cl);
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-                #ifdef DRUP
+
+                //Drup
                 if (decisionLevel() == 0) {
                     *drup
                     << cl[0]
                     << " 0\n";
                 }
-                #endif
             }
         } else {
             //We have a non-propagating clause
@@ -1391,12 +1385,12 @@ bool Searcher::handle_conflict(PropBy confl)
                     it->lits[0]
                     , by
                 );
-                #ifdef DRUP
+
+                //Drup
                 if (decisionLevel() == 0) {
-                    drup
+                    *drup
                     << it->lits[0] << " 0\n";
                 }
-                #endif
             }
         } else {
             //We have a non-propagating clause
@@ -1442,14 +1436,12 @@ bool Searcher::handle_conflict(PropBy confl)
 
     } else {
         //Detach & delete subsumed clause
-        #ifdef DRUP
         if (conf.verbosity >= 6) {
             cout
             << "Detaching OTF subsumed (LAST) clause:"
             << *cl
             << endl;
         }
-        #endif
         solver->detachClause(*cl);
 
         //Shrink clause
@@ -2663,12 +2655,11 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
                 removedIrred++;
             }
 
-            #ifdef DRUP
-            drup
+            //Drup
+            *drup
             << "d "
             << it->getLit1() << " " << it->getLit2()
             << " 0\n";
-            #endif
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -2954,9 +2945,7 @@ PropBy Searcher::propagate(
     //, AvgCalc<bool>* litPropagatedSomething
     #endif
 ) {
-    #ifdef DRUP
-    size_t origTrailSize = trail.size();
-    #endif
+    const size_t origTrailSize = trail.size();
 
     PropBy ret;
     if (conf.propBinFirst) {
@@ -2970,9 +2959,8 @@ PropBy Searcher::propagate(
         ret = propagateAnyOrder();
     }
 
-    #ifdef DRUP
-    //If declevel 0 propagation, we have to add the unitaries
-    if (drup.enabled() && decisionLevel() == 0) {
+    //Drup -- If declevel 0 propagation, we have to add the unitaries
+    if (drup->enabled() && decisionLevel() == 0) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRUP
             if (conf.verbosity >= 6) {
@@ -2983,16 +2971,15 @@ PropBy Searcher::propagate(
             }
             #endif
 
-            drup
+            *drup
             << trail[i]
             << " 0\n";
         }
         if (!ret.isNULL()) {
-            drup
+            *drup
             << "0\n";
         }
     }
-    #endif
 
     return ret;
 }

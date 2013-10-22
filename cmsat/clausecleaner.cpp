@@ -80,7 +80,7 @@ void ClauseCleaner::treatImplicitClauses()
             //Treat binaries
             if (i->isBinary()) {
                 if (satisfied(*i, lit)) {
-                    #ifdef DRUP
+                    //Drup
                     if (lit < i->lit2()) {
                         (*solver->drup)
                         << "d "
@@ -88,7 +88,6 @@ void ClauseCleaner::treatImplicitClauses()
                         << i->lit2()
                         << " 0\n";
                     }
-                    #endif
 
                     if (i->red()) {
                         remLBin++;
@@ -150,16 +149,15 @@ void ClauseCleaner::treatImplicitClauses()
             }
             if (needAttach) {
                 toAttach.push_back(BinaryClause(lits[0], lits[1], i->red()));
-                #ifdef DRUP
+                //Drup
                 (*solver->drup)
                 << lits[0] << " "
                 << lits[1]
                 << " 0\n";
-                #endif
             }
 
             if (remove) {
-                #ifdef DRUP
+                //Drup
                 if (//Only remove once --> exactly when adding
                     lit < i->lit2()
                     && i->lit2() < i->lit3()
@@ -171,7 +169,6 @@ void ClauseCleaner::treatImplicitClauses()
                     << i->lit3()
                     << " 0\n";
                 }
-                #endif
 
                 if (i->red())
                     remLTri++;
@@ -239,10 +236,10 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     Clause& cl = *solver->clAllocator->getPointer(offset);
     assert(cl.size() > 3);
     const uint32_t origSize = cl.size();
-    #ifdef DRUP
+
+    //Drup
     vector<Lit> origCl(cl.size());
     std::copy(cl.begin(), cl.end(), origCl.begin());
-    #endif
 
     Lit origLit1 = cl[0];
     Lit origLit2 = cl[1];
@@ -258,21 +255,18 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
 
         if (val == l_True) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            #ifdef DRUP
             (*solver->drup) << "d " << origCl;
-            #endif
             return true;
         }
     }
     cl.shrink(i-j);
 
-    #ifdef DRUP
+    //Drup
     if (i != j) {
         (*solver->drup)
         << cl
         << "d " << origCl;
     }
-    #endif
 
     assert(cl.size() > 1);
     if (i != j) {

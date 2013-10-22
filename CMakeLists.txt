@@ -136,16 +136,6 @@ ENDIF (ZLIB_FOUND)
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
-
-
-#for DRUP
-#set(DRUP 1)
-if (DRUP)
-    add_definitions( -DDRUP )
-    #add_definitions( -DDRUP_DEBUG )
-endif(DRUP)
-
-
 #SET(STATSNEEDED 1)
 
 #MySQL

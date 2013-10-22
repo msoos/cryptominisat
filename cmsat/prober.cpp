@@ -89,9 +89,7 @@ void Prober::checkOTFRatio()
             > 0.8*800LL*1000LL*1000LL
         && ratio < 0.3
         && solver->conf.otfHyperbin
-        #ifdef DRUP
         && !solver->drup->enabled()
-        #endif
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
@@ -502,17 +500,19 @@ void Prober::checkAndSetBothProp(Var var, bool first)
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);
             toEnqueue.push_back(litToEnq);
-            #ifdef DRUP
+
             if (solver->conf.verbosity >= 6) {
                 cout
                 << "c bprop:"
                 << litToEnq
                 << endl;
             }
+
+            //Drup
             (*solver->drup)
             << litToEnq
             << " 0\n";
-            #endif
+
             if (solver->conf.verbosity >= 10)
                 cout << "c Bothprop indicated to enqueue " << litToEnq << endl;
         }
@@ -544,11 +544,11 @@ void Prober::addRestOfLitsToCache(Lit lit)
     //~lit V OTHER, and ~lit V ~OTHER are technically in
     if (taut) {
         toEnqueue.push_back(~lit);
-        #ifdef DRUP
+
+        //Drup
         (*solver->drup)
         << (~lit)
         << " 0\n";
-        #endif
     }
 }
 
@@ -626,9 +626,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         //If we timed out on ONE call, turn otf hyper-bin off
         //and return --> the "visitedAlready" will be wrong
         if (solver->timedOutPropagateFull
-            #ifdef DRUP
-            && ! solver->drup->enabled()
-            #endif
+            && !solver->drup->enabled()
         ) {
             if (solver->conf.verbosity >= 2) {
                 cout

@@ -195,13 +195,12 @@ void Simplifier::extendModel(SolutionExtender* extender)
 void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
-    #ifdef DRUP
-    if (solver->drup.enabled() && doDrup) {
-       solver->drup
-       << "d " << cl
-       << " 0\n";
+
+    //Drup
+    if (solver->drup->enabled() && doDrup) {
+       (*solver->drup)
+       << "d " << cl;
     }
-    #endif
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -236,10 +235,10 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
     cout << endl;
     #endif
-    #ifdef DRUP
+
+    //Drup
     vector<Lit> origCl(cl.size());
     std::copy(cl.begin(), cl.end(), origCl.begin());
-    #endif
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -266,11 +265,10 @@ lbool Simplifier::cleanClause(ClOffset offset)
         #ifdef VERBOSE_DEBUG
         cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
-        #ifdef DRUP
-        (solver->drup)
-        << "d " << origCl
-        << " 0\n";
-        #endif
+
+        //Drup
+        (*solver->drup)
+        << "d " << origCl;
 
         unlinkClause(offset, false);
         return l_True;
@@ -282,20 +280,18 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->litStats.irredLits -= i-j;
 
-    #ifdef DRUP
     if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
+
+    //Drup
     if (i-j > 0) {
-        solver->drup
+        (*solver->drup)
         << cl
-        << " 0\n"
 
         //Delete old one
-        << "d " << origCl
-        << " 0\n";
+        << "d " << origCl;
     }
-    #endif
 
     switch(cl.size()) {
         case 0:
@@ -542,20 +538,19 @@ bool Simplifier::completeCleanClause(Clause& cl)
         solver->litStats.irredLits -= cl.size();
     }
 
-    #ifdef DRUP
+    //Drup
     vector<Lit> origCl(cl.size());
     std::copy(cl.begin(), cl.end(), origCl.begin());
-    #endif
 
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            #ifdef DRUP
-            (solver->drup)
-            << "d " << origCl
-            << " 0\n";
-            #endif
+
+            //Drup
+            (*solver->drup)
+            << "d " << origCl;
+
             return false;
         }
 
@@ -565,17 +560,14 @@ bool Simplifier::completeCleanClause(Clause& cl)
     }
     cl.shrink(i-j);
 
-    #ifdef DRUP
+    //Drup
     if (i - j > 0) {
-        solver->drup
+        (*solver->drup)
         << cl
-        << " 0\n"
 
         //Delete old one
-        << "d " << origCl
-        << " 0\n";
+        << "d " << origCl;
     }
-    #endif
 
     switch (cl.size()) {
         case 0:
@@ -943,9 +935,7 @@ bool Simplifier::simplify()
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
-    #ifdef DRUP
     const size_t origBlockedSize = blockedClauses.size();
-    #endif
 
     //Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
@@ -994,12 +984,11 @@ bool Simplifier::simplify()
 
 end:
 
-    #ifdef DRUP
     if (solver->conf.verbosity >= 6) {
         cout << "c Deleting blocked clauses for DRUP" << endl;
     }
-    //Remove clauses that have been blocked recently
-    if (solver->drup.enabled()) {
+    //Drup -- Remove clauses that have been blocked recently
+    if ((*solver->drup).enabled()) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
 
             //If doing stamping or caching, we cannot delete binary redundant
@@ -1012,7 +1001,7 @@ end:
                 continue;
             }
 
-            solver->drup
+            (*solver->drup)
             << "d ";
 
             for(vector<Lit>::const_iterator
@@ -1020,12 +1009,11 @@ end:
                 ; it != end
                 ; it++
             ) {
-                solver->drup << *it << " ";
+                (*solver->drup) << *it << " ";
             }
-            solver->drup << "0\n";
+            (*solver->drup) << "0\n";
         }
     }
-    #endif
 
     finishUp(origTrailSize);
 
@@ -1747,17 +1735,17 @@ void Simplifier::removeClausesHelper(
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
-                #ifdef DRUP
+
+                //Drup
                 if (!solver->conf.doStamp
                     && !solver->conf.doCache
                 ) {
-                   solver->drup
+                   (*solver->drup)
                    << "d "
                    << lits[0] << " "
                    << lits[1]
                    << " 0\n";
                 }
-                #endif
             }
 
             //Remove
@@ -1791,14 +1779,14 @@ void Simplifier::removeClausesHelper(
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
-                #ifdef DRUP
-               solver->drup
-               << "d "
-               << lits[0] << " "
-               << lits[1] << " "
-               << lits[2]
-               << " 0\n";
-                #endif
+
+                //Drup
+                (*solver->drup)
+                << "d "
+                << lits[0] << " "
+                << lits[1] << " "
+                << lits[2]
+                << " 0\n";
             }
 
             //Remove

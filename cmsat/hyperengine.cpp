@@ -533,11 +533,12 @@ void HyperEngine::addHyperBin(const Lit p)
         cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        #ifdef DRUP
+
+        //Drup
         *drup
         << p << " " << (~deepestAncestor)
         << " 0\n";
-        #endif
+
         hyperBinNotAdded = false;
     } else {
         //0-level propagation is NEVER made by propFull

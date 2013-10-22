@@ -271,12 +271,13 @@ void PropEngine::lazy_hyper_bin_resolve(
         #ifdef STATS_NEEDED
         propStats.longLHBR++;
         #endif
-        #ifdef DRUP
+
+        //Drup
         *drup
         << other << " "
         << c[0]
         << " 0\n";
-        #endif
+
         enqueue(c[0], PropBy(other));
     } else {
         //no, not possible, just enqueue as normal
@@ -661,12 +662,12 @@ void PropEngine::lazy_hyper_bin_resolve(Lit lit1, Lit lit2)
     #ifdef STATS_NEEDED
     propStats.triLHBR++;
     #endif
-    #ifdef DRUP
+
+    //Drup
     *drup
     << lit << " "
     << lit2
     << " 0\n";
-    #endif
 }
 
 bool PropEngine::can_do_lazy_hyper_bin(Lit lit1, Lit lit2, Lit lit3)

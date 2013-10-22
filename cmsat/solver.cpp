@@ -194,9 +194,8 @@ bool Solver::addXorClauseInt(
     switch(ps.size()) {
         case 0:
             if (rhs) {
-                #ifdef DRUP
-                drup << "0\n";
-                #endif
+                //Drup
+                *drup << "0\n";
 
                 ok = false;
             }
@@ -205,9 +204,7 @@ bool Solver::addXorClauseInt(
         case 1: {
             Lit lit = Lit(ps[0].var(), !rhs);
             enqueue(lit);
-            #ifdef DRUP
             drupNewUnit(lit);
-            #endif
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -299,11 +296,9 @@ Clause* Solver::addClauseInt(
         *finalLits = ps;
     }
 
-    #ifdef DRUP
     if (addDrup) {
-        drup << ps << " 0\n";
+        *drup << ps;
     }
-    #endif
 
     //Handle special cases
     switch (ps.size()) {
@@ -468,11 +463,9 @@ void Solver::detachBinClause(
 
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
 {
-    #ifdef DRUP
     if (removeDrup) {
-        drup << "d " << cl << " 0\n";
+        *drup << "d " << cl;
     }
-    #endif
 
     assert(cl.size() > 3);
     detachModifiedClause(cl[0], cl[1], cl.size(), &cl);
@@ -621,10 +614,10 @@ bool Solver::addClause(const vector<Lit>& lits)
     const size_t origTrailSize = trail.size();
 
     vector<Lit> ps = lits;
-    #ifdef DRUP
+
+    //Drup
     vector<Lit> origCl = ps;
     vector<Lit> finalCl;
-    #endif
 
     if (!addClauseHelper(ps)) {
         return false;
@@ -635,30 +628,26 @@ bool Solver::addClause(const vector<Lit>& lits)
         , false //irred
         , ClauseStats() //default stats
         , true //yes, attach
-        #ifdef DRUP
         , &finalCl
         , false
-        #endif
     );
 
-    #ifdef DRUP
-    //We manipulated the clause, delete
+    //Drup -- We manipulated the clause, delete
     std::sort(origCl.begin(), origCl.end());
-    if (drup.enabled()
+    if (drup->enabled()
         && origCl != finalCl
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl.empty()) {
-            drup << finalCl << " 0\n";
+            *drup << finalCl;
         }
 
         //Empty clause, it's UNSAT
         if (!solver->okay()) {
-            drup << "0\n";
+            *drup << "0\n";
         }
-        drup << "d " << origCl << " 0\n";
+        *drup << "d " << origCl;
     }
-    #endif
 
     if (cl != NULL) {
         ClOffset offset = clAllocator->getOffset(cl);
@@ -1214,9 +1203,7 @@ void Solver::pre_clean_clause_db(
                 }
 
                 //detach&free
-                #ifdef DRUP
                 drupRemCl(cl);
-                #endif
                 clAllocator->clauseFree(offset);
 
             } else {
@@ -1256,9 +1243,7 @@ void Solver::real_clean_clause_db(
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
         //free clause
-        #ifdef DRUP
         drupRemCl(cl);
-        #endif
         clAllocator->clauseFree(offset);
     }
 

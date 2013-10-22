@@ -131,10 +131,8 @@ public:
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
-    #ifdef DRUP
     void drupNewUnit(const Lit lit);
     void drupRemCl(const Clause* cl);
-    #endif
 
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
@@ -457,7 +455,6 @@ inline bool PropEngine::getStoredPolarity(const Var var)
     return varData[var].polarity;
 }
 
-#ifdef DRUP
 inline void PropEngine::drupNewUnit(const Lit lit)
 {
     *drup
@@ -471,7 +468,6 @@ inline void PropEngine::drupRemCl(const Clause* cl)
     << "d "
     << *cl;
 }
-#endif
 
 } //end namespace
 

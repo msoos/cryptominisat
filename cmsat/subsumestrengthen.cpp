@@ -387,20 +387,17 @@ void SubsumeStrengthen::strengthen(ClOffset offset, const Lit toRemoveLit)
     #endif
 
     *simplifier->toDecrease -= 5;
-    #ifdef DRUP
+
+    //Drup
     vector<Lit> origCl(cl.size());
     std::copy(cl.begin(), cl.end(), origCl.begin());
-    #endif
 
     cl.strengthen(toRemoveLit);
 
-    #ifdef DRUP
-    solver->drup
+    //Drup
+    (*solver->drup)
     << cl
-    << " 0\n"
-    << "d " << origCl
-    << " 0\n";
-    #endif
+    << "d " << origCl;
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit.toInt()], offset);

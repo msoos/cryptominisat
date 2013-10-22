@@ -940,14 +940,13 @@ void ClauseVivifier::subsumeImplicit()
                     removeTri(lit, i->lit2(), i->lit3(), i->red());
                     remTris++;
 
-                    #ifdef DRUP
+                    //Drup
                     (*solver->drup)
                     << "d "
                     << lit << " "
                     << i->lit2() << " "
                     << i->lit3()
                     << " 0\n";
-                    #endif
                     continue;
                 }
 
@@ -979,13 +978,12 @@ void ClauseVivifier::subsumeImplicit()
                     solver->binTri.irredBins--;
                 }
 
-                #ifdef DRUP
+                //Drup
                 (*solver->drup)
                 << "d "
                 << lit << " "
                 << i->lit2()
                 << " 0\n";
-                #endif
 
                 continue;
             } else {
@@ -1079,11 +1077,11 @@ bool ClauseVivifier::strengthenImplicit()
                     if (lits.size() == 1) {
                         toEnqueue.push_back(lits[0]);
 
-                        #ifdef DRUP
+                        //Drup
                         (*solver->drup)
                         << lits[0]
                         << " 0\n";
-                        #endif
+
                         remLitFromBin++;
                         stampRem++;
                         *j++ = *i;
@@ -1121,12 +1119,11 @@ bool ClauseVivifier::strengthenImplicit()
                 if (rem) {
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
-                    #ifdef DRUP
+
+                    //Drup
                     (*solver->drup)
                     << lit
                     << " 0\n";
-                    #endif
-
                 }
                 *j++ = *i;
                 continue;
@@ -1174,7 +1171,8 @@ bool ClauseVivifier::strengthenImplicit()
                     removeTri(lit, i->lit2(), i->lit3(), i->red());
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
-                    #ifdef DRUP
+
+                    //Drup
                     (*solver->drup)
                     //Add shortened
                     << i->lit2() << " "
@@ -1187,8 +1185,6 @@ bool ClauseVivifier::strengthenImplicit()
                     << i->lit2() << " "
                     << i->lit3()
                     << " 0\n";
-                    #endif
-
 
                     continue;
                 }
@@ -1216,7 +1212,8 @@ bool ClauseVivifier::strengthenImplicit()
                         removeTri(lit, i->lit2(), i->lit3(), i->red());
                         remLitFromTri++;
                         binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
-                        #ifdef DRUP
+
+                        //Drup
                         (*solver->drup)
                         //Add shortened
                         << lits[0] << " "
@@ -1228,16 +1225,15 @@ bool ClauseVivifier::strengthenImplicit()
                         << lit << " "
                         << i->lit2() << " "
                         << i->lit3()
-                        << " 0\n"
-                        ;
-                        #endif
+                        << " 0\n";
 
                         continue;
                     } else if (lits.size() == 1) {
                         removeTri(lit, i->lit2(), i->lit3(), i->red());
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
-                        #ifdef DRUP
+
+                        //Drup
                         (*solver->drup)
                         //Add shortened
                         << lits[0]
@@ -1248,9 +1244,7 @@ bool ClauseVivifier::strengthenImplicit()
                         << lit << " "
                         << i->lit2() << " "
                         << i->lit3()
-                        << " 0\n"
-                        ;
-                        #endif
+                        << " 0\n";
 
                         continue;
                     }
