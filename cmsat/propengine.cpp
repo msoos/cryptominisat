@@ -272,7 +272,7 @@ void PropEngine::lazy_hyper_bin_resolve(
         propStats.longLHBR++;
         #endif
         #ifdef DRUP
-        drup
+        *drup
         << other << " "
         << c[0]
         << " 0\n";
@@ -662,7 +662,7 @@ void PropEngine::lazy_hyper_bin_resolve(Lit lit1, Lit lit2)
     propStats.triLHBR++;
     #endif
     #ifdef DRUP
-    drup
+    *drup
     << lit << " "
     << lit2
     << " 0\n";

@@ -929,7 +929,11 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
     #ifdef DRUP
-    solver->drup.setFile(drupf);
+    if (drupf) {
+        DrupFile* drup = new DrupFile();
+        drup->setFile(drupf);
+        solver->drup = drup;
+    }
     #endif
 
     std::ofstream resultfile;

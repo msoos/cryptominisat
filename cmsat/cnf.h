@@ -46,7 +46,9 @@ struct CNF
         clAllocator(_clAllocator)
         , conf(_conf)
         , minNumVars(0)
-    {}
+    {
+        drup = new Drup();
+    }
 
     ClauseAllocator* clAllocator;
     SolverConf conf;
@@ -66,7 +68,7 @@ struct CNF
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
     LitStats litStats;
-    Drup drup;
+    Drup* drup;
     vector<Var> outerToInterMain;
     vector<Var> interToOuterMain;
 

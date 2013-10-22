@@ -246,11 +246,11 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout  << endl;
         }
 
-        if (drup.enabled()) {
+        if (drup->enabled()) {
             for(unsigned  i = 0; i < newCl.size; i++) {
-                drup << newCl.lits[i] << " ";
+                *drup << newCl.lits[i] << " ";
             }
-            drup << " 0\n";
+            *drup << " 0\n";
         }
         #endif //DRUP
 
@@ -286,9 +286,9 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout
             << "New smaller clause OTF:" << cl << endl;
         }
-        drup
-        << cl << " 0\n"
-        << "d " << origCl << " 0\n"
+        *drup
+        << cl
+        << "d " << origCl;
         ;
         #endif
 
@@ -880,7 +880,7 @@ void Searcher::hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel)
             ) {
                 to_enqueue_toplevel.push_back(~ancestor);
                 #ifdef DRUP
-                drup << (~ancestor) << " 0\n";
+                *drup << (~ancestor) << " 0\n";
                 #endif
             }
         }
@@ -1225,7 +1225,7 @@ bool Searcher::handle_conflict(PropBy confl)
         << learnt_clause
         << endl;
     }
-    drup << learnt_clause << " 0\n";
+    *drup << learnt_clause;
     #endif
 
     size_t orig_trail_size = trail.size();
@@ -1318,7 +1318,7 @@ bool Searcher::handle_conflict(PropBy confl)
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
                 #ifdef DRUP
                 if (decisionLevel() == 0) {
-                    drup
+                    *drup
                     << cl[0]
                     << " 0\n";
                 }

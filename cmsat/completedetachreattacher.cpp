@@ -174,10 +174,9 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
         if (solver->value(*i) == l_True) {
             #ifdef DRUP
             if (i != j) {
-                solver->drup
+                (*solver->drup)
                 << "d "
-                << origCl
-                << "\n";
+                << origCl;
             }
             #endif
 
@@ -191,14 +190,12 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
 
     #ifdef DRUP
     if (i != j) {
-        (solver->drup)
+        (*solver->drup)
         << *cl
-        << " 0\n"
 
         //Delete old one
         << "d "
-        << origCl
-        << " 0\n";
+        << origCl;
     }
     #endif
 

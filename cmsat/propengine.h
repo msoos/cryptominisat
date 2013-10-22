@@ -460,17 +460,16 @@ inline bool PropEngine::getStoredPolarity(const Var var)
 #ifdef DRUP
 inline void PropEngine::drupNewUnit(const Lit lit)
 {
-    drup
+    *drup
     << lit
     << " 0\n";
 }
 
 inline void PropEngine::drupRemCl(const Clause* cl)
 {
-    drup
+    *drup
     << "d "
-    << *cl
-    << " 0\n";
+    << *cl;
 }
 #endif
 

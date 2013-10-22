@@ -1,13 +1,50 @@
 #ifndef __DRUP_H__
 #define __DRUP_H__
 
+#include "clause.h"
+#include <iostream>
+
 namespace CMSat {
 using namespace CMSat;
 
 struct Drup
 {
-    void setFile(std::ostream*)
+    Drup()
     {
+    }
+
+    virtual bool enabled()
+    {
+        return false;
+    }
+
+    virtual Drup& operator<<(const Lit)
+    {
+
+        return *this;
+    }
+
+    virtual Drup& operator<<(const char*)
+    {
+        return *this;
+    }
+
+    virtual Drup& operator<<(const Clause&)
+    {
+        return *this;
+    }
+
+    virtual Drup& operator<<(const vector<Lit>&)
+    {
+        return *this;
+    }
+};
+
+struct DrupFile: public Drup
+{
+    void setFile(std::ostream* _file)
+    {
+        file = _file;
     }
 
     bool enabled()
@@ -15,26 +52,35 @@ struct Drup
         return true;
     }
 
-    Drup operator<<(const Lit) const
+    Drup& operator<<(const Lit lit)
     {
+        *file << lit;
 
         return *this;
     }
 
-    Drup operator<<(const char*) const
+    Drup& operator<<(const char* str)
     {
+        *file << str;
+
         return *this;
     }
 
-    Drup operator<<(const Clause&) const
+    Drup& operator<<(const Clause& cl)
     {
+        *file << cl << " 0\n";
+
         return *this;
     }
 
-    Drup operator<<(const vector<Lit>&) const
+    Drup& operator<<(const vector<Lit>& lits)
     {
+        *file << lits << " 0\n";
+
         return *this;
     }
+
+    std::ostream* file = NULL;
 };
 
 }

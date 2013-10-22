@@ -82,7 +82,7 @@ void ClauseCleaner::treatImplicitClauses()
                 if (satisfied(*i, lit)) {
                     #ifdef DRUP
                     if (lit < i->lit2()) {
-                        solver->drup
+                        (*solver->drup)
                         << "d "
                         << lit << " "
                         << i->lit2()
@@ -151,7 +151,7 @@ void ClauseCleaner::treatImplicitClauses()
             if (needAttach) {
                 toAttach.push_back(BinaryClause(lits[0], lits[1], i->red()));
                 #ifdef DRUP
-                solver->drup
+                (*solver->drup)
                 << lits[0] << " "
                 << lits[1]
                 << " 0\n";
@@ -164,7 +164,7 @@ void ClauseCleaner::treatImplicitClauses()
                     lit < i->lit2()
                     && i->lit2() < i->lit3()
                 ) {
-                    solver->drup
+                    (*solver->drup)
                     << "d "
                     << lit << " "
                     << i->lit2() << " "
@@ -259,7 +259,7 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
         if (val == l_True) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
             #ifdef DRUP
-            solver->drup << "d " << origCl << " 0\n";
+            (*solver->drup) << "d " << origCl;
             #endif
             return true;
         }
@@ -268,9 +268,9 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
 
     #ifdef DRUP
     if (i != j) {
-        solver->drup
-        << cl << " 0\n"
-        << "d " << origCl << " 0\n";
+        (*solver->drup)
+        << cl
+        << "d " << origCl;
     }
     #endif
 

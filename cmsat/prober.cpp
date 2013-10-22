@@ -90,7 +90,7 @@ void Prober::checkOTFRatio()
         && ratio < 0.3
         && solver->conf.otfHyperbin
         #ifdef DRUP
-        && !solver->drup.enabled()
+        && !solver->drup->enabled()
         #endif
     ) {
         solver->conf.otfHyperbin = false;
@@ -509,7 +509,7 @@ void Prober::checkAndSetBothProp(Var var, bool first)
                 << litToEnq
                 << endl;
             }
-            solver->drup
+            (*solver->drup)
             << litToEnq
             << " 0\n";
             #endif
@@ -545,7 +545,7 @@ void Prober::addRestOfLitsToCache(Lit lit)
     if (taut) {
         toEnqueue.push_back(~lit);
         #ifdef DRUP
-        (solver->drup)
+        (*solver->drup)
         << (~lit)
         << " 0\n";
         #endif
@@ -627,7 +627,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         //and return --> the "visitedAlready" will be wrong
         if (solver->timedOutPropagateFull
             #ifdef DRUP
-            && !solver->drup.enabled()
+            && ! solver->drup->enabled()
             #endif
         ) {
             if (solver->conf.verbosity >= 2) {

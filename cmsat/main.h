@@ -29,6 +29,7 @@
 
 #include "solvertypes.h"
 #include "solverconf.h"
+#include "constants.h"
 
 using std::string;
 using std::vector;

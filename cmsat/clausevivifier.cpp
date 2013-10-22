@@ -941,7 +941,7 @@ void ClauseVivifier::subsumeImplicit()
                     remTris++;
 
                     #ifdef DRUP
-                    (solver->drup)
+                    (*solver->drup)
                     << "d "
                     << lit << " "
                     << i->lit2() << " "
@@ -980,7 +980,7 @@ void ClauseVivifier::subsumeImplicit()
                 }
 
                 #ifdef DRUP
-                solver->drup
+                (*solver->drup)
                 << "d "
                 << lit << " "
                 << i->lit2()
@@ -1080,7 +1080,7 @@ bool ClauseVivifier::strengthenImplicit()
                         toEnqueue.push_back(lits[0]);
 
                         #ifdef DRUP
-                        solver->drup
+                        (*solver->drup)
                         << lits[0]
                         << " 0\n";
                         #endif
@@ -1122,7 +1122,7 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
                     #ifdef DRUP
-                    (solver->drup)
+                    (*solver->drup)
                     << lit
                     << " 0\n";
                     #endif
@@ -1175,7 +1175,7 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
                     #ifdef DRUP
-                    (solver->drup)
+                    (*solver->drup)
                     //Add shortened
                     << i->lit2() << " "
                     << i->lit3()
@@ -1217,7 +1217,7 @@ bool ClauseVivifier::strengthenImplicit()
                         remLitFromTri++;
                         binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
                         #ifdef DRUP
-                        (solver->drup)
+                        (*solver->drup)
                         //Add shortened
                         << lits[0] << " "
                         << lits[1]
@@ -1238,7 +1238,7 @@ bool ClauseVivifier::strengthenImplicit()
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
                         #ifdef DRUP
-                        (solver->drup)
+                        (*solver->drup)
                         //Add shortened
                         << lits[0]
                         << " 0\n"
