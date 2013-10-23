@@ -1800,7 +1800,7 @@ uint32_t Simplifier::numIrredBins(const Lit lit) const
     return num;
 }
 
-int Simplifier::testVarElim(const Var var)
+int Simplifier::test_elim_and_fill_posall_negall(const Var var)
 {
     assert(solver->ok);
     assert(!var_elimed[var]);
@@ -2101,31 +2101,32 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
     }
 }
 
+void Simplifier::print_var_elim_complexity_stats(const Var var) const
+{
+    if (solver->conf.verbosity < 5)
+        return;
+
+    cout << "trying complexity: "
+    << varElimComplexity[var].first
+    << ", " << varElimComplexity[var].second
+    << endl;
+}
+
 bool Simplifier::maybeEliminate(const Var var)
 {
     assert(solver->ok);
-
-    //Print complexity stat for this var
-    if (solver->conf.verbosity >= 5) {
-        cout << "trying complexity: "
-        << varElimComplexity[var].first
-        << ", " << varElimComplexity[var].second
-        << endl;
-    }
-
-    //Cannot eliminate variables that are in the assumptions
+    print_var_elim_complexity_stats(var);
     if (solver->assumptionsSet[var]) {
+        //Cannot eliminate variables that are in the assumptions
         return false;
     }
-
-    //Test if we should remove, and fill posAll&negAll
     runStats.testedToElimVars++;
-    if (testVarElim(var) == 1000) {
+
+    if (test_elim_and_fill_posall_negall(var) == 1000) {
         return false;
     }
     runStats.triedToElimVars++;
 
-    //The literal
     const Lit lit = Lit(var, false);
     print_var_eliminate_stat(lit);
 
@@ -2135,6 +2136,8 @@ bool Simplifier::maybeEliminate(const Var var)
     removeClausesHelper(solver->watches[(~lit).toInt()], ~lit);
     assert(solver->watches[lit.toInt()].empty());
     assert(solver->watches[(~lit).toInt()].empty());
+
+    //Add resolvents
     for(auto& resolvent: resolvents) {
         bool ok = add_varelim_resolvent(resolvent.first, resolvent.second);
         if (!ok)
@@ -2795,7 +2798,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     if (solver->conf.varelimStrategy == 0) {
         cost = heuristicCalcVarElimScore(var);
     } else {
-        int ret = testVarElim(var);
+        int ret = test_elim_and_fill_posall_negall(var);
 
         cost.first = ret;
         cost.second = 0;
