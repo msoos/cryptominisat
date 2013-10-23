@@ -522,7 +522,7 @@ private:
             varElimComplexity(_varElimComplexity)
         {}
     };
-    void        orderVarsForElimInit();
+    void        order_vars_for_elim();
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);

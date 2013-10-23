@@ -628,14 +628,9 @@ bool Simplifier::eliminateVars()
     size_t wenThrough = 0;
     toDecrease = &numMaxElim;
 
-    //Order the variables
-    orderVarsForElimInit();
-
+    order_vars_for_elim();
     if (solver->conf.verbosity >= 5) {
-        cout
-        << "c #order size:"
-        << varElimOrder.size()
-        << endl;
+        cout << "c #order size:" << varElimOrder.size() << endl;
     }
 
     //Go through the ordered list of variables to eliminate
@@ -669,8 +664,6 @@ bool Simplifier::eliminateVars()
             vars_elimed++;
             numMaxElimVars--;
         }
-
-        //During elimination, we reached UNSAT, finish
         if (!solver->ok)
             goto end;
     }
@@ -2746,7 +2739,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     return std::make_pair(normCost, litCost);
 }
 
-void Simplifier::orderVarsForElimInit()
+void Simplifier::order_vars_for_elim()
 {
     varElimOrder.clear();
     varElimComplexity.clear();
