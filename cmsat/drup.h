@@ -56,7 +56,7 @@ struct DrupFile: public Drup
 
     std::stringstream todel;
     bool delete_filled = false;
-    bool must_delete_next = false;;
+    bool must_delete_next = false;
 
     Drup& operator<<(const Lit lit)
     {
