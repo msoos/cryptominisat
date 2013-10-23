@@ -1967,9 +1967,118 @@ void Simplifier::printOccur(const Lit lit) const
     }
 }
 
-/**
-@brief Tries to eliminate variable
-*/
+void Simplifier::print_var_eliminate_stat(const Lit lit) const
+{
+    //Eliminate:
+    if (solver->conf.verbosity < 5)
+        return;
+
+    cout
+    << "Eliminating var " << lit
+    << " with occur sizes "
+    << solver->watches[lit.toInt()].size() << " , "
+    << solver->watches[(~lit).toInt()].size()
+    << endl;
+
+    cout << "POS: " << endl;
+    printOccur(lit);
+    cout << "NEG: " << endl;
+    printOccur(~lit);
+}
+
+void Simplifier::check_if_new_2_long_subsumes_3_long(const vector<Lit>& lits)
+{
+    assert(lits.size() == 2);
+    for(watch_subarray::const_iterator
+        it2 = solver->watches[lits[0].toInt()].begin()
+        , end2 = solver->watches[lits[0].toInt()].end()
+        ; it2 != end2
+        ; it2++
+    ) {
+        if (it2->isTri() && !it2->red()
+            && (it2->lit2() == lits[1]
+                || it2->lit3() == lits[1])
+        ) {
+            if (solver->conf.verbosity >= 6) {
+                cout
+                << "Removing irred tri-clause due to addition of"
+                << " irred bin: "
+                << lits[0]
+                << ", " << it2->lit2()
+                << ", " << it2->lit3()
+                << endl;
+            }
+
+            touched.touch(it2->lit2());
+            touched.touch(it2->lit3());
+
+            runStats.subsumedByVE++;
+            solver->detachTriClause(
+                lits[0]
+                , it2->lit2()
+                , it2->lit3()
+                , it2->red()
+            );
+
+            //We have to break: we just modified the stuff we are
+            //going through...
+            break;
+        }
+    }
+}
+
+bool Simplifier::add_varelim_resolvent(
+    vector<Lit>& finalLits
+    , const ClauseStats& stats
+) {
+    runStats.newClauses++;
+
+    //Check if a new 2-long would subsume a 3-long
+    if (finalLits.size() == 2) {
+        check_if_new_2_long_subsumes_3_long(finalLits);
+    }
+
+    //Add clause and do subsumption
+    Clause* newCl = solver->addClauseInt(
+        finalLits //Literals in new clause
+        , false //Is the new clause redundant?
+        , stats //Statistics for this new clause (usage, etc.)
+        , false //Should clause be attached?
+        , &finalLits //Return final set of literals here
+    );
+
+    if (!solver->ok)
+        return false;
+
+    if (newCl != NULL) {
+        linkInClause(*newCl);
+        ClOffset offset = solver->clAllocator->getOffset(newCl);
+        clauses.push_back(offset);
+        runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
+    } else if (finalLits.size() == 3 || finalLits.size() == 2) {
+        //Subsume long
+        SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
+            std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
+            , finalLits //Literals in this binary clause
+            , calcAbstraction(finalLits) //Abstraction of literals
+            , true //subsume implicit ones
+        );
+        runStats.subsumedByVE += ret.numSubsumed;
+        if (ret.numSubsumed > 0) {
+            if (solver->conf.verbosity >= 5) {
+                cout << "Subsumed: " << ret.numSubsumed << endl;
+            }
+        }
+    }
+
+    //Touch every var of the new clause, so we re-estimate
+    //elimination complexity for this var
+    for(Lit lit: finalLits)
+        touched.touch(lit);
+
+    return true;
+}
+
 bool Simplifier::maybeEliminate(const Var var)
 {
     assert(solver->ok);
@@ -1992,128 +2101,22 @@ bool Simplifier::maybeEliminate(const Var var)
     if (testVarElim(var) == 1000) {
         return false;
     }
-
     runStats.triedToElimVars++;
 
     //The literal
     const Lit lit = Lit(var, false);
-
-    //Eliminate:
-    if (solver->conf.verbosity >= 5) {
-        cout
-        << "Eliminating var " << lit
-        << " with occur sizes "
-        << solver->watches[lit.toInt()].size() << " , "
-        << solver->watches[(~lit).toInt()].size()
-        << endl;
-
-        cout << "POS: " << endl;
-        printOccur(lit);
-        cout << "NEG: " << endl;
-        printOccur(~lit);
-    }
+    print_var_eliminate_stat(lit);
 
     //Remove clauses
     touched.clear();
     removeClausesHelper(solver->watches[lit.toInt()], lit);
     removeClausesHelper(solver->watches[(~lit).toInt()], ~lit);
-
-    //Occur is cleared
     assert(solver->watches[lit.toInt()].empty());
     assert(solver->watches[(~lit).toInt()].empty());
-
-    //Add resolvents calculated in testVarElim()
-    for(vector<pair<vector<Lit>, ClauseStats> >::const_iterator
-        it = resolvents.begin(), end = resolvents.end()
-        ; it != end
-        ; it++
-    ) {
-        runStats.newClauses++;
-
-        finalLits = it->first;
-
-        //Check if a new 2-long would subsume a 3-long
-        if (finalLits.size() == 2) {
-            for(watch_subarray::const_iterator
-                it2 = solver->watches[finalLits[0].toInt()].begin()
-                , end2 = solver->watches[finalLits[0].toInt()].end()
-                ; it2 != end2
-                ; it2++
-            ) {
-                if (it2->isTri() && !it2->red()
-                    && (it2->lit2() == finalLits[1]
-                        || it2->lit3() == finalLits[1])
-                ) {
-                    if (solver->conf.verbosity >= 6) {
-                        cout
-                        << "Removing irred tri-clause due to addition of"
-                        << " irred bin: "
-                        << finalLits[0]
-                        << ", " << it2->lit2()
-                        << ", " << it2->lit3()
-                        << endl;
-                    }
-
-                    touched.touch(it2->lit2());
-                    touched.touch(it2->lit3());
-
-                    runStats.subsumedByVE++;
-                    solver->detachTriClause(
-                        finalLits[0]
-                        , it2->lit2()
-                        , it2->lit3()
-                        , it2->red()
-                    );
-
-                    //We have to break: we just modified the stuff we are
-                    //going through...
-                    break;
-                }
-            }
-        }
-
-        //Add clause and do subsumption
-        Clause* newCl = solver->addClauseInt(
-            it->first //Literals in new clause
-            , false //Is the new clause redundant?
-            , it->second //Statistics for this new clause (usage, etc.)
-            , false //Should clause be attached?
-            , &finalLits //Return final set of literals here
-        );
-
-        if (!solver->ok)
+    for(auto& resolvent: resolvents) {
+        bool ok = add_varelim_resolvent(resolvent.first, resolvent.second);
+        if (!ok)
             goto end;
-
-        if (newCl != NULL) {
-            linkInClause(*newCl);
-            ClOffset offset = solver->clAllocator->getOffset(newCl);
-            clauses.push_back(offset);
-            runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
-        } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-            //Subsume long
-            SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
-                std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
-                , finalLits //Literals in this binary clause
-                , calcAbstraction(finalLits) //Abstraction of literals
-                , true //subsume implicit ones
-            );
-            runStats.subsumedByVE += ret.numSubsumed;
-            if (ret.numSubsumed > 0) {
-                if (solver->conf.verbosity >= 5) {
-                    cout << "Subsumed: " << ret.numSubsumed << endl;
-                }
-            }
-        }
-
-        //Touch every var of the new clause, so we re-estimate
-        //elimination complexity for this var
-        for(vector<Lit>::const_iterator
-            it3 = finalLits.begin(), end3 = finalLits.end()
-            ; it3 != end3
-            ; it3++
-        ) {
-            touched.touch(*it3);
-        }
     }
 
     //Update var elim complexity heap
