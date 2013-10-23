@@ -426,7 +426,28 @@ private:
         vector<ClOffset>& toAdd
         , bool alsoOccur
         , bool irred
-        , uint64_t& numLitsAdded
+    );
+    struct LinkInData
+    {
+        LinkInData()
+        {};
+
+        LinkInData(uint64_t _cl_linked, uint64_t _cl_not_linked) :
+            cl_linked(_cl_linked)
+            , cl_not_linked(_cl_not_linked)
+        {}
+
+        uint64_t cl_linked = 0;
+        uint64_t cl_not_linked = 0;
+    };
+    uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
+    void     print_mem_usage_of_occur(bool irred, uint64_t memUsage) const;
+    void     print_linkin_data(const LinkInData link_in_data) const;
+    bool     decide_occur_limit(bool irred, uint64_t memUsage);
+    LinkInData link_in_clauses(
+        const vector<ClOffset>& toAdd
+        , bool irred
+        , bool alsoOccur
     );
     void setLimits();
 

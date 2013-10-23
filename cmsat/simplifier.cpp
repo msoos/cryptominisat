@@ -308,75 +308,68 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
 }
 
-/**
-@brief Adds clauses from the solver to the occur
-*/
-bool Simplifier::addFromSolver(
-    vector<ClOffset>& toAdd
-    , bool alsoOccur
+uint64_t Simplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
+{
+     uint64_t memUsage = 0;
+    for (vector<ClOffset>::const_iterator
+        it = toAdd.begin(), end = toAdd.end()
+        ; it !=  end
+        ; it++
+    ) {
+        Clause* cl = solver->clAllocator->getPointer(*it);
+        //*2 because of the overhead of allocation
+        memUsage += cl->size()*sizeof(Watched)*2;
+    }
+
+    //Estimate malloc overhead
+    memUsage += solver->numActiveVars()*2*40;
+
+    return memUsage;
+}
+
+void Simplifier::print_mem_usage_of_occur(bool irred, uint64_t memUsage) const
+{
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [simp] mem usage for occur of "
+        << (irred ?  "irred" : "red  ")
+        << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
+        << endl;
+    }
+}
+
+void Simplifier::print_linkin_data(const LinkInData link_in_data) const
+{
+    if (solver->conf.verbosity < 2)
+        return;
+
+    double val;
+    if (link_in_data.cl_linked + link_in_data.cl_not_linked == 0) {
+        val = 0;
+    } else {
+        val = (double)link_in_data.cl_not_linked/(double)(link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
+    }
+
+    cout
+    << "c [simp] Not linked in red "
+    << link_in_data.cl_not_linked << "/"
+    << (link_in_data.cl_linked + link_in_data.cl_not_linked)
+    << " ("
+    << std::setprecision(2) << std::fixed
+    << val
+    << " %)"
+    << endl;
+}
+
+
+Simplifier::LinkInData Simplifier::link_in_clauses(
+    const vector<ClOffset>& toAdd
     , bool irred
-    , uint64_t& numLitsAdded
+    , bool alsoOccur
 ) {
-    //solver->printWatchMemUsed();
-
-    //Estimate memory usage it would imply and if over
-    //over + irred -> exit
-    //over + red -> don't link
-    if (alsoOccur) {
-        uint64_t memUsage = 0;
-        for (vector<ClOffset>::iterator
-            it = toAdd.begin(), end = toAdd.end()
-            ; it !=  end
-            ; it++
-        ) {
-            Clause* cl = solver->clAllocator->getPointer(*it);
-            //*2 because of the overhead of allocation
-            memUsage += cl->size()*sizeof(Watched)*2;
-        }
-
-        //Estimate malloc overhead
-        memUsage += solver->numActiveVars()*2*40;
-
-        if (solver->conf.verbosity >= 2) {
-            cout
-            << "c [simp] mem usage for occur of "
-            << (irred ?  "irred" : "red  ")
-            << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
-            << endl;
-        }
-
-        if (irred
-            && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
-        ) {
-            if (solver->conf.verbosity >= 2) {
-                cout
-                << "c [simp] Not linking in irred due to excessive expected memory usage"
-                << endl;
-            }
-
-            return false;
-        }
-
-        if (!irred
-            && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
-        ) {
-            alsoOccur = false;
-            if (solver->conf.verbosity >= 2) {
-                cout
-                << "c [simp] Not linking in red due to excessive expected memory usage"
-                << endl;
-            }
-        }
-    }
-
-    if (!irred && alsoOccur) {
-        std::sort(toAdd.begin(), toAdd.end(), MySorter(solver->clAllocator));
-    }
-
+    LinkInData link_in_data;
     uint64_t linkedInLits = 0;
-    size_t numNotLinkedIn = 0;
-    size_t numLinkedIn = 0;
-    for (vector<ClOffset>::iterator
+    for (vector<ClOffset>::const_iterator
         it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
         ; it++
@@ -397,39 +390,74 @@ bool Simplifier::addFromSolver(
             )
         ) {
             linkInClause(*cl);
-            numLinkedIn++;
+            link_in_data.cl_linked++;
             linkedInLits += cl->size();
         } else {
             assert(cl->red());
             cl->setOccurLinked(false);
-            numNotLinkedIn++;
+            link_in_data.cl_not_linked++;
         }
 
         clauses.push_back(*it);
     }
-    toAdd.clear();
-    numLitsAdded += linkedInLits;
+    addedClauseLits += linkedInLits;
 
-    if (solver->conf.verbosity >= 2
-        && !irred
+    return link_in_data;
+}
+
+bool Simplifier::decide_occur_limit(bool irred, uint64_t memUsage)
+{
+    //over + irred -> exit
+    if (irred
+        && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
     ) {
-        //Pretty-printing
-        double val;
-        if (numLinkedIn + numNotLinkedIn == 0) {
-            val = 0;
-        } else {
-            val = (double)numNotLinkedIn/(double)(numLinkedIn + numNotLinkedIn)*100.0;
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [simp] Not linking in irred due to excessive expected memory usage"
+            << endl;
+        }
+        return false;
+    }
+
+    //over + red -> don't link
+    if (!irred
+        && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
+    ) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [simp] Not linking in red due to excessive expected memory usage"
+            << endl;
         }
 
-        cout
-        << "c [simp] Not linked in red "
-        << numNotLinkedIn << "/" << (numLinkedIn + numNotLinkedIn)
-        << " ("
-        << std::setprecision(2) << std::fixed
-        << val
-        << " %)"
-        << endl;
+        return false;
     }
+
+    return true;
+}
+
+bool Simplifier::addFromSolver(
+    vector<ClOffset>& toAdd
+    , bool alsoOccur
+    , bool irred
+) {
+    //solver->printWatchMemUsed();
+
+    if (alsoOccur) {
+        uint64_t memUsage = calc_mem_usage_of_occur(toAdd);
+        print_mem_usage_of_occur(irred, memUsage);
+        alsoOccur = decide_occur_limit(irred, memUsage);
+        if (irred && !alsoOccur)
+            return false;
+    }
+
+    if (!irred && alsoOccur) {
+        std::sort(toAdd.begin(), toAdd.end(), MySorter(solver->clAllocator));
+    }
+
+    LinkInData link_in_data = link_in_clauses(toAdd, irred, alsoOccur);
+    toAdd.clear();
+    if (!irred)
+        print_linkin_data(link_in_data);
 
     return true;
 }
@@ -791,7 +819,6 @@ void Simplifier::subsumeReds()
         solver->longRedCls
         , true //try to add to occur
         , false //irreduntant?
-        , addedClauseLits
     );
     solver->longRedCls.clear();
     runStats.origNumFreeVars = solver->getNumFreeVars();
@@ -809,7 +836,6 @@ void Simplifier::subsumeReds()
     addFromSolver(solver->longIrredCls
         , false //try to add to occur
         , true //irreduntant?
-        , addedClauseLits
     );
     solver->longIrredCls.clear();
 
@@ -880,7 +906,6 @@ bool Simplifier::simplify()
     bool ret = addFromSolver(solver->longIrredCls
         , true //try to add to occur list
         , true //it is irred
-        , addedClauseLits
     );
 
     //Memory limit reached, irreduntant clauses cannot
@@ -896,7 +921,6 @@ bool Simplifier::simplify()
     addFromSolver(solver->longRedCls
         , true //try to add to occur list
         , false //irreduntant?
-        , addedClauseLits
     );
     runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
