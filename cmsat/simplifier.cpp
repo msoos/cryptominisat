@@ -462,9 +462,42 @@ bool Simplifier::addFromSolver(
     return true;
 }
 
-/**
-@brief Adds clauses from here, back to the solver
-*/
+bool Simplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
+{
+    bool notLinkedNeedFree = false;
+    for (Clause::const_iterator
+        it2 = cl->begin(), end2 = cl->end()
+        ; it2 != end2
+        ; it2++
+    ) {
+        //The clause was too long, and wasn't linked in
+        //but has been var-elimed, so remove it
+        if (!cl->getOccurLinked()
+            && solver->varData[it2->var()].removed == Removed::elimed
+        ) {
+            notLinkedNeedFree = true;
+        }
+
+        if (cl->getOccurLinked()
+            && solver->varData[it2->var()].removed != Removed::none
+            && solver->varData[it2->var()].removed != Removed::queued_replacer
+        ) {
+            cout
+            << "ERROR! Clause " << *cl
+            << " red: " << cl->red()
+            << " contains lit " << *it2
+            << " which has removed status"
+            << removed_type_to_string(solver->varData[it2->var()].removed)
+            << endl;
+
+            assert(false);
+            exit(-1);
+        }
+    }
+
+    return notLinkedNeedFree;
+}
+
 void Simplifier::addBackToSolver()
 {
     for (vector<ClOffset>::const_iterator
@@ -473,55 +506,20 @@ void Simplifier::addBackToSolver()
         ; it++
     ) {
         Clause* cl = solver->clAllocator->getPointer(*it);
-
-        //Clause has been removed
         if (cl->getFreed())
             continue;
 
         //All clauses are larger than 2-long
         assert(cl->size() > 3);
 
-        //Check variable elimination sanity
-        bool notLinkedNeedFree = false;
-        for (Clause::const_iterator
-            it2 = cl->begin(), end2 = cl->end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //The clause was too long, and wasn't linked in
-            //but has been var-elimed, so remove it
-            if (!cl->getOccurLinked()
-                && solver->varData[it2->var()].removed == Removed::elimed
-            ) {
-                notLinkedNeedFree = true;
-            }
-
-            if (cl->getOccurLinked()
-                && solver->varData[it2->var()].removed != Removed::none
-                && solver->varData[it2->var()].removed != Removed::queued_replacer
-            ) {
-                cout
-                << "ERROR! Clause " << *cl
-                << " red: " << cl->red()
-                << " contains lit " << *it2
-                << " which has removed status"
-                << removed_type_to_string(solver->varData[it2->var()].removed)
-                << endl;
-
-                assert(false);
-                exit(-1);
-            }
-        }
-
-        //The clause wasn't linked in but needs removal now
+        bool notLinkedNeedFree = check_varelim_when_adding_back_cl(cl);
         if (notLinkedNeedFree) {
+            //The clause wasn't linked in but needs removal now
             if (cl->red()) {
                 solver->litStats.redLits -= cl->size();
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
-
-            //Free
             solver->clAllocator->clauseFree(cl);
             continue;
         }
