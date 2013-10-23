@@ -500,18 +500,7 @@ void Prober::checkAndSetBothProp(Var var, bool first)
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);
             toEnqueue.push_back(litToEnq);
-
-            if (solver->conf.verbosity >= 6) {
-                cout
-                << "c bprop:"
-                << litToEnq
-                << endl;
-            }
-
-            //Drup
-            (*solver->drup)
-            << litToEnq
-            << " 0\n";
+            (*solver->drup) << litToEnq << fin;
 
             if (solver->conf.verbosity >= 10)
                 cout << "c Bothprop indicated to enqueue " << litToEnq << endl;
@@ -544,11 +533,7 @@ void Prober::addRestOfLitsToCache(Lit lit)
     //~lit V OTHER, and ~lit V ~OTHER are technically in
     if (taut) {
         toEnqueue.push_back(~lit);
-
-        //Drup
-        (*solver->drup)
-        << (~lit)
-        << " 0\n";
+        (*solver->drup) << ~lit << fin;
     }
 }
 

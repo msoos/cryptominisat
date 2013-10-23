@@ -195,11 +195,8 @@ void Simplifier::extendModel(SolutionExtender* extender)
 void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
 {
     Clause& cl = *solver->clAllocator->getPointer(offset);
-
-    //Drup
     if (solver->drup->enabled() && doDrup) {
-       (*solver->drup)
-       << "d " << cl;
+       (*solver->drup) << del << cl << fin;
     }
 
     //Remove from occur
@@ -228,6 +225,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
     bool satisfied = false;
     Clause& cl = *solver->clAllocator->getPointer(offset);
+    (*solver->drup) << deldelay << cl << fin;
     #ifdef VERBOSE_DEBUG
     cout << "Clause to clean: " << cl << endl;
     for(size_t i = 0; i < cl.size(); i++) {
@@ -235,10 +233,6 @@ lbool Simplifier::cleanClause(ClOffset offset)
     }
     cout << endl;
     #endif
-
-    //Drup
-    vector<Lit> origCl(cl.size());
-    std::copy(cl.begin(), cl.end(), origCl.begin());
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -265,11 +259,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
         #ifdef VERBOSE_DEBUG
         cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
-
-        //Drup
-        (*solver->drup)
-        << "d " << origCl;
-
+        (*solver->drup) << findelay;
         unlinkClause(offset, false);
         return l_True;
     }
@@ -284,13 +274,8 @@ lbool Simplifier::cleanClause(ClOffset offset)
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
-    //Drup
     if (i-j > 0) {
-        (*solver->drup)
-        << cl
-
-        //Delete old one
-        << "d " << origCl;
+        (*solver->drup) << cl << fin << findelay;
     }
 
     switch(cl.size()) {
@@ -529,6 +514,7 @@ void Simplifier::addBackToSolver()
 bool Simplifier::completeCleanClause(Clause& cl)
 {
     assert(cl.size() > 3);
+    (*solver->drup) << deldelay << cl << fin;
 
     //Remove all lits from stats
     //we will re-attach the clause either way
@@ -538,19 +524,12 @@ bool Simplifier::completeCleanClause(Clause& cl)
         solver->litStats.irredLits -= cl.size();
     }
 
-    //Drup
-    vector<Lit> origCl(cl.size());
-    std::copy(cl.begin(), cl.end(), origCl.begin());
-
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
 
-            //Drup
-            (*solver->drup)
-            << "d " << origCl;
-
+            (*solver->drup) << findelay;
             return false;
         }
 
@@ -562,11 +541,7 @@ bool Simplifier::completeCleanClause(Clause& cl)
 
     //Drup
     if (i - j > 0) {
-        (*solver->drup)
-        << cl
-
-        //Delete old one
-        << "d " << origCl;
+        (*solver->drup) << cl << fin << findelay;
     }
 
     switch (cl.size()) {
@@ -1001,17 +976,15 @@ end:
                 continue;
             }
 
-            (*solver->drup)
-            << "d ";
-
+            (*solver->drup) << del;
             for(vector<Lit>::const_iterator
                 it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
                 ; it != end
                 ; it++
             ) {
-                (*solver->drup) << *it << " ";
+                (*solver->drup) << *it;
             }
-            (*solver->drup) << "0\n";
+            (*solver->drup) << fin;
         }
     }
 
@@ -1740,11 +1713,7 @@ void Simplifier::removeClausesHelper(
                 if (!solver->conf.doStamp
                     && !solver->conf.doCache
                 ) {
-                   (*solver->drup)
-                   << "d "
-                   << lits[0] << " "
-                   << lits[1]
-                   << " 0\n";
+                   (*solver->drup) << del << lits[0] << lits[1] << fin;
                 }
             }
 
@@ -1779,14 +1748,7 @@ void Simplifier::removeClausesHelper(
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
-
-                //Drup
-                (*solver->drup)
-                << "d "
-                << lits[0] << " "
-                << lits[1] << " "
-                << lits[2]
-                << " 0\n";
+                (*solver->drup) << del << lits[0] << lits[1] << lits[2] << fin;
             }
 
             //Remove

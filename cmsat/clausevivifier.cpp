@@ -939,14 +939,8 @@ void ClauseVivifier::subsumeImplicit()
                     timeAvailable -= solver->watches[i->lit3().toInt()].size();
                     removeTri(lit, i->lit2(), i->lit3(), i->red());
                     remTris++;
-
-                    //Drup
                     (*solver->drup)
-                    << "d "
-                    << lit << " "
-                    << i->lit2() << " "
-                    << i->lit3()
-                    << " 0\n";
+                    << del << lit  << i->lit2()  << i->lit3() << fin;
                     continue;
                 }
 
@@ -977,13 +971,7 @@ void ClauseVivifier::subsumeImplicit()
                 } else {
                     solver->binTri.irredBins--;
                 }
-
-                //Drup
-                (*solver->drup)
-                << "d "
-                << lit << " "
-                << i->lit2()
-                << " 0\n";
+                (*solver->drup) << del << lit << i->lit2() << fin;
 
                 continue;
             } else {
@@ -1076,11 +1064,7 @@ bool ClauseVivifier::strengthenImplicit()
                     assert(!lits.empty());
                     if (lits.size() == 1) {
                         toEnqueue.push_back(lits[0]);
-
-                        //Drup
-                        (*solver->drup)
-                        << lits[0]
-                        << " 0\n";
+                        (*solver->drup) << lits[0] << fin;
 
                         remLitFromBin++;
                         stampRem++;
@@ -1119,11 +1103,7 @@ bool ClauseVivifier::strengthenImplicit()
                 if (rem) {
                     remLitFromBin++;
                     toEnqueue.push_back(lit);
-
-                    //Drup
-                    (*solver->drup)
-                    << lit
-                    << " 0\n";
+                    (*solver->drup) << lit << fin;
                 }
                 *j++ = *i;
                 continue;
@@ -1172,20 +1152,9 @@ bool ClauseVivifier::strengthenImplicit()
                     remLitFromTri++;
                     binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
 
-                    //Drup
                     (*solver->drup)
-                    //Add shortened
-                    << i->lit2() << " "
-                    << i->lit3()
-                    << " 0\n"
-
-                    //Delete old
-                    << "d "
-                    << lit << " "
-                    << i->lit2() << " "
-                    << i->lit3()
-                    << " 0\n";
-
+                    << i->lit2()  << i->lit3() << fin
+                    << del << lit << i->lit2() << i->lit3() << fin;
                     continue;
                 }
 
@@ -1215,36 +1184,17 @@ bool ClauseVivifier::strengthenImplicit()
 
                         //Drup
                         (*solver->drup)
-                        //Add shortened
-                        << lits[0] << " "
-                        << lits[1]
-                        << " 0\n"
-
-                        //Delete old
-                        << "d "
-                        << lit << " "
-                        << i->lit2() << " "
-                        << i->lit3()
-                        << " 0\n";
+                        << lits[0] << lits[1] << fin
+                        << del << lit << i->lit2() << i->lit3() << fin;
 
                         continue;
                     } else if (lits.size() == 1) {
                         removeTri(lit, i->lit2(), i->lit3(), i->red());
                         remLitFromTri+=2;
                         toEnqueue.push_back(lits[0]);
-
-                        //Drup
                         (*solver->drup)
-                        //Add shortened
-                        << lits[0]
-                        << " 0\n"
-
-                        //Delete old
-                        << "d "
-                        << lit << " "
-                        << i->lit2() << " "
-                        << i->lit3()
-                        << " 0\n";
+                        << lits[0] << fin
+                        << del << lit << i->lit2() << i->lit3() << fin;
 
                         continue;
                     }

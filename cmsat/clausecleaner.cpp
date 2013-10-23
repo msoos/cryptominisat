@@ -80,13 +80,9 @@ void ClauseCleaner::treatImplicitClauses()
             //Treat binaries
             if (i->isBinary()) {
                 if (satisfied(*i, lit)) {
-                    //Drup
+                    //Only delete once
                     if (lit < i->lit2()) {
-                        (*solver->drup)
-                        << "d "
-                        << lit << " "
-                        << i->lit2()
-                        << " 0\n";
+                        (*solver->drup) << del << lit << i->lit2() << fin;
                     }
 
                     if (i->red()) {
@@ -149,11 +145,7 @@ void ClauseCleaner::treatImplicitClauses()
             }
             if (needAttach) {
                 toAttach.push_back(BinaryClause(lits[0], lits[1], i->red()));
-                //Drup
-                (*solver->drup)
-                << lits[0] << " "
-                << lits[1]
-                << " 0\n";
+                (*solver->drup) << lits[0] << lits[1] << fin;
             }
 
             if (remove) {
@@ -163,11 +155,7 @@ void ClauseCleaner::treatImplicitClauses()
                     && i->lit2() < i->lit3()
                 ) {
                     (*solver->drup)
-                    << "d "
-                    << lit << " "
-                    << i->lit2() << " "
-                    << i->lit3()
-                    << " 0\n";
+                    << del << lit << i->lit2() << i->lit3() << fin;
                 }
 
                 if (i->red())
@@ -237,10 +225,7 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     assert(cl.size() > 3);
     const uint32_t origSize = cl.size();
 
-    //Drup
-    vector<Lit> origCl(cl.size());
-    std::copy(cl.begin(), cl.end(), origCl.begin());
-
+    (*solver->drup) << deldelay << cl << fin;
     Lit origLit1 = cl[0];
     Lit origLit2 = cl[1];
 
@@ -255,17 +240,13 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
 
         if (val == l_True) {
             solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            (*solver->drup) << "d " << origCl;
+            (*solver->drup) << findelay;
             return true;
         }
     }
-    cl.shrink(i-j);
-
-    //Drup
     if (i != j) {
-        (*solver->drup)
-        << cl
-        << "d " << origCl;
+        cl.shrink(i-j);
+        (*solver->drup) << cl << fin << findelay;
     }
 
     assert(cl.size() > 1);

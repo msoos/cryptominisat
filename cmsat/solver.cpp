@@ -194,9 +194,7 @@ bool Solver::addXorClauseInt(
     switch(ps.size()) {
         case 0:
             if (rhs) {
-                //Drup
-                *drup << "0\n";
-
+                *drup << fin;
                 ok = false;
             }
             return ok;
@@ -204,7 +202,7 @@ bool Solver::addXorClauseInt(
         case 1: {
             Lit lit = Lit(ps[0].var(), !rhs);
             enqueue(lit);
-            drupNewUnit(lit);
+            *drup << lit << fin;
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -297,7 +295,7 @@ Clause* Solver::addClauseInt(
     }
 
     if (addDrup) {
-        *drup << ps;
+        *drup << ps << fin;
     }
 
     //Handle special cases
@@ -363,10 +361,9 @@ void Solver::attachClause(
     #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
         for(size_t i = 0; i < cl.size(); i++) {
-            *drup
-            << cl[i] << " ";
+            *drup << cl[i];
         }
-        *drup << "0\n";
+        *drup << fin;
     }
     #endif
 
@@ -388,10 +385,7 @@ void Solver::attachTriClause(
 ) {
     #if defined(DRUP_DEBUG) && defined(DRUP)
     if (drup) {
-        *drup
-        << lit1 << " "
-        << lit2 << " "
-        << lit3 << " 0\n";
+        *drup << lit1  << lit2  << lit3 << fin;
     }
     #endif
 
@@ -413,11 +407,7 @@ void Solver::attachBinClause(
     , const bool checkUnassignedFirst
 ) {
     #if defined(DRUP_DEBUG) && defined(DRUP)
-    if (drup) {
-        *drup
-        << lit1 << " "
-        << lit2 << " 0\n";
-    }
+    *drup << lit1 << lit2 << fin;
     #endif
 
     //Update stats
@@ -464,7 +454,7 @@ void Solver::detachBinClause(
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
 {
     if (removeDrup) {
-        *drup << "d " << cl;
+        *drup << del << cl << fin;
     }
 
     assert(cl.size() > 3);
@@ -639,14 +629,14 @@ bool Solver::addClause(const vector<Lit>& lits)
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl.empty()) {
-            *drup << finalCl;
+            *drup << finalCl << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!solver->okay()) {
-            *drup << "0\n";
+            *drup << fin;
         }
-        *drup << "d " << origCl;
+        *drup << del << origCl << fin;
     }
 
     if (cl != NULL) {
@@ -1203,7 +1193,7 @@ void Solver::pre_clean_clause_db(
                 }
 
                 //detach&free
-                drupRemCl(cl);
+                *drup << del << *cl << fin;
                 clAllocator->clauseFree(offset);
 
             } else {
@@ -1243,7 +1233,7 @@ void Solver::real_clean_clause_db(
         tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
 
         //free clause
-        drupRemCl(cl);
+        *drup << del << *cl << fin;
         clAllocator->clauseFree(offset);
     }
 
@@ -2520,7 +2510,7 @@ void Solver::dumpBinClauses(
                     *outfile
                     << tmpCl[0] << " "
                     << tmpCl[1]
-                    << " 0\n";
+                    << fin;
                 }
             }
         }
@@ -2562,7 +2552,7 @@ void Solver::dumpTriClauses(
                     << tmpCl[0] << " "
                     << tmpCl[1] << " "
                     << tmpCl[2]
-                    << " 0\n";
+                    << fin;
                 }
             }
         }
@@ -2624,7 +2614,7 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         *os
         << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0\n";
+        << fin;
 
         tmpCl[0] ^= true;
         tmpCl[1] ^= true;
@@ -2632,7 +2622,7 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         *os
         << tmpCl[0] << " "
         << tmpCl[1]
-        << " 0\n";
+        << fin;
     }
 }
 
@@ -2641,7 +2631,7 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
-        << " 0\n";
+        << fin;
     }
 }
 

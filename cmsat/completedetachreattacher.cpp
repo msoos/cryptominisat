@@ -155,6 +155,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 bool CompleteDetachReatacher::cleanClause(Clause* cl)
 {
     Clause& ps = *cl;
+    (*solver->drup) << deldelay << ps << fin;
     if (ps.size() <= 3) {
         cout
         << "ERROR, clause is too small, and linked in: "
@@ -163,10 +164,6 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     }
     assert(ps.size() > 3);
 
-    //Drup
-    vector<Lit> origCl(cl->size());
-    std::copy(cl->begin(), cl->end(), origCl.begin());
-
     Lit *i = ps.begin();
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
@@ -174,9 +171,7 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
 
             //Drup
             if (i != j) {
-                (*solver->drup)
-                << "d "
-                << origCl;
+                (*solver->drup) << findelay;
             }
             return false;
         }
@@ -188,12 +183,7 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
 
     //Drup
     if (i != j) {
-        (*solver->drup)
-        << *cl
-
-        //Delete old one
-        << "d "
-        << origCl;
+        (*solver->drup) << *cl << fin << findelay;
     }
 
     switch (ps.size()) {

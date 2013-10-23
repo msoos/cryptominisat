@@ -131,9 +131,6 @@ public:
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
-    void drupNewUnit(const Lit lit);
-    void drupRemCl(const Clause* cl);
-
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
     template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
@@ -453,20 +450,6 @@ uint16_t PropEngine::calcGlue(const T& ps)
 inline bool PropEngine::getStoredPolarity(const Var var)
 {
     return varData[var].polarity;
-}
-
-inline void PropEngine::drupNewUnit(const Lit lit)
-{
-    *drup
-    << lit
-    << " 0\n";
-}
-
-inline void PropEngine::drupRemCl(const Clause* cl)
-{
-    *drup
-    << "d "
-    << *cl;
 }
 
 } //end namespace

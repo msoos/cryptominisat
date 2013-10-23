@@ -245,12 +245,11 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout  << endl;
         }
 
-        //Drup
         if (drup->enabled()) {
             for(unsigned  i = 0; i < newCl.size; i++) {
-                *drup << newCl.lits[i] << " ";
+                *drup << newCl.lits[i];
             }
-            *drup << " 0\n";
+            *drup << fin;
         }
 
         stats.otfSubsumed++;
@@ -261,11 +260,7 @@ void Searcher::doOTFSubsume(const PropBy confl)
 
     //Final will not be implicit
     if (num > 3) {
-
-        //Drup
-        vector<Lit> origCl(cl.size());
-        std::copy(cl.begin(), cl.end(), origCl.begin());
-
+        (*solver->drup) << deldelay << cl << fin;
         solver->detachClause(cl, false);
         stats.otfSubsumed++;
         stats.otfSubsumedLong++;
@@ -285,11 +280,7 @@ void Searcher::doOTFSubsume(const PropBy confl)
             cout
             << "New smaller clause OTF:" << cl << endl;
         }
-        //Drup
-        *drup
-        << cl
-        << "d " << origCl;
-
+        *drup << cl << fin << findelay;
         toAttachLater.push_back(offset);
     }
 }
@@ -877,9 +868,7 @@ void Searcher::hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel)
                     || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
             ) {
                 to_enqueue_toplevel.push_back(~ancestor);
-
-                //Drup
-                *drup << (~ancestor) << " 0\n";
+                *drup << (~ancestor) << fin;
             }
         }
     }
@@ -894,7 +883,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     solver->varData[trail.back().var()].depth = 0;
     Lit failed = propagateFullBFS();
     if (failed != lit_Undef) {
-        drupNewUnit(~failed);
+        *drup << ~failed << fin;
 
         //Update conflict stats
         stats.learntUnits++;
@@ -1220,7 +1209,7 @@ bool Searcher::handle_conflict(PropBy confl)
         << learnt_clause
         << endl;
     }
-    *drup << learnt_clause;
+    *drup << learnt_clause << fin;
 
     size_t orig_trail_size = trail.size();
     if (params.update) {
@@ -1313,9 +1302,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
                 //Drup
                 if (decisionLevel() == 0) {
-                    *drup
-                    << cl[0]
-                    << " 0\n";
+                    *drup << cl[0] << fin;
                 }
             }
         } else {
@@ -1388,8 +1375,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
                 //Drup
                 if (decisionLevel() == 0) {
-                    *drup
-                    << it->lits[0] << " 0\n";
+                    *drup << it->lits[0] << fin;
                 }
             }
         } else {
@@ -2654,12 +2640,7 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
-
-            //Drup
-            *drup
-            << "d "
-            << it->getLit1() << " " << it->getLit2()
-            << " 0\n";
+            *drup << del << it->getLit1() << it->getLit2() << fin;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -2970,14 +2951,10 @@ PropBy Searcher::propagate(
                 << endl;
             }
             #endif
-
-            *drup
-            << trail[i]
-            << " 0\n";
+            *drup << trail[i] << fin;
         }
         if (!ret.isNULL()) {
-            *drup
-            << "0\n";
+            *drup << fin;
         }
     }
 
