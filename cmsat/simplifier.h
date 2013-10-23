@@ -535,6 +535,7 @@ private:
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
     void        check_if_new_2_long_subsumes_3_long(const vector<Lit>& lits);
+    void        update_varelim_complexity_heap(const Var var);
     vector<pair<vector<Lit>, ClauseStats> > resolvents;
 
     struct HeuristicData

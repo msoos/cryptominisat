@@ -2079,6 +2079,28 @@ bool Simplifier::add_varelim_resolvent(
     return true;
 }
 
+void Simplifier::update_varelim_complexity_heap(const Var var)
+{
+    //Update var elim complexity heap
+    if (!solver->conf.updateVarElimComplexityOTF)
+        return;
+
+    for(Var touchVar: touched.getTouchedList()) {
+        //No point in updating the score of this var
+        //it's eliminated already, or not to be eliminated at all
+        if (touchVar == var
+            || !varElimOrder.inHeap(touchVar)
+            || solver->value(touchVar) != l_Undef
+            || solver->varData[touchVar].removed != Removed::none
+        ) {
+            continue;
+        }
+
+        varElimComplexity[touchVar] = strategyCalcVarElimScore(touchVar);
+        varElimOrder.update(touchVar);
+    }
+}
+
 bool Simplifier::maybeEliminate(const Var var)
 {
     assert(solver->ok);
@@ -2118,29 +2140,7 @@ bool Simplifier::maybeEliminate(const Var var)
         if (!ok)
             goto end;
     }
-
-    //Update var elim complexity heap
-    if (solver->conf.updateVarElimComplexityOTF) {
-        for(vector<Var>::const_iterator
-            it = touched.getTouchedList().begin()
-            , end = touched.getTouchedList().end()
-            ; it != end
-            ; it++
-        ) {
-            //No point in updating the score of this var
-            //it's eliminated already, or not to be eliminated at all
-            if (*it == var
-                || !varElimOrder.inHeap(*it)
-                || solver->value(*it) != l_Undef
-                || solver->varData[*it].removed != Removed::none
-            ) {
-                continue;
-            }
-
-            varElimComplexity[*it] = strategyCalcVarElimScore(*it);;
-            varElimOrder.update(*it);
-        }
-    }
+    update_varelim_complexity_heap(var);
 
 end:
     if (solver->conf.verbosity >= 5) {
