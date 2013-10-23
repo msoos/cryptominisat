@@ -660,7 +660,6 @@ bool Simplifier::eliminateVars()
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
             || solver->varData[var].removed != Removed::none
-            //|| !gateFinder->canElim(var)
         ) {
             continue;
         }
@@ -2767,7 +2766,6 @@ void Simplifier::orderVarsForElimInit()
         //Can this variable be eliminated at all?
         if (solver->value(var) != l_Undef
             || solver->varData[var].removed != Removed::none
-            //|| !gateFinder->canElim(var)
         ) {
             continue;
         }

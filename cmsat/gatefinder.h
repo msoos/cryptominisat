@@ -141,7 +141,6 @@ public:
     bool doAll();
 
     //Getter functions
-    bool canElim(const Var var) const;
     void printGateStats() const;
     void printDot(); ///<Print Graphviz DOT file describing the gates
 
@@ -412,9 +411,6 @@ private:
     vector<vector<uint32_t> > gateOcc; //LHS of every NON-LEARNT gate is in this occur list (a = b V c, so 'a' is LHS)
     vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list (a = b V c, so 'b' and 'c' are LHS)
 
-    //Extended resolution
-    vector<char>   dontElim; ///<These vars should not be eliminated, because they have been added through ER
-
     //For temporaries
     vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
     set<ClOffset> clToUnlink;
@@ -441,11 +437,6 @@ private:
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
 };
-
-inline bool GateFinder::canElim(const Var var) const
-{
-    return !dontElim[var];
-}
 
 inline const GateFinder::Stats& GateFinder::getStats() const
 {

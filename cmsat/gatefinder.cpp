@@ -1019,7 +1019,6 @@ void GateFinder::printDot()
 
 void GateFinder::newVar()
 {
-    dontElim.push_back(0);
     gateOcc.push_back(vector<uint32_t>());
     gateOcc.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
