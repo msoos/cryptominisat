@@ -155,6 +155,13 @@ void Simplifier::print_blocked_clauses_reverse() const
         vector<Lit> tmp(it->lits);
         updateLitsMap(tmp, solver->outerToInterMain);
 
+        if (it->dummy) {
+            cout
+            << "dummy blocked clause for literal " << it->blockedOn
+            << endl;
+            continue;
+        }
+
         cout
         << "blocked clause " << tmp
         << " blocked on var " << getUpdatedVar(it->blockedOn.var(), solver->outerToInterMain)+1
@@ -166,7 +173,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is false
     for(size_t i = 0; i < var_elimed.size(); i++) {
-        assert(var_elimed[i] == false || solver->value(i) == l_Undef);
+        assert(var_elimed[i] == false || (solver->value(i) == l_Undef && solver->model[i] == l_Undef));
     }
 
     cleanBlockedClauses();
@@ -181,11 +188,15 @@ void Simplifier::extendModel(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
-        vector<Lit> lits(it->lits);
-        updateLitsMap(lits, solver->outerToInterMain);
-        Lit blockedOn = getUpdatedLit(it->blockedOn, solver->outerToInterMain);
-        bool ret = extender->addClause(lits, blockedOn);
-        assert(ret);
+        const Lit blockedOn = getUpdatedLit(it->blockedOn, solver->outerToInterMain);
+
+        if (it->dummy) {
+            extender->dummyBlocked(blockedOn);
+        } else {
+            vector<Lit> lits(it->lits);
+            updateLitsMap(lits, solver->outerToInterMain);
+            extender->addClause(lits, blockedOn);
+        }
     }
 }
 
@@ -620,6 +631,55 @@ void Simplifier::removeAllLongsFromWatches()
     }
 }
 
+void Simplifier::eliminate_empty_resolvent_vars()
+{
+    uint32_t var_elimed = 0;
+    double myTime = cpuTime();
+    toDecrease = &numMaxElim;
+
+    //Sanity check 'seen'
+    for(uint64_t num: seen) {
+        assert(num == 0);
+    }
+
+    for(size_t var = 0
+        ; var < solver->nVars() && *toDecrease > 0
+        ; var++
+    ) {
+        if (!can_eliminate_var(var))
+            continue;
+
+        const Lit lit = Lit(var, false);
+        if (!checkEmptyResolvent(lit))
+            continue;
+
+        create_dummy_blocked_clause(lit);
+        rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
+        rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
+        set_var_as_eliminated(var, lit);
+        var_elimed++;
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c Empty resolvent elimed: " << var_elimed
+        << " T:" << (cpuTime() - myTime)
+        << endl;
+    }
+}
+
+bool Simplifier::can_eliminate_var(const Var var) const
+{
+    if (solver->value(var) != l_Undef
+        || solver->varData[var].removed != Removed::none
+        ||  solver->assumptionsSet[var] //Cannot eliminate variables that are in the assumptions
+    ) {
+        return false;
+    }
+
+    return true;
+}
+
 bool Simplifier::eliminateVars()
 {
     //Set-up
@@ -652,12 +712,8 @@ bool Simplifier::eliminateVars()
             cout << "toDecrease: " << *toDecrease << endl;
         }
 
-        //Can this variable be eliminated at all?
-        if (solver->value(var) != l_Undef
-            || solver->varData[var].removed != Removed::none
-        ) {
+        if (!can_eliminate_var(var))
             continue;
-        }
 
         //Try to eliminate
         if (maybeEliminate(var)) {
@@ -964,6 +1020,10 @@ bool Simplifier::simplify()
     /*if (solver->conf.doAsymmTE)
         asymmTE();*/
 
+    /*if (solver->conf.doVarElim) {
+        eliminate_empty_resolvent_vars();
+    }*/
+
     //If no var elimination is needed, this IS fixedpoint
     if (solver->conf.doVarElim &&!eliminateVars()) {
         goto end;
@@ -979,6 +1039,8 @@ end:
     //Drup -- Remove clauses that have been blocked recently
     if ((*solver->drup).enabled()) {
         for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
+            if (blockedClauses[i].dummy)
+                continue;
 
             //If doing stamping or caching, we cannot delete binary redundant
             //clauses, because they are stored in the stamp/cache and so
@@ -1054,6 +1116,9 @@ bool Simplifier::unEliminate(Var var)
         //Mark for removal from blocked list
         blockedClauses[at].toRemove = true;
         assert(blockedClauses[at].blockedOn.var() == var);
+
+        if (blockedClauses[at].dummy)
+            continue;
 
         //Re-insert into Solver
         const vector<Lit>& cl = blockedClauses[at].lits;
@@ -1659,12 +1724,13 @@ void Simplifier::cleanBlockedClauses()
     blockedClauses.resize(blockedClauses.size()-(i-j));
 }
 
-void Simplifier::removeClausesHelper(
+size_t Simplifier::rem_cls_from_watch_due_to_varelim(
     watch_subarray_const todo
     , const Lit lit
 ) {
     blockedMapBuilt = false;
     vector<Lit> lits;
+    const size_t orig_blocked_cls_size = blockedClauses.size();
 
     //Copy todo --> it will be manipulated below
     vector<Watched> todo_copy;
@@ -1672,8 +1738,7 @@ void Simplifier::removeClausesHelper(
         todo_copy.push_back(tmp);
     }
 
-    for (uint32_t i = 0; i < todo_copy.size(); i++) {
-        const Watched& watch = todo_copy[i];
+    for (const Watched watch :todo_copy) {
         lits.clear();
         bool red = false;
 
@@ -1683,15 +1748,15 @@ void Simplifier::removeClausesHelper(
 
             //Update stats
             if (cl.red()) {
-                red = true;
-                runStats.longRedClRemThroughElim++;
-            } else {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
                 blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
+            } else {
+                red = true;
+                runStats.longRedClRemThroughElim++;
             }
 
             //Remove -- only DRUP the ones that are redundant
@@ -1779,6 +1844,8 @@ void Simplifier::removeClausesHelper(
             << endl;
         }
     }
+
+    return blockedClauses.size() - orig_blocked_cls_size;
 }
 
 uint32_t Simplifier::numIrredBins(const Lit lit) const
@@ -2104,14 +2171,29 @@ void Simplifier::print_var_elim_complexity_stats(const Var var) const
     << endl;
 }
 
+void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
+{
+    //if (solver->conf.verbosity >= 5) {
+        cout << "Elimination of var " <<  getUpdatedLit(lit, solver->interToOuterMain) << " finished " << endl;
+    //}
+
+    var_elimed[var] = true;
+    solver->varData[var].removed = Removed::elimed;
+    runStats.numVarsElimed++;
+    solver->unsetDecisionVar(var);
+}
+
+void Simplifier::create_dummy_blocked_clause(const Lit lit)
+{
+    blockedClauses.push_back(
+        BlockedClause(getUpdatedLit(lit, solver->interToOuterMain))
+    );
+}
+
 bool Simplifier::maybeEliminate(const Var var)
 {
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
-    if (solver->assumptionsSet[var]) {
-        //Cannot eliminate variables that are in the assumptions
-        return false;
-    }
     runStats.testedToElimVars++;
 
     if (test_elim_and_fill_posall_negall(var) == 1000) {
@@ -2124,11 +2206,9 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //Remove clauses
     touched.clear();
-    removeClausesHelper(solver->watches[lit.toInt()], lit);
-    removeClausesHelper(solver->watches[(~lit).toInt()], ~lit);
-    assert(solver->watches[lit.toInt()].empty());
-    assert(solver->watches[(~lit).toInt()].empty());
-
+    create_dummy_blocked_clause(lit);
+    rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
+    rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
     //Add resolvents
     for(auto& resolvent: resolvents) {
         bool ok = add_varelim_resolvent(resolvent.first, resolvent.second);
@@ -2138,14 +2218,7 @@ bool Simplifier::maybeEliminate(const Var var)
     update_varelim_complexity_heap(var);
 
 end:
-    if (solver->conf.verbosity >= 5) {
-        cout << "Elimination of var " << lit << " finished " << endl;
-    }
-
-    var_elimed[var] = true;
-    solver->varData[var].removed = Removed::elimed;
-    runStats.numVarsElimed++;
-    solver->unsetDecisionVar(var);
+    set_var_as_eliminated(var, lit);
 
     return solver->ok;
 }
@@ -2525,19 +2598,23 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
     return ret;
 }
 
-bool Simplifier::checkEmptyResolvent(const Lit lit)
+bool Simplifier::checkEmptyResolvent(Lit lit)
 {
-    size_t num_bits_set = checkEmptyResolventHelper(
+    //Take the smaller of the two
+    if (solver->watches[(~lit).toInt()].size() < solver->watches[lit.toInt()].size())
+        lit = ~lit;
+
+    int num_bits_set = checkEmptyResolventHelper(
         lit
         , ResolventCountAction::set
         , 0
     );
 
-    size_t num_resolvents = std::numeric_limits<size_t>::max();
+    int num_resolvents = std::numeric_limits<int>::max();
 
     //Can only count if the POS was small enough
     //otherwise 'seen' cannot properly store the data
-    if (num_bits_set > sizeof(unsigned char)*8) {
+    if (num_bits_set < sizeof(uint16_t)*8) {
         num_resolvents = checkEmptyResolventHelper(
             ~lit
             , ResolventCountAction::count
@@ -2557,17 +2634,17 @@ bool Simplifier::checkEmptyResolvent(const Lit lit)
 }
 
 
-bool Simplifier::checkEmptyResolventHelper(
+int Simplifier::checkEmptyResolventHelper(
     const Lit lit
     , ResolventCountAction action
-    , size_t otherSize
+    , int otherSize
 ) {
-    unsigned char at = 1;
-    size_t count = 0;
+    uint16_t at = 1;
+    int count = 0;
     size_t numCls = 0;
 
     watch_subarray_const ws = solver->watches[lit.toInt()];
-    *toDecrease -= ws.size() + 100;
+    *toDecrease -= ws.size()*2;
     for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
@@ -2577,12 +2654,10 @@ bool Simplifier::checkEmptyResolventHelper(
         if (it->isBinary()){
             //Only count irred
             if (!it->red()) {
-                numCls++;
-
+                *toDecrease -= 4;
                 switch(action) {
                     case ResolventCountAction::set:
                         seen[it->lit2().toInt()] |= at;
-                        at <<= 1;
                         break;
 
                     case ResolventCountAction::unset:
@@ -2590,9 +2665,13 @@ bool Simplifier::checkEmptyResolventHelper(
                         break;
 
                     case ResolventCountAction::count:
-                        count += otherSize - __builtin_popcount(seen[(~it->lit2()).toInt()]);
+                        int num = __builtin_popcount(seen[(~it->lit2()).toInt()]);
+                        assert(num <= otherSize);
+                        count += otherSize - num;
                         break;
                 }
+                at <<= 1;
+                numCls++;
             }
             continue;
         }
@@ -2601,13 +2680,11 @@ bool Simplifier::checkEmptyResolventHelper(
         if (it->isTri()) {
             //Only count irred
             if (!it->red()) {
-                numCls++;
-
+                *toDecrease -= 4;
                 switch(action) {
                     case ResolventCountAction::set:
                         seen[it->lit2().toInt()] |= at;
                         seen[it->lit3().toInt()] |= at;
-                        at <<= 1;
                         break;
 
                     case ResolventCountAction::unset:
@@ -2616,10 +2693,14 @@ bool Simplifier::checkEmptyResolventHelper(
                         break;
 
                     case ResolventCountAction::count:
-                        unsigned tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
-                        count += otherSize - __builtin_popcount(tmp);
+                        uint16_t tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
+                        int num = __builtin_popcount(tmp);
+                        assert(num <= otherSize);
+                        count += otherSize - num;
                         break;
                 }
+                at <<= 1;
+                numCls++;
             }
 
             continue;
@@ -2633,8 +2714,8 @@ bool Simplifier::checkEmptyResolventHelper(
 
             //Only irred is of relevance
             if (!cl->red()) {
-                numCls++;
-                unsigned tmp = 0;
+                *toDecrease -= cl->size()*2;
+                uint16_t tmp = 0;
                 for(size_t i = 0; i < cl->size(); i++) {
                     const Lit lit = (*cl)[i];
 
@@ -2652,15 +2733,14 @@ bool Simplifier::checkEmptyResolventHelper(
                             break;
                     }
                 }
-
-                //move setit data along
-                if (action == ResolventCountAction::set) {
-                    at <<= 1;
-                }
+                numCls++;
+                at <<= 1;
 
                 //Count using tmp
                 if (action == ResolventCountAction::count) {
-                    count += otherSize - __builtin_popcount(tmp);
+                    int num = __builtin_popcount(tmp);
+                    assert(num <= otherSize);
+                    count += otherSize - num;
                 }
             }
 
@@ -2674,16 +2754,17 @@ bool Simplifier::checkEmptyResolventHelper(
 
     switch(action) {
         case ResolventCountAction::count:
-            return numCls;
+            return count;
 
         case ResolventCountAction::set:
-            return 0;
+            return numCls;
 
         case ResolventCountAction::unset:
             return 0;
     }
 
-    return count;
+    assert(false);
+    return std::numeric_limits<int>::max();
 }
 
 
@@ -2754,15 +2835,10 @@ void Simplifier::order_vars_for_elim()
         ; var < solver->nVars() && *toDecrease > 0
         ; var++
     ) {
-        *toDecrease -= 50;
-
-        //Can this variable be eliminated at all?
-        if (solver->value(var) != l_Undef
-            || solver->varData[var].removed != Removed::none
-        ) {
+        if (!can_eliminate_var(var))
             continue;
-        }
 
+        *toDecrease -= 50;
         assert(!varElimOrder.inHeap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);;
         varElimOrder.insert(var);

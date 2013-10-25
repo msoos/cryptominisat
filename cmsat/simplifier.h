@@ -57,9 +57,13 @@ class XorFinderAbst;
 class SubsumeStrengthen;
 
 struct BlockedClause {
-    BlockedClause() :
-        blockedOn(lit_Undef)
+    BlockedClause()
+    {}
+
+    BlockedClause(Lit dummyLit) :
+        blockedOn(dummyLit)
         , toRemove(false)
+        , dummy(true)
     {}
 
     BlockedClause(
@@ -70,6 +74,7 @@ struct BlockedClause {
         blockedOn( getUpdatedLit(_blockedOn, interToOuterMain))
         , toRemove(false)
         , lits(_lits)
+        , dummy(false)
     {
         updateLitsMap(lits, interToOuterMain);
     }
@@ -77,6 +82,7 @@ struct BlockedClause {
     Lit blockedOn;
     bool toRemove;
     vector<Lit> lits;
+    bool dummy;
 };
 
 /**
@@ -526,11 +532,14 @@ private:
     Heap<VarOrderLt> varElimOrder;
     uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);
-    void        removeClausesHelper(watch_subarray_const todo, const Lit lit);
+    size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
+    void        set_var_as_eliminated(const Var var, const Lit lit);
+    bool        can_eliminate_var(const Var var) const;
 
 
     TouchList   touched;
     bool        maybeEliminate(const Var x);
+    void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_posall_negall(Var var);
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
@@ -566,10 +575,10 @@ private:
     //For empty resolvents
     enum class ResolventCountAction{count, set, unset};
     bool checkEmptyResolvent(const Lit lit);
-    bool checkEmptyResolventHelper(
+    int checkEmptyResolventHelper(
         const Lit lit
         , ResolventCountAction action
-        , size_t otherSize
+        , int otherSize
     );
 
     pair<int, int>  heuristicCalcVarElimScore(const Var var);
@@ -585,6 +594,7 @@ private:
         , bool& retval
     );
     bool        eliminateVars();
+    void        eliminate_empty_resolvent_vars();
     bool        loopSubsumeVarelim();
 
     /////////////////////

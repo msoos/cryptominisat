@@ -186,6 +186,7 @@ class Searcher : public HyperEngine
             uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );
         void finish_up_solve(lbool status);
+        void print_solution_varreplace_status() const;
         void restore_order_heap();
         void setup_restart_print();
         void reduce_db_if_needed();

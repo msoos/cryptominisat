@@ -44,6 +44,7 @@ SolverConf::SolverConf() :
         , increaseClean(1.1)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
+        , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
 
         //Restarting
         , restart_first(300)

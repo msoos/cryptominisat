@@ -66,6 +66,7 @@ class SolverConf
         double    increaseClean;
         double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;
+        uint64_t min_time_in_db_before_eligible_for_cleaning;
 
         //For restarting
         uint64_t    restart_first;      ///<The initial restart limit.                                                                (default 100)

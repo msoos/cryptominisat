@@ -1219,7 +1219,7 @@ void Solver::real_clean_clause_db(
         assert(cl->size() > 3);
 
         //Don't delete if not aged long enough
-        if (cl->stats.conflictNumIntroduced + 1000
+        if (cl->stats.conflictNumIntroduced + conf.min_time_in_db_before_eligible_for_cleaning
              >= Searcher::sumConflicts()
         ) {
             longRedCls[j++] = offset;
@@ -1510,13 +1510,12 @@ void Solver::extend_solution()
     }
 
     //Extend solution
+    model = solution;
     if (conf.perform_occur_based_simp
         || conf.doFindAndReplaceEqLits
     ) {
-        SolutionExtender extender(this, solution);
+        SolutionExtender extender(this);
         extender.extend();
-    } else {
-        model = solution;
     }
     updateArrayRev(model, interToOuterMain);
 }
@@ -2735,6 +2734,8 @@ void Solver::dump_blocked_clauses(std::ostream* os) const
             it = blockedClauses.begin(); it != blockedClauses.end()
             ; it++
         ) {
+            if (it->dummy)
+                continue;
 
             //Print info about clause
             *os

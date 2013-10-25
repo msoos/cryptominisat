@@ -2193,6 +2193,28 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     return status;
 }
 
+void Searcher::print_solution_varreplace_status() const
+{
+    for(size_t var = 0; var < nVarsReal(); var++) {
+        if (varData[var].removed == Removed::replaced) {
+            assert(value(var) == l_Undef);
+        }
+
+        if (conf.verbosity >= 6
+            && (varData[var].removed == Removed::replaced
+                || varData[var].removed == Removed::queued_replacer)
+            && value(var) != l_Undef
+        ) {
+            cout
+            << "var: " << var
+            << " value: " << value(var)
+            << " level:" << varData[var].level
+            << " type: " << removed_type_to_string(varData[var].removed)
+            << endl;
+        }
+    }
+}
+
 void Searcher::finish_up_solve(const lbool status)
 {
     #ifdef VERBOSE_DEBUG
@@ -2206,6 +2228,7 @@ void Searcher::finish_up_solve(const lbool status)
 
     if (status == l_True) {
         solution = assigns;
+        print_solution_varreplace_status();
     } else if (status == l_False) {
         if (conflict.size() == 0)
             ok = false;

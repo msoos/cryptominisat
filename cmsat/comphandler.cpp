@@ -632,6 +632,7 @@ void CompHandler::addSavedState(vector<lbool>& solution)
         if (savedState[var] != l_Undef) {
             const lbool val = savedState[var];
             const Var interVar = getUpdatedVar(var, solver->outerToInterMain);
+            cout << "added saved state to solution, outer var: " << var << " inter var: " << interVar << endl;
             solution[interVar] = val;
             solver->varData[interVar].polarity = (val == l_True);
         }

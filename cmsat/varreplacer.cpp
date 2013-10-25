@@ -647,46 +647,67 @@ vector<Var> VarReplacer::getReplacingVars() const
     return replacingVars;
 }
 
-/**
-@brief Used when a variable was eliminated, but it replaced some other variables
-
-This function will add to solver2 clauses that represent the relationship of
-the variables to their replaced cousins. Then, calling solver2.solve() should
-take care of everything
-*/
-void VarReplacer::extendModel(SolutionExtender* extender) const
+void VarReplacer::set_sub_var_during_solution_extension(Var var, Var sub_var)
 {
+    lbool to_set = solver->model[var] ^ table[sub_var].sign();
+    if (solver->model[sub_var] != l_Undef) {
+        cout
+        << "varData[" << sub_var << "].removed:"
+        << removed_type_to_string(solver->varData[sub_var].removed)
+        << " to_set: " << to_set
+        << " solver->model[sub_var]: " << solver->model[sub_var]
+        << " solver->varData[sub_var].level:" << solver->varData[sub_var].level
+        << endl;
+        assert(solver->varData[sub_var].removed == Removed::queued_replacer
+            || solver->varData[sub_var].removed == Removed::replaced
+        );
+        assert(solver->model[sub_var] == l_Undef
+            || solver->varData[sub_var].level == 0
+            || solver->varData[sub_var].removed == Removed::queued_replacer
+        );
+        assert(solver->model[sub_var] == to_set);
+    } else {
+        solver->model[sub_var] = to_set;
+    }
+}
 
+void VarReplacer::extendModel(const Var var)
+{
+    assert(solver->model[var] != l_Undef);
+    map<Var, vector<Var> >::const_iterator it
+        = reverseTable.find(var);
+
+    if (it == reverseTable.end())
+        return;
+
+    assert(it->first == var);
+    for(const Var sub_var: it->second)
+    {
+        set_sub_var_during_solution_extension(var, sub_var);
+    }
+}
+
+void VarReplacer::extendModel()
+{
     #ifdef VERBOSE_DEBUG
     cout << "c VarReplacer::extendModel() called" << endl;
     #endif //VERBOSE_DEBUG
 
-    vector<Lit> tmpClause;
+    assert(solver->model.size() == solver->nVarsReal());
+
     uint32_t i = 0;
-    for (vector<Lit>::const_iterator
-        it = table.begin()
-        ; it != table.end()
-        ; it++, i++
+    for (map<Var, vector<Var> >::const_iterator
+        it = reverseTable.begin() , end = reverseTable.end()
+        ; it != end
+        ; it++
     ) {
-        //Not replaced, nothing to do
-        if (it->var() == i)
+        if (solver->model[it->first] == l_Undef)
             continue;
 
-        tmpClause.clear();
-        Lit lit1 = Lit(it->var(), true);
-        Lit lit2 = Lit(i, it->sign());
-        tmpClause.push_back(lit1);
-        tmpClause.push_back(lit2);
-        bool OK = extender->addClause(tmpClause);
-        assert(OK);
-
-        tmpClause.clear();
-        lit1 ^= true;
-        lit2 ^= true;
-        tmpClause.push_back(lit1);
-        tmpClause.push_back(lit2);
-        OK = extender->addClause(tmpClause);
-        assert(OK);
+        for(const Var sub_var: it->second)
+        {
+            set_sub_var_during_solution_extension(it->first, sub_var);
+        }
     }
 }
 

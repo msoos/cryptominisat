@@ -297,15 +297,15 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 {
 
     if (ws.isClause()) {
-        os << "Clause, offset: " << ws.getOffset();
+        os << "Clause offset " << ws.getOffset();
     }
 
     if (ws.isBinary()) {
-        os << "Bin: " << ws.lit2() << " (red: " << ws.red() << " )";
+        os << "Bin lit " << ws.lit2() << " (red: " << ws.red() << " )";
     }
 
     if (ws.isTri()) {
-        os << "Tri: "
+        os << "Tri lits "
         << ws.lit2() << ", " << ws.lit3()
         << " (red: " << ws.red() << " )";
     }

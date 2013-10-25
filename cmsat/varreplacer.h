@@ -37,7 +37,6 @@ namespace CMSat {
 
 using std::map;
 using std::vector;
-class SolutionExtender;
 class Solver;
 
 class LaterAddBinXor
@@ -68,7 +67,9 @@ class VarReplacer
             , bool addLaterAsTwoBins
         );
 
-        void extendModel(SolutionExtender* extender) const;
+        void extendModel();
+        void extendModel(const Var var);
+        void set_sub_var_during_solution_extension(Var var, Var sub_var);
 
         vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
