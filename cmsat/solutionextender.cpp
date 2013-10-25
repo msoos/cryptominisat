@@ -1,0 +1,87 @@
+#include "solutionextender.h"
+#include "solver.h"
+#include "varreplacer.h"
+#include "simplifier.h"
+
+using namespace CMSat;
+
+SolutionExtender::SolutionExtender(Solver* _solver) :
+    solver(_solver)
+{
+}
+
+void SolutionExtender::extend()
+{
+    if (solver->varReplacer)
+        solver->varReplacer->extendModel();
+
+    if (solver->simplifier)
+        solver->simplifier->extendModel(this);
+}
+
+bool SolutionExtender::satisfied(const vector< Lit >& lits) const
+{
+    for(Lit lit: lits) {
+        if (solver->modelValue(lit) == l_True)
+            return true;
+    }
+
+    return false;
+}
+
+bool SolutionExtender::contains_lit(
+    const vector<Lit>& lits
+    , const Lit tocontain
+) const {
+    for(Lit lit: lits) {
+        if (lit == tocontain)
+            return true;
+    }
+
+    return false;
+}
+
+void SolutionExtender::dummyBlocked(const Lit blockedOn)
+{
+    cout
+    << "dummy blocked lit "
+    << getUpdatedLit(blockedOn, solver->interToOuterMain)
+    << endl;
+
+    assert(solver->varData[blockedOn.var()].removed == Removed::elimed);
+
+    //Oher blocked clauses set its value already
+    if (solver->modelValue(blockedOn) != l_Undef)
+        return;
+
+    assert(solver->modelValue(blockedOn) == l_Undef);
+    solver->model[blockedOn.var()] = l_True;
+    solver->varReplacer->extendModel(blockedOn.var());
+    cout << "dummy now: " << solver->modelValue(blockedOn) << endl;
+}
+
+void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
+{
+    assert(solver->varData[blockedOn.var()].removed == Removed::elimed);
+    assert(contains_lit(lits, blockedOn));
+    if (satisfied(lits))
+        return;
+
+    for(Lit lit: lits) {
+        cout
+        << getUpdatedLit(lit, solver->interToOuterMain) << ": " << solver->modelValue(lit)
+        << "(elim: " << removed_type_to_string(solver->varData[lit.var()].removed) << ")"
+        << ", ";
+    }
+    cout << "blocked on: " <<  getUpdatedLit(blockedOn, solver->interToOuterMain) << endl;
+
+    assert(blockedOn != lit_Undef && "Clause must be satisfied if it's not blocked");
+
+    assert(solver->modelValue(blockedOn) == l_Undef);
+    solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
+    assert(satisfied(lits));
+    cout << "blocked on now: " << solver->modelValue(blockedOn) << endl;
+
+    solver->varReplacer->extendModel(blockedOn.var());
+}
+
