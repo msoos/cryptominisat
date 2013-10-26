@@ -14,7 +14,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
     timedOutPropagateFull = false;
     propStats.otfHyperPropCalled++;
     #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Prop full started" << endl;
+    cout << "Prop full BFS started" << endl;
     #endif
 
     PropBy confl;
