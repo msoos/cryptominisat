@@ -380,6 +380,13 @@ Clause* Searcher::analyze(
     int index = trail.size() - 1;
     out_btlevel = 0;
 
+    #ifdef DEBUG_RESOLV
+    cout << "Before resolution, trail is: " << endl;
+    print_trail();
+    cout << "Conflicting clause: " << confl << endl;
+    cout << "Fail bin lit: " << failBinLit << endl;
+    #endif
+
     //cout << "---- Start analysis -----" << endl;
     learnt_clause.push_back(lit_Undef); //make space for ~p
     Clause* cl;
