@@ -913,9 +913,6 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
         stats.transReduRemRed += tmp.second;
         solver->enqueue(~failed);
 
-        if (!ok)
-            return l_False;
-
         must_continue = true;
         return l_Undef;
     }
