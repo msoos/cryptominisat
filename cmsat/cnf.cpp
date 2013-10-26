@@ -1,5 +1,6 @@
 #include "cnf.h"
 #include "solvertypes.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 
@@ -17,4 +18,11 @@ size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
     );
 
     return mem;
+}
+
+bool CNF::redundant(const Watched& ws) const
+{
+    return ((ws.isBinary() || ws.isTri()) && ws.red())
+            || (ws.isClause() && clAllocator->getPointer(ws.getOffset())->red()
+    );
 }

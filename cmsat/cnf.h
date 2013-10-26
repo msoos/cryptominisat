@@ -102,6 +102,8 @@ struct CNF
         return assigns[p.var()] ^ p.sign();
     }
 
+    bool redundant(const Watched& ws) const;
+
     size_t print_mem_used_longclauses(size_t totalMem) const;
 };
 

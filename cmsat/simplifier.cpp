@@ -1877,8 +1877,9 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
     }
 
     //Check if we should do agressive check or not
-    const bool agressive = (numMaxVarElimAgressiveCheck > 0);
+    bool agressive = (numMaxVarElimAgressiveCheck > 0);
     runStats.usedAgressiveCheckToELim += agressive;
+    agressive = false;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -1910,33 +1911,18 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
         ; it != end
         ; it++
     ) {
-        //Decrement available time
         *toDecrease -= 3;
-
-        //Ignore redundant
-        if (((it->isBinary() || it->isTri()) && it->red())
-            || (it->isClause() && solver->clAllocator->getPointer(it->getOffset())->red())
-        ) {
+        if (solver->redundant(*it))
             continue;
-        }
 
         for (watch_subarray::const_iterator
             it2 = negs.begin(), end2 = negs.end()
             ; it2 != end2
             ; it2++
         ) {
-            //Decrement available time
             *toDecrease -= 3;
-
-            //Ignore redundant
-            if (
-                ((it2->isBinary() || it2->isTri())
-                    && it2->red())
-                || (it2->isClause()
-                    && solver->clAllocator->getPointer(it2->getOffset())->red())
-            ) {
+            if (solver->redundant(*it2))
                 continue;
-            }
 
             //Resolve the two clauses
             bool ok = merge(*it, *it2, lit, agressive);
@@ -1963,8 +1949,10 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
             if (after_clauses > before_clauses
                 //Over-time
                 || *toDecrease < -10LL*1000LL
-            )
+            ) {
+                cout << "Not good candidate, exiting" << endl;
                 return 1000;
+            }
 
             //Calculate new clause stats
             ClauseStats stats;
@@ -2091,6 +2079,7 @@ bool Simplifier::add_varelim_resolvent(
     , const ClauseStats& stats
 ) {
     runStats.newClauses++;
+    cout << "Adding resolvent: " << finalLits << endl;
 
     //Check if a new 2-long would subsume a 3-long
     if (finalLits.size() == 2) {
@@ -2105,6 +2094,7 @@ bool Simplifier::add_varelim_resolvent(
         , false //Should clause be attached?
         , &finalLits //Return final set of literals here
     );
+    cout << "Final lit of resolvent: " << finalLits << endl;
 
     if (!solver->ok)
         return false;
@@ -2192,13 +2182,16 @@ void Simplifier::create_dummy_blocked_clause(const Lit lit)
 
 bool Simplifier::maybeEliminate(const Var var)
 {
+    cout << "Starting varelim for " << var+1 << endl;
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
     runStats.testedToElimVars++;
 
     if (test_elim_and_fill_posall_negall(var) == 1000) {
+        cout << "Exiting with " << var+1 << endl;
         return false;
     }
+    cout << "Continuing with " << var+1 << endl;
     runStats.triedToElimVars++;
 
     const Lit lit = Lit(var, false);
@@ -2454,14 +2447,11 @@ bool Simplifier::merge(
     end:
     //Clear 'seen'
     *toDecrease -= toClear.size()/2 + 1;
-    for (vector<Lit>::const_iterator
-        it = toClear.begin(), end = toClear.end()
-        ; it != end
-        ; it++
-    ) {
-        seen[it->toInt()] = 0;
+    for (Lit lit: toClear) {
+        seen[lit.toInt()] = 0;
     }
 
+    cout << "Retval is " << retval << " when merging" << endl;
     return retval;
 }
 
@@ -2865,6 +2855,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     if (solver->conf.varelimStrategy == 0) {
         cost = heuristicCalcVarElimScore(var);
     } else {
+        cout << "WHAAAAAAT?????" << endl;
         int ret = test_elim_and_fill_posall_negall(var);
 
         cost.first = ret;
@@ -2972,8 +2963,8 @@ void Simplifier::linkInClause(Clause& cl)
     assert(cl.size() > 3);
     ClOffset offset = solver->clAllocator->getOffset(&cl);
     std::sort(cl.begin(), cl.end());
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        watch_subarray ws = solver->watches[cl[i].toInt()];
+    for (const Lit lit: cl) {
+        watch_subarray ws = solver->watches[lit.toInt()];
         *toDecrease -= ws.size();
 
         ws.push(Watched(offset, cl.abst));
