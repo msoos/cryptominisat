@@ -729,27 +729,31 @@ bool HyperEngine::isAncestorOf(
     return false;
 }
 
-void HyperEngine::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
+void HyperEngine::addHyperBin(const Lit lit1, const Lit lit2, const Lit lit3)
 {
-    assert(value(p.var()) == l_Undef);
+    assert(value(lit1.var()) == l_Undef);
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Enqueing " << p
-    << " with ancestor 3-long clause: " << p << " , " << lit1 << " , " << lit2
+    print_trail();
+    cout << "Enqueing " << lit1
+    << " with ancestor 3-long clause: " << lit1 << " , "
+    << lit2 << " (lev:" << varData[lit2.var()].level << ") "
+    << lit3 << " (lev:" << varData[lit3.var()].level << ") "
     << endl;
     #endif
 
-    assert(value(lit1) == l_False);
     assert(value(lit2) == l_False);
+    assert(value(lit3) == l_False);
 
     currAncestors.clear();;
-    if (varData[lit1.var()].level != 0)
-        currAncestors.push_back(~lit1);
-
-    if (varData[lit2.var()].level != 0)
+    if (varData[lit2.var()].level != 0) {
         currAncestors.push_back(~lit2);
+    }
 
-    addHyperBin(p);
+    if (varData[lit3.var()].level != 0)
+        currAncestors.push_back(~lit3);
+
+    addHyperBin(lit1);
 }
 
 void HyperEngine::addHyperBin(const Lit p, const Clause& cl)
@@ -1077,11 +1081,11 @@ PropResult HyperEngine::propTriClauseComplex(
     }
 
     if (val2 == l_Undef && val3 == l_False) {
-        return propTriHelperComplex(lit1, lit2, lit3, i->red());
+        return propTriHelperComplex(lit2, ~lit1, lit3, i->red());
     }
 
     if (val3 == l_Undef && val2 == l_False) {
-        return propTriHelperComplex(lit1, lit3, lit2, i->red());
+        return propTriHelperComplex(lit3, ~lit1,  lit2, i->red());
     }
 
     return PROP_NOTHING;
@@ -1101,7 +1105,7 @@ PropResult HyperEngine::propTriHelperComplex(
     #endif
 
     //Not simple
-    addHyperBin(lit2, ~lit1, lit3);
+    addHyperBin(lit1, lit2, lit3);
     return PROP_SOMETHING;
 }
 
