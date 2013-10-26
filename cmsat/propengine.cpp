@@ -1054,3 +1054,14 @@ PropBy PropEngine::propagateIrredBin()
     //No conflict, propagation done
     return PropBy();
 }
+
+void PropEngine::print_trail()
+{
+    for(size_t i = trail_lim[0]; i < trail.size(); i++) {
+        cout
+        << "trail " << i << ":" << trail[i]
+        << " lev: " << varData[trail[i].var()].level
+        << " reason: " << varData[trail[i].var()].reason
+        << endl;
+    }
+}

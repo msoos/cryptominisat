@@ -380,6 +380,13 @@ Clause* Searcher::analyze(
     int index = trail.size() - 1;
     out_btlevel = 0;
 
+    #ifdef DEBUG_RESOLV
+    cout << "Before resolution, trail is: " << endl;
+    print_trail();
+    cout << "Conflicting clause: " << confl << endl;
+    cout << "Fail bin lit: " << failBinLit << endl;
+    #endif
+
     //cout << "---- Start analysis -----" << endl;
     learnt_clause.push_back(lit_Undef); //make space for ~p
     Clause* cl;
@@ -906,9 +913,6 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
         stats.transReduRemRed += tmp.second;
         solver->enqueue(~failed);
 
-        if (!ok)
-            return l_False;
-
         must_continue = true;
         return l_Undef;
     }
@@ -965,32 +969,14 @@ lbool Searcher::search()
     cout << "c started Searcher::search()" << endl;
     #endif //VERBOSE_DEBUG
 
+    assert(solver->qhead == solver->trail.size());
+
     //Loop until restart or finish (SAT/UNSAT)
     bool lastWasConflict = false;
+    PropBy confl;
     while (!params.needToStopSearch
         && sumConflicts() <= solver->getNextCleanLimit()
     ) {
-        assert(ok);
-        PropBy confl;
-
-        //If decision level==1, then do hyperbin & transitive reduction
-        if (conf.otfHyperbin && decisionLevel() == 1) {
-            bool must_continue;
-            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
-            if (ret != l_Undef)
-                return ret;
-            if (must_continue)
-                continue;
-        } else {
-            //Decision level is higher than 1, so must do normal propagation
-            confl = propagate(
-                #ifdef STATS_NEEDED
-                , &hist.watchListSizeTraversed
-                //, &hist.litPropagatedSomething
-                #endif
-            );
-        }
-
         if (!confl.isNULL()) {
             //Update conflict stats based on lastConflictCausedBy
             stats.conflStats.update(lastConflictCausedBy);
@@ -1011,9 +997,30 @@ lbool Searcher::search()
             if (ret != l_Undef)
                 return ret;
         }
+
+        again:
+        if (conf.otfHyperbin && decisionLevel() == 1) {
+            bool must_continue;
+            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
+            if (ret != l_Undef)
+                return ret;
+            if (must_continue)
+                goto again;
+            confl = PropBy();
+        } else {
+            //Decision level is higher than 1, so must do normal propagation
+            confl = propagate(
+                #ifdef STATS_NEEDED
+                , &hist.watchListSizeTraversed
+                //, &hist.litPropagatedSomething
+                #endif
+            );
+        }
     }
 
     cancelUntil(0);
+    assert(solver->qhead == solver->trail.size());
+
     return l_Undef;
 }
 
@@ -1168,6 +1175,143 @@ void Searcher::checkNeedRestart()
     }
 }
 
+void Searcher::add_otf_subsume_long_clauses()
+{
+    //Hande long OTF subsumption
+    for(size_t i = 0; i < toAttachLater.size(); i++) {
+        const ClOffset offset = toAttachLater[i];
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
+
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(cl[at], cl[0]);
+        assert(value(cl[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
+                at = i2;
+                break;
+            }
+        }
+        assert(cl.size() > 3);
+
+        if (at == 0) {
+            //If none found, we have a propagating clause_t
+
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                addHyperBin(cl[0], cl);
+            } else {
+                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+
+                //Drup
+                if (decisionLevel() == 0) {
+                    *drup << cl[0] << fin;
+                }
+            }
+        } else {
+            //We have a non-propagating clause
+
+            std::swap(cl[at], cl[1]);
+            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
+        }
+        solver->attachClause(cl, false);
+        cl.reCalcAbstraction();
+    }
+    toAttachLater.clear();
+}
+
+void Searcher::add_otf_subsume_implicit_clause()
+{
+    //Handle implicit OTF subsumption
+    for(vector<OTFClause>::iterator
+        it = otfMustAttach.begin(), end = otfMustAttach.end()
+        ; it != end
+        ; it++
+    ) {
+        assert(it->size > 1);
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(it->lits[at], it->lits[0]);
+        assert(value(it->lits[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef
+                || value(it->lits[i2]) == l_True
+            ) {
+                at = i2;
+                break;
+            }
+        }
+
+        if (at == 0) {
+            //If none found, we have a propagation
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                if (it->size == 2) {
+                    enqueueComplex(it->lits[0], ~it->lits[1], true);
+                } else {
+                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
+                }
+            } else {
+                //Calculate reason
+                PropBy by = PropBy();
+
+                //if decision level is non-zero, we have to be more careful
+                if (decisionLevel() != 0) {
+                    if (it->size == 2) {
+                        by = PropBy(it->lits[1]);
+                    } else {
+                        by = PropBy(it->lits[1], it->lits[2]);
+                    }
+                }
+
+                //Enqueue this literal, finally
+                enqueue(
+                    it->lits[0]
+                    , by
+                );
+
+                //Drup
+                if (decisionLevel() == 0) {
+                    *drup << it->lits[0] << fin;
+                }
+            }
+        } else {
+            //We have a non-propagating clause
+            std::swap(it->lits[at], it->lits[1]);
+            assert(value(it->lits[1]) == l_Undef
+                || value(it->lits[1]) == l_True
+            );
+
+            //Attach new binary/tertiary clause
+            if (it->size == 2) {
+                solver->attachBinClause(it->lits[0], it->lits[1], true);
+            } else {
+                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
+            }
+        }
+    }
+    otfMustAttach.clear();
+}
+
 /**
 @brief Handles a conflict that we reached through propagation
 
@@ -1264,136 +1408,8 @@ bool Searcher::handle_conflict(PropBy confl)
         hist.trailDepthDeltaHist.push(orig_trail_size - trail.size());
     }
 
-    //Hande long OTF subsumption
-    for(size_t i = 0; i < toAttachLater.size(); i++) {
-        const ClOffset offset = toAttachLater[i];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
-        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
-
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(cl[at], cl[0]);
-        assert(value(cl[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
-                at = i2;
-                break;
-            }
-        }
-        assert(cl.size() > 3);
-
-        if (at == 0) {
-            //If none found, we have a propagating clause_t
-
-            if (conf.otfHyperbin && decisionLevel() == 1) {
-                addHyperBin(cl[0], cl);
-            } else {
-                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << cl[0] << fin;
-                }
-            }
-        } else {
-            //We have a non-propagating clause
-
-            std::swap(cl[at], cl[1]);
-            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
-        }
-        solver->attachClause(cl, false);
-        cl.reCalcAbstraction();
-    }
-    toAttachLater.clear();
-
-    //Handle implicit OTF subsumption
-    for(vector<OTFClause>::iterator
-        it = otfMustAttach.begin(), end = otfMustAttach.end()
-        ; it != end
-        ; it++
-    ) {
-        assert(it->size > 1);
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(it->lits[at], it->lits[0]);
-        assert(value(it->lits[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef
-                || value(it->lits[i2]) == l_True
-            ) {
-                at = i2;
-                break;
-            }
-        }
-
-        if (at == 0) {
-            //If none found, we have a propagation
-            if (conf.otfHyperbin && decisionLevel() == 1) {
-                if (it->size == 2) {
-                    enqueueComplex(it->lits[0], ~it->lits[1], true);
-                } else {
-                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
-                }
-            } else {
-                //Calculate reason
-                PropBy by = PropBy();
-
-                //if decision level is non-zero, we have to be more careful
-                if (decisionLevel() != 0) {
-                    if (it->size == 2) {
-                        by = PropBy(it->lits[1]);
-                    } else {
-                        by = PropBy(it->lits[1], it->lits[2]);
-                    }
-                }
-
-                //Enqueue this literal, finally
-                enqueue(
-                    it->lits[0]
-                    , by
-                );
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << it->lits[0] << fin;
-                }
-            }
-        } else {
-            //We have a non-propagating clause
-            std::swap(it->lits[at], it->lits[1]);
-            assert(value(it->lits[1]) == l_Undef
-                || value(it->lits[1]) == l_True
-            );
-
-            //Attach new binary/tertiary clause
-            if (it->size == 2) {
-                solver->attachBinClause(it->lits[0], it->lits[1], true);
-            } else {
-                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
-            }
-        }
-    }
-    otfMustAttach.clear();
+    add_otf_subsume_long_clauses();
+    add_otf_subsume_implicit_clause();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -2145,12 +2161,12 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         << "c Searcher::solve() called"
         << endl;
     }
+
     resetStats();
     lbool status = l_Undef;
     status = burstSearch();
     if (status != l_Undef)
         goto end;
-
 
     //watch consolidate
     if (conf.verbosity >= 2)

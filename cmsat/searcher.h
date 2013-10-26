@@ -667,6 +667,8 @@ class Searcher : public HyperEngine
         lbool search();
         lbool burstSearch();
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
+        void  add_otf_subsume_long_clauses();
+        void  add_otf_subsume_implicit_clause();
         lbool new_decision();  // Handles the case when decision must be made
         void  checkNeedRestart();     // Helper function to decide if we need to restart during search
         Restart decide_restart_type() const;
