@@ -1747,7 +1747,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             Clause& cl = *solver->clAllocator->getPointer(offset);
 
             //Update stats
-            if (cl.red()) {
+            if (!cl.red()) {
                 runStats.clauses_elimed_long++;
                 runStats.clauses_elimed_sumsize += cl.size();
 
