@@ -212,6 +212,7 @@ protected:
     void     checkNoWrongAttach() const;
     void     printWatchList(const Lit lit) const;
     bool     satisfied(const BinaryClause& bin);
+    void     print_trail();
 
     //Var selection, activity, etc.
     AgilityData agility;
