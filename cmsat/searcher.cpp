@@ -969,6 +969,8 @@ lbool Searcher::search()
     cout << "c started Searcher::search()" << endl;
     #endif //VERBOSE_DEBUG
 
+    assert(solver->qhead == solver->trail.size());
+
     //Loop until restart or finish (SAT/UNSAT)
     bool lastWasConflict = false;
     while (!params.needToStopSearch
