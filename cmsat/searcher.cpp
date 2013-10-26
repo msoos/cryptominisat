@@ -1175,6 +1175,143 @@ void Searcher::checkNeedRestart()
     }
 }
 
+void Searcher::add_otf_subsume_long_clauses()
+{
+    //Hande long OTF subsumption
+    for(size_t i = 0; i < toAttachLater.size(); i++) {
+        const ClOffset offset = toAttachLater[i];
+        Clause& cl = *solver->clAllocator->getPointer(offset);
+        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
+
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(cl[at], cl[0]);
+        assert(value(cl[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < cl.size(); i2++) {
+            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
+                at = i2;
+                break;
+            }
+        }
+        assert(cl.size() > 3);
+
+        if (at == 0) {
+            //If none found, we have a propagating clause_t
+
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                addHyperBin(cl[0], cl);
+            } else {
+                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+
+                //Drup
+                if (decisionLevel() == 0) {
+                    *drup << cl[0] << fin;
+                }
+            }
+        } else {
+            //We have a non-propagating clause
+
+            std::swap(cl[at], cl[1]);
+            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
+        }
+        solver->attachClause(cl, false);
+        cl.reCalcAbstraction();
+    }
+    toAttachLater.clear();
+}
+
+void Searcher::add_otf_subsume_implicit_clause()
+{
+    //Handle implicit OTF subsumption
+    for(vector<OTFClause>::iterator
+        it = otfMustAttach.begin(), end = otfMustAttach.end()
+        ; it != end
+        ; it++
+    ) {
+        assert(it->size > 1);
+        //Find the l_Undef
+        size_t at = std::numeric_limits<size_t>::max();
+        for(size_t i2 = 0; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef) {
+                at = i2;
+                break;
+            }
+        }
+        assert(at != std::numeric_limits<size_t>::max());
+        std::swap(it->lits[at], it->lits[0]);
+        assert(value(it->lits[0]) == l_Undef);
+
+        //Find another l_Undef or an l_True
+        at = 0;
+        for(size_t i2 = 1; i2 < it->size; i2++) {
+            if (value(it->lits[i2]) == l_Undef
+                || value(it->lits[i2]) == l_True
+            ) {
+                at = i2;
+                break;
+            }
+        }
+
+        if (at == 0) {
+            //If none found, we have a propagation
+            if (conf.otfHyperbin && decisionLevel() == 1) {
+                if (it->size == 2) {
+                    enqueueComplex(it->lits[0], ~it->lits[1], true);
+                } else {
+                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
+                }
+            } else {
+                //Calculate reason
+                PropBy by = PropBy();
+
+                //if decision level is non-zero, we have to be more careful
+                if (decisionLevel() != 0) {
+                    if (it->size == 2) {
+                        by = PropBy(it->lits[1]);
+                    } else {
+                        by = PropBy(it->lits[1], it->lits[2]);
+                    }
+                }
+
+                //Enqueue this literal, finally
+                enqueue(
+                    it->lits[0]
+                    , by
+                );
+
+                //Drup
+                if (decisionLevel() == 0) {
+                    *drup << it->lits[0] << fin;
+                }
+            }
+        } else {
+            //We have a non-propagating clause
+            std::swap(it->lits[at], it->lits[1]);
+            assert(value(it->lits[1]) == l_Undef
+                || value(it->lits[1]) == l_True
+            );
+
+            //Attach new binary/tertiary clause
+            if (it->size == 2) {
+                solver->attachBinClause(it->lits[0], it->lits[1], true);
+            } else {
+                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
+            }
+        }
+    }
+    otfMustAttach.clear();
+}
+
 /**
 @brief Handles a conflict that we reached through propagation
 
@@ -1271,136 +1408,8 @@ bool Searcher::handle_conflict(PropBy confl)
         hist.trailDepthDeltaHist.push(orig_trail_size - trail.size());
     }
 
-    //Hande long OTF subsumption
-    for(size_t i = 0; i < toAttachLater.size(); i++) {
-        const ClOffset offset = toAttachLater[i];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
-        cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
-
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(cl[at], cl[0]);
-        assert(value(cl[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
-                at = i2;
-                break;
-            }
-        }
-        assert(cl.size() > 3);
-
-        if (at == 0) {
-            //If none found, we have a propagating clause_t
-
-            if (conf.otfHyperbin && decisionLevel() == 1) {
-                addHyperBin(cl[0], cl);
-            } else {
-                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << cl[0] << fin;
-                }
-            }
-        } else {
-            //We have a non-propagating clause
-
-            std::swap(cl[at], cl[1]);
-            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
-        }
-        solver->attachClause(cl, false);
-        cl.reCalcAbstraction();
-    }
-    toAttachLater.clear();
-
-    //Handle implicit OTF subsumption
-    for(vector<OTFClause>::iterator
-        it = otfMustAttach.begin(), end = otfMustAttach.end()
-        ; it != end
-        ; it++
-    ) {
-        assert(it->size > 1);
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(it->lits[at], it->lits[0]);
-        assert(value(it->lits[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef
-                || value(it->lits[i2]) == l_True
-            ) {
-                at = i2;
-                break;
-            }
-        }
-
-        if (at == 0) {
-            //If none found, we have a propagation
-            if (conf.otfHyperbin && decisionLevel() == 1) {
-                if (it->size == 2) {
-                    enqueueComplex(it->lits[0], ~it->lits[1], true);
-                } else {
-                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
-                }
-            } else {
-                //Calculate reason
-                PropBy by = PropBy();
-
-                //if decision level is non-zero, we have to be more careful
-                if (decisionLevel() != 0) {
-                    if (it->size == 2) {
-                        by = PropBy(it->lits[1]);
-                    } else {
-                        by = PropBy(it->lits[1], it->lits[2]);
-                    }
-                }
-
-                //Enqueue this literal, finally
-                enqueue(
-                    it->lits[0]
-                    , by
-                );
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << it->lits[0] << fin;
-                }
-            }
-        } else {
-            //We have a non-propagating clause
-            std::swap(it->lits[at], it->lits[1]);
-            assert(value(it->lits[1]) == l_Undef
-                || value(it->lits[1]) == l_True
-            );
-
-            //Attach new binary/tertiary clause
-            if (it->size == 2) {
-                solver->attachBinClause(it->lits[0], it->lits[1], true);
-            } else {
-                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
-            }
-        }
-    }
-    otfMustAttach.clear();
+    add_otf_subsume_long_clauses();
+    add_otf_subsume_implicit_clause();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -2152,12 +2161,12 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         << "c Searcher::solve() called"
         << endl;
     }
+
     resetStats();
     lbool status = l_Undef;
     status = burstSearch();
     if (status != l_Undef)
         goto end;
-
 
     //watch consolidate
     if (conf.verbosity >= 2)
