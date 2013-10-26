@@ -973,30 +973,10 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     bool lastWasConflict = false;
+    PropBy confl;
     while (!params.needToStopSearch
         && sumConflicts() <= solver->getNextCleanLimit()
     ) {
-        assert(ok);
-        PropBy confl;
-
-        //If decision level==1, then do hyperbin & transitive reduction
-        if (conf.otfHyperbin && decisionLevel() == 1) {
-            bool must_continue;
-            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
-            if (ret != l_Undef)
-                return ret;
-            if (must_continue)
-                continue;
-        } else {
-            //Decision level is higher than 1, so must do normal propagation
-            confl = propagate(
-                #ifdef STATS_NEEDED
-                , &hist.watchListSizeTraversed
-                //, &hist.litPropagatedSomething
-                #endif
-            );
-        }
-
         if (!confl.isNULL()) {
             //Update conflict stats based on lastConflictCausedBy
             stats.conflStats.update(lastConflictCausedBy);
@@ -1017,9 +997,30 @@ lbool Searcher::search()
             if (ret != l_Undef)
                 return ret;
         }
+
+        again:
+        if (conf.otfHyperbin && decisionLevel() == 1) {
+            bool must_continue;
+            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
+            if (ret != l_Undef)
+                return ret;
+            if (must_continue)
+                goto again;
+            confl = PropBy();
+        } else {
+            //Decision level is higher than 1, so must do normal propagation
+            confl = propagate(
+                #ifdef STATS_NEEDED
+                , &hist.watchListSizeTraversed
+                //, &hist.litPropagatedSomething
+                #endif
+            );
+        }
     }
 
     cancelUntil(0);
+    assert(solver->qhead == solver->trail.size());
+
     return l_Undef;
 }
 
