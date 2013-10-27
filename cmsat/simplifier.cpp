@@ -635,7 +635,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
 {
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
-    limit_to_decrease = &varelim_time_limit;
+    limit_to_decrease = &empty_varelim_time_limit;
 
     for(size_t var = 0
         ; var < solver->nVars() && *limit_to_decrease > 0
@@ -681,7 +681,7 @@ bool Simplifier::eliminateVars()
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
-    limit_to_decrease = &varelim_time_limit;
+    limit_to_decrease = &norm_varelim_time_limit;
 
     order_vars_for_elim();
     if (solver->conf.verbosity >= 5) {
@@ -693,7 +693,7 @@ bool Simplifier::eliminateVars()
         && *limit_to_decrease > 0
         && varelim_num_limit > 0
     ) {
-        assert(limit_to_decrease == &varelim_time_limit);
+        assert(limit_to_decrease == &norm_varelim_time_limit);
         Var var = varElimOrder.removeMin();
 
         //Stats
@@ -726,7 +726,7 @@ end:
         << "c  #time-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
         << "c  #time: " << (cpuTime() - myTime) << endl;
     }
-    assert(limit_to_decrease == &varelim_time_limit);
+    assert(limit_to_decrease == &norm_varelim_time_limit);
 
     runStats.varElimTimeOut += (*limit_to_decrease <= 0);
     runStats.varElimTime += cpuTime() - myTime;
@@ -1623,12 +1623,13 @@ void Simplifier::asymmTE()
 
 void Simplifier::setLimits()
 {
-    subsumption_time_limit    = 850LL*1000LL*1000LL;
-    strengthening_time_limit    = 400LL*1000LL*1000LL;
+    subsumption_time_limit     = 850LL*1000LL*1000LL;
+    strengthening_time_limit   = 400LL*1000LL*1000LL;
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
-    varelim_time_limit        = 800LL*1000LL*1000LL;
-    asymm_time_limit       = 40LL *1000LL*1000LL;
-    aggressive_elim_time_limit  = 300LL *1000LL*1000LL;
+    norm_varelim_time_limit    = 800LL*1000LL*1000LL;
+    empty_varelim_time_limit   = 200LL*1000LL*1000LL;
+    asymm_time_limit           = 40LL *1000LL*1000LL;
+    aggressive_elim_time_limit = 300LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1637,20 +1638,22 @@ void Simplifier::setLimits()
     if (globalStats.testedToElimVars > 0
         && (double)globalStats.numVarsElimed/(double)globalStats.testedToElimVars < 0.1
     ) {
-        varelim_time_limit /= 2;
+        norm_varelim_time_limit /= 2;
     }
 
     #ifdef BIT_MORE_VERBOSITY
-    cout << "c addedClauseLits: " << addedClauseLits << endl;
+    cout << "c addedClauseLits: " << clause_lits_added_limit << endl;
     #endif
     if (clause_lits_added_limit < 10ULL*1000ULL*1000ULL) {
-        varelim_time_limit *= 2;
+        norm_varelim_time_limit *= 2;
+        empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
     }
 
     if (clause_lits_added_limit < 3ULL*1000ULL*1000ULL) {
-        varelim_time_limit *= 2;
+        norm_varelim_time_limit *= 2;
+        empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
     }

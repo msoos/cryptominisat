@@ -419,7 +419,8 @@ private:
     int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
 //     int64_t  numMaxTriSub;
     int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
-    int64_t  varelim_time_limit;
+    int64_t  norm_varelim_time_limit;
+    int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
     int64_t  asymm_time_limit;
     int64_t  aggressive_elim_time_limit;
