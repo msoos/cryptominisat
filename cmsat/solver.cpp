@@ -3142,9 +3142,13 @@ void Solver::checkNoWrongAttach() const
 
 size_t Solver::getNumFreeVars() const
 {
-    assert(decisionLevel() == 0);
     uint32_t freeVars = nVarsReal();
-    freeVars -= trail.size();
+    if (decisionLevel() == 0) {
+        freeVars -= trail.size();
+    } else {
+        freeVars -= trail_lim[0];
+    }
+
     if (conf.perform_occur_based_simp) {
         freeVars -= simplifier->getStats().numVarsElimed;
     }

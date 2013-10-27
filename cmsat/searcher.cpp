@@ -983,6 +983,7 @@ lbool Searcher::search()
 
             //If restart is needed, set it as so
             checkNeedRestart();
+            print_restart_stat();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(lastWasConflict);
             #endif
@@ -1966,11 +1967,10 @@ Restart Searcher::decide_restart_type() const
     return rest_type;
 }
 
-void Searcher::print_restart_stat(const lbool status)
+void Searcher::print_restart_stat()
 {
     //Print restart stat
     if (conf.verbosity >= 2
-        && status == l_Undef
         && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
             || conf.printAllRestarts)
     ) {
@@ -2191,7 +2191,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
         max_conflicts_geometric *= conf.restart_inc;
-        print_restart_stat(status);
         if (must_abort(status))
             goto end;
 
