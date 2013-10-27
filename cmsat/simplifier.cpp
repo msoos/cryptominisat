@@ -2583,7 +2583,7 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
 
     int num_bits_set = checkEmptyResolventHelper(
         lit
-        , ResolventCountAction::set
+        , ResolvCount::set
         , 0
     );
 
@@ -2591,10 +2591,10 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
 
     //Can only count if the POS was small enough
     //otherwise 'seen' cannot properly store the data
-    if (num_bits_set < sizeof(uint16_t)*8) {
+    if (num_bits_set < 16) {
         num_resolvents = checkEmptyResolventHelper(
             ~lit
-            , ResolventCountAction::count
+            , ResolvCount::count
             , num_bits_set
         );
     }
@@ -2602,7 +2602,7 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
     //Clear the 'seen' array
     checkEmptyResolventHelper(
         lit
-        , ResolventCountAction::unset
+        , ResolvCount::unset
         , 0
     );
 
@@ -2613,36 +2613,45 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
 
 int Simplifier::checkEmptyResolventHelper(
     const Lit lit
-    , ResolventCountAction action
-    , int otherSize
+    , const ResolvCount action
+    , const int otherSize
 ) {
     uint16_t at = 1;
     int count = 0;
     size_t numCls = 0;
 
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    *toDecrease -= ws.size()*2;
-    for (watch_subarray::const_iterator
-        it = ws.begin(), end = ws.end()
-        ; it != end
-        ; it++
-    ) {
+    watch_subarray_const watch_list = solver->watches[lit.toInt()];
+    *toDecrease -= watch_list.size()*2;
+    for (const Watched& ws: watch_list) {
+        if (numCls >= 16
+            && (action == ResolvCount::set
+                || action == ResolvCount::unset)
+        ) {
+            break;
+        }
+
+        if (count > 0
+            && action == ResolvCount::count
+        ) {
+            break;
+        }
+
         //Handle binary
-        if (it->isBinary()){
+        if (ws.isBinary()){
             //Only count irred
-            if (!it->red()) {
+            if (!ws.red()) {
                 *toDecrease -= 4;
                 switch(action) {
-                    case ResolventCountAction::set:
-                        seen[it->lit2().toInt()] |= at;
+                    case ResolvCount::set:
+                        seen[ws.lit2().toInt()] |= at;
                         break;
 
-                    case ResolventCountAction::unset:
-                        seen[it->lit2().toInt()] = 0;
+                    case ResolvCount::unset:
+                        seen[ws.lit2().toInt()] = 0;
                         break;
 
-                    case ResolventCountAction::count:
-                        int num = __builtin_popcount(seen[(~it->lit2()).toInt()]);
+                    case ResolvCount::count:
+                        int num = __builtin_popcount(seen[(~ws.lit2()).toInt()]);
                         assert(num <= otherSize);
                         count += otherSize - num;
                         break;
@@ -2654,23 +2663,23 @@ int Simplifier::checkEmptyResolventHelper(
         }
 
         //Handle tertiary
-        if (it->isTri()) {
+        if (ws.isTri()) {
             //Only count irred
-            if (!it->red()) {
+            if (!ws.red()) {
                 *toDecrease -= 4;
                 switch(action) {
-                    case ResolventCountAction::set:
-                        seen[it->lit2().toInt()] |= at;
-                        seen[it->lit3().toInt()] |= at;
+                    case ResolvCount::set:
+                        seen[ws.lit2().toInt()] |= at;
+                        seen[ws.lit3().toInt()] |= at;
                         break;
 
-                    case ResolventCountAction::unset:
-                        seen[it->lit2().toInt()] = 0;
-                        seen[it->lit3().toInt()] = 0;
+                    case ResolvCount::unset:
+                        seen[ws.lit2().toInt()] = 0;
+                        seen[ws.lit3().toInt()] = 0;
                         break;
 
-                    case ResolventCountAction::count:
-                        uint16_t tmp = seen[(~it->lit2()).toInt()] | seen[(~it->lit3()).toInt()];
+                    case ResolvCount::count:
+                        uint16_t tmp = seen[(~ws.lit2()).toInt()] | seen[(~ws.lit3()).toInt()];
                         int num = __builtin_popcount(tmp);
                         assert(num <= otherSize);
                         count += otherSize - num;
@@ -2683,8 +2692,8 @@ int Simplifier::checkEmptyResolventHelper(
             continue;
         }
 
-        if (it->isClause()) {
-            const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
+        if (ws.isClause()) {
+            const Clause* cl = solver->clAllocator->getPointer(ws.getOffset());
 
             //If in occur then it cannot be freed
             assert(!cl->freed());
@@ -2693,28 +2702,31 @@ int Simplifier::checkEmptyResolventHelper(
             if (!cl->red()) {
                 *toDecrease -= cl->size()*2;
                 uint16_t tmp = 0;
-                for(size_t i = 0; i < cl->size(); i++) {
-                    const Lit lit = (*cl)[i];
+                for(const Lit l: *cl) {
+
+                    //Ignore orig
+                    if (l == lit)
+                        continue;
 
                     switch (action) {
-                        case ResolventCountAction::set:
-                            seen[lit.toInt()] |= at;
+                        case ResolvCount::set:
+                            seen[l.toInt()] |= at;
                             break;
 
-                        case ResolventCountAction::unset:
-                            seen[lit.toInt()] = 0;
+                        case ResolvCount::unset:
+                            seen[l.toInt()] = 0;
                             break;
 
-                        case ResolventCountAction::count:
-                            tmp |= seen[(~lit).toInt()];
+                        case ResolvCount::count:
+                            tmp |= seen[(~l).toInt()];
                             break;
                     }
                 }
-                numCls++;
                 at <<= 1;
+                numCls++;
 
                 //Count using tmp
-                if (action == ResolventCountAction::count) {
+                if (action == ResolvCount::count) {
                     int num = __builtin_popcount(tmp);
                     assert(num <= otherSize);
                     count += otherSize - num;
@@ -2728,15 +2740,14 @@ int Simplifier::checkEmptyResolventHelper(
         assert(false);
     }
 
-
     switch(action) {
-        case ResolventCountAction::count:
+        case ResolvCount::count:
             return count;
 
-        case ResolventCountAction::set:
+        case ResolvCount::set:
             return numCls;
 
-        case ResolventCountAction::unset:
+        case ResolvCount::unset:
             return 0;
     }
 

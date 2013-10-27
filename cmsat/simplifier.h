@@ -573,11 +573,11 @@ private:
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
     //For empty resolvents
-    enum class ResolventCountAction{count, set, unset};
+    enum class ResolvCount{count, set, unset};
     bool checkEmptyResolvent(const Lit lit);
     int checkEmptyResolventHelper(
         const Lit lit
-        , ResolventCountAction action
+        , ResolvCount action
         , int otherSize
     );
 
