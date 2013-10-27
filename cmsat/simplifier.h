@@ -414,15 +414,15 @@ private:
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits
-    uint64_t addedClauseLits;
-    int64_t  numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
+    uint64_t clause_lits_added_limit;
+    int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
 //     int64_t  numMaxTriSub;
-    int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
-    int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
-    int64_t  numMaxElimVars;
-    int64_t  numMaxAsymm;
-    int64_t  numMaxVarElimAgressiveCheck;
-    int64_t* toDecrease;
+    int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
+    int64_t  varelim_time_limit;
+    int64_t  varelim_num_limit;
+    int64_t  asymm_time_limit;
+    int64_t  aggressive_elim_time_limit;
+    int64_t* limit_to_decrease;
 
     //Propagation&handling of stuff
     bool propagate();

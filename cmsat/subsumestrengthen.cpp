@@ -100,7 +100,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume0AndUnlink(
         ret.numSubsumed++;
 
         //If we are waaay over time, just exit
-        if (*simplifier->toDecrease < -20LL*1000LL*1000LL)
+        if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL)
             break;
     }
 
@@ -170,7 +170,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::subsume1(const ClOffset offset)
                 return ret;
 
             //If we are waaay over time, just exit
-            if (*simplifier->toDecrease < -20LL*1000LL*1000LL)
+            if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL)
                 break;
         }
     }
@@ -187,17 +187,17 @@ void SubsumeStrengthen::performSubsumption()
     double myTime = cpuTime();
     size_t wenThrough = 0;
     size_t subsumed = 0;
-    simplifier->toDecrease = &simplifier->numMaxSubsume0;
-    while (*simplifier->toDecrease > 0
+    simplifier->limit_to_decrease = &simplifier->subsumption_time_limit;
+    while (*simplifier->limit_to_decrease > 0
         && wenThrough < 1.5*(double)simplifier->clauses.size()
     ) {
-        *simplifier->toDecrease -= 2;
+        *simplifier->limit_to_decrease -= 2;
 
         //Print status
         if (solver->conf.verbosity >= 5
             && wenThrough % 10000 == 0
         ) {
-            cout << "toDecrease: " << *simplifier->toDecrease << endl;
+            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
         }
 
         const size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
@@ -209,7 +209,7 @@ void SubsumeStrengthen::performSubsumption()
             continue;
 
         wenThrough++;
-        *simplifier->toDecrease -= 20;
+        *simplifier->limit_to_decrease -= 20;
 
         subsumed += subsume0(offset);
     }
@@ -233,20 +233,20 @@ bool SubsumeStrengthen::performStrengthening()
 
     double myTime = cpuTime();
     size_t wenThrough = 0;
-    simplifier->toDecrease = &simplifier->numMaxSubsume1;
+    simplifier->limit_to_decrease = &simplifier->strengthening_time_limit;
     Sub1Ret ret;
-    while(*simplifier->toDecrease > 0
+    while(*simplifier->limit_to_decrease > 0
         && wenThrough < 1.5*(double)2*simplifier->clauses.size()
         && solver->okay()
     ) {
-        *simplifier->toDecrease -= 20;
+        *simplifier->limit_to_decrease -= 20;
         wenThrough++;
 
         //Print status
         if (solver->conf.verbosity >= 5
             && wenThrough % 10000 == 0
         ) {
-            cout << "toDecrease: " << *simplifier->toDecrease << endl;
+            cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
         }
 
         size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
@@ -294,7 +294,7 @@ void inline SubsumeStrengthen::fillSubs(
 ) {
     Lit litSub;
     watch_subarray_const cs = solver->watches[lit.toInt()];
-    *simplifier->toDecrease -= cs.size()*15 + 40;
+    *simplifier->limit_to_decrease -= cs.size()*15 + 40;
     for (watch_subarray_const::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
@@ -315,7 +315,7 @@ void inline SubsumeStrengthen::fillSubs(
         if (cl.size() > cl2.size())
             continue;
 
-        *simplifier->toDecrease -= cl.size() + cl2.size();
+        *simplifier->limit_to_decrease -= cl.size() + cl2.size();
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
             out_subsumed.push_back(it->getOffset());
@@ -372,7 +372,7 @@ void SubsumeStrengthen::findStrengthened(
         }
     }
     assert(minVar != var_Undef);
-    *simplifier->toDecrease -= cl.size();
+    *simplifier->limit_to_decrease -= cl.size();
 
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, true));
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
@@ -386,7 +386,7 @@ void SubsumeStrengthen::strengthen(ClOffset offset, const Lit toRemoveLit)
     cout << " with lit: " << toRemoveLit << endl;
     #endif
 
-    *simplifier->toDecrease -= 5;
+    *simplifier->limit_to_decrease -= 5;
 
     (*solver->drup) << deldelay << cl << fin;
     cl.strengthen(toRemoveLit);
@@ -458,7 +458,7 @@ bool SubsumeStrengthen::subset(const T1& A, const T2& B)
     ret = false;
 
     end:
-    *simplifier->toDecrease -= i2*4 + i*4;
+    *simplifier->limit_to_decrease -= i2*4 + i*4;
     return ret;
 }
 
@@ -508,7 +508,7 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
     retLit = lit_Error;
 
     end:
-    *simplifier->toDecrease -= i2*4 + i*4;
+    *simplifier->limit_to_decrease -= i2*4 + i*4;
     return retLit;
 }
 
@@ -539,11 +539,11 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
         if (solver->watches[ps[i].toInt()].size() < solver->watches[ps[min_i].toInt()].size())
             min_i = i;
     }
-    *simplifier->toDecrease -= ps.size();
+    *simplifier->limit_to_decrease -= ps.size();
 
     //Go through the occur list of the literal that has the smallest occur list
     watch_subarray occ = solver->watches[ps[min_i].toInt()];
-    *simplifier->toDecrease -= occ.size()*8 + 40;
+    *simplifier->limit_to_decrease -= occ.size()*8 + 40;
 
     watch_subarray::iterator it = occ.begin();
     watch_subarray::iterator it2 = occ.begin();
@@ -602,7 +602,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
             continue;
         }
 
-        *simplifier->toDecrease -= 15;
+        *simplifier->limit_to_decrease -= 15;
 
         if (it->getOffset() == offset
             || !subsetAbst(abs, it->getAbst())
@@ -616,7 +616,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
         if (ps.size() > cl2.size())
             continue;
 
-        *simplifier->toDecrease -= 50;
+        *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
             out_subsumed.push_back(it->getOffset());
             #ifdef VERBOSE_DEBUG

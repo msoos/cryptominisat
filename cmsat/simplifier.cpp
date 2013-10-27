@@ -211,7 +211,7 @@ void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *toDecrease -= 2*solver->watches[cl[i].toInt()].size();
+        *limit_to_decrease -= 2*solver->watches[cl[i].toInt()].size();
 
         removeWCl(solver->watches[cl[i].toInt()], offset);
 
@@ -247,7 +247,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     Lit* i = cl.begin();
     Lit* j = cl.begin();
     const Lit* end = cl.end();
-    *toDecrease -= cl.size();
+    *limit_to_decrease -= cl.size();
     for(; i != end; i++) {
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
@@ -410,7 +410,7 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
 
         clauses.push_back(*it);
     }
-    addedClauseLits += linkedInLits;
+    clause_lits_added_limit += linkedInLits;
 
     return link_in_data;
 }
@@ -634,10 +634,10 @@ void Simplifier::eliminate_empty_resolvent_vars()
 {
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
-    toDecrease = &numMaxElim;
+    limit_to_decrease = &varelim_time_limit;
 
     for(size_t var = 0
-        ; var < solver->nVars() && *toDecrease > 0
+        ; var < solver->nVars() && *limit_to_decrease > 0
         ; var++
     ) {
         if (!can_eliminate_var(var))
@@ -680,7 +680,7 @@ bool Simplifier::eliminateVars()
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
-    toDecrease = &numMaxElim;
+    limit_to_decrease = &varelim_time_limit;
 
     order_vars_for_elim();
     if (solver->conf.verbosity >= 5) {
@@ -689,21 +689,21 @@ bool Simplifier::eliminateVars()
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
-        && *toDecrease > 0
-        && numMaxElimVars > 0
+        && *limit_to_decrease > 0
+        && varelim_num_limit > 0
     ) {
-        assert(toDecrease == &numMaxElim);
+        assert(limit_to_decrease == &varelim_time_limit);
         Var var = varElimOrder.removeMin();
 
         //Stats
-        *toDecrease -= 20;
+        *limit_to_decrease -= 20;
         wenThrough++;
 
         //Print status
         if (solver->conf.verbosity >= 5
             && wenThrough % 200 == 0
         ) {
-            cout << "toDecrease: " << *toDecrease << endl;
+            cout << "toDecrease: " << *limit_to_decrease << endl;
         }
 
         if (!can_eliminate_var(var))
@@ -712,7 +712,7 @@ bool Simplifier::eliminateVars()
         //Try to eliminate
         if (maybeEliminate(var)) {
             vars_elimed++;
-            numMaxElimVars--;
+            varelim_num_limit--;
         }
         if (!solver->ok)
             goto end;
@@ -722,12 +722,12 @@ end:
     if (solver->conf.verbosity >= 2) {
         cout << "c  #try to eliminate: " << wenThrough << endl
         << "c  #var-elim: " << vars_elimed << endl
-        << "c  #time-out: " << ((*toDecrease <= 0) ? "Y" : "N") << endl
+        << "c  #time-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
         << "c  #time: " << (cpuTime() - myTime) << endl;
     }
-    assert(toDecrease == &numMaxElim);
+    assert(limit_to_decrease == &varelim_time_limit);
 
-    runStats.varElimTimeOut += (*toDecrease <= 0);
+    runStats.varElimTimeOut += (*limit_to_decrease <= 0);
     runStats.varElimTime += cpuTime() - myTime;
 
     return solver->ok;
@@ -844,10 +844,10 @@ void Simplifier::subsumeReds()
     )  return;
 
     //Setup
-    addedClauseLits = 0;
+    clause_lits_added_limit = 0;
     runStats.clear();
     clauses.clear();
-    toDecrease = &numMaxSubsume1;
+    limit_to_decrease = &strengthening_time_limit;
     size_t origTrailSize = solver->trail.size();
 
     //Remove all long clauses from watches
@@ -931,11 +931,11 @@ bool Simplifier::simplify()
 
     //Setup
     double myTime = cpuTime();
-    addedClauseLits = 0;
+    clause_lits_added_limit = 0;
     runStats.clear();
     runStats.numCalls++;
     clauses.clear();
-    toDecrease = &numMaxSubsume1;
+    limit_to_decrease = &strengthening_time_limit;
     size_t origTrailSize = solver->trail.size();
 
     //Remove all long clauses from watches
@@ -1497,18 +1497,18 @@ void Simplifier::asymmTE()
     size_t wenThrough = 0;
 
     vector<Lit> tmpCl;
-    toDecrease = &numMaxAsymm;
-    while(*toDecrease > 0
+    limit_to_decrease = &asymm_time_limit;
+    while(*limit_to_decrease > 0
         && wenThrough < 2*clauses.size()
     ) {
-        *toDecrease -= 2;
+        *limit_to_decrease -= 2;
         wenThrough++;
 
         //Print status
         if (solver->conf.verbosity >= 5
             && wenThrough % 10000 == 0
         ) {
-            cout << "toDecrease: " << *toDecrease << endl;
+            cout << "toDecrease: " << *limit_to_decrease << endl;
         }
 
         size_t num = solver->mtrand.randInt(clauses.size()-1);
@@ -1520,7 +1520,7 @@ void Simplifier::asymmTE()
             continue;
 
 
-        *toDecrease -= cl.size()*2;
+        *limit_to_decrease -= cl.size()*2;
 
         //Fill tmpCl, seen
         tmpCl.clear();
@@ -1620,22 +1620,14 @@ void Simplifier::asymmTE()
     runStats.asymmTime += cpuTime() - myTime;
 }
 
-/**
-@brief Calculate limits for backw-subsumption, var elim, etc.
-
-It is important to have limits, otherwise the time taken to perfom these tasks
-could be huge. Furthermore, it seems that there is a benefit in doing these
-simplifications slowly, instead of trying to use them as much as possible
-from the beginning.
-*/
 void Simplifier::setLimits()
 {
-    numMaxSubsume0    = 850LL*1000LL*1000LL;
-    numMaxSubsume1    = 400LL*1000LL*1000LL;
+    subsumption_time_limit    = 850LL*1000LL*1000LL;
+    strengthening_time_limit    = 400LL*1000LL*1000LL;
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
-    numMaxElim        = 800LL*1000LL*1000LL;
-    numMaxAsymm       = 40LL *1000LL*1000LL;
-    numMaxVarElimAgressiveCheck  = 300LL *1000LL*1000LL;
+    varelim_time_limit        = 800LL*1000LL*1000LL;
+    asymm_time_limit       = 40LL *1000LL*1000LL;
+    aggressive_elim_time_limit  = 300LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1644,32 +1636,32 @@ void Simplifier::setLimits()
     if (globalStats.testedToElimVars > 0
         && (double)globalStats.numVarsElimed/(double)globalStats.testedToElimVars < 0.1
     ) {
-        numMaxElim /= 2;
+        varelim_time_limit /= 2;
     }
 
     #ifdef BIT_MORE_VERBOSITY
     cout << "c addedClauseLits: " << addedClauseLits << endl;
     #endif
-    if (addedClauseLits < 10ULL*1000ULL*1000ULL) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
+    if (clause_lits_added_limit < 10ULL*1000ULL*1000ULL) {
+        varelim_time_limit *= 2;
+        subsumption_time_limit *= 2;
+        strengthening_time_limit *= 2;
     }
 
-    if (addedClauseLits < 3ULL*1000ULL*1000ULL) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
+    if (clause_lits_added_limit < 3ULL*1000ULL*1000ULL) {
+        varelim_time_limit *= 2;
+        subsumption_time_limit *= 2;
+        strengthening_time_limit *= 2;
     }
 
-    numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
+    varelim_num_limit = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
-        numMaxElimVars = (double)numMaxElimVars * (globalStats.numCalls+0.5);
+        varelim_num_limit = (double)varelim_num_limit * (globalStats.numCalls+0.5);
     }
-    runStats.origNumMaxElimVars = numMaxElimVars;
+    runStats.origNumMaxElimVars = varelim_num_limit;
 
     if (!solver->conf.doSubsume1) {
-        numMaxSubsume1 = 0;
+        strengthening_time_limit = 0;
     }
 
     //For debugging
@@ -1791,8 +1783,8 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *toDecrease -= solver->watches[lits[0].toInt()].size();
-            *toDecrease -= solver->watches[lits[1].toInt()].size();
+            *limit_to_decrease -= solver->watches[lits[0].toInt()].size();
+            *limit_to_decrease -= solver->watches[lits[1].toInt()].size();
             solver->detachBinClause(lits[0], lits[1], watch.red());
         }
 
@@ -1825,9 +1817,9 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *toDecrease -= solver->watches[lits[0].toInt()].size();
-            *toDecrease -= solver->watches[lits[1].toInt()].size();
-            *toDecrease -= solver->watches[lits[2].toInt()].size();
+            *limit_to_decrease -= solver->watches[lits[0].toInt()].size();
+            *limit_to_decrease -= solver->watches[lits[1].toInt()].size();
+            *limit_to_decrease -= solver->watches[lits[2].toInt()].size();
             solver->detachTriClause(lits[0], lits[1], lits[2], watch.red());
         }
 
@@ -1866,12 +1858,12 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
     HeuristicData neg = calcDataForHeuristic(Lit(var, true));
 
     //Heuristic calculation took too much time
-    if (*toDecrease < 0) {
+    if (*limit_to_decrease < 0) {
         return 1000;
     }
 
     //Check if we should do agressive check or not
-    bool agressive = (numMaxVarElimAgressiveCheck > 0);
+    bool agressive = (aggressive_elim_time_limit > 0);
     runStats.usedAgressiveCheckToELim += agressive;
     agressive = false;
 
@@ -1905,7 +1897,7 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
         ; it != end
         ; it++
     ) {
-        *toDecrease -= 3;
+        *limit_to_decrease -= 3;
         if (solver->redundant(*it))
             continue;
 
@@ -1914,7 +1906,7 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
             ; it2 != end2
             ; it2++
         ) {
-            *toDecrease -= 3;
+            *limit_to_decrease -= 3;
             if (solver->redundant(*it2))
                 continue;
 
@@ -1940,7 +1932,7 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
             //Early-abort or over time
             if (after_clauses > before_clauses
                 //Over-time
-                || *toDecrease < -10LL*1000LL
+                || *limit_to_decrease < -10LL*1000LL
             ) {
                 return 1000;
             }
@@ -2242,7 +2234,7 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
     , const Lit posLit
 ) {
     if (ps.isBinary() || ps.isTri()) {
-        *toDecrease -= 1;
+        *limit_to_decrease -= 1;
         assert(ps.lit2() != posLit);
 
         seen[ps.lit2().toInt()] = 1;
@@ -2259,7 +2251,7 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
     if (ps.isClause()) {
         Clause& cl = *solver->clAllocator->getPointer(ps.getOffset());
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
-        *toDecrease -= cl.size();
+        *limit_to_decrease -= cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
             //Skip noPosLit
             if (cl[i] == posLit)
@@ -2276,7 +2268,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
     , const Lit posLit
 ) {
     if (qs.isBinary() || qs.isTri()) {
-        *toDecrease -= 2;
+        *limit_to_decrease -= 2;
         assert(qs.lit2() != ~posLit);
 
         if (seen[(~qs.lit2()).toInt()]) {
@@ -2302,7 +2294,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
 
     if (qs.isClause()) {
         Clause& cl = *solver->clAllocator->getPointer(qs.getOffset());
-        *toDecrease -= cl.size();
+        *limit_to_decrease -= cl.size();
         for (const Lit lit: cl) {
             if (lit == ~posLit)
                 continue;
@@ -2328,10 +2320,10 @@ bool Simplifier::reverse_vivification_of_dummy(
     , const Lit posLit
 ) {
     for (size_t i = 0
-        ; i < dummy.size() && numMaxVarElimAgressiveCheck > 0
+        ; i < dummy.size() && aggressive_elim_time_limit > 0
         ; i++
     ) {
-        numMaxVarElimAgressiveCheck -= 3;
+        aggressive_elim_time_limit -= 3;
         const Lit lit = toClear[i];
         assert(lit.var() != posLit.var());
 
@@ -2341,7 +2333,7 @@ bool Simplifier::reverse_vivification_of_dummy(
             && solver->conf.doCache
         ) {
             const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-            numMaxVarElimAgressiveCheck -= cache.size()/3;
+            aggressive_elim_time_limit -= cache.size()/3;
             for(vector<LitExtra>::const_iterator
                 it = cache.begin(), end = cache.end()
                 ; it != end
@@ -2391,7 +2383,7 @@ bool Simplifier::subsume_dummy_through_stamping(
     //pendency
 
     if (!ps.isBinary() && !qs.isBinary()) {
-        numMaxVarElimAgressiveCheck -= 20;
+        aggressive_elim_time_limit -= 20;
         if (solver->stamp.stampBasedClRem(toClear)) {
             return true;
         }
@@ -2437,7 +2429,7 @@ bool Simplifier::resolve_clauses(
         tautological = subsume_dummy_through_stamping(ps, qs);
     }
 
-    *toDecrease -= toClear.size()/2 + 1;
+    *limit_to_decrease -= toClear.size()/2 + 1;
     for (const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
@@ -2451,7 +2443,7 @@ bool Simplifier::agressiveCheck(
     , bool& retval
 ) {
     watch_subarray_const ws = solver->watches[lit.toInt()];
-    numMaxVarElimAgressiveCheck -= ws.size()/3 + 2;
+    aggressive_elim_time_limit -= ws.size()/3 + 2;
     for(watch_subarray::const_iterator it =
         ws.begin(), end = ws.end()
         ; it != end
@@ -2528,7 +2520,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
     HeuristicData ret;
 
     watch_subarray_const ws = solver->watches[lit.toInt()];
-    *toDecrease -= ws.size() + 100;
+    *limit_to_decrease -= ws.size() + 100;
     for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
@@ -2624,7 +2616,7 @@ int Simplifier::checkEmptyResolventHelper(
     size_t numCls = 0;
 
     watch_subarray_const watch_list = solver->watches[lit.toInt()];
-    *toDecrease -= watch_list.size()*2;
+    *limit_to_decrease -= watch_list.size()*2;
     for (const Watched& ws: watch_list) {
         if (numCls >= 16
             && (action == ResolvCount::set
@@ -2643,7 +2635,7 @@ int Simplifier::checkEmptyResolventHelper(
         if (ws.isBinary()){
             //Only count irred
             if (!ws.red()) {
-                *toDecrease -= 4;
+                *limit_to_decrease -= 4;
                 switch(action) {
                     case ResolvCount::set:
                         seen[ws.lit2().toInt()] |= at;
@@ -2669,7 +2661,7 @@ int Simplifier::checkEmptyResolventHelper(
         if (ws.isTri()) {
             //Only count irred
             if (!ws.red()) {
-                *toDecrease -= 4;
+                *limit_to_decrease -= 4;
                 switch(action) {
                     case ResolvCount::set:
                         seen[ws.lit2().toInt()] |= at;
@@ -2703,7 +2695,7 @@ int Simplifier::checkEmptyResolventHelper(
 
             //Only irred is of relevance
             if (!cl->red()) {
-                *toDecrease -= cl->size()*2;
+                *limit_to_decrease -= cl->size()*2;
                 uint16_t tmp = 0;
                 for(const Lit l: *cl) {
 
@@ -2823,13 +2815,13 @@ void Simplifier::order_vars_for_elim()
     //Go through all vars
     for (
         size_t var = 0
-        ; var < solver->nVars() && *toDecrease > 0
+        ; var < solver->nVars() && *limit_to_decrease > 0
         ; var++
     ) {
         if (!can_eliminate_var(var))
             continue;
 
-        *toDecrease -= 50;
+        *limit_to_decrease -= 50;
         assert(!varElimOrder.inHeap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);;
         varElimOrder.insert(var);
@@ -2965,7 +2957,7 @@ void Simplifier::linkInClause(Clause& cl)
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];
-        *toDecrease -= ws.size();
+        *limit_to_decrease -= ws.size();
 
         ws.push(Watched(offset, cl.abst));
     }

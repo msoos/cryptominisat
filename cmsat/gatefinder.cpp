@@ -215,7 +215,7 @@ void GateFinder::findOrGates()
     double myTime = cpuTime();
     clearIndexes();
     numMaxGateFinder = 100LL*1000LL*1000LL;
-    simplifier->toDecrease = &numMaxGateFinder;
+    simplifier->limit_to_decrease = &numMaxGateFinder;
 
     findOrGates(false);
 
@@ -275,7 +275,7 @@ bool GateFinder::doAllOptimisationWithGates()
         //Setup
         double myTime = cpuTime();
         numMaxShortenWithGates = 100LL*1000LL*1000LL;
-        simplifier->toDecrease = &numMaxShortenWithGates;
+        simplifier->limit_to_decrease = &numMaxShortenWithGates;
         runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
             simplifier->runStats.origNumRedLongClauses;
         runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
@@ -283,7 +283,7 @@ bool GateFinder::doAllOptimisationWithGates()
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
             //Time is up!
-            if (*simplifier->toDecrease < 0) {
+            if (*simplifier->limit_to_decrease < 0) {
                 if (solver->conf.verbosity >= 2) {
                     cout
                     << "c No more time left for shortening with gates"
@@ -307,7 +307,7 @@ bool GateFinder::doAllOptimisationWithGates()
     if (solver->conf.doRemClWithAndGates) {
         //Setup
         numMaxClRemWithGates = 100LL*1000LL*1000LL;
-        simplifier->toDecrease = &numMaxClRemWithGates;
+        simplifier->limit_to_decrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
 
         //Do clause removal
@@ -320,7 +320,7 @@ bool GateFinder::doAllOptimisationWithGates()
             at++;
 
             //Time's up?
-            if (*simplifier->toDecrease < 0) {
+            if (*simplifier->limit_to_decrease < 0) {
                 if (solver->conf.verbosity >= 2) {
                     cout
                     << "c No more time left for cl-removal with gates" << endl;
@@ -441,15 +441,15 @@ void GateFinder::findOrGates(const bool redGatesToo)
 {
     //Go through each TRI clause
     for(size_t i = 0; i < solver->watches.size(); i++) {
-        if (*simplifier->toDecrease < 0)
+        if (*simplifier->limit_to_decrease < 0)
             break;
 
         const Lit lit = Lit::toLit(i);
         for(const Watched ws: solver->watches[i]) {
-            *simplifier->toDecrease -= 1;
+            *simplifier->limit_to_decrease -= 1;
 
             //Ran out of time?
-            if (*simplifier->toDecrease < 0) {
+            if (*simplifier->limit_to_decrease < 0) {
                 if (solver->conf.verbosity >= 1) {
                     cout
                     << "c [gate] Finishing gate-finding: ran out of time"
@@ -510,7 +510,7 @@ void GateFinder::findOrGate(
 
         //Try to find corresponding binary clause in cache
         const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
-        *simplifier->toDecrease -= cache.size();
+        *simplifier->limit_to_decrease -= cache.size();
         for (LitExtra cacheLit: cache) {
             if ((redGatesToo || cacheLit.getOnlyIrredBin())
                  && cacheLit.getLit() == eqLit
@@ -523,7 +523,7 @@ void GateFinder::findOrGate(
 
         //Try to find corresponding binary clause in watchlist
         watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
-        *simplifier->toDecrease -= ws.size();
+        *simplifier->limit_to_decrease -= ws.size();
         for (watch_subarray::const_iterator
             wsIt = ws.begin(), endWS = ws.end()
             ; wsIt != endWS && !OK
@@ -688,7 +688,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
 
     watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
     //cout << "csother: " << csOther.size() << endl;
-    *simplifier->toDecrease -= csOther.size()*3;
+    *simplifier->limit_to_decrease -= csOther.size()*3;
     for (const Watched ws: csOther) {
         //Check if it's a long clause
         if (!ws.isClause())
@@ -706,7 +706,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
         if (cl.size() > solver->conf.maxGateBasedClReduceSize)
             continue;
 
-        *simplifier->toDecrease -= cl.size();
+        *simplifier->limit_to_decrease -= cl.size();
 
         //Make sure sizeSortedOcc is enough, and add this clause to it
         maxSize = std::max(maxSize, cl.size());
@@ -757,7 +757,7 @@ bool GateFinder::tryAndGate(
 
     //Now go through lit1 and see if anything matches
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
-    *simplifier->toDecrease -= cs.size()*3;
+    *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
         //Only look through long clauses
         if (!ws.isClause()) {
@@ -786,7 +786,7 @@ bool GateFinder::tryAndGate(
         //Check that ~lits2 is not inside this clause, and that eqLit is not inside, either
         //Also check that all literals inside have at least been set by seen2 (otherwise, no chance of exact match)
         bool OK = true;
-        *(simplifier->toDecrease) -= cl.size();
+        *(simplifier->limit_to_decrease) -= cl.size();
         for (const Lit lit: cl) {
             //We know this is inside, skip
             if (lit == ~(gate.lit1))
@@ -886,7 +886,7 @@ void GateFinder::treatAndGateClause(
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
     lits.clear();
-    *simplifier->toDecrease -= cl.size()*2;
+    *simplifier->limit_to_decrease -= cl.size()*2;
     for (const Lit lit: cl) {
         if (lit != ~(gate.lit1))
             lits.push_back(lit);
@@ -919,7 +919,7 @@ inline bool GateFinder::findAndGateOtherCl(
     , const CL_ABST_TYPE abst
     , ClOffset& other
 ) {
-    *(simplifier->toDecrease) += sizeSortedOcc.size()*5;
+    *(simplifier->limit_to_decrease) += sizeSortedOcc.size()*5;
     for (const ClOffset offset: sizeSortedOcc) {
         const Clause& cl = *solver->clAllocator->getPointer(offset);
 
