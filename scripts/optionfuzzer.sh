@@ -56,8 +56,6 @@ do
         #--cache $(bool) \
         #--scc $(bool) \
         #--presimp $(bool) \
-        #--extscc $(bool) \
-        #--renumber $(bool) \
         ../build/cryptominisat \
 		--random $RANDOM \
 		--clbtwsimp $(int 0 3) \
@@ -93,10 +91,10 @@ do
 		--block $(bool) \
 		--asymmte $(bool) \
 		--noextbinsubs $(bool) \
-		--scc 0 \
+		--extscc $(bool) \
 		--vivif $(bool) \
 		--sortwatched $(bool) \
-		--renumber 0 \
+		--renumber $(bool) \
                 --recur $(bool) \
 		--verb 2 \
 		--comps 1 \
