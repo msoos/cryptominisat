@@ -1944,7 +1944,6 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
                 //Over-time
                 || *toDecrease < -10LL*1000LL
             ) {
-                cout << "Not good candidate, exiting" << endl;
                 return 1000;
             }
 
@@ -2073,7 +2072,6 @@ bool Simplifier::add_varelim_resolvent(
     , const ClauseStats& stats
 ) {
     runStats.newClauses++;
-    cout << "Adding resolvent: " << finalLits << endl;
 
     //Check if a new 2-long would subsume a 3-long
     if (finalLits.size() == 2) {
@@ -2088,7 +2086,6 @@ bool Simplifier::add_varelim_resolvent(
         , false //Should clause be attached?
         , &finalLits //Return final set of literals here
     );
-    cout << "Final lit of resolvent: " << finalLits << endl;
 
     if (!solver->ok)
         return false;
@@ -2157,9 +2154,9 @@ void Simplifier::print_var_elim_complexity_stats(const Var var) const
 
 void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
 {
-    //if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 5) {
         cout << "Elimination of var " <<  getUpdatedLit(lit, solver->interToOuterMain) << " finished " << endl;
-    //}
+    }
 
     var_elimed[var] = true;
     solver->varData[var].removed = Removed::elimed;
@@ -2176,16 +2173,13 @@ void Simplifier::create_dummy_blocked_clause(const Lit lit)
 
 bool Simplifier::maybeEliminate(const Var var)
 {
-    cout << "Starting varelim for " << var+1 << endl;
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
     runStats.testedToElimVars++;
 
     if (test_elim_and_fill_posall_negall(var) == 1000) {
-        cout << "Exiting with " << var+1 << endl;
         return false;
     }
-    cout << "Continuing with " << var+1 << endl;
     runStats.triedToElimVars++;
 
     const Lit lit = Lit(var, false);
@@ -2445,7 +2439,6 @@ bool Simplifier::merge(
         seen[lit.toInt()] = 0;
     }
 
-    cout << "Retval is " << retval << " when merging" << endl;
     return retval;
 }
 
