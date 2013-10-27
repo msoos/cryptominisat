@@ -75,14 +75,14 @@ using std::endl;
 
 Simplifier::Simplifier(Solver* _solver):
     solver(_solver)
+    , seen(solver->seen)
+    , seen2(solver->seen2)
+    , toClear(solver->toClear)
     , varElimOrder(VarOrderLt(varElimComplexity))
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
-    , seen(solver->seen)
-    , seen2(solver->seen2)
     , blockedMapBuilt(false)
-    , toClear(solver->toClear)
 {
     #ifdef USE_M4RI
     if (solver->conf.doFindXors) {
