@@ -2322,6 +2322,84 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
     return false;
 }
 
+bool Simplifier::reverse_vivification_of_dummy(
+    const Watched ps
+    , const Watched qs
+    , const Lit posLit
+) {
+    for (size_t i = 0
+        ; i < dummy.size() && numMaxVarElimAgressiveCheck > 0
+        ; i++
+    ) {
+        numMaxVarElimAgressiveCheck -= 3;
+        const Lit lit = toClear[i];
+        assert(lit.var() != posLit.var());
+
+        //Use cache
+        if (!ps.isBinary()
+            && !qs.isBinary()
+            && solver->conf.doCache
+        ) {
+            const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+            numMaxVarElimAgressiveCheck -= cache.size()/3;
+            for(vector<LitExtra>::const_iterator
+                it = cache.begin(), end = cache.end()
+                ; it != end
+                ; it++
+            ) {
+                //If redundant, that doesn't help
+                if (!it->getOnlyIrredBin())
+                    continue;
+
+                const Lit otherLit = it->getLit();
+                if (otherLit.var() == posLit.var())
+                    continue;
+
+                //If (a) was in original clause
+                //then (a V b) means -b can be put inside
+                if (!seen[(~otherLit).toInt()]) {
+                    toClear.push_back(~otherLit);
+                    seen[(~otherLit).toInt()] = 1;
+                }
+
+                //If (a V b) is irred in the clause, then done
+                if (seen[otherLit.toInt()]) {
+                    return true;
+                }
+            }
+        }
+
+        /*
+        //TODO
+        //Use watchlists
+        if (numMaxVarElimAgressiveCheck > 0) {
+            if (agressiveCheck(lit, noPosLit, retval))
+                goto end;
+        }*/
+    }
+
+    return false;
+}
+
+bool Simplifier::subsume_dummy_through_stamping(
+    const Watched ps
+    , const Watched qs
+) {
+    //only if none of the clauses were binary
+    //Otherwise we cannot tell if the value in the cache is dependent
+    //on the binary clause itself, so that would cause a circular de-
+    //pendency
+
+    if (!ps.isBinary() && !qs.isBinary()) {
+        numMaxVarElimAgressiveCheck -= 20;
+        if (solver->stamp.stampBasedClRem(toClear)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Simplifier::resolve_clauses(
     const Watched ps
     , const Watched qs
@@ -2344,91 +2422,21 @@ bool Simplifier::resolve_clauses(
     toClear.clear();
     add_pos_lits_to_dummy_and_seen(ps, posLit);
     bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
-    if (tautological) {
-        toClear = dummy;
-        goto end;
-    }
     toClear = dummy;
 
-    //We add to 'seen' what COULD be added to the clause
-    //This is essentially the reverse of cache-based vivification
-    if (aggressive
+    if (!tautological && aggressive
         && solver->conf.doAsymmTE
     ) {
-        for (size_t i = 0
-            ; i < dummy.size() && numMaxVarElimAgressiveCheck > 0
-            ; i++
-        ) {
-            numMaxVarElimAgressiveCheck -= 3;
-            const Lit lit = toClear[i];
-            assert(lit.var() != posLit.var());
-
-            //Use cache
-            if (!ps.isBinary()
-                && !qs.isBinary()
-                && solver->conf.doCache
-            ) {
-                const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-                numMaxVarElimAgressiveCheck -= cache.size()/3;
-                for(vector<LitExtra>::const_iterator
-                    it = cache.begin(), end = cache.end()
-                    ; it != end
-                    ; it++
-                ) {
-                    //If redundant, that doesn't help
-                    if (!it->getOnlyIrredBin())
-                        continue;
-
-                    const Lit otherLit = it->getLit();
-                    if (otherLit.var() == posLit.var())
-                        continue;
-
-                    //If (a) was in original clause
-                    //then (a V b) means -b can be put inside
-                    if (!seen[(~otherLit).toInt()]) {
-                        toClear.push_back(~otherLit);
-                        seen[(~otherLit).toInt()] = 1;
-                    }
-
-                    //If (a V b) is irred in the clause, then done
-                    if (seen[otherLit.toInt()]) {
-                        tautological = true;
-                        goto end;
-                    }
-                }
-            }
-
-            /*
-            //TODO
-            //Use watchlists
-            if (numMaxVarElimAgressiveCheck > 0) {
-                if (agressiveCheck(lit, noPosLit, retval))
-                    goto end;
-            }*/
-        }
+        tautological = reverse_vivification_of_dummy(ps, qs, posLit);
     }
 
-    if (aggressive
+    if (!tautological && aggressive
         && solver->conf.doAsymmTE
         && solver->conf.doStamp
     ) {
-        //Use stamping
-        //but only if none of the clauses were binary
-        //Otherwise we cannot tell if the value in the cache is dependent
-        //on the binary clause itself, so that would cause a circular de-
-        //pendency
-
-        if (!ps.isBinary() && !qs.isBinary()) {
-            numMaxVarElimAgressiveCheck -= 20;
-            if (solver->stamp.stampBasedClRem(toClear)) {
-                tautological = true;
-                goto end;
-            }
-        }
+        tautological = subsume_dummy_through_stamping(ps, qs);
     }
 
-    end:
-    //Clear 'seen'
     *toDecrease -= toClear.size()/2 + 1;
     for (const Lit lit: toClear) {
         seen[lit.toInt()] = 0;

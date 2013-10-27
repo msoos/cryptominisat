@@ -596,6 +596,15 @@ private:
         const Watched qs
         , const Lit posLit
     );
+    bool reverse_vivification_of_dummy(
+        const Watched ps
+        , const Watched qs
+        , const Lit posLit
+    );
+    bool subsume_dummy_through_stamping(
+       const Watched ps
+        , const Watched qs
+    );
     bool agressiveCheck(
         const Lit lit
         , const Lit noPosLit
