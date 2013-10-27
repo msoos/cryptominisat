@@ -25,6 +25,7 @@
 #include "solver.h"
 #include "varupdatehelper.h"
 #include "watchalgos.h"
+#include "clauseallocator.h"
 #include <iostream>
 #include <assert.h>
 #include <iomanip>

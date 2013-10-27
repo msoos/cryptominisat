@@ -2,6 +2,7 @@
 #include "simplifier.h"
 #include "solver.h"
 #include "watchalgos.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 

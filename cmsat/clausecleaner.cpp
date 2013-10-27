@@ -20,6 +20,7 @@
 */
 
 #include "clausecleaner.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 

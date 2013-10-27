@@ -24,6 +24,8 @@
 #include "time_mem.h"
 #include "solver.h"
 #include "watchalgos.h"
+#include "clauseallocator.h"
+
 #include <iomanip>
 using namespace CMSat;
 using std::cout;

@@ -3,7 +3,6 @@
 
 #include "propby.h"
 #include "solverconf.h"
-#include "clauseallocator.h"
 #include "stamp.h"
 #include "solvertypes.h"
 #include "implcache.h"
@@ -13,6 +12,8 @@
 
 namespace CMSat {
 using namespace CMSat;
+
+class ClauseAllocator;
 
 struct CNF
 {
@@ -105,6 +106,15 @@ struct CNF
     bool redundant(const Watched& ws) const;
 
     size_t print_mem_used_longclauses(size_t totalMem) const;
+};
+
+struct ClauseSizeSorter
+{
+    ClauseSizeSorter(const ClauseAllocator* _clAllocator) :
+        clAllocator(_clAllocator)
+    {}
+    bool operator () (const ClOffset x, const ClOffset y);
+    const ClauseAllocator* clAllocator;
 };
 
 }

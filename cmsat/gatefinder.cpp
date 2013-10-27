@@ -24,6 +24,7 @@
 #include "solver.h"
 #include "simplifier.h"
 #include "subsumestrengthen.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 using std::cout;

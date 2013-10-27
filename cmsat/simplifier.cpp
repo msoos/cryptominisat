@@ -44,6 +44,7 @@
 #include "completedetachreattacher.h"
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
+#include "clauseallocator.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -461,7 +462,7 @@ bool Simplifier::addFromSolver(
     }
 
     if (!irred && alsoOccur) {
-        std::sort(toAdd.begin(), toAdd.end(), MySorter(solver->clAllocator));
+        std::sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->clAllocator));
     }
 
     LinkInData link_in_data = link_in_clauses(toAdd, irred, alsoOccur);

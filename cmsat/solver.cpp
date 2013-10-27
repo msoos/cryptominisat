@@ -32,15 +32,17 @@
 #include "varupdatehelper.h"
 #include "gatefinder.h"
 #include "sqlstats.h"
-#include <fstream>
-#include <cmath>
-#include <fcntl.h>
 #include "completedetachreattacher.h"
 #include "compfinder.h"
 #include "comphandler.h"
 #include "subsumestrengthen.h"
 #include "varupdatehelper.h"
 #include "watchalgos.h"
+#include "clauseallocator.h"
+
+#include <fstream>
+#include <cmath>
+#include <fcntl.h>
 
 using namespace CMSat;
 using std::cout;

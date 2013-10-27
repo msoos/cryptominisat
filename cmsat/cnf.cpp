@@ -26,3 +26,10 @@ bool CNF::redundant(const Watched& ws) const
             || (ws.isClause() && clAllocator->getPointer(ws.getOffset())->red()
     );
 }
+
+bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
+{
+    Clause* cl1 = clAllocator->getPointer(x);
+    Clause* cl2 = clAllocator->getPointer(y);
+    return (cl1->size() < cl2->size());
+}

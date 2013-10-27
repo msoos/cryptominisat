@@ -22,6 +22,7 @@
 #include "solvertypes.h"
 #include "clause.h"
 #include "propby.h"
+#include "clauseallocator.h"
 
 #ifndef __PROPBYFORGRAPH_H__
 #define __PROPBYFORGRAPH_H__

@@ -24,8 +24,9 @@
 #include "solver.h"
 #include "varreplacer.h"
 #include "simplifier.h"
-#include <limits>
+#include "clauseallocator.h"
 #include "m4ri.h"
+#include <limits>
 
 using namespace CMSat;
 using std::cout;

@@ -23,6 +23,7 @@
 #include "solver.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 

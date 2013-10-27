@@ -23,6 +23,7 @@
 #include "assert.h"
 #include "time_mem.h"
 #include "solver.h"
+#include "clauseallocator.h"
 
 using namespace CMSat;
 using std::cout;

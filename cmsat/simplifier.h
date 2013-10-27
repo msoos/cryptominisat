@@ -32,7 +32,6 @@
 #include <iomanip>
 #include <fstream>
 
-#include "solver.h"
 #include "clause.h"
 #include "queue.h"
 #include "bitarray.h"
@@ -40,6 +39,8 @@
 #include "heap.h"
 #include "touchlist.h"
 #include "varupdatehelper.h"
+#include "watched.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -484,25 +485,6 @@ private:
 
             return false;
         }
-    };
-
-    /**
-    @brief Sort clauses according to size
-    */
-    struct MySorter
-    {
-        MySorter(const ClauseAllocator* _clAllocator) :
-            clAllocator(_clAllocator)
-        {}
-
-        bool operator () (const ClOffset x, const ClOffset y)
-        {
-            Clause* cl1 = clAllocator->getPointer(x);
-            Clause* cl2 = clAllocator->getPointer(y);
-            return (cl1->size() < cl2->size());
-        }
-
-        const ClauseAllocator* clAllocator;
     };
 
     /////////////////////
