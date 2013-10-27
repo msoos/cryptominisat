@@ -3,6 +3,8 @@
 #include "varreplacer.h"
 #include "simplifier.h"
 
+//#define VERBOSE_DEBUG_SOLUTIONEXTENDER
+
 using namespace CMSat;
 
 SolutionExtender::SolutionExtender(Solver* _solver) :
@@ -43,10 +45,12 @@ bool SolutionExtender::contains_lit(
 
 void SolutionExtender::dummyBlocked(const Lit blockedOn)
 {
+    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
     << "dummy blocked lit "
     << getUpdatedLit(blockedOn, solver->interToOuterMain)
     << endl;
+    #endif
 
     assert(solver->varData[blockedOn.var()].removed == Removed::elimed);
 
@@ -57,7 +61,10 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     assert(solver->modelValue(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = l_True;
     solver->varReplacer->extendModel(blockedOn.var());
+
+    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout << "dummy now: " << solver->modelValue(blockedOn) << endl;
+    #endif
 }
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
@@ -67,6 +74,7 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     if (satisfied(lits))
         return;
 
+    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     for(Lit lit: lits) {
         cout
         << getUpdatedLit(lit, solver->interToOuterMain) << ": " << solver->modelValue(lit)
@@ -74,13 +82,13 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
         << ", ";
     }
     cout << "blocked on: " <<  getUpdatedLit(blockedOn, solver->interToOuterMain) << endl;
+    #endif
 
     assert(blockedOn != lit_Undef && "Clause must be satisfied if it's not blocked");
 
     assert(solver->modelValue(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
     assert(satisfied(lits));
-    cout << "blocked on now: " << solver->modelValue(blockedOn) << endl;
 
     solver->varReplacer->extendModel(blockedOn.var());
 }

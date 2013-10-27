@@ -2853,7 +2853,6 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     if (solver->conf.varelimStrategy == 0) {
         cost = heuristicCalcVarElimScore(var);
     } else {
-        cout << "WHAAAAAAT?????" << endl;
         int ret = test_elim_and_fill_posall_negall(var);
 
         cost.first = ret;
