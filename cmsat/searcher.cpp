@@ -978,10 +978,7 @@ lbool Searcher::search()
         && sumConflicts() <= solver->getNextCleanLimit()
     ) {
         if (!confl.isNULL()) {
-            //Update conflict stats based on lastConflictCausedBy
             stats.conflStats.update(lastConflictCausedBy);
-
-            //If restart is needed, set it as so
             checkNeedRestart();
             print_restart_stat();
             #ifdef STATS_NEEDED
