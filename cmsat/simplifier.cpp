@@ -79,9 +79,9 @@ Simplifier::Simplifier(Solver* _solver):
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
-    , blockedMapBuilt(false)
     , seen(solver->seen)
     , seen2(solver->seen2)
+    , blockedMapBuilt(false)
     , toClear(solver->toClear)
 {
     #ifdef USE_M4RI
