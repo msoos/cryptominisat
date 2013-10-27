@@ -159,13 +159,12 @@ void Simplifier::print_blocked_clauses_reverse() const
             cout
             << "dummy blocked clause for literal " << it->blockedOn
             << endl;
-            continue;
+        } else {
+            cout
+            << "blocked clause " << tmp
+            << " blocked on var " << getUpdatedVar(it->blockedOn.var(), solver->outerToInterMain)+1
+            << endl;
         }
-
-        cout
-        << "blocked clause " << tmp
-        << " blocked on var " << getUpdatedVar(it->blockedOn.var(), solver->outerToInterMain)+1
-        << endl;
     }
 }
 
