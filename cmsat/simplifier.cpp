@@ -2435,7 +2435,7 @@ bool Simplifier::merge(
     end:
     //Clear 'seen'
     *toDecrease -= toClear.size()/2 + 1;
-    for (Lit lit: toClear) {
+    for (const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
 
