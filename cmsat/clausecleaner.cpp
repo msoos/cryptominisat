@@ -175,7 +175,7 @@ void ClauseCleaner::treatImplicitClauses()
 
         clean_implicit_watchlist(ws, lit);
     }
-    impl_data.update_solver(solver);
+    impl_data.update_solver_stats(solver);
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
@@ -270,7 +270,7 @@ bool ClauseCleaner::satisfied(const Clause& cl) const
         return false;
 }
 
-void ClauseCleaner::ImplicitData::update_solver(Solver* solver)
+void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 {
     for(const BinaryClause& bincl: toAttach) {
         assert(solver->value(bincl.getLit1()) == l_Undef);

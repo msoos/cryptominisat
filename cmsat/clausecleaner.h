@@ -55,7 +55,7 @@ class ClauseCleaner
             //need to manipulate the watchlist we are going through
             vector<BinaryClause> toAttach;
 
-            void update_solver(Solver* solver);
+            void update_solver_stats(Solver* solver);
         };
         ImplicitData impl_data;
         void clean_implicit_watchlist(
