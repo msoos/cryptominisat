@@ -1014,9 +1014,9 @@ bool Simplifier::simplify()
     /*if (solver->conf.doAsymmTE)
         asymmTE();*/
 
-    /*if (solver->conf.doVarElim) {
+    if (solver->conf.doVarElim) {
         eliminate_empty_resolvent_vars();
-    }*/
+    }
 
     //If no var elimination is needed, this IS fixedpoint
     if (solver->conf.doVarElim &&!eliminateVars()) {
