@@ -636,11 +636,6 @@ void Simplifier::eliminate_empty_resolvent_vars()
     double myTime = cpuTime();
     toDecrease = &numMaxElim;
 
-    //Sanity check 'seen'
-    for(uint64_t num: seen) {
-        assert(num == 0);
-    }
-
     for(size_t var = 0
         ; var < solver->nVars() && *toDecrease > 0
         ; var++
