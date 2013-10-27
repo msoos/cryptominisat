@@ -637,9 +637,12 @@ void Simplifier::eliminate_empty_resolvent_vars()
     double myTime = cpuTime();
     limit_to_decrease = &empty_varelim_time_limit;
 
-    for(size_t var = 0
-        ; var < solver->nVars() && *limit_to_decrease > 0
-        ; var++
+    size_t num = 0;
+    for(size_t var = solver->mtrand.randInt(solver->nVars())
+        ; num < solver->nVars()
+        && var < solver->nVars()
+        && *limit_to_decrease > 0
+        ; var = (var + 1) % solver->nVars(), num++
     ) {
         if (!can_eliminate_var(var))
             continue;
@@ -659,6 +662,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
         cout
         << "c Empty resolvent elimed: " << var_elimed
         << " T:" << (cpuTime() - myTime)
+        << " T-out: " << (*limit_to_decrease <= 0 ? "Y" : "N")
         << endl;
     }
 }
