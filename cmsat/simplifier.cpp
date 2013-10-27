@@ -1919,10 +1919,8 @@ int Simplifier::test_elim_and_fill_posall_negall(const Var var)
                 continue;
 
             //Resolve the two clauses
-            bool ok = merge(*it, *it2, lit, agressive);
-
-            //The resolvent is tautological
-            if (!ok)
+            bool tautological = resolve_clauses(*it, *it2, lit, agressive);
+            if (tautological)
                 continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
@@ -2239,41 +2237,13 @@ end:
     assert(solver->value(lit) == l_Undef);
 }*/
 
-/**
-@brief Resolves two clauses on a variable
-
-Clause ps must contain without_p
-Clause ps must contain without_q
-And without_p = ~without_q
-
-@return FALSE if clause is always satisfied ('out_clause' should not be used)
-*/
-bool Simplifier::merge(
-    const Watched& ps
-    , const Watched& qs
-    , const Lit noPosLit
-    , const bool aggressive
+void Simplifier::add_pos_lits_to_dummy_and_seen(
+    const Watched ps
+    , const Lit posLit
 ) {
-    //If clause has already been freed, skip
-    if (ps.isClause()
-        && solver->clAllocator->getPointer(ps.getOffset())->freed()
-    ) {
-        return false;
-    }
-    if (qs.isClause()
-        && solver->clAllocator->getPointer(qs.getOffset())->freed()
-    ) {
-        return false;
-    }
-
-    dummy.clear(); //The final clause
-    toClear.clear(); //Used to clear 'seen'
-
-    //Handle PS
-    bool retval = true;
     if (ps.isBinary() || ps.isTri()) {
         *toDecrease -= 1;
-        assert(ps.lit2() != noPosLit);
+        assert(ps.lit2() != posLit);
 
         seen[ps.lit2().toInt()] = 1;
         dummy.push_back(ps.lit2());
@@ -2292,23 +2262,25 @@ bool Simplifier::merge(
         *toDecrease -= cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
             //Skip noPosLit
-            if (cl[i] == noPosLit)
+            if (cl[i] == posLit)
                 continue;
 
             seen[cl[i].toInt()] = 1;
             dummy.push_back(cl[i]);
         }
     }
+}
 
-    //Handle QS
+bool Simplifier::add_neg_lits_to_dummy_and_seen(
+    const Watched qs
+    , const Lit posLit
+) {
     if (qs.isBinary() || qs.isTri()) {
         *toDecrease -= 2;
-        assert(qs.lit2() != ~noPosLit);
+        assert(qs.lit2() != ~posLit);
 
         if (seen[(~qs.lit2()).toInt()]) {
-            retval = false;
-            toClear = dummy;
-            goto end;
+            return true;
         }
         if (!seen[qs.lit2().toInt()]) {
             dummy.push_back(qs.lit2());
@@ -2320,9 +2292,7 @@ bool Simplifier::merge(
         assert(qs.lit2() < qs.lit3());
 
         if (seen[(~qs.lit3()).toInt()]) {
-            retval = false;
-            toClear = dummy;
-            goto end;
+            return true;
         }
         if (!seen[qs.lit3().toInt()]) {
             dummy.push_back(qs.lit3());
@@ -2332,27 +2302,51 @@ bool Simplifier::merge(
 
     if (qs.isClause()) {
         Clause& cl = *solver->clAllocator->getPointer(qs.getOffset());
-        //assert(!clauseData[qs.clsimp.index].defOfOrGate);
         *toDecrease -= cl.size();
-        for (uint32_t i = 0; i < cl.size(); i++){
-
-            //Skip ~noPosLit
-            if (cl[i] == ~noPosLit)
+        for (const Lit lit: cl) {
+            if (lit == ~posLit)
                 continue;
 
-            //Opposite is inside, nothing to add
-            if (seen[(~cl[i]).toInt()]) {
-                retval = false;
-                toClear = dummy;
-                goto end;
+            if (seen[(~lit).toInt()]) {
+                return true;
             }
 
             //Add the literal
-            if (!seen[cl[i].toInt()]) {
-                dummy.push_back(cl[i]);
-                seen[cl[i].toInt()] = 1;
+            if (!seen[lit.toInt()]) {
+                dummy.push_back(lit);
+                seen[lit.toInt()] = 1;
             }
         }
+    }
+
+    return false;
+}
+
+bool Simplifier::resolve_clauses(
+    const Watched ps
+    , const Watched qs
+    , const Lit posLit
+    , const bool aggressive
+) {
+    //If clause has already been freed, skip
+    if (ps.isClause()
+        && solver->clAllocator->getPointer(ps.getOffset())->freed()
+    ) {
+        return false;
+    }
+    if (qs.isClause()
+        && solver->clAllocator->getPointer(qs.getOffset())->freed()
+    ) {
+        return false;
+    }
+
+    dummy.clear();
+    toClear.clear();
+    add_pos_lits_to_dummy_and_seen(ps, posLit);
+    bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
+    if (tautological) {
+        toClear = dummy;
+        goto end;
     }
     toClear = dummy;
 
@@ -2367,7 +2361,7 @@ bool Simplifier::merge(
         ) {
             numMaxVarElimAgressiveCheck -= 3;
             const Lit lit = toClear[i];
-            assert(lit.var() != noPosLit.var());
+            assert(lit.var() != posLit.var());
 
             //Use cache
             if (!ps.isBinary()
@@ -2386,7 +2380,7 @@ bool Simplifier::merge(
                         continue;
 
                     const Lit otherLit = it->getLit();
-                    if (otherLit.var() == noPosLit.var())
+                    if (otherLit.var() == posLit.var())
                         continue;
 
                     //If (a) was in original clause
@@ -2398,7 +2392,7 @@ bool Simplifier::merge(
 
                     //If (a V b) is irred in the clause, then done
                     if (seen[otherLit.toInt()]) {
-                        retval = false;
+                        tautological = true;
                         goto end;
                     }
                 }
@@ -2427,6 +2421,7 @@ bool Simplifier::merge(
         if (!ps.isBinary() && !qs.isBinary()) {
             numMaxVarElimAgressiveCheck -= 20;
             if (solver->stamp.stampBasedClRem(toClear)) {
+                tautological = true;
                 goto end;
             }
         }
@@ -2439,7 +2434,7 @@ bool Simplifier::merge(
         seen[lit.toInt()] = 0;
     }
 
-    return retval;
+    return tautological;
 }
 
 bool Simplifier::agressiveCheck(

@@ -582,11 +582,19 @@ private:
     );
 
     pair<int, int>  heuristicCalcVarElimScore(const Var var);
-    bool merge(
-        const Watched& ps
-        , const Watched& qs
+    bool resolve_clauses(
+        const Watched ps
+        , const Watched qs
         , const Lit noPosLit
         , const bool useCache
+    );
+    void add_pos_lits_to_dummy_and_seen(
+        const Watched ps
+        , const Lit posLit
+    );
+    bool add_neg_lits_to_dummy_and_seen(
+        const Watched qs
+        , const Lit posLit
     );
     bool agressiveCheck(
         const Lit lit
