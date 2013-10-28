@@ -463,6 +463,7 @@ void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     for (size_t i = 0; i < toClear.size(); i++) {
+        seen2[toClear[i].toInt()] = 0;
         seen[toClear[i].var()] = 0;
     }
     toClear.clear();
