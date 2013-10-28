@@ -708,25 +708,33 @@ class Searcher : public HyperEngine
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &nblevels         //glue of the learnt clause
-            , ResolutionTypes<uint16_t> &resolutions   //number of resolutions mades
             , bool fromProber = false
         );
+        int pathC;
+        ResolutionTypes<uint16_t> resolutions;
 
         vector<std::pair<Lit, size_t> > lastDecisionLevel; //for glue-based extra var activity bumping
 
         //OTF subsumption
         vector<ClOffset> otf_subsuming_long_cls;
         vector<OTFClause> otf_subsuming_short_cls;
-        void doOTFSubsume(PropBy confl);
+        void check_otf_subsume(PropBy confl);
+        void create_otf_subsuming_implicit_clause(const Clause& cl);
+        void create_otf_subsuming_long_clause(
+           Clause& cl
+            , ClOffset offset
+        );
+        Clause* add_literals_from_confl_to_learnt(
+            const PropBy confl
+            , const Lit p
+            , bool fromProber
+        );
+        void debug_print_resolving_clause(const PropBy confl) const;
         size_t tmp_learnt_clause_size;
         CL_ABST_TYPE tmp_learnt_clause_abst;
 
-        void analyzeHelper(
-            Lit lit
-            , int& pathC
-            , bool fromProber
-        );
-        void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
+        void add_lit_to_learnt(Lit lit, bool fromProber);
+        void analyzeFinal(const Lit p, vector<Lit>& out_conflict);
 
         //////////////
         // Conflict minimisation

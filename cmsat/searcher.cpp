@@ -137,9 +137,8 @@ void Searcher::cancelUntil(uint32_t level)
     #endif
 }
 
-void Searcher::analyzeHelper(
+void Searcher::add_lit_to_learnt(
     const Lit lit
-    , int& pathC
     , bool fromProber
 ) {
     const Var var = lit.var();
@@ -203,85 +202,90 @@ void Searcher::recursiveConfClauseMin()
     learnt_clause.resize(j);
 }
 
-void Searcher::doOTFSubsume(const PropBy confl)
+void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
+{
+    OTFClause newCl;
+    newCl.size = 0;
+    for(const Lit
+        *it = cl.begin(), *end = cl.end()
+        ; it != end
+        ; it++
+    ) {
+        if (seen2[it->toInt()]) {
+            assert(newCl.size < 3);
+            newCl.lits[newCl.size] = *it;
+            newCl.size++;
+        }
+    }
+    otf_subsuming_short_cls.push_back(newCl);
+    if (conf.verbosity >= 6) {
+        cout << "New implicit clause that subsumes a long clause:";
+        for(unsigned  i = 0; i < newCl.size; i++) {
+            cout
+            << newCl.lits[i] << " ";
+        }
+        cout  << endl;
+    }
+
+    if (drup->enabled()) {
+        for(unsigned  i = 0; i < newCl.size; i++) {
+            *drup << newCl.lits[i];
+        }
+        *drup << fin;
+    }
+
+    stats.otfSubsumed++;
+    stats.otfSubsumedImplicit++;
+    stats.otfSubsumedRed += cl.red();
+    stats.otfSubsumedLitsGained += cl.size() - newCl.size;
+}
+
+void Searcher::create_otf_subsuming_long_clause(
+    Clause& cl
+    , const ClOffset offset
+) {
+    (*solver->drup) << deldelay << cl << fin;
+    solver->detachClause(cl, false);
+    stats.otfSubsumed++;
+    stats.otfSubsumedLong++;
+    stats.otfSubsumedRed += cl.red();
+    stats.otfSubsumedLitsGained += cl.size() - tmp_learnt_clause_size;
+
+    size_t i = 0;
+    size_t i2 = 0;
+    for (; i < cl.size(); i++) {
+        if (seen2[cl[i].toInt()]) {
+            cl[i2++] = cl[i];
+        }
+    }
+    cl.shrink(i-i2);
+    assert(cl.size() == tmp_learnt_clause_size);
+    if (conf.verbosity >= 6) {
+        cout
+        << "New smaller clause OTF:" << cl << endl;
+    }
+    *drup << cl << fin << findelay;
+    otf_subsuming_long_cls.push_back(offset);
+}
+
+void Searcher::check_otf_subsume(const PropBy confl)
 {
     ClOffset offset = confl.getClause();
     Clause& cl = *clAllocator->getPointer(offset);
 
-    //Count if every one from learnt_clause is inside
-    size_t num = 0;
-    for (size_t j = 0, size = cl.size(); j < size; j++) {
-        if (seen2[cl[j].toInt()]) {
-            num++;
+    size_t num_lits_from_cl = 0;
+    for (const Lit lit: cl) {
+        if (seen2[lit.toInt()]) {
+            num_lits_from_cl++;
         }
     }
-
-    //Does not subsume
-    if (num != tmp_learnt_clause_size)
+    if (num_lits_from_cl != tmp_learnt_clause_size)
         return;
 
-    //Final will be implicit
-    if (num <= 3) {
-        OTFClause newCl;
-        newCl.size = 0;
-        for(const Lit
-            *it = cl.begin(), *end = cl.end()
-            ; it != end
-            ; it++
-        ) {
-            if (seen2[it->toInt()]) {
-                assert(newCl.size < 3);
-                newCl.lits[newCl.size] = *it;
-                newCl.size++;
-            }
-        }
-        otf_subsuming_short_cls.push_back(newCl);
-        if (conf.verbosity >= 6) {
-            cout << "New implicit clause that subsumes a long clause:";
-            for(unsigned  i = 0; i < newCl.size; i++) {
-                cout
-                << newCl.lits[i] << " ";
-            }
-            cout  << endl;
-        }
-
-        if (drup->enabled()) {
-            for(unsigned  i = 0; i < newCl.size; i++) {
-                *drup << newCl.lits[i];
-            }
-            *drup << fin;
-        }
-
-        stats.otfSubsumed++;
-        stats.otfSubsumedImplicit++;
-        stats.otfSubsumedRed += cl.red();
-        stats.otfSubsumedLitsGained += cl.size() - newCl.size;
-    }
-
-    //Final will not be implicit
-    if (num > 3) {
-        (*solver->drup) << deldelay << cl << fin;
-        solver->detachClause(cl, false);
-        stats.otfSubsumed++;
-        stats.otfSubsumedLong++;
-        stats.otfSubsumedRed += cl.red();
-        stats.otfSubsumedLitsGained += cl.size() - tmp_learnt_clause_size;
-
-        size_t i = 0;
-        size_t i2 = 0;
-        for (; i < cl.size(); i++) {
-            if (seen2[cl[i].toInt()]) {
-                cl[i2++] = cl[i];
-            }
-        }
-        cl.shrink(i-i2);
-        assert(cl.size() == tmp_learnt_clause_size);
-        if (conf.verbosity >= 6) {
-            cout
-            << "New smaller clause OTF:" << cl << endl;
-        }
-        *drup << cl << fin << findelay;
-        otf_subsuming_long_cls.push_back(offset);
+    if (num_lits_from_cl <= 3) {
+        create_otf_subsuming_implicit_clause(cl);
+    } else {
+        create_otf_subsuming_long_clause(cl, offset);
     }
 }
 
@@ -353,16 +357,101 @@ void Searcher::normalClMinim()
     learnt_clause.resize(j);
 }
 
-/**
-@brief    Analyze conflict and produce a reason clause.
+void Searcher::debug_print_resolving_clause(const PropBy confl) const
+{
+    #ifndef DEBUG_RESOLV
+    return;
+    #endif
 
-Post-condition: 'learnt_clause[0]' is the asserting literal at level 'out_btlevel'
-*/
+    switch(confl.getType()) {
+        case tertiary_t: {
+            cout << "resolv (tri): " << confl.lit2() << ", " << confl.lit3() << endl;
+            break;
+        }
+
+        case binary_t: {
+            cout << "resolv bin: " << confl.lit2() << endl;
+            break;
+        }
+
+        case clause_t: {
+            Clause* cl = clAllocator->getPointer(confl.getClause());
+            cout << "resolv (long): " << *cl << endl;
+            break;
+        }
+    }
+}
+
+Clause* Searcher::add_literals_from_confl_to_learnt(
+    const PropBy confl
+    , const Lit p
+    , bool fromProber
+) {
+    debug_print_resolving_clause(confl);
+
+    Clause* cl = NULL;
+    switch (confl.getType()) {
+        case tertiary_t : {
+            resolutions.tri++;
+            stats.resolvs.tri++;
+            add_lit_to_learnt(confl.lit3(), fromProber);
+
+            if (p == lit_Undef) {
+                add_lit_to_learnt(failBinLit, fromProber);
+            }
+
+            add_lit_to_learnt(confl.lit2(), fromProber);
+            break;
+        }
+
+        case binary_t : {
+            resolutions.bin++;
+            stats.resolvs.bin++;
+            if (p == lit_Undef) {
+                add_lit_to_learnt(failBinLit, fromProber);
+            }
+            add_lit_to_learnt(confl.lit2(), fromProber);
+            break;
+        }
+
+        case clause_t : {
+            cl = clAllocator->getPointer(confl.getClause());
+            if (cl->red()) {
+                resolutions.redL++;
+                stats.resolvs.redL++;
+            } else {
+                resolutions.irredL++;
+                stats.resolvs.irredL++;
+            }
+            cl->stats.numUsedUIP++;
+            if (cl->red() && !fromProber) {
+                bumpClauseAct(cl);
+            }
+
+            for (size_t j = 0, size = cl->size(); j != size; j++) {
+                //Will be resolved away, skip
+                if (p != lit_Undef && j == 0)
+                    continue;
+
+                add_lit_to_learnt((*cl)[j], fromProber);
+            }
+            break;
+        }
+
+        case null_clause_t:
+        default:
+            //otherwise should be UIP
+            assert(false && "Error in conflict analysis");
+            break;
+    }
+    return cl;
+}
+
+
 Clause* Searcher::analyze(
     PropBy confl
     , uint32_t& out_btlevel
     , uint32_t &glue
-    , ResolutionTypes<uint16_t>& resolutions
     , bool fromProber
 ) {
     //Set up environment
@@ -375,7 +464,7 @@ Clause* Searcher::analyze(
     tmp_learnt_clause_abst = 0;
     assert(decisionLevel() > 0);
 
-    int pathC = 0;
+    pathC = 0;
     Lit p = lit_Undef;
     int index = trail.size() - 1;
     out_btlevel = 0;
@@ -406,76 +495,7 @@ Clause* Searcher::analyze(
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        //Add literals from 'confl' to clause
-        cl = NULL;
-        switch (confl.getType()) {
-            case tertiary_t : {
-                resolutions.tri++;
-                stats.resolvs.tri++;
-                #ifdef DEBUG_RESOLV
-                cout << "resolv (tri): " << confl.lit3() << endl;
-                #endif
-                analyzeHelper(confl.lit3(), pathC, fromProber);
-            }
-            //NO BREAK, since tertiary is like binary, just one more lit
-
-            case binary_t : {
-                //We fall here even on TRI, so make sure
-                if (confl.getType() == binary_t) {
-                    resolutions.bin++;
-                    stats.resolvs.bin++;
-                }
-
-
-                if (p == lit_Undef) {
-                    analyzeHelper(failBinLit, pathC, fromProber);
-                }
-
-                analyzeHelper(confl.lit2(), pathC, fromProber);
-                #ifdef DEBUG_RESOLV
-                cout << "resolv (bin/tri): " << confl.lit2() << endl;
-                #endif
-                break;
-            }
-
-            case clause_t : {
-                cl = clAllocator->getPointer(confl.getClause());
-                #ifdef DEBUG_RESOLV
-                cout << "resolv (long): " << *cl << endl;
-                #endif
-
-                if (cl->red()) {
-                    resolutions.redL++;
-                    stats.resolvs.redL++;
-                } else {
-                    resolutions.irredL++;
-                    stats.resolvs.irredL++;
-                }
-
-                //Update stats
-                cl->stats.numUsedUIP++;
-                if (cl->red() && !fromProber) {
-                    bumpClauseAct(cl);
-                }
-
-                for (size_t j = 0, size = cl->size(); j != size; j++) {
-
-                    //This is the one that will be resolved out anyway, so just skip
-                    if (p != lit_Undef && j == 0) {
-                        continue;
-                    }
-
-                    analyzeHelper((*cl)[j], pathC, fromProber);
-                }
-                break;
-            }
-
-            case null_clause_t:
-            default:
-                //otherwise should be UIP
-                assert(false && "Error in conflict analysis");
-                break;
-        }
+        cl = add_literals_from_confl_to_learnt(confl, p, fromProber);
 
         // Select next implication to look at
         while (!seen[trail[index--].var()]);
@@ -492,10 +512,9 @@ Clause* Searcher::analyze(
             && ((cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
             && pathC > 1
         ) {
-            doOTFSubsume(confl);
+            check_otf_subsume(confl);
         }
 
-        //Saving old confl for OTF subsumption
         confl = varData[p.var()].reason;
 
         //This clears out vars that haven't been added to learnt_clause,
@@ -511,15 +530,12 @@ Clause* Searcher::analyze(
     stats.litsRedNonMin += learnt_clause.size();
     const size_t origSize = learnt_clause.size();
 
-    //Recursive cc min
     toClear = learnt_clause;
     if (conf.doRecursiveMinim) {
         recursiveConfClauseMin();
     } else {
         normalClMinim();
     }
-
-    //Clear seen
     for (size_t i = 0; i < toClear.size(); i++) {
         seen[toClear[i].var()] = 0;
         seen2[toClear[i].toInt()] = 0;
@@ -1327,7 +1343,7 @@ bool Searcher::handle_conflict(PropBy confl)
     //Stats
     uint32_t backtrack_level;
     uint32_t glue;
-    ResolutionTypes<uint16_t> resolutions;
+    resolutions.clear();;
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
@@ -1341,7 +1357,6 @@ bool Searcher::handle_conflict(PropBy confl)
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
-        , resolutions   //return number of resolutions made here
         , false
     );
 
@@ -2695,7 +2710,7 @@ string Searcher::simplAnalyseGraph(
     , uint32_t& out_btlevel
     , uint32_t &glue
 ) {
-    int pathC = 0;
+    pathC = 0;
     Lit p = lit_Undef;
 
     learnt_clause.clear();

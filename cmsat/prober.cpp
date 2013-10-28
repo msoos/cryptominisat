@@ -644,14 +644,12 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
         PropBy confl = solver->propagate();
         if (!confl.isNULL()) {
-            ResolutionTypes<uint16_t> resolutions;
             uint32_t  glue;
             uint32_t  backtrack_level;
             solver->analyze(
                 confl
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
-                , resolutions   //return number of resolutions made here
                 , true
             );
             if (solver->learnt_clause.empty()) {

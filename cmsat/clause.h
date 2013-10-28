@@ -49,6 +49,11 @@ struct ResolutionTypes
         , redL(0)
     {}
 
+    void clear()
+    {
+        *this = ResolutionTypes<T>();
+    }
+
     uint64_t sum() const
     {
         return bin + tri + irredL + redL;
