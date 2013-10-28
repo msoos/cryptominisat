@@ -709,12 +709,16 @@ class Searcher : public HyperEngine
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         vector<Lit> learnt_clause;
-        Clause* analyze(
+        Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel      //backtrack level
-            , uint32_t &nblevels         //glue of the learnt clause
+            , uint32_t &glue         //glue of the learnt clause
             , bool fromProber = false
         );
+        void minimize_learnt_clause();
+        void mimimize_learnt_clause_based_on_cache();
+        void print_fully_minimized_learnt_clause() const;
+        size_t find_backtrack_level_of_learnt() const;
         int pathC;
         ResolutionTypes<uint16_t> resolutions;
 

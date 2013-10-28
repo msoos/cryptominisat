@@ -447,11 +447,78 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     return cl;
 }
 
+void Searcher::minimize_learnt_clause()
+{
+    const size_t origSize = learnt_clause.size();
 
-Clause* Searcher::analyze(
+    toClear = learnt_clause;
+    if (conf.doRecursiveMinim) {
+        recursiveConfClauseMin();
+    } else {
+        normalClMinim();
+    }
+    for (size_t i = 0; i < toClear.size(); i++) {
+        seen[toClear[i].var()] = 0;
+    }
+    toClear.clear();
+
+    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
+    stats.recMinLitRem += origSize - learnt_clause.size();
+}
+
+void Searcher::mimimize_learnt_clause_based_on_cache()
+{
+    if (conf.doMinimRedMore
+        && learnt_clause.size() > 1
+        && (conf.doAlwaysFMinim
+            || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
+            || learnt_clause.size() < 0.65*hist.conflSizeHistLT.avg()
+            || learnt_clause.size() < 10
+            )
+    ) {
+        stats.moreMinimLitsStart += learnt_clause.size();
+
+        //Binary&cache-based minim
+        minimiseRedFurther(learnt_clause);
+
+        //Stamp-based minimization
+        if (conf.doStamp) {
+            stampBasedRedMinim(learnt_clause);
+        }
+
+        stats.moreMinimLitsEnd += learnt_clause.size();
+    }
+}
+
+void Searcher::print_fully_minimized_learnt_clause() const
+{
+    if (conf.verbosity >= 6) {
+        cout << "Final clause: " << learnt_clause << endl;
+        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+            cout << "lev learnt_clause[" << i << "]:" << varData[learnt_clause[i].var()].level << endl;
+        }
+    }
+}
+
+size_t Searcher::find_backtrack_level_of_learnt() const
+{
+    if (learnt_clause.size() <= 1)
+        return 0;
+    else {
+        uint32_t max_i = 1;
+        for (uint32_t i = 2; i < learnt_clause.size(); i++)
+            if (varData[learnt_clause[i].var()].level > varData[learnt_clause[max_i].var()].level)
+                max_i = i;
+        std::swap(learnt_clause[max_i], learnt_clause[1]);
+        return varData[learnt_clause[1].var()].level;
+    }
+}
+
+
+Clause* Searcher::analyze_conflict(
     PropBy confl
     , uint32_t& out_btlevel
-    , uint32_t &glue
+    , uint32_t& glue
     , bool fromProber
 ) {
     //Set up environment
@@ -524,72 +591,21 @@ Clause* Searcher::analyze(
         //Okay, one more path done
         pathC--;
     } while (pathC > 0);
-    learnt_clause[0] = ~p;
-
     assert(pathC == 0);
+    learnt_clause[0] = ~p;
+    for(const Lit lit: learnt_clause) {
+        seen2[lit.toInt()] = 0;
+    }
+
     stats.litsRedNonMin += learnt_clause.size();
-    const size_t origSize = learnt_clause.size();
-
-    toClear = learnt_clause;
-    if (conf.doRecursiveMinim) {
-        recursiveConfClauseMin();
-    } else {
-        normalClMinim();
-    }
-    for (size_t i = 0; i < toClear.size(); i++) {
-        seen[toClear[i].var()] = 0;
-        seen2[toClear[i].toInt()] = 0;
-    }
-    toClear.clear();
-
-    stats.recMinCl += ((origSize - learnt_clause.size()) > 0);
-    stats.recMinLitRem += origSize - learnt_clause.size();
-
-    //Cache-based minimisation
-    if (conf.doMinimRedMore
-        && learnt_clause.size() > 1
-        && (conf.doAlwaysFMinim
-            || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
-            || learnt_clause.size() < 0.65*hist.conflSizeHistLT.avg()
-            || learnt_clause.size() < 10
-            )
-    ) {
-        stats.moreMinimLitsStart += learnt_clause.size();
-
-        //Binary&cache-based minim
-        minimiseRedFurther(learnt_clause);
-
-        //Stamp-based minimization
-        if (conf.doStamp) {
-            stampBasedRedMinim(learnt_clause);
-        }
-
-        stats.moreMinimLitsEnd += learnt_clause.size();
-    }
+    minimize_learnt_clause();
+    mimimize_learnt_clause_based_on_cache();
+    print_fully_minimized_learnt_clause();
 
     //Calc stats
     glue = calcGlue(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
-
-    //Print fully minimised clause
-    #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
-    cout << "Final clause: " << learnt_clause << endl;
-    for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-        cout << "lev learnt_clause[" << i << "]:" << varData[learnt_clause[i].var()].level << endl;
-    }
-    #endif
-
-    // Find correct backtrack level:
-    if (learnt_clause.size() <= 1)
-        out_btlevel = 0;
-    else {
-        uint32_t max_i = 1;
-        for (uint32_t i = 2; i < learnt_clause.size(); i++)
-            if (varData[learnt_clause[i].var()].level > varData[learnt_clause[max_i].var()].level)
-                max_i = i;
-        std::swap(learnt_clause[max_i], learnt_clause[1]);
-        out_btlevel = varData[learnt_clause[1].var()].level;
-    }
+    out_btlevel = find_backtrack_level_of_learnt();
 
     //Glucose 2.1
     if (!fromProber
@@ -1519,7 +1535,7 @@ bool Searcher::handle_conflict(PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    Clause* cl = analyze(
+    Clause* cl = analyze_conflict(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here

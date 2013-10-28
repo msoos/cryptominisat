@@ -646,7 +646,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         if (!confl.isNULL()) {
             uint32_t  glue;
             uint32_t  backtrack_level;
-            solver->analyze(
+            solver->analyze_conflict(
                 confl
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
