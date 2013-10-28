@@ -1326,160 +1326,65 @@ void Searcher::add_otf_subsume_implicit_clause()
     otf_subsuming_short_cls.clear();
 }
 
-/**
-@brief Handles a conflict that we reached through propagation
-
-Handles on-the-fly subsumption: the OTF subsumption check is done in
-conflict analysis, but this is the code that actually replaces the original
-clause with that of the shorter one
-@returns l_False if UNSAT
-*/
-bool Searcher::handle_conflict(PropBy confl)
+void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Handling conflict" << endl;
-    #endif
+    hist.trailDepthHist.push(trail.size() - trail_lim[0]);
+    hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
 
-    //Stats
-    uint32_t backtrack_level;
-    uint32_t glue;
-    resolutions.clear();;
-    stats.conflStats.numConflicts++;
-    params.conflictsDoneThisRestart++;
-    if (conf.doPrintConflDot)
-        genConfGraph(confl);
+    hist.branchDepthHist.push(decisionLevel());
+    hist.branchDepthHistLT.push(decisionLevel());
 
-    if (decisionLevel() == 0) {
-        return false;
-    }
+    hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
+    hist.branchDepthDeltaHistLT.push(decisionLevel() - backtrack_level);
 
-    Clause* cl = analyze(
-        confl
-        , backtrack_level  //return backtrack level here
-        , glue             //return glue here
-        , false
-    );
+    hist.glueHist.push(glue);
+    hist.glueHistLT.push(glue);
 
-    if (conf.verbosity >= 6) {
-        cout
-        << "c learnt clause: "
-        << learnt_clause
-        << endl;
-    }
-    *drup << learnt_clause << fin;
+    hist.conflSizeHist.push(learnt_clause.size());
+    hist.conflSizeHistLT.push(learnt_clause.size());
 
-    size_t orig_trail_size = trail.size();
-    if (params.update) {
-        //Update history
-        hist.trailDepthHist.push(trail.size() - trail_lim[0]);
-        hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
+    hist.agilityHist.push(agility.getAgility());
+    hist.agilityHistLT.push(agility.getAgility());
 
-        hist.branchDepthHist.push(decisionLevel());
-        hist.branchDepthHistLT.push(decisionLevel());
+    hist.numResolutionsHist.push(resolutions.sum());
+    hist.numResolutionsHistLT.push(resolutions.sum());
 
-        hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
-        hist.branchDepthDeltaHistLT.push(decisionLevel() - backtrack_level);
+    hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
+    hist.trailDepthDeltaHistLT.push(trail.size() - trail_lim[backtrack_level]);
 
-        hist.glueHist.push(glue);
-        hist.glueHistLT.push(glue);
+    #ifdef STATS_NEEDED
+    if (conf.doSQL) {
+        if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
+            printClauseDistribSQL();
 
-        hist.conflSizeHist.push(learnt_clause.size());
-        hist.conflSizeHistLT.push(learnt_clause.size());
-
-        hist.agilityHist.push(agility.getAgility());
-        hist.agilityHistLT.push(agility.getAgility());
-
-        hist.numResolutionsHist.push(resolutions.sum());
-        hist.numResolutionsHistLT.push(resolutions.sum());
-
-        #ifdef STATS_NEEDED
-        if (conf.doSQL) {
-            if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
-                printClauseDistribSQL();
-
-                //Clear distributions
-                std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
-                std::fill(clauseGlueDistrib.begin(), clauseGlueDistrib.end(), 0);
-                for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
-                    for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
-                        sizeAndGlue[i][i2] = 0;
-                    }
+            //Clear distributions
+            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+            std::fill(clauseGlueDistrib.begin(), clauseGlueDistrib.end(), 0);
+            for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
+                for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
+                    sizeAndGlue[i][i2] = 0;
                 }
             }
-
-            //Add this new clause to distributions
-            uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), conf.dumpClauseDistribMaxSize-1);
-            uint32_t truncGlue = std::min<uint32_t>(glue, conf.dumpClauseDistribMaxGlue-1);
-            clauseSizeDistrib[truncSize]++;
-            clauseGlueDistrib[truncGlue]++;
-            sizeAndGlue[truncSize][truncGlue]++;
         }
-        #endif
-    }
-    cancelUntil(backtrack_level);
-    if (params.update) {
-        hist.trailDepthDeltaHist.push(orig_trail_size - trail.size());
-    }
 
-    add_otf_subsume_long_clauses();
-    add_otf_subsume_implicit_clause();
-
-    //Debug
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "Learning:" << learnt_clause
-    << endl
-    << "reverting var " << learnt_clause[0].var()+1
-    << " to " << !learnt_clause[0].sign()
-    << endl;
+        //Add this new clause to distributions
+        uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), conf.dumpClauseDistribMaxSize-1);
+        uint32_t truncGlue = std::min<uint32_t>(glue, conf.dumpClauseDistribMaxGlue-1);
+        clauseSizeDistrib[truncSize]++;
+        clauseGlueDistrib[truncGlue]++;
+        sizeAndGlue[truncSize][truncGlue]++;
+    }
     #endif
-    assert(value(learnt_clause[0]) == l_Undef);
+}
 
-    //Set up everything to get the clause
-    glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
-
-    //Is there on-the-fly subsumption?
-    if (cl == NULL) {
-
-        //Otherwise, we will attach it directly, below
-        if (learnt_clause.size() > 3) {
-            cl = clAllocator->Clause_new(learnt_clause, Searcher::sumConflicts());
-            cl->makeRed(glue);
-            ClOffset offset = clAllocator->getOffset(cl);
-            solver->longRedCls.push_back(offset);
-        }
-
-    } else {
-        //Detach & delete subsumed clause
-        if (conf.verbosity >= 6) {
-            cout
-            << "Detaching OTF subsumed (LAST) clause:"
-            << *cl
-            << endl;
-        }
-        solver->detachClause(*cl);
-
-        //Shrink clause
-        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-            (*cl)[i] = learnt_clause[i];
-        }
-        cl->shrink(cl->size() - learnt_clause.size());
-        assert(cl->size() == learnt_clause.size());
-
-        //Update stats
-        if (cl->red() && cl->stats.glue > glue) {
-            cl->stats.glue = glue;
-        }
-        cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
-    }
-
-    //Attach new clause
+void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
+{
     switch (learnt_clause.size()) {
         case 1:
             //Unitary learnt
             stats.learntUnits++;
             enqueue(learnt_clause[0]);
-            assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0");
+            assert(decisionLevel() == 0);
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -1533,6 +1438,109 @@ bool Searcher::handle_conflict(PropBy confl)
 
             break;
     }
+}
+
+void Searcher::print_learning_debug_info() const
+{
+    #ifndef VERBOSE_DEBUG
+    return;
+    #endif
+
+    cout
+    << "Learning:" << learnt_clause
+    << endl
+    << "reverting var " << learnt_clause[0].var()+1
+    << " to " << !learnt_clause[0].sign()
+    << endl;
+}
+
+void Searcher::print_learnt_clause() const
+{
+    if (conf.verbosity >= 6) {
+        cout
+        << "c learnt clause: "
+        << learnt_clause
+        << endl;
+    }
+}
+
+Clause* Searcher::handle_last_confl_otf_subsumption(
+    Clause* cl
+    , const size_t glue
+) {
+    //Is there on-the-fly subsumption?
+    if (cl == NULL) {
+
+        //Otherwise, we will attach it directly, below
+        if (learnt_clause.size() > 3) {
+            cl = clAllocator->Clause_new(learnt_clause, Searcher::sumConflicts());
+            cl->makeRed(glue);
+            ClOffset offset = clAllocator->getOffset(cl);
+            solver->longRedCls.push_back(offset);
+        }
+
+    } else {
+        //Detach & delete subsumed clause
+        if (conf.verbosity >= 6) {
+            cout
+            << "Detaching OTF subsumed (LAST) clause:"
+            << *cl
+            << endl;
+        }
+        solver->detachClause(*cl);
+
+        //Shrink clause
+        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+            (*cl)[i] = learnt_clause[i];
+        }
+        cl->shrink(cl->size() - learnt_clause.size());
+        assert(cl->size() == learnt_clause.size());
+
+        //Update stats
+        if (cl->red() && cl->stats.glue > glue) {
+            cl->stats.glue = glue;
+        }
+        cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
+    }
+
+    return cl;
+}
+
+bool Searcher::handle_conflict(PropBy confl)
+{
+    uint32_t backtrack_level;
+    uint32_t glue;
+    resolutions.clear();;
+    stats.conflStats.numConflicts++;
+    params.conflictsDoneThisRestart++;
+    if (conf.doPrintConflDot)
+        genConfGraph(confl);
+
+    if (decisionLevel() == 0)
+        return false;
+
+    Clause* cl = analyze(
+        confl
+        , backtrack_level  //return backtrack level here
+        , glue             //return glue here
+        , false
+    );
+    print_learnt_clause();
+    *drup << learnt_clause << fin;
+
+    size_t orig_trail_size = trail.size();
+    if (params.update) {
+        update_history_stats(backtrack_level, glue);
+    }
+    cancelUntil(backtrack_level);
+
+    add_otf_subsume_long_clauses();
+    add_otf_subsume_implicit_clause();
+    print_learning_debug_info();
+    assert(value(learnt_clause[0]) == l_Undef);
+    glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
+    cl = handle_last_confl_otf_subsumption(cl, glue);
+    attach_and_enqueue_learnt_clause(cl);
 
     varDecayActivity();
     decayClauseAct();
