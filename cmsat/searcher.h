@@ -715,9 +715,9 @@ class Searcher : public HyperEngine
         vector<std::pair<Lit, size_t> > lastDecisionLevel; //for glue-based extra var activity bumping
 
         //OTF subsumption
-        vector<ClOffset> toAttachLater;
+        vector<ClOffset> otf_subsuming_long_cls;
+        vector<OTFClause> otf_subsuming_short_cls;
         void doOTFSubsume(PropBy confl);
-        vector<OTFClause> otfMustAttach;
         size_t tmp_learnt_clause_size;
         CL_ABST_TYPE tmp_learnt_clause_abst;
 

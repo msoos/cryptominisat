@@ -235,7 +235,7 @@ void Searcher::doOTFSubsume(const PropBy confl)
                 newCl.size++;
             }
         }
-        otfMustAttach.push_back(newCl);
+        otf_subsuming_short_cls.push_back(newCl);
         if (conf.verbosity >= 6) {
             cout << "New implicit clause that subsumes a long clause:";
             for(unsigned  i = 0; i < newCl.size; i++) {
@@ -281,7 +281,7 @@ void Searcher::doOTFSubsume(const PropBy confl)
             << "New smaller clause OTF:" << cl << endl;
         }
         *drup << cl << fin << findelay;
-        toAttachLater.push_back(offset);
+        otf_subsuming_long_cls.push_back(offset);
     }
 }
 
@@ -369,8 +369,8 @@ Clause* Searcher::analyze(
     learnt_clause.clear();
     toClear.clear();
     lastDecisionLevel.clear();
-    otfMustAttach.clear();
-    toAttachLater.clear();
+    otf_subsuming_short_cls.clear();
+    otf_subsuming_long_cls.clear();
     tmp_learnt_clause_size = 0;
     tmp_learnt_clause_abst = 0;
     assert(decisionLevel() > 0);
@@ -1176,8 +1176,8 @@ void Searcher::checkNeedRestart()
 void Searcher::add_otf_subsume_long_clauses()
 {
     //Hande long OTF subsumption
-    for(size_t i = 0; i < toAttachLater.size(); i++) {
-        const ClOffset offset = toAttachLater[i];
+    for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
+        const ClOffset offset = otf_subsuming_long_cls[i];
         Clause& cl = *solver->clAllocator->getPointer(offset);
         cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
@@ -1225,14 +1225,14 @@ void Searcher::add_otf_subsume_long_clauses()
         solver->attachClause(cl, false);
         cl.reCalcAbstraction();
     }
-    toAttachLater.clear();
+    otf_subsuming_long_cls.clear();
 }
 
 void Searcher::add_otf_subsume_implicit_clause()
 {
     //Handle implicit OTF subsumption
     for(vector<OTFClause>::iterator
-        it = otfMustAttach.begin(), end = otfMustAttach.end()
+        it = otf_subsuming_short_cls.begin(), end = otf_subsuming_short_cls.end()
         ; it != end
         ; it++
     ) {
@@ -1307,7 +1307,7 @@ void Searcher::add_otf_subsume_implicit_clause()
             }
         }
     }
-    otfMustAttach.clear();
+    otf_subsuming_short_cls.clear();
 }
 
 /**
@@ -3000,8 +3000,8 @@ size_t Searcher::memUsed() const
 {
     size_t mem = HyperEngine::memUsed();
     mem += act_polar_backup.memUsed();
-    mem += otfMustAttach.capacity()*sizeof(OTFClause);
-    mem += toAttachLater.capacity()*sizeof(ClOffset);
+    mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
+    mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += activities.capacity()*sizeof(uint32_t);
     mem += order_heap.memUsed();
     mem += learnt_clause.capacity()*sizeof(Lit);
@@ -3012,12 +3012,12 @@ size_t Searcher::memUsed() const
     if (conf.verbosity >= 3) {
         cout
         << "c otfMustAttach bytes: "
-        << otfMustAttach.capacity()*sizeof(OTFClause)
+        << otf_subsuming_short_cls.capacity()*sizeof(OTFClause)
         << endl;
 
         cout
         << "c toAttachLater bytes: "
-        << toAttachLater.capacity()*sizeof(ClOffset)
+        << otf_subsuming_long_cls.capacity()*sizeof(ClOffset)
         << endl;
 
         cout
