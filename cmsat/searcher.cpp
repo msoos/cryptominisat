@@ -379,6 +379,11 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
             cout << "resolv (long): " << *cl << endl;
             break;
         }
+
+        case null_clause_t: {
+            assert(false);
+            break;
+        }
     }
 }
 
@@ -500,7 +505,7 @@ void Searcher::print_fully_minimized_learnt_clause() const
     }
 }
 
-size_t Searcher::find_backtrack_level_of_learnt() const
+size_t Searcher::find_backtrack_level_of_learnt()
 {
     if (learnt_clause.size() <= 1)
         return 0;
@@ -514,38 +519,14 @@ size_t Searcher::find_backtrack_level_of_learnt() const
     }
 }
 
-
-Clause* Searcher::analyze_conflict(
-    PropBy confl
-    , uint32_t& out_btlevel
-    , uint32_t& glue
-    , bool fromProber
-) {
-    //Set up environment
-    learnt_clause.clear();
-    toClear.clear();
-    lastDecisionLevel.clear();
-    otf_subsuming_short_cls.clear();
-    otf_subsuming_long_cls.clear();
-    tmp_learnt_clause_size = 0;
-    tmp_learnt_clause_abst = 0;
-    assert(decisionLevel() > 0);
-
+Clause* Searcher::create_learnt_clause(PropBy confl, bool fromProber)
+{
     pathC = 0;
-    Lit p = lit_Undef;
     int index = trail.size() - 1;
-    out_btlevel = 0;
+    Lit p = lit_Undef;
+    Clause* last_resolved_long_cl = NULL;
 
-    #ifdef DEBUG_RESOLV
-    cout << "Before resolution, trail is: " << endl;
-    print_trail();
-    cout << "Conflicting clause: " << confl << endl;
-    cout << "Fail bin lit: " << failBinLit << endl;
-    #endif
-
-    //cout << "---- Start analysis -----" << endl;
     learnt_clause.push_back(lit_Undef); //make space for ~p
-    Clause* cl;
     do {
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
@@ -562,7 +543,7 @@ Clause* Searcher::analyze_conflict(
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        cl = add_literals_from_confl_to_learnt(confl, p, fromProber);
+        last_resolved_long_cl = add_literals_from_confl_to_learnt(confl, p, fromProber);
 
         // Select next implication to look at
         while (!seen[trail[index--].var()]);
@@ -572,11 +553,11 @@ Clause* Searcher::analyze_conflict(
         if (!fromProber
             && conf.doOTFSubsume
             //A long clause
-            && cl != NULL
+            && last_resolved_long_cl != NULL
             //Must subsume, so must be smaller
-            && cl->size() > tmp_learnt_clause_size
+            && last_resolved_long_cl->size() > tmp_learnt_clause_size
             //Everything in learnt_cl_2 seems to be also in cl
-            && ((cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
+            && ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
             && pathC > 1
         ) {
             check_otf_subsume(confl);
@@ -597,56 +578,94 @@ Clause* Searcher::analyze_conflict(
         seen2[lit.toInt()] = 0;
     }
 
-    stats.litsRedNonMin += learnt_clause.size();
-    minimize_learnt_clause();
-    mimimize_learnt_clause_based_on_cache();
-    print_fully_minimized_learnt_clause();
+    return last_resolved_long_cl;
+}
 
-    //Calc stats
-    glue = calcGlue(learnt_clause);
-    stats.litsRedFinal += learnt_clause.size();
-    out_btlevel = find_backtrack_level_of_learnt();
-
-    //Glucose 2.1
-    if (!fromProber
-        && params.rest_type == Restart::glue
+void Searcher::bump_var_activities_based_on_last_decision_level(size_t glue)
+{
+    for (vector<pair<Lit, size_t> >::const_iterator
+        it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
+        ; it != end
+        ; it++
     ) {
-        for (vector<pair<Lit, size_t> >::const_iterator
-            it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
-            ; it != end
-            ; it++
-        ) {
-            if (it->second < glue) {
-                varBumpActivity(it->first.var());
-            }
+        if (it->second < glue) {
+            varBumpActivity(it->first.var());
         }
     }
-    lastDecisionLevel.clear();
+}
 
+Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl)
+{
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
     if (!conf.doOTFSubsume
         //Last was a lont clause
-        || cl == NULL
+        || last_resolved_long_cl == NULL
         //Final clause will not be implicit
         || learnt_clause.size() <= 3
         //Larger or equivalent clauses cannot subsume the clause
-        || learnt_clause.size() >= cl->size()
+        || learnt_clause.size() >= last_resolved_long_cl->size()
     ) {
         return NULL;
     }
 
     //Does it subsume?
-    if (!subset(learnt_clause, *cl))
+    if (!subset(learnt_clause, *last_resolved_long_cl))
         return NULL;
 
     //on-the-fly subsumed the original clause
     stats.otfSubsumed++;
     stats.otfSubsumedLong++;
-    stats.otfSubsumedRed += cl->red();
-    stats.otfSubsumedLitsGained += cl->size() - learnt_clause.size();
-    return cl;
+    stats.otfSubsumedRed += last_resolved_long_cl->red();
+    stats.otfSubsumedLitsGained += last_resolved_long_cl->size() - learnt_clause.size();
+    return last_resolved_long_cl;
+}
+
+void Searcher::print_debug_resolution_data(const PropBy confl)
+{
+    #ifndef DEBUG_RESOLV
+    return;
+    #endif
+
+    cout << "Before resolution, trail is: " << endl;
+    print_trail();
+    cout << "Conflicting clause: " << confl << endl;
+    cout << "Fail bin lit: " << failBinLit << endl;
+}
+
+Clause* Searcher::analyze_conflict(
+    PropBy confl
+    , uint32_t& out_btlevel
+    , uint32_t& glue
+    , bool fromProber
+) {
+    //Set up environment
+    learnt_clause.clear();
+    toClear.clear();
+    lastDecisionLevel.clear();
+    otf_subsuming_short_cls.clear();
+    otf_subsuming_long_cls.clear();
+    tmp_learnt_clause_size = 0;
+    tmp_learnt_clause_abst = 0;
+    assert(decisionLevel() > 0);
+
+    print_debug_resolution_data(confl);
+    Clause* last_resolved_long_cl = create_learnt_clause(confl, fromProber);
+    stats.litsRedNonMin += learnt_clause.size();
+    minimize_learnt_clause();
+    mimimize_learnt_clause_based_on_cache();
+    print_fully_minimized_learnt_clause();
+
+    glue = calcGlue(learnt_clause);
+    stats.litsRedFinal += learnt_clause.size();
+    out_btlevel = find_backtrack_level_of_learnt();
+    if (!fromProber && params.rest_type == Restart::glue) {
+        bump_var_activities_based_on_last_decision_level(glue);
+    }
+    lastDecisionLevel.clear();
+
+    return otf_subsume_last_resolved_clause(last_resolved_long_cl);
 
 }
 
@@ -1544,7 +1563,6 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learnt_clause();
     *drup << learnt_clause << fin;
 
-    size_t orig_trail_size = trail.size();
     if (params.update) {
         update_history_stats(backtrack_level, glue);
     }
