@@ -2940,10 +2940,8 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     assert(ok);
     assert(!conflPart.isNULL());
 
-    static int num = 0;
-    num++;
     std::stringstream s;
-    s << "confls/" << "confl" << num << ".dot";
+    s << "confls/" << "confl" << solver->sumConflicts() << ".dot";
     std::string filename = s.str();
 
     std::ofstream file;
