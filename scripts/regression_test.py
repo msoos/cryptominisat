@@ -581,6 +581,30 @@ class Tester:
     def check_dump_irred(self, fname):
         currTime = time.time()
         irred_cnf = "irred_data.cnf"
+        self.needDebugLib = False
+        extra_optins = " --dumpirred %s --maxconfl 1000 " % irred_cnf
+        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
+        self.needDebugLib = True
+        diffTime = time.time() - currTime
+        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
+            print "Too much time to solve, aborted!"
+            return
+        else:
+            print "Within time limit: %f s" % (time.time() - currTime)
+
+        if not file_exists(irred_cnf):
+            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
+            print "Error log: ", consoleOutput
+            exit()
+
+        self.needDebugLib = False
+        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True)
+        self.needDebugLib = True
+        os.unlink(irred_cnf)
+
+    def check_dump_red(self, fname):
+        currTime = time.time()
+        irred_cnf = "irred_data.cnf"
         red_cnf = "red_data.cnf"
         self.needDebugLib = False
         extra_optins = " --dumpirred %s --dumpred %s --maxconfl 1000 " % (irred_cnf, red_cnf)
@@ -892,6 +916,7 @@ class Tester:
                 #check file
                 self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
                 self.check_dump_irred(fname=file_name2)
+                self.check_dump_red(fname=file_name2)
 
                 #remove temporary filenames
                 os.unlink(file_name2)
