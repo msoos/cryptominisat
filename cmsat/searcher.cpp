@@ -2969,10 +2969,6 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     << " , fontsize=8"
     << " ];" << endl;
 
-    #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-    cout << "conflict: "<< confl << endl;
-    #endif
-
     vector<Lit> lits = get_lits_from_conflict(conflPart);
     for (const Lit lit: lits) {
         file << "x" << lit.unsign() << " -> vertK "
@@ -2998,8 +2994,11 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     file  << "}" << endl;
     file.close();
 
-    cout << "c Printed implication graph (with conflict clauses) to file "
-    << filename << endl;
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Printed implication graph (with conflict clauses) to file "
+        << filename << endl;
+    };
 }
 
 void Searcher::decayClauseAct()
