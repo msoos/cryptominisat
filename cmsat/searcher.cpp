@@ -2747,7 +2747,6 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
     return std::make_pair(removedIrred, removedRed);
 }
 
-//Only used to generate nice Graphviz graphs
 string Searcher::analyze_confl_for_graphviz_graph(
     PropBy conflHalf
     , uint32_t& out_btlevel
@@ -2816,7 +2815,6 @@ string Searcher::analyze_confl_for_graphviz_graph(
     return resolutions.str();
 }
 
-//Only used to generate nice Graphviz graphs
 void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
 {
     assert(ok);
