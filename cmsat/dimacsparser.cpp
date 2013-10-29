@@ -250,7 +250,8 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     } else if (ret == l_False) {
         partFile << "s UNSAT" << endl;
     } else if (ret == l_Undef) {
-        assert(false);
+        cout << "c timeout, exiting" << endl;
+        exit(15);
     } else {
         assert(false);
     }

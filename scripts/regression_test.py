@@ -133,7 +133,15 @@ def unique_fuzz_file(file_name_begin):
             return file_name
         except OSError:
             pass
+
         counter += 1
+
+def file_exists(fname) :
+    try:
+       with open(fname):
+           return True
+    except IOError:
+       return False
 
 class Tester:
     def __init__(self):
@@ -142,7 +150,6 @@ class Tester:
         self.testDirNewVar = options.testDirNewVar
 
         self.ignoreNoSolution = False
-        self.needDebugLib = True
 
     def random_options(self) :
         cmd = " "
@@ -202,7 +209,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None):
+    def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None, extraOptions=""):
         if os.path.isfile(options.solver) != True:
             print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
                 options.solver
@@ -220,6 +227,7 @@ class Tester:
             command += "--debugnewvar "
         command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
+        command += extraOptions
         command += fname
         if fnameDrup:
             command += " --drupexistscheck 0 " + fnameDrup
@@ -570,11 +578,33 @@ class Tester:
                 #delete temporary file
                 os.unlink(tmpfname)
 
+    def check_dump_irred(self, fname):
+        currTime = time.time()
+        temp_cnf = "valami.cnf"
+        self.needDebugLib = False
+        extra_optins = " --dumpirred %s --maxconfl 1000 " % temp_cnf
+        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
+        self.needDebugLib = True
+        diffTime = time.time() - currTime
+        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
+            print "Too much time to solve, aborted!"
+            return
+        else:
+            print "Within time limit: %f s" % (time.time() - currTime)
+
+        if not file_exists(temp_cnf):
+            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % temp_cnf
+            print "Error log: ", consoleOutput
+            exit()
+
+        self.check(temp_cnf, checkAgainst=fname, needToLimitTime=True)
+        os.unlink(temp_cnf)
 
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
-              needSolve=True, needToLimitTime=False):
+              needSolve=True, needToLimitTime=False, checkAgainst=None):
 
         consoleOutput = ""
+        if checkAgainst == None: checkAgainst = fname
         currTime = time.time()
 
         #Do we need to solve the problem, or is it already solved?
@@ -603,14 +633,14 @@ class Tester:
 
         #if library debug is set, check it
         if (self.needDebugLib) :
-            self.checkDebugLib(fname)
+            self.checkDebugLib(checkAgainst)
 
         print "Checking console output..."
         (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
 
         if not unsat :
-            self.test_found_solution(solution, fname)
+            self.test_found_solution(solution, checkAgainst)
             return;
 
         #it's UNSAT and we should not check, so exit
@@ -647,7 +677,7 @@ class Tester:
                 print "OK, DRUP says:", drupLine
 
         #check with other solver
-        ret = self.checkUNSAT(fname)
+        ret = self.checkUNSAT(checkAgainst)
         if ret == None :
             print "Other solver time-outed, cannot check"
         elif ret == True:
@@ -857,6 +887,7 @@ class Tester:
 
                 #check file
                 self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
+                self.check_dump_irred(fname=file_name2)
 
                 #remove temporary filenames
                 os.unlink(file_name2)

@@ -2511,7 +2511,7 @@ void Solver::dumpBinClauses(
                     *outfile
                     << tmpCl[0] << " "
                     << tmpCl[1]
-                    << fin;
+                    << " 0\n";
                 }
             }
         }
@@ -2553,7 +2553,7 @@ void Solver::dumpTriClauses(
                     << tmpCl[0] << " "
                     << tmpCl[1] << " "
                     << tmpCl[2]
-                    << fin;
+                    << " 0\n";
                 }
             }
         }
@@ -2615,7 +2615,7 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         *os
         << tmpCl[0] << " "
         << tmpCl[1]
-        << fin;
+        << " 0\n";
 
         tmpCl[0] ^= true;
         tmpCl[1] ^= true;
@@ -2623,7 +2623,7 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
         *os
         << tmpCl[0] << " "
         << tmpCl[1]
-        << fin;
+        << " 0\n";
     }
 }
 
@@ -2632,7 +2632,7 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
-        << fin;
+        << " 0\n";
     }
 }
 
@@ -2722,7 +2722,7 @@ void Solver::dump_clauses(const vector<ClOffset>& cls, std::ostream* os) const
     ) {
         Clause* cl = clAllocator->getPointer(*it);
         assert(!cl->red());
-        *os << sortLits(clauseBackNumbered(*cl)) << " 0" << endl;
+        *os << sortLits(clauseBackNumbered(*cl)) << " 0\n";
     }
 }
 
@@ -3474,18 +3474,9 @@ void Solver::dumpIfNeeded() const
         return;
     }
 
-    //Handle UNSAT
-    if (!solver->okay()) {
-        cout
-        << "c Problem is UNSAT, so irred and/or redundant clauses cannot be dumped"
-        << endl;
-
-        return;
-    }
-
     //Don't dump implicit clauses multiple times
-    if (conf.doStrSubImplicit) {
-        solver->clauseVivifier->subsumeImplicit();
+    if (conf.doStrSubImplicit && okay()) {
+        clauseVivifier->subsumeImplicit();
     }
 
     if (!conf.redDumpFname.empty()) {
@@ -3500,7 +3491,13 @@ void Solver::dumpIfNeeded() const
         } else {
             outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             try {
-                solver->dumpRedClauses(&outfile, conf.maxDumpRedsSize);
+                if (!okay()) {
+                    outfile
+                    << "p cnf 0 1\n"
+                    << "0\n";
+                } else {
+                    dumpRedClauses(&outfile, conf.maxDumpRedsSize);
+                }
             } catch (std::ifstream::failure e) {
                 cout
                 << "Error writing redcible clause file dump: " << e.what()
@@ -3534,7 +3531,13 @@ void Solver::dumpIfNeeded() const
         if (okay()) {
             outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             try {
-                solver->dumpIrredClauses(&outfile);
+                if (!okay()) {
+                    outfile
+                    << "p cnf 0 1\n"
+                    << "0\n";
+                } else {
+                    dumpIrredClauses(&outfile);
+                }
             } catch (std::ifstream::failure e) {
                 cout
                 << "Error writing irredcible clause file dump: " << e.what()
