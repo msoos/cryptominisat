@@ -598,12 +598,14 @@ class Tester:
             print "Error log: ", consoleOutput
             exit()
 
+        self.needDebugLib = False
         self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True, extraOptions=" --input %s " % red_cnf)
+        self.needDebugLib = True
         os.unlink(irred_cnf)
         os.unlink(red_cnf)
 
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
-              needSolve=True, needToLimitTime=False, checkAgainst=None):
+              needSolve=True, needToLimitTime=False, checkAgainst=None, extraOptions=""):
 
         consoleOutput = ""
         if checkAgainst == None: checkAgainst = fname
@@ -611,7 +613,7 @@ class Tester:
 
         #Do we need to solve the problem, or is it already solved?
         if needSolve:
-            consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup)
+            consoleOutput = self.execute(fname, newVar, needToLimitTime, fnameDrup=fnameDrup, extraOptions=extraOptions)
         else:
             if not os.path.isfile(fnameSolution) :
                 print "ERROR! Solution file '%s' is not a file!" % fnameSolution
