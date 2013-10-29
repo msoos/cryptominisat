@@ -768,8 +768,8 @@ class Searcher : public HyperEngine
 
         /////////////////
         //Graphical conflict generation
-        void         genConfGraph     (PropBy conflPart);
-        string simplAnalyseGraph (PropBy conflHalf, uint32_t& out_btlevel, uint32_t &glue);
+        void   create_graphviz_confl_graph     (PropBy conflPart);
+        string analyze_confl_for_graphviz_graph (PropBy conflHalf, uint32_t& out_btlevel, uint32_t &glue);
 
         /////////////////
         // Variable activity

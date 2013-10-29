@@ -1550,7 +1550,7 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
-        genConfGraph(confl);
+        create_graphviz_confl_graph(confl);
 
     if (decisionLevel() == 0)
         return false;
@@ -2748,7 +2748,7 @@ std::pair<size_t, size_t> Searcher::removeUselessBins()
 }
 
 //Only used to generate nice Graphviz graphs
-string Searcher::simplAnalyseGraph(
+string Searcher::analyze_confl_for_graphviz_graph(
     PropBy conflHalf
     , uint32_t& out_btlevel
     , uint32_t &glue
@@ -2817,7 +2817,7 @@ string Searcher::simplAnalyseGraph(
 }
 
 //Only used to generate nice Graphviz graphs
-void Searcher::genConfGraph(const PropBy conflPart)
+void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
 {
     assert(ok);
     assert(!conflPart.isNULL());
@@ -2839,7 +2839,7 @@ void Searcher::genConfGraph(const PropBy conflPart)
 
     //Special vertex indicating final conflict clause (to help us)
     uint32_t out_btlevel, glue;
-    const std::string res = simplAnalyseGraph(conflPart, out_btlevel, glue);
+    const std::string res = analyze_confl_for_graphviz_graph(conflPart, out_btlevel, glue);
     file << "vertK -> dummy;";
     file << "dummy "
     << "[ "
