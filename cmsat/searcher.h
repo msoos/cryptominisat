@@ -770,6 +770,14 @@ class Searcher : public HyperEngine
         //Graphical conflict generation
         void   create_graphviz_confl_graph     (PropBy conflPart);
         string analyze_confl_for_graphviz_graph (PropBy conflHalf, uint32_t& out_btlevel, uint32_t &glue);
+        void print_edges_for_graphviz_file(std::ofstream& file) const;
+        void print_vertex_definitions_for_graphviz_file(std::ofstream& file);
+        void fill_seen_for_lits_connected_to_conflict_graph(
+            vector<Lit>& lits
+        );
+        vector<Lit> get_lits_from_conflict(const PropBy conflPart);
+
+
 
         /////////////////
         // Variable activity

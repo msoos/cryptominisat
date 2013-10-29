@@ -2815,108 +2815,8 @@ string Searcher::analyze_confl_for_graphviz_graph(
     return resolutions.str();
 }
 
-void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
+void Searcher::print_edges_for_graphviz_file(std::ofstream& file) const
 {
-    assert(ok);
-    assert(!conflPart.isNULL());
-
-    static int num = 0;
-    num++;
-    std::stringstream s;
-    s << "confls/" << "confl" << num << ".dot";
-    std::string filename = s.str();
-
-    std::ofstream file;
-    file.open(filename.c_str());
-    if (!file) {
-        cout << "Couldn't open filename " << filename << endl;
-        cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
-        exit(-1);
-    }
-    file << "digraph G {" << endl;
-
-    //Special vertex indicating final conflict clause (to help us)
-    uint32_t out_btlevel, glue;
-    const std::string res = analyze_confl_for_graphviz_graph(conflPart, out_btlevel, glue);
-    file << "vertK -> dummy;";
-    file << "dummy "
-    << "[ "
-    << " shape=record"
-    << " , label=\"{"
-    << " clause: " << learnt_clause
-    << " | btlevel: " << out_btlevel
-    << " | glue: " << glue
-    << " | {resol: | " << res << " }"
-    << "}\""
-    << " , fontsize=8"
-    << " ];" << endl;
-
-    PropByForGraph confl(conflPart, failBinLit, *clAllocator);
-    #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-    cout << "conflict: "<< confl << endl;
-    #endif
-
-    vector<Lit> lits;
-    for (uint32_t i = 0; i < confl.size(); i++) {
-        const Lit lit = confl[i];
-        assert(value(lit) == l_False);
-        lits.push_back(lit);
-
-        //Put these into the impl. graph for sure
-        seen[lit.var()] = true;
-    }
-
-    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++) {
-        file << "x" << it->unsign() << " -> vertK "
-        << "[ "
-        << " label=\"" << lits << "\""
-        << " , fontsize=8"
-        << " ];" << endl;
-    }
-
-    //Special conflict vertex
-    file << "vertK"
-    << " [ "
-    << "shape=\"box\""
-    << ", style=\"filled\""
-    << ", color=\"darkseagreen\""
-    << ", label=\"K : " << lits << "\""
-    << "];" << endl;
-
-    //Calculate which literals are directly connected with the conflict
-    vector<Lit> insideImplGraph;
-    while(!lits.empty())
-    {
-        vector<Lit> newLits;
-        for (size_t i = 0; i < lits.size(); i++) {
-            PropBy reason = varData[lits[i].var()].reason;
-            //Reason in NULL, so remove: it's got no antedecent
-            if (reason.isNULL()) continue;
-
-            #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-            cout << "Reason for lit " << lits[i] << " : " << reason << endl;
-            #endif
-
-            PropByForGraph prop(reason, lits[i], *clAllocator);
-            for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
-                const Lit lit = prop[i2];
-                assert(value(lit) != l_Undef);
-
-                //Don't put into the impl. graph lits at 0 decision level
-                if (varData[lit.var()].level == 0) continue;
-
-                //Already added, just drop
-                if (seen[lit.var()]) continue;
-
-                seen[lit.var()] = true;
-                newLits.push_back(lit);
-                insideImplGraph.push_back(lit);
-            }
-        }
-        lits = newLits;
-    }
-
-    //Print edges
     for (size_t i = 0; i < trail.size(); i++) {
         const Lit lit = trail[i];
 
@@ -2956,8 +2856,10 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
             << " ];" << endl;
         }
     }
+}
 
-    //Print vertex definitions
+void Searcher::print_vertex_definitions_for_graphviz_file(std::ofstream& file)
+{
     for (size_t i = 0; i < trail.size(); i++) {
         Lit lit = trail[i];
 
@@ -2981,6 +2883,119 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
         << " @ " << varData[lit.var()].level << "\""
         << " ];" << endl;
     }
+}
+
+void Searcher::fill_seen_for_lits_connected_to_conflict_graph(
+    vector<Lit>& lits
+) {
+    while(!lits.empty())
+    {
+        vector<Lit> newLits;
+        for (size_t i = 0; i < lits.size(); i++) {
+            PropBy reason = varData[lits[i].var()].reason;
+            //Reason in NULL, so remove: it's got no antedecent
+            if (reason.isNULL()) continue;
+
+            #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
+            cout << "Reason for lit " << lits[i] << " : " << reason << endl;
+            #endif
+
+            PropByForGraph prop(reason, lits[i], *clAllocator);
+            for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
+                const Lit lit = prop[i2];
+                assert(value(lit) != l_Undef);
+
+                //Don't put into the impl. graph lits at 0 decision level
+                if (varData[lit.var()].level == 0) continue;
+
+                //Already added, just drop
+                if (seen[lit.var()]) continue;
+
+                seen[lit.var()] = true;
+                newLits.push_back(lit);
+            }
+        }
+        lits = newLits;
+    }
+}
+
+vector<Lit> Searcher::get_lits_from_conflict(const PropBy conflPart)
+{
+    vector<Lit> lits;
+    PropByForGraph confl(conflPart, failBinLit, *clAllocator);
+    for (uint32_t i = 0; i < confl.size(); i++) {
+        const Lit lit = confl[i];
+        assert(value(lit) == l_False);
+        lits.push_back(lit);
+
+        //Put these into the impl. graph for sure
+        seen[lit.var()] = true;
+    }
+
+    return lits;
+}
+
+void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
+{
+    assert(ok);
+    assert(!conflPart.isNULL());
+
+    static int num = 0;
+    num++;
+    std::stringstream s;
+    s << "confls/" << "confl" << num << ".dot";
+    std::string filename = s.str();
+
+    std::ofstream file;
+    file.open(filename.c_str());
+    if (!file) {
+        cout << "Couldn't open filename " << filename << endl;
+        cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
+        exit(-1);
+    }
+    file << "digraph G {" << endl;
+
+    //Special vertex indicating final conflict clause (to help us)
+    uint32_t out_btlevel, glue;
+    const std::string res = analyze_confl_for_graphviz_graph(conflPart, out_btlevel, glue);
+    file << "vertK -> dummy;";
+    file << "dummy "
+    << "[ "
+    << " shape=record"
+    << " , label=\"{"
+    << " clause: " << learnt_clause
+    << " | btlevel: " << out_btlevel
+    << " | glue: " << glue
+    << " | {resol: | " << res << " }"
+    << "}\""
+    << " , fontsize=8"
+    << " ];" << endl;
+
+    #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
+    cout << "conflict: "<< confl << endl;
+    #endif
+
+    vector<Lit> lits = get_lits_from_conflict(conflPart);
+    for (const Lit lit: lits) {
+        file << "x" << lit.unsign() << " -> vertK "
+        << "[ "
+        << " label=\"" << lits << "\""
+        << " , fontsize=8"
+        << " ];" << endl;
+    }
+
+    //Special conflict vertex
+    file << "vertK"
+    << " [ "
+    << "shape=\"box\""
+    << ", style=\"filled\""
+    << ", color=\"darkseagreen\""
+    << ", label=\"K : " << lits << "\""
+    << "];" << endl;
+
+    fill_seen_for_lits_connected_to_conflict_graph(lits);
+    print_edges_for_graphviz_file(file);
+    print_vertex_definitions_for_graphviz_file(file);
 
     file  << "}" << endl;
     file.close();
