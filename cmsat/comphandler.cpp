@@ -172,8 +172,13 @@ bool CompHandler::handle()
         moveClausesLong(solver->longIrredCls, &newSolver, comp);
         moveClausesLong(solver->longRedCls, &newSolver, comp);
 
-        lbool status = newSolver.solve();
-        assert(status != l_Undef);
+        const lbool status = newSolver.solve();
+        //Out of time
+        if (status == l_Undef) {
+            readdRemovedClauses();
+            break;
+        }
+
         if (status == l_False) {
             solver->ok = false;
             if (solver->conf.verbosity >= 2) {
