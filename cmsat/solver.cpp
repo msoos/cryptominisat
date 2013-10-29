@@ -3464,12 +3464,66 @@ size_t Solver::getNumVarsReplaced() const
     return varReplacer->getNumReplacedVars();
 }
 
+void Solver::open_file_and_dump_red_clauses() const
+{
+    std::ofstream outfile;
+    open_dump_file(outfile, conf.redDumpFname);
+    try {
+        if (!okay()) {
+            outfile
+            << "p cnf 0 1\n"
+            << "0\n";
+        } else {
+            dumpRedClauses(&outfile, conf.maxDumpRedsSize);
+        }
+    } catch (std::ifstream::failure e) {
+        cout
+        << "Error writing clause dump to file: " << e.what()
+        << endl;
+        exit(-1);
+    }
+}
+
+void Solver::open_file_and_dump_irred_clauses() const
+{
+    std::ofstream outfile;
+    open_dump_file(outfile, conf.irredDumpFname);
+
+    try {
+        if (!okay()) {
+            outfile
+            << "p cnf 0 1\n"
+            << "0\n";
+        } else {
+            dumpIrredClauses(&outfile);
+        }
+    } catch (std::ifstream::failure e) {
+        cout
+        << "Error writing clause dump to file: " << e.what()
+        << endl;
+        exit(-1);
+    }
+}
+
+void Solver::open_dump_file(std::ofstream& outfile, std::string filename) const
+{
+    outfile.open(filename.c_str());
+    if (!outfile) {
+        cout
+        << "Cannot open file '"
+        << filename
+        << "' for writing. exiting"
+        << endl;
+        exit(-1);
+    }
+    outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+}
+
 void Solver::dumpIfNeeded() const
 {
     if (conf.redDumpFname.empty()
         && conf.irredDumpFname.empty()
     ) {
-        //Nothing to do, return
         return;
     }
 
@@ -3479,79 +3533,16 @@ void Solver::dumpIfNeeded() const
     }
 
     if (!conf.redDumpFname.empty()) {
-        std::ofstream outfile;
-        outfile.open(conf.redDumpFname.c_str());
-        if (!outfile) {
-            cout
-            << "ERROR: Couldn't open file '"
-            << conf.redDumpFname
-            << "' for writing, cannot dump redundant clauses!"
-            << endl;
-        } else {
-            outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            try {
-                if (!okay()) {
-                    outfile
-                    << "p cnf 0 1\n"
-                    << "0\n";
-                } else {
-                    dumpRedClauses(&outfile, conf.maxDumpRedsSize);
-                }
-            } catch (std::ifstream::failure e) {
-                cout
-                << "Error writing redcible clause file dump: " << e.what()
-                << endl;
-                exit(-1);
-            }
-        }
-
+        open_file_and_dump_red_clauses();
         cout << "Dumped redundant clauses" << endl;
     }
 
     if (!conf.irredDumpFname.empty()) {
-        if (conf.verbosity >= 1) {
-            cout
-            << "c Dumping irred irredundant clauses to file '"
-            << conf.irredDumpFname << "'"
-            << endl;
-        }
-
-        std::ofstream outfile;
-        outfile.open(conf.irredDumpFname.c_str());
-        if (!outfile) {
-            cout
-            << "Cannot open file '"
-            << conf.irredDumpFname
-            << "' for writing. exiting"
-            << endl;
-            exit(-1);
-        }
-
-        if (okay()) {
-            outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            try {
-                if (!okay()) {
-                    outfile
-                    << "p cnf 0 1\n"
-                    << "0\n";
-                } else {
-                    dumpIrredClauses(&outfile);
-                }
-            } catch (std::ifstream::failure e) {
-                cout
-                << "Error writing irredcible clause file dump: " << e.what()
-                << endl;
-                exit(-1);
-            }
-        } else {
-            outfile << "p cnf 0 1" << endl;
-            outfile << "0";
-        }
-
+        open_file_and_dump_irred_clauses();
         cout
         << "c [solver] Dumped irredundant clauses to file "
-        << "'" << conf.irredDumpFname << "'."
-        << " Note that these are NOT the original CNF, but"
+        << "'" << conf.irredDumpFname << "'." << endl
+        << "c [solver] Note that these may NOT be in the original CNF, but"
         << " *describe the same problem* with the *same variables*"
         << endl;
     }

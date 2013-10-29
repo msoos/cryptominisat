@@ -99,6 +99,9 @@ class Solver : public Searcher
         uint64_t getNumLongClauses() const;
         bool     getNeedToDumpReds() const;
         bool     getNeedToDumpIrredundant() const;
+        void     open_dump_file(std::ofstream& outfile, std::string filename) const;
+        void     open_file_and_dump_irred_clauses() const;
+        void     open_file_and_dump_red_clauses() const;
         int      getVerbosity() const;
         void     printStats() const;
         void     printClauseStats() const;
