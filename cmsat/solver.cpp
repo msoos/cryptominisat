@@ -2721,7 +2721,6 @@ void Solver::dump_clauses(const vector<ClOffset>& cls, std::ostream* os) const
         ; it++
     ) {
         Clause* cl = clAllocator->getPointer(*it);
-        assert(!cl->red());
         *os << sortLits(clauseBackNumbered(*cl)) << " 0\n";
     }
 }

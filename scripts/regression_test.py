@@ -580,9 +580,10 @@ class Tester:
 
     def check_dump_irred(self, fname):
         currTime = time.time()
-        temp_cnf = "valami.cnf"
+        irred_cnf = "irred_data.cnf"
+        red_cnf = "red_data.cnf"
         self.needDebugLib = False
-        extra_optins = " --dumpirred %s --maxconfl 1000 " % temp_cnf
+        extra_optins = " --dumpirred %s --dumpred %s --maxconfl 1000 " % (irred_cnf, red_cnf)
         consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
         self.needDebugLib = True
         diffTime = time.time() - currTime
@@ -592,13 +593,14 @@ class Tester:
         else:
             print "Within time limit: %f s" % (time.time() - currTime)
 
-        if not file_exists(temp_cnf):
-            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % temp_cnf
+        if not file_exists(irred_cnf):
+            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
             print "Error log: ", consoleOutput
             exit()
 
-        self.check(temp_cnf, checkAgainst=fname, needToLimitTime=True)
-        os.unlink(temp_cnf)
+        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True, extraOptions=" --input %s " % red_cnf)
+        os.unlink(irred_cnf)
+        os.unlink(red_cnf)
 
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False, checkAgainst=None):
