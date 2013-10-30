@@ -14,4 +14,3 @@ script:
   - cd build
   - CC="gcc-4.7" CXX="g++-4.7" cmake ..
   - make
-  - make test
