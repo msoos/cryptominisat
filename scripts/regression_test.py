@@ -174,6 +174,7 @@ class Tester:
         cmd += "--gaussuntil=%d " % random.randint(0,50)
         cmd += "--maxnummatrixes=%d " % random.randint(0,10)
         cmd += "--restart=%s " % random.choice(["auto", "static", "dynamic"])
+        cmd += "--switchoffsubs=%s " % random.choice([20, random.randint(0, 200000)])
 
         return cmd
 

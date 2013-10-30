@@ -101,6 +101,7 @@ class SolverConf
         uint32_t  maxGlue;            ///< Learnt clauses (when doing dynamic restarts) with glue above this value will be removed immediately on backtracking
         #endif //ENABLE_UNWIND_GLUE
         RestartType fixRestartType;   ///<If set, the solver will always choose the given restart strategy instead of automatically trying to guess a strategy. Note that even if set to dynamic_restart, there will be a few restarts made statically after each full restart.
+        long int switch_off_subsumer_max_vars;
 
         uint32_t origSeed;
 

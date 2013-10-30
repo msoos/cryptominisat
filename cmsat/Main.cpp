@@ -298,6 +298,7 @@ void Main::printUsage(char** argv)
     printf("  --plain            Get rid of all simplification algorithms\n");
     printf("  --maxconfl       = [0..2^63-1] Maximum number of conflicts to do\n");
     printf("  --maxtime        = [0..] Maximum number of seconds to run after which we exit cleanly\n");
+    printf("  --switchoffsubs  = Number of variables after which to switch off subsumption and all related algorithms. Saves time. Default: %ld\n", conf.switch_off_subsumer_max_vars);
     printf("\n");
 }
 
@@ -592,6 +593,13 @@ void Main::parseCommandLine()
                 exit(-1);
             }
             start_timer(maxtime);
+        } else if ((value = hasPrefix(argv[i], "--switchoffsubs="))) {
+            long vars = 0;
+            if (sscanf(value, "%ld", &vars) < 0 || vars < 2) {
+                printf("ERROR! max time is too small: %s\n", value);
+                exit(-1);
+            }
+            conf.switch_off_subsumer_max_vars = vars;
         } else if ((value = hasPrefix(argv[i], "--plain"))) {
             conf.isPlain = true;
             conf.doOTFSubsume = false;
