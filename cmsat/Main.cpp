@@ -88,6 +88,7 @@ Main::Main(int _argc, char** _argv) :
 std::map<uint32_t, Solver*> solversToInterrupt;
 std::set<uint32_t> finished;
 timer_t mytimer;
+bool need_clean_exit;
 
 void start_timer(int num)
 {
@@ -358,6 +359,7 @@ void Main::parseCommandLine()
     uint32_t unparsedOptions = 0;
     bool needTwoFileNames = false;
     conf.verbosity = 2;
+    need_clean_exit = false;
 
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "--polarity-mode="))) {
@@ -986,7 +988,7 @@ void SIGINT_handler(int)
         Solver& solver = *solversToInterrupt.begin()->second;
         printf("\n");
         std::cerr << "*** INTERRUPTED ***" << std::endl;
-        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
+        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig || need_clean_exit) {
             solver.needToInterrupt = true;
             std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
             std::cerr << "*** This means we might need to finish some calculations" << std::endl;
