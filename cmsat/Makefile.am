@@ -26,6 +26,6 @@ libcryptominisat_la_SOURCES = \
 	BothCache.cpp
 
 bin_PROGRAMS = cryptominisat
-cryptominisat_LDADD = libcryptominisat.la
+cryptominisat_LDADD = libcryptominisat.la -lrt
 cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS) $(LIBS)
 cryptominisat_SOURCES = Main.cpp

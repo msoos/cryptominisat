@@ -35,4 +35,5 @@ target_link_libraries(cryptominisat
     ${ZLIB_LIBRARY}
     ${Perftools_LIBRARIES}
     ${MYSQL_LIB}
+    rt
 )

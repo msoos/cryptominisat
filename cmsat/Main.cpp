@@ -54,6 +54,8 @@ Here is a picture of of the above process in more detail:
 #include <map>
 #include <set>
 #include "cmsat/constants.h"
+#include <signal.h>
+#include <time.h>
 
 #include <signal.h>
 
@@ -85,6 +87,18 @@ Main::Main(int _argc, char** _argv) :
 
 std::map<uint32_t, Solver*> solversToInterrupt;
 std::set<uint32_t> finished;
+timer_t mytimer;
+
+void start_timer(int num)
+{
+    struct itimerspec value;
+    value.it_value.tv_sec = num;//waits for n seconds before sending timer signal
+    value.it_value.tv_nsec = 0;
+    value.it_interval.tv_sec = 0;//exipire once
+    value.it_interval.tv_nsec = 0;
+    timer_create (CLOCK_REALTIME, NULL, &mytimer);
+    timer_settime (mytimer, 0, &value, NULL);
+}
 
 void Main::readInAFile(const std::string& filename, Solver& solver)
 {
@@ -283,6 +297,7 @@ void Main::printUsage(char** argv)
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --plain            Get rid of all simplification algorithms\n");
     printf("  --maxconfl       = [0..2^63-1] Maximum number of conflicts to do\n");
+    printf("  --maxtime        = [0..] Maximum number of seconds to run after which we exit cleanly\n");
     printf("\n");
 }
 
@@ -567,9 +582,16 @@ void Main::parseCommandLine()
             int maxconfl = 0;
             if (sscanf(value, "%d", &maxconfl) < 0 || maxconfl < 2) {
                 printf("ERROR! max confl: %s\n", value);
-                exit(0);
+                exit(-1);
             }
             conf.maxConfl = maxconfl;
+        } else if ((value = hasPrefix(argv[i], "--maxtime="))) {
+            int maxtime = 0;
+            if (sscanf(value, "%d", &maxtime) < 0 || maxtime < 2) {
+                printf("ERROR! max time is too small: %s\n", value);
+                exit(-1);
+            }
+            start_timer(maxtime);
         } else if ((value = hasPrefix(argv[i], "--plain"))) {
             conf.isPlain = true;
             conf.doOTFSubsume = false;
@@ -972,7 +994,9 @@ int main(int argc, char** argv)
     Main main(argc, argv);
     main.parseCommandLine();
     signal(SIGINT, SIGINT_handler);
+    signal(SIGALRM, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
+
 
     try {
         if (main.numThreads == 1)
