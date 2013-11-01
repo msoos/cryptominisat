@@ -439,7 +439,6 @@ Lit HyperEngine::propagateFullDFS(
 
     //Setup
     needToAddBinClause.clear();
-    PropResult ret = PROP_NOTHING;
     stampingTime++;
     stamp.tstamp[root.toInt()].start[stampType] = stampingTime;
 
@@ -479,7 +478,6 @@ Lit HyperEngine::propagateFullDFS(
         if (restart)
             continue;
 
-        ret = PROP_NOTHING;
         while (!toPropNorm.empty()) {
             Lit ret = prop_norm_cl_dfs(stampType, confl, root, restart);
             if (ret != lit_Undef)
