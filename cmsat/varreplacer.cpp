@@ -694,8 +694,6 @@ void VarReplacer::extendModel()
     #endif //VERBOSE_DEBUG
 
     assert(solver->model.size() == solver->nVarsReal());
-
-    uint32_t i = 0;
     for (map<Var, vector<Var> >::const_iterator
         it = reverseTable.begin() , end = reverseTable.end()
         ; it != end
