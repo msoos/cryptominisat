@@ -746,7 +746,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     return true;
 }
 
-bool VarReplacer::handleBothSet(
+bool VarReplacer::replace_vars_already_set(
     const Lit lit1
     , const lbool val1
     , const Lit lit2
@@ -837,7 +837,7 @@ bool VarReplacer::replace(
 
     //Both are set
     if (val1 != l_Undef && val2 != l_Undef) {
-        return handleBothSet(lit1, val1, lit2, val2);
+        return replace_vars_already_set(lit1, val1, lit2, val2);
     }
 
     //exactly one set

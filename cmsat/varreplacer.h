@@ -210,7 +210,7 @@ class VarReplacer
         //Helpers for replace()
         void replaceChecks(const Lit lit1, const Lit lit2) const;
         bool handleAlreadyReplaced(const Lit lit1, const Lit lit2);
-        bool handleBothSet(
+        bool replace_vars_already_set(
             const Lit lit1
             , const lbool val1
             , const Lit lit2
