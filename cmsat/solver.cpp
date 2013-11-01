@@ -534,14 +534,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Undo var replacement
     for (Lit& lit: ps) {
-        Lit origLit = lit;
-        lit = varReplacer->getLitReplacedWith(lit);
+        Lit updated_lit = varReplacer->getLitReplacedWith(lit);
         #ifdef VERBOSE_DEBUG
         cout
-        << "EqLit updating lit " << origLit
-        << " to lit " << lit
+        << "EqLit updating lit " << lit
+        << " to lit " << upated_lit
         << endl;
         #endif
+        lit = updated_lit;
     }
 
     for (const Lit lit:ps) {
