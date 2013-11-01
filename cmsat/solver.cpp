@@ -2601,6 +2601,12 @@ void Solver::printClauseSizeDistrib()
 
 void Solver::dumpEquivalentLits(std::ostream* os) const
 {
+    *os
+    << "c " << endl
+    << "c ---------------------------------------" << endl
+    << "c equivalent literals" << endl
+    << "c ---------------------------------------" << endl;
+
     const vector<Lit>& table = varReplacer->getReplaceTable();
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
@@ -2629,6 +2635,12 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
 
 void Solver::dumpUnitaryClauses(std::ostream* os) const
 {
+    *os
+    << "c " << endl
+    << "c ---------" << endl
+    << "c unitaries" << endl
+    << "c ---------" << endl;
+
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         *os
         << getUpdatedLit(trail[i], interToOuterMain)
@@ -2640,7 +2652,6 @@ void Solver::dumpRedClauses(
     std::ostream* os
     , const uint32_t maxSize
 ) const {
-
     dumpUnitaryClauses(os);
 
     *os
@@ -2782,18 +2793,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     << " " << count_irred_clauses_for_dump()
     << endl;
 
-    *os
-    << "c " << endl
-    << "c ---------" << endl
-    << "c unitaries" << endl
-    << "c ---------" << endl;
     dumpUnitaryClauses(os);
-
-    *os
-    << "c " << endl
-    << "c ---------------------------------------" << endl
-    << "c clauses representing 2-long XOR clauses" << endl
-    << "c ---------------------------------------" << endl;
     dumpEquivalentLits(os);
 
     *os
