@@ -87,7 +87,7 @@ class SolverConf
         int  doPrintConflDot; ///< Print DOT file for each conflict
         int  printFullStats;
         int  verbStats;
-        int  doPrintLongestTrail;
+        uint32_t  doPrintLongestTrail;
         int  doPrintBestRedClauses;
 
         //Limits
