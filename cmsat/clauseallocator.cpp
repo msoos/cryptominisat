@@ -164,20 +164,6 @@ void* ClauseAllocator::allocEnough(
     return pointer;
 }
 
-#ifdef STATS_NEEDED
-struct sortByClauseNumLookedAtDescending
-{
-    bool operator () (const Clause* x, const Clause* y)
-    {
-        if (x->stats.numLookedAt > y->stats.numLookedAt) return 1;
-        if (x->stats.numLookedAt < y->stats.numLookedAt) return 0;
-
-        //Second tie: size. If size is smaller, go first
-        return x->size() < y->size();
-    }
-};
-#endif
-
 /**
 @brief Given the pointer of the clause it finds a 32-bit offset for it
 
