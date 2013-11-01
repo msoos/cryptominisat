@@ -71,14 +71,12 @@ private:
         watch_subarray_const::const_iterator i
         , const Lit lit1
         , PropBy& confl
-        , Solver* solver
     );
     PropResult propNormalClauseComplex(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
-        , Solver* solver
     );
     PropResult propTriHelperComplex(
         const Lit lit1

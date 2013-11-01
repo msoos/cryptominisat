@@ -115,7 +115,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
 
             if (i->isTri()) {
                 *j++ = *i;
-                ret = propTriClauseComplex(i, p, confl, NULL);
+                ret = propTriClauseComplex(i, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
@@ -126,7 +126,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
             }
 
             if (i->isClause()) {
-                ret = propNormalClauseComplex(i, j, p, confl, NULL);
+                ret = propNormalClauseComplex(i, j, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
@@ -324,7 +324,7 @@ Lit HyperEngine::prop_norm_cl_dfs(
 
         if (i->isTri()) {
             *j++ = *i;
-            ret = propTriClauseComplex(i, p, confl, NULL);
+            ret = propTriClauseComplex(i, p, confl);
             if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                 i++;
                 break;
@@ -335,7 +335,7 @@ Lit HyperEngine::prop_norm_cl_dfs(
         }
 
         if (i->isClause()) {
-            ret = propNormalClauseComplex(i, j, p, confl, NULL);
+            ret = propNormalClauseComplex(i, j, p, confl);
             if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                 i++;
                 break;
@@ -1021,7 +1021,6 @@ PropResult HyperEngine::propNormalClauseComplex(
     , watch_subarray::iterator &j
     , const Lit p
     , PropBy& confl
-    , Solver* solver
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     if (value(i->getBlockedLit()).getBool()) {
@@ -1062,7 +1061,6 @@ PropResult HyperEngine::propTriClauseComplex(
     watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
-    , Solver* solver
 ) {
     const Lit lit2 = i->lit2();
     lbool val2 = value(lit2);
