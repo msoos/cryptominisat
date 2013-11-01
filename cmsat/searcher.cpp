@@ -1015,6 +1015,7 @@ lbool Searcher::search()
     PropBy confl;
     while (!params.needToStopSearch
         && sumConflicts() <= solver->getNextCleanLimit()
+        && cpuTime() < conf.maxTime
     ) {
         if (!confl.isNULL()) {
             stats.conflStats.update(lastConflictCausedBy);
