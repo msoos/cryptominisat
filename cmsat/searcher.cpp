@@ -2254,8 +2254,10 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 void Searcher::print_solution_varreplace_status() const
 {
     for(size_t var = 0; var < nVarsReal(); var++) {
-        if (varData[var].removed == Removed::replaced) {
-            assert(value(var) == l_Undef);
+        if (varData[var].removed == Removed::replaced
+            || varData[var].removed == Removed::elimed
+        ) {
+            assert(value(var) == l_Undef || varData[var].level == 0);
         }
 
         if (conf.verbosity >= 6
