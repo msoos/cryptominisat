@@ -993,19 +993,6 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     return l_Undef;
 }
 
-/**
-@brief Search for a model
-
-Limits: must be below the specified number of conflicts and must keep the
-number of redundant clauses below the provided limit
-
-Use negative value for 'nof_conflicts' or 'nof_learnts' to indicate infinity.
-
-Output: 'l_True' if a partial assigment that is consistent with respect to the
-clauseset is found. If all variables are decision variables, this means
-that the clause set is satisfiable. 'l_False' if the clause set is
-unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
-*/
 lbool Searcher::search()
 {
     assert(ok);
