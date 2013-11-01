@@ -89,13 +89,8 @@ class Searcher : public HyperEngine
 
             #ifdef STATS_NEEDED
             AvgCalc<bool>       conflictAfterConflict;
-            AvgCalc<bool>       conflictAfterConflictLT;
-
             AvgCalc<size_t>     watchListSizeTraversed;
-            AvgCalc<size_t>     watchListSizeTraversedLT;
-
             AvgCalc<bool>       litPropagatedSomething;
-            AvgCalc<bool>       litPropagatedSomethingLT;
             #endif
 
             size_t memUsed() const
