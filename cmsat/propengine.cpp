@@ -317,7 +317,7 @@ PropResult PropEngine::prop_normal_helper(
     }
 
     // Look for new watch:
-    uint16_t numLitVisited = 0;
+    uint32_t numLitVisited = 0;
     for (Lit *k = c.begin() + 2, *end2 = c.end()
         ; k != end2
         ; k++, numLitVisited++
