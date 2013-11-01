@@ -87,9 +87,9 @@ Main::Main(int _argc, char** _argv) :
 
 std::map<uint32_t, Solver*> solversToInterrupt;
 std::set<uint32_t> finished;
-timer_t mytimer;
 bool need_clean_exit;
-
+#ifndef MSCVER
+timer_t mytimer;
 void start_timer(int num)
 {
     struct itimerspec value;
@@ -100,6 +100,7 @@ void start_timer(int num)
     timer_create (CLOCK_REALTIME, NULL, &mytimer);
     timer_settime (mytimer, 0, &value, NULL);
 }
+#endif
 
 void Main::readInAFile(const std::string& filename, Solver& solver)
 {
@@ -298,8 +299,10 @@ void Main::printUsage(char** argv)
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --plain            Get rid of all simplification algorithms\n");
     printf("  --maxconfl       = [0..2^63-1] Maximum number of conflicts to do\n");
-    printf("  --maxtime        = [0..] Maximum number of seconds to run after which we exit cleanly\n");
     printf("  --switchoffsubs  = Number of variables after which to switch off subsumption and all related algorithms. Saves time. Default: %ld\n", conf.switch_off_subsumer_max_vars);
+    #ifndef MSCVER
+    printf("  --maxtime        = [0..] Maximum number of seconds to run after which we exit cleanly\n");
+    #endif
     printf("\n");
 }
 
@@ -588,6 +591,7 @@ void Main::parseCommandLine()
                 exit(-1);
             }
             conf.maxConfl = maxconfl;
+        #ifndef MSCVER
         } else if ((value = hasPrefix(argv[i], "--maxtime="))) {
             int maxtime = 0;
             if (sscanf(value, "%d", &maxtime) < 0 || maxtime < 2) {
@@ -595,6 +599,7 @@ void Main::parseCommandLine()
                 exit(-1);
             }
             start_timer(maxtime);
+        #endif
         } else if ((value = hasPrefix(argv[i], "--switchoffsubs="))) {
             long vars = 0;
             if (sscanf(value, "%ld", &vars) < 0 || vars < 2) {
@@ -1004,7 +1009,9 @@ int main(int argc, char** argv)
     Main main(argc, argv);
     main.parseCommandLine();
     signal(SIGINT, SIGINT_handler);
+    #ifndef MSCVER
     signal(SIGALRM, SIGINT_handler);
+    #endif
     //signal(SIGHUP,SIGINT_handler);
 
 
