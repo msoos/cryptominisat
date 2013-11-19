@@ -75,7 +75,7 @@ class DataPrinter
         echo "maxConflRestart.push($max);";
     }
 
-    protected function printOneThing(
+    protected function print_one_graph(
         $datanames
         , $nicedatanames
     ) {
@@ -188,16 +188,16 @@ class DataPrinter
     {
         $this->runQuery("restart");
 
-        $this->printOneThing(array("time")
+        $this->print_one_graph(array("time")
             , array("time"));
 
-        $this->printOneThing(array("restarts")
+        $this->print_one_graph(array("restarts")
             , array("restart no."));
 
-        /*printOneThing(array("propsPerDec")
+        /*print_one_graph(array("propsPerDec")
             , array("avg. no. propagations per decision"));*/
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
             "set"
             , "numIrredBins"
             , "numRedBins"
@@ -217,55 +217,55 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array("branchDepth")
+        $this->print_one_graph(array("branchDepth")
             , array("avg. branch depth"));
 
-        $this->printOneThing(array("branchDepthDelta")
+        $this->print_one_graph(array("branchDepthDelta")
             , array("avg. no. of levels backjumped"));
 
-        $this->printOneThing(array("trailDepth")
+        $this->print_one_graph(array("trailDepth")
             , array("avg. trail depth"));
 
-        $this->printOneThing(array("trailDepthDelta")
+        $this->print_one_graph(array("trailDepthDelta")
             , array("avg. trail depth delta"));
 
-        $this->printOneThing(array("glue")
+        $this->print_one_graph(array("glue")
             , array("newly learnt clauses avg. glue"));
 
-        $this->printOneThing(array("size")
+        $this->print_one_graph(array("size")
             , array("newly learnt clauses avg. size"));
 
-        $this->printOneThing(array("resolutions")
+        $this->print_one_graph(array("resolutions")
             , array("avg. no. resolutions for 1UIP"));
 
-        $this->printOneThing(array("agility")
+        $this->print_one_graph(array("agility")
             , array("avg. agility"));
 
-        /*printOneThing(array("flippedPercent")
+        /*print_one_graph(array("flippedPercent")
             , array("var polarity flipped %"));*/
 
-        $this->printOneThing(array("conflAfterConfl")
+        $this->print_one_graph(array("conflAfterConfl")
             , array("conflict after conflict %"));
 
-        /*printOneThing("conflAfterConflSD", array("conflAfterConfl")
+        /*print_one_graph("conflAfterConflSD", array("conflAfterConfl")
             , array("conflict after conflict std dev %"));*/
 
-        $this->printOneThing(array("watchListSizeTraversed")
+        $this->print_one_graph(array("watchListSizeTraversed")
             , array("avg. traversed watchlist size"));
 
-        /*printOneThing(array("watchListSizeTraversedSD")
+        /*print_one_graph(array("watchListSizeTraversedSD")
             , array("avg. traversed watchlist size std dev"));*/
 
-        /*printOneThing("litPropagatedSomething", array("litPropagatedSomething")
+        /*print_one_graph("litPropagatedSomething", array("litPropagatedSomething")
             , array("literal propagated something with binary clauses %"));*/
 
-        $this->printOneThing(array("replaced")
+        $this->print_one_graph(array("replaced")
             , array("vars replaced"));
 
-        $this->printOneThing(array("set")
+        $this->print_one_graph(array("set")
             , array("vars set"));
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
             "varSetPos"
             , "varSetNeg"
             )
@@ -274,7 +274,7 @@ class DataPrinter
             , "propagated polar neg %")
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
             "learntUnits"
             , "learntBins"
             , "learntTris"
@@ -287,7 +287,7 @@ class DataPrinter
             , "new learnts long %")
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
             "propBinIrred", "propBinRed"
             , "propTriIrred", "propTriRed"
             , "propLongIrred", "propLongRed"
@@ -298,7 +298,7 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
             "conflBinIrred"
             , "conflBinRed"
             , "conflTriIrred"
@@ -316,7 +316,7 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
               "resolBin"
             , "resolTri"
             , "resolLIrred"
@@ -330,31 +330,31 @@ class DataPrinter
             )
         );
 
-        /*printOneThing("branchDepthSD", array("branchDepthSD")
+        /*print_one_graph("branchDepthSD", array("branchDepthSD")
             , array("branch depth std dev"));
 
-        printOneThing("branchDepthDeltaSD", array("branchDepthDeltaSD")
+        print_one_graph("branchDepthDeltaSD", array("branchDepthDeltaSD")
             , array("branch depth delta std dev"));
 
-        printOneThing("trailDepthSD", array("trailDepthSD")
+        print_one_graph("trailDepthSD", array("trailDepthSD")
             , array("trail depth std dev"));
 
-        printOneThing("trailDepthDeltaSD", array("trailDepthDeltaSD")
+        print_one_graph("trailDepthDeltaSD", array("trailDepthDeltaSD")
             , array("trail depth delta std dev"));
 
-        printOneThing("glueSD", array("glueSD")
+        print_one_graph("glueSD", array("glueSD")
             , array("newly learnt clause glue std dev"));
 
-        printOneThing("sizeSD", array("sizeSD")
+        print_one_graph("sizeSD", array("sizeSD")
             , array("newly learnt clause size std dev"));
 
-        printOneThing("resolutionsSD", array("resolutionsSD")
+        print_one_graph("resolutionsSD", array("resolutionsSD")
             , array("std dev no. resolutions for 1UIP"));*/
 
 
         $this->runQuery("reduceDB");
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
                 "irredLitsVisited"
                 , "redLitsVisited"
             )
@@ -364,7 +364,7 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
                   "preRemovedResolBin"
                 , "preRemovedResolTri"
                 , "preRemovedResolLIrred"
@@ -378,7 +378,7 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
                   "removedResolBin"
                 , "removedResolTri"
                 , "removedResolLIrred"
@@ -392,7 +392,7 @@ class DataPrinter
             )
         );
 
-        $this->printOneThing(array(
+        $this->print_one_graph(array(
                   "remainResolBin"
                 , "remainResolTri"
                 , "remainResolLIrred"
