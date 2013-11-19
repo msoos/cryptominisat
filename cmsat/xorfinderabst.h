@@ -30,10 +30,16 @@ class Solver;
 class XorFinderAbst
 {
     public:
-        virtual bool findXors() = 0;
+        virtual bool findXors()
+        {
+            return true;
+        }
         virtual ~XorFinderAbst()
         {}
-        virtual size_t memUsed() const = 0;
+        virtual size_t memUsed() const
+        {
+            return 0;
+        }
 };
 
 }

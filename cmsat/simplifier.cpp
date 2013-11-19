@@ -45,6 +45,7 @@
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "xorfinderabst.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -85,8 +86,10 @@ Simplifier::Simplifier(Solver* _solver):
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
+    xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
     if (solver->conf.doFindXors) {
+        delete xorFinder;
         xorFinder = new XorFinder(this, solver);
     }
     #endif
@@ -99,11 +102,8 @@ Simplifier::Simplifier(Solver* _solver):
 
 Simplifier::~Simplifier()
 {
-    #ifdef USE_M4RI
     delete xorFinder;
-    #endif
     delete subsumeStrengthen;
-
     delete gateFinder;
 }
 
@@ -2941,15 +2941,7 @@ size_t Simplifier::memUsed() const
 
 size_t Simplifier::memUsedXor() const
 {
-    #ifdef USE_M4RI
-    if (xorFinder) {
-        return xorFinder->memUsed();
-    } else {
-        return 0;
-    }
-    #else
-    return 0;
-    #endif
+    return xorFinder->memUsed();
 }
 
 void Simplifier::freeXorMem()
