@@ -651,13 +651,6 @@ void VarReplacer::set_sub_var_during_solution_extension(Var var, Var sub_var)
 {
     lbool to_set = solver->model[var] ^ table[sub_var].sign();
     if (solver->model[sub_var] != l_Undef) {
-        cout
-        << "varData[" << sub_var << "].removed:"
-        << removed_type_to_string(solver->varData[sub_var].removed)
-        << " to_set: " << to_set
-        << " solver->model[sub_var]: " << solver->model[sub_var]
-        << " solver->varData[sub_var].level:" << solver->varData[sub_var].level
-        << endl;
         assert(solver->varData[sub_var].removed == Removed::queued_replacer
             || solver->varData[sub_var].removed == Removed::replaced
         );
