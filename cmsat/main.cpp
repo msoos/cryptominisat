@@ -642,13 +642,14 @@ void Main::parseCommandLine()
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::unknown_option> >& c
     ) {
-        cout << "Some option you gave was wrong. Please give '--help' to get help" << endl;
-        cout << "Unkown option: " << c.what() << endl;
+        cerr
+        << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl
+        << "       Unkown option: " << c.what() << endl;
         exit(-1);
     } catch (boost::bad_any_cast &e) {
         std::cerr
-        << "ERROR! You probably gave a wrong argument type (Bad cast): "
-        << e.what()
+        << "ERROR! You probably gave a wrong argument type" << endl
+        << "       Bad cast: " << e.what()
         << endl;
 
         exit(-1);
@@ -656,8 +657,8 @@ void Main::parseCommandLine()
         boost::exception_detail::error_info_injector<po::invalid_option_value> > what
     ) {
         cerr
-        << "Invalid value '" << what.what() << "'"
-        << " given to option '" << what.get_option_name() << "'"
+        << "ERROR: Invalid value '" << what.what() << "'" << endl
+        << "       given to option '" << what.get_option_name() << "'"
         << endl;
 
         exit(-1);
@@ -665,7 +666,7 @@ void Main::parseCommandLine()
         boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
     ) {
         cerr
-        << "Error: " << what.what() << " of option '"
+        << "ERROR: " << what.what() << " of option '"
         << what.get_option_name() << "'"
         << endl;
 
@@ -674,8 +675,17 @@ void Main::parseCommandLine()
         boost::exception_detail::error_info_injector<po::required_option> > what
     ) {
         cerr
-        << "You forgot to give a required option '"
+        << "ERROR: You forgot to give a required option '"
         << what.get_option_name() << "'"
+        << endl;
+
+        exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::too_many_positional_options_error> > what
+    ) {
+        cerr
+        << "ERROR: You gave too many files. Only 2 files can be given:" << endl
+        << "       the 1st the CNF file input, the 2nd the DRUP file output"
         << endl;
 
         exit(-1);
