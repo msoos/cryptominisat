@@ -44,14 +44,14 @@ class DataPrinter
     protected $nrows;
     protected $colnum;
     protected $runID;
-    protected $maxConfl;
+    protected $max_confl;
 
     public function __construct($mycolnum, $runID, $maxConfl)
     {
         $this->colnum = $mycolnum;
         $this->runID = $runID;
-        $this->maxConfl = $maxConfl;
         $this->numberingScheme = 0;
+        $this->max_confl = $this->sql_get_max_restart($maxConfl);
 
         echo "
         if (columnDivs.length <= ".$this->colnum.")
@@ -59,11 +59,12 @@ class DataPrinter
         ";
     }
 
-    public function maxConflRestart()
+    private function sql_get_max_restart($maxConfl)
     {
+
         $query="
         SELECT max(conflicts) as mymax FROM `restart`
-        where conflicts < ".$this->maxConfl."
+        where conflicts < $maxConfl
         and runID = ".$this->runID.";";
         $result=mysql_query($query);
 
@@ -72,7 +73,12 @@ class DataPrinter
         }
 
         $max = mysql_result($result, 0, "mymax");
-        echo "maxConflRestart.push($max);";
+        return intval($max);
+    }
+
+    public function get_max_confl()
+    {
+        return $this->max_confl;
     }
 
     protected function print_one_graph(
@@ -158,6 +164,7 @@ class DataPrinter
         echo ", blockDivID:  '$blockDivID'";
         echo ", dataDivID:  '$dataDivID'";
         echo ", labelDivID: '$labelDivID'";
+        echo ", max_confl: '".$this->max_confl."'";
         echo " });\n";
 
         //Put into columnDivs
@@ -173,7 +180,7 @@ class DataPrinter
         SELECT *
         FROM `$table`
         where `runID` = ".$this->runID."
-        and conflicts < ".$this->maxConfl." $extra
+        and conflicts <= ".$this->max_confl." $extra
         order by `conflicts`";
 
         $this->data = mysql_query($query);
@@ -412,7 +419,7 @@ class DataPrinter
 
 for($i = 0; $i < count($runIDs); $i++) {
     $printer = new DataPrinter($i, $runIDs[$i], $maxConfl);
-    $printer->maxConflRestart();
+    echo "maxConflRestart.push(".$printer->get_max_confl().");";
     $orderNum = $printer->printOneSolve();
 }
 
@@ -471,19 +478,18 @@ class ClauseDistrib
     protected $colnum;
     protected $rownum;
     protected $runID;
-    protected $maxConfl;
     protected $tablename;
     protected $lookAt;
-
+    protected $maxConfl;
 
     public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt)
     {
         $this->colnum = $mycolnum;
         $this->rownum = $myrownum;
         $this->runID = $runID;
-        $this->maxConfl = $maxConfl;
         $this->tablename = $tablename;
         $this->lookAt = $lookAt;
+        $this->maxConfl = $maxConfl;
     }
 
     public function fillClauseDistrib()

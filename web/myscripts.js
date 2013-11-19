@@ -79,6 +79,7 @@ function drawOneGraph(i)
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             errorBars: myData[i].noisy,
+            dateWindow: [0, myData[i].max_confl],
             drawCallback: function(me, initial) {
 
                 //Fill original sizes, so if we zoom out, we know where to
@@ -105,6 +106,7 @@ function drawOneGraph(i)
                     gs[j].updateOptions( {
                         dateWindow: xrange
                     } );
+                    //console.log(xrange);
                 }
 
                 blockRedraw = false;
@@ -122,6 +124,7 @@ function drawAllDists(from, to)
             a = new DrawClauseDistrib(
                     clDistrib[i][i2].data
                     , clDistrib[i][i2].canvasID
+                    , clDistrib[i][i2].dataDivID
                     , simplificationPoints[i]
                 );
 
@@ -135,13 +138,14 @@ function drawAllDists(from, to)
     }
 }
 
-function DrawClauseDistrib(_data, _divID, _simpPoints)
+function DrawClauseDistrib(_data, _canvas_div_ID, _div_ID, _simpPoints)
 {
     var data = _data;
-    var divID = _divID;
+    var canvas_div_ID = _canvas_div_ID;
+    var div_ID = _div_ID;
     var simpPoints = _simpPoints;
-    var mywidth = 415; //document.getElementById(divID).offsetWidth-5;
-    var myheight = 100; //document.getElementById(divID).offsetHeight;
+    var mywidth = document.getElementById(div_ID).offsetWidth-5;
+    var myheight = document.getElementById(div_ID).offsetHeight;
 
     //For SVG pattern, a rectangle
     function drawDistribBox(x1, x2, y1, y2, relHeight, imgData)
@@ -188,7 +192,7 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
 
     this.drawPattern = function(from , to)
     {
-        var myDiv = document.getElementById(divID);
+        var myDiv = document.getElementById(canvas_div_ID);
         var ctx = myDiv.getContext("2d");
         var Xdelta = 0.5;
 
@@ -258,16 +262,23 @@ function DrawClauseDistrib(_data, _divID, _simpPoints)
     }
 }
 
+function calc_width()
+{
+    var width = 420;
+    return width;
+}
+
 //Creates HTML for dygraphs
 function createHTMLforGraphs()
 {
+    var width = calc_width();
     for (var i = 0; i < myData.length; i++) {
         datagraphs = document.getElementById("datagraphs");
         datagraphs.innerHTML += "\
         <div class=\"block\" id=\"" + myData[i].blockDivID + "\">\
         <table id=\"plot-table-a\">\
         <tr>\
-        <td><div id=\"" + myData[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
+        <td><div id=\"" + myData[i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
         <td><div id=\"" + myData[i].labelDivID + "\" class=\"draghandle\"></div></td>\
         </tr>\
         </table>\
@@ -277,8 +288,7 @@ function createHTMLforGraphs()
 
 function createHTMLforDists()
 {
-    var width = 900/clDistrib.length;
-    width = 420;
+    var width = calc_width();
     for(var i = 0; i < clDistrib.length; i++) {
         for(var i2 = 0; i2 < clDistrib[i].length; i2++) {
             datagraphs = document.getElementById("datagraphs");
@@ -288,8 +298,8 @@ function createHTMLforDists()
             <table id=\"plot-table-a\"> \
             <tr> \
             <td> \
-                <div id=\""+ clDistrib[i][i2].dataDivID + "\" class=\"myPlotData\"> \
-                <canvas id=\""+ clDistrib[i][i2].canvasID + "\" class=\"canvasPlot\" width=\"420\"> \
+                <div id=\""+ clDistrib[i][i2].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"> \
+                <canvas id=\""+ clDistrib[i][i2].canvasID + "\" class=\"canvasPlot\"> \
                 no support for canvas \
                 </canvas> \
                 </div> \
