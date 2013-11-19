@@ -2666,7 +2666,7 @@ void Solver::dumpRedClauses(
     << "c ---------------------------------" << endl
     << "c redundant tertiary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
-    if (maxSize >= 2) {
+    if (maxSize >= 3) {
         dumpTriClauses(true, false, os);
     }
 
@@ -2679,7 +2679,7 @@ void Solver::dumpRedClauses(
     << "c --------------------" << endl
     << "c redundant long clauses" << endl
     << "c --------------------" << endl;
-    dump_clauses(longRedCls, os);
+    dump_clauses(longRedCls, os, maxSize);
 }
 
 uint64_t Solver::count_irred_clauses_for_dump() const
@@ -2722,15 +2722,19 @@ uint64_t Solver::count_irred_clauses_for_dump() const
     return numClauses;
 }
 
-void Solver::dump_clauses(const vector<ClOffset>& cls, std::ostream* os) const
-{
+void Solver::dump_clauses(
+    const vector<ClOffset>& cls
+    , std::ostream* os
+    , size_t max_size
+) const {
     for(vector<ClOffset>::const_iterator
         it = cls.begin(), end = cls.end()
         ; it != end
         ; it++
     ) {
         Clause* cl = clAllocator->getPointer(*it);
-        *os << sortLits(clauseBackNumbered(*cl)) << " 0\n";
+        if (cl->size() <= max_size)
+            *os << sortLits(clauseBackNumbered(*cl)) << " 0\n";
     }
 }
 

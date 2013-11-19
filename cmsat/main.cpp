@@ -736,7 +736,7 @@ void Main::parseCommandLine()
 
     //Conflict
     if (vm.count("maxdump") && conf.redDumpFname.empty()) {
-        throw WrongParam("maxdumpredss", "--dumpreds=<filename> must be first activated before issuing --maxdumpreds=<size>");
+        throw WrongParam("maxdump", "--dumpred <filename> must be activated if issuing --maxdump <size>");
     }
 
     if (typeclean == "glue") {

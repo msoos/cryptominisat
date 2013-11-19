@@ -158,7 +158,11 @@ class Solver : public Searcher
             std::ostream* os
         ) const;
         uint64_t count_irred_clauses_for_dump() const;
-        void dump_clauses(const vector<ClOffset>& cls, std::ostream* os) const;
+        void dump_clauses(
+            const vector<ClOffset>& cls
+            , std::ostream* os
+            , size_t max_size = std::numeric_limits<size_t>::max()
+        ) const;
         void dump_blocked_clauses(std::ostream* os) const;
         void dump_component_clauses(std::ostream* os) const;
 
