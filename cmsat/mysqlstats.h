@@ -195,7 +195,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[81+1]; //+1 == runID
+        MYSQL_BIND  bind[79+1]; //+1 == runID
         MYSQL_STMT  *stmt;
 
         //Position
@@ -282,9 +282,6 @@ private:
         double watchListSizeTraversedSD;
         uint64_t watchListSizeTraversedMin;
         uint64_t watchListSizeTraversedMax;
-
-        double litPropagatedSomething;
-        double litPropagatedSomethingSD;
 
         //Resolution stats
         ResolutionTypes<uint64_t> resolv;

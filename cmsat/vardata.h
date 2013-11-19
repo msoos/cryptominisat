@@ -2,6 +2,7 @@
 #define __VARDATA_H__
 
 #include "propby.h"
+#include "avgcalc.h"
 
 namespace CMSat
 {

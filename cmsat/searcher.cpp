@@ -949,8 +949,8 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
         stats.conflStats.numConflicts++;
         stats.conflStats.update(lastConflictCausedBy);
         #ifdef STATS_NEEDED
-        hist.conflictAfterConflict.push(lastWasConflict);
-        lastWasConflict = true;
+        hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
+        last_decision_ended_in_conflict = true;
         #endif
 
         cancelUntil(0);
@@ -1011,7 +1011,7 @@ lbool Searcher::search()
     assert(solver->qhead == solver->trail.size());
 
     //Loop until restart or finish (SAT/UNSAT)
-    bool lastWasConflict = false;
+    last_decision_ended_in_conflict = false;
     PropBy confl;
     while (!params.needToStopSearch
         && sumConflicts() <= solver->getNextCleanLimit()
@@ -1022,15 +1022,15 @@ lbool Searcher::search()
             checkNeedRestart();
             print_restart_stat();
             #ifdef STATS_NEEDED
-            hist.conflictAfterConflict.push(lastWasConflict);
+            hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
             #endif
-            lastWasConflict = true;
+            last_decision_ended_in_conflict = true;
             handle_longest_decision_trail();
             if (!handle_conflict(confl))
                 return l_False;
         } else {
             assert(ok);
-            lastWasConflict = false;
+            last_decision_ended_in_conflict = false;
             const lbool ret = new_decision();
             if (ret != l_Undef)
                 return ret;
@@ -1049,8 +1049,7 @@ lbool Searcher::search()
             //Decision level is higher than 1, so must do normal propagation
             confl = propagate(
                 #ifdef STATS_NEEDED
-                , &hist.watchListSizeTraversed
-                //, &hist.litPropagatedSomething
+                &hist.watchListSizeTraversed
                 #endif
             );
         }
@@ -3015,8 +3014,7 @@ void Searcher::bumpClauseAct(Clause* cl)
 
 PropBy Searcher::propagate(
     #ifdef STATS_NEEDED
-    , AvgCalc<size_t>* watchListSizeTraversed
-    //, AvgCalc<bool>* litPropagatedSomething
+    AvgCalc<size_t>* watchListSizeTraversed
     #endif
 ) {
     const size_t origTrailSize = trail.size();
@@ -3025,8 +3023,7 @@ PropBy Searcher::propagate(
     if (conf.propBinFirst) {
         ret = propagateBinFirst(
             #ifdef STATS_NEEDED
-            , watchListSizeTraversed
-            //, AvgCalc<bool>* litPropagatedSomething
+            watchListSizeTraversed
             #endif
         );
     } else {

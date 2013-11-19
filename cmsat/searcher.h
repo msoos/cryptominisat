@@ -90,7 +90,6 @@ class Searcher : public HyperEngine
             #ifdef STATS_NEEDED
             AvgCalc<bool>       conflictAfterConflict;
             AvgCalc<size_t>     watchListSizeTraversed;
-            AvgCalc<bool>       litPropagatedSomething;
             #endif
 
             size_t memUsed() const
@@ -124,7 +123,6 @@ class Searcher : public HyperEngine
                 #ifdef STATS_NEEDED
                 conflictAfterConflict.clear();
                 watchListSizeTraversed.clear();
-                litPropagatedSomething.clear();
                 #endif
             }
 
@@ -198,8 +196,7 @@ class Searcher : public HyperEngine
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         PropBy propagate(
             #ifdef STATS_NEEDED
-            , AvgCalc<size_t>* watchListSizeTraversed = NULL
-            //, AvgCalc<bool>* litPropagatedSomething
+            AvgCalc<size_t>* watchListSizeTraversed = NULL
             #endif
         );
 
@@ -659,6 +656,7 @@ class Searcher : public HyperEngine
         /////////////////
         // Searching
         /// Search for a given number of conflicts.
+        bool last_decision_ended_in_conflict;
         lbool search();
         lbool burstSearch();
         bool  handle_conflict(PropBy confl);// Handles the conflict clause

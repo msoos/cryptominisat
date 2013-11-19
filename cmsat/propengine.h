@@ -153,7 +153,7 @@ protected:
     PropBy propagateAnyOrder();
     PropBy propagateBinFirst(
         #ifdef STATS_NEEDED
-        ,  AvgCalc<size_t>* watchListSizeTraversed = NULL
+        AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
     );
     PropBy propagateIrredBin();  ///<For debug purposes, to test binary clause removal

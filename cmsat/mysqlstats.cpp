@@ -455,7 +455,6 @@ void MySQLStats::initRestartSTMT(
     //Misc
     << ", `watchListSizeTraversed`, `watchListSizeTraversedSD`"
     << ", `watchListSizeTraversedMin`, `watchListSizeTraversedMax`"
-    << ", `litPropagatedSomething`, `litPropagatedSomethingSD`"
 
     //Resolutions
     << ", `resolBin`, `resolTri`, `resolLIrred`, `resolLRed`"
@@ -529,7 +528,6 @@ void MySQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.numRedBins);
     bindTo(stmtRst, stmtRst.numRedTris);
     bindTo(stmtRst, stmtRst.numRedLongs);
-
     bindTo(stmtRst, stmtRst.numIrredLits);
     bindTo(stmtRst, stmtRst.numRedLits);
 
@@ -601,9 +599,6 @@ void MySQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.watchListSizeTraversedSD);
     bindTo(stmtRst, stmtRst.watchListSizeTraversedMin);
     bindTo(stmtRst, stmtRst.watchListSizeTraversedMax);
-
-    bindTo(stmtRst, stmtRst.litPropagatedSomething);
-    bindTo(stmtRst, stmtRst.litPropagatedSomethingSD);
 
     //Resolutions
     bindTo(stmtRst, stmtRst.resolv.bin);
@@ -1149,11 +1144,11 @@ void MySQLStats::restart(
     stmtRst.numIrredBins  = binTri.irredBins;
     stmtRst.numIrredTris  = binTri.irredTris;
     stmtRst.numIrredLongs = solver->getNumLongIrredCls();
-    stmtRst.numIrredLits  = litStats.irredLits;
+    stmtRst.numIrredLits  = solver->litStats.irredLits;
     stmtRst.numRedBins    = binTri.redBins;
     stmtRst.numRedTris    = binTri.redTris;
     stmtRst.numRedLongs   = solver->getNumLongRedCls();
-    stmtRst.numRedLits    = litStats.redLits;
+    stmtRst.numRedLits    = solver->litStats.redLits;
 
     //Conflict stats
     stmtRst.glueHist        = searchHist.glueHist.getLongtTerm().avg();
@@ -1220,8 +1215,8 @@ void MySQLStats::restart(
 
     //Red
     stmtRst.learntUnits = thisStats.learntUnits;
-    stmtRst.redBins  = thisStats.redBins;
-    stmtRst.redTris  = thisStats.redTris;
+    stmtRst.redBins  = solver->binTri.redBins;
+    stmtRst.redTris  = solver->binTri.redTris;
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Misc
@@ -1229,10 +1224,6 @@ void MySQLStats::restart(
     stmtRst.watchListSizeTraversedSD = sqrt(searchHist.watchListSizeTraversed.var());
     stmtRst.watchListSizeTraversedMin= searchHist.watchListSizeTraversed.getMin();
     stmtRst.watchListSizeTraversedMax= searchHist.watchListSizeTraversed.getMax();
-
-
-    stmtRst.litPropagatedSomething   = searchHist.litPropagatedSomething.avg()*100.0;
-    stmtRst.litPropagatedSomethingSD = sqrt(searchHist.litPropagatedSomething.var())*100.0;
 
     //Resolv stats
     stmtRst.resolv          = thisStats.resolvs;

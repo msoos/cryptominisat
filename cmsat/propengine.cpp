@@ -920,8 +920,7 @@ inline void PropEngine::updateWatch(
 
 PropBy PropEngine::propagateBinFirst(
     #ifdef STATS_NEEDED
-    , AvgCalc<size_t>* watchListSizeTraversed
-    //, AvgCalc<bool>* litPropagatedSomething
+    AvgCalc<size_t>* watchListSizeTraversed
     #endif
 ) {
     PropBy confl;
@@ -966,8 +965,6 @@ PropBy PropEngine::propagateBinFirst(
                 continue;
             } //end CLAUSE
         }
-        /*if (litPropagatedSomething)
-            litPropagatedSomething->push(trail.size() > lastTrailSize);*/
     }
 
     PropResult ret = PROP_NOTHING;
