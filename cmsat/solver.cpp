@@ -999,8 +999,6 @@ Var Solver::newVar(const bool dvar)
     if (nVars() != nVarsReal())
         unSaveVarMem();
 
-    const Var var = decisionVar.size();
-
     if (conf.doStamp
         && nVars() > 15ULL*1000ULL*1000ULL
     ) {
