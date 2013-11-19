@@ -142,7 +142,7 @@ class DataPrinter
         echo "];\n";
 
         //Add name & data
-        echo "myData.push({data: tmp ";
+        echo "data_tmp.push({data: tmp ";
 
         //Calculate labels
         echo ", labels: [\"Conflicts\"";
@@ -189,8 +189,9 @@ class DataPrinter
         $this->nrows = mysql_numrows($this->data);
     }
 
-    public function printOneSolve()
+    public function fill_data_tmp()
     {
+        echo "data_tmp = new Array();";
         $this->runQuery("restart");
 
         $this->print_one_graph(array("time")
@@ -418,7 +419,8 @@ class DataPrinter
 for($i = 0; $i < count($runIDs); $i++) {
     $printer = new DataPrinter($i, $runIDs[$i], $maxConfl);
     echo "maxConflRestart.push(".$printer->get_max_confl().");";
-    $orderNum = $printer->printOneSolve();
+    $orderNum = $printer->fill_data_tmp();
+    echo "myData.push(data_tmp);";
 }
 
 
@@ -497,7 +499,7 @@ class ClauseDistrib
         $query = "
         SELECT conflicts, num FROM ".$this->tablename."
         where runID = ".$this->runID."
-        and conflicts < ".$this->maxConfl."
+        and conflicts <= ".$this->maxConfl."
         and ".$this->lookAt." > 0
         order by conflicts, ".$this->lookAt;
         $result=mysql_query($query);

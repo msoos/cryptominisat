@@ -4,7 +4,7 @@
 //for graphs
 var origSizes = new Array();
 var blockRedraw = false;
-var gs = new Array();
+var graphs = new Array();
 
 //For distibutions
 var dists = [];
@@ -14,35 +14,41 @@ var portal;
 
 function setRollPeriod(num)
 {
-    for (var j = 0; j < myData.length; j++) {
-        gs[j].updateOptions( {
-            rollPeriod: num
-        } );
+    for (var column = 0; column < myData.length; column++) {
+        for (var j = 0; j < myData[column].length; j++) {
+            graphs[column][j].updateOptions( {
+                rollPeriod: num
+            } );
+        }
     }
 }
 
 //Draws all graphs using dygraphs
 function drawAllGraphs()
 {
-    for (var i = 0; i < myData.length; i++) {
-        gs.push(drawOneGraph(i));
+    graphs = new Array();
+    for (var column = 0; column < myData.length; column++) {
+        graphs.push(new Array());
+        for (var i = 0; i < myData[column].length; i++) {
+            graphs[column].push(drawOneGraph(column, i));
+        }
     }
 }
 
 //Draw one of the graphs
-function drawOneGraph(i)
+function drawOneGraph(column, i)
 {
     graph = new Dygraph(
-        document.getElementById(myData[i].dataDivID),
-        myData[i].data
+        document.getElementById(myData[column][i].dataDivID),
+        myData[column][i].data
         , {
-            stackedGraph: myData[i].stacked,
-            includeZero: myData[i].stacked,
-            labels: myData[i].labels,
+            stackedGraph: myData[column][i].stacked,
+            includeZero: myData[column][i].stacked,
+            labels: myData[column][i].labels,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 //Draw simplification points
-                colnum = myData[i].colnum;
+                colnum = myData[column][i].colnum;
 
                 for(var k = 0; k < simplificationPoints[colnum].length-1; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[colnum][k], -20);
@@ -67,7 +73,7 @@ function drawOneGraph(i)
             drawXAxis: false,
             legend: 'always',
             xlabel: false,
-            labelsDiv: document.getElementById(myData[i].labelDivID),
+            labelsDiv: document.getElementById(myData[column][i].labelDivID),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
@@ -78,14 +84,14 @@ function drawOneGraph(i)
             strokeStyle: "black",
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
-            errorBars: myData[i].noisy,
-            dateWindow: [0, maxConflRestart[myData[i].colnum]],
+            errorBars: myData[column][i].noisy,
+            dateWindow: [0, maxConflRestart[myData[column][i].colnum]],
             drawCallback: function(me, initial) {
 
                 //Fill original sizes, so if we zoom out, we know where to
                 //zoom out
                 if (initial)
-                    origSizes[myData[i].colnum] = me.xAxisRange();
+                    origSizes[myData[column][i].colnum] = me.xAxisRange();
 
                 //Initial draw, ignore
                 if (blockRedraw || initial)
@@ -97,13 +103,13 @@ function drawOneGraph(i)
                 drawAllDists(xrange[0], xrange[1]);
 
                 //Zoom every one the same way
-                for (var j = 0; j < myData.length; j++) {
+                for (var j = 0; j < myData[column].length; j++) {
                     //Don't go into loop
-                    if (gs[j] == me)
+                    if (graphs[column][j] == me)
                         continue;
 
                     //If this is a full reset, then zoom out maximally
-                    gs[j].updateOptions( {
+                    graphs[column][j].updateOptions( {
                         dateWindow: xrange
                     } );
                     //console.log(xrange);
@@ -264,7 +270,7 @@ function DrawClauseDistrib(_data, _canvas_div_ID, _div_ID, _simpPoints)
 
 function calc_width()
 {
-    var width = 420/maxConflRestart.length;
+    var width = 600/maxConflRestart.length;
     return width;
 }
 
@@ -272,41 +278,43 @@ function calc_width()
 function createHTMLforGraphs()
 {
     var width = calc_width();
-    for (var i = 0; i < myData.length; i++) {
-        datagraphs = document.getElementById("datagraphs");
-        datagraphs.innerHTML += "\
-        <div class=\"block\" id=\"" + myData[i].blockDivID + "\">\
-        <table id=\"plot-table-a\">\
-        <tr>\
-        <td><div id=\"" + myData[i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
-        <td><div id=\"" + myData[i].labelDivID + "\" class=\"draghandle\"></div></td>\
-        </tr>\
-        </table>\
-        </div>";
+    var datagraphs = document.getElementById("datagraphs");
+    for (var i = 0; i < myData[0].length; i++) {
+        for (var column = 0; column < myData.length; column++) {
+            datagraphs.innerHTML += "\
+            <div class=\"block\" id=\"" + myData[column][i].blockDivID + "\">\
+            <table id=\"plot-table-a\">\
+            <tr>\
+            <td><div id=\"" + myData[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
+            <td><div id=\"" + myData[column][i].labelDivID + "\" class=\"draghandle\"></div></td>\
+            </tr>\
+            </table>\
+            </div>";
+        }
     }
 }
 
 function createHTMLforDists()
 {
     var width = calc_width();
-    for(var i = 0; i < clDistrib.length; i++) {
-        for(var i2 = 0; i2 < clDistrib[i].length; i2++) {
-            datagraphs = document.getElementById("datagraphs");
+    for(var column = 0; column < clDistrib.length; column++) {
+        for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
+            var datagraphs = document.getElementById("datagraphs");
 
             datagraphs.innerHTML += "\
-            <div class=\"block\" id=\"" + clDistrib[i][i2].blockDivID +"\"> \
+            <div class=\"block\" id=\"" + clDistrib[column][i2].blockDivID +"\"> \
             <table id=\"plot-table-a\"> \
             <tr> \
             <td> \
-                <div id=\""+ clDistrib[i][i2].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"> \
-                <canvas id=\""+ clDistrib[i][i2].canvasID + "\" class=\"canvasPlot\"> \
+                <div id=\""+ clDistrib[column][i2].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"> \
+                <canvas id=\""+ clDistrib[column][i2].canvasID + "\" class=\"canvasPlot\"> \
                 no support for canvas \
                 </canvas> \
                 </div> \
             </td> \
             <td> \
-                <div id=\"" + clDistrib[i][i2].labelDivID + "\" class=\"draghandle\"><b> \
-                (" + i + ") Newly learnt clause " + clDistrib[i][i2].lookAt + " distribution. \
+                <div id=\"" + clDistrib[column][i2].labelDivID + "\" class=\"draghandle\"><b> \
+                (" + column + ") Newly learnt clause " + clDistrib[column][i2].lookAt + " distribution. \
                 Bottom: 1. Top:  max. \
                 Black: Many. White: 0. \
                 </b></div> \
@@ -337,10 +345,22 @@ function createPortal()
 
 function doAll()
 {
+    var columns = document.getElementById("columns");
+    column_text = "\
+    <table>\
+    <tr>";
+    for(var i = 0; i < myData.length; i++) {
+        column_text += "\
+        <td><div id=\"column-" + i +"\" class=\"column menu\"></div></td>";
+    }
+    column_text += "\
+    </tr>\
+    </table>";
+    columns.innerHTML = column_text;
+
     //Clear vars
     origSizes = new Array();
     blockRedraw = false;
-    gs = new Array();
     dists = [];
 
     //Clear & create HTML
