@@ -1376,7 +1376,7 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.trailDepthDeltaHistLT.push(trail.size() - trail_lim[backtrack_level]);
 
     #ifdef STATS_NEEDED
-    if (conf.doSQL) {
+    if (conf.doSQL && conf.dumpClauseDistribPer != 0) {
         if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
             printClauseDistribSQL();
 
@@ -1610,12 +1610,14 @@ void Searcher::resetStats()
     }
 
     //Clause data
-    clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
-    clauseGlueDistrib.resize(conf.dumpClauseDistribMaxGlue, 0);
-    sizeAndGlue.resize(boost::extents[conf.dumpClauseDistribMaxSize][conf.dumpClauseDistribMaxGlue]);
-    for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
-        for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
-            sizeAndGlue[i][i2] = 0;
+    if (conf.dumpClauseDistribPer != 0) {
+        clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
+        clauseGlueDistrib.resize(conf.dumpClauseDistribMaxGlue, 0);
+        sizeAndGlue.resize(boost::extents[conf.dumpClauseDistribMaxSize][conf.dumpClauseDistribMaxGlue]);
+        for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
+            for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
+                sizeAndGlue[i][i2] = 0;
+            }
         }
     }
     #endif
@@ -2310,9 +2312,10 @@ void Searcher::finish_up_solve(const lbool status)
         printRestartSQL();
         //printVarStatsSQL();
 
-        //Print clause distib SQL until here
-        printClauseDistribSQL();
-        std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+        if (conf.dumpClauseDistribPer != 0) {
+            printClauseDistribSQL();
+            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+        }
     }
     #endif
 
