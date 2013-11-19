@@ -79,7 +79,7 @@ function drawOneGraph(i)
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
             errorBars: myData[i].noisy,
-            dateWindow: [0, myData[i].max_confl],
+            dateWindow: [0, maxConflRestart[myData[i].colnum]],
             drawCallback: function(me, initial) {
 
                 //Fill original sizes, so if we zoom out, we know where to
@@ -119,17 +119,17 @@ function drawOneGraph(i)
 
 function drawAllDists(from, to)
 {
-    for(var i = 0; i < columnDivs.length; i++) {
-        for(var i2 = 0; i2 < clDistrib[i].length; i2++) {
+    for(var column = 0; column < columnDivs.length; column++) {
+        for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
             a = new DrawClauseDistrib(
-                    clDistrib[i][i2].data
-                    , clDistrib[i][i2].canvasID
-                    , clDistrib[i][i2].dataDivID
-                    , simplificationPoints[i]
+                    clDistrib[column][i2].data
+                    , clDistrib[column][i2].canvasID
+                    , clDistrib[column][i2].dataDivID
+                    , simplificationPoints[column]
                 );
 
             if (from === undefined)
-                a.drawPattern(0, maxConflRestart[i]);
+                a.drawPattern(0, maxConflRestart[column]);
             else
                 a.drawPattern(from, to);
 
@@ -264,7 +264,7 @@ function DrawClauseDistrib(_data, _canvas_div_ID, _div_ID, _simpPoints)
 
 function calc_width()
 {
-    var width = 420;
+    var width = 420/maxConflRestart.length;
     return width;
 }
 

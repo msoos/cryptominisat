@@ -5,6 +5,7 @@ $maxConfl = 7000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 
+echo "<script type=\"text/javascript\">";
 $username="cmsat_presenter";
 $password="";
 $database="cmsat";
@@ -15,9 +16,6 @@ mysql_connect("localhost", $username, $password);
 #$runIDs = array(mysql_real_escape_string($_GET["id"]));
 $runIDs = array(getLatestID());
 
-//$runIDs = array(2981893) ;
-
-echo "<script type=\"text/javascript\">";
 function getLatestID()
 {
     $query = "select runID from `startup` order by startTime desc limit 1;";
