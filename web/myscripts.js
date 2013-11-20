@@ -60,7 +60,7 @@ function drawOneGraph(column, i)
             axes: {
               x: {
                 valueFormatter: function(d) {
-                  return 'Conflicts: ' + d;
+                  return 'Conflict ' + d;
                 },
                 pixelsPerLabel: 100,
                 includeZero: true
