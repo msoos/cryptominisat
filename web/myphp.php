@@ -295,11 +295,11 @@ class DataPrinter
         /*print_one_graph("conflAfterConflSD", array("conflAfterConfl")
             , array("conflict after conflict std dev %"));*/
 
-        $this->print_one_graph(
-            "Avg. traversed watchlist size"
-            , array("watchListSizeTraversed")
-            , array("")
-        );
+//         $this->print_one_graph(
+//             "Avg. traversed watchlist size"
+//             , array("watchListSizeTraversed")
+//             , array("")
+//         );
 
         /*print_one_graph(array("watchListSizeTraversedSD")
             , array("avg. traversed watchlist size std dev"));*/
