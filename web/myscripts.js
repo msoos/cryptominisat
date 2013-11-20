@@ -290,10 +290,10 @@ function createHTMLforGraphs()
             <div class=\"block\" id=\"" + myData[column][i].blockDivID + "\">\
             <table id=\"plot-table-a\">\
             <tr>\
-            <td><div id=\"" + myData[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
+            <td width=\""+width+"\"><div id=\"" + myData[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
             <td>\
 \
-            <table>\
+            <table id=\"plot-table-a\">\
             <tr><td>"+ myData[column][i].title +"</td></tr>\
             <tr><td><div id=\"" + myData[column][i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
             </table>\
