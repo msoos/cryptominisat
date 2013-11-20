@@ -45,6 +45,7 @@ function drawOneGraph(column, i)
             stackedGraph: myData[column][i].stacked,
             includeZero: myData[column][i].stacked,
             labels: myData[column][i].labels,
+            //title: myData[column][i].title,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 //Draw simplification points
@@ -69,7 +70,7 @@ function drawOneGraph(column, i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            //rollPeriod: 1,
+            rollPeriod: 20,
             drawXAxis: false,
             legend: 'always',
             xlabel: false,
@@ -126,6 +127,10 @@ function drawOneGraph(column, i)
 function drawAllDists(from, to)
 {
     for(var column = 0; column < columnDivs.length; column++) {
+        if (clDistrib.length <= column) {
+            continue;
+        }
+
         for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
             a = new DrawClauseDistrib(
                     clDistrib[column][i2].data
@@ -286,7 +291,14 @@ function createHTMLforGraphs()
             <table id=\"plot-table-a\">\
             <tr>\
             <td><div id=\"" + myData[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
-            <td><div id=\"" + myData[column][i].labelDivID + "\" class=\"draghandle\"></div></td>\
+            <td>\
+\
+            <table>\
+            <tr><td>"+ myData[column][i].title +"</td></tr>\
+            <tr><td><div id=\"" + myData[column][i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
+            </table>\
+\
+            </td>\
             </tr>\
             </table>\
             </div>";

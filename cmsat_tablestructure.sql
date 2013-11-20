@@ -51,19 +51,24 @@ CREATE TABLE `clauseSizeDistrib` (
 -- Table structure for table `clauseStats`
 --
 
-DROP TABLE IF EXISTS `clauseStats`;
+DROP TABLE IF EXISTS `sum_clause_stats`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `clauseStats` (
+CREATE TABLE `sum_clause_stats` (
   `runID` bigint(20) unsigned NOT NULL,
   `simplifications` int(20) unsigned NOT NULL,
   `reduceDB` int(20) unsigned NOT NULL,
   `learnt` int(10) unsigned NOT NULL,
-  `size` int(20) unsigned NOT NULL,
-  `glue` int(20) unsigned NOT NULL,
-  `numPropAndConfl` int(20) unsigned NOT NULL,
-  `numLitVisited` int(20) unsigned NOT NULL,
-  `numLookedAt` int(20) unsigned NOT NULL
+  `avg_size` double unsigned NOT NULL,
+  `avg_glue` double unsigned NOT NULL,
+  `avg_props` double unsigned NOT NULL,
+  `avg_confls` double unsigned NOT NULL,
+  `avg_UIP_used` double unsigned NOT NULL,
+  `avg_numPropAndConfl` int(20) unsigned NOT NULL,
+  `avg_numLitVisited` int(20) unsigned NOT NULL,
+  `avg_numLookedAt` int(20) unsigned NOT NULL,
+  `num` int(20) unsigned NOT NULL,
+  KEY `idx1` (`runID`,`reduceDB`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -76,7 +81,8 @@ DROP TABLE IF EXISTS `fileNamesUsed`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `fileNamesUsed` (
   `runID` bigint(20) NOT NULL,
-  `filename` varchar(500) NOT NULL
+  `filename` varchar(500) NOT NULL,
+  KEY `idx1` (`runID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -137,7 +143,7 @@ CREATE TABLE `reduceDB` (
   `remainProp` int(20) unsigned NOT NULL,
   `remainConfl` int(20) unsigned NOT NULL,
   `remainLookedAt` int(20) unsigned NOT NULL,
-  KEY `idx1` (`conflicts`,`runID`)
+  KEY `idx1` (`runID`, `conflicts`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -212,14 +218,10 @@ CREATE TABLE `restart` (
   `watchListSizeTraversedSD` float unsigned NOT NULL,
   `watchListSizeTraversedMin` int(20) unsigned NOT NULL,
   `watchListSizeTraversedMax` int(20) unsigned NOT NULL,
-  `litPropagatedSomething` float unsigned NOT NULL,
-  `litPropagatedSomethingSD` float unsigned NOT NULL,
-  
   `resolBin` int(20) unsigned NOT NULL,
   `resolTri` int(20) unsigned NOT NULL,
   `resolLIrred` int(20) unsigned NOT NULL,
   `resolLRed` int(20) unsigned NOT NULL,
-
   `propagations` int(20) unsigned NOT NULL,
   `decisions` int(20) unsigned NOT NULL,
   `avgDecLevelVarLT` float unsigned NOT NULL,
@@ -233,7 +235,7 @@ CREATE TABLE `restart` (
   `replaced` int(20) unsigned NOT NULL,
   `eliminated` int(20) unsigned NOT NULL,
   `set` int(20) unsigned NOT NULL,
-  KEY `idx1` (`conflicts`,`runID`),
+  KEY `idx1` (`runID`, `conflicts`),
   KEY `idx2` (`runID`,`simplifications`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -250,7 +252,8 @@ CREATE TABLE `sizeGlue` (
   `conflicts` int(20) unsigned NOT NULL,
   `size` int(10) unsigned NOT NULL,
   `glue` int(10) unsigned NOT NULL,
-  `num` int(20) unsigned NOT NULL
+  `num` int(20) unsigned NOT NULL,
+  KEY `idx1` (`runID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -266,7 +269,7 @@ CREATE TABLE `solverRun` (
   `version` varchar(255) NOT NULL,
   `time` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`runID`)
-) ENGINE=InnoDB AUTO_INCREMENT=4275344478 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=15078679 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -279,7 +282,8 @@ DROP TABLE IF EXISTS `startup`;
 CREATE TABLE `startup` (
   `runID` bigint(20) unsigned NOT NULL,
   `startTime` datetime NOT NULL,
-  `verbosity` int(20) unsigned NOT NULL
+  `verbosity` int(20) unsigned NOT NULL,
+  KEY `idx1` (`runID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -297,8 +301,9 @@ CREATE TABLE `varDataInit` (
   `restarts` int(20) unsigned NOT NULL,
   `conflicts` int(20) unsigned NOT NULL,
   `time` float unsigned NOT NULL,
-  PRIMARY KEY (`varInitID`)
-) ENGINE=MyISAM AUTO_INCREMENT=11810 DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`varInitID`),
+  key (`runID`, `varInitID`)
+) ENGINE=MyISAM AUTO_INCREMENT=15587 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -323,7 +328,8 @@ CREATE TABLE `vars` (
   `trailLevelAvg` float NOT NULL,
   `trailLevelSD` float NOT NULL,
   `trailLevelMin` int(20) unsigned NOT NULL,
-  `trailLevelMax` int(20) unsigned NOT NULL
+  `trailLevelMax` int(20) unsigned NOT NULL,
+  key (`varInitID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -336,4 +342,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-12-16  0:09:35
+-- Dump completed on 2013-11-19 16:43:28

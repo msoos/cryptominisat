@@ -1,7 +1,7 @@
 <?php
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
-$maxConfl = 7000000;
+$maxConfl = 5000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 
@@ -80,7 +80,8 @@ class DataPrinter
     }
 
     protected function print_one_graph(
-        $datanames
+        $title
+        , $datanames
         , $nicedatanames
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
@@ -105,6 +106,11 @@ class DataPrinter
         $total_sum = 0.0;
         $last_confl = 0.0;
         while ($i < $this->nrows) {
+            if ($i % 7 != 0) {
+                $i++;
+                continue;
+            }
+
             //Print conflicts
             $confl=mysql_result($this->data, $i, "conflicts");
             echo "[$confl";
@@ -163,6 +169,7 @@ class DataPrinter
         echo ", dataDivID:  '$dataDivID'";
         echo ", labelDivID: '$labelDivID'";
         echo ", max_confl: '".$this->max_confl."'";
+        echo ", title: '$title'";
         echo " });\n";
 
         //Put into columnDivs
@@ -194,16 +201,23 @@ class DataPrinter
         echo "data_tmp = new Array();";
         $this->runQuery("restart");
 
-        $this->print_one_graph(array("time")
-            , array("time"));
+        $this->print_one_graph(
+            "Time"
+            , array("time")
+            , array(""));
 
-        $this->print_one_graph(array("restarts")
-            , array("restart no."));
+        $this->print_one_graph(
+            "No. of restarts"
+            , array("restarts")
+            , array("")
+        );
 
         /*print_one_graph(array("propsPerDec")
             , array("avg. no. propagations per decision"));*/
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Distribution of clause types %"
+            , array(
             "set"
             , "numIrredBins"
             , "numRedBins"
@@ -213,51 +227,79 @@ class DataPrinter
             , "numRedLongs"
             )
             ,array(
-            "unit cls %"
-            , "irredBin %"
-            , "redBin %"
-            , "irredTri %"
-            , "redTri  %"
-            , "irredLong %"
-            , "iredLong %"
+            "unit cls"
+            , "irred bin"
+            , "red bin"
+            , "irred tri"
+            , "red tri"
+            , "irred long"
+            , "ired long"
             )
         );
 
-        $this->print_one_graph(array("branchDepth")
-            , array("avg. branch depth"));
+        $this->print_one_graph(
+            "Avg. branch depth"
+            , array("branchDepth")
+            , array("")
+        );
 
-        $this->print_one_graph(array("branchDepthDelta")
-            , array("avg. no. of levels backjumped"));
+        $this->print_one_graph(
+            "Avg. branch depth delta"
+            , array("branchDepthDelta")
+            , array(""));
 
-        $this->print_one_graph(array("trailDepth")
-            , array("avg. trail depth"));
+        $this->print_one_graph(
+            "Avg. trail depth"
+            , array("trailDepth")
+            , array(""));
 
-        $this->print_one_graph(array("trailDepthDelta")
-            , array("avg. trail depth delta"));
+        $this->print_one_graph(
+            "Avg. trail depth delt"
+            , array("trailDepthDelta")
+            , array("")
+        );
 
-        $this->print_one_graph(array("glue")
-            , array("newly learnt clauses avg. glue"));
+        $this->print_one_graph(
+            "Avg. glue of newly learnt clauses"
+            , array("glue")
+            , array("")
+        );
 
-        $this->print_one_graph(array("size")
-            , array("newly learnt clauses avg. size"));
+        $this->print_one_graph(
+            "Avg. size of newly learnt clauses"
+            , array("size")
+            , array("")
+        );
 
-        $this->print_one_graph(array("resolutions")
-            , array("avg. no. resolutions for 1UIP"));
+        $this->print_one_graph(
+            "Avg. no. of resolutions carried out for 1st UIP"
+            , array("resolutions")
+            , array("")
+        );
 
-        $this->print_one_graph(array("agility")
-            , array("avg. agility"));
+        $this->print_one_graph(
+            "Avg. agility"
+            , array("agility")
+            , array("avg. agility")
+        );
 
         /*print_one_graph(array("flippedPercent")
             , array("var polarity flipped %"));*/
 
-        $this->print_one_graph(array("conflAfterConfl")
-            , array("conflict after conflict %"));
+        $this->print_one_graph(
+            "Conflicts immediately following a conflict %"
+            , array("conflAfterConfl")
+            , array("")
+        );
 
         /*print_one_graph("conflAfterConflSD", array("conflAfterConfl")
             , array("conflict after conflict std dev %"));*/
 
-        $this->print_one_graph(array("watchListSizeTraversed")
-            , array("avg. traversed watchlist size"));
+        $this->print_one_graph(
+            "Avg. traversed watchlist size"
+            , array("watchListSizeTraversed")
+            , array("")
+        );
 
         /*print_one_graph(array("watchListSizeTraversedSD")
             , array("avg. traversed watchlist size std dev"));*/
@@ -265,46 +307,60 @@ class DataPrinter
         /*print_one_graph("litPropagatedSomething", array("litPropagatedSomething")
             , array("literal propagated something with binary clauses %"));*/
 
-        $this->print_one_graph(array("replaced")
-            , array("vars replaced"));
+        $this->print_one_graph(
+            "No. of variables replaced"
+            , array("replaced")
+            , array("")
+        );
 
-        $this->print_one_graph(array("set")
-            , array("vars set"));
+        $this->print_one_graph(
+            "No. of variables\' values set"
+            , array("set")
+            , array("")
+        );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Propagated polarity %"
+            , array(
             "varSetPos"
             , "varSetNeg"
             )
             , array(
-            "propagated polar pos %"
-            , "propagated polar neg %")
+            "positive"
+            , "negative")
         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Newly learnt clause type %"
+            , array(
             "learntUnits"
             , "learntBins"
             , "learntTris"
             , "learntLongs"
             )
             ,array(
-            "new learnts unit %"
-            , "new learnts bin %"
-            , "new learnts tri %"
-            , "new learnts long %")
+            "unit"
+            , "binary"
+            , "tertiary"
+            , "long")
         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Propagation by %"
+            , array(
             "propBinIrred", "propBinRed"
             , "propTriIrred", "propTriRed"
             , "propLongIrred", "propLongRed"
             )
-            ,array("prop by bin irred %", "prop by bin red %"
-            , "prop by tri irred %", "prop by tri red %"
-            , "prop by long irred %", "prop by long red %"
+            ,array("bin irred", "bin red"
+            , "tri irred", "tri red"
+            , "long irred", "long red"
             )
         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Conflict caused by clause type %"
+            , array(
             "conflBinIrred"
             , "conflBinRed"
             , "conflTriIrred"
@@ -313,26 +369,28 @@ class DataPrinter
             , "conflLongRed"
             )
             ,array(
-            "confl by bin irred %"
-            , "confl by bin red %"
-            , "confl by tri irred %"
-            , "confl by tri red %"
-            , "confl by long irred %"
-            , "confl by long red %"
+            "bin irred"
+            , "bin red"
+            , "tri irred"
+            , "tri red"
+            , "long irred"
+            , "long red"
             )
         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Resolutions used clause types %"
+            , array(
               "resolBin"
             , "resolTri"
             , "resolLIrred"
             , "resolLRed"
             )
             ,array(
-              "resolv by bin %"
-            , "resolv by tri %"
-            , "resolv by long irred %"
-            , "resolv by long red %"
+              "bin"
+            , "tri"
+            , "long irred"
+            , "long red"
             )
         );
 
@@ -360,55 +418,63 @@ class DataPrinter
 
         $this->runQuery("reduceDB");
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Visited literals while propagating %"
+            , array(
                 "irredLitsVisited"
                 , "redLitsVisited"
             )
             ,array(
-                "irredLitsVisited % "
-                , "redLitsVisited %"
+                "irredundant"
+                , "redundant"
             )
         );
 
-        $this->print_one_graph(array(
-                  "preRemovedResolBin"
-                , "preRemovedResolTri"
-                , "preRemovedResolLIrred"
-                , "preRemovedResolLRed"
-            )
-            ,array(
-                  "preRemovedResolBin"
-                , "preRemovedResolTri"
-                , "preRemovedResolLIrred"
-                , "preRemovedResolLRed"
-            )
-        );
+//         $this->print_one_graph(
+//             "Clause-cleaning pre-removed clauses with resolutions"
+//             , array(
+//                   "preRemovedResolBin"
+//                 , "preRemovedResolTri"
+//                 , "preRemovedResolLIrred"
+//                 , "preRemovedResolLRed"
+//             )
+//             ,array(
+//                   "bin"
+//                 , "tri"
+//                 , "long irred"
+//                 , "long red"
+//             )
+//         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "Clause-cleaning removed learnt clauses with resolutions"
+            , array(
                   "removedResolBin"
                 , "removedResolTri"
                 , "removedResolLIrred"
                 , "removedResolLRed"
             )
             ,array(
-                  "removedResolBin"
-                , "removedResolTri"
-                , "removedResolLIrred"
-                , "removedResolLRed"
+                  "bin"
+                , "tri"
+                , "long irred"
+                , "long red"
             )
         );
 
-        $this->print_one_graph(array(
+        $this->print_one_graph(
+            "After clause-cleaning remaining learnt clauses with resolutions"
+            , array(
                   "remainResolBin"
                 , "remainResolTri"
                 , "remainResolLIrred"
                 , "remainResolLRed"
             )
             ,array(
-                  "remainResolBin"
-                , "remainResolTri"
-                , "remainResolLIrred"
-                , "remainResolLRed"
+                  "bin"
+                , "tri"
+                , "long irred"
+                , "long red"
             )
         );
 
@@ -553,14 +619,14 @@ class ClauseDistrib
     }
 }
 
-for($i = 0; $i < count($runIDs); $i++) {
+/*for($i = 0; $i < count($runIDs); $i++) {
     echo "clDistrib.push([]);";
     $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue");
     $myDist->fillClauseDistrib();
 
     $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size");
     $myDist->fillClauseDistrib();
-}
+}*/
 echo '</script>';
 
 ?>

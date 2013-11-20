@@ -66,10 +66,7 @@ of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
 
-<div id="columns">
-</div>
-
-<!-- Here come all the datagraphs -->
+<div id="columns"></div>
 <div id="myajaxStuff"></div>
 <div id="datagraphs"></div>
 
