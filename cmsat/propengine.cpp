@@ -325,8 +325,8 @@ PropResult PropEngine::prop_normal_helper(
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
-            //propStats.bogoProps += numLitVisited/10;
             #ifdef STATS_NEEDED
+            //propStats.bogoProps += numLitVisited/10;
             c.stats.numLitVisited+= numLitVisited;
             #endif
             *k = ~p;
@@ -334,8 +334,8 @@ PropResult PropEngine::prop_normal_helper(
             return PROP_NOTHING;
         }
     }
-    //propStats.bogoProps += numLitVisited/10;
     #ifdef STATS_NEEDED
+    //propStats.bogoProps += numLitVisited/10;
     c.stats.numLitVisited+= numLitVisited;
     #endif
 
@@ -473,8 +473,8 @@ bool PropEngine::propNormalClauseAnyOrder(
             return true;
         }
     }
-    //propStats.bogoProps += numLitVisited/10;
     #ifdef STATS_NEEDED
+    //propStats.bogoProps += numLitVisited/10;
     c.stats.numLitVisited+= numLitVisited;
     #endif
 
