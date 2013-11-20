@@ -59,7 +59,7 @@ struct CNF
     vector<lbool> assigns;
     vector<VarData> varData;
     #ifdef STATS_NEEDED
-    vector<VarData::Stats> varDataLT;
+    vector<VarData> varDataLT;
     #endif
     Stamp stamp;
     ImplCache implCache;

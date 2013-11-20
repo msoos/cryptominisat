@@ -864,12 +864,9 @@ class Searcher : public HyperEngine
         void printClauseDistribSQL();
         PropStats lastSQLPropStats;
         Stats lastSQLGlobalStats;
-        void calcVariancesLT(
-            double& avgDecLevelVar
-            , double& avgTrailLevelVar
-        );
         void calcVariances(
-            double& avgDecLevelVar
+            const vector<VarData>& data
+            , double& avgDecLevelVar
             , double& avgTrailLevelVar
         );
         #endif

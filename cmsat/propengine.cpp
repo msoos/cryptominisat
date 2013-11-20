@@ -78,7 +78,7 @@ Var PropEngine::newVar(const bool)
     varData.push_back(VarData());
 
     #ifdef STATS_NEEDED
-    varDataLT.push_back(VarData::Stats());
+    varDataLT.push_back(VarData());
     #endif
 
     CNF::newVar();
