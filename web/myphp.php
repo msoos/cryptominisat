@@ -83,6 +83,7 @@ class DataPrinter
         $title
         , $datanames
         , $nicedatanames
+        , $everyn = 7
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
@@ -106,7 +107,7 @@ class DataPrinter
         $total_sum = 0.0;
         $last_confl = 0.0;
         while ($i < $this->nrows) {
-            if ($i % 7 != 0) {
+            if ($i % $everyn != 0) {
                 $i++;
                 continue;
             }
@@ -428,6 +429,7 @@ class DataPrinter
                 "irredundant"
                 , "redundant"
             )
+            , 1
         );
 
 //         $this->print_one_graph(
@@ -477,6 +479,7 @@ class DataPrinter
                 , "long irred"
                 , "long red"
             )
+            , 1
         );
 
         return $this->numberingScheme;
