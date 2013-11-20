@@ -1,14 +1,12 @@
-html {
-
-}
-
 div.draghandle {
  cursor: move;
  font-family: sans-serif;
- width:140px;
- font-size:0.55em;
+ width:90px;
+ font-size:0.60em;
  padding-top:0px;
  padding-bottom:10px;
+ vertical-align:top;
+ text-align:left;
 }
 
 div.draghandle.dygraph-label {
@@ -16,7 +14,7 @@ div.draghandle.dygraph-label {
 }
 
 div.myPlotData {
-  height:140px;
+  height:145px;
   margin:0;
 }
 
@@ -95,13 +93,19 @@ a {
 {
     margin-left: 10px;
     margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 0;
     border: 0;
     border-collapse: collapse;
+    text-align:left;
 }
 
 #plot-table-a td
 {
     padding: 0 0 0 0;
+    vertical-align:top;
+    text-align:left;
+    /*border:0;*/
 }
 
 /*#columns {
