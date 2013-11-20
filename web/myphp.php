@@ -447,7 +447,7 @@ class DataPrinter
 //         );
 
         $this->print_one_graph(
-            "Clause-cleaning removed learnt clauses with resolutions"
+            "Cleaning removed learnt cls with resolutions %"
             , array(
                   "removedResolBin"
                 , "removedResolTri"
@@ -460,10 +460,11 @@ class DataPrinter
                 , "long irred"
                 , "long red"
             )
+            , 1
         );
 
         $this->print_one_graph(
-            "After clause-cleaning remaining learnt clauses with resolutions"
+            "After cleaning remaining learnt cls with resolutions %"
             , array(
                   "remainResolBin"
                 , "remainResolTri"
