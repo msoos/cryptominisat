@@ -590,8 +590,8 @@ void MySQLStats::initRestartSTMT(
 
     //Red
     bindTo(stmtRst, stmtRst.learntUnits);
-    bindTo(stmtRst, stmtRst.redBins);
-    bindTo(stmtRst, stmtRst.redTris);
+    bindTo(stmtRst, stmtRst.learntBins);
+    bindTo(stmtRst, stmtRst.learntTris);
     bindTo(stmtRst, stmtRst.learntLongs);
 
     //Misc
@@ -1217,8 +1217,8 @@ void MySQLStats::restart(
 
     //Red
     stmtRst.learntUnits = thisStats.learntUnits;
-    stmtRst.redBins  = solver->binTri.redBins;
-    stmtRst.redTris  = solver->binTri.redTris;
+    stmtRst.learntBins  = thisStats.learntBins;
+    stmtRst.learntTris  = thisStats.learntTris;
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Misc
