@@ -1871,7 +1871,9 @@ void Searcher::printRestartSQL()
     lastSQLGlobalStats = stats;
 
     //Variable stats
-    solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
+    if (conf.dumpTopNVars > 0) {
+        solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
+    }
 }
 #endif
 

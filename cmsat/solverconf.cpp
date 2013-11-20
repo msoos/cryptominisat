@@ -89,7 +89,7 @@ SolverConf::SolverConf() :
 
         //SQL
         , doSQL            (false)
-        , dumpTopNVars     (50)
+        , dumpTopNVars     (0)
         , dumpClauseDistribPer(0)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)
