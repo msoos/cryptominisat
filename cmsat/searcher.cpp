@@ -1103,7 +1103,7 @@ lbool Searcher::new_decision()
 
         //Update stats
         stats.decisions++;
-        #ifdef STATS_NEEDED
+        #ifdef STATS_NEEDED_EXTRA
         if (next.sign()) {
             varData[next.var()].stats.negDecided++;
         } else {
@@ -1601,6 +1601,7 @@ void Searcher::resetStats()
 
     //About vars
     #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     for(vector<VarData>::iterator
         it = varData.begin(), end = varData.end()
         ; it != end
@@ -1608,6 +1609,7 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
+    #endif
 
     //Clause data
     if (conf.dumpClauseDistribPer != 0) {
@@ -1806,6 +1808,7 @@ struct MyPolarData
 }*/
 
 #ifdef STATS_NEEDED
+#ifdef STATS_NEEDED_EXTRA
 void Searcher::calcVariances(
     const vector<VarData>& data
     , double& avgDecLevelVar
@@ -1828,6 +1831,7 @@ void Searcher::calcVariances(
     avgDecLevelVar = sumVarDec/(double)num;
     avgTrailLevelVar = sumVarTrail/(double)num;
 }
+#endif
 
 void Searcher::printRestartSQL()
 {
@@ -1837,10 +1841,12 @@ void Searcher::printRestartSQL()
 
     //Print variance
     VariableVariance variableVarianceStat;
+    #ifdef STATS_NEEDED_EXTRA
     if (conf.dump_tree_variance_stats) {
         calcVariances(varData, variableVarianceStat.avgDecLevelVar, variableVarianceStat.avgTrailLevelVar);
         calcVariances(varDataLT, variableVarianceStat.avgDecLevelVarLT, variableVarianceStat.avgTrailLevelVarLT);
     }
+    #endif
 
     solver->sqlStats->restart(
         thisPropStats
@@ -1854,9 +1860,11 @@ void Searcher::printRestartSQL()
     lastSQLGlobalStats = stats;
 
     //Variable stats
+    #ifdef STATS_NEEDED_EXTRA
     if (conf.dumpTopNVars > 0) {
         solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
     }
+    #endif
 }
 #endif
 
@@ -1878,6 +1886,7 @@ struct VarDumpOrder
 };
 
 #ifdef STATS_NEEDED
+#ifdef STATS_NEEDED_EXTRA
 vector<Var> Searcher::calcVarsToDump() const
 {
     //How much to dump per criteria
@@ -1937,6 +1946,7 @@ vector<Var> Searcher::calcVarsToDump() const
 
     return toDumpVec;
 }
+#endif
 
 void Searcher::printClauseDistribSQL()
 {
@@ -2128,6 +2138,7 @@ void Searcher::save_search_loop_stats()
         printRestartSQL();
     }
 
+    #ifdef STATS_NEEDED_EXTRA
     //Update varDataLT
     if (conf.dump_tree_variance_stats) {
         for(size_t i = 0; i < nVars(); i++) {
@@ -2135,6 +2146,7 @@ void Searcher::save_search_loop_stats()
             varData[i].stats.reset();
         }
     }
+    #endif
     #endif
 }
 

@@ -2344,7 +2344,7 @@ void Solver::printMemStats() const
     size_t mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
     mem += varData.capacity()*sizeof(VarData);
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     mem += varDataLT.capacity()*sizeof(VarData::Stats);
     #endif
     mem += decisionVar.capacity()*sizeof(char);

@@ -893,6 +893,7 @@ void MySQLStats::initVarSTMT(
     }
 }
 
+#ifdef STATS_NEEDED_EXTRA
 void MySQLStats::varDataDump(
     const Solver* solver
     , const Searcher* search
@@ -994,6 +995,7 @@ void MySQLStats::varDataDump(
         << endl;
     }
 }
+#endif
 
 void MySQLStats::clauseSizeDistrib(
     uint64_t sumConflicts

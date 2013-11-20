@@ -346,7 +346,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     assigns[v] = boolToLBool(!p.sign());
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     varData[v].stats.trailLevelHist.push(trail.size());
     varData[v].stats.decLevelHist.push(decisionLevel());
     #endif
@@ -357,12 +357,12 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     propStats.propagations++;
 
     if (p.sign()) {
-        #ifdef STATS_NEEDED
+        #ifdef STATS_NEEDED_EXTRA
         varData[v].stats.negPolarSet++;
         #endif
         propStats.varSetNeg++;
     } else {
-        #ifdef STATS_NEEDED
+        #ifdef STATS_NEEDED_EXTRA
         varData[v].stats.posPolarSet++;
         #endif
         propStats.varSetPos++;
@@ -370,7 +370,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 
     if (varData[v].polarity != !p.sign()) {
         agility.update(true);
-        #ifdef STATS_NEEDED
+        #ifdef STATS_NEEDED_EXTRA
         varData[v].stats.flippedPolarity++;
         #endif
         propStats.varFlipped++;

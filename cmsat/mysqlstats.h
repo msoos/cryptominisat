@@ -40,12 +40,14 @@ public:
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
     );
 
+    #ifdef STATS_NEEDED_EXTRA
     virtual void varDataDump(
         const Solver* solver
         , const Searcher* search
         , const vector<Var>& varsToDump
         , const vector<VarData>& varData
     );
+    #endif
 
     virtual void reduceDB(
         const ClauseUsageStats& irredStats

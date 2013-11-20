@@ -10,7 +10,7 @@ using namespace CMSat;
 
 struct VarData
 {
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     struct Stats
     {
         void addData(VarData::Stats& other)
@@ -72,7 +72,7 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity;
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     Stats stats;
     #endif
 };
