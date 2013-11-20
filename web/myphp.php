@@ -42,14 +42,16 @@ class DataPrinter
     protected $nrows;
     protected $colnum;
     protected $runID;
+    protected $num_runIDs;
     protected $max_confl;
 
-    public function __construct($mycolnum, $runID, $maxConfl)
+    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs)
     {
         $this->colnum = $mycolnum;
         $this->runID = $runID;
         $this->numberingScheme = 0;
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
+        $this->num_runIDs = $num_RunIDs;
 
         echo "
         if (columnDivs.length <= ".$this->colnum.")
@@ -154,7 +156,11 @@ class DataPrinter
         //Calculate labels
         echo ", labels: [\"Conflicts\"";
         foreach ($nicedatanames as $dataname) {
-            echo ", \"(".$this->colnum.") $dataname\"";
+            $toadd = "";
+            if (count($this->num_runIDs) > 1) {
+                $toadd += "(".$this->colnum.") ";
+            }
+            echo ", \"".$dataname."\"";
         }
         echo "]";
 
@@ -487,7 +493,7 @@ class DataPrinter
 }
 
 for($i = 0; $i < count($runIDs); $i++) {
-    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl);
+    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs));
     echo "maxConflRestart.push(".$printer->get_max_confl().");";
     $orderNum = $printer->fill_data_tmp();
     echo "myData.push(data_tmp);";
