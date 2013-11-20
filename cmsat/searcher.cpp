@@ -1805,6 +1805,7 @@ struct MyPolarData
     }
 }*/
 
+#ifdef STATS_NEEDED
 void Searcher::calcVariances(
     const vector<VarData>& data
     , double& avgDecLevelVar
@@ -1814,7 +1815,8 @@ void Searcher::calcVariances(
     double sumVarTrail = 0;
     size_t num = 0;
     size_t maxDecLevel = 0;
-    for(const VarData val: data) {
+    for(size_t i = 0; i < nVars(); i++) {
+        const VarData val = data[i];
         if (val.stats.posPolarSet || val.stats.negPolarSet) {
             sumVarDec += sqrt(val.stats.decLevelHist.var());
             sumVarTrail += sqrt(val.stats.decLevelHist.var());
@@ -1827,7 +1829,6 @@ void Searcher::calcVariances(
     avgTrailLevelVar = sumVarTrail/(double)num;
 }
 
-#ifdef STATS_NEEDED
 void Searcher::printRestartSQL()
 {
     //Propagation stats
@@ -1836,8 +1837,10 @@ void Searcher::printRestartSQL()
 
     //Print variance
     VariableVariance variableVarianceStat;
-    calcVariances(varData, variableVarianceStat.avgDecLevelVar, variableVarianceStat.avgTrailLevelVar);
-    calcVariances(varDataLT, variableVarianceStat.avgDecLevelVarLT, variableVarianceStat.avgTrailLevelVarLT);
+    if (conf.dump_tree_variance_stats) {
+        calcVariances(varData, variableVarianceStat.avgDecLevelVar, variableVarianceStat.avgTrailLevelVar);
+        calcVariances(varDataLT, variableVarianceStat.avgDecLevelVarLT, variableVarianceStat.avgTrailLevelVarLT);
+    }
 
     solver->sqlStats->restart(
         thisPropStats
@@ -2126,9 +2129,11 @@ void Searcher::save_search_loop_stats()
     }
 
     //Update varDataLT
-    for(size_t i = 0; i < varData.size(); i++) {
-        varDataLT[i].stats.addData(varData[i].stats);
-        varData[i].stats.reset();
+    if (conf.dump_tree_variance_stats) {
+        for(size_t i = 0; i < nVars(); i++) {
+            varDataLT[i].stats.addData(varData[i].stats);
+            varData[i].stats.reset();
+        }
     }
     #endif
 }

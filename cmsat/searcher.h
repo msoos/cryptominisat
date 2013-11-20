@@ -46,10 +46,10 @@ struct OTFClause
 
 struct VariableVariance
 {
-    double avgDecLevelVarLT;
-    double avgTrailLevelVarLT;
-    double avgDecLevelVar;
-    double avgTrailLevelVar;
+    double avgDecLevelVarLT = 0;
+    double avgTrailLevelVarLT= 0;
+    double avgDecLevelVar = 0;
+    double avgTrailLevelVar = 0;
 };
 
 class Searcher : public HyperEngine

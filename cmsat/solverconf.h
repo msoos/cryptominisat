@@ -112,6 +112,7 @@ class SolverConf
         //SQL
         int       doSQL;
         uint64_t    dumpTopNVars; //Only dump information about the "top" N active variables
+        int       dump_tree_variance_stats;
         uint64_t    dumpClauseDistribPer;
         uint64_t    dumpClauseDistribMaxSize;
         uint64_t    dumpClauseDistribMaxGlue;

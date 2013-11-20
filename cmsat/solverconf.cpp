@@ -90,6 +90,7 @@ SolverConf::SolverConf() :
         //SQL
         , doSQL            (false)
         , dumpTopNVars     (0)
+        , dump_tree_variance_stats(0)
         , dumpClauseDistribPer(0)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)
