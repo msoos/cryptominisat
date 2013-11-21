@@ -2188,6 +2188,7 @@ bool Simplifier::maybeEliminate(const Var var)
     create_dummy_blocked_clause(lit);
     rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
     rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
+
     //Add resolvents
     for(auto& resolvent: resolvents) {
         bool ok = add_varelim_resolvent(resolvent.first, resolvent.second);
