@@ -2527,54 +2527,37 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
 {
     HeuristicData ret;
 
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    *limit_to_decrease -= ws.size() + 100;
-    for (watch_subarray::const_iterator
-        it = ws.begin(), end = ws.end()
-        ; it != end
-        ; it++
-    ) {
-        //Handle binary
-        if (it->isBinary())
-        {
-            //Only count irred
-            if (!it->red()) {
+    watch_subarray_const ws_list = solver->watches[lit.toInt()];
+    *limit_to_decrease -= ws_list.size() + 100;
+    for (const Watched ws: ws_list) {
+        //Skip redundant clauses
+        if (solver->redundant(ws))
+            continue;
+
+        switch(ws.getType()) {
+            case watch_binary_t:
                 ret.bin++;
                 ret.lit += 2;
-            }
-            continue;
-        }
+                break;
 
-        //Handle tertiary
-        if (it->isTri()) {
-            //Only count irred
-            if (!it->red()) {
+            case watch_clause_t:
                 ret.tri++;
                 ret.lit += 3;
-            }
+                break;
 
-            continue;
-        }
-
-        if (it->isClause()) {
-            const Clause* cl = solver->clAllocator->getPointer(it->getOffset());
-
-            //If in occur then it cannot be freed
-            assert(!cl->freed());
-
-            //Only irred is of relevance
-            if (!cl->red()) {
+            case watch_tertiary_t: {
+                const Clause* cl = solver->clAllocator->getPointer(ws.getOffset());
+                assert(!cl->freed() && "Inside occur, so cannot be freed");
                 ret.longer++;
                 ret.lit += cl->size();
+                break;
             }
 
-            continue;
+            default:
+                assert(false);
+                break;
         }
-
-        //Only the two above types are there
-        assert(false);
     }
-
     return ret;
 }
 
