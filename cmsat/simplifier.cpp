@@ -1889,7 +1889,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     }
 
     //Too expensive to check, it's futile
-    if (pos.totalCls() >= 40 && pos.totalCls() >= 40) {
+    if (pos.totalCls() >= 40 && neg.totalCls() >= 40) {
         return 1000;
     }
 
