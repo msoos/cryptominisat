@@ -2540,12 +2540,12 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
                 ret.lit += 2;
                 break;
 
-            case watch_clause_t:
+            case CMSat::watch_tertiary_t:
                 ret.tri++;
                 ret.lit += 3;
                 break;
 
-            case watch_tertiary_t: {
+            case watch_clause_t: {
                 const Clause* cl = solver->clAllocator->getPointer(ws.getOffset());
                 assert(!cl->freed() && "Inside occur, so cannot be freed");
                 ret.longer++;
