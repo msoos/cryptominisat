@@ -1888,8 +1888,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return -100;
     }
 
-    //Too expensive to check, spend time on the others instead
-    if (pos.totalCls() >= 50 && pos.totalCls() >= 50) {
+    //Too expensive to check, it's futile
+    if (pos.totalCls() >= 40 && pos.totalCls() >= 40) {
         return 1000;
     }
 
