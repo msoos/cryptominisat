@@ -1888,9 +1888,10 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return -100;
     }
 
-    /*// Heuristic CUT OFF:
-    if (posSize >= 15 && negSize >= 15)
-        return -1000;*/
+    //Too expensive to check, spend time on the others instead
+    if (pos.totalCls() >= 50 && pos.totalCls() >= 50) {
+        return 1000;
+    }
 
     // Count clauses/literals after elimination
     uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
