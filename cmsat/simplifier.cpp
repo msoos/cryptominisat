@@ -1853,7 +1853,7 @@ uint32_t Simplifier::numIrredBins(const Lit lit) const
     return num;
 }
 
-int Simplifier::test_elim_and_fill_posall_negall(const Var var)
+int Simplifier::test_elim_and_fill_resolvents(const Var var)
 {
     assert(solver->ok);
     assert(!var_elimed[var]);
@@ -2175,7 +2175,7 @@ bool Simplifier::maybeEliminate(const Var var)
     print_var_elim_complexity_stats(var);
     runStats.testedToElimVars++;
 
-    if (test_elim_and_fill_posall_negall(var) == 1000) {
+    if (test_elim_and_fill_resolvents(var) == 1000) {
         return false;
     }
     runStats.triedToElimVars++;
@@ -2856,7 +2856,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     if (solver->conf.varelimStrategy == 0) {
         cost = heuristicCalcVarElimScore(var);
     } else {
-        int ret = test_elim_and_fill_posall_negall(var);
+        int ret = test_elim_and_fill_resolvents(var);
 
         cost.first = ret;
         cost.second = 0;
