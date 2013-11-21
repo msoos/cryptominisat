@@ -1873,7 +1873,6 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     //Check if we should do agressive check or not
     bool agressive = (aggressive_elim_time_limit > 0);
     runStats.usedAgressiveCheckToELim += agressive;
-    agressive = false;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -2327,8 +2326,24 @@ bool Simplifier::reverse_vivification_of_dummy(
     , const Watched qs
     , const Lit posLit
 ) {
+    /*
+    //TODO
+    //Use watchlists
+    if (numMaxVarElimAgressiveCheck > 0) {
+        if (agressiveCheck(lit, noPosLit, retval))
+            goto end;
+    }*/
+
+    //Cache can only be used if none are binary
+    if (ps.isBinary()
+        || qs.isBinary()
+        || !solver->conf.doCache
+    ) {
+        return false;
+    }
+
     for (size_t i = 0
-        ; i < dummy.size() && aggressive_elim_time_limit > 0
+        ; i < toClear.size() && aggressive_elim_time_limit > 0
         ; i++
     ) {
         aggressive_elim_time_limit -= 3;
@@ -2336,46 +2351,29 @@ bool Simplifier::reverse_vivification_of_dummy(
         assert(lit.var() != posLit.var());
 
         //Use cache
-        if (!ps.isBinary()
-            && !qs.isBinary()
-            && solver->conf.doCache
-        ) {
-            const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-            aggressive_elim_time_limit -= cache.size()/3;
-            for(vector<LitExtra>::const_iterator
-                it = cache.begin(), end = cache.end()
-                ; it != end
-                ; it++
-            ) {
-                //If redundant, that doesn't help
-                if (!it->getOnlyIrredBin())
-                    continue;
+        const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+        aggressive_elim_time_limit -= cache.size()/3;
+        for(const LitExtra litextra: cache) {
+            //If redundant, that doesn't help
+            if (!litextra.getOnlyIrredBin())
+                continue;
 
-                const Lit otherLit = it->getLit();
-                if (otherLit.var() == posLit.var())
-                    continue;
+            const Lit otherLit = litextra.getLit();
+            if (otherLit.var() == posLit.var())
+                continue;
 
-                //If (a) was in original clause
-                //then (a V b) means -b can be put inside
-                if (!seen[(~otherLit).toInt()]) {
-                    toClear.push_back(~otherLit);
-                    seen[(~otherLit).toInt()] = 1;
-                }
+            //If (a) was in original clause
+            //then (a V b) means -b can be put inside
+            if (!seen[(~otherLit).toInt()]) {
+                toClear.push_back(~otherLit);
+                seen[(~otherLit).toInt()] = 1;
+            }
 
-                //If (a V b) is irred in the clause, then done
-                if (seen[otherLit.toInt()]) {
-                    return true;
-                }
+            //If (a V b) is irred in the clause, then done
+            if (seen[otherLit.toInt()]) {
+                return true;
             }
         }
-
-        /*
-        //TODO
-        //Use watchlists
-        if (numMaxVarElimAgressiveCheck > 0) {
-            if (agressiveCheck(lit, noPosLit, retval))
-                goto end;
-        }*/
     }
 
     return false;
