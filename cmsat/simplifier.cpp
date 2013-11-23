@@ -3015,40 +3015,28 @@ Lit Simplifier::least_occurring_except(const Watched w, const Lit except, const 
         return lit_Undef;
 }*/
 
-void Simplifier::for_every_lit_in_clause(
-    const Watched& ws
-    , Lit watch_lit
-    , const std::function<void (const Lit lit)>& func
-) {
+void Simplifier::set_seen_for_lits(const Watched& ws, Lit watch_lit, int val)
+{
     switch(ws.getType()) {
         case CMSat::watch_binary_t:
-            func(watch_lit);
-            func(ws.lit2());
+            seen[watch_lit.toInt()] = val;
+            seen[ws.lit2().toInt()] = val;
             break;
 
         case CMSat::watch_tertiary_t:
-            func(watch_lit);
-            func(ws.lit2());
-            func(ws.lit3());
+            seen[watch_lit.toInt()] = val;
+            seen[ws.lit2().toInt()] = val;
+            seen[ws.lit3().toInt()] = val;
             break;
 
         case CMSat::watch_clause_t: {
             const Clause& cl = *solver->clAllocator->getPointer(ws.getOffset());
             for(const Lit lit: cl) {
-                func(lit);
+                seen[lit.toInt()] = val;
             }
             break;
         }
     }
-}
-
-void Simplifier::set_seen_for_lits(const Watched& ws, Lit watch_lit, int val)
-{
-    auto func = [&] (const Lit lit) {
-        seen[lit.toInt()] = val;
-    };
-
-    for_every_lit_in_clause(ws, watch_lit, func);
 }
 
 Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
@@ -3065,7 +3053,27 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
             num++;
         }
     };
-    for_every_lit_in_clause(a, lit_a, func);
+
+    switch(a.getType()) {
+        case CMSat::watch_binary_t:
+            func(lit_a);
+            func(a.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            func(lit_a);
+            func(a.lit2());
+            func(a.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& cl = *solver->clAllocator->getPointer(a.getOffset());
+            for(const Lit lit: cl) {
+                func(lit);
+            }
+            break;
+        }
+    }
 
     set_seen_for_lits(b, lit_b, 0);
 
@@ -3155,16 +3163,17 @@ void Simplifier::fill_potential(const Lit lit)
                 && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d)
                 && !solver->redundant(d)
                 && lit_diff_watches(c.ws, c.lit, d, l_min) == lit
-                && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
             ) {
                 Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                potential.push_back(PotentialClause(l_dash, c.lit, c.ws));
+                if (!inside(m_lits, l_dash)) {
+                    potential.push_back(PotentialClause(l_dash, c.lit, c.ws));
 
-                if (solver->conf.verbosity >= 6) {
-                    cout
-                    << "c [bva] Added to P: " << l_dash
-                    << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
-                    << endl;
+                    if (solver->conf.verbosity >= 6) {
+                        cout
+                        << "c [bva] Added to P: " << l_dash
+                        << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
+                        << endl;
+                    }
                 }
             }
         }
