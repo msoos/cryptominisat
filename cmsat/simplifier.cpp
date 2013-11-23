@@ -3121,8 +3121,12 @@ void Simplifier::bounded_var_addition()
                     && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
                 ) {
                     Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                    cout << "c [bva] Adding to P: " << l_dash << ", (" << solver->watched_to_string(c.lit, c.ws) << " )" << endl;
                     p.push_back(BVA(l_dash, c.lit, c.ws));
+
+                    cout
+                    << "c [bva] Added to P: " << l_dash
+                    << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
+                    << endl;
                 }
             }
         }
