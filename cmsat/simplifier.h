@@ -609,8 +609,8 @@ private:
         Watched ws;
     };
 
-    struct BVA {
-        BVA(const Lit _lit, const Lit _ws_lit, const Watched _ws) :
+    struct PotentialClause {
+        PotentialClause(const Lit _lit, const Lit _ws_lit, const Watched _ws) :
             lit(_lit)
             , ws_pair(Watched_pair(_ws_lit, _ws))
         {}
@@ -629,7 +629,7 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
-    vector<BVA> potential;
+    vector<PotentialClause> potential;
     vector<Lit> m_lits;
     vector<Watched_pair> m_cls;
 

@@ -3030,14 +3030,14 @@ Lit Simplifier::most_occuring_lit_in_potential(size_t& num_occur)
 {
     num_occur = 0;
     Lit most_occur = lit_Undef;
-    for(const BVA pot: potential) {
+    for(const PotentialClause pot: potential) {
         seen[pot.lit.toInt()]++;
         if (num_occur < seen[pot.lit.toInt()]) {
             num_occur = seen[pot.lit.toInt()];
             most_occur = pot.lit;
         }
     }
-    for(const BVA pot: potential) {
+    for(const PotentialClause pot: potential) {
         seen[pot.lit.toInt()] = 0;
     }
 
@@ -3100,7 +3100,7 @@ void Simplifier::fill_potential(const Lit lit)
                 && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
             ) {
                 Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                potential.push_back(BVA(l_dash, c.lit, c.ws));
+                potential.push_back(PotentialClause(l_dash, c.lit, c.ws));
 
                 cout
                 << "c [bva] Added to P: " << l_dash
@@ -3142,7 +3142,7 @@ void Simplifier::bounded_var_addition()
             if (simplifies_system(num_occur)) {
                 m_lits.push_back(l_max);
                 m_cls.clear();
-                for(const BVA pot: potential) {
+                for(const PotentialClause pot: potential) {
                     if (pot.lit == l_max) {
                         m_cls.push_back(pot.ws_pair);
                     }
