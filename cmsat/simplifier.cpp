@@ -2992,10 +2992,7 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
     assert(lit_a != lit_b);
 
     vector<Lit> lits_a = solver->get_lits(a, lit_a);
-    //cout << "c [bva] lits_a: " << lits_a << endl;
-
     vector<Lit> lits_b = solver->get_lits(b, lit_b);
-    //cout << "c [bva] lits_b: " << lits_b << endl;
 
     for(const Lit l: lits_b) {
         seen[l.toInt()] = 1;
@@ -3011,14 +3008,6 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
     for(const Lit l: lits_b) {
         seen[l.toInt()] = 0;
     }
-
-    cout
-    << "c [bva] diff of "
-    << solver->watched_to_string(lit_a, a)
-    << " - "
-    << solver->watched_to_string(lit_b, b)
-    << " is: " << (num > 1 ? lit_Undef : toret)
-    << endl;
 
     if (num == 1)
         return toret;
@@ -3039,6 +3028,13 @@ Lit Simplifier::most_occuring_lit_in_potential(size_t& num_occur)
     }
     for(const PotentialClause pot: potential) {
         seen[pot.lit.toInt()] = 0;
+    }
+
+    if (solver->conf.verbosity >= 5) {
+        cout
+        << "c [bva] ---> Most occuring lit in p: " << most_occur
+        << " occur num: " << num_occur
+        << endl;
     }
 
     return most_occur;
@@ -3088,9 +3084,11 @@ void Simplifier::fill_potential(const Lit lit)
         if (l_min == lit_Undef)
             continue;
 
-        cout
-        << "c [bva] Potential clause is :" << solver->watched_to_string(c.lit, c.ws)
-        << " -- l_min is: " << l_min << endl;
+        if (solver->conf.verbosity >= 6) {
+            cout
+            << "c [bva] Potential clause is :" << solver->watched_to_string(c.lit, c.ws)
+            << " -- l_min is: " << l_min << endl;
+        }
 
         for(const Watched d: solver->watches[l_min.toInt()]) {
             if (c.ws != d
@@ -3102,10 +3100,12 @@ void Simplifier::fill_potential(const Lit lit)
                 Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
                 potential.push_back(PotentialClause(l_dash, c.lit, c.ws));
 
-                cout
-                << "c [bva] Added to P: " << l_dash
-                << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
-                << endl;
+                if (solver->conf.verbosity >= 6) {
+                    cout
+                    << "c [bva] Added to P: " << l_dash
+                    << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
+                    << endl;
+                }
             }
         }
     }
@@ -3120,9 +3120,13 @@ void Simplifier::bounded_var_addition()
     solver->dumpIrredClauses(&f);
     f.close();
 
+    double my_time = cpuTime();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
-        cout << "c [bva] Trying lit: " << lit << endl;
+        cout
+        << "c [bva] Trying lit: " << lit
+        << " T: " << (cpuTime() - my_time)
+        << endl;
 
         m_cls.clear();
         m_lits.clear();
@@ -3138,7 +3142,6 @@ void Simplifier::bounded_var_addition()
 
             size_t num_occur;
             const Lit l_max = most_occuring_lit_in_potential(num_occur);
-            cout << "c [bva] ---> Most occuring lit in p: " << l_max << " num: " << num_occur << endl;
             if (simplifies_system(num_occur)) {
                 m_lits.push_back(l_max);
                 m_cls.clear();
@@ -3148,18 +3151,19 @@ void Simplifier::bounded_var_addition()
                     }
                 }
             } else {
-                cout << "Not adding to m_cls & m_litss" << endl;
                 break;
             }
         }
 
         if (simplification_size(m_lits.size(), m_cls.size()) <= 0) {
-            cout
-            << "Doesn't simplify system."
-            << "m_lits sz: " << m_lits.size() << ", m_cls sz:" << m_cls.size()
-            << ", simp size: "
-            << simplification_size(m_lits.size(), m_cls.size())
-            << endl;
+            if (solver->conf.verbosity >= 5) {
+                cout
+                << "Doesn't simplify system."
+                << "m_lits sz: " << m_lits.size() << ", m_cls sz:" << m_cls.size()
+                << ", simp size: "
+                << simplification_size(m_lits.size(), m_cls.size())
+                << endl;
+            }
 
             continue;
         }
