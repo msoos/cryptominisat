@@ -3026,19 +3026,19 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
         return lit_Undef;
 }
 
-Lit Simplifier::most_occuring_lit_in_bva(size_t& num_occur)
+Lit Simplifier::most_occuring_lit_in_potential(size_t& num_occur)
 {
     num_occur = 0;
     Lit most_occur = lit_Undef;
-    for(const BVA bva: p) {
-        seen[bva.lit.toInt()]++;
-        if (num_occur < seen[bva.lit.toInt()]) {
-            num_occur = seen[bva.lit.toInt()];
-            most_occur = bva.lit;
+    for(const BVA pot: potential) {
+        seen[pot.lit.toInt()]++;
+        if (num_occur < seen[pot.lit.toInt()]) {
+            num_occur = seen[pot.lit.toInt()];
+            most_occur = pot.lit;
         }
     }
-    for(const BVA bva: p) {
-        seen[bva.lit.toInt()] = 0;
+    for(const BVA pot: potential) {
+        seen[pot.lit.toInt()] = 0;
     }
 
     return most_occur;
@@ -3053,11 +3053,8 @@ bool Simplifier::inside(const vector<Lit>& lits, const Lit notin) const
     return false;
 }
 
-bool Simplifier::simplifies_system(
-    const size_t num_occur
-    , const vector<Lit>& m_lits
-    , const vector<Watched_pair>& m_cls
-) const {
+bool Simplifier::simplifies_system(const size_t num_occur) const
+{
     //If first run, at least 2 must match, nothing else matters
     if (m_lits.size() == 1) {
         return num_occur >= 2;
@@ -3083,24 +3080,27 @@ int Simplifier::simplification_size(
     return m_lits_size*m_cls_size-m_lits_size-m_cls_size;
 }
 
-void Simplifier::fill_p(const Lit lit)
+void Simplifier::fill_potential(const Lit lit)
 {
-    p.clear();
+    potential.clear();
     for(const Watched_pair c: m_cls) {
         const Lit l_min = least_occurring_except(c.ws, c.lit, m_lits);
         if (l_min == lit_Undef)
             continue;
 
-        cout << "c [bva] C is :" << solver->watched_to_string(c.lit, c.ws) << " -- l_min is: " << l_min << endl;
+        cout
+        << "c [bva] Potential clause is :" << solver->watched_to_string(c.lit, c.ws)
+        << " -- l_min is: " << l_min << endl;
 
         for(const Watched d: solver->watches[l_min.toInt()]) {
             if (c.ws != d
                 && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d)
+                && !solver->redundant(d)
                 && lit_diff_watches(c.ws, c.lit, d, l_min) == lit
                 && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
             ) {
                 Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                p.push_back(BVA(l_dash, c.lit, c.ws));
+                potential.push_back(BVA(l_dash, c.lit, c.ws));
 
                 cout
                 << "c [bva] Added to P: " << l_dash
@@ -3133,23 +3133,24 @@ void Simplifier::bounded_var_addition()
             }
         }
 
-        next:
-        fill_p(lit);
+        while(true) {
+            fill_potential(lit);
 
-        size_t num_occur;
-        const Lit l_max = most_occuring_lit_in_bva(num_occur);
-        cout << "c [bva] ---> Most occuring lit in p: " << l_max << " num: " << num_occur << endl;
-        if (simplifies_system(num_occur, m_lits, m_cls)) {
-            m_lits.push_back(l_max);
-            m_cls.clear();
-            for(const BVA bva: p) {
-                if (bva.lit == l_max) {
-                    m_cls.push_back(bva.ws_pair);
+            size_t num_occur;
+            const Lit l_max = most_occuring_lit_in_potential(num_occur);
+            cout << "c [bva] ---> Most occuring lit in p: " << l_max << " num: " << num_occur << endl;
+            if (simplifies_system(num_occur)) {
+                m_lits.push_back(l_max);
+                m_cls.clear();
+                for(const BVA pot: potential) {
+                    if (pot.lit == l_max) {
+                        m_cls.push_back(pot.ws_pair);
+                    }
                 }
+            } else {
+                cout << "Not adding to m_cls & m_litss" << endl;
+                break;
             }
-            goto next;
-        } else {
-            cout << "Not adding to m_cls & m_litss" << endl;
         }
 
         if (simplification_size(m_lits.size(), m_cls.size()) <= 0) {
