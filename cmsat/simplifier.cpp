@@ -3026,7 +3026,7 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
         return lit_Undef;
 }
 
-Lit Simplifier::most_occuring_lit_in_bva(const vector<BVA>& p, size_t& num_occur)
+Lit Simplifier::most_occuring_lit_in_bva(size_t& num_occur)
 {
     num_occur = 0;
     Lit most_occur = lit_Undef;
@@ -3083,6 +3083,34 @@ int Simplifier::simplification_size(
     return m_lits_size*m_cls_size-m_lits_size-m_cls_size;
 }
 
+void Simplifier::fill_p(const Lit lit)
+{
+    p.clear();
+    for(const Watched_pair c: m_cls) {
+        const Lit l_min = least_occurring_except(c.ws, c.lit, m_lits);
+        if (l_min == lit_Undef)
+            continue;
+
+        cout << "c [bva] C is :" << solver->watched_to_string(c.lit, c.ws) << " -- l_min is: " << l_min << endl;
+
+        for(const Watched d: solver->watches[l_min.toInt()]) {
+            if (c.ws != d
+                && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d)
+                && lit_diff_watches(c.ws, c.lit, d, l_min) == lit
+                && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
+            ) {
+                Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
+                p.push_back(BVA(l_dash, c.lit, c.ws));
+
+                cout
+                << "c [bva] Added to P: " << l_dash
+                << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
+                << endl;
+            }
+        }
+    }
+}
+
 void Simplifier::bounded_var_addition()
 {
     if (solver->conf.verbosity >= 3) {
@@ -3096,43 +3124,20 @@ void Simplifier::bounded_var_addition()
         const Lit lit = Lit::toLit(i);
         cout << "c [bva] Trying lit: " << lit << endl;
 
-        vector<Lit> m_lits;
+        m_cls.clear();
+        m_lits.clear();
         m_lits.push_back(lit);
-        vector<Watched_pair> m_cls;
-        //cout << "c [bva] solver->watches[lit.toInt()].size(): " << solver->watches[lit.toInt()].size() << endl;
         for(const Watched w: solver->watches[lit.toInt()]) {
-            m_cls.push_back(Watched_pair(lit, w));
-            //cout << "c [bva] adding cl to M_cls:" <<  solver->watched_to_string(lit, w) << endl;
-        }
-
-        next:
-        vector<BVA> p;
-        for(const Watched_pair c: m_cls) {
-            const Lit l_min = least_occurring_except(c.ws, c.lit, m_lits);
-            if (l_min == lit_Undef)
-                continue;
-
-            cout << "c [bva] C is :" << solver->watched_to_string(c.lit, c.ws) << " -- l_min is: " << l_min << endl;
-
-            for(const Watched d: solver->watches[l_min.toInt()]) {
-                if (c.ws != d
-                    && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d)
-                    && lit_diff_watches(c.ws, c.lit, d, l_min) == lit
-                    && !inside(m_lits, lit_diff_watches(d, l_min, c.ws, c.lit))
-                ) {
-                    Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                    p.push_back(BVA(l_dash, c.lit, c.ws));
-
-                    cout
-                    << "c [bva] Added to P: " << l_dash
-                    << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
-                    << endl;
-                }
+            if (!solver->redundant(w)) {
+                m_cls.push_back(Watched_pair(lit, w));
             }
         }
 
+        next:
+        fill_p(lit);
+
         size_t num_occur;
-        const Lit l_max = most_occuring_lit_in_bva(p, num_occur);
+        const Lit l_max = most_occuring_lit_in_bva(num_occur);
         cout << "c [bva] ---> Most occuring lit in p: " << l_max << " num: " << num_occur << endl;
         if (simplifies_system(num_occur, m_lits, m_cls)) {
             m_lits.push_back(l_max);

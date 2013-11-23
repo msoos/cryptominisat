@@ -618,9 +618,9 @@ private:
         Lit lit;
         Watched_pair ws_pair;
     };
-    Lit most_occuring_lit_in_bva(const vector<BVA>& p, size_t& num_occur);
-    Lit lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b);
     void bounded_var_addition();
+    Lit most_occuring_lit_in_bva(size_t& num_occur);
+    Lit lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b);
     Lit least_occurring_except(const Watched w, const Lit except, const vector<Lit>& except2);
     bool inside(const vector<Lit>& lits, const Lit notin) const;
     bool simplifies_system(
@@ -632,6 +632,10 @@ private:
         const int m_lit_size
         , const int m_cls_size
     ) const;
+    void fill_p(const Lit lit);
+    vector<BVA> p;
+    vector<Lit> m_lits;
+    vector<Watched_pair> m_cls;
 
     /////////////////////
     //Helpers
