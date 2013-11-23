@@ -629,6 +629,8 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
+    void set_seen_for_lits(const Watched& ws, Lit watch_lit, int val);
+    void for_every_lit_in_clause(const Watched& ws, Lit watch_lit, const std::function<void (const Lit lit)>& func);
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
     vector<Watched_pair> m_cls;

@@ -2986,7 +2986,7 @@ Lit Simplifier::least_occurring_except(const Watched w, const Lit except, const 
     return smallest;
 }
 
-Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
+/*Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
 {
     assert(solver->watched_cl_size(a) == solver->watched_cl_size(b));
     assert(lit_a != lit_b);
@@ -3008,6 +3008,66 @@ Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched
     for(const Lit l: lits_b) {
         seen[l.toInt()] = 0;
     }
+
+    if (num == 1)
+        return toret;
+    else
+        return lit_Undef;
+}*/
+
+void Simplifier::for_every_lit_in_clause(
+    const Watched& ws
+    , Lit watch_lit
+    , const std::function<void (const Lit lit)>& func
+) {
+    switch(ws.getType()) {
+        case CMSat::watch_binary_t:
+            func(watch_lit);
+            func(ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            func(watch_lit);
+            func(ws.lit2());
+            func(ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& cl = *solver->clAllocator->getPointer(ws.getOffset());
+            for(const Lit lit: cl) {
+                func(lit);
+            }
+            break;
+        }
+    }
+}
+
+void Simplifier::set_seen_for_lits(const Watched& ws, Lit watch_lit, int val)
+{
+    auto func = [&] (const Lit lit) {
+        seen[lit.toInt()] = val;
+    };
+
+    for_every_lit_in_clause(ws, watch_lit, func);
+}
+
+Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
+{
+    assert(solver->watched_cl_size(a) == solver->watched_cl_size(b));
+    assert(lit_a != lit_b);
+    set_seen_for_lits(b, lit_b, 1);
+
+    size_t num = 0;
+    Lit toret = lit_Undef;
+    auto func = [&] (const Lit lit) {
+        if (seen[lit.toInt()] == 0) {
+            toret = lit;
+            num++;
+        }
+    };
+    for_every_lit_in_clause(a, lit_a, func);
+
+    set_seen_for_lits(b, lit_b, 0);
 
     if (num == 1)
         return toret;
