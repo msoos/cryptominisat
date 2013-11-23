@@ -233,6 +233,16 @@ class Watched {
             return data2;
         }
 
+        bool operator==(const Watched& other) const
+        {
+            return data1 == other.data1 && data2 == other.data2 && type == other.type;
+        }
+
+        bool operator!=(const Watched& other) const
+        {
+            return !(*this == other);
+        }
+
         class Iterator
         {
         public:

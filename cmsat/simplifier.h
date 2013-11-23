@@ -597,6 +597,42 @@ private:
     void        eliminate_empty_resolvent_vars();
     bool        loopSubsumeVarelim();
 
+    /////////////
+    //Bounded Variable Addition
+    struct Watched_pair {
+        Watched_pair(const Lit _lit, const Watched _ws) :
+            lit(_lit)
+            , ws(_ws)
+        {}
+
+        Lit lit;
+        Watched ws;
+    };
+
+    struct BVA {
+        BVA(const Lit _lit, const Lit _ws_lit, const Watched _ws) :
+            lit(_lit)
+            , ws_pair(Watched_pair(_ws_lit, _ws))
+        {}
+
+        Lit lit;
+        Watched_pair ws_pair;
+    };
+    Lit most_occuring_lit_in_bva(const vector<BVA>& p, size_t& num_occur);
+    Lit lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b);
+    void bounded_var_addition();
+    Lit least_occurring_except(const Watched w, const Lit except, const vector<Lit>& except2);
+    bool inside(const vector<Lit>& lits, const Lit notin) const;
+    bool simplifies_system(
+        const size_t num_occur
+        , const vector<Lit>& m_lit
+        , const vector<Watched_pair>& m_cls
+    ) const;
+    int simplification_size(
+        const int m_lit_size
+        , const int m_cls_size
+    ) const;
+
     /////////////////////
     //Helpers
     friend class XorFinder;
