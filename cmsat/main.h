@@ -54,6 +54,9 @@ class Main
         string drupfilname;
         int drupExistsCheck = 1;
         void add_supported_options();
+        void check_options_correctness();
+        void manually_parse_some_options();
+
         po::positional_options_description p;
         po::variables_map vm;
         po::options_description cmdline_options;

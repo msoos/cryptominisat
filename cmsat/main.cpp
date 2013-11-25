@@ -603,22 +603,9 @@ void Main::add_supported_options()
     ;
 }
 
-void Main::parseCommandLine()
+void Main::check_options_correctness()
 {
-    conf.verbosity = 2;
-    conf.verbStats = 1;
-
-    //Reconstruct the command line so we can emit it later if needed
-    for(int i = 0; i < argc; i++) {
-        commandLine += string(argv[i]);
-        if (i+1 < argc) {
-            commandLine += " ";
-        }
-    }
-
-    add_supported_options();
-
-     try {
+    try {
         po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
         //po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help"))
@@ -689,7 +676,10 @@ void Main::parseCommandLine()
 
         exit(-1);
     }
+}
 
+void Main::manually_parse_some_options()
+{
     if (conf.doLHBR
         && !conf.propBinFirst
     ) {
@@ -911,6 +901,24 @@ void Main::parseCommandLine()
         //In case we are debugging the library, blocking must be disabled
         conf.doBlockClauses = false;
     }
+}
+
+void Main::parseCommandLine()
+{
+    conf.verbosity = 2;
+    conf.verbStats = 1;
+
+    //Reconstruct the command line so we can emit it later if needed
+    for(int i = 0; i < argc; i++) {
+        commandLine += string(argv[i]);
+        if (i+1 < argc) {
+            commandLine += " ";
+        }
+    }
+
+    add_supported_options();
+    check_options_correctness();
+    manually_parse_some_options();
 }
 
 void Main::printVersionInfo()
