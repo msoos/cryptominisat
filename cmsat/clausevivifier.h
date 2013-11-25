@@ -275,6 +275,21 @@ class ClauseVivifier {
                 stampTriRem = 0;
                 cacheTriRem = 0;
             }
+
+            void print(const double total_time, const size_t numWatchesLooked, int64_t timeAvailable) const
+            {
+                cout
+                << "c [implicit] sub"
+                << " bin: " << remBins
+                << " tri: " << remTris
+                << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
+
+                << " T: " << std::fixed << std::setprecision(2)
+                << total_time
+                << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+                << " w-visit: " << numWatchesLooked
+                << endl;
+            }
         };
         ImplSubsumeData impl_subs_dat;
         void try_subsume_tri(
@@ -282,6 +297,11 @@ class ClauseVivifier {
             , Watched*& i
             , Watched*& j
             , const bool doStamp
+        );
+        void try_subsume_bin(
+           const Lit lit
+            , Watched*& i
+            , Watched*& j
         );
 
         //Vars for strengthen implicit

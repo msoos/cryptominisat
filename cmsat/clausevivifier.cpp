@@ -917,6 +917,41 @@ void ClauseVivifier::try_subsume_tri(
     return;
 }
 
+void ClauseVivifier::try_subsume_bin(
+    const Lit lit
+    , Watched*& i
+    , Watched*& j
+) {
+    //Subsume bin with bin
+    if (i->lit2() == impl_subs_dat.lastLit2
+        && impl_subs_dat.lastLit3 == lit_Undef
+    ) {
+        //The sorting algorithm prefers irred to red, so it is
+        //impossible to have irred before red
+        assert(!(i->red() == false && impl_subs_dat.lastRed == true));
+
+        impl_subs_dat.remBins++;
+        assert(i->lit2().var() != lit.var());
+        timeAvailable -= 30;
+        timeAvailable -= solver->watches[i->lit2().toInt()].size();
+        removeWBin(solver->watches, i->lit2(), lit, i->red());
+        if (i->red()) {
+            solver->binTri.redBins--;
+        } else {
+            solver->binTri.irredBins--;
+        }
+        (*solver->drup) << del << lit << i->lit2() << fin;
+
+        return;
+    } else {
+        impl_subs_dat.lastBin = j;
+        impl_subs_dat.lastLit2 = i->lit2();
+        impl_subs_dat.lastLit3 = lit_Undef;
+        impl_subs_dat.lastRed = i->red();
+        *j++ = *i;
+    }
+}
+
 void ClauseVivifier::subsumeImplicit()
 {
     assert(solver->okay());
@@ -950,66 +985,35 @@ void ClauseVivifier::subsumeImplicit()
         Watched* j = i;
         impl_subs_dat.clear();
 
-        for (watch_subarray::iterator end = ws.end(); i != end; i++) {
-
-            //Don't care about long clauses
-            if (i->isClause() || timeAvailable < 0) {
+        for (Watched* end = ws.end(); i != end; i++) {
+            if (timeAvailable < 0) {
                 *j++ = *i;
                 continue;
             }
 
-            if (i->isTri()) {
-                try_subsume_tri(lit, i, j, doStamp);
-                continue;
-            }
+            switch(i->getType()) {
+                case CMSat::watch_clause_t:
+                    *j++ = *i;
+                    break;
 
-            //Binary from here on
-            assert(i->isBinary());
+                case CMSat::watch_tertiary_t:
+                    try_subsume_tri(lit, i, j, doStamp);
+                    break;
 
-            //Subsume bin with bin
-            if (i->lit2() == impl_subs_dat.lastLit2
-                && impl_subs_dat.lastLit3 == lit_Undef
-            ) {
-                //The sorting algorithm prefers irred to red, so it is
-                //impossible to have irred before red
-                assert(!(i->red() == false && impl_subs_dat.lastRed == true));
+                case CMSat::watch_binary_t:
+                    try_subsume_bin(lit, i, j);
+                    break;
 
-                impl_subs_dat.remBins++;
-                assert(i->lit2().var() != lit.var());
-                timeAvailable -= 30;
-                timeAvailable -= solver->watches[i->lit2().toInt()].size();
-                removeWBin(solver->watches, i->lit2(), lit, i->red());
-                if (i->red()) {
-                    solver->binTri.redBins--;
-                } else {
-                    solver->binTri.irredBins--;
-                }
-                (*solver->drup) << del << lit << i->lit2() << fin;
-
-                continue;
-            } else {
-                impl_subs_dat.lastBin = j;
-                impl_subs_dat.lastLit2 = i->lit2();
-                impl_subs_dat.lastLit3 = lit_Undef;
-                impl_subs_dat.lastRed = i->red();
-                *j++ = *i;
+                default:
+                    assert(false);
+                    break;
             }
         }
         ws.shrink(i-j);
     }
 
     if (solver->conf.verbosity >= 1) {
-        cout
-        << "c [implicit] sub"
-        << " bin: " << impl_subs_dat.remBins
-        << " tri: " << impl_subs_dat.remTris
-        << " (stamp: " << impl_subs_dat.stampTriRem << ", cache: " << impl_subs_dat.cacheTriRem << ")"
-
-        << " T: " << std::fixed << std::setprecision(2)
-        << (cpuTime() - myTime)
-        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
-        << " w-visit: " << numWatchesLooked
-        << endl;
+        impl_subs_dat.print(cpuTime() - myTime, numWatchesLooked, timeAvailable);
     }
     solver->checkStats();
 
