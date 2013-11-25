@@ -2986,35 +2986,11 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
     return smallest;
 }
 
-void Simplifier::set_seen_for_lits(const OccurClause& cl, int val)
-{
-    switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
-            seen[cl.lit.toInt()] = val;
-            seen[cl.ws.lit2().toInt()] = val;
-            break;
-
-        case CMSat::watch_tertiary_t:
-            seen[cl.lit.toInt()] = val;
-            seen[cl.ws.lit2().toInt()] = val;
-            seen[cl.ws.lit3().toInt()] = val;
-            break;
-
-        case CMSat::watch_clause_t: {
-            const Clause& clause = *solver->clAllocator->getPointer(cl.ws.getOffset());
-            for(const Lit lit: clause) {
-                seen[lit.toInt()] = val;
-            }
-            break;
-        }
-    }
-}
-
 Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
 {
     assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
     assert(a.lit != b.lit);
-    set_seen_for_lits(b, 1);
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;});
 
     size_t num = 0;
     Lit toret = lit_Undef;
@@ -3025,7 +3001,8 @@ Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
         }
     };
     solver->for_each_lit(a, check_seen);
-    set_seen_for_lits(b, 0);
+
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;});
 
     if (num == 1)
         return toret;

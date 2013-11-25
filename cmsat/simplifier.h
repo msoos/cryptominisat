@@ -620,7 +620,6 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
-    void set_seen_for_lits(const OccurClause& cl, int val);
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
     vector<OccurClause> m_cls;
