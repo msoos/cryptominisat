@@ -427,6 +427,119 @@ ClOffset ClauseVivifier::testVivify(
     }
 }
 
+void ClauseVivifier::strengthen_clause_with_watch(
+    const Lit lit
+    , const Watched* wit
+) {
+    //Strengthening w/ bin
+    if (wit->isBinary()
+        && seen[lit.toInt()] //We haven't yet removed it
+    ) {
+        if (seen[(~wit->lit2()).toInt()]) {
+            thisRemLitBinTri++;
+            seen[(~wit->lit2()).toInt()] = 0;
+        }
+    }
+
+    //Strengthening w/ tri
+    if (wit->isTri()
+        && seen[lit.toInt()] //We haven't yet removed it
+    ) {
+        if (seen[(wit->lit2()).toInt()]) {
+            if (seen[(~wit->lit3()).toInt()]) {
+                thisRemLitBinTri++;
+                seen[(~wit->lit3()).toInt()] = 0;
+            }
+        } else if (seen[wit->lit3().toInt()]) {
+            if (seen[(~wit->lit2()).toInt()]) {
+                thisRemLitBinTri++;
+                seen[(~wit->lit2()).toInt()] = 0;
+            }
+        }
+    }
+}
+
+bool ClauseVivifier::subsume_clause_with_watch(
+    const Lit lit
+    , Watched* wit
+    , const Clause& cl
+) {
+    //Subsumption w/ bin
+    if (wit->isBinary() &&
+        seen_subs[wit->lit2().toInt()]
+    ) {
+        //If subsuming irred with redundant, make the redundant into irred
+        if (wit->red() && !cl.red()) {
+            wit->setRed(false);
+            timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
+            solver->binTri.redBins--;
+            solver->binTri.irredBins++;
+        }
+        cache_based_data.subBinTri++;
+        isSubsumed = true;
+        return true;
+    }
+
+    //Extension w/ bin
+    if (wit->isBinary()
+        && !wit->red()
+        && !seen_subs[(~(wit->lit2())).toInt()]
+    ) {
+        seen_subs[(~(wit->lit2())).toInt()] = 1;
+        lits2.push_back(~(wit->lit2()));
+    }
+
+    if (wit->isTri()) {
+        assert(wit->lit2() < wit->lit3());
+    }
+
+    //Subsumption w/ tri
+    if (wit->isTri()
+        && lit < wit->lit2() //Check only one instance of the TRI clause
+        && seen_subs[wit->lit2().toInt()]
+        && seen_subs[wit->lit3().toInt()]
+    ) {
+        //If subsuming irred with redundant, make the redundant into irred
+        if (!cl.red() && wit->red()) {
+            wit->setRed(false);
+            timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
+            timeAvailable -= solver->watches[wit->lit3().toInt()].size()*3;
+            findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
+            findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
+            solver->binTri.redTris--;
+            solver->binTri.irredTris++;
+        }
+        cache_based_data.subBinTri++;
+        isSubsumed = true;
+        return true;
+    }
+
+    //Extension w/ tri (1)
+    if (wit->isTri()
+        && lit < wit->lit2() //Check only one instance of the TRI clause
+        && !wit->red()
+        && seen_subs[wit->lit2().toInt()]
+        && !seen_subs[(~(wit->lit3())).toInt()]
+    ) {
+        seen_subs[(~(wit->lit3())).toInt()] = 1;
+        lits2.push_back(~(wit->lit3()));
+    }
+
+    //Extension w/ tri (2)
+    if (wit->isTri()
+        && lit < wit->lit2() //Check only one instance of the TRI clause
+        && !wit->red()
+        && !seen_subs[(~(wit->lit2())).toInt()]
+        && seen_subs[wit->lit3().toInt()]
+    ) {
+        seen_subs[(~(wit->lit2())).toInt()] = 1;
+        lits2.push_back(~(wit->lit2()));
+    }
+
+    return false;
+}
+
 void ClauseVivifier::vivify_clause_with_lit(
     Clause& cl
     , const Lit lit
@@ -472,106 +585,12 @@ void ClauseVivifier::vivify_clause_with_lit(
         timeAvailable -= 5;
 
         if (alsoStrengthen) {
-            //Strengthening w/ bin
-            if (wit->isBinary()
-                && seen[lit.toInt()] //We haven't yet removed it
-            ) {
-                if (seen[(~wit->lit2()).toInt()]) {
-                    thisRemLitBinTri++;
-                    seen[(~wit->lit2()).toInt()] = 0;
-                }
-            }
-
-            //Strengthening w/ tri
-            if (wit->isTri()
-                && seen[lit.toInt()] //We haven't yet removed it
-            ) {
-                if (seen[(wit->lit2()).toInt()]) {
-                    if (seen[(~wit->lit3()).toInt()]) {
-                        thisRemLitBinTri++;
-                        seen[(~wit->lit3()).toInt()] = 0;
-                    }
-                } else if (seen[wit->lit3().toInt()]) {
-                    if (seen[(~wit->lit2()).toInt()]) {
-                        thisRemLitBinTri++;
-                        seen[(~wit->lit2()).toInt()] = 0;
-                    }
-                }
-            }
+            strengthen_clause_with_watch(lit, wit);
         }
 
-        //Subsumption w/ bin
-        if (wit->isBinary() &&
-            seen_subs[wit->lit2().toInt()]
-        ) {
-            //If subsuming irred with redundant, make the redundant into irred
-            if (wit->red() && !cl.red()) {
-                wit->setRed(false);
-                timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
-                findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
-                solver->binTri.redBins--;
-                solver->binTri.irredBins++;
-            }
-            cache_based_data.subBinTri++;
-            isSubsumed = true;
+        const bool subsumed = subsume_clause_with_watch(lit, wit, cl);
+        if (subsumed)
             break;
-        }
-
-        //Extension w/ bin
-        if (wit->isBinary()
-            && !wit->red()
-            && !seen_subs[(~(wit->lit2())).toInt()]
-        ) {
-            seen_subs[(~(wit->lit2())).toInt()] = 1;
-            lits2.push_back(~(wit->lit2()));
-        }
-
-        if (wit->isTri()) {
-            assert(wit->lit2() < wit->lit3());
-        }
-
-        //Subsumption w/ tri
-        if (wit->isTri()
-            && lit < wit->lit2() //Check only one instance of the TRI clause
-            && seen_subs[wit->lit2().toInt()]
-            && seen_subs[wit->lit3().toInt()]
-        ) {
-            //If subsuming irred with redundant, make the redundant into irred
-            if (!cl.red() && wit->red()) {
-                wit->setRed(false);
-                timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
-                timeAvailable -= solver->watches[wit->lit3().toInt()].size()*3;
-                findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
-                findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
-                solver->binTri.redTris--;
-                solver->binTri.irredTris++;
-            }
-            cache_based_data.subBinTri++;
-            isSubsumed = true;
-            break;
-        }
-
-        //Extension w/ tri (1)
-        if (wit->isTri()
-            && lit < wit->lit2() //Check only one instance of the TRI clause
-            && !wit->red()
-            && seen_subs[wit->lit2().toInt()]
-            && !seen_subs[(~(wit->lit3())).toInt()]
-        ) {
-            seen_subs[(~(wit->lit3())).toInt()] = 1;
-            lits2.push_back(~(wit->lit3()));
-        }
-
-        //Extension w/ tri (2)
-        if (wit->isTri()
-            && lit < wit->lit2() //Check only one instance of the TRI clause
-            && !wit->red()
-            && !seen_subs[(~(wit->lit2())).toInt()]
-            && seen_subs[wit->lit3().toInt()]
-        ) {
-            seen_subs[(~(wit->lit2())).toInt()] = 1;
-            lits2.push_back(~(wit->lit2()));
-        }
     }
 
 }
