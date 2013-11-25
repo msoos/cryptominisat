@@ -42,9 +42,9 @@ using std::endl;
 
 ClauseVivifier::ClauseVivifier(Solver* _solver) :
     solver(_solver)
-    , numCalls(0)
     , seen(solver->seen)
     , seen_subs(solver->seen2)
+    , numCalls(0)
 {}
 
 bool ClauseVivifier::vivify(const bool alsoStrengthen)
@@ -754,7 +754,6 @@ bool ClauseVivifier::vivifyClausesCache(
     tmpStats = Stats::CacheBased();
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
-    const bool doStamp = solver->conf.doStamp;
     cache_based_data.clear();
     needToFinish = false;
     randomise_order_of_clauses(clauses);
@@ -1087,7 +1086,6 @@ void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
     const Lit lit
     , Watched*& i
     , Watched*& j
-    , const Watched* end
 ) {
     const Lit lit1 = i->lit2();
     const Lit lit2 = i->lit3();
@@ -1211,7 +1209,7 @@ void ClauseVivifier::strengthen_implicit_lit(const Lit lit)
 
             case CMSat::watch_tertiary_t:
                 timeAvailable -= 20;
-                strengthen_tri_with_bin_tri_stamp(lit, i, j, end);
+                strengthen_tri_with_bin_tri_stamp(lit, i, j);
                 break;
 
             default:

@@ -356,7 +356,6 @@ class ClauseVivifier {
            const Lit lit
             , Watched*& i
             , Watched*& j
-            , const Watched* end
         );
         void strengthen_implicit_lit(const Lit lit);
 
