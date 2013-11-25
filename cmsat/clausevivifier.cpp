@@ -427,15 +427,18 @@ ClOffset ClauseVivifier::testVivify(
     }
 }
 
-void ClauseVivifier::vivify_with_lit(Clause& cl, const Lit lit, const bool alsoStrengthen)
-{
+void ClauseVivifier::vivify_clause_with_lit(
+    Clause& cl
+    , const Lit lit
+    , const bool alsoStrengthen
+) {
     //Use cache
     if (alsoStrengthen
         && solver->conf.doCache
-        && seen[lit.toInt()] //We haven't yet removed it
+        && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
          countTime += 2*solver->implCache[lit.toInt()].lits.size();
-         for (const auto elit: solver->implCache[lit.toInt()].lits) {
+         for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
              if (seen[(~(elit.getLit())).toInt()]) {
                 seen[(~(elit.getLit())).toInt()] = 0;
                 thisRemLitCache++;
@@ -589,10 +592,7 @@ void ClauseVivifier::try_subsuming_by_stamping(const bool red)
 
 void ClauseVivifier::remove_lits_through_stamping_red()
 {
-    if (solver->conf.doStamp
-        && lits.size() > 1
-        && !isSubsumed
-    ) {
+    if (lits.size() > 1) {
         countTime += lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
@@ -602,10 +602,7 @@ void ClauseVivifier::remove_lits_through_stamping_red()
 
 void ClauseVivifier::remove_lits_through_stamping_irred()
 {
-    if (solver->conf.doStamp
-        && lits.size() > 1
-        && !isSubsumed
-    ) {
+    if (lits.size() > 1) {
         countTime += lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
@@ -642,7 +639,7 @@ bool ClauseVivifier::vivify_clause(
         ; lit != end && !isSubsumed
         ; lit++
     ) {
-        vivify_with_lit(cl, *lit, alsoStrengthen);
+        vivify_clause_with_lit(cl, *lit, alsoStrengthen);
     }
     assert(lits2.size() > 1);
 
@@ -666,13 +663,15 @@ bool ClauseVivifier::vivify_clause(
         seen[lit.toInt()] = 0;
     }
 
-    if (alsoStrengthen) {
+    if (isSubsumed)
+        return true;
+
+    if (alsoStrengthen
+        && solver->conf.doStamp
+    ) {
         remove_lits_through_stamping_red();
         remove_lits_through_stamping_irred();
     }
-
-    if (isSubsumed)
-        return true;
 
     //Nothing to do
     if (lits.size() == cl.size()) {
@@ -691,6 +690,8 @@ bool ClauseVivifier::vivify_clause(
     }
 
     if (c2 != NULL) {
+        solver->detachClause(offset);
+        solver->clAllocator->clauseFree(offset);
         offset = solver->clAllocator->getOffset(c2);
         return false;
     }
