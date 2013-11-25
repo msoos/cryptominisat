@@ -540,6 +540,25 @@ bool ClauseVivifier::subsume_clause_with_watch(
     return false;
 }
 
+void ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
+{
+    timeAvailable -= 2*solver->implCache[lit.toInt()].lits.size();
+    for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
+         if (seen[(~(elit.getLit())).toInt()]) {
+            seen[(~(elit.getLit())).toInt()] = 0;
+            thisRemLitCache++;
+         }
+
+         if (seen_subs[elit.getLit().toInt()]
+             && elit.getOnlyIrredBin()
+         ) {
+             isSubsumed = true;
+             cache_based_data.subCache++;
+             return;
+         }
+     }
+}
+
 void ClauseVivifier::vivify_clause_with_lit(
     Clause& cl
     , const Lit lit
@@ -550,21 +569,7 @@ void ClauseVivifier::vivify_clause_with_lit(
         && solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
-         timeAvailable -= 2*solver->implCache[lit.toInt()].lits.size();
-         for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
-             if (seen[(~(elit.getLit())).toInt()]) {
-                seen[(~(elit.getLit())).toInt()] = 0;
-                thisRemLitCache++;
-             }
-
-             if (seen_subs[elit.getLit().toInt()]
-                 && elit.getOnlyIrredBin()
-             ) {
-                 isSubsumed = true;
-                 cache_based_data.subCache++;
-                 break;
-             }
-         }
+         strenghten_clause_with_cache(lit);
      }
 
      if (isSubsumed)
@@ -592,7 +597,6 @@ void ClauseVivifier::vivify_clause_with_lit(
         if (subsumed)
             break;
     }
-
 }
 
 void ClauseVivifier::try_subsuming_by_stamping(const bool red)
