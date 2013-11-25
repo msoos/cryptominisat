@@ -40,7 +40,7 @@ if (SANITIZE)
     add_cxx_flag("-Wno-bitfield-constant-conversion")
 endif()
 
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O4 -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wno-deprecated -O0 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O2 -g -DNDEBUG -mtune=native")
 
