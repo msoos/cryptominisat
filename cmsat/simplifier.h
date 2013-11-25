@@ -610,18 +610,23 @@ private:
     };
 
     struct PotentialClause {
-        PotentialClause(const Lit _lit, const Lit _ws_lit, const Watched _ws) :
+        PotentialClause(const Lit _lit, const OccurClause cl) :
             lit(_lit)
-            , ws_pair(OccurClause(_ws_lit, _ws))
+            , occur_cl(cl)
         {}
 
         Lit lit;
-        OccurClause ws_pair;
+        OccurClause occur_cl;
+        string to_string(const Solver* solver) const;
     };
+    void for_each_lit(
+       const OccurClause& cl
+        , std::function<void (const Lit lit)> func
+    );
     void bounded_var_addition();
     Lit most_occuring_lit_in_potential(size_t& num_occur);
     Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
-    Lit least_occurring_except(const Watched w, const Lit except, const vector<Lit>& except2);
+    Lit least_occurring_except(const OccurClause& c, const vector<Lit>& except2);
     bool inside(const vector<Lit>& lits, const Lit notin) const;
     bool simplifies_system(const size_t num_occur) const;
     int simplification_size(

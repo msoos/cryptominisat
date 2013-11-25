@@ -58,38 +58,7 @@ vector<Lit> CNF::get_lits(const Watched& ws, Lit origLit) const
     return lits;
 }
 
-vector<Lit> CNF::get_lits_except(const Watched& ws, Lit origLit) const
-{
-    vector<Lit> lits;
-    switch(ws.getType()) {
-        case watch_binary_t:
-            lits.push_back(ws.lit2());
-            break;
-
-        case CMSat::watch_tertiary_t:
-            lits.push_back(ws.lit2());
-            lits.push_back(ws.lit3());
-            break;
-
-        case watch_clause_t: {
-            const Clause* cl = clAllocator->getPointer(ws.getOffset());
-            for(const Lit lit: *cl) {
-                if (lit != origLit) {
-                    lits.push_back(lit);
-                }
-            }
-            break;
-        }
-
-        default:
-            assert(false);
-            break;
-    }
-
-    return lits;
-}
-
-size_t CNF::watched_cl_size(const Watched& ws) const
+size_t CNF::cl_size(const Watched& ws) const
 {
     switch(ws.getType()) {
         case watch_binary_t:
