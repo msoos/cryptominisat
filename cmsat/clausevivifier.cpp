@@ -437,7 +437,6 @@ bool ClauseVivifier::vivifyClausesCache(
     if (!alsoStrengthen) {
         maxCountTime *= 4;
     }
-
     double myTime = cpuTime();
 
     //If it hasn't been to successful until now, don't do it so much
@@ -457,14 +456,8 @@ bool ClauseVivifier::vivifyClausesCache(
     Stats::CacheBased tmpStats;
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
-    size_t remLitTimeStampTotal = 0;
-    size_t remLitTimeStampTotalInv = 0;
-    size_t subsumedStamp = 0;
-    size_t remLitCache = 0;
-    size_t remLitBinTri = 0;
-    size_t subBinTri = 0;
-    size_t subCache = 0;
     const bool doStamp = solver->conf.doStamp;
+    cache_based_data.clear();
 
     //Temps
     vector<Lit> lits;
@@ -544,7 +537,7 @@ bool ClauseVivifier::vivifyClausesCache(
                          && elit.getOnlyIrredBin()
                      ) {
                          isSubsumed = true;
-                         subCache++;
+                         cache_based_data.subCache++;
                          break;
                      }
                  }
@@ -608,7 +601,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         solver->binTri.redBins--;
                         solver->binTri.irredBins++;
                     }
-                    subBinTri++;
+                    cache_based_data.subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -642,7 +635,7 @@ bool ClauseVivifier::vivifyClausesCache(
                         solver->binTri.redTris--;
                         solver->binTri.irredTris++;
                     }
-                    subBinTri++;
+                    cache_based_data.subBinTri++;
                     isSubsumed = true;
                     break;
                 }
@@ -681,7 +674,7 @@ bool ClauseVivifier::vivifyClausesCache(
             countTime += lits2.size()*3 + 10;
             if (solver->stamp.stampBasedClRem(lits2)) {
                 isSubsumed = true;
-                subsumedStamp++;
+                cache_based_data.subsumedStamp++;
             }
         }
 
@@ -722,8 +715,8 @@ bool ClauseVivifier::vivifyClausesCache(
         ) {
             countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-            remLitTimeStampTotal += tmp.first;
-            remLitTimeStampTotalInv += tmp.second;
+            cache_based_data.remLitTimeStampTotal += tmp.first;
+            cache_based_data.remLitTimeStampTotalInv += tmp.second;
         }
 
         //Remove lits through stamping
@@ -734,8 +727,8 @@ bool ClauseVivifier::vivifyClausesCache(
         ) {
             countTime += lits.size()*3 + 10;
             std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            remLitTimeStampTotal += tmp.first;
-            remLitTimeStampTotalInv += tmp.second;
+            cache_based_data.remLitTimeStampTotal += tmp.first;
+            cache_based_data.remLitTimeStampTotalInv += tmp.second;
         }
 
         //If nothing to do, then move along
@@ -747,8 +740,8 @@ bool ClauseVivifier::vivifyClausesCache(
         //Else either remove or shrink clause
         countTime += cl.size()*10;
         if (!isSubsumed) {
-            remLitCache += thisRemLitCache;
-            remLitBinTri += thisRemLitBinTri;
+            cache_based_data.remLitCache += thisRemLitCache;
+            cache_based_data.remLitBinTri += thisRemLitBinTri;
             tmpStats.shrinked++;
             countTime += lits.size()*2 + 50;
             Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
@@ -770,8 +763,8 @@ bool ClauseVivifier::vivifyClausesCache(
     #endif
 
     //Set stats
-    tmpStats.numClSubsumed += subBinTri + subsumedStamp + subCache;
-    tmpStats.numLitsRem += remLitBinTri + remLitCache + remLitTimeStampTotal + remLitTimeStampTotalInv;
+    tmpStats.numClSubsumed += cache_based_data.get_cl_subsumed();
+    tmpStats.numLitsRem += cache_based_data.get_lits_rem();
     tmpStats.cpu_time = cpuTime() - myTime;
     if (red) {
         runStats.redCacheBased = tmpStats;
@@ -780,24 +773,7 @@ bool ClauseVivifier::vivifyClausesCache(
     }
 
     if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [cl-str] stamp-based"
-        << " lit-rem: " << remLitTimeStampTotal
-        << " inv-lit-rem: " << remLitTimeStampTotalInv
-        << " stamp-cl-rem: " << subsumedStamp
-        << endl;
-
-        cout
-        << "c [cl-str] bintri-based"
-        << " lit-rem: " << remLitBinTri
-        << " cl-sub: " << subBinTri
-        << endl;
-
-        cout
-        << "c [cl-str] cache-based"
-        << " lit-rem: " << remLitCache
-        << " cl-sub: " << subCache
-        << endl;
+        cache_based_data.print();
     }
 
     return solver->ok;

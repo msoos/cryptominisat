@@ -307,6 +307,63 @@ class ClauseVivifier {
         );
         void strengthen_implicit_lit(const Lit lit);
 
+        //Cache-based data
+        struct CacheBasedData
+        {
+            size_t remLitTimeStampTotal;
+            size_t remLitTimeStampTotalInv;
+            size_t subsumedStamp;
+            size_t remLitCache;
+            size_t remLitBinTri;
+            size_t subBinTri;
+            size_t subCache;
+
+            void clear()
+            {
+                remLitTimeStampTotal = 0;
+                remLitTimeStampTotalInv = 0;
+                subsumedStamp = 0;
+                remLitCache = 0;
+                remLitBinTri = 0;
+                subBinTri = 0;
+                subCache = 0;
+            }
+
+            size_t get_cl_subsumed() const
+            {
+                return subBinTri + subsumedStamp + subCache;
+            }
+
+            size_t get_lits_rem() const
+            {
+                return remLitBinTri + remLitCache
+                    + remLitTimeStampTotal + remLitTimeStampTotalInv;
+            }
+
+            void print() const
+            {
+                cout
+                << "c [cl-str] stamp-based"
+                << " lit-rem: " << remLitTimeStampTotal
+                << " inv-lit-rem: " << remLitTimeStampTotalInv
+                << " stamp-cl-rem: " << subsumedStamp
+                << endl;
+
+                cout
+                << "c [cl-str] bintri-based"
+                << " lit-rem: " << remLitBinTri
+                << " cl-sub: " << subBinTri
+                << endl;
+
+                cout
+                << "c [cl-str] cache-based"
+                << " lit-rem: " << remLitCache
+                << " cl-sub: " << subCache
+                << endl;
+            }
+        };
+        CacheBasedData cache_based_data;
+
 
         //Actual algorithms used
         bool asymmClausesLongIrred();
