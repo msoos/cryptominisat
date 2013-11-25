@@ -3120,11 +3120,6 @@ void Simplifier::bounded_var_addition()
     double my_time = cpuTime();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
-        /*cout
-        << "c [bva] Trying lit: " << lit
-        << " T: " << (cpuTime() - my_time)
-        << endl;*/
-
         m_cls.clear();
         m_lits.clear();
         m_lits.push_back(lit);
@@ -3155,14 +3150,6 @@ void Simplifier::bounded_var_addition()
 
         const int simp_size = simplification_size(m_lits.size(), m_cls.size());
         if (simp_size <= 0) {
-            if (solver->conf.verbosity >= 5) {
-                cout
-                << "Doesn't simplify system."
-                << "m_lits sz: " << m_lits.size() << ", m_cls sz:" << m_cls.size()
-                << ", simplification size would be: " << simp_size
-                << endl;
-            }
-
             continue;
         }
 
