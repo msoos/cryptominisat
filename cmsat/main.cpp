@@ -593,9 +593,6 @@ void Main::add_supported_options()
     .add(xorOptions)
     #endif
     .add(gateOptions)
-    #ifdef USE_GAUSS
-    .add(gaussOptions)
-    #endif
     #ifdef USE_MYSQL
     .add(sqlOptions)
     #endif
@@ -744,52 +741,6 @@ void Main::manually_parse_some_options()
 
         exit(-1);
     }
-
-    //XOR finding
-
-    #ifdef USE_GAUSS
-    if (vm.count("gaussuntil")) {
-        gaussconfig.decision_until = vm["gaussuntil"].as<uint32_t>();
-    }
-
-    if (vm.count("nodisablegauss")) {
-        gaussconfig.dontDisable = true;
-    }
-
-    if (vm.count("maxnummatrixes")) {
-        gaussconfig.maxNumMatrixes = vm["maxnummatrixes"].as<uint32_t>();
-    }
-
-    if (vm.count("nosepmatrix")) {
-        gaussconfig.doSeparateMatrixFind = false;
-    }
-
-    if (vm.count("noiterreduce")) {
-        gaussconfig.iterativeReduce = false;
-    }
-
-    if (vm.count("noiterreduce")) {
-        gaussconfig.iterativeReduce = false;
-    }
-
-    if (vm.count("noordercol")) {
-        gaussconfig.orderCols = false;
-    }
-
-    if (vm.count("maxmatrixrows")) {
-        gaussconfig.maxMatrixRows = vm["maxmatrixrows"].as<uint32_t>();
-    }
-
-
-    if (vm.count("minmatrixrows")) {
-        gaussconfig.minMatrixRows = vm["minmatrixrows"].as<uint32_t>();
-    }
-
-
-    if (vm.count("savematrix")) {
-        gaussconfig.only_nth_gauss_save = vm["savematrix"].as<uint32_t>();
-    }
-    #endif //USE_GAUSS
 
     if (vm.count("restart")) {
         string type = vm["restart"].as<string>();
