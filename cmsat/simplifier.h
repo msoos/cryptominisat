@@ -625,6 +625,13 @@ private:
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
     vector<OccurClause> m_cls;
+    struct VarBVAOrder
+    {
+        VarBVAOrder(const Solver* solver);
+        bool operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const;
+        const Solver* solver;
+    };
+    Heap<VarBVAOrder> var_bva_order;
 
     /////////////////////
     //Helpers

@@ -85,6 +85,7 @@ Simplifier::Simplifier(Solver* _solver):
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
+    , var_bva_order(VarBVAOrder(_solver))
 {
     xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
@@ -3110,6 +3111,18 @@ void Simplifier::fill_potential(const Lit lit)
     }
 }
 
+Simplifier::VarBVAOrder::VarBVAOrder(const Solver* _solver) :
+    solver(_solver)
+{}
+
+
+bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const
+{
+    const Lit lit1 = Lit::toLit(lit1_uint);
+    const Lit lit2 = Lit::toLit(lit2_uint);
+    return solver->watches[lit1.toInt()].size() < solver->watches[lit2.toInt()].size();
+};
+
 void Simplifier::bounded_var_addition()
 {
     if (solver->conf.verbosity >= 3) {
@@ -3119,9 +3132,16 @@ void Simplifier::bounded_var_addition()
     solver->dumpIrredClauses(&f);
     f.close();
 
-    double my_time = cpuTime();
+    var_bva_order.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
+        var_bva_order.insert(lit.toInt());
+    }
+
+    double my_time = cpuTime();
+    while(!var_bva_order.empty()) {
+        const Lit lit = Lit::toLit(var_bva_order.removeMin());
+        //cout << "c [bva] trying lit " << lit << endl;
         try_bva_on_lit(lit);
     }
 
@@ -3169,7 +3189,7 @@ void Simplifier::try_bva_on_lit(const Lit lit)
 void Simplifier::bva_simplify_system(const Lit lit)
 {
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [bva] YES Simplification by "
         << simp_size
