@@ -573,7 +573,7 @@ void ClauseVivifier::vivify_with_lit(Clause& cl, const Lit lit, const bool alsoS
 
 }
 
-void ClauseVivifier::try_removing_by_stamping(const bool red)
+void ClauseVivifier::try_subsuming_by_stamping(const bool red)
 {
     if (solver->conf.doStamp
         && !isSubsumed
@@ -646,7 +646,7 @@ bool ClauseVivifier::vivify_clause(
     }
     assert(lits2.size() > 1);
 
-    try_removing_by_stamping(red);
+    try_subsuming_by_stamping(red);
 
     //Clear 'seen_subs'
     countTime += lits2.size()*3;

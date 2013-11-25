@@ -368,7 +368,7 @@ class ClauseVivifier {
         size_t thisRemLitBinTri;
         uint64_t countTime;
         void vivify_with_lit(Clause& cl, const Lit lit, const bool alsoStrengthen);
-        void try_removing_by_stamping(const bool red);
+        void try_subsuming_by_stamping(const bool red);
         void remove_lits_through_stamping_red();
         void remove_lits_through_stamping_irred();
         Stats::CacheBased tmpStats;
