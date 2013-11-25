@@ -3235,10 +3235,10 @@ void Simplifier::bounded_var_addition()
     double my_time = cpuTime();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
-        cout
+        /*cout
         << "c [bva] Trying lit: " << lit
         << " T: " << (cpuTime() - my_time)
-        << endl;
+        << endl;*/
 
         m_cls.clear();
         m_lits.clear();
@@ -3281,18 +3281,22 @@ void Simplifier::bounded_var_addition()
             continue;
         }
 
-        cout
-        << "c [bva] YES Simplification by " << simp_size
-        << " with matching lits: "
-        << m_lits << endl
-        << " c [bva] cls: ";
-        for(OccurClause cl: m_cls) {
+        if (solver->conf.verbosity >= 5) {
             cout
-            << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
-            << ", ";
+            << "c [bva] YES Simplification by " << simp_size
+            << " with matching lits: "
+            << m_lits << endl
+            << " c [bva] cls: ";
+            for(OccurClause cl: m_cls) {
+                cout
+                << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
+                << ", ";
+            }
+            cout << endl;
         }
-        cout << endl;
     }
+
+    cout << "c BVA time: " << cpuTime() - my_time << endl;
 }
 
 string Simplifier::PotentialClause::to_string(const Solver* solver) const
