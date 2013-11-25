@@ -437,7 +437,7 @@ void ClauseVivifier::vivify_clause_with_lit(
         && solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
-         countTime += 2*solver->implCache[lit.toInt()].lits.size();
+         timeAvailable -= 2*solver->implCache[lit.toInt()].lits.size();
          for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
              if (seen[(~(elit.getLit())).toInt()]) {
                 seen[(~(elit.getLit())).toInt()] = 0;
@@ -459,7 +459,7 @@ void ClauseVivifier::vivify_clause_with_lit(
 
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit.toInt()];
-    countTime += thisW.size()*2 + 5;
+    timeAvailable -= thisW.size()*2 + 5;
     for(watch_subarray::iterator
         wit = thisW.begin(), wend = thisW.end()
         ; wit != wend
@@ -469,7 +469,7 @@ void ClauseVivifier::vivify_clause_with_lit(
         if (wit->isClause())
             continue;
 
-        countTime += 5;
+        timeAvailable -= 5;
 
         if (alsoStrengthen) {
             //Strengthening w/ bin
@@ -507,7 +507,7 @@ void ClauseVivifier::vivify_clause_with_lit(
             //If subsuming irred with redundant, make the redundant into irred
             if (wit->red() && !cl.red()) {
                 wit->setRed(false);
-                countTime += solver->watches[wit->lit2().toInt()].size()*3;
+                timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
                 findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
                 solver->binTri.redBins--;
                 solver->binTri.irredBins++;
@@ -539,8 +539,8 @@ void ClauseVivifier::vivify_clause_with_lit(
             //If subsuming irred with redundant, make the redundant into irred
             if (!cl.red() && wit->red()) {
                 wit->setRed(false);
-                countTime += solver->watches[wit->lit2().toInt()].size()*3;
-                countTime += solver->watches[wit->lit3().toInt()].size()*3;
+                timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
+                timeAvailable -= solver->watches[wit->lit3().toInt()].size()*3;
                 findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
                 findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
                 solver->binTri.redTris--;
@@ -582,7 +582,7 @@ void ClauseVivifier::try_subsuming_by_stamping(const bool red)
         && !isSubsumed
         && !red
     ) {
-        countTime += lits2.size()*3 + 10;
+        timeAvailable -= lits2.size()*3 + 10;
         if (solver->stamp.stampBasedClRem(lits2)) {
             isSubsumed = true;
             cache_based_data.subsumedStamp++;
@@ -593,7 +593,7 @@ void ClauseVivifier::try_subsuming_by_stamping(const bool red)
 void ClauseVivifier::remove_lits_through_stamping_red()
 {
     if (lits.size() > 1) {
-        countTime += lits.size()*3 + 10;
+        timeAvailable -= lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
         cache_based_data.remLitTimeStampTotalInv += tmp.second;
@@ -603,7 +603,7 @@ void ClauseVivifier::remove_lits_through_stamping_red()
 void ClauseVivifier::remove_lits_through_stamping_irred()
 {
     if (lits.size() > 1) {
-        countTime += lits.size()*3 + 10;
+        timeAvailable -= lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
         cache_based_data.remLitTimeStampTotalInv += tmp.second;
@@ -618,7 +618,7 @@ bool ClauseVivifier::vivify_clause(
     Clause& cl = *solver->clAllocator->getPointer(offset);
     assert(cl.size() > 3);
 
-    countTime += cl.size()*2;
+    timeAvailable -= cl.size()*2;
     tmpStats.totalLits += cl.size();
     tmpStats.triedCls++;
     isSubsumed = false;
@@ -646,14 +646,14 @@ bool ClauseVivifier::vivify_clause(
     try_subsuming_by_stamping(red);
 
     //Clear 'seen_subs'
-    countTime += lits2.size()*3;
+    timeAvailable -= lits2.size()*3;
     for (const Lit lit: lits2) {
         seen_subs[lit.toInt()] = 0;
     }
 
     //Clear 'seen' and fill new clause data
     lits.clear();
-    countTime += cl.size()*3;
+    timeAvailable -= cl.size()*3;
     for (const Lit lit: cl) {
         if (!isSubsumed
             && seen[lit.toInt()]
@@ -679,11 +679,11 @@ bool ClauseVivifier::vivify_clause(
     }
 
     //Remove or shrink clause
-    countTime += cl.size()*10;
+    timeAvailable -= cl.size()*10;
     cache_based_data.remLitCache += thisRemLitCache;
     cache_based_data.remLitBinTri += thisRemLitBinTri;
     tmpStats.shrinked++;
-    countTime += lits.size()*2 + 50;
+    timeAvailable -= lits.size()*2 + 50;
     Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
     if (!solver->ok) {
         needToFinish = true;
@@ -704,7 +704,7 @@ void ClauseVivifier::randomise_order_of_clauses(
     vector<ClOffset>& clauses
 ) {
     if (!clauses.empty()) {
-        countTime += clauses.size()*2;
+        timeAvailable -= clauses.size()*2;
         for(size_t i = 0; i < clauses.size()-1; i++) {
             std::swap(
                 clauses[i]
@@ -714,7 +714,7 @@ void ClauseVivifier::randomise_order_of_clauses(
     }
 }
 
-uint64_t ClauseVivifier::calc_max_count_time(
+uint64_t ClauseVivifier::calc_time_available(
     const bool alsoStrengthen
     , const bool red
 ) const {
@@ -748,10 +748,9 @@ bool ClauseVivifier::vivifyClausesCache(
     assert(solver->ok);
 
     //Stats
-    countTime = 0;
     double myTime = cpuTime();
 
-    uint64_t maxCountTime = calc_max_count_time(alsoStrengthen, red);
+    timeAvailable = calc_time_available(alsoStrengthen, red);
     tmpStats = Stats::CacheBased();
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
@@ -768,7 +767,7 @@ bool ClauseVivifier::vivifyClausesCache(
         ; i++
     ) {
         //Timeout?
-        if (countTime > maxCountTime) {
+        if (timeAvailable < 0) {
             needToFinish = true;
             tmpStats.ranOutOfTime++;
         }

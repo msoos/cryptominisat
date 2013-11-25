@@ -366,7 +366,6 @@ class ClauseVivifier {
         bool isSubsumed;
         size_t thisRemLitCache;
         size_t thisRemLitBinTri;
-        uint64_t countTime;
         void vivify_clause_with_lit(
             Clause& cl
             , const Lit lit
@@ -383,7 +382,7 @@ class ClauseVivifier {
             , const bool alsoStrengthen
         );
         void randomise_order_of_clauses(vector<ClOffset>& clauses);
-        uint64_t calc_max_count_time(
+        uint64_t calc_time_available(
             const bool alsoStrengthen
             , const bool red
         ) const;
