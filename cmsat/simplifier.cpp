@@ -3120,55 +3120,67 @@ void Simplifier::bounded_var_addition()
     double my_time = cpuTime();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
-        m_cls.clear();
-        m_lits.clear();
-        m_lits.push_back(lit);
-        for(const Watched w: solver->watches[lit.toInt()]) {
-            if (!solver->redundant(w)) {
-                m_cls.push_back(OccurClause(lit, w));
-            }
-        }
-
-        while(true) {
-            potential.clear();
-            fill_potential(lit);
-
-            size_t num_occur;
-            const Lit l_max = most_occuring_lit_in_potential(num_occur);
-            if (simplifies_system(num_occur)) {
-                m_lits.push_back(l_max);
-                m_cls.clear();
-                for(const PotentialClause pot: potential) {
-                    if (pot.lit == l_max) {
-                        m_cls.push_back(pot.occur_cl);
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-
-        const int simp_size = simplification_size(m_lits.size(), m_cls.size());
-        if (simp_size <= 0) {
-            continue;
-        }
-
-        if (solver->conf.verbosity >= 5) {
-            cout
-            << "c [bva] YES Simplification by " << simp_size
-            << " with matching lits: "
-            << m_lits << endl
-            << " c [bva] cls: ";
-            for(OccurClause cl: m_cls) {
-                cout
-                << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
-                << ", ";
-            }
-            cout << endl;
-        }
+        try_bva_on_lit(lit);
     }
 
     cout << "c BVA time: " << cpuTime() - my_time << endl;
+}
+
+void Simplifier::try_bva_on_lit(const Lit lit)
+{
+    m_cls.clear();
+    m_lits.clear();
+    m_lits.push_back(lit);
+    for(const Watched w: solver->watches[lit.toInt()]) {
+        if (!solver->redundant(w)) {
+            m_cls.push_back(OccurClause(lit, w));
+        }
+    }
+
+    while(true) {
+        potential.clear();
+        fill_potential(lit);
+
+        size_t num_occur;
+        const Lit l_max = most_occuring_lit_in_potential(num_occur);
+        if (simplifies_system(num_occur)) {
+            m_lits.push_back(l_max);
+            m_cls.clear();
+            for(const PotentialClause pot: potential) {
+                if (pot.lit == l_max) {
+                    m_cls.push_back(pot.occur_cl);
+                }
+            }
+        } else {
+            break;
+        }
+    }
+
+    const int simp_size = simplification_size(m_lits.size(), m_cls.size());
+    if (simp_size <= 0) {
+        return;
+    }
+
+    bva_simplify_system(lit);
+}
+
+void Simplifier::bva_simplify_system(const Lit lit)
+{
+    int simp_size = simplification_size(m_lits.size(), m_cls.size());
+    if (solver->conf.verbosity >= 5) {
+        cout
+        << "c [bva] YES Simplification by "
+        << simp_size
+        << " with matching lits: "
+        << m_lits << endl
+        << " c [bva] cls: ";
+        for(OccurClause cl: m_cls) {
+            cout
+            << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
+            << ", ";
+        }
+        cout << endl;
+    }
 }
 
 string Simplifier::PotentialClause::to_string(const Solver* solver) const

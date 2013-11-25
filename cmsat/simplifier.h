@@ -620,6 +620,8 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
+    void try_bva_on_lit(const Lit lit);
+    void bva_simplify_system(const Lit lit);
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
     vector<OccurClause> m_cls;
