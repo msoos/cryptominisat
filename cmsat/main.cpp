@@ -701,11 +701,6 @@ void Main::manually_parse_some_options()
         conf.needResultFile = true;
     }
 
-    if (vm.count("version")) {
-        printVersionInfo();
-        exit(0);
-    }
-
     if (vm.count("polar")) {
         string mode = vm["polar"].as<string>();
 
@@ -869,6 +864,10 @@ void Main::parseCommandLine()
 
     add_supported_options();
     check_options_correctness();
+    if (vm.count("version")) {
+        printVersionInfo();
+        exit(0);
+    }
     manually_parse_some_options();
 }
 
