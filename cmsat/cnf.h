@@ -9,6 +9,7 @@
 #include "vardata.h"
 #include "watcharray.h"
 #include "drup.h"
+#include "clauseallocator.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -109,7 +110,71 @@ struct CNF
     string watched_to_string(Lit otherLit, const Watched& ws) const;
 
     size_t print_mem_used_longclauses(size_t totalMem) const;
+    template<class Function>
+    void for_each_lit(
+        const OccurClause& cl
+        ,  Function func
+    ) const;
+    template<class Function>
+    void for_each_lit_except_watched(
+        const OccurClause& cl
+        , Function func
+    ) const;
 };
+
+template<class Function>
+void CNF::for_each_lit(
+    const OccurClause& cl
+    ,  Function func
+) const {
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            func(cl.lit);
+            func(cl.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            func(cl.lit);
+            func(cl.ws.lit2());
+            func(cl.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *clAllocator->getPointer(cl.ws.getOffset());
+            for(const Lit lit: clause) {
+                func(lit);
+            }
+            break;
+        }
+    }
+}
+
+template<class Function>
+void CNF::for_each_lit_except_watched(
+    const OccurClause& cl
+    , Function func
+) const {
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            func(cl.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            func(cl.ws.lit2());
+            func(cl.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *clAllocator->getPointer(cl.ws.getOffset());
+            for(const Lit lit: clause) {
+                if (lit != cl.lit) {
+                    func(lit);
+                }
+            }
+            break;
+        }
+    }
+}
 
 struct ClauseSizeSorter
 {

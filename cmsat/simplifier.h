@@ -599,16 +599,6 @@ private:
 
     /////////////
     //Bounded Variable Addition
-    struct OccurClause {
-        OccurClause(const Lit _lit, const Watched _ws) :
-            lit(_lit)
-            , ws(_ws)
-        {}
-
-        Lit lit;
-        Watched ws;
-    };
-
     struct PotentialClause {
         PotentialClause(const Lit _lit, const OccurClause cl) :
             lit(_lit)
@@ -619,14 +609,6 @@ private:
         OccurClause occur_cl;
         string to_string(const Solver* solver) const;
     };
-    void for_each_lit(
-       const OccurClause& cl
-        , std::function<void (const Lit lit)> func
-    );
-    inline void for_each_lit_except_watched(
-        const OccurClause& cl
-        , std::function<void (const Lit lit)> func
-    );
     void bounded_var_addition();
     Lit most_occuring_lit_in_potential(size_t& num_occur);
     Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
