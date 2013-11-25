@@ -42,10 +42,9 @@
 
 
 #include <boost/lexical_cast.hpp>
-#include <boost/program_options.hpp>
 using namespace CMSat;
 using boost::lexical_cast;
-namespace po = boost::program_options;
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -255,23 +254,8 @@ struct WrongParam
     string msg;
 };
 
-void Main::parseCommandLine()
+void Main::add_supported_options()
 {
-    conf.verbosity = 2;
-    conf.verbStats = 1;
-
-    //Reconstruct the command line so we can emit it later if needed
-    for(int i = 0; i < argc; i++) {
-        commandLine += string(argv[i]);
-        if (i+1 < argc) {
-            commandLine += " ";
-        }
-    }
-
-    string typeclean;
-    string drupfilname;
-    int drupExistsCheck = 1;
-
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
@@ -588,12 +572,9 @@ void Main::parseCommandLine()
     ("compslimit", po::value<uint64_t>(&conf.compFindLimitMega)->default_value(conf.compFindLimitMega)
         , "Limit how much time is spent in component-finding");
 
-    po::positional_options_description p;
     p.add("input", 1);
     p.add("drup", 1);
 
-    po::variables_map vm;
-    po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
     .add(restartOptions)
@@ -620,6 +601,22 @@ void Main::parseCommandLine()
     #endif
     .add(miscOptions)
     ;
+}
+
+void Main::parseCommandLine()
+{
+    conf.verbosity = 2;
+    conf.verbStats = 1;
+
+    //Reconstruct the command line so we can emit it later if needed
+    for(int i = 0; i < argc; i++) {
+        commandLine += string(argv[i]);
+        if (i+1 < argc) {
+            commandLine += " ";
+        }
+    }
+
+    add_supported_options();
 
      try {
         po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);

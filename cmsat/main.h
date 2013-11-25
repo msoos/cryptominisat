@@ -34,6 +34,9 @@
 using std::string;
 using std::vector;
 
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 namespace CMSat {
     class Solver;
 }
@@ -47,6 +50,13 @@ class Main
         int solve();
 
     private:
+        string typeclean;
+        string drupfilname;
+        int drupExistsCheck = 1;
+        void add_supported_options();
+        po::positional_options_description p;
+        po::variables_map vm;
+        po::options_description cmdline_options;
 
         CMSat::Solver* solver;
 
