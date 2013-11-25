@@ -587,46 +587,121 @@ void ClauseVivifier::try_removing_by_stamping(const bool red)
     }
 }
 
-bool ClauseVivifier::vivifyClausesCache(
-    vector<ClOffset>& clauses
-    , bool red
-    , bool alsoStrengthen
-) {
-    assert(solver->ok);
-
-    //Stats
-    countTime = 0;
-    uint64_t maxCountTime = 700ULL*1000ULL*1000ULL;
-    if (!alsoStrengthen) {
-        maxCountTime *= 4;
-    }
-    double myTime = cpuTime();
-
-    //If it hasn't been to successful until now, don't do it so much
-    Stats::CacheBased* tmp = NULL;
-    if (red) {
-        tmp = &(globalStats.redCacheBased);
-    } else {
-        tmp = &(globalStats.irredCacheBased);
-    }
-    if (tmp->numCalled > 2
-        && (double)tmp->numClSubsumed/(double)tmp->triedCls < 0.05
-        && (double)tmp->numLitsRem/(double)tmp->totalLits < 0.05
+void ClauseVivifier::remove_lits_through_stamping_red()
+{
+    if (solver->conf.doStamp
+        && lits.size() > 1
+        && !isSubsumed
     ) {
-        maxCountTime /= 2;
+        countTime += lits.size()*3 + 10;
+        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
+        cache_based_data.remLitTimeStampTotal += tmp.first;
+        cache_based_data.remLitTimeStampTotalInv += tmp.second;
+    }
+}
+
+void ClauseVivifier::remove_lits_through_stamping_irred()
+{
+    if (solver->conf.doStamp
+        && lits.size() > 1
+        && !isSubsumed
+    ) {
+        countTime += lits.size()*3 + 10;
+        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
+        cache_based_data.remLitTimeStampTotal += tmp.first;
+        cache_based_data.remLitTimeStampTotalInv += tmp.second;
+    }
+}
+
+bool ClauseVivifier::vivify_clause(
+    ClOffset& offset
+    , bool red
+    , const bool alsoStrengthen
+) {
+    Clause& cl = *solver->clAllocator->getPointer(offset);
+    assert(cl.size() > 3);
+
+    countTime += cl.size()*2;
+    tmpStats.totalLits += cl.size();
+    tmpStats.triedCls++;
+    isSubsumed = false;
+    thisRemLitCache = 0;
+    thisRemLitBinTri = 0;
+
+    //Fill 'seen'
+    lits2.clear();
+    for (const Lit lit: cl) {
+        seen[lit.toInt()] = 1;
+        seen_subs[lit.toInt()] = 1;
+        lits2.push_back(lit);
     }
 
-    Stats::CacheBased tmpStats;
-    tmpStats.totalCls = clauses.size();
-    tmpStats.numCalled = 1;
-    const bool doStamp = solver->conf.doStamp;
-    cache_based_data.clear();
+    //Go through each literal and subsume/strengthen with it
+    for (const Lit
+        *lit = cl.begin(), *end = cl.end()
+        ; lit != end && !isSubsumed
+        ; lit++
+    ) {
+        vivify_with_lit(cl, *lit, alsoStrengthen);
+    }
+    assert(lits2.size() > 1);
 
-    //Temps
+    try_removing_by_stamping(red);
 
-    bool needToFinish = false;
+    //Clear 'seen_subs'
+    countTime += lits2.size()*3;
+    for (const Lit lit: lits2) {
+        seen_subs[lit.toInt()] = 0;
+    }
 
-    //Randomise order of clauses
+    //Clear 'seen' and fill new clause data
+    lits.clear();
+    countTime += cl.size()*3;
+    for (const Lit lit: cl) {
+        if (!isSubsumed
+            && seen[lit.toInt()]
+        ) {
+            lits.push_back(lit);
+        }
+        seen[lit.toInt()] = 0;
+    }
+
+    if (alsoStrengthen) {
+        remove_lits_through_stamping_red();
+        remove_lits_through_stamping_irred();
+    }
+
+    if (isSubsumed)
+        return true;
+
+    //Nothing to do
+    if (lits.size() == cl.size()) {
+        return false;
+    }
+
+    //Remove or shrink clause
+    countTime += cl.size()*10;
+    cache_based_data.remLitCache += thisRemLitCache;
+    cache_based_data.remLitBinTri += thisRemLitBinTri;
+    tmpStats.shrinked++;
+    countTime += lits.size()*2 + 50;
+    Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
+    if (!solver->ok) {
+        needToFinish = true;
+    }
+
+    if (c2 != NULL) {
+        offset = solver->clAllocator->getOffset(c2);
+        return false;
+    }
+
+    //Implicit clause or non-existent after addition, remove
+    return true;
+}
+
+void ClauseVivifier::randomise_order_of_clauses(
+    vector<ClOffset>& clauses
+) {
     if (!clauses.empty()) {
         countTime += clauses.size()*2;
         for(size_t i = 0; i < clauses.size()-1; i++) {
@@ -636,8 +711,55 @@ bool ClauseVivifier::vivifyClausesCache(
             );
         }
     }
+}
 
-    size_t i = 0; //solver->mtrand.randInt(clauses.size()-1);
+uint64_t ClauseVivifier::calc_max_count_time(
+    const bool alsoStrengthen
+    , const bool red
+) const {
+    //If it hasn't been to successful until now, don't do it so much
+    const Stats::CacheBased* stats = NULL;
+    if (red) {
+        stats = &(globalStats.redCacheBased);
+    } else {
+        stats = &(globalStats.irredCacheBased);
+    }
+
+    uint64_t maxCountTime = 700ULL*1000ULL*1000ULL;
+    if (!alsoStrengthen) {
+        maxCountTime *= 4;
+    }
+    if (stats->numCalled > 2
+        && (double)stats->numClSubsumed/(double)stats->triedCls < 0.05
+        && (double)stats->numLitsRem/(double)stats->totalLits < 0.05
+    ) {
+        maxCountTime /= 2;
+    }
+
+    return maxCountTime;
+}
+
+bool ClauseVivifier::vivifyClausesCache(
+    vector<ClOffset>& clauses
+    , bool red
+    , bool alsoStrengthen
+) {
+    assert(solver->ok);
+
+    //Stats
+    countTime = 0;
+    double myTime = cpuTime();
+
+    uint64_t maxCountTime = calc_max_count_time(alsoStrengthen, red);
+    tmpStats = Stats::CacheBased();
+    tmpStats.totalCls = clauses.size();
+    tmpStats.numCalled = 1;
+    const bool doStamp = solver->conf.doStamp;
+    cache_based_data.clear();
+    needToFinish = false;
+    randomise_order_of_clauses(clauses);
+
+    size_t i = 0;
     size_t j = i;
     const size_t end = clauses.size();
     for (
@@ -656,115 +778,14 @@ bool ClauseVivifier::vivifyClausesCache(
             continue;
         }
 
-        //Setup
         ClOffset offset = clauses[i];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
-        assert(cl.size() > 3);
-        countTime += cl.size()*2;
-        tmpStats.totalLits += cl.size();
-        tmpStats.triedCls++;
-        isSubsumed = false;
-        thisRemLitCache = 0;
-        thisRemLitBinTri = 0;
-
-        //Fill 'seen'
-        lits2.clear();
-        for (uint32_t i2 = 0; i2 < cl.size(); i2++) {
-            seen[cl[i2].toInt()] = 1;
-            seen_subs[cl[i2].toInt()] = 1;
-            lits2.push_back(cl[i2]);
+        const bool remove = vivify_clause(offset, red, alsoStrengthen);
+        if (remove) {
+            solver->detachClause(offset);
+            solver->clAllocator->clauseFree(offset);
+        } else {
+            clauses[j++] = offset;
         }
-
-        //Go through each literal and subsume/strengthen with it
-        for (const Lit
-            *lit = cl.begin(), *end = cl.end()
-            ; lit != end && !isSubsumed
-            ; lit++
-        ) {
-            vivify_with_lit(cl, *lit, alsoStrengthen);
-        }
-        assert(lits2.size() > 1);
-
-        try_removing_by_stamping(red);
-
-        //Clear 'seen2'
-        countTime += lits2.size()*3;
-        for (vector<Lit>::const_iterator
-            it2 = lits2.begin(), end2 = lits2.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            seen_subs[it2->toInt()] = 0;
-        }
-
-        //Clear 'seen' and fill new clause data
-        lits.clear();
-        countTime += cl.size()*3;
-        for (Clause::const_iterator
-            it2 = cl.begin(), end2 = cl.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //Only fill new clause data if clause hasn't been subsumed
-            if (!isSubsumed
-                && seen[it2->toInt()]
-            ) {
-                lits.push_back(*it2);
-            }
-
-            //Clear 'seen' and 'seen_subs'
-            seen[it2->toInt()] = 0;
-        }
-
-        //Remove lits through stamping
-        if (doStamp
-            && alsoStrengthen
-            && lits.size() > 1
-            && !isSubsumed
-        ) {
-            countTime += lits.size()*3 + 10;
-            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-            cache_based_data.remLitTimeStampTotal += tmp.first;
-            cache_based_data.remLitTimeStampTotalInv += tmp.second;
-        }
-
-        //Remove lits through stamping
-        if (doStamp
-            && alsoStrengthen
-            && lits.size() > 1
-            && !isSubsumed
-        ) {
-            countTime += lits.size()*3 + 10;
-            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            cache_based_data.remLitTimeStampTotal += tmp.first;
-            cache_based_data.remLitTimeStampTotalInv += tmp.second;
-        }
-
-        //If nothing to do, then move along
-        if (lits.size() == cl.size() && !isSubsumed) {
-            clauses[j++] = clauses[i];
-            continue;
-        }
-
-        //Else either remove or shrink clause
-        countTime += cl.size()*10;
-        if (!isSubsumed) {
-            cache_based_data.remLitCache += thisRemLitCache;
-            cache_based_data.remLitBinTri += thisRemLitBinTri;
-            tmpStats.shrinked++;
-            countTime += lits.size()*2 + 50;
-            Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
-
-            if (c2 != NULL) {
-                clauses[j++] = solver->clAllocator->getOffset(c2);
-            }
-
-            if (!solver->ok) {
-                needToFinish = true;
-            }
-        }
-        solver->detachClause(offset);
-        solver->clAllocator->clauseFree(offset);
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS

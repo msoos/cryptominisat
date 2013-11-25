@@ -369,7 +369,20 @@ class ClauseVivifier {
         uint64_t countTime;
         void vivify_with_lit(Clause& cl, const Lit lit, const bool alsoStrengthen);
         void try_removing_by_stamping(const bool red);
-
+        void remove_lits_through_stamping_red();
+        void remove_lits_through_stamping_irred();
+        Stats::CacheBased tmpStats;
+        bool needToFinish;
+        bool vivify_clause(
+            ClOffset& offset
+            , bool red
+            , const bool alsoStrengthen
+        );
+        void randomise_order_of_clauses(vector<ClOffset>& clauses);
+        uint64_t calc_max_count_time(
+            const bool alsoStrengthen
+            , const bool red
+        ) const;
 
         //Actual algorithms used
         bool asymmClausesLongIrred();
