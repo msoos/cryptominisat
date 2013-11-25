@@ -106,7 +106,6 @@ struct CNF
 
     bool redundant(const Watched& ws) const;
     size_t cl_size(const Watched& ws) const;
-    vector<Lit> get_lits(const Watched& ws, Lit origLit) const;
     string watched_to_string(Lit otherLit, const Watched& ws) const;
 
     size_t print_mem_used_longclauses(size_t totalMem) const;
