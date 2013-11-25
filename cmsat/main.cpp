@@ -675,6 +675,121 @@ void Main::check_options_correctness()
     }
 }
 
+void Main::handle_drup_option()
+{
+    if (drupDebug) {
+        drupf = &std::cout;
+    } else {
+        if (drupExistsCheck && fileExists(drupfilname)) {
+            cout
+            << "ERROR! File selected for DRUP output, '"
+            << drupfilname
+            << "' already exists. Please delete the file or pick another"
+            << endl
+            << "DRUP filename"
+            << endl;
+            exit(-1);
+        }
+        std::ofstream* drupfTmp = new std::ofstream;
+        drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
+        if (!*drupfTmp) {
+            cout
+            << "ERROR: Could not open DRUP file "
+            << drupfilname
+            << " for writing"
+            << endl;
+
+            exit(-1);
+        }
+        drupf = drupfTmp;
+    }
+
+    if (!conf.otfHyperbin) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c OTF hyper-bin is needed for BProp in DRUP, turning it back"
+            << endl;
+        }
+        conf.otfHyperbin = true;
+    }
+
+    if (conf.doFindXors) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c XOR manipulation is not supported in DRUP, turning it off"
+            << endl;
+        }
+        conf.doFindXors = false;
+    }
+
+    if (conf.doRenumberVars) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Variable renumbering is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doRenumberVars = false;
+    }
+
+    if (conf.doCompHandler) {
+        if (conf.verbosity >= 2) {
+            cout
+            << "c Component finding & solving is not supported during DRUP, turning it off"
+            << endl;
+        }
+        conf.doCompHandler = false;
+    }
+}
+
+void Main::parse_cleaning_type()
+{
+    if (typeclean == "glue") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_GLUE_BASED;
+    } else if (typeclean == "size") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
+    } else if (typeclean == "propconfl") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
+    } else if (typeclean == "activity") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_ACTIVITY_BASED;
+    } else {
+        std::cerr
+        << "ERROR: Cannot parse option given to '--clean'. It's '"
+        << typeclean << "'" << " but that none of the possiblities listed."
+        << endl;
+
+        exit(-1);
+    }
+}
+
+void Main::parse_restart_type()
+{
+    if (vm.count("restart")) {
+        string type = vm["restart"].as<string>();
+        if (type == "geom")
+            conf.restartType = Restart::geom;
+        else if (type == "glue")
+            conf.restartType = Restart::glue;
+        else if (type == "agility")
+            conf.restartType = Restart::agility;
+        else if (type == "glueagility")
+            conf.restartType = Restart::glue_agility;
+        else throw WrongParam("restart", "unknown restart type");
+    }
+}
+
+void Main::parse_polarity_type()
+{
+    if (vm.count("polar")) {
+        string mode = vm["polar"].as<string>();
+
+        if (mode == "true") conf.polarity_mode = PolarityMode::pos;
+        else if (mode == "false") conf.polarity_mode = PolarityMode::neg;
+        else if (mode == "rnd") conf.polarity_mode = PolarityMode::rnd;
+        else if (mode == "auto") conf.polarity_mode = PolarityMode::automatic;
+        else throw WrongParam(mode, "unknown polarity-mode");
+    }
+}
+
 void Main::manually_parse_some_options()
 {
     if (conf.doLHBR
@@ -701,15 +816,7 @@ void Main::manually_parse_some_options()
         conf.needResultFile = true;
     }
 
-    if (vm.count("polar")) {
-        string mode = vm["polar"].as<string>();
-
-        if (mode == "true") conf.polarity_mode = PolarityMode::pos;
-        else if (mode == "false") conf.polarity_mode = PolarityMode::neg;
-        else if (mode == "rnd") conf.polarity_mode = PolarityMode::rnd;
-        else if (mode == "auto") conf.polarity_mode = PolarityMode::automatic;
-        else throw WrongParam(mode, "unknown polarity-mode");
-    }
+    parse_polarity_type();
 
     if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
         WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
@@ -720,35 +827,8 @@ void Main::manually_parse_some_options()
         throw WrongParam("maxdump", "--dumpred <filename> must be activated if issuing --maxdump <size>");
     }
 
-    if (typeclean == "glue") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_GLUE_BASED;
-    } else if (typeclean == "size") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
-    } else if (typeclean == "propconfl") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
-    } else if (typeclean == "activity") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_ACTIVITY_BASED;
-    } else {
-        std::cerr
-        << "ERROR: Cannot parse option given to '--clean'. It's '"
-        << typeclean << "'" << " but that none of the possiblities listed."
-        << endl;
-
-        exit(-1);
-    }
-
-    if (vm.count("restart")) {
-        string type = vm["restart"].as<string>();
-        if (type == "geom")
-            conf.restartType = Restart::geom;
-        else if (type == "glue")
-            conf.restartType = Restart::glue;
-        else if (type == "agility")
-            conf.restartType = Restart::agility;
-        else if (type == "glueagility")
-            conf.restartType = Restart::glue_agility;
-        else throw WrongParam("restart", "unknown restart type");
-    }
+    parse_cleaning_type();
+    parse_restart_type();
 
     if (numThreads < 1)
         throw WrongParam("threads", "Num threads must be at least 1");
@@ -775,68 +855,7 @@ void Main::manually_parse_some_options()
     }
 
     if (vm.count("drup")) {
-        if (drupDebug) {
-            drupf = &std::cout;
-        } else {
-            if (drupExistsCheck && fileExists(drupfilname)) {
-                cout
-                << "ERROR! File selected for DRUP output, '"
-                << drupfilname
-                << "' already exists. Please delete the file or pick another"
-                << endl
-                << "DRUP filename"
-                << endl;
-                exit(-1);
-            }
-            std::ofstream* drupfTmp = new std::ofstream;
-            drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
-            if (!*drupfTmp) {
-                cout
-                << "ERROR: Could not open DRUP file "
-                << drupfilname
-                << " for writing"
-                << endl;
-
-                exit(-1);
-            }
-            drupf = drupfTmp;
-        }
-    }
-
-    if (!conf.otfHyperbin && drupf) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c OTF hyper-bin is needed for BProp, turning it back"
-            << endl;
-        }
-        conf.otfHyperbin = true;
-    }
-
-    if (conf.doFindXors && drupf) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c XOR manipulation is not supported in DRUP, turning it off"
-            << endl;
-        }
-        conf.doFindXors = false;
-    }
-
-    if (conf.doRenumberVars && drupf) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c Variable renumbering is not supported during DRUP, turning it off"
-            << endl;
-        }
-        conf.doRenumberVars = false;
-    }
-
-    if (conf.doCompHandler && drupf) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c Component finding & solving is not supported during DRUP, turning it off"
-            << endl;
-        }
-        conf.doCompHandler = false;
+        handle_drup_option();
     }
 
     if (conf.verbosity >= 1) {

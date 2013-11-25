@@ -56,6 +56,10 @@ class Main
         void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();
+        void parse_cleaning_type();
+        void handle_drup_option();
+        void parse_restart_type();
+        void parse_polarity_type();
 
         po::positional_options_description p;
         po::variables_map vm;
