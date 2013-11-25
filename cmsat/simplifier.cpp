@@ -2963,7 +2963,6 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
     for(const Lit lit: except2) {
         seen[lit.toInt()] = 1;
     }
-    seen[c.lit.toInt()] = 1;
 
     Lit smallest = lit_Undef;
     size_t smallest_val = std::numeric_limits<size_t>::max();
@@ -2978,7 +2977,7 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
             smallest_val = watch_size;
         }
     };
-    for_each_lit(c, check_smallest);
+    for_each_lit_except_watched(c, check_smallest);
 
     for(const Lit lit: except2) {
         seen[lit.toInt()] = 0;
@@ -3031,6 +3030,32 @@ inline void Simplifier::for_each_lit(
             const Clause& clause = *solver->clAllocator->getPointer(cl.ws.getOffset());
             for(const Lit lit: clause) {
                 func(lit);
+            }
+            break;
+        }
+    }
+}
+
+inline void Simplifier::for_each_lit_except_watched(
+    const OccurClause& cl
+    , std::function<void (const Lit lit)> func
+) {
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            func(cl.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            func(cl.ws.lit2());
+            func(cl.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *solver->clAllocator->getPointer(cl.ws.getOffset());
+            for(const Lit lit: clause) {
+                if (lit != cl.lit) {
+                    func(lit);
+                }
             }
             break;
         }

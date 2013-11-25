@@ -623,6 +623,10 @@ private:
        const OccurClause& cl
         , std::function<void (const Lit lit)> func
     );
+    inline void for_each_lit_except_watched(
+        const OccurClause& cl
+        , std::function<void (const Lit lit)> func
+    );
     void bounded_var_addition();
     Lit most_occuring_lit_in_potential(size_t& num_occur);
     Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
