@@ -251,6 +251,39 @@ class ClauseVivifier {
 
     private:
 
+        struct ImplSubsumeData
+        {
+            Lit lastLit2;
+            Lit lastLit3;
+            Watched* lastBin;
+            bool lastRed;
+
+            uint64_t remBins;
+            uint64_t remTris;
+            uint64_t stampTriRem;
+            uint64_t cacheTriRem;
+
+            void clear()
+            {
+                lastLit2 = lit_Undef;
+                lastLit3 = lit_Undef;
+                lastBin = NULL;
+                lastRed = false;
+
+                remBins = 0;
+                remTris = 0;
+                stampTriRem = 0;
+                cacheTriRem = 0;
+            }
+        };
+        ImplSubsumeData impl_subs_dat;
+        void try_subsume_tri(
+            const Lit lit
+            , Watched*& i
+            , Watched*& j
+            , const bool doStamp
+        );
+
         //Vars for strengthen implicit
         struct StrImplicitData
         {
