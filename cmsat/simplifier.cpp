@@ -3073,7 +3073,7 @@ int Simplifier::simplification_size(
 
 void Simplifier::fill_potential(const Lit lit)
 {
-    for(const OccurClause c: m_cls) {
+    for(const OccurClause& c: m_cls) {
         const Lit l_min = least_occurring_except(c, m_lits);
         if (l_min == lit_Undef)
             continue;
@@ -3085,7 +3085,7 @@ void Simplifier::fill_potential(const Lit lit)
             << endl;
         }
 
-        for(const Watched d_ws: solver->watches[l_min.toInt()]) {
+        for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
             OccurClause d(l_min, d_ws);
             if (c.ws != d.ws
                 && solver->cl_size(c.ws) == solver->cl_size(d.ws)
