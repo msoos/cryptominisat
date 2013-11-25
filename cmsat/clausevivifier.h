@@ -363,6 +363,12 @@ class ClauseVivifier {
             }
         };
         CacheBasedData cache_based_data;
+        bool isSubsumed;
+        size_t thisRemLitCache;
+        size_t thisRemLitBinTri;
+        uint64_t countTime;
+        void vivify_with_lit(Clause& cl, const Lit lit, const bool alsoStrengthen);
+        void try_removing_by_stamping(const bool red);
 
 
         //Actual algorithms used
@@ -418,8 +424,11 @@ class ClauseVivifier {
 
         //For vivify
         vector<Lit> lits;
+        vector<Lit> lits2;
         vector<Lit> uselessLits;
         uint64_t extraTime;
+        vector<uint16_t>& seen;
+        vector<uint16_t>& seen_subs;
 
         //Global status
         Stats runStats;
