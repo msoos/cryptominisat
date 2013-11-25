@@ -2978,6 +2978,26 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
         }
     };
     for_each_lit_except_watched(c, check_smallest);
+    /*switch(c.ws.getType()) {
+        case CMSat::watch_binary_t:
+            check_smallest(c.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            check_smallest(c.ws.lit2());
+            check_smallest(c.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *solver->clAllocator->getPointer(c.ws.getOffset());
+            for(const Lit lit: clause) {
+                if (lit != c.lit) {
+                    check_smallest(lit);
+                }
+            }
+            break;
+        }
+    }*/
 
     for(const Lit lit: except2) {
         seen[lit.toInt()] = 0;
@@ -3076,7 +3096,27 @@ Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
             num++;
         }
     };
-    for_each_lit(a, check_seen);
+    //for_each_lit(a, check_seen);
+    switch(a.ws.getType()) {
+        case CMSat::watch_binary_t:
+            check_seen(a.lit);
+            check_seen(a.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            check_seen(a.lit);
+            check_seen(a.ws.lit2());
+            check_seen(a.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *solver->clAllocator->getPointer(a.ws.getOffset());
+            for(const Lit lit: clause) {
+                check_seen(lit);
+            }
+            break;
+        }
+    }
     set_seen_for_lits(b, 0);
 
     if (num == 1)
