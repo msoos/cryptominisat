@@ -1030,7 +1030,7 @@ bool Simplifier::simplify()
 
     assert(solver->ok);
 
-    bounded_var_addition();
+    //bounded_var_addition();
 
 end:
 
