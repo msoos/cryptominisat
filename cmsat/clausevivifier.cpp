@@ -540,7 +540,7 @@ bool ClauseVivifier::subsume_clause_with_watch(
     return false;
 }
 
-void ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
+bool ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
 {
     timeAvailable -= 2*solver->implCache[lit.toInt()].lits.size();
     for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
@@ -554,9 +554,11 @@ void ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
          ) {
              isSubsumed = true;
              cache_based_data.subCache++;
-             return;
+             return true;
          }
      }
+
+     return false;
 }
 
 void ClauseVivifier::vivify_clause_with_lit(
@@ -569,11 +571,10 @@ void ClauseVivifier::vivify_clause_with_lit(
         && solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
-         strenghten_clause_with_cache(lit);
+         const bool subsumed = strenghten_clause_with_cache(lit);
+         if (subsumed)
+             return;
      }
-
-     if (isSubsumed)
-         return;
 
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit.toInt()];
@@ -595,7 +596,7 @@ void ClauseVivifier::vivify_clause_with_lit(
 
         const bool subsumed = subsume_clause_with_watch(lit, wit, cl);
         if (subsumed)
-            break;
+            return;
     }
 }
 
