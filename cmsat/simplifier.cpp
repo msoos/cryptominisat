@@ -2986,52 +2986,23 @@ Lit Simplifier::least_occurring_except(const Watched w, const Lit except, const 
     return smallest;
 }
 
-/*Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
+void Simplifier::set_seen_for_lits(const OccurClause& cl, int val)
 {
-    assert(solver->watched_cl_size(a) == solver->watched_cl_size(b));
-    assert(lit_a != lit_b);
-
-    vector<Lit> lits_a = solver->get_lits(a, lit_a);
-    vector<Lit> lits_b = solver->get_lits(b, lit_b);
-
-    for(const Lit l: lits_b) {
-        seen[l.toInt()] = 1;
-    }
-    size_t num = 0;
-    Lit toret = lit_Undef;
-    for(const Lit l: lits_a) {
-        if (seen[l.toInt()] == 0) {
-            toret = l;
-            num++;
-        }
-    }
-    for(const Lit l: lits_b) {
-        seen[l.toInt()] = 0;
-    }
-
-    if (num == 1)
-        return toret;
-    else
-        return lit_Undef;
-}*/
-
-void Simplifier::set_seen_for_lits(const Watched& ws, Lit watch_lit, int val)
-{
-    switch(ws.getType()) {
+    switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
-            seen[watch_lit.toInt()] = val;
-            seen[ws.lit2().toInt()] = val;
+            seen[cl.lit.toInt()] = val;
+            seen[cl.ws.lit2().toInt()] = val;
             break;
 
         case CMSat::watch_tertiary_t:
-            seen[watch_lit.toInt()] = val;
-            seen[ws.lit2().toInt()] = val;
-            seen[ws.lit3().toInt()] = val;
+            seen[cl.lit.toInt()] = val;
+            seen[cl.ws.lit2().toInt()] = val;
+            seen[cl.ws.lit3().toInt()] = val;
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& cl = *solver->clAllocator->getPointer(ws.getOffset());
-            for(const Lit lit: cl) {
+            const Clause& clause = *solver->clAllocator->getPointer(cl.ws.getOffset());
+            for(const Lit lit: clause) {
                 seen[lit.toInt()] = val;
             }
             break;
@@ -3039,43 +3010,43 @@ void Simplifier::set_seen_for_lits(const Watched& ws, Lit watch_lit, int val)
     }
 }
 
-Lit Simplifier::lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b)
+Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
 {
-    assert(solver->watched_cl_size(a) == solver->watched_cl_size(b));
-    assert(lit_a != lit_b);
-    set_seen_for_lits(b, lit_b, 1);
+    assert(solver->watched_cl_size(a.ws) == solver->watched_cl_size(b.ws));
+    assert(a.lit != b.lit);
+    set_seen_for_lits(b, 1);
 
     size_t num = 0;
     Lit toret = lit_Undef;
-    auto func = [&] (const Lit lit) {
+    const auto check_seen = [&] (const Lit lit) {
         if (seen[lit.toInt()] == 0) {
             toret = lit;
             num++;
         }
     };
 
-    switch(a.getType()) {
+    switch(a.ws.getType()) {
         case CMSat::watch_binary_t:
-            func(lit_a);
-            func(a.lit2());
+            check_seen(a.lit);
+            check_seen(a.ws.lit2());
             break;
 
         case CMSat::watch_tertiary_t:
-            func(lit_a);
-            func(a.lit2());
-            func(a.lit3());
+            check_seen(a.lit);
+            check_seen(a.ws.lit2());
+            check_seen(a.ws.lit3());
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& cl = *solver->clAllocator->getPointer(a.getOffset());
+            const Clause& cl = *solver->clAllocator->getPointer(a.ws.getOffset());
             for(const Lit lit: cl) {
-                func(lit);
+                check_seen(lit);
             }
             break;
         }
     }
 
-    set_seen_for_lits(b, lit_b, 0);
+    set_seen_for_lits(b, 0);
 
     if (num == 1)
         return toret;
@@ -3146,8 +3117,7 @@ int Simplifier::simplification_size(
 
 void Simplifier::fill_potential(const Lit lit)
 {
-    potential.clear();
-    for(const Watched_pair c: m_cls) {
+    for(const OccurClause c: m_cls) {
         const Lit l_min = least_occurring_except(c.ws, c.lit, m_lits);
         if (l_min == lit_Undef)
             continue;
@@ -3158,19 +3128,20 @@ void Simplifier::fill_potential(const Lit lit)
             << " -- l_min is: " << l_min << endl;
         }
 
-        for(const Watched d: solver->watches[l_min.toInt()]) {
-            if (c.ws != d
-                && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d)
-                && !solver->redundant(d)
-                && lit_diff_watches(c.ws, c.lit, d, l_min) == lit
+        for(const Watched d_cl: solver->watches[l_min.toInt()]) {
+            OccurClause d(l_min, d_cl);
+            if (c.ws != d.ws
+                && solver->watched_cl_size(c.ws) == solver->watched_cl_size(d.ws)
+                && !solver->redundant(d.ws)
+                && lit_diff_watches(c, d) == lit
             ) {
-                Lit l_dash = lit_diff_watches(d, l_min, c.ws, c.lit);
-                if (!inside(m_lits, l_dash)) {
-                    potential.push_back(PotentialClause(l_dash, c.lit, c.ws));
+                const Lit diff = lit_diff_watches(d, c);
+                if (!inside(m_lits, diff)) {
+                    potential.push_back(PotentialClause(diff, c.lit, c.ws));
 
                     if (solver->conf.verbosity >= 6) {
                         cout
-                        << "c [bva] Added to P: " << l_dash
+                        << "c [bva] Added to P: " << diff
                         << ", (" << solver->watched_to_string(c.lit, c.ws) << " )"
                         << endl;
                     }
@@ -3202,11 +3173,12 @@ void Simplifier::bounded_var_addition()
         m_lits.push_back(lit);
         for(const Watched w: solver->watches[lit.toInt()]) {
             if (!solver->redundant(w)) {
-                m_cls.push_back(Watched_pair(lit, w));
+                m_cls.push_back(OccurClause(lit, w));
             }
         }
 
         while(true) {
+            potential.clear();
             fill_potential(lit);
 
             size_t num_occur;
@@ -3224,13 +3196,13 @@ void Simplifier::bounded_var_addition()
             }
         }
 
-        if (simplification_size(m_lits.size(), m_cls.size()) <= 0) {
+        const int simp_size = simplification_size(m_lits.size(), m_cls.size());
+        if (simp_size <= 0) {
             if (solver->conf.verbosity >= 5) {
                 cout
                 << "Doesn't simplify system."
                 << "m_lits sz: " << m_lits.size() << ", m_cls sz:" << m_cls.size()
-                << ", simp size: "
-                << simplification_size(m_lits.size(), m_cls.size())
+                << ", simplification size would be: " << simp_size
                 << endl;
             }
 
@@ -3238,12 +3210,11 @@ void Simplifier::bounded_var_addition()
         }
 
         cout
-        << "c [bva] YES"
-        << " Simplification by " << simplification_size(m_lits.size(), m_cls.size())
+        << "c [bva] Simplification by " << simp_size
         << " with matching lits: "
         << m_lits << endl
         << " c [bva] cls: ";
-        for(Watched_pair cl: m_cls) {
+        for(OccurClause cl: m_cls) {
             cout
             << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
             << ", ";

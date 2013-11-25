@@ -599,8 +599,8 @@ private:
 
     /////////////
     //Bounded Variable Addition
-    struct Watched_pair {
-        Watched_pair(const Lit _lit, const Watched _ws) :
+    struct OccurClause {
+        OccurClause(const Lit _lit, const Watched _ws) :
             lit(_lit)
             , ws(_ws)
         {}
@@ -612,15 +612,15 @@ private:
     struct PotentialClause {
         PotentialClause(const Lit _lit, const Lit _ws_lit, const Watched _ws) :
             lit(_lit)
-            , ws_pair(Watched_pair(_ws_lit, _ws))
+            , ws_pair(OccurClause(_ws_lit, _ws))
         {}
 
         Lit lit;
-        Watched_pair ws_pair;
+        OccurClause ws_pair;
     };
     void bounded_var_addition();
     Lit most_occuring_lit_in_potential(size_t& num_occur);
-    Lit lit_diff_watches(const Watched a, const Lit lit_a, const Watched b, const Lit lit_b);
+    Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
     Lit least_occurring_except(const Watched w, const Lit except, const vector<Lit>& except2);
     bool inside(const vector<Lit>& lits, const Lit notin) const;
     bool simplifies_system(const size_t num_occur) const;
@@ -629,11 +629,10 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
-    void set_seen_for_lits(const Watched& ws, Lit watch_lit, int val);
-    void for_every_lit_in_clause(const Watched& ws, Lit watch_lit, const std::function<void (const Lit lit)>& func);
+    void set_seen_for_lits(const OccurClause& cl, int val);
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
-    vector<Watched_pair> m_cls;
+    vector<OccurClause> m_cls;
 
     /////////////////////
     //Helpers
