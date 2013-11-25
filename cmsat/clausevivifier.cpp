@@ -1067,6 +1067,145 @@ void ClauseVivifier::strengthen_bin_with_bin(
     *j++ = *i;
 }
 
+void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
+    const Lit lit
+    , Watched*& i
+    , Watched*& j
+    , const Watched* end
+) {
+    const Lit lit1 = i->lit2();
+    const Lit lit2 = i->lit3();
+    bool rem = false;
+
+    timeAvailable -= solver->watches[(~lit).toInt()].size();
+    for(watch_subarray::const_iterator
+        it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
+        ; it2 != end2 && timeAvailable > 0
+        ; it2++
+    ) {
+        if (it2->isBinary()
+            && (it2->lit2() == lit1 || it2->lit2() == lit2)
+        ) {
+            rem = true;
+            str_impl_data.remLitFromTriByBin++;
+            break;
+        }
+
+        if (it2->isTri()
+            && (
+                (it2->lit2() == lit1 && it2->lit3() == lit2)
+                ||
+                (it2->lit2() == lit2 && it2->lit3() == lit1)
+            )
+
+        ) {
+            rem = true;
+            str_impl_data.remLitFromTriByTri++;
+            break;
+        }
+
+        //watches are sorted, so early-abort
+        if (it2->isClause())
+            break;
+    }
+
+    if (rem) {
+        removeTri(lit, i->lit2(), i->lit3(), i->red());
+        str_impl_data.remLitFromTri++;
+        str_impl_data.binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
+
+        (*solver->drup)
+        << i->lit2()  << i->lit3() << fin
+        << del << lit << i->lit2() << i->lit3() << fin;
+        return;
+    }
+
+    if (solver->conf.doStamp) {
+        //Strengthen TRI using stamps
+        lits.clear();
+        lits.push_back(lit);
+        lits.push_back(i->lit2());
+        lits.push_back(i->lit3());
+
+        //Try both stamp types to reduce size
+        timeAvailable -= 15;
+        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
+        str_impl_data.stampRem += tmp.first;
+        str_impl_data.stampRem += tmp.second;
+        if (lits.size() > 1) {
+            timeAvailable -= 15;
+            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
+            str_impl_data.stampRem += tmp.first;
+            str_impl_data.stampRem += tmp.second;
+        }
+
+        if (lits.size() == 2) {
+            removeTri(lit, i->lit2(), i->lit3(), i->red());
+            str_impl_data.remLitFromTri++;
+            str_impl_data.binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
+
+            //Drup
+            (*solver->drup)
+            << lits[0] << lits[1] << fin
+            << del << lit << i->lit2() << i->lit3() << fin;
+
+            return;
+        } else if (lits.size() == 1) {
+            removeTri(lit, i->lit2(), i->lit3(), i->red());
+            str_impl_data.remLitFromTri+=2;
+            str_impl_data.toEnqueue.push_back(lits[0]);
+            (*solver->drup)
+            << lits[0] << fin
+            << del << lit << i->lit2() << i->lit3() << fin;
+
+            return;
+        }
+    }
+
+
+    //Nothing to do, copy
+    *j++ = *i;
+}
+
+void ClauseVivifier::strengthen_implicit_lit(const Lit lit)
+{
+    watch_subarray ws = solver->watches[lit.toInt()];
+
+    Watched* i = ws.begin();
+    Watched* j = i;
+    for (const Watched* end = ws.end()
+        ; i != end
+        ; i++
+    ) {
+        timeAvailable -= 2;
+        if (timeAvailable < 0) {
+            *j++ = *i;
+            continue;
+        }
+
+        switch(i->getType()) {
+            case CMSat::watch_clause_t:
+                *j++ = *i;
+                break;
+
+            case CMSat::watch_binary_t:
+                timeAvailable -= 20;
+                strengthen_bin_with_bin(lit, i, j, end);
+                break;
+
+            case CMSat::watch_tertiary_t:
+                timeAvailable -= 20;
+                strengthen_tri_with_bin_tri_stamp(lit, i, j, end);
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
+    }
+    ws.shrink(i-j);
+}
+
 bool ClauseVivifier::strengthenImplicit()
 {
     str_impl_data.clear();
@@ -1074,148 +1213,21 @@ bool ClauseVivifier::strengthenImplicit()
     const size_t origTrailSize = solver->trail.size();
     timeAvailable = 1000LL*1000LL*1000LL;
     double myTime = cpuTime();
-    const bool doStamp = solver->conf.doStamp;
-    uint64_t numWatchesLooked = 0;
 
-    //For delayed enqueue and binary adding
-    //Used for strengthening
-    vector<BinaryClause> binsToAdd;
+    //Cannot handle empty
+    if (solver->watches.size() == 0)
+        return solver->okay();
 
     //Randomize starting point
-    size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t upI = solver->mtrand.randInt(solver->watches.size()-1);
     size_t numDone = 0;
     for (; numDone < solver->watches.size() && timeAvailable > 0
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
-        numWatchesLooked++;
-        Lit lit = Lit::toLit(upI);
-        watch_subarray ws = solver->watches[upI];
-
-        Watched* i = ws.begin();
-        Watched* j = i;
-        for (const Watched* end = ws.end()
-            ; i != end
-            ; i++
-        ) {
-            timeAvailable -= 2;
-            //Can't do much with clause, will treat them during vivification
-            //Or timeout
-            if (i->isClause() || timeAvailable < 0) {
-                *j++ = *i;
-                continue;
-            }
-
-            timeAvailable -= 20;
-
-            //Strengthen bin with bin -- effectively setting literal
-            if (i->isBinary()) {
-                strengthen_bin_with_bin(lit, i, j, end);
-                continue;
-            }
-
-            //Strengthen tri with bin/tri/stamp
-            if (i->isTri()) {
-                const Lit lit1 = i->lit2();
-                const Lit lit2 = i->lit3();
-                bool rem = false;
-
-                timeAvailable -= solver->watches[(~lit).toInt()].size();
-                for(watch_subarray::const_iterator
-                    it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
-                    ; it2 != end2 && timeAvailable > 0
-                    ; it2++
-                ) {
-                    if (it2->isBinary()
-                        && (it2->lit2() == lit1 || it2->lit2() == lit2)
-                    ) {
-                        rem = true;
-                        str_impl_data.remLitFromTriByBin++;
-                        break;
-                    }
-
-                    if (it2->isTri()
-                        && (
-                            (it2->lit2() == lit1 && it2->lit3() == lit2)
-                            ||
-                            (it2->lit2() == lit2 && it2->lit3() == lit1)
-                        )
-
-                    ) {
-                        rem = true;
-                        str_impl_data.remLitFromTriByTri++;
-                        break;
-                    }
-
-                    //watches are sorted, so early-abort
-                    if (it2->isClause())
-                        break;
-                }
-
-                if (rem) {
-                    removeTri(lit, i->lit2(), i->lit3(), i->red());
-                    str_impl_data.remLitFromTri++;
-                    binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
-
-                    (*solver->drup)
-                    << i->lit2()  << i->lit3() << fin
-                    << del << lit << i->lit2() << i->lit3() << fin;
-                    continue;
-                }
-
-                if (doStamp) {
-                    //Strengthen TRI using stamps
-                    lits.clear();
-                    lits.push_back(lit);
-                    lits.push_back(i->lit2());
-                    lits.push_back(i->lit3());
-
-                    //Try both stamp types to reduce size
-                    timeAvailable -= 15;
-                    std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-                    str_impl_data.stampRem += tmp.first;
-                    str_impl_data.stampRem += tmp.second;
-                    if (lits.size() > 1) {
-                        timeAvailable -= 15;
-                        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-                        str_impl_data.stampRem += tmp.first;
-                        str_impl_data.stampRem += tmp.second;
-                    }
-
-                    if (lits.size() == 2) {
-                        removeTri(lit, i->lit2(), i->lit3(), i->red());
-                        str_impl_data.remLitFromTri++;
-                        binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
-
-                        //Drup
-                        (*solver->drup)
-                        << lits[0] << lits[1] << fin
-                        << del << lit << i->lit2() << i->lit3() << fin;
-
-                        continue;
-                    } else if (lits.size() == 1) {
-                        removeTri(lit, i->lit2(), i->lit3(), i->red());
-                        str_impl_data.remLitFromTri+=2;
-                        str_impl_data.toEnqueue.push_back(lits[0]);
-                        (*solver->drup)
-                        << lits[0] << fin
-                        << del << lit << i->lit2() << i->lit3() << fin;
-
-                        continue;
-                    }
-                }
-
-
-                //Nothing to do, copy
-                *j++ = *i;
-                continue;
-            }
-
-            //Only bin, tri and clause in watchlist
-            assert(false);
-        }
-        ws.shrink(i-j);
+        str_impl_data.numWatchesLooked++;
+        const Lit lit = Lit::toLit(upI);
+        strengthen_implicit_lit(lit);
     }
 
     //Enqueue delayed values
@@ -1223,43 +1235,51 @@ bool ClauseVivifier::strengthenImplicit()
         goto end;
 
     //Add delayed binary clauses
-    for(vector<BinaryClause>::const_iterator
-        it = binsToAdd.begin(), end = binsToAdd.end()
-        ; it != end
-        ; it++
-    ) {
+    for(const BinaryClause& bin: str_impl_data.binsToAdd) {
         lits.clear();
-        lits.push_back(it->getLit1());
-        lits.push_back(it->getLit2());
+        lits.push_back(bin.getLit1());
+        lits.push_back(bin.getLit2());
         timeAvailable -= 5;
-        solver->addClauseInt(lits, it->isRed());
+        solver->addClauseInt(lits, bin.isRed());
         if (!solver->okay())
             goto end;
     }
 
 end:
 
-    if (solver->conf.verbosity >= 1) {
-        cout
-        << "c [implicit] str"
-        << " lit bin: " << str_impl_data.remLitFromBin
-        << " lit tri: " << str_impl_data.remLitFromTri
-        << " (by tri: " << str_impl_data.remLitFromTriByTri << ")"
-        << " (by stamp: " << str_impl_data.stampRem << ")"
-        << " set-var: " << solver->trail.size() - origTrailSize
-
-        << " T: " << std::fixed << std::setprecision(2)
-        << (cpuTime() - myTime)
-        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
-        << " w-visit: " << numWatchesLooked
-        << endl;
-    }
     solver->checkStats();
+    if (solver->conf.verbosity >= 1) {
+        str_impl_data.print(
+            solver->trail.size() - origTrailSize
+            , myTime
+            , timeAvailable
+        );
+    }
 
     //Update stats
     solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
 
     return solver->okay();
+}
+
+void ClauseVivifier::StrImplicitData::print(
+    const size_t trail_diff
+    , const double myTime
+    , const int64_t timeAvailable
+) const {
+    cout
+    << "c [implicit] str"
+    << " lit bin: " << remLitFromBin
+    << " lit tri: " << remLitFromTri
+    << " (by tri: " << remLitFromTriByTri << ")"
+    << " (by stamp: " << stampRem << ")"
+    << " set-var: " << trail_diff
+
+    << " T: " << std::fixed << std::setprecision(2)
+    << (cpuTime() - myTime)
+    << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+    << " w-visit: " << numWatchesLooked
+    << endl;
 }
 
 void ClauseVivifier::removeTri(

@@ -260,7 +260,12 @@ class ClauseVivifier {
             uint64_t remLitFromTriByTri;
             uint64_t stampRem;
 
+            //For delayed enqueue and binary adding
+            //Used for strengthening
             vector<Lit> toEnqueue;
+            vector<BinaryClause> binsToAdd;
+
+            uint64_t numWatchesLooked;
 
             void clear()
             {
@@ -269,8 +274,16 @@ class ClauseVivifier {
                 remLitFromTriByBin = 0;
                 remLitFromTriByTri = 0;
                 stampRem = 0;
+                numWatchesLooked = 0;
                 toEnqueue.clear();
+                binsToAdd.clear();
             }
+
+            void print(
+                const size_t trail_diff
+                , const double myTime
+                , const int64_t timeAvailable
+            ) const;
         };
         StrImplicitData str_impl_data;
         // end
@@ -280,7 +293,20 @@ class ClauseVivifier {
             , const bool red
             , const uint32_t queueByBy
         );
-        void strengthen_bin_with_bin(const Lit lit, Watched*& i, Watched*& j, const Watched* end);
+        void strengthen_bin_with_bin(
+            const Lit lit
+            , Watched*& i
+            , Watched*& j
+            , const Watched* end
+        );
+        void strengthen_tri_with_bin_tri_stamp(
+           const Lit lit
+            , Watched*& i
+            , Watched*& j
+            , const Watched* end
+        );
+        void strengthen_implicit_lit(const Lit lit);
+
 
         //Actual algorithms used
         bool asymmClausesLongIrred();
