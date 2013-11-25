@@ -27,6 +27,7 @@
 #include "constants.h"
 #include "solvertypes.h"
 #include "cloffset.h"
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -250,11 +251,36 @@ class ClauseVivifier {
 
     private:
 
+        //Vars for strengthen implicit
+        struct StrImplicitData
+        {
+            uint64_t remLitFromBin;
+            uint64_t remLitFromTri;
+            uint64_t remLitFromTriByBin;
+            uint64_t remLitFromTriByTri;
+            uint64_t stampRem;
+
+            vector<Lit> toEnqueue;
+
+            void clear()
+            {
+                remLitFromBin = 0;
+                remLitFromTri = 0;
+                remLitFromTriByBin = 0;
+                remLitFromTriByTri = 0;
+                stampRem = 0;
+                toEnqueue.clear();
+            }
+        };
+        StrImplicitData str_impl_data;
+        // end
+
         ClOffset testVivify(
             ClOffset offset
             , const bool red
             , const uint32_t queueByBy
         );
+        void strengthen_bin_with_bin(const Lit lit, Watched*& i, Watched*& j, const Watched* end);
 
         //Actual algorithms used
         bool asymmClausesLongIrred();
