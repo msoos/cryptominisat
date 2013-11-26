@@ -55,8 +55,7 @@ using std::endl;
 */
 Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         HyperEngine(
-            _solver->clAllocator
-            , _conf
+            _conf
         )
 
         //variables
@@ -168,7 +167,7 @@ void Searcher::add_lit_to_learnt(
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
-                Clause* cl = clAllocator->getPointer(varData[var].reason.getClause());
+                Clause* cl = clAllocator.getPointer(varData[var].reason.getClause());
                 if (cl->red()) {
                     lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
                 }
@@ -271,7 +270,7 @@ void Searcher::create_otf_subsuming_long_clause(
 void Searcher::check_otf_subsume(const PropBy confl)
 {
     ClOffset offset = confl.getClause();
-    Clause& cl = *clAllocator->getPointer(offset);
+    Clause& cl = *clAllocator.getPointer(offset);
 
     size_t num_lits_from_cl = 0;
     for (const Lit lit: cl) {
@@ -304,7 +303,7 @@ void Searcher::normalClMinim()
 
         switch (type) {
             case clause_t:
-                cl = clAllocator->getPointer(reason.getClause());
+                cl = clAllocator.getPointer(reason.getClause());
                 size = cl->size()-1;
                 break;
 
@@ -375,7 +374,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
         }
 
         case clause_t: {
-            Clause* cl = clAllocator->getPointer(confl.getClause());
+            Clause* cl = clAllocator.getPointer(confl.getClause());
             cout << "resolv (long): " << *cl << endl;
             break;
         }
@@ -420,7 +419,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case clause_t : {
-            cl = clAllocator->getPointer(confl.getClause());
+            cl = clAllocator.getPointer(confl.getClause());
             if (cl->red()) {
                 resolutions.redL++;
                 stats.resolvs.redL++;
@@ -696,7 +695,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         Clause* cl = NULL;
         switch (type) {
             case clause_t:
-                cl = clAllocator->getPointer(reason.getClause());
+                cl = clAllocator.getPointer(reason.getClause());
                 size = cl->size()-1;
                 break;
 
@@ -837,7 +836,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
                 }
 
                 case clause_t : {
-                    const Clause& cl = *clAllocator->getPointer(confl.getClause());
+                    const Clause& cl = *clAllocator.getPointer(confl.getClause());
                     for (uint32_t j = 1, size = cl.size(); j < size; j++) {
                         if (varData[cl[j].var()].level > 0)
                             seen[cl[j].var()] = 1;
@@ -1217,7 +1216,7 @@ void Searcher::add_otf_subsume_long_clauses()
     //Hande long OTF subsumption
     for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
         const ClOffset offset = otf_subsuming_long_cls[i];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
+        Clause& cl = *solver->clAllocator.getPointer(offset);
         cl.stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
         //Find the l_Undef
@@ -1453,7 +1452,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             if (conf.otfHyperbin && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
             else
-                enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
+                enqueue(learnt_clause[0], PropBy(clAllocator.getOffset(cl)));
 
             #ifdef STATS_NEEDED
             propStats.propsLongRed++;
@@ -1496,9 +1495,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
         //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
-            cl = clAllocator->Clause_new(learnt_clause, Searcher::sumConflicts());
+            cl = clAllocator.Clause_new(learnt_clause, Searcher::sumConflicts());
             cl->makeRed(glue);
-            ClOffset offset = clAllocator->getOffset(cl);
+            ClOffset offset = clAllocator.getOffset(cl);
             solver->longRedCls.push_back(offset);
         }
 
@@ -2752,7 +2751,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
     out_btlevel = 0;
     std::stringstream resolutions;
 
-    PropByForGraph confl(conflHalf, failBinLit, *clAllocator);
+    PropByForGraph confl(conflHalf, failBinLit, clAllocator);
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
 
@@ -2789,7 +2788,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
-        confl = PropByForGraph(varData[p.var()].reason, p, *clAllocator);
+        confl = PropByForGraph(varData[p.var()].reason, p, clAllocator);
         seen[p.var()] = 0; // this one is resolved
         pathC--;
     } while (pathC > 0); //UIP when eveything goes through this one
@@ -2822,7 +2821,7 @@ void Searcher::print_edges_for_graphviz_file(std::ofstream& file) const
         //A decision variable, it is not propagated by any clause
         if (reason.isNULL()) continue;
 
-        PropByForGraph prop(reason, lit, *clAllocator);
+        PropByForGraph prop(reason, lit, clAllocator);
         for (uint32_t i = 0; i < prop.size(); i++) {
             if (prop[i] == lit //This is being propagated, don't make a circular line
                 || varData[prop[i].var()].level == 0 //'clean' clauses of 0-level lits
@@ -2891,7 +2890,7 @@ void Searcher::fill_seen_for_lits_connected_to_conflict_graph(
             cout << "Reason for lit " << lits[i] << " : " << reason << endl;
             #endif
 
-            PropByForGraph prop(reason, lits[i], *clAllocator);
+            PropByForGraph prop(reason, lits[i], clAllocator);
             for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
                 const Lit lit = prop[i2];
                 assert(value(lit) != l_Undef);
@@ -2913,7 +2912,7 @@ void Searcher::fill_seen_for_lits_connected_to_conflict_graph(
 vector<Lit> Searcher::get_lits_from_conflict(const PropBy conflPart)
 {
     vector<Lit> lits;
-    PropByForGraph confl(conflPart, failBinLit, *clAllocator);
+    PropByForGraph confl(conflPart, failBinLit, clAllocator);
     for (uint32_t i = 0; i < confl.size(); i++) {
         const Lit lit = confl[i];
         assert(value(lit) == l_False);
@@ -3007,7 +3006,7 @@ void Searcher::bumpClauseAct(Clause* cl)
             ; it != end
             ; it++
         ) {
-            clAllocator->getPointer(*it)->stats.activity *= 1e-20;
+            clAllocator.getPointer(*it)->stats.activity *= 1e-20;
         }
         clauseActivityIncrease *= 1e-20;
         clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);

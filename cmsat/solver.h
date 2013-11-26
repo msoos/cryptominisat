@@ -416,37 +416,37 @@ class Solver : public Searcher
         CleaningStats reduceDB();           ///<Reduce the set of redundant clauses.
         struct reduceDBStructGlue
         {
-            reduceDBStructGlue(ClauseAllocator* _clAllocator) :
+            reduceDBStructGlue(ClauseAllocator& _clAllocator) :
                 clAllocator(_clAllocator)
             {}
-            ClauseAllocator* clAllocator;
+            ClauseAllocator& clAllocator;
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
         struct reduceDBStructSize
         {
-            reduceDBStructSize(ClauseAllocator* _clAllocator) :
+            reduceDBStructSize(ClauseAllocator& _clAllocator) :
                 clAllocator(_clAllocator)
             {}
-            ClauseAllocator* clAllocator;
+            ClauseAllocator& clAllocator;
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
         struct reduceDBStructActivity
         {
-            reduceDBStructActivity(ClauseAllocator* _clAllocator) :
+            reduceDBStructActivity(ClauseAllocator& _clAllocator) :
                 clAllocator(_clAllocator)
             {}
-            ClauseAllocator* clAllocator;
+            ClauseAllocator& clAllocator;
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
         struct reduceDBStructPropConfl
         {
-            reduceDBStructPropConfl(ClauseAllocator* _clAllocator) :
+            reduceDBStructPropConfl(ClauseAllocator& _clAllocator) :
                 clAllocator(_clAllocator)
             {}
-            ClauseAllocator* clAllocator;
+            ClauseAllocator& clAllocator;
 
             bool operator () (const ClOffset x, const ClOffset y);
         };

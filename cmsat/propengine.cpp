@@ -47,10 +47,9 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    ClauseAllocator *_clAllocator
-    , const SolverConf& _conf
+    const SolverConf& _conf
 ) :
-        CNF(_clAllocator, _conf)
+        CNF(_conf)
         // Stats
         , qhead(0)
         , agility(_conf.agilityG, _conf.agilityLimit)
@@ -183,7 +182,7 @@ void PropEngine::attachClause(
     }
     #endif //DEBUG_ATTACH
 
-    const ClOffset offset = clAllocator->getOffset(&c);
+    const ClOffset offset = clAllocator.getOffset(&c);
 
     //blocked literal is the lit in the middle (c.size()/2). For no reason.
     watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
@@ -205,7 +204,7 @@ void PropEngine::detachModifiedClause(
 ) {
     assert(origSize > 3);
 
-    ClOffset offset = clAllocator->getOffset(address);
+    ClOffset offset = clAllocator.getOffset(address);
     removeWCl(watches[lit1.toInt()], offset);
     removeWCl(watches[lit2.toInt()], offset);
 }
@@ -382,7 +381,7 @@ PropResult PropEngine::propNormalClause(
     //Dereference pointer
     propStats.bogoProps += 4;
     const ClOffset offset = i->getOffset();
-    Clause& c = *clAllocator->getPointer(offset);
+    Clause& c = *clAllocator.getPointer(offset);
 
     PropResult ret = prop_normal_helper(c, offset, j, p);
     if (ret != PROP_TODO)
@@ -430,7 +429,7 @@ bool PropEngine::propNormalClauseAnyOrder(
     }
     propStats.bogoProps += 4;
     const ClOffset offset = i->getOffset();
-    Clause& c = *clAllocator->getPointer(offset);
+    Clause& c = *clAllocator.getPointer(offset);
     #ifdef STATS_NEEDED
     c.stats.numLookedAt++;
     c.stats.numLitVisited++;
@@ -959,7 +958,7 @@ PropBy PropEngine::propagateBinFirst(
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
                     const ClOffset offset = i->getOffset();
-                    __builtin_prefetch(clAllocator->getPointer(offset));
+                    __builtin_prefetch(clAllocator.getPointer(offset));
                 }
 
                 continue;

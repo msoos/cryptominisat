@@ -5,8 +5,8 @@
 
 using namespace CMSat;
 
-HyperEngine::HyperEngine(ClauseAllocator* clAllocator, const SolverConf& _conf) :
-    PropEngine(clAllocator, _conf)
+HyperEngine::HyperEngine(const SolverConf& _conf) :
+    PropEngine(_conf)
     , stampingTime(0)
 {
 }
@@ -239,7 +239,7 @@ Lit HyperEngine::prop_norm_bin_dfs(
         if (k->isClause()) {
             if (value(k->getBlockedLit()) != l_True) {
                 const ClOffset offset = k->getOffset();
-                __builtin_prefetch(clAllocator->getPointer(offset));
+                __builtin_prefetch(clAllocator.getPointer(offset));
             }
 
             continue;
@@ -813,7 +813,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
 
         case clause_t: {
             const uint32_t offset = propBy.getClause();
-            const Clause& cl = *clAllocator->getPointer(offset);
+            const Clause& cl = *clAllocator.getPointer(offset);
             for(size_t i = 0; i < cl.size(); i++) {
                 if (varData[cl[i].var()].level != 0)
                     currAncestors.push_back(~cl[i]);
@@ -1029,7 +1029,7 @@ PropResult HyperEngine::propNormalClauseComplex(
     //Dereference pointer
     propStats.bogoProps += 4;
     const ClOffset offset = i->getOffset();
-    Clause& c = *clAllocator->getPointer(offset);
+    Clause& c = *clAllocator.getPointer(offset);
 
     PropResult ret = prop_normal_helper(c, offset, j, p);
     if (ret != PROP_TODO)

@@ -157,7 +157,7 @@ void CompFinder::addToCompClauses(const vector<ClOffset>& cs)
             break;
         }
         timeUsed += 10;
-        Clause* cl = solver->clAllocator->getPointer(offset);
+        Clause* cl = solver->clAllocator.getPointer(offset);
         addToCompClause(*cl);
     }
 }

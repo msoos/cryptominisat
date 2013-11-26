@@ -101,7 +101,7 @@ int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
         }
 
         case clause_t : {
-            const Clause& cl = *clAllocator->getPointer(rp.getClause());
+            const Clause& cl = *clAllocator.getPointer(rp.getClause());
             for (int i = 0, sz = cl.size(); i < sz; i++) {
                 if (i == 0)
                     continue;
@@ -169,7 +169,7 @@ void Searcher::mark_needed_removable(const Lit p)
         }
 
         case clause_t : {
-            const Clause& cl = *clAllocator->getPointer(rp.getClause());
+            const Clause& cl = *clAllocator.getPointer(rp.getClause());
             for (int i = 0; i < cl.size(); i++){
                 if (i == 0)
                     continue;

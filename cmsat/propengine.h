@@ -107,8 +107,7 @@ public:
     // Constructor/Destructor:
     //
     PropEngine(
-        ClauseAllocator* clAllocator
-        , const SolverConf& _conf
+        const SolverConf& _conf
     );
     ~PropEngine();
 

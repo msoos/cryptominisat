@@ -44,15 +44,14 @@ struct CNF
         uint64_t redLits = 0;
     };
 
-    CNF(ClauseAllocator* _clAllocator, const SolverConf& _conf) :
-        clAllocator(_clAllocator)
-        , conf(_conf)
+    CNF(const SolverConf& _conf) :
+        conf(_conf)
         , minNumVars(0)
     {
         drup = new Drup();
     }
 
-    ClauseAllocator* clAllocator;
+    ClauseAllocator clAllocator;
     SolverConf conf;
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
@@ -139,7 +138,7 @@ void CNF::for_each_lit(
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& clause = *clAllocator->getPointer(cl.ws.getOffset());
+            const Clause& clause = *clAllocator.getPointer(cl.ws.getOffset());
             for(const Lit lit: clause) {
                 func(lit);
             }
@@ -164,7 +163,7 @@ void CNF::for_each_lit_except_watched(
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& clause = *clAllocator->getPointer(cl.ws.getOffset());
+            const Clause& clause = *clAllocator.getPointer(cl.ws.getOffset());
             for(const Lit lit: clause) {
                 if (lit != cl.lit) {
                     func(lit);
@@ -177,11 +176,11 @@ void CNF::for_each_lit_except_watched(
 
 struct ClauseSizeSorter
 {
-    ClauseSizeSorter(const ClauseAllocator* _clAllocator) :
+    ClauseSizeSorter(const ClauseAllocator& _clAllocator) :
         clAllocator(_clAllocator)
     {}
     bool operator () (const ClOffset x, const ClOffset y);
-    const ClauseAllocator* clAllocator;
+    const ClauseAllocator& clAllocator;
 };
 
 }

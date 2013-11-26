@@ -176,18 +176,18 @@ bool ClauseVivifier::vivifyClausesTriIrred()
 
 struct ClauseSizeSorter
 {
-    ClauseSizeSorter(const ClauseAllocator* _clAllocator, const bool _invert = false) :
+    ClauseSizeSorter(const ClauseAllocator& _clAllocator, const bool _invert = false) :
         clAllocator(_clAllocator)
         , invert(_invert)
     {}
 
-    const ClauseAllocator* clAllocator;
+    const ClauseAllocator& clAllocator;
     const bool invert;
 
     bool operator()(const ClOffset off1, const ClOffset off2) const
     {
-        const Clause* cl1 = clAllocator->getPointer(off1);
-        const Clause* cl2 = clAllocator->getPointer(off2);
+        const Clause* cl1 = clAllocator.getPointer(off1);
+        const Clause* cl2 = clAllocator.getPointer(off2);
 
         if (!invert)
             return cl1->size() > cl2->size();
@@ -257,7 +257,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
 
         //Get pointer
         ClOffset offset = *i;
-        Clause& cl = *solver->clAllocator->getPointer(offset);
+        Clause& cl = *solver->clAllocator.getPointer(offset);
         //Time to dereference
         extraTime += 5;
 
@@ -303,7 +303,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
             ; it != end
             ; it++
         ) {
-            Clause* cl = solver->clAllocator->getPointer(*it);
+            Clause* cl = solver->clAllocator.getPointer(*it);
             cl->setAsymmed(false);
         }
     }
@@ -392,7 +392,7 @@ ClOffset ClauseVivifier::testVivify(
             if (offset != std::numeric_limits<ClOffset>::max()) {
                 cout
                 << "c --> orig clause:" <<
-                 *solver->clAllocator->getPointer(offset)
+                 *solver->clAllocator.getPointer(offset)
                  << endl;
             } else {
                 cout
@@ -409,7 +409,7 @@ ClOffset ClauseVivifier::testVivify(
         //Detach and free old clause
         if (offset != std::numeric_limits<ClOffset>::max()) {
             solver->detachClause(offset);
-            solver->clAllocator->clauseFree(offset);
+            solver->clAllocator.clauseFree(offset);
         }
 
         runStats.numLitsRem += origSize - lits.size();
@@ -418,7 +418,7 @@ ClOffset ClauseVivifier::testVivify(
             //The new clause has been asymm-tried
             cl2->setAsymmed(true);
 
-            return solver->clAllocator->getOffset(cl2);
+            return solver->clAllocator.getOffset(cl2);
         } else {
             return std::numeric_limits<ClOffset>::max();
         }
@@ -639,7 +639,7 @@ bool ClauseVivifier::vivify_clause(
     , bool red
     , const bool alsoStrengthen
 ) {
-    Clause& cl = *solver->clAllocator->getPointer(offset);
+    Clause& cl = *solver->clAllocator.getPointer(offset);
     assert(cl.size() > 3);
 
     timeAvailable -= cl.size()*2;
@@ -715,8 +715,8 @@ bool ClauseVivifier::vivify_clause(
 
     if (c2 != NULL) {
         solver->detachClause(offset);
-        solver->clAllocator->clauseFree(offset);
-        offset = solver->clAllocator->getOffset(c2);
+        solver->clAllocator.clauseFree(offset);
+        offset = solver->clAllocator.getOffset(c2);
         return false;
     }
 
@@ -805,7 +805,7 @@ bool ClauseVivifier::vivifyClausesCache(
         const bool remove = vivify_clause(offset, red, alsoStrengthen);
         if (remove) {
             solver->detachClause(offset);
-            solver->clAllocator->clauseFree(offset);
+            solver->clAllocator.clauseFree(offset);
         } else {
             clauses[j++] = offset;
         }

@@ -129,7 +129,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
-        Clause* cl = solver->clAllocator->getPointer(*i);
+        Clause* cl = solver->clAllocator.getPointer(*i);
 
         //Handle stat removal if need be
         if (removeStatsFirst) {
@@ -144,7 +144,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
             solver->attachClause(*cl);
             *j++ = *i;
         } else {
-            solver->clAllocator->clauseFree(*i);
+            solver->clAllocator.clauseFree(*i);
         }
     }
     cs.resize(cs.size() - (i-j));

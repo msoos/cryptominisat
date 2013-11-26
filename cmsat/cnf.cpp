@@ -7,7 +7,7 @@ using namespace CMSat;
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
-    mem += clAllocator->memUsed();
+    mem += clAllocator.memUsed();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
     printStatsLine("c Mem for longclauses"
@@ -23,7 +23,7 @@ size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 bool CNF::redundant(const Watched& ws) const
 {
     return ((ws.isBinary() || ws.isTri()) && ws.red())
-            || (ws.isClause() && clAllocator->getPointer(ws.getOffset())->red()
+            || (ws.isClause() && clAllocator.getPointer(ws.getOffset())->red()
     );
 }
 
@@ -39,7 +39,7 @@ size_t CNF::cl_size(const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = clAllocator->getPointer(ws.getOffset());
+            const Clause* cl = clAllocator.getPointer(ws.getOffset());
             return cl->size();
             break;
         }
@@ -64,7 +64,7 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = clAllocator->getPointer(ws.getOffset());
+            const Clause* cl = clAllocator.getPointer(ws.getOffset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
                 if (i < cl->size()-1)
@@ -84,7 +84,7 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
 
 bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
 {
-    Clause* cl1 = clAllocator->getPointer(x);
-    Clause* cl2 = clAllocator->getPointer(y);
+    Clause* cl1 = clAllocator.getPointer(x);
+    Clause* cl2 = clAllocator.getPointer(y);
     return (cl1->size() < cl2->size());
 }

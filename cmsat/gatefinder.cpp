@@ -432,7 +432,7 @@ size_t GateFinder::findEqOrGates()
                 continue;
 
             //Try to find a gate with eqlit (~*l)
-            ClOffset offset = solver->clAllocator->getOffset(&cl);
+            ClOffset offset = solver->clAllocator.getOffset(&cl);
             for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
                 findOrGate(~*l, offset, learntGatesToo, wasRed);
         }
@@ -593,7 +593,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
     for (size_t i = 0; i < subs.size(); i++) {
         ClOffset offset = subs[i];
-        Clause& cl = *solver->clAllocator->getPointer(offset);
+        Clause& cl = *solver->clAllocator.getPointer(offset);
 
         // OLD STUFF
         //  //Don't shorten definitions of OR gates
@@ -663,7 +663,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             continue;
 
         simplifier->linkInClause(*cl2);
-        ClOffset offset2 = solver->clAllocator->getOffset(cl2);
+        ClOffset offset2 = solver->clAllocator.getOffset(cl2);
         simplifier->clauses.push_back(offset2);
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -696,7 +696,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
             continue;
 
         ClOffset offset = ws.getOffset();
-        const Clause& cl = *solver->clAllocator->getPointer(offset);
+        const Clause& cl = *solver->clAllocator.getPointer(offset);
 
         //We might be contracting 2 irred clauses based on a learnt gate
         //would lead to UNSAT->SAT
@@ -769,7 +769,7 @@ bool GateFinder::tryAndGate(
         }
 
         ClOffset offset = ws.getOffset();
-        Clause& cl = *solver->clAllocator->getPointer(offset);
+        Clause& cl = *solver->clAllocator.getPointer(offset);
         if ((ws.getAbst() | abstraction) != abstraction //Abstraction must be OK
             || cl.size() > solver->conf.maxGateBasedClReduceSize
             || cl.size() > maxSize //Size must be smaller or equal to maxSize
@@ -881,7 +881,7 @@ void GateFinder::treatAndGateClause(
     //Update stats
     runStats.andGateUseful++;
     runStats.clauseSizeRem += cl.size();
-    const Clause& otherCl = *solver->clAllocator->getPointer(other);
+    const Clause& otherCl = *solver->clAllocator.getPointer(other);
     runStats.clauseSizeRem += otherCl.size();
 
     //Put into 'lits' the literals of the clause
@@ -909,7 +909,7 @@ void GateFinder::treatAndGateClause(
     Clause* clNew = solver->addClauseInt(lits, red, stats, false);
     if (clNew != NULL) {
         simplifier->linkInClause(*clNew);
-        ClOffset offsetNew = solver->clAllocator->getOffset(clNew);
+        ClOffset offsetNew = solver->clAllocator.getOffset(clNew);
         simplifier->clauses.push_back(offsetNew);
     }
 }
@@ -922,7 +922,7 @@ inline bool GateFinder::findAndGateOtherCl(
 ) {
     *(simplifier->limit_to_decrease) += sizeSortedOcc.size()*5;
     for (const ClOffset offset: sizeSortedOcc) {
-        const Clause& cl = *solver->clAllocator->getPointer(offset);
+        const Clause& cl = *solver->clAllocator.getPointer(offset);
 
         //abstraction must match
         if (cl.abst != abst)

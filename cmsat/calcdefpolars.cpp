@@ -47,7 +47,7 @@ void CalcDefPolars::tallyVotes(const vector<ClOffset>& cs)
         ; it != end
         ; it++
     ) {
-        const Clause& cl = *solver->clAllocator->getPointer(*it);
+        const Clause& cl = *solver->clAllocator.getPointer(*it);
 
         //Only count irred
         if (cl.red())
