@@ -3132,6 +3132,10 @@ void Simplifier::bounded_var_addition()
     solver->dumpIrredClauses(&f);
     f.close();
 
+    propagate();
+    //TODO
+    //clean_clauses();
+
     var_bva_order.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
@@ -3150,6 +3154,9 @@ void Simplifier::bounded_var_addition()
 
 void Simplifier::try_bva_on_lit(const Lit lit)
 {
+    assert(solver->value(lit) == l_Undef);
+    assert(solver->varData[lit.var()].removed == Removed::none);
+
     m_cls.clear();
     m_lits.clear();
     m_lits.push_back(lit);
@@ -3189,7 +3196,7 @@ void Simplifier::try_bva_on_lit(const Lit lit)
 void Simplifier::bva_simplify_system(const Lit lit)
 {
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 5) {
         cout
         << "c [bva] YES Simplification by "
         << simp_size
@@ -3202,6 +3209,59 @@ void Simplifier::bva_simplify_system(const Lit lit)
             << ", ";
         }
         cout << endl;
+    }
+
+    for(const Lit replace_lit: m_lits) {
+        for(const OccurClause cl: m_cls) {
+            //TODO
+            //remove_clause(cl, replace_lit);
+        }
+    }
+
+    //Var newvar = solver->new_bva_var();
+    Var newvar = 1;
+    Lit new_lit(newvar, false);
+
+    for(Lit m_lit: m_lits) {
+        solver->attachBinClause(m_lit, new_lit, false);
+    }
+
+    for(const OccurClause m_cl: m_cls) {
+        //TODO
+        add_longer_clause(~new_lit, m_cl);
+    }
+}
+
+void Simplifier::add_longer_clause(const Lit lit, const const OccurClause& cl)
+{
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            solver->attachBinClause(lit, cl.ws.lit2(), false);
+            break;
+
+        case CMSat::watch_tertiary_t:
+            solver->attachTriClause(lit, cl.ws.lit2(), cl.ws.lit3(), false);
+            break;
+
+        case CMSat::watch_clause_t:
+            //TODO
+            break;
+    }
+}
+
+void Simplifier::remove_matching_clause(const OccurClause& cl, const Lit lit_replace)
+{
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            solver->detachBinClause(lit_replace, cl.ws.lit2(), cl.ws.red());
+
+        case CMSat::watch_tertiary_t:
+            solver->detachTriClause(lit_replace, cl.ws.lit2(), cl.ws.lit3(), cl.ws.red());
+            break;
+
+        case CMSat::watch_clause_t:
+            //TODO
+            break;
     }
 }
 
