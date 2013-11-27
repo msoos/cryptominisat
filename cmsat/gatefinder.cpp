@@ -36,7 +36,9 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
     , solver(_solver)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
-{}
+{
+    sizeSortedOcc.resize(solver->conf.maxGateBasedClReduceSize+1);
+}
 
 bool GateFinder::doAll()
 {
@@ -711,11 +713,8 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
 
         //Make sure sizeSortedOcc is enough, and add this clause to it
         maxSize = std::max(maxSize, cl.size());
-        if (sizeSortedOcc.size() < (uint32_t)maxSize+1) {
-            sizeSortedOcc.resize(maxSize+1);
-        }
-        sizeSortedOcc[cl.size()].push_back(offset);
         minSize = std::min(minSize, cl.size());
+        sizeSortedOcc[cl.size()].push_back(offset);
 
         //Set seen2 & abstraction, which is an optimisations to speed up
         //gate-based clause removal
