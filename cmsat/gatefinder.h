@@ -204,6 +204,7 @@ private:
     //Each algo
     void findOrGates();
     void createNewVars();
+    size_t num_long_irred_cls(const Lit lit) const;
 
     //Helpers to find
     void findOrGates(const bool redGatesToo);

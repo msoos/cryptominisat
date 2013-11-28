@@ -80,6 +80,23 @@ end:
     return solver->ok;
 }
 
+size_t GateFinder::num_long_irred_cls(const Lit lit) const
+{
+    size_t num = 0;
+    for(const Watched& ws: solver->watches[lit.toInt()]) {
+        if (!ws.isClause())
+            continue;
+
+        const Clause& cl = *solver->clAllocator.getPointer(ws.getOffset());
+        if (cl.red())
+            continue;
+
+        num++;
+    }
+
+    return num;
+}
+
 void GateFinder::createNewVars()
 {
     double myTime = cpuTime();
@@ -90,32 +107,40 @@ void GateFinder::createNewVars()
     numMaxCreateNewVars = 500LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxCreateNewVars;
 
+    vector<Lit> potential_lits;
+    for(size_t i = 0; i < 2*solver->nVars(); i++) {
+        const Lit lit(i/2, i %2);
+        size_t num = num_long_irred_cls(lit);
+        if (num > 3)
+            potential_lits.push_back(lit);
+    }
+    if (potential_lits.size() < 2)
+        return;
+
+    cout << "Lits size: " << potential_lits.size() << endl;
+
     size_t tries = 0;
     while(true) {
         if (*simplifier->limit_to_decrease < 0)
             break;
 
-        //Take some variables randomly
-        const Var var1 = solver->mtrand.randInt(solver->nVars()-1);
-        const Var var2 = solver->mtrand.randInt(solver->nVars()-1);
-
-        //Check that var1 & var2 are sane choices (not equivalent, not removed, etc.)
-        if (var1 == var2)
-            continue;
-
-        if (solver->value(var1) != l_Undef
-            || !solver->decisionVar[var1]
-            || solver->varData[var1].removed != Removed::none
-            ) continue;
-
-        if (solver->value(var2) != l_Undef
-            || !solver->decisionVar[var2]
-            || solver->varData[var2].removed != Removed::none
-            ) continue;
-
         //Pick sign randomly
-        Lit lit1 = Lit(var1, solver->mtrand.randInt(1));
-        Lit lit2 = Lit(var2, solver->mtrand.randInt(1));
+        Lit lit1 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)];
+        Lit lit2 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)];
+        if (solver->value(lit1) != l_Undef
+            || solver->varData[lit1.var()].removed != Removed::none
+        ) {
+            continue;
+        }
+
+        if (solver->value(lit2) != l_Undef
+            || solver->varData[lit2.var()].removed != Removed::none
+        ) {
+            continue;
+        }
+
+        if (lit1.var() == lit2.var())
+            continue;
 
         tries++;
         if (tries % 100000 == 0) {
@@ -127,17 +152,14 @@ void GateFinder::createNewVars()
             std::swap(lit1, lit2);
 
         //See how many clauses this binary gate would allow us to remove
-        uint32_t potential = 0;
-        vector<Lit> lits;
-        lits.push_back(lit1);
-        lits.push_back(lit2);
+        uint32_t reduction = 0;
         OrGate gate(Lit(0,false), lit1, lit2, false);
-        remove_clauses_using_and_gate(gate, false, true, potential);
+        remove_clauses_using_and_gate(gate, false, true, reduction);
 
         //If we find the above to be adequate, then this should be a new gate
-        if (potential > 3) {
+        if (reduction > 3) {
             cout << "Potential for reduction: "
-            << potential
+            << reduction
             << " lit1: " << lit1 << " lit2: " << lit2
             << endl;
             //newGates.push_back(NewGateData(lit1, lit2, subs.size(), potential));
