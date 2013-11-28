@@ -147,40 +147,6 @@ public:
     //Stats
     struct Stats
     {
-        Stats() :
-            //Time
-            findGateTime(0)
-            , find_gate_timeout(0)
-            , orBasedTime(0)
-            , or_based_timeout(0)
-            , varReplaceTime(0)
-            , andBasedTime(0)
-            , and_based_timeout(0)
-            , erTime(0)
-
-            //OR-gate
-            , orGateUseful(0)
-            , numLongCls(0)
-            , numLongClsLits(0)
-            , litsRem(0)
-
-            //Var-replace
-            , varReplaced(0)
-
-            //And-gate
-            , andGateUseful(0)
-            , clauseSizeRem(0)
-
-            //ER
-            , numERVars(0)
-
-            //Gate
-            , learntGatesSize(0)
-            , numRed(0)
-            , irredGatesSize(0)
-            , numIrred(0)
-        {}
-
         void clear()
         {
             Stats tmp;
@@ -192,177 +158,41 @@ public:
             return findGateTime + orBasedTime + varReplaceTime
                 + andBasedTime + erTime;
         }
-
-        Stats& operator+=(const Stats& other)
-        {
-            findGateTime += other.findGateTime;
-            find_gate_timeout += other.find_gate_timeout;
-            orBasedTime += other.orBasedTime;
-            or_based_timeout += other.or_based_timeout;
-            varReplaceTime += other.varReplaceTime;
-            andBasedTime += other.andBasedTime;
-            and_based_timeout += other.and_based_timeout;
-            erTime += other.erTime;
-
-            //OR-gate
-            orGateUseful += other.orGateUseful;
-            numLongCls += other.numLongCls;
-            numLongClsLits += other.numLongClsLits;
-            litsRem += other.litsRem;
-            varReplaced += other.varReplaced;
-
-            //And-gate
-            andGateUseful += other.andGateUseful;
-            clauseSizeRem += other.clauseSizeRem;
-
-            //ER
-            numERVars += other.numERVars;
-
-            //Gates
-            learntGatesSize += other.learntGatesSize;
-            numRed += other.numRed;
-            irredGatesSize += other.irredGatesSize;
-            numIrred += other.numIrred;
-
-            return *this;
-        }
-
-        void print(const size_t nVars) const
-        {
-            cout << "c -------- GATE FINDING ----------" << endl;
-            printStatsLine("c time"
-                , totalTime()
-            );
-
-            printStatsLine("c find gate time"
-                , findGateTime
-                , findGateTime/totalTime()*100.0
-                , "% time"
-            );
-
-            printStatsLine("c gate-based cl-sh time"
-                , orBasedTime
-                , orBasedTime/totalTime()*100.0
-                , "% time"
-            );
-
-            printStatsLine("c gate-based cl-rem time"
-                , andBasedTime
-                , andBasedTime/totalTime()*100.0
-                , "% time"
-            );
-
-            printStatsLine("c gate-based varrep time"
-                , varReplaceTime
-                , varReplaceTime/totalTime()*100.0
-                , "% time"
-            );
-
-            printStatsLine("c gatefinder cl-short"
-                , orGateUseful
-                , (double)orGateUseful/(double)numLongCls
-                , "% long cls"
-            );
-
-            printStatsLine("c gatefinder lits-rem"
-                , litsRem
-                , (double)litsRem/(double)numLongClsLits
-                , "% long cls lits"
-            );
-
-            printStatsLine("c gatefinder cl-rem"
-                , andGateUseful
-                , (double)andGateUseful/(double)numLongCls
-                , "% long cls"
-            );
-
-            printStatsLine("c gatefinder cl-rem's lits"
-                , clauseSizeRem
-                , (double)clauseSizeRem/(double)numLongClsLits
-                , "% long cls lits"
-            );
-
-            printStatsLine("c gatefinder var-rep"
-                , varReplaced
-                , (double)varReplaced/(double)nVars
-                , "% vars"
-            );
-
-            cout << "c -------- GATE FINDING END ----------" << endl;
-        }
-
-        void printShort()
-        {
-            //Gate find
-            cout << "c [gate] found"
-            << " irred:" << numIrred
-            << " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)irredGatesSize/(double)numIrred)
-            << " red: " << numRed
-            /*<< " avg-s: " << std::fixed << std::setprecision(1)
-            << ((double)learntGatesSize/(double)numRed)*/
-            << " T: " << std::fixed << std::setprecision(2)
-            << findGateTime
-            << " T-out: " << (find_gate_timeout ? "Y" : "N")
-            << endl;
-
-            //gate-based shorten
-            cout << "c [gate] shorten"
-            << " cl: " << std::setw(5) << orGateUseful
-            << " l-rem: " << std::setw(6) << litsRem
-            << " T: " << std::fixed << std::setw(7) << std::setprecision(2)
-            << orBasedTime
-            << " T-out: " << (or_based_timeout ? "Y" : "N")
-            << endl;
-
-            //gate-based cl-rem
-            cout << "c [gate] rem"
-            << " cl: " << andGateUseful
-            << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
-            << " T: " << std::fixed << std::setprecision(2)
-            << andBasedTime
-            << " T-out: " << (and_based_timeout ? "Y" : "N")
-            << endl;
-
-            //var-replace
-            cout << "c [gate] eqlit"
-            << " v-rep: " << std::setw(3) << varReplaced
-            << " T: " << std::fixed << std::setprecision(2)
-            << varReplaceTime
-            << endl;
-        }
+        Stats& operator+=(const Stats& other);
+        void print(const size_t nVars) const;
+        void printShort() const;
 
         //Time
-        double findGateTime;
-        uint32_t find_gate_timeout;
-        double orBasedTime;
-        uint32_t or_based_timeout;
-        double varReplaceTime;
-        double andBasedTime;
-        uint32_t and_based_timeout;
-        double erTime;
+        double findGateTime = 0.0;
+        uint32_t find_gate_timeout = 0;
+        double orBasedTime = 0.0;
+        uint32_t or_based_timeout = 0;
+        double varReplaceTime = 0.0;
+        double andBasedTime = 0.0;
+        uint32_t and_based_timeout = 0;
+        double erTime = 0.0;
 
         //OR-gate
-        uint64_t orGateUseful;
-        uint64_t numLongCls;
-        uint64_t numLongClsLits;
-        int64_t  litsRem;
+        uint64_t orGateUseful = 0;
+        uint64_t numLongCls = 0;
+        uint64_t numLongClsLits = 0;
+        int64_t  litsRem = 0;
 
         //Var-replace
-        uint64_t varReplaced;
+        uint64_t varReplaced = 0;
 
         //And-gate
-        uint64_t andGateUseful;
-        uint64_t clauseSizeRem;
+        uint64_t andGateUseful = 0;
+        uint64_t clauseSizeRem = 0;
 
         //ER
-        uint64_t numERVars;
+        uint64_t numERVars = 0;
 
         //Gates
-        uint64_t learntGatesSize;
-        uint64_t numRed;
-        uint64_t irredGatesSize;
-        uint64_t numIrred;
+        uint64_t learntGatesSize = 0;
+        uint64_t numRed = 0;
+        uint64_t irredGatesSize = 0;
+        uint64_t numIrred = 0;
     };
 
     const Stats& getStats() const;

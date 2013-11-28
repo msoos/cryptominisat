@@ -964,3 +964,142 @@ void GateFinder::newVar()
     gateOccEq.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
 }
+
+GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
+{
+    findGateTime += other.findGateTime;
+    find_gate_timeout += other.find_gate_timeout;
+    orBasedTime += other.orBasedTime;
+    or_based_timeout += other.or_based_timeout;
+    varReplaceTime += other.varReplaceTime;
+    andBasedTime += other.andBasedTime;
+    and_based_timeout += other.and_based_timeout;
+    erTime += other.erTime;
+
+    //OR-gate
+    orGateUseful += other.orGateUseful;
+    numLongCls += other.numLongCls;
+    numLongClsLits += other.numLongClsLits;
+    litsRem += other.litsRem;
+    varReplaced += other.varReplaced;
+
+    //And-gate
+    andGateUseful += other.andGateUseful;
+    clauseSizeRem += other.clauseSizeRem;
+
+    //ER
+    numERVars += other.numERVars;
+
+    //Gates
+    learntGatesSize += other.learntGatesSize;
+    numRed += other.numRed;
+    irredGatesSize += other.irredGatesSize;
+    numIrred += other.numIrred;
+
+    return *this;
+}
+
+void GateFinder::Stats::print(const size_t nVars) const
+{
+    cout << "c -------- GATE FINDING ----------" << endl;
+    printStatsLine("c time"
+        , totalTime()
+    );
+
+    printStatsLine("c find gate time"
+        , findGateTime
+        , findGateTime/totalTime()*100.0
+        , "% time"
+    );
+
+    printStatsLine("c gate-based cl-sh time"
+        , orBasedTime
+        , orBasedTime/totalTime()*100.0
+        , "% time"
+    );
+
+    printStatsLine("c gate-based cl-rem time"
+        , andBasedTime
+        , andBasedTime/totalTime()*100.0
+        , "% time"
+    );
+
+    printStatsLine("c gate-based varrep time"
+        , varReplaceTime
+        , varReplaceTime/totalTime()*100.0
+        , "% time"
+    );
+
+    printStatsLine("c gatefinder cl-short"
+        , orGateUseful
+        , (double)orGateUseful/(double)numLongCls
+        , "% long cls"
+    );
+
+    printStatsLine("c gatefinder lits-rem"
+        , litsRem
+        , (double)litsRem/(double)numLongClsLits
+        , "% long cls lits"
+    );
+
+    printStatsLine("c gatefinder cl-rem"
+        , andGateUseful
+        , (double)andGateUseful/(double)numLongCls
+        , "% long cls"
+    );
+
+    printStatsLine("c gatefinder cl-rem's lits"
+        , clauseSizeRem
+        , (double)clauseSizeRem/(double)numLongClsLits
+        , "% long cls lits"
+    );
+
+    printStatsLine("c gatefinder var-rep"
+        , varReplaced
+        , (double)varReplaced/(double)nVars
+        , "% vars"
+    );
+
+    cout << "c -------- GATE FINDING END ----------" << endl;
+}
+
+void GateFinder::Stats::printShort() const
+{
+    //Gate find
+    cout << "c [gate] found"
+    << " irred:" << numIrred
+    << " avg-s: " << std::fixed << std::setprecision(1)
+    << ((double)irredGatesSize/(double)numIrred)
+    << " red: " << numRed
+    /*<< " avg-s: " << std::fixed << std::setprecision(1)
+    << ((double)learntGatesSize/(double)numRed)*/
+    << " T: " << std::fixed << std::setprecision(2)
+    << findGateTime
+    << " T-out: " << (find_gate_timeout ? "Y" : "N")
+    << endl;
+
+    //gate-based shorten
+    cout << "c [gate] shorten"
+    << " cl: " << std::setw(5) << orGateUseful
+    << " l-rem: " << std::setw(6) << litsRem
+    << " T: " << std::fixed << std::setw(7) << std::setprecision(2)
+    << orBasedTime
+    << " T-out: " << (or_based_timeout ? "Y" : "N")
+    << endl;
+
+    //gate-based cl-rem
+    cout << "c [gate] rem"
+    << " cl: " << andGateUseful
+    << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
+    << " T: " << std::fixed << std::setprecision(2)
+    << andBasedTime
+    << " T-out: " << (and_based_timeout ? "Y" : "N")
+    << endl;
+
+    //var-replace
+    cout << "c [gate] eqlit"
+    << " v-rep: " << std::setw(3) << varReplaced
+    << " T: " << std::fixed << std::setprecision(2)
+    << varReplaceTime
+    << endl;
+}
