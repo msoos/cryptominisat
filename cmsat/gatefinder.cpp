@@ -80,25 +80,24 @@ end:
     return solver->ok;
 }
 
-/*uint32_t GateFinder::createNewVars()
+void GateFinder::createNewVars()
 {
     double myTime = cpuTime();
     vector<NewGateData> newGates;
     vector<Lit> tmp;
     vector<ClOffset> subs;
     uint64_t numOp = 0;
-    simplifier->toDecrease = &numMaxCreateNewVars;
-
-    const size_t size = solver->getNumFreeVars()-1;
+    numMaxCreateNewVars = 500LL*1000LL*1000LL;
+    simplifier->limit_to_decrease = &numMaxCreateNewVars;
 
     size_t tries = 0;
-    for (; tries < std::min<size_t>(100000U, size*size/2); tries++) {
-        if (*simplifier->toDecrease < 50LL*1000LL*1000LL)
+    while(true) {
+        if (*simplifier->limit_to_decrease < 0)
             break;
 
         //Take some variables randomly
-        const Var var1 = solver->mtrand.randInt(size);
-        const Var var2 = solver->mtrand.randInt(size);
+        const Var var1 = solver->mtrand.randInt(solver->nVars()-1);
+        const Var var2 = solver->mtrand.randInt(solver->nVars()-1);
 
         //Check that var1 & var2 are sane choices (not equivalent, not removed, etc.)
         if (var1 == var2)
@@ -118,98 +117,44 @@ end:
         Lit lit1 = Lit(var1, solver->mtrand.randInt(1));
         Lit lit2 = Lit(var2, solver->mtrand.randInt(1));
 
+        tries++;
+        if (tries % 100000 == 0) {
+            cout << "trying " << tries << endl;
+        }
+
         //Make sure they are in the right order
         if (lit1 > lit2)
             std::swap(lit1, lit2);
 
-        //See how many clauses this binary gate would shorten
-        tmp.clear();
-        tmp.push_back(lit1);
-        tmp.push_back(lit2);
-        subs.clear();
-        simplifier->findSubsumed0(std::numeric_limits< uint32_t >::max(), tmp, calcAbstraction(tmp), subs);
-
         //See how many clauses this binary gate would allow us to remove
         uint32_t potential = 0;
-        if (numOp < 100*1000*1000) {
-            vector<Lit> lits;
-            lits.push_back(lit1);
-            lits.push_back(lit2);
-            OrGate gate(lits, Lit(0,false), false);
-            treatAndGate(gate, false, potential, numOp);
-        }
+        vector<Lit> lits;
+        lits.push_back(lit1);
+        lits.push_back(lit2);
+        OrGate gate(Lit(0,false), lit1, lit2, false);
+        tryAndGate(gate, false, potential);
 
         //If we find the above to be adequate, then this should be a new gate
-        if (potential > 5 || subs.size() > 100
-            || (potential > 1 && subs.size() > 50)) {
-            newGates.push_back(NewGateData(lit1, lit2, subs.size(), potential));
+        if (potential > 3) {
+            cout << "Potential for reduction: "
+            << potential
+            << " lit1: " << lit1 << " lit2: " << lit2
+            << endl;
+            //newGates.push_back(NewGateData(lit1, lit2, subs.size(), potential));
         }
     }
 
-    //Rank the potentially new gates
-    std::sort(newGates.begin(), newGates.end());
-    newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
-
-    //Add the new gates
-    uint64_t addedVars = 0;
-    for (uint32_t i = 0; i < newGates.size(); i++) {
-        const NewGateData& n = newGates[i];
-        if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
-            || i > ((double)solver->getNumFreeVars()*0.01)
-            || i > 100) break;
-
-        const Var newVar = solver->newVar();
-        dontElim[newVar] = true;
-        const Lit newLit = Lit(newVar, false);
-        vector<Lit> lits;
-        lits.push_back(n.lit1);
-        lits.push_back(n.lit2);
-        OrGate gate(lits, newLit, false);
-        orGates.push_back(gate);
-        gateOccEq[gate.eqLit.toInt()].push_back(orGates.size()-1);
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            gateOcc[gate.lits[i].toInt()].push_back(orGates.size()-1);
-        }
-
-        tmp.clear();
-        tmp.push_back(newLit);
-        tmp.push_back(~n.lit1);
-        Clause* cl = solver->addClauseInt(tmp);
-        assert(cl == NULL);
-        assert(solver->ok);
-
-        tmp.clear();
-        tmp.push_back(newLit);
-        tmp.push_back(~n.lit2);
-        cl = solver->addClauseInt(tmp);
-        assert(cl == NULL);
-        assert(solver->ok);
-
-        tmp.clear();
-        tmp.push_back(~newLit);
-        tmp.push_back(n.lit1);
-        tmp.push_back(n.lit2);
-        cl = solver->addClauseInt(tmp, false, ClauseStats(), false);
-        assert(cl != NULL);
-        assert(solver->ok);
-        cl->stats.conflictNumIntroduced = solver->sumStats.conflStats.numConflicts;
-        simplifier->linkInClause(*cl);
-        cl->defOfOrGate = true;
-
-        addedVars++;
-    }
-
-    if (solver->conf.verbosity >= 1) {
+    /*if (solver->conf.verbosity >= 1) {
         cout
         << "c Added vars :" << addedVars
         << " tried: " << tries
         << " time: " << (cpuTime() - myTime) << endl;
     }
     runStats.numERVars += addedVars;
-    runStats.erTime += cpuTime() - myTime;
+    runStats.erTime += cpuTime() - myTime;*/
 
-    return addedVars;
-}*/
+    //return addedVars;
+}
 
 void GateFinder::findOrGates()
 {

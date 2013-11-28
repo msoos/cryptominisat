@@ -368,8 +368,8 @@ private:
     void clearIndexes();
 
     //Each algo
-    void     findOrGates();
-    uint32_t createNewVars();
+    void findOrGates();
+    void createNewVars();
 
     //Helpers to find
     void findOrGates(const bool redGatesToo);
