@@ -770,10 +770,10 @@ bool GateFinder::remove_clauses_using_and_gate(
     const OrGate& gate
     , const bool really_remove
     , const bool only_irred
-    , uint32_t& foundPotential
+    , uint32_t& reduction
 ) {
     assert(clToUnlink.empty());
-    foundPotential = 0;
+    reduction = 0;
 
     if (solver->watches[(~(gate.lit1)).toInt()].empty()
         || solver->watches[(~(gate.lit2)).toInt()].empty()
@@ -805,7 +805,7 @@ bool GateFinder::remove_clauses_using_and_gate(
             clToUnlink.insert(this_cl_offs);
             treatAndGateClause(other_cl_offs, gate, this_cl_offs);
         }
-        foundPotential += (other_cl_offs != CL_OFFSET_MAX);
+        reduction += (other_cl_offs != CL_OFFSET_MAX);
 
         if (!solver->ok)
             return false;

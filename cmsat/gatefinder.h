@@ -225,7 +225,7 @@ private:
         const OrGate& gate
         , const bool reallyRemove
         , const bool only_irred
-        , uint32_t& foundPotential
+        , uint32_t& reduction
     );
 
     CL_ABST_TYPE  calc_sorted_occ_and_set_seen2(
