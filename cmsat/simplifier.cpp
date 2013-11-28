@@ -3232,7 +3232,7 @@ void Simplifier::bva_simplify_system(const Lit lit)
     }
 }
 
-void Simplifier::add_longer_clause(const Lit lit, const const OccurClause& cl)
+void Simplifier::add_longer_clause(const Lit lit, const OccurClause& cl)
 {
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
