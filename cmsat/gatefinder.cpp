@@ -842,12 +842,10 @@ bool GateFinder::tryAndGate(
         return solver->okay();
     }
 
-    //Set up sorted occurrance list of the other lit (lit2) in the gate
-    uint16_t maxSize = 0; //Maximum clause size in this occur
-    uint16_t minSize = std::numeric_limits<uint16_t>::max(); //Minimum clause size in this occur
+    uint16_t maxSize = 0;
+    uint16_t minSize = std::numeric_limits<uint16_t>::max();
     CL_ABST_TYPE abstraction = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize);
 
-    //Now go through lit1 and see if anything matches
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
