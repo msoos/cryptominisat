@@ -298,9 +298,8 @@ bool GateFinder::doAllOptimisationWithGates()
             if (!shortenWithOrGate(gate))
                 break;
         }
-
-        //Handle results
         runStats.orBasedTime += cpuTime() - myTime;
+        runStats.or_based_timeout += (*simplifier->limit_to_decrease < 0);
 
         if (!solver->ok)
             return false;
@@ -324,20 +323,14 @@ bool GateFinder::doAllOptimisationWithGates()
 
             //Time's up?
             if (*simplifier->limit_to_decrease < 0) {
-                if (solver->conf.verbosity >= 2) {
-                    cout
-                    << "c No more time left for cl-removal with gates" << endl;
-                }
                 break;
             }
 
             if (!tryAndGate(gate, true, foundPotential))
                 break;
         }
-
-
-        //Handle results
         runStats.andBasedTime += cpuTime() - myTime;
+        runStats.and_based_timeout += (*simplifier->limit_to_decrease < 0);
 
         if (!solver->ok)
             return false;

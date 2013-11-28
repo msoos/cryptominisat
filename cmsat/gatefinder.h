@@ -151,8 +151,10 @@ public:
             //Time
             findGateTime(0)
             , orBasedTime(0)
+            , or_based_timeout(0)
             , varReplaceTime(0)
             , andBasedTime(0)
+            , and_based_timeout(0)
             , erTime(0)
 
             //OR-gate
@@ -194,8 +196,10 @@ public:
         {
             findGateTime += other.findGateTime;
             orBasedTime += other.orBasedTime;
+            or_based_timeout += other.or_based_timeout;
             varReplaceTime += other.varReplaceTime;
             andBasedTime += other.andBasedTime;
+            and_based_timeout += other.and_based_timeout;
             erTime += other.erTime;
 
             //OR-gate
@@ -305,6 +309,7 @@ public:
             << " l-rem: " << std::setw(6) << litsRem
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2)
             << orBasedTime
+            << " T-out: " << (or_based_timeout ? "Y" : "N")
             << endl;
 
             //gate-based cl-rem
@@ -313,6 +318,7 @@ public:
             << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
             << " T: " << std::fixed << std::setprecision(2)
             << andBasedTime
+            << " T-out: " << (and_based_timeout ? "Y" : "N")
             << endl;
 
             //var-replace
@@ -326,8 +332,10 @@ public:
         //Time
         double findGateTime;
         double orBasedTime;
+        uint32_t or_based_timeout;
         double varReplaceTime;
         double andBasedTime;
+        uint32_t and_based_timeout;
         double erTime;
 
         //OR-gate
