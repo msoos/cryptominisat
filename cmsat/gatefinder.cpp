@@ -651,7 +651,7 @@ CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
         certain_size_occ.clear();
 
     watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
-    *simplifier->limit_to_decrease -= csOther.size()*3;
+    *simplifier->limit_to_decrease -= csOther.size();
     for (const Watched ws: csOther) {
         if (!ws.isClause())
             continue;
@@ -762,6 +762,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     );
 
     //Clear 'seen' from bits set
+    *(simplifier->limit_to_decrease) -= this_cl.size();
     for (const Lit lit: this_cl) {
         seen[lit.toInt()] = 0;
     }
@@ -790,7 +791,7 @@ bool GateFinder::remove_clauses_using_and_gate(
     general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
 
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
-    *simplifier->limit_to_decrease -= cs.size()*3;
+    *simplifier->limit_to_decrease -= cs.size();
     for (const Watched ws: cs) {
         if (*simplifier->limit_to_decrease < 0)
             break;
@@ -815,6 +816,7 @@ bool GateFinder::remove_clauses_using_and_gate(
     }
 
     //Clear from seen2 bits that have been set
+    *(simplifier->limit_to_decrease) -= seen2Set.size();
     for(const size_t at: seen2Set) {
         seen2[at] = false;
     }
@@ -884,7 +886,7 @@ ClOffset GateFinder::findAndGateOtherCl(
     , const CL_ABST_TYPE abst
     , const bool only_irred
 ) {
-    *(simplifier->limit_to_decrease) += sizeSortedOcc.size()*5;
+    *(simplifier->limit_to_decrease) -= sizeSortedOcc.size();
     for (const ClOffset offset: sizeSortedOcc) {
         const Clause& cl = *solver->clAllocator.getPointer(offset);
         if (cl.red() && only_irred)
@@ -894,6 +896,7 @@ ClOffset GateFinder::findAndGateOtherCl(
         if (cl.abst != abst)
             continue;
 
+        *(simplifier->limit_to_decrease) -= cl.size()/2+5;
         for (const Lit lit: cl) {
             //we skip the other lit in the gate
             if (lit == otherLit)
