@@ -774,7 +774,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const Watched& ws
     , const size_t minSize
     , const size_t maxSize
-    , const CL_ABST_TYPE abstraction
+    , const CL_ABST_TYPE general_abst
     , const OrGate& gate
 ) {
     //Only long clauses
@@ -783,7 +783,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
 
     const ClOffset this_cl_offs = ws.getOffset();
     Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
-    if ((ws.getAbst() | abstraction) != abstraction
+    if ((ws.getAbst() | general_abst) != general_abst
         || this_cl.size() > solver->conf.maxGateBasedClReduceSize
         || this_cl.size() > maxSize //Size must be smaller or equal to maxSize
         || this_cl.size() < minSize //Size must be larger or equal than minsize
@@ -801,11 +801,11 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         return CL_OFFSET_MAX;
 
 
-    const CL_ABST_TYPE abst2 = calc_abst_and_set_seen(this_cl, gate);
+    const CL_ABST_TYPE this_cl_abst = calc_abst_and_set_seen(this_cl, gate);
     const ClOffset other_cl_offs = findAndGateOtherCl(
         sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
         , ~(gate.lit2) //this is the LIT that is meant to be in the clause
-        , abst2 //clause MUST match this abst
+        , this_cl_abst //clause MUST match this abst
     );
 
     //Clear 'seen' from bits set
@@ -832,13 +832,13 @@ bool GateFinder::tryAndGate(
 
     uint16_t maxSize = 0;
     uint16_t minSize = std::numeric_limits<uint16_t>::max();
-    CL_ABST_TYPE abstraction = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize);
+    CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize);
 
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
         const ClOffset other_cl_offs = find_pair_for_and_gate_reduction(
-            ws, minSize, maxSize, abstraction, gate
+            ws, minSize, maxSize, general_abst, gate
         );
 
         if (really_remove
