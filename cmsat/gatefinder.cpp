@@ -837,7 +837,7 @@ bool GateFinder::tryAndGate(
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
-        ClOffset other_cl_offs = find_pair_for_and_gate_reduction(
+        const ClOffset other_cl_offs = find_pair_for_and_gate_reduction(
             ws, minSize, maxSize, abstraction, gate
         );
 
