@@ -316,12 +316,7 @@ bool GateFinder::doAllOptimisationWithGates()
         uint32_t foundPotential;
 
         //Go through each gate, see if we can do something with it
-        size_t at = 0;
         for (const OrGate& gate: orGates) {
-            //cout << "At AND-gate no. " << at << "/" << orGates.size() << endl;
-            at++;
-
-            //Time's up?
             if (*simplifier->limit_to_decrease < 0) {
                 break;
             }
