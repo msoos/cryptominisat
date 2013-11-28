@@ -3139,6 +3139,11 @@ void Simplifier::bounded_var_addition()
     var_bva_order.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
+        if (solver->value(lit) != l_Undef
+            || solver->varData[lit.toInt()].removed != Removed::none
+        ) {
+            continue;
+        }
         var_bva_order.insert(lit.toInt());
     }
 
