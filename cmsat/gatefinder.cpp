@@ -275,7 +275,6 @@ bool GateFinder::doAllOptimisationWithGates()
 
     //OR gate treatment
     if (solver->conf.doShortenWithOrGates) {
-        //Setup
         double myTime = cpuTime();
         numMaxShortenWithGates = 100LL*1000LL*1000LL;
         simplifier->limit_to_decrease = &numMaxShortenWithGates;
@@ -285,7 +284,6 @@ bool GateFinder::doAllOptimisationWithGates()
 
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
-            //Time is up!
             if (*simplifier->limit_to_decrease < 0) {
                 if (solver->conf.verbosity >= 2) {
                     cout
@@ -307,7 +305,6 @@ bool GateFinder::doAllOptimisationWithGates()
 
     //AND gate treatment
     if (solver->conf.doRemClWithAndGates) {
-        //Setup
         numMaxClRemWithGates = 100LL*1000LL*1000LL;
         simplifier->limit_to_decrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
