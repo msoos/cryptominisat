@@ -622,7 +622,7 @@ private:
     void fill_potential(const Lit lit);
     void try_bva_on_lit(const Lit lit);
     void bva_simplify_system(const Lit lit);
-    void add_longer_clause(const Lit lit, const const OccurClause& cl);
+    void add_longer_clause(const Lit lit, const OccurClause& cl);
     void remove_matching_clause(const OccurClause& cl, const Lit lit_replace);
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
