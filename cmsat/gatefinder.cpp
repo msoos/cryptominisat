@@ -132,7 +132,7 @@ void GateFinder::createNewVars()
         lits.push_back(lit1);
         lits.push_back(lit2);
         OrGate gate(Lit(0,false), lit1, lit2, false);
-        tryAndGate(gate, false, potential);
+        tryAndGate(gate, false, true, potential);
 
         //If we find the above to be adequate, then this should be a new gate
         if (potential > 3) {
@@ -258,7 +258,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 break;
             }
 
-            if (!tryAndGate(gate, true, foundPotential))
+            if (!tryAndGate(gate, true, false, foundPotential))
                 break;
         }
         runStats.andBasedTime += cpuTime() - myTime;
@@ -620,6 +620,7 @@ CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
     const OrGate& gate
     , uint16_t& maxSize
     , uint16_t& minSize
+    , const bool only_irred
 ) {
     assert(seen2Set.empty());
     CL_ABST_TYPE abstraction = 0;
@@ -634,6 +635,8 @@ CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
 
         const ClOffset offset = ws.getOffset();
         const Clause& cl = *solver->clAllocator.getPointer(offset);
+        if (cl.red() && only_irred)
+            continue;
 
         //We might be contracting 2 irred clauses based on a learnt gate
         //would lead to UNSAT->SAT
@@ -700,6 +703,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     , const size_t maxSize
     , const CL_ABST_TYPE general_abst
     , const OrGate& gate
+    , const bool only_irred
 ) {
     //Only long clauses
     if (!ws.isClause())
@@ -708,6 +712,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const ClOffset this_cl_offs = ws.getOffset();
     Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
     if ((ws.getAbst() | general_abst) != general_abst
+        || this_cl.red() && only_irred
         || this_cl.size() > solver->conf.maxGateBasedClReduceSize
         || this_cl.size() > maxSize //Size must be smaller or equal to maxSize
         || this_cl.size() < minSize //Size must be larger or equal than minsize
@@ -730,6 +735,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
         , ~(gate.lit2) //this is the LIT that is meant to be in the clause
         , this_cl_abst //clause MUST match this abst
+        , only_irred
     );
 
     //Clear 'seen' from bits set
@@ -743,6 +749,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
 bool GateFinder::tryAndGate(
     const OrGate& gate
     , const bool really_remove
+    , const bool only_irred
     , uint32_t& foundPotential
 ) {
     assert(clToUnlink.empty());
@@ -756,7 +763,7 @@ bool GateFinder::tryAndGate(
 
     uint16_t maxSize = 0;
     uint16_t minSize = std::numeric_limits<uint16_t>::max();
-    CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize);
+    CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
     general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
 
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
@@ -766,7 +773,7 @@ bool GateFinder::tryAndGate(
             break;
 
         const ClOffset other_cl_offs = find_pair_for_and_gate_reduction(
-            ws, minSize, maxSize, general_abst, gate
+            ws, minSize, maxSize, general_abst, gate, only_irred
         );
 
         if (really_remove
@@ -852,10 +859,13 @@ ClOffset GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& sizeSortedOcc
     , const Lit otherLit
     , const CL_ABST_TYPE abst
+    , const bool only_irred
 ) {
     *(simplifier->limit_to_decrease) += sizeSortedOcc.size()*5;
     for (const ClOffset offset: sizeSortedOcc) {
         const Clause& cl = *solver->clAllocator.getPointer(offset);
+        if (cl.red() && only_irred)
+            continue;
 
         //abstraction must match
         if (cl.abst != abst)

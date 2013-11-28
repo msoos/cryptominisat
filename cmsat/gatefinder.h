@@ -389,6 +389,7 @@ private:
     bool tryAndGate(
         const OrGate& gate
         , const bool reallyRemove
+        , const bool only_irred
         , uint32_t& foundPotential
     );
 
@@ -396,6 +397,7 @@ private:
         const OrGate& gate
         , uint16_t& maxSize
         , uint16_t& minSize
+        , const bool only_irred
     );
     void set_seen2_and_abstraction(
         const Clause& cl
@@ -421,12 +423,14 @@ private:
         , const size_t maxSize
         , const CL_ABST_TYPE abstraction
         , const OrGate& gate
+        , const bool only_irred
     );
 
     ClOffset findAndGateOtherCl(
         const vector<ClOffset>& sizeSortedOcc
         , const Lit lit
         , const CL_ABST_TYPE abst2
+        , const bool only_irred
     );
 
     ///temporary for and-gate treatment. Cleared at every treatAndGate() call
