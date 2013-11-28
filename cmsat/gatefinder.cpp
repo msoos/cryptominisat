@@ -857,13 +857,13 @@ bool GateFinder::tryAndGate(
     }
 
     //Clear from seen2 bits that have been set
-    for(size_t at: seen2Set) {
+    for(const size_t at: seen2Set) {
         seen2[at] = false;
     }
     seen2Set.clear();
 
     //Now that all is computed, remove those that need removal
-    for(ClOffset offset: clToUnlink) {
+    for(const ClOffset offset: clToUnlink) {
         simplifier->unlinkClause(offset);
     }
     clToUnlink.clear();
