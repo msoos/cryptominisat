@@ -228,7 +228,7 @@ public:
                 //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
                 << " T: " << std::fixed << std::setprecision(2)
                 << varElimTime << " s"
-                << " T-out: " << varElimTimeOut
+                << " T-out: " << (varElimTimeOut ? "Y" : "N")
                 << endl;
 
                 cout
