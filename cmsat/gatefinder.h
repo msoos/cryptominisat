@@ -399,21 +399,20 @@ private:
     );
 
     void treatAndGateClause(
-        const ClOffset offset
+        const ClOffset other_cl_offset
         , const OrGate& gate
-        , const Clause& cl
+        , const ClOffset this_cl_offset
     );
     CL_ABST_TYPE calc_abst_and_set_seen(
        const Clause& cl
         , const OrGate& gate
     );
-    bool find_pair_for_and_gate_reduction(
+    ClOffset find_pair_for_and_gate_reduction(
         const Watched& ws
         , const size_t minSize
         , const size_t maxSize
         , const CL_ABST_TYPE abstraction
         , const OrGate& gate
-        , const bool really_remove
     );
 
     ClOffset findAndGateOtherCl(

@@ -770,17 +770,16 @@ bool GateFinder::check_seen_and_gate_against_cl(
     return true;
 }
 
-bool GateFinder::find_pair_for_and_gate_reduction(
+ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const Watched& ws
     , const size_t minSize
     , const size_t maxSize
     , const CL_ABST_TYPE abstraction
     , const OrGate& gate
-    , const bool really_remove
 ) {
     //Only long clauses
     if (!ws.isClause())
-        return false;
+        return CL_OFFSET_MAX;
 
     const ClOffset this_cl_offs = ws.getOffset();
     Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
@@ -791,15 +790,15 @@ bool GateFinder::find_pair_for_and_gate_reduction(
         || sizeSortedOcc[this_cl.size()].empty()) //this bracket for sizeSortedOcc must be non-empty
     {
         //cout << "Not even possible, this clause cannot match any other" << endl;
-        return false;
+        return CL_OFFSET_MAX;
     }
 
     //Check that we are not removing irred info based on learnt gate
     if (!this_cl.red() && gate.red)
-        return false;
+        return CL_OFFSET_MAX;
 
     if (!check_seen_and_gate_against_cl(this_cl, gate))
-        return false;
+        return CL_OFFSET_MAX;
 
 
     const CL_ABST_TYPE abst2 = calc_abst_and_set_seen(this_cl, gate);
@@ -809,23 +808,12 @@ bool GateFinder::find_pair_for_and_gate_reduction(
         , abst2 //clause MUST match this abst
     );
 
-    if (really_remove
-        && other_cl_offs != std::numeric_limits<ClOffset>::max()
-    ) {
-        assert(other_cl_offs != this_cl_offs);
-        clToUnlink.insert(other_cl_offs);
-        clToUnlink.insert(this_cl_offs);
-
-        //Add new clause that is shorter and represents both of the clauses above
-        treatAndGateClause(other_cl_offs, gate, this_cl);
-    }
-
     //Clear 'seen' from bits set
     for (const Lit lit: this_cl) {
         seen[lit.toInt()] = 0;
     }
 
-    return other_cl_offs != std::numeric_limits<ClOffset>::max();
+    return other_cl_offs;
 }
 
 bool GateFinder::tryAndGate(
@@ -849,9 +837,20 @@ bool GateFinder::tryAndGate(
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
-        foundPotential += find_pair_for_and_gate_reduction(
-            ws, minSize, maxSize, abstraction, gate, really_remove
+        ClOffset other_cl_offs = find_pair_for_and_gate_reduction(
+            ws, minSize, maxSize, abstraction, gate
         );
+
+        if (really_remove
+           && other_cl_offs != CL_OFFSET_MAX
+        ) {
+            const ClOffset this_cl_offs = ws.getOffset();
+            assert(other_cl_offs != this_cl_offs);
+            clToUnlink.insert(other_cl_offs);
+            clToUnlink.insert(this_cl_offs);
+            treatAndGateClause(other_cl_offs, gate, this_cl_offs);
+        }
+        foundPotential += (other_cl_offs != CL_OFFSET_MAX);
 
         if (!solver->ok)
             return false;
@@ -875,7 +874,7 @@ bool GateFinder::tryAndGate(
 void GateFinder::treatAndGateClause(
     const ClOffset other_cl_offset
     , const OrGate& gate
-    , const Clause& cl
+    , const ClOffset this_cl_offset
 ) {
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "AND gate-based cl rem" << endl;
@@ -886,15 +885,16 @@ void GateFinder::treatAndGateClause(
 
     //Update stats
     runStats.andGateUseful++;
-    runStats.clauseSizeRem += cl.size();
-    const Clause& otherCl = *solver->clAllocator.getPointer(other_cl_offset);
-    runStats.clauseSizeRem += otherCl.size();
+    const Clause& this_cl = *solver->clAllocator.getPointer(other_cl_offset);
+    runStats.clauseSizeRem += this_cl.size();
+    const Clause& other_cl = *solver->clAllocator.getPointer(other_cl_offset);
+    runStats.clauseSizeRem += other_cl.size();
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
     lits.clear();
-    *simplifier->limit_to_decrease -= cl.size()*2;
-    for (const Lit lit: cl) {
+    *simplifier->limit_to_decrease -= this_cl.size()*2;
+    for (const Lit lit: this_cl) {
         if (lit != ~(gate.lit1))
             lits.push_back(lit);
 
@@ -903,8 +903,8 @@ void GateFinder::treatAndGateClause(
     lits.push_back(~(gate.eqLit));
 
     //Calculate learnt & glue
-    bool red = otherCl.red() && cl.red();
-    ClauseStats stats = ClauseStats::combineStats(cl.stats, otherCl.stats);
+    bool red = other_cl.red() && this_cl.red();
+    ClauseStats stats = ClauseStats::combineStats(this_cl.stats, other_cl.stats);
 
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "new clause:" << lits << endl;
