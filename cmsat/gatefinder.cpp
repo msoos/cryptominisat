@@ -738,7 +738,7 @@ CL_ABST_TYPE GateFinder::calc_abst_and_set_seen(
         if (lit == ~(gate.lit1))
             continue;
 
-        seen[lit.toInt()] = true;
+        seen[lit.toInt()] = 1;
         abst |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
     }
     abst |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
