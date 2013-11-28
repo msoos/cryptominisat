@@ -91,6 +91,9 @@ size_t GateFinder::num_long_irred_cls(const Lit lit) const
         if (cl.red())
             continue;
 
+        if (cl.size() > solver->conf.maxGateBasedClReduceSize)
+            continue;
+
         num++;
     }
 
