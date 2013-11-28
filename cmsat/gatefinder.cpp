@@ -285,11 +285,6 @@ bool GateFinder::doAllOptimisationWithGates()
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
             if (*simplifier->limit_to_decrease < 0) {
-                if (solver->conf.verbosity >= 2) {
-                    cout
-                    << "c No more time left for shortening with gates"
-                    << endl;
-                }
                 break;
             }
 
