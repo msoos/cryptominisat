@@ -2057,7 +2057,7 @@ void Solver::consolidateMem()
 void Solver::printStats() const
 {
     const double cpu_time = cpuTime();
-    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     printStatsLine("c UIP search time"
         , sumStats.cpu_time
         , sumStats.cpu_time/cpu_time*100.0
