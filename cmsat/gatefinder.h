@@ -384,10 +384,18 @@ private:
         , uint32_t& foundPotential
     );
 
-    CL_ABST_TYPE  calculateSortedOcc(
+    CL_ABST_TYPE  calc_sorted_occ_and_set_seen2(
         const OrGate& gate
         , uint16_t& maxSize
         , uint16_t& minSize
+    );
+    void set_seen2_and_abstraction(
+        const Clause& cl
+        , CL_ABST_TYPE& abstraction
+    );
+    bool check_seen_and_gate_against_cl(
+        const Clause& this_cl
+        , const OrGate& gate
     );
 
     void treatAndGateClause(
@@ -395,12 +403,23 @@ private:
         , const OrGate& gate
         , const Clause& cl
     );
+    CL_ABST_TYPE calc_abst_and_set_seen(
+       const Clause& cl
+        , const OrGate& gate
+    );
+    bool find_pair_for_and_gate_reduction(
+        const Watched& ws
+        , const size_t minSize
+        , const size_t maxSize
+        , const CL_ABST_TYPE abstraction
+        , const OrGate& gate
+        , const bool really_remove
+    );
 
-    bool findAndGateOtherCl(
+    ClOffset findAndGateOtherCl(
         const vector<ClOffset>& sizeSortedOcc
         , const Lit lit
         , const CL_ABST_TYPE abst2
-        , ClOffset& other
     );
 
     ///temporary for and-gate treatment. Cleared at every treatAndGate() call

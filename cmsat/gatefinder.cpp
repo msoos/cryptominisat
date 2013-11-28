@@ -677,27 +677,37 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
     return true;
 }
 
-CL_ABST_TYPE GateFinder::calculateSortedOcc(
+void GateFinder::set_seen2_and_abstraction(
+    const Clause& cl
+    , CL_ABST_TYPE& abstraction
+) {
+    *simplifier->limit_to_decrease -= cl.size();
+    for (const Lit lit: cl) {
+        if (!seen2[lit.toInt()]) {
+            seen2[lit.toInt()] = true;
+            seen2Set.push_back(lit.toInt());
+        }
+        abstraction |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+    }
+}
+
+CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
     const OrGate& gate
     , uint16_t& maxSize
     , uint16_t& minSize
 ) {
     assert(seen2Set.empty());
     CL_ABST_TYPE abstraction = 0;
-
-    //Initialise sizeSortedOcc, which s a temporary to save memory frees&requests
-    for (uint32_t i = 0; i < sizeSortedOcc.size(); i++)
-        sizeSortedOcc[i].clear();
+    for (vector<ClOffset>& certain_size_occ: sizeSortedOcc)
+        certain_size_occ.clear();
 
     watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
-    //cout << "csother: " << csOther.size() << endl;
     *simplifier->limit_to_decrease -= csOther.size()*3;
     for (const Watched ws: csOther) {
-        //Check if it's a long clause
         if (!ws.isClause())
             continue;
 
-        ClOffset offset = ws.getOffset();
+        const ClOffset offset = ws.getOffset();
         const Clause& cl = *solver->clAllocator.getPointer(offset);
 
         //We might be contracting 2 irred clauses based on a learnt gate
@@ -709,145 +719,144 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(
         if (cl.size() > solver->conf.maxGateBasedClReduceSize)
             continue;
 
-        *simplifier->limit_to_decrease -= cl.size();
-
-        //Make sure sizeSortedOcc is enough, and add this clause to it
         maxSize = std::max(maxSize, cl.size());
         minSize = std::min(minSize, cl.size());
         sizeSortedOcc[cl.size()].push_back(offset);
-
-        //Set seen2 & abstraction, which is an optimisations to speed up
-        //gate-based clause removal
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (!seen2[cl[i].toInt()]) {
-                seen2[cl[i].toInt()] = true;
-                seen2Set.push_back(cl[i].toInt());
-            }
-            abstraction |= 1UL << (cl[i].var() % CLAUSE_ABST_SIZE);
-        }
+        set_seen2_and_abstraction(cl, abstraction);
     }
     abstraction |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
 
     return abstraction;
 }
 
+CL_ABST_TYPE GateFinder::calc_abst_and_set_seen(
+    const Clause& cl
+    , const OrGate& gate
+) {
+    CL_ABST_TYPE abst = 0;
+    for (const Lit lit: cl) {
+        //lit1 doesn't count into abstraction
+        if (lit == ~(gate.lit1))
+            continue;
+
+        seen[lit.toInt()] = true;
+        abst |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+    }
+    abst |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
+
+    return abst;
+}
+
+bool GateFinder::check_seen_and_gate_against_cl(
+    const Clause& this_cl
+    , const OrGate& gate
+) {
+    *(simplifier->limit_to_decrease) -= this_cl.size();
+    for (const Lit lit: this_cl) {
+
+        //We know this is inside, skip
+        if (lit == ~(gate.lit1))
+            continue;
+
+        //If some weird variable is inside, skip
+        if (   lit.var() == gate.lit2.var()
+            || lit.var() == gate.eqLit.var()
+            //A lit is inside this clause isn't inside the others
+            || !seen2[lit.toInt()]
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GateFinder::find_pair_for_and_gate_reduction(
+    const Watched& ws
+    , const size_t minSize
+    , const size_t maxSize
+    , const CL_ABST_TYPE abstraction
+    , const OrGate& gate
+    , const bool really_remove
+) {
+    //Only long clauses
+    if (!ws.isClause())
+        return false;
+
+    const ClOffset this_cl_offs = ws.getOffset();
+    Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
+    if ((ws.getAbst() | abstraction) != abstraction
+        || this_cl.size() > solver->conf.maxGateBasedClReduceSize
+        || this_cl.size() > maxSize //Size must be smaller or equal to maxSize
+        || this_cl.size() < minSize //Size must be larger or equal than minsize
+        || sizeSortedOcc[this_cl.size()].empty()) //this bracket for sizeSortedOcc must be non-empty
+    {
+        //cout << "Not even possible, this clause cannot match any other" << endl;
+        return false;
+    }
+
+    //Check that we are not removing irred info based on learnt gate
+    if (!this_cl.red() && gate.red)
+        return false;
+
+    if (!check_seen_and_gate_against_cl(this_cl, gate))
+        return false;
+
+
+    const CL_ABST_TYPE abst2 = calc_abst_and_set_seen(this_cl, gate);
+    const ClOffset other_cl_offs = findAndGateOtherCl(
+        sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
+        , ~(gate.lit2) //this is the LIT that is meant to be in the clause
+        , abst2 //clause MUST match this abst
+    );
+
+    if (really_remove
+        && other_cl_offs != std::numeric_limits<ClOffset>::max()
+    ) {
+        assert(other_cl_offs != this_cl_offs);
+        clToUnlink.insert(other_cl_offs);
+        clToUnlink.insert(this_cl_offs);
+
+        //Add new clause that is shorter and represents both of the clauses above
+        treatAndGateClause(other_cl_offs, gate, this_cl);
+    }
+
+    //Clear 'seen' from bits set
+    for (const Lit lit: this_cl) {
+        seen[lit.toInt()] = 0;
+    }
+
+    return other_cl_offs != std::numeric_limits<ClOffset>::max();
+}
+
 bool GateFinder::tryAndGate(
     const OrGate& gate
-    , const bool reallyRemove
+    , const bool really_remove
     , uint32_t& foundPotential
 ) {
     assert(clToUnlink.empty());
+    foundPotential = 0;
 
-    //If there are no clauses that contain the opposite of the literals
-    //on the LHS, there is nothing we can do
     if (solver->watches[(~(gate.lit1)).toInt()].empty()
         || solver->watches[(~(gate.lit2)).toInt()].empty()
     ) {
-        cout << "Nothing in one of the watchlists" << endl;
-        return true;
+        return solver->okay();
     }
 
     //Set up sorted occurrance list of the other lit (lit2) in the gate
     uint16_t maxSize = 0; //Maximum clause size in this occur
     uint16_t minSize = std::numeric_limits<uint16_t>::max(); //Minimum clause size in this occur
-    CL_ABST_TYPE abstraction = calculateSortedOcc(gate, maxSize, minSize);
-
-    ClOffset other;
-    foundPotential = 0;
+    CL_ABST_TYPE abstraction = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize);
 
     //Now go through lit1 and see if anything matches
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size()*3;
     for (const Watched ws: cs) {
-        //Only look through long clauses
-        if (!ws.isClause()) {
-            //cout << "Not long" << endl;
-            continue;
-        } else {
-            //cout << "OK, long" << endl;
-        }
-
-        ClOffset offset = ws.getOffset();
-        Clause& cl = *solver->clAllocator.getPointer(offset);
-        if ((ws.getAbst() | abstraction) != abstraction //Abstraction must be OK
-            || cl.size() > solver->conf.maxGateBasedClReduceSize
-            || cl.size() > maxSize //Size must be smaller or equal to maxSize
-            || cl.size() < minSize //Size must be larger or equal than minsize
-            || sizeSortedOcc[cl.size()].empty()) //this bracket for sizeSortedOcc must be non-empty
-        {
-            //cout << "Not even possible, this clause cannot match any other" << endl;
-            continue;
-        }
-
-        //Check that we are not removing irred info based on learnt gate
-        if (!cl.red() && gate.red)
-            continue;
-
-        //Check that ~lits2 is not inside this clause, and that eqLit is not inside, either
-        //Also check that all literals inside have at least been set by seen2 (otherwise, no chance of exact match)
-        bool OK = true;
-        *(simplifier->limit_to_decrease) -= cl.size();
-        for (const Lit lit: cl) {
-            //We know this is inside, skip
-            if (lit == ~(gate.lit1))
-                continue;
-
-            //If some weird variable is inside, skip
-            if (   lit.var() == gate.lit2.var()
-                || lit.var() == gate.eqLit.var()
-                //A var is inside this clause isn't inside the others
-                || !seen2[lit.toInt()]
-            ) {
-                OK = false;
-                break;
-            }
-        }
-
-        //Not possible, continue
-        if (!OK) {
-            //cout << "Has weird literal inside, skip" << endl;
-            continue;
-        }
-
-        //Calculate abstraction and set 'seen'
-        CL_ABST_TYPE abst2 = 0;
-        for (const Lit lit: cl) {
-            //lit1 doesn't count into abstraction
-            if (lit == ~(gate.lit1))
-                continue;
-
-            seen[lit.toInt()] = true;
-            abst2 |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
-        }
-        abst2 |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
-
-        //Find matching pair
-        const bool foundOther = findAndGateOtherCl(
-            sizeSortedOcc[cl.size()] //in this occur list that contains clauses of specific size
-            , ~(gate.lit2) //this is the LIT that is meant to be in the clause
-            , abst2 //clause MUST match this abst
-            , other
+        foundPotential += find_pair_for_and_gate_reduction(
+            ws, minSize, maxSize, abstraction, gate, really_remove
         );
-        if (!foundOther) {
-            //cout << "Wrong, looked through sizeSortedOcc, but no." << endl;
-        }
 
-        foundPotential += foundOther;
-        if (reallyRemove && foundOther) {
-            assert(other != offset);
-            clToUnlink.insert(other);
-            clToUnlink.insert(offset);
-
-            //Add new clause that is shorter and represents both of the clauses above
-            treatAndGateClause(other, gate, cl);
-            if (!solver->ok)
-                return false;
-        }
-
-        //Clear 'seen' from bits set
-        for (Lit lit: cl) {
-            seen[lit.toInt()] = false;
-        }
+        if (!solver->ok)
+            return false;
     }
 
     //Clear from seen2 bits that have been set
@@ -862,25 +871,25 @@ bool GateFinder::tryAndGate(
     }
     clToUnlink.clear();
 
-    return true;
+    return solver->okay();
 }
 
 void GateFinder::treatAndGateClause(
-    const ClOffset other
+    const ClOffset other_cl_offset
     , const OrGate& gate
     , const Clause& cl
 ) {
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "AND gate-based cl rem" << endl;
     cout << "clause 1: " << cl << endl;
-    cout << "clause 2: " << *clauses[other.index] << endl;
+    //cout << "clause 2: " << *clauses[other_cl_offset.index] << endl;
     cout << "gate : " << gate << endl;
     #endif
 
     //Update stats
     runStats.andGateUseful++;
     runStats.clauseSizeRem += cl.size();
-    const Clause& otherCl = *solver->clAllocator.getPointer(other);
+    const Clause& otherCl = *solver->clAllocator.getPointer(other_cl_offset);
     runStats.clauseSizeRem += otherCl.size();
 
     //Put into 'lits' the literals of the clause
@@ -913,11 +922,10 @@ void GateFinder::treatAndGateClause(
     }
 }
 
-inline bool GateFinder::findAndGateOtherCl(
+ClOffset GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& sizeSortedOcc
     , const Lit otherLit
     , const CL_ABST_TYPE abst
-    , ClOffset& other
 ) {
     *(simplifier->limit_to_decrease) += sizeSortedOcc.size()*5;
     for (const ClOffset offset: sizeSortedOcc) {
@@ -937,13 +945,11 @@ inline bool GateFinder::findAndGateOtherCl(
                 goto next;
 
         }
-        other = offset;
-        return true;
-
+        return offset;
         next:;
     }
 
-    return false;
+    return std::numeric_limits<ClOffset>::max();
 }
 
 void GateFinder::printDot2()
