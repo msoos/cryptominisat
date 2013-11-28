@@ -3669,8 +3669,10 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 
         const lbool val = value(lit);
         if (val == l_Undef) {
+            assert(varData[lit.var()].removed == Removed::none
+                || varData[lit.var()].removed == Removed::queued_replacer
+            );
             enqueue(lit);
-            assert(varReplacer->getLitReplacedWith(lit) == lit);
             ok = propagate().isNULL();
 
             if (!ok) {
