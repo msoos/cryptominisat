@@ -177,6 +177,9 @@ void GateFinder::findOrGates()
         }
     }
     runStats.findGateTime += cpuTime() - myTime;
+    if (*simplifier->limit_to_decrease < 0) {
+        runStats.find_gate_timeout++;
+    }
 }
 
 void GateFinder::printGateStats() const
@@ -378,11 +381,6 @@ void GateFinder::findOrGates(const bool redGatesToo)
 
             //Ran out of time?
             if (*simplifier->limit_to_decrease < 0) {
-                if (solver->conf.verbosity >= 1) {
-                    cout
-                    << "c [gate] Finishing gate-finding: ran out of time"
-                    << endl;
-                }
                 break;
             }
 

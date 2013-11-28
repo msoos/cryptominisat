@@ -150,6 +150,7 @@ public:
         Stats() :
             //Time
             findGateTime(0)
+            , find_gate_timeout(0)
             , orBasedTime(0)
             , or_based_timeout(0)
             , varReplaceTime(0)
@@ -195,6 +196,7 @@ public:
         Stats& operator+=(const Stats& other)
         {
             findGateTime += other.findGateTime;
+            find_gate_timeout += other.find_gate_timeout;
             orBasedTime += other.orBasedTime;
             or_based_timeout += other.or_based_timeout;
             varReplaceTime += other.varReplaceTime;
@@ -301,6 +303,7 @@ public:
             << ((double)learntGatesSize/(double)numRed)*/
             << " T: " << std::fixed << std::setprecision(2)
             << findGateTime
+            << " T-out: " << (find_gate_timeout ? "Y" : "N")
             << endl;
 
             //gate-based shorten
@@ -331,6 +334,7 @@ public:
 
         //Time
         double findGateTime;
+        uint32_t find_gate_timeout;
         double orBasedTime;
         uint32_t or_based_timeout;
         double varReplaceTime;
