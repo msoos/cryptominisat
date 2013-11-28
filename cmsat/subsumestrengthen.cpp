@@ -726,7 +726,7 @@ void SubsumeStrengthen::finishedRun()
 //                 CL_ABST_TYPE abstr = calcAbstraction(lits);
 //
 //                 Sub0Ret ret = subsume0Final(
-//                     std::numeric_limits<ClOffset>::max()
+//                     CL_OFFSET_MAX
 //                     , lits
 //                     , abstr
 //                 );

@@ -6,6 +6,7 @@
 namespace CMSat {
 
 typedef uint32_t ClOffset;
+#define CL_OFFSET_MAX (std::numeric_limits<ClOffset>::max())
 
 }
 

@@ -144,7 +144,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 lits[1] = ws.lit2();
                 lits[2] = ws.lit3();
                 testVivify(
-                    std::numeric_limits<ClOffset>::max()
+                    CL_OFFSET_MAX
                     , ws.red()
                     , 2
                 );
@@ -289,7 +289,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
             , queueByBy
         );
 
-        if (offset2 != std::numeric_limits<ClOffset>::max()) {
+        if (offset2 != CL_OFFSET_MAX) {
             *j++ = offset2;
         }
     }
@@ -389,7 +389,7 @@ ClOffset ClauseVivifier::testVivify(
         if (solver->conf.verbosity >= 5) {
             cout
             << "c Asymm branch effective." << endl;
-            if (offset != std::numeric_limits<ClOffset>::max()) {
+            if (offset != CL_OFFSET_MAX) {
                 cout
                 << "c --> orig clause:" <<
                  *solver->clAllocator.getPointer(offset)
@@ -407,7 +407,7 @@ ClOffset ClauseVivifier::testVivify(
         }
 
         //Detach and free old clause
-        if (offset != std::numeric_limits<ClOffset>::max()) {
+        if (offset != CL_OFFSET_MAX) {
             solver->detachClause(offset);
             solver->clAllocator.clauseFree(offset);
         }
@@ -420,7 +420,7 @@ ClOffset ClauseVivifier::testVivify(
 
             return solver->clAllocator.getOffset(cl2);
         } else {
-            return std::numeric_limits<ClOffset>::max();
+            return CL_OFFSET_MAX;
         }
     } else {
         return offset;

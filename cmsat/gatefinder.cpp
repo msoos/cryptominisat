@@ -949,7 +949,7 @@ ClOffset GateFinder::findAndGateOtherCl(
         next:;
     }
 
-    return std::numeric_limits<ClOffset>::max();
+    return CL_OFFSET_MAX;
 }
 
 void GateFinder::printDot2()
