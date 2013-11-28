@@ -132,7 +132,7 @@ void GateFinder::createNewVars()
         lits.push_back(lit1);
         lits.push_back(lit2);
         OrGate gate(Lit(0,false), lit1, lit2, false);
-        tryAndGate(gate, false, true, potential);
+        remove_clauses_using_and_gate(gate, false, true, potential);
 
         //If we find the above to be adequate, then this should be a new gate
         if (potential > 3) {
@@ -258,7 +258,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 break;
             }
 
-            if (!tryAndGate(gate, true, false, foundPotential))
+            if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
                 break;
         }
         runStats.andBasedTime += cpuTime() - myTime;
@@ -746,7 +746,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     return other_cl_offs;
 }
 
-bool GateFinder::tryAndGate(
+bool GateFinder::remove_clauses_using_and_gate(
     const OrGate& gate
     , const bool really_remove
     , const bool only_irred

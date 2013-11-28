@@ -386,7 +386,7 @@ private:
     size_t findEqOrGates();
 
     //And gate treatment
-    bool tryAndGate(
+    bool remove_clauses_using_and_gate(
         const OrGate& gate
         , const bool reallyRemove
         , const bool only_irred
