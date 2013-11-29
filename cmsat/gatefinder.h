@@ -26,6 +26,7 @@
 #include "cset.h"
 #include <boost/array.hpp>
 #include <set>
+#include "watcharray.h"
 
 namespace CMSat {
 
@@ -266,6 +267,31 @@ private:
         , const Lit lit
         , const CL_ABST_TYPE abst2
         , const bool only_irred
+    );
+    bool findAndGateOtherCl_tri(
+       watch_subarray_const ws_list
+        , const bool only_irred
+        , Watched& ret
+    );
+    bool find_pair_for_and_gate_reduction_tri(
+        const Watched& ws
+        , const OrGate& gate
+        , const bool only_irred
+        , Watched& found_pair
+    );
+    bool remove_clauses_using_and_gate_tri(
+       const OrGate& gate
+        , const bool really_remove
+        , const bool only_irred
+        , uint32_t& reduction
+    );
+    void set_seen2_tri(
+       const OrGate& gate
+        , const bool only_irred
+    );
+    bool check_seen_and_gate_against_lit(
+        const Lit lit
+        , const OrGate& gate
     );
 
     ///temporary for and-gate treatment. Cleared at every treatAndGate() call
