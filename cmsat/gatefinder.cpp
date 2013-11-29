@@ -990,7 +990,7 @@ void GateFinder::treatAndGateClause(
 
     //Update stats
     runStats.andGateUseful++;
-    const Clause& this_cl = *solver->clAllocator.getPointer(other_cl_offset);
+    const Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offset);
     runStats.clauseSizeRem += this_cl.size();
 
     //Put into 'lits' the literals of the clause
@@ -998,10 +998,12 @@ void GateFinder::treatAndGateClause(
     lits.clear();
     *simplifier->limit_to_decrease -= this_cl.size()*2;
     for (const Lit lit: this_cl) {
-        if (lit != ~(gate.lit1))
+        if (lit != ~(gate.lit1)) {
             lits.push_back(lit);
-
-        assert(lit.var() != gate.eqLit.var());
+            assert(lit.var() != gate.eqLit.var());
+            assert(lit.var() != gate.lit1.var());
+            assert(lit.var() != gate.lit2.var());
+        }
     }
     lits.push_back(~(gate.eqLit));
 
