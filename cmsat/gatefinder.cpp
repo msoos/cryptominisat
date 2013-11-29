@@ -1008,7 +1008,7 @@ void GateFinder::treatAndGateClause(
 
     //Calculate learnt & glue
     const Clause& other_cl = *solver->clAllocator.getPointer(other_cl_offset);
-    bool red = other_cl.red() && this_cl.red();
+    const bool red = other_cl.red() && this_cl.red();
     ClauseStats stats = ClauseStats::combineStats(this_cl.stats, other_cl.stats);
 
     #ifdef VERBOSE_ORGATE_REPLACE
