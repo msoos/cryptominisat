@@ -873,6 +873,8 @@ bool GateFinder::remove_clauses_using_and_gate(
     uint16_t minSize = std::numeric_limits<uint16_t>::max();
     CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
     general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
+    if (maxSize == 0)
+        return solver->okay();
 
     watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size();
