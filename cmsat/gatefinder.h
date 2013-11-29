@@ -266,12 +266,14 @@ private:
         const vector<ClOffset>& sizeSortedOcc
         , const Lit lit
         , const CL_ABST_TYPE abst2
+        , const bool gate_is_red
         , const bool only_irred
     );
     bool findAndGateOtherCl_tri(
        watch_subarray_const ws_list
-        , const bool only_irred
-        , Watched& ret
+       , const bool gate_is_red
+       , const bool only_irred
+       , Watched& ret
     );
     bool find_pair_for_and_gate_reduction_tri(
         const Watched& ws

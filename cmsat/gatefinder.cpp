@@ -803,6 +803,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
         , ~(gate.lit2) //this is the LIT that is meant to be in the clause
         , this_cl_abst //clause MUST match this abst
+        , gate.red
         , only_irred
     );
 
@@ -844,6 +845,7 @@ bool GateFinder::find_pair_for_and_gate_reduction_tri(
     seen[ws.lit3().toInt()] = 1;
     const bool ret = findAndGateOtherCl_tri(
         solver->watches[(~(gate.lit2)).toInt()]
+        , gate.red
         , only_irred
         , found_pair
     );
@@ -1013,12 +1015,16 @@ ClOffset GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& sizeSortedOcc
     , const Lit otherLit
     , const CL_ABST_TYPE abst
+    , const bool gate_is_red
     , const bool only_irred
 ) {
     *(simplifier->limit_to_decrease) -= sizeSortedOcc.size();
     for (const ClOffset offset: sizeSortedOcc) {
         const Clause& cl = *solver->clAllocator.getPointer(offset);
         if (cl.red() && only_irred)
+            continue;
+
+        if (!cl.red() && gate_is_red)
             continue;
 
         //abstraction must match
@@ -1045,6 +1051,7 @@ ClOffset GateFinder::findAndGateOtherCl(
 
 bool GateFinder::findAndGateOtherCl_tri(
     watch_subarray_const ws_list
+    , const bool gate_is_red
     , const bool only_irred
     , Watched& ret
 ) {
@@ -1054,6 +1061,9 @@ bool GateFinder::findAndGateOtherCl_tri(
             continue;
 
         if (ws.red() && only_irred)
+            continue;
+
+        if (!ws.red() && gate_is_red)
             continue;
 
         if (seen[ws.lit2().toInt()]
