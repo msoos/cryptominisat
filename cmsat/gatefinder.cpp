@@ -417,7 +417,7 @@ void GateFinder::findOrGates(const bool redGatesToo)
                 continue;
 
             //if no learnt gates are allowed and this is learnt, skip
-            if (!redGatesToo && ws.red())
+            if (ws.red() && !redGatesToo)
                 continue;
 
             const bool wasRed = ws.red();
