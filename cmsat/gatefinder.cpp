@@ -456,7 +456,7 @@ void GateFinder::findOrGate(
     , bool wasRed
 ) {
     bool isEqual = true;
-    for (Lit otherLit: boost::array<Lit, 2>{{lit1, lit2}}) {
+    for (const Lit otherLit: boost::array<Lit, 2>{{lit1, lit2}}) {
         //This is the other lineral in the binary clause
         //We are looking for a binary clause '~otherlit V ~eqLit'
         bool OK = false;
