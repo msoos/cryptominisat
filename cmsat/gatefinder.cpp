@@ -480,20 +480,17 @@ void GateFinder::findOrGate(
         //Try to find corresponding binary clause in watchlist
         watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
         *simplifier->limit_to_decrease -= ws.size();
-        for (watch_subarray::const_iterator
-            wsIt = ws.begin(), endWS = ws.end()
-            ; wsIt != endWS && !OK
-            ; wsIt++
-        ) {
+        for (const Watched w: ws) {
             //Only binary clauses are of importance
-            if (!wsIt->isBinary())
+            if (!w.isBinary())
                 continue;
 
-            if ((redGatesToo || !wsIt->red())
-                 && wsIt->lit2() == eqLit
+            if ((redGatesToo || !w.red())
+                 && w.lit2() == eqLit
             ) {
-                wasRed |= wsIt->red();
+                wasRed |= w.red();
                 OK = true;
+                break;
             }
         }
 
