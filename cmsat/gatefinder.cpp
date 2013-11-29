@@ -995,7 +995,6 @@ void GateFinder::treatAndGateClause(
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
-    lits.clear();
     *simplifier->limit_to_decrease -= this_cl.size()*2;
     for (const Lit lit: this_cl) {
         if (lit != ~(gate.lit1)) {
