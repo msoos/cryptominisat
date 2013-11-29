@@ -102,20 +102,19 @@ size_t GateFinder::num_long_irred_cls(const Lit lit) const
 
 void GateFinder::createNewVars()
 {
-    double myTime = cpuTime();
     vector<NewGateData> newGates;
-    vector<Lit> tmp;
-    vector<ClOffset> subs;
-    uint64_t numOp = 0;
-    numMaxCreateNewVars = 500LL*1000LL*1000LL;
+    numMaxCreateNewVars = 300LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxCreateNewVars;
 
     vector<Lit> potential_lits;
     for(size_t i = 0; i < 2*solver->nVars(); i++) {
         const Lit lit(i/2, i %2);
-        size_t num = num_long_irred_cls(lit);
-        if (num > 3)
-            potential_lits.push_back(lit);
+        //size_t num = num_long_irred_cls(lit);
+        size_t num = solver->watches[lit.toInt()].size();
+        if (num > 3) {
+            //Have to invert it, since this is an AND gate, so ~a = ~b AND ~c
+            potential_lits.push_back(~lit);
+        }
     }
     if (potential_lits.size() < 2)
         return;
@@ -158,6 +157,7 @@ void GateFinder::createNewVars()
         uint32_t reduction = 0;
         OrGate gate(Lit(0,false), lit1, lit2, false);
         remove_clauses_using_and_gate(gate, false, true, reduction);
+        remove_clauses_using_and_gate_tri(gate, false, true, reduction);
 
         //If we find the above to be adequate, then this should be a new gate
         if (reduction > 3) {
