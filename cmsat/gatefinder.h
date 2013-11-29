@@ -307,6 +307,28 @@ private:
     //For temporaries
     vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
     set<ClOffset> clToUnlink;
+    struct TriToUnlink
+    {
+        TriToUnlink(Lit _lit2, Lit _lit3, bool _red) :
+            lit2(_lit2)
+            , lit3(_lit3)
+            , red(_red)
+        {}
+
+        const Lit lit2;
+        const Lit lit3;
+        const bool red;
+
+        bool operator<(const TriToUnlink& other) const
+        {
+            if (lit2 != other.lit2)
+                return lit2 < other.lit2;
+            if (lit3 != other.lit3)
+                return lit3 < other.lit3;
+            return red < other.red;
+        }
+    };
+    set<TriToUnlink> tri_to_unlink;
 
     //Graph
     void printDot2(); ///<Print Graphviz DOT file describing the gates

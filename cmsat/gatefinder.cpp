@@ -946,10 +946,15 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
             runStats.andGateUseful++;
             runStats.clauseSizeRem += 3;
 
-            solver->detachTriClause(~(gate.lit1), ws.lit2(), ws.lit3(), ws.red());
+            tri_to_unlink.insert(TriToUnlink(ws.lit2(), ws.lit3(), ws.red()));
             solver->detachTriClause(~(gate.lit2), other_ws.lit2(), other_ws.lit3(), other_ws.red());
             vector<Lit> lits = {~(gate.eqLit), ws.lit2(), ws.lit3()};
-            solver->addClauseInt(lits, ws.red() && other_ws.red());
+            solver->addClauseInt(
+                lits
+                , ws.red() && other_ws.red()
+                , ClauseStats()
+                , false //don't attach/propagate
+            );
             if (!solver->ok)
                 return false;
         }
@@ -962,6 +967,11 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
         seen2[at] = false;
     }
     seen2Set.clear();
+
+    for(const TriToUnlink tri: tri_to_unlink) {
+        solver->detachTriClause(~(gate.lit1), tri.lit2, tri.lit3, tri.red);
+    }
+    tri_to_unlink.clear();
 
     return solver->okay();
 }
