@@ -928,9 +928,10 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
     ) {
         return solver->okay();
     }
+    tri_to_unlink.clear();
 
     set_seen2_tri(gate, only_irred);
-    watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
+    watch_subarray_const cs = solver->watches[(~(gate.lit1)).toInt()];
     *simplifier->limit_to_decrease -= cs.size();
     for (const Watched ws: cs) {
         if (*simplifier->limit_to_decrease < 0)
