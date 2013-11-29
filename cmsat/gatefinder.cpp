@@ -784,7 +784,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const ClOffset this_cl_offs = ws.getOffset();
     Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
     if ((ws.getAbst() | general_abst) != general_abst
-        || this_cl.red() && only_irred
+        || (this_cl.red() && only_irred)
         || this_cl.size() > solver->conf.maxGateBasedClReduceSize
         || this_cl.size() > maxSize //Size must be smaller or equal to maxSize
         || this_cl.size() < minSize //Size must be larger or equal than minsize
@@ -865,8 +865,6 @@ bool GateFinder::remove_clauses_using_and_gate(
     , uint32_t& reduction
 ) {
     assert(clToUnlink.empty());
-    reduction = 0;
-
     if (solver->watches[(~(gate.lit1)).toInt()].empty()
         || solver->watches[(~(gate.lit2)).toInt()].empty()
     ) {
@@ -983,8 +981,6 @@ void GateFinder::treatAndGateClause(
     runStats.andGateUseful++;
     const Clause& this_cl = *solver->clAllocator.getPointer(other_cl_offset);
     runStats.clauseSizeRem += this_cl.size();
-    const Clause& other_cl = *solver->clAllocator.getPointer(other_cl_offset);
-    runStats.clauseSizeRem += other_cl.size();
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
@@ -999,6 +995,7 @@ void GateFinder::treatAndGateClause(
     lits.push_back(~(gate.eqLit));
 
     //Calculate learnt & glue
+    const Clause& other_cl = *solver->clAllocator.getPointer(other_cl_offset);
     bool red = other_cl.red() && this_cl.red();
     ClauseStats stats = ClauseStats::combineStats(this_cl.stats, other_cl.stats);
 
