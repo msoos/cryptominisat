@@ -942,7 +942,7 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
             ws, gate, only_irred, other_ws
         );
 
-        if (really_remove&& found_pair) {
+        if (really_remove && found_pair) {
             runStats.andGateUseful++;
             runStats.clauseSizeRem += 3;
 
