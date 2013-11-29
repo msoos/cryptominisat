@@ -786,6 +786,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offs);
     if ((ws.getAbst() | general_abst) != general_abst
         || (this_cl.red() && only_irred)
+        || (!this_cl.red() && gate.red)
         || this_cl.size() > solver->conf.maxGateBasedClReduceSize
         || this_cl.size() > maxSize //Size must be smaller or equal to maxSize
         || this_cl.size() < minSize //Size must be larger or equal than minsize
@@ -794,10 +795,6 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         //cout << "Not even possible, this clause cannot match any other" << endl;
         return CL_OFFSET_MAX;
     }
-
-    //Check that we are not removing irred info based on learnt gate
-    if (!this_cl.red() && gate.red)
-        return CL_OFFSET_MAX;
 
     if (!check_seen_and_gate_against_cl(this_cl, gate))
         return CL_OFFSET_MAX;
