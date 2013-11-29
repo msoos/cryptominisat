@@ -904,7 +904,7 @@ bool GateFinder::remove_clauses_using_and_gate(
     //Clear from seen2 bits that have been set
     *(simplifier->limit_to_decrease) -= seen2Set.size();
     for(const size_t at: seen2Set) {
-        seen2[at] = false;
+        seen2[at] = 0;
     }
     seen2Set.clear();
 
