@@ -43,6 +43,9 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
 bool GateFinder::doAll()
 {
     runStats.clear();
+    orGates.clear();
+    clearIndexes();
+
     findOrGates();
     if (!doAllOptimisationWithGates())
         goto end;
@@ -186,7 +189,6 @@ void GateFinder::findOrGates()
     assert(solver->ok);
 
     double myTime = cpuTime();
-    clearIndexes();
     numMaxGateFinder = 100LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
@@ -235,7 +237,6 @@ void GateFinder::printGateStats() const
 void GateFinder::clearIndexes()
 {
     //Clear gate statistics
-    orGates.clear();
     for (size_t i = 0; i < gateOcc.size(); i++)
         gateOcc[i].clear();
     for (size_t i = 0; i < gateOccEq.size(); i++)
