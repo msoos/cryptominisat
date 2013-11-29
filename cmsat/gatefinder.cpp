@@ -462,6 +462,7 @@ void GateFinder::findOrGate(
 
         //TODO stamping
 
+        /*
         //Try to find corresponding binary clause in cache
         const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
         *simplifier->limit_to_decrease -= cache.size();
@@ -473,7 +474,7 @@ void GateFinder::findOrGate(
                 OK = true;
                 break;
             }
-        }
+        }*/
 
         //Try to find corresponding binary clause in watchlist
         watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
