@@ -3201,7 +3201,7 @@ void Simplifier::try_bva_on_lit(const Lit lit)
 void Simplifier::bva_simplify_system(const Lit lit)
 {
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [bva] YES Simplification by "
         << simp_size
@@ -3228,12 +3228,12 @@ void Simplifier::bva_simplify_system(const Lit lit)
     Lit new_lit(newvar, false);
 
     for(Lit m_lit: m_lits) {
-        solver->attachBinClause(m_lit, new_lit, false);
+        //solver->attachBinClause(m_lit, new_lit, false);
     }
 
     for(const OccurClause m_cl: m_cls) {
         //TODO
-        add_longer_clause(~new_lit, m_cl);
+        //add_longer_clause(~new_lit, m_cl);
     }
 }
 
