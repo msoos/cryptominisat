@@ -399,13 +399,17 @@ size_t GateFinder::findEqOrGates()
 
 void GateFinder::findOrGates(const bool redGatesToo)
 {
-    //Go through each TRI clause
-    for(size_t i = 0; i < solver->watches.size(); i++) {
-        if (*simplifier->limit_to_decrease < 0)
-            break;
+    if (solver->nVars() < 1)
+        return;
 
-        const Lit lit = Lit::toLit(i);
-        for(const Watched ws: solver->watches[i]) {
+    const size_t offs = solver->mtrand.randInt(solver->nVars()*2-1);
+    for(size_t i = 0
+        ; i < solver->nVars()*2 && *simplifier->limit_to_decrease > 0
+        ; i++
+    ) {
+        const size_t at = (offs + i) % (solver->nVars()*2);
+        const Lit lit = Lit::toLit(at);
+        for(const Watched ws: solver->watches[lit.toInt()]) {
             *simplifier->limit_to_decrease -= 1;
 
             //Ran out of time?
