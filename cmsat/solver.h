@@ -172,8 +172,6 @@ class Solver : public Searcher
             SolveStats() :
                 numSimplify(0)
                 , nbReduceDB(0)
-                , subsBinWithBinTime(0)
-                , subsBinWithBin(0)
                 , numCallReachCalc(0)
             {}
 
@@ -181,8 +179,6 @@ class Solver : public Searcher
             {
                 numSimplify += other.numSimplify;
                 nbReduceDB += other.nbReduceDB;
-                subsBinWithBinTime += other.subsBinWithBinTime;
-                subsBinWithBin += other.subsBinWithBin;
                 numCallReachCalc += other.numCallReachCalc;
 
                 return *this;
@@ -190,8 +186,6 @@ class Solver : public Searcher
 
             uint64_t numSimplify;
             uint64_t nbReduceDB;
-            double subsBinWithBinTime;
-            uint64_t subsBinWithBin;
             uint64_t numCallReachCalc;
         };
         const SolveStats& getSolveStats() const;

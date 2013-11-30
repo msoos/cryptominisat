@@ -52,10 +52,49 @@ private:
     bool lastRed;
     vector<Lit> tmplits;
 
-    uint64_t remBins;
-    uint64_t remTris;
-    uint64_t stampTriRem;
-    uint64_t cacheTriRem;
+    struct Stats {
+        void clear()
+        {
+            *this = Stats();
+        }
+
+        Stats operator+=(const Stats& other)
+        {
+            time_used += other.time_used;
+            remBins += other.remBins;
+            remTris += other.remTris;
+            stampTriRem += other.stampTriRem;
+            cacheTriRem += other.cacheTriRem;
+            numWatchesLooked += other.numWatchesLooked;
+
+            return *this;
+        }
+
+        void print() const
+        {
+            cout
+            << "c [implicit] sub"
+            << " bin: " << remBins
+            << " tri: " << remTris
+            << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
+
+            << " T: " << std::fixed << std::setprecision(2)
+            << time_used
+            << " T-out: " << (time_out < 0 ? "Y" : "N")
+            << " w-visit: " << numWatchesLooked
+            << endl;
+        }
+
+        double time_used;
+        uint64_t time_out = 0;
+        uint64_t remBins = 0;
+        uint64_t remTris = 0;
+        uint64_t stampTriRem = 0;
+        uint64_t cacheTriRem = 0;
+        uint64_t numWatchesLooked = 0;
+    };
+    Stats runStats;
+    Stats globalStats;
 
     struct WatchSorter {
         bool operator()(const Watched& first, const Watched& second)
@@ -98,26 +137,6 @@ private:
         lastLit3 = lit_Undef;
         lastBin = NULL;
         lastRed = false;
-
-        remBins = 0;
-        remTris = 0;
-        stampTriRem = 0;
-        cacheTriRem = 0;
-    }
-
-    void print(const double total_time, const size_t numWatchesLooked, int64_t timeAvailable) const
-    {
-        cout
-        << "c [implicit] sub"
-        << " bin: " << remBins
-        << " tri: " << remTris
-        << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
-
-        << " T: " << std::fixed << std::setprecision(2)
-        << total_time
-        << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
-        << " w-visit: " << numWatchesLooked
-        << endl;
     }
 
     //ImplSubsumeData impl_subs_dat;

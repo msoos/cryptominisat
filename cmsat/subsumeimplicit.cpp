@@ -93,7 +93,7 @@ void SubsumeImplicit::try_subsume_tri(
     if (doStamp && !remove) {
         timeAvailable -= 15;
         remove = solver->stamp.stampBasedClRem(tmplits);
-        stampTriRem += remove;
+        runStats.stampTriRem += remove;
     }
 
     //Subsumed by cache
@@ -115,7 +115,7 @@ void SubsumeImplicit::try_subsume_tri(
                     && it2->getOnlyIrredBin()
                 ) {
                     remove = true;
-                    cacheTriRem++;
+                    runStats.cacheTriRem++;
                     break;
                  }
             }
@@ -125,7 +125,7 @@ void SubsumeImplicit::try_subsume_tri(
     if (remove) {
         timeAvailable -= 30;
         solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-        remTris++;
+        runStats.remTris++;
         (*solver->drup) << del << lit  << i->lit2()  << i->lit3() << fin;
         return;
     }
@@ -152,7 +152,7 @@ void SubsumeImplicit::try_subsume_bin(
         //impossible to have irred before red
         assert(!(i->red() == false && lastRed == true));
 
-        remBins++;
+        runStats.remBins++;
         assert(i->lit2().var() != lit.var());
         timeAvailable -= 30;
         timeAvailable -= solver->watches[i->lit2().toInt()].size();
@@ -180,19 +180,18 @@ void SubsumeImplicit::subsume_implicit()
     const double myTime = cpuTime();
     timeAvailable = 1900LL*1000LL*1000LL;
     const bool doStamp = solver->conf.doStamp;
-    uint64_t numWatchesLooked = 0;
+    runStats.clear();
 
     //Randomize starting point
-    size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    const size_t rnd_start = solver->mtrand.randInt(solver->watches.size()-1);
     size_t numDone = 0;
-    for (; numDone < solver->watches.size() && timeAvailable > 0
-        ; upI = (upI +1) % solver->watches.size(), numDone++
-
+    for (;numDone < solver->watches.size() && timeAvailable > 0
+         ;numDone++
     ) {
-        numWatchesLooked++;
-        Lit lit = Lit::toLit(upI);
-        watch_subarray ws = solver->watches[upI];
+        const size_t at = (rnd_start + numDone)  % solver->watches.size();
+        runStats.numWatchesLooked++;
+        const Lit lit = Lit::toLit(at);
+        watch_subarray ws = solver->watches[lit.toInt()];
 
         //We can't do much when there is nothing, or only one
         if (ws.size() < 2)
@@ -233,12 +232,13 @@ void SubsumeImplicit::subsume_implicit()
         }
         ws.shrink(i-j);
     }
-
-    if (solver->conf.verbosity >= 1) {
-        print(cpuTime() - myTime, numWatchesLooked, timeAvailable);
-    }
     solver->checkStats();
 
-    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
-    solver->solveStats.subsBinWithBin += remBins;
+    runStats.time_used += cpuTime() - myTime;
+    runStats.time_out += (timeAvailable < 0);
+    if (solver->conf.verbosity >= 1) {
+        runStats.print();
+    }
+
+    globalStats += runStats;
 }
