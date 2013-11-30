@@ -467,6 +467,7 @@ void GateFinder::findOrGate(
 
         //TODO stamping
 
+        //TODO enable below?
         /*
         //Try to find corresponding binary clause in cache
         const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
