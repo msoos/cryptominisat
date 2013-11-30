@@ -80,7 +80,7 @@ bool CompFinder::findComps()
     if (timedout) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c Timed out finding components, BP: "
+            << "c [comp] Timed out finding components, BP: "
             << std::setprecision(2) << std::fixed
             << (double)timeUsed/(1000.0*1000.0)
             << "M T: "
@@ -110,7 +110,7 @@ bool CompFinder::findComps()
         || (solver->conf.verbosity  >=1 && used_comp_no > 1)
     ) {
         cout
-        << "c Found component(s): " <<  reverseTable.size()
+        << "c [comp] Found component(s): " <<  reverseTable.size()
         << " BP: "
         << std::setprecision(2) << std::fixed
         << (double)timeUsed/(1000.0*1000.0)<< "M"
@@ -122,17 +122,18 @@ bool CompFinder::findComps()
         size_t notPrinted = 0;
         size_t totalSmallSize = 0;
         size_t i = 0;
+        size_t print_limit = 300;
         for(map<uint32_t, vector<Var> >::const_iterator
             it = reverseTable.begin(), end = reverseTable.end()
             ; it != end
             ; it++, i++
         ) {
-            if (it->second.size() < 300 || solver->conf.verbosity >= 3) {
+            if (it->second.size() < print_limit || solver->conf.verbosity >= 3) {
                 totalSmallSize += it->second.size();
                 notPrinted++;
             } else {
                 cout
-                << "c large component " << std::setw(5) << i
+                << "c [comp]large component " << std::setw(5) << i
                 << " size: " << std::setw(10) << it->second.size()
                 << endl;
             }
@@ -140,7 +141,7 @@ bool CompFinder::findComps()
 
         if (solver->conf.verbosity < 3) {
             cout
-            << "c Not printed total small (<300 vars) components:" << notPrinted
+            << "c [comp] Unprinted small (<" << print_limit << " var) components:" << notPrinted
             << " vars: " << totalSmallSize
             << endl;
         }

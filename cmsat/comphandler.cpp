@@ -95,7 +95,7 @@ bool CompHandler::handle()
     if (num_comps <= 1) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c Only one component, not handling it separately"
+            << "c [comp] Only one component, not handling it separately"
             << endl;
         }
         return true;
@@ -155,7 +155,7 @@ bool CompHandler::handle()
         //Print what we are going to do
         if (solver->conf.verbosity >= 1 && num_comps < 20) {
             cout
-            << "c Solving component " << it
+            << "c [comp] Solving component " << it
             << " num vars: " << vars.size()
             << " ======================================="
             << endl;
@@ -183,7 +183,7 @@ bool CompHandler::handle()
             solver->ok = false;
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c One of the sub-problems was UNSAT -> problem is unsat."
+                << "c [comp] The component is UNSAT -> problem is UNSAT"
                 << endl;
             }
             return false;
@@ -247,7 +247,7 @@ bool CompHandler::handle()
 
         if (solver->conf.verbosity >= 1 && num_comps < 20) {
             cout
-            << "c Solved component " << it
+            << "c [comp] Solved component " << it
             << " ======================================="
             << endl;
         }
@@ -258,7 +258,7 @@ bool CompHandler::handle()
     //Coming back to the original instance now
     if (solver->conf.verbosity  >= 1) {
         cout
-        << "c Coming back to original instance, solved "
+        << "c [comp] Coming back to original instance, solved "
         << num_comps_solved << " component(s), "
         << vars_solved << " vars"
         << " T: "
@@ -691,7 +691,7 @@ void CompHandler::readdRemovedClauses()
             tmp.push_back(removedClauses.lits[i]);
         }
         if (solver->conf.verbosity >= 6) {
-            cout << "c Adding back component clause " << tmp << endl;
+            cout << "c [comp] Adding back component clause " << tmp << endl;
         }
 
         //Add the clause to the system
@@ -705,7 +705,7 @@ void CompHandler::readdRemovedClauses()
     //Explain what we just did
     if (solver->conf.verbosity >= 2) {
         cout
-        << "c Re-added components. Lits: "
+        << "c [comp] re-added components. Lits: "
         << removedClauses.lits.size()
         << " cls:" << removedClauses.sizes.size()
         << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
