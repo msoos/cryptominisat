@@ -253,14 +253,18 @@ inline lbool toLbool(const char   v)
 {
     return lbool(v);
 }
-inline lbool boolToLBool(const bool b)
-{
-    return lbool(2*b-1);
-}
 
 const lbool l_True  = toLbool( 1);
 const lbool l_False = toLbool(-1);
 const lbool l_Undef = toLbool( 0);
+
+inline lbool boolToLBool(const bool b)
+{
+    if (b)
+        return l_True;
+    else
+        return l_False;
+}
 
 inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 {
