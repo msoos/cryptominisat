@@ -1082,7 +1082,8 @@ end:
     }
 
     //Update stats
-    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    //TODO
+    //solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
 
     return solver->okay();
 }
