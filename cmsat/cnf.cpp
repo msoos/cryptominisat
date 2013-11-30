@@ -1,6 +1,7 @@
 #include "cnf.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
+#include "watchalgos.h"
 
 using namespace CMSat;
 
@@ -81,10 +82,35 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
     return ss.str();
 }
 
-
 bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
 {
     Clause* cl1 = clAllocator.getPointer(x);
     Clause* cl2 = clAllocator.getPointer(y);
     return (cl1->size() < cl2->size());
+}
+
+void CNF::remove_tri_but_lit1(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool red
+    , int64_t& timeAvailable
+) {
+    //Remove tri
+    Lit lits[3];
+    lits[0] = lit1;
+    lits[1] = lit2;
+    lits[2] = lit3;
+    std::sort(lits, lits+3);
+    timeAvailable -= watches[lits[0].toInt()].size();
+    timeAvailable -= watches[lits[1].toInt()].size();
+    timeAvailable -= watches[lits[2].toInt()].size();
+    removeTriAllButOne(watches, lit1, lits, red);
+
+    //Update stats for tri
+    if (red) {
+        binTri.redTris--;
+    } else {
+        binTri.irredTris--;
+    }
 }

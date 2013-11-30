@@ -39,6 +39,7 @@
 #include "varupdatehelper.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "subsumeimplicit.h"
 
 #include <fstream>
 #include <cmath>
@@ -71,6 +72,7 @@ Solver::Solver(const SolverConf _conf) :
     , clauseCleaner(NULL)
     , varReplacer(NULL)
     , compHandler(NULL)
+    , subsumeImplicit(NULL)
     , mtrand(_conf.origSeed)
     , needToInterrupt(false)
 
@@ -109,6 +111,9 @@ Solver::Solver(const SolverConf _conf) :
     if (conf.doCompHandler) {
         compHandler = new CompHandler(this);
     }
+    if (conf.doStrSubImplicit) {
+        subsumeImplicit = new SubsumeImplicit(this);
+    }
     Searcher::solver = this;
 }
 
@@ -122,6 +127,7 @@ Solver::~Solver()
     delete clauseVivifier;
     delete clauseCleaner;
     delete varReplacer;
+    delete subsumeImplicit;
 }
 
 bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
@@ -1718,7 +1724,7 @@ lbool Solver::simplifyProblem()
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
-        clauseVivifier->subsumeImplicit();
+        subsumeImplicit->subsume_implicit();
     }
 
     //PROBE
@@ -1741,7 +1747,7 @@ lbool Solver::simplifyProblem()
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
-        clauseVivifier->subsumeImplicit();
+        subsumeImplicit->subsume_implicit();
     }
 
     //SCC&VAR-REPL
@@ -1767,7 +1773,7 @@ lbool Solver::simplifyProblem()
             goto end;
         }
 
-        clauseVivifier->subsumeImplicit();
+        subsumeImplicit->subsume_implicit();
     }
 
     //Clean cache before vivif
@@ -3529,7 +3535,7 @@ void Solver::dumpIfNeeded() const
 
     //Don't dump implicit clauses multiple times
     if (conf.doStrSubImplicit && okay()) {
-        clauseVivifier->subsumeImplicit();
+        subsumeImplicit->subsume_implicit();
     }
 
     if (!conf.redDumpFname.empty()) {

@@ -832,219 +832,6 @@ bool ClauseVivifier::vivifyClausesCache(
     return solver->ok;
 }
 
-void ClauseVivifier::try_subsume_tri(
-    const Lit lit
-    , Watched*& i
-    , Watched*& j
-    , const bool doStamp
-) {
-    //Only treat one of the TRI's instances
-    if (lit > i->lit2()) {
-        *j++ = *i;
-        return;
-    }
-
-    bool remove = false;
-
-    //Subsumed by bin
-    if (impl_subs_dat.lastLit2 == i->lit2()
-        && impl_subs_dat.lastLit3 == lit_Undef
-        && impl_subs_dat.lastLit2 == i->lit2()
-    ) {
-        if (impl_subs_dat.lastRed && !i->red()) {
-            assert(impl_subs_dat.lastBin->isBinary());
-            assert(impl_subs_dat.lastBin->red());
-            assert(impl_subs_dat.lastBin->lit2() == impl_subs_dat.lastLit2);
-
-            impl_subs_dat.lastBin->setRed(false);
-            timeAvailable -= 20;
-            timeAvailable -= solver->watches[impl_subs_dat.lastLit2.toInt()].size();
-            findWatchedOfBin(solver->watches, impl_subs_dat.lastLit2, lit, true).setRed(false);
-            solver->binTri.redBins--;
-            solver->binTri.irredBins++;
-            impl_subs_dat.lastRed = false;
-        }
-
-        remove = true;
-    }
-
-    //Subsumed by Tri
-    if (!remove
-        && impl_subs_dat.lastLit2 == i->lit2()
-        && impl_subs_dat.lastLit3 == i->lit3()
-    ) {
-        //The sorting algorithm prefers irred to red, so it is
-        //impossible to have irred before red
-        assert(!(i->red() == false && impl_subs_dat.lastRed == true));
-
-        remove = true;
-    }
-
-    lits.clear();
-    lits.push_back(lit);
-    lits.push_back(i->lit2());
-    lits.push_back(i->lit3());
-
-    //Subsumed by stamp
-    if (doStamp && !remove) {
-        timeAvailable -= 15;
-        remove = solver->stamp.stampBasedClRem(lits);
-        impl_subs_dat.stampTriRem += remove;
-    }
-
-    //Subsumed by cache
-    if (!remove
-        && solver->conf.doCache
-    ) {
-        for(size_t i = 0; i < lits.size() && !remove; i++) {
-            timeAvailable -= solver->implCache[lit.toInt()].lits.size();
-            for (vector<LitExtra>::const_iterator
-                it2 = solver->implCache[lits[i].toInt()].lits.begin()
-                , end2 = solver->implCache[lits[i].toInt()].lits.end()
-                ; it2 != end2
-                ; it2++
-            ) {
-                if ((   it2->getLit() == lits[0]
-                        || it2->getLit() == lits[1]
-                        || it2->getLit() == lits[2]
-                    )
-                    && it2->getOnlyIrredBin()
-                ) {
-                    remove = true;
-                    impl_subs_dat.cacheTriRem++;
-                    break;
-                 }
-            }
-        }
-    }
-
-    if (remove) {
-        //Remove Tri
-        timeAvailable -= 30;
-        timeAvailable -= solver->watches[lit.toInt()].size();
-        timeAvailable -= solver->watches[i->lit2().toInt()].size();
-        timeAvailable -= solver->watches[i->lit3().toInt()].size();
-        removeTri(lit, i->lit2(), i->lit3(), i->red());
-        impl_subs_dat.remTris++;
-        (*solver->drup)
-        << del << lit  << i->lit2()  << i->lit3() << fin;
-        return;
-    }
-
-    //Don't remove
-    impl_subs_dat.lastLit2 = i->lit2();
-    impl_subs_dat.lastLit3 = i->lit3();
-    impl_subs_dat.lastRed = i->red();
-
-    *j++ = *i;
-    return;
-}
-
-void ClauseVivifier::try_subsume_bin(
-    const Lit lit
-    , Watched*& i
-    , Watched*& j
-) {
-    //Subsume bin with bin
-    if (i->lit2() == impl_subs_dat.lastLit2
-        && impl_subs_dat.lastLit3 == lit_Undef
-    ) {
-        //The sorting algorithm prefers irred to red, so it is
-        //impossible to have irred before red
-        assert(!(i->red() == false && impl_subs_dat.lastRed == true));
-
-        impl_subs_dat.remBins++;
-        assert(i->lit2().var() != lit.var());
-        timeAvailable -= 30;
-        timeAvailable -= solver->watches[i->lit2().toInt()].size();
-        removeWBin(solver->watches, i->lit2(), lit, i->red());
-        if (i->red()) {
-            solver->binTri.redBins--;
-        } else {
-            solver->binTri.irredBins--;
-        }
-        (*solver->drup) << del << lit << i->lit2() << fin;
-
-        return;
-    } else {
-        impl_subs_dat.lastBin = j;
-        impl_subs_dat.lastLit2 = i->lit2();
-        impl_subs_dat.lastLit3 = lit_Undef;
-        impl_subs_dat.lastRed = i->red();
-        *j++ = *i;
-    }
-}
-
-void ClauseVivifier::subsumeImplicit()
-{
-    assert(solver->okay());
-    const double myTime = cpuTime();
-    timeAvailable = 1900LL*1000LL*1000LL;
-    const bool doStamp = solver->conf.doStamp;
-    uint64_t numWatchesLooked = 0;
-
-    //Randomize starting point
-    size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
-    size_t numDone = 0;
-    for (; numDone < solver->watches.size() && timeAvailable > 0
-        ; upI = (upI +1) % solver->watches.size(), numDone++
-
-    ) {
-        numWatchesLooked++;
-        Lit lit = Lit::toLit(upI);
-        watch_subarray ws = solver->watches[upI];
-
-        //We can't do much when there is nothing, or only one
-        if (ws.size() < 2)
-            continue;
-
-        timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
-        std::sort(ws.begin(), ws.end(), WatchSorter());
-        /*cout << "---> Before" << endl;
-        printWatchlist(ws, lit);*/
-
-        Watched* i = ws.begin();
-        Watched* j = i;
-        impl_subs_dat.clear();
-
-        for (Watched* end = ws.end(); i != end; i++) {
-            if (timeAvailable < 0) {
-                *j++ = *i;
-                continue;
-            }
-
-            switch(i->getType()) {
-                case CMSat::watch_clause_t:
-                    *j++ = *i;
-                    break;
-
-                case CMSat::watch_tertiary_t:
-                    try_subsume_tri(lit, i, j, doStamp);
-                    break;
-
-                case CMSat::watch_binary_t:
-                    try_subsume_bin(lit, i, j);
-                    break;
-
-                default:
-                    assert(false);
-                    break;
-            }
-        }
-        ws.shrink(i-j);
-    }
-
-    if (solver->conf.verbosity >= 1) {
-        impl_subs_dat.print(cpuTime() - myTime, numWatchesLooked, timeAvailable);
-    }
-    solver->checkStats();
-
-    //Update stats
-    solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
-    solver->solveStats.subsBinWithBin += impl_subs_dat.remBins;
-}
-
 void ClauseVivifier::strengthen_bin_with_bin(
     const Lit lit
     , Watched*& i
@@ -1148,7 +935,7 @@ void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
     }
 
     if (rem) {
-        removeTri(lit, i->lit2(), i->lit3(), i->red());
+        solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
         str_impl_data.remLitFromTri++;
         str_impl_data.binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
 
@@ -1178,7 +965,7 @@ void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
         }
 
         if (lits.size() == 2) {
-            removeTri(lit, i->lit2(), i->lit3(), i->red());
+            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
             str_impl_data.remLitFromTri++;
             str_impl_data.binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
 
@@ -1189,7 +976,7 @@ void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
 
             return;
         } else if (lits.size() == 1) {
-            removeTri(lit, i->lit2(), i->lit3(), i->red());
+            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
             str_impl_data.remLitFromTri+=2;
             str_impl_data.toEnqueue.push_back(lits[0]);
             (*solver->drup)
@@ -1318,29 +1105,4 @@ void ClauseVivifier::StrImplicitData::print(
     << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
     << " w-visit: " << numWatchesLooked
     << endl;
-}
-
-void ClauseVivifier::removeTri(
-    const Lit lit1
-    ,const Lit lit2
-    ,const Lit lit3
-    ,const bool red
-) {
-    //Remove tri
-    Lit lits[3];
-    lits[0] = lit1;
-    lits[1] = lit2;
-    lits[2] = lit3;
-    std::sort(lits, lits+3);
-    timeAvailable -= solver->watches[lits[0].toInt()].size();
-    timeAvailable -= solver->watches[lits[1].toInt()].size();
-    timeAvailable -= solver->watches[lits[2].toInt()].size();
-    removeTriAllButOne(solver->watches, lit1, lits, red);
-
-    //Update stats for tri
-    if (red) {
-        solver->binTri.redTris--;
-    } else {
-        solver->binTri.irredTris--;
-    }
 }

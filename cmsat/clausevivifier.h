@@ -40,7 +40,6 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver* solver);
         bool vivify(bool alsoStrengthen);
-        void subsumeImplicit();
         bool strengthenImplicit();
 
         struct Stats
@@ -251,58 +250,7 @@ class ClauseVivifier {
 
     private:
 
-        struct ImplSubsumeData
-        {
-            Lit lastLit2;
-            Lit lastLit3;
-            Watched* lastBin;
-            bool lastRed;
 
-            uint64_t remBins;
-            uint64_t remTris;
-            uint64_t stampTriRem;
-            uint64_t cacheTriRem;
-
-            void clear()
-            {
-                lastLit2 = lit_Undef;
-                lastLit3 = lit_Undef;
-                lastBin = NULL;
-                lastRed = false;
-
-                remBins = 0;
-                remTris = 0;
-                stampTriRem = 0;
-                cacheTriRem = 0;
-            }
-
-            void print(const double total_time, const size_t numWatchesLooked, int64_t timeAvailable) const
-            {
-                cout
-                << "c [implicit] sub"
-                << " bin: " << remBins
-                << " tri: " << remTris
-                << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
-
-                << " T: " << std::fixed << std::setprecision(2)
-                << total_time
-                << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
-                << " w-visit: " << numWatchesLooked
-                << endl;
-            }
-        };
-        ImplSubsumeData impl_subs_dat;
-        void try_subsume_tri(
-            const Lit lit
-            , Watched*& i
-            , Watched*& j
-            , const bool doStamp
-        );
-        void try_subsume_bin(
-           const Lit lit
-            , Watched*& i
-            , Watched*& j
-        );
 
         //Vars for strengthen implicit
         struct StrImplicitData
@@ -458,44 +406,6 @@ class ClauseVivifier {
             , bool alsoStrengthen
         );
         int64_t timeAvailable;
-
-
-        //Subsumtion of bin with bin
-        struct WatchSorter {
-            bool operator()(const Watched& first, const Watched& second)
-            {
-                //Anything but clause!
-                if (first.isClause())
-                    return false;
-                if (second.isClause())
-                    return true;
-                //Now nothing is clause
-
-                if (first.lit2() < second.lit2()) return true;
-                if (first.lit2() > second.lit2()) return false;
-                if (first.isBinary() && second.isTri()) return true;
-                if (first.isTri() && second.isBinary()) return false;
-                //At this point either both are BIN or both are TRI
-
-
-                //Both are BIN
-                if (first.isBinary()) {
-                    assert(second.isBinary());
-                    if (first.red() == second.red()) return false;
-                    if (!first.red()) return true;
-                    return false;
-                }
-
-                //Both are Tri
-                assert(first.isTri() && second.isTri());
-                if (first.lit3() < second.lit3()) return true;
-                if (first.lit3() > second.lit3()) return false;
-                if (first.red() == second.red()) return false;
-                if (!first.red()) return true;
-                return false;
-            }
-        };
-        void removeTri(Lit lit1, Lit lit2, Lit lit3, bool red);
 
         //Working set
         Solver* solver;

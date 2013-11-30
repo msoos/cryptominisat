@@ -52,6 +52,7 @@ class ImplCache;
 class CompFinder;
 class CompHandler;
 class SubsumeStrengthen;
+class SubsumeImplicit;
 
 class LitReachData {
     public:
@@ -369,6 +370,7 @@ class Solver : public Searcher
         friend class CompFinder;
         friend class CompHandler;
         friend class TransCache;
+        friend class SubsumeImplicit;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
@@ -376,6 +378,7 @@ class Solver : public Searcher
         ClauseCleaner       *clauseCleaner;
         VarReplacer         *varReplacer;
         CompHandler         *compHandler;
+        SubsumeImplicit     *subsumeImplicit;
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////

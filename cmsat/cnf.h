@@ -118,6 +118,13 @@ struct CNF
         const OccurClause& cl
         , Function func
     ) const;
+    void remove_tri_but_lit1(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+        , const bool red
+        , int64_t& timeAvailable
+    );
 };
 
 template<class Function>
