@@ -354,6 +354,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
 
     trail.push_back(p);
     propStats.propagations++;
+    propStats.bogoProps += 1;
 
     if (p.sign()) {
         #ifdef STATS_NEEDED_EXTRA
