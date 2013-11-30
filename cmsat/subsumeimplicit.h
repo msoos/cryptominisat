@@ -42,6 +42,26 @@ public:
     SubsumeImplicit(Solver* solver);
     void subsume_implicit();
 
+    struct Stats {
+        void clear()
+        {
+            *this = Stats();
+        }
+        Stats operator+=(const Stats& other);
+        void printShort() const;
+        void print() const;
+
+        double time_used;
+        uint64_t numCalled = 0;
+        uint64_t time_out = 0;
+        uint64_t remBins = 0;
+        uint64_t remTris = 0;
+        uint64_t stampTriRem = 0;
+        uint64_t cacheTriRem = 0;
+        uint64_t numWatchesLooked = 0;
+    };
+    Stats getStats() const;
+
 private:
     Solver* solver;
     int64_t timeAvailable;
@@ -51,48 +71,6 @@ private:
     Watched* lastBin;
     bool lastRed;
     vector<Lit> tmplits;
-
-    struct Stats {
-        void clear()
-        {
-            *this = Stats();
-        }
-
-        Stats operator+=(const Stats& other)
-        {
-            time_used += other.time_used;
-            remBins += other.remBins;
-            remTris += other.remTris;
-            stampTriRem += other.stampTriRem;
-            cacheTriRem += other.cacheTriRem;
-            numWatchesLooked += other.numWatchesLooked;
-
-            return *this;
-        }
-
-        void print() const
-        {
-            cout
-            << "c [implicit] sub"
-            << " bin: " << remBins
-            << " tri: " << remTris
-            << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
-
-            << " T: " << std::fixed << std::setprecision(2)
-            << time_used
-            << " T-out: " << (time_out < 0 ? "Y" : "N")
-            << " w-visit: " << numWatchesLooked
-            << endl;
-        }
-
-        double time_used;
-        uint64_t time_out = 0;
-        uint64_t remBins = 0;
-        uint64_t remTris = 0;
-        uint64_t stampTriRem = 0;
-        uint64_t cacheTriRem = 0;
-        uint64_t numWatchesLooked = 0;
-    };
     Stats runStats;
     Stats globalStats;
 

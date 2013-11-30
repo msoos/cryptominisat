@@ -2298,6 +2298,10 @@ void Solver::printFullStats() const
                     , "% time");
     clauseVivifier->getStats().print(nVars());
 
+    if (conf.doStrSubImplicit) {
+        subsumeImplicit->getStats().print();
+    }
+
     if (conf.doCache) {
         implCache.printStats(this);
     }

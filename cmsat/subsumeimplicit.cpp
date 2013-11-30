@@ -234,11 +234,72 @@ void SubsumeImplicit::subsume_implicit()
     }
     solver->checkStats();
 
+    runStats.numCalled++;
     runStats.time_used += cpuTime() - myTime;
     runStats.time_out += (timeAvailable < 0);
     if (solver->conf.verbosity >= 1) {
-        runStats.print();
+        runStats.printShort();
     }
 
     globalStats += runStats;
+}
+
+SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit::Stats& other)
+{
+    numCalled+= other.numCalled;
+    time_out += other.time_out;
+    time_used += other.time_used;
+    remBins += other.remBins;
+    remTris += other.remTris;
+    stampTriRem += other.stampTriRem;
+    cacheTriRem += other.cacheTriRem;
+    numWatchesLooked += other.numWatchesLooked;
+
+    return *this;
+}
+
+void SubsumeImplicit::Stats::printShort() const
+{
+    cout
+    << "c [impl sub]"
+    << " bin: " << remBins
+    << " tri: " << remTris
+    << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
+
+    << " T: " << std::fixed << std::setprecision(2)
+    << time_used
+    << " T-out: " << (time_out < 0 ? "Y" : "N")
+    << " w-visit: " << numWatchesLooked
+    << endl;
+}
+
+void SubsumeImplicit::Stats::print() const
+{
+    //Asymm
+    cout << "c -------- IMPLICIT SUB STATS --------" << endl;
+    printStatsLine("c time"
+        , time_used
+        , time_used/(double)numCalled
+        , "per call"
+    );
+
+    printStatsLine("c timed out"
+        , time_out
+        , (double)time_out/(double)numCalled*100.0
+        , "% of calls"
+    );
+
+    printStatsLine("c rem bins"
+        , remBins
+    );
+
+    printStatsLine("c rem tris"
+        , remTris
+    );
+    cout << "c -------- IMPLICIT SUB STATS END --------" << endl;
+}
+
+SubsumeImplicit::Stats SubsumeImplicit::getStats() const
+{
+    return globalStats;
 }
