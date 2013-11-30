@@ -615,7 +615,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         ) {
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c [probe] timeout during propagation,"
+                << "c [probe] intra-propagation timout,"
                 << " turning off OTF hyper-bin&trans-red"
                 << endl;
             }
