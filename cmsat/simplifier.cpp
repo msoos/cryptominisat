@@ -755,7 +755,8 @@ bool Simplifier::propagate()
             ; it++
         ) {
             if (it->isClause()) {
-                propagate_long_clause(it->getOffset());
+                if (!propagate_long_clause(it->getOffset()))
+                    return false;
             }
 
             if (it->isBinary()) {
