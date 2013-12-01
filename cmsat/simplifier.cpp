@@ -1062,9 +1062,10 @@ bool Simplifier::simplify()
     }
     #endif
 
-    if (!propImplicits()) {
+    if (!propagate()) {
         goto end;
     }
+    solver->clauseCleaner->clean_implicit_clauses();
 
     /*if (solver->conf.doAsymmTE)
         asymmTE();*/
@@ -1250,122 +1251,6 @@ void Simplifier::finishUp(
     if (solver->ok) {
         checkElimedUnassignedAndStats();
     }
-}
-
-bool Simplifier::propImplicits()
-{
-    size_t numRemovedHalfIrred = 0;
-    size_t numRemovedHalfRed = 0;
-
-    //Delayed enqueue for correct binary clause removal
-    vector<Lit> toEnqueue;
-
-    size_t wsLit = 0;
-    for (watch_array::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        const Lit lit = Lit::toLit(wsLit);
-        watch_subarray ws = *it;
-
-        size_t i, j;
-        for(i = 0, j = 0
-            ; i < ws.size()
-            ; i++
-        ) {
-            if (!ws[i].isBinary()) {
-                ws[j++] = ws[i];
-                continue;
-            }
-
-            assert(ws[i].isBinary());
-
-            const Lit lit2 = ws[i].lit2();
-
-            //Satisfied, remove
-            if (solver->value(lit) == l_True
-                || solver->value(lit2) == l_True)
-            {
-                if (ws[i].red())
-                    numRemovedHalfRed++;
-                else
-                    numRemovedHalfIrred++;
-
-                continue;
-            }
-
-            //UNSAT
-            if (solver->value(lit) == l_False
-                && solver->value(lit2) == l_False)
-            {
-                solver->ok = false;
-                ws[j++] = ws[i];
-                continue;
-            }
-
-            //Propagate lit1
-            if (solver->value(lit) == l_Undef
-                && solver->value(lit2) == l_False)
-            {
-                toEnqueue.push_back(lit);
-
-                //Remove binary clause
-                if (ws[i].red())
-                    numRemovedHalfRed++;
-                else
-                    numRemovedHalfIrred++;
-
-                continue;
-            }
-
-            //Propagate lit2
-            if (solver->value(lit) == l_False
-                && solver->value(lit2) == l_Undef)
-            {
-                toEnqueue.push_back(lit2);
-
-                //Remove binary clause
-                if (ws[i].red())
-                    numRemovedHalfRed++;
-                else
-                    numRemovedHalfIrred++;
-
-                continue;
-            }
-
-            if (solver->value(lit) == l_Undef
-                && solver->value(lit2) == l_Undef)
-            {
-                ws[j++] = ws[i];
-                continue;
-            }
-
-            assert(false);
-        }
-        ws.shrink(i-j);
-    }
-
-    //Enqueue in delayed mode
-    //Otherwise the
-    for(vector<Lit>::const_iterator
-        it = toEnqueue.begin(), end = toEnqueue.end()
-        ; it != end
-        ; it++
-    ) {
-        lbool val = solver->value(*it);
-        if (val == l_Undef)
-            solver->enqueue(*it);
-        else if (val == l_False)
-            solver->ok = false;
-    }
-
-    assert(numRemovedHalfRed % 2 == 0);
-    assert(numRemovedHalfIrred % 2 == 0);
-    solver->binTri.redBins -= numRemovedHalfRed/2;
-    solver->binTri.irredBins -= numRemovedHalfIrred/2;
-
-    return solver->ok;
 }
 
 void Simplifier::sanityCheckElimedVars()

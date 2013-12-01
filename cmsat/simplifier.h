@@ -465,7 +465,6 @@ private:
     //Finish-up
     void addBackToSolver();
     bool check_varelim_when_adding_back_cl(const Clause* cl) const;
-    bool propImplicits();
     void removeAllLongsFromWatches();
     bool completeCleanClause(Clause& ps);
 
