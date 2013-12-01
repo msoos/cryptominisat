@@ -2787,7 +2787,7 @@ void Simplifier::checkElimedUnassigned() const
 {
     for (size_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
-            assert(solver->assigns[i] == l_Undef);
+            assert(solver->value(i) == l_Undef);
         }
     }
 }
