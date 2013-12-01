@@ -219,6 +219,8 @@ void Main::printResultFunc(
         }
         else if (!printResult) *os << "s UNSATISFIABLE" << endl;
         else                   *os << "s UNSATISFIABLE" << endl;
+    } else {
+        *os << "s INDETERMINATE" << endl;
     }
 
     if (ret == l_True && (printResult || toFile)) {
