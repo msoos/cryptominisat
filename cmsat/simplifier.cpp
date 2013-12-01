@@ -83,9 +83,9 @@ Simplifier::Simplifier(Solver* _solver):
     , varElimOrder(VarOrderLt(varElimComplexity))
     , xorFinder(NULL)
     , gateFinder(NULL)
+    , var_bva_order(VarBVAOrder(_solver))
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
-    , var_bva_order(VarBVAOrder(_solver))
 {
     xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
