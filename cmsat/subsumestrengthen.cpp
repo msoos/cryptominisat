@@ -3,6 +3,7 @@
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include <array>
 
 using namespace CMSat;
 
@@ -629,7 +630,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
 }
 template void SubsumeStrengthen::findSubsumed0(
     const ClOffset offset
-    , const boost::array<Lit, 2>& ps
+    , const std::array<Lit, 2>& ps
     , const CL_ABST_TYPE abs //Abstraction of literals in clause
     , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
     , bool removeImplicit

@@ -25,6 +25,7 @@
 #include "simplifier.h"
 #include "subsumestrengthen.h"
 #include "clauseallocator.h"
+#include <array>
 
 using namespace CMSat;
 using std::cout;
@@ -460,7 +461,7 @@ void GateFinder::findOrGate(
     , bool wasRed
 ) {
     bool isEqual = true;
-    for (const Lit otherLit: boost::array<Lit, 2>{{lit1, lit2}}) {
+    for (const Lit otherLit: std::array<Lit, 2>{{lit1, lit2}}) {
         //This is the other lineral in the binary clause
         //We are looking for a binary clause '~otherlit V ~eqLit'
         bool OK = false;
@@ -525,7 +526,7 @@ void GateFinder::findOrGate(
     orGates.push_back(gate);
     gateOccEq[gate.eqLit.toInt()].push_back(at);
     if (!wasRed) {
-        for (Lit lit: boost::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
+        for (Lit lit: std::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
             gateOcc[lit.toInt()].push_back(at);
         }
     }

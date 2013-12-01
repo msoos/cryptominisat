@@ -27,6 +27,7 @@
 #include <boost/array.hpp>
 #include <set>
 #include "watcharray.h"
+#include <array>
 
 namespace CMSat {
 
@@ -106,9 +107,9 @@ class OrGate {
                 && lit2 == other.lit2
                 ;
         }
-        boost::array<Lit, 2> getLits() const
+        std::array<Lit, 2> getLits() const
         {
-            return boost::array<Lit, 2>{{lit1, lit2}};
+            return std::array<Lit, 2>{{lit1, lit2}};
         }
 
         //LHS
