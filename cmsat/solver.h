@@ -336,6 +336,7 @@ class Solver : public Searcher
             , bool rhs
             , const bool attach
         );
+
         lbool simplifyProblem();
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
