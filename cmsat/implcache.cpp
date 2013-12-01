@@ -63,13 +63,13 @@ size_t ImplCache::memUsed() const
 void ImplCache::printStats(const Solver* solver) const
 {
     cout
-    << "--------- Implication Cache Stats Start ----------"
+    << "c --------- Implication Cache Stats Start ----------"
     << endl;
 
     printStatsSort(solver);
 
     cout
-    << "--------- Implication Cache Stats End   ----------"
+    << "c --------- Implication Cache Stats End   ----------"
     << endl;
 }
 
