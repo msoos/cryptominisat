@@ -38,7 +38,7 @@ class ClauseCleaner
         void cleanClauses(vector<ClOffset>& cs);
 
 
-        void treatImplicitClauses();
+        void clean_implicit_clauses();
         void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
 

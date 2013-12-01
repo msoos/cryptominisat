@@ -108,7 +108,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
 
     //Treat implicits
-    solver->clauseCleaner->treatImplicitClauses();
+    solver->clauseCleaner->clean_implicit_clauses();
 
     if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());

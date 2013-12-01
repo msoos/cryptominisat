@@ -159,7 +159,7 @@ void ClauseCleaner::clean_implicit_watchlist(
     watch_list.shrink_(i - j);
 }
 
-void ClauseCleaner::treatImplicitClauses()
+void ClauseCleaner::clean_implicit_clauses()
 {
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
@@ -291,7 +291,7 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 void ClauseCleaner::removeAndCleanAll()
 {
     double myTime = cpuTime();
-    treatImplicitClauses();
+    clean_implicit_clauses();
     cleanClauses(solver->longIrredCls);
     cleanClauses(solver->longRedCls);
 
