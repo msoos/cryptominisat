@@ -1224,11 +1224,6 @@ void Simplifier::finishUp(
     removeAllLongsFromWatches();
     addBackToSolver();
 
-    //Propagate
-    if (solver->ok) {
-        propImplicits();
-    }
-
     //We can now propagate from solver
     //since the clauses are now back normally
     if (solver->ok) {
