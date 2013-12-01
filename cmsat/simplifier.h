@@ -428,6 +428,7 @@ private:
 
     //Propagation&handling of stuff
     bool propagate();
+    bool propagate_long_clause(const ClOffset offset);
 
     //Start-up
     bool addFromSolver(

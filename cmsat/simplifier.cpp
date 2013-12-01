@@ -755,57 +755,7 @@ bool Simplifier::propagate()
             ; it++
         ) {
             if (it->isClause()) {
-                const Clause& cl = *solver->clAllocator.getPointer(it->getOffset());
-
-                //Cannot be already removed in occur
-                assert(!cl.getFreed());
-
-                //Find what's up with this clause
-                Lit lastUndef = lit_Undef;
-                uint32_t numUndef = 0;
-                bool satisfied = false;
-                for (uint32_t i = 0; i < cl.size(); i++) {
-                    const lbool val = solver->value(cl[i]);
-                    if (val == l_True) {
-                        satisfied = true;
-                        break;
-                    }
-                    if (val == l_Undef) {
-                        numUndef++;
-                        if (numUndef > 1) break;
-                        lastUndef = cl[i];
-                    }
-                }
-
-                //Satisfied
-                if (satisfied)
-                    continue;
-
-                //UNSAT
-                if (numUndef == 0) {
-                    solver->ok = false;
-                    return false;
-                }
-
-                //Propagation
-                if (numUndef == 1) {
-                    solver->enqueue(lastUndef);
-
-                    //Update stats
-                    #ifdef STATS_NEEDED
-                    if (cl.size() == 3)
-                        if (cl.red())
-                            solver->propStats.propsTriRed++;
-                        else
-                            solver->propStats.propsTriIrred++;
-                    else {
-                        if (cl.red())
-                            solver->propStats.propsLongRed++;
-                        else
-                            solver->propStats.propsLongIrred++;
-                    }
-                    #endif
-                }
+                propagate_long_clause(it->getOffset());
             }
 
             if (it->isBinary()) {
@@ -830,6 +780,56 @@ bool Simplifier::propagate()
             }
         }
     }
+
+    return true;
+}
+
+bool Simplifier::propagate_long_clause(const ClOffset offset)
+{
+    const Clause& cl = *solver->clAllocator.getPointer(offset);
+    assert(!cl.getFreed() && "Cannot be already removed in occur");
+
+    Lit lastUndef = lit_Undef;
+    uint32_t numUndef = 0;
+    bool satisfied = false;
+    for (const Lit lit: cl) {
+        const lbool val = solver->value(lit);
+        if (val == l_True) {
+            satisfied = true;
+            break;
+        }
+        if (val == l_Undef) {
+            numUndef++;
+            if (numUndef > 1) break;
+            lastUndef = lit;
+        }
+    }
+    if (satisfied)
+        return true;
+
+    //Problem is UNSAT
+    if (numUndef == 0) {
+        solver->ok = false;
+        return false;
+    }
+
+    if (numUndef > 1)
+        return true;
+
+    solver->enqueue(lastUndef);
+    #ifdef STATS_NEEDED
+    if (cl.size() == 3)
+        if (cl.red())
+            solver->propStats.propsTriRed++;
+        else
+            solver->propStats.propsTriIrred++;
+    else {
+        if (cl.red())
+            solver->propStats.propsLongRed++;
+        else
+            solver->propStats.propsLongIrred++;
+    }
+    #endif
 
     return true;
 }
