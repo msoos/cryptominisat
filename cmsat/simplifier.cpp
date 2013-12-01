@@ -1228,6 +1228,7 @@ void Simplifier::finishUp(
     //since the clauses are now back normally
     if (solver->ok) {
         solver->ok = solver->propagate().isNULL();
+        solver->clauseCleaner->removeAndCleanAll();
     }
 
     //Sanity checks
