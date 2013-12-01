@@ -759,27 +759,75 @@ bool Simplifier::propagate()
                     return false;
             }
 
-            if (it->isBinary()) {
-                const lbool val = solver->value(it->lit2());
-
-                //UNSAT
-                if (val == l_False) {
-                    solver->ok = false;
+            if (it->isTri()) {
+                if (propagate_tri_clause(*it))
                     return false;
-                }
+            }
 
-                //Propagation
-                if (val == l_Undef) {
-                    solver->enqueue(it->lit2());
-                    #ifdef STATS_NEEDED
-                    if (it->red())
-                        solver->propStats.propsBinRed++;
-                    else
-                        solver->propStats.propsBinIrred++;
-                    #endif
-                }
+            if (it->isBinary()) {
+                if (propagate_binary_clause(*it))
+                    return false;
             }
         }
+    }
+
+    return true;
+}
+
+bool Simplifier::propagate_tri_clause(const Watched& ws)
+{
+    const lbool val2 = solver->value(ws.lit2());
+    const lbool val3 = solver->value(ws.lit3());
+    if (val2 == l_True
+        || val3 == l_True
+    ) {
+        return true;
+    }
+
+    if (val2 == l_Undef
+        && val3 == l_Undef
+    ) {
+        return true;
+    }
+
+    if (val2 == l_False
+        && val3 == l_False
+    ) {
+        solver->ok = false;
+        return false;
+    }
+
+    #ifdef STATS_NEEDED
+    if (it->red())
+        solver->propStats.propsTriRed++;
+    else
+        solver->propStats.propsTriIrred++;
+    #endif
+
+    if (val2 == l_Undef) {
+        solver->enqueue(ws.lit2());
+    } else {
+        solver->enqueue(ws.lit3());
+    }
+    return true;
+}
+
+bool Simplifier::propagate_binary_clause(const Watched& ws)
+{
+    const lbool val = solver->value(ws.lit2());
+    if (val == l_False) {
+        solver->ok = false;
+        return false;
+    }
+
+    if (val == l_Undef) {
+        solver->enqueue(ws.lit2());
+        #ifdef STATS_NEEDED
+        if (it->red())
+            solver->propStats.propsBinRed++;
+        else
+            solver->propStats.propsBinIrred++;
+        #endif
     }
 
     return true;

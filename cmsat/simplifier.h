@@ -429,6 +429,8 @@ private:
     //Propagation&handling of stuff
     bool propagate();
     bool propagate_long_clause(const ClOffset offset);
+    bool propagate_binary_clause(const Watched& ws);
+    bool propagate_tri_clause(const Watched& wCs);
 
     //Start-up
     bool addFromSolver(
