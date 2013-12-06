@@ -116,7 +116,8 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 #MySQL
-option(STATSNEEDED "Allow dumping data to a database")
+#option(STATSNEEDED "Allow dumping data to a database")
+set(STATSNEEDED 1)
 if (STATSNEEDED)
     add_definitions( -DSTATS_NEEDED )
     find_package(MySQL)
