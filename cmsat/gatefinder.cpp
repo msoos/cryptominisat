@@ -117,8 +117,8 @@ void GateFinder::createNewVars()
     vector<Lit> potential_lits;
     for(size_t i = 0; i < 2*solver->nVars(); i++) {
         const Lit lit(i/2, i %2);
-        //size_t num = num_long_irred_cls(lit);
-        size_t num = solver->watches[lit.toInt()].size();
+        size_t num = num_long_irred_cls(lit);
+        //size_t num = solver->watches[lit.toInt()].size();
         if (num > 3) {
             //Have to invert it, since this is an AND gate, so ~a = ~b AND ~c
             potential_lits.push_back(~lit);
