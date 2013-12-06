@@ -2041,6 +2041,9 @@ void Searcher::restore_order_heap()
         if (solver->decisionVar[var]
             && value(var) == l_Undef
         ) {
+            assert(varData[var].removed == Removed::none
+                || varData[var].removed == Removed::queued_replacer
+            );
             insertVarOrder(var);
         }
     }
