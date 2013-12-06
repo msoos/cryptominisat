@@ -54,6 +54,10 @@ bool GateFinder::doAll()
     if (solver->conf.doPrintGateDot)
         printDot();
 
+    if (solver->conf.doER) {
+        createNewVars();
+    }
+
     //Do ER with randomly piced variables as gates
     /*if (solver->conf.doER) {
         const uint32_t addedVars = createNewVars();
