@@ -141,17 +141,6 @@ inline const vector<lbool>& CompHandler::getSavedState()
     return savedState;
 }
 
-/**
-@brief Creates a space in savedState
-
-So that the solution can eventually be saved here (if comps are used). By
-default the value is l_Undef, i.e. no solution has been saved there.
-*/
-inline void CompHandler::newVar()
-{
-    savedState.push_back(l_Undef);
-}
-
 inline const CompHandler::RemovedClauses& CompHandler::getRemovedClauses() const
 {
     return removedClauses;
