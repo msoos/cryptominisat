@@ -114,3 +114,4 @@ void CNF::remove_tri_but_lit1(
         binTri.irredTris--;
     }
 }
+
