@@ -210,6 +210,10 @@ Lit HyperEngine::prop_red_bin_dfs(
 
             case PROP_NOTHING:
                 break;
+
+            default:
+                assert(false);
+                break;
         }
     }
 
@@ -282,6 +286,9 @@ Lit HyperEngine::prop_norm_bin_dfs(
                 return lit_Undef;
 
             case PROP_NOTHING:
+                break;
+            default:
+                assert(false);
                 break;
         }
     }
@@ -377,6 +384,10 @@ Lit HyperEngine::prop_norm_cl_dfs(
             return lit_Undef;
 
         case PROP_NOTHING:
+            break;
+
+        default:
+            assert(false);
             break;
     }
 
