@@ -140,6 +140,7 @@ public:
     GateFinder(Simplifier *subsumer, Solver *control);
 
     void newVar();
+    void saveVarMem();
     bool doAll();
 
     //Getter functions

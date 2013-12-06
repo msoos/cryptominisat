@@ -1180,6 +1180,14 @@ void GateFinder::newVar()
     gateOccEq.push_back(vector<uint32_t>());
 }
 
+void GateFinder::saveVarMem()
+{
+    gateOcc.resize(solver->nVars()*2);
+    gateOcc.shrink_to_fit();
+    gateOccEq.resize(solver->nVars()*2);
+    gateOccEq.shrink_to_fit();
+}
+
 GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
 {
     findGateTime += other.findGateTime;
