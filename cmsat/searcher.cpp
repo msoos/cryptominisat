@@ -2210,11 +2210,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     if (status != l_Undef)
         goto end;
 
-    //watch consolidate
-    if (conf.verbosity >= 2)
-        watches.print_stat();
-    watches.consolidate();
-
     restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
