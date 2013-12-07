@@ -186,11 +186,11 @@ bool CompHandler::solve_component(
         return true;
     }
 
-    vector<Var> vars(vars_orig);
-
     //Components with assumptions should not be removed
-    if (assumpsInsideComponent(vars))
+    if (assumpsInsideComponent(vars_orig))
         return true;
+
+    vector<Var> vars(vars_orig);
 
     //Sort and renumber
     std::sort(vars.begin(), vars.end());
