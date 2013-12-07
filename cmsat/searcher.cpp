@@ -3170,9 +3170,9 @@ size_t Searcher::memUsed() const
 void Searcher::backup_activities_and_polarities()
 {
     act_polar_backup.activity.clear();
-    act_polar_backup.activity.resize(nVarsReal(), 0);
+    act_polar_backup.activity.resize(nVars(), 0);
     act_polar_backup.polarity.clear();
-    act_polar_backup.polarity.resize(nVarsReal(), false);
+    act_polar_backup.polarity.resize(nVars(), false);
     for (size_t i = 0; i < nVars(); i++) {
         act_polar_backup.polarity[i] = varData[i].polarity;
         act_polar_backup.activity[i] = activities[i];
