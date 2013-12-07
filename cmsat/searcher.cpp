@@ -2497,7 +2497,12 @@ Lit Searcher::pickBranchLit()
     }
     #endif
 
-    assert(next == lit_Undef || solver->varData[next.var()].is_decision);
+    if (next != lit_Undef) {
+        assert(solver->varData[next.var()].is_decision);
+        assert(solver->varData[next.var()].removed == Removed::none
+            || solver->varData[next.var()].removed == Removed::queued_replacer
+        );
+    }
     return next;
 }
 
