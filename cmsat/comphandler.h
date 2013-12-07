@@ -57,7 +57,7 @@ class CompHandler
 
         bool handle();
         const vector<lbool>& getSavedState();
-        void newVar();
+        void newVar(const Var orig_outer);
         void saveVarMem();
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();

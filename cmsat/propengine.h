@@ -113,7 +113,7 @@ public:
 
     // Variable mode:
     //
-    virtual void newVar(const bool bva);
+    virtual void newVar(const bool bva, Var orig_outer);
 
     // Read state:
     //

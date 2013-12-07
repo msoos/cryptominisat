@@ -100,7 +100,7 @@ public:
     //Called from main
     bool simplify();
     void subsumeReds();
-    void newVar();
+    void newVar(const Var orig_outer);
     void saveVarMem();
     bool unEliminate(const Var var);
     size_t memUsed() const;

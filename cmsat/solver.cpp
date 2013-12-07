@@ -548,7 +548,13 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         lit = updated_lit;
     }
 
-    //TODO newVar stuff
+    for(Lit& lit: ps) {
+        if (lit.var() >= nVars()) {
+            const Var outer = interToOuterMain[lit.var()];
+            newVar(false, outer);
+            lit = Lit(outerToInterMain[outer], lit.sign());
+        }
+    }
 
     //Uneliminate vars
     for (const Lit lit: ps) {
@@ -848,7 +854,6 @@ void Solver::renumberVariables()
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
 
-    updateLitsMap(origAssumptions, outerToInter);
     if (conf.doStamp) {
         stamp.updateVars(outerToInter, interToOuter2, seen);
     }
@@ -924,25 +929,28 @@ void Solver::check_switchoff_limits_newvar()
     }
 }
 
-void Solver::newVar(const bool bva)
+void Solver::newVar(const bool bva, const Var orig_outer)
 {
     check_switchoff_limits_newvar();
-    Searcher::newVar(bva);
+    Searcher::newVar(bva, orig_outer);
     numDecisionVars += 1;
     if (conf.doCache) {
         litReachable.push_back(LitReachData());
         litReachable.push_back(LitReachData());
     }
 
-    varReplacer->newVar();
+    varReplacer->newVar(orig_outer);
 
     if (conf.perform_occur_based_simp) {
-        simplifier->newVar();
+        simplifier->newVar(orig_outer);
     }
 
     if (conf.doCompHandler) {
-        compHandler->newVar();
+        compHandler->newVar(orig_outer);
     }
+
+    //Too expensive
+    //test_reflectivity_of_renumbering();
 }
 
 void Solver::saveVarMem(const uint32_t newNumVars)
@@ -1302,21 +1310,11 @@ CleaningStats Solver::reduceDB()
     return tmpStats;
 }
 
-void Solver::treatAssumptions(const vector<Lit>* _assumptions)
+void Solver::set_assumptions()
 {
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = false;
-    }
-    assumptions.clear();
-
-    if (_assumptions == NULL) {
-        return;
-    }
-
-    assumptions = *_assumptions;
-    origAssumptions = assumptions;
+    assumptions = origAssumptions;
     addClauseHelper(assumptions);
-    for(Lit lit: assumptions) {
+    for(const Lit lit: assumptions) {
         if (assumptionsSet[lit.var()]) {
             /*cout
             << "ERROR, the assumptions have the same variable inside"
@@ -1326,6 +1324,27 @@ void Solver::treatAssumptions(const vector<Lit>* _assumptions)
         } else {
             assumptionsSet[lit.var()] = true;
         }
+    }
+}
+
+void Solver::check_model_for_assumptions() const
+{
+    for(const Lit lit: origAssumptions) {
+        assert(model.size() > lit.var());
+        if (modelValue(lit) == l_Undef) {
+            cout
+            << "ERROR, lit " << lit
+            << " was in the assumptions, but it wasn't set at all!"
+            << endl;
+        }
+        assert(model[lit.var()] != l_Undef);
+        if (modelValue(lit) != l_True) {
+            cout
+            << "ERROR, lit " << lit
+            << " was in the assumptions, but it was set to its opposite value!"
+            << endl;
+        }
+        assert(modelValue(lit) == l_True);
     }
 }
 
@@ -1420,6 +1439,7 @@ void Solver::extend_solution()
         SolutionExtender extender(this);
         extender.extend();
     }
+    check_model_for_assumptions();
 }
 
 lbool Solver::solve(const vector<Lit>* _assumptions)
@@ -1446,7 +1466,14 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     //Initialise
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
-    treatAssumptions(_assumptions);
+    if (_assumptions != NULL) {
+        origAssumptions = *_assumptions;
+        set_assumptions();
+    } else {
+        std::fill(assumptionsSet.begin(), assumptionsSet.end(), false);
+        origAssumptions.clear();
+        assumptions.clear();
+    }
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;

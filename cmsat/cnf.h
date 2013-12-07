@@ -18,7 +18,10 @@ class ClauseAllocator;
 
 struct CNF
 {
-    virtual void newVar(bool bva);
+    virtual void newVar(bool bva, Var orig_outer);
+    void enlarge_minimal_datastructs();
+    void enlarge_nonminimial_datastructs();
+    void swapVars(const Var which);
     void saveVarMem();
     void test_reflectivity_of_renumbering() const;
 

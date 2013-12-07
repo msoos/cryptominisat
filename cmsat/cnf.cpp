@@ -3,10 +3,11 @@
 #include "solvertypes.h"
 #include "clauseallocator.h"
 #include "watchalgos.h"
+#include "varupdatehelper.h"
 
 using namespace CMSat;
 
-void CNF::newVar(bool bva)
+void CNF::newVar(const bool bva, const Var orig_outer)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
@@ -14,39 +15,76 @@ void CNF::newVar(bool bva)
     }
 
     minNumVars++;
-    watches.resize(nVars()*2);
+    enlarge_minimal_datastructs();
     if (conf.doCache) {
-        implCache.addNew();
+        implCache.newVar(orig_outer);
     }
     if (conf.doStamp) {
-        stamp.newVar();
+        stamp.newVar(orig_outer);
     }
 
+    if (orig_outer == std::numeric_limits<Var>::max()) {
+        enlarge_nonminimial_datastructs();
+        varData[nVars()-1].is_bva = bva;
+
+        Var minVar = nVars()-1;
+        Var maxVar = nVarsReal()-1;
+        interToOuterMain.push_back(maxVar);
+        const Var x = interToOuterMain[minVar];
+        interToOuterMain[minVar] = maxVar;
+        interToOuterMain[maxVar] = x;
+
+        outerToInterMain.push_back(maxVar);
+        outerToInterMain[maxVar] = minVar;
+        outerToInterMain[x] = maxVar;
+
+        swapVars(nVarsReal()-1);
+    } else {
+        assert(orig_outer < nVarsReal());
+
+        const Var minVar = nVars()-1;
+        Var k = interToOuterMain[minVar];
+        Var z = outerToInterMain[orig_outer];
+        interToOuterMain[minVar] = orig_outer;
+        interToOuterMain[z] = k;
+
+        outerToInterMain[k] = z;
+        outerToInterMain[orig_outer] = minVar;
+
+        swapVars(z);
+    }
+
+    //Too expensive
+    //test_reflectivity_of_renumbering();
+}
+
+void CNF::swapVars(const Var which)
+{
+    std::swap(assigns[nVars()-1], assigns[which]);
+    std::swap(varData[nVars()-1], varData[which]);
+
+    #ifdef STATS_NEEDED
+    std::swap(varDataLT[nVars()-1], varDataLT[which]);
+    #endif
+}
+
+void CNF::enlarge_nonminimial_datastructs()
+{
     assigns.push_back(l_Undef);
-    std::swap(assigns[nVars()-1], assigns.back());
     varData.push_back(VarData());
-    std::swap(varData[nVars()-1], varData.back());
-    varData[nVars()-1].is_bva = bva;
     #ifdef STATS_NEEDED
     varDataLT.push_back(VarData());
-    std::swap(varDataLT[nVars()-1], varDataLT.back());
     #endif
+}
+
+void CNF::enlarge_minimal_datastructs()
+{
+    watches.resize(nVars()*2);
 
     seen      .push_back(0);
     seen      .push_back(0);
     seen2     .push_back(0);
     seen2     .push_back(0);
-
-    Var minVar = nVars()-1;
-    Var maxVar = nVarsReal()-1;
-    interToOuterMain.push_back(maxVar);
-    const Var x = interToOuterMain[minVar];
-    interToOuterMain[minVar] = maxVar;
-    interToOuterMain[maxVar] = x;
-
-    outerToInterMain.push_back(maxVar);
-    outerToInterMain[maxVar] = minVar;
-    outerToInterMain[x] = maxVar;
 }
 
 void CNF::saveVarMem()

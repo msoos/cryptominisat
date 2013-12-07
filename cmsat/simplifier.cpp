@@ -108,7 +108,7 @@ Simplifier::~Simplifier()
     delete gateFinder;
 }
 
-void Simplifier::newVar()
+void Simplifier::newVar(const Var orig_outer)
 {
     if (solver->conf.doGateFind
         && solver->nVars() > 10ULL*1000ULL*1000ULL
@@ -125,7 +125,7 @@ void Simplifier::newVar()
     }
 
     if (solver->conf.doGateFind) {
-        gateFinder->newVar();
+        gateFinder->newVar(orig_outer);
     }
 }
 

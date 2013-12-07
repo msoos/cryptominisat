@@ -85,7 +85,7 @@ class Solver : public Searcher
 
         //////////////////////////////
         // Problem specification:
-        void newVar(const bool dvar = true);
+        void newVar(const bool dvar = true, const Var orig_outer = std::numeric_limits<Var>::max());
         bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
         bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addRedClause(
@@ -503,7 +503,8 @@ class Solver : public Searcher
             , const vector<ClauseUsageStats>& stats
         ) const;
 
-        void treatAssumptions(const vector<Lit>* _assumptions);
+        void set_assumptions();
+        void check_model_for_assumptions() const;
 };
 
 inline void Solver::setDecisionVar(const uint32_t var)

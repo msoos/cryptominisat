@@ -167,7 +167,7 @@ class Searcher : public HyperEngine
                 cout << std::right;
             }
         };
-        void newVar(bool bva);
+        virtual void newVar(bool bva, Var orig_outer);
 
         ///////////////////////////////
         // Solving

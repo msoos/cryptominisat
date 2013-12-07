@@ -139,7 +139,7 @@ class GateFinder
 public:
     GateFinder(Simplifier *subsumer, Solver *control);
 
-    void newVar();
+    void newVar(const Var orig_outer);
     void saveVarMem();
     bool doAll();
 

@@ -73,9 +73,9 @@ Searcher::~Searcher()
 {
 }
 
-void Searcher::newVar(const bool bva)
+void Searcher::newVar(const bool bva, const Var orig_outer)
 {
-    PropEngine::newVar(bva);
+    PropEngine::newVar(bva, orig_outer);
     activities.push_back(0);
     insertVarOrder(nVars()-1);
     assumptionsSet.push_back(false);

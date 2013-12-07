@@ -71,7 +71,7 @@ public:
     }
 
     vector<Timestamp>   tstamp;
-    void newVar()
+    void newVar(const Var)
     {
         tstamp.push_back(Timestamp());
         tstamp.push_back(Timestamp());
