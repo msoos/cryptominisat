@@ -88,7 +88,6 @@ do
 		--elimstrategy $(bool) \
 		--elimcomplexupdate $(bool) \
 		--subsume1 $(bool) \
-		--block $(bool) \
 		--asymmte $(bool) \
 		--noextbinsubs $(bool) \
 		--extscc $(bool) \
