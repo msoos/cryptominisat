@@ -242,10 +242,6 @@ bool CompHandler::handle()
         }
     }
 
-    //Checking that all remaining clauses contain only variables
-    //that are in the remaining comp
-    //assert(checkClauseMovement(solver, sizes[sizes.size()-1].first));
-
     delete compFinder;
     compFinder = NULL;
     return true;
