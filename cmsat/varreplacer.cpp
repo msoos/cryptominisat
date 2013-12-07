@@ -24,7 +24,6 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
-#include <boost/type_traits/detail/is_mem_fun_pointer_impl.hpp>
 using std::cout;
 using std::endl;
 
