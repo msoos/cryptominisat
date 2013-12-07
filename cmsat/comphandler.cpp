@@ -159,6 +159,9 @@ bool CompHandler::handle()
 
         //Sort and renumber
         std::sort(vars.begin(), vars.end());
+        /*for(Var var: vars) {
+            cout << "var in component: " << solver->interToOuterMain[var] + 1 << endl;
+        }*/
         createRenumbering(vars);
 
         //Print what we are going to do
