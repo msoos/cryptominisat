@@ -2312,12 +2312,14 @@ void Searcher::print_solution_varreplace_status() const
 void Searcher::finish_up_solve(const lbool status)
 {
     #ifdef VERBOSE_DEBUG
-    if (status == l_True)
+    if (status == l_True) {
         cout << "Solution  is SAT" << endl;
-    else if (status == l_False)
+    } else if (status == l_False) {
         cout << "Solution is UNSAT" << endl;
-    else
+        cout << "OK is: " << okay() << endl;
+    } else {
         cout << "Solutions is UNKNOWN" << endl;
+    }
     #endif //VERBOSE_DEBUG
 
     if (status == l_True) {
