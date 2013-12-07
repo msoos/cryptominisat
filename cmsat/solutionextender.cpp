@@ -23,7 +23,7 @@ void SolutionExtender::extend()
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const
 {
-    for(Lit lit: lits) {
+    for(const Lit lit: lits) {
         if (solver->modelValue(lit) == l_True)
             return true;
     }
@@ -35,7 +35,7 @@ bool SolutionExtender::contains_lit(
     const vector<Lit>& lits
     , const Lit tocontain
 ) const {
-    for(Lit lit: lits) {
+    for(const Lit lit: lits) {
         if (lit == tocontain)
             return true;
     }
