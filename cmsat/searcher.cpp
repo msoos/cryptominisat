@@ -113,12 +113,20 @@ void Searcher::updateVars(
 
 void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
 {
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = false;
+    for(const Lit lit: assumptions) {
+        if (lit.var() < assumptionsSet.size()) {
+            assumptionsSet[lit.var()] = false;
+        } else {
+            assert(solver->value(lit) != l_Undef);
+        }
     }
     updateLitsMap(assumptions, outerToInter);
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = true;
+    for(const Lit lit: assumptions) {
+        if (lit.var() < assumptionsSet.size()) {
+            assumptionsSet[lit.var()] = true;
+        } else {
+            assert(solver->value(lit) != l_Undef);
+        }
     }
 }
 

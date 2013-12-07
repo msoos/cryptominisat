@@ -1316,14 +1316,18 @@ void Solver::set_assumptions()
     assumptions = origAssumptions;
     addClauseHelper(assumptions);
     for(const Lit lit: assumptions) {
-        if (assumptionsSet[lit.var()]) {
-            /*cout
-            << "ERROR, the assumptions have the same variable inside"
-            << " more than once!"
-            << endl;*/
-            //Yes, it can happen... due to variable replacement
+        if (lit.var() < assumptionsSet.size()) {
+            if (assumptionsSet[lit.var()]) {
+                /*cout
+                << "ERROR, the assumptions have the same variable inside"
+                << " more than once!"
+                << endl;*/
+                //Yes, it can happen... due to variable replacement
+            } else {
+                assumptionsSet[lit.var()] = true;
+            }
         } else {
-            assumptionsSet[lit.var()] = true;
+            assert(solver->value(lit) != l_Undef);
         }
     }
 }

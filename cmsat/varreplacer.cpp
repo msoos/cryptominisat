@@ -236,9 +236,16 @@ bool VarReplacer::performReplace()
 
     //Update assumptions
     for(Lit& lit: solver->assumptions) {
-        solver->assumptionsSet[lit.var()] = false;
+        if (solver->assumptionsSet.size() > lit.var()) {
+            solver->assumptionsSet[lit.var()] = false;
+        } else {
+            assert(solver->value(lit) != l_Undef
+                && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
+        }
         lit = getLitReplacedWith(lit);
-        solver->assumptionsSet[lit.var()] = true;
+        if (solver->assumptionsSet.size() > lit.var()) {
+            solver->assumptionsSet[lit.var()] = true;
+        }
     }
 
     solver->testAllClauseAttach();
