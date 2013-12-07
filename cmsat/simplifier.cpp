@@ -660,7 +660,7 @@ bool Simplifier::can_eliminate_var(const Var var) const
 {
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        ||  solver->assumptionsSet[var] //Cannot eliminate variables that are in the assumptions
+        ||  solver->assumptionsSet[var]
     ) {
         return false;
     }
