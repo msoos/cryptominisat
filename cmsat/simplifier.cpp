@@ -81,9 +81,9 @@ Simplifier::Simplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , varElimOrder(VarOrderLt(varElimComplexity))
+    , var_bva_order(VarBVAOrder(_solver))
     , xorFinder(NULL)
     , gateFinder(NULL)
-    , var_bva_order(VarBVAOrder(_solver))
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
