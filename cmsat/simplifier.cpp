@@ -108,13 +108,6 @@ Simplifier::~Simplifier()
     delete gateFinder;
 }
 
-/**
-@brief New var has been added to the solver
-
-@note: MUST be called if a new var has been added to the solver
-
-Adds occurrence list places, increments seen, etc.
-*/
 void Simplifier::newVar()
 {
     if (solver->conf.doGateFind) {
