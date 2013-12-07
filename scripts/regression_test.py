@@ -969,6 +969,7 @@ tester = Tester()
 
 if options.checkFile :
     tester.check_unsat = True
+    tester.needDebugLib = False
     tester.check(options.checkFile, options.solutionFile, needSolve=False)
 
 if options.fuzz_test:
