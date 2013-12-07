@@ -142,7 +142,6 @@ SolverConf::SolverConf() :
         , regularly_simplify_problem(true)
         , perform_occur_based_simp(true)
         , doSubsume1       (true)
-        , doBlockClauses   (true)
         , doAsymmTE        (true)
         , maxRedLinkInSize (200)
         , maxOccurIrredMB  (800)

@@ -404,8 +404,6 @@ void Main::add_supported_options()
         , "Perform clause contraction through resolution")
     ("bva", po::value<int>(&conf.do_bounded_variable_addition)->default_value(conf.do_bounded_variable_addition)
         , "Perform bounded variable addition")
-    ("block", po::value<int>(&conf.doBlockClauses)->default_value(conf.doBlockClauses)
-        , "Do blocked-clause removal")
     ("asymmte", po::value<int>(&conf.doAsymmTE)->default_value(conf.doAsymmTE)
         , "Do asymmetric tautology elimination. See Armin Biere & collaborators' papers")
     ("noextbinsubs", po::value<int>(&conf.doExtBinSubs)->default_value(conf.doExtBinSubs)
@@ -840,17 +838,6 @@ void Main::manually_parse_some_options()
     if (numThreads > 1)
         throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
 
-
-    //If the number of solutions requested is more than 1, we need to disable blocking
-    if (max_nr_of_solutions > 1) {
-        conf.doBlockClauses = false;
-        if (conf.verbosity >= 1) {
-            cout
-            << "c Blocking disabled because multiple solutions are needed"
-            << endl;
-        }
-    }
-
     if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
         fileNamePresent = true;
@@ -864,11 +851,6 @@ void Main::manually_parse_some_options()
 
     if (conf.verbosity >= 1) {
         cout << "c Outputting solution to console" << endl;
-    }
-
-    if (debugLib) {
-        //In case we are debugging the library, blocking must be disabled
-        conf.doBlockClauses = false;
     }
 }
 

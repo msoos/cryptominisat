@@ -589,8 +589,6 @@ bool Solver::addClause(const vector<Lit>& lits)
         cout
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
-        << " (note: current state of blocking enabled: "
-        << conf.doBlockClauses << " )"
         << endl;
         exit(-1);
     }

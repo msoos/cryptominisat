@@ -1413,9 +1413,7 @@ void Simplifier::asymmTE()
     if (clauses.empty())
         return;
 
-    if (solver->conf.doBlockClauses) {
-        blockedMapBuilt = false;
-    }
+    blockedMapBuilt = false;
 
     const double myTime = cpuTime();
     uint32_t asymmSubsumed = 0;
