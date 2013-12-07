@@ -1729,11 +1729,6 @@ lbool Solver::simplifyProblem()
     if (conf.doSortWatched)
         sortWatched();
 
-    //Re-calculate reachability after re-numbering and new cache data
-    if (conf.doCache) {
-        calcReachability();
-    }
-
     //Delete and disable cache if too large
     if (conf.doCache) {
         const size_t memUsedMB = implCache.memUsed()/(1024UL*1024UL);
@@ -1764,6 +1759,11 @@ lbool Solver::simplifyProblem()
         }
 
         renumberVariables();
+    }
+
+    //Re-calculate reachability after re-numbering and new cache data
+    if (conf.doCache) {
+        calcReachability();
     }
 
     //Free unused watch memory
