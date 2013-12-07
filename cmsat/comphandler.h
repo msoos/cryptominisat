@@ -88,6 +88,13 @@ class CompHandler
             const Solver* newSolver
             , const vector<Var>& vars
         );
+        void check_local_vardata_sanity();
+        bool solve_component(
+            const uint32_t comp_at
+            , const uint32_t comp
+            , const vector<Var>& vars
+            , const size_t num_comps
+        );
 
         void configureNewSolver(
             Solver* newSolver

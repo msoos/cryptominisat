@@ -134,87 +134,18 @@ bool CompHandler::handle()
     size_t num_comps_solved = 0;
     size_t vars_solved = 0;
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
-        //What are we solving?
         const uint32_t comp = sizes[it].first;
-        vector<Var> vars = reverseTable[comp];
-
-        //Don't move over variables already solved
-        vector<Var> tmp;
-        for(size_t i = 0; i < vars.size(); i++) {
-            Var var = vars[i];
-            if (solver->value(var) == l_Undef) {
-                tmp.push_back(var);
-            }
-        }
-        vars.swap(tmp);
-
-        //Are there too many variables? If so, don't create a sub-solver
-        //I'm afraid that we will memory-out
-        if (vars.size() > 100ULL*1000ULL) {
-            continue;
-        }
-
-        //Components with assumptions should not be removed
-        if (assumpsInsideComponent(vars))
-            continue;
-
-        //Sort and renumber
-        std::sort(vars.begin(), vars.end());
-        /*for(Var var: vars) {
-            cout << "var in component: " << solver->interToOuterMain[var] + 1 << endl;
-        }*/
-        createRenumbering(vars);
-
-        //Print what we are going to do
-        if (solver->conf.verbosity >= 1 && num_comps < 20) {
-            cout
-            << "c [comp] Solving component " << it
-            << " num vars: " << vars.size()
-            << " ======================================="
-            << endl;
-        }
-
-        //Set up new solver
-        SolverConf conf;
-        Solver newSolver(conf);
-        configureNewSolver(&newSolver, vars.size());
-        moveVariablesBetweenSolvers(&newSolver, vars, comp);
-
-        //Move clauses over
-        moveClausesImplicit(&newSolver, comp, vars);
-        moveClausesLong(solver->longIrredCls, &newSolver, comp);
-        moveClausesLong(solver->longRedCls, &newSolver, comp);
-
-        const lbool status = newSolver.solve();
-        //Out of time
-        if (status == l_Undef) {
-            readdRemovedClauses();
+        vector<Var>& vars = reverseTable[comp];
+        const bool cont = solve_component(it, comp, vars, num_comps);
+        if (!cont) {
             break;
-        }
-
-        if (status == l_False) {
-            solver->ok = false;
-            if (solver->conf.verbosity >= 2) {
-                cout
-                << "c [comp] The component is UNSAT -> problem is UNSAT"
-                << endl;
-            }
-            return false;
-        }
-
-        check_solution_is_unassigned_in_main_solver(&newSolver, vars);
-        save_solution_to_savedstate(&newSolver, vars, comp);
-        move_decision_level_zero_vars_here(&newSolver, vars);
-
-        if (solver->conf.verbosity >= 1 && num_comps < 20) {
-            cout
-            << "c [comp] Solved component " << it
-            << " ======================================="
-            << endl;
         }
         num_comps_solved++;
         vars_solved += vars.size();
     }
+
+    if (!solver->okay())
+        return false;
 
     //Coming back to the original instance now
     if (solver->conf.verbosity  >= 1) {
@@ -230,9 +161,100 @@ bool CompHandler::handle()
 
     //Filter out the variables that have been made non-decision
     solver->filterOrderHeap();
+    check_local_vardata_sanity();
 
+    delete compFinder;
+    compFinder = NULL;
+    return true;
+}
+
+bool CompHandler::solve_component(
+    const uint32_t comp_at
+    , const uint32_t comp
+    , const vector<Var>& vars_orig
+    , const size_t num_comps
+) {
+    //Don't move over variables already solved
+    vector<Var> vars;
+    for(size_t i = 0; i < vars.size(); i++) {
+        Var var = vars[i];
+        if (solver->value(var) == l_Undef) {
+            vars.push_back(var);
+        }
+    }
+
+    //Are there too many variables? If so, don't create a sub-solver
+    //I'm afraid that we will memory-out
+    if (vars.size() > 100ULL*1000ULL) {
+        return true;
+    }
+
+    //Components with assumptions should not be removed
+    if (assumpsInsideComponent(vars))
+        return true;
+
+    //Sort and renumber
+    std::sort(vars.begin(), vars.end());
+    /*for(Var var: vars) {
+        cout << "var in component: " << solver->interToOuterMain[var] + 1 << endl;
+    }*/
+    createRenumbering(vars);
+
+    //Print what we are going to do
+    if (solver->conf.verbosity >= 1 && num_comps < 20) {
+        cout
+        << "c [comp] Solving component " << comp_at
+        << " num vars: " << vars.size()
+        << " ======================================="
+        << endl;
+    }
+
+    //Set up new solver
+    SolverConf conf;
+    Solver newSolver(conf);
+    configureNewSolver(&newSolver, vars.size());
+    moveVariablesBetweenSolvers(&newSolver, vars, comp);
+
+    //Move clauses over
+    moveClausesImplicit(&newSolver, comp, vars);
+    moveClausesLong(solver->longIrredCls, &newSolver, comp);
+    moveClausesLong(solver->longRedCls, &newSolver, comp);
+
+    const lbool status = newSolver.solve();
+    //Out of time
+    if (status == l_Undef) {
+        readdRemovedClauses();
+        return false;
+    }
+
+    if (status == l_False) {
+        solver->ok = false;
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [comp] The component is UNSAT -> problem is UNSAT"
+            << endl;
+        }
+        return false;
+    }
+
+    check_solution_is_unassigned_in_main_solver(&newSolver, vars);
+    save_solution_to_savedstate(&newSolver, vars, comp);
+    move_decision_level_zero_vars_here(&newSolver, vars);
+
+    if (solver->conf.verbosity >= 1 && num_comps < 20) {
+        cout
+        << "c [comp] Solved component " << comp_at
+        << " ======================================="
+        << endl;
+    }
+    return true;
+}
+
+void CompHandler::check_local_vardata_sanity()
+{
     //Checking that all variables that are not in the remaining comp have
     //correct 'removed' flags, and none have been assigned
+
     for (Var var = 0; var < solver->nVars(); var++) {
         const Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
         if (savedState[outerVar] != l_Undef) {
@@ -241,10 +263,6 @@ bool CompHandler::handle()
             assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
         }
     }
-
-    delete compFinder;
-    compFinder = NULL;
-    return true;
 }
 
 void CompHandler::check_solution_is_unassigned_in_main_solver(
