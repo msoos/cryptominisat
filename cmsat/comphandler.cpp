@@ -26,6 +26,7 @@
 #include "varupdatehelper.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "clausecleaner.h"
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
@@ -91,6 +92,7 @@ bool CompHandler::handle()
 {
     assert(solver->okay());
     double myTime = cpuTime();
+    solver->clauseCleaner->removeAndCleanAll();
     compFinder = new CompFinder(solver);
     if (!compFinder->findComps()) {
         return false;
@@ -174,13 +176,8 @@ bool CompHandler::solve_component(
     , const vector<Var>& vars_orig
     , const size_t num_comps
 ) {
-    //Don't move over variables already solved
-    vector<Var> vars;
-    for(size_t i = 0; i < vars.size(); i++) {
-        Var var = vars[i];
-        if (solver->value(var) == l_Undef) {
-            vars.push_back(var);
-        }
+    for(const Var var: vars_orig) {
+        assert(solver->value(var) == l_Undef);
     }
 
     //Are there too many variables? If so, don't create a sub-solver
