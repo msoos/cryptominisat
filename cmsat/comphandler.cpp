@@ -371,7 +371,7 @@ and making it non-decision in the old solver.
 */
 void CompHandler::moveVariablesBetweenSolvers(
     Solver* newSolver
-    , vector<Var>& vars
+    , const vector<Var>& vars
     , const uint32_t comp
 ) {
     for(const Var var: vars) {

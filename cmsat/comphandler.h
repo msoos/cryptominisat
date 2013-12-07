@@ -103,7 +103,7 @@ class CompHandler
 
         void moveVariablesBetweenSolvers(
             Solver* newSolver
-            , vector<Var>& vars
+            , const vector<Var>& vars
             , const uint32_t comp
         );
 
