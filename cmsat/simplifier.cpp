@@ -1161,11 +1161,13 @@ bool Simplifier::unEliminate(Var var)
             continue;
 
         //Re-insert into Solver
-        const vector<Lit>& cl = blockedClauses[at].lits;
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        cout << "Uneliminating " << cl << " on var " << var+1 << endl;
+        cout
+        << "Uneliminating cl " << blockedClauses[at].lits
+        << " on var " << var+1
+        << endl;
         #endif
-        solver->addClause(cl);
+        solver->addClause(blockedClauses[at].lits);
         if (!solver->okay())
             return false;
     }
