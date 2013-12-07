@@ -513,6 +513,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             << " inserted, but max var is "
             << nVarsReal() +1
             << endl;
+            assert(false);
             exit(-1);
         }
         assert(lit.var() < nVarsReal()
