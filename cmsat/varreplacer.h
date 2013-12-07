@@ -94,105 +94,25 @@ class VarReplacer
         size_t getNumTrees() const;
         struct Stats
         {
-            Stats() :
-                numCalls(0)
-                , cpu_time(0)
-                , replacedLits(0)
-                , zeroDepthAssigns(0)
-                , actuallyReplacedVars(0)
-                , removedBinClauses(0)
-                , removedTriClauses(0)
-                , removedLongClauses(0)
-                , removedLongLits(0)
-            {}
-
             void clear()
             {
                 Stats tmp;
                 *this = tmp;
             }
 
-            Stats& operator+=(const Stats& other)
-            {
-                numCalls += other.numCalls;
-                cpu_time += other.cpu_time;
-                replacedLits += other.replacedLits;
-                zeroDepthAssigns += other.zeroDepthAssigns;
-                actuallyReplacedVars += other.actuallyReplacedVars;
-                removedBinClauses += other.removedBinClauses;
-                removedTriClauses += other.removedTriClauses;
-                removedLongClauses += other.removedLongClauses;
-                removedLongLits += other.removedLongLits;
+            Stats& operator+=(const Stats& other);
+            void print(const size_t nVars) const;
+            void printShort() const;
 
-                return *this;
-            }
-
-            void print(const size_t nVars) const
-            {
-                cout << "c --------- VAR REPLACE STATS ----------" << endl;
-                printStatsLine("c time"
-                    , cpu_time
-                    , cpu_time/(double)numCalls
-                    , "per call"
-                );
-
-                printStatsLine("c trees' crown"
-                    , actuallyReplacedVars
-                    , 100.0*(double)actuallyReplacedVars/(double)nVars
-                    , "% of vars"
-                );
-
-                printStatsLine("c 0-depth assigns"
-                    , zeroDepthAssigns
-                    , (double)zeroDepthAssigns/(double)nVars*100.0
-                    , "% vars"
-                );
-
-                printStatsLine("c lits replaced"
-                    , replacedLits
-                );
-
-                printStatsLine("c bin cls removed"
-                    , removedBinClauses
-                );
-
-                printStatsLine("c tri cls removed"
-                    , removedTriClauses
-                );
-
-                printStatsLine("c long cls removed"
-                    , removedLongClauses
-                );
-
-                printStatsLine("c long lits removed"
-                    , removedLongLits
-                );
-                cout << "c --------- VAR REPLACE STATS END ----------" << endl;
-            }
-
-            void printShort() const
-            {
-                cout
-                << "c vrep"
-                << " vars " << actuallyReplacedVars
-                << " lits " << replacedLits
-                << " rem-bin-cls " << removedBinClauses
-                << " rem-tri-cls " << removedTriClauses
-                << " rem-long-cls " << removedLongClauses
-                << " T: " << std::fixed << std::setprecision(2)
-                << cpu_time << " s "
-                << endl;
-            }
-
-            uint64_t numCalls;
-            double cpu_time;
-            uint64_t replacedLits; ///<Num literals replaced during var-replacement
-            uint64_t zeroDepthAssigns;
-            uint64_t actuallyReplacedVars;
-            uint64_t removedBinClauses;
-            uint64_t removedTriClauses;
-            uint64_t removedLongClauses;
-            uint64_t removedLongLits;
+            uint64_t numCalls = 0;
+            double cpu_time = 0;
+            uint64_t replacedLits = 0;
+            uint64_t zeroDepthAssigns = 0;
+            uint64_t actuallyReplacedVars = 0;
+            uint64_t removedBinClauses = 0;
+            uint64_t removedTriClauses = 0;
+            uint64_t removedLongClauses = 0;
+            uint64_t removedLongLits = 0;
         };
         const Stats& getStats() const;
         size_t memUsed() const;

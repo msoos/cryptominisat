@@ -1009,3 +1009,88 @@ size_t VarReplacer::memUsed() const
 
     return b;
 }
+void VarReplacer::Stats::print(const size_t nVars) const
+{
+        cout << "c --------- VAR REPLACE STATS ----------" << endl;
+        printStatsLine("c time"
+            , cpu_time
+            , cpu_time/(double)numCalls
+            , "per call"
+        );
+
+        printStatsLine("c trees' crown"
+            , actuallyReplacedVars
+            , 100.0*(double)actuallyReplacedVars/(double)nVars
+            , "% of vars"
+        );
+
+        printStatsLine("c 0-depth assigns"
+            , zeroDepthAssigns
+            , (double)zeroDepthAssigns/(double)nVars*100.0
+            , "% vars"
+        );
+
+        printStatsLine("c lits replaced"
+            , replacedLits
+        );
+
+        printStatsLine("c bin cls removed"
+            , removedBinClauses
+        );
+
+        printStatsLine("c tri cls removed"
+            , removedTriClauses
+        );
+
+        printStatsLine("c long cls removed"
+            , removedLongClauses
+        );
+
+        printStatsLine("c long lits removed"
+            , removedLongLits
+        );
+        cout << "c --------- VAR REPLACE STATS END ----------" << endl;
+}
+
+void VarReplacer::Stats::printShort() const
+{
+    cout
+    << "c vrep"
+    << " vars " << actuallyReplacedVars
+    << " lits " << replacedLits
+    << " rem-bin-cls " << removedBinClauses
+    << " rem-tri-cls " << removedTriClauses
+    << " rem-long-cls " << removedLongClauses
+    << " T: " << std::fixed << std::setprecision(2)
+    << cpu_time << " s "
+    << endl;
+}
+
+VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
+{
+    numCalls += other.numCalls;
+    cpu_time += other.cpu_time;
+    replacedLits += other.replacedLits;
+    zeroDepthAssigns += other.zeroDepthAssigns;
+    actuallyReplacedVars += other.actuallyReplacedVars;
+    removedBinClauses += other.removedBinClauses;
+    removedTriClauses += other.removedTriClauses;
+    removedLongClauses += other.removedLongClauses;
+    removedLongLits += other.removedLongLits;
+
+    return *this;
+}
+
+Lit VarReplacer::getLitReplacedWith(Lit lit) const
+{
+    lit = getUpdatedLit(lit, solver->interToOuterMain);
+    Lit lit2 = table[lit.var()] ^ lit.sign();
+    return getUpdatedLit(lit2, solver->outerToInterMain);
+}
+
+Var VarReplacer::getVarReplacedWith(Var var) const
+{
+    var = solver->interToOuterMain[var];
+    Var var2 = table[var].var();
+    return solver->outerToInterMain[var2];
+}
