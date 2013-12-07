@@ -661,7 +661,7 @@ bool VarReplacer::handleUpdatedClause(
 
 void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_var)
 {
-    lbool to_set = solver->model[var] ^ table[sub_var].sign();
+    const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const Var sub_var_inter = solver->outerToInterMain[sub_var];
     if (solver->model[sub_var] != l_Undef) {
         assert(solver->varData[sub_var_inter].removed == Removed::queued_replacer
