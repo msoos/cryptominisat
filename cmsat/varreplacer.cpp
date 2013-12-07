@@ -151,7 +151,7 @@ bool VarReplacer::performReplace()
     #ifdef REPLACE_STATISTICS
     uint32_t numRedir = 0;
     for (uint32_t i = 0; i < table.size(); i++) {
-        if (table[i].var() != i)
+        if (getVarReplacedWith(i) != i)
             numRedir++;
     }
     cout << "c Number of trees:" << reverseTable.size() << endl;
@@ -268,8 +268,8 @@ void VarReplacer::updateTri(
     assert(solver->value(origLit3) == l_Undef);
 
     //Update lit3
-    if (table[lit3.var()].var() != lit3.var()) {
-        lit3 = table[lit3.var()] ^ lit3.sign();
+    if (getVarReplacedWith(lit3) != lit3.var()) {
+        lit3 = getLitReplacedWith(lit3);
         i->setLit3(lit3);
         runStats.replacedLits++;
     }
@@ -477,15 +477,15 @@ bool VarReplacer::replaceImplicit()
 
             //Update main lit
             Lit lit1 = origLit1;
-            if (table[lit1.var()].var() != lit1.var()) {
-                lit1 = table[lit1.var()] ^ lit1.sign();
+            if (getVarReplacedWith(lit1) != lit1.var()) {
+                lit1 = getLitReplacedWith(lit1);
                 runStats.replacedLits++;
             }
 
             //Update lit2
             Lit lit2 = origLit2;
-            if (table[lit2.var()].var() != lit2.var()) {
-                lit2 = table[lit2.var()] ^ lit2.sign();
+            if (getVarReplacedWith(lit2) != lit2.var()) {
+                lit2 = getLitReplacedWith(lit2);
                 i->setLit2(lit2);
                 runStats.replacedLits++;
             }
