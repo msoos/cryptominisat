@@ -268,7 +268,7 @@ void SubsumeImplicit::Stats::printShort() const
 
     << " T: " << std::fixed << std::setprecision(2)
     << time_used
-    << " T-out: " << (time_out < 0 ? "Y" : "N")
+    << " T-out: " << (time_out ? "Y" : "N")
     << " w-visit: " << numWatchesLooked
     << endl;
 }
