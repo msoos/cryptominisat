@@ -2762,7 +2762,7 @@ void Solver::dump_blocked_clauses(std::ostream* os) const
             //Print info about clause
             *os
             << "c next clause is eliminated/blocked on lit "
-            << getUpdatedLit(it->blockedOn, interToOuterMain)
+            << it->blockedOn
             << endl;
 
             //Print clause
