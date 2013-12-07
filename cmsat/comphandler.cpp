@@ -180,11 +180,14 @@ bool CompHandler::solve_component(
         assert(solver->value(var) == l_Undef);
     }
 
-    //Are there too many variables? If so, don't create a sub-solver
-    //I'm afraid that we will memory-out
-    if (vars.size() > 100ULL*1000ULL) {
+    if (vars_orig.size() > 100ULL*1000ULL) {
+        //There too many variables -- don't create a sub-solver
+        //I'm afraid that we will memory-out
+
         return true;
     }
+
+    vector<Var> vars(vars_orig);
 
     //Components with assumptions should not be removed
     if (assumpsInsideComponent(vars))
