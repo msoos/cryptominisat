@@ -115,7 +115,6 @@ class Solver : public Searcher
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
         size_t   getNumLongRedCls() const;
-        const vector<Var>& getInterToOuterMain() const;
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
         void dumpIfNeeded() const;
@@ -584,11 +583,6 @@ inline size_t Solver::getNumLongIrredCls() const
 inline size_t Solver::getNumLongRedCls() const
 {
     return longRedCls.size();
-}
-
-inline const vector<Var>& Solver::getInterToOuterMain() const
-{
-    return interToOuterMain;
 }
 
 inline const SolverConf& Solver::getConf() const
