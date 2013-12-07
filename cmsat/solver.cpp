@@ -3586,13 +3586,6 @@ void Solver::updateDominators()
     }
 }
 
-void Solver::print_elimed_vars() const
-{
-    if (conf.perform_occur_based_simp) {
-        simplifier->print_elimed_vars();
-    }
-}
-
 void Solver::calcReachability()
 {
     double myTime = cpuTime();

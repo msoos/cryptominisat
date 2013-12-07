@@ -119,7 +119,6 @@ class Solver : public Searcher
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
         void dumpIfNeeded() const;
-        void print_elimed_vars() const;
         Var numActiveVars() const;
         void printMemStats() const;
         uint64_t printWatchMemUsed(uint64_t totalMem) const;
