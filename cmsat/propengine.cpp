@@ -757,7 +757,7 @@ PropBy PropEngine::propagateAnyOrder()
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation ended." << endl;
+    cout << "Propagation (propagateAnyOrder) ended." << endl;
     #endif
 
     return confl;
@@ -1011,7 +1011,7 @@ PropBy PropEngine::propagateBinFirst(
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation ended." << endl;
+    cout << "Propagation (propagateBinFirst) ended." << endl;
     #endif
 
     return confl;
