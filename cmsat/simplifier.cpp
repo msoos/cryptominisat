@@ -110,10 +110,6 @@ Simplifier::~Simplifier()
 
 void Simplifier::newVar()
 {
-    if (solver->conf.doGateFind) {
-        gateFinder->newVar();
-    }
-
     if (solver->conf.doGateFind
         && solver->nVars() > 10ULL*1000ULL*1000ULL
     ) {
@@ -130,6 +126,9 @@ void Simplifier::newVar()
 
     //variable status
     var_elimed .push_back(false);
+    if (solver->conf.doGateFind) {
+        gateFinder->newVar();
+    }
 }
 
 void Simplifier::updateVars(
