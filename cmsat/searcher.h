@@ -167,10 +167,7 @@ class Searcher : public HyperEngine
                 cout << std::right;
             }
         };
-
-        //////////////////////////////
-        // Problem specification:
-        Var newVar(bool dvar = true); // Add a new variable that can be decided on or not
+        void newVar(bool bva);
 
         ///////////////////////////////
         // Solving
@@ -619,8 +616,13 @@ class Searcher : public HyperEngine
         };
 
     protected:
-        void updateVars(const vector<uint32_t>& interToOuter);
-        vector<bool> assumptionsSet;
+        void saveVarMem();
+        void updateVars(
+            const vector<uint32_t>& outerToInter
+            , const vector<uint32_t>& interToOuter
+        );
+        void renumber_assumptions(const vector<Var>& outerToInter);
+        vector<char> assumptionsSet;
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
 
         friend class CalcDefPolars;

@@ -56,6 +56,35 @@ VarReplacer::~VarReplacer()
 {
 }
 
+void VarReplacer::newVar()
+{
+    table.push_back(Lit(table.size(), false));
+}
+
+void VarReplacer::saveVarMem()
+{
+}
+
+void VarReplacer::updateVars(
+    const std::vector< uint32_t >& outerToInter
+    , const std::vector< uint32_t >& interToOuter
+) {
+    assert(laterAddBinXor.empty());
+
+    /*updateArray(table, interToOuter);
+    updateLitsMap(table, outerToInter);
+    map<Var, vector<Var> > newReverseTable;
+    for(map<Var, vector<Var> >::iterator
+        it = reverseTable.begin(), end = reverseTable.end()
+        ; it != end
+        ; it++
+    ) {
+        updateArrayMapCopy(it->second, outerToInter);
+        newReverseTable[outerToInter.at(it->first)] = it->second;
+    }
+    reverseTable.swap(newReverseTable);*/
+}
+
 void VarReplacer::printReplaceStats() const
 {
     uint32_t i = 0;
@@ -68,7 +97,7 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
-void VarReplacer::update_vardata_and_decisionvar(
+void VarReplacer::update_vardata_and_activities(
     const Var orig
     , const Var replaced_with
 ) {
@@ -170,7 +199,9 @@ bool VarReplacer::performReplace()
         it = table.begin(); it != table.end()
         ; it++, var++
     ) {
-       update_vardata_and_decisionvar(var, it->var());
+        const Var orig = solver->outerToInterMain[var];
+        const Var repl = solver->outerToInterMain[it->var()];
+        update_vardata_and_activities(orig, repl);
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
@@ -628,34 +659,17 @@ bool VarReplacer::handleUpdatedClause(
     return false;
 }
 
-/**
-@brief Returns variables that have been replaced
-*/
-vector<Var> VarReplacer::getReplacingVars() const
-{
-    vector<Var> replacingVars;
-
-    for(map<Var, vector<Var> >::const_iterator
-        it = reverseTable.begin(), end = reverseTable.end()
-        ; it != end
-        ; it++
-    ) {
-        replacingVars.push_back(it->first);
-    }
-
-    return replacingVars;
-}
-
-void VarReplacer::set_sub_var_during_solution_extension(Var var, Var sub_var)
+void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_var)
 {
     lbool to_set = solver->model[var] ^ table[sub_var].sign();
+    const Var sub_var_inter = solver->outerToInterMain[sub_var];
     if (solver->model[sub_var] != l_Undef) {
-        assert(solver->varData[sub_var].removed == Removed::queued_replacer
-            || solver->varData[sub_var].removed == Removed::replaced
+        assert(solver->varData[sub_var_inter].removed == Removed::queued_replacer
+            || solver->varData[sub_var_inter].removed == Removed::replaced
         );
         assert(solver->model[sub_var] == l_Undef
-            || solver->varData[sub_var].level == 0
-            || solver->varData[sub_var].removed == Removed::queued_replacer
+            || solver->varData[sub_var_inter].level == 0
+            || solver->varData[sub_var_inter].removed == Removed::queued_replacer
         );
         assert(solver->model[sub_var] == to_set);
     } else {
@@ -780,35 +794,36 @@ bool VarReplacer::handleOneSet(
 @brief Replaces two two lits with one another
 */
 bool VarReplacer::replace(
-    Lit lit1
-    , Lit lit2
+    Var var1
+    , Var var2
     , const bool xorEqualFalse
     , bool addLaterAsTwoBins
 )
 {
     #ifdef VERBOSE_DEBUG
-    cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << endl;
+    cout
+    << "replace() called with var " <<  Lit(var1, false)
+    << " and var " << Lit(var2, false)
+    << " with xorEqualFalse " << xorEqualFalse << endl;
     #endif
 
-    replaceChecks(lit1, lit2);
+    replaceChecks(var1, var2);
 
     #ifdef DRUP_DEBUG
     (*solver->drup)
-    << ~lit1 << " " << (lit2 ^!xorEqualFalse) fin
-    << lit1 << " " << (~lit2 ^!xorEqualFalse) fin
+    << Lit(var1, true)  << " " << (Lit(var2, false) ^ !xorEqualFalse) << fin
+    << Lit(var1, false) << " " << (Lit(var2, true)  ^ !xorEqualFalse) << fin
     ;
     #endif
 
-    //Move forward circle
-    lit1 = table[lit1.var()];
-    lit2 = table[lit2.var()] ^ !xorEqualFalse;
+    //Move forward
+    const Lit lit1 = getLitReplacedWith(Lit(var1, false));
+    const Lit lit2 = getLitReplacedWith(Lit(var2, false)) ^ !xorEqualFalse;
 
     //Already inside?
     if (lit1.var() == lit2.var()) {
         return handleAlreadyReplaced(lit1, lit2);
     }
-
-    //Not already inside
     (*solver->drup)
     << ~lit1 << lit2 << fin
     << lit1 << ~lit2 << fin;
@@ -819,8 +834,8 @@ bool VarReplacer::replace(
     assert(solver->varData[lit2.var()].removed == Removed::none
             || solver->varData[lit2.var()].removed == Removed::queued_replacer);
 
-    lbool val1 = solver->value(lit1);
-    lbool val2 = solver->value(lit2);
+    const lbool val1 = solver->value(lit1);
+    const lbool val2 = solver->value(lit2);
 
     //Both are set
     if (val1 != l_Undef && val2 != l_Undef) {
@@ -841,6 +856,14 @@ bool VarReplacer::replace(
 
     solver->varData[lit1.var()].removed = Removed::queued_replacer;
     solver->varData[lit2.var()].removed = Removed::queued_replacer;
+
+    const Lit lit1_outer = getUpdatedLit(lit1, solver->interToOuterMain);
+    const Lit lit2_outer = getUpdatedLit(lit2, solver->interToOuterMain);
+    return update_table_and_reversetable(lit1_outer, lit2_outer);
+}
+
+bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
+{
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
         table[lit1.var()] = lit2 ^ lit1.sign();
@@ -856,41 +879,9 @@ bool VarReplacer::replace(
     }
 
     //both have children
-    setAllThatPointsHereTo(lit1.var(), lit2 ^ lit1.sign()); //erases reverseTable[lit1.var()]
+    setAllThatPointsHereTo(lit1.var(), lit2 ^ lit1.sign());
     replacedVars++;
     return true;
-}
-
-/**
-@brief Returns if we already know that var = lit
-
-Also checks if var = ~lit, in which it sets solver->ok = false
-*/
-bool VarReplacer::alreadyIn(const Var var, const Lit lit)
-{
-    Lit lit2 = table[var];
-    if (lit2.var() == lit.var()) {
-        if (lit2.sign() != lit.sign()) {
-            #ifdef VERBOSE_DEBUG
-            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
-            #endif
-            solver->ok = false;
-        }
-        return true;
-    }
-
-    lit2 = table[lit.var()];
-    if (lit2.var() == var) {
-        if (lit2.sign() != lit.sign()) {
-            #ifdef VERBOSE_DEBUG
-            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
-            #endif
-            solver->ok = false;
-        }
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -900,11 +891,11 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 {
     map<Var, vector<Var> >::iterator it = reverseTable.find(var);
     if (it != reverseTable.end()) {
-        for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
-            assert(table[*it2].var() == var);
-            if (lit.var() != *it2) {
-                table[*it2] = lit ^ table[*it2].sign();
-                reverseTable[lit.var()].push_back(*it2);
+        for(const Var var2: it->second) {
+            assert(table[var2].var() == var);
+            if (lit.var() != var2) {
+                table[var2] = lit ^ table[var2].sign();
+                reverseTable[lit.var()].push_back(var2);
             }
         }
         reverseTable.erase(it);
@@ -913,34 +904,9 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
     reverseTable[lit.var()].push_back(var);
 }
 
-void VarReplacer::newVar()
-{
-    table.push_back(Lit(table.size(), false));
-}
-
-void VarReplacer::updateVars(
-    const std::vector< uint32_t >& outerToInter
-    , const std::vector< uint32_t >& interToOuter
-) {
-    assert(laterAddBinXor.empty());
-
-    updateArray(table, interToOuter);
-    updateLitsMap(table, outerToInter);
-    map<Var, vector<Var> > newReverseTable;
-    for(map<Var, vector<Var> >::iterator
-        it = reverseTable.begin(), end = reverseTable.end()
-        ; it != end
-        ; it++
-    ) {
-        updateArrayMapCopy(it->second, outerToInter);
-        newReverseTable[outerToInter.at(it->first)] = it->second;
-    }
-    reverseTable.swap(newReverseTable);
-}
-
 void VarReplacer::checkUnsetSanity()
 {
-    for(size_t i = 0; i < solver->nVars(); i++) {
+    for(size_t i = 0; i < solver->nVarsReal(); i++) {
         const Lit repLit = getLitReplacedWith(Lit(i, false));
         const Var repVar = getVarReplacedWith(i);
 
@@ -1005,10 +971,73 @@ size_t VarReplacer::memUsed() const
     ) {
         b += it->second.capacity()*sizeof(Lit);
     }
-    b += reverseTable.size()*(sizeof(Var) + sizeof(vector<Var>)); //TODO under-counting
+    //TODO under-counting
+    b += reverseTable.size()*(sizeof(Var) + sizeof(vector<Var>));
 
     return b;
 }
+
+void VarReplacer::print_equivalent_literals(std::ostream *os) const
+{
+    vector<Lit> tmpCl;
+    for (Var var = 0; var < table.size(); var++) {
+        const Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        tmpCl.clear();
+        tmpCl.push_back(~lit);
+        tmpCl.push_back(Lit(var, false));
+        std::sort(tmpCl.begin(), tmpCl.end());
+
+        *os
+        << tmpCl[0] << " "
+        << tmpCl[1]
+        << " 0\n";
+
+        tmpCl[0] ^= true;
+        tmpCl[1] ^= true;
+
+        *os
+        << tmpCl[0] << " "
+        << tmpCl[1]
+        << " 0\n";
+    }
+}
+
+void VarReplacer::print_some_stats(const double global_cpu_time) const
+{
+    printStatsLine("c vrep replace time"
+        , globalStats.cpu_time
+        , globalStats.cpu_time/global_cpu_time*100.0
+        , "% time"
+    );
+
+    printStatsLine("c vrep tree roots"
+        , getNumTrees()
+    );
+
+    printStatsLine("c vrep trees' crown"
+        , getNumReplacedVars()
+        , (double)getNumReplacedVars()/(double)getNumTrees()
+        , "leafs/tree"
+    );
+}
+
+size_t VarReplacer::get_num_bin_clauses() const
+{
+    size_t num = 0;
+    for (Var var = 0; var < table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        num += 2;
+    }
+
+    return num;
+}
+
 void VarReplacer::Stats::print(const size_t nVars) const
 {
         cout << "c --------- VAR REPLACE STATS ----------" << endl;

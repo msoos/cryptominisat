@@ -182,7 +182,7 @@ bool Solver::addXorClauseInt(
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
-            assert(!conf.perform_occur_based_simp || !simplifier->getVarElimed(p.var()));
+            assert(varData[p.var()].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
             assert(value(ps[i]) != l_Undef);
@@ -548,21 +548,12 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         lit = updated_lit;
     }
 
-    for (const Lit lit:ps) {
-        //It's not too large, but larger than the saved memory size
-        //then expand everything to normal size. This will take memory
-        //but it's the easiest thing to do
-        if (lit.var() >= nVars()) {
-            unSaveVarMem();
-            assert(lit.var() < nVars()
-            && "After memory expansion, the variable must fit");
-        }
-    }
+    //TODO newVar stuff
 
     //Uneliminate vars
     for (const Lit lit: ps) {
         if (conf.perform_occur_based_simp
-            && simplifier->getVarElimed(lit.var())
+            && varData[lit.var()].removed == Removed::elimed
         ) {
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "Uneliminating var " << lit.var() + 1 << endl;
@@ -788,38 +779,6 @@ void Solver::renumber_clauses(const vector<Var>& outerToInter)
     }
 }
 
-void Solver::renumber_stamps(
-    const vector<Var>& outerToInter
-    , const vector<Var>& interToOuter2
-) {
-    if (!conf.doStamp)
-        return;
-
-    //Update both dominators
-    for(size_t i = 0; i < stamp.tstamp.size(); i++) {
-        for(size_t i2 = 0; i2 < 2; i2++) {
-            if (stamp.tstamp[i].dominator[i2] != lit_Undef)
-                stamp.tstamp[i].dominator[i2]
-                    = getUpdatedLit(stamp.tstamp[i].dominator[i2], outerToInter);
-        }
-    }
-
-    //Update the stamp. Stamp can be very large, so update by swapping
-    updateBySwap(stamp.tstamp, seen, interToOuter2);
-}
-
-void Solver::renumber_assumptions(const vector<Var>& outerToInter)
-{
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = false;
-    }
-    updateLitsMap(assumptions, outerToInter);
-    for(Lit lit: assumptions) {
-        assumptionsSet[lit.var()] = true;
-    }
-    updateLitsMap(origAssumptions, outerToInter);
-}
-
 size_t Solver::calculate_interToOuter_and_outerToInter(
     vector<Var>& outerToInter
     , vector<Var>& interToOuter
@@ -903,8 +862,8 @@ void Solver::renumberVariables()
         calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
 
     //Create temporary outerToInter2
-    vector<uint32_t> interToOuter2(interToOuter.size()*2);
-    for(size_t i = 0; i < interToOuter.size(); i++) {
+    vector<uint32_t> interToOuter2(nVarsReal()*2);
+    for(size_t i = 0; i < nVarsReal(); i++) {
         interToOuter2[i*2] = interToOuter[i]*2;
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
     }
@@ -914,18 +873,16 @@ void Solver::renumberVariables()
     updateArrayMapCopy(outerToInterMain, outerToInter);
 
     //Update local data
-    updateArray(decisionVar, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
-    Searcher::updateVars(interToOuter);
+    Searcher::updateVars(outerToInter, interToOuter);
 
-    renumber_assumptions(outerToInter);
-    renumber_stamps(outerToInter, interToOuter2);
+    updateLitsMap(origAssumptions, outerToInter);
+    if (conf.doStamp) {
+        stamp.updateVars(outerToInter, interToOuter2, seen);
+    }
     renumber_clauses(outerToInter);
 
     //Update sub-elements' vars
-    if (conf.perform_occur_based_simp) {
-        simplifier->updateVars(outerToInter, interToOuter);
-    }
     varReplacer->updateVars(outerToInter, interToOuter);
     if (conf.doCache) {
         implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
@@ -948,61 +905,12 @@ void Solver::renumberVariables()
         saveVarMem(numEffectiveVars);
     }
 
-    //Update order heap -- needed due to decisionVar update
-    redoOrderHeap();
+    //NOTE order heap is now wrong, but that's OK, it will be restored from
+    //backed up activities and then rebuilt at the start of Searcher
 }
 
-void Solver::saveVarMem(const uint32_t newNumVars)
+void Solver::check_switchoff_limits_newvar()
 {
-    //never resize varData --> contains info about what is replaced/etc.
-    //never resize assigns --> contains 0-level assigns
-    //never resize interToOuterMain, outerToInterMain
-
-    //printMemStats();
-
-    watches.resize(newNumVars*2);
-    watches.consolidate();
-    implCache.newNumVars(newNumVars);
-    stamp.newNumVars(newNumVars);
-
-    //Resize 'seen'
-    seen.resize(newNumVars*2);
-    seen.shrink_to_fit();
-    seen2.resize(newNumVars*2);
-    seen2.shrink_to_fit();
-
-    activities.resize(newNumVars);
-    activities.shrink_to_fit();
-    minNumVars = newNumVars;
-
-    //printMemStats();
-}
-
-void Solver::unSaveVarMem()
-{
-    //printMemStats();
-
-    watches.resize(nVarsReal()*2);
-    implCache.newNumVars(nVarsReal());
-    stamp.newNumVars(nVarsReal());
-
-    //Resize 'seen'
-    seen.resize(nVarsReal()*2);
-    seen2.resize(nVarsReal()*2);
-
-    activities.resize(nVarsReal());
-    minNumVars = nVarsReal();
-
-    //printMemStats();
-}
-
-Var Solver::newVar(const bool dvar)
-{
-    //For adding the variable to all sorts of places, we need to increment
-    //the sizes of the vectors/heaps
-    if (nVars() != nVarsReal())
-        unSaveVarMem();
-
     if (conf.doStamp
         && nVars() > 15ULL*1000ULL*1000ULL
     ) {
@@ -1042,23 +950,20 @@ Var Solver::newVar(const bool dvar)
             << endl;
         }
     }
+}
 
-    if (conf.doStamp) {
-        stamp.newVar();
-    }
-
-    decisionVar.push_back(dvar);
-    numDecisionVars += dvar;
-
+void Solver::newVar(const bool bva)
+{
+    check_switchoff_limits_newvar();
+    Searcher::newVar(bva);
+    numDecisionVars += 1;
     if (conf.doCache) {
-        implCache.addNew();
         litReachable.push_back(LitReachData());
         litReachable.push_back(LitReachData());
     }
-
-    Searcher::newVar(dvar);
 
     varReplacer->newVar();
+
     if (conf.perform_occur_based_simp) {
         simplifier->newVar();
     }
@@ -1066,8 +971,30 @@ Var Solver::newVar(const bool dvar)
     if (conf.doCompHandler) {
         compHandler->newVar();
     }
+}
 
-    return decisionVar.size()-1;
+void Solver::saveVarMem(const uint32_t newNumVars)
+{
+    //never resize varData --> contains info about what is replaced/etc.
+    //never resize assigns --> contains 0-level assigns
+    //never resize interToOuterMain, outerToInterMain
+    //TODO should we resize assumptionsSet ??
+
+    //printMemStats();
+
+    minNumVars = newNumVars;
+    Searcher::saveVarMem();
+
+    litReachable.resize(nVars()*2);
+    litReachable.shrink_to_fit();
+    varReplacer->saveVarMem();
+    if (simplifier) {
+        simplifier->saveVarMem();
+    }
+    if (conf.doCompHandler) {
+        compHandler->saveVarMem();
+    }
+    //printMemStats();
 }
 
 /// @brief Sort clauses according to glues: large glues first
@@ -1507,13 +1434,13 @@ void Solver::extend_solution()
 {
     //If literal stats are wrong, the solution is probably wrong
     checkStats();
+    updateArrayRev(solution, interToOuterMain);
 
     //Extend solution to stored solution in component handler
     if (conf.doCompHandler) {
         compHandler->addSavedState(solution);
     }
 
-    //Extend solution
     model = solution;
     if (conf.perform_occur_based_simp
         || conf.doFindAndReplaceEqLits
@@ -1521,7 +1448,6 @@ void Solver::extend_solution()
         SolutionExtender extender(this);
         extender.extend();
     }
-    updateArrayRev(model, interToOuterMain);
 }
 
 lbool Solver::solve(const vector<Lit>* _assumptions)
@@ -1654,7 +1580,7 @@ void Solver::checkDecisionVarCorrectness() const
         if (varData[var].removed != Removed::none
             && varData[var].removed != Removed::queued_replacer
         ) {
-            assert(!decisionVar[var]);
+            assert(!varData[var].is_decision);
         }
     }
 }
@@ -2128,21 +2054,8 @@ void Solver::printMinStats() const
         , "% time"
     );
     sCCFinder->getStats().printShort();
-    printStatsLine("c vrep replace time"
-        , varReplacer->getStats().cpu_time
-        , varReplacer->getStats().cpu_time/cpu_time*100.0
-        , "% time"
-    );
+    varReplacer->print_some_stats(cpu_time);
 
-    printStatsLine("c vrep tree roots"
-        , varReplacer->getNumTrees()
-    );
-
-    printStatsLine("c vrep trees' crown"
-        , varReplacer->getNumReplacedVars()
-        , (double)varReplacer->getNumReplacedVars()/(double)varReplacer->getNumTrees()
-        , "leafs/tree"
-    );
     //varReplacer->getStats().printShort(nVars());
     printStatsLine("c asymm time"
                     , clauseVivifier->getStats().timeNorm
@@ -2265,23 +2178,8 @@ void Solver::printFullStats() const
     );
     sCCFinder->getStats().print();
 
-
-    printStatsLine("c vrep replace time"
-        , varReplacer->getStats().cpu_time
-        , varReplacer->getStats().cpu_time/cpu_time*100.0
-        , "% time"
-    );
-
-    printStatsLine("c vrep tree roots"
-        , varReplacer->getNumTrees()
-    );
-
-    printStatsLine("c vrep trees' crown"
-        , varReplacer->getNumReplacedVars()
-        , (double)varReplacer->getNumReplacedVars()/(double)varReplacer->getNumTrees()
-        , "leafs/tree"
-    );
     varReplacer->getStats().print(nVars());
+    varReplacer->print_some_stats(cpu_time);
 
     //Vivifier-ASYMM stats
     printStatsLine("c vivif time"
@@ -2355,7 +2253,6 @@ void Solver::printMemStats() const
     #ifdef STATS_NEEDED_EXTRA
     mem += varDataLT.capacity()*sizeof(VarData::Stats);
     #endif
-    mem += decisionVar.capacity()*sizeof(char);
     mem += assumptions.capacity()*sizeof(Lit);
     printStatsLine("c Mem for vars"
         , mem/(1024UL*1024UL)
@@ -2613,30 +2510,7 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
     << "c equivalent literals" << endl
     << "c ---------------------------------------" << endl;
 
-    const vector<Lit>& table = varReplacer->getReplaceTable();
-    for (Var var = 0; var != table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
-
-        tmpCl.clear();
-        tmpCl.push_back(getUpdatedLit((~lit), interToOuterMain));
-        tmpCl.push_back(getUpdatedLit(Lit(var, false), interToOuterMain));
-        std::sort(tmpCl.begin(), tmpCl.end());
-
-        *os
-        << tmpCl[0] << " "
-        << tmpCl[1]
-        << " 0\n";
-
-        tmpCl[0] ^= true;
-        tmpCl[1] ^= true;
-
-        *os
-        << tmpCl[0] << " "
-        << tmpCl[1]
-        << " 0\n";
-    }
+    varReplacer->print_equivalent_literals(os);
 }
 
 void Solver::dumpUnitaryClauses(std::ostream* os) const
@@ -2647,10 +2521,14 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     << "c unitaries" << endl
     << "c ---------" << endl;
 
-    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        *os
-        << getUpdatedLit(trail[i], interToOuterMain)
-        << " 0\n";
+    //'trail' cannot be trusted between 0....size()
+    assert(decisionLevel() == 0);
+    for(size_t i = 0; i < assigns.size(); i++) {
+        if (assigns[i] != l_Undef) {
+            Lit lit(i, assigns[i] == l_False);
+            lit = getUpdatedLit(lit, interToOuterMain);
+            *os << lit << " 0\n";
+        }
     }
 }
 
@@ -2704,13 +2582,7 @@ uint64_t Solver::count_irred_clauses_for_dump() const
 
     //binary XOR clauses
     if (varReplacer) {
-        const vector<Lit>& table = varReplacer->getReplaceTable();
-        for (Var var = 0; var != table.size(); var++) {
-            Lit lit = table[var];
-            if (lit.var() == var)
-                continue;
-            numClauses += 2;
-        }
+        varReplacer->get_num_bin_clauses();
     }
 
     //Normal clauses
@@ -3601,7 +3473,7 @@ void Solver::calcReachability()
         //Check if it's a good idea to look at the variable as a dominator
         if (value(var) != l_Undef
             || varData[var].removed != Removed::none
-            || !decisionVar[var]
+            || !varData[var].is_decision
         ) {
             continue;
         }

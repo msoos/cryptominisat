@@ -152,16 +152,17 @@ void SCCFinder::tarjan(const uint32_t vertex)
         if (tmp.size() >= 2) {
             for (uint32_t i = 1; i < tmp.size(); i++) {
                 if (!solver->ok) break;
-                vector<Lit> lits(2);
-                lits[0] = Lit::toLit(tmp[0]).unsign();
-                lits[1] = Lit::toLit(tmp[i]).unsign();
-                const bool xorEqualsFalse = Lit::toLit(tmp[0]).sign()
-                                            ^ Lit::toLit(tmp[i]).sign()
-                                            ^ true;
+                Var vars[2];
+                vars[0] = Lit::toLit(tmp[0]).var();
+                vars[1] = Lit::toLit(tmp[i]).var();
+                const bool xorEqualsFalse =
+                    Lit::toLit(tmp[0]).sign()
+                    ^ Lit::toLit(tmp[i]).sign()
+                    ^ true;
 
                 //Both are UNDEF, so this is a proper binary XOR
-                if (solver->value(lits[0]) == l_Undef
-                    && solver->value(lits[1]) == l_Undef
+                if (solver->value(vars[0]) == l_Undef
+                    && solver->value(vars[1]) == l_Undef
                 ) {
                     runStats.foundXors++;
                     #ifdef VERBOSE_DEBUG
@@ -173,8 +174,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     << endl;
                     #endif
                     solver->varReplacer->replace(
-                        lits[0]
-                        , lits[1]
+                        vars[0]
+                        , vars[1]
                         , xorEqualsFalse
                         //Because otherwise queued varreplacer could be reducible
                         //and during var-elim, we would remove one of the binary clauses

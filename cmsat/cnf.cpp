@@ -1,9 +1,66 @@
 #include "cnf.h"
+#include "vardata.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
 #include "watchalgos.h"
 
 using namespace CMSat;
+
+void CNF::newVar(bool bva)
+{
+    if (nVars() >= 1ULL<<28) {
+        cout << "ERROR! Variable requested is far too large" << endl;
+        exit(-1);
+    }
+
+    minNumVars++;
+    watches.resize(nVars()*2);
+    if (conf.doCache) {
+        implCache.addNew();
+    }
+    if (conf.doStamp) {
+        stamp.newVar();
+    }
+
+    assigns.push_back(l_Undef);
+    std::swap(assigns[nVars()-1], assigns.back());
+    varData.push_back(VarData());
+    std::swap(varData[nVars()-1], varData.back());
+    varData[nVars()-1].is_bva = bva;
+    #ifdef STATS_NEEDED
+    varDataLT.push_back(VarData());
+    std::swap(varDataLT[nVars()-1], varDataLT.back());
+    #endif
+
+    seen      .push_back(0);
+    seen      .push_back(0);
+    seen2     .push_back(0);
+    seen2     .push_back(0);
+
+    Var minVar = nVars()-1;
+    Var maxVar = nVarsReal()-1;
+    interToOuterMain.push_back(maxVar);
+    const Var x = interToOuterMain[minVar];
+    interToOuterMain[minVar] = maxVar;
+    interToOuterMain[maxVar] = x;
+
+    outerToInterMain.push_back(maxVar);
+    outerToInterMain[maxVar] = minVar;
+    outerToInterMain[x] = maxVar;
+}
+
+void CNF::saveVarMem()
+{
+    watches.resize(nVars()*2);
+    watches.consolidate();
+    implCache.saveVarMems(nVars());
+    stamp.saveVarMem(nVars());
+
+    seen.resize(nVars()*2);
+    seen.shrink_to_fit();
+    seen2.resize(nVars()*2);
+    seen2.shrink_to_fit();
+}
 
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {

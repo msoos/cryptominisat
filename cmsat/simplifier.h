@@ -101,10 +101,7 @@ public:
     bool simplify();
     void subsumeReds();
     void newVar();
-    void updateVars(
-        const vector<uint32_t>& outerToInter
-        , const vector<uint32_t>& interToOuter
-    );
+    void saveVarMem();
     bool unEliminate(const Var var);
     size_t memUsed() const;
     size_t memUsedXor() const;
@@ -379,7 +376,6 @@ public:
         uint64_t zeroDepthAssings;
     };
 
-    bool getVarElimed(const Var var) const;
     const vector<BlockedClause>& getBlockedClauses() const;
     //const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
@@ -404,7 +400,6 @@ private:
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
-    vector<bool>    var_elimed;           ///<Contains TRUE if var has been eliminated
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
     vector<Lit>& toClear;
@@ -667,11 +662,6 @@ private:
 inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
 {
     return blockedClauses;
-}
-
-inline bool Simplifier::getVarElimed(const Var var) const
-{
-    return var_elimed[var];
 }
 
 inline const Simplifier::Stats& Simplifier::getStats() const

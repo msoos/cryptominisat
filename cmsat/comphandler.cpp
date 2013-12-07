@@ -50,6 +50,15 @@ CompHandler::~CompHandler()
     }
 }
 
+void CompHandler::newVar()
+{
+    savedState.push_back(l_Undef);
+}
+
+void CompHandler::saveVarMem()
+{
+}
+
 void CompHandler::createRenumbering(const vector<Var>& vars)
 {
     interToOuter.resize(solver->nVars());
@@ -270,12 +279,13 @@ bool CompHandler::handle()
     //Filter out the variables that have been made non-decision
     solver->filterOrderHeap();
 
-    //Checking that all variables that are not in the remaining comp are all
-    //non-decision vars, and none have been assigned
+    //Checking that all variables that are not in the remaining comp have
+    //correct 'removed' flags, and none have been assigned
     for (Var var = 0; var < solver->nVars(); var++) {
         const Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
         if (savedState[outerVar] != l_Undef) {
-            assert(solver->decisionVar[var] == false);
+            assert(solver->varData[var].is_decision == false);
+            assert(solver->varData[var].removed == Removed::decomposed);
             assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
         }
     }
@@ -330,7 +340,7 @@ void CompHandler::moveVariablesBetweenSolvers(
     for(const Var var: vars) {
         //Misc check
         #ifdef VERBOSE_DEBUG
-        if (!solver->decisionVar[var]) {
+        if (!solver->varData[var].is_decision) {
             cout
             << "var " << var + 1
             << " is non-decision, but in comp... strange."
@@ -339,11 +349,11 @@ void CompHandler::moveVariablesBetweenSolvers(
         #endif //VERBOSE_DEBUG
 
         //Add to new solver
-        newSolver->newVar(solver->decisionVar[var]);
+        newSolver->newVar(solver->varData[var].is_decision);
         assert(compFinder->getVarComp(var) == comp);
 
         //Remove from old solver
-        if (solver->decisionVar[var]) {
+        if (solver->varData[var].is_decision) {
             decisionVarRemoved.push_back(getUpdatedVar(var, solver->interToOuterMain));
         }
         solver->unsetDecisionVar(var);
@@ -637,8 +647,9 @@ void CompHandler::addSavedState(vector<lbool>& solution)
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
             const lbool val = savedState[var];
+            solution[var] = val;
+
             const Var interVar = getUpdatedVar(var, solver->outerToInterMain);
-            solution[interVar] = val;
             solver->varData[interVar].polarity = (val == l_True);
         }
     }

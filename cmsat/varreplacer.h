@@ -59,39 +59,38 @@ class VarReplacer
     public:
         VarReplacer(Solver* solver);
         ~VarReplacer();
+        void newVar();
+        void saveVarMem();
         bool performReplace();
         bool replace(
-            Lit lit1
-            , Lit lit2
+            Var lit1
+            , Var lit2
             , const bool xorEqualFalse
             , bool addLaterAsTwoBins
         );
+        void print_equivalent_literals(std::ostream *os) const;
+        size_t get_num_bin_clauses() const;
+        void print_some_stats(const double global_cpu_time) const;
 
         void extendModel();
         void extendModel(const Var var);
-        void set_sub_var_during_solution_extension(Var var, Var sub_var);
 
-        vector<Var> getReplacingVars() const;
-        const vector<Lit>& getReplaceTable() const;
         Lit getLitReplacedWith(Lit lit) const;
         Var getVarReplacedWith(const Var var) const;
-        const map<Var, vector<Var> >&getReverseTable() const;
+        Var getVarReplacedWith(const Lit lit) const;
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
         bool replacingVar(const Var var) const;
-        void newVar();
         bool addLaterAddBinXor();
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
-        void checkUnsetSanity();
 
         //Stats
         size_t getNumReplacedVars() const;
         size_t getNumLastReplacedVars() const;
         size_t getNewToReplaceVars() const;
-        size_t getNumTrees() const;
         struct Stats
         {
             void clear()
@@ -118,17 +117,20 @@ class VarReplacer
         size_t memUsed() const;
 
     private:
-        Solver* solver; ///<The solver we are working with
+        Solver* solver;
+        size_t getNumTrees() const;
+        void set_sub_var_during_solution_extension(Var var, Var sub_var);
+        void checkUnsetSanity();
 
         bool replace_set(vector<ClOffset>& cs);
-        void update_vardata_and_decisionvar(
+        void update_vardata_and_activities(
             const Var orig
             , const Var replaced
         );
         bool enqueueDelayedEnqueue();
 
         //Helpers for replace()
-        void replaceChecks(const Lit lit1, const Lit lit2) const;
+        void replaceChecks(const Var var1, const Var var2) const;
         bool handleAlreadyReplaced(const Lit lit1, const Lit lit2);
         bool replace_vars_already_set(
             const Lit lit1
@@ -220,9 +222,8 @@ class VarReplacer
 
          //While replacing the implicit clauses we cannot enqeue
         vector<Lit> delayedEnqueue;
-
+        bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const Var var, const Lit lit);
-        bool alreadyIn(const Var var, const Lit lit);
         vector<LaterAddBinXor> laterAddBinXor;
 
         //Mapping tables
@@ -252,19 +253,19 @@ inline size_t VarReplacer::getNewToReplaceVars() const
     return replacedVars-lastReplacedVars;
 }
 
-inline const vector<Lit>& VarReplacer::getReplaceTable() const
+inline bool VarReplacer::isReplaced(const Var var) const
 {
-    return table;
+    return getVarReplacedWith(var) != var;
 }
 
-inline Lit VarReplacer::getLitReplacedWith(const Lit lit) const
+inline Var VarReplacer::getVarReplacedWith(const Lit lit) const
 {
-    return table[lit.var()] ^ lit.sign();
+    return getVarReplacedWith(lit.var());
 }
 
-inline Var VarReplacer::getVarReplacedWith(const Var var) const
+inline bool VarReplacer::isReplaced(const Lit lit) const
 {
-    return table[var].var();
+    return isReplaced(lit.var());
 }
 
 inline bool VarReplacer::replacingVar(const Var var) const
@@ -277,24 +278,9 @@ inline size_t VarReplacer::getNumTrees() const
     return reverseTable.size();
 }
 
-inline const map<Var, vector<Var> >& VarReplacer::getReverseTable() const
-{
-    return reverseTable;
-}
-
 inline const VarReplacer::Stats& VarReplacer::getStats() const
 {
     return globalStats;
-}
-
-inline bool VarReplacer::isReplaced(const Var var) const
-{
-    return getReplaceTable()[var].var() != var;
-}
-
-inline bool VarReplacer::isReplaced(const Lit lit) const
-{
-    return isReplaced(lit.var());
 }
 
 } //end namespace

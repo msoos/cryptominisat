@@ -1,5 +1,6 @@
 #include "stamp.h"
 #include "varreplacer.h"
+#include "varupdatehelper.h"
 
 using namespace CMSat;
 
@@ -40,6 +41,24 @@ bool Stamp::stampBasedClRem(
     }
 
     return false;
+}
+
+void Stamp::updateVars(
+    const vector<Var>& outerToInter
+    , const vector<Var>& interToOuter2
+    , vector<uint16_t>& seen
+) {
+    //Update both dominators
+    for(size_t i = 0; i < tstamp.size(); i++) {
+        for(size_t i2 = 0; i2 < 2; i2++) {
+            if (tstamp[i].dominator[i2] != lit_Undef)
+                tstamp[i].dominator[i2]
+                    = getUpdatedLit(tstamp[i].dominator[i2], outerToInter);
+        }
+    }
+
+    //Update the stamp. Stamp can be very large, so update by swapping
+    updateBySwap(tstamp, seen, interToOuter2);
 }
 
 std::pair<size_t, size_t> Stamp::stampBasedLitRem(

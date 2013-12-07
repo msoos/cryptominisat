@@ -73,19 +73,53 @@ Searcher::~Searcher()
 {
 }
 
-Var Searcher::newVar(const bool dvar)
+void Searcher::newVar(const bool bva)
 {
-    const Var var = PropEngine::newVar(dvar);
-    assert(var == activities.size());
+    PropEngine::newVar(bva);
     activities.push_back(0);
-    if (dvar) {
-        insertVarOrder(var);
-    }
+    insertVarOrder(nVars()-1);
     assumptionsSet.push_back(false);
+
     act_polar_backup.activity.push_back(0);
     act_polar_backup.polarity.push_back(false);
+}
 
-    return var;
+void Searcher::saveVarMem()
+{
+    PropEngine::saveVarMem();
+    activities.resize(nVars());
+    activities.shrink_to_fit();
+    assumptionsSet.resize(nVars());
+    assumptionsSet.shrink_to_fit();
+
+    act_polar_backup.activity.resize(nVars());
+    act_polar_backup.activity.shrink_to_fit();
+    act_polar_backup.polarity.resize(nVars());
+    act_polar_backup.polarity.shrink_to_fit();
+}
+
+void Searcher::updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& interToOuter
+) {
+    if (act_polar_backup.saved) {
+        updateArray(act_polar_backup.activity, interToOuter);
+        updateArray(act_polar_backup.polarity, interToOuter);
+    }
+    //activities are not updated, they are taken from backup, which is updated
+    renumber_assumptions(outerToInter);
+    assert(longest_dec_trail.empty());
+}
+
+void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
+{
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = false;
+    }
+    updateLitsMap(assumptions, outerToInter);
+    for(Lit lit: assumptions) {
+        assumptionsSet[lit.var()] = true;
+    }
 }
 
 /**
@@ -1670,6 +1704,7 @@ lbool Searcher::burstSearch()
     params.conflictsToDo = conf.burstSearchLen;
     params.rest_type = Restart::never;
     lbool status = search();
+    longest_dec_trail.clear();
 
     //Restore config
     conf.random_var_freq = backup_rand;
@@ -2038,7 +2073,7 @@ void Searcher::restore_order_heap()
 {
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
-        if (solver->decisionVar[var]
+        if (solver->varData[var].is_decision
             && value(var) == l_Undef
         ) {
             assert(varData[var].removed == Removed::none
@@ -2390,7 +2425,7 @@ Lit Searcher::pickBranchLit()
     ) {
         const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
         if (value(next_var) == l_Undef
-            && solver->decisionVar[next_var]
+            && solver->varData[next_var].is_decision
         ) {
             stats.decisionsRand++;
             next = Lit(next_var, !pickPolarity(next_var));
@@ -2400,7 +2435,7 @@ Lit Searcher::pickBranchLit()
     // Activity based decision:
     while (next == lit_Undef
       || value(next.var()) != l_Undef
-      || !solver->decisionVar[next.var()]
+      || !solver->varData[next.var()].is_decision
     ) {
         //There is no more to branch on. Satisfying assignment found.
         if (order_heap.empty()) {
@@ -2438,7 +2473,7 @@ Lit Searcher::pickBranchLit()
         //Update
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
-            && solver->decisionVar[lit2.var()]
+            && solver->varData[lit2.var()].is_decision
         ) {
             //Dominator may not actually dominate this variabe
             //So just to be sure, re-insert it
@@ -2458,7 +2493,7 @@ Lit Searcher::pickBranchLit()
     }
     #endif
 
-    assert(next == lit_Undef || solver->decisionVar[next.var()]);
+    assert(next == lit_Undef || solver->varData[next.var()].is_decision);
     return next;
 }
 
@@ -2614,7 +2649,7 @@ void Searcher::stampBasedRedMinim(vector<Lit>& cl)
 void Searcher::insertVarOrder(const Var x)
 {
     if (!order_heap.inHeap(x)
-        && solver->decisionVar[x]
+        && solver->varData[x].is_decision
     ) {
         order_heap.insert(x);
     }
@@ -2622,7 +2657,7 @@ void Searcher::insertVarOrder(const Var x)
 
 bool Searcher::VarFilter::operator()(uint32_t var) const
 {
-    return (cc->value(var) == l_Undef && solver->decisionVar[var]);
+    return (cc->value(var) == l_Undef && solver->varData[var].is_decision);
 }
 
 void Searcher::setNeedToInterrupt()
@@ -3121,17 +3156,6 @@ size_t Searcher::memUsed() const
     }
 
     return mem;
-}
-
-
-void Searcher::updateVars(const vector<uint32_t>& interToOuter)
-{
-    if (act_polar_backup.saved) {
-        updateArray(act_polar_backup.activity, interToOuter);
-        updateArray(act_polar_backup.polarity, interToOuter);
-    }
-
-    updateLitsMap(longest_dec_trail, interToOuter);
 }
 
 void Searcher::backup_activities_and_polarities()

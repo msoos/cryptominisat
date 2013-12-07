@@ -48,6 +48,7 @@ struct VarData
         ///The history of levels it was assigned
         AvgCalc<uint32_t> decLevelHist;
     };
+    Stats stats;
     #endif
 
     VarData() :
@@ -55,6 +56,8 @@ struct VarData
         , reason(PropBy())
         , removed(Removed::none)
         , polarity(false)
+        , is_decision(true)
+        , is_bva(false)
     {}
 
     ///contains the decision level at which the assignment was made.
@@ -71,10 +74,8 @@ struct VarData
 
     ///The preferred polarity of each variable.
     bool polarity;
-
-    #ifdef STATS_NEEDED_EXTRA
-    Stats stats;
-    #endif
+    bool is_decision;
+    bool is_bva;
 };
 
 }

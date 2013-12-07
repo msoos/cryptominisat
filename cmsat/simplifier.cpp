@@ -124,18 +124,15 @@ void Simplifier::newVar()
         solver->conf.doGateFind = false;
     }
 
-    //variable status
-    var_elimed .push_back(false);
     if (solver->conf.doGateFind) {
         gateFinder->newVar();
     }
 }
 
-void Simplifier::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter
-) {
-    updateArray(var_elimed, interToOuter);
+void Simplifier::saveVarMem()
+{
+    if (gateFinder)
+        gateFinder->saveVarMem();
 }
 
 void Simplifier::print_blocked_clauses_reverse() const
@@ -164,9 +161,12 @@ void Simplifier::print_blocked_clauses_reverse() const
 
 void Simplifier::extendModel(SolutionExtender* extender)
 {
-    //Either a variable is not eliminated, or its value is false
-    for(size_t i = 0; i < var_elimed.size(); i++) {
-        assert(var_elimed[i] == false || (solver->value(i) == l_Undef && solver->model[i] == l_Undef));
+    //Either a variable is not eliminated, or its value is undef
+    for(size_t i = 0; i < solver->nVarsReal(); i++) {
+        const Var outer = solver->interToOuterMain[i];
+        assert(solver->varData[i].removed != Removed::elimed
+            || (solver->value(i) == l_Undef && solver->model[outer] == l_Undef)
+        );
     }
 
     cleanBlockedClauses();
@@ -181,14 +181,10 @@ void Simplifier::extendModel(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
-        const Lit blockedOn = getUpdatedLit(it->blockedOn, solver->outerToInterMain);
-
         if (it->dummy) {
-            extender->dummyBlocked(blockedOn);
+            extender->dummyBlocked(it->blockedOn);
         } else {
-            vector<Lit> lits(it->lits);
-            updateLitsMap(lits, solver->outerToInterMain);
-            extender->addClause(lits, blockedOn);
+            extender->addClause(it->lits, it->blockedOn);
         }
     }
 }
@@ -790,7 +786,7 @@ bool Simplifier::propagate_tri_clause(const Watched& ws)
     }
 
     #ifdef STATS_NEEDED
-    if (it->red())
+    if (ws.red())
         solver->propStats.propsTriRed++;
     else
         solver->propStats.propsTriIrred++;
@@ -815,7 +811,7 @@ bool Simplifier::propagate_binary_clause(const Watched& ws)
     if (val == l_Undef) {
         solver->enqueue(ws.lit2());
         #ifdef STATS_NEEDED
-        if (it->red())
+        if (ws.red())
             solver->propStats.propsBinRed++;
         else
             solver->propStats.propsBinIrred++;
@@ -1129,9 +1125,8 @@ bool Simplifier::unEliminate(Var var)
     assert(solver->okay());
 
     //Check that it was really eliminated
-    assert(var_elimed[var]);
     assert(solver->varData[var].removed == Removed::elimed);
-    assert(!solver->decisionVar[var]);
+    assert(!solver->varData[var].is_decision);
     assert(solver->value(var) == l_Undef);
 
     if (!blockedMapBuilt) {
@@ -1140,7 +1135,6 @@ bool Simplifier::unEliminate(Var var)
     }
 
     //Uneliminate it in theory
-    var_elimed[var] = false;
     globalStats.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
     solver->setDecisionVar(var);
@@ -1249,20 +1243,19 @@ void Simplifier::sanityCheckElimedVars()
         ; it != end
         ; it++
     ) {
-        Clause* cl = solver->clAllocator.getPointer(*it);
+        const Clause* cl = solver->clAllocator.getPointer(*it);
 
         //Already removed
         if (cl->getFreed())
             continue;
 
-        for (uint32_t i = 0; i < cl->size(); i++) {
-            if (var_elimed[(*cl)[i].var()]) {
+        for (const Lit lit: *cl) {
+            if (solver->varData[lit.var()].removed == Removed::elimed) {
                 cout
-                << "Error: elimed var -- Lit " << (*cl)[i] << " in clause"
+                << "Error: elimed var -- Lit " << lit << " in clause"
                 << endl
                 << "wrongly left in clause: " << *cl
                 << endl;
-
                 exit(-1);
             }
         }
@@ -1283,12 +1276,13 @@ void Simplifier::sanityCheckElimedVars()
             ; it2++
         ) {
             if (it2->isBinary()) {
-                if (var_elimed[lit.var()] || var_elimed[it2->lit2().var()]) {
+                if (solver->varData[lit.var()].removed == Removed::elimed
+                        || solver->varData[it2->lit2().var()].removed == Removed::elimed
+                ) {
                     cout
                     << "Error: A var is elimed in a binary clause: "
                     << lit << " , " << it2->lit2()
                     << endl;
-
                     exit(-1);
                 }
             }
@@ -1624,12 +1618,11 @@ void Simplifier::cleanBlockedClauses()
         ; i++, at++
     ) {
         const Var blockedOn = getUpdatedVar(i->blockedOn.var(), solver->outerToInterMain);
-        if (var_elimed[blockedOn] == true
+        if (solver->varData[blockedOn].removed == Removed::elimed
             && solver->value(blockedOn) != l_Undef
         ) {
             cout
-            << "ERROR: lit " << *i << " elimed:"
-            << var_elimed[blockedOn]
+            << "ERROR: lit " << *i << " elimed,"
             << " value: " << solver->value(blockedOn)
             << endl;
             assert(false);
@@ -1639,6 +1632,7 @@ void Simplifier::cleanBlockedClauses()
         if (blockedClauses[at].toRemove) {
             blockedMapBuilt = false;
         } else {
+            assert(solver->varData[blockedOn].removed == Removed::elimed);
             *j++ = *i;
         }
     }
@@ -1783,9 +1777,7 @@ uint32_t Simplifier::numIrredBins(const Lit lit) const
 int Simplifier::test_elim_and_fill_resolvents(const Var var)
 {
     assert(solver->ok);
-    assert(!var_elimed[var]);
     assert(solver->varData[var].removed == Removed::none);
-    //assert(solver->decisionVar[var]);
     assert(solver->value(var) == l_Undef);
 
     //Gather data
@@ -2082,8 +2074,6 @@ void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
     if (solver->conf.verbosity >= 5) {
         cout << "Elimination of var " <<  getUpdatedLit(lit, solver->interToOuterMain) << " finished " << endl;
     }
-
-    var_elimed[var] = true;
     solver->varData[var].removed = Removed::elimed;
     runStats.numVarsElimed++;
     solver->unsetDecisionVar(var);
@@ -2777,8 +2767,8 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
 
 void Simplifier::checkElimedUnassigned() const
 {
-    for (size_t i = 0; i < var_elimed.size(); i++) {
-        if (var_elimed[i]) {
+    for (size_t i = 0; i < solver->nVarsReal(); i++) {
+        if (solver->varData[i].removed == Removed::elimed) {
             assert(solver->value(i) == l_Undef);
         }
     }
@@ -2788,8 +2778,8 @@ void Simplifier::checkElimedUnassignedAndStats() const
 {
     assert(solver->ok);
     int64_t checkNumElimed = 0;
-    for (size_t i = 0; i < var_elimed.size(); i++) {
-        if (var_elimed[i]) {
+    for (size_t i = 0; i < solver->nVarsReal(); i++) {
+        if (solver->varData[i].removed == Removed::elimed) {
             checkNumElimed++;
             assert(solver->value(i) == l_Undef);
         }
@@ -2814,8 +2804,6 @@ size_t Simplifier::memUsed() const
     b += toClear.capacity()*sizeof(Lit);
     b += finalLits.capacity()*sizeof(Lit);
     b += subsumeStrengthen->memUsed();
-
-    b += var_elimed.capacity()*sizeof(char); //TODO wrong, because of template specialization of bit-array
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end
@@ -3046,8 +3034,7 @@ void Simplifier::bounded_var_addition()
     f.close();
 
     propagate();
-    //TODO
-    //clean_clauses();
+    solver->clauseCleaner->clean_implicit_clauses();
 
     var_bva_order.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
@@ -3063,7 +3050,9 @@ void Simplifier::bounded_var_addition()
     double my_time = cpuTime();
     while(!var_bva_order.empty()) {
         const Lit lit = Lit::toLit(var_bva_order.removeMin());
-        //cout << "c [bva] trying lit " << lit << endl;
+        if (solver->conf.verbosity >= 5) {
+            cout << "c [bva] trying lit " << lit << endl;
+        }
         try_bva_on_lit(lit);
     }
 
@@ -3137,7 +3126,7 @@ void Simplifier::bva_simplify_system(const Lit lit)
     }
 
     //Var newvar = solver->new_bva_var();
-    Var newvar = 1;
+    const Var newvar = 0;//TODO solver->new_bva_var();
     Lit new_lit(newvar, false);
 
     for(Lit m_lit: m_lits) {

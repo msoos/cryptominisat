@@ -57,9 +57,14 @@ public:
         vector<Lit>& lits
         , StampType stampType
     ) const;
+    void updateVars(
+        const vector<Var>& outerToInter
+        , const vector<Var>& interToOuter2
+        , vector<uint16_t>& seen
+    );
     void updateDominators(const VarReplacer* replacer);
     void clearStamps();
-    void newNumVars(uint32_t newNumVars)
+    void saveVarMem(const uint32_t newNumVars)
     {
         tstamp.resize(newNumVars*2);
         tstamp.shrink_to_fit();

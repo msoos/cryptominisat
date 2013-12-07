@@ -260,7 +260,7 @@ bool Prober::probe()
 
         //Check if var is set already
         if (solver->value(lit.var()) != l_Undef
-            || !solver->decisionVar[lit.var()]
+            || !solver->varData[lit.var()].is_decision
             || visitedAlready[lit.toInt()]
         ) {
             continue;
@@ -271,7 +271,7 @@ bool Prober::probe()
             if (solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
                 const Lit betterlit = solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED];
                 if (solver->value(betterlit.var()) == l_Undef
-                    && solver->decisionVar[betterlit.var()]
+                    && solver->varData[betterlit.var()].is_decision
                 ) {
                     //Update lit
                     lit = betterlit;
@@ -287,7 +287,7 @@ bool Prober::probe()
             if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
                 const Lit betterlit = solver->litReachable[lit.toInt()].lit;
                 if (solver->value(betterlit.var()) == l_Undef
-                    && solver->decisionVar[betterlit.var()]
+                    && solver->varData[betterlit.var()].is_decision
                 ) {
                     //Update lit
                     lit = betterlit;

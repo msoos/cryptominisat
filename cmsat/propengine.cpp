@@ -60,30 +60,18 @@ PropEngine::~PropEngine()
 {
 }
 
-/**
-@brief Creates a new SAT variable
-*/
-Var PropEngine::newVar(const bool)
+void PropEngine::newVar(const bool bva)
 {
-    const Var v = nVars();
-    if (v >= 1ULL<<28) {
-        cout << "ERROR! Variable requested is far too large" << endl;
-        exit(-1);
-    }
-
-    minNumVars++;
-    watches.resize(watches.size() + 2);  // (list for positive&negative literals)
-    assigns.push_back(l_Undef);
-    varData.push_back(VarData());
-
-    #ifdef STATS_NEEDED
-    varDataLT.push_back(VarData());
-    #endif
-
-    CNF::newVar();
-
-    return v;
+    CNF::newVar(bva);
+    //TODO
+    //trail... update x->whatever
 }
+
+void PropEngine::saveVarMem()
+{
+    CNF::saveVarMem();
+}
+
 
 void PropEngine::attachTriClause(
     Lit lit1

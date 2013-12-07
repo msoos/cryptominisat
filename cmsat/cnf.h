@@ -18,16 +18,8 @@ class ClauseAllocator;
 
 struct CNF
 {
-    void newVar()
-    {
-        seen      .push_back(0);
-        seen      .push_back(0);
-        seen2     .push_back(0);
-        seen2     .push_back(0);
-
-        outerToInterMain.push_back(outerToInterMain.size());
-        interToOuterMain.push_back(interToOuterMain.size());
-    }
+    virtual void newVar(bool bva);
+    void saveVarMem();
 
     struct BinTriStats
     {
@@ -64,7 +56,6 @@ struct CNF
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars;
-    vector<bool> decisionVar;
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
@@ -72,6 +63,7 @@ struct CNF
     Drup* drup;
     vector<Var> outerToInterMain;
     vector<Var> interToOuterMain;
+    vector<char> bva_var;
 
     //Temporaries
     vector<uint16_t> seen;

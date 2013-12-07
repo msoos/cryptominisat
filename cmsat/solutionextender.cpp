@@ -52,7 +52,8 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     << endl;
     #endif
 
-    assert(solver->varData[blockedOn.var()].removed == Removed::elimed);
+    const Var blockedOn_inter = solver->outerToInterMain[blockedOn.var()];
+    assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
 
     //Oher blocked clauses set its value already
     if (solver->modelValue(blockedOn) != l_Undef)
@@ -69,22 +70,22 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
-    assert(solver->varData[blockedOn.var()].removed == Removed::elimed);
+    const Var blocked_on_inter = getUpdatedVar(blockedOn.var(), solver->outerToInterMain);
+    assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
     if (satisfied(lits))
         return;
 
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     for(Lit lit: lits) {
+        Lit lit_inter = getUpdateLit(lit, solver->outerToInterMain);
         cout
-        << getUpdatedLit(lit, solver->interToOuterMain) << ": " << solver->modelValue(lit)
-        << "(elim: " << removed_type_to_string(solver->varData[lit.var()].removed) << ")"
+        << lit << ": " << solver->modelValue(lit)
+        << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
         << ", ";
     }
-    cout << "blocked on: " <<  getUpdatedLit(blockedOn, solver->interToOuterMain) << endl;
+    cout << "blocked on: " <<  blockedOn << endl;
     #endif
-
-    assert(blockedOn != lit_Undef && "Clause must be satisfied if it's not blocked");
 
     assert(solver->modelValue(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;

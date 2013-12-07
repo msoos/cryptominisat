@@ -85,7 +85,7 @@ class Solver : public Searcher
 
         //////////////////////////////
         // Problem specification:
-        Var  newVar(const bool dvar = true); ///< Add new variable
+        void newVar(const bool dvar = true);
         bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
         bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addRedClause(
@@ -321,6 +321,7 @@ class Solver : public Searcher
         );
 
     private:
+        void check_switchoff_limits_newvar();
         vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;
         bool enqueueThese(const vector<Lit>& toEnqueue);
@@ -388,11 +389,6 @@ class Solver : public Searcher
         size_t calculate_interToOuter_and_outerToInter(
             vector<Var>& outerToInter
             , vector<Var>& interToOuter
-        );
-        void renumber_assumptions(const vector<Var>& outerToInter);
-        void renumber_stamps(
-            const vector<Var>& outerToInter
-            , const vector<Var>& interToOuter2
         );
         void renumber_clauses(const vector<Var>& outerToInter);
         void test_renumbering() const;
@@ -513,18 +509,18 @@ class Solver : public Searcher
 
 inline void Solver::setDecisionVar(const uint32_t var)
 {
-    if (!decisionVar[var]) {
+    if (!varData[var].is_decision) {
         numDecisionVars++;
-        decisionVar[var] = true;
+        varData[var].is_decision = true;
         insertVarOrder(var);
     }
 }
 
 inline void Solver::unsetDecisionVar(const uint32_t var)
 {
-    if (decisionVar[var]) {
+    if (varData[var].is_decision) {
         numDecisionVars--;
-        decisionVar[var] = false;
+        varData[var].is_decision = false;
     }
 }
 
@@ -615,7 +611,7 @@ inline Var Solver::numActiveVars() const
 {
     Var numActive = 0;
     for(Var var = 0; var < solver->nVars(); var++) {
-        if (decisionVar[var]
+        if (varData[var].is_decision
             && (varData[var].removed == Removed::none
                 || varData[var].removed == Removed::queued_replacer)
             && value(var) == l_Undef
