@@ -4,6 +4,28 @@
 
 using namespace CMSat;
 
+void Stamp::saveVarMem(const uint32_t newNumVars)
+{
+    tstamp.resize(newNumVars*2);
+    tstamp.shrink_to_fit();
+
+    for(Timestamp& t: tstamp) {
+        Lit lit = t.dominator[STAMP_RED];
+        if (lit != lit_Undef
+            && lit.var() > newNumVars
+        ) {
+            t.dominator[STAMP_RED] = lit_Undef;
+        }
+
+        lit = t.dominator[STAMP_IRRED];
+        if (lit != lit_Undef
+            && lit.var() > newNumVars
+        ) {
+            t.dominator[STAMP_IRRED] = lit_Undef;
+        }
+    }
+}
+
 bool Stamp::stampBasedClRem(
     const vector<Lit>& lits
 ) const {
