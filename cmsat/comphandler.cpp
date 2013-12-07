@@ -211,6 +211,7 @@ bool CompHandler::handle()
         }
 
         //Save the solution as savedState
+        assert(savedState.size() == solver->nVarsReal());
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
             Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
@@ -656,12 +657,19 @@ void CompHandler::addSavedState(vector<lbool>& solution)
 {
     //Enqueue them. They may need to be extended, so enqueue is needed
     //manipulating "model" may not be good enough
+    assert(savedState.size() == solver->nVarsReal());
+    assert(solution.size() == solver->nVarsReal());
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
-            const lbool val = savedState[var];
-            solution[var] = val;
-
             const Var interVar = getUpdatedVar(var, solver->outerToInterMain);
+            assert(solver->varData[interVar].removed == Removed::decomposed);
+            assert(solver->varData[interVar].is_decision == false);
+
+            const lbool val = savedState[var];
+            assert(solution[var] == l_Undef);
+            solution[var] = val;
+            //cout << "Solution to var " << var + 1 << " has been added: " << val << endl;
+
             solver->varData[interVar].polarity = (val == l_True);
         }
     }
