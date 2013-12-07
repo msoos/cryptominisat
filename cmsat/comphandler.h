@@ -75,6 +75,10 @@ class CompHandler
             }
         };
         bool assumpsInsideComponent(const vector<Var>& vars);
+        void move_decision_level_zero_vars_here(
+            const Solver* newSolver
+            , const vector<Var>& vars
+        );
 
         void configureNewSolver(
             Solver* newSolver

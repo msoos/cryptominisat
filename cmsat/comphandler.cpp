@@ -210,41 +210,6 @@ bool CompHandler::handle()
             }
         }
 
-        //Move decision level 0 vars over
-        assert(newSolver.decisionLevel() == 0);
-        assert(solver->decisionLevel() == 0);
-        for (size_t i = 0; i < vars.size(); i++) {
-            //This is *tricky*. The newSolver might have internally re-numbered
-            //the variables, so we must take this into account
-            Var newSolverInternalVar;
-            if (!newSolver.interToOuterMain.empty()) {
-                newSolverInternalVar = getUpdatedVar(i, newSolver.outerToInterMain);
-            } else {
-                newSolverInternalVar = i;
-            }
-
-            //Is it 0-level assigned in newSolver?
-            lbool val = newSolver.value(newSolverInternalVar);
-            if (val != l_Undef) {
-                assert(newSolver.varData[newSolverInternalVar].level == 0);
-
-                //Use our 'solver'-s notation, i.e. 'var'
-                Var var = vars[i];
-                Lit lit(var, val == l_False);
-                solver->enqueue(lit);
-
-                /*cout
-                << "0-level enqueueing var "
-                << solver->interToOuterMain[var] + 1
-                << endl;*/
-
-                //These vars are not meant to be in the orig solver
-                //so they cannot cause UNSAT
-                solver->ok = (solver->propagate().isNULL());
-                assert(solver->ok);
-            }
-        }
-
         //Save the solution as savedState
         for (size_t i = 0; i < vars.size(); i++) {
             Var var = vars[i];
@@ -256,6 +221,9 @@ bool CompHandler::handle()
                 savedState[outerVar] = newSolver.model[updateVar(var)];
             }
         }
+
+        //Move decision level 0 vars over
+        move_decision_level_zero_vars_here(&newSolver, vars);
 
         if (solver->conf.verbosity >= 1 && num_comps < 20) {
             cout
@@ -300,6 +268,47 @@ bool CompHandler::handle()
     delete compFinder;
     compFinder = NULL;
     return true;
+}
+
+void CompHandler::move_decision_level_zero_vars_here(
+    const Solver* newSolver
+    , const vector<Var>& vars
+) {
+    assert(newSolver->decisionLevel() == 0);
+    assert(solver->decisionLevel() == 0);
+    for (size_t i = 0; i < vars.size(); i++) {
+        //This is *tricky*. The newSolver might have internally re-numbered
+        //the variables, so we must take this into account
+        Var newSolverInternalVar;
+        if (!newSolver->interToOuterMain.empty()) {
+            newSolverInternalVar = getUpdatedVar(i, newSolver->outerToInterMain);
+        } else {
+            newSolverInternalVar = i;
+        }
+
+        //Is it 0-level assigned in newSolver?
+        lbool val = newSolver->value(newSolverInternalVar);
+        if (val != l_Undef) {
+            assert(newSolver->varData[newSolverInternalVar].level == 0);
+
+            //Use our 'solver'-s notation, i.e. 'var'
+            Var var = vars[i];
+            Lit lit(var, val == l_False);
+            solver->varData[var].removed = Removed::none;
+            savedState[solver->interToOuterMain[var]] = l_Undef;
+            solver->enqueue(lit);
+
+            /*cout
+            << "0-level enqueueing var "
+            << solver->interToOuterMain[var] + 1
+            << endl;*/
+
+            //These vars are not meant to be in the orig solver
+            //so they cannot cause UNSAT
+            solver->ok = (solver->propagate().isNULL());
+            assert(solver->ok);
+        }
+    }
 }
 
 /**
