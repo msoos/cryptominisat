@@ -701,27 +701,24 @@ void VarReplacer::extendModel()
     }
 }
 
-void VarReplacer::replaceChecks(const Lit lit1, const Lit lit2) const
+void VarReplacer::replaceChecks(const Var var1, const Var var2) const
 {
 
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
-    assert(!lit1.sign());
-    assert(!lit2.sign());
-    assert(solver->value(lit1.var()) == l_Undef);
-    assert(solver->value(lit2.var()) == l_Undef);
+    assert(solver->value(var1) == l_Undef);
+    assert(solver->value(var2) == l_Undef);
 
-    assert(solver->varData[lit1.var()].removed == Removed::none
-            || solver->varData[lit1.var()].removed == Removed::queued_replacer);
-    assert(solver->varData[lit2.var()].removed == Removed::none
-            || solver->varData[lit2.var()].removed == Removed::queued_replacer);
+    assert(solver->varData[var1].removed == Removed::none
+            || solver->varData[var1].removed == Removed::queued_replacer);
+    assert(solver->varData[var2].removed == Removed::none
+            || solver->varData[var2].removed == Removed::queued_replacer);
 }
 
 bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
-        //Drup
         (*solver->drup)
         << ~lit1 << lit2 << fin
         << lit1 << ~lit2 << fin
