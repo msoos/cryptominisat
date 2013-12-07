@@ -180,7 +180,6 @@ class Searcher : public HyperEngine
         );
         void finish_up_solve(lbool status);
         void print_solution_varreplace_status() const;
-        void restore_order_heap();
         void setup_restart_print();
         void reduce_db_if_needed();
         void clean_clauses_if_needed();
@@ -627,7 +626,6 @@ class Searcher : public HyperEngine
         friend class CalcDefPolars;
         friend class VarReplacer;
         void filterOrderHeap();
-        void redoOrderHeap();
 
         //For connection with Solver
         void  resetStats();
@@ -816,6 +814,7 @@ class Searcher : public HyperEngine
         ActPolarBackup act_polar_backup;
         void backup_activities_and_polarities();
         void restore_activities_and_polarities();
+        void restore_order_heap();
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap

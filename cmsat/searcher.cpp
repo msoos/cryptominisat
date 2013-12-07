@@ -3123,20 +3123,6 @@ size_t Searcher::memUsed() const
     return mem;
 }
 
-void Searcher::redoOrderHeap()
-{
-    assert(decisionLevel() == 0);
-    order_heap.clear();
-    for(size_t var = 0; var < nVars(); var++) {
-        if (solver->decisionVar[var]
-            && value(var) == l_Undef
-            && (varData[var].removed == Removed::none
-                || varData[var].removed == Removed::queued_replacer)
-        ) {
-            insertVarOrder(var);
-        }
-    }
-}
 
 void Searcher::updateVars(const vector<uint32_t>& interToOuter)
 {
