@@ -101,7 +101,6 @@ public:
     bool simplify();
     void subsumeReds();
     void newVar();
-    void print_elimed_vars() const;
     void updateVars(
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter

@@ -2806,15 +2806,6 @@ void Simplifier::checkElimedUnassignedAndStats() const
     }
 }
 
-void Simplifier::print_elimed_vars() const
-{
-    for(size_t i = 0; i < var_elimed.size(); i++) {
-        if (var_elimed[i]) {
-            cout << "Elimed var: " << i+1 << endl;
-        }
-    }
-}
-
 size_t Simplifier::memUsed() const
 {
     size_t b = 0;
