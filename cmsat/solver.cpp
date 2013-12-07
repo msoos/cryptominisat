@@ -521,7 +521,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //External var number -> Internal var number
     for (Lit& lit: ps) {
-        Lit origLit = lit;
+        const Lit origLit = lit;
 
         //Update variable numbering
         lit = getUpdatedLit(lit, outerToInterMain);
@@ -538,7 +538,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Undo var replacement
     for (Lit& lit: ps) {
-        Lit updated_lit = varReplacer->getLitReplacedWith(lit);
+        const Lit updated_lit = varReplacer->getLitReplacedWith(lit);
         #ifdef VERBOSE_DEBUG
         cout
         << "EqLit updating lit " << lit
