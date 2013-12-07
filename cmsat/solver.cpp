@@ -542,7 +542,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         #ifdef VERBOSE_DEBUG
         cout
         << "EqLit updating lit " << lit
-        << " to lit " << upated_lit
+        << " to lit " << updated_lit
         << endl;
         #endif
         lit = updated_lit;
