@@ -202,29 +202,8 @@ bool CompHandler::handle()
             return false;
         }
 
-        //Check that the newly found solution is really unassigned in the
-        //original solver
-        for (size_t i = 0; i < vars.size(); i++) {
-            Var var = vars[i];
-            if (newSolver.model[updateVar(var)] != l_Undef) {
-                assert(solver->value(var) == l_Undef);
-            }
-        }
-
-        //Save the solution as savedState
-        assert(savedState.size() == solver->nVarsReal());
-        for (size_t i = 0; i < vars.size(); i++) {
-            Var var = vars[i];
-            Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
-            if (newSolver.model[updateVar(var)] != l_Undef) {
-                assert(savedState[outerVar] == l_Undef);
-                assert(compFinder->getVarComp(var) == comp);
-
-                savedState[outerVar] = newSolver.model[updateVar(var)];
-            }
-        }
-
-        //Move decision level 0 vars over
+        check_solution_is_unassigned_in_main_solver(&newSolver, vars);
+        save_solution_to_savedstate(&newSolver, vars, comp);
         move_decision_level_zero_vars_here(&newSolver, vars);
 
         if (solver->conf.verbosity >= 1 && num_comps < 20) {
@@ -270,6 +249,36 @@ bool CompHandler::handle()
     delete compFinder;
     compFinder = NULL;
     return true;
+}
+
+void CompHandler::check_solution_is_unassigned_in_main_solver(
+    const Solver* newSolver
+    , const vector<Var>& vars
+) {
+    for (size_t i = 0; i < vars.size(); i++) {
+        Var var = vars[i];
+        if (newSolver->model[updateVar(var)] != l_Undef) {
+            assert(solver->value(var) == l_Undef);
+        }
+    }
+}
+
+void CompHandler::save_solution_to_savedstate(
+    const Solver* newSolver
+    , const vector<Var>& vars
+    , const uint32_t comp
+) {
+    assert(savedState.size() == solver->nVarsReal());
+    for (size_t i = 0; i < vars.size(); i++) {
+        Var var = vars[i];
+        Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
+        if (newSolver->model[updateVar(var)] != l_Undef) {
+            assert(savedState[outerVar] == l_Undef);
+            assert(compFinder->getVarComp(var) == comp);
+
+            savedState[outerVar] = newSolver->model[updateVar(var)];
+        }
+    }
 }
 
 void CompHandler::move_decision_level_zero_vars_here(

@@ -79,6 +79,15 @@ class CompHandler
             const Solver* newSolver
             , const vector<Var>& vars
         );
+        void save_solution_to_savedstate(
+            const Solver* newSolver
+            , const vector<Var>& vars
+            , const uint32_t comp
+        );
+        void check_solution_is_unassigned_in_main_solver(
+            const Solver* newSolver
+            , const vector<Var>& vars
+        );
 
         void configureNewSolver(
             Solver* newSolver
