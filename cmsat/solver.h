@@ -385,7 +385,6 @@ class Solver : public Searcher
         void freeUnusedWatches();
         void saveVarMem(uint32_t newNumVars);
         void unSaveVarMem();
-        void test_reflectivity_of_renumbering() const;
         size_t calculate_interToOuter_and_outerToInter(
             vector<Var>& outerToInter
             , vector<Var>& interToOuter

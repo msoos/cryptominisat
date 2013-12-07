@@ -20,6 +20,7 @@ struct CNF
 {
     virtual void newVar(bool bva);
     void saveVarMem();
+    void test_reflectivity_of_renumbering() const;
 
     struct BinTriStats
     {

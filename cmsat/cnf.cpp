@@ -62,6 +62,34 @@ void CNF::saveVarMem()
     seen2.shrink_to_fit();
 }
 
+void CNF::test_reflectivity_of_renumbering() const
+{
+    //Test for reflectivity of interToOuterMain & outerToInterMain
+    #ifdef NDEBUG
+    return;
+    #endif
+
+    vector<Var> test(nVarsReal());
+    for(size_t i = 0; i  < nVarsReal(); i++) {
+        test[i] = i;
+    }
+    updateArrayRev(test, interToOuterMain);
+    #ifdef DEBUG_RENUMBER
+    for(size_t i = 0; i < nVarsReal(); i++) {
+        cout << i << ": "
+        << std::setw(2) << test[i] << ", "
+        << std::setw(2) << outerToInterMain[i]
+        << endl;
+    }
+    #endif
+    for(size_t i = 0; i < nVarsReal(); i++) {
+        assert(test[i] == outerToInterMain[i]);
+    }
+    #ifdef DEBUG_RENUMBR
+    cout << "Passed test" << endl;
+    #endif
+}
+
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
