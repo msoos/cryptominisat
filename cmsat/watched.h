@@ -73,7 +73,7 @@ class Watched {
 
         Watched() :
             data1 (std::numeric_limits<uint32_t>::max())
-            , data2(std::numeric_limits<uint32_t>::max())
+            , data2(std::numeric_limits<uint32_t>::max() >> 2)
         {}
 
         /**
