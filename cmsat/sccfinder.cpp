@@ -167,9 +167,9 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     runStats.foundXors++;
                     #ifdef VERBOSE_DEBUG
                     cout << "SCC says: "
-                    << lits[0]
+                    << vars[0] +1
                     << " XOR "
-                    << lits[1]
+                    << vars[1] +1
                     << " = " << !xorEqualsFalse
                     << endl;
                     #endif
