@@ -1052,11 +1052,11 @@ bool Simplifier::simplify()
     if (!propagate()) {
         goto end;
     }
-    solver->clauseCleaner->clean_implicit_clauses();
 
     /*if (solver->conf.doAsymmTE)
         asymmTE();*/
 
+    solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doVarElim) {
         eliminate_empty_resolvent_vars();
         if (!eliminateVars())
