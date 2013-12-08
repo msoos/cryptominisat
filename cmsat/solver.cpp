@@ -3558,3 +3558,9 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 
     return true;
 }
+
+void Solver::new_external_var()
+{
+    newVar(false);
+}
+

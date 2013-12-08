@@ -154,8 +154,8 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
                 exit(-1);
             }
 
-            while (var >= solver->nVars())
-                solver->newVar();
+            while (var >= solver->nVarsReal())
+                solver->new_external_var();
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
@@ -274,7 +274,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
     } else if (debugNewVar && str == "Solver::newVar()") {
-        solver->newVar();
+        solver->new_external_var();
 
         if (solver->getConf().verbosity >= 6) {
             cout << "c Parsed Solver::newVar()" << endl;
@@ -409,7 +409,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     debugLibPart = 1;
     numRedClauses = 0;
     numNormClauses = 0;
-    const uint32_t origNumVars = solver->nVars();
+    const uint32_t origNumVars = solver->nVarsReal();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
@@ -422,7 +422,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
         << " irredundant"
         << endl;
 
-        cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
+        cout << "c -- vars added " << std::setw(10) << (solver->nVarsReal() - origNumVars)
         << endl;
     }
 }

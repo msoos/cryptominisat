@@ -85,7 +85,7 @@ class Solver : public Searcher
 
         //////////////////////////////
         // Problem specification:
-        void newVar(const bool dvar = true, const Var orig_outer = std::numeric_limits<Var>::max());
+        void new_external_var();
         bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
         bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addRedClause(
@@ -270,6 +270,7 @@ class Solver : public Searcher
         void checkImplicitStats() const;
 
     protected:
+        virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
 
         //friend class SQLStats;
         SQLStats* sqlStats;

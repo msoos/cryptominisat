@@ -111,10 +111,6 @@ public:
     );
     ~PropEngine();
 
-    // Variable mode:
-    //
-    virtual void newVar(const bool bva, Var orig_outer);
-
     // Read state:
     //
     uint32_t nAssigns   () const;         ///<The current number of assigned literals.
@@ -130,6 +126,7 @@ public:
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
+    virtual void newVar(const bool bva, Var orig_outer);
     void saveVarMem();
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.

@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_SUITE( assumptions_interface )
 BOOST_AUTO_TEST_CASE(empty)
 {
     Solver s;
-    s.newVar();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     lbool ret = s.solve(&assumps);
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(empty)
 BOOST_AUTO_TEST_CASE(single_true)
 {
     Solver s;
-    s.newVar();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, false));
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(single_true)
 BOOST_AUTO_TEST_CASE(single_false)
 {
     Solver s;
-    s.newVar();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
@@ -43,8 +43,8 @@ BOOST_AUTO_TEST_CASE(single_false)
 BOOST_AUTO_TEST_CASE(binclause_true)
 {
     Solver s;
-    s.newVar();
-    s.newVar();
+    s.new_external_var();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false), Lit(1, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
@@ -57,8 +57,8 @@ BOOST_AUTO_TEST_CASE(binclause_true)
 BOOST_AUTO_TEST_CASE(binclause_false)
 {
     Solver s;
-    s.newVar();
-    s.newVar();
+    s.new_external_var();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false), Lit(1, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(binclause_false)
 BOOST_AUTO_TEST_CASE(replace_true)
 {
     Solver s;
-    s.newVar();
-    s.newVar();
+    s.new_external_var();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false), Lit(1, true)});
     s.addClause(vector<Lit>{Lit(0, true), Lit(1, false)});
     vector<Lit> assumps;
@@ -92,8 +92,8 @@ BOOST_AUTO_TEST_CASE_EXPECTED_FAILURES(replace_false, 2)
 BOOST_AUTO_TEST_CASE(replace_false)
 {
     Solver s;
-    s.newVar();
-    s.newVar();
+    s.new_external_var();
+    s.new_external_var();
     s.addClause(vector<Lit>{Lit(0, false), Lit(1, true)});
     s.addClause(vector<Lit>{Lit(0, true), Lit(1, false)});
 

@@ -167,7 +167,6 @@ class Searcher : public HyperEngine
                 cout << std::right;
             }
         };
-        virtual void newVar(bool bva, Var orig_outer);
 
         ///////////////////////////////
         // Solving
@@ -616,6 +615,7 @@ class Searcher : public HyperEngine
         };
 
     protected:
+        virtual void newVar(bool bva, Var orig_outer);
         void saveVarMem();
         void updateVars(
             const vector<uint32_t>& outerToInter

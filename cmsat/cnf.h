@@ -20,7 +20,6 @@ class ClauseAllocator;
 class CNF
 {
 public:
-    virtual void newVar(bool bva, Var orig_outer);
     void saveVarMem();
     void updateVars(
         const vector<Var>& outerToInter
@@ -74,11 +73,6 @@ public:
     vector<uint16_t> seen;
     vector<uint16_t> seen2;
     vector<Lit>      toClear;
-
-    uint32_t nVars() const
-    {
-        return minNumVars;
-    }
 
     uint32_t nVarsReal() const
     {
@@ -144,12 +138,18 @@ public:
     }
 
 protected:
+    virtual void newVar(bool bva, Var orig_outer);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const
     {
         vector<lbool> back_numbered = solution;
         updateArrayRev(back_numbered, interToOuterMain);
         return back_numbered;
+    }
+
+    uint32_t nVars() const
+    {
+        return minNumVars;
     }
 
 private:
