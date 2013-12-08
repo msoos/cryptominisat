@@ -1074,35 +1074,8 @@ bool Simplifier::simplify()
 
 end:
 
-    if (solver->conf.verbosity >= 6) {
-        cout << "c Deleting blocked clauses for DRUP" << endl;
-    }
-    //Drup -- Remove clauses that have been blocked recently
     if ((*solver->drup).enabled()) {
-        for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
-            if (blockedClauses[i].dummy)
-                continue;
-
-            //If doing stamping or caching, we cannot delete binary redundant
-            //clauses, because they are stored in the stamp/cache and so
-            //will be used -- and DRUP will complain when used
-            if (blockedClauses[i].lits.size() <= 2
-                && (solver->conf.doCache
-                    || solver->conf.doStamp)
-            ) {
-                continue;
-            }
-
-            (*solver->drup) << del;
-            for(vector<Lit>::const_iterator
-                it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
-                ; it != end
-                ; it++
-            ) {
-                (*solver->drup) << *it;
-            }
-            (*solver->drup) << fin;
-        }
+        remove_by_drup_recently_blocked_clauses(origBlockedSize);
     }
 
     finishUp(origTrailSize);
@@ -1172,6 +1145,38 @@ bool Simplifier::unEliminate(Var var)
     }
 
     return solver->okay();
+}
+
+void Simplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSize)
+{
+    if (solver->conf.verbosity >= 6) {
+        cout << "c Deleting blocked clauses for DRUP" << endl;
+    }
+
+    for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
+        if (blockedClauses[i].dummy)
+            continue;
+
+        //If doing stamping or caching, we cannot delete binary redundant
+        //clauses, because they are stored in the stamp/cache and so
+        //will be used -- and DRUP will complain when used
+        if (blockedClauses[i].lits.size() <= 2
+            && (solver->conf.doCache
+                || solver->conf.doStamp)
+        ) {
+            continue;
+        }
+
+        (*solver->drup) << del;
+        for(vector<Lit>::const_iterator
+            it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
+            ; it != end
+            ; it++
+        ) {
+            (*solver->drup) << *it;
+        }
+        (*solver->drup) << fin;
+    }
 }
 
 void Simplifier::buildBlockedMap()

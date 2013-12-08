@@ -457,6 +457,7 @@ private:
     void setLimits();
 
     //Finish-up
+    void remove_by_drup_recently_blocked_clauses(size_t origBlockedSize);
     void addBackToSolver();
     bool check_varelim_when_adding_back_cl(const Clause* cl) const;
     void removeAllLongsFromWatches();
