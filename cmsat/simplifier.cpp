@@ -1066,9 +1066,8 @@ bool Simplifier::simplify()
 
     assert(solver->ok);
 
-    if (solver->conf.do_bounded_variable_addition) {
-        bounded_var_addition();
-    }
+
+    bounded_var_addition();
 
 end:
 
@@ -3028,6 +3027,9 @@ bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_
 
 void Simplifier::bounded_var_addition()
 {
+    if (!solver->conf.do_bounded_variable_addition)
+        return;
+
     if (solver->conf.verbosity >= 3) {
         cout << "c [bva] Running BVA" << endl;
     }
