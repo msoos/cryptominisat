@@ -1059,11 +1059,8 @@ bool Simplifier::simplify()
 
     if (solver->conf.doVarElim) {
         eliminate_empty_resolvent_vars();
-    }
-
-    //If no var elimination is needed, this IS fixedpoint
-    if (solver->conf.doVarElim &&!eliminateVars()) {
-        goto end;
+        if (!eliminateVars())
+            goto end;
     }
 
     assert(solver->ok);
