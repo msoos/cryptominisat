@@ -208,6 +208,12 @@ private:
     void findOrGates();
     void createNewVars();
     size_t num_long_irred_cls(const Lit lit) const;
+    CL_ABST_TYPE calc_abst_of_long_cls(const Lit lit) const;
+    Lit find_matching_pair_er(
+        const Lit lit1
+        , const vector<std::pair<Lit, uint32_t> >& potential_lits
+        , const vector<CL_ABST_TYPE>& absts
+    );
 
     //Helpers to find
     void findOrGates(const bool redGatesToo);

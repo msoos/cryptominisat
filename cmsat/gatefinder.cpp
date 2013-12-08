@@ -26,6 +26,7 @@
 #include "subsumestrengthen.h"
 #include "clauseallocator.h"
 #include <array>
+#include <utility>
 
 using namespace CMSat;
 using std::cout;
@@ -108,26 +109,69 @@ size_t GateFinder::num_long_irred_cls(const Lit lit) const
     return num;
 }
 
+CL_ABST_TYPE GateFinder::calc_abst_of_long_cls(const Lit ws_lit) const
+{
+    CL_ABST_TYPE ret = 0;
+    watch_subarray_const ws_arr = solver->watches[ws_lit.toInt()];
+    for(const Watched& ws: ws_arr) {
+        if (!ws.isClause())
+            continue;
+
+        const Clause& cl = *solver->clAllocator.getPointer(ws.getOffset());
+        if (cl.red())
+            continue;
+
+        if (cl.size() > solver->conf.maxGateBasedClReduceSize)
+            continue;
+
+        for(const Lit lit: cl) {
+            if (lit != ws_lit) {
+                ret |= abst_var(lit.var());
+            }
+        }
+    }
+
+    return ret;
+}
+
 void GateFinder::createNewVars()
 {
     vector<NewGateData> newGates;
     numMaxCreateNewVars = 300LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxCreateNewVars;
+    const double myTime = cpuTime();
 
-    vector<Lit> potential_lits;
+    vector<pair<Lit, uint32_t> > potential_lits;
     for(size_t i = 0; i < 2*solver->nVars(); i++) {
-        const Lit lit(i/2, i %2);
+        const Lit lit = Lit::toLit(i);
+         if (solver->value(lit) != l_Undef
+            || solver->varData[lit.var()].removed != Removed::none
+         ) {
+             continue;
+         }
+
         size_t num = num_long_irred_cls(lit);
         //size_t num = solver->watches[lit.toInt()].size();
         if (num > 3) {
             //Have to invert it, since this is an AND gate, so ~a = ~b AND ~c
-            potential_lits.push_back(~lit);
+            potential_lits.push_back(std::make_pair(lit, num));
         }
     }
     if (potential_lits.size() < 2)
         return;
 
     cout << "Lits size: " << potential_lits.size() << endl;
+    std::sort(potential_lits.begin(), potential_lits.end(),
+        [](const pair<Lit, uint32_t>& a, const pair<Lit, uint32_t>& b) {
+            return (a.second > b.second);
+    });
+
+    vector<CL_ABST_TYPE> absts;
+    for(size_t i = 0; i < 2*solver->nVars(); i++) {
+        const Lit lit = Lit::toLit(i);
+        const CL_ABST_TYPE abst = calc_abst_of_long_cls(lit);
+        absts.push_back(abst);
+    }
 
     size_t tries = 0;
     while(true) {
@@ -135,24 +179,13 @@ void GateFinder::createNewVars()
             break;
 
         //Pick sign randomly
-        Lit lit1 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)];
-        Lit lit2 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)];
-        if (solver->value(lit1) != l_Undef
-            || solver->varData[lit1.var()].removed != Removed::none
-        ) {
-            continue;
-        }
-
-        if (solver->value(lit2) != l_Undef
-            || solver->varData[lit2.var()].removed != Removed::none
-        ) {
-            continue;
-        }
-
-        if (lit1.var() == lit2.var())
-            continue;
-
+        //Lit lit1 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)].first;
+        Lit lit1 = potential_lits[(tries/3) % potential_lits.size()].first;
+        Lit lit2 = find_matching_pair_er(lit1, potential_lits, absts);
         tries++;
+        if (lit2 == lit_Undef)
+            continue;
+
         if (tries % 100000 == 0) {
             cout << "trying " << tries << endl;
         }
@@ -163,7 +196,7 @@ void GateFinder::createNewVars()
 
         //See how many clauses this binary gate would allow us to remove
         uint32_t reduction = 0;
-        OrGate gate(Lit(0,false), lit1, lit2, false);
+        OrGate gate(Lit(0,false), ~lit1, ~lit2, false);
         remove_clauses_using_and_gate(gate, false, true, reduction);
         remove_clauses_using_and_gate_tri(gate, false, true, reduction);
 
@@ -176,6 +209,7 @@ void GateFinder::createNewVars()
             //newGates.push_back(NewGateData(lit1, lit2, subs.size(), potential));
         }
     }
+    cout << "Potential time: " << (cpuTime() - myTime) << endl;
 
     /*if (solver->conf.verbosity >= 1) {
         cout
@@ -187,6 +221,43 @@ void GateFinder::createNewVars()
     runStats.erTime += cpuTime() - myTime;*/
 
     //return addedVars;
+}
+
+Lit GateFinder::find_matching_pair_er(
+    const Lit lit1
+    , const vector<pair<Lit, uint32_t> >& potential_lits
+    , const vector<CL_ABST_TYPE>& absts
+) {
+    size_t wrong = 0;
+    for(size_t i = 0; i < potential_lits.size(); i++) {
+        *simplifier->limit_to_decrease -= 3;
+        const Lit lit2 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)].first;
+        if (lit1.var() == lit2.var()) {
+            //return lit_Undef;
+            continue;
+        }
+
+        assert(solver->value(lit1) == l_Undef);
+        assert(solver->value(lit2) == l_Undef);
+        assert(solver->varData[lit1.var()].removed == Removed::none);
+        assert(solver->varData[lit2.var()].removed == Removed::none);
+
+        CL_ABST_TYPE common_abst = absts[lit1.toInt()] & absts[lit2.toInt()];
+        const int num_bits_common = __builtin_popcount(common_abst);
+        if (num_bits_common <= 2) {
+            //2 is too low for a long clause, 3 is a must
+
+            //return lit_Undef;
+            wrong++;
+            if (wrong > 20)
+                return lit_Undef;
+            continue;
+        }
+
+        return lit2;
+    }
+
+    return lit_Undef;
 }
 
 void GateFinder::findOrGates()
