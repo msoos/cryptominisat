@@ -25,7 +25,6 @@ void CNF::newVar(const bool bva, const Var orig_outer)
 
     if (orig_outer == std::numeric_limits<Var>::max()) {
         enlarge_nonminimial_datastructs();
-        varData[nVars()-1].is_bva = bva;
 
         Var minVar = nVars()-1;
         Var maxVar = nVarsReal()-1;
@@ -39,6 +38,7 @@ void CNF::newVar(const bool bva, const Var orig_outer)
         outerToInterMain[x] = maxVar;
 
         swapVars(nVarsReal()-1);
+        varData[nVars()-1].is_bva = bva;
     } else {
         assert(orig_outer < nVarsReal());
 
