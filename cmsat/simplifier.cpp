@@ -1025,7 +1025,6 @@ bool Simplifier::simplify()
             goto end;
     }
 
-    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     origTrailSize = solver->trail.size();
 
     //Do subsumption & var-elim in loop
