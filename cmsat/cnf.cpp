@@ -132,6 +132,14 @@ void CNF::test_reflectivity_of_renumbering() const
     #endif
 }
 
+void CNF::updateVars(
+    const vector<Var>& outerToInter
+    , const vector<Var>& interToOuter
+) {
+    updateArray(interToOuterMain, interToOuter);
+    updateArrayMapCopy(outerToInterMain, outerToInter);
+}
+
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
@@ -242,3 +250,10 @@ void CNF::remove_tri_but_lit1(
     }
 }
 
+size_t CNF::get_renumber_mem() const
+{
+    size_t mem = 0;
+    mem += interToOuterMain.capacity()*sizeof(Var);
+    mem += outerToInterMain.capacity()*sizeof(Var);
+    return mem;
+}

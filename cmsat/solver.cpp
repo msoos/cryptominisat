@@ -848,8 +848,7 @@ void Solver::renumberVariables()
     }
 
     //Update updater data
-    updateArray(interToOuterMain, interToOuter);
-    updateArrayMapCopy(outerToInterMain, outerToInter);
+    CNF::updateVars(outerToInter, interToOuter);
 
     //Update local data
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
@@ -2313,9 +2312,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = 0;
-    mem += interToOuterMain.capacity()*sizeof(Var);
-    mem += outerToInterMain.capacity()*sizeof(Var);
+    mem = CNF::get_renumber_mem();
     printStatsLine("c Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"

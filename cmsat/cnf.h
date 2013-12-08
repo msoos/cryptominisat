@@ -24,6 +24,11 @@ struct CNF
     void swapVars(const Var which);
     void saveVarMem();
     void test_reflectivity_of_renumbering() const;
+    void updateVars(
+        const vector<Var>& outerToInter
+        , const vector<Var>& interToOuter
+    );
+    size_t get_renumber_mem() const;
 
     struct BinTriStats
     {
