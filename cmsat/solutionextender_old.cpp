@@ -399,7 +399,7 @@ bool SolutionExtender::propagateCl(
     if (solver->varData[blockedOn.var()].level == 0) {
         cout
         << "!! Flip 0-level var:"
-        << solver->interToOuterMain[blockedOn.var()]
+        << solver->map_inter_to_outer(blockedOn.var()) + 1
         << endl;
     }
 

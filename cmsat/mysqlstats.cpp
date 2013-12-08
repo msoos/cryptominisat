@@ -947,7 +947,7 @@ void MySQLStats::varDataDump(
 
         stmtVar->varInitID = id;
         //Back-number variables
-        stmtVar->data[at].var = solver->getInterToOuterMain()[var];
+        stmtVar->data[at].var = solver->map_inter_to_outer(var);
 
         //Overall stats
         stmtVar->data[at].posPolarSet = varData[var].stats.posPolarSet;

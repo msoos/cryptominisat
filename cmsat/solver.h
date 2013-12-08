@@ -601,7 +601,7 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
 {
     tmpCl.clear();
     for(size_t i = 0; i < cl.size(); i++) {
-        tmpCl.push_back(getUpdatedLit(cl[i], interToOuterMain));
+        tmpCl.push_back(map_inter_to_outer(cl[i]));
     }
 
     return tmpCl;

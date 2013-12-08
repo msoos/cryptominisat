@@ -525,7 +525,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         const Lit origLit = lit;
 
         //Update variable numbering
-        lit = getUpdatedLit(lit, outerToInterMain);
+        lit = solver->map_outer_to_inter(lit);
 
         if (conf.verbosity >= 12) {
             cout
@@ -551,9 +551,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     for(Lit& lit: ps) {
         if (lit.var() >= nVars()) {
-            const Var outer = interToOuterMain[lit.var()];
+            const Var outer = map_inter_to_outer(lit.var());
             newVar(false, outer);
-            lit = Lit(outerToInterMain[outer], lit.sign());
+            lit = Lit(map_outer_to_inter(outer), lit.sign());
         }
     }
 
@@ -1425,7 +1425,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 void Solver::extend_solution()
 {
     checkStats();
-    updateArrayRev(solution, interToOuterMain);
+    solution = solver->back_number_solution(solution);
 
     //Extend solution to stored solution in component handler
     if (conf.doCompHandler) {
@@ -1564,7 +1564,7 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         //update_conflict_to_orig_assumptions();
 
         //Back-number the conflict
-        updateLitsMap(conflict, interToOuterMain);
+        solver->map_inter_to_outer(conflict);
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
@@ -2404,8 +2404,8 @@ void Solver::dumpBinClauses(
 
                 if (toDump) {
                     tmpCl.clear();
-                    tmpCl.push_back(getUpdatedLit(it2->lit2(), interToOuterMain));
-                    tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
+                    tmpCl.push_back(map_inter_to_outer(it2->lit2()));
+                    tmpCl.push_back(map_inter_to_outer(lit));
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
@@ -2444,9 +2444,9 @@ void Solver::dumpTriClauses(
 
                 if (toDump) {
                     tmpCl.clear();
-                    tmpCl.push_back(getUpdatedLit(it2->lit2(), interToOuterMain));
-                    tmpCl.push_back(getUpdatedLit(it2->lit3(), interToOuterMain));
-                    tmpCl.push_back(getUpdatedLit(lit, interToOuterMain));
+                    tmpCl.push_back(map_inter_to_outer(it2->lit2()));
+                    tmpCl.push_back(map_inter_to_outer(it2->lit3()));
+                    tmpCl.push_back(map_inter_to_outer(lit));
                     std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
@@ -2523,7 +2523,7 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
     for(size_t i = 0; i < assigns.size(); i++) {
         if (assigns[i] != l_Undef) {
             Lit lit(i, assigns[i] == l_False);
-            lit = getUpdatedLit(lit, interToOuterMain);
+            lit = map_inter_to_outer(lit);
             *os << lit << " 0\n";
         }
     }

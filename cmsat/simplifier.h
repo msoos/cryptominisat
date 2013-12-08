@@ -70,14 +70,12 @@ struct BlockedClause {
     BlockedClause(
         const Lit _blockedOn
         , const vector<Lit>& _lits
-        , const vector<uint32_t>& interToOuterMain
     ) :
-        blockedOn( getUpdatedLit(_blockedOn, interToOuterMain))
+        blockedOn(_blockedOn)
         , toRemove(false)
         , lits(_lits)
         , dummy(false)
     {
-        updateLitsMap(lits, interToOuterMain);
     }
 
     Lit blockedOn;
@@ -514,6 +512,7 @@ private:
     uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
+    void        add_clause_to_blck(Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const Var var, const Lit lit);
     bool        can_eliminate_var(const Var var) const;
 

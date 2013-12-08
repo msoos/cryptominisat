@@ -10,20 +10,18 @@
 #include "watcharray.h"
 #include "drup.h"
 #include "clauseallocator.h"
+#include "varupdatehelper.h"
 
 namespace CMSat {
 using namespace CMSat;
 
 class ClauseAllocator;
 
-struct CNF
+class CNF
 {
+public:
     virtual void newVar(bool bva, Var orig_outer);
-    void enlarge_minimal_datastructs();
-    void enlarge_nonminimial_datastructs();
-    void swapVars(const Var which);
     void saveVarMem();
-    void test_reflectivity_of_renumbering() const;
     void updateVars(
         const vector<Var>& outerToInter
         , const vector<Var>& interToOuter
@@ -70,8 +68,6 @@ struct CNF
     BinTriStats binTri;
     LitStats litStats;
     Drup* drup;
-    vector<Var> outerToInterMain;
-    vector<Var> interToOuterMain;
     vector<char> bva_var;
 
     //Temporaries
@@ -126,6 +122,43 @@ struct CNF
         , const bool red
         , int64_t& timeAvailable
     );
+    Var map_inter_to_outer(const Var inter) const
+    {
+        return interToOuterMain[inter];
+    }
+    Lit map_inter_to_outer(const Lit lit) const
+    {
+        return Lit(interToOuterMain[lit.var()], lit.sign());
+    }
+    Var map_outer_to_inter(const Var outer) const
+    {
+        return outerToInterMain[outer];
+    }
+    Lit map_outer_to_inter(const Lit outer) const
+    {
+        return Lit(outerToInterMain[outer.var()], outer.sign());
+    }
+    void map_inter_to_outer(vector<Lit>& lits) const
+    {
+        updateLitsMap(lits, interToOuterMain);
+    }
+
+protected:
+    void test_reflectivity_of_renumbering() const;
+    vector<lbool> back_number_solution(const vector<lbool>& solution) const
+    {
+        vector<lbool> back_numbered = solution;
+        updateArrayRev(back_numbered, interToOuterMain);
+        return back_numbered;
+    }
+
+private:
+    void enlarge_minimal_datastructs();
+    void enlarge_nonminimial_datastructs();
+    void swapVars(const Var which);
+
+    vector<Var> outerToInterMain;
+    vector<Var> interToOuterMain;
 };
 
 template<class Function>

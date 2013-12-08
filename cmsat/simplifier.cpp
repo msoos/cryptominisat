@@ -160,7 +160,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef
     for(size_t i = 0; i < solver->nVarsReal(); i++) {
-        const Var outer = solver->interToOuterMain[i];
+        const Var outer = solver->map_inter_to_outer(i);
         assert(solver->varData[i].removed != Removed::elimed
             || (solver->value(i) == l_Undef && solver->model[outer] == l_Undef)
         );
@@ -1097,7 +1097,7 @@ bool Simplifier::unEliminate(Var var)
     }
 
     //Find if variable is really needed to be eliminated
-    var = getUpdatedVar(var, solver->interToOuterMain);
+    var = solver->map_inter_to_outer(var);
     map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
     if (it == blk_var_to_cl.end())
         return solver->okay();
@@ -1598,7 +1598,7 @@ void Simplifier::cleanBlockedClauses()
         ; i != end
         ; i++, at++
     ) {
-        const Var blockedOn = getUpdatedVar(i->blockedOn.var(), solver->outerToInterMain);
+        const Var blockedOn = solver->map_outer_to_inter(i->blockedOn.var());
         if (solver->varData[blockedOn].removed == Removed::elimed
             && solver->value(blockedOn) != l_Undef
         ) {
@@ -1649,7 +1649,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
-                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
+                add_clause_to_blck(lit, lits);
             } else {
                 red = true;
                 runStats.longRedClRemThroughElim++;
@@ -1676,9 +1676,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             lits[0] = lit;
             lits[1] = watch.lit2();
             if (!watch.red()) {
-                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
-
-                //touch removed lits
+                add_clause_to_blck(lit, lits);
                 touched.touch(watch.lit2());
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
@@ -1715,9 +1713,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             lits[1] = watch.lit2();
             lits[2] = watch.lit3();
             if (!watch.red()) {
-                blockedClauses.push_back(BlockedClause(lit, lits, solver->interToOuterMain));
-
-                //Touch removed lits
+                add_clause_to_blck(lit, lits);
                 touched.touch(watch.lit2());
                 touched.touch(watch.lit3());
             } else {
@@ -1742,6 +1738,14 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
     }
 
     return blockedClauses.size() - orig_blocked_cls_size;
+}
+
+void Simplifier::add_clause_to_blck(Lit lit, const vector<Lit>& lits)
+{
+    lit = solver->map_inter_to_outer(lit);
+    vector<Lit> lits_outer = lits;
+    solver->map_inter_to_outer(lits_outer);
+    blockedClauses.push_back(BlockedClause(lit, lits_outer));
 }
 
 uint32_t Simplifier::numIrredBins(const Lit lit) const
@@ -2053,7 +2057,9 @@ void Simplifier::print_var_elim_complexity_stats(const Var var) const
 void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
 {
     if (solver->conf.verbosity >= 5) {
-        cout << "Elimination of var " <<  getUpdatedLit(lit, solver->interToOuterMain) << " finished " << endl;
+        cout << "Elimination of var "
+        <<  solver->map_inter_to_outer(lit)
+        << " finished " << endl;
     }
     solver->varData[var].removed = Removed::elimed;
     runStats.numVarsElimed++;
@@ -2063,7 +2069,7 @@ void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
 void Simplifier::create_dummy_blocked_clause(const Lit lit)
 {
     blockedClauses.push_back(
-        BlockedClause(getUpdatedLit(lit, solver->interToOuterMain))
+        BlockedClause(solver->map_inter_to_outer(lit))
     );
 }
 

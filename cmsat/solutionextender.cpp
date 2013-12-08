@@ -48,11 +48,11 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
     << "dummy blocked lit "
-    << getUpdatedLit(blockedOn, solver->interToOuterMain)
+    << solver->map_inter_to_outer(blockedOn)
     << endl;
     #endif
 
-    const Var blockedOn_inter = solver->outerToInterMain[blockedOn.var()];
+    const Var blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
 
     //Oher blocked clauses set its value already
@@ -70,7 +70,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
-    const Var blocked_on_inter = getUpdatedVar(blockedOn.var(), solver->outerToInterMain);
+    const Var blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
     if (satisfied(lits))
@@ -78,7 +78,7 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     for(Lit lit: lits) {
-        Lit lit_inter = getUpdateLit(lit, solver->outerToInterMain);
+        Lit lit_inter = solver->map_outer_to_inter(lit);
         cout
         << lit << ": " << solver->modelValue(lit)
         << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"

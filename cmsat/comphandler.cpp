@@ -195,7 +195,7 @@ bool CompHandler::solve_component(
     //Sort and renumber
     std::sort(vars.begin(), vars.end());
     /*for(Var var: vars) {
-        cout << "var in component: " << solver->interToOuterMain[var] + 1 << endl;
+        cout << "var in component: " << solver->map_inter_to_outer(var) + 1 << endl;
     }*/
     createRenumbering(vars);
 
@@ -255,7 +255,7 @@ void CompHandler::check_local_vardata_sanity()
     //correct 'removed' flags, and none have been assigned
 
     for (Var var = 0; var < solver->nVars(); var++) {
-        const Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
+        const Var outerVar = solver->map_inter_to_outer(var);
         if (savedState[outerVar] != l_Undef) {
             assert(solver->varData[var].is_decision == false);
             assert(solver->varData[var].removed == Removed::decomposed);
@@ -284,7 +284,7 @@ void CompHandler::save_solution_to_savedstate(
     assert(savedState.size() == solver->nVarsReal());
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
-        Var outerVar = getUpdatedVar(var, solver->interToOuterMain);
+        Var outerVar = solver->map_inter_to_outer(var);
         if (newSolver->model[updateVar(var)] != l_Undef) {
             assert(savedState[outerVar] == l_Undef);
             assert(compFinder->getVarComp(var) == comp);
@@ -301,14 +301,7 @@ void CompHandler::move_decision_level_zero_vars_here(
     assert(newSolver->decisionLevel() == 0);
     assert(solver->decisionLevel() == 0);
     for (size_t i = 0; i < vars.size(); i++) {
-        //This is *tricky*. The newSolver might have internally re-numbered
-        //the variables, so we must take this into account
-        Var newSolverInternalVar;
-        if (!newSolver->interToOuterMain.empty()) {
-            newSolverInternalVar = getUpdatedVar(i, newSolver->outerToInterMain);
-        } else {
-            newSolverInternalVar = i;
-        }
+        Var newSolverInternalVar = newSolver->map_outer_to_inter(i);
 
         //Is it 0-level assigned in newSolver?
         lbool val = newSolver->value(newSolverInternalVar);
@@ -319,12 +312,13 @@ void CompHandler::move_decision_level_zero_vars_here(
             Var var = vars[i];
             Lit lit(var, val == l_False);
             solver->varData[var].removed = Removed::none;
-            savedState[solver->interToOuterMain[var]] = l_Undef;
+            const Var outer = solver->map_inter_to_outer(var);
+            savedState[outer] = l_Undef;
             solver->enqueue(lit);
 
             /*cout
             << "0-level enqueueing var "
-            << solver->interToOuterMain[var] + 1
+            << outer + 1
             << endl;*/
 
             //These vars are not meant to be in the orig solver
@@ -390,7 +384,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
         //Remove from old solver
         if (solver->varData[var].is_decision) {
-            decisionVarRemoved.push_back(getUpdatedVar(var, solver->interToOuterMain));
+            decisionVarRemoved.push_back(solver->map_inter_to_outer(var));
         }
         solver->unsetDecisionVar(var);
         solver->varData[var].removed = Removed::decomposed;
@@ -684,7 +678,7 @@ void CompHandler::addSavedState(vector<lbool>& solution)
     assert(solution.size() == solver->nVarsReal());
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
-            const Var interVar = getUpdatedVar(var, solver->outerToInterMain);
+            const Var interVar = solver->map_outer_to_inter(var);
             assert(solver->varData[interVar].removed == Removed::decomposed);
             assert(solver->varData[interVar].is_decision == false);
 
@@ -705,7 +699,7 @@ void CompHandler::saveClause(const T& lits)
     //to update the variables every time the internal variable numbering changes
     for (const Lit lit : lits ) {
         removedClauses.lits.push_back(
-            getUpdatedLit(lit, solver->interToOuterMain)
+            solver->map_inter_to_outer(lit)
         );
     }
     removedClauses.sizes.push_back(lits.size());
@@ -725,7 +719,7 @@ void CompHandler::readdRemovedClauses()
 
     //Re-set them to be decision vars
     for (const Var var: decisionVarRemoved) {
-        const Var intervar = getUpdatedVar(var, solver->outerToInterMain);
+        const Var intervar = solver->map_outer_to_inter(var);
         solver->setDecisionVar(intervar);
     }
     decisionVarRemoved.clear();

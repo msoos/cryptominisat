@@ -201,8 +201,8 @@ bool VarReplacer::performReplace()
         it = table.begin(); it != table.end()
         ; it++, var++
     ) {
-        const Var orig = solver->outerToInterMain[var];
-        const Var repl = solver->outerToInterMain[it->var()];
+        const Var orig = solver->map_outer_to_inter(var);
+        const Var repl = solver->map_outer_to_inter(it->var());
         update_vardata_and_activities(orig, repl);
     }
 
@@ -671,7 +671,7 @@ bool VarReplacer::handleUpdatedClause(
 void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_var)
 {
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
-    const Var sub_var_inter = solver->outerToInterMain[sub_var];
+    const Var sub_var_inter = solver->map_outer_to_inter(sub_var);
     if (solver->model[sub_var] != l_Undef) {
         assert(solver->varData[sub_var_inter].removed == Removed::queued_replacer
             || solver->varData[sub_var_inter].removed == Removed::replaced
@@ -866,8 +866,8 @@ bool VarReplacer::replace(
     solver->varData[lit1.var()].removed = Removed::queued_replacer;
     solver->varData[lit2.var()].removed = Removed::queued_replacer;
 
-    const Lit lit1_outer = getUpdatedLit(lit1, solver->interToOuterMain);
-    const Lit lit2_outer = getUpdatedLit(lit2, solver->interToOuterMain);
+    const Lit lit1_outer = solver->map_inter_to_outer(lit1);
+    const Lit lit2_outer = solver->map_inter_to_outer(lit2);
     return update_table_and_reversetable(lit1_outer, lit2_outer);
 }
 
@@ -1121,14 +1121,14 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
 
 Lit VarReplacer::getLitReplacedWith(Lit lit) const
 {
-    lit = getUpdatedLit(lit, solver->interToOuterMain);
+    lit = solver->map_inter_to_outer(lit);
     Lit lit2 = table[lit.var()] ^ lit.sign();
-    return getUpdatedLit(lit2, solver->outerToInterMain);
+    return solver->map_outer_to_inter(lit2);
 }
 
 Var VarReplacer::getVarReplacedWith(Var var) const
 {
-    var = solver->interToOuterMain[var];
+    var = solver->map_inter_to_outer(var);
     Var var2 = table[var].var();
-    return solver->outerToInterMain[var2];
+    return solver->map_outer_to_inter(var2);
 }

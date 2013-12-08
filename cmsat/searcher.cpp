@@ -932,7 +932,7 @@ void Searcher::handle_longest_decision_trail()
 
         for(Lit lit: longest_dec_trail) {
             cout
-            << getUpdatedLit(lit, interToOuterMain) << " ";
+            << solver->map_inter_to_outer(lit) << " ";
         }
         cout << endl;
 
