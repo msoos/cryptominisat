@@ -208,6 +208,8 @@ private:
     void findOrGates();
     void link_in_gate(const OrGate& gate);
     void createNewVars();
+    void check_literal_is_good_for_er(const Lit lit) const;
+    void add_er_gate(const OrGate gate);
     size_t num_long_irred_cls(const Lit lit) const;
     CL_ABST_TYPE calc_abst_of_long_cls(const Lit lit) const;
     Lit find_matching_pair_er(

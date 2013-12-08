@@ -136,8 +136,7 @@ CL_ABST_TYPE GateFinder::calc_abst_of_long_cls(const Lit ws_lit) const
 
 void GateFinder::createNewVars()
 {
-    vector<NewGateData> newGates;
-    numMaxCreateNewVars = 300LL*1000LL*1000LL;
+    numMaxCreateNewVars = 120LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxCreateNewVars;
     const double myTime = cpuTime();
 
@@ -153,14 +152,13 @@ void GateFinder::createNewVars()
         size_t num = num_long_irred_cls(lit);
         //size_t num = solver->watches[lit.toInt()].size();
         if (num > 3) {
-            //Have to invert it, since this is an AND gate, so ~a = ~b AND ~c
             potential_lits.push_back(std::make_pair(lit, num));
         }
     }
     if (potential_lits.size() < 2)
         return;
 
-    cout << "Lits size: " << potential_lits.size() << endl;
+    cout << "c [er] Lits size: " << potential_lits.size() << endl;
     std::sort(potential_lits.begin(), potential_lits.end(),
         [](const pair<Lit, uint32_t>& a, const pair<Lit, uint32_t>& b) {
             return (a.second > b.second);
@@ -174,9 +172,9 @@ void GateFinder::createNewVars()
     }
 
     size_t tries = 0;
-    while(true) {
-        if (*simplifier->limit_to_decrease < 0)
-            break;
+    size_t added = 0;
+    size_t total_reduction = 0;
+    while(*simplifier->limit_to_decrease > 0) {
 
         //Pick sign randomly
         //Lit lit1 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)].first;
@@ -186,7 +184,7 @@ void GateFinder::createNewVars()
         if (lit2 == lit_Undef)
             continue;
 
-        if (tries % 100000 == 0) {
+        if (solver->conf.verbosity >= 5 && tries % 100000 == 0) {
             cout << "trying " << tries << endl;
         }
 
@@ -196,31 +194,52 @@ void GateFinder::createNewVars()
 
         //See how many clauses this binary gate would allow us to remove
         uint32_t reduction = 0;
-        OrGate gate(Lit(0,false), ~lit1, ~lit2, false);
+        OrGate gate(lit_Undef, ~lit1, ~lit2, false);
         remove_clauses_using_and_gate(gate, false, true, reduction);
         remove_clauses_using_and_gate_tri(gate, false, true, reduction);
 
         //If we find the above to be adequate, then this should be a new gate
         if (reduction > 3) {
-            cout << "Potential for reduction: "
-            << reduction
-            << " lit1: " << lit1 << " lit2: " << lit2
-            << endl;
-            //newGates.push_back(NewGateData(lit1, lit2, subs.size(), potential));
+            solver->newVar(true);
+            const Var newVar = solver->nVars()-1;
+            //Have to invert it, because we want to make an AND gate
+            OrGate gate(Lit(newVar, false), ~lit1, ~lit2, false);
+            add_er_gate(gate);
+            link_in_gate(gate);
+            reduction = 0;
+            remove_clauses_using_and_gate(gate, true, false, reduction);
+            remove_clauses_using_and_gate_tri(gate, true, false, reduction);
+            total_reduction += reduction;
+            added++;
         }
     }
-    cout << "Potential time: " << (cpuTime() - myTime) << endl;
 
-    /*if (solver->conf.verbosity >= 1) {
-        cout
-        << "c Added vars :" << addedVars
-        << " tried: " << tries
-        << " time: " << (cpuTime() - myTime) << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [er] T: " << (cpuTime() - myTime)
+        << " vars: " << added
+        << " reduce: " << total_reduction
+        << endl;
     }
-    runStats.numERVars += addedVars;
-    runStats.erTime += cpuTime() - myTime;*/
+    runStats.numERVars += added;
+    runStats.erTime += cpuTime() - myTime;
+}
 
-    //return addedVars;
+void GateFinder::add_er_gate(const OrGate gate)
+{
+    check_literal_is_good_for_er(gate.lit1);
+    check_literal_is_good_for_er(gate.lit2);
+    check_literal_is_good_for_er(gate.eqLit);
+    assert(solver->varData[gate.eqLit.var()].is_bva == true);
+
+    solver->attachBinClause(gate.eqLit, ~gate.lit1, false);
+    solver->attachBinClause(gate.eqLit, ~gate.lit2, false);
+    solver->attachTriClause(~gate.eqLit, gate.lit1, gate.lit2, false);
+}
+
+void GateFinder::check_literal_is_good_for_er(const Lit lit) const
+{
+    assert(solver->value(lit) == l_Undef);
+    assert(solver->varData[lit.var()].removed == Removed::none);
 }
 
 Lit GateFinder::find_matching_pair_er(
@@ -229,7 +248,10 @@ Lit GateFinder::find_matching_pair_er(
     , const vector<CL_ABST_TYPE>& absts
 ) {
     size_t wrong = 0;
-    for(size_t i = 0; i < potential_lits.size(); i++) {
+    for(size_t i = 0
+        ; i < potential_lits.size() && *simplifier->limit_to_decrease > 0
+        ; i++
+    ) {
         *simplifier->limit_to_decrease -= 3;
         const Lit lit2 = potential_lits[solver->mtrand.randInt(potential_lits.size()-1)].first;
         if (lit1.var() == lit2.var()) {
