@@ -1017,12 +1017,13 @@ bool Simplifier::simplify()
     }
     #endif
 
+    /*if (solver->conf.doAsymmTE) {
+        asymmTE();
+    }*/
+
     if (!propagate()) {
         goto end;
     }
-
-    /*if (solver->conf.doAsymmTE)
-        asymmTE();*/
 
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doVarElim) {
