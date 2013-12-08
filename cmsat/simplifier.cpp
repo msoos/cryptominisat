@@ -1209,13 +1209,11 @@ void Simplifier::finishUp(
     }
 
     //Add back clauses to solver
+    propagate();
     removeAllLongsFromWatches();
     addBackToSolver();
-
-    //We can now propagate from solver
-    //since the clauses are now back normally
+    propagate();
     if (solver->ok) {
-        solver->ok = solver->propagate().isNULL();
         solver->clauseCleaner->removeAndCleanAll();
     }
 
