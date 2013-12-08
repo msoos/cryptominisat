@@ -729,7 +729,8 @@ end:
 
 bool Simplifier::propagate()
 {
-    assert(solver->ok);
+    if (!solver->okay())
+        return false;
 
     while (solver->qhead < solver->trail.size()) {
         const Lit p = solver->trail[solver->qhead];
