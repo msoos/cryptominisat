@@ -89,6 +89,10 @@ void CNF::enlarge_minimal_datastructs()
 
 void CNF::saveVarMem()
 {
+    //never resize varData --> contains info about what is replaced/etc.
+    //never resize assigns --> contains 0-level assigns
+    //never resize interToOuterMain, outerToInterMain
+
     watches.resize(nVars()*2);
     watches.consolidate();
     implCache.saveVarMems(nVars());

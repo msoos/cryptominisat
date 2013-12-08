@@ -956,9 +956,6 @@ void Solver::newVar(const bool bva, const Var orig_outer)
 
 void Solver::saveVarMem(const uint32_t newNumVars)
 {
-    //never resize varData --> contains info about what is replaced/etc.
-    //never resize assigns --> contains 0-level assigns
-    //never resize interToOuterMain, outerToInterMain
     //TODO should we resize assumptionsSet ??
 
     //printMemStats();
