@@ -1424,7 +1424,6 @@ void Solver::check_minimization_effectiveness(const lbool status)
 
 void Solver::extend_solution()
 {
-    //If literal stats are wrong, the solution is probably wrong
     checkStats();
     updateArrayRev(solution, interToOuterMain);
 
