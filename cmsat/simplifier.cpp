@@ -732,7 +732,7 @@ bool Simplifier::propagate()
     assert(solver->ok);
 
     while (solver->qhead < solver->trail.size()) {
-        Lit p = solver->trail[solver->qhead];
+        const Lit p = solver->trail[solver->qhead];
         solver->qhead++;
         watch_subarray ws = solver->watches[(~p).toInt()];
 
