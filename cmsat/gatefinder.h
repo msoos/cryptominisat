@@ -206,6 +206,7 @@ private:
 
     //Each algo
     void findOrGates();
+    void link_in_gate(const OrGate& gate);
     void createNewVars();
     size_t num_long_irred_cls(const Lit lit) const;
     CL_ABST_TYPE calc_abst_of_long_cls(const Lit lit) const;

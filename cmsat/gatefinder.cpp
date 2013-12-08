@@ -586,29 +586,30 @@ void GateFinder::findOrGate(
     if (!isEqual)
         return;
 
-    //Create gate
     OrGate gate(eqLit, lit1, lit2, wasRed);
 
     //Find if there are any gates that are the same
     for (uint32_t at: gateOccEq[gate.eqLit.toInt()]) {
-        //The same gate? Then froget about this
         if (orGates[at] == gate)
             return;
     }
-
-    //Add gate
-    const size_t at = orGates.size();
-    orGates.push_back(gate);
-    gateOccEq[gate.eqLit.toInt()].push_back(at);
-    if (!wasRed) {
-        for (Lit lit: std::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
-            gateOcc[lit.toInt()].push_back(at);
-        }
-    }
+    link_in_gate(gate);
 
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "Found gate : " << gate << endl;
     #endif
+}
+
+void GateFinder::link_in_gate(const OrGate& gate)
+{
+    const size_t at = orGates.size();
+    orGates.push_back(gate);
+    gateOccEq[gate.eqLit.toInt()].push_back(at);
+    if (!gate.red) {
+        for (Lit lit: std::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
+            gateOcc[lit.toInt()].push_back(at);
+        }
+    }
 }
 
 bool GateFinder::shortenWithOrGate(const OrGate& gate)
