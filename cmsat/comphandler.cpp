@@ -344,7 +344,7 @@ void CompHandler::configureNewSolver(
         newSolver->conf.doCache = false;
         newSolver->conf.doProbe = false;
         newSolver->conf.otfHyperbin = false;
-        newSolver->conf.verbosity = std::min(solver->conf.verbosity, 1);
+        newSolver->conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
 
     //To small, don't clogger up the screen
