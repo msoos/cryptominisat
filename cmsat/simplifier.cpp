@@ -748,12 +748,12 @@ bool Simplifier::propagate()
             }
 
             if (it->isTri()) {
-                if (propagate_tri_clause(*it))
+                if (!propagate_tri_clause(*it))
                     return false;
             }
 
             if (it->isBinary()) {
-                if (propagate_binary_clause(*it))
+                if (!propagate_binary_clause(*it))
                     return false;
             }
         }
