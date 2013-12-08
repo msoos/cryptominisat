@@ -394,6 +394,7 @@ private:
     bool subsetReverse(const Clause& B) const;
     void checkAllLinkedIn();
 
+    bool fill_occur();
     void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;
     bool subsumeWithBinaries();

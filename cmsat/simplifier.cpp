@@ -982,31 +982,9 @@ bool Simplifier::simplify()
     limit_to_decrease = &strengthening_time_limit;
     size_t origTrailSize = solver->trail.size();
 
-    //Remove all long clauses from watches
     removeAllLongsFromWatches();
-
-    //Try to add irreducible to occur
-    runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    bool ret = addFromSolver(solver->longIrredCls
-        , true //try to add to occur list
-        , true //it is irred
-    );
-
-    //Memory limit reached, irreduntant clauses cannot
-    //be added to occur --> exit
-    if (!ret) {
-        CompleteDetachReatacher detRet(solver);;
-        detRet.reattachLongs(true);
+    if (!fill_occur())
         return solver->okay();
-    }
-
-    //Add redundant to occur
-    runStats.origNumRedLongClauses = solver->longRedCls.size();
-    addFromSolver(solver->longRedCls
-        , true //try to add to occur list
-        , false //irreduntant?
-    );
-    runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
     sanityCheckElimedVars();
 
@@ -1015,10 +993,11 @@ bool Simplifier::simplify()
         solver->printWatchMemUsed(memUsedTotal());
     }
 
-    //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
+    runStats.origNumFreeVars = solver->getNumFreeVars();
     const size_t origBlockedSize = blockedClauses.size();
+    const size_t origTrailSize = solver->trail.size();
 
     //Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
@@ -1026,21 +1005,11 @@ bool Simplifier::simplify()
             goto end;
     }
 
-    origTrailSize = solver->trail.size();
-
-    //Do subsumption & var-elim in loop
-    assert(solver->ok);
-
-//   subsumeStrengthen->subsumeWithTris();
-
-    //Carry out subsume0
+    //subsumeStrengthen->subsumeWithTris();
     subsumeStrengthen->performSubsumption();
-
-    //Carry out strengthening
     if (!subsumeStrengthen->performStrengthening())
         goto end;
 
-    //XOR-finding
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
         && xorFinder != NULL
@@ -1063,10 +1032,6 @@ bool Simplifier::simplify()
         if (!eliminateVars())
             goto end;
     }
-
-    assert(solver->ok);
-
-
     bounded_var_addition();
 
 end:
@@ -1083,6 +1048,33 @@ end:
     }
 
     return solver->ok;
+}
+
+bool Simplifier::fill_occur()
+{
+    //Try to add irreducible to occur
+    runStats.origNumIrredLongClauses = solver->longIrredCls.size();
+    bool ret = addFromSolver(solver->longIrredCls
+        , true //try to add to occur list
+        , true //it is irred
+    );
+
+    //Memory limit reached, irreduntant clauses cannot
+    //be added to occur --> exit
+    if (!ret) {
+        CompleteDetachReatacher detRet(solver);;
+        detRet.reattachLongs(true);
+        return false;
+    }
+
+    //Add redundant to occur
+    runStats.origNumRedLongClauses = solver->longRedCls.size();
+    addFromSolver(solver->longRedCls
+        , true //try to add to occur list
+        , false //irreduntant?
+    );
+
+    return true;
 }
 
 bool Simplifier::unEliminate(Var var)
@@ -3019,6 +3011,7 @@ bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_
 
 void Simplifier::bounded_var_addition()
 {
+    assert(solver->ok);
     if (!solver->conf.do_bounded_variable_addition)
         return;
 
