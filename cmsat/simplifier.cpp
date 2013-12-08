@@ -998,7 +998,6 @@ bool Simplifier::simplify()
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail.size();
 
-    //Gate-finding
     if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
