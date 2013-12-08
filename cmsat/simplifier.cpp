@@ -142,18 +142,15 @@ void Simplifier::print_blocked_clauses_reverse() const
         ; it != end
         ; it++
     ) {
-        //Display the internal variable numbers
-        vector<Lit> tmp(it->lits);
-        updateLitsMap(tmp, solver->outerToInterMain);
-
         if (it->dummy) {
             cout
             << "dummy blocked clause for literal " << it->blockedOn
             << endl;
         } else {
             cout
-            << "blocked clause " << tmp
-            << " blocked on var " << getUpdatedVar(it->blockedOn.var(), solver->outerToInterMain)+1
+            << "blocked clause " << it->lits
+            << " blocked on var "
+            << solver->map_outer_to_inter(it->blockedOn.var()) + 1
             << endl;
         }
     }
