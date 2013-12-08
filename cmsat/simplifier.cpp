@@ -1074,10 +1074,7 @@ bool Simplifier::simplify()
 
 end:
 
-    if ((*solver->drup).enabled()) {
-        remove_by_drup_recently_blocked_clauses(origBlockedSize);
-    }
-
+    remove_by_drup_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
 
     //Print stats
@@ -1149,6 +1146,9 @@ bool Simplifier::unEliminate(Var var)
 
 void Simplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSize)
 {
+    if (!(*solver->drup).enabled())
+        return;
+
     if (solver->conf.verbosity >= 6) {
         cout << "c Deleting blocked clauses for DRUP" << endl;
     }
