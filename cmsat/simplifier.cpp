@@ -1208,7 +1208,6 @@ void Simplifier::finishUp(
         cleanBlockedClauses();
     }
 
-
     //Add back clauses to solver
     removeAllLongsFromWatches();
     addBackToSolver();
