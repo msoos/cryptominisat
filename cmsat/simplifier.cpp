@@ -974,25 +974,25 @@ bool Simplifier::simplify()
     }
 
     //Setup
-    double myTime = cpuTime();
     clause_lits_added_limit = 0;
     runStats.clear();
     runStats.numCalls++;
     clauses.clear();
     limit_to_decrease = &strengthening_time_limit;
 
+    double myTime = cpuTime();
     removeAllLongsFromWatches();
     if (!fill_occur())
         return solver->okay();
-    setLimits();
     sanityCheckElimedVars();
+    const double linkInTime = cpuTime() - myTime;
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity >= 2) {
         solver->printWatchMemUsed(memUsedTotal());
     }
 
-    double linkInTime = cpuTime() - myTime;
+    setLimits();
     runStats.linkInTime += linkInTime;
     runStats.origNumFreeVars = solver->getNumFreeVars();
     const size_t origBlockedSize = blockedClauses.size();
