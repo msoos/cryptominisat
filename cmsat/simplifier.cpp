@@ -980,7 +980,6 @@ bool Simplifier::simplify()
     runStats.numCalls++;
     clauses.clear();
     limit_to_decrease = &strengthening_time_limit;
-    size_t origTrailSize = solver->trail.size();
 
     removeAllLongsFromWatches();
     if (!fill_occur())
