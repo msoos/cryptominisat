@@ -1203,11 +1203,6 @@ void Simplifier::finishUp(
     runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
     double myTime = cpuTime();
 
-    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
-    if (somethingSet) {
-        cleanBlockedClauses();
-    }
-
     //Add back clauses to solver
     propagate();
     removeAllLongsFromWatches();
