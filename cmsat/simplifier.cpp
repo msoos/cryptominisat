@@ -3134,7 +3134,8 @@ void Simplifier::bva_simplify_system(const Lit lit)
     Lit new_lit(newvar, false);
 
     for(Lit m_lit: m_lits) {
-        //solver->attachBinClause(m_lit, new_lit, false);
+        //WRONG: solver->attachBinClause(m_lit, new_lit, false);
+        //instead: addclauseint
     }
 
     for(const OccurClause m_cl: m_cls) {
@@ -3147,11 +3148,13 @@ void Simplifier::add_longer_clause(const Lit lit, const OccurClause& cl)
 {
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
-            solver->attachBinClause(lit, cl.ws.lit2(), false);
+            //WRONG: solver->attachBinClause(lit, cl.ws.lit2(), false);
+            //instead: addclauseInt
             break;
 
         case CMSat::watch_tertiary_t:
-            solver->attachTriClause(lit, cl.ws.lit2(), cl.ws.lit3(), false);
+            //WRONG: solver->attachTriClause(lit, cl.ws.lit2(), cl.ws.lit3(), false);
+            //instead: addclauseInt ...
             break;
 
         case CMSat::watch_clause_t:
