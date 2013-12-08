@@ -311,7 +311,7 @@ void ClauseCleaner::removeAndCleanAll()
     }
     #endif
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [clean] T: "
         << std::fixed << std::setprecision(4)
