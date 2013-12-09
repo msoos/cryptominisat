@@ -596,6 +596,8 @@ private:
 
     /////////////
     //Bounded Variable Addition
+    size_t bva_worked;
+    size_t bva_simp_size;
     struct PotentialClause {
         PotentialClause(const Lit _lit, const OccurClause cl) :
             lit(_lit)
@@ -606,7 +608,7 @@ private:
         OccurClause occur_cl;
         string to_string(const Solver* solver) const;
     };
-    void bounded_var_addition();
+    bool bounded_var_addition();
     Lit most_occuring_lit_in_potential(size_t& num_occur);
     Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
     Lit least_occurring_except(const OccurClause& c, const vector<Lit>& except2);
@@ -617,12 +619,22 @@ private:
         , const int m_cls_size
     ) const;
     void fill_potential(const Lit lit);
-    void try_bva_on_lit(const Lit lit);
-    void bva_simplify_system(const Lit lit);
-    void add_longer_clause(const Lit lit, const OccurClause& cl);
-    void remove_matching_clause(const OccurClause& cl, const Lit lit_replace);
+    bool try_bva_on_lit(const Lit lit);
+    bool bva_simplify_system(const Lit lit);
+    bool add_longer_clause(const Lit lit, const OccurClause& cl);
+    void remove_duplicates_from_m_cls();
+    void remove_matching_clause(
+        const OccurClause& cl
+        , const Lit lit_replace
+    );
+    Clause* find_cl_for_bva(
+        const Lit lit_orig
+        , const Lit lit_replace
+        , const Clause& cl_orig
+    ) const;
     vector<PotentialClause> potential;
     vector<Lit> m_lits;
+    vector<Lit> m_lits_this_cl;
     vector<OccurClause> m_cls;
     struct VarBVAOrder
     {

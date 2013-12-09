@@ -329,6 +329,10 @@ struct OccurClause {
         , ws(_ws)
     {}
 
+    OccurClause() :
+        lit(lit_Undef)
+    {}
+
     Lit lit;
     Watched ws;
 };

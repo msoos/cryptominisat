@@ -98,6 +98,7 @@ do
 		--verb 2 \
 		--comps 1 \
                 --er $(int 0 1) \
+                --bva $(int 0 1) \
         --compsfrom $(int 0 2) \
         --compsvar $(int 20000 500000) \
         --compslimit $(int 0 3000) \
