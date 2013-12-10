@@ -169,7 +169,7 @@ void ClauseCleaner::clean_implicit_clauses()
         ; wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
-        watch_subarray ws = solver->watches[wsLit];;
+        watch_subarray ws = solver->watches[lit.toInt()];
         if (ws.empty())
             continue;
 
