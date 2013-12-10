@@ -417,6 +417,7 @@ private:
     int64_t  varelim_num_limit;
     int64_t  asymm_time_limit;
     int64_t  aggressive_elim_time_limit;
+    int64_t bounded_var_elim_time_limit;
     int64_t* limit_to_decrease;
 
     //Propagation&handling of stuff

@@ -1540,6 +1540,7 @@ void Simplifier::setLimits()
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
     asymm_time_limit           = 40LL *1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
+    bounded_var_elim_time_limit= 400LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1559,6 +1560,7 @@ void Simplifier::setLimits()
         empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
+        bounded_var_elim_time_limit *= 2;
     }
 
     if (clause_lits_added < 3ULL*1000ULL*1000ULL) {
@@ -3040,6 +3042,7 @@ bool Simplifier::bounded_var_addition()
     f.close();
 
     propagate();
+    limit_to_decrease = &bounded_var_elim_time_limit;
     solver->clauseCleaner->clean_implicit_clauses();
     solver->subsumeImplicit->subsume_implicit(false);
 
@@ -3058,6 +3061,9 @@ bool Simplifier::bounded_var_addition()
 
     double my_time = cpuTime();
     while(!var_bva_order.empty()) {
+        if (*limit_to_decrease < 0)
+            break;
+
         const Lit lit = Lit::toLit(var_bva_order.removeMin());
         if (solver->conf.verbosity >= 5) {
             cout << "c [bva] trying lit " << lit << endl;
