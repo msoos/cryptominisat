@@ -3185,6 +3185,13 @@ void Simplifier::remove_duplicates_from_m_cls()
         }
     }
     m_cls.resize(m_cls.size()-(i-j));
+
+    if (solver->conf.verbosity >= 6) {
+        cout << "m_cls after cleaning: " << endl;
+        for(const OccurClause& w: m_cls) {
+            cout << "-> " << solver->watched_to_string(w.lit, w.ws) << endl;
+        }
+    }
 }
 
 bool Simplifier::try_bva_on_lit(const Lit lit)

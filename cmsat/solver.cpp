@@ -1309,6 +1309,7 @@ CleaningStats Solver::reduceDB()
 
 void Solver::set_assumptions()
 {
+    assert(solver->okay());
     assumptions = origAssumptions;
     addClauseHelper(assumptions);
     for(const Lit lit: assumptions) {
@@ -1323,6 +1324,14 @@ void Solver::set_assumptions()
                 assumptionsSet[lit.var()] = true;
             }
         } else {
+            if (solver->value(lit) == l_Undef) {
+                cout
+                << "ERROR: Lit " << lit
+                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
+                << " value: " << value(lit)
+                << " -- value should be l_Undef"
+                << endl;
+            }
             assert(solver->value(lit) != l_Undef);
         }
     }
@@ -1458,6 +1467,18 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         << endl;
     }
 
+    //Check if adding the clauses caused UNSAT
+    lbool status = l_Undef;
+    if (!ok) {
+        status = l_False;
+        if (conf.verbosity >= 6) {
+            cout
+            << "c Solver status l_Fase on startup of solve()"
+            << endl;
+        }
+        return status;
+    }
+
     //Set up SQL writer
     if (conf.doSQL) {
         sqlStats->setup(this);
@@ -1473,17 +1494,6 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
         std::fill(assumptionsSet.begin(), assumptionsSet.end(), false);
         origAssumptions.clear();
         assumptions.clear();
-    }
-
-    //Check if adding the clauses caused UNSAT
-    lbool status = l_Undef;
-    if (!ok) {
-        status = l_False;
-        if (conf.verbosity >= 6) {
-            cout
-            << "c Solver status l_Fase on startup of solve()"
-            << endl;
-        }
     }
 
     //If still unknown, simplify
