@@ -2974,10 +2974,14 @@ void Simplifier::fill_potential(const Lit lit)
         if (*limit_to_decrease < 0)
             break;
 
-        m_lits_this_cl = m_lits;
         const Lit l_min = least_occurring_except(c, m_lits);
         if (l_min == lit_Undef)
             continue;
+
+        m_lits_this_cl = m_lits;
+        for(const Lit lit: m_lits_this_cl) {
+            seen2[lit.toInt()] = 1;
+        }
 
         if (solver->conf.verbosity >= 6) {
             cout
@@ -2990,7 +2994,7 @@ void Simplifier::fill_potential(const Lit lit)
         *limit_to_decrease -= solver->watches[l_min.toInt()].size();
         for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
             if (*limit_to_decrease < 0)
-                break;
+                goto end;
 
             OccurClause d(l_min, d_ws);
             if (c.ws != d.ws
@@ -2999,9 +3003,10 @@ void Simplifier::fill_potential(const Lit lit)
                 && lit_diff_watches(c, d) == lit
             ) {
                 const Lit diff = lit_diff_watches(d, c);
-                if (!inside(m_lits_this_cl, diff)) {
+                if (seen2[diff.toInt()] == 0) {
                     potential.push_back(PotentialClause(diff, c));
                     m_lits_this_cl.push_back(diff);
+                    seen2[diff.toInt()] = 1;
 
                     if (solver->conf.verbosity >= 6) {
                         cout
@@ -3013,6 +3018,10 @@ void Simplifier::fill_potential(const Lit lit)
             }
         }
 
+        end:
+        for(const Lit lit: m_lits_this_cl) {
+            seen2[lit.toInt()] = 0;
+        }
     }
 }
 
