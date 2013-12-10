@@ -3143,7 +3143,7 @@ void Simplifier::remove_duplicates_from_m_cls()
             return false;
     };
 
-    *limit_to_decrease -= m_cls.size()*3;
+    *limit_to_decrease -= 2*m_cls.size()*std::sqrt(m_cls.size());
     std::sort(m_cls.begin(), m_cls.end(), mysort);
     size_t i = 0;
     size_t j = 0;
