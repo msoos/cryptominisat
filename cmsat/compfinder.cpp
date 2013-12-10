@@ -133,7 +133,7 @@ bool CompFinder::findComps()
                 notPrinted++;
             } else {
                 cout
-                << "c [comp]large component " << std::setw(5) << i
+                << "c [comp] large component " << std::setw(5) << i
                 << " size: " << std::setw(10) << it->second.size()
                 << endl;
             }
