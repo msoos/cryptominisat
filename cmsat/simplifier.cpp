@@ -46,6 +46,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "xorfinderabst.h"
+#include "subsumeimplicit.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -3033,6 +3034,7 @@ bool Simplifier::bounded_var_addition()
 
     propagate();
     solver->clauseCleaner->clean_implicit_clauses();
+    solver->subsumeImplicit->subsume_implicit(false);
 
     bva_worked = 0;
     bva_simp_size = 0;
@@ -3094,12 +3096,16 @@ void Simplifier::remove_duplicates_from_m_cls()
             assert(atype == btype);
             switch(atype) {
                 case CMSat::watch_binary_t: {
+                    //subsumption could have time-outed
+                    //assert(a.ws.lit2() != b.ws.lit2() && "Implicit has been cleaned of duplicates!!");
                     return a.ws.lit2() < b.ws.lit2();
                 }
                 case CMSat::watch_tertiary_t: {
                     if (a.ws.lit2() != b.ws.lit2()) {
                         return a.ws.lit2() < b.ws.lit2();
                     }
+                    //subsumption could have time-outed
+                    //assert(a.ws.lit3() != b.ws.lit3() && "Implicit has been cleaned of duplicates!!");
                     return a.ws.lit3() < b.ws.lit3();
                 }
                 case CMSat::watch_clause_t: {
