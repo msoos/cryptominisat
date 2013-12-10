@@ -75,36 +75,43 @@ private:
     Stats globalStats;
 
     struct WatchSorter {
-        bool operator()(const Watched& first, const Watched& second)
+        bool operator()(const Watched& a, const Watched& b)
         {
             //Anything but clause!
-            if (first.isClause())
+            if (a.isClause()) {
+                //A is definitely not better than B
                 return false;
-            if (second.isClause())
+            }
+            if (b.isClause()) {
+                //B is clause, A is NOT a clause. So A is better than B.
                 return true;
+            }
             //Now nothing is clause
 
-            if (first.lit2() < second.lit2()) return true;
-            if (first.lit2() > second.lit2()) return false;
-            if (first.isBinary() && second.isTri()) return true;
-            if (first.isTri() && second.isBinary()) return false;
+            if (a.lit2() != b.lit2()) {
+                return a.lit2() < b.lit2();
+            }
+            if (a.isBinary() && b.isTri()) return true;
+            if (a.isTri() && b.isBinary()) return false;
             //At this point either both are BIN or both are TRI
 
-
             //Both are BIN
-            if (first.isBinary()) {
-                assert(second.isBinary());
-                if (first.red() == second.red()) return false;
-                if (!first.red()) return true;
+            if (a.isBinary()) {
+                assert(b.isBinary());
+                if (a.red() != b.red()) {
+                    return !a.red();
+                }
                 return false;
             }
 
             //Both are Tri
-            assert(first.isTri() && second.isTri());
-            if (first.lit3() < second.lit3()) return true;
-            if (first.lit3() > second.lit3()) return false;
-            if (first.red() == second.red()) return false;
-            if (!first.red()) return true;
+            assert(a.isTri() && b.isTri());
+            if (a.lit3() != b.lit3()) {
+                return a.lit3() < b.lit3();
+            }
+            if (a.red() != b.red()) {
+                return !a.red();
+            }
             return false;
         }
     };
