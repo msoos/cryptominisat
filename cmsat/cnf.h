@@ -103,11 +103,13 @@ public:
     void for_each_lit(
         const OccurClause& cl
         ,  Function func
+        , int64_t* limit
     ) const;
     template<class Function>
     void for_each_lit_except_watched(
         const OccurClause& cl
         , Function func
+        , int64_t* limit
     ) const;
     void remove_tri_but_lit1(
         const Lit lit1
@@ -165,14 +167,17 @@ template<class Function>
 void CNF::for_each_lit(
     const OccurClause& cl
     ,  Function func
+    , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
+            *limit -= 2;
             func(cl.lit);
             func(cl.ws.lit2());
             break;
 
         case CMSat::watch_tertiary_t:
+            *limit -= 3;
             func(cl.lit);
             func(cl.ws.lit2());
             func(cl.ws.lit3());
@@ -180,6 +185,7 @@ void CNF::for_each_lit(
 
         case CMSat::watch_clause_t: {
             const Clause& clause = *clAllocator.getPointer(cl.ws.getOffset());
+            *limit -= clause.size();
             for(const Lit lit: clause) {
                 func(lit);
             }
@@ -192,19 +198,23 @@ template<class Function>
 void CNF::for_each_lit_except_watched(
     const OccurClause& cl
     , Function func
+    , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
+            *limit -= 1;
             func(cl.ws.lit2());
             break;
 
         case CMSat::watch_tertiary_t:
+            *limit -= 2;
             func(cl.ws.lit2());
             func(cl.ws.lit3());
             break;
 
         case CMSat::watch_clause_t: {
             const Clause& clause = *clAllocator.getPointer(cl.ws.getOffset());
+            *limit -= clause.size();
             for(const Lit lit: clause) {
                 if (lit != cl.lit) {
                     func(lit);

@@ -2855,6 +2855,7 @@ void Simplifier::printGateFinderStats() const
 
 Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& except2)
 {
+    *limit_to_decrease -= except2.size();
     for(const Lit lit: except2) {
         seen[lit.toInt()] = 1;
     }
@@ -2872,7 +2873,7 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
             smallest_val = watch_size;
         }
     };
-    solver->for_each_lit_except_watched(c, check_smallest);
+    solver->for_each_lit_except_watched(c, check_smallest, limit_to_decrease);
 
     for(const Lit lit: except2) {
         seen[lit.toInt()] = 0;
@@ -2885,7 +2886,7 @@ Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
 {
     assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
     assert(a.lit != b.lit);
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;});
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;}, limit_to_decrease);
 
     size_t num = 0;
     Lit toret = lit_Undef;
@@ -2895,9 +2896,8 @@ Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
             num++;
         }
     };
-    solver->for_each_lit(a, check_seen);
-
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;});
+    solver->for_each_lit(a, check_seen, limit_to_decrease);
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;}, limit_to_decrease);
 
     if (num == 1)
         return toret;
@@ -2969,6 +2969,9 @@ int Simplifier::simplification_size(
 void Simplifier::fill_potential(const Lit lit)
 {
     for(const OccurClause& c: m_cls) {
+        if (*limit_to_decrease < 0)
+            break;
+
         m_lits_this_cl = m_lits;
         const Lit l_min = least_occurring_except(c, m_lits);
         if (l_min == lit_Undef)
@@ -2982,7 +2985,11 @@ void Simplifier::fill_potential(const Lit lit)
             << endl;
         }
 
+        *limit_to_decrease -= solver->watches[l_min.toInt()].size();
         for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
+            if (*limit_to_decrease < 0)
+                break;
+
             OccurClause d(l_min, d_ws);
             if (c.ws != d.ws
                 && solver->cl_size(c.ws) == solver->cl_size(d.ws)
@@ -3203,6 +3210,8 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     while(true) {
         potential.clear();
         fill_potential(lit);
+        if (*limit_to_decrease < 0)
+            break;
 
         size_t num_occur;
         const Lit l_max = most_occuring_lit_in_potential(num_occur);
@@ -3224,6 +3233,9 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
             break;
         }
     }
+
+    if (*limit_to_decrease < 0)
+        return solver->okay();
 
     const int simp_size = simplification_size(m_lits.size(), m_cls.size());
     if (simp_size <= 0) {
