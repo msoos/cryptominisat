@@ -408,7 +408,7 @@ private:
     vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits
-    uint64_t clause_lits_added_limit;
+    uint64_t clause_lits_added;
     int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
 //     int64_t  numMaxTriSub;
     int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run

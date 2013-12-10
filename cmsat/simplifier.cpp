@@ -398,7 +398,7 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
 
         clauses.push_back(*it);
     }
-    clause_lits_added_limit += linkedInLits;
+    clause_lits_added += linkedInLits;
 
     return link_in_data;
 }
@@ -886,7 +886,7 @@ void Simplifier::subsumeReds()
     )  return;
 
     //Setup
-    clause_lits_added_limit = 0;
+    clause_lits_added = 0;
     runStats.clear();
     clauses.clear();
     limit_to_decrease = &strengthening_time_limit;
@@ -972,7 +972,7 @@ bool Simplifier::simplify()
     }
 
     //Setup
-    clause_lits_added_limit = 0;
+    clause_lits_added = 0;
     runStats.clear();
     runStats.numCalls++;
     clauses.clear();
@@ -1554,14 +1554,14 @@ void Simplifier::setLimits()
     #ifdef BIT_MORE_VERBOSITY
     cout << "c addedClauseLits: " << clause_lits_added_limit << endl;
     #endif
-    if (clause_lits_added_limit < 10ULL*1000ULL*1000ULL) {
+    if (clause_lits_added < 10ULL*1000ULL*1000ULL) {
         norm_varelim_time_limit *= 2;
         empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
     }
 
-    if (clause_lits_added_limit < 3ULL*1000ULL*1000ULL) {
+    if (clause_lits_added < 3ULL*1000ULL*1000ULL) {
         norm_varelim_time_limit *= 2;
         empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
