@@ -1323,6 +1323,14 @@ void Solver::set_assumptions()
                 assumptionsSet[lit.var()] = true;
             }
         } else {
+            if (solver->value(lit) == l_Undef) {
+                cout
+                << "ERROR: Lit " << lit
+                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
+                << " value: " << value(lit)
+                << " -- value should be l_Undef"
+                << endl;
+            }
             assert(solver->value(lit) != l_Undef);
         }
     }
