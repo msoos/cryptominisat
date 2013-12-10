@@ -174,7 +174,7 @@ void SubsumeImplicit::try_subsume_bin(
     }
 }
 
-void SubsumeImplicit::subsume_implicit()
+void SubsumeImplicit::subsume_implicit(const bool check_stats)
 {
     assert(solver->okay());
     const double myTime = cpuTime();
@@ -232,7 +232,9 @@ void SubsumeImplicit::subsume_implicit()
         }
         ws.shrink(i-j);
     }
-    solver->checkStats();
+    if (check_stats) {
+        solver->checkStats();
+    }
 
     runStats.numCalled++;
     runStats.time_used += cpuTime() - myTime;

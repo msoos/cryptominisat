@@ -40,7 +40,7 @@ class SubsumeImplicit
 {
 public:
     SubsumeImplicit(Solver* solver);
-    void subsume_implicit();
+    void subsume_implicit(bool check_stats = true);
 
     struct Stats {
         void clear()
