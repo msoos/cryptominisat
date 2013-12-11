@@ -1107,3 +1107,80 @@ void ClauseVivifier::StrImplicitData::print(
     << " w-visit: " << numWatchesLooked
     << endl;
 }
+
+ClauseVivifier::Stats& ClauseVivifier::Stats::operator+=(const Stats& other)
+{
+    timeNorm += other.timeNorm;
+    timeOut += other.timeOut;
+    zeroDepthAssigns += other.zeroDepthAssigns;
+    numClShorten += other.numClShorten;
+    numLitsRem += other.numLitsRem;
+    checkedClauses += other.checkedClauses;
+    potentialClauses += other.potentialClauses;
+    numCalled += other.numCalled;
+
+    //Cache-based
+    irredCacheBased += other.irredCacheBased;
+    redCacheBased += other.redCacheBased;
+
+    return *this;
+}
+
+void ClauseVivifier::Stats::printShort() const
+{
+    //Irred cache-based asymm
+    irredCacheBased.printShort("irred");
+
+    //Irred cache-based asymm
+    redCacheBased.printShort("red");
+
+    //Norm Asymm
+    cout
+    << "c [vivif] asymm (tri+long)"
+    << " useful: "<< numClShorten
+    << "/" << checkedClauses << "/" << potentialClauses
+    << " lits-rem: " << numLitsRem
+    << " 0-depth-assigns: " << zeroDepthAssigns
+    << " T: " << timeNorm << " s"
+    << " T-out: " << (timeOut ? "Y" : "N")
+    << endl;
+}
+
+void ClauseVivifier::Stats::print(const size_t nVars) const
+{
+    //Asymm
+    cout << "c -------- ASYMM STATS --------" << endl;
+    printStatsLine("c time"
+        , timeNorm
+        , timeNorm/(double)numCalled
+        , "per call"
+    );
+
+    printStatsLine("c timed out"
+        , timeOut
+        , (double)timeOut/(double)numCalled*100.0
+        , "% of calls"
+    );
+
+    printStatsLine("c asymm/checked/potential"
+        , numClShorten
+        , checkedClauses
+        , potentialClauses
+    );
+
+    printStatsLine("c lits-rem",
+        numLitsRem
+    );
+    printStatsLine("c 0-depth-assigns",
+        zeroDepthAssigns
+        , (double)zeroDepthAssigns/(double)nVars*100.0
+        , "% of vars"
+    );
+
+    cout << "c --> cache-based on irred cls" << endl;
+    irredCacheBased.print();
+
+    cout << "c --> cache-based on red cls" << endl;
+    redCacheBased.print();
+    cout << "c -------- ASYMM STATS END --------" << endl;
+}
