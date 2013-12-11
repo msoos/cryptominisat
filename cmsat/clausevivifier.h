@@ -44,18 +44,6 @@ class ClauseVivifier {
 
         struct Stats
         {
-            Stats() :
-                //Asymm
-                timeNorm(0)
-                , timeOut(0)
-                , zeroDepthAssigns(0)
-                , numClShorten(0)
-                , numLitsRem(0)
-                , checkedClauses(0)
-                , potentialClauses(0)
-                , numCalled(0)
-            {}
-
             void clear()
             {
                 Stats tmp;
@@ -140,14 +128,14 @@ class ClauseVivifier {
             }
 
             //Asymm
-            double timeNorm;
-            uint64_t timeOut;
-            uint64_t zeroDepthAssigns;
-            uint64_t numClShorten;
-            uint64_t numLitsRem;
-            uint64_t checkedClauses;
-            uint64_t potentialClauses;
-            uint64_t numCalled;
+            double timeNorm = 0.0;
+            uint64_t timeOut = 0;
+            uint64_t zeroDepthAssigns = 0;
+            uint64_t numClShorten = 0;
+            uint64_t numLitsRem = 0;
+            uint64_t checkedClauses = 0;
+            uint64_t potentialClauses = 0;
+            uint64_t numCalled = 0;
 
             struct CacheBased
             {
