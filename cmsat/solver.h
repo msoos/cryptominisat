@@ -164,6 +164,7 @@ class Solver : public Searcher
         ) const;
         void dump_blocked_clauses(std::ostream* os) const;
         void dump_component_clauses(std::ostream* os) const;
+        void write_irred_stats_to_cnf(std::ostream* os) const;
 
         struct SolveStats
         {

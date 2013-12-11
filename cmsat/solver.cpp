@@ -2719,6 +2719,28 @@ void Solver::dumpIrredClauses(std::ostream* os) const
     << "c clauses in components" << endl
     << "c ---------------" << endl;
     dump_component_clauses(os);
+
+    write_irred_stats_to_cnf(os);
+}
+
+void Solver::write_irred_stats_to_cnf(std::ostream* os) const
+{
+    *os << "c units: " << ((trail_lim.size() > 0) ? trail_lim[0] : trail.size()) << endl;
+    if (varReplacer) {
+        *os << "c binaries related to binary XORs: " << varReplacer->get_num_bin_clauses() << endl;
+    }
+    *os << "c normal binary cls: " << binTri.irredBins << endl;
+    *os << "c normal tertiary cls: " << binTri.irredTris << endl;
+    *os << "c normal long cls: " << longIrredCls.size() << endl;
+    if (conf.doCompHandler) {
+        *os << "c disconnected component cls: "
+        << compHandler->getRemovedClauses().sizes.size()
+        << endl;
+    }
+    if (conf.perform_occur_based_simp) {
+        const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
+        *os << "c blocked cls: " << blockedClauses.size() << endl;
+    }
 }
 
 void Solver::printAllClauses() const
