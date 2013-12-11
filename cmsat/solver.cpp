@@ -1082,6 +1082,7 @@ void Solver::pre_clean_clause_db(
             Clause* cl = clAllocator.getPointer(offset);
             assert(cl->size() > 3);
             if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
+                && !cl->stats.locked
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
             ) {
@@ -1126,9 +1127,10 @@ void Solver::real_clean_clause_db(
         Clause* cl = clAllocator.getPointer(offset);
         assert(cl->size() > 3);
 
-        //Don't delete if not aged long enough
+        //Don't delete if not aged long enough or locked
         if (cl->stats.conflictNumIntroduced + conf.min_time_in_db_before_eligible_for_cleaning
-             >= Searcher::sumConflicts()
+                >= Searcher::sumConflicts()
+             || cl->stats.locked
         ) {
             longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
@@ -1285,6 +1287,7 @@ CleaningStats Solver::reduceDB()
     CompleteDetachReatacher detachReattach(this);
     detachReattach.detachNonBinsNonTris();
 
+    lock_most_UIP_used_clauses();
     pre_clean_clause_db(tmpStats, sumConfl);
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
     sort_red_cls_as_required(tmpStats);
@@ -1305,6 +1308,38 @@ CleaningStats Solver::reduceDB()
     cleaningStats += tmpStats;
 
     return tmpStats;
+}
+
+void Solver::lock_most_UIP_used_clauses()
+{
+    std::function<bool (const ClOffset, const ClOffset)> uipsort
+        = [&] (const ClOffset a, const ClOffset b) -> bool {
+            const Clause& a_cl = *clAllocator.getPointer(a);
+            const Clause& b_cl = *clAllocator.getPointer(b);
+
+            return a_cl.stats.numUsedUIP > b_cl.stats.numUsedUIP;
+    };
+    std::sort(longRedCls.begin(), longRedCls.end(), uipsort);
+
+    size_t locked = 0;
+    size_t skipped = 0;
+    for(size_t i = 0
+        ; i < longRedCls.size() && locked < conf.lock_per_dbclean
+        ; i++
+    ) {
+        const ClOffset offs = longRedCls[i];
+        Clause& cl = *clAllocator.getPointer(offs);
+        if (!cl.stats.locked) {
+            cl.stats.locked = true;
+            locked++;
+        } else {
+            skipped++;
+        }
+    }
+
+    if (conf.verbosity >= 2) {
+        cout << "c [DBclean] Locked: " << locked << " skipped: " << skipped <<endl;
+    }
 }
 
 void Solver::set_assumptions()

@@ -407,6 +407,7 @@ class Solver : public Searcher
         void fullReduce();
         void clearClauseStats(vector<ClOffset>& clauseset);
         CleaningStats reduceDB();           ///<Reduce the set of redundant clauses.
+        void lock_most_UIP_used_clauses();
         struct reduceDBStructGlue
         {
             reduceDBStructGlue(ClauseAllocator& _clAllocator) :

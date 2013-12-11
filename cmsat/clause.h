@@ -99,6 +99,7 @@ struct ClauseStats
         , numLookedAt(0)
         #endif
         , numUsedUIP(0)
+        , locked(false)
     {}
 
     uint32_t numPropAndConfl() const
@@ -117,6 +118,7 @@ struct ClauseStats
     uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
     #endif
     uint32_t numUsedUIP; ///Number of times the claue was using during 1st UIP conflict generation
+    bool locked;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
@@ -150,6 +152,7 @@ struct ClauseStats
         ret.numLookedAt = first.numLookedAt + second.numLookedAt;
         #endif
         ret.numUsedUIP = first.numUsedUIP + second.numUsedUIP;
+        ret.locked = first.locked | second.locked;
 
         return ret;
     };
