@@ -66,14 +66,6 @@ class NewGateData
         uint32_t numClRem;
 };
 
-struct SecondSorter
-{
-    bool operator() (const std::pair<Var, uint32_t> p1, const std::pair<Var, uint32_t> p2)
-    {
-        return p1.second > p2.second;
-    }
-};
-
 class OrGate {
     public:
         OrGate(const Lit& _eqLit, Lit _lit1, Lit _lit2, const bool _red) :
@@ -203,22 +195,10 @@ public:
 private:
     //Setup
     void clearIndexes();
-
-    //Each algo
-    void findOrGates();
     void link_in_gate(const OrGate& gate);
-    void createNewVars();
-    void check_literal_is_good_for_er(const Lit lit) const;
-    void add_er_gate(const OrGate gate);
-    size_t num_long_irred_cls(const Lit lit) const;
-    CL_ABST_TYPE calc_abst_of_long_cls(const Lit lit) const;
-    Lit find_matching_pair_er(
-        const Lit lit1
-        , const vector<std::pair<Lit, uint32_t> >& potential_lits
-        , const vector<CL_ABST_TYPE>& absts
-    );
 
-    //Helpers to find
+    //Finding
+    void findOrGates();
     void findOrGates(const bool redGatesToo);
     void findOrGate(
         const Lit eqLit

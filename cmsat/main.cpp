@@ -454,8 +454,6 @@ void Main::add_supported_options()
         , "Find equivalent literals using gates")
     ("maxgatesz", po::value<uint64_t>(&conf.maxGateSize)->default_value(conf.maxGateSize)
         , "Maximum gate size to discover")
-    ("er", po::value<int>(&conf.doER)->default_value(conf.doER)
-        , "Find gates to add, and perform Extended Resolution")
     ("printgatedot", po::value<int>(&conf.doPrintGateDot)->default_value(conf.doPrintGateDot)
         , "Print gate structure regularly to file 'gatesX.dot'")
     ;
