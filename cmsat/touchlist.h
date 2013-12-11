@@ -24,6 +24,8 @@
 
 #include <vector>
 #include "solvertypes.h"
+#include <cstdarg>
+
 
 namespace CMSat {
 
@@ -35,7 +37,20 @@ public:
         touch(lit.var());
     }
 
-    void touch(const Var var)
+    template<typename T, typename... Targs>
+    void touch(T value, Targs... Fargs) // recursive variadic function
+    {
+        touch(value);
+        touch(Fargs...);
+    }
+
+    void touch(const vector<Lit>& lits)
+    {
+        for(const Lit lit: lits)
+            touch(lit.var());
+    }
+
+    void touch(const uint32_t var)
     {
         if (touchedBitset.size() <= var)
             touchedBitset.resize(var+1, 0);
@@ -46,7 +61,7 @@ public:
         }
     }
 
-    const vector<Var>& getTouchedList() const
+    const vector<uint32_t>& getTouchedList() const
     {
         return touched;
     }
@@ -54,7 +69,7 @@ public:
     void clear()
     {
         //Clear touchedBitset
-        for(vector<Var>::const_iterator
+        for(vector<uint32_t>::const_iterator
             it = touched.begin(), end = touched.end()
             ; it != end
             ; it++
@@ -69,14 +84,14 @@ public:
     size_t memUsed() const
     {
         uint64_t mem = 0;
-        mem += touched.capacity()*sizeof(Var);
+        mem += touched.capacity()*sizeof(uint32_t);
         mem += touchedBitset.capacity()*sizeof(char);
 
         return mem;
     }
 
 private:
-    vector<Var> touched;
+    vector<uint32_t> touched;
     vector<char> touchedBitset;
 };
 

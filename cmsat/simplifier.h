@@ -610,6 +610,8 @@ private:
         string to_string(const Solver* solver) const;
     };
     bool bounded_var_addition();
+    size_t calc_watch_irred_size(const Lit lit) const;
+    vector<size_t> calc_watch_irred_sizes() const;
     Lit most_occuring_lit_in_potential(size_t& num_occur);
     Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
     Lit least_occurring_except(const OccurClause& c, const vector<Lit>& except2);
@@ -622,6 +624,7 @@ private:
     void fill_potential(const Lit lit);
     bool try_bva_on_lit(const Lit lit);
     bool bva_simplify_system(const Lit lit);
+    void update_touched_lits_in_bva();
     bool add_longer_clause(const Lit lit, const OccurClause& cl);
     void remove_duplicates_from_m_cls();
     void remove_matching_clause(
@@ -637,11 +640,15 @@ private:
     vector<Lit> m_lits;
     vector<Lit> m_lits_this_cl;
     vector<OccurClause> m_cls;
+    vector<size_t> watch_irred_sizes;
     struct VarBVAOrder
     {
-        VarBVAOrder(const Solver* solver);
+        VarBVAOrder(vector<size_t>& _watch_irred_sizes) :
+            watch_irred_sizes(_watch_irred_sizes)
+        {}
+
         bool operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const;
-        const Solver* solver;
+        vector<size_t>& watch_irred_sizes;
     };
     Heap<VarBVAOrder> var_bva_order;
 

@@ -82,7 +82,7 @@ Simplifier::Simplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , varElimOrder(VarOrderLt(varElimComplexity))
-    , var_bva_order(VarBVAOrder(_solver))
+    , var_bva_order(VarBVAOrder(watch_irred_sizes))
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
@@ -3025,17 +3025,41 @@ void Simplifier::fill_potential(const Lit lit)
     }
 }
 
-Simplifier::VarBVAOrder::VarBVAOrder(const Solver* _solver) :
-    solver(_solver)
-{}
-
 
 bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const
 {
-    const Lit lit1 = Lit::toLit(lit1_uint);
-    const Lit lit2 = Lit::toLit(lit2_uint);
-    return solver->watches[lit1.toInt()].size() < solver->watches[lit2.toInt()].size();
-};
+    return watch_irred_sizes[lit1_uint] > watch_irred_sizes[lit2_uint];
+}
+
+size_t Simplifier::calc_watch_irred_size(const Lit lit) const
+{
+    size_t num = 0;
+    watch_subarray_const ws = solver->watches[lit.toInt()];
+    for(const Watched w: ws) {
+        if (w.isBinary() || w.isTri()) {
+            num += !w.red();
+            continue;
+        }
+
+        assert(w.isClause());
+        const Clause& cl = *solver->clAllocator.getPointer(w.getOffset());
+        num += !cl.red();
+    }
+
+    return num;
+}
+
+vector<size_t> Simplifier::calc_watch_irred_sizes() const
+{
+    vector<size_t> watch_irred_sizes;
+    for(size_t i = 0; i < solver->nVars()*2; i++) {
+        const Lit lit = Lit::toLit(i);
+        const size_t irred_size = calc_watch_irred_size(lit);
+        watch_irred_sizes.push_back(irred_size);
+    }
+
+    return watch_irred_sizes;
+}
 
 bool Simplifier::bounded_var_addition()
 {
@@ -3058,6 +3082,7 @@ bool Simplifier::bounded_var_addition()
     bva_worked = 0;
     bva_simp_size = 0;
     var_bva_order.clear();
+    watch_irred_sizes = calc_watch_irred_sizes();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
         if (solver->value(lit) != l_Undef
@@ -3270,6 +3295,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
 
 bool Simplifier::bva_simplify_system(const Lit lit)
 {
+    touched.clear();
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
     if (solver->conf.verbosity >= 6) {
         cout
@@ -3296,7 +3322,8 @@ bool Simplifier::bva_simplify_system(const Lit lit)
         vector<Lit> lits(2);
         lits[0] = m_lit;
         lits[1] = new_lit;
-        solver->addClauseInt(lits, false, ClauseStats(), false);
+        solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
+        touched.touch(lits);
     }
 
     for(const OccurClause m_cl: m_cls) {
@@ -3312,7 +3339,27 @@ bool Simplifier::bva_simplify_system(const Lit lit)
         }
     }
 
+    update_touched_lits_in_bva();
+
     return solver->okay();
+}
+
+void Simplifier::update_touched_lits_in_bva()
+{
+    const vector<uint32_t>& touched_list = touched.getTouchedList();
+    for(const uint32_t lit_uint: touched_list) {
+        const Lit lit = Lit::toLit(lit_uint);
+        if (var_bva_order.inHeap(lit.toInt())) {
+            watch_irred_sizes[lit.toInt()] = calc_watch_irred_size(lit);
+            var_bva_order.update(lit.toInt());
+        }
+
+        if (var_bva_order.inHeap((~lit).toInt())) {
+            watch_irred_sizes[(~lit).toInt()] = calc_watch_irred_size(~lit);
+            var_bva_order.update((~lit).toInt());
+        }
+    }
+    touched.clear();
 }
 
 void Simplifier::remove_matching_clause(
@@ -3323,10 +3370,12 @@ void Simplifier::remove_matching_clause(
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
             solver->detachBinClause(lit_replace, cl.ws.lit2(), cl.ws.red());
+            touched.touch(lit_replace, cl.ws.lit2());
             break;
 
         case CMSat::watch_tertiary_t:
             solver->detachTriClause(lit_replace, cl.ws.lit2(), cl.ws.lit3(), cl.ws.red());
+            touched.touch(lit_replace, cl.ws.lit2(), cl.ws.lit3());
             break;
 
         case CMSat::watch_clause_t:
@@ -3382,27 +3431,28 @@ Clause* Simplifier::find_cl_for_bva(
 
 bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
 {
+    vector<Lit> lits;
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t: {
-            vector<Lit> lits(2);
+            lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            solver->addClauseInt(lits, false, ClauseStats(), false);
+            solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
             break;
         }
 
         case CMSat::watch_tertiary_t: {
-            vector<Lit> lits(3);
+            lits.resize(3);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
             lits[2] = cl.ws.lit3();
-            solver->addClauseInt(lits, false, ClauseStats(), false);
+            solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
             break;
         }
 
         case CMSat::watch_clause_t: {
             const Clause& orig_cl = *solver->clAllocator.getPointer(cl.ws.getOffset());
-            vector<Lit> lits(orig_cl.size());
+            lits.resize(orig_cl.size());
             for(size_t i = 0; i < orig_cl.size(); i++) {
                 if (orig_cl[i] == cl.lit) {
                     lits[i] = new_lit;
@@ -3410,7 +3460,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                     lits[i] = orig_cl[i];
                 }
             }
-            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false);
+            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits);
             if (newCl != NULL) {
                 linkInClause(*newCl);
                 ClOffset offset = solver->clAllocator.getOffset(newCl);
@@ -3419,6 +3469,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             break;
         }
     }
+    touched.touch(lits);
 
     return solver->okay();
 }
