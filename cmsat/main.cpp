@@ -674,6 +674,23 @@ void Main::check_options_correctness()
         << endl;
 
         exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::ambiguous_option> > what
+    ) {
+        cerr
+        << "ERROR: The option you gave was not fully written and matches" << endl
+        << "       more than one option. Please give the full option name." << endl
+        << "       The option you gave: '" << what.get_option_name() << "'" <<endl
+        << "       The alternatives are: ";
+        for(size_t i = 0; i < what.alternatives().size(); i++) {
+            cout << what.alternatives()[i];
+            if (i+1 < what.alternatives().size()) {
+                cout << ", ";
+            }
+        }
+        cout << endl;
+
+        exit(-1);
     }
 }
 
