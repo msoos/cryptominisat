@@ -333,6 +333,11 @@ struct OccurClause {
         lit(lit_Undef)
     {}
 
+    bool operator==(const OccurClause& other) const
+    {
+        return lit == other.lit && ws == other.ws;
+    }
+
     Lit lit;
     Watched ws;
 };
