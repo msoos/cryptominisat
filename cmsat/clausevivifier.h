@@ -151,27 +151,15 @@ class ClauseVivifier {
 
             struct CacheBased
             {
-                double cpu_time;
-                uint64_t numLitsRem;
-                uint64_t numClSubsumed;
-                uint64_t triedCls;
-                uint64_t shrinked;
-                uint64_t totalCls;
-                uint64_t totalLits;
-                uint64_t ranOutOfTime;
-                uint64_t numCalled;
-
-                CacheBased() :
-                    cpu_time(0)
-                    , numLitsRem(0)
-                    , numClSubsumed(0)
-                    , triedCls(0)
-                    , shrinked(0)
-                    , totalCls(0)
-                    , totalLits(0)
-                    , ranOutOfTime(0)
-                    , numCalled(0)
-                {}
+                double cpu_time = 0.0;
+                uint64_t numLitsRem = 0;
+                uint64_t numClSubsumed = 0;
+                uint64_t triedCls = 0;
+                uint64_t shrinked = 0;
+                uint64_t totalCls = 0;
+                uint64_t totalLits = 0;
+                uint64_t ranOutOfTime = 0;
+                uint64_t numCalled = 0;
 
                 void clear()
                 {
