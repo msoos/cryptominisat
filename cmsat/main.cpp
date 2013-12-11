@@ -691,6 +691,15 @@ void Main::check_options_correctness()
         cout << endl;
 
         exit(-1);
+    } catch (boost::exception_detail::clone_impl<
+        boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> > what
+    ) {
+        cerr
+        << "ERROR: The option you gave is missing the argument or the" << endl
+        << "       argument is given with space between the equal sign." << endl
+        << "       detailed error message: " << what.what() << endl
+        ;
+        exit(-1);
     }
 }
 
