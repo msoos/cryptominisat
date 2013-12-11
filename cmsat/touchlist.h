@@ -24,8 +24,6 @@
 
 #include <vector>
 #include "solvertypes.h"
-#include <cstdarg>
-
 
 namespace CMSat {
 
