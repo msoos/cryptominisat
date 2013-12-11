@@ -169,7 +169,6 @@ SolverConf::SolverConf() :
         , maxGateSize      (20)
         , maxGateBasedClReduceSize(20)
 
-        , doER             (false)
         , doCalcReach      (true)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)

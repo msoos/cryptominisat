@@ -194,7 +194,7 @@ class SolverConf
         uint64_t    maxGateSize;
         unsigned maxGateBasedClReduceSize;
 
-        int      doER; ///< Perform Extended Resolution (ER)
+
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
 
