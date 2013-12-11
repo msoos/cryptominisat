@@ -996,11 +996,6 @@ bool Simplifier::simplify()
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail.size();
 
-    if (solver->conf.doCache && solver->conf.doGateFind) {
-        if (!gateFinder->doAll())
-            goto end;
-    }
-
     //subsumeStrengthen->subsumeWithTris();
     subsumeStrengthen->performSubsumption();
     if (!subsumeStrengthen->performStrengthening())
@@ -1032,6 +1027,11 @@ bool Simplifier::simplify()
 
     if (!bounded_var_addition()) {
         goto end;
+    }
+
+    if (solver->conf.doCache && solver->conf.doGateFind) {
+        if (!gateFinder->doAll())
+            goto end;
     }
 
 end:
