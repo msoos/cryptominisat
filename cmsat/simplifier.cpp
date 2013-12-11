@@ -714,8 +714,8 @@ end:
     if (solver->conf.verbosity >= 2) {
         cout << "c  #try to eliminate: " << wenThrough << endl
         << "c  #var-elim: " << vars_elimed << endl
-        << "c  #time-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
-        << "c  #time: " << (cpuTime() - myTime) << endl;
+        << "c  #T-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
+        << "c  #T: " << (cpuTime() - myTime) << endl;
     }
     assert(limit_to_decrease == &norm_varelim_time_limit);
 
