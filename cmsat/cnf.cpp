@@ -203,7 +203,7 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
             const Clause* cl = clAllocator.getPointer(ws.getOffset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
-                if (i < cl->size()-1)
+                if (i + 1 < cl->size())
                     ss << ", ";
             }
             break;
