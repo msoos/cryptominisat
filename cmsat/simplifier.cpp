@@ -3065,7 +3065,7 @@ bool Simplifier::bounded_var_addition()
 {
     assert(solver->ok);
     if (!solver->conf.do_bounded_variable_addition)
-        return solver->okay();;
+        return solver->okay();
 
     if (solver->conf.verbosity >= 3) {
         cout << "c [bva] Running BVA" << endl;
