@@ -3070,9 +3070,6 @@ bool Simplifier::bounded_var_addition()
     if (solver->conf.verbosity >= 3) {
         cout << "c [bva] Running BVA" << endl;
     }
-    std::ofstream f("tmp");
-    solver->dumpIrredClauses(&f);
-    f.close();
 
     propagate();
     limit_to_decrease = &bounded_var_elim_time_limit;
