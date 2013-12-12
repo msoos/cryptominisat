@@ -246,7 +246,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
                 << ((solver->model[i]==l_True) ? "" : "-")
                 << (i+1) <<  " ";
         }
-        partFile << "0" << endl;;
+        partFile << "0" << endl;
     } else if (ret == l_False) {
         partFile << "s UNSAT" << endl;
     } else if (ret == l_Undef) {

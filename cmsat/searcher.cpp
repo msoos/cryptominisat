@@ -1574,7 +1574,7 @@ bool Searcher::handle_conflict(PropBy confl)
 {
     uint32_t backtrack_level;
     uint32_t glue;
-    resolutions.clear();;
+    resolutions.clear();
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)

@@ -756,7 +756,7 @@ void HyperEngine::addHyperBin(const Lit lit1, const Lit lit2, const Lit lit3)
     assert(value(lit2) == l_False);
     assert(value(lit3) == l_False);
 
-    currAncestors.clear();;
+    currAncestors.clear();
     if (varData[lit2.var()].level != 0) {
         currAncestors.push_back(~lit2);
     }

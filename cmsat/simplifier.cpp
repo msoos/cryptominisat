@@ -1062,7 +1062,7 @@ bool Simplifier::fill_occur()
     //Memory limit reached, irreduntant clauses cannot
     //be added to occur --> exit
     if (!ret) {
-        CompleteDetachReatacher detRet(solver);;
+        CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
         return false;
     }
@@ -2724,7 +2724,7 @@ void Simplifier::order_vars_for_elim()
 
         *limit_to_decrease -= 50;
         assert(!varElimOrder.inHeap(var));
-        varElimComplexity[var] = strategyCalcVarElimScore(var);;
+        varElimComplexity[var] = strategyCalcVarElimScore(var);
         varElimOrder.insert(var);
     }
     assert(varElimOrder.heapProperty());

@@ -139,7 +139,7 @@ class CSet {
 
                 bool operator!=(const iterator& iter) const
                 {
-                    return (it != iter.it);;
+                    return (it != iter.it);
                 }
 
                 ClOffset& operator*() {
@@ -172,7 +172,7 @@ class CSet {
 
                 bool operator!=(const const_iterator& iter) const
                 {
-                    return (it != iter.it);;
+                    return (it != iter.it);
                 }
 
                 const ClOffset& operator*() {

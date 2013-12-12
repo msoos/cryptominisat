@@ -444,7 +444,7 @@ void CompHandler::moveClausesLong(
 
         //Let's move it to the other solver!
         #ifdef VERBOSE_DEBUG
-        cout << "clause in this comp:" << cl << endl;;
+        cout << "clause in this comp:" << cl << endl;
         #endif
 
         //Create temporary space 'tmp' and copy to backup

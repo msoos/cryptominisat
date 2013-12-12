@@ -2882,7 +2882,7 @@ bool Solver::verifyImplicitClauses() const
 bool Solver::verifyClauses(const vector<ClOffset>& cs) const
 {
     #ifdef VERBOSE_DEBUG
-    cout << "Checking clauses whether they have been properly satisfied." << endl;;
+    cout << "Checking clauses whether they have been properly satisfied." << endl;
     #endif
 
     bool verificationOK = true;

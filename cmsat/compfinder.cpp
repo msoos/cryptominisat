@@ -260,7 +260,7 @@ void CompFinder::addToCompClause(const T& cl)
             ; it++
         ) {
             if (table[it->var()] != comp) {
-                allsame = false;;
+                allsame = false;
                 break;
             }
         }
