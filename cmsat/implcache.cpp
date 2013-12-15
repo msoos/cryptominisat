@@ -124,17 +124,22 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
                     continue;
 
                 const Lit lit = solver->varReplacer->getLitReplacedWith(litOrig);
-                bool taut = implCache[lit.toInt()].merge(
-                    implCache[litOrig.toInt()].lits
-                    , lit_Undef //nothing to add
-                    , false //replaced, so 'irred'
-                    , lit.var() //exclude the literal itself
-                    , solver->seen
-                );
 
-                if (taut) {
-                    toEnqueue.push_back(lit);
-                    (*solver->drup) << lit << fin;
+                //Updated literal must be normal, otherwise, biig problems e.g
+                //implCache is not even large enough, etc.
+                if (solver->varData[lit.var()].removed == Removed::none) {
+                    bool taut = implCache.at(lit.toInt()).merge(
+                        implCache[litOrig.toInt()].lits
+                        , lit_Undef //nothing to add
+                        , false //replaced, so 'irred'
+                        , lit.var() //exclude the literal itself
+                        , solver->seen
+                    );
+
+                    if (taut) {
+                        toEnqueue.push_back(lit);
+                        (*solver->drup) << lit << fin;
+                    }
                 }
             }
         }
