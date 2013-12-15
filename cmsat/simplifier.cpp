@@ -268,7 +268,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->litStats.irredLits -= i-j;
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->conf.verbosity >= 6 || bva_verbosity) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
@@ -2986,7 +2986,7 @@ void Simplifier::fill_potential(const Lit lit)
             seen2[lit.toInt()] = 1;
         }
 
-        if (solver->conf.verbosity >= 6) {
+        if (solver->conf.verbosity >= 6 || bva_verbosity) {
             cout
             << "c [bva] Examining clause for addition to 'potential':"
             << solver->watched_to_string(c.lit, c.ws)
@@ -3011,7 +3011,7 @@ void Simplifier::fill_potential(const Lit lit)
                     m_lits_this_cl.push_back(diff);
                     seen2[diff.toInt()] = 1;
 
-                    if (solver->conf.verbosity >= 6) {
+                    if (solver->conf.verbosity >= 6 || bva_verbosity) {
                         cout
                         << "c [bva] Added to P: "
                         << potential.back().to_string(solver)
@@ -3066,11 +3066,12 @@ vector<size_t> Simplifier::calc_watch_irred_sizes() const
 
 bool Simplifier::bounded_var_addition()
 {
+    bva_verbosity = false;
     assert(solver->ok);
     if (!solver->conf.do_bounded_variable_addition)
         return solver->okay();
 
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3 || bva_verbosity) {
         cout << "c [bva] Running BVA" << endl;
     }
 
@@ -3099,7 +3100,7 @@ bool Simplifier::bounded_var_addition()
             break;
 
         const Lit lit = Lit::toLit(var_bva_order.removeMin());
-        if (solver->conf.verbosity >= 5) {
+        if (solver->conf.verbosity >= 5 || bva_verbosity) {
             cout << "c [bva] trying lit " << lit << endl;
         }
         bool ok = try_bva_on_lit(lit);
@@ -3230,7 +3231,7 @@ void Simplifier::remove_duplicates_from_m_cls()
     }
     m_cls.resize(m_cls.size()-(i-j));
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->conf.verbosity >= 6 || bva_verbosity) {
         cout << "m_cls after cleaning: " << endl;
         for(const OccurClause& w: m_cls) {
             cout << "-> " << solver->watched_to_string(w.lit, w.ws) << endl;
@@ -3249,7 +3250,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     for(const Watched w: solver->watches[lit.toInt()]) {
         if (!solver->redundant(w)) {
             m_cls.push_back(OccurClause(lit, w));
-            if (solver->conf.verbosity >= 6) {
+            if (solver->conf.verbosity >= 6 || bva_verbosity) {
                 cout << "1st adding to m_cls "
                 << solver->watched_to_string(lit, w)
                 << endl;
@@ -3272,7 +3273,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
             for(const PotentialClause pot: potential) {
                 if (pot.lit == l_max) {
                     m_cls.push_back(pot.occur_cl);
-                    if (solver->conf.verbosity >= 6) {
+                    if (solver->conf.verbosity >= 6 || bva_verbosity) {
                         cout << "-- max is : " << l_max << ", adding to m_cls "
                         << solver->watched_to_string(pot.occur_cl.lit, pot.occur_cl.ws)
                         << endl;
@@ -3301,7 +3302,7 @@ bool Simplifier::bva_simplify_system()
 {
     touched.clear();
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (solver->conf.verbosity >= 6) {
+    if (solver->conf.verbosity >= 6 || bva_verbosity) {
         cout
         << "c [bva] YES Simplification by "
         << simp_size
@@ -3370,7 +3371,12 @@ void Simplifier::remove_matching_clause(
     const OccurClause& cl
     , const Lit lit_replace
 ) {
-    //cout << "Removing cl " << solver->watched_to_string(replace_lit, cl.ws) << endl;
+    if (solver->conf.verbosity >= 6 || bva_verbosity) {
+        cout
+        << "c [bva] Removing cl "
+        << solver->watched_to_string(lit_replace, cl.ws)
+        << endl;
+    }
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
             solver->detachBinClause(lit_replace, cl.ws.lit2(), cl.ws.red());

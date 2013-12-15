@@ -597,6 +597,7 @@ private:
 
     /////////////
     //Bounded Variable Addition
+    bool bva_verbosity = 0;
     size_t bva_worked;
     size_t bva_simp_size;
     struct PotentialClause {
