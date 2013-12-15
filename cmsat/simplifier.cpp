@@ -3323,7 +3323,7 @@ bool Simplifier::bva_simplify_system()
     const Var newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
-    for(Lit m_lit: m_lits) {
+    for(const Lit m_lit: m_lits) {
         vector<Lit> lits(2);
         lits[0] = m_lit;
         lits[1] = new_lit;
