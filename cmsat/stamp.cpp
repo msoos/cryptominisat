@@ -12,14 +12,14 @@ void Stamp::saveVarMem(const uint32_t newNumVars)
     for(Timestamp& t: tstamp) {
         Lit lit = t.dominator[STAMP_RED];
         if (lit != lit_Undef
-            && lit.var() > newNumVars
+            && lit.var() >= newNumVars
         ) {
             t.dominator[STAMP_RED] = lit_Undef;
         }
 
         lit = t.dominator[STAMP_IRRED];
         if (lit != lit_Undef
-            && lit.var() > newNumVars
+            && lit.var() >= newNumVars
         ) {
             t.dominator[STAMP_IRRED] = lit_Undef;
         }
