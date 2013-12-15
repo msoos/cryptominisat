@@ -3205,13 +3205,17 @@ void Simplifier::remove_duplicates_from_m_cls()
             }
 
             case CMSat::watch_clause_t: {
-                *limit_to_decrease -= 20;
+                *limit_to_decrease -= 10;
                 const Clause& cl1 = *solver->clAllocator.getPointer(prev.getOffset());
-                const Clause& cl2 = *solver->clAllocator.getPointer(prev.getOffset());
+                const Clause& cl2 = *solver->clAllocator.getPointer(next.getOffset());
+                del = true;
+                if (cl1.size() != cl2.size()) {
+                    break;
+                }
                 for(size_t i = 0; i < cl1.size(); i++) {
                     *limit_to_decrease -= 1;
                     if (cl1[i] != cl2[i]) {
-                        del = true;
+                        del = false;
                         break;
                     }
                 }
