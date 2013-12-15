@@ -149,7 +149,7 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
                 cout
                 << "ERROR! Variable requested is far too large: "
                 << var << endl
-                << "--> At line " << lineNum
+                << "--> At line " << lineNum+1
                 << endl;
                 exit(-1);
             }
@@ -196,7 +196,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     } else {
         cout
         << "PARSE ERROR! Unexpected char: '" << *in
-        << "' in the header, at line " << lineNum
+        << "' in the header, at line " << lineNum+1
         << endl;
         exit(3);
     }
@@ -394,8 +394,11 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             parseComments(in, str);
             break;
         case '\n':
-            //Skipping empty line, even though empty lines are kind of out-of-spec
-            ++in;
+            cout
+            << "c WARNING: Empty line at line number " << lineNum+1
+            << " -- this is not part of the DIMACS specifications. Ignoring."
+            << endl;
+            skipLine(in);
             break;
         default:
             readFullClause(in);
