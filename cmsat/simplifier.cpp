@@ -2823,7 +2823,10 @@ size_t Simplifier::memUsed() const
 
 size_t Simplifier::memUsedXor() const
 {
-    return xorFinder->memUsed();
+    if (xorFinder)
+        return xorFinder->memUsed();
+    else
+        return 0;
 }
 
 void Simplifier::freeXorMem()
