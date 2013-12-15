@@ -3293,11 +3293,11 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
         return solver->okay();
     }
 
-    const bool ok = bva_simplify_system(lit);
+    const bool ok = bva_simplify_system();
     return ok;
 }
 
-bool Simplifier::bva_simplify_system(const Lit lit)
+bool Simplifier::bva_simplify_system()
 {
     touched.clear();
     int simp_size = simplification_size(m_lits.size(), m_cls.size());

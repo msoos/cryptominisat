@@ -623,7 +623,7 @@ private:
     ) const;
     void fill_potential(const Lit lit);
     bool try_bva_on_lit(const Lit lit);
-    bool bva_simplify_system(const Lit lit);
+    bool bva_simplify_system();
     void update_touched_lits_in_bva();
     bool add_longer_clause(const Lit lit, const OccurClause& cl);
     void remove_duplicates_from_m_cls();
