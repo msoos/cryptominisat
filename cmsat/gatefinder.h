@@ -330,7 +330,6 @@ private:
 
     //Limits
     int64_t  numMaxGateFinder;
-    int64_t  numMaxCreateNewVars;
     int64_t  numMaxShortenWithGates;
     int64_t  numMaxClRemWithGates;
 
