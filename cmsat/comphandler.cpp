@@ -378,8 +378,7 @@ void CompHandler::moveVariablesBetweenSolvers(
         }
         #endif //VERBOSE_DEBUG
 
-        //Add to new solver
-        newSolver->newVar(solver->varData[var].is_decision);
+        newSolver->new_external_var();
         assert(compFinder->getVarComp(var) == comp);
 
         //Remove from old solver
