@@ -2944,6 +2944,10 @@ Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
             num++;
         }
     }
+    if (num >= largest) {
+        largest = num;
+        most_occur = last_occur;
+    }
 
     if (solver->conf.verbosity >= 5) {
         cout
