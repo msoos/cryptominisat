@@ -600,22 +600,52 @@ private:
     bool bva_verbosity = 0;
     size_t bva_worked;
     size_t bva_simp_size;
+    struct lit_pair{
+        lit_pair(const Lit a, const Lit b = lit_Undef) :
+            lit1(a)
+            , lit2(b)
+        {}
+
+        bool operator==(const lit_pair& other) const
+        {
+            return lit1 == other.lit1 && lit2 == other.lit2;
+        }
+
+        bool operator!=(const lit_pair& other) const
+        {
+            return !(*this == other);
+        }
+
+        Lit lit1;
+        Lit lit2;
+    };
     struct PotentialClause {
-        PotentialClause(const Lit _lit, const OccurClause cl) :
-            lit(_lit)
+        PotentialClause(const lit_pair _lits, const OccurClause cl) :
+            lits(_lits)
             , occur_cl(cl)
         {}
 
-        Lit lit;
+        bool operator<(const PotentialClause& other) const
+        {
+            if (lits == other.lits)
+                return false;
+
+            if (lits.lit1 != other.lits.lit1)
+                return lits.lit1 < other.lits.lit1;
+
+            return lits.lit2 < other.lits.lit2;
+        }
+
+        lit_pair lits;
         OccurClause occur_cl;
         string to_string(const Solver* solver) const;
     };
     bool bounded_var_addition();
     size_t calc_watch_irred_size(const Lit lit) const;
     vector<size_t> calc_watch_irred_sizes() const;
-    Lit most_occuring_lit_in_potential(size_t& num_occur);
-    Lit lit_diff_watches(const OccurClause& a, const OccurClause& b);
-    Lit least_occurring_except(const OccurClause& c, const vector<Lit>& except2);
+    lit_pair most_occuring_lit_in_potential(size_t& num_occur);
+    lit_pair lit_diff_watches(const OccurClause& a, const OccurClause& b);
+    Lit least_occurring_except(const OccurClause& c);
     bool inside(const vector<Lit>& lits, const Lit notin) const;
     bool simplifies_system(const size_t num_occur) const;
     int simplification_size(
@@ -630,16 +660,15 @@ private:
     void remove_duplicates_from_m_cls();
     void remove_matching_clause(
         const OccurClause& cl
-        , const Lit lit_replace
+        , const lit_pair lit_replace
     );
     Clause* find_cl_for_bva(
-        const Lit lit_orig
-        , const Lit lit_replace
-        , const Clause& cl_orig
+        const vector<Lit>& torem
+        , const bool red
     ) const;
     vector<PotentialClause> potential;
-    vector<Lit> m_lits;
-    vector<Lit> m_lits_this_cl;
+    vector<lit_pair> m_lits;
+    vector<lit_pair> m_lits_this_cl;
     vector<OccurClause> m_cls;
     vector<size_t> watch_irred_sizes;
     struct VarBVAOrder

@@ -2862,17 +2862,20 @@ void Simplifier::printGateFinderStats() const
     }
 }
 
-Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& except2)
+Lit Simplifier::least_occurring_except(const OccurClause& c)
 {
-    *limit_to_decrease -= except2.size();
-    for(const Lit lit: except2) {
-        seen[lit.toInt()] = 1;
+    *limit_to_decrease -= m_lits.size();
+    for(const lit_pair lits: m_lits) {
+        seen[lits.lit1.toInt()] = 1;
+        if (lits.lit2 != lit_Undef) {
+            seen[lits.lit2.toInt()] = 1;
+        }
     }
 
     Lit smallest = lit_Undef;
     size_t smallest_val = std::numeric_limits<size_t>::max();
     const auto check_smallest = [&] (const Lit lit) {
-        //Must not be in except2
+        //Must not be in m_lits
         if (seen[lit.toInt()] != 0)
             return;
 
@@ -2884,55 +2887,68 @@ Lit Simplifier::least_occurring_except(const OccurClause& c, const vector<Lit>& 
     };
     solver->for_each_lit_except_watched(c, check_smallest, limit_to_decrease);
 
-    for(const Lit lit: except2) {
-        seen[lit.toInt()] = 0;
+    for(const lit_pair lits: m_lits) {
+        seen[lits.lit1.toInt()] = 0;
+        if (lits.lit2 != lit_Undef) {
+            seen[lits.lit2.toInt()] = 1;
+        }
     }
 
     return smallest;
 }
 
-Lit Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
+Simplifier::lit_pair Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
 {
-    assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
+    //assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
     assert(a.lit != b.lit);
     solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;}, limit_to_decrease);
 
     size_t num = 0;
-    Lit toret = lit_Undef;
+    lit_pair toret = lit_pair(lit_Undef, lit_Undef);
     const auto check_seen = [&] (const Lit lit) {
         if (seen[lit.toInt()] == 0) {
-            toret = lit;
+            if (num == 0)
+                toret.lit1 = lit;
+            else
+                toret.lit2 = lit;
+
             num++;
         }
     };
     solver->for_each_lit(a, check_seen, limit_to_decrease);
     solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;}, limit_to_decrease);
 
-    if (num == 1)
+    if (num >= 1 && num <= 2)
         return toret;
     else
         return lit_Undef;
 }
 
-Lit Simplifier::most_occuring_lit_in_potential(size_t& num_occur)
+Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
 {
-    num_occur = 0;
-    Lit most_occur = lit_Undef;
+    largest = 0;
+    lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
+    std::sort(potential.begin(), potential.end());
+
+    lit_pair last_occur = lit_pair(lit_Undef, lit_Undef);
+    size_t num = 0;
     for(const PotentialClause pot: potential) {
-        seen[pot.lit.toInt()]++;
-        if (num_occur < seen[pot.lit.toInt()]) {
-            num_occur = seen[pot.lit.toInt()];
-            most_occur = pot.lit;
+        if (last_occur != pot.lits) {
+            if (num >= largest) {
+                largest = num;
+                most_occur = last_occur;
+            }
+            last_occur = pot.lits;
+            num = 1;
+        } else {
+            num++;
         }
-    }
-    for(const PotentialClause pot: potential) {
-        seen[pot.lit.toInt()] = 0;
     }
 
     if (solver->conf.verbosity >= 5) {
         cout
-        << "c [bva] ---> Most occuring lit in p: " << most_occur
-        << " occur num: " << num_occur
+        << "c [bva] ---> Most occuring lit in p: " << most_occur.lit1 << ", " << most_occur.lit2
+        << " occur num: " << largest
         << endl;
     }
 
@@ -2981,13 +2997,16 @@ void Simplifier::fill_potential(const Lit lit)
         if (*limit_to_decrease < 0)
             break;
 
-        const Lit l_min = least_occurring_except(c, m_lits);
+        const Lit l_min = least_occurring_except(c);
         if (l_min == lit_Undef)
             continue;
 
         m_lits_this_cl = m_lits;
-        for(const Lit lit: m_lits_this_cl) {
-            seen2[lit.toInt()] = 1;
+        for(const lit_pair lits: m_lits_this_cl) {
+            seen2[lits.lit1.toInt()] = 1;
+            if (lits.lit2 != lit_Undef) {
+                seen2[lits.lit2.toInt()] = 1;
+            }
         }
 
         if (solver->conf.verbosity >= 6 || bva_verbosity) {
@@ -3004,16 +3023,23 @@ void Simplifier::fill_potential(const Lit lit)
                 goto end;
 
             OccurClause d(l_min, d_ws);
+            //cout << "Under scrutiny: "<< solver->watched_to_string(d.lit, d.ws) << endl;
             if (c.ws != d.ws
-                && solver->cl_size(c.ws) == solver->cl_size(d.ws)
+                && (solver->cl_size(c.ws) == solver->cl_size(d.ws)
+                    || solver->cl_size(c.ws)+1 == solver->cl_size(d.ws))
                 && !solver->redundant(d.ws)
                 && lit_diff_watches(c, d) == lit
             ) {
-                const Lit diff = lit_diff_watches(d, c);
-                if (seen2[diff.toInt()] == 0) {
+                const lit_pair diff = lit_diff_watches(d, c);
+                if (seen2[diff.lit1.toInt()] == 0
+                    && (diff.lit2 == lit_Undef || seen2[diff.lit2.toInt()] == 0)
+                ) {
                     potential.push_back(PotentialClause(diff, c));
                     m_lits_this_cl.push_back(diff);
-                    seen2[diff.toInt()] = 1;
+                    seen2[diff.lit1.toInt()] = 1;
+                    if (diff.lit2 != lit_Undef) {
+                        seen2[diff.lit2.toInt()] = 1;
+                    }
 
                     if (solver->conf.verbosity >= 6 || bva_verbosity) {
                         cout
@@ -3026,8 +3052,11 @@ void Simplifier::fill_potential(const Lit lit)
         }
 
         end:
-        for(const Lit lit: m_lits_this_cl) {
-            seen2[lit.toInt()] = 0;
+        for(const lit_pair lits: m_lits_this_cl) {
+            seen2[lits.lit1.toInt()] = 0;
+            if (lits.lit2 != lit_Undef) {
+                seen2[lits.lit2.toInt()] = 0;
+            }
         }
     }
 }
@@ -3270,15 +3299,15 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
             break;
 
         size_t num_occur;
-        const Lit l_max = most_occuring_lit_in_potential(num_occur);
+        const lit_pair l_max = most_occuring_lit_in_potential(num_occur);
         if (simplifies_system(num_occur)) {
             m_lits.push_back(l_max);
             m_cls.clear();
             for(const PotentialClause pot: potential) {
-                if (pot.lit == l_max) {
+                if (pot.lits == l_max) {
                     m_cls.push_back(pot.occur_cl);
                     if (solver->conf.verbosity >= 6 || bva_verbosity) {
-                        cout << "-- max is : " << l_max << ", adding to m_cls "
+                        cout << "-- max is : (" << l_max.lit1 << ", " << l_max.lit2 << "), adding to m_cls "
                         << solver->watched_to_string(pot.occur_cl.lit, pot.occur_cl.ws)
                         << endl;
                     }
@@ -3310,9 +3339,16 @@ bool Simplifier::bva_simplify_system()
         cout
         << "c [bva] YES Simplification by "
         << simp_size
-        << " with matching lits: "
-        << m_lits << endl
-        << "c [bva] cls: ";
+        << " with matching lits: ";
+        for(const lit_pair l: m_lits) {
+            cout << "(" << l.lit1;
+            if (l.lit2 != lit_Undef) {
+                cout << ", " << l.lit2;
+            }
+            cout << "), ";
+        }
+        cout << endl;
+        cout << "c [bva] cls: ";
         for(OccurClause cl: m_cls) {
             cout
             << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
@@ -3327,10 +3363,13 @@ bool Simplifier::bva_simplify_system()
     const Var newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
-    for(const Lit m_lit: m_lits) {
-        vector<Lit> lits(2);
-        lits[0] = m_lit;
-        lits[1] = new_lit;
+    for(const lit_pair m_lit: m_lits) {
+        vector<Lit> lits;
+        lits.push_back(m_lit.lit1);
+        if (m_lit.lit2 != lit_Undef) {
+            lits.push_back(m_lit.lit2);
+        }
+        lits.push_back(new_lit);
         solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
         touched.touch(lits);
     }
@@ -3341,7 +3380,7 @@ bool Simplifier::bva_simplify_system()
             return false;
     }
 
-    for(const Lit replace_lit: m_lits) {
+    for(const lit_pair replace_lit: m_lits) {
        //cout << "Doing lit " << replace_lit << " replacing lit " << lit << endl;
         for(const OccurClause cl: m_cls) {
             remove_matching_clause(cl, replace_lit);
@@ -3373,52 +3412,79 @@ void Simplifier::update_touched_lits_in_bva()
 
 void Simplifier::remove_matching_clause(
     const OccurClause& cl
-    , const Lit lit_replace
+    , const lit_pair lit_replace
 ) {
     if (solver->conf.verbosity >= 6 || bva_verbosity) {
         cout
         << "c [bva] Removing cl "
-        << solver->watched_to_string(lit_replace, cl.ws)
+        //<< solver->watched_to_string(lit_replace, cl.ws)
         << endl;
+    }
+
+    bool red;
+    vector<Lit> torem;
+    torem.push_back(lit_replace.lit1);
+    if (lit_replace.lit2 != lit_Undef) {
+        torem.push_back(lit_replace.lit2);
     }
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t:
-            solver->detachBinClause(lit_replace, cl.ws.lit2(), cl.ws.red());
-            touched.touch(lit_replace, cl.ws.lit2());
+            torem.push_back(cl.ws.lit2());
+            red = cl.ws.red();
             break;
 
         case CMSat::watch_tertiary_t:
-            solver->detachTriClause(lit_replace, cl.ws.lit2(), cl.ws.lit3(), cl.ws.red());
-            touched.touch(lit_replace, cl.ws.lit2(), cl.ws.lit3());
+            torem.push_back(cl.ws.lit2());
+            torem.push_back(cl.ws.lit3());
+            red = cl.ws.red();
             break;
 
         case CMSat::watch_clause_t:
             const Clause* cl_orig = solver->clAllocator.getPointer(cl.ws.getOffset());
-            Clause* cl_new = find_cl_for_bva(cl.lit, lit_replace, *cl_orig);
+            for(const Lit lit: *cl_orig) {
+                if (cl.lit != lit) {
+                    torem.push_back(lit);
+                }
+            }
+            red = cl_orig->red();
+            break;
+    }
+    touched.touch(torem);
+
+    switch(torem.size()) {
+        case 2:
+            solver->detachBinClause(torem[0], torem[1], red);
+            break;
+
+        case 3:
+            solver->detachTriClause(torem[0], torem[1], torem[2], red);
+            break;
+
+        default:
+            Clause* cl_new = find_cl_for_bva(torem, red);
             unlinkClause(solver->clAllocator.getOffset(cl_new));
             break;
     }
 }
 
 Clause* Simplifier::find_cl_for_bva(
-    const Lit lit_orig
-    , const Lit lit_replace
-    , const Clause& cl_orig
+    const vector<Lit>& torem
+    , const bool red
 ) const {
     Clause* cl = NULL;
-    for(Lit lit: cl_orig) {
-        if (lit == lit_orig) {
-            lit = lit_replace;
-        }
+    for(const Lit lit: torem) {
         seen[lit.toInt()] = 1;
     }
-    for(Watched w: solver->watches[lit_replace.toInt()]) {
+    for(Watched w: solver->watches[torem[0].toInt()]) {
         if (!w.isClause())
             continue;
 
         cl = solver->clAllocator.getPointer(w.getOffset());
-        if (cl->size() != cl_orig.size())
+        if (cl->red() != red
+            || cl->size() != torem.size()
+        ) {
             continue;
+        }
 
         bool OK = true;
         for(const Lit lit: *cl) {
@@ -3432,10 +3498,7 @@ Clause* Simplifier::find_cl_for_bva(
             break;
     }
 
-    for(Lit lit: cl_orig) {
-        if (lit == lit_orig) {
-            lit = lit_replace;
-        }
+    for(const Lit lit: torem) {
         seen[lit.toInt()] = 0;
     }
 
@@ -3492,7 +3555,7 @@ string Simplifier::PotentialClause::to_string(const Solver* solver) const
 {
     std::stringstream ss;
     ss << solver->watched_to_string(occur_cl.lit, occur_cl.ws)
-    << " -- lit: " << lit;
+    << " -- lit: " << lits.lit1 << ", " << lits.lit2;
 
     return ss.str();
 }
