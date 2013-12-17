@@ -216,11 +216,15 @@ void SubsumeStrengthen::performSubsumption()
         subsumed += subsume0(offset);
     }
 
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 2) {
         cout
-        << "c subs: " << subsumed
-        << " tried: " << wenThrough
+        << "c [subs] rem cl: " << subsumed
+        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+        << " (" << std::setprecision(1) << std::fixed
+        << (double)wenThrough/(double)simplifier->clauses.size()*100.0
+        << "%)"
         << " T: " << cpuTime() - myTime
+        << " T-out: " << (*simplifier->limit_to_decrease < 0 ? "Y" : "N")
         << endl;
     }
 
