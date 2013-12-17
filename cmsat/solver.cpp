@@ -527,7 +527,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         //Update variable numbering
         assert(lit.var() < nVarsReal());
         lit = map_outer_to_inter(lit);
-        assert(lit.var() < nVars());
 
         if (conf.verbosity >= 12) {
             cout
