@@ -358,10 +358,20 @@ void GateFinder::findOrGate(
         //We are looking for a binary clause '~otherlit V ~eqLit'
         bool OK = false;
 
-        //TODO stamping
+        //looking for "~otherLit V eqLit"
+        //start STAMP of ~otherLit < start STAMP of eqLit
+        //end STAMP of ~otherLit > start STAMP of eqLit
+        const uint64_t start_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].start[STAMP_IRRED];
+        const uint64_t start_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
+        if (start_inv_other < start_eqLit) {
+            const uint64_t end_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].end[STAMP_IRRED];
+            const uint64_t end_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
+            if (end_inv_other > end_eqLit) {
+                OK = true;
+                cout << "Here!" << endl;
+            }
+        }
 
-        //TODO enable below?
-        /*
         //Try to find corresponding binary clause in cache
         const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
         *simplifier->limit_to_decrease -= cache.size();
@@ -373,7 +383,7 @@ void GateFinder::findOrGate(
                 OK = true;
                 break;
             }
-        }*/
+        }
 
         //Try to find corresponding binary clause in watchlist
         watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
