@@ -67,7 +67,6 @@ public:
     BinTriStats binTri;
     LitStats litStats;
     Drup* drup;
-    vector<char> bva_var;
 
     //Temporaries
     vector<uint16_t> seen;
