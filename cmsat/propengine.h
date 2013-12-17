@@ -131,7 +131,6 @@ protected:
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
     template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
-    bool doLHBR;
     friend class SQLStats;
     PropStats propStats;
 

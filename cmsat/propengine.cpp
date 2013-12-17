@@ -390,7 +390,7 @@ PropResult PropEngine::propNormalClause(
         propStats.propsLongIrred++;
     #endif
 
-    if (doLHBR
+    if (conf.doLHBR
         && varData[c[1].var()].reason.getType() == binary_t
     ) {
         lazy_hyper_bin_resolve(c, offset);
@@ -672,7 +672,7 @@ PropResult PropEngine::propTriHelperSimple(
     #endif
 
     //Check if we could do lazy hyper-binary resoution
-    if (doLHBR
+    if (conf.doLHBR
         && can_do_lazy_hyper_bin(lit1, lit2, lit3)
     ) {
         lazy_hyper_bin_resolve(lit1, lit2);
