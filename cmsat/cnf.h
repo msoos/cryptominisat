@@ -73,11 +73,6 @@ public:
     vector<uint16_t> seen2;
     vector<Lit>      toClear;
 
-    uint32_t nVarsReal() const
-    {
-        return assigns.size();
-    }
-
     bool okay() const
     {
         return ok;
@@ -138,6 +133,17 @@ public:
         updateLitsMap(lits, interToOuterMain);
     }
 
+    uint32_t nVarsOutside() const
+    {
+        assert(outer_to_with_bva_map.size() == nVarsReal() - num_bva_vars);
+        return nVarsReal() - num_bva_vars;
+    }
+
+    Lit map_to_with_bva(const Lit lit) const
+    {
+        return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
+    }
+
 protected:
     virtual void newVar(bool bva, Var orig_outer);
     void test_reflectivity_of_renumbering() const;
@@ -153,6 +159,13 @@ protected:
         return minNumVars;
     }
 
+    uint32_t nVarsReal() const
+    {
+        return assigns.size();
+    }
+
+    vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
+
 private:
     void enlarge_minimal_datastructs();
     void enlarge_nonminimial_datastructs();
@@ -160,6 +173,8 @@ private:
 
     vector<Var> outerToInterMain;
     vector<Var> interToOuterMain;
+    size_t num_bva_vars = 0;
+    vector<Var> outer_to_with_bva_map;
 };
 
 template<class Function>

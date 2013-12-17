@@ -197,7 +197,7 @@ class Tester:
             , "comps", "subsume1", "probe"
             , "binpri", "stamp", "cache"
             , "otfsubsume", "renumber", "savemem"
-            , "moreminim", "gates"
+            , "moreminim", "gates", "bva"
             , "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
             for opt in opts:

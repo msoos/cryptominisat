@@ -108,7 +108,7 @@ SolverConf::SolverConf() :
         , varelimStrategy  (0)
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
-        , do_bounded_variable_addition(false)
+        , do_bounded_variable_addition(true)
 
         //Probing
         , doProbe          (true)

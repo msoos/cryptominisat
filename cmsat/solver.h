@@ -78,6 +78,7 @@ class Solver : public Searcher
         //////////////////////////////
         //Solving
         //
+        bool addClauseOuter(const vector<Lit>& ps);
         lbool solve(const vector<Lit>* _assumptions = NULL);
         void        setNeedToInterrupt();
         vector<lbool>  model;
@@ -86,7 +87,6 @@ class Solver : public Searcher
         //////////////////////////////
         // Problem specification:
         void new_external_var();
-        bool addClause(const vector<Lit>& ps);  ///< Add clause to the solver
         bool addXorClause(const vector<Var>& vars, bool rhs);
         bool addRedClause(
             const vector<Lit>& ps
@@ -271,6 +271,7 @@ class Solver : public Searcher
         void checkImplicitStats() const;
 
     protected:
+        bool addClause(const vector<Lit>& ps);
         virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
 
         //friend class SQLStats;
@@ -323,6 +324,7 @@ class Solver : public Searcher
         );
 
     private:
+        vector<Lit> back_number_from_caller(const vector<Lit>& lits) const;
         void check_switchoff_limits_newvar();
         vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;

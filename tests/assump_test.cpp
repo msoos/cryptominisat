@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_CASE(empty)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     lbool ret = s.solve(&assumps);
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(single_true)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, false));
     lbool ret = s.solve(&assumps);
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(single_false)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     lbool ret = s.solve(&assumps);
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(binclause_true)
     Solver s;
     s.new_external_var();
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false), Lit(1, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     lbool ret = s.solve(&assumps);
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(binclause_false)
     Solver s;
     s.new_external_var();
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false), Lit(1, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     assumps.push_back(Lit(1, true));
@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(replace_true)
     Solver s;
     s.new_external_var();
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.addClause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.addClauseOuter(vector<Lit>{Lit(0, true), Lit(1, false)});
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     assumps.push_back(Lit(1, true));
@@ -94,8 +94,8 @@ BOOST_AUTO_TEST_CASE(replace_false)
     Solver s;
     s.new_external_var();
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.addClause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.addClauseOuter(vector<Lit>{Lit(0, true), Lit(1, false)});
 
     vector<Lit> assumps;
     assumps.push_back(Lit(0, false));

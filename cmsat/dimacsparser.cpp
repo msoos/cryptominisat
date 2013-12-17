@@ -154,7 +154,7 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
                 exit(-1);
             }
 
-            while (var >= solver->nVarsReal())
+            while (var >= solver->nVarsOutside())
                 solver->new_external_var();
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
@@ -240,7 +240,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     if (ret == l_True) {
         partFile << "s SATISFIABLE" << endl;
         partFile << "v ";
-        for (Var i = 0; i != solver->nVarsReal(); i++) {
+        for (Var i = 0; i != solver->nVarsOutside(); i++) {
             if (solver->model[i] != l_Undef)
                 partFile
                 << ((solver->model[i]==l_True) ? "" : "-")
@@ -360,7 +360,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         solver->addRedClause(lits, stats);
         numRedClauses++;
     } else {
-        solver->addClause(lits);
+        solver->addClauseOuter(lits);
         numNormClauses++;
     }
 
@@ -412,7 +412,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     debugLibPart = 1;
     numRedClauses = 0;
     numNormClauses = 0;
-    const uint32_t origNumVars = solver->nVarsReal();
+    const uint32_t origNumVars = solver->nVarsOutside();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
@@ -425,7 +425,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
         << " irredundant"
         << endl;
 
-        cout << "c -- vars added " << std::setw(10) << (solver->nVarsReal() - origNumVars)
+        cout << "c -- vars added " << std::setw(10) << (solver->nVarsOutside() - origNumVars)
         << endl;
     }
 }

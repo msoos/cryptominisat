@@ -39,6 +39,11 @@ void CNF::newVar(const bool bva, const Var orig_outer)
 
         swapVars(nVarsReal()-1);
         varData[nVars()-1].is_bva = bva;
+        if (bva) {
+            num_bva_vars ++;
+        } else {
+            outer_to_with_bva_map.push_back(nVarsReal() - 1);
+        }
     } else {
         assert(orig_outer < nVarsReal());
 
@@ -256,4 +261,18 @@ size_t CNF::get_renumber_mem() const
     mem += interToOuterMain.capacity()*sizeof(Var);
     mem += outerToInterMain.capacity()*sizeof(Var);
     return mem;
+}
+
+
+vector<lbool> CNF::map_back_to_without_bva(const vector<lbool>& val) const
+{
+    vector<lbool> ret;
+    ret.reserve(nVarsReal() - num_bva_vars);
+    for(size_t i = 0; i < nVarsReal(); i++) {
+        if (!varData[i].is_bva) {
+            ret.push_back(val[i]);
+        }
+    }
+    assert(ret.size() == nVarsReal() - num_bva_vars);
+    return ret;
 }

@@ -525,7 +525,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         const Lit origLit = lit;
 
         //Update variable numbering
-        lit = solver->map_outer_to_inter(lit);
+        assert(lit.var() < nVarsReal());
+        lit = map_outer_to_inter(lit);
+        assert(lit.var() < nVars());
 
         if (conf.verbosity >= 12) {
             cout
@@ -582,14 +584,39 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     return true;
 }
 
-/**
-@brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
+bool Solver::addClauseOuter(const vector<Lit>& lits)
+{
+    //Check for too large variable number
+    for (const Lit lit: lits) {
+        if (lit.var() >= nVarsOutside()) {
+            cout
+            << "ERROR: Variable " << lit.var() + 1
+            << " inserted, but max var is "
+            << nVarsOutside()
+            << endl;
+            assert(false);
+            exit(-1);
+        }
+        release_assert(lit.var() < nVarsOutside()
+        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+    }
 
-Checks whether the
-variables of the literals in "ps" have been eliminated/replaced etc. If so,
-it acts on them such that they are correct, and calls addClauseInt() to do
-the heavy-lifting
-*/
+    vector<Lit> lits2 = back_number_from_caller(lits);
+    return addClause(lits2);
+}
+
+vector<Lit> Solver::back_number_from_caller(const vector<Lit>& lits) const
+{
+    vector<Lit> lits2(lits);
+    for (Lit& lit: lits2) {
+        assert(lit.var() < nVarsOutside());
+        lit = map_to_with_bva(lit);
+        assert(lit.var() < nVarsReal());
+    }
+
+    return lits2;
+}
+
 bool Solver::addClause(const vector<Lit>& lits)
 {
     if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
@@ -1345,7 +1372,7 @@ void Solver::lock_most_UIP_used_clauses()
 void Solver::set_assumptions()
 {
     assert(solver->okay());
-    assumptions = origAssumptions;
+    assumptions = back_number_from_caller(origAssumptions);
     addClauseHelper(assumptions);
     for(const Lit lit: assumptions) {
         if (lit.var() < assumptionsSet.size()) {
@@ -1483,6 +1510,7 @@ void Solver::extend_solution()
         SolutionExtender extender(this);
         extender.extend();
     }
+    model = map_back_to_without_bva(model);
     check_model_for_assumptions();
 }
 

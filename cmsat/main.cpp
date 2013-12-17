@@ -95,7 +95,7 @@ void SIGINT_handler(int)
         << "*** This means we might need to finish some calculations"
         << endl;
     } else {
-        if (solver->nVarsReal() > 0) {
+        if (solver->nVarsOutside() > 0) {
             if (solver->getVerbosity() >= 1) {
                 solver->addInPartialSolvingStat();
                 if (solver->getVerbosity() >= 1) {
@@ -226,7 +226,7 @@ void Main::printResultFunc(
     if (ret == l_True && (printResult || toFile)) {
 
         if(!toFile) *os << "v ";
-        for (Var var = 0; var != solver->nVarsReal(); var++) {
+        for (Var var = 0; var != solver->nVarsOutside(); var++) {
             if (solver->model[var] != l_Undef)
                 *os << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
         }
@@ -973,12 +973,12 @@ int Main::solve()
 
             //Banning found solution
             vector<Lit> lits;
-            for (Var var = 0; var < solver->nVarsReal(); var++) {
+            for (Var var = 0; var < solver->nVarsOutside(); var++) {
                 if (solver->model[var] != l_Undef) {
                     lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
                 }
             }
-            solver->addClause(lits);
+            solver->addClauseOuter(lits);
         }
     }
 

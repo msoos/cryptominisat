@@ -3104,7 +3104,9 @@ bool Simplifier::bounded_var_addition()
     propagate();
     limit_to_decrease = &bounded_var_elim_time_limit;
     solver->clauseCleaner->clean_implicit_clauses();
-    solver->subsumeImplicit->subsume_implicit(false);
+    if (solver->conf.doStrSubImplicit) {
+        solver->subsumeImplicit->subsume_implicit(false);
+    }
 
     bva_worked = 0;
     bva_simp_size = 0;

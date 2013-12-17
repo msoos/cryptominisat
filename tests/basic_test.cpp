@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(onelit)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 }
@@ -26,8 +26,8 @@ BOOST_AUTO_TEST_CASE(twolit)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
-    s.addClause(vector<Lit>{Lit(0, true)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
 }
@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE(multi_solve_unsat)
 {
     Solver s;
     s.new_external_var();
-    s.addClause(vector<Lit>{Lit(0, false)});
-    s.addClause(vector<Lit>{Lit(0, true)});
+    s.addClauseOuter(vector<Lit>{Lit(0, false)});
+    s.addClauseOuter(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
