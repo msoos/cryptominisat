@@ -506,12 +506,12 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Check for too large variable number
-    for (Lit lit: ps) {
+    for (const Lit lit: ps) {
         if (lit.var() >= nVarsReal()) {
             cout
             << "ERROR: Variable " << lit.var() + 1
             << " inserted, but max var is "
-            << nVarsReal() +1
+            << nVarsReal()
             << endl;
             assert(false);
             exit(-1);
