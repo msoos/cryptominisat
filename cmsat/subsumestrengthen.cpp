@@ -218,7 +218,7 @@ void SubsumeStrengthen::performSubsumption()
 
     if (solver->conf.verbosity >= 2) {
         cout
-        << "c [subs] rem cl: " << subsumed
+        << "c [sub] rem cl: " << subsumed
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " (" << std::setprecision(1) << std::fixed
         << (double)wenThrough/(double)simplifier->clauses.size()*100.0
