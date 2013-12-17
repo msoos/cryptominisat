@@ -203,7 +203,7 @@ void SubsumeStrengthen::performSubsumption()
         }
 
         const size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
-        ClOffset offset = simplifier->clauses[num];
+        const ClOffset offset = simplifier->clauses[num];
         Clause* cl = solver->clAllocator.getPointer(offset);
 
         //Has already been removed
