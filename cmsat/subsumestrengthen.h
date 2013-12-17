@@ -143,6 +143,8 @@ private:
         , vector<ClOffset>& out_subsumed
         , const bool removeImplicit = false
     );
+    template<class T>
+    size_t find_smallest_watchlist_for_clause(const T& ps) const;
 
     template<class T>
     void findStrengthened(

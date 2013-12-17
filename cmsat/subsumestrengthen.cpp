@@ -518,6 +518,23 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
     return retLit;
 }
 
+template<class T>
+size_t SubsumeStrengthen::find_smallest_watchlist_for_clause(const T& ps) const
+{
+    size_t min_i = 0;
+    size_t min_num = solver->watches[ps[min_i].toInt()].size();
+    for (uint32_t i = 1; i < ps.size(); i++){
+        const size_t this_num = solver->watches[ps[i].toInt()].size();
+        if (this_num < min_num) {
+            min_i = i;
+            min_num = this_num;
+        }
+    }
+    *simplifier->limit_to_decrease -= ps.size();
+
+    return min_i;
+}
+
 /**
 @brief Finds clauses that are backward-subsumed by given clause
 
@@ -533,22 +550,16 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
 ) {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed0: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        cout << ps[i] << " , ";
+    for (const Lit lit: ps) {
+        cout << lit << " , ";
     }
     cout << endl;
     #endif
 
-    //Which literal in the clause has the smallest occur list? -- that will be picked to go through
-    size_t min_i = 0;
-    for (uint32_t i = 1; i < ps.size(); i++){
-        if (solver->watches[ps[i].toInt()].size() < solver->watches[ps[min_i].toInt()].size())
-            min_i = i;
-    }
-    *simplifier->limit_to_decrease -= ps.size();
+    const size_t smallest = find_smallest_watchlist_for_clause(ps);
 
     //Go through the occur list of the literal that has the smallest occur list
-    watch_subarray occ = solver->watches[ps[min_i].toInt()];
+    watch_subarray occ = solver->watches[ps[smallest].toInt()];
     *simplifier->limit_to_decrease -= occ.size()*8 + 40;
 
     watch_subarray::iterator it = occ.begin();
@@ -562,18 +573,18 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
         if (removeImplicit) {
             if (it->isBinary()
                 && ps.size() == 2
-                && ps[!min_i] == it->lit2()
+                && ps[!smallest] == it->lit2()
                 && !it->red()
             ) {
                 /*cout
                 << "ps " << ps << " could subsume this bin: "
-                << ps[min_i] << ", " << it->lit2()
+                << ps[smallest] << ", " << it->lit2()
                 << endl;*/
                 numBinFound++;
 
                 //We cannot remove ourselves
                 if (numBinFound > 1) {
-                    removeWBin(solver->watches, it->lit2(), ps[min_i], it->red());
+                    removeWBin(solver->watches, it->lit2(), ps[smallest], it->red());
                     solver->binTri.irredBins--;
                     continue;
                 }
@@ -581,19 +592,19 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
 
             if (it->isTri()
                 && ps.size() == 2
-                && (ps[!min_i] == it->lit2() || ps[!min_i] == it->lit3())
+                && (ps[!smallest] == it->lit2() || ps[!smallest] == it->lit3())
             ) {
                 /*cout
                 << "ps " << ps << " could subsume this tri: "
-                << ps[min_i] << ", " << it->lit2() << ", " << it->lit3()
+                << ps[smallest] << ", " << it->lit2() << ", " << it->lit3()
                 << endl;
                 */
                 Lit lits[3];
-                lits[0] = ps[min_i];
+                lits[0] = ps[smallest];
                 lits[1] = it->lit2();
                 lits[2] = it->lit3();
                 std::sort(lits + 0, lits + 3);
-                removeTriAllButOne(solver->watches, ps[min_i], lits, it->red());
+                removeTriAllButOne(solver->watches, ps[smallest], lits, it->red());
                 if (it->red()) {
                     solver->binTri.redTris--;
                 } else {
