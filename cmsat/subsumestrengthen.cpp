@@ -267,12 +267,16 @@ bool SubsumeStrengthen::performStrengthening()
 
     }
 
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 2) {
         cout
-        << "c streng sub: " << ret.sub
+        << "c [str] sub: " << ret.sub
         << " str: " << ret.str
-        << " tried: " << wenThrough
+        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+        << " (" << std::setprecision(1) << std::fixed
+        << (double)wenThrough/(double)simplifier->clauses.size()*100.0
+        << "%)"
         << " T: " << cpuTime() - myTime
+        << " T-out: " << (*simplifier->limit_to_decrease < 0 ? "Y" : "N")
         << endl;
     }
 
