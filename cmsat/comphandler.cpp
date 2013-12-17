@@ -104,7 +104,7 @@ bool CompHandler::handle()
 
     //If there is only one big comp, we can't do anything
     if (num_comps <= 1) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity >= 3) {
             cout
             << "c [comp] Only one component, not handling it separately"
             << endl;
