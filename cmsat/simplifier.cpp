@@ -3004,9 +3004,6 @@ void Simplifier::fill_potential(const Lit lit)
         m_lits_this_cl = m_lits;
         for(const lit_pair lits: m_lits_this_cl) {
             seen2[lits.lit1.toInt()] = 1;
-            if (lits.lit2 != lit_Undef) {
-                seen2[lits.lit2.toInt()] = 1;
-            }
         }
 
         if (solver->conf.verbosity >= 6 || bva_verbosity) {
@@ -3031,15 +3028,10 @@ void Simplifier::fill_potential(const Lit lit)
                 && lit_diff_watches(c, d) == lit
             ) {
                 const lit_pair diff = lit_diff_watches(d, c);
-                if (seen2[diff.lit1.toInt()] == 0
-                    && (diff.lit2 == lit_Undef || seen2[diff.lit2.toInt()] == 0)
-                ) {
+                if (seen2[diff.lit1.toInt()] == 0) {
                     potential.push_back(PotentialClause(diff, c));
                     m_lits_this_cl.push_back(diff);
                     seen2[diff.lit1.toInt()] = 1;
-                    if (diff.lit2 != lit_Undef) {
-                        seen2[diff.lit2.toInt()] = 1;
-                    }
 
                     if (solver->conf.verbosity >= 6 || bva_verbosity) {
                         cout
@@ -3054,9 +3046,6 @@ void Simplifier::fill_potential(const Lit lit)
         end:
         for(const lit_pair lits: m_lits_this_cl) {
             seen2[lits.lit1.toInt()] = 0;
-            if (lits.lit2 != lit_Undef) {
-                seen2[lits.lit2.toInt()] = 0;
-            }
         }
     }
 }
