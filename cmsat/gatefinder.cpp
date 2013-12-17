@@ -358,29 +358,33 @@ void GateFinder::findOrGate(
         //We are looking for a binary clause '~otherlit V ~eqLit'
         bool OK = false;
 
-        //looking for "~otherLit V eqLit"
-        //start STAMP of ~otherLit < start STAMP of eqLit
-        //end STAMP of ~otherLit > start STAMP of eqLit
-        const uint64_t start_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].start[STAMP_IRRED];
-        const uint64_t start_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
-        if (start_inv_other < start_eqLit) {
-            const uint64_t end_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].end[STAMP_IRRED];
-            const uint64_t end_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
-            if (end_inv_other > end_eqLit) {
-                OK = true;
+        if (solver->conf.doStamp) {
+            //looking for "~otherLit V eqLit"
+            //start STAMP of ~otherLit < start STAMP of eqLit
+            //end STAMP of ~otherLit > start STAMP of eqLit
+            const uint64_t start_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].start[STAMP_IRRED];
+            const uint64_t start_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
+            if (start_inv_other < start_eqLit) {
+                const uint64_t end_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].end[STAMP_IRRED];
+                const uint64_t end_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
+                if (end_inv_other > end_eqLit) {
+                    OK = true;
+                }
             }
         }
 
-        //Try to find corresponding binary clause in cache
-        const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
-        *simplifier->limit_to_decrease -= cache.size();
-        for (LitExtra cacheLit: cache) {
-            if ((redGatesToo || cacheLit.getOnlyIrredBin())
-                 && cacheLit.getLit() == eqLit
-            ) {
-                wasRed |= !cacheLit.getOnlyIrredBin();
-                OK = true;
-                break;
+        if (solver->conf.doCache) {
+            //Try to find corresponding binary clause in cache
+            const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
+            *simplifier->limit_to_decrease -= cache.size();
+            for (LitExtra cacheLit: cache) {
+                if ((redGatesToo || cacheLit.getOnlyIrredBin())
+                     && cacheLit.getLit() == eqLit
+                ) {
+                    wasRed |= !cacheLit.getOnlyIrredBin();
+                    OK = true;
+                    break;
+                }
             }
         }
 
