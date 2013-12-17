@@ -1018,19 +1018,23 @@ bool Simplifier::simplify()
         goto end;
     }
 
-    if (solver->conf.doCache && solver->conf.doGateFind) {
-        if (!gateFinder->doAll())
+    solver->clauseCleaner->clean_implicit_clauses();
+    if (solver->conf.doVarElim) {
+        eliminate_empty_resolvent_vars();
+        if (!eliminateVars())
             goto end;
+    }
+
+    if (!propagate()) {
+        goto end;
     }
 
     if (!bounded_var_addition()) {
         goto end;
     }
 
-    solver->clauseCleaner->clean_implicit_clauses();
-    if (solver->conf.doVarElim) {
-        eliminate_empty_resolvent_vars();
-        if (!eliminateVars())
+    if (solver->conf.doCache && solver->conf.doGateFind) {
+        if (!gateFinder->doAll())
             goto end;
     }
 
