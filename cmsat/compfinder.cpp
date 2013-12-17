@@ -119,6 +119,10 @@ bool CompFinder::findComps()
         << " s"
         << endl;
 
+        if (reverseTable.size() == 1) {
+            return solver->okay();
+        }
+
         size_t notPrinted = 0;
         size_t totalSmallSize = 0;
         size_t i = 0;
@@ -139,7 +143,7 @@ bool CompFinder::findComps()
             }
         }
 
-        if (solver->conf.verbosity < 3) {
+        if (solver->conf.verbosity < 3 && notPrinted > 0) {
             cout
             << "c [comp] Unprinted small (<" << print_limit << " var) components:" << notPrinted
             << " vars: " << totalSmallSize
