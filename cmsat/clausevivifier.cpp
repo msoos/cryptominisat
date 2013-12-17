@@ -245,7 +245,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
         }
 
         //if done enough, stop doing it
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps) {
             if (solver->conf.verbosity >= 3) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
@@ -790,7 +790,7 @@ bool ClauseVivifier::vivifyClausesCache(
         ; i++
     ) {
         //Timeout?
-        if (timeAvailable < 0) {
+        if (timeAvailable <= 0) {
             needToFinish = true;
             tmpStats.ranOutOfTime++;
         }
@@ -1103,7 +1103,7 @@ void ClauseVivifier::StrImplicitData::print(
 
     << " T: " << std::fixed << std::setprecision(2)
     << (cpuTime() - myTime)
-    << " T-out: " << (timeAvailable < 0 ? "Y" : "N")
+    << " T-out: " << (timeAvailable <= 0 ? "Y" : "N")
     << " w-visit: " << numWatchesLooked
     << endl;
 }

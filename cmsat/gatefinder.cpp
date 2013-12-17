@@ -97,7 +97,7 @@ void GateFinder::findOrGates()
         }
     }
     runStats.findGateTime += cpuTime() - myTime;
-    if (*simplifier->limit_to_decrease < 0) {
+    if (*simplifier->limit_to_decrease <= 0) {
         runStats.find_gate_timeout++;
     }
 }
@@ -159,7 +159,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 break;
         }
         runStats.orBasedTime += cpuTime() - myTime;
-        runStats.or_based_timeout += (*simplifier->limit_to_decrease < 0);
+        runStats.or_based_timeout += (*simplifier->limit_to_decrease <= 0);
 
         if (!solver->ok)
             return false;
@@ -187,7 +187,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 break;
         }
         runStats.andBasedTime += cpuTime() - myTime;
-        runStats.and_based_timeout += (*simplifier->limit_to_decrease < 0);
+        runStats.and_based_timeout += (*simplifier->limit_to_decrease <= 0);
 
         if (!solver->ok)
             return false;

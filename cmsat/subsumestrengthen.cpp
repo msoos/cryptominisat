@@ -224,7 +224,7 @@ void SubsumeStrengthen::performSubsumption()
         << (double)wenThrough/(double)simplifier->clauses.size()*100.0
         << "%)"
         << " T: " << cpuTime() - myTime
-        << " T-out: " << (*simplifier->limit_to_decrease < 0 ? "Y" : "N")
+        << " T-out: " << (*simplifier->limit_to_decrease <= 0 ? "Y" : "N")
         << endl;
     }
 
@@ -276,7 +276,7 @@ bool SubsumeStrengthen::performStrengthening()
         << (double)wenThrough/(double)simplifier->clauses.size()*100.0
         << "%)"
         << " T: " << cpuTime() - myTime
-        << " T-out: " << (*simplifier->limit_to_decrease < 0 ? "Y" : "N")
+        << " T-out: " << (*simplifier->limit_to_decrease <= 0 ? "Y" : "N")
         << endl;
     }
 

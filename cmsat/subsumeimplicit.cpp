@@ -238,7 +238,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 
     runStats.numCalled++;
     runStats.time_used += cpuTime() - myTime;
-    runStats.time_out += (timeAvailable < 0);
+    runStats.time_out += (timeAvailable <= 0);
     if (solver->conf.verbosity >= 1) {
         runStats.printShort();
     }
