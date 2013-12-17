@@ -3139,6 +3139,7 @@ bool Simplifier::bounded_var_addition()
         << "c [bva] added: " << bva_worked
         << " simp: " << bva_simp_size
         << " T: " << cpuTime() - my_time
+        << " T-out: " << (*limit_to_decrease <= 0 ? "Y" : "N")
         << endl;
     }
 
