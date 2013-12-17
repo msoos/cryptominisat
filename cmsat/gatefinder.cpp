@@ -368,7 +368,6 @@ void GateFinder::findOrGate(
             const uint64_t end_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
             if (end_inv_other > end_eqLit) {
                 OK = true;
-                cout << "Here!" << endl;
             }
         }
 
