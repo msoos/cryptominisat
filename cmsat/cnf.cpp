@@ -267,12 +267,13 @@ size_t CNF::get_renumber_mem() const
 vector<lbool> CNF::map_back_to_without_bva(const vector<lbool>& val) const
 {
     vector<lbool> ret;
-    ret.reserve(nVarsReal() - num_bva_vars);
+    assert(val.size() == nVarsReal());
+    ret.reserve(nVarsOutside());
     for(size_t i = 0; i < nVarsReal(); i++) {
-        if (!varData[i].is_bva) {
+        if (!varData[map_outer_to_inter(i)].is_bva) {
             ret.push_back(val[i]);
         }
     }
-    assert(ret.size() == nVarsReal() - num_bva_vars);
+    assert(ret.size() == nVarsOutside());
     return ret;
 }
