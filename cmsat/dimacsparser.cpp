@@ -291,83 +291,24 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 }
 
 /**
-@brief Parses clause parameters given as e.g. "c clause red yes"
-*/
-void DimacsParser::parseClauseParameters(
-    StreamBuffer& in
-    , bool& red
-) {
-    std::string str;
-
-    //Parse in if we are a redundant clause or not
-    ++in;
-    parseString(in, str);
-    if (str != "red") goto addTheClause;
-
-    ++in;
-    parseString(in, str);
-    if (str == "yes") red = true;
-    else if (str == "no") {
-        red = false;
-        goto addTheClause;
-    } else {
-        cout
-        << "c WARNING parsed for 'red' instead of yes/no: '"
-        << str << "'"
-        << endl;
-
-        goto addTheClause;
-    }
-
-    addTheClause:
-    skipLine(in);
-    return;
-}
-
-/**
 @brief Parses in a clause and its optional attributes
 */
 void DimacsParser::readFullClause(StreamBuffer& in)
 {
-    bool red = false;
-    ClauseStats stats;
-    stats.conflictNumIntroduced = 0;
-    std::string str;
-    bool needToParseComments = false;
-
-    //Is it an XOR clause?
     if ( *in == 'x') {
         cout << "ERROR: Cannot read XOR clause!" << endl;
         exit(-1);
     }
 
-    //read in the actual clause
     readClause(in, lits);
     skipLine(in);
+    solver->addClauseOuter(lits);
+    numNormClauses++;
 
-    //Parse comments or parse clause type (redundant, glue value, etc.)
     if (*in == 'c') {
         ++in;
+        std::string str;
         parseString(in, str);
-        if (str == "clause") {
-            parseClauseParameters(in, red);
-        } else {
-            needToParseComments = true;
-        }
-    }
-
-    if (red) {
-        solver->addRedClause(lits, stats);
-        numRedClauses++;
-    } else {
-        solver->addClauseOuter(lits);
-        numNormClauses++;
-    }
-
-    if (needToParseComments) {
-        #ifdef DEBUG_COMMENT_PARSING
-        cout << "Need to parse comments:" << str << endl;
-        #endif //DEBUG_COMMENT_PARSING
         parseComments(in, str);
     }
 }
@@ -410,7 +351,6 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
-    numRedClauses = 0;
     numNormClauses = 0;
     const uint32_t origNumVars = solver->nVarsOutside();
 
@@ -419,8 +359,6 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 
     if (solver->getVerbosity() >= 1) {
         cout << "c -- clauses added: "
-        << std::setw(12) << numRedClauses
-        << " redundant "
         << std::setw(12) << numNormClauses
         << " irredundant"
         << endl;

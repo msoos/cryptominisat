@@ -130,7 +130,7 @@ Solver::~Solver()
     delete subsumeImplicit;
 }
 
-bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
+/*bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
 {
     vector<Lit> ps(vars.size());
     for(size_t i = 0; i < vars.size(); i++) {
@@ -144,7 +144,7 @@ bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
         return false;
 
     return okay();
-}
+}*/
 
 bool Solver::addXorClauseInt(
     const vector< Lit >& lits
@@ -677,7 +677,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     return ok;
 }
 
-bool Solver::addRedClause(
+/*bool Solver::addRedClause(
     const vector<Lit>& lits
     , const ClauseStats& stats
 ) {
@@ -694,7 +694,7 @@ bool Solver::addRedClause(
     }
 
     return ok;
-}
+}*/
 
 void Solver::reArrangeClause(ClOffset offset)
 {

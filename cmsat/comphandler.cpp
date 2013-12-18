@@ -455,10 +455,10 @@ void CompHandler::moveClausesLong(
         //Add 'tmp' to the new solver
         if (cl.red()) {
             cl.stats.conflictNumIntroduced = 0;
-            newSolver->addRedClause(tmp, cl.stats);
+            //newSolver->addRedClause(tmp, cl.stats);
         } else {
             saveClause(cl);
-            newSolver->addClause(tmp);
+            newSolver->addClauseOuter(tmp);
         }
 
         //Remove from here
@@ -540,13 +540,13 @@ void CompHandler::moveClausesImplicit(
 
                     //Add new clause
                     if (i->red()) {
-                        newSolver->addRedClause(lits);
+                        //newSolver->addRedClause(lits);
                         numRemovedHalfRed++;
                     } else {
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2});
 
-                        newSolver->addClause(lits);
+                        newSolver->addClauseOuter(lits);
                         numRemovedHalfIrred++;
                     }
                 } else {
@@ -628,13 +628,13 @@ void CompHandler::moveClausesImplicit(
 
                     //Add new clause
                     if (i->red()) {
-                        newSolver->addRedClause(lits);
+                        //newSolver->addRedClause(lits);
                         numRemovedThirdRed++;
                     } else {
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2, lit3});
 
-                        newSolver->addClause(lits);
+                        newSolver->addClauseOuter(lits);
                         numRemovedThirdIrred++;
                     }
                 } else {
