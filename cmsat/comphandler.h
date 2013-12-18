@@ -125,9 +125,6 @@ class CompHandler
         ///The solutions that have been found by the comps
         vector<lbool> savedState;
 
-        ///List of variables whose decision-ness has been removed (set to FALSE)
-        vector<Var> decisionVarRemoved;
-
         //Re-numbering
         void createRenumbering(const vector<Var>& vars);
         vector<Var> useless; //temporary

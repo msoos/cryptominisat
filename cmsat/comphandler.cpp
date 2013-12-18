@@ -381,10 +381,8 @@ void CompHandler::moveVariablesBetweenSolvers(
         newSolver->new_external_var();
         assert(compFinder->getVarComp(var) == comp);
 
-        //Remove from old solver
-        if (solver->varData[var].is_decision) {
-            decisionVarRemoved.push_back(solver->map_inter_to_outer(var));
-        }
+        assert(solver->varData[var].removed == Removed::none);
+        assert(solver->varData[var].is_decision);
         solver->unsetDecisionVar(var);
         solver->varData[var].removed = Removed::decomposed;
     }
@@ -710,18 +708,13 @@ void CompHandler::readdRemovedClauses()
     double myTime = cpuTime();
 
     //Avoid recursion, clear 'removed' status
-    for(VarData& dat: solver->varData) {
+    for(size_t i = 0; i < solver->nVarsReal(); i++) {
+        VarData& dat = solver->varData[i];
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
+            solver->setDecisionVar(i);
         }
     }
-
-    //Re-set them to be decision vars
-    for (const Var var: decisionVarRemoved) {
-        const Var intervar = solver->map_outer_to_inter(var);
-        solver->setDecisionVar(intervar);
-    }
-    decisionVarRemoved.clear();
 
      //Clear saved state
     for(lbool& val: savedState) {
