@@ -226,7 +226,7 @@ void Main::printResultFunc(
     if (ret == l_True && (printResult || toFile)) {
 
         if(!toFile) *os << "v ";
-        for (Var var = 0; var != solver->nVarsOutside(); var++) {
+        for (Var var = 0; var < solver->nVarsOutside(); var++) {
             if (solver->model[var] != l_Undef)
                 *os << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
         }
