@@ -583,39 +583,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     return true;
 }
 
-bool Solver::addClauseOuter(const vector<Lit>& lits)
-{
-    //Check for too large variable number
-    for (const Lit lit: lits) {
-        if (lit.var() >= nVarsOutside()) {
-            cout
-            << "ERROR: Variable " << lit.var() + 1
-            << " inserted, but max var is "
-            << nVarsOutside()
-            << endl;
-            assert(false);
-            exit(-1);
-        }
-        release_assert(lit.var() < nVarsOutside()
-        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
-    }
-
-    vector<Lit> lits2 = back_number_from_caller(lits);
-    return addClause(lits2);
-}
-
-vector<Lit> Solver::back_number_from_caller(const vector<Lit>& lits) const
-{
-    vector<Lit> lits2(lits);
-    for (Lit& lit: lits2) {
-        assert(lit.var() < nVarsOutside());
-        lit = map_to_with_bva(lit);
-        assert(lit.var() < nVarsReal());
-    }
-
-    return lits2;
-}
-
 bool Solver::addClause(const vector<Lit>& lits)
 {
     if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
@@ -1513,7 +1480,7 @@ void Solver::extend_solution()
     check_model_for_assumptions();
 }
 
-lbool Solver::solve(const vector<Lit>* _assumptions)
+lbool Solver::solve()
 {
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
         && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
@@ -1549,12 +1516,12 @@ lbool Solver::solve(const vector<Lit>* _assumptions)
     //Initialise
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
-    if (_assumptions != NULL) {
-        origAssumptions = *_assumptions;
+    if (!origAssumptions.empty()) {
+        //origAssumptions = *_assumptions;
         set_assumptions();
     } else {
         std::fill(assumptionsSet.begin(), assumptionsSet.end(), false);
-        origAssumptions.clear();
+        //origAssumptions.clear();
         assumptions.clear();
     }
 

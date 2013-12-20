@@ -139,7 +139,8 @@ public:
         return nVarsReal() - num_bva_vars;
     }
 
-    Lit map_to_with_bva(const Lit lit) const
+    template<class T>
+    Lit map_to_with_bva(const T lit) const
     {
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
     }

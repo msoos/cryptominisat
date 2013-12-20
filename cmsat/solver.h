@@ -78,8 +78,30 @@ class Solver : public Searcher
         //////////////////////////////
         //Solving
         //
-        bool addClauseOuter(const vector<Lit>& ps);
-        lbool solve(const vector<Lit>* _assumptions = NULL);
+        template<class T>
+        bool addClauseOuter(const vector<T>& lits)
+        {
+            //Check for too large variable number
+            for (const T lit: lits) {
+                if (lit.var() >= nVarsOutside()) {
+                    cout
+                    << "ERROR: Variable " << lit.var() + 1
+                    << " inserted, but max var is "
+                    << nVarsOutside()
+                    << endl;
+                    assert(false);
+                    exit(-1);
+                }
+                release_assert(lit.var() < nVarsOutside()
+                && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+            }
+
+            vector<Lit> lits2 = back_number_from_caller(lits);
+            return addClause(lits2);
+        }
+
+        template<class T>
+        lbool solve_with_assumptions(const vector<T>* _assumptions = NULL);
         void        setNeedToInterrupt();
         vector<lbool>  model;
         lbool   modelValue (const Lit p) const;  ///<Found model value for lit
@@ -324,7 +346,19 @@ class Solver : public Searcher
         );
 
     private:
-        vector<Lit> back_number_from_caller(const vector<Lit>& lits) const;
+        lbool solve();
+        template<class T>
+        vector<Lit> back_number_from_caller(const vector<T>& lits) const
+        {
+            vector<Lit> lits2;
+            for (const T& lit: lits) {
+                assert(lit.var() < nVarsOutside());
+                lits2.push_back(map_to_with_bva(lit));
+                assert(lits2.back().var() < nVarsReal());
+            }
+
+            return lits2;
+        }
         void check_switchoff_limits_newvar();
         vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;
@@ -626,6 +660,19 @@ inline Var Solver::numActiveVars() const
     }
 
     return numActive;
+}
+
+template<class T>
+inline lbool Solver::solve_with_assumptions(
+    const vector<T>* _assumptions
+) {
+    origAssumptions.clear();
+    if (_assumptions) {
+        for(const T& lit: *_assumptions) {
+            origAssumptions.push_back(Lit(lit.var(), lit.sign()));
+        }
+    }
+    return solve();
 }
 
 } //end namespace
