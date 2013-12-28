@@ -1558,6 +1558,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         << endl;
     }
     solver->detachClause(*cl);
+    assert(cl->size() > learnt_clause.size());
 
     //Shrink clause
     for (uint32_t i = 0; i < learnt_clause.size(); i++) {
