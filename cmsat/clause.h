@@ -191,7 +191,7 @@ protected:
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t isAsymmed:1;
     uint16_t occurLinked:1;
-    uint16_t mySize; ///<The current size of the clause
+    uint32_t mySize;
 
 
     Lit* getData()
