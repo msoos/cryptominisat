@@ -33,7 +33,7 @@ class PropByForGraph
 {
     private:
         uint16_t type;
-        uint16_t isize;
+        uint32_t isize;
         Clause* clause;
         Lit lits[3];
 

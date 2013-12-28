@@ -130,7 +130,7 @@ protected:
     void saveVarMem();
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
-    template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
+    template<class T> uint32_t calcGlue(const T& ps); ///<Calculates the glue of a clause
     friend class SQLStats;
     PropStats propStats;
 

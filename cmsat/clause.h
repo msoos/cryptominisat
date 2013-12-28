@@ -89,7 +89,7 @@ struct ResolutionTypes
 struct ClauseStats
 {
     ClauseStats() :
-        glue(std::numeric_limits<uint16_t>::max())
+        glue(std::numeric_limits<uint32_t>::max())
         , activity(0)
         , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
         , numProp(0)
