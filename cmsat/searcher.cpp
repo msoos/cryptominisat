@@ -1564,7 +1564,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     for (uint32_t i = 0; i < learnt_clause.size(); i++) {
         (*cl)[i] = learnt_clause[i];
     }
-    cl->shrink(cl->size() - learnt_clause.size());
+    cl->resize(learnt_clause.size());
     assert(cl->size() == learnt_clause.size());
 
     //Update stats
