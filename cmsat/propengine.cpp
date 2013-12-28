@@ -273,7 +273,7 @@ void PropEngine::update_glue(Clause& c)
         && c.stats.glue > 2
         && conf.updateGlues
     ) {
-        uint16_t newGlue = calcGlue(c);
+        uint32_t newGlue = calcGlue(c);
         c.stats.glue = std::min(c.stats.glue, newGlue);
     }
 }
@@ -504,7 +504,7 @@ bool PropEngine::propNormalClauseAnyOrder(
             && c.stats.glue > 2
             && conf.updateGlues
         ) {
-            uint16_t newGlue = calcGlue(c);
+            uint32_t newGlue = calcGlue(c);
             c.stats.glue = std::min(c.stats.glue, newGlue);
         }
     }

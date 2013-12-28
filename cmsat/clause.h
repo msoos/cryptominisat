@@ -108,7 +108,7 @@ struct ClauseStats
     }
 
     //Stored data
-    uint16_t glue;    ///<Clause glue
+    uint32_t glue;    ///<Clause glue
     double   activity;
     uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
     uint32_t numProp; ///<Number of times caused propagation
@@ -215,7 +215,7 @@ public:
         //assert(ps.size() > 2);
 
         stats.conflictNumIntroduced = _conflictNumIntroduced;
-        stats.glue = std::min<uint16_t>(stats.glue, ps.size());
+        stats.glue = std::min<uint32_t>(stats.glue, ps.size());
         //defOfOrGate = false;
         isFreed = false;
         mySize = ps.size();
@@ -234,7 +234,7 @@ public:
 
     friend class ClauseAllocator;
 
-    uint16_t size() const
+    uint32_t size() const
     {
         return mySize;
     }

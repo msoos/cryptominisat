@@ -442,10 +442,10 @@ bool SubsumeStrengthen::subset(const T1& A, const T2& B)
     #endif
 
     bool ret;
-    uint16_t i = 0;
-    uint16_t i2;
+    uint32_t i = 0;
+    uint32_t i2;
     Lit lastB = lit_Undef;
-    for (i2 = 0; i2 != B.size(); i2++) {
+    for (i2 = 0; i2 < B.size(); i2++) {
         if (lastB != lit_Undef)
             assert(lastB < B[i2]);
 
@@ -490,9 +490,9 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
 {
     Lit retLit = lit_Undef;
 
-    uint16_t i = 0;
-    uint16_t i2;
-    for (i2 = 0; i2 != B.size(); i2++) {
+    uint32_t i = 0;
+    uint32_t i2;
+    for (i2 = 0; i2 < B.size(); i2++) {
         if (A[i] == ~B[i2] && retLit == lit_Undef) {
             retLit = B[i2];
             i++;

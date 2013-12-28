@@ -1607,7 +1607,7 @@ bool Searcher::handle_conflict(PropBy confl)
     add_otf_subsume_implicit_clause();
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
-    glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
+    glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     cl = handle_last_confl_otf_subsumption(cl, glue);
     attach_and_enqueue_learnt_clause(cl);
 

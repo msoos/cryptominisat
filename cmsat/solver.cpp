@@ -685,14 +685,14 @@ void Solver::reArrangeClause(ClOffset offset)
     std::sort(cl.begin(), cl.end(), PolaritySorter(varData));
 
     uint8_t foundDatas = 0;
-    for (uint16_t i = 0; i < cl.size(); i++) {
+    for (uint32_t i = 0; i < cl.size(); i++) {
         if (cl[i] == lit1) {
             std::swap(cl[i], cl[0]);
             foundDatas++;
         }
     }
 
-    for (uint16_t i = 0; i < cl.size(); i++) {
+    for (uint32_t i = 0; i < cl.size(); i++) {
         if (cl[i] == lit2) {
             std::swap(cl[i], cl[1]);
             foundDatas++;

@@ -222,8 +222,8 @@ private:
 
     CL_ABST_TYPE  calc_sorted_occ_and_set_seen2(
         const OrGate& gate
-        , uint16_t& maxSize
-        , uint16_t& minSize
+        , uint32_t& maxSize
+        , uint32_t& minSize
         , const bool only_irred
     );
     void set_seen2_and_abstraction(

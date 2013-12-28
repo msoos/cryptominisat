@@ -425,7 +425,7 @@ existing clause. Only used if the glue-based activity heuristic is enabled,
 i.e. if we are in GLUCOSE mode (not MiniSat mode)
 */
 template<class T>
-uint16_t PropEngine::calcGlue(const T& ps)
+uint32_t PropEngine::calcGlue(const T& ps)
 {
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;

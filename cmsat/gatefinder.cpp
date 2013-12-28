@@ -551,8 +551,8 @@ void GateFinder::set_seen2_and_abstraction(
 
 CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
     const OrGate& gate
-    , uint16_t& maxSize
-    , uint16_t& minSize
+    , uint32_t& maxSize
+    , uint32_t& minSize
     , const bool only_irred
 ) {
     assert(seen2Set.empty());
@@ -777,8 +777,8 @@ bool GateFinder::remove_clauses_using_and_gate(
         return solver->okay();
     }
 
-    uint16_t maxSize = 0;
-    uint16_t minSize = std::numeric_limits<uint16_t>::max();
+    uint32_t maxSize = 0;
+    uint32_t minSize = std::numeric_limits<uint32_t>::max();
     CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
     general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
     if (maxSize == 0)

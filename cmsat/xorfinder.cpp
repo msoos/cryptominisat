@@ -67,7 +67,7 @@ bool XorFinder::findXors()
             continue;
 
         //Too large -> too expensive
-        if (cl->size() > solver->conf.maxXorToFind)
+        if ((long)cl->size() > solver->conf.maxXorToFind)
             return solver->ok;
 
         //If not tried already, find an XOR with it
