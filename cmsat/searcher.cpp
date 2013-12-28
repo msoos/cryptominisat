@@ -1609,6 +1609,7 @@ bool Searcher::handle_conflict(PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     cl = handle_last_confl_otf_subsumption(cl, glue);
+    assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
     varDecayActivity();
