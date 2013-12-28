@@ -1444,6 +1444,8 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
 {
     switch (learnt_clause.size()) {
+        case 0:
+            assert(false);
         case 1:
             //Unitary learnt
             stats.learntUnits++;
