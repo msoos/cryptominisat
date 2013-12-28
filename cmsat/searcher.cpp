@@ -1444,6 +1444,8 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
 {
     switch (learnt_clause.size()) {
+        case 0:
+            assert(false);
         case 1:
             //Unitary learnt
             stats.learntUnits++;
@@ -1532,40 +1534,44 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const size_t glue
 ) {
-    //Is there on-the-fly subsumption?
+    //No on-the-fly subsumption
     if (cl == NULL) {
-
-        //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
             cl = clAllocator.Clause_new(learnt_clause, Searcher::sumConflicts());
             cl->makeRed(glue);
             ClOffset offset = clAllocator.getOffset(cl);
             solver->longRedCls.push_back(offset);
+            return cl;
         }
-
-    } else {
-        //Detach & delete subsumed clause
-        if (conf.verbosity >= 6) {
-            cout
-            << "Detaching OTF subsumed (LAST) clause:"
-            << *cl
-            << endl;
-        }
-        solver->detachClause(*cl);
-
-        //Shrink clause
-        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-            (*cl)[i] = learnt_clause[i];
-        }
-        cl->shrink(cl->size() - learnt_clause.size());
-        assert(cl->size() == learnt_clause.size());
-
-        //Update stats
-        if (cl->red() && cl->stats.glue > glue) {
-            cl->stats.glue = glue;
-        }
-        cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
+        return NULL;
     }
+
+    //Cannot make a non-implicit into an implicit
+    if (learnt_clause.size() <= 3)
+        return NULL;
+
+    assert(cl->size() > 3);
+    if (conf.verbosity >= 6) {
+        cout
+        << "Detaching OTF subsumed (LAST) clause:"
+        << *cl
+        << endl;
+    }
+    solver->detachClause(*cl);
+    assert(cl->size() > learnt_clause.size());
+
+    //Shrink clause
+    for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+        (*cl)[i] = learnt_clause[i];
+    }
+    cl->resize(learnt_clause.size());
+    assert(cl->size() == learnt_clause.size());
+
+    //Update stats
+    if (cl->red() && cl->stats.glue > glue) {
+        cl->stats.glue = glue;
+    }
+    cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
     return cl;
 }
@@ -1601,8 +1607,9 @@ bool Searcher::handle_conflict(PropBy confl)
     add_otf_subsume_implicit_clause();
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
-    glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
+    glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     cl = handle_last_confl_otf_subsumption(cl, glue);
+    assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
     varDecayActivity();

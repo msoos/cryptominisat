@@ -142,7 +142,7 @@ class FoundXors
         vector<bool> foundComb;
         Lit origCl[5];
         const CL_ABST_TYPE abst;
-        uint16_t size;
+        uint32_t size;
         bool rhs;
 };
 
