@@ -1534,40 +1534,44 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const size_t glue
 ) {
-    //Is there on-the-fly subsumption?
+    //No on-the-fly subsumption
     if (cl == NULL) {
-
-        //Otherwise, we will attach it directly, below
         if (learnt_clause.size() > 3) {
             cl = clAllocator.Clause_new(learnt_clause, Searcher::sumConflicts());
             cl->makeRed(glue);
             ClOffset offset = clAllocator.getOffset(cl);
             solver->longRedCls.push_back(offset);
+            return cl;
         }
-
-    } else {
-        //Detach & delete subsumed clause
-        if (conf.verbosity >= 6) {
-            cout
-            << "Detaching OTF subsumed (LAST) clause:"
-            << *cl
-            << endl;
-        }
-        solver->detachClause(*cl);
-
-        //Shrink clause
-        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-            (*cl)[i] = learnt_clause[i];
-        }
-        cl->shrink(cl->size() - learnt_clause.size());
-        assert(cl->size() == learnt_clause.size());
-
-        //Update stats
-        if (cl->red() && cl->stats.glue > glue) {
-            cl->stats.glue = glue;
-        }
-        cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
+        return NULL;
     }
+
+    //Cannot make a non-implicit into an implicit
+    if (learnt_clause.size() <= 3)
+        return NULL;
+
+    //Detach & delete subsumed clause
+    assert(cl->size() > 3);
+    if (conf.verbosity >= 6) {
+        cout
+        << "Detaching OTF subsumed (LAST) clause:"
+        << *cl
+        << endl;
+    }
+    solver->detachClause(*cl);
+
+    //Shrink clause
+    for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+        (*cl)[i] = learnt_clause[i];
+    }
+    cl->shrink(cl->size() - learnt_clause.size());
+    assert(cl->size() == learnt_clause.size());
+
+    //Update stats
+    if (cl->red() && cl->stats.glue > glue) {
+        cl->stats.glue = glue;
+    }
+    cl->stats.numConfl += conf.rewardShortenedClauseWithConfl;
 
     return cl;
 }
