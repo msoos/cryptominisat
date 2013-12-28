@@ -1550,7 +1550,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (learnt_clause.size() <= 3)
         return NULL;
 
-    //Detach & delete subsumed clause
     assert(cl->size() > 3);
     if (conf.verbosity >= 6) {
         cout
