@@ -33,6 +33,7 @@
 #include <string>
 #include <limits>
 #include "assert.h"
+#include "solverconf.h"
 
 namespace CMSat {
 
@@ -44,34 +45,26 @@ using std::string;
 //Typedefs
 typedef uint32_t Var;
 static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
-enum class Restart {
-    glue
-    , glue_agility
-    , geom
-    , agility
-    , never
-    , automatic
-};
 
-inline std::string restart_type_to_string(const Restart type)
+inline std::string restart_type_to_string(const CryptoMiniSat::Restart type)
 {
     switch(type) {
-        case Restart::glue:
+        case CryptoMiniSat::Restart::glue:
             return "glue-based";
 
-        case Restart::glue_agility:
+        case CryptoMiniSat::Restart::glue_agility:
             return "glue&agility based";
 
-        case Restart::geom:
+        case CryptoMiniSat::Restart::geom:
             return "geometric";
 
-        case  Restart::agility:
+        case CryptoMiniSat::Restart::agility:
             return "agility-based";
 
-        case Restart::never:
+        case CryptoMiniSat::Restart::never:
             return "never restart";
 
-        case Restart::automatic:
+        case CryptoMiniSat::Restart::automatic:
             return "automatic";
     }
 
@@ -110,13 +103,6 @@ inline std::string removed_type_to_string(const Removed removed) {
     assert(false && "oops, one of the elim types has no string name");
     return "Oops, undefined!";
 }
-
-enum class PolarityMode {
-    pos
-    , neg
-    , rnd
-    , automatic
-};
 
 /**
 @brief A Literal, i.e. a variable with a sign

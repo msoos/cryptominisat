@@ -209,7 +209,7 @@ bool CompHandler::solve_component(
     }
 
     //Set up new solver
-    SolverConf conf;
+    CryptoMiniSat::SolverConf conf;
     Solver newSolver(conf);
     configureNewSolver(&newSolver, vars.size());
     moveVariablesBetweenSolvers(&newSolver, vars, comp);

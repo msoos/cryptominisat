@@ -28,6 +28,7 @@
 #include <string.h>
 #include <limits>
 
+#include "solverconf.h"
 #include "solvertypes.h"
 #include "constants.h"
 #include "watched.h"
@@ -493,35 +494,6 @@ struct ClauseUsageStats
     }
 };
 
-enum ClauseCleaningTypes {
-    CLEAN_CLAUSES_GLUE_BASED
-    , CLEAN_CLAUSES_SIZE_BASED
-    , CLEAN_CLAUSES_PROPCONFL_BASED
-    ,  CLEAN_CLAUSES_ACTIVITY_BASED
-};
-
-inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
-{
-    switch(clauseCleaningType) {
-        case CLEAN_CLAUSES_GLUE_BASED :
-            return "glue";
-
-        case CLEAN_CLAUSES_SIZE_BASED:
-            return "size";
-
-        case CLEAN_CLAUSES_PROPCONFL_BASED:
-            return "propconfl";
-
-        case CLEAN_CLAUSES_ACTIVITY_BASED:
-            return "activity";
-
-        default:
-            assert(false && "Unknown clause cleaning type?");
-    };
-
-    return "";
-}
-
 struct CleaningStats
 {
     struct Data
@@ -763,7 +735,7 @@ struct CleaningStats
     Data preRemove;
 
     //Clean type
-    ClauseCleaningTypes clauseCleaningType;
+    CryptoMiniSat::ClauseCleaningTypes clauseCleaningType;
     size_t glueBasedClean;
     size_t sizeBasedClean;
     size_t propConflBasedClean;

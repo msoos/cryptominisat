@@ -137,7 +137,7 @@ bool XorFinder::findXors()
         extractInfo();
     }
 
-    if (solver->getVerbosity() >= 1) {
+    if (solver->conf.verbosity >= 1) {
         runStats.printShort();
     }
 

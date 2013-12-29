@@ -10,24 +10,15 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define DIMACSPARSER_H
 
 #include <string>
-#include "solvertypes.h"
-#include "constants.h"
 #include "streambuffer.h"
-#include "vec.h"
-#include "constants.h"
-#include "clause.h"
+#include "cryptominisat.h"
 
 #ifdef USE_ZLIB
 #include <zlib.h>
 #endif
 
-namespace CMSat {
+using namespace CryptoMiniSat;
 
-class Solver;
-
-/**
-@brief Parses up a DIMACS file that my be zipped
-*/
 class DimacsParser
 {
     public:
@@ -51,7 +42,7 @@ class DimacsParser
         void parseSolveComment(StreamBuffer& in);
 
 
-        Solver *solver;
+        Solver* solver;
         const bool debugLib;
         const bool debugNewVar;
 
@@ -62,7 +53,5 @@ class DimacsParser
         std::vector<Lit> lits; ///<To reduce temporary creation overhead
         uint32_t numNormClauses; ///<Number of irred, non-xor claues added
 };
-
-}
 
 #endif //DIMACSPARSER_H

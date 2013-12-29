@@ -63,7 +63,7 @@ using std::endl;
 
 //#define DEBUG_TRI_SORTED_SANITY
 
-Solver::Solver(const SolverConf _conf) :
+Solver::Solver(const CryptoMiniSat::SolverConf _conf) :
     Searcher(_conf, this)
     , prober(NULL)
     , simplifier(NULL)
@@ -1198,28 +1198,28 @@ uint64_t Solver::calc_how_many_to_remove()
 void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
 {
     switch (conf.clauseCleaningType) {
-    case CLEAN_CLAUSES_GLUE_BASED :
+    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructGlue(clAllocator));
         tmpStats.glueBasedClean = 1;
         break;
 
-    case CLEAN_CLAUSES_SIZE_BASED :
+    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructSize(clAllocator));
         tmpStats.sizeBasedClean = 1;
         break;
 
-    case CLEAN_CLAUSES_ACTIVITY_BASED :
+    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructActivity(clAllocator));
         tmpStats.actBasedClean = 1;
         break;
 
-    case CLEAN_CLAUSES_PROPCONFL_BASED :
+    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructPropConfl(clAllocator));

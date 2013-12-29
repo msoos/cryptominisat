@@ -5,7 +5,7 @@
 
 using namespace CMSat;
 
-HyperEngine::HyperEngine(const SolverConf& _conf) :
+HyperEngine::HyperEngine(const CryptoMiniSat::SolverConf& _conf) :
     PropEngine(_conf)
     , stampingTime(0)
 {

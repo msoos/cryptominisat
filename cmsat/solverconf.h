@@ -23,11 +23,56 @@
 #define SOLVERCONF_H
 
 #include <fstream>
-#include "solvertypes.h"
+#include <string>
 #include "constants.h"
-#include "clause.h"
+#include "assert.h"
 
-namespace CMSat {
+namespace CryptoMiniSat {
+
+enum class ClauseCleaningTypes {
+    CLEAN_CLAUSES_GLUE_BASED
+    , CLEAN_CLAUSES_SIZE_BASED
+    , CLEAN_CLAUSES_PROPCONFL_BASED
+    ,  CLEAN_CLAUSES_ACTIVITY_BASED
+};
+
+enum class PolarityMode {
+    pos
+    , neg
+    , rnd
+    , automatic
+};
+
+enum class Restart {
+    glue
+    , glue_agility
+    , geom
+    , agility
+    , never
+    , automatic
+};
+
+inline std::string getNameOfCleanType(CryptoMiniSat::ClauseCleaningTypes clauseCleaningType)
+{
+    switch(clauseCleaningType) {
+        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
+            return "glue";
+
+        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED:
+            return "size";
+
+        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED:
+            return "propconfl";
+
+        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED:
+            return "activity";
+
+        default:
+            assert(false && "Unknown clause cleaning type?");
+    };
+
+    return "";
+}
 
 class SolverConf
 {
@@ -119,10 +164,10 @@ class SolverConf
         uint64_t    dumpClauseDistribMaxGlue;
         uint64_t    preparedDumpSizeScatter;
         uint64_t    preparedDumpSizeVarData;
-        string    sqlServer;
-        string    sqlUser;
-        string    sqlPass;
-        string    sqlDatabase;
+        std::string    sqlServer;
+        std::string    sqlUser;
+        std::string    sqlPass;
+        std::string    sqlDatabase;
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination

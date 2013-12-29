@@ -68,7 +68,7 @@ class LitReachData {
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf _conf = SolverConf());
+        Solver(const CryptoMiniSat::SolverConf _conf = CryptoMiniSat::SolverConf());
         virtual ~Solver();
 
         //////////
@@ -125,14 +125,13 @@ class Solver : public Searcher
         void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         void     open_file_and_dump_irred_clauses() const;
         void     open_file_and_dump_red_clauses() const;
-        int      getVerbosity() const;
         void     printStats() const;
         void     printClauseStats() const;
         void     print_value_kilo_mega(uint64_t value) const;
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;
-        const SolverConf& getConf() const;
+        const CryptoMiniSat::SolverConf& getConf() const;
         const vector<string>& getFileNamesUsed() const;
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
@@ -578,11 +577,6 @@ inline uint64_t Solver::getNumLongClauses() const
     return longIrredCls.size() + longRedCls.size();
 }
 
-inline int Solver::getVerbosity() const
-{
-    return conf.verbosity;
-}
-
 inline const Searcher::Stats& Solver::getStats() const
 {
     return sumStats;
@@ -620,7 +614,7 @@ inline size_t Solver::getNumLongRedCls() const
     return longRedCls.size();
 }
 
-inline const SolverConf& Solver::getConf() const
+inline const CryptoMiniSat::SolverConf& Solver::getConf() const
 {
     return conf;
 }

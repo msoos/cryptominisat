@@ -1,8 +1,10 @@
 #define BOOST_TEST_MODULE basic_interface
 #include <boost/test/unit_test.hpp>
 
-#include "solver.h"
-using namespace CMSat;
+#include "cryptominisat.h"
+using namespace CryptoMiniSat;
+#include <vector>
+using std::vector;
 
 BOOST_AUTO_TEST_SUITE( minimal_interface )
 
@@ -16,8 +18,8 @@ BOOST_AUTO_TEST_CASE(start)
 BOOST_AUTO_TEST_CASE(onelit)
 {
     Solver s;
-    s.new_external_var();
-    s.addClauseOuter(vector<Lit>{Lit(0, false)});
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 }
@@ -25,9 +27,9 @@ BOOST_AUTO_TEST_CASE(onelit)
 BOOST_AUTO_TEST_CASE(twolit)
 {
     Solver s;
-    s.new_external_var();
-    s.addClauseOuter(vector<Lit>{Lit(0, false)});
-    s.addClauseOuter(vector<Lit>{Lit(0, true)});
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
 }
@@ -35,9 +37,9 @@ BOOST_AUTO_TEST_CASE(twolit)
 BOOST_AUTO_TEST_CASE(multi_solve_unsat)
 {
     Solver s;
-    s.new_external_var();
-    s.addClauseOuter(vector<Lit>{Lit(0, false)});
-    s.addClauseOuter(vector<Lit>{Lit(0, true)});
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     for(size_t i = 0;i < 10; i++) {

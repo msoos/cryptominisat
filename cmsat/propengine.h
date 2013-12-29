@@ -107,7 +107,7 @@ public:
     // Constructor/Destructor:
     //
     PropEngine(
-        const SolverConf& _conf
+        const CryptoMiniSat::SolverConf& _conf
     );
     ~PropEngine();
 
@@ -116,7 +116,6 @@ public:
     uint32_t nAssigns   () const;         ///<The current number of assigned literals.
 
     //Get state
-    uint32_t    getVerbosity() const;
     uint32_t    getBinWatchSize(const bool alsoRed, const Lit lit) const;
     uint32_t    decisionLevel() const;      ///<Returns current decision level
     vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses

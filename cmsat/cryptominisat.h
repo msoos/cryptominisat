@@ -1,8 +1,9 @@
-#include <vector>
+#ifndef __CRYPTOMINISAT_H__
+#define __CRYPTOMINISAT_H__
 
-namespace CMSat {
-    class Solver;
-};
+#include <vector>
+#include <iostream>
+#include "solverconf.h"
 
 namespace CryptoMiniSat {
     class Lit
@@ -29,6 +30,9 @@ namespace CryptoMiniSat {
             x ^= (unsigned)b;
             return *this;
         }
+        bool operator<(const Lit other) const {
+            return x < other.x;
+        }
         bool sign() const {
             return x & 1;
         }
@@ -42,6 +46,12 @@ namespace CryptoMiniSat {
             return x != p.x;
         }
     };
+
+    inline std::ostream& operator<<(std::ostream& os, const Lit lit)
+    {
+        os << (lit.sign() ? "-" : "") << (lit.var() + 1);
+        return os;
+    }
 
     class lbool
     {
@@ -75,16 +85,33 @@ namespace CryptoMiniSat {
     const lbool l_False = toLbool(-1);
     const lbool l_Undef = toLbool( 0);
 
+    inline std::ostream& operator<<(std::ostream& cout, const lbool val)
+    {
+        if (val == l_True) cout << "l_True";
+        if (val == l_False) cout << "l_False";
+        if (val == l_Undef) cout << "l_Undef";
+        return cout;
+    }
+
     class Solver
     {
     public:
-        Solver();
+        Solver(SolverConf conf = SolverConf());
+        uint32_t nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
         void new_var();
         lbool solve(std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
+        const std::vector<Lit>& get_conflict() const;
         const std::vector<Lit>& get_unitary_clauses() const;
+        void add_file(const std::string& filename);
+        SolverConf get_conf() const;
+        std::string get_version() const;
+        void print_stats() const;
+        void set_drup(std::ostream* os);
+    private:
+        void* solver;
     };
-
-    CMSat::Solver* solver;
 };
+
+#endif //__CRYPTOMINISAT_H__

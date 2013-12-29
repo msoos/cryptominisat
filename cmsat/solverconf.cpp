@@ -21,7 +21,7 @@
 
 #include "solverconf.h"
 #include <limits>
-using namespace CMSat;
+using namespace CryptoMiniSat;
 
 SolverConf::SolverConf() :
         //Variable activities
@@ -33,7 +33,7 @@ SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::automatic)
 
         //Clause cleaning
-        , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)
+        , clauseCleaningType(ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)

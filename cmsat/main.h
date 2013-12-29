@@ -27,19 +27,15 @@
 #include <memory>
 #include <fstream>
 
-#include "solvertypes.h"
 #include "solverconf.h"
-#include "constants.h"
+#include "cryptominisat.h"
+using namespace CryptoMiniSat;
 
 using std::string;
 using std::vector;
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
-
-namespace CMSat {
-    class Solver;
-}
 
 class Main
 {
@@ -65,7 +61,7 @@ class Main
         po::variables_map vm;
         po::options_description cmdline_options;
 
-        CMSat::Solver* solver;
+        Solver* solver;
 
         //File reading
         void readInAFile(const string& filename);
@@ -76,14 +72,14 @@ class Main
         void printResultFunc(
             std::ostream* os
             , const bool toFile
-            , const CMSat::lbool ret
+            , const lbool ret
             , const bool firstSolut
         );
         void printVersionInfo();
-        int correctReturnValue(const CMSat::lbool ret) const;
+        int correctReturnValue(const lbool ret) const;
 
         //Config
-        CMSat::SolverConf conf;
+        SolverConf conf;
         int numThreads;
         bool debugLib;
         bool debugNewVar;

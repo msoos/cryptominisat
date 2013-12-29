@@ -18,7 +18,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define DEBUG_COMMENT_PARSING
 #endif //VERBOSE_DEBUG
 
-using namespace CMSat;
 using std::vector;
 using std::cout;
 using std::endl;
@@ -137,7 +136,7 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
 {
     int32_t parsed_lit;
-    Var     var;
+    uint32_t var;
     uint32_t len;
     lits.clear();
     for (;;) {
@@ -154,8 +153,9 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
                 exit(-1);
             }
 
-            while (var >= solver->nVarsOutside())
-                solver->new_external_var();
+            while (var >= solver->nVars()) {
+                solver->new_var();
+            }
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
@@ -189,7 +189,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (solver->getVerbosity() >= 1) {
+        if (solver->get_conf().verbosity >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
@@ -213,7 +213,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
         skipWhitespace(in);
     }
 
-    if (solver->getVerbosity()>= 2) {
+    if (solver->get_conf().verbosity >= 2) {
         cout
         << "c -----------> Solver::solve() called (number: "
         << std::setw(3) << debugLibPart << ") with assumps :";
@@ -240,10 +240,10 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     if (ret == l_True) {
         partFile << "s SATISFIABLE" << endl;
         partFile << "v ";
-        for (Var i = 0; i != solver->nVarsOutside(); i++) {
-            if (solver->model[i] != l_Undef)
+        for (uint32_t i = 0; i != solver->nVars(); i++) {
+            if (solver->get_model()[i] != l_Undef)
                 partFile
-                << ((solver->model[i]==l_True) ? "" : "-")
+                << ((solver->get_model()[i]==l_True) ? "" : "-")
                 << (i+1) <<  " ";
         }
         partFile << "0" << endl;
@@ -258,7 +258,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     partFile.close();
     debugLibPart++;
 
-    if (solver->getConf().verbosity >= 6) {
+    if (solver->get_conf().verbosity >= 6) {
         cout << "c Parsed Solver::solve()" << endl;
     }
 }
@@ -274,13 +274,13 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
     } else if (debugNewVar && str == "Solver::newVar()") {
-        solver->new_external_var();
+        solver->new_var();
 
-        if (solver->getConf().verbosity >= 6) {
+        if (solver->get_conf().verbosity >= 6) {
             cout << "c Parsed Solver::newVar()" << endl;
         }
     } else {
-        if (solver->getConf().verbosity >= 6) {
+        if (solver->get_conf().verbosity >= 6) {
             cout
             << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"
@@ -302,7 +302,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 
     readClause(in, lits);
     skipLine(in);
-    solver->addClauseOuter(lits);
+    solver->add_clause(lits);
     numNormClauses++;
 
     if (*in == 'c') {
@@ -352,18 +352,18 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
     numNormClauses = 0;
-    const uint32_t origNumVars = solver->nVarsOutside();
+    const uint32_t origNumVars = solver->nVars();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (solver->getVerbosity() >= 1) {
+    if (solver->get_conf().verbosity >= 1) {
         cout << "c -- clauses added: "
         << std::setw(12) << numNormClauses
         << " irredundant"
         << endl;
 
-        cout << "c -- vars added " << std::setw(10) << (solver->nVarsOutside() - origNumVars)
+        cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
         << endl;
     }
 }

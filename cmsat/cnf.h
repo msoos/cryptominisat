@@ -42,7 +42,7 @@ public:
         uint64_t redLits = 0;
     };
 
-    CNF(const SolverConf& _conf) :
+    CNF(const CryptoMiniSat::SolverConf& _conf) :
         conf(_conf)
         , minNumVars(0)
     {
@@ -50,7 +50,7 @@ public:
     }
 
     ClauseAllocator clAllocator;
-    SolverConf conf;
+    CryptoMiniSat::SolverConf conf;
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'

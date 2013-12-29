@@ -47,7 +47,7 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const SolverConf& _conf
+    const CryptoMiniSat::SolverConf& _conf
 ) :
         CNF(_conf)
         // Stats

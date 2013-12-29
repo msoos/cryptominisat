@@ -31,18 +31,15 @@
 #include <fstream>
 #include <signal.h>
 #include <sys/stat.h>
-#include "constants.h"
 
 #include "main.h"
-#include "constants.h"
 #include "time_mem.h"
-#include "constants.h"
 #include "dimacsparser.h"
-#include "solver.h"
+#include "cryptominisat.h"
 
 
 #include <boost/lexical_cast.hpp>
-using namespace CMSat;
+using namespace CryptoMiniSat;
 using boost::lexical_cast;
 
 using std::cout;
@@ -75,31 +72,25 @@ Main::Main(int _argc, char** _argv) :
 
 Solver* solverToInterrupt;
 
-/**
-@brief For correctly and gracefully exiting
-
-It can happen that the user requests a dump of the redundant clauses. In this case,
-the program must wait until it gets to a state where the redundant clauses are in
-a correct state, then dump these and quit normally. This interrupt hander
-is used to achieve this
-*/
 void SIGINT_handler(int)
 {
     Solver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (solver->getNeedToDumpReds() || solver->getNeedToDumpIrredundant()) {
+    solver->print_stats();
+    _exit(-1);
+    /*if (solver->getNeedToDumpReds() || solver->getNeedToDumpIrredundant()) {
         solver->setNeedToInterrupt();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl
         << "*** This means we might need to finish some calculations"
         << endl;
     } else {
-        if (solver->nVarsOutside() > 0) {
-            if (solver->getVerbosity() >= 1) {
+        if (solver->nVars() > 0) {
+            if (solver->get_conf().verbosity >= 1) {
                 solver->addInPartialSolvingStat();
-                if (solver->getVerbosity() >= 1) {
-                    solver->printStats();
+                if (solver->get_conf().verbosity >= 1) {
+                    solver->print_stats();
                 }
             }
         } else {
@@ -108,12 +99,12 @@ void SIGINT_handler(int)
             << endl;
         }
         _exit(1);
-    }
+    }*/
 }
 
 void Main::readInAFile(const string& filename)
 {
-    solver->fileAdded(filename);
+    solver->add_file(filename);
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
@@ -144,7 +135,7 @@ void Main::readInAFile(const string& filename)
 
 void Main::readInStandardInput()
 {
-    if (solver->getVerbosity()) {
+    if (solver->get_conf().verbosity) {
         cout
         << "c Reading from standard input... Use '-h' or '--help' for help."
         << endl;
@@ -226,9 +217,9 @@ void Main::printResultFunc(
     if (ret == l_True && (printResult || toFile)) {
 
         if(!toFile) *os << "v ";
-        for (Var var = 0; var < solver->nVarsOutside(); var++) {
-            if (solver->model[var] != l_Undef)
-                *os << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
+        for (uint32_t var = 0; var < solver->nVars(); var++) {
+            if (solver->get_model()[var] != l_Undef)
+                *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
         }
 
         *os << "0" << endl;
@@ -770,13 +761,13 @@ void Main::handle_drup_option()
 void Main::parse_cleaning_type()
 {
     if (typeclean == "glue") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_GLUE_BASED;
+        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED;
     } else if (typeclean == "size") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
+        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED;
     } else if (typeclean == "propconfl") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
+        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED;
     } else if (typeclean == "activity") {
-        conf.clauseCleaningType = CLEAN_CLAUSES_ACTIVITY_BASED;
+        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--clean'. It's '"
@@ -902,7 +893,7 @@ void Main::parseCommandLine()
 
 void Main::printVersionInfo()
 {
-    cout << "c CryptoMiniSat version " << Solver::getVersion() << endl;
+    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else
@@ -915,9 +906,7 @@ int Main::solve()
     solver = new Solver(conf);
     solverToInterrupt = solver;
     if (drupf) {
-        DrupFile* drup = new DrupFile();
-        drup->setFile(drupf);
-        solver->drup = drup;
+        solver->set_drup(drupf);
     }
 
     std::ofstream resultfile;
@@ -973,16 +962,16 @@ int Main::solve()
 
             //Banning found solution
             vector<Lit> lits;
-            for (Var var = 0; var < solver->nVarsOutside(); var++) {
-                if (solver->model[var] != l_Undef) {
-                    lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
+            for (uint32_t var = 0; var < solver->nVars(); var++) {
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
                 }
             }
-            solver->addClauseOuter(lits);
+            solver->add_clause(lits);
         }
     }
 
-    solver->dumpIfNeeded();
+    //solver->dumpIfNeeded();
 
     if (ret == l_Undef && conf.verbosity >= 1) {
         cout
@@ -990,7 +979,7 @@ int Main::solve()
         << endl;
     }
     if (conf.verbosity >= 1) {
-        solver->printStats();
+        solver->print_stats();
     }
 
     //Final print of solution
