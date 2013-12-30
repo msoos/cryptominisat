@@ -1634,17 +1634,9 @@ void Searcher::genRandomVarActMultDiv()
     }
 }
 
-/**
-@brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
-*/
 void Searcher::resetStats()
 {
-    assert(ok);
-
-    //Set up time
     startTime = cpuTime();
-
-    //Clear up previous stuff like model, final conflict
     conflict.clear();
 
     //About vars

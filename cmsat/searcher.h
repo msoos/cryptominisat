@@ -624,6 +624,7 @@ class Searcher : public HyperEngine
         void renumber_assumptions(const vector<Var>& outerToInter);
         vector<char> assumptionsSet;
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
+        void add_in_partial_solving_stats();
 
         friend class CalcDefPolars;
         friend class VarReplacer;
@@ -631,7 +632,6 @@ class Searcher : public HyperEngine
 
         //For connection with Solver
         void  resetStats();
-        void  addInPartialSolvingStat();
 
         //For hyper-bin and transitive reduction
         size_t hyperBinResAll();
@@ -941,11 +941,6 @@ inline const Searcher::Stats& Searcher::getStats() const
     return stats;
 }
 
-inline void Searcher::addInPartialSolvingStat()
-{
-    stats.cpu_time = cpuTime() - startTime;
-}
-
 inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
@@ -954,6 +949,11 @@ inline const Searcher::Hist& Searcher::getHistory() const
 inline void Searcher::filterOrderHeap()
 {
     order_heap.filter(VarFilter(this, solver));
+}
+
+inline void Searcher::add_in_partial_solving_stats()
+{
+    stats.cpu_time = cpuTime() - startTime;
 }
 
 } //end namespace

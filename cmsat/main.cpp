@@ -71,16 +71,16 @@ Main::Main(int _argc, char** _argv) :
 }
 
 Solver* solverToInterrupt;
+string redDumpFname;
+string irredDumpFname;
 
 void SIGINT_handler(int)
 {
     Solver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    solver->print_stats();
-    _exit(-1);
-    /*if (solver->getNeedToDumpReds() || solver->getNeedToDumpIrredundant()) {
-        solver->setNeedToInterrupt();
+    if (!redDumpFname.empty() || !irredDumpFname.empty()) {
+        solver->interrupt_asap();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl
         << "*** This means we might need to finish some calculations"
@@ -88,10 +88,8 @@ void SIGINT_handler(int)
     } else {
         if (solver->nVars() > 0) {
             if (solver->get_conf().verbosity >= 1) {
-                solver->addInPartialSolvingStat();
-                if (solver->get_conf().verbosity >= 1) {
-                    solver->print_stats();
-                }
+                solver->add_in_partial_solving_stats();
+                solver->print_stats();
             }
         } else {
             cout
@@ -99,7 +97,7 @@ void SIGINT_handler(int)
             << endl;
         }
         _exit(1);
-    }*/
+    }
 }
 
 void Main::readInAFile(const string& filename)
@@ -348,11 +346,11 @@ void Main::add_supported_options()
     iterativeOptions.add_options()
     ("maxsol", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
-    ("dumpred", po::value<string>(&conf.redDumpFname)
+    ("dumpred", po::value<string>(&redDumpFname)
         , "If stopped dump redundant clauses here")
     ("maxdump", po::value<uint32_t>(&conf.maxDumpRedsSize)
         , "Maximum length of redundant clause dumped")
-    ("dumpirred", po::value<string>(&conf.irredDumpFname)
+    ("dumpirred", po::value<string>(&irredDumpFname)
         , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
         , "Solve at specific 'solve()' points in CNF file")
@@ -840,7 +838,7 @@ void Main::manually_parse_some_options()
     }
 
     //Conflict
-    if (vm.count("maxdump") && conf.redDumpFname.empty()) {
+    if (vm.count("maxdump") && redDumpFname.empty()) {
         throw WrongParam("maxdump", "--dumpred <filename> must be activated if issuing --maxdump <size>");
     }
 
@@ -899,6 +897,30 @@ void Main::printVersionInfo()
     #else
     cout << "c compiled with non-gcc compiler" << endl;
     #endif
+}
+
+void Main::dumpIfNeeded() const
+{
+    if (redDumpFname.empty()
+        && irredDumpFname.empty()
+    ) {
+        return;
+    }
+
+    if (!redDumpFname.empty()) {
+        solver->open_file_and_dump_red_clauses(redDumpFname);
+        cout << "Dumped redundant clauses" << endl;
+    }
+
+    if (!irredDumpFname.empty()) {
+        solver->open_file_and_dump_irred_clauses(irredDumpFname);
+        cout
+        << "c [solver] Dumped irredundant clauses to file "
+        << "'" << irredDumpFname << "'." << endl
+        << "c [solver] Note that these may NOT be in the original CNF, but"
+        << " *describe the same problem* with the *same variables*"
+        << endl;
+    }
 }
 
 int Main::solve()
@@ -971,7 +993,7 @@ int Main::solve()
         }
     }
 
-    //solver->dumpIfNeeded();
+    dumpIfNeeded();
 
     if (ret == l_Undef && conf.verbosity >= 1) {
         cout

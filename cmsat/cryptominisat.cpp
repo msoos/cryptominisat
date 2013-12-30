@@ -65,3 +65,23 @@ void Solver::set_drup(std::ostream* os)
     drup->setFile(os);
     ((CMSat::Solver*)solver)->drup = drup;
 }
+
+void Solver::interrupt_asap()
+{
+    ((CMSat::Solver*)solver)->setNeedToInterrupt();
+}
+
+void Solver::open_file_and_dump_irred_clauses(std::string fname) const
+{
+    ((CMSat::Solver*)solver)->open_file_and_dump_irred_clauses(fname);
+}
+
+void Solver::open_file_and_dump_red_clauses(std::string fname) const
+{
+    ((CMSat::Solver*)solver)->open_file_and_dump_red_clauses(fname);
+}
+
+void Solver::add_in_partial_solving_stats()
+{
+    ((CMSat::Solver*)solver)->add_in_partial_solving_stats();
+}

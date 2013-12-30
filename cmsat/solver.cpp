@@ -1567,6 +1567,7 @@ lbool Solver::solve()
         sumStats += Searcher::getStats();
         sumPropStats += propStats;
         propStats.clear();
+        Searcher::resetStats();
 
         //Solution has been found
         if (status != l_Undef) {
@@ -1581,11 +1582,7 @@ lbool Solver::solve()
             break;
         }
 
-        if (status != l_False) {
-            Searcher::resetStats();
-            fullReduce();
-        }
-
+        fullReduce();
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         //Simplify
@@ -3404,10 +3401,14 @@ size_t Solver::getNumVarsReplaced() const
     return varReplacer->getNumReplacedVars();
 }
 
-void Solver::open_file_and_dump_red_clauses() const
+void Solver::open_file_and_dump_red_clauses(const string redDumpFname) const
 {
+    if (conf.doStrSubImplicit && okay()) {
+        subsumeImplicit->subsume_implicit();
+    }
+
     std::ofstream outfile;
-    open_dump_file(outfile, conf.redDumpFname);
+    open_dump_file(outfile, redDumpFname);
     try {
         if (!okay()) {
             outfile
@@ -3424,10 +3425,14 @@ void Solver::open_file_and_dump_red_clauses() const
     }
 }
 
-void Solver::open_file_and_dump_irred_clauses() const
+void Solver::open_file_and_dump_irred_clauses(const string irredDumpFname) const
 {
+    if (conf.doStrSubImplicit && okay()) {
+        subsumeImplicit->subsume_implicit();
+    }
+
     std::ofstream outfile;
-    open_dump_file(outfile, conf.irredDumpFname);
+    open_dump_file(outfile, irredDumpFname);
 
     try {
         if (!okay()) {
@@ -3457,35 +3462,6 @@ void Solver::open_dump_file(std::ofstream& outfile, std::string filename) const
         exit(-1);
     }
     outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-}
-
-void Solver::dumpIfNeeded() const
-{
-    if (conf.redDumpFname.empty()
-        && conf.irredDumpFname.empty()
-    ) {
-        return;
-    }
-
-    //Don't dump implicit clauses multiple times
-    if (conf.doStrSubImplicit && okay()) {
-        subsumeImplicit->subsume_implicit();
-    }
-
-    if (!conf.redDumpFname.empty()) {
-        open_file_and_dump_red_clauses();
-        cout << "Dumped redundant clauses" << endl;
-    }
-
-    if (!conf.irredDumpFname.empty()) {
-        open_file_and_dump_irred_clauses();
-        cout
-        << "c [solver] Dumped irredundant clauses to file "
-        << "'" << conf.irredDumpFname << "'." << endl
-        << "c [solver] Note that these may NOT be in the original CNF, but"
-        << " *describe the same problem* with the *same variables*"
-        << endl;
-    }
 }
 
 Lit Solver::updateLitForDomin(Lit lit) const
@@ -3625,3 +3601,9 @@ void Solver::new_external_var()
     newVar(false);
 }
 
+void Solver::add_in_partial_solving_stats()
+{
+    Searcher::add_in_partial_solving_stats();
+    sumStats += Searcher::getStats();
+    sumPropStats += propStats;
+}

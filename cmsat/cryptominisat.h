@@ -109,6 +109,10 @@ namespace CryptoMiniSat {
         std::string get_version() const;
         void print_stats() const;
         void set_drup(std::ostream* os);
+        void interrupt_asap();
+        void open_file_and_dump_irred_clauses(std::string fname) const;
+        void open_file_and_dump_red_clauses(std::string fname) const;
+        void add_in_partial_solving_stats();
     private:
         void* solver;
     };

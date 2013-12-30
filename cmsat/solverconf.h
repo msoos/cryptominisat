@@ -252,8 +252,6 @@ class SolverConf
         //interrupting & dumping
         bool      needResultFile;     ///<If set to TRUE, result will be written to a file
         std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
-        std::string redDumpFname;    ///<Dump sorted redundant clauses to this file. Only active if "needToDumpReds" is set to TRUE
-        std::string irredDumpFname;       ///<Dump irred original problem CNF to this file. Only active if "needToDumpOrig" is set to TRUE
         uint32_t  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
 
         int printAllRestarts;

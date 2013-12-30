@@ -74,6 +74,7 @@ class Solver : public Searcher
         //////////
         //External stats
         void fileAdded(const string& filename);
+        void add_in_partial_solving_stats();
 
         //////////////////////////////
         //Solving
@@ -102,7 +103,7 @@ class Solver : public Searcher
 
         template<class T>
         lbool solve_with_assumptions(const vector<T>* _assumptions = NULL);
-        void        setNeedToInterrupt();
+        void  setNeedToInterrupt();
         vector<lbool>  model;
         lbool   modelValue (const Lit p) const;  ///<Found model value for lit
 
@@ -123,8 +124,8 @@ class Solver : public Searcher
         bool     getNeedToDumpReds() const;
         bool     getNeedToDumpIrredundant() const;
         void     open_dump_file(std::ofstream& outfile, std::string filename) const;
-        void     open_file_and_dump_irred_clauses() const;
-        void     open_file_and_dump_red_clauses() const;
+        void     open_file_and_dump_irred_clauses(string fname) const;
+        void     open_file_and_dump_red_clauses(string fname) const;
         void     printStats() const;
         void     printClauseStats() const;
         void     print_value_kilo_mega(uint64_t value) const;
@@ -138,7 +139,6 @@ class Solver : public Searcher
         size_t   getNumLongRedCls() const;
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
-        void dumpIfNeeded() const;
         Var numActiveVars() const;
         void printMemStats() const;
         uint64_t printWatchMemUsed(uint64_t totalMem) const;
@@ -562,16 +562,6 @@ inline void Solver::unsetDecisionVar(const uint32_t var)
     }
 }
 
-inline bool Solver::getNeedToDumpReds() const
-{
-    return !conf.redDumpFname.empty();
-}
-
-inline bool Solver::getNeedToDumpIrredundant() const
-{
-    return !conf.irredDumpFname.empty();
-}
-
 inline uint64_t Solver::getNumLongClauses() const
 {
     return longIrredCls.size() + longRedCls.size();
@@ -585,13 +575,6 @@ inline const Searcher::Stats& Solver::getStats() const
 inline uint64_t Solver::getNextCleanLimit() const
 {
     return nextCleanLimit;
-}
-
-inline void Solver::addInPartialSolvingStat()
-{
-    Searcher::addInPartialSolvingStat();
-    sumStats += Searcher::getStats();
-    sumPropStats += propStats;
 }
 
 inline const Solver::SolveStats& Solver::getSolveStats() const
