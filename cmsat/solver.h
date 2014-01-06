@@ -68,7 +68,7 @@ class LitReachData {
 class Solver : public Searcher
 {
     public:
-        Solver(const CryptoMiniSat::SolverConf _conf = CryptoMiniSat::SolverConf());
+        Solver(const SolverConf _conf = SolverConf());
         virtual ~Solver();
 
         //////////
@@ -120,9 +120,8 @@ class Solver : public Searcher
         //Stats
         static const char* getVersion();
 
+        vector<Lit> get_zero_assigned_lits() const;
         uint64_t getNumLongClauses() const;
-        bool     getNeedToDumpReds() const;
-        bool     getNeedToDumpIrredundant() const;
         void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         void     open_file_and_dump_irred_clauses(string fname) const;
         void     open_file_and_dump_red_clauses(string fname) const;
@@ -132,7 +131,7 @@ class Solver : public Searcher
         void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;
-        const CryptoMiniSat::SolverConf& getConf() const;
+        const SolverConf& getConf() const;
         const vector<string>& getFileNamesUsed() const;
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
@@ -597,7 +596,7 @@ inline size_t Solver::getNumLongRedCls() const
     return longRedCls.size();
 }
 
-inline const CryptoMiniSat::SolverConf& Solver::getConf() const
+inline const SolverConf& Solver::getConf() const
 {
     return conf;
 }

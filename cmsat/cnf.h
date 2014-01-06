@@ -42,7 +42,7 @@ public:
         uint64_t redLits = 0;
     };
 
-    CNF(const CryptoMiniSat::SolverConf& _conf) :
+    CNF(const SolverConf& _conf) :
         conf(_conf)
         , minNumVars(0)
     {
@@ -50,7 +50,7 @@ public:
     }
 
     ClauseAllocator clAllocator;
-    CryptoMiniSat::SolverConf conf;
+    SolverConf conf;
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
@@ -146,6 +146,7 @@ public:
     }
 
 protected:
+    vector<Var> build_outer_to_without_bva_map() const;
     virtual void newVar(bool bva, Var orig_outer);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const

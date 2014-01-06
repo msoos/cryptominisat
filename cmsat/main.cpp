@@ -39,7 +39,7 @@
 
 
 #include <boost/lexical_cast.hpp>
-using namespace CryptoMiniSat;
+using namespace CMSat;
 using boost::lexical_cast;
 
 using std::cout;
@@ -70,13 +70,13 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-Solver* solverToInterrupt;
+MainSolver* solverToInterrupt;
 string redDumpFname;
 string irredDumpFname;
 
 void SIGINT_handler(int)
 {
-    Solver* solver = solverToInterrupt;
+    MainSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
     if (!redDumpFname.empty() || !irredDumpFname.empty()) {
@@ -353,7 +353,7 @@ void Main::add_supported_options()
     ("dumpirred", po::value<string>(&irredDumpFname)
         , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
-        , "Solve at specific 'solve()' points in CNF file")
+        , "MainSolver at specific 'solve()' points in CNF file")
     ("debugnewvar", po::bool_switch(&debugNewVar)
         , "Add new vars at specific 'newVar()' points in 6CNF file")
     ("dumpresult", po::value<std::string>(&conf.resultFilename)
@@ -759,13 +759,13 @@ void Main::handle_drup_option()
 void Main::parse_cleaning_type()
 {
     if (typeclean == "glue") {
-        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED;
     } else if (typeclean == "size") {
-        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED;
     } else if (typeclean == "propconfl") {
-        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED;
     } else if (typeclean == "activity") {
-        conf.clauseCleaningType = CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--clean'. It's '"
@@ -925,7 +925,7 @@ void Main::dumpIfNeeded() const
 
 int Main::solve()
 {
-    solver = new Solver(conf);
+    solver = new MainSolver(conf);
     solverToInterrupt = solver;
     if (drupf) {
         solver->set_drup(drupf);

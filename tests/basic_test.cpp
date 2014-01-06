@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "cryptominisat.h"
-using namespace CryptoMiniSat;
+using namespace CMSat;
 #include <vector>
 using std::vector;
 
@@ -10,14 +10,14 @@ BOOST_AUTO_TEST_SUITE( minimal_interface )
 
 BOOST_AUTO_TEST_CASE(start)
 {
-    Solver s;
+    MainSolver s;
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 }
 
 BOOST_AUTO_TEST_CASE(onelit)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(onelit)
 
 BOOST_AUTO_TEST_CASE(twolit)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     s.add_clause(vector<Lit>{Lit(0, true)});
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(twolit)
 
 BOOST_AUTO_TEST_CASE(multi_solve_unsat)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     s.add_clause(vector<Lit>{Lit(0, true)});

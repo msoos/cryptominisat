@@ -53,7 +53,7 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Searcher::Searcher(const CryptoMiniSat::SolverConf& _conf, Solver* _solver) :
+Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         HyperEngine(
             _conf
         )
@@ -205,7 +205,7 @@ void Searcher::add_lit_to_learnt(
 
             //Glucose 2.1
             if (!fromProber
-                && params.rest_type != CryptoMiniSat::Restart::geom
+                && params.rest_type != Restart::geom
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
@@ -702,7 +702,7 @@ Clause* Searcher::analyze_conflict(
     glue = calcGlue(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!fromProber && params.rest_type == CryptoMiniSat::Restart::glue) {
+    if (!fromProber && params.rest_type == Restart::glue) {
         bump_var_activities_based_on_last_decision_level(glue);
     }
     lastDecisionLevel.clear();
@@ -1171,17 +1171,17 @@ void Searcher::checkNeedRestart()
 
     switch (params.rest_type) {
 
-        case CryptoMiniSat::Restart::never:
+        case Restart::never:
             //Just don't restart no matter what
             break;
 
-        case CryptoMiniSat::Restart::geom:
+        case Restart::geom:
             if (params.conflictsDoneThisRestart > max_conflicts_geometric)
                 params.needToStopSearch = true;
 
             break;
 
-        case CryptoMiniSat::Restart::glue:
+        case Restart::glue:
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
@@ -1199,7 +1199,7 @@ void Searcher::checkNeedRestart()
 
             break;
 
-        case CryptoMiniSat::Restart::glue_agility:
+        case Restart::glue_agility:
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
                 && agility.getAgility() < conf.agilityLimit
@@ -1215,7 +1215,7 @@ void Searcher::checkNeedRestart()
 
             break;
 
-        case CryptoMiniSat::Restart::agility:
+        case Restart::agility:
             if (agility.getAgility() < conf.agilityLimit) {
                 params.numAgilityNeedRestart++;
                 if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
@@ -1235,8 +1235,8 @@ void Searcher::checkNeedRestart()
     //If agility was used and it's too high, print it if need be
     if (conf.verbosity >= 4
         && params.needToStopSearch
-        && (conf.restartType == CryptoMiniSat::Restart::agility
-            || conf.restartType == CryptoMiniSat::Restart::glue_agility)
+        && (conf.restartType == Restart::agility
+            || conf.restartType == Restart::glue_agility)
     ) {
         cout << "c Agility was too low, restarting asap";
         printAgilityStats();
@@ -1696,20 +1696,20 @@ lbool Searcher::burstSearch()
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
-    const CryptoMiniSat::PolarityMode backup_polar_mode = conf.polarity_mode;
+    const PolarityMode backup_polar_mode = conf.polarity_mode;
     uint32_t backup_var_inc_divider = var_inc_divider;
     uint32_t backup_var_inc_multiplier = var_inc_multiplier;
 
     //Set burst config
     conf.random_var_freq = 1;
-    conf.polarity_mode = CryptoMiniSat::PolarityMode::rnd;
+    conf.polarity_mode = PolarityMode::rnd;
     var_inc_divider = 1;
     var_inc_multiplier = 1;
 
     //Do burst
     params.clear();
     params.conflictsToDo = conf.burstSearchLen;
-    params.rest_type = CryptoMiniSat::Restart::never;
+    params.rest_type = Restart::never;
     lbool status = search();
     longest_dec_trail.clear();
 
@@ -2007,14 +2007,14 @@ void Searcher::printClauseDistribSQL()
 }
 #endif
 
-CryptoMiniSat::Restart Searcher::decide_restart_type() const
+Restart Searcher::decide_restart_type() const
 {
-    CryptoMiniSat::Restart rest_type = conf.restartType;
-    if (rest_type == CryptoMiniSat::Restart::automatic) {
+    Restart rest_type = conf.restartType;
+    if (rest_type == Restart::automatic) {
         if (solver->sumPropStats.propagations == 0) {
 
             //If no data yet, default to Restart::glue
-            rest_type = CryptoMiniSat::Restart::glue;
+            rest_type = Restart::glue;
         } else {
             //Otherwise, choose according to % of pos/neg polarities
             double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
@@ -2022,9 +2022,9 @@ CryptoMiniSat::Restart Searcher::decide_restart_type() const
             if (percent > 60.0
                 || percent < 40.0
             ) {
-                rest_type = CryptoMiniSat::Restart::glue;
+                rest_type = Restart::glue;
             } else {
-                rest_type = CryptoMiniSat::Restart::geom;
+                rest_type = Restart::geom;
             }
 
             if (conf.verbosity >= 1) {
@@ -2392,16 +2392,16 @@ inline int64_t abs64(int64_t a)
 bool Searcher::pickPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
-        case CryptoMiniSat::PolarityMode::neg:
+        case PolarityMode::neg:
             return false;
 
-        case CryptoMiniSat::PolarityMode::pos:
+        case PolarityMode::pos:
             return true;
 
-        case CryptoMiniSat::PolarityMode::rnd:
+        case PolarityMode::rnd:
             return mtrand.randInt(1);
 
-        case CryptoMiniSat::PolarityMode::automatic:
+        case PolarityMode::automatic:
             return getStoredPolarity(var);
         default:
             assert(false);

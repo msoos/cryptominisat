@@ -17,12 +17,12 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif
 
-using namespace CryptoMiniSat;
+using namespace CMSat;
 
 class DimacsParser
 {
     public:
-        DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar);
+        DimacsParser(MainSolver* solver, const bool debugLib, const bool debugNewVar);
 
         template <class T> void parse_DIMACS(T input_stream);
 
@@ -42,7 +42,7 @@ class DimacsParser
         void parseSolveComment(StreamBuffer& in);
 
 
-        Solver* solver;
+        MainSolver* solver;
         const bool debugLib;
         const bool debugNewVar;
 

@@ -27,7 +27,7 @@
 #include "constants.h"
 #include "assert.h"
 
-namespace CryptoMiniSat {
+namespace CMSat {
 
 enum class ClauseCleaningTypes {
     CLEAN_CLAUSES_GLUE_BASED
@@ -52,19 +52,19 @@ enum class Restart {
     , automatic
 };
 
-inline std::string getNameOfCleanType(CryptoMiniSat::ClauseCleaningTypes clauseCleaningType)
+inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
 {
     switch(clauseCleaningType) {
-        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
+        case ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
             return "glue";
 
-        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED:
+        case ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED:
             return "size";
 
-        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED:
+        case ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED:
             return "propconfl";
 
-        case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED:
+        case ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED:
             return "activity";
 
         default:

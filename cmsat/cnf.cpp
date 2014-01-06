@@ -277,3 +277,19 @@ vector<lbool> CNF::map_back_to_without_bva(const vector<lbool>& val) const
     assert(ret.size() == nVarsOutside());
     return ret;
 }
+
+vector<Var> CNF::build_outer_to_without_bva_map() const
+{
+    vector<Var> ret;
+    size_t at = 0;
+    for(size_t i = 0; i < nVarsReal(); i++) {
+        if (!varData[i].is_bva) {
+            ret.push_back(at);
+            at++;
+        } else {
+            ret.push_back(var_Undef);
+        }
+    }
+
+    return ret;
+}

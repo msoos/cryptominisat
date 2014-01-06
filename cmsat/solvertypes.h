@@ -34,6 +34,7 @@
 #include <limits>
 #include "assert.h"
 #include "solverconf.h"
+#include "solvertypesmini.h"
 
 namespace CMSat {
 
@@ -42,29 +43,25 @@ using std::cout;
 using std::endl;
 using std::string;
 
-//Typedefs
-typedef uint32_t Var;
-static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
-
-inline std::string restart_type_to_string(const CryptoMiniSat::Restart type)
+inline std::string restart_type_to_string(const Restart type)
 {
     switch(type) {
-        case CryptoMiniSat::Restart::glue:
+        case Restart::glue:
             return "glue-based";
 
-        case CryptoMiniSat::Restart::glue_agility:
+        case Restart::glue_agility:
             return "glue&agility based";
 
-        case CryptoMiniSat::Restart::geom:
+        case Restart::geom:
             return "geometric";
 
-        case CryptoMiniSat::Restart::agility:
+        case Restart::agility:
             return "agility-based";
 
-        case CryptoMiniSat::Restart::never:
+        case Restart::never:
             return "never restart";
 
-        case CryptoMiniSat::Restart::automatic:
+        case Restart::automatic:
             return "automatic";
     }
 
@@ -102,162 +99,6 @@ inline std::string removed_type_to_string(const Removed removed) {
 
     assert(false && "oops, one of the elim types has no string name");
     return "Oops, undefined!";
-}
-
-/**
-@brief A Literal, i.e. a variable with a sign
-*/
-class Lit
-{
-    uint32_t x;
-    explicit Lit(uint32_t i) : x(i) { };
-public:
-    Lit() : x(2*var_Undef) {}   // (lit_Undef)
-    explicit Lit(Var var, bool sign) :
-        x((2*var) | (uint32_t)sign)
-    {}
-
-    const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.
-        return x;
-    }
-    Lit  operator~() const {
-        return Lit(x ^ 1);
-    }
-    Lit  operator^(const bool b) const {
-        return Lit(x ^ (uint32_t)b);
-    }
-    Lit& operator^=(const bool b) {
-        x ^= (uint32_t)b;
-        return *this;
-    }
-    bool sign() const {
-        return x & 1;
-    }
-    Var  var() const {
-        return x >> 1;
-    }
-    Lit  unsign() const {
-        return Lit(x & ~1);
-    }
-    bool operator==(const Lit& p) const {
-        return x == p.x;
-    }
-    bool operator!= (const Lit& p) const {
-        return x != p.x;
-    }
-    /**
-    @brief ONLY to be used for ordering such as: a, b, ~b, etc.
-    */
-    bool operator <  (const Lit& p) const {
-        return x < p.x;     // '<' guarantees that p, ~p are adjacent in the ordering.
-    }
-    bool operator >  (const Lit& p) const {
-        return x > p.x;
-    }
-    bool operator >=  (const Lit& p) const {
-        return x >= p.x;
-    }
-    static Lit toLit(uint32_t data)
-    {
-        return Lit(data);
-    }
-};
-
-static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
-static const Lit lit_Error(var_Undef, true );  //
-
-inline std::ostream& operator<<(std::ostream& os, const Lit lit)
-{
-    if (lit == lit_Undef) {
-        os << "lit_Undef";
-    } else {
-        os << (lit.sign() ? "-" : "") << (lit.var() + 1);
-    }
-    return os;
-}
-
-inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
-{
-    for (uint32_t i = 0; i < lits.size(); i++) {
-        co << lits[i];
-
-        if (i != lits.size()-1)
-            co << " ";
-    }
-
-    return co;
-}
-
-///Class that can hold: True, False, Undef
-class lbool
-{
-    char     value;
-    explicit lbool(const char v) : value(v) { }
-
-public:
-    lbool() :
-        value(0)
-    {
-    };
-
-    char getchar() const
-    {
-        return value;
-    }
-
-    bool isDef() const
-    {
-        return value;
-    }
-
-    bool getBool() const
-    {
-        return value == 1;
-    }
-
-    bool operator==(lbool b) const
-    {
-        return value == b.value;
-    }
-
-    bool operator!=(lbool b) const
-    {
-        return value != b.value;
-    }
-
-    lbool operator^(const char b) const
-    {
-        return b ? lbool(-value) : lbool(value);
-    }
-    //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
-
-    friend lbool toLbool(const char v);
-    friend lbool boolToLBool(const bool b);
-    friend class llbool;
-};
-inline lbool toLbool(const char   v)
-{
-    return lbool(v);
-}
-
-const lbool l_True  = toLbool( 1);
-const lbool l_False = toLbool(-1);
-const lbool l_Undef = toLbool( 0);
-
-inline lbool boolToLBool(const bool b)
-{
-    if (b)
-        return l_True;
-    else
-        return l_False;
-}
-
-inline std::ostream& operator<<(std::ostream& cout, const lbool val)
-{
-    if (val == l_True) cout << "l_True";
-    if (val == l_False) cout << "l_False";
-    if (val == l_Undef) cout << "l_Undef";
-    return cout;
 }
 
 class BinaryClause {

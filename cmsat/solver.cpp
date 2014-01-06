@@ -63,7 +63,7 @@ using std::endl;
 
 //#define DEBUG_TRI_SORTED_SANITY
 
-Solver::Solver(const CryptoMiniSat::SolverConf _conf) :
+Solver::Solver(const SolverConf _conf) :
     Searcher(_conf, this)
     , prober(NULL)
     , simplifier(NULL)
@@ -840,10 +840,7 @@ void Solver::renumberVariables()
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
     }
 
-    //Update updater data
     CNF::updateVars(outerToInter, interToOuter);
-
-    //Update local data
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
 
@@ -1198,28 +1195,28 @@ uint64_t Solver::calc_how_many_to_remove()
 void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
 {
     switch (conf.clauseCleaningType) {
-    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
+    case ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructGlue(clAllocator));
         tmpStats.glueBasedClean = 1;
         break;
 
-    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED :
+    case ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructSize(clAllocator));
         tmpStats.sizeBasedClean = 1;
         break;
 
-    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED :
+    case ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructActivity(clAllocator));
         tmpStats.actBasedClean = 1;
         break;
 
-    case CryptoMiniSat::ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED :
+    case ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructPropConfl(clAllocator));
@@ -2546,6 +2543,22 @@ void Solver::dumpEquivalentLits(std::ostream* os) const
     varReplacer->print_equivalent_literals(os);
 }
 
+vector<Lit> Solver::get_zero_assigned_lits() const
+{
+    vector<Lit> lits;
+    assert(decisionLevel() == 0);
+    for(size_t i = 0; i < assigns.size(); i++) {
+        if (assigns[i] != l_Undef) {
+            Lit lit(i, assigns[i] == l_False);
+            lit = map_inter_to_outer(lit);
+            lits.push_back(lit);
+        }
+    }
+    vector<Var> my_map = build_outer_to_without_bva_map();
+    updateLitsMap(lits, my_map);
+    return lits;
+}
+
 void Solver::dumpUnitaryClauses(std::ostream* os) const
 {
     *os
@@ -2556,12 +2569,9 @@ void Solver::dumpUnitaryClauses(std::ostream* os) const
 
     //'trail' cannot be trusted between 0....size()
     assert(decisionLevel() == 0);
-    for(size_t i = 0; i < assigns.size(); i++) {
-        if (assigns[i] != l_Undef) {
-            Lit lit(i, assigns[i] == l_False);
-            lit = map_inter_to_outer(lit);
-            *os << lit << " 0\n";
-        }
+    vector<Lit> lits = get_zero_assigned_lits();
+    for(const Lit lit: lits) {
+        *os << lit << " 0\n";
     }
 }
 

@@ -12,7 +12,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <iomanip>
 #include <vector>
 #include <fstream>
-#include "solver.h"
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING
@@ -25,7 +24,7 @@ using std::endl;
 //#define DEBUG_COMMENT_PARSING
 
 DimacsParser::DimacsParser(
-    Solver* _solver
+    MainSolver* _solver
     , const bool _debugLib
     , const bool _debugNewVar
 ):

@@ -735,7 +735,7 @@ struct CleaningStats
     Data preRemove;
 
     //Clean type
-    CryptoMiniSat::ClauseCleaningTypes clauseCleaningType;
+    ClauseCleaningTypes clauseCleaningType;
     size_t glueBasedClean;
     size_t sizeBasedClean;
     size_t propConflBasedClean;

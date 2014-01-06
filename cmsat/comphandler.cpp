@@ -30,6 +30,7 @@
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
+#include "cryptominisat.h"
 
 using namespace CMSat;
 using std::make_pair;
@@ -209,9 +210,8 @@ bool CompHandler::solve_component(
     }
 
     //Set up new solver
-    CryptoMiniSat::SolverConf conf;
-    Solver newSolver(conf);
-    configureNewSolver(&newSolver, vars.size());
+    SolverConf conf = configureNewSolver(vars.size());
+    MainSolver newSolver(conf);
     moveVariablesBetweenSolvers(&newSolver, vars, comp);
 
     //Move clauses over
@@ -238,11 +238,11 @@ bool CompHandler::solve_component(
 
     check_solution_is_unassigned_in_main_solver(&newSolver, vars);
     save_solution_to_savedstate(&newSolver, vars, comp);
-    move_decision_level_zero_vars_here(&newSolver, vars);
+    move_decision_level_zero_vars_here(&newSolver);
 
     if (solver->conf.verbosity >= 1 && num_comps < 20) {
         cout
-        << "c [comp] Solved component " << comp_at
+        << "c [comp] component " << comp_at
         << " ======================================="
         << endl;
     }
@@ -265,19 +265,19 @@ void CompHandler::check_local_vardata_sanity()
 }
 
 void CompHandler::check_solution_is_unassigned_in_main_solver(
-    const Solver* newSolver
+    const MainSolver* newSolver
     , const vector<Var>& vars
 ) {
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
-        if (newSolver->model[updateVar(var)] != l_Undef) {
+        if (newSolver->get_model()[updateVar(var)] != l_Undef) {
             assert(solver->value(var) == l_Undef);
         }
     }
 }
 
 void CompHandler::save_solution_to_savedstate(
-    const Solver* newSolver
+    const MainSolver* newSolver
     , const vector<Var>& vars
     , const uint32_t comp
 ) {
@@ -285,75 +285,57 @@ void CompHandler::save_solution_to_savedstate(
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
         Var outerVar = solver->map_inter_to_outer(var);
-        if (newSolver->model[updateVar(var)] != l_Undef) {
+        if (newSolver->get_model()[updateVar(var)] != l_Undef) {
             assert(savedState[outerVar] == l_Undef);
             assert(compFinder->getVarComp(var) == comp);
 
-            savedState[outerVar] = newSolver->model[updateVar(var)];
+            savedState[outerVar] = *((lbool*)(&newSolver->get_model()[updateVar(var)]));
         }
     }
 }
 
 void CompHandler::move_decision_level_zero_vars_here(
-    const Solver* newSolver
-    , const vector<Var>& vars
+    const MainSolver* newSolver
 ) {
-    assert(newSolver->decisionLevel() == 0);
-    assert(solver->decisionLevel() == 0);
-    for (size_t i = 0; i < vars.size(); i++) {
-        Var newSolverInternalVar = newSolver->map_outer_to_inter(i);
+    const vector<Lit> zero_assigned = newSolver->get_zero_assigned_lits();
+    for (Lit lit: zero_assigned) {
+        lit = Lit(interToOuter[lit.var()], lit.sign());
+        solver->varData[lit.var()].removed = Removed::none;
+        const Var outer = solver->map_inter_to_outer(lit.var());
+        savedState[outer] = l_Undef;
+        solver->enqueue(lit);
 
-        //Is it 0-level assigned in newSolver?
-        lbool val = newSolver->value(newSolverInternalVar);
-        if (val != l_Undef) {
-            assert(newSolver->varData[newSolverInternalVar].level == 0);
-
-            //Use our 'solver'-s notation, i.e. 'var'
-            Var var = vars[i];
-            Lit lit(var, val == l_False);
-            solver->varData[var].removed = Removed::none;
-            const Var outer = solver->map_inter_to_outer(var);
-            savedState[outer] = l_Undef;
-            solver->enqueue(lit);
-
-            /*cout
-            << "0-level enqueueing var "
-            << outer + 1
-            << endl;*/
-
-            //These vars are not meant to be in the orig solver
-            //so they cannot cause UNSAT
-            solver->ok = (solver->propagate().isNULL());
-            assert(solver->ok);
-        }
+        //These vars are not meant to be in the orig solver
+        //so they cannot cause UNSAT
+        solver->ok = (solver->propagate().isNULL());
+        assert(solver->ok);
     }
 }
 
-/**
-@brief Sets up the sub-solver with a specific configuration
-*/
-void CompHandler::configureNewSolver(
-    Solver* newSolver
-    , const size_t numVars
+
+SolverConf CompHandler::configureNewSolver(
+    const size_t numVars
 ) const {
-    newSolver->conf = solver->conf;
-    newSolver->mtrand.seed(solver->mtrand.randInt());
+    SolverConf conf(solver->conf);
+    conf.origSeed = solver->mtrand.randInt();
     if (numVars < 60) {
-        newSolver->conf.regularly_simplify_problem = false;
-        newSolver->conf.doStamp = false;
-        newSolver->conf.doCache = false;
-        newSolver->conf.doProbe = false;
-        newSolver->conf.otfHyperbin = false;
-        newSolver->conf.verbosity = std::min(solver->conf.verbosity, 0);
+        conf.regularly_simplify_problem = false;
+        conf.doStamp = false;
+        conf.doCache = false;
+        conf.doProbe = false;
+        conf.otfHyperbin = false;
+        conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
 
     //To small, don't clogger up the screen
     if (numVars < 20 && solver->conf.verbosity < 3) {
-        newSolver->conf.verbosity = 0;
+        conf.verbosity = 0;
     }
 
     //Don't recurse
-    newSolver->conf.doCompHandler = false;
+    conf.doCompHandler = false;
+
+    return conf;
 }
 
 /**
@@ -363,7 +345,7 @@ This implies making the right variables decision in the new solver,
 and making it non-decision in the old solver.
 */
 void CompHandler::moveVariablesBetweenSolvers(
-    Solver* newSolver
+    MainSolver* newSolver
     , const vector<Var>& vars
     , const uint32_t comp
 ) {
@@ -378,7 +360,7 @@ void CompHandler::moveVariablesBetweenSolvers(
         }
         #endif //VERBOSE_DEBUG
 
-        newSolver->new_external_var();
+        newSolver->new_var();
         assert(compFinder->getVarComp(var) == comp);
 
         assert(solver->varData[var].removed == Removed::none);
@@ -390,7 +372,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
 void CompHandler::moveClausesLong(
     vector<ClOffset>& cs
-    , Solver* newSolver
+    , MainSolver* newSolver
     , const uint32_t comp
 ) {
     vector<Lit> tmp;
@@ -456,7 +438,7 @@ void CompHandler::moveClausesLong(
             //newSolver->addRedClause(tmp, cl.stats);
         } else {
             saveClause(cl);
-            newSolver->addClauseOuter(tmp);
+            newSolver->add_clause(tmp);
         }
 
         //Remove from here
@@ -467,7 +449,7 @@ void CompHandler::moveClausesLong(
 }
 
 void CompHandler::moveClausesImplicit(
-    Solver* newSolver
+    MainSolver* newSolver
     , const uint32_t comp
     , const vector<Var>& vars
 ) {
@@ -544,7 +526,7 @@ void CompHandler::moveClausesImplicit(
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2});
 
-                        newSolver->addClauseOuter(lits);
+                        newSolver->add_clause(lits);
                         numRemovedHalfIrred++;
                     }
                 } else {
@@ -632,7 +614,7 @@ void CompHandler::moveClausesImplicit(
                         //Save backup
                         saveClause(vector<Lit>{lit, lit2, lit3});
 
-                        newSolver->addClauseOuter(lits);
+                        newSolver->add_clause(lits);
                         numRemovedThirdIrred++;
                     }
                 } else {

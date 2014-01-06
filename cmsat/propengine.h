@@ -107,7 +107,7 @@ public:
     // Constructor/Destructor:
     //
     PropEngine(
-        const CryptoMiniSat::SolverConf& _conf
+        const SolverConf& _conf
     );
     ~PropEngine();
 

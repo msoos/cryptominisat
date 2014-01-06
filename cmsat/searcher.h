@@ -55,7 +55,7 @@ struct VariableVariance
 class Searcher : public HyperEngine
 {
     public:
-        Searcher(const CryptoMiniSat::SolverConf& _conf, Solver* solver);
+        Searcher(const SolverConf& _conf, Solver* solver);
         virtual ~Searcher();
 
         //History
@@ -669,7 +669,7 @@ class Searcher : public HyperEngine
         Clause* handle_last_confl_otf_subsumption(Clause* cl, const size_t glue);
         lbool new_decision();  // Handles the case when decision must be made
         void  checkNeedRestart();     // Helper function to decide if we need to restart during search
-        CryptoMiniSat::Restart decide_restart_type() const;
+        Restart decide_restart_type() const;
         Lit   pickBranchLit();                             // Return the next decision variable.
         lbool otf_hyper_prop_first_dec_level(bool& must_continue);
         void  hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel);
@@ -696,7 +696,7 @@ class Searcher : public HyperEngine
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
             uint64_t numAgilityNeedRestart;
-            CryptoMiniSat::Restart rest_type = CryptoMiniSat::Restart::never;
+            Restart rest_type = Restart::never;
         };
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.

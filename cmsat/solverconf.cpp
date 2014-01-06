@@ -21,7 +21,7 @@
 
 #include "solverconf.h"
 #include <limits>
-using namespace CryptoMiniSat;
+using namespace CMSat;
 
 SolverConf::SolverConf() :
         //Variable activities

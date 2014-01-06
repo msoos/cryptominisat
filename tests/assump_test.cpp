@@ -4,13 +4,13 @@
 #include "cryptominisat.h"
 #include <vector>
 using std::vector;
-using namespace CryptoMiniSat;
+using namespace CMSat;
 
 BOOST_AUTO_TEST_SUITE( assumptions_interface )
 
 BOOST_AUTO_TEST_CASE(empty)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(empty)
 
 BOOST_AUTO_TEST_CASE(single_true)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(single_true)
 
 BOOST_AUTO_TEST_CASE(single_false)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(single_false)
 
 BOOST_AUTO_TEST_CASE(binclause_true)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(binclause_true)
 
 BOOST_AUTO_TEST_CASE(binclause_false)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(binclause_false)
 
 BOOST_AUTO_TEST_CASE(replace_true)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(replace_true)
 BOOST_AUTO_TEST_CASE_EXPECTED_FAILURES(replace_false, 2)
 BOOST_AUTO_TEST_CASE(replace_false)
 {
-    Solver s;
+    MainSolver s;
     s.new_var();
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});

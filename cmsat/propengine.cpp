@@ -47,7 +47,7 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const CryptoMiniSat::SolverConf& _conf
+    const SolverConf& _conf
 ) :
         CNF(_conf)
         // Stats
@@ -851,7 +851,12 @@ void PropEngine::updateVars(
     updateArray(varDataLT, interToOuter);
     #endif
     updateArray(assigns, interToOuter);
-    updateLitsMap(trail, outerToInter);
+    assert(decisionLevel() == 0);
+
+    //Trail is NOT correct, only its length is correct
+    for(Lit& lit: trail) {
+        lit = lit_Undef;
+    }
     updateBySwap(watches, seen, interToOuter2);
 
     for(size_t i = 0; i < watches.size(); i++) {

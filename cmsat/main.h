@@ -29,13 +29,13 @@
 
 #include "solverconf.h"
 #include "cryptominisat.h"
-using namespace CryptoMiniSat;
 
 using std::string;
 using std::vector;
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
+using namespace CMSat;
 
 class Main
 {
@@ -62,7 +62,7 @@ class Main
         po::variables_map vm;
         po::options_description cmdline_options;
 
-        Solver* solver;
+        MainSolver* solver;
 
         //File reading
         void readInAFile(const string& filename);
