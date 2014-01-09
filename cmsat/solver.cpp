@@ -2550,6 +2550,9 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     for(size_t i = 0; i < assigns.size(); i++) {
         if (assigns[i] != l_Undef) {
             Lit lit(i, assigns[i] == l_False);
+            if (varData[lit.var()].is_bva)
+                continue;
+
             lit = map_inter_to_outer(lit);
             lits.push_back(lit);
         }
