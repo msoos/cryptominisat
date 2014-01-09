@@ -132,12 +132,11 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 @brief Reads in a clause and puts it in lit
 @p[out] lits
 */
-void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
+void DimacsParser::readClause(StreamBuffer& in)
 {
     int32_t parsed_lit;
     uint32_t var;
     uint32_t len;
-    lits.clear();
     for (;;) {
         parsed_lit = parseInt(in, len);
         if (parsed_lit == 0) break;
@@ -299,7 +298,8 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         exit(-1);
     }
 
-    readClause(in, lits);
+    lits.clear();
+    readClause(in);
     skipLine(in);
     solver->add_clause(lits);
     numNormClauses++;

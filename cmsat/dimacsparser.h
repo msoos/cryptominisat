@@ -33,7 +33,7 @@ class DimacsParser
         std::string untilEnd(StreamBuffer& in);
         int32_t parseInt(StreamBuffer& in, uint32_t& len);
         void parseString(StreamBuffer& in, std::string& str);
-        void readClause(StreamBuffer& in, std::vector<Lit>& lits);
+        void readClause(StreamBuffer& in);
         void readFullClause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
