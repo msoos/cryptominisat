@@ -600,14 +600,12 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     vector<Lit> ps = lits;
 
-    //Drup
-    vector<Lit> origCl = ps;
-    vector<Lit> finalCl;
-
     if (!addClauseHelper(ps)) {
         return false;
     }
 
+    vector<Lit> finalCl;
+    vector<Lit> origCl = ps;
     Clause* cl = addClauseInt(
         ps
         , false //irred
