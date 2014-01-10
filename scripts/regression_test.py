@@ -822,12 +822,19 @@ class Tester:
 
             #get a var that is not already inside the assumps
             thisVar = random.randint(1, maxvar)
+            tries = 0
             while (thisVar in varsInside) :
                 thisVar = random.randint(1, maxvar)
+                tries += 1
+
+                #too many tries, don't waste time
+                if tries > 100:
+                    return assumps
 
             varsInside.add(thisVar)
 
             #random sign
+            num += 1
             if random.randint(0,1) :
                 thisVar *= -1
 
