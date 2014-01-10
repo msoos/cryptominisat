@@ -922,8 +922,8 @@ class Tester:
 
                 #check file
                 self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
-                self.check_dump_irred(fname=file_name2)
-                self.check_dump_red(fname=file_name2)
+                #self.check_dump_irred(fname=file_name2)
+                #self.check_dump_red(fname=file_name2)
 
                 #remove temporary filenames
                 os.unlink(file_name2)
