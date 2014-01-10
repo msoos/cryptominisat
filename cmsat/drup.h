@@ -15,6 +15,10 @@ struct Drup
     {
     }
 
+    virtual ~Drup()
+    {
+    }
+
     virtual bool enabled()
     {
         return false;

@@ -7,7 +7,12 @@ using namespace CMSat;
 MainSolver::MainSolver(const SolverConf conf)
 {
     solver = (void*)(new ::CMSat::Solver(conf));
-};
+}
+
+MainSolver::~MainSolver()
+{
+    delete ((CMSat::Solver*)solver);
+}
 
 bool MainSolver::add_clause(const vector< Lit >& lits)
 {

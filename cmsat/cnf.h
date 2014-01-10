@@ -49,6 +49,11 @@ public:
         drup = new Drup();
     }
 
+    ~CNF()
+    {
+        delete drup;
+    }
+
     ClauseAllocator clAllocator;
     SolverConf conf;
     //If FALSE, state of CNF is UNSAT

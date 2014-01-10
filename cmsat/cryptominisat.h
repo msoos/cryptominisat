@@ -11,6 +11,7 @@ namespace CMSat {
     {
     public:
         MainSolver(SolverConf conf = SolverConf());
+        ~MainSolver();
         uint32_t nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
         void new_var();
