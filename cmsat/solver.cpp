@@ -278,8 +278,8 @@ Clause* Solver::addClauseInt(
                 && varData[p.var()].removed != Removed::queued_replacer
             ) {
                 cout << "ERROR: clause " << lits << " contains literal "
-                << p << " whose variable has been eliminated (elim number "
-                << (int) (varData[p.var()].removed) << " )"
+                << p << " whose variable has been eliminated (elim type: "
+                << removed_type_to_string(varData[p.var()].removed) << " )"
                 << endl;
             }
 
