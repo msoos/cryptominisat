@@ -6,17 +6,17 @@
 ulimit -t unlimited
 ulimit -a
 shopt -s nullglob
-rm todo
+rm -f todo
 touch todo
 #fileloc="/home/soos/sat/examples/satcomp09/*.cnf.gz"
-fileloc="/home/soos/sat/examples/satcomp11/application/*cnf.gz"
+fileloc="/home/soos/sat/examples/satcomp091113/*cnf.gz"
 solver="/home/soos/cryptominisat/build/cryptominisat"
-#solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling"
+#solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
 #solver="/home/soos/glucose2.2/simp/glucose"
 #opts="--restart glue --clean glue --flippolarfreq 0"
 #opts="--restart agility"
 opts=""
-output="/home/soos/sat/newout/44-satcomp11"
+output="/home/soos/sat/out/lingeling-satcomp091113"
 tlimit="1000"
 #5GB mem limit
 memlimit="5000000"
@@ -63,7 +63,7 @@ mystart=0
 echo -ne "Creating per-core TODOs"
 for ((myi=0; myi < numthreads ; myi++))
 do
-    rm todo_rnd_$myi.sh
+    rm -f todo_rnd_$myi.sh
     echo todo_rnd_$myi.sh
     echo "ulimit -t $tlimit" > todo_rnd_$myi.sh
     echo "ulimit -v $memlimit" >> todo_rnd_$myi.sh
@@ -78,6 +78,7 @@ do
     chmod +x todo_rnd_$myi.sh
 done
 echo "Done."
+let myi--
 tail -n $remain todo_rnd >> todo_rnd_$myi.sh
 
 #check that todos match original
@@ -91,11 +92,11 @@ tail -n $remain todo_rnd >> todo_rnd_$myi.sh
 # fi
 
 # Execute todos
-rm out_*
+rm -f out_*
 echo -ne "executing todos..."
 for ((myi=0; myi < numthreads ; myi++))
 do
-    nohup ./todo_rnd_$myi.sh > out_$my &
+    nohup ./todo_rnd_$myi.sh > out_$myi &
     echo "OK"
 done
 echo  "done."
