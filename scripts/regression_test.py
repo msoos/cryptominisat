@@ -21,7 +21,7 @@ from subprocess import Popen, PIPE, STDOUT
 import optparse
 from xor_to_cnf_class import *
 
-maxTime = 200
+maxTime = 80
 maxTimeDiff = 20
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
