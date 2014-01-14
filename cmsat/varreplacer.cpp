@@ -1122,8 +1122,14 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
 Lit VarReplacer::getLitReplacedWith(Lit lit) const
 {
     lit = solver->map_inter_to_outer(lit);
-    Lit lit2 = table[lit.var()] ^ lit.sign();
+    Lit lit2 = getLitReplacedWithOuter(lit);
     return solver->map_outer_to_inter(lit2);
+}
+
+Lit VarReplacer::getLitReplacedWithOuter(Lit lit) const
+{
+    Lit lit2 = table[lit.var()] ^ lit.sign();
+    return lit2;
 }
 
 Var VarReplacer::getVarReplacedWith(Var var) const

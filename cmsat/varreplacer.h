@@ -78,6 +78,7 @@ class VarReplacer
         Lit getLitReplacedWith(Lit lit) const;
         Var getVarReplacedWith(const Var var) const;
         Var getVarReplacedWith(const Lit lit) const;
+        Lit getLitReplacedWithOuter(Lit lit) const;
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
         bool replacingVar(const Var var) const;
