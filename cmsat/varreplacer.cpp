@@ -708,7 +708,7 @@ void VarReplacer::extendModel()
     cout << "c VarReplacer::extendModel() called" << endl;
     #endif //VERBOSE_DEBUG
 
-    assert(solver->model.size() == solver->nVarsReal());
+    assert(solver->model.size() == solver->nVarsOuter());
     for (map<Var, vector<Var> >::const_iterator
         it = reverseTable.begin() , end = reverseTable.end()
         ; it != end
@@ -915,7 +915,7 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 
 void VarReplacer::checkUnsetSanity()
 {
-    for(size_t i = 0; i < solver->nVarsReal(); i++) {
+    for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         const Lit repLit = getLitReplacedWith(Lit(i, false));
         const Var repVar = getVarReplacedWith(i);
 

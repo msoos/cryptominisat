@@ -2295,7 +2295,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
 void Searcher::print_solution_varreplace_status() const
 {
-    for(size_t var = 0; var < nVarsReal(); var++) {
+    for(size_t var = 0; var < nVarsOuter(); var++) {
         if (varData[var].removed == Removed::replaced
             || varData[var].removed == Removed::elimed
         ) {

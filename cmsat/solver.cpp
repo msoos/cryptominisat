@@ -510,16 +510,16 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Check for too large variable number
     for (const Lit lit: ps) {
-        if (lit.var() >= nVarsReal()) {
+        if (lit.var() >= nVarsOuter()) {
             cout
             << "ERROR: Variable " << lit.var() + 1
             << " inserted, but max var is "
-            << nVarsReal()
+            << nVarsOuter()
             << endl;
             assert(false);
             exit(-1);
         }
-        assert(lit.var() < nVarsReal()
+        assert(lit.var() < nVarsOuter()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
@@ -542,7 +542,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         const Lit origLit = lit;
 
         //Update variable numbering
-        assert(lit.var() < nVarsReal());
+        assert(lit.var() < nVarsOuter());
         lit = map_outer_to_inter(lit);
 
         if (conf.verbosity >= 12) {
@@ -835,8 +835,8 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     }
     assert(at == nVars());
 
-    //Extend to nVarsReal() --> these are just the identity transformation
-    for(size_t i = nVars(); i < nVarsReal(); i++) {
+    //Extend to nVarsOuter() --> these are just the identity transformation
+    for(size_t i = nVars(); i < nVarsOuter(); i++) {
         outerToInter[i] = i;
         interToOuter[i] = i;
     }
@@ -851,14 +851,14 @@ void Solver::renumberVariables()
     clauseCleaner->removeAndCleanAll();
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
-    vector<Var> outerToInter(nVarsReal());
-    vector<Var> interToOuter(nVarsReal());
+    vector<Var> outerToInter(nVarsOuter());
+    vector<Var> interToOuter(nVarsOuter());
     size_t numEffectiveVars =
         calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
 
     //Create temporary outerToInter2
-    vector<uint32_t> interToOuter2(nVarsReal()*2);
-    for(size_t i = 0; i < nVarsReal(); i++) {
+    vector<uint32_t> interToOuter2(nVarsOuter()*2);
+    for(size_t i = 0; i < nVarsOuter(); i++) {
         interToOuter2[i*2] = interToOuter[i]*2;
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
     }
@@ -1631,7 +1631,7 @@ lbool Solver::solve()
 void Solver::checkDecisionVarCorrectness() const
 {
     //Check for var deicisonness
-    for(size_t var = 0; var < nVarsReal(); var++) {
+    for(size_t var = 0; var < nVarsOuter(); var++) {
         if (varData[var].removed != Removed::none
             && varData[var].removed != Removed::queued_replacer
         ) {
@@ -2740,7 +2740,7 @@ void Solver::dumpIrredClauses(std::ostream* os) const
 {
     *os
     << "p cnf "
-    << nVarsReal()
+    << nVarsOuter()
     << " " << count_irred_clauses_for_dump()
     << endl;
 
@@ -3114,7 +3114,7 @@ void Solver::checkNoWrongAttach() const
 
 size_t Solver::getNumFreeVars() const
 {
-    uint32_t freeVars = nVarsReal();
+    uint32_t freeVars = nVarsOuter();
     if (decisionLevel() == 0) {
         freeVars -= trail.size();
     } else {

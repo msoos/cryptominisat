@@ -27,7 +27,7 @@ void CNF::newVar(const bool bva, const Var orig_outer)
         enlarge_nonminimial_datastructs();
 
         Var minVar = nVars()-1;
-        Var maxVar = nVarsReal()-1;
+        Var maxVar = nVarsOuter()-1;
         interToOuterMain.push_back(maxVar);
         const Var x = interToOuterMain[minVar];
         interToOuterMain[minVar] = maxVar;
@@ -37,15 +37,15 @@ void CNF::newVar(const bool bva, const Var orig_outer)
         outerToInterMain[maxVar] = minVar;
         outerToInterMain[x] = maxVar;
 
-        swapVars(nVarsReal()-1);
+        swapVars(nVarsOuter()-1);
         varData[nVars()-1].is_bva = bva;
         if (bva) {
             num_bva_vars ++;
         } else {
-            outer_to_with_bva_map.push_back(nVarsReal() - 1);
+            outer_to_with_bva_map.push_back(nVarsOuter() - 1);
         }
     } else {
-        assert(orig_outer < nVarsReal());
+        assert(orig_outer < nVarsOuter());
 
         const Var minVar = nVars()-1;
         Var k = interToOuterMain[minVar];
@@ -116,20 +116,20 @@ void CNF::test_reflectivity_of_renumbering() const
     return;
     #endif
 
-    vector<Var> test(nVarsReal());
-    for(size_t i = 0; i  < nVarsReal(); i++) {
+    vector<Var> test(nVarsOuter());
+    for(size_t i = 0; i  < nVarsOuter(); i++) {
         test[i] = i;
     }
     updateArrayRev(test, interToOuterMain);
     #ifdef DEBUG_RENUMBER
-    for(size_t i = 0; i < nVarsReal(); i++) {
+    for(size_t i = 0; i < nVarsOuter(); i++) {
         cout << i << ": "
         << std::setw(2) << test[i] << ", "
         << std::setw(2) << outerToInterMain[i]
         << endl;
     }
     #endif
-    for(size_t i = 0; i < nVarsReal(); i++) {
+    for(size_t i = 0; i < nVarsOuter(); i++) {
         assert(test[i] == outerToInterMain[i]);
     }
     #ifdef DEBUG_RENUMBR
@@ -267,9 +267,9 @@ size_t CNF::get_renumber_mem() const
 vector<lbool> CNF::map_back_to_without_bva(const vector<lbool>& val) const
 {
     vector<lbool> ret;
-    assert(val.size() == nVarsReal());
+    assert(val.size() == nVarsOuter());
     ret.reserve(nVarsOutside());
-    for(size_t i = 0; i < nVarsReal(); i++) {
+    for(size_t i = 0; i < nVarsOuter(); i++) {
         if (!varData[map_outer_to_inter(i)].is_bva) {
             ret.push_back(val[i]);
         }
@@ -282,7 +282,7 @@ vector<Var> CNF::build_outer_to_without_bva_map() const
 {
     vector<Var> ret;
     size_t at = 0;
-    for(size_t i = 0; i < nVarsReal(); i++) {
+    for(size_t i = 0; i < nVarsOuter(); i++) {
         if (!varData[map_outer_to_inter(i)].is_bva) {
             ret.push_back(at);
             at++;
