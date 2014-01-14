@@ -1482,14 +1482,13 @@ void Solver::check_minimization_effectiveness(const lbool status)
 void Solver::extend_solution()
 {
     checkStats();
-    solution = solver->back_number_solution(solution);
+    model = solver->back_number_solution(model);
 
     //Extend solution to stored solution in component handler
     if (conf.doCompHandler) {
-        compHandler->addSavedState(solution);
+        compHandler->addSavedState(model);
     }
 
-    model = solution;
     if (conf.perform_occur_based_simp
         || conf.doFindAndReplaceEqLits
     ) {
@@ -2340,12 +2339,6 @@ void Solver::printMemStats() const
     account += mem;
 
     mem = memUsed();
-    mem += model.capacity()*sizeof(lbool);
-    if (conf.verbosity >= 3) {
-        cout << "model bytes: "
-        << model.capacity()*sizeof(lbool)
-        << endl;
-    }
     printStatsLine("c Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"

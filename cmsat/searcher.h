@@ -187,7 +187,8 @@ class Searcher : public HyperEngine
         uint64_t max_conflicts;
         uint64_t loop_num;
 
-        vector<lbool> solution;     ///<Filled only if solve() returned l_True
+
+        vector<lbool>  model;
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         PropBy propagate(
             #ifdef STATS_NEEDED

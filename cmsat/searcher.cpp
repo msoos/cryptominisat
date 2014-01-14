@@ -2336,7 +2336,7 @@ void Searcher::finish_up_solve(const lbool status)
     print_solution_type(status);
 
     if (status == l_True) {
-        solution = assigns;
+        model = assigns;
         print_solution_varreplace_status();
     } else if (status == l_False) {
         if (conflict.size() == 0)
@@ -3117,7 +3117,7 @@ size_t Searcher::memUsed() const
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.memUsed();
     mem += conflict.capacity()*sizeof(Lit);
-    mem += solution.capacity()*sizeof(lbool);
+    mem += model.capacity()*sizeof(lbool);
 
     if (conf.verbosity >= 3) {
         cout

@@ -104,7 +104,6 @@ class Solver : public Searcher
         template<class T>
         lbool solve_with_assumptions(const vector<T>* _assumptions = NULL);
         void  setNeedToInterrupt();
-        vector<lbool>  model;
         lbool   modelValue (const Lit p) const;  ///<Found model value for lit
 
         //////////////////////////////
