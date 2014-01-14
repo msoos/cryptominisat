@@ -2317,18 +2317,23 @@ void Searcher::print_solution_varreplace_status() const
     }
 }
 
+void Searcher::print_solution_type(const lbool status) const
+{
+    if (conf.verbosity >= 6) {
+        if (status == l_True) {
+            cout << "Solution from Searcher is SAT" << endl;
+        } else if (status == l_False) {
+            cout << "Solution from Searcher is UNSAT" << endl;
+            cout << "OK is: " << okay() << endl;
+        } else {
+            cout << "Solutions from Searcher is UNKNOWN" << endl;
+        }
+    }
+}
+
 void Searcher::finish_up_solve(const lbool status)
 {
-    #ifdef VERBOSE_DEBUG
-    if (status == l_True) {
-        cout << "Solution  is SAT" << endl;
-    } else if (status == l_False) {
-        cout << "Solution is UNSAT" << endl;
-        cout << "OK is: " << okay() << endl;
-    } else {
-        cout << "Solutions is UNKNOWN" << endl;
-    }
-    #endif //VERBOSE_DEBUG
+    print_solution_type(status);
 
     if (status == l_True) {
         solution = assigns;
@@ -2363,7 +2368,6 @@ void Searcher::finish_up_solve(const lbool status)
     #endif
 
     print_iteration_solving_stats();
-
     backup_activities_and_polarities();
 }
 

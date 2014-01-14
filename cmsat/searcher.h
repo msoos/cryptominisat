@@ -871,6 +871,10 @@ class Searcher : public HyperEngine
         );
         #endif
 
+
+        //Other
+        void print_solution_type(const lbool status) const;
+
         //Picking polarity when doing decision
         bool     pickPolarity(const Var var);
 
