@@ -160,7 +160,7 @@ void Simplifier::print_blocked_clauses_reverse() const
 void Simplifier::extendModel(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef
-    for(size_t i = 0; i < solver->nVarsReal(); i++) {
+    for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         const Var outer = solver->map_inter_to_outer(i);
         assert(solver->varData[i].removed != Removed::elimed
             || (solver->value(i) == l_Undef && solver->model[outer] == l_Undef)
@@ -2764,7 +2764,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
 
 void Simplifier::checkElimedUnassigned() const
 {
-    for (size_t i = 0; i < solver->nVarsReal(); i++) {
+    for (size_t i = 0; i < solver->nVarsOuter(); i++) {
         if (solver->varData[i].removed == Removed::elimed) {
             assert(solver->value(i) == l_Undef);
         }
@@ -2775,7 +2775,7 @@ void Simplifier::checkElimedUnassignedAndStats() const
 {
     assert(solver->ok);
     int64_t checkNumElimed = 0;
-    for (size_t i = 0; i < solver->nVarsReal(); i++) {
+    for (size_t i = 0; i < solver->nVarsOuter(); i++) {
         if (solver->varData[i].removed == Removed::elimed) {
             checkNumElimed++;
             assert(solver->value(i) == l_Undef);
@@ -2858,7 +2858,7 @@ void Simplifier::linkInClause(Clause& cl)
 void Simplifier::printGateFinderStats() const
 {
     if (gateFinder) {
-        gateFinder->getStats().print(solver->nVarsReal());
+        gateFinder->getStats().print(solver->nVarsOuter());
     }
 }
 

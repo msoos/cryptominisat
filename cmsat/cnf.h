@@ -140,8 +140,8 @@ public:
 
     uint32_t nVarsOutside() const
     {
-        assert(outer_to_with_bva_map.size() == nVarsReal() - num_bva_vars);
-        return nVarsReal() - num_bva_vars;
+        assert(outer_to_with_bva_map.size() == nVarsOuter() - num_bva_vars);
+        return nVarsOuter() - num_bva_vars;
     }
 
     template<class T>
@@ -166,7 +166,7 @@ protected:
         return minNumVars;
     }
 
-    uint32_t nVarsReal() const
+    uint32_t nVarsOuter() const
     {
         return assigns.size();
     }

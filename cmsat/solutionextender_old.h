@@ -65,7 +65,7 @@ class SolutionExtender
         bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
         Lit pickBranchLit();
 
-        uint32_t nVarsReal() const
+        uint32_t nVarsOuter() const
         {
             return assigns.size();
         }

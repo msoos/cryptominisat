@@ -281,7 +281,7 @@ void CompHandler::save_solution_to_savedstate(
     , const vector<Var>& vars
     , const uint32_t comp
 ) {
-    assert(savedState.size() == solver->nVarsReal());
+    assert(savedState.size() == solver->nVarsOuter());
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
         Var outerVar = solver->map_inter_to_outer(var);
@@ -654,8 +654,8 @@ void CompHandler::addSavedState(vector<lbool>& solution)
 {
     //Enqueue them. They may need to be extended, so enqueue is needed
     //manipulating "model" may not be good enough
-    assert(savedState.size() == solver->nVarsReal());
-    assert(solution.size() == solver->nVarsReal());
+    assert(savedState.size() == solver->nVarsOuter());
+    assert(solution.size() == solver->nVarsOuter());
     for (size_t var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
             const Var interVar = solver->map_outer_to_inter(var);
@@ -691,7 +691,7 @@ void CompHandler::readdRemovedClauses()
     double myTime = cpuTime();
 
     //Avoid recursion, clear 'removed' status
-    for(size_t i = 0; i < solver->nVarsReal(); i++) {
+    for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         VarData& dat = solver->varData[i];
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;

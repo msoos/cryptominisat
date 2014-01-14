@@ -352,7 +352,7 @@ class Solver : public Searcher
             for (const T& lit: lits) {
                 assert(lit.var() < nVarsOutside());
                 lits2.push_back(map_to_with_bva(lit));
-                assert(lits2.back().var() < nVarsReal());
+                assert(lits2.back().var() < nVarsOuter());
             }
 
             return lits2;

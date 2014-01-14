@@ -36,8 +36,8 @@ SolutionExtender::SolutionExtender(
     , qhead (0)
     , assigns(_solution)
 {
-    solver->model.resize(nVarsReal(), l_Undef);
-    for (Var var = 0; var < nVarsReal(); var++) {
+    solver->model.resize(nVarsOuter(), l_Undef);
+    for (Var var = 0; var < nVarsOuter(); var++) {
         solver->model[var] = value(var);
     }
     release_assert(solver->verifyModel());
@@ -64,7 +64,7 @@ void SolutionExtender::extend()
     detachReattach.detachNonBinsNonTris();
 
     //Make watches large enough to fit occur of all
-    solver->watches.resize(nVarsReal()*2);
+    solver->watches.resize(nVarsOuter()*2);
 
     //Sanity check
     if (solver->simplifier) {
@@ -82,7 +82,7 @@ void SolutionExtender::extend()
     }
 
     //Pick branches as long as we can
-    for (Var var = 0; var < nVarsReal(); var++) {
+    for (Var var = 0; var < nVarsOuter(); var++) {
         if (value(var) == l_Undef
             //Don't pick replaced variables
             && solver->varData[var].removed != Removed::replaced
@@ -114,8 +114,8 @@ void SolutionExtender::extend()
     }
 
     //Copy&check model
-    solver->model.resize(nVarsReal(), l_Undef);
-    for (Var var = 0; var < nVarsReal(); var++) {
+    solver->model.resize(nVarsOuter(), l_Undef);
+    for (Var var = 0; var < nVarsOuter(); var++) {
         solver->model[var] = value(var);
     }
 
