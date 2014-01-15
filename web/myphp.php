@@ -129,9 +129,7 @@ class DataPrinter
             foreach ($datanames as $dataname) {
                 $tmp = mysql_result($this->data, $i, $dataname);
                 if (sizeof($datanames) > 1) {
-                    if ($local_sum == 0) {
-                        //$tmp = 0;
-                    } else {
+                    if ($local_sum != 0) {
                         $tmp /= $local_sum;
                         $tmp *= 100.0;
                     }
