@@ -537,6 +537,12 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         lit = updated_lit;
     }
 
+    for(Lit& lit: ps) {
+        if (map_outer_to_inter(lit).var() >= nVars()) {
+            newVar(false, lit.var());
+        }
+    }
+
     //External var number -> Internal var number
     for (Lit& lit: ps) {
         const Lit origLit = lit;
@@ -555,23 +561,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
     }
 
-    //Check
-    for (const Lit lit: ps) {
-        const Lit updated_lit = varReplacer->getLitReplacedWith(lit);
-        assert(lit == updated_lit);
-    }
-
-    for(Lit& lit: ps) {
-        if (lit.var() >= nVars()) {
-            const Var outer = map_inter_to_outer(lit.var());
-            newVar(false, outer);
-            assert(map_outer_to_inter(outer) == nVars()-1);
-            lit = Lit(map_outer_to_inter(outer), lit.sign());
-            assert(outer == map_inter_to_outer(lit.var()));
-        }
-    }
-
-    //Check
+    //Check renumberer
     for (const Lit lit: ps) {
         const Lit updated_lit = varReplacer->getLitReplacedWith(lit);
         assert(lit == updated_lit);
