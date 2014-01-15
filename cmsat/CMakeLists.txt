@@ -87,12 +87,6 @@ add_executable(cryptominisat
 set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
     cryptoms
-#    vtkViews
-#    vtkInfovis
-#    vtkRendering
-#    vtkImaging
-#    vtkIO
-#    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 IF (ZLIB_FOUND)
