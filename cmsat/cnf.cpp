@@ -59,8 +59,9 @@ void CNF::newVar(const bool bva, const Var orig_outer)
         swapVars(z);
     }
 
-    //Too expensive
-    //test_reflectivity_of_renumbering();
+    #ifdef MORE_DEBUG
+    test_reflectivity_of_renumbering();
+    #endif
 }
 
 void CNF::swapVars(const Var which)
@@ -109,13 +110,9 @@ void CNF::saveVarMem()
     seen2.shrink_to_fit();
 }
 
+//Test for reflectivity of interToOuterMain & outerToInterMain
 void CNF::test_reflectivity_of_renumbering() const
 {
-    //Test for reflectivity of interToOuterMain & outerToInterMain
-    #ifdef NDEBUG
-    return;
-    #endif
-
     vector<Var> test(nVarsOuter());
     for(size_t i = 0; i  < nVarsOuter(); i++) {
         test[i] = i;
@@ -129,6 +126,7 @@ void CNF::test_reflectivity_of_renumbering() const
         << endl;
     }
     #endif
+
     for(size_t i = 0; i < nVarsOuter(); i++) {
         assert(test[i] == outerToInterMain[i]);
     }
