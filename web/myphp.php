@@ -208,11 +208,6 @@ class DataPrinter
         $this->runQuery("restart");
 
         $this->print_one_graph(
-            "Time"
-            , array("time")
-            , array(""));
-
-        $this->print_one_graph(
             "No. of restarts"
             , array("restarts")
             , array("")
