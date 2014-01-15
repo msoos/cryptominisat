@@ -68,6 +68,7 @@ add_cxx_flag_if_supported("-Wuninitialized")
 add_cxx_flag_if_supported("-Wno-deprecated")
 add_cxx_flag_if_supported("-Wstrict-aliasing")
 add_cxx_flag_if_supported("-Wpointer-arith")
+add_cxx_flag_if_supported("-Wheader-guard")
 
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
