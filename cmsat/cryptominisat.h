@@ -32,6 +32,6 @@ namespace CMSat {
     private:
         void* solver;
     };
-};
+}
 
 #endif //__CRYPTOMINISAT_H__
