@@ -85,7 +85,7 @@ class DataPrinter
         $title
         , $datanames
         , $nicedatanames
-        , $everyn = 7
+        , $everyn = 1000
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
@@ -108,14 +108,15 @@ class DataPrinter
         $i=0;
         $total_sum = 0.0;
         $last_confl = 0.0;
+        $last_confl_for_everyn = 0.0;
         while ($i < $this->nrows) {
-            if ($i % $everyn != 0) {
+            $confl = mysql_result($this->data, $i, "conflicts");
+            if ($confl -$last_confl_for_everyn < $everyn) {
                 $i++;
                 continue;
             }
+            $last_confl_for_everyn = $confl;
 
-            //Print conflicts
-            $confl=mysql_result($this->data, $i, "conflicts");
             echo "[$confl";
 
             //Calc local sum
@@ -435,7 +436,6 @@ class DataPrinter
                 "irredundant"
                 , "redundant"
             )
-            , 1
         );
 
 //         $this->print_one_graph(
@@ -485,7 +485,6 @@ class DataPrinter
                 , "long irred"
                 , "long red"
             )
-            , 1
         );
 
         return $this->numberingScheme;
