@@ -832,11 +832,6 @@ bool Searcher::subset(const vector<Lit>& A, const Clause& B)
     return ret;
 }
 
-/**
-@brief Specialized analysis procedure to express the final conflict in terms of assumptions.
-Calculates the (possibly empty) set of assumptions that led to the assignment of 'p', and
-stores the result in 'out_conflict'.
-*/
 void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
 {
     out_conflict.clear();
@@ -845,59 +840,12 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     if (decisionLevel() == 0)
         return;
 
-    //Guard it because of memory savings
-    //seen[] can be small in case the variable has been set at level 0
-    if (p.var() < nVars()) {
-        seen[p.var()] = 1;
-    }
-
     for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
         const Var x = trail[i].var();
-        if (!seen[x])
-            continue;
-
         if (varData[x].reason.isNULL()) {
             assert(varData[x].level > 0);
             out_conflict.push_back(~trail[i]);
-        } else {
-            PropBy confl = varData[x].reason;
-            switch(confl.getType()) {
-                case tertiary_t : {
-                    const Lit lit3 = confl.lit3();
-                    if (varData[lit3.var()].level > 0)
-                        seen[lit3.var()] = 1;
-
-                    //Intentionally no break, since tertiary is similar to binary
-                }
-
-                case binary_t : {
-                    const Lit lit2 = confl.lit2();
-                    if (varData[lit2.var()].level > 0)
-                        seen[lit2.var()] = 1;
-                    break;
-                }
-
-                case clause_t : {
-                    const Clause& cl = *clAllocator.getPointer(confl.getClause());
-                    for (uint32_t j = 1, size = cl.size(); j < size; j++) {
-                        if (varData[cl[j].var()].level > 0)
-                            seen[cl[j].var()] = 1;
-                    }
-                    break;
-                }
-
-                case null_clause_t :
-                    assert(false && "Incorrect analyzeFinal");
-                    break;
-            }
         }
-        seen[x] = 0;
-    }
-
-    //Guard it because of memory savings
-    //seen[] can be small in case the variable has been set at level 0
-    if (p.var() < nVars()) {
-        seen[p.var()] = 0;
     }
 }
 
@@ -1125,8 +1073,6 @@ lbool Searcher::new_decision()
             // Dummy decision level:
             newDecisionLevel();
         } else if (value(p) == l_False) {
-            //NOTE at this point, 'p.var()' can actually be larger than seen.size()
-            //That is now guarded against in analyzeFinal()
             analyzeFinal(~p, conflict);
             return l_False;
         } else {
