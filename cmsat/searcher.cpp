@@ -1054,9 +1054,12 @@ lbool Searcher::search()
     //Loop until restart or finish (SAT/UNSAT)
     last_decision_ended_in_conflict = false;
     PropBy confl;
-    while (!params.needToStopSearch
-        && sumConflicts() <= solver->getNextCleanLimit()
-        && cpuTime() < conf.maxTime
+    while (
+        (!params.needToStopSearch
+            && sumConflicts() <= solver->getNextCleanLimit()
+            && cpuTime() < conf.maxTime
+        )
+            || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
             stats.conflStats.update(lastConflictCausedBy);
