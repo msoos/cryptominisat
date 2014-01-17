@@ -474,7 +474,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 bumpClauseAct(cl);
             }
 
-            for (size_t j = 0, size = cl->size(); j != size; j++) {
+            for (size_t j = 0; j < cl->size(); j++) {
                 //Will be resolved away, skip
                 if (p != lit_Undef && j == 0)
                     continue;
