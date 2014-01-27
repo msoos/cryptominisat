@@ -383,8 +383,8 @@ void Main::add_supported_options()
         , "Perform simplification at the very start")
     ("varelim", po::value<int>(&conf.doVarElim)->default_value(conf.doVarElim)
         , "Perform variable elimination as per Een and Biere")
-    ("elimstrategy", po::value<int>(&conf.varelimStrategy)->default_value(conf.varelimStrategy)
-        , "Sort variable elimination order by guessing(0) or by calculation(1)")
+    ("elimstrategy", po::value<string>(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.varelimStrategy))
+        , "Sort variable elimination order by intelligent guessing ('heuristic') or by exact calculation ('calculate')")
     ("elimcomplexupdate", po::value<int>(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
         , "Update estimated elimination complexity on-the-fly while eliminating")
     ("elimcoststrategy", po::value<int>(&conf.varElimCostEstimateStrategy)->default_value(conf.varElimCostEstimateStrategy)
@@ -776,6 +776,22 @@ void Main::parse_cleaning_type()
     }
 }
 
+void Main::parse_var_elim_strategy()
+{
+    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
+        conf.varelimStrategy = ElimStrategy::heuristic;
+    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
+        conf.varelimStrategy = ElimStrategy::calculate_exactly;
+    } else {
+        std::cerr
+        << "ERROR: Cannot parse option given to '--elimstrategy'. It's '"
+        << var_elim_strategy << "'" << " but that none of the possiblities listed."
+        << endl;
+
+        exit(-1);
+    }
+}
+
 void Main::parse_restart_type()
 {
     if (vm.count("restart")) {
@@ -844,6 +860,7 @@ void Main::manually_parse_some_options()
 
     parse_cleaning_type();
     parse_restart_type();
+    parse_var_elim_strategy();
 
     if (numThreads < 1)
         throw WrongParam("threads", "Num threads must be at least 1");

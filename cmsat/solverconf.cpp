@@ -105,7 +105,7 @@ SolverConf::SolverConf() :
         //Var-elim
         , doVarElim        (true)
         , updateVarElimComplexityOTF(true)
-        , varelimStrategy  (0)
+        , varelimStrategy  (ElimStrategy::heuristic)
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
         , do_bounded_variable_addition(true)

@@ -47,11 +47,13 @@ class Main
 
     private:
         string typeclean;
+        string var_elim_strategy;
         string drupfilname;
         int drupExistsCheck = 1;
         void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();
+        void parse_var_elim_strategy();
         void parse_cleaning_type();
         void handle_drup_option();
         void parse_restart_type();

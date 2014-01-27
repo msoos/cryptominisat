@@ -74,6 +74,28 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
     return "";
 }
 
+enum class ElimStrategy {
+    heuristic
+    , calculate_exactly
+};
+
+inline std::string getNameOfElimStrategy(ElimStrategy strategy)
+{
+    switch(strategy)
+    {
+        case ElimStrategy::heuristic:
+            return "heuristic";
+
+        case ElimStrategy::calculate_exactly:
+            return "calculate";
+
+        default:
+            assert(false);
+
+        return "";
+    }
+}
+
 class SolverConf
 {
     public:
@@ -172,7 +194,7 @@ class SolverConf
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
         int      updateVarElimComplexityOTF;
-        int      varelimStrategy; ///<Guess varelim order, or calculate?
+        ElimStrategy  varelimStrategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
         int      do_bounded_variable_addition;
