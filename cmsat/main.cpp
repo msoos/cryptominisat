@@ -383,7 +383,7 @@ void Main::add_supported_options()
         , "Perform simplification at the very start")
     ("varelim", po::value<int>(&conf.doVarElim)->default_value(conf.doVarElim)
         , "Perform variable elimination as per Een and Biere")
-    ("elimstrategy", po::value<string>(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.varelimStrategy))
+    ("elimstrategy", po::value<string>(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.var_elim_strategy))
         , "Sort variable elimination order by intelligent guessing ('heuristic') or by exact calculation ('calculate')")
     ("elimcomplexupdate", po::value<int>(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
         , "Update estimated elimination complexity on-the-fly while eliminating")
@@ -779,9 +779,9 @@ void Main::parse_cleaning_type()
 void Main::parse_var_elim_strategy()
 {
     if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
-        conf.varelimStrategy = ElimStrategy::heuristic;
+        conf.var_elim_strategy = ElimStrategy::heuristic;
     } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
-        conf.varelimStrategy = ElimStrategy::calculate_exactly;
+        conf.var_elim_strategy = ElimStrategy::calculate_exactly;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--elimstrategy'. It's '"
