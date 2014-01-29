@@ -1315,6 +1315,9 @@ CleaningStats Solver::reduceDB()
 
 void Solver::lock_most_UIP_used_clauses()
 {
+    if (conf.lock_per_dbclean == 0)
+        return;
+
     std::function<bool (const ClOffset, const ClOffset)> uipsort
         = [&] (const ClOffset a, const ClOffset b) -> bool {
             const Clause& a_cl = *clAllocator.getPointer(a);
