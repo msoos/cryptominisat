@@ -206,7 +206,6 @@ protected:
     }
 
 public:
-    //char defOfOrGate; //TODO make it into a bitfield above
     CL_ABST_TYPE abst;
     ClauseStats stats;
 
@@ -217,7 +216,6 @@ public:
 
         stats.conflictNumIntroduced = _conflictNumIntroduced;
         stats.glue = std::min<uint32_t>(stats.glue, ps.size());
-        //defOfOrGate = false;
         isFreed = false;
         mySize = ps.size();
         isRed = false;

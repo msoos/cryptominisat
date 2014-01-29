@@ -2173,7 +2173,6 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
 
     if (ps.isClause()) {
         Clause& cl = *solver->clAllocator.getPointer(ps.getOffset());
-        //assert(!clauseData[ps.clsimp.index].defOfOrGate);
         *limit_to_decrease -= cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
             //Skip noPosLit
