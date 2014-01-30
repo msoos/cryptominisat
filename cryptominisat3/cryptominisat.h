@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <iostream>
-#include "solverconf.h"
-#include "solvertypesmini.h"
+#include "cryptominisat3/solverconf.h"
+#include "cryptominisat3/solvertypesmini.h"
 
 namespace CMSat {
     class MainSolver
