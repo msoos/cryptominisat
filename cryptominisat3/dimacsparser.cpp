@@ -13,6 +13,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <vector>
 #include <fstream>
 #include <complex>
+#include "assert.h"
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING

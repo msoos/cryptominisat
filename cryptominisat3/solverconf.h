@@ -24,8 +24,6 @@
 
 #include <fstream>
 #include <string>
-#include "constants.h"
-#include "assert.h"
 
 namespace CMSat {
 
@@ -68,7 +66,8 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
             return "activity";
 
         default:
-            assert(false && "Unknown clause cleaning type?");
+            exit(-1);
+            //assert(false && "Unknown clause cleaning type?");
     };
 
     return "";
@@ -90,7 +89,8 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
             return "calculate";
 
         default:
-            assert(false);
+            exit(-1);
+            //assert(false);
 
         return "";
     }
