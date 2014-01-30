@@ -1494,6 +1494,7 @@ void Solver::extend_solution()
 
 lbool Solver::solve()
 {
+    conflict.clear();
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
         && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."
     );

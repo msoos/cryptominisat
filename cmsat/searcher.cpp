@@ -1586,7 +1586,6 @@ void Searcher::genRandomVarActMultDiv()
 void Searcher::resetStats()
 {
     startTime = cpuTime();
-    conflict.clear();
 
     //About vars
     #ifdef STATS_NEEDED
