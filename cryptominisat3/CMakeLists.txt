@@ -144,6 +144,7 @@ IF (ZLIB_FOUND)
 ENDIF()
 
 set_target_properties(cryptominisat3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set_target_properties(cryptominisat3 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 target_link_libraries(cryptominisat3
     ${cryptoms_exec_link_libs}
 )
