@@ -1208,28 +1208,28 @@ uint64_t Solver::calc_how_many_to_remove()
 void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
 {
     switch (conf.clauseCleaningType) {
-    case ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
+    case ClauseCleaningTypes::glue_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructGlue(clAllocator));
         tmpStats.glueBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED :
+    case ClauseCleaningTypes::size_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructSize(clAllocator));
         tmpStats.sizeBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED :
+    case ClauseCleaningTypes::sum_activity_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructActivity(clAllocator));
         tmpStats.actBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED :
+    case ClauseCleaningTypes::sum_prop_confl_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructPropConfl(clAllocator));

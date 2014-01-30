@@ -30,10 +30,10 @@
 namespace CMSat {
 
 enum class ClauseCleaningTypes {
-    CLEAN_CLAUSES_GLUE_BASED
-    , CLEAN_CLAUSES_SIZE_BASED
-    , CLEAN_CLAUSES_PROPCONFL_BASED
-    ,  CLEAN_CLAUSES_ACTIVITY_BASED
+    glue_based
+    , size_based
+    , sum_prop_confl_based
+    ,  sum_activity_based
 };
 
 enum class PolarityMode {
@@ -55,16 +55,16 @@ enum class Restart {
 inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
 {
     switch(clauseCleaningType) {
-        case ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED :
+        case ClauseCleaningTypes::glue_based :
             return "glue";
 
-        case ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED:
+        case ClauseCleaningTypes::size_based:
             return "size";
 
-        case ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED:
+        case ClauseCleaningTypes::sum_prop_confl_based:
             return "propconfl";
 
-        case ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED:
+        case ClauseCleaningTypes::sum_activity_based:
             return "activity";
 
         default:

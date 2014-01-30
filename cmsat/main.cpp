@@ -759,13 +759,13 @@ void Main::handle_drup_option()
 void Main::parse_cleaning_type()
 {
     if (typeclean == "glue") {
-        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_GLUE_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::glue_based;
     } else if (typeclean == "size") {
-        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_SIZE_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::size_based;
     } else if (typeclean == "propconfl") {
-        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_PROPCONFL_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_based;
     } else if (typeclean == "activity") {
-        conf.clauseCleaningType = ClauseCleaningTypes::CLEAN_CLAUSES_ACTIVITY_BASED;
+        conf.clauseCleaningType = ClauseCleaningTypes::sum_activity_based;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--clean'. It's '"
