@@ -22,7 +22,6 @@
 #ifndef SOLVERCONF_H
 #define SOLVERCONF_H
 
-#include <fstream>
 #include <string>
 
 namespace CMSat {
