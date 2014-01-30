@@ -11,8 +11,8 @@ ELSE()
   "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-PROJECT(cryptoms)
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some library search cmake stuff
+PROJECT(cryptominisat3)
+SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
@@ -126,42 +126,108 @@ ELSE (M4RI_FOUND)
     MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
 ENDIF (M4RI_FOUND)
 
-# find_package(Perftools)
-# IF (Perftools_FOUND)
-#     MESSAGE(STATUS "OK, Found Google Perftools")
-# else (Perftools_FOUND)
-#     MESSAGE(WARNING "Did NOT find Perftools, memory allocation will be terrible")
-# endif (Perftools_FOUND)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+macro(cmsat_add_public_header LIBTARGET HEADER)
+    set(HEADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}")
+    if(EXISTS "${HEADER_PATH}")
+        # Get existing PUBLIC_HEADER
+        get_target_property(EXISTING_PUBLIC_HEADERS ${LIBTARGET} PUBLIC_HEADER)
+        if(EXISTING_PUBLIC_HEADERS)
+            list(APPEND EXISTING_PUBLIC_HEADERS "${HEADER_PATH}")
+        else()
+            # Do not append to empty list
+            set(EXISTING_PUBLIC_HEADERS "${HEADER_PATH}")
+        endif()
+        set_target_properties(${LIBTARGET}
+                              PROPERTIES
+                              PUBLIC_HEADER "${EXISTING_PUBLIC_HEADERS}"
+                             )
+    else()
+        message(FATAL_ERROR "Cannot add public header, file ${HEADER_PATH} does not exist.")
+    endif()
+endmacro()
+
+# -----------------------------------------------------------------------------
+# Provide an export name to be used by targets that wish to export themselves.
+# -----------------------------------------------------------------------------
+set(CRYPTOMINISAT3_EXPORT_NAME "cryptominisat3Targets")
 
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
 add_subdirectory(cmsat)
-
-# -----------------------------------------------------------------------------
-# Copy built binaries to root (build) dir
-# -----------------------------------------------------------------------------
-add_custom_target(copy ALL COMMENT "Copying binaries from subdirs to build directory")
-add_custom_command(
-    TARGET copy
-    COMMAND ${CMAKE_COMMAND} -E copy cmsat/cryptominisat .
-)
-add_dependencies(copy
-    cryptominisat
-)
-
 add_subdirectory(tests)
+
+# -----------------------------------------------------------------------------
+# Add uninstall target for makefiles
+# -----------------------------------------------------------------------------
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 enable_testing()
 ADD_TEST (basic_test tests/basic_test)
 ADD_TEST (assump_test tests/assump_test)
 
-set(CPACK_PACKAGE_NAME "cryptominisat")
+# -----------------------------------------------------------------------------
+# Export our targets so that other CMake based projects can interface with
+# the build of cryptominisat3 in the build-tree
+# -----------------------------------------------------------------------------
+set(CRYPTOMINISAT3_TARGETS_FILENAME "cryptominisat3Targets.cmake")
+set(CRYPTOMINISAT3_CONFIG_FILENAME "cryptominisat3Config.cmake")
+
+# Export targets
+export(TARGETS libcryptominisat3 cryptominisat3 FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT3_TARGETS_FILENAME}")
+
+# Create cryptominisat3Config file
+set(EXPORT_TYPE "Build-tree")
+set(CONF_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/include")
+configure_file(cryptominisat3Config.cmake.in
+    "${CMAKE_BINARY_DIR}/${CRYPTOMINISAT3_CONFIG_FILENAME}" @ONLY
+)
+
+# Export this package to the CMake user package registry
+# Now the user can just use find_package(cryptominisat3) on their system
+export(PACKAGE cryptominisat3)
+
+
+if(WIN32 AND NOT CYGWIN)
+  set(DEF_INSTALL_CMAKE_DIR CMake)
+else()
+  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat3)
+endif()
+set(CRYPTOMINISAT3_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+    "Installation directory for cryptominisat3 CMake files")
+
+# Create cryptominisat3Config file
+set(EXPORT_TYPE "installed")
+set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
+configure_file(cryptominisat3Config.cmake.in
+   "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT3_CONFIG_FILENAME}" @ONLY
+)
+
+install(FILES
+    "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT3_CONFIG_FILENAME}"
+    DESTINATION "${CRYPTOMINISAT3_INSTALL_CMAKE_DIR}"
+)
+
+# Install the export set for use with the install-tree
+install(EXPORT ${CRYPTOMINISAT3_EXPORT_NAME} DESTINATION
+    "${CRYPTOMINISAT3_INSTALL_CMAKE_DIR}"
+)
+
+set(CPACK_PACKAGE_NAME "cryptominisat3")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "3.2.0")
+set(CPACK_PACKAGE_VERSION "3.3.0")
 set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "2")
+set(CPACK_PACKAGE_VERSION_MINOR "3")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME

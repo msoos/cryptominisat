@@ -10,7 +10,7 @@ add_executable(basic_test
 
 target_link_libraries(basic_test
     ${Boost_LIBRARIES}
-    cryptoms
+    libcryptominisat3
 )
 
 add_executable(assump_test
@@ -19,5 +19,5 @@ add_executable(assump_test
 
 target_link_libraries(assump_test
     ${Boost_LIBRARIES}
-    cryptoms
+    libcryptominisat3
 )
