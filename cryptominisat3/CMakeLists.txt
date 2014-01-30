@@ -92,7 +92,7 @@ target_link_libraries(libcryptominisat3
     ${cryptoms_lib_link_libs}
 )
 set_target_properties(libcryptominisat3 PROPERTIES
-    OUTPUT_NAME cryptoms
+    OUTPUT_NAME cryptominisat3
     PUBLIC_HEADER "${cryptominisat3_public_headers}"
 )
 

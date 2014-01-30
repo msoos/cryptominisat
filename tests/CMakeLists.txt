@@ -1,5 +1,5 @@
 include_directories(
-    ${PROJECT_SOURCE_DIR}/cmsat/
+    ${PROJECT_SOURCE_DIR}/cryptominisat3/
     ${Boost_INCLUDE_DIRS}
 )
 
