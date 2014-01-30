@@ -111,9 +111,9 @@ if (NOT NOSTATS)
     else (MYSQL_FOUND)
         MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
     endif (MYSQL_FOUND)
-ELSE (STATSNEEDED)
+ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
-ENDIF (STATSNEEDED)
+ENDIF ()
 
 find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
 
