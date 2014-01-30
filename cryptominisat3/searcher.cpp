@@ -1365,7 +1365,7 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
     hist.trailDepthDeltaHistLT.push(trail.size() - trail_lim[backtrack_level]);
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_EXTRA
     if (conf.doSQL && conf.dumpClauseDistribPer != 0) {
         if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
             printClauseDistribSQL();
@@ -1588,7 +1588,6 @@ void Searcher::resetStats()
     startTime = cpuTime();
 
     //About vars
-    #ifdef STATS_NEEDED
     #ifdef STATS_NEEDED_EXTRA
     for(vector<VarData>::iterator
         it = varData.begin(), end = varData.end()
@@ -1597,7 +1596,6 @@ void Searcher::resetStats()
     ) {
         it->stats.reset();
     }
-    #endif
 
     //Clause data
     if (conf.dumpClauseDistribPer != 0) {
@@ -1874,7 +1872,6 @@ struct VarDumpOrder
     }
 };
 
-#ifdef STATS_NEEDED
 #ifdef STATS_NEEDED_EXTRA
 vector<Var> Searcher::calcVarsToDump() const
 {
@@ -1935,7 +1932,6 @@ vector<Var> Searcher::calcVarsToDump() const
 
     return toDumpVec;
 }
-#endif
 
 void Searcher::printClauseDistribSQL()
 {
@@ -2308,10 +2304,12 @@ void Searcher::finish_up_solve(const lbool status)
         printRestartSQL();
         //printVarStatsSQL();
 
+        #ifdef STATS_NEEDED_EXTRA
         if (conf.dumpClauseDistribPer != 0) {
             printClauseDistribSQL();
             std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
         }
+        #endif
     }
     #endif
 

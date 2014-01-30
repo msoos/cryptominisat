@@ -57,8 +57,9 @@ void MySQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->getConf().verbosity);
     initReduceDBSTMT(solver->getConf().verbosity);
-    initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
     initVarSTMT(solver, stmtVarSingle, 1);
+    #ifdef STATS_NEEDED_EXTRA
+    initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
     initClauseDistribSTMT(
         solver
         , stmtClsDistribSize
@@ -78,6 +79,7 @@ void MySQLStats::setup(const Solver* solver)
         solver
         , solver->getConf().preparedDumpSizeScatter
     );
+    #endif
 }
 
 void MySQLStats::connectServer(const Solver* solver)

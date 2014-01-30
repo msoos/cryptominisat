@@ -181,11 +181,13 @@ class SolverConf
         int       doSQL;
         uint64_t    dumpTopNVars; //Only dump information about the "top" N active variables
         int       dump_tree_variance_stats;
+        #ifdef STATS_NEEDED_EXTRA
         uint64_t    dumpClauseDistribPer;
         uint64_t    dumpClauseDistribMaxSize;
         uint64_t    dumpClauseDistribMaxGlue;
         uint64_t    preparedDumpSizeScatter;
         uint64_t    preparedDumpSizeVarData;
+        #endif
         std::string    sqlServer;
         std::string    sqlUser;
         std::string    sqlPass;

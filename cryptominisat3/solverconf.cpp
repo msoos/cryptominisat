@@ -92,11 +92,13 @@ SolverConf::SolverConf() :
         , doSQL            (false)
         , dumpTopNVars     (0)
         , dump_tree_variance_stats(0)
+        #ifdef STATS_NEEDED_EXTRA
         , dumpClauseDistribPer(0)
         , dumpClauseDistribMaxSize(200)
         , dumpClauseDistribMaxGlue(50)
         , preparedDumpSizeScatter(100)
         , preparedDumpSizeVarData(40)
+        #endif
         , sqlServer ("localhost")
         , sqlUser ("cmsat_solver")
         , sqlPass ("")
