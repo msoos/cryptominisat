@@ -55,10 +55,10 @@ if (M4RI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} m4ri)
 endif (M4RI_FOUND)
 
-if (MYSQL_FOUND AND STATSNEEDED)
+if (MYSQL_FOUND AND NOT NOSTATS)
     SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
-endif (MYSQL_FOUND AND STATSNEEDED)
+endif (MYSQL_FOUND AND NOT NOSTATS)
 
 if (Perftools_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})

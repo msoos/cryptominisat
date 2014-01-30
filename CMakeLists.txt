@@ -99,25 +99,22 @@ ENDIF (ZLIB_FOUND)
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
-#MySQL
-#option(STATSNEEDED "Allow dumping data to a database")
-set(STATSNEEDED 1)
-if (STATSNEEDED)
+option(NOSTATS "Don't use statistics at all")
+if (NOT NOSTATS)
     add_definitions( -DSTATS_NEEDED )
     find_package(MySQL)
     IF (MYSQL_FOUND)
-      MESSAGE(STATUS "OK, Found MySQL!")
-      include_directories(${MySQL_INCLUDE_DIR})
-      link_directories(${MySQL_LIB_DIR})
-      add_definitions( -DUSE_MYSQL )
+        MESSAGE(STATUS "OK, Found MySQL!")
+        include_directories(${MySQL_INCLUDE_DIR})
+        link_directories(${MySQL_LIB_DIR})
+        add_definitions( -DUSE_MYSQL )
     else (MYSQL_FOUND)
-           ERROR(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
+        MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
     endif (MYSQL_FOUND)
 ELSE (STATSNEEDED)
-    MESSAGE(STATUS "Not using MySQL because STATS_NEEDED is not set")
+    MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
 ENDIF (STATSNEEDED)
 
-# Look for Boost program options
 find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
 
 #M4RI
