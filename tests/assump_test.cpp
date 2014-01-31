@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE assumptions
 #include <boost/test/unit_test.hpp>
 
-#include "cryptominisat.h"
+#include "cryptominisat3/cryptominisat.h"
 #include <vector>
 using std::vector;
 using namespace CMSat;

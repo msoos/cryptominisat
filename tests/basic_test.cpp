@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE basic_interface
 #include <boost/test/unit_test.hpp>
 
-#include "cryptominisat.h"
+#include "cryptominisat3/cryptominisat.h"
 using namespace CMSat;
 #include <vector>
 using std::vector;
