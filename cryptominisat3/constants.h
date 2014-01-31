@@ -38,11 +38,6 @@
 #endif //__GNUC__
 
 ///////////////////
-// Settings (magic constants)
-///////////////////
-#define ANDGATEUSEFUL 20
-
-///////////////////
 // Verbose Debug
 ///////////////////
 

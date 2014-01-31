@@ -35,37 +35,6 @@ class Solver;
 class Simplifier;
 using std::set;
 
-class NewGateData
-{
-    public:
-        NewGateData(const Lit _lit1, const Lit _lit2, const uint32_t _numLitRem, const uint32_t _numClRem) :
-            lit1(_lit1)
-            , lit2(_lit2)
-            , numLitRem(_numLitRem)
-            , numClRem(_numClRem)
-        {}
-        bool operator<(const NewGateData& n2) const
-        {
-            uint32_t value1 = numClRem*ANDGATEUSEFUL + numLitRem;
-            uint32_t value2 = n2.numClRem*ANDGATEUSEFUL + n2.numLitRem;
-            if (value1 != value2) return(value1 > value2);
-            if (lit1 != n2.lit1) return(lit1 > n2.lit1);
-            if (lit2 != n2.lit2) return(lit2 > n2.lit2);
-            return false;
-        }
-        bool operator==(const NewGateData& n2) const
-        {
-            return(lit1 == n2.lit1
-                && lit2 == n2.lit2
-                && numLitRem == n2.numLitRem
-                && numClRem == n2.numClRem);
-        }
-        Lit lit1;
-        Lit lit2;
-        uint32_t numLitRem;
-        uint32_t numClRem;
-};
-
 class OrGate {
     public:
         OrGate(const Lit& _eqLit, Lit _lit1, Lit _lit2, const bool _red) :
