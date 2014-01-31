@@ -157,7 +157,7 @@ set(CRYPTOMINISAT3_EXPORT_NAME "cryptominisat3Targets")
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
-add_subdirectory(cryptominisat3 cryptominisat3-builddir)
+add_subdirectory(cryptominisat3 cmsat3-src)
 add_subdirectory(tests)
 
 # -----------------------------------------------------------------------------
