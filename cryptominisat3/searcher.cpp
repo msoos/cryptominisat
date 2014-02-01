@@ -2394,17 +2394,13 @@ Lit Searcher::pickBranchLit()
         }
 
         const Var next_var = order_heap.removeMin();
-        bool oldPolar = getStoredPolarity(next_var);
-        bool newPolar = pickPolarity(next_var);
-        next = Lit(next_var, !newPolar);
-        if (oldPolar != newPolar) {
-            stats.decisionFlippedPolar++;
-        }
+        next = Lit(next_var, !pickPolarity(next_var));
     }
 
     //Flip polaritiy if need be
-    if (next != lit_Undef) {
-        next ^= (mtrand.randInt(conf.polarity_flip_frequency_multiplier*hist.branchDepthDeltaHistLT.avg()) == 1);
+    if (next != lit_Undef && mtrand.randInt(conf.polarity_flip_frequency_multiplier) == 1) {
+        next ^= 1;
+        stats.decisionFlippedPolar++;
     }
 
     //Try to update to dominator
