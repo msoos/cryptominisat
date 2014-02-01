@@ -227,7 +227,7 @@ class SolverConf
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
         uint32_t  dominPickFreq;
-        uint32_t  flipPolarFreq;
+        uint32_t  polarity_flip_frequency_multiplier;
 
         //Simplifier
         int      simplify_at_startup;

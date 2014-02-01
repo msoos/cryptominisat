@@ -339,7 +339,7 @@ void Main::add_supported_options()
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
     ("dompickf", po::value<uint32_t>(&conf.dominPickFreq)->default_value(conf.dominPickFreq)
         , "Use dominating literal every once in N when picking decision literal")
-    ("flippolf", po::value<uint32_t>(&conf.flipPolarFreq)->default_value(conf.flipPolarFreq)
+    ("flippolf", po::value<uint32_t>(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
         , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ;
 

@@ -2416,7 +2416,7 @@ Lit Searcher::pickBranchLit()
 
     //Flip polaritiy if need be
     if (next != lit_Undef) {
-        next ^= (mtrand.randInt(conf.flipPolarFreq*hist.branchDepthDeltaHistLT.avg()) == 1);
+        next ^= (mtrand.randInt(conf.polarity_flip_frequency_multiplier*hist.branchDepthDeltaHistLT.avg()) == 1);
     }
 
     //Try to update to dominator
