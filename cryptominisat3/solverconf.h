@@ -23,6 +23,7 @@
 #define SOLVERCONF_H
 
 #include <string>
+#include <cstdint>
 
 namespace CMSat {
 
