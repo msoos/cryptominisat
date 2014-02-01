@@ -374,7 +374,10 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
         agility.update(false);
     }
 
-    varData[v].polarity = !p.sign();
+    //Only update non-decision: this way, flipped decisions don't get saved
+    if (from != PropBy()) {
+        varData[v].polarity = !p.sign();
+    }
 
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << endl;
