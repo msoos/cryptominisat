@@ -2360,18 +2360,6 @@ bool Searcher::pickPolarity(const Var var)
     return true;
 }
 
-/**
-@brief Picks a branching variable and its value (True/False)
-
-We do three things here:
--# Try to do random decision (rare, less than 2%)
--# Try acitivity-based decision
-
-Then, we pick a sign (True/False):
-\li If we are in search-burst mode ("simplifying" is set), we pick a sign
-totally randomly
-\li Otherwise, we simply take the saved polarity
-*/
 Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
