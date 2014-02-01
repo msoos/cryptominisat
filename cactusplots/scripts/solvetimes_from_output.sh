@@ -1,8 +1,8 @@
 #!/bin/sh
 
 grep "Total" *.out | awk '{print $5}' > solveTimes
-grep "Total" *out | awk '{print $1}' | sed 's/:c$//' > solvedAll3000
-grep "Total" *out | awk '{if ($5 < 1000) {print $1}}' | sed 's/:c$//' > solvedAll
+grep "Total" *out | awk '{print $1}' | sed 's/:c$//' > solved
+# grep "Total" *out | awk '{if ($5 < 1000) {print $1}}' | sed 's/:c$//' > solvedAll
 ls *.gz.out > allFiles
 #grep "CPU time .*:" *out | awk '{ if ($5<5000) {print $1}}' | sed 's/:c$//' > solved
 grep "s UNSATISFIABLE" *out | sed 's/:s.*$//' > solvedUNSAT
