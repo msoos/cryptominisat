@@ -2363,7 +2363,7 @@ bool Searcher::pickPolarity(const Var var)
 Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "decision level: " << decisionLevel() << " ";
+    cout << "picking decision variable, dec. level: " << decisionLevel() << " ";
     #endif
 
     Lit next = lit_Undef;
