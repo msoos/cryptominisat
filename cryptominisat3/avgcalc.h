@@ -84,6 +84,9 @@ public:
 
     double var() const
     {
+        if (num == 0)
+            return 0;
+
         const double calcAvg = avg();
         return
             (((double)sumSqare
