@@ -112,6 +112,7 @@ CREATE TABLE `reduceDB` (
   `preRemovedProp` int(20) unsigned NOT NULL,
   `preRemovedConfl` int(20) unsigned NOT NULL,
   `preRemovedLookedAt` int(20) unsigned NOT NULL,
+  `preRemovedUsedUIP` int(20) unsigned NOT NULL,
   `removedNum` int(20) unsigned NOT NULL,
   `removedLits` int(20) unsigned NOT NULL,
   `removedGlue` int(20) unsigned NOT NULL,
@@ -125,6 +126,7 @@ CREATE TABLE `reduceDB` (
   `removedProp` int(20) unsigned NOT NULL,
   `removedConfl` int(20) unsigned NOT NULL,
   `removedLookedAt` int(20) unsigned NOT NULL,
+  `removedUsedUIP` int(20) unsigned NOT NULL,
   `remainNum` int(20) unsigned NOT NULL,
   `remainLits` int(20) unsigned NOT NULL,
   `remainGlue` int(20) unsigned NOT NULL,
@@ -138,6 +140,7 @@ CREATE TABLE `reduceDB` (
   `remainProp` int(20) unsigned NOT NULL,
   `remainConfl` int(20) unsigned NOT NULL,
   `remainLookedAt` int(20) unsigned NOT NULL,
+  `remainUsedUIP` int(20) unsigned NOT NULL,
   KEY `idx1` (`runID`,`conflicts`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

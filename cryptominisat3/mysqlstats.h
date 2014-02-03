@@ -126,7 +126,7 @@ private:
             stmt(NULL)
         {};
 
-        MYSQL_BIND  bind[10 + 13*3];
+        MYSQL_BIND  bind[10 + 14*3];
         MYSQL_STMT  *stmt;
 
         //Position

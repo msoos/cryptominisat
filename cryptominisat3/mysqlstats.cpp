@@ -656,19 +656,19 @@ void MySQLStats::initReduceDBSTMT(
     << ", preRemovedResolBin, preRemovedResolTri, preRemovedResolLIrred, preRemovedResolLRed"
     << ", preRemovedAge, preRemovedAct"
     << ", preRemovedLitVisited, preRemovedProp, preRemovedConfl"
-    << ", preRemovedLookedAt"
+    << ", preRemovedLookedAt, preRemovedUsedUIP"
 
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
     << ", removedAge, removedAct"
     << ", removedLitVisited, removedProp, removedConfl"
-    << ", removedLookedAt"
+    << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBin, remainResolTri, remainResolLIrred, remainResolLRed"
     << ", remainAge, remainAct"
     << ", remainLitVisited, remainProp, remainConfl"
-    << ", remainLookedAt"
+    << ", remainLookedAt, remainUsedUIP"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -744,6 +744,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLookedAt);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numUsedUIP);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
@@ -758,6 +759,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLookedAt);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numUsedUIP);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
@@ -772,6 +774,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLookedAt);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numUsedUIP);
 
     assert(bindAt == numElems);
 
