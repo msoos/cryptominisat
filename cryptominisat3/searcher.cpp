@@ -2219,7 +2219,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         params.clear();
         params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
-        max_conflicts_geometric *= conf.restart_inc;
+        if (params.rest_type == Restart::geom)
+            max_conflicts_geometric *= conf.restart_inc;
+
         if (must_abort(status))
             goto end;
 
