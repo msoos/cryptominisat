@@ -43,13 +43,6 @@ class ClauseAllocator;
 template <class T>
 struct ResolutionTypes
 {
-    ResolutionTypes() :
-        bin(0)
-        , tri(0)
-        , irredL(0)
-        , redL(0)
-    {}
-
     void clear()
     {
         *this = ResolutionTypes<T>();
@@ -81,10 +74,10 @@ struct ResolutionTypes
         return *this;
     }
 
-    T bin;
-    T tri;
-    T irredL;
-    T redL;
+    T bin = 0;
+    T tri = 0;
+    T irredL = 0;
+    T redL = 0;
 };
 
 struct ClauseStats
@@ -496,21 +489,6 @@ struct CleaningStats
 {
     struct Data
     {
-        Data() :
-            num(0)
-            , lits(0)
-            , age(0)
-
-            , glue(0)
-            , numProp(0)
-            , numConfl(0)
-            , numLitVisited(0)
-            , numLookedAt(0)
-            , numUsedUIP(0)
-
-            , act(0)
-        {}
-
         uint64_t sumResolutions() const
         {
             return resol.sum();
@@ -535,18 +513,18 @@ struct CleaningStats
             return *this;
         }
 
-        uint64_t num;
-        uint64_t lits;
-        uint64_t age;
+        uint64_t num = 0;
+        uint64_t lits = 0;
+        uint64_t age = 0;
 
-        uint64_t glue;
-        uint64_t numProp;
-        uint64_t numConfl;
-        uint64_t numLitVisited;
-        uint64_t numLookedAt;
-        uint64_t numUsedUIP;
+        uint64_t glue = 0;
+        uint64_t numProp = 0;
+        uint64_t numConfl = 0;
+        uint64_t numLitVisited = 0;
+        uint64_t numLookedAt = 0;
+        uint64_t numUsedUIP = 0;
         ResolutionTypes<uint64_t> resol;
-        double   act;
+        double   act = 0.0;
 
         void incorporate(const Clause* cl)
         {
