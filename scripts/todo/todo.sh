@@ -11,6 +11,7 @@ touch todo
 fileloc="/home/soos/sat/examples/satcomp091113/*cnf.gz"
 solver="/home/soos/cryptominisat/build/cryptominisat3"
 #solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
+#solver="/home/soos/lingeling-aqw/code/lingeling -v"
 #solver="/home/soos/glucose2.2/simp/glucose"
 #opts="--restart glue --clean glue --flippolarfreq 0"
 #opts="--restart agility"
