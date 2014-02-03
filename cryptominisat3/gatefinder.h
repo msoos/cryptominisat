@@ -24,7 +24,6 @@
 
 #include "solvertypes.h"
 #include "cset.h"
-#include <boost/array.hpp>
 #include <set>
 #include "watcharray.h"
 #include <array>

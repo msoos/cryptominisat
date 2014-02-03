@@ -57,8 +57,8 @@ void MySQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->getConf().verbosity);
     initReduceDBSTMT(solver->getConf().verbosity);
-    initVarSTMT(solver, stmtVarSingle, 1);
     #ifdef STATS_NEEDED_EXTRA
+    initVarSTMT(solver, stmtVarSingle, 1);
     initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
     initClauseDistribSTMT(
         solver
@@ -783,6 +783,7 @@ void MySQLStats::initReduceDBSTMT(
     }
 }
 
+#ifdef STATS_NEEDED_EXTRA
 void MySQLStats::initVarSTMT(
     const Solver* solver
     , StmtVar& stmtVar
@@ -895,7 +896,6 @@ void MySQLStats::initVarSTMT(
     }
 }
 
-#ifdef STATS_NEEDED_EXTRA
 void MySQLStats::varDataDump(
     const Solver* solver
     , const Searcher* search
@@ -997,7 +997,6 @@ void MySQLStats::varDataDump(
         << endl;
     }
 }
-#endif
 
 void MySQLStats::clauseSizeDistrib(
     uint64_t sumConflicts
@@ -1088,6 +1087,7 @@ void MySQLStats::clauseSizeGlueScatter(
     }
     assert(at == 0 && "numInserts must be divisible");
 }
+#endif //STATS_NEEDED_EXTRA
 
 void MySQLStats::reduceDB(
     const ClauseUsageStats& irredStats

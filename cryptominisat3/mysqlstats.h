@@ -25,6 +25,7 @@ public:
         , const Searcher* searcher
     );
 
+    #ifdef STATS_NEEDED_EXTRA
     virtual void clauseSizeDistrib(
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
@@ -40,7 +41,6 @@ public:
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
     );
 
-    #ifdef STATS_NEEDED_EXTRA
     virtual void varDataDump(
         const Solver* solver
         , const Searcher* search

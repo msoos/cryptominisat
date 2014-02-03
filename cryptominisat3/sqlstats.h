@@ -3,7 +3,10 @@
 
 #include "searcher.h"
 #include "clause.h"
+
+#ifdef STATS_NEEDED_EXTRA
 #include "boost/multi_array.hpp"
+#endif
 
 namespace CMSat {
 
@@ -24,6 +27,7 @@ public:
         , const Searcher* searcher
     ) = 0;
 
+    #ifdef STATS_NEEDED_EXTRA
     virtual void clauseSizeDistrib(
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
@@ -39,7 +43,6 @@ public:
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
     ) = 0;
 
-    #ifdef STATS_NEEDED_EXTRA
     virtual void varDataDump(
         const Solver* solver
         , const Searcher* search
