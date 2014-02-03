@@ -207,11 +207,11 @@ class DataPrinter
         echo "data_tmp = new Array();";
         $this->runQuery("restart");
 
-        $this->print_one_graph(
-            "No. of restarts"
-            , array("restarts")
-            , array("")
-        );
+//         $this->print_one_graph(
+//             "No. of restarts"
+//             , array("restarts")
+//             , array("")
+//         );
 
         /*print_one_graph(array("propsPerDec")
             , array("avg. no. propagations per decision"));*/
