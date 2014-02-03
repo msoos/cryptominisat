@@ -33,7 +33,7 @@
         } \
     } while (0)
 
-#ifndef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 #define __builtin_prefetch(x)
 #endif //__GNUC__
 
