@@ -114,10 +114,12 @@ void MySQLStats::connectServer(const Solver* solver)
         << "If your MySQL server is running then you did not create the database" << endl
         << "and/or didn't add the correct user. You can fix this by executing: " << endl
         << "$ mysql -u root -p" << endl
-        << "mysql> create database cmsat;" << endl
-        << "mysql> grant all on cryptoms.* to user 'cmsat_solver'@localhost identified by '';" << endl
-        << "mysql> grant all on cryptoms.* to user 'cmsat_presenter'@localhost identified by '';" << endl
-        << "mysql> quit;" << endl
+        << "create database cmsat;" << endl
+        << "create user 'cmsat_solver'@'localhost' identified by '';" << endl
+        << "grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';" << endl
+        << "create user 'cmsat_presenter'@'localhost' identified by '';" << endl
+        << "grant select on cmsat.* to 'cmsat_presenter'@'localhost';" << endl
+        << "quit;" << endl
         << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
         ;
 
