@@ -471,7 +471,7 @@ bool ClauseVivifier::subsume_clause_with_watch(
         //If subsuming irred with redundant, make the redundant into irred
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
-            timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit2().toInt()].size()*3;
             findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
@@ -503,8 +503,8 @@ bool ClauseVivifier::subsume_clause_with_watch(
         //If subsuming irred with redundant, make the redundant into irred
         if (!cl.red() && wit->red()) {
             wit->setRed(false);
-            timeAvailable -= solver->watches[wit->lit2().toInt()].size()*3;
-            timeAvailable -= solver->watches[wit->lit3().toInt()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit2().toInt()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit3().toInt()].size()*3;
             findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
             findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
             solver->binTri.redTris--;
@@ -542,7 +542,7 @@ bool ClauseVivifier::subsume_clause_with_watch(
 
 bool ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
 {
-    timeAvailable -= 2*solver->implCache[lit.toInt()].lits.size();
+    timeAvailable -= 2*(long)solver->implCache[lit.toInt()].lits.size();
     for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
          if (seen[(~(elit.getLit())).toInt()]) {
             seen[(~(elit.getLit())).toInt()] = 0;
@@ -578,7 +578,7 @@ void ClauseVivifier::vivify_clause_with_lit(
 
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit.toInt()];
-    timeAvailable -= thisW.size()*2 + 5;
+    timeAvailable -= (long)thisW.size()*2 + 5;
     for(watch_subarray::iterator
         wit = thisW.begin(), wend = thisW.end()
         ; wit != wend
@@ -606,7 +606,7 @@ void ClauseVivifier::try_subsuming_by_stamping(const bool red)
         && !isSubsumed
         && !red
     ) {
-        timeAvailable -= lits2.size()*3 + 10;
+        timeAvailable -= (long)lits2.size()*3 + 10;
         if (solver->stamp.stampBasedClRem(lits2)) {
             isSubsumed = true;
             cache_based_data.subsumedStamp++;
@@ -617,7 +617,7 @@ void ClauseVivifier::try_subsuming_by_stamping(const bool red)
 void ClauseVivifier::remove_lits_through_stamping_red()
 {
     if (lits.size() > 1) {
-        timeAvailable -= lits.size()*3 + 10;
+        timeAvailable -= (long)lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
         cache_based_data.remLitTimeStampTotalInv += tmp.second;
@@ -627,7 +627,7 @@ void ClauseVivifier::remove_lits_through_stamping_red()
 void ClauseVivifier::remove_lits_through_stamping_irred()
 {
     if (lits.size() > 1) {
-        timeAvailable -= lits.size()*3 + 10;
+        timeAvailable -= (long)lits.size()*3 + 10;
         std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
         cache_based_data.remLitTimeStampTotal += tmp.first;
         cache_based_data.remLitTimeStampTotalInv += tmp.second;
@@ -642,7 +642,7 @@ bool ClauseVivifier::vivify_clause(
     Clause& cl = *solver->clAllocator.getPointer(offset);
     assert(cl.size() > 3);
 
-    timeAvailable -= cl.size()*2;
+    timeAvailable -= (long)cl.size()*2;
     tmpStats.totalLits += cl.size();
     tmpStats.triedCls++;
     isSubsumed = false;
@@ -670,14 +670,14 @@ bool ClauseVivifier::vivify_clause(
     try_subsuming_by_stamping(red);
 
     //Clear 'seen_subs'
-    timeAvailable -= lits2.size()*3;
+    timeAvailable -= (long)lits2.size()*3;
     for (const Lit lit: lits2) {
         seen_subs[lit.toInt()] = 0;
     }
 
     //Clear 'seen' and fill new clause data
     lits.clear();
-    timeAvailable -= cl.size()*3;
+    timeAvailable -= (long)cl.size()*3;
     for (const Lit lit: cl) {
         if (!isSubsumed
             && seen[lit.toInt()]
@@ -703,11 +703,11 @@ bool ClauseVivifier::vivify_clause(
     }
 
     //Remove or shrink clause
-    timeAvailable -= cl.size()*10;
+    timeAvailable -= (long)cl.size()*10;
     cache_based_data.remLitCache += thisRemLitCache;
     cache_based_data.remLitBinTri += thisRemLitBinTri;
     tmpStats.shrinked++;
-    timeAvailable -= lits.size()*2 + 50;
+    timeAvailable -= (long)lits.size()*2 + 50;
     Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
     if (!solver->ok) {
         needToFinish = true;
@@ -728,7 +728,7 @@ void ClauseVivifier::randomise_order_of_clauses(
     vector<ClOffset>& clauses
 ) {
     if (!clauses.empty()) {
-        timeAvailable -= clauses.size()*2;
+        timeAvailable -= (long)clauses.size()*2;
         for(size_t i = 0; i < clauses.size()-1; i++) {
             std::swap(
                 clauses[i]
@@ -902,7 +902,7 @@ void ClauseVivifier::strengthen_tri_with_bin_tri_stamp(
     const Lit lit2 = i->lit3();
     bool rem = false;
 
-    timeAvailable -= solver->watches[(~lit).toInt()].size();
+    timeAvailable -= (long)solver->watches[(~lit).toInt()].size();
     for(watch_subarray::const_iterator
         it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
         ; it2 != end2 && timeAvailable > 0

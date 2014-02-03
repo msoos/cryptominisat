@@ -304,7 +304,7 @@ void inline SubsumeStrengthen::fillSubs(
 ) {
     Lit litSub;
     watch_subarray_const cs = solver->watches[lit.toInt()];
-    *simplifier->limit_to_decrease -= cs.size()*15 + 40;
+    *simplifier->limit_to_decrease -= (long)cs.size()*15 + 40;
     for (watch_subarray_const::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
@@ -325,7 +325,7 @@ void inline SubsumeStrengthen::fillSubs(
         if (cl.size() > cl2.size())
             continue;
 
-        *simplifier->limit_to_decrease -= cl.size() + cl2.size();
+        *simplifier->limit_to_decrease -= (long)cl.size() + (long)cl2.size();
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
             out_subsumed.push_back(it->getOffset());
@@ -382,7 +382,7 @@ void SubsumeStrengthen::findStrengthened(
         }
     }
     assert(minVar != var_Undef);
-    *simplifier->limit_to_decrease -= cl.size();
+    *simplifier->limit_to_decrease -= (long)cl.size();
 
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, true));
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
@@ -468,7 +468,7 @@ bool SubsumeStrengthen::subset(const T1& A, const T2& B)
     ret = false;
 
     end:
-    *simplifier->limit_to_decrease -= i2*4 + i*4;
+    *simplifier->limit_to_decrease -= (long)i2*4 + (long)i*4;
     return ret;
 }
 
@@ -518,7 +518,7 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
     retLit = lit_Error;
 
     end:
-    *simplifier->limit_to_decrease -= i2*4 + i*4;
+    *simplifier->limit_to_decrease -= (long)i2*4 + (long)i*4;
     return retLit;
 }
 
@@ -534,7 +534,7 @@ size_t SubsumeStrengthen::find_smallest_watchlist_for_clause(const T& ps) const
             min_num = this_num;
         }
     }
-    *simplifier->limit_to_decrease -= ps.size();
+    *simplifier->limit_to_decrease -= (long)ps.size();
 
     return min_i;
 }
@@ -564,7 +564,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
 
     //Go through the occur list of the literal that has the smallest occur list
     watch_subarray occ = solver->watches[ps[smallest].toInt()];
-    *simplifier->limit_to_decrease -= occ.size()*8 + 40;
+    *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
     watch_subarray::iterator it = occ.begin();
     watch_subarray::iterator it2 = occ.begin();
