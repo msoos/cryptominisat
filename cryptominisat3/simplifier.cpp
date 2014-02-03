@@ -199,7 +199,7 @@ void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
 
     //Remove from occur
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *limit_to_decrease -= 2*solver->watches[cl[i].toInt()].size();
+        *limit_to_decrease -= 2*(long)solver->watches[cl[i].toInt()].size();
 
         removeWCl(solver->watches[cl[i].toInt()], offset);
 
@@ -235,7 +235,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     Lit* i = cl.begin();
     Lit* j = cl.begin();
     const Lit* end = cl.end();
-    *limit_to_decrease -= cl.size();
+    *limit_to_decrease -= (long)cl.size();
     for(; i != end; i++) {
         if (solver->value(*i) == l_Undef) {
             *j++ = *i;
@@ -1435,7 +1435,7 @@ void Simplifier::asymmTE()
             continue;
 
 
-        *limit_to_decrease -= cl.size()*2;
+        *limit_to_decrease -= (long)cl.size()*2;
 
         //Fill tmpCl, seen
         tmpCl.clear();
@@ -1701,8 +1701,8 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= solver->watches[lits[0].toInt()].size();
-            *limit_to_decrease -= solver->watches[lits[1].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
             solver->detachBinClause(lits[0], lits[1], watch.red());
         }
 
@@ -1733,9 +1733,9 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= solver->watches[lits[0].toInt()].size();
-            *limit_to_decrease -= solver->watches[lits[1].toInt()].size();
-            *limit_to_decrease -= solver->watches[lits[2].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[2].toInt()].size();
             solver->detachTriClause(lits[0], lits[1], lits[2], watch.red());
         }
 
@@ -2173,7 +2173,7 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
 
     if (ps.isClause()) {
         Clause& cl = *solver->clAllocator.getPointer(ps.getOffset());
-        *limit_to_decrease -= cl.size();
+        *limit_to_decrease -= (long)cl.size();
         for (uint32_t i = 0; i < cl.size(); i++){
             //Skip noPosLit
             if (cl[i] == posLit)
@@ -2216,7 +2216,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
 
     if (qs.isClause()) {
         Clause& cl = *solver->clAllocator.getPointer(qs.getOffset());
-        *limit_to_decrease -= cl.size();
+        *limit_to_decrease -= (long)cl.size();
         for (const Lit lit: cl) {
             if (lit == ~posLit)
                 continue;
@@ -2350,7 +2350,7 @@ bool Simplifier::resolve_clauses(
         tautological = subsume_dummy_through_stamping(ps, qs);
     }
 
-    *limit_to_decrease -= toClear.size()/2 + 1;
+    *limit_to_decrease -= (long)toClear.size()/2 + 1;
     for (const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
@@ -2441,7 +2441,7 @@ Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
     HeuristicData ret;
 
     watch_subarray_const ws_list = solver->watches[lit.toInt()];
-    *limit_to_decrease -= ws_list.size() + 100;
+    *limit_to_decrease -= (long)ws_list.size() + 100;
     for (const Watched ws: ws_list) {
         //Skip redundant clauses
         if (solver->redundant(ws))
@@ -2520,7 +2520,7 @@ int Simplifier::checkEmptyResolventHelper(
     size_t numCls = 0;
 
     watch_subarray_const watch_list = solver->watches[lit.toInt()];
-    *limit_to_decrease -= watch_list.size()*2;
+    *limit_to_decrease -= (long)watch_list.size()*2;
     for (const Watched& ws: watch_list) {
         if (numCls >= 16
             && (action == ResolvCount::set
@@ -2599,7 +2599,7 @@ int Simplifier::checkEmptyResolventHelper(
 
             //Only irred is of relevance
             if (!cl->red()) {
-                *limit_to_decrease -= cl->size()*2;
+                *limit_to_decrease -= (long)cl->size()*2;
                 uint16_t tmp = 0;
                 for(const Lit l: *cl) {
 
@@ -2845,7 +2845,7 @@ void Simplifier::linkInClause(Clause& cl)
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];
-        *limit_to_decrease -= ws.size();
+        *limit_to_decrease -= (long)ws.size();
 
         ws.push(Watched(offset, cl.abst));
     }
@@ -2863,7 +2863,7 @@ void Simplifier::printGateFinderStats() const
 
 Lit Simplifier::least_occurring_except(const OccurClause& c)
 {
-    *limit_to_decrease -= m_lits.size();
+    *limit_to_decrease -= (long)m_lits.size();
     for(const lit_pair lits: m_lits) {
         seen[lits.lit1.toInt()] = 1;
         if (lits.lit2 != lit_Undef) {
@@ -3017,7 +3017,7 @@ void Simplifier::fill_potential(const Lit lit)
             << endl;
         }
 
-        *limit_to_decrease -= solver->watches[l_min.toInt()].size();
+        *limit_to_decrease -= (long)solver->watches[l_min.toInt()].size();
         for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
             if (*limit_to_decrease < 0)
                 goto end;
@@ -3206,7 +3206,7 @@ void Simplifier::remove_duplicates_from_m_cls()
             return false;
     };
 
-    *limit_to_decrease -= 2*m_cls.size()*std::sqrt(m_cls.size());
+    *limit_to_decrease -= 2*(long)m_cls.size()*(long)std::sqrt(m_cls.size());
     std::sort(m_cls.begin(), m_cls.end(), mysort);
     size_t i = 0;
     size_t j = 0;
