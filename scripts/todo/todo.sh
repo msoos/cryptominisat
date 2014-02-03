@@ -8,7 +8,6 @@ ulimit -a
 shopt -s nullglob
 rm -f todo
 touch todo
-#fileloc="/home/soos/sat/examples/satcomp09/*.cnf.gz"
 fileloc="/home/soos/sat/examples/satcomp091113/*cnf.gz"
 solver="/home/soos/cryptominisat/build/cryptominisat"
 #solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
