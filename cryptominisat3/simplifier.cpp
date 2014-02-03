@@ -2889,7 +2889,7 @@ Lit Simplifier::least_occurring_except(const OccurClause& c)
     for(const lit_pair lits: m_lits) {
         seen[lits.lit1.toInt()] = 0;
         if (lits.lit2 != lit_Undef) {
-            seen[lits.lit2.toInt()] = 1;
+            seen[lits.lit2.toInt()] = 0;
         }
     }
 
