@@ -20,6 +20,11 @@ struct watch_subarray
         return array[at];
     }
 
+    Watched& at(const size_t at)
+    {
+        return array.at(at);
+    }
+
     void clear()
     {
         array.clear();
@@ -86,9 +91,14 @@ struct watch_subarray_const
         array(other.array)
     {}
 
-    const Watched& operator[](const size_t at) const
+    const Watched& operator[](const size_t pos) const
     {
-        return array[at];
+        return array[pos];
+    }
+
+    const Watched& at(const size_t pos) const
+    {
+        return array.at(pos);
     }
 
     size_t size() const
@@ -118,14 +128,24 @@ struct watch_array
 {
     vector<vector<Watched> > watches;
 
-    watch_subarray operator[](size_t at)
+    watch_subarray operator[](size_t pos)
     {
-        return watch_subarray(watches[at]);
+        return watch_subarray(watches[pos]);
+    }
+
+    watch_subarray at(size_t pos)
+    {
+        return watch_subarray(watches.at(pos));
     }
 
     watch_subarray_const operator[](size_t at) const
     {
         return watch_subarray_const(watches[at]);
+    }
+
+    watch_subarray_const at(size_t pos) const
+    {
+        return watch_subarray_const(watches.at(pos));
     }
 
     void resize(const size_t new_size)
