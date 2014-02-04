@@ -77,10 +77,11 @@ private:
     void connectServer(const Solver* solver);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
-
     void addFiles(const Solver* solver);
+
     void addStartupData(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
+    #ifdef STATS_NEEDED_EXTRA
     void initClauseDistribSTMT(
         const Solver* solver
         , StmtClsDistrib& stmt
@@ -92,6 +93,7 @@ private:
         const Solver* solver
         , const size_t numInserts
     );
+    #endif
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
@@ -149,47 +151,6 @@ private:
     };
     StmtReduceDB stmtReduceDB;
     void initReduceDBSTMT(uint64_t verbosity);
-
-    struct StmtVar {
-        StmtVar() :
-            stmt(NULL)
-        {};
-
-        uint64_t varInitID;
-        vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt;
-
-        struct Data {
-            uint64_t var;
-
-            //Overall stats
-            uint64_t posPolarSet;
-            uint64_t negPolarSet;
-            uint64_t flippedPolarity;
-            uint64_t posDecided;
-            uint64_t negDecided;
-
-            //Dec level history stats
-            double decLevelAvg;
-            double decLevelSD;
-            uint64_t decLevelMin;
-            uint64_t decLevelMax;
-
-            //Trail level history stats
-            double trailLevelAvg;
-            double trailLevelSD;
-            uint64_t trailLevelMin;
-            uint64_t trailLevelMax;
-        };
-        vector<Data> data;
-    };
-    StmtVar stmtVarBulk;
-    StmtVar stmtVarSingle;
-    void initVarSTMT(
-        const Solver* solver
-        , MySQLStats::StmtVar& stmtVar
-        , uint64_t numInserts
-    );
 
     size_t bindAt;
     struct StmtRst {
@@ -301,6 +262,48 @@ private:
         uint64_t trailSize;
     };
 
+    #ifdef STATS_NEEDED_EXTRA
+    struct StmtVar {
+        StmtVar() :
+            stmt(NULL)
+        {};
+
+        uint64_t varInitID;
+        vector<MYSQL_BIND>  bind;
+        MYSQL_STMT  *stmt;
+
+        struct Data {
+            uint64_t var;
+
+            //Overall stats
+            uint64_t posPolarSet;
+            uint64_t negPolarSet;
+            uint64_t flippedPolarity;
+            uint64_t posDecided;
+            uint64_t negDecided;
+
+            //Dec level history stats
+            double decLevelAvg;
+            double decLevelSD;
+            uint64_t decLevelMin;
+            uint64_t decLevelMax;
+
+            //Trail level history stats
+            double trailLevelAvg;
+            double trailLevelSD;
+            uint64_t trailLevelMin;
+            uint64_t trailLevelMax;
+        };
+        vector<Data> data;
+    };
+    StmtVar stmtVarBulk;
+    StmtVar stmtVarSingle;
+    void initVarSTMT(
+        const Solver* solver
+        , MySQLStats::StmtVar& stmtVar
+        , uint64_t numInserts
+    );
+
     struct StmtSizeGlueScatter {
         StmtSizeGlueScatter() :
             stmt(NULL)
@@ -314,11 +317,12 @@ private:
         vector<uint64_t> glue;
         vector<uint64_t> num;
     };
-
-    StmtRst stmtRst;
     StmtSizeGlueScatter stmtSizeGlueScatter;
     StmtClsDistrib stmtClsDistribSize;
     StmtClsDistrib stmtClsDistribGlue;
+    #endif
+
+    StmtRst stmtRst;
 
     MYSQL *serverConn;
 };
