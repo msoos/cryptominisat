@@ -224,10 +224,10 @@ void MySQLStats::finishup(const Solver* solver, const lbool status)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO finishup (runID, endTime, status) VALUES ("
+    << "INSERT INTO `finishup` (runID, endTime, status) VALUES ("
     << runID << ","
     << "NOW() , "
-    << status
+    << "'" << status << "'"
     << ");";
 
     if (mysql_query(serverConn, ss.str().c_str())) {

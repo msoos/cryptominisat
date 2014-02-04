@@ -285,13 +285,13 @@ CREATE TABLE `startup` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-DROP TABLE IF EXISTS `startup`;
+DROP TABLE IF EXISTS `finishup`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `startup` (
+CREATE TABLE `finishup` (
   `runID` bigint(20) unsigned NOT NULL,
   `endTime` datetime NOT NULL,
-  `status` int(20) varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL,
   KEY `idx1` (`runID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
