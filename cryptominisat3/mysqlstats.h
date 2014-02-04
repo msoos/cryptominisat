@@ -60,6 +60,14 @@ public:
 
 private:
 
+    void connectServer(const Solver* solver);
+    void getID(const Solver* solver);
+    bool tryIDInSQL(const Solver* solver);
+    void addFiles(const Solver* solver);
+
+    void addStartupData(const Solver* solver);
+    void initRestartSTMT(uint64_t verbosity);
+    #ifdef STATS_NEEDED_EXTRA
     struct StmtClsDistrib {
         StmtClsDistrib() :
             stmt(NULL)
@@ -73,15 +81,6 @@ private:
         vector<uint64_t> value;
         vector<uint64_t> num;
     };
-
-    void connectServer(const Solver* solver);
-    void getID(const Solver* solver);
-    bool tryIDInSQL(const Solver* solver);
-    void addFiles(const Solver* solver);
-
-    void addStartupData(const Solver* solver);
-    void initRestartSTMT(uint64_t verbosity);
-    #ifdef STATS_NEEDED_EXTRA
     void initClauseDistribSTMT(
         const Solver* solver
         , StmtClsDistrib& stmt
