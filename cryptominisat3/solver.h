@@ -71,12 +71,10 @@ class Solver : public Searcher
         Solver(const SolverConf _conf = SolverConf());
         virtual ~Solver();
 
-        //////////
-        //External stats
-        void fileAdded(const string& filename);
+        void add_sql_tag(const string& tagname, const string& tag);
+        const vector<std::pair<string, string> >& get_sql_tags() const;
         void add_in_partial_solving_stats();
 
-        //////////////////////////////
         //Solving
         //
         template<class T>
@@ -127,11 +125,10 @@ class Solver : public Searcher
         void     printStats() const;
         void     printClauseStats() const;
         void     print_value_kilo_mega(uint64_t value) const;
-        void     addInPartialSolvingStat();
         size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;
         const SolverConf& getConf() const;
-        const vector<string>& getFileNamesUsed() const;
+        const vector<std::pair<string, string> >& get_tags() const;
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
         size_t   getNumLongRedCls() const;
@@ -295,7 +292,7 @@ class Solver : public Searcher
 
         //friend class SQLStats;
         SQLStats* sqlStats;
-        vector<string> fileNamesUsed;
+        vector<std::pair<string, string> > sql_tags;
 
         //Attaching-detaching clauses
         virtual void attachClause(
@@ -580,9 +577,9 @@ inline const Solver::SolveStats& Solver::getSolveStats() const
     return solveStats;
 }
 
-inline void Solver::fileAdded(const string& filename)
+inline void Solver::add_sql_tag(const string& tagname, const string& tag)
 {
-    fileNamesUsed.push_back(filename);
+    sql_tags.push_back(std::make_pair(tagname, tag));
 }
 
 inline size_t Solver::getNumLongIrredCls() const
@@ -600,9 +597,9 @@ inline const SolverConf& Solver::getConf() const
     return conf;
 }
 
-inline const vector<string>& Solver::getFileNamesUsed() const
+inline const vector<std::pair<string, string> >& Solver::get_sql_tags() const
 {
-    return fileNamesUsed;
+    return sql_tags;
 }
 
 inline const Solver::BinTriStats& Solver::getBinTriStats() const

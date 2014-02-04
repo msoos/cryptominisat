@@ -57,14 +57,14 @@ public:
     );
 
     virtual void setup(const Solver* solver);
-    virtual void finishup(const Solver* solver, lbool status);
+    virtual void finishup(lbool status);
 
 private:
 
     void connectServer(const Solver* solver);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
-    void addFiles(const Solver* solver);
+    void add_tags(const Solver* solver);
 
     void addStartupData(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);

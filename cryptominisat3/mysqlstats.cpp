@@ -55,7 +55,7 @@ void MySQLStats::setup(const Solver* solver)
 {
     connectServer(solver);
     getID(solver);
-    addFiles(solver);
+    add_tags(solver);
     addStartupData(solver);
     initRestartSTMT(solver->getConf().verbosity);
     initReduceDBSTMT(solver->getConf().verbosity);
@@ -183,22 +183,25 @@ void MySQLStats::getID(const Solver* solver)
     }
 }
 
-void MySQLStats::addFiles(const Solver* solver)
+void MySQLStats::add_tags(const Solver* solver)
 {
-    for(vector<string>::const_iterator
-        it = solver->getFileNamesUsed().begin(), end = solver->getFileNamesUsed().end()
+    for(vector<std::pair<string, string> >::const_iterator
+        it = solver->get_sql_tags().begin(), end = solver->get_sql_tags().end()
         ; it != end
         ; it++
     ) {
 
         std::stringstream ss;
         ss
-        << "INSERT INTO fileNamesUsed (runID, fileName) VALUES"
-        <<"(" << runID << ", \"" << *it << "\");";
+        << "INSERT INTO `tags` (`runID`, `tagname`, `tag`) VALUES("
+        << runID
+        << ", '" << it->first << "'"
+        << ", '" << it->second << "'"
+        << ");";
 
         //Inserting element into solverruns to get unique ID
         if (mysql_query(serverConn, ss.str().c_str())) {
-            cout << "Couldn't insert into table 'solverruns'" << endl;
+            cout << "Couldn't insert into table 'tags'" << endl;
             exit(1);
         }
     }
@@ -220,7 +223,7 @@ void MySQLStats::addStartupData(const Solver* solver)
     }
 }
 
-void MySQLStats::finishup(const Solver* solver, const lbool status)
+void MySQLStats::finishup(const lbool status)
 {
     std::stringstream ss;
     ss

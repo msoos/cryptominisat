@@ -102,7 +102,7 @@ void SIGINT_handler(int)
 
 void Main::readInAFile(const string& filename)
 {
-    solver->add_file(filename);
+    solver->add_sql_tag("filename", filename);
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
@@ -975,6 +975,7 @@ int Main::solve()
         << commandLine
         << endl;
     }
+    solver->add_sql_tag("commandline", commandLine);
 
     //Parse in DIMACS (maybe gzipped) files
     parseInAllFiles();

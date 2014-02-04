@@ -71,12 +71,13 @@ CREATE TABLE `clauseStats` (
 -- Table structure for table `fileNamesUsed`
 --
 
-DROP TABLE IF EXISTS `fileNamesUsed`;
+DROP TABLE IF EXISTS `tags`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `fileNamesUsed` (
+CREATE TABLE `tags` (
   `runID` bigint(20) NOT NULL,
-  `filename` varchar(500) NOT NULL,
+  `tagname` varchar(500) NOT NULL,
+  `tag` varchar(500) NOT NULL,
   KEY `idx1` (`runID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

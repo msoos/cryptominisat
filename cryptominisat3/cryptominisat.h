@@ -19,7 +19,7 @@ namespace CMSat {
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
         const std::vector<Lit>& get_unitary_clauses() const;
-        void add_file(const std::string& filename);
+        void add_sql_tag(const std::string& tagname, const std::string& tag);
         SolverConf get_conf() const;
         std::string get_version() const;
         void print_stats() const;

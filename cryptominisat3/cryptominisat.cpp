@@ -44,9 +44,9 @@ void MainSolver::new_var()
     ((CMSat::Solver*)solver)->new_external_var();
 }
 
-void MainSolver::add_file(const std::string& filename)
+void MainSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
-    ((CMSat::Solver*)solver)->fileAdded(filename);
+    ((CMSat::Solver*)solver)->add_sql_tag(tagname, tag);
 }
 
 SolverConf MainSolver::get_conf() const
