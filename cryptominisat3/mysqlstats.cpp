@@ -208,7 +208,7 @@ void MySQLStats::addStartupData(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO startup (runID, startTime, verbosity) VALUES ("
+    << "INSERT INTO `startup` (`runID`, `startTime`, `verbosity`) VALUES ("
     << runID << ","
     << "NOW() , "
     << solver->getConf().verbosity
@@ -224,7 +224,7 @@ void MySQLStats::finishup(const Solver* solver, const lbool status)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `finishup` (runID, endTime, status) VALUES ("
+    << "INSERT INTO `finishup` (`runID`, `endTime`, `status`) VALUES ("
     << runID << ","
     << "NOW() , "
     << "'" << status << "'"
