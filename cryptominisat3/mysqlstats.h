@@ -57,6 +57,7 @@ public:
     );
 
     virtual void setup(const Solver* solver);
+    virtual void finishup(const Solver* solver, lbool status);
 
 private:
 

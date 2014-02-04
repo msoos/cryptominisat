@@ -214,9 +214,24 @@ void MySQLStats::addStartupData(const Solver* solver)
     << solver->getConf().verbosity
     << ");";
 
-    //Inserting element into solverruns to get unique ID
     if (mysql_query(serverConn, ss.str().c_str())) {
-        cout << "Couldn't insert into table 'solverruns'" << endl;
+        cout << "Couldn't insert into table 'startup'" << endl;
+        exit(1);
+    }
+}
+
+void MySQLStats::finishup(const Solver* solver, const lbool status)
+{
+    std::stringstream ss;
+    ss
+    << "INSERT INTO finishup (runID, endTime, status) VALUES ("
+    << runID << ","
+    << "NOW() , "
+    << status
+    << ");";
+
+    if (mysql_query(serverConn, ss.str().c_str())) {
+        cout << "Couldn't insert into table 'finishup'" << endl;
         exit(1);
     }
 }

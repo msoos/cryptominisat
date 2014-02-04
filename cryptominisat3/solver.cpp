@@ -1617,6 +1617,8 @@ lbool Solver::solve()
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
+    if (sqlStats)
+        sqlStats->finishup(this, status);
 
     return status;
 }
