@@ -321,6 +321,7 @@ SolverConf CompHandler::configureNewSolver(
     conf.origSeed = solver->mtrand.randInt();
     if (numVars < 60) {
         conf.regularly_simplify_problem = false;
+        conf.doSQL = false;
         conf.doStamp = false;
         conf.doCache = false;
         conf.doProbe = false;
