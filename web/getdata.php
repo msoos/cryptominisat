@@ -5,7 +5,6 @@ $maxConfl = 5000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 
-echo "<script type=\"text/javascript\">";
 $username="cmsat_presenter";
 $password="";
 $database="cmsat";
@@ -44,19 +43,18 @@ class DataPrinter
     protected $runID;
     protected $num_runIDs;
     protected $max_confl;
+    protected $columndivs;
+    protected $data_tmp;
 
-    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs)
+    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs, $json_columndivs)
     {
         $this->colnum = $mycolnum;
         $this->runID = $runID;
         $this->numberingScheme = 0;
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
         $this->num_runIDs = $num_RunIDs;
-
-        echo "
-        if (columnDivs.length <= ".$this->colnum.")
-            columnDivs.push(new Array());
-        ";
+        $this->columndivs = $json_columndivs;
+        $this->data_tmp = array();
     }
 
     private function sql_get_max_restart($maxConfl)
@@ -88,21 +86,17 @@ class DataPrinter
         , $everyn = 1000
     ) {
         $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
-
-        echo "tmp = [";
+        $json_data = array();
 
         //Start with an empty one
-        echo "[0, ";
+        $json_subarray = array();
+        array_push($json_subarray, 0);
         $i = 0;
         while($i < sizeof($datanames)) {
-            echo "null";
-
+            array_push($json_subarray, NULL);
             $i++;
-            if ($i < sizeof($datanames)) {
-                echo ", ";
-            }
         }
-        echo "],";
+        array_push($json_data, $json_subarray);
 
         //Now go through it all
         $i=0;
@@ -110,14 +104,14 @@ class DataPrinter
         $last_confl = 0.0;
         $last_confl_for_everyn = 0.0;
         while ($i < $this->nrows) {
-            $confl = mysql_result($this->data, $i, "conflicts");
+            $confl = (int)mysql_result($this->data, $i, "conflicts");
             if ($confl -$last_confl_for_everyn < $everyn) {
                 $i++;
                 continue;
             }
             $last_confl_for_everyn = $confl;
-
-            echo "[$confl";
+            $json_subarray = array();
+            array_push($json_subarray, $confl);
 
             //Calc local sum
             $local_sum = 0;
@@ -127,60 +121,54 @@ class DataPrinter
 
             //Print for each
             foreach ($datanames as $dataname) {
-                $tmp = mysql_result($this->data, $i, $dataname);
+                $tmp = (int)mysql_result($this->data, $i, $dataname);
                 if (sizeof($datanames) > 1) {
                     if ($local_sum != 0) {
                         $tmp /= $local_sum;
                         $tmp *= 100.0;
                     }
-                    echo ", $tmp";
+                    array_push($json_subarray, $tmp);
                 } else {
                     $total_sum += $tmp*($confl-$last_confl);
                     $last_confl = $confl;
-                    echo ", $tmp";
+                    array_push($json_subarray, $tmp);
                 }
             }
-            echo "]\n";
+            array_push($json_data, $json_subarray);
 
             $i++;
-            if ($i < $this->nrows) {
-                echo ",";
-            }
         }
-        echo "];\n";
-
-        //Add name & data
-        echo "data_tmp.push({data: tmp ";
 
         //Calculate labels
-        echo ", labels: [\"Conflicts\"";
+        $json_labels_tmp = array();
+        array_push($json_labels_tmp, "Conflicts");
         foreach ($nicedatanames as $dataname) {
-            $toadd = "";
-            if (count($this->num_runIDs) > 1) {
-                $toadd += "(".$this->colnum.") ";
-            }
-            echo ", \"".$dataname."\"";
+            array_push($json_labels_tmp, $dataname);
         }
-        echo "]";
 
-        //Rest of the info
-        echo ", stacked: ".(int)(sizeof($datanames) > 1);
-        echo ", colnum: \"".$this->colnum."\"";
-
-        //DIVs
+        //Calculate blockDivID
         $blockDivID = "graphBlock".$this->numberingScheme."AT".$this->colnum;
-        $dataDivID = $fullname."_datadiv";
-        $labelDivID = $fullname."_labeldiv";
-        echo ", blockDivID:  '$blockDivID'";
-        echo ", dataDivID:  '$dataDivID'";
-        echo ", labelDivID: '$labelDivID'";
-        echo ", max_confl: '".$this->max_confl."'";
-        echo ", title: '$title'";
-        echo " });\n";
 
-        //Put into columnDivs
-        echo "tmp = {blockDivID:  '$blockDivID'};";
-        echo "columnDivs[".$this->colnum."].push(tmp);";
+        //put into $this->data_tmp
+        $json_data_tmp = array();
+        $json_data_tmp['data'] = $json_data;
+        $json_data_tmp['labels'] = $json_labels_tmp;
+        $json_data_tmp['stacked'] = (int)(sizeof($datanames) > 1);
+        $json_data_tmp['colnum'] = $this->colnum;
+        $json_data_tmp['blockDivID'] = $blockDivID;
+        $json_data_tmp['dataDivID'] = $fullname."_datadiv";
+        $json_data_tmp['labelDivID'] = $fullname."_labeldiv";
+        $json_data_tmp['max_confl'] = $this->max_confl;
+        $json_data_tmp['title'] = $title;
+        array_push($this->data_tmp, $json_data_tmp);
+
+        //put into $this->columndivs
+        $json_columndivs_tmp = array();
+        $json_columndivs_tmp['blockDivID'] = $blockDivID;
+        if (!array_key_exists($this->colnum, $this->columndivs)) {
+            $this->columndivs[$this->colnum] = array();
+        }
+        array_push($this->columndivs[$this->colnum], $json_columndivs_tmp);
 
         $this->numberingScheme++;
     }
@@ -204,7 +192,6 @@ class DataPrinter
 
     public function fill_data_tmp()
     {
-        echo "data_tmp = new Array();";
         $this->runQuery("restart");
 
 //         $this->print_one_graph(
@@ -480,21 +467,26 @@ class DataPrinter
             )
         );
 
-        return $this->numberingScheme;
+        return array($this->columndivs, $this->data_tmp, $this->numberingScheme);
     }
 }
 
+$json_mydata = array();
+$json_maxconflrestart = array();
+$json_columndivs = array();
 for($i = 0; $i < count($runIDs); $i++) {
-    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs));
-    echo "maxConflRestart.push(".$printer->get_max_confl().");";
-    $orderNum = $printer->fill_data_tmp();
-    echo "myData.push(data_tmp);";
+    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs), $json_columndivs);
+
+    list($json_columndivs, $data_tmp, $orderNum) = $printer->fill_data_tmp();
+    array_push($json_maxconflrestart, $printer->get_max_confl());
+    array_push($json_mydata, $data_tmp);
 }
 
 
 class Simplifications
 {
     protected $runIDs;
+    protected $points = array();
 
     public function __construct($runIDs)
     {
@@ -516,18 +508,15 @@ class Simplifications
         }
         $nrows=mysql_numrows($result);
 
-        echo "tmp = [0,";
+        $json_tmp = array();
+        array_push($json_tmp, 0);
         $i=0;
         while ($i < $nrows) {
             $confl = mysql_result($result, $i, "confl");
-            echo "$confl";
+            array_push($json_tmp, $confl);
             $i++;
-            if ($i < $nrows) {
-                echo ", ";
-            }
         }
-        echo "];";
-        echo "simplificationPoints.push(tmp);\n";
+        array_push($this->points, $json_tmp);
     }
 
     public function fill()
@@ -535,11 +524,13 @@ class Simplifications
         foreach ($this->runIDs as $thisRunID) {
             $this->fillSimplificationPoints($thisRunID);
         }
+
+        return $this->points;
     }
 }
 
 $simps = new Simplifications($runIDs);
-$simps->fill();
+$json_simplificationpoints = $simps->fill();
 
 class ClauseDistrib
 {
@@ -629,6 +620,13 @@ class ClauseDistrib
     $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size");
     $myDist->fillClauseDistrib();
 }*/
-echo '</script>';
 
+$final_json = array();
+$final_json["columnDivs"] = $json_columndivs;
+$final_json["myData"] = $json_mydata;
+//$final_json["clDistrib"] = new Array();
+$final_json["simplificationPoints"] = $json_simplificationpoints;
+$final_json["maxConflRestart"] = $json_maxconflrestart;
+$jsonstring = json_encode($final_json);
+echo $jsonstring;
 ?>

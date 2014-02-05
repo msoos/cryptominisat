@@ -9,25 +9,19 @@ var maxConflRestart = new Array();
 //myajax.makeGetRequest(86533651);
 //}
 
-
-jQuery.ajax({
-     url:'getdata.php?id=' + '86533651'
-     ,success:function(response){
+jQuery.getJSON(
+    "getdata.php?id=" + "86533651"
+     ,function(response){
         columnDivs = new Array();
         myData = new Array();
         clDistrib = new Array();
         simplificationPoints = new Array();
         maxConflRestart = new Array();
 
-        var div = document.getElementById("myajaxStuff");
-        div.innerHTML = response;
-        var x = div.getElementsByTagName("script");
-        for(var i=0; i < x.length; i++) {
-            //console.log(x[i].text);
-            //jQuery.parseJSON(x[i].text);
-            //json.parse (x[i].text);
-            eval(x[i].text);
-        }
+        columnDivs = response["columnDivs"];
+        myData = response["myData"];
+        simplificationPoints = response["simplificationPoints"];
+        maxConflRestart = response["maxConflRestart"];
         doAll();
     }
-});
+);
