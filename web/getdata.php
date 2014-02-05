@@ -9,31 +9,34 @@ $username="cmsat_presenter";
 $password="";
 $database="cmsat";
 
-mysql_connect("localhost", $username, $password);
-@mysql_select_db($database) or die( "Unable to select database");
+$sql = new mysqli("localhost", $username, $password, $database);
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    die();
+}
+//print_r($sql);
 
-$runIDs = array(mysql_real_escape_string($_GET["id"]));
+#$runIDs = array(mysql_real_escape_string($_GET["id"]));
 #$runIDs = array(getLatestID());
 #$runIDs = array(4890500, 15772794, 15772794);
 #$runIDs = array(4890500);
 #$runIDs = array(15772794);
+$runIDs = array(12962808);
 
 function getLatestID()
 {
     $query = "select runID from `startup` order by startTime desc limit 1;";
-    $result = mysql_query($query);
-
+    $result = $sql->query($query);
     if (!$result) {
-        die('Invalid query: ' . mysql_error());
+        printf("Error: %s\n", $sql->error());
+        die();
     }
 
-    $nrows = mysql_numrows($result);
-    if ($nrows < 1) {
-        return 7401737;
+    if ($result->num_rows < 1) {
+        return 0;
     }
-
-    $runID = mysql_result($result, 0, "runID");
-
+    $row = $result->fetch_assoc();
+    $runID = (int)$row["runID"];
     return $runID;
 }
 
@@ -49,12 +52,14 @@ class DataPrinter
     protected $columndivs;
     protected $data_tmp;
     protected $tablename;
+    protected $sql;
 
-    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs, $json_columndivs)
+    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs, $json_columndivs, $sql)
     {
         $this->colnum = $mycolnum;
         $this->runID = $runID;
         $this->numberingScheme = 0;
+        $this->sql = $sql;
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
         $this->num_runIDs = $num_RunIDs;
         $this->columndivs = $json_columndivs;
@@ -68,14 +73,15 @@ class DataPrinter
         SELECT max(conflicts) as mymax FROM `restart`
         where conflicts < $maxConfl
         and runID = ".$this->runID.";";
-        $result=mysql_query($query);
-
+        $result = $this->sql->query($query);
         if (!$result) {
-            die('Invalid query: ' . mysql_error());
+            printf("Error: %s\n", $this->sql->error());
+            die();
         }
 
-        $max = mysql_result($result, 0, "mymax");
-        return intval($max);
+        $row = $result->fetch_assoc();
+        $max = (int)$row["mymax"];
+        return $max;
     }
 
     public function get_max_confl()
@@ -106,8 +112,11 @@ class DataPrinter
         $total_sum = 0.0;
         $last_confl = 0.0;
         $last_confl_for_everyn = 0.0;
+        $time_start = microtime();
+        $this->data->data_seek(0);
         while ($i < $this->nrows) {
-            $confl = (int)mysql_result($this->data, $i, "conflicts");
+            $row = $this->data->fetch_assoc();
+            $confl = (int)$row["conflicts"];
             if ($confl -$last_confl_for_everyn < $everyn) {
                 $i++;
                 continue;
@@ -119,12 +128,12 @@ class DataPrinter
             //Calc local sum
             $local_sum = 0;
             foreach ($datanames as $dataname) {
-                $local_sum += mysql_result($this->data, $i, $dataname);
+                $local_sum += (int)$row[$dataname];
             }
 
             //Print for each
             foreach ($datanames as $dataname) {
-                $tmp = (int)mysql_result($this->data, $i, $dataname);
+                $tmp = (int)$row[$dataname];
                 if (sizeof($datanames) > 1) {
                     if ($local_sum != 0) {
                         $tmp /= $local_sum;
@@ -138,9 +147,10 @@ class DataPrinter
                 }
             }
             array_push($json_data, $json_subarray);
-
             $i++;
         }
+        $time = microtime() - $time_start;
+        //echo "Took $time seconds\n";
 
         //Calculate labels
         $json_labels_tmp = array();
@@ -189,12 +199,12 @@ class DataPrinter
         and conflicts <= ".$this->max_confl." $extra
         order by `conflicts`";
 
-        $this->data = mysql_query($query);
+        $this->data = $this->sql->query($query);
         if (!$this->data) {
-            die('Invalid query: ' . mysql_error());
+            printf("Error: %s\n", $this->sql->error());
+            die();
         }
-
-        $this->nrows = mysql_numrows($this->data);
+        $this->nrows = $this->data->num_rows;
     }
 
     public function fill_data_tmp()
@@ -482,7 +492,7 @@ $json_graph_data = array();
 $json_maxconflrestart = array();
 $json_columndivs = array();
 for($i = 0; $i < count($runIDs); $i++) {
-    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs), $json_columndivs);
+    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs), $json_columndivs, $sql);
 
     list($json_columndivs, $data_tmp, $orderNum) = $printer->fill_data_tmp();
     array_push($json_maxconflrestart, $printer->get_max_confl());
@@ -494,10 +504,12 @@ class Simplifications
 {
     protected $runIDs;
     protected $points = array();
+    protected $sql;
 
-    public function __construct($runIDs)
+    public function __construct($runIDs, $sql)
     {
         $this->runIDs = $runIDs;
+        $this->sql = $sql;
     }
 
     protected function fillSimplificationPoints($thisRunID)
@@ -508,18 +520,17 @@ class Simplifications
         where runID = ".$thisRunID."
         group by simplifications
         order by simplifications";
-
-        $result=mysql_query($query);
+        $result = $this->sql->query($query);
         if (!$result) {
-            die('Invalid query: ' . mysql_error());
+            printf("Error: %s\n", $this->sql->error());
+            die();
         }
-        $nrows=mysql_numrows($result);
 
         $json_tmp = array();
         array_push($json_tmp, 0);
         $i=0;
-        while ($i < $nrows) {
-            $confl = mysql_result($result, $i, "confl");
+        while ($row = $result->fetch_assoc()) {
+            $confl = (int)$row["confl"];
             array_push($json_tmp, $confl);
             $i++;
         }
@@ -536,7 +547,7 @@ class Simplifications
     }
 }
 
-$simps = new Simplifications($runIDs);
+$simps = new Simplifications($runIDs, $sql);
 $json_simplificationpoints = $simps->fill();
 
 class ClauseDistrib
@@ -572,29 +583,39 @@ class ClauseDistrib
         and conflicts <= ".$this->maxConfl."
         and ".$this->lookAt." > 0
         order by conflicts, ".$this->lookAt;
-        $result=mysql_query($query);
+
+        $result = $this->sql->query($query);
         if (!$result) {
-            die('Invalid query: ' . mysql_error());
+            printf("Error: %s\n", $this->sql->error());
+            die();
         }
-        $nrows=mysql_numrows($result);
+        $nrows = $result->num_rows;
+        $result = $this->sql->store_result();
 
         $rownum = 0;
         $lastConfl = 0;
         while($rownum < $nrows) {
-            $confl = (int)mysql_result($result, $rownum, "conflicts");
+            $this->data->data_seek($rownum);
+            $row = $this->data->fetch_assoc();
+            $confl = (int)$row["conflicts"];
+
             $json_tmp = array();
             $json_tmp['conflStart'] = $lastConfl;
             $json_tmp['conflEnd'] = $confl;
             $json_darkness = array();
             $lastConfl = $confl;
             while($rownum < $nrows) {
-                $numberOfCl = (int)mysql_result($result, $rownum, "num");
+                $this->data->data_seek($rownum);
+                $row = $this->data->fetch_assoc();
+                $numberOfCl = (int)$row["num"];
                 array_push($json_darkness, $numberOfCl);
 
                 //More in this bracket?
                 $rownum++;
+                $this->data->data_seek($rownum);
+                $row = $this->data->fetch_assoc();
                 if ($rownum >= $nrows
-                    || mysql_result($result, $rownum, "conflicts") != $confl
+                    || $row["conflicts"] != $confl
                 ) {
                     break;
                 }
