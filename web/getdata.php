@@ -85,7 +85,6 @@ class DataPrinter
         , $nicedatanames
         , $everyn = 1000
     ) {
-        $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
         $json_data = array();
 
         //Start with an empty one
@@ -148,6 +147,7 @@ class DataPrinter
 
         //Calculate blockDivID
         $blockDivID = "graphBlock".$this->numberingScheme."AT".$this->colnum;
+        $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
 
         //put into $this->data_tmp
         $json_data_tmp = array();
