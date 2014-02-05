@@ -16,12 +16,12 @@ if (mysqli_connect_errno()) {
 }
 //print_r($sql);
 
-#$runIDs = array(mysql_real_escape_string($_GET["id"]));
+$runIDs = array(mysql_real_escape_string($_GET["id"]));
 #$runIDs = array(getLatestID());
 #$runIDs = array(4890500, 15772794, 15772794);
 #$runIDs = array(4890500);
 #$runIDs = array(15772794);
-$runIDs = array(12962808);
+#$runIDs = array(12962808);
 
 function getLatestID()
 {
