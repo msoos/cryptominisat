@@ -4,23 +4,17 @@ var clDistrib = new Array();
 var simplificationPoints = new Array();
 var maxConflRestart = new Array();
 
-function MyAjax() {
+function fill_datapoints() {
     var gotResponse = true;
     var http = createRequestObject();
 
     function createRequestObject() {
         var tmpXmlHttpObject;
-
-        //Browser dependent
         if (window.XMLHttpRequest) {
-            //Mozilla, Safari
             tmpXmlHttpObject = new XMLHttpRequest();
-
         } else if (window.ActiveXObject) {
-            //IE
             tmpXmlHttpObject = new ActiveXObject("Microsoft.XMLHTTP");
         }
-
         return tmpXmlHttpObject;
     }
 
@@ -33,8 +27,6 @@ function MyAjax() {
 
     function processResponse() {
         if(http.readyState == 4){
-            //Got it
-
             var response = http.responseText;
 
             //Clear data
@@ -59,8 +51,7 @@ function MyAjax() {
     }
 }
 
-myajax = new MyAjax();
-
+var myajax = new fill_datapoints();
 //while (true) {
 //setInterval(function(){myajax.makeGetRequest(500005960);}, 2000);
 myajax.makeGetRequest(86533651);
