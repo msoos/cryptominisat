@@ -10,11 +10,10 @@
     <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
     <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
     <script type="text/javascript" src="dragdrop/js/portal.js"></script>
-    <script type="text/javascript" src="myajax.js"></script>
-    <script type="text/javascript" src="myscripts.js"></script>
+    <script type="text/javascript" src="selectdata.js"></script>
+    <script type="text/javascript" src="drawgraphs.js"></script>
 
     <style>
-/*     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700); */
     @import url(style.css);
     </style>
 
