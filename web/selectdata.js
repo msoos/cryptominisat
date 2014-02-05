@@ -10,15 +10,19 @@ var maxConflRestart = new Array();
 //}
 
 function selected_runID(runID) {
+    clear_everything();
+    console.log("getting it");
     jQuery.getJSON(
-        "getdata.php?id=" + runID
-         ,function(response){
+        "getdata.php?id=" + runID,
+         function(response){
+            console.log("gotit");
+            console.log(response);
             columnDivs = response["columnDivs"];
             graph_data = response["graph_data"];
             clDistrib = new Array();
             simplificationPoints = response["simplificationPoints"];
             maxConflRestart = response["maxConflRestart"];
-            doAll();
+            print_all_graphs();
         }
     );
 }

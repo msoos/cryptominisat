@@ -103,7 +103,7 @@ function drawOneGraph(column, i)
                 blockRedraw = true;
                 var xrange = me.xAxisRange();
 
-                drawAllDists(xrange[0], xrange[1]);
+                draw_all_clause_distributions(xrange[0], xrange[1]);
 
                 //Zoom every one the same way
                 for (var j = 0; j < graph_data[column].length; j++) {
@@ -126,7 +126,7 @@ function drawOneGraph(column, i)
     return graph;
 }
 
-function drawAllDists(from, to)
+function draw_all_clause_distributions(from, to)
 {
     for(var column = 0; column < columnDivs.length; column++) {
         if (clDistrib.length <= column) {
@@ -134,7 +134,7 @@ function drawAllDists(from, to)
         }
 
         for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
-            a = new DrawClauseDistrib(
+            a = new draw_clause_distribution(
                     clDistrib[column][i2].data
                     , clDistrib[column][i2].canvasID
                     , clDistrib[column][i2].dataDivID
@@ -151,7 +151,7 @@ function drawAllDists(from, to)
     }
 }
 
-function DrawClauseDistrib(_data, _canvas_div_ID, _div_ID, _simpPoints)
+function draw_clause_distribution(_data, _canvas_div_ID, _div_ID, _simpPoints)
 {
     var data = _data;
     var canvas_div_ID = _canvas_div_ID;
@@ -357,13 +357,13 @@ function createPortal()
     //});
 }
 
-function doAll()
+function create_columns(num)
 {
     var columns = document.getElementById("columns");
     column_text = "\
     <table>\
     <tr>";
-    for(var i = 0; i < graph_data.length; i++) {
+    for(var i = 0; i < num; i++) {
         column_text += "\
         <td><div id=\"column-" + i +"\" class=\"column menu\"></div></td>";
     }
@@ -371,21 +371,31 @@ function doAll()
     </tr>\
     </table>";
     columns.innerHTML = column_text;
+}
 
-    //Clear vars
+function clear_everything()
+{
+    create_columns(0);
     origSizes = new Array();
     blockRedraw = false;
     dists = [];
 
-    //Clear & create HTML
     datagraphs = document.getElementById("datagraphs");
     datagraphs.innerHTML = "";
+}
+
+function print_all_graphs()
+{
+    clear_everything();
+    create_columns(graph_data.length);
+
+    //Clear & create HTML
     createHTMLforGraphs();
     createHTMLforDists();
 
     //Draws the graphs
     drawAllGraphs();
-    drawAllDists();
+    draw_all_clause_distributions();
     createPortal();
 }
 
