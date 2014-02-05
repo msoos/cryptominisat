@@ -6,13 +6,13 @@
 
 <script type="text/javascript">
 (function($, window) {
-  $.fn.replaceOptions = function(options) {
+  jQuery.fn.replaceOptions = function(options) {
     var self, $option;
 
     this.empty();
     self = this;
 
-    $.each(options, function(index, option) {
+    jQuery.each(options, function(index, option) {
       $option = $("<option></option>")
         .attr("value", option.value)
         .text(option.text);
@@ -61,7 +61,7 @@ fill_versions();
 <script type="text/javascript">
 function fill_files_options()
 {
-    $.getJSON("get_files_for_version.php?version=" + $("#version option:selected").text(),
+    jQuery.getJSON("get_files_for_version.php?version=" + $("#version option:selected").text(),
         function(result){
             $("#fname").replaceOptions(result);
         }
