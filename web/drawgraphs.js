@@ -76,7 +76,7 @@ function drawOneGraph(column, i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            rollPeriod: 20,
+            rollPeriod: (myData[column][i].tablename == "restart") ? 10: 0,
             legend: 'always',
             xlabel: false,
             labelsDiv: document.getElementById(myData[column][i].labelDivID),

@@ -48,6 +48,7 @@ class DataPrinter
     protected $max_confl;
     protected $columndivs;
     protected $data_tmp;
+    protected $tablename;
 
     public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs, $json_columndivs)
     {
@@ -163,6 +164,7 @@ class DataPrinter
         $json_data_tmp['labelDivID'] = $fullname."_labeldiv";
         $json_data_tmp['max_confl'] = $this->max_confl;
         $json_data_tmp['title'] = $title;
+        $json_data_tmp['tablename'] = $this->tablename;
         array_push($this->data_tmp, $json_data_tmp);
 
         //put into $this->columndivs
@@ -178,6 +180,8 @@ class DataPrinter
 
     function runQuery($table, $extra = "")
     {
+        $this->tablename = $table;
+
         $query="
         SELECT *
         FROM `$table`
