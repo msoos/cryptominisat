@@ -63,7 +63,13 @@ function drawOneGraph(column, i)
                   return 'Conflict ' + d;
                 },
                 pixelsPerLabel: 100,
-                includeZero: true
+                includeZero: true,
+                drawGrid: false,
+                drawAxis: false,
+              },
+              y: {
+                  drawGrid: false,
+                  drawAxis: false,
               }
             },
             //stepPlot: true,
@@ -71,7 +77,6 @@ function drawOneGraph(column, i)
             strokeWidth: 0.3,
             highlightCircleSize: 3,
             rollPeriod: 20,
-            drawXAxis: false,
             legend: 'always',
             xlabel: false,
             labelsDiv: document.getElementById(myData[column][i].labelDivID),
@@ -79,9 +84,6 @@ function drawOneGraph(column, i)
             labelsKMB: true,
             drawPoints: true,
             pointSize: 1,
-            drawXGrid: false,
-            drawYGrid: false,
-            drawYAxis: false,
             strokeStyle: "black",
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
