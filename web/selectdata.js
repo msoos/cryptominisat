@@ -9,19 +9,23 @@ var maxConflRestart = new Array();
 //myajax.makeGetRequest(86533651);
 //}
 
-jQuery.getJSON(
-    "getdata.php?id=" + "86533651"
-     ,function(response){
-        columnDivs = new Array();
-        myData = new Array();
-        clDistrib = new Array();
-        simplificationPoints = new Array();
-        maxConflRestart = new Array();
+function selected_runID(runID) {
+    jQuery.getJSON(
+        "getdata.php?id=" + runID
+         ,function(response){
+            columnDivs = new Array();
+            myData = new Array();
+            clDistrib = new Array();
+            simplificationPoints = new Array();
+            maxConflRestart = new Array();
 
-        columnDivs = response["columnDivs"];
-        myData = response["myData"];
-        simplificationPoints = response["simplificationPoints"];
-        maxConflRestart = response["maxConflRestart"];
-        doAll();
-    }
-);
+            columnDivs = response["columnDivs"];
+            myData = response["myData"];
+            simplificationPoints = response["simplificationPoints"];
+            maxConflRestart = response["maxConflRestart"];
+            doAll();
+        }
+    );
+}
+
+selected_runID(15772794);

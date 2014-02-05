@@ -12,8 +12,11 @@ $database="cmsat";
 mysql_connect("localhost", $username, $password);
 @mysql_select_db($database) or die( "Unable to select database");
 
-#$runIDs = array(mysql_real_escape_string($_GET["id"]));
-$runIDs = array(getLatestID());
+$runIDs = array(mysql_real_escape_string($_GET["id"]));
+#$runIDs = array(getLatestID());
+#$runIDs = array(4890500, 15772794, 15772794);
+#$runIDs = array(4890500);
+#$runIDs = array(15772794);
 
 function getLatestID()
 {
