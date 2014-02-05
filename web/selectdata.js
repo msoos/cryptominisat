@@ -5,22 +5,19 @@ var simplificationPoints = new Array();
 var maxConflRestart = new Array();
 
 function MyAjax() {
-
-    //Ajax value OK?
     var gotResponse = true;
     var http = createRequestObject();
 
-    //Creates xmlHttpObject
     function createRequestObject() {
         var tmpXmlHttpObject;
 
-        //depending on what the browser supports, use the right way to create the XMLHttpRequest object
+        //Browser dependent
         if (window.XMLHttpRequest) {
-            // Mozilla, Safari would use this method ...
+            //Mozilla, Safari
             tmpXmlHttpObject = new XMLHttpRequest();
 
         } else if (window.ActiveXObject) {
-            // IE would use this method ...
+            //IE
             tmpXmlHttpObject = new ActiveXObject("Microsoft.XMLHTTP");
         }
 
@@ -29,23 +26,15 @@ function MyAjax() {
 
     this.makeGetRequest = function(runID) {
         gotResponse = false;
-
-        //make a connection to the server ... specifying that you intend to make a GET request
-        //to the server. Specifiy the page name and the URL parameters to send
         http.open('get', 'getdata.php?id=' + runID);
-
-        //assign a handler for the response
         http.onreadystatechange = processResponse;
-
-        //actually send the request to the server
         http.send(null);
     }
 
     function processResponse() {
-        //check if the response has been received from the server
         if(http.readyState == 4){
+            //Got it
 
-            //read and assign the response from the server
             var response = http.responseText;
 
             //Clear data
@@ -66,9 +55,6 @@ function MyAjax() {
             }
             doAll();
             gotResponse = true;
-
-            //If the server returned an error message like a 404 error, that message would be shown within the div tag!!.
-            //So it may be worth doing some basic error before setting the contents of the <div>
         }
     }
 }
