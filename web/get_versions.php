@@ -1,8 +1,8 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!--<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
     <script type="text/javascript" src="jquery/jquery.js"></script>
-</head>
+</head>-->
 
 <script type="text/javascript">
 (function($, window) {
@@ -52,7 +52,7 @@ function fill_versions()
 fill_versions();
 ?>
 
-<select id="fname">
+<select id="fname" onchange='selected_runID(this.value);'>
 <option value="newsvalue">News</option>
 <option value="webmastervalue">Webmaster</option>
 <option value="techvalue">Tech</option>
@@ -61,13 +61,16 @@ fill_versions();
 <script type="text/javascript">
 function fill_files_options()
 {
-    jQuery.getJSON("get_files_for_version.php?version=" + $("#version option:selected").text(),
+    jQuery.getJSON("get_files_for_version.php?version=" + jQuery("#version option:selected").text(),
         function(result){
-            $("#fname").replaceOptions(result);
+            jQuery("#fname").replaceOptions(result);
+            console.log("updated:", result);
+            console.log(jQuery("#fname option:selected").val());
+            selected_runID(jQuery("#fname option:selected").val());
         }
     );
 };
-$( document ).ready(function() {
+jQuery( document ).ready(function() {
     fill_files_options();
 });
 </script>

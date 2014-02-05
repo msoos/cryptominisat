@@ -64,9 +64,9 @@ simplifcaition, and the solver behaviour changes afterwards. The angle
 of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
+<p><?php include 'get_versions.php'; ?></p>
 
 <div id="columns"></div>
-<div id="myajaxStuff"></div>
 <div id="datagraphs"></div>
 
 <!-- clear out column layout -->
