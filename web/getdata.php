@@ -478,7 +478,7 @@ class DataPrinter
     }
 }
 
-$json_mydata = array();
+$json_graph_data = array();
 $json_maxconflrestart = array();
 $json_columndivs = array();
 for($i = 0; $i < count($runIDs); $i++) {
@@ -486,7 +486,7 @@ for($i = 0; $i < count($runIDs); $i++) {
 
     list($json_columndivs, $data_tmp, $orderNum) = $printer->fill_data_tmp();
     array_push($json_maxconflrestart, $printer->get_max_confl());
-    array_push($json_mydata, $data_tmp);
+    array_push($json_graph_data, $data_tmp);
 }
 
 
@@ -639,7 +639,7 @@ $json_cldistrib = array();
 
 $final_json = array();
 $final_json["columnDivs"] = $json_columndivs;
-$final_json["myData"] = $json_mydata;
+$final_json["graph_data"] = $json_graph_data;
 $final_json["clDistrib"] = $json_cldistrib;
 $final_json["simplificationPoints"] = $json_simplificationpoints;
 $final_json["maxConflRestart"] = $json_maxconflrestart;

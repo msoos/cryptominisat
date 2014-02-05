@@ -14,8 +14,8 @@ var portal;
 
 function setRollPeriod(num)
 {
-    for (var column = 0; column < myData.length; column++) {
-        for (var j = 0; j < myData[column].length; j++) {
+    for (var column = 0; column < graph_data.length; column++) {
+        for (var j = 0; j < graph_data[column].length; j++) {
             graphs[column][j].updateOptions( {
                 rollPeriod: num
             } );
@@ -27,9 +27,9 @@ function setRollPeriod(num)
 function drawAllGraphs()
 {
     graphs = new Array();
-    for (var column = 0; column < myData.length; column++) {
+    for (var column = 0; column < graph_data.length; column++) {
         graphs.push(new Array());
-        for (var i = 0; i < myData[column].length; i++) {
+        for (var i = 0; i < graph_data[column].length; i++) {
             graphs[column].push(drawOneGraph(column, i));
         }
     }
@@ -39,17 +39,17 @@ function drawAllGraphs()
 function drawOneGraph(column, i)
 {
     graph = new Dygraph(
-        document.getElementById(myData[column][i].dataDivID),
-        myData[column][i].data
+        document.getElementById(graph_data[column][i].dataDivID),
+        graph_data[column][i].data
         , {
-            stackedGraph: myData[column][i].stacked,
-            includeZero: myData[column][i].stacked,
-            labels: myData[column][i].labels,
-            //title: myData[column][i].title,
+            stackedGraph: graph_data[column][i].stacked,
+            includeZero: graph_data[column][i].stacked,
+            labels: graph_data[column][i].labels,
+            //title: graph_data[column][i].title,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 //Draw simplification points
-                colnum = myData[column][i].colnum;
+                colnum = graph_data[column][i].colnum;
 
                 for(var k = 0; k < simplificationPoints[colnum].length-1; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[colnum][k], -20);
@@ -76,10 +76,10 @@ function drawOneGraph(column, i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            rollPeriod: (myData[column][i].tablename == "restart") ? 10: 0,
+            rollPeriod: (graph_data[column][i].tablename == "restart") ? 10: 0,
             legend: 'always',
             xlabel: false,
-            labelsDiv: document.getElementById(myData[column][i].labelDivID),
+            labelsDiv: document.getElementById(graph_data[column][i].labelDivID),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
@@ -87,14 +87,14 @@ function drawOneGraph(column, i)
             strokeStyle: "black",
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
-            errorBars: myData[column][i].noisy,
-            dateWindow: [0, maxConflRestart[myData[column][i].colnum]],
+            errorBars: graph_data[column][i].noisy,
+            dateWindow: [0, maxConflRestart[graph_data[column][i].colnum]],
             drawCallback: function(me, initial) {
 
                 //Fill original sizes, so if we zoom out, we know where to
                 //zoom out
                 if (initial)
-                    origSizes[myData[column][i].colnum] = me.xAxisRange();
+                    origSizes[graph_data[column][i].colnum] = me.xAxisRange();
 
                 //Initial draw, ignore
                 if (blockRedraw || initial)
@@ -106,7 +106,7 @@ function drawOneGraph(column, i)
                 drawAllDists(xrange[0], xrange[1]);
 
                 //Zoom every one the same way
-                for (var j = 0; j < myData[column].length; j++) {
+                for (var j = 0; j < graph_data[column].length; j++) {
                     //Don't go into loop
                     if (graphs[column][j] == me)
                         continue;
@@ -286,18 +286,18 @@ function createHTMLforGraphs()
 {
     var width = calc_width();
     var datagraphs = document.getElementById("datagraphs");
-    for (var i = 0; i < myData[0].length; i++) {
-        for (var column = 0; column < myData.length; column++) {
+    for (var i = 0; i < graph_data[0].length; i++) {
+        for (var column = 0; column < graph_data.length; column++) {
             datagraphs.innerHTML += "\
-            <div class=\"block\" id=\"" + myData[column][i].blockDivID + "\">\
+            <div class=\"block\" id=\"" + graph_data[column][i].blockDivID + "\">\
             <table id=\"plot-table-a\">\
             <tr>\
-            <td width=\""+width+"\"><div id=\"" + myData[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
+            <td width=\""+width+"\"><div id=\"" + graph_data[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
             <td>\
 \
             <table id=\"plot-table-a\">\
-            <tr><td>"+ myData[column][i].title +"</td></tr>\
-            <tr><td><div id=\"" + myData[column][i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
+            <tr><td>"+ graph_data[column][i].title +"</td></tr>\
+            <tr><td><div id=\"" + graph_data[column][i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
             </table>\
 \
             </td>\
@@ -363,7 +363,7 @@ function doAll()
     column_text = "\
     <table>\
     <tr>";
-    for(var i = 0; i < myData.length; i++) {
+    for(var i = 0; i < graph_data.length; i++) {
         column_text += "\
         <td><div id=\"column-" + i +"\" class=\"column menu\"></div></td>";
     }

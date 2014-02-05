@@ -1,5 +1,5 @@
 var columnDivs = new Array();
-var myData = new Array();
+var graph_data = new Array();
 var clDistrib = new Array();
 var simplificationPoints = new Array();
 var maxConflRestart = new Array();
@@ -13,14 +13,9 @@ function selected_runID(runID) {
     jQuery.getJSON(
         "getdata.php?id=" + runID
          ,function(response){
-            columnDivs = new Array();
-            myData = new Array();
-            clDistrib = new Array();
-            simplificationPoints = new Array();
-            maxConflRestart = new Array();
-
             columnDivs = response["columnDivs"];
-            myData = response["myData"];
+            graph_data = response["graph_data"];
+            clDistrib = new Array();
             simplificationPoints = response["simplificationPoints"];
             maxConflRestart = response["maxConflRestart"];
             doAll();
