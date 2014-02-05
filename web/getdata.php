@@ -540,8 +540,10 @@ class ClauseDistrib
     protected $tablename;
     protected $lookAt;
     protected $maxConfl;
+    protected $cldistrib;
+    protected $columndivs;
 
-    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt)
+    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt, $cldistrib, $columndivs)
     {
         $this->colnum = $mycolnum;
         $this->rownum = $myrownum;
@@ -549,11 +551,13 @@ class ClauseDistrib
         $this->tablename = $tablename;
         $this->lookAt = $lookAt;
         $this->maxConfl = $maxConfl;
+        $this->cldistrib = $cldistrib;
+        $this->columndivs = $columndivs;
     }
 
     public function fillClauseDistrib()
     {
-        echo "tmpArray = new Array();\n";
+        $json_tmparray = array();
 
         $query = "
         SELECT conflicts, num FROM ".$this->tablename."
@@ -570,12 +574,15 @@ class ClauseDistrib
         $rownum = 0;
         $lastConfl = 0;
         while($rownum < $nrows) {
-            $confl = mysql_result($result, $rownum, "conflicts");
-            echo "tmp = {conflStart: $lastConfl, conflEnd: $confl, darkness: [";
+            $confl = (int)mysql_result($result, $rownum, "conflicts");
+            $json_tmp = array();
+            $json_tmp['conflStart'] = $lastConfl;
+            $json_tmp['conflEnd'] = $confl;
+            $json_darkness = array();
             $lastConfl = $confl;
             while($rownum < $nrows) {
-                $numberOfCl = mysql_result($result, $rownum, "num");
-                echo "$numberOfCl";
+                $numberOfCl = (int)mysql_result($result, $rownum, "num");
+                array_push($json_darkness, $numberOfCl);
 
                 //More in this bracket?
                 $rownum++;
@@ -584,11 +591,9 @@ class ClauseDistrib
                 ) {
                     break;
                 }
-
-                echo ",";
             }
-            echo "]};\n";
-            echo "tmpArray.push(tmp);\n";
+            $json_tmp['darkness'] = $json_darkness;
+            array_push($json_tmparray, $json_tmp);
         }
 
         $blockDivID = "distBlock".$this->colnum."-".$this->rownum;
@@ -597,34 +602,38 @@ class ClauseDistrib
         $labelDivID = "$blockDivID"."_labeldiv";
 
         //Put into data
-        echo "oneData = {data: tmpArray";
-        echo ", blockDivID:  '$blockDivID'";
-        echo ", dataDivID:  '$dataDivID'";
-        echo ", canvasID: '$canvasID'";
-        echo ", labelDivID: '$labelDivID'";
-        echo ", lookAt: '".$this->lookAt."'";
-        echo "};\n";
-        echo "clDistrib[".$this->colnum."].push(oneData);";
+        $json_onedata = array();
+        $json_onedata['data'] = $json_tmparray;
+        $json_onedata['blockDivID'] = $blockDivID;
+        $json_onedata['dataDivID'] = $dataDivID;
+        $json_onedata['canvasID'] = $canvasID;
+        $json_onedata['labelDivID'] = $labelDivID;
+        $json_onedata['lookAt'] = $this->lookAt;
+        array_push($this->cldistrib[$this->colnum], $json_onedata);
 
         //Put into columnDivs
-        echo "tmp = {blockDivID:  '$blockDivID'};";
-        echo "columnDivs[".$this->colnum."].push(tmp);";
+        $json_tmp = array();
+        $json_tmp['blockDivID'] = $blockDivID;
+        array_push($this->columndivs[$this->colnum], $json_tmp);
+
+        return array($this->cldistrib, $this->columndivs);
     }
 }
 
+$json_cldistrib = array();
 /*for($i = 0; $i < count($runIDs); $i++) {
-    echo "clDistrib.push([]);";
-    $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue");
-    $myDist->fillClauseDistrib();
+    array_push($json_cldistrib, array());
+    $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue", $json_cldistrib, $json_columndivs);
+    list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
 
-    $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size");
-    $myDist->fillClauseDistrib();
+    $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size", $json_cldistrib, $json_columndivs);
+    list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
 }*/
 
 $final_json = array();
 $final_json["columnDivs"] = $json_columndivs;
 $final_json["myData"] = $json_mydata;
-//$final_json["clDistrib"] = new Array();
+$final_json["clDistrib"] = $json_cldistrib;
 $final_json["simplificationPoints"] = $json_simplificationpoints;
 $final_json["maxConflRestart"] = $json_maxconflrestart;
 $jsonstring = json_encode($final_json);
