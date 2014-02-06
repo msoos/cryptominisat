@@ -16,29 +16,12 @@ if (mysqli_connect_errno()) {
 }
 //print_r($sql);
 
-$runIDs = array(mysql_real_escape_string($_GET["id"]));
-#$runIDs = array(getLatestID());
+$runIDs = array($_GET["id"]);
 #$runIDs = array(4890500, 15772794, 15772794);
 #$runIDs = array(4890500);
 #$runIDs = array(15772794);
 #$runIDs = array(12962808);
-
-function getLatestID()
-{
-    $query = "select runID from `startup` order by startTime desc limit 1;";
-    $result = $sql->query($query);
-    if (!$result) {
-        printf("Error: %s\n", $sql->error());
-        die();
-    }
-
-    if ($result->num_rows < 1) {
-        return 0;
-    }
-    $row = $result->fetch_assoc();
-    $runID = (int)$row["runID"];
-    return $runID;
-}
+#$runIDs = array(22503);
 
 class DataPrinter
 {
@@ -71,16 +54,18 @@ class DataPrinter
 
         $query="
         SELECT max(conflicts) as mymax FROM `restart`
-        where conflicts < $maxConfl
-        and runID = ".$this->runID.";";
-        $result = $this->sql->query($query);
-        if (!$result) {
-            printf("Error: %s\n", $this->sql->error());
-            die();
-        }
+        where conflicts < ?
+        and runID = ?";
 
-        $row = $result->fetch_assoc();
-        $max = (int)$row["mymax"];
+        $stmt = $this->sql->prepare($query);
+        if (!$stmt) {
+            die("Cannot prepare statement");
+        }
+        $stmt->bind_param('ii', $maxConfl, $this->runID);
+        $stmt->execute();
+        $stmt->bind_result($max);
+        $stmt->fetch();
+        $stmt->close();
         return $max;
     }
 
@@ -188,22 +173,27 @@ class DataPrinter
         $this->numberingScheme++;
     }
 
-    function runQuery($table, $extra = "")
+    function runQuery($table)
     {
         $this->tablename = $table;
+
+        #NOT controllable by attacker, but sanitize it anyway
+        $table = $this->sql->real_escape_string($table);
 
         $query="
         SELECT *
         FROM `$table`
-        where `runID` = ".$this->runID."
-        and conflicts <= ".$this->max_confl." $extra
+        where `runID` = ?
+        and conflicts <= ?
         order by `conflicts`";
 
-        $this->data = $this->sql->query($query);
-        if (!$this->data) {
-            printf("Error: %s\n", $this->sql->error());
-            die();
+        $stmt = $this->sql->prepare($query);
+        if (!$stmt) {
+            die("Cannot prepare statement");
         }
+        $stmt->bind_param("ii", $this->runID, $this->max_confl);
+        $stmt->execute();
+        $this->data = $stmt->get_result();
         $this->nrows = $this->data->num_rows;
     }
 
@@ -517,14 +507,17 @@ class Simplifications
         $query="
         SELECT max(conflicts) as confl, simplifications as simpl
         FROM restart
-        where runID = ".$thisRunID."
+        where runID = ?
         group by simplifications
         order by simplifications";
-        $result = $this->sql->query($query);
-        if (!$result) {
-            printf("Error: %s\n", $this->sql->error());
-            die();
+
+        $stmt = $this->sql->prepare($query);
+        if (!$stmt) {
+            die("Cannot prepare statement");
         }
+        $stmt->bind_param("i", $thisRunID);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         $json_tmp = array();
         array_push($json_tmp, 0);
@@ -576,19 +569,22 @@ class ClauseDistrib
     public function fillClauseDistrib()
     {
         $json_tmparray = array();
+        $lookAt = $this->sql->real_escape_string($this->lookat);
 
         $query = "
         SELECT conflicts, num FROM ".$this->tablename."
-        where runID = ".$this->runID."
-        and conflicts <= ".$this->maxConfl."
-        and ".$this->lookAt." > 0
-        order by conflicts, ".$this->lookAt;
+        where runID = ?
+        and conflicts <= ?
+        and `$lookAt` > 0
+        order by `conflicts`, `$lookAt`";
 
-        $result = $this->sql->query($query);
-        if (!$result) {
-            printf("Error: %s\n", $this->sql->error());
-            die();
+        $stmt = $this->sql->prepare($query);
+        if (!$stmt) {
+            die("Cannot prepare statement");
         }
+        $stmt->bind_param("ii", $this->runID, $this->maxConfl);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $nrows = $result->num_rows;
         $result = $this->sql->store_result();
 
