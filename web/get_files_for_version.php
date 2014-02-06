@@ -19,7 +19,8 @@ function get_files_for_version($sql, $version)
     from solverRun, tags
     where solverRun.runID = tags.runID
     and solverRun.version = ?
-    and tagname = 'filename'";
+    and tagname = 'filename'
+    order by tags.tag";
     $stmt = $sql->prepare($query);
     if (!$stmt) {
         die("Cannot prepare statement");
