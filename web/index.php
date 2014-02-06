@@ -7,9 +7,6 @@
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery/jquery.js"></script>
     <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
-    <script type="text/javascript" src="scriptaculous-js-1.9.0/lib/prototype.js"></script>
-    <script type="text/javascript" src="scriptaculous-js-1.9.0/src/scriptaculous.js"></script>
-    <script type="text/javascript" src="dragdrop/js/portal.js"></script>
     <script type="text/javascript" src="selectdata.js"></script>
     <script type="text/javascript" src="drawgraphs.js"></script>
 

@@ -9,9 +9,6 @@ var graphs = new Array();
 //For distibutions
 var dists = [];
 
-//For portal
-var portal;
-
 function setRollPeriod(num)
 {
     for (var column = 0; column < graph_data.length; column++) {
@@ -76,7 +73,7 @@ function drawOneGraph(column, i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            rollPeriod: (graph_data[column][i].tablename == "restart") ? 10: 0,
+            rollPeriod: (graph_data[column][i].tablename == "restart") ? 0: 0,
             legend: 'always',
             xlabel: false,
             labelsDiv: document.getElementById(graph_data[column][i].labelDivID),
@@ -340,7 +337,7 @@ function createHTMLforDists()
     }
 }
 
-function createPortal()
+/*function createPortal()
 {
     var settings = {};
     for(var i = 0; i < columnDivs.length; i++) {
@@ -350,12 +347,12 @@ function createPortal()
         }
         settings["column-" + i] = tmp;
     }
-    var options = { portal : 'columns', editorEnabled : true};
+    //var options = { portal : 'columns', editorEnabled : true};
     var data = {};
     //Event.observe(window, 'load', function() {
-            portal = new Portal(settings, options, data);
+            //portal = new Portal(settings, options, data);
     //});
-}
+}*/
 
 function create_columns(num)
 {
@@ -396,6 +393,5 @@ function print_all_graphs()
     //Draws the graphs
     drawAllGraphs();
     draw_all_clause_distributions();
-    createPortal();
 }
 
