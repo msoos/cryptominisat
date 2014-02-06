@@ -68,8 +68,6 @@ function fill_files_options()
     jQuery.getJSON("get_files_for_version.php?version=" + jQuery("#version option:selected").text(),
         function(result){
             jQuery("#fname").replaceOptions(result);
-            console.log("updated:", result);
-            console.log(jQuery("#fname option:selected").val());
             selected_runID(jQuery("#fname option:selected").val());
         }
     );
