@@ -11,9 +11,26 @@ var maxConflRestart = new Array();
 
 function selected_runID(runID) {
     clear_everything();
+    console.log(runID);
+    var v = document.getElementById("fileinfo");
     jQuery.getJSON(
         "getdata.php?id=" + runID,
-         function(response){
+         function(response)
+         {
+            console.log(response["metadata"]);
+            var v = document.getElementById("fileinfo");
+            v.innerHTML = "Status: ";
+            var metad = response["metadata"][0];
+            if (metad["status"] == null) {
+                v.innerHTML += "Unfinished";
+            } else {
+                v.innerHTML += metad["status"];
+                v.innerHTML += ", time(s): "+ metad["difftime"];
+                //v.innerHTML += ", start time: "+ metad["startTime"];
+                //v.innerHTML += ", end time: "+ metad["endTime"];
+            }
+            v.innerHTML += ", run id: "+runID;
+
             columnDivs = response["columnDivs"];
             graph_data = response["graph_data"];
             clDistrib = new Array();

@@ -654,7 +654,77 @@ $json_cldistrib = array();
     list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
 }*/
 
+function get_metadata($sql, $runID)
+{
+    $query="
+    SELECT `startTime`
+    FROM `startup`
+    where runID = ?";
+
+    $stmt = $sql->prepare($query);
+    if (!$stmt) {
+        print "Error:".$sql->error;
+        die("Cannot prepare statement $query");
+    }
+    $stmt->bind_param("i", $runID);
+    $stmt->execute();
+    $stmt->bind_result($starttime);
+    $stmt->fetch();
+    $stmt->close();
+
+    $query="
+    SELECT `endTime`, `status`
+    FROM `finishup`
+    where runID = ?";
+
+    $stmt = $sql->prepare($query);
+    if (!$stmt) {
+        print "Error:".$sql->error;
+        die("Cannot prepare statement $query");
+    }
+    $stmt->bind_param("i", $runID);
+    $stmt->execute();
+    $stmt->bind_result($endtime, $status);
+    $ok = $stmt->fetch();
+    $stmt->close();
+
+    if ($ok) {
+    $query="
+        SELECT `endTime`-`startTime`
+        FROM `finishup`, `startup`
+        where startup.runID = finishup.runID
+        and startup.runID = ?";
+
+        $stmt = $sql->prepare($query);
+        if (!$stmt) {
+            print "Error:".$sql->error;
+            die("Cannot prepare statement $query");
+        }
+        $stmt->bind_param("i", $runID);
+        $stmt->execute();
+        $stmt->bind_result($difftime);
+        $stmt->fetch();
+        $stmt->close();
+    }
+
+
+
+    $json_ret = array();
+    $json_ret["startTime"] = $starttime;
+    $json_ret["endTime"] = $endtime;
+    $json_ret["difftime"] = $difftime;
+    $json_ret["status"] = $status;
+
+    return $json_ret;
+}
+$metadata = array();
+for($i = 0; $i < count($runIDs); $i++) {
+    $this_metadata = get_metadata($sql, $runIDs[$i]);
+    array_push($metadata, $this_metadata);
+};
+
 $final_json = array();
+$final_json["metadata"] = $metadata;
 $final_json["columnDivs"] = $json_columndivs;
 $final_json["graph_data"] = $json_graph_data;
 $final_json["clDistrib"] = $json_cldistrib;

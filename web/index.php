@@ -63,6 +63,7 @@ find a full list of terms below.
 </p>
 <p><?php include 'get_versions.php'; ?></p>
 
+<p id="fileinfo"></p>
 <div id="columns"></div>
 <div id="datagraphs"></div>
 
