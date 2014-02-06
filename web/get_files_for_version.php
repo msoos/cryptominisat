@@ -3,38 +3,44 @@ $username="cmsat_presenter";
 $password="";
 $database="cmsat";
 
-mysql_connect("localhost", $username, $password);
-@mysql_select_db($database) or die( "Unable to select database");
+$sql = new mysqli("localhost", $username, $password, $database);
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    die();
+}
 
-$version = mysql_real_escape_string($_GET["version"]);
+$version = $_GET["version"];
 #$version = "aaaa3aaaa72c7bac1ebe38bdf939ac438d7e9f37";
 
-function get_files_for_version($version)
+function get_files_for_version($sql, $version)
 {
-    $query = '
-    select solverRun.runID as runID, tagname,tags.tag
+    $query = "
+    select solverRun.runID as runID, tags.tag as tag
     from solverRun, tags
     where solverRun.runID = tags.runID
-    and solverRun.version="'.$version.'"
-    and tagname = "filename";';
-
-    $result = mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
+    and solverRun.version = ?
+    and tagname = 'filename'";
+    $stmt = $sql->prepare($query);
+    if (!$stmt) {
+        die("Cannot prepare statement");
     }
+    $stmt->bind_param('s', $version);
+    $stmt->execute();
+    $stmt->bind_result($runID, $tag);
 
     $json = array();
-    while($row = mysql_fetch_assoc($result))
+    while($stmt->fetch())
     {
         //echo "{text: '".$row['tag']."', value: '".$row['runID']."'},";
         $data = array(
-            'text' => $row['tag'],
-            'value' => $row['runID']
+            'text' => $tag,
+            'value' => $runID
         );
         array_push($json, $data);
     }
     $jsonstring = json_encode($json);
     echo $jsonstring;
+    $stmt->close();
 }
-get_files_for_version($version);
+get_files_for_version($sql, $version);
 ?>

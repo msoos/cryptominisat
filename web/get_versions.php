@@ -1,8 +1,8 @@
-<!--<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
     <script type="text/javascript" src="jquery/jquery.js"></script>
-</head>-->
+</head>
 
 <script type="text/javascript">
 (function($, window) {
@@ -32,24 +32,28 @@ $username="cmsat_presenter";
 $password="";
 $database="cmsat";
 
-mysql_connect("localhost", $username, $password);
-@mysql_select_db($database) or die( "Unable to select database");
+$sql = new mysqli("localhost", $username, $password, $database);
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    die();
+}
 
-function fill_versions()
+function fill_versions($sql)
 {
     $query = "select `version` from `solverRun` group by `version`;";
-    $result = mysql_query($query);
+    $result = $sql->query($query);
     if (!$result) {
         die('Invalid query: ' . mysql_error());
     }
     echo "<select id='version' onchange='changed_version(this.value);'>\n";
-    while($row = mysql_fetch_assoc($result))
+    while($row = $result->fetch_assoc())
     {
         echo "<option value = '".$row['version']."'>".$row['version']."</option>\n";
     }
     echo "</select>\n";
+    $result->close();
 }
-fill_versions();
+fill_versions($sql);
 ?>
 
 <select id="fname" onchange='selected_runID(this.value);'>
