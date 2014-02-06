@@ -52,7 +52,7 @@ echo "Done creating todo with $numlines of problems"
 
 # create random order
 echo -ne "Randomizing order of execution of $val files"
-sort --random-sort todo > todo_rnd
+shuf --random-source=myrnd --random-sort todo > todo_rnd
 echo "Done."
 
 # create per-core todos
