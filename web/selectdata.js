@@ -11,13 +11,11 @@ var maxConflRestart = new Array();
 
 function selected_runID(runID) {
     clear_everything();
-    console.log(runID);
     var v = document.getElementById("fileinfo");
     jQuery.getJSON(
         "getdata.php?id=" + runID,
          function(response)
          {
-            console.log(response["metadata"]);
             var v = document.getElementById("fileinfo");
             v.innerHTML = "Status: ";
             var metad = response["metadata"][0];
