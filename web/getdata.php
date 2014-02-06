@@ -59,7 +59,7 @@ class DataPrinter
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
-            die("Cannot prepare statement");
+            die("Cannot prepare statement $query");
         }
         $stmt->bind_param('ii', $maxConfl, $this->runID);
         $stmt->execute();
@@ -189,7 +189,7 @@ class DataPrinter
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
-            die("Cannot prepare statement");
+            die("Cannot prepare statement $query");
         }
         $stmt->bind_param("ii", $this->runID, $this->max_confl);
         $stmt->execute();
@@ -513,7 +513,7 @@ class Simplifications
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
-            die("Cannot prepare statement");
+            die("Cannot prepare statement $query");
         }
         $stmt->bind_param("i", $thisRunID);
         $stmt->execute();
@@ -580,7 +580,7 @@ class ClauseDistrib
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
-            die("Cannot prepare statement");
+            die("Cannot prepare statement $query");
         }
         $stmt->bind_param("ii", $this->runID, $this->maxConfl);
         $stmt->execute();
