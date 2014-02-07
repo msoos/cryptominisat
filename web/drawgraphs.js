@@ -347,11 +347,11 @@ function createHTMLforDists()
         }
         settings["column-" + i] = tmp;
     }
-    //var options = { portal : 'columns', editorEnabled : true};
+    var options = { portal : 'columns', editorEnabled : true};
     var data = {};
-    //Event.observe(window, 'load', function() {
-            //portal = new Portal(settings, options, data);
-    //});
+    Event.observe(window, 'load', function() {
+            portal = new Portal(settings, options, data);
+    });
 }*/
 
 function create_columns(num)
