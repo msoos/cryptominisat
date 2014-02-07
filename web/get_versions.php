@@ -29,7 +29,7 @@ function changed_version(val) {
 
 <?php
 $username="cmsat_presenter";
-$password="";
+$password="neud21kahgsdk";
 $database="cmsat";
 
 $sql = new mysqli("localhost", $username, $password, $database);

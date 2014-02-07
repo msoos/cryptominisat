@@ -6,7 +6,7 @@ $maxConfl = 5000000;
 //error_reporting(E_STRICT);
 
 $username="cmsat_presenter";
-$password="";
+$password="neud21kahgsdk";
 $database="cmsat";
 
 $sql = new mysqli("localhost", $username, $password, $database);
