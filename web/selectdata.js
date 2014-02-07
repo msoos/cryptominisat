@@ -10,6 +10,7 @@ var maxConflRestart = new Array();
 //}
 
 function selected_runID(runID) {
+    console.log("getting runid " + runID);
     clear_everything();
     link = "getdata.php?id=" + runID;
     //runID = "/private/sat/dat/" + runID.replace(/^.*[\\\/]/, '') + ".dat"
@@ -18,6 +19,7 @@ function selected_runID(runID) {
         link
         , function(response)
          {
+            console.log("parsing data");
             var v = document.getElementById("fileinfo");
             v.innerHTML = "Status: ";
             var metad = response["metadata"][0];
