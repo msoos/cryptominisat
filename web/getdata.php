@@ -114,12 +114,12 @@ class DataPrinter
             //Calc local sum
             $local_sum = 0;
             foreach ($datanames as $dataname) {
-                $local_sum += (int)$row[$dataname];
+                $local_sum += $row[$dataname];
             }
 
             //Print for each
             foreach ($datanames as $dataname) {
-                $tmp = (int)$row[$dataname];
+                $tmp = $row[$dataname];
                 if (sizeof($datanames) > 1) {
                     if ($local_sum != 0) {
                         $tmp /= $local_sum;
