@@ -261,23 +261,17 @@ function draw_clause_distribution(_data, _canvas_div_ID, _div_ID, _simpPoints)
     }
 }
 
-function calc_width()
-{
-    return 600;
-}
-
 //Creates HTML for dygraphs
 function createHTMLforGraphs()
 {
-    var width = calc_width();
     var datagraphs = document.getElementById("datagraphs");
     for (var i = 0; i < graph_data.length; i++) {
         datagraphs.innerHTML += "\
-        <div class=\"block\" id=\"" + graph_data[i].blockDivID + "\">\
+        <div id=\"" + graph_data[i].blockDivID + "\">\
         <table id=\"plot-table-a\">\
         <tr>\
-        <td width=\""+width+"\"><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
-        <td>\
+        <td width=\"80%\"><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
+        <td width=\"20%\">\
 \
         <table id=\"plot-table-a\">\
         <tr><td>"+ graph_data[i].title +"</td></tr>\
@@ -298,7 +292,7 @@ function createHTMLforDists()
         var datagraphs = document.getElementById("datagraphs");
 
         datagraphs.innerHTML += "\
-        <div class=\"block\" id=\"" + clDistrib[i2].blockDivID +"\"> \
+        <div id=\"" + clDistrib[i2].blockDivID +"\"> \
         <table id=\"plot-table-a\"> \
         <tr> \
         <td> \
@@ -354,7 +348,7 @@ function print_all_graphs()
 
     //Clear & create HTML
     createHTMLforGraphs();
-    createHTMLforDists();
+    //createHTMLforDists();
 
     //Draws the graphs
     drawAllGraphs();

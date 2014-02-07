@@ -15,7 +15,7 @@ $version = $_GET["version"];
 function get_files_for_version($sql, $version)
 {
     $query = "
-    select solverRun.runID as runID, tags.tag as tag
+    select solverRun.runID as runID, tags.tag as fname
     from solverRun, tags
     where solverRun.runID = tags.runID
     and solverRun.version = ?
@@ -27,14 +27,14 @@ function get_files_for_version($sql, $version)
     }
     $stmt->bind_param('s', $version);
     $stmt->execute();
-    $stmt->bind_result($runID, $tag);
+    $stmt->bind_result($runID, $fname);
 
     $json = array();
     while($stmt->fetch())
     {
         //echo "{text: '".$row['tag']."', value: '".$row['runID']."'},";
         $data = array(
-            'text' => $tag,
+            'text' => basename($fname),
             'value' => $runID
         );
         array_push($json, $data);

@@ -61,14 +61,14 @@ simplifcaition, and the solver behaviour changes afterwards. The angle
 of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
-
-<select id='version' onchange='changed_version(this.value);'>
+<p>
+<select id='version' onchange='changed_version(this.value);' style="width:20%;">
 <option value = "idtest">idtest</option>
 </select>
-
-<select id="fname">
+<select id="fname" style="width:60%;">
 <option value="test">Test</option>
 </select>
+</p>
 
 <script type="text/javascript">
 function changed_version(val) {
