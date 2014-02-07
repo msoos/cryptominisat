@@ -11,10 +11,13 @@ var maxConflRestart = new Array();
 
 function selected_runID(runID) {
     clear_everything();
-    var v = document.getElementById("fileinfo");
+    link = "getdata.php?id=" + runID;
+    runID = "/private/sat/dat/" + runID.replace(/^.*[\\\/]/, '') + ".dat"
+    console.log(runID);
+    link = runID;
     jQuery.getJSON(
-        "getdata.php?id=" + runID,
-         function(response)
+        link
+        , function(response)
          {
             var v = document.getElementById("fileinfo");
             v.innerHTML = "Status: ";
