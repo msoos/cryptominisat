@@ -691,7 +691,7 @@ function get_metadata($sql, $runID)
 
     if ($ok) {
     $query="
-        SELECT `endTime`-`startTime`
+        SELECT UNIX_TIMESTAMP(`endTime`)-UNIX_TIMESTAMP(`startTime`)
         FROM `finishup`, `startup`
         where startup.runID = finishup.runID
         and startup.runID = ?";
@@ -706,9 +706,9 @@ function get_metadata($sql, $runID)
         $stmt->bind_result($difftime);
         $stmt->fetch();
         $stmt->close();
+    } else {
+        $difftime = 0;
     }
-
-
 
     $json_ret = array();
     $json_ret["startTime"] = $starttime;
