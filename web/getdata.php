@@ -268,8 +268,11 @@ class MainDataGetter
             , array("avg. agility")
         );
 
-        /*print_one_graph(array("flippedPercent")
-            , array("var polarity flipped %"));*/
+//         $this->print_one_graph(
+//             array("var polarity flipped")
+//             , array("flipped")
+//             , array("")
+//         );
 
         $this->print_one_graph(
             "Conflicts immediately following a conflict %"
