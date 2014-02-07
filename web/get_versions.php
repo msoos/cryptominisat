@@ -56,19 +56,26 @@ function fill_versions($sql)
 fill_versions($sql);
 ?>
 
-<select id="fname" onchange='selected_runID(this.value);'>
+<select id="fname">
 <option value="newsvalue">News</option>
 <option value="webmastervalue">Webmaster</option>
 <option value="techvalue">Tech</option>
 </select>
 
 <script type="text/javascript">
+$('#fname').change(function(){
+    selected_runID(jQuery("#fname option:selected").text());
+    //alert($(this).val());
+    //selected_runID(this.text());
+})
+
 function fill_files_options()
 {
     jQuery.getJSON("get_files_for_version.php?version=" + jQuery("#version option:selected").text(),
         function(result){
             jQuery("#fname").replaceOptions(result);
-            selected_runID(jQuery("#fname option:selected").val());
+            //selected_runID(jQuery("#fname option:selected").val());
+            selected_runID(jQuery("#fname option:selected").text());
         }
     );
 };
