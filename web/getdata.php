@@ -1,4 +1,5 @@
 <?php
+ob_start('ob_gzhandler');
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 $maxConfl = 5000000;
