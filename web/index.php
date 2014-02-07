@@ -61,7 +61,61 @@ simplifcaition, and the solver behaviour changes afterwards. The angle
 of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
-<p><?php include 'get_versions.php'; ?></p>
+
+<select id='version' onchange='changed_version(this.value);'>
+<option value = "idtest">idtest</option>
+</select>
+
+<select id="fname">
+<option value="test">Test</option>
+</select>
+
+<script type="text/javascript">
+function changed_version(val) {
+    console.log(val);
+    new fill_files_options(val);
+};
+
+$('#fname').change(function(){
+    selected_runID(jQuery("#fname option:selected").val());
+    //selected_runID(jQuery("#fname option:selected").text());
+});
+
+function fill_versions()
+{
+    jQuery.getJSON("get_versions.php",
+        function(data){
+            var select = document.getElementById('version');
+            select.options.length = 0; // clear out existing items
+            for(var i=0; i < data.length; i++) {
+                var d = data[i];
+                select.options.add(new Option(d.text, d.value));
+            }
+
+            changed_version(jQuery("#version option:selected").val());
+        }
+    );
+};
+
+function fill_files_options()
+{
+    jQuery.getJSON("get_files_for_version.php?version=" + jQuery("#version option:selected").text(),
+        function(data){
+            var select = document.getElementById('fname');
+            select.options.length = 0; // clear out existing items
+            for(var i=0; i < data.length; i++) {
+                var d = data[i];
+                select.options.add(new Option(d.text, d.value));
+            }
+            selected_runID(jQuery("#fname option:selected").val());
+            //selected_runID(jQuery("#fname option:selected").text());
+        }
+    );
+};
+
+
+fill_versions();
+</script>
 
 <p id="fileinfo"></p>
 <div id="columns"></div>
