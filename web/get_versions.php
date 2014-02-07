@@ -1,8 +1,8 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!--<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
     <script type="text/javascript" src="jquery/jquery.js"></script>
-</head>
+</head>-->
 
 <script type="text/javascript">
 (function($, window) {
