@@ -17,36 +17,29 @@ if (mysqli_connect_errno()) {
 }
 //print_r($sql);
 
-$runIDs = array($_GET["id"]);
-#$runIDs = array(4890500, 15772794, 15772794);
-#$runIDs = array(4890500);
-#$runIDs = array(15772794);
-#$runIDs = array(12962808);
-#$runIDs = array(22503);
+$runID = $_GET["id"];
+#$runID = 22503;
 
-class DataPrinter
+class MainDataGetter
 {
     protected $numberingScheme;
     protected $data;
     protected $nrows;
     protected $colnum;
     protected $runID;
-    protected $num_runIDs;
     protected $max_confl;
     protected $columndivs;
     protected $data_tmp;
     protected $tablename;
     protected $sql;
 
-    public function __construct($mycolnum, $runID, $maxConfl, $num_RunIDs, $json_columndivs, $sql)
+    public function __construct($runID, $maxConfl, $sql)
     {
-        $this->colnum = $mycolnum;
         $this->runID = $runID;
         $this->numberingScheme = 0;
         $this->sql = $sql;
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
-        $this->num_runIDs = $num_RunIDs;
-        $this->columndivs = $json_columndivs;
+        $this->columndivs = array();
         $this->data_tmp = array();
     }
 
@@ -146,15 +139,14 @@ class DataPrinter
         }
 
         //Calculate blockDivID
-        $blockDivID = "graphBlock".$this->numberingScheme."AT".$this->colnum;
-        $fullname = "toplot_".$this->numberingScheme."_".$this->colnum;
+        $blockDivID = "graphBlock".$this->numberingScheme;
+        $fullname = "toplot_".$this->numberingScheme;
 
         //put into $this->data_tmp
         $json_data_tmp = array();
         $json_data_tmp['data'] = $json_data;
         $json_data_tmp['labels'] = $json_labels_tmp;
         $json_data_tmp['stacked'] = (int)(sizeof($datanames) > 1);
-        $json_data_tmp['colnum'] = $this->colnum;
         $json_data_tmp['blockDivID'] = $blockDivID;
         $json_data_tmp['dataDivID'] = $fullname."_datadiv";
         $json_data_tmp['labelDivID'] = $fullname."_labeldiv";
@@ -166,10 +158,7 @@ class DataPrinter
         //put into $this->columndivs
         $json_columndivs_tmp = array();
         $json_columndivs_tmp['blockDivID'] = $blockDivID;
-        if (!array_key_exists($this->colnum, $this->columndivs)) {
-            $this->columndivs[$this->colnum] = array();
-        }
-        array_push($this->columndivs[$this->colnum], $json_columndivs_tmp);
+        array_push($this->columndivs, $json_columndivs_tmp);
 
         $this->numberingScheme++;
     }
@@ -479,31 +468,19 @@ class DataPrinter
     }
 }
 
-$json_graph_data = array();
-$json_maxconflrestart = array();
-$json_columndivs = array();
-for($i = 0; $i < count($runIDs); $i++) {
-    $printer = new DataPrinter($i, $runIDs[$i], $maxConfl, count($runIDs), $json_columndivs, $sql);
-
-    list($json_columndivs, $data_tmp, $orderNum) = $printer->fill_data_tmp();
-    array_push($json_maxconflrestart, $printer->get_max_confl());
-    array_push($json_graph_data, $data_tmp);
-}
-
 
 class Simplifications
 {
-    protected $runIDs;
-    protected $points = array();
+    protected $runID;
     protected $sql;
 
-    public function __construct($runIDs, $sql)
+    public function __construct($runID, $sql)
     {
-        $this->runIDs = $runIDs;
+        $this->runID = $runID;
         $this->sql = $sql;
     }
 
-    protected function fillSimplificationPoints($thisRunID)
+    public function fillSimplificationPoints()
     {
         $query="
         SELECT max(conflicts) as confl, simplifications as simpl
@@ -516,7 +493,7 @@ class Simplifications
         if (!$stmt) {
             die("Cannot prepare statement $query");
         }
-        $stmt->bind_param("i", $thisRunID);
+        $stmt->bind_param("i", $this->runID);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -528,42 +505,26 @@ class Simplifications
             array_push($json_tmp, $confl);
             $i++;
         }
-        array_push($this->points, $json_tmp);
-    }
-
-    public function fill()
-    {
-        foreach ($this->runIDs as $thisRunID) {
-            $this->fillSimplificationPoints($thisRunID);
-        }
-
-        return $this->points;
+        return $json_tmp;
     }
 }
 
-$simps = new Simplifications($runIDs, $sql);
-$json_simplificationpoints = $simps->fill();
-
 class ClauseDistrib
 {
-    protected $colnum;
     protected $rownum;
     protected $runID;
     protected $tablename;
     protected $lookAt;
     protected $maxConfl;
-    protected $cldistrib;
     protected $columndivs;
 
-    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt, $cldistrib, $columndivs)
+    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt, $columndivs)
     {
-        $this->colnum = $mycolnum;
         $this->rownum = $myrownum;
         $this->runID = $runID;
         $this->tablename = $tablename;
         $this->lookAt = $lookAt;
         $this->maxConfl = $maxConfl;
-        $this->cldistrib = $cldistrib;
         $this->columndivs = $columndivs;
     }
 
@@ -621,9 +582,9 @@ class ClauseDistrib
             array_push($json_tmparray, $json_tmp);
         }
 
-        $blockDivID = "distBlock".$this->colnum."-".$this->rownum;
-        $dataDivID = "drawingPad".$this->colnum."-".$this->rownum."-Parent";
-        $canvasID = "drawingPad".$this->colnum."-".$this->rownum;
+        $blockDivID = "distBlock".$this->rownum;
+        $dataDivID = "drawingPad".$this->rownum."-Parent";
+        $canvasID = "drawingPad".$this->rownum;
         $labelDivID = "$blockDivID"."_labeldiv";
 
         //Put into data
@@ -634,26 +595,15 @@ class ClauseDistrib
         $json_onedata['canvasID'] = $canvasID;
         $json_onedata['labelDivID'] = $labelDivID;
         $json_onedata['lookAt'] = $this->lookAt;
-        array_push($this->cldistrib[$this->colnum], $json_onedata);
 
         //Put into columnDivs
         $json_tmp = array();
         $json_tmp['blockDivID'] = $blockDivID;
-        array_push($this->columndivs[$this->colnum], $json_tmp);
+        array_push($this->columndivs, $json_tmp);
 
-        return array($this->cldistrib, $this->columndivs);
+        return array($json_onedata, $this->columndivs);
     }
 }
-
-$json_cldistrib = array();
-/*for($i = 0; $i < count($runIDs); $i++) {
-    array_push($json_cldistrib, array());
-    $myDist = new ClauseDistrib($i, 0, $runIDs[$i], $maxConfl, "clauseGlueDistrib", "glue", $json_cldistrib, $json_columndivs);
-    list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
-
-    $myDist = new ClauseDistrib($i, 1, $runIDs[$i], $maxConfl, "clauseSizeDistrib", "size", $json_cldistrib, $json_columndivs);
-    list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
-}*/
 
 function get_metadata($sql, $runID)
 {
@@ -718,11 +668,23 @@ function get_metadata($sql, $runID)
 
     return $json_ret;
 }
-$metadata = array();
-for($i = 0; $i < count($runIDs); $i++) {
-    $this_metadata = get_metadata($sql, $runIDs[$i]);
-    array_push($metadata, $this_metadata);
-};
+
+///Main Data
+$main_data_getter = new MainDataGetter($runID, $maxConfl, $sql);
+list($json_columndivs, $json_graph_data, $orderNum) = $main_data_getter->fill_data_tmp();
+$json_maxconflrestart = $main_data_getter->get_max_confl();
+
+///Simplification points
+$simps = new Simplifications($runID, $sql);
+$json_simplificationpoints = $simps->fillSimplificationPoints();
+
+///Clause distributions
+//$myDist = new ClauseDistrib($i, 0, $runID, $maxConfl, "clauseGlueDistrib", "glue", $json_columndivs);
+//list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
+$json_cldistrib = array();
+
+///Metadata
+$metadata = get_metadata($sql, $runID);
 
 $final_json = array();
 $final_json["metadata"] = $metadata;

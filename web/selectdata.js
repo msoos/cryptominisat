@@ -22,7 +22,7 @@ function selected_runID(runID) {
             console.log("parsing data");
             var v = document.getElementById("fileinfo");
             v.innerHTML = "Status: ";
-            var metad = response["metadata"][0];
+            var metad = response["metadata"];
             if (metad["status"] == null) {
                 v.innerHTML += "Unfinished";
             } else {

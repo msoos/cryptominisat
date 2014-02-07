@@ -11,12 +11,10 @@ var dists = [];
 
 function setRollPeriod(num)
 {
-    for (var column = 0; column < graph_data.length; column++) {
-        for (var j = 0; j < graph_data[column].length; j++) {
-            graphs[column][j].updateOptions( {
-                rollPeriod: num
-            } );
-        }
+    for (var j = 0; j < graph_data.length; j++) {
+        graphs[j].updateOptions( {
+            rollPeriod: num
+        } );
     }
 }
 
@@ -24,32 +22,30 @@ function setRollPeriod(num)
 function drawAllGraphs()
 {
     graphs = new Array();
-    for (var column = 0; column < graph_data.length; column++) {
-        graphs.push(new Array());
-        for (var i = 0; i < graph_data[column].length; i++) {
-            graphs[column].push(drawOneGraph(column, i));
-        }
+    for (var i = 0; i < graph_data.length; i++) {
+        console.log("printing graph "+i);
+        graphs.push(drawOneGraph(i));
     }
 }
 
 //Draw one of the graphs
-function drawOneGraph(column, i)
+function drawOneGraph(i)
 {
+    console.log("putting to:");
+    console.log(document.getElementById(graph_data[i].dataDivID));
     graph = new Dygraph(
-        document.getElementById(graph_data[column][i].dataDivID),
-        graph_data[column][i].data
+        document.getElementById(graph_data[i].dataDivID),
+        graph_data[i].data
         , {
-            stackedGraph: graph_data[column][i].stacked,
-            includeZero: graph_data[column][i].stacked,
-            labels: graph_data[column][i].labels,
-            //title: graph_data[column][i].title,
+            stackedGraph: graph_data[i].stacked,
+            includeZero: graph_data[i].stacked,
+            labels: graph_data[i].labels,
+            //title: graph_data[i].title,
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(105, 105, 185, 185)";
                 //Draw simplification points
-                colnum = graph_data[column][i].colnum;
-
-                for(var k = 0; k < simplificationPoints[colnum].length-1; k++) {
-                    var bottom_left = g.toDomCoords(simplificationPoints[colnum][k], -20);
+                for(var k = 0; k < simplificationPoints.length-1; k++) {
+                    var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
                     var left = bottom_left[0];
                     canvas.fillRect(left, area.y, 2, area.h);
                 }
@@ -73,10 +69,10 @@ function drawOneGraph(column, i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.3,
             highlightCircleSize: 3,
-            rollPeriod: (graph_data[column][i].tablename == "restart") ? 0: 0,
+            rollPeriod: (graph_data[i].tablename == "restart") ? 0: 0,
             legend: 'always',
             xlabel: false,
-            labelsDiv: document.getElementById(graph_data[column][i].labelDivID),
+            labelsDiv: document.getElementById(graph_data[i].labelDivID),
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
@@ -84,14 +80,13 @@ function drawOneGraph(column, i)
             strokeStyle: "black",
             colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
             fillAlpha: 0.8,
-            errorBars: graph_data[column][i].noisy,
-            dateWindow: [0, maxConflRestart[graph_data[column][i].colnum]],
+            errorBars: graph_data[i].noisy,
+            dateWindow: [0, maxConflRestart],
             drawCallback: function(me, initial) {
 
-                //Fill original sizes, so if we zoom out, we know where to
-                //zoom out
+                //Fill original sizes, so if we zoom out, we know where to zoom out
                 if (initial)
-                    origSizes[graph_data[column][i].colnum] = me.xAxisRange();
+                    origSizes = me.xAxisRange();
 
                 //Initial draw, ignore
                 if (blockRedraw || initial)
@@ -103,13 +98,13 @@ function drawOneGraph(column, i)
                 draw_all_clause_distributions(xrange[0], xrange[1]);
 
                 //Zoom every one the same way
-                for (var j = 0; j < graph_data[column].length; j++) {
+                for (var j = 0; j < graph_data.length; j++) {
                     //Don't go into loop
-                    if (graphs[column][j] == me)
+                    if (graphs[j] == me)
                         continue;
 
                     //If this is a full reset, then zoom out maximally
-                    graphs[column][j].updateOptions( {
+                    graphs[j].updateOptions( {
                         dateWindow: xrange
                     } );
                     //console.log(xrange);
@@ -125,26 +120,20 @@ function drawOneGraph(column, i)
 
 function draw_all_clause_distributions(from, to)
 {
-    for(var column = 0; column < columnDivs.length; column++) {
-        if (clDistrib.length <= column) {
-            continue;
-        }
+    for(var i2 = 0; i2 < clDistrib.length; i2++) {
+        a = new draw_clause_distribution(
+                clDistrib[i2].data
+                , clDistrib[i2].canvasID
+                , clDistrib[i2].dataDivID
+                , simplificationPoints[column]
+            );
 
-        for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
-            a = new draw_clause_distribution(
-                    clDistrib[column][i2].data
-                    , clDistrib[column][i2].canvasID
-                    , clDistrib[column][i2].dataDivID
-                    , simplificationPoints[column]
-                );
+        if (from === undefined)
+            a.drawPattern(0, maxConflRestart[column]);
+        else
+            a.drawPattern(from, to);
 
-            if (from === undefined)
-                a.drawPattern(0, maxConflRestart[column]);
-            else
-                a.drawPattern(from, to);
-
-            dists.push(a);
-        }
+        dists.push(a);
     }
 }
 
@@ -274,8 +263,7 @@ function draw_clause_distribution(_data, _canvas_div_ID, _div_ID, _simpPoints)
 
 function calc_width()
 {
-    var width = 600/maxConflRestart.length;
-    return width;
+    return 600;
 }
 
 //Creates HTML for dygraphs
@@ -283,57 +271,53 @@ function createHTMLforGraphs()
 {
     var width = calc_width();
     var datagraphs = document.getElementById("datagraphs");
-    for (var i = 0; i < graph_data[0].length; i++) {
-        for (var column = 0; column < graph_data.length; column++) {
-            datagraphs.innerHTML += "\
-            <div class=\"block\" id=\"" + graph_data[column][i].blockDivID + "\">\
-            <table id=\"plot-table-a\">\
-            <tr>\
-            <td width=\""+width+"\"><div id=\"" + graph_data[column][i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
-            <td>\
+    for (var i = 0; i < graph_data.length; i++) {
+        datagraphs.innerHTML += "\
+        <div class=\"block\" id=\"" + graph_data[i].blockDivID + "\">\
+        <table id=\"plot-table-a\">\
+        <tr>\
+        <td width=\""+width+"\"><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"></div></td>\
+        <td>\
 \
-            <table id=\"plot-table-a\">\
-            <tr><td>"+ graph_data[column][i].title +"</td></tr>\
-            <tr><td><div id=\"" + graph_data[column][i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
-            </table>\
+        <table id=\"plot-table-a\">\
+        <tr><td>"+ graph_data[i].title +"</td></tr>\
+        <tr><td><div id=\"" + graph_data[i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
+        </table>\
 \
-            </td>\
-            </tr>\
-            </table>\
-            </div>";
-        }
+        </td>\
+        </tr>\
+        </table>\
+        </div>";
     }
 }
 
 function createHTMLforDists()
 {
     var width = calc_width();
-    for(var column = 0; column < clDistrib.length; column++) {
-        for(var i2 = 0; i2 < clDistrib[column].length; i2++) {
-            var datagraphs = document.getElementById("datagraphs");
+    for(var i2 = 0; i2 < clDistrib.length; i2++) {
+        var datagraphs = document.getElementById("datagraphs");
 
-            datagraphs.innerHTML += "\
-            <div class=\"block\" id=\"" + clDistrib[column][i2].blockDivID +"\"> \
-            <table id=\"plot-table-a\"> \
-            <tr> \
-            <td> \
-                <div id=\""+ clDistrib[column][i2].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"> \
-                <canvas id=\""+ clDistrib[column][i2].canvasID + "\" class=\"canvasPlot\"> \
-                no support for canvas \
-                </canvas> \
-                </div> \
-            </td> \
-            <td> \
-                <div id=\"" + clDistrib[column][i2].labelDivID + "\" class=\"draghandle\"><b> \
-                (" + column + ") Newly learnt clause " + clDistrib[column][i2].lookAt + " distribution. \
-                Bottom: 1. Top:  max. \
-                Black: Many. White: 0. \
-                </b></div> \
-            </td> \
-            </tr> \
-            </table> \
-            </div>";
-        }
+        datagraphs.innerHTML += "\
+        <div class=\"block\" id=\"" + clDistrib[i2].blockDivID +"\"> \
+        <table id=\"plot-table-a\"> \
+        <tr> \
+        <td> \
+            <div id=\""+ clDistrib[i2].dataDivID + "\" class=\"myPlotData\" style=\"width:"+width+"px;\"> \
+            <canvas id=\""+ clDistrib[i2].canvasID + "\" class=\"canvasPlot\"> \
+            no support for canvas \
+            </canvas> \
+            </div> \
+        </td> \
+        <td> \
+            <div id=\"" + clDistrib[i2].labelDivID + "\" class=\"draghandle\"><b> \
+            (" + column + ") Newly learnt clause " + clDistrib[i2].lookAt + " distribution. \
+            Bottom: 1. Top:  max. \
+            Black: Many. White: 0. \
+            </b></div> \
+        </td> \
+        </tr> \
+        </table> \
+        </div>";
     }
 }
 
@@ -354,25 +338,8 @@ function createHTMLforDists()
     });
 }*/
 
-function create_columns(num)
-{
-    var columns = document.getElementById("columns");
-    column_text = "\
-    <table>\
-    <tr>";
-    for(var i = 0; i < num; i++) {
-        column_text += "\
-        <td><div id=\"column-" + i +"\" class=\"column menu\"></div></td>";
-    }
-    column_text += "\
-    </tr>\
-    </table>";
-    columns.innerHTML = column_text;
-}
-
 function clear_everything()
 {
-    create_columns(0);
     origSizes = new Array();
     blockRedraw = false;
     dists = [];
@@ -384,7 +351,6 @@ function clear_everything()
 function print_all_graphs()
 {
     clear_everything();
-    create_columns(graph_data.length);
 
     //Clear & create HTML
     createHTMLforGraphs();
