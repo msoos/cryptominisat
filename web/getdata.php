@@ -96,7 +96,7 @@ class MainDataGetter
         while ($i < $this->nrows) {
             $row = $this->data->fetch_assoc();
             $confl = (int)$row["conflicts"];
-            if ($confl -$last_confl_for_everyn < $everyn) {
+            if ($confl -$last_confl_for_everyn < $everyn && $i < $this->nrows-1) {
                 $i++;
                 continue;
             }
