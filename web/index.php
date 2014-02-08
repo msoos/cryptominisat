@@ -61,7 +61,15 @@ simplifcaition, and the solver behaviour changes afterwards. The angle
 of the "restart no." graph indicates how often restarts were made. You can
 find a full list of terms below.
 </p>
-<p>
+
+<div class="full_selector">
+<input id="need_unfinished" type="checkbox" name="unfinished" onclick="fill_files_options();" checked>unfinished</input>
+<input id="need_SAT" type="checkbox" name="SAT" onclick="fill_files_options();" checked>satisfiable</input>
+<input id="need_UNSAT" type="checkbox" name="UNSAT" onclick="fill_files_options();" checked>unsatisfiable</input>
+&nbsp;
+&nbsp;
+<div style="display:inline;" id="total_files_info"></div>
+<br/>
 <select id='version' onchange='changed_version(this.value);' style="width:20%;">
 <option value = "idtest">idtest</option>
 </select>
@@ -69,6 +77,7 @@ find a full list of terms below.
 <option value="test">Test</option>
 </select>
 </p>
+</div>
 
 <script type="text/javascript">
 function changed_version(val) {
@@ -99,16 +108,24 @@ function fill_versions()
 
 function fill_files_options()
 {
-    jQuery.getJSON("get_files_for_version.php?version=" + jQuery("#version option:selected").text(),
+    link = "get_files_for_version.php?";
+    link += "version=" + jQuery("#version option:selected").text();
+    link += "&unfinish=" + $('#need_unfinished')[0].checked;
+    link += "&sat=" + $('#need_SAT')[0].checked;
+    link += "&unsat=" + $('#need_UNSAT')[0].checked;
+    jQuery.getJSON(link,
         function(data){
             var select = document.getElementById('fname');
             select.options.length = 0; // clear out existing items
-            for(var i=0; i < data.length; i++) {
-                var d = data[i];
+            var filelist = data['filelist'];
+            for(var i=0; i < filelist.length; i++) {
+                var d = filelist[i];
                 select.options.add(new Option(d.text, d.value));
             }
+            var v = document.getElementById("total_files_info");
+            v.innerHTML = ""+data['numfiles']+" files";
+
             selected_runID(jQuery("#fname option:selected").val());
-            //selected_runID(jQuery("#fname option:selected").text());
         }
     );
 };

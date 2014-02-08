@@ -10,28 +10,70 @@ if (mysqli_connect_errno()) {
 }
 
 $version = $_GET["version"];
-#$version = "aaaa3aaaa72c7bac1ebe38bdf939ac438d7e9f37";
+$unfinished = $_GET["unfinish"] == "true";
+$sat = $_GET["sat"] == "true";
+$unsat = $_GET["unsat"] == "true";
+$numfiles = 0;
 
-function get_files_for_version($sql, $version)
+$json = array();
+function get_files_for_unsat()
 {
     $query = "
     select solverRun.runID as runID, tags.tag as fname
-    from solverRun, tags
+    from solverRun, tags, finishup
     where solverRun.runID = tags.runID
+    and solverRun.runID = finishup.runID
     and solverRun.version = ?
     and tagname = 'filename'
+    and finishup.status = 'l_False'
     order by tags.tag";
+
+    get_files_for_version($query);
+}
+
+function get_files_for_sat()
+{
+    $query = "
+    select solverRun.runID as runID, tags.tag as fname
+    from solverRun, tags, finishup
+    where solverRun.runID = tags.runID
+    and solverRun.runID = finishup.runID
+    and solverRun.version = ?
+    and tagname = 'filename'
+    and finishup.status = 'l_True'
+    order by tags.tag";
+
+    get_files_for_version($query);
+}
+
+function get_files_for_unfinished()
+{
+    $query = "
+    select solverRun.runID as runID, tags.tag as fname
+    from tags, solverRun left join finishup on (finishup.runID = solverRun.runID)
+    where solverRun.version = ?
+    and solverRun.runID = tags.runID
+    and tags.tagname='filename'
+    and finishup.runID is NULL;";
+
+    get_files_for_version($query);
+}
+
+function get_files_for_version($query)
+{
+    global $sql, $version, $json, $numfiles;
     $stmt = $sql->prepare($query);
     if (!$stmt) {
+        print "Error:".$sql->error;
         die("Cannot prepare statement");
     }
     $stmt->bind_param('s', $version);
     $stmt->execute();
     $stmt->bind_result($runID, $fname);
 
-    $json = array();
     while($stmt->fetch())
     {
+        $numfiles++;
         //echo "{text: '".$row['tag']."', value: '".$row['runID']."'},";
         $data = array(
             'text' => basename($fname),
@@ -39,9 +81,23 @@ function get_files_for_version($sql, $version)
         );
         array_push($json, $data);
     }
-    $jsonstring = json_encode($json);
-    echo $jsonstring;
     $stmt->close();
 }
-get_files_for_version($sql, $version);
+if ($unsat) {
+    get_files_for_unsat();
+}
+if ($sat) {
+    get_files_for_sat();
+}
+if ($unfinished) {
+    get_files_for_unfinished();
+}
+
+$ret = array(
+    'filelist' => $json,
+    'numfiles' => $numfiles
+);
+$jsonstring = json_encode($ret);
+echo $jsonstring;
+$sql->close();
 ?>

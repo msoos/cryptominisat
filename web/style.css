@@ -8,6 +8,15 @@ div.draghandle {
  text-align:left;
 }
 
+div.full_selector {
+    width:80%;
+    margin: 0;
+    margin-top: 0px;
+    margin-left: 20px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
 div.draghandle.dygraph-label {
  font-family: Arial, Helvetica, sans-serif;
 }
