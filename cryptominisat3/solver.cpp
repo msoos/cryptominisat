@@ -1970,7 +1970,7 @@ void Solver::clearClauseStats(vector<ClOffset>& clauseset)
         ; it++
     ) {
         Clause* cl = clAllocator.getPointer(*it);
-        cl->stats.clearAfterReduceDB();
+        cl->stats.clearAfterReduceDB(conf.multiplier_perf_values_after_cl_clean);
     }
 }
 

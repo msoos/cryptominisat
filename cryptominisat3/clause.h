@@ -118,16 +118,16 @@ struct ClauseStats
     ///originally learnt. Only makes sense for redundant clauses
     ResolutionTypes<uint16_t> resolutions;
 
-    void clearAfterReduceDB()
+    void clearAfterReduceDB(const double multiplier)
     {
         activity = 0;
-        numProp = 0;
-        numConfl = 0;
+        numProp = (double)numProp * multiplier;
+        numConfl = (double)numConfl * multiplier;
         #ifdef STATS_NEEDED
         numLitVisited = 0;
         numLookedAt = 0;
         #endif
-        numUsedUIP = 0;
+        numUsedUIP = (double)numUsedUIP*multiplier;
     }
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)

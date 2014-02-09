@@ -299,6 +299,9 @@ void Main::add_supported_options()
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ;
 
+    std::ostringstream s_perf_multip;
+    s_perf_multip << std::setprecision(2) << conf.multiplier_perf_values_after_cl_clean;
+
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
@@ -307,6 +310,8 @@ void Main::add_supported_options()
         , "Metric to use to clean clauses: 'size', 'glue', 'activity' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
     ("lock", po::value<size_t>(&conf.lock_per_dbclean)->default_value(conf.lock_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
+    ("perfmult", po::value<double>(&conf.multiplier_perf_values_after_cl_clean)->default_value(conf.multiplier_perf_values_after_cl_clean, s_perf_multip.str())
+        , "Multiply clause performance values by this number after every clause cleaning")
     ("preclean", po::value<int>(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
         , "Before cleaning clauses with whatever sorting strategy, remove redundant clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
     ("precleanlim", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)

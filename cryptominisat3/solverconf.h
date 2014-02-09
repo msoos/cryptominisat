@@ -135,6 +135,7 @@ class SolverConf
         double    clauseDecayActivity;
         uint64_t min_time_in_db_before_eligible_for_cleaning;
         size_t   lock_per_dbclean;
+        double   multiplier_perf_values_after_cl_clean;
 
         //For restarting
         uint64_t    restart_first;      ///<The initial restart limit.                                                                (default 100)
