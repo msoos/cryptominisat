@@ -153,6 +153,7 @@ class MainDataGetter
         $json_data_tmp['max_confl'] = $this->max_confl;
         $json_data_tmp['title'] = $title;
         $json_data_tmp['tablename'] = $this->tablename;
+        $json_data_tmp['simple_line'] = count($datanames) == 1;
         array_push($this->data_tmp, $json_data_tmp);
 
         //put into $this->columndivs

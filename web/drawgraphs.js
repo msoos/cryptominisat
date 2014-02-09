@@ -78,7 +78,7 @@ function drawOneGraph(i)
             drawPoints: true,
             pointSize: 1,
             strokeStyle: "black",
-            colors: ['#000000', '#05fa03', '#d03332', '#4e4ea8', '#689696'],
+            colors: (graph_data[i].simple_line ? ['#000000'] : ['#ef1414', '#efab14', '#1f3da2', '#10bf10', '#1fad14', '#88109d', '#d0e913']),
             fillAlpha: 0.8,
             errorBars: graph_data[i].noisy,
             dateWindow: [0, maxConflRestart],
