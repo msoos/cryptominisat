@@ -32,6 +32,7 @@ class MainDataGetter
     protected $data_tmp;
     protected $tablename;
     protected $sql;
+    protected $everyn;
 
     public function __construct($runID, $maxConfl)
     {
@@ -42,6 +43,7 @@ class MainDataGetter
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
         $this->columndivs = array();
         $this->data_tmp = array();
+        $this->everyn = 1000;
     }
 
     private function sql_get_max_restart($maxConfl)
@@ -73,7 +75,6 @@ class MainDataGetter
         $title
         , $datanames
         , $nicedatanames
-        , $everyn = 1000
     ) {
         $json_data = array();
 
@@ -89,15 +90,13 @@ class MainDataGetter
 
         //Now go through it all
         $i=0;
-        $total_sum = 0.0;
-        $last_confl = 0.0;
         $last_confl_for_everyn = 0.0;
         $time_start = microtime();
         $this->data->data_seek(0);
         while ($i < $this->nrows) {
             $row = $this->data->fetch_assoc();
             $confl = (int)$row["conflicts"];
-            if ($confl -$last_confl_for_everyn < $everyn && $i < $this->nrows-1) {
+            if ($confl -$last_confl_for_everyn < $this->everyn && $i < $this->nrows-1) {
                 $i++;
                 continue;
             }
