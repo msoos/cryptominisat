@@ -33,8 +33,9 @@ class MainDataGetter
     protected $tablename;
     protected $sql;
 
-    public function __construct($runID, $maxConfl, $sql)
+    public function __construct($runID, $maxConfl)
     {
+        global $sql;
         $this->runID = $runID;
         $this->numberingScheme = 0;
         $this->sql = $sql;
@@ -478,8 +479,9 @@ class Simplifications
     protected $runID;
     protected $sql;
 
-    public function __construct($runID, $sql)
+    public function __construct($runID)
     {
+        global $sql;
         $this->runID = $runID;
         $this->sql = $sql;
     }
@@ -674,12 +676,12 @@ function get_metadata($sql, $runID)
 }
 
 ///Main Data
-$main_data_getter = new MainDataGetter($runID, $maxConfl, $sql);
+$main_data_getter = new MainDataGetter($runID, $maxConfl);
 list($json_columndivs, $json_graph_data, $orderNum) = $main_data_getter->fill_data_tmp();
 $json_maxconflrestart = $main_data_getter->get_max_confl();
 
 ///Simplification points
-$simps = new Simplifications($runID, $sql);
+$simps = new Simplifications($runID);
 $json_simplificationpoints = $simps->fillSimplificationPoints();
 
 ///Clause distributions
