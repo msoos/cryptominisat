@@ -67,7 +67,7 @@ function drawOneGraph(i)
             },
             //stepPlot: true,
             //strokePattern: [0.1, 0, 0, 0.5],
-            strokeWidth: 0.3,
+            strokeWidth: 0.5,
             highlightCircleSize: 3,
             rollPeriod: (graph_data[i].tablename == "restart") ? 0: 0,
             legend: 'always',
