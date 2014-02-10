@@ -75,6 +75,7 @@ class MainDataGetter
         $title
         , $datanames
         , $nicedatanames
+        , $minmax = False
     ) {
         $json_data = array();
 
@@ -118,12 +119,12 @@ class MainDataGetter
                         $tmp /= $local_sum;
                         $tmp *= 100.0;
                     }
-                    array_push($json_subarray, $tmp);
-                } else {
-                    $total_sum += $tmp*($confl-$last_confl);
-                    $last_confl = $confl;
-                    array_push($json_subarray, $tmp);
                 }
+
+                if ($minmax) {
+                    $tmp = array($row[$dataname."Min"], $tmp, $row[$dataname."Max"]);
+                }
+                array_push($json_subarray, $tmp);
             }
             array_push($json_data, $json_subarray);
             $i++;
@@ -152,6 +153,7 @@ class MainDataGetter
         $json_data_tmp['labelDivID'] = $fullname."_labeldiv";
         $json_data_tmp['max_confl'] = $this->max_confl;
         $json_data_tmp['title'] = $title;
+        $json_data_tmp['minmax'] = $minmax;
         $json_data_tmp['tablename'] = $this->tablename;
         $json_data_tmp['simple_line'] = count($datanames) == 1;
         array_push($this->data_tmp, $json_data_tmp);
@@ -227,40 +229,49 @@ class MainDataGetter
             "Avg. branch depth"
             , array("branchDepth")
             , array("")
+            , True
         );
 
         $this->print_one_graph(
             "Avg. branch depth delta"
             , array("branchDepthDelta")
-            , array(""));
+            , array("")
+            , True
+        );
 
         $this->print_one_graph(
             "Avg. trail depth"
             , array("trailDepth")
-            , array(""));
+            , array("")
+            , True
+        );
 
         $this->print_one_graph(
             "Avg. trail depth delt"
             , array("trailDepthDelta")
             , array("")
+            , True
         );
 
         $this->print_one_graph(
             "Avg. glue of newly learnt clauses"
             , array("glue")
             , array("")
+            , True
         );
 
         $this->print_one_graph(
             "Avg. size of newly learnt clauses"
             , array("size")
             , array("")
+            , True
         );
 
         $this->print_one_graph(
             "Avg. no. of resolutions carried out for 1st UIP"
             , array("resolutions")
             , array("")
+            , True
         );
 
         $this->print_one_graph(
@@ -449,7 +460,6 @@ class MainDataGetter
                 , "long irred"
                 , "long red"
             )
-            , 1
         );
 
         $this->print_one_graph(
