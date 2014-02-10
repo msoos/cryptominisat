@@ -322,12 +322,12 @@ class MainDataGetter
         $this->print_one_graph(
             "Propagated polarity %"
             , array(
-            "varSetPos"
-            , "varSetNeg"
+                "varSetPos"
+                , "varSetNeg"
             )
             , array(
-            "positive"
-            , "negative")
+                "positive"
+                , "negative")
         );
 
         $this->print_one_graph(
