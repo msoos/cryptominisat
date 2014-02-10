@@ -271,8 +271,8 @@ function createHTMLforGraphs()
         <div id=\"" + graph_data[i].blockDivID + "\">\
         <table id=\"plot-table-a\">\
         <tr>\
-        <td width=\"80%\"><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
-        <td width=\"20%\">\
+        <td><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
+        <td id=\"labelW\">\
 \
         <table id=\"plot-table-a\">\
         <tr><td>"+ graph_data[i].title +"</td></tr>\
