@@ -54,7 +54,8 @@ function get_files_for_unfinished()
     where solverRun.version = ?
     and solverRun.runID = tags.runID
     and tags.tagname='filename'
-    and finishup.runID is NULL;";
+    and finishup.runID is NULL
+    order by tags.tag;";
 
     get_files_for_version($query);
 }
