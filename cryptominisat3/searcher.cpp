@@ -195,7 +195,7 @@ void Searcher::add_lit_to_learnt(
     if (!seen[var]) {
         seen[var] = 1;
 
-        varBumpActivity(var);
+        bump_var_activitiy(var);
         tmp_learnt_clause_size++;
         seen2[lit.toInt()] = 1;
         tmp_learnt_clause_abst |= abst_var(lit.var());
@@ -631,7 +631,7 @@ void Searcher::bump_var_activities_based_on_last_decision_level(size_t glue)
         ; it++
     ) {
         if (it->second < glue) {
-            varBumpActivity(it->first.var());
+            bump_var_activitiy(it->first.var());
         }
     }
 }

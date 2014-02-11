@@ -836,7 +836,7 @@ class Searcher : public HyperEngine
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
-        void     varBumpActivity  (Var v);
+        void     bump_var_activitiy  (Var v);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<uint32_t>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
@@ -902,7 +902,7 @@ inline void Searcher::varDecayActivity()
     var_inc *= var_inc_multiplier;
     var_inc /= var_inc_divider;
 }
-inline void Searcher::varBumpActivity(Var var)
+inline void Searcher::bump_var_activitiy(Var var)
 {
     activities[var] += var_inc;
     if ( (activities[var]) > ((0x1U) << 24)
