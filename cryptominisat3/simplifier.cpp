@@ -712,7 +712,8 @@ bool Simplifier::eliminateVars()
 
 end:
     if (solver->conf.verbosity >= 2) {
-        cout << "c  #try to eliminate: " << wenThrough << endl
+        cout
+        << "c  #try to eliminate: " << wenThrough << endl
         << "c  #var-elim: " << vars_elimed << endl
         << "c  #T-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
         << "c  #T: " << (cpuTime() - myTime) << endl;
