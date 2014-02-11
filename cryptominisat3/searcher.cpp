@@ -702,7 +702,7 @@ Clause* Searcher::analyze_conflict(
     glue = calcGlue(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!fromProber && params.rest_type == Restart::glue) {
+    if (!fromProber && params.rest_type == Restart::glue && conf.extra_bump_var_activities_based_on_glue) {
         bump_var_activities_based_on_last_decision_level(glue);
     }
     lastDecisionLevel.clear();

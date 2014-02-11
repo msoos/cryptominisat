@@ -60,6 +60,7 @@ SolverConf::SolverConf() :
         , doMinimRedMore(true)
         , doAlwaysFMinim   (false)
         , moreMinimLimit   (300)
+        , extra_bump_var_activities_based_on_glue(true)
 
         //Verbosity
         , verbosity        (0)

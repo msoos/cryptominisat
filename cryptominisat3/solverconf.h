@@ -149,6 +149,7 @@ class SolverConf
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         uint64_t moreMinimLimit;
+        int extra_bump_var_activities_based_on_glue;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])

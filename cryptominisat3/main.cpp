@@ -346,6 +346,8 @@ void Main::add_supported_options()
         , "Use dominating literal every once in N when picking decision literal")
     ("flippolf", po::value<uint32_t>(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
         , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
+    ("morebump", po::value<int>(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
+        , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
     ;
 
 
