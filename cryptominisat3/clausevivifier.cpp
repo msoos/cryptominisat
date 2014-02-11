@@ -57,6 +57,9 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
 
     solver->clauseCleaner->cleanClauses(solver->longIrredCls);
 
+    runStats.redCacheBased.clear();
+    runStats.irredCacheBased.clear();
+
     if (!vivifyClausesCache(solver->longIrredCls, false, false))
         goto end;
 
@@ -750,15 +753,15 @@ uint64_t ClauseVivifier::calc_time_available(
         stats = &(globalStats.irredCacheBased);
     }
 
-    uint64_t maxCountTime = 700ULL*1000ULL*1000ULL;
+    uint64_t maxCountTime = 300ULL*1000ULL*1000ULL;
     if (!alsoStrengthen) {
-        maxCountTime *= 4;
+        maxCountTime *= 2;
     }
     if (stats->numCalled > 2
         && (double)stats->numClSubsumed/(double)stats->triedCls < 0.05
         && (double)stats->numLitsRem/(double)stats->totalLits < 0.05
     ) {
-        maxCountTime /= 2;
+        maxCountTime *= 0.2;
     }
 
     return maxCountTime;
@@ -820,9 +823,9 @@ bool ClauseVivifier::vivifyClausesCache(
     tmpStats.numLitsRem += cache_based_data.get_lits_rem();
     tmpStats.cpu_time = cpuTime() - myTime;
     if (red) {
-        runStats.redCacheBased = tmpStats;
+        runStats.redCacheBased += tmpStats;
     } else {
-        runStats.irredCacheBased = tmpStats;
+        runStats.irredCacheBased += tmpStats;
     }
 
     if (solver->conf.verbosity >= 2) {
