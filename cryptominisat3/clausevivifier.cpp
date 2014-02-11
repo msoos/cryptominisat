@@ -730,14 +730,15 @@ bool ClauseVivifier::vivify_clause(
 void ClauseVivifier::randomise_order_of_clauses(
     vector<ClOffset>& clauses
 ) {
-    if (!clauses.empty()) {
-        timeAvailable -= (long)clauses.size()*2;
-        for(size_t i = 0; i < clauses.size()-1; i++) {
-            std::swap(
-                clauses[i]
-                , clauses[i + solver->mtrand.randInt(clauses.size()-i-1)]
-            );
-        }
+    if (clauses.empty())
+        return;
+
+    timeAvailable -= (long)clauses.size()*2;
+    for(size_t i = 0; i < clauses.size()-1; i++) {
+        std::swap(
+            clauses[i]
+            , clauses[i + solver->mtrand.randInt(clauses.size()-i-1)]
+        );
     }
 }
 
