@@ -550,7 +550,7 @@ private:
         uint32_t lit;
         uint32_t count;
     };
-    HeuristicData calcDataForHeuristic(const Lit lit);
+    HeuristicData calc_data_for_heuristic(const Lit lit);
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
 
     //For empty resolvents

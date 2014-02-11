@@ -1777,8 +1777,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     assert(solver->value(var) == l_Undef);
 
     //Gather data
-    HeuristicData pos = calcDataForHeuristic(Lit(var, false));
-    HeuristicData neg = calcDataForHeuristic(Lit(var, true));
+    HeuristicData pos = calc_data_for_heuristic(Lit(var, false));
+    HeuristicData neg = calc_data_for_heuristic(Lit(var, true));
 
     //Heuristic calculation took too much time
     if (*limit_to_decrease < 0) {
@@ -2437,7 +2437,7 @@ bool Simplifier::agressiveCheck(
     return false;
 }
 
-Simplifier::HeuristicData Simplifier::calcDataForHeuristic(const Lit lit)
+Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
 {
     HeuristicData ret;
 
@@ -2660,8 +2660,8 @@ int Simplifier::checkEmptyResolventHelper(
 pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 {
     const Lit lit(var, false);
-    const HeuristicData pos = calcDataForHeuristic(lit);
-    const HeuristicData neg = calcDataForHeuristic(~lit);
+    const HeuristicData pos = calc_data_for_heuristic(lit);
+    const HeuristicData neg = calc_data_for_heuristic(~lit);
 
     //Estimate cost
     int posTotalLonger = pos.longer + pos.tri;
