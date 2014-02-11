@@ -9,15 +9,17 @@ shopt -s nullglob
 rm -f todo
 touch todo
 fileloc="/home/soos/sat/examples/satcomp091113/*cnf.gz"
-solver="/home/soos/cryptominisat/build/cryptominisat3"
+#solver="/home/soos/cryptominisat/build/cryptominisat3"
 #solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
-#solver="/home/soos/lingeling-aqw/code/lingeling -v"
+#solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
+solver="/home/soos/glucose-3.0/simp/glucose"
 #solver="/home/soos/glucose2.2/simp/glucose"
 #opts="--restart glue --clean glue --flippolarfreq 0"
-#opts="--restart agility"
 opts=""
-output="/home/soos/sat/out/lingeling-satcomp091113"
-tlimit="1000"
+#output="/home/soos/sat/out/lingeling-aqw-satcomp091113"
+#output="/home/soos/sat/out/lingeling-aqw-satcomp091113"
+output="/home/soos/sat/out/glucose3-satcomp091113"
+tlimit="900"
 #5GB mem limit
 memlimit="5000000"
 numthreads=4
@@ -52,7 +54,7 @@ echo "Done creating todo with $numlines of problems"
 
 # create random order
 echo -ne "Randomizing order of execution of $val files"
-shuf --random-source=myrnd --random-sort todo > todo_rnd
+shuf --random-source=myrnd todo > todo_rnd
 echo "Done."
 
 # create per-core todos
