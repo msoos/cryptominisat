@@ -436,6 +436,7 @@ void Solver::detachTriClause(
     , const Lit lit2
     , const Lit lit3
     , const bool red
+    , const bool allow_empty_watch
 ) {
     if (red) {
         binTri.redTris--;
@@ -443,13 +444,14 @@ void Solver::detachTriClause(
         binTri.irredTris--;
     }
 
-    PropEngine::detachTriClause(lit1, lit2, lit3, red);
+    PropEngine::detachTriClause(lit1, lit2, lit3, red, allow_empty_watch);
 }
 
 void Solver::detachBinClause(
     const Lit lit1
     , const Lit lit2
     , const bool red
+    , const bool allow_empty_watch
 ) {
     if (red) {
         binTri.redBins--;
@@ -457,7 +459,7 @@ void Solver::detachBinClause(
         binTri.irredBins--;
     }
 
-    PropEngine::detachBinClause(lit1, lit2, red);
+    PropEngine::detachBinClause(lit1, lit2, red, allow_empty_watch);
 }
 
 void Solver::detachClause(const Clause& cl, const bool removeDrup)

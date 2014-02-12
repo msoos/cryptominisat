@@ -190,7 +190,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
 /**
 @brief Removes&free-s a clause from everywhere
 */
-void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
+void Simplifier::unlinkClause(const ClOffset offset, bool doDrup, bool allow_empty_watch)
 {
     Clause& cl = *solver->clAllocator.getPointer(offset);
     if (solver->drup->enabled() && doDrup) {
@@ -201,7 +201,9 @@ void Simplifier::unlinkClause(const ClOffset offset, bool doDrup)
     for (uint32_t i = 0; i < cl.size(); i++) {
         *limit_to_decrease -= 2*(long)solver->watches[cl[i].toInt()].size();
 
-        removeWCl(solver->watches[cl[i].toInt()], offset);
+        if (!(allow_empty_watch && solver->watches[cl[i].toInt()].empty())) {
+            removeWCl(solver->watches[cl[i].toInt()], offset);
+        }
 
         if (!cl.red())
             touched.touch(cl[i]);
@@ -1645,6 +1647,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
         todo_copy.push_back(tmp);
     }
 
+    solver->watches[lit.toInt()].clear();
     for (const Watched watch :todo_copy) {
         lits.clear();
         bool red = false;
@@ -1668,7 +1671,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
 
             //Remove -- only DRUP the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
-            unlinkClause(offset, cl.red());
+            unlinkClause(offset, cl.red(), true);
         }
 
         if (watch.isBinary()) {
@@ -1704,7 +1707,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             //Remove
             *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
-            solver->detachBinClause(lits[0], lits[1], watch.red());
+            solver->detachBinClause(lits[0], lits[1], red, true);
         }
 
         if (watch.isTri()) {
@@ -1737,7 +1740,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[2].toInt()].size();
-            solver->detachTriClause(lits[0], lits[1], lits[2], watch.red());
+            solver->detachTriClause(lits[0], lits[1], lits[2], watch.red(), true);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {

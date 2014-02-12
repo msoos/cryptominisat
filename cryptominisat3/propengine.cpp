@@ -104,24 +104,36 @@ void PropEngine::detachTriClause(
     , const Lit lit2
     , const Lit lit3
     , const bool red
+    , const bool allow_empty_watch
 ) {
     Lit lits[3];
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits, lits+3);
-    removeWTri(watches, lits[0], lits[1], lits[2], red);
-    removeWTri(watches, lits[1], lits[0], lits[2], red);
-    removeWTri(watches, lits[2], lits[0], lits[1], red);
+    if (!(allow_empty_watch && watches[lits[0].toInt()].empty())) {
+        removeWTri(watches, lits[0], lits[1], lits[2], red);
+    }
+    if (!(allow_empty_watch && watches[lits[1].toInt()].empty())) {
+        removeWTri(watches, lits[1], lits[0], lits[2], red);
+    }
+    if (!(allow_empty_watch && watches[lits[2].toInt()].empty())) {
+        removeWTri(watches, lits[2], lits[0], lits[1], red);
+    }
 }
 
 void PropEngine::detachBinClause(
     const Lit lit1
     , const Lit lit2
     , const bool red
+    , const bool allow_empty_watch
 ) {
-    removeWBin(watches, lit1, lit2, red);
-    removeWBin(watches, lit2, lit1, red);
+    if (!(allow_empty_watch && watches[lit1.toInt()].empty())) {
+        removeWBin(watches, lit1, lit2, red);
+    }
+    if (!(allow_empty_watch && watches[lit2.toInt()].empty())) {
+        removeWBin(watches, lit2, lit1, red);
+    }
 }
 
 void PropEngine::attachBinClause(

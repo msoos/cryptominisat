@@ -173,15 +173,17 @@ protected:
         , const bool checkAttach = true
     );
     virtual void detachTriClause(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
+        Lit lit1
+        , Lit lit2
+        , Lit lit3
+        , bool red
+        , bool allow_empty_watch = false
     );
     virtual void detachBinClause(
-        const Lit lit1
-        , const Lit lit2
-        , const bool red
+        Lit lit1
+        , Lit lit2
+        , bool red
+        , bool allow_empty_watch = false
     );
     virtual void attachBinClause(
         const Lit lit1

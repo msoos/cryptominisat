@@ -465,7 +465,7 @@ private:
 
     //Clause update
     lbool       cleanClause(ClOffset c);
-    void        unlinkClause(ClOffset cc, bool drup = true);
+    void        unlinkClause(ClOffset cc, bool drup = true, bool allow_empty_watch = false);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
