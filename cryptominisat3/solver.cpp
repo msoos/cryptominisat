@@ -1541,7 +1541,7 @@ lbool Solver::solve()
             << "c Solver status l_Fase on startup of solve()"
             << endl;
         }
-        return status;
+        goto end;
     }
 
     //Initialise
@@ -1635,6 +1635,8 @@ lbool Solver::solve()
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
+
+    end:
     if (sqlStats) {
         sqlStats->finishup(status);
     }
