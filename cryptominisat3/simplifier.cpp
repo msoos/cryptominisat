@@ -674,6 +674,8 @@ bool Simplifier::eliminateVars()
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
+    time_spent_on_calc_otf_update = 0;
+    num_otf_update_until_now = 0;
     limit_to_decrease = &norm_varelim_time_limit;
 
     order_vars_for_elim();
@@ -1543,7 +1545,7 @@ void Simplifier::setLimits()
     subsumption_time_limit     = 850LL*1000LL*1000LL;
     strengthening_time_limit   = 400LL*1000LL*1000LL;
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
-    norm_varelim_time_limit    = 800LL*1000LL*1000LL;
+    norm_varelim_time_limit    = 4ULL*1000LL*1000LL*1000LL;
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
     asymm_time_limit           = 40LL *1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
@@ -2041,6 +2043,25 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
     if (!solver->conf.updateVarElimComplexityOTF)
         return;
 
+    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars) {
+        const double avg = (double)time_spent_on_calc_otf_update/(double)num_otf_update_until_now;
+        //cout << "num_otf_update_until_now: " << num_otf_update_until_now << endl;
+        //cout << "avg: " << avg << endl;
+
+        if (avg > solver->conf.updateVarElimComplexityOTF_limitavg) {
+            solver->conf.updateVarElimComplexityOTF = false;
+            if (solver->conf.verbosity >= 2) {
+                cout
+                << "c [v-elim] Turning off OTF complexity update, it's too expensive"
+                << endl;
+            }
+            return;
+        }
+    }
+
+
+    int64_t limit_before = *limit_to_decrease;
+    num_otf_update_until_now++;
     for(Var touchVar: touched.getTouchedList()) {
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
@@ -2055,6 +2076,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         varElimComplexity[touchVar] = strategyCalcVarElimScore(touchVar);
         varElimOrder.update(touchVar);
     }
+    time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
 
 void Simplifier::print_var_elim_complexity_stats(const Var var) const
@@ -2445,7 +2467,7 @@ Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
     HeuristicData ret;
 
     watch_subarray_const ws_list = solver->watches[lit.toInt()];
-    *limit_to_decrease -= (long)ws_list.size() + 100;
+    *limit_to_decrease -= (long)ws_list.size()*3 + 100;
     for (const Watched ws: ws_list) {
         //Skip redundant clauses
         if (solver->redundant(ws))

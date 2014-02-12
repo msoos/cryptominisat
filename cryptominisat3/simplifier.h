@@ -552,6 +552,8 @@ private:
     };
     HeuristicData calc_data_for_heuristic(const Lit lit);
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
+    uint64_t time_spent_on_calc_otf_update;
+    uint64_t num_otf_update_until_now;
 
     //For empty resolvents
     enum class ResolvCount{count, set, unset};
