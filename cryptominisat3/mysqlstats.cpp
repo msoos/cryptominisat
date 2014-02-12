@@ -51,9 +51,12 @@ MySQLStats::~MySQLStats()
 	mysql_close(serverConn);
 }
 
-void MySQLStats::setup(const Solver* solver)
+bool MySQLStats::setup(const Solver* solver)
 {
-    connectServer(solver);
+    bool ret = connectServer(solver);
+    if (!ret)
+        return false;
+
     getID(solver);
     add_tags(solver);
     addStartupData(solver);
@@ -82,9 +85,11 @@ void MySQLStats::setup(const Solver* solver)
         , solver->getConf().preparedDumpSizeScatter
     );
     #endif
+
+    return true;
 }
 
-void MySQLStats::connectServer(const Solver* solver)
+bool MySQLStats::connectServer(const Solver* solver)
 {
     //Init MySQL library
     serverConn = mysql_init(NULL);
@@ -92,8 +97,7 @@ void MySQLStats::connectServer(const Solver* solver)
         cout
         << "Insufficient memory to allocate server connection"
         << endl;
-
-        exit(-1);
+        return false;
     }
 
     //Connect to server
@@ -108,24 +112,16 @@ void MySQLStats::connectServer(const Solver* solver)
         , 0)
     ) {
         cout
-        << "ERROR while connecting to MySQL server:"
+        << "c ERROR while connecting to MySQL server:"
         << mysql_error(serverConn)
         << endl;
 
         cout
-        << "If your MySQL server is running then you did not create the database" << endl
-        << "and/or didn't add the correct user. You can fix this by executing: " << endl
-        << "$ mysql -u root -p" << endl
-        << "create database cmsat;" << endl
-        << "create user 'cmsat_solver'@'localhost' identified by '';" << endl
-        << "grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';" << endl
-        << "create user 'cmsat_presenter'@'localhost' identified by '';" << endl
-        << "grant select on cmsat.* to 'cmsat_presenter'@'localhost';" << endl
-        << "quit;" << endl
-        << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
+        << "c If your MySQL server is running then you did not create the database" << endl
+        << "c and/or didn't add the correct user. Read cmsat_mysql_setup.txt to fix this issue " << endl
         ;
 
-      exit(1);
+        return false;
     }
 }
 

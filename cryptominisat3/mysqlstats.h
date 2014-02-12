@@ -56,12 +56,12 @@ public:
         , const Solver* solver
     );
 
-    virtual void setup(const Solver* solver);
+    virtual bool setup(const Solver* solver);
     virtual void finishup(lbool status);
 
 private:
 
-    void connectServer(const Solver* solver);
+    bool connectServer(const Solver* solver);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
     void add_tags(const Solver* solver);

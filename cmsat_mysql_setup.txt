@@ -1,0 +1,11 @@
+Please execute:
+
+$ mysql -u root -p
+create database cmsat;
+create user 'cmsat_solver'@'localhost' identified by '';
+grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';
+create user 'cmsat_presenter'@'localhost' identified by '';
+grant select on cmsat.* to 'cmsat_presenter'@'localhost';
+quit;
+
+$ mysql -u root -p cmsat < cmsat_tablestructure.sql

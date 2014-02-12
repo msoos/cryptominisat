@@ -1525,7 +1525,18 @@ lbool Solver::solve()
 
     //Set up SQL writer
     if (conf.doSQL) {
-        sqlStats->setup(this);
+        bool ret = sqlStats->setup(this);
+        if (!ret) {
+            if (conf.doSQL == 2) {
+                cout
+                << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
+                exit(-1);
+            }
+            delete sqlStats;
+            sqlStats = NULL;
+            conf.doSQL = false;
+        }
+
     }
 
     //Initialise
