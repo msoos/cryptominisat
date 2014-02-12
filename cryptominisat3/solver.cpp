@@ -1494,6 +1494,25 @@ void Solver::extend_solution()
     check_model_for_assumptions();
 }
 
+void Solver::set_up_sql_writer()
+{
+    if (!conf.doSQL) {
+        return;
+    }
+
+    bool ret = sqlStats->setup(this);
+    if (!ret) {
+        if (conf.doSQL == 2) {
+            cout
+            << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
+            exit(-1);
+        }
+        delete sqlStats;
+        sqlStats = NULL;
+        conf.doSQL = false;
+    }
+}
+
 lbool Solver::solve()
 {
     conflict.clear();
@@ -1511,21 +1530,7 @@ lbool Solver::solve()
         << endl;
     }
 
-    //Set up SQL writer
-    if (conf.doSQL) {
-        bool ret = sqlStats->setup(this);
-        if (!ret) {
-            if (conf.doSQL == 2) {
-                cout
-                << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
-                exit(-1);
-            }
-            delete sqlStats;
-            sqlStats = NULL;
-            conf.doSQL = false;
-        }
-
-    }
+    set_up_sql_writer();
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;

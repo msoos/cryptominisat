@@ -291,6 +291,7 @@ class Solver : public Searcher
         virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
 
         //friend class SQLStats;
+        void set_up_sql_writer();
         SQLStats* sqlStats;
         vector<std::pair<string, string> > sql_tags;
 
