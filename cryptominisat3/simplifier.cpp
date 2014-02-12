@@ -2953,6 +2953,7 @@ Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
 {
     largest = 0;
     lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
+    *limit_to_decrease -= potential.size()*std::log(potential.size());
     std::sort(potential.begin(), potential.end());
 
     lit_pair last_occur = lit_pair(lit_Undef, lit_Undef);
