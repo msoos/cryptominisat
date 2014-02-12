@@ -2678,6 +2678,7 @@ size_t Searcher::hyperBinResAll()
         solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
         added++;
     }
+    solver->needToAddBinClause.clear();
 
     return added;
 }
