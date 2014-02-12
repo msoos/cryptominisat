@@ -81,6 +81,7 @@ Solver::Solver(const SolverConf _conf) :
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
+    , num_solve_calls(0)
 {
     if (conf.doSQL) {
         #ifdef USE_MYSQL
@@ -1496,7 +1497,8 @@ void Solver::extend_solution()
 
 void Solver::set_up_sql_writer()
 {
-    if (!conf.doSQL) {
+    if (!conf.doSQL || num_solve_calls > 1) {
+        //Either it's already initialized, or it's not needed
         return;
     }
 
@@ -1515,6 +1517,7 @@ void Solver::set_up_sql_writer()
 
 lbool Solver::solve()
 {
+    num_solve_calls++;
     conflict.clear();
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
         && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."

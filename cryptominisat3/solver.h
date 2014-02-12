@@ -342,6 +342,7 @@ class Solver : public Searcher
         );
 
     private:
+        uint32_t num_solve_calls;
         lbool solve();
         template<class T>
         vector<Lit> back_number_from_caller(const vector<T>& lits) const
