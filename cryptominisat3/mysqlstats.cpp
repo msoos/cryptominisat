@@ -23,14 +23,14 @@ MySQLStats::~MySQLStats()
     if (!setup_ok)
         return;
 
-	//Free all the prepared statements
+    //Free all the prepared statements
     my_bool ret = mysql_stmt_close(stmtRst.stmt);
-	if (ret) {
-		cout << "Error closing prepared statement" << endl;
-		exit(-1);
-	}
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        exit(-1);
+    }
 
-	ret = mysql_stmt_close(stmtReduceDB.stmt);
+    ret = mysql_stmt_close(stmtReduceDB.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
         exit(-1);
@@ -38,26 +38,26 @@ MySQLStats::~MySQLStats()
 
     #ifdef STATS_NEEDED_EXTRA
     ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
-	if (ret) {
-		cout << "Error closing prepared statement" << endl;
-		exit(-1);
-	}
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        exit(-1);
+    }
 
     ret = mysql_stmt_close(stmtClsDistribSize.stmt);
-	if (ret) {
-		cout << "Error closing prepared statement" << endl;
-		exit(-1);
-	}
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        exit(-1);
+    }
 
     ret = mysql_stmt_close(stmtClsDistribGlue.stmt);
-	if (ret) {
-		cout << "Error closing prepared statement" << endl;
-		exit(-1);
-	}
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        exit(-1);
+    }
     #endif
 
-	//Close clonnection
-	mysql_close(serverConn);
+    //Close clonnection
+    mysql_close(serverConn);
 }
 
 bool MySQLStats::setup(const Solver* solver)
