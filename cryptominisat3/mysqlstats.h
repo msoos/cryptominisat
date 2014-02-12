@@ -325,4 +325,5 @@ private:
     StmtRst stmtRst;
 
     MYSQL *serverConn;
+    bool setup_ok = false;
 };

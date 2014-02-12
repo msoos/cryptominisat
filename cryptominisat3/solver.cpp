@@ -1511,18 +1511,6 @@ lbool Solver::solve()
         << endl;
     }
 
-    //Check if adding the clauses caused UNSAT
-    lbool status = l_Undef;
-    if (!ok) {
-        status = l_False;
-        if (conf.verbosity >= 6) {
-            cout
-            << "c Solver status l_Fase on startup of solve()"
-            << endl;
-        }
-        return status;
-    }
-
     //Set up SQL writer
     if (conf.doSQL) {
         bool ret = sqlStats->setup(this);
@@ -1537,6 +1525,18 @@ lbool Solver::solve()
             conf.doSQL = false;
         }
 
+    }
+
+    //Check if adding the clauses caused UNSAT
+    lbool status = l_Undef;
+    if (!ok) {
+        status = l_False;
+        if (conf.verbosity >= 6) {
+            cout
+            << "c Solver status l_Fase on startup of solve()"
+            << endl;
+        }
+        return status;
     }
 
     //Initialise

@@ -20,12 +20,21 @@ MySQLStats::MySQLStats() :
 
 MySQLStats::~MySQLStats()
 {
+    if (!setup_ok)
+        return;
+
 	//Free all the prepared statements
     my_bool ret = mysql_stmt_close(stmtRst.stmt);
 	if (ret) {
 		cout << "Error closing prepared statement" << endl;
 		exit(-1);
 	}
+
+	ret = mysql_stmt_close(stmtReduceDB.stmt);
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        exit(-1);
+    }
 
     #ifdef STATS_NEEDED_EXTRA
     ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
@@ -53,9 +62,10 @@ MySQLStats::~MySQLStats()
 
 bool MySQLStats::setup(const Solver* solver)
 {
-    bool ret = connectServer(solver);
-    if (!ret)
+    setup_ok = connectServer(solver);
+    if (!setup_ok) {
         return false;
+    }
 
     getID(solver);
     add_tags(solver);
@@ -123,6 +133,8 @@ bool MySQLStats::connectServer(const Solver* solver)
 
         return false;
     }
+
+    return true;
 }
 
 bool MySQLStats::tryIDInSQL(const Solver* solver)
