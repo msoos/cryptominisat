@@ -2351,10 +2351,14 @@ Lit Searcher::pickBranchLit()
 
     // Random decision:
     double rand = mtrand.randDblExc();
-    if (rand < conf.random_var_freq
-        && !order_heap.empty()
+    double frq = conf.random_var_freq;
+    if (decisionLevel() < conf.random_var_freq_increase_for) {
+        frq = conf.random_var_freq_for_top_N;
+    }
+    if (rand < frq
+        && order_heap.size() > conf.random_picks_from_top_T
     ) {
-        const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
+        const Var next_var = order_heap[mtrand.randInt(conf.random_picks_from_top_T)];
         if (value(next_var) == l_Undef
             && solver->varData[next_var].is_decision
         ) {

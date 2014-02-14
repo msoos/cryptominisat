@@ -29,7 +29,10 @@ SolverConf::SolverConf() :
         , var_inc_multiplier(11)
         , var_inc_divider(10)
         , var_inc_variability(0)
-        , random_var_freq(0)
+        , random_var_freq(0.001)
+        , random_var_freq_for_top_N(0.1)
+        , random_var_freq_increase_for(3)
+        , random_picks_from_top_T(20)
         , polarity_mode(PolarityMode::automatic)
 
         //Clause cleaning

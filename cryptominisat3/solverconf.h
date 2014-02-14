@@ -115,7 +115,10 @@ class SolverConf
          * but if that variable is already set, then it _silently_ fails
          * , and moves on (doing non-random flip)!
         **/
-        double    random_var_freq;
+        double random_var_freq;
+        uint32_t random_var_freq_increase_for;
+        double random_var_freq_for_top_N;
+        uint32_t random_picks_from_top_T;
         /**
          * Controls which polarity the decision heuristic chooses.
         **/
