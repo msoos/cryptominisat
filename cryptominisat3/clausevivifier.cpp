@@ -762,7 +762,7 @@ uint64_t ClauseVivifier::calc_time_available(
         && (double)stats->numClSubsumed/(double)stats->triedCls < 0.05
         && (double)stats->numLitsRem/(double)stats->totalLits < 0.05
     ) {
-        maxCountTime *= 0.2;
+        maxCountTime *= 0.5;
     }
 
     return maxCountTime;
