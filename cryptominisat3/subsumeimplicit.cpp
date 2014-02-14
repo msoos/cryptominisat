@@ -197,8 +197,10 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         if (ws.size() < 2)
             continue;
 
-        timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
-        std::sort(ws.begin(), ws.end(), WatchSorter());
+        if (ws.size() > 1) {
+            timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
+            std::sort(ws.begin(), ws.end(), WatchSorter());
+        }
         /*cout << "---> Before" << endl;
         printWatchlist(ws, lit);*/
 
