@@ -3131,6 +3131,7 @@ bool Simplifier::bounded_var_addition()
 
     propagate();
     limit_to_decrease = &bounded_var_elim_time_limit;
+    int64_t limit_orig = *limit_to_decrease;
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doStrSubImplicit) {
         solver->subsumeImplicit->subsume_implicit(false);
@@ -3170,6 +3171,7 @@ bool Simplifier::bounded_var_addition()
         << " simp: " << bva_simp_size
         << " T: " << cpuTime() - my_time
         << " T-out: " << (*limit_to_decrease <= 0 ? "Y" : "N")
+        << " T-r: " << ((double)*limit_to_decrease/(double)limit_orig*100.0) << "%"
         << endl;
     }
 
