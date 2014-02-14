@@ -202,20 +202,17 @@ void Searcher::add_lit_to_learnt(
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
-
-            //Glucose 2.1
             if (!fromProber
-                && params.rest_type != Restart::geom
+                //&& params.rest_type == Restart::glue
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
                 Clause* cl = clAllocator.getPointer(varData[var].reason.getClause());
                 if (cl->red()) {
-                    lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
+                    bump_var_activitiy(var);
                 }
             }
-        }
-        else {
+        } else {
             learnt_clause.push_back(lit);
         }
     }
@@ -623,19 +620,6 @@ Clause* Searcher::create_learnt_clause(PropBy confl, bool fromProber)
     return last_resolved_long_cl;
 }
 
-void Searcher::bump_var_activities_based_on_last_decision_level(size_t glue)
-{
-    for (vector<pair<Lit, size_t> >::const_iterator
-        it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->second < glue) {
-            bump_var_activitiy(it->first.var());
-        }
-    }
-}
-
 Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl)
 {
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
@@ -685,7 +669,6 @@ Clause* Searcher::analyze_conflict(
     //Set up environment
     learnt_clause.clear();
     toClear.clear();
-    lastDecisionLevel.clear();
     otf_subsuming_short_cls.clear();
     otf_subsuming_long_cls.clear();
     tmp_learnt_clause_size = 0;
@@ -702,10 +685,6 @@ Clause* Searcher::analyze_conflict(
     glue = calcGlue(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!fromProber && params.rest_type == Restart::glue && conf.extra_bump_var_activities_based_on_glue) {
-        bump_var_activities_based_on_last_decision_level(glue);
-    }
-    lastDecisionLevel.clear();
 
     return otf_subsume_last_resolved_clause(last_resolved_long_cl);
 
