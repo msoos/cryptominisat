@@ -357,6 +357,12 @@ void Main::add_supported_options()
         , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ("morebump", po::value<int>(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
+    ("topnrndpick", po::value<uint32_t>(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
+        , "When randomly picking brancing variable, pick from the top N")
+    ("topnrndpickfreq", po::value<double>(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N)
+        , "Frequency of increased random  picking brancing variable from top N")
+    ("topnincnum", po::value<uint32_t>(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
+        , "Until what decision level should the increase in variable branch randomness be. 0 means none, 1 means only dec. level 0, etc.")
     ;
 
 
