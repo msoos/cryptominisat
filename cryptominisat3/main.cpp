@@ -247,6 +247,12 @@ struct WrongParam
 
 void Main::add_supported_options()
 {
+    std::ostringstream s_maxtime;
+    s_maxtime << std::setprecision(2) << conf.maxTime;
+
+    std::ostringstream s_maxconfl;
+    s_maxconfl << std::setprecision(2) << std::fixed << conf.maxConfl;
+
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
@@ -257,9 +263,9 @@ void Main::add_supported_options()
         , "[0..] Sets random seed")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
-    ("maxtime", po::value<double>(&conf.maxTime)->default_value(conf.maxTime)
+    ("maxtime", po::value<double>(&conf.maxTime)->default_value(conf.maxTime, s_maxtime.str())
         , "Stop solving after this much time, print stats and exit")
-    ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl)
+    ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl, s_maxconfl.str())
         , "Stop solving after this many conflicts, print stats and exit")
     ("occsimp", po::value<int>(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
         , "Perform occurrence-list-based optimisations (var-elim, subsumption, blocking, etc)")
@@ -302,6 +308,9 @@ void Main::add_supported_options()
     std::ostringstream s_perf_multip;
     s_perf_multip << std::setprecision(2) << conf.multiplier_perf_values_after_cl_clean;
 
+    std::ostringstream s_incclean;
+    s_incclean << std::setprecision(2) << conf.increaseClean;
+
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
@@ -322,7 +331,7 @@ void Main::add_supported_options()
         , "Clear clause statistics data of each clause after clause cleaning")
     ("startclean", po::value<uint64_t>(&conf.startClean)->default_value(conf.startClean)
         , "Clean first time after this many conflicts")
-    ("incclean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
+    ("incclean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean, s_incclean.str())
         , "Clean increment cleaning by this factor for next cleaning")
     ("maxredratio", po::value<double>(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
