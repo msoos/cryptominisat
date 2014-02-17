@@ -78,7 +78,6 @@ Solver::Solver(const SolverConf _conf) :
 
     //Stuff
     , nextCleanLimit(0)
-    , numDecisionVars(0)
     , num_solve_calls(0)
 {
     if (conf.doSQL) {
@@ -937,7 +936,6 @@ void Solver::newVar(const bool bva, const Var orig_outer)
 {
     check_switchoff_limits_newvar();
     Searcher::newVar(bva, orig_outer);
-    numDecisionVars += 1;
     if (conf.doCache) {
         litReachable.push_back(LitReachData());
         litReachable.push_back(LitReachData());
@@ -2962,11 +2960,6 @@ bool Solver::verifyModel() const
     }
 
     return verificationOK;
-}
-
-size_t Solver::getNumDecisionVars() const
-{
-    return numDecisionVars;
 }
 
 void Solver::setNeedToInterrupt()

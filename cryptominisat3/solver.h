@@ -125,7 +125,6 @@ class Solver : public Searcher
         void     printStats() const;
         void     printClauseStats() const;
         void     print_value_kilo_mega(uint64_t value) const;
-        size_t   getNumDecisionVars() const;
         size_t   getNumFreeVars() const;
         const SolverConf& getConf() const;
         const vector<std::pair<string, string> >& get_tags() const;
@@ -493,7 +492,6 @@ class Solver : public Searcher
         bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
-        uint32_t             numDecisionVars;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
         size_t               zeroLevAssignsByCNF = 0;
@@ -546,7 +544,6 @@ class Solver : public Searcher
 inline void Solver::setDecisionVar(const uint32_t var)
 {
     if (!varData[var].is_decision) {
-        numDecisionVars++;
         varData[var].is_decision = true;
         insertVarOrder(var);
     }
@@ -555,7 +552,6 @@ inline void Solver::setDecisionVar(const uint32_t var)
 inline void Solver::unsetDecisionVar(const uint32_t var)
 {
     if (varData[var].is_decision) {
-        numDecisionVars--;
         varData[var].is_decision = false;
     }
 }
