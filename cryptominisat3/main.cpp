@@ -849,6 +849,10 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    #ifndef STATS_NEEDED
+    conf.doSQL = false;
+    #endif
+
     if (conf.doLHBR
         && !conf.propBinFirst
     ) {
