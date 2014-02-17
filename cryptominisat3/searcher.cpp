@@ -532,7 +532,7 @@ void Searcher::mimimize_learnt_clause_based_on_cache()
 
         //Stamp-based minimization
         if (conf.doStamp) {
-            stampBasedRedMinim(learnt_clause);
+            stamp_based_more_minim(learnt_clause);
         }
 
         stats.moreMinimLitsEnd += learnt_clause.size();
@@ -2566,7 +2566,7 @@ void Searcher::minimise_redundant_more(vector<Lit>& cl)
     cl.resize(cl.size() - (i-j));
 }
 
-void Searcher::stampBasedRedMinim(vector<Lit>& cl)
+void Searcher::stamp_based_more_minim(vector<Lit>& cl)
 {
     //Stamp-based minimization
     stats.stampShrinkAttempt++;

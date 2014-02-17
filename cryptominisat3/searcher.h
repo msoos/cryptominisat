@@ -795,7 +795,7 @@ class Searcher : public HyperEngine
         void   minimise_redundant_more(vector<Lit>& cl);
         void   binary_based_more_minim(vector<Lit>& cl);
         void   cache_based_more_minim(vector<Lit>& cl);
-        void   stampBasedRedMinim(vector<Lit>& cl);
+        void   stamp_based_more_minim(vector<Lit>& cl);
 
         //For printint longest decision trail
         vector<Lit> longest_dec_trail;
