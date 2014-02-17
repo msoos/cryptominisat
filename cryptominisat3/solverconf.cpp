@@ -62,7 +62,8 @@ SolverConf::SolverConf() :
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
         , doAlwaysFMinim   (false)
-        , moreMinimLimit   (300)
+        , more_red_minim_limit_cache(200)
+        , more_red_minim_limit_binary(100)
         , extra_bump_var_activities_based_on_glue(true)
 
         //Verbosity

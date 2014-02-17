@@ -65,6 +65,8 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
 {
+    more_red_minim_limit_binary_actual = _conf.more_red_minim_limit_binary;
+    more_red_minim_limit_cache_actual = _conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize);
 }
@@ -2454,61 +2456,48 @@ Lit Searcher::pickBranchLit()
     return next;
 }
 
-void Searcher::minimise_redundant_more(vector<Lit>& cl)
+void Searcher::cache_based_more_minim(vector<Lit>& cl)
 {
-    stats.furtherShrinkAttempt++;
-
-    //Set all literals' seen[lit] = 1 in learnt clause
-    //We will 'clean' the learnt clause by setting these to 0
-    for (vector<Lit>::const_iterator
-        it = cl.begin(), end = cl.end()
-        ; it != end
-        ; it++
-    ) {
-        seen[it->toInt()] = 1;
-    }
-
-    //Do cache-based minimisation and watchlist-based minimisation
-    //one-by-one on the literals. Order could be enforced to get smallest
-    //clause, but it doesn't really matter, I think
-    size_t timeSpent = 0;
+    int64_t limit = more_red_minim_limit_cache_actual;
     for (const Lit lit: cl) {
         //Timeout
-        if (timeSpent > conf.moreMinimLimit)
+        if (limit < 0)
             break;
 
         //Already removed this literal
         if (seen[lit.toInt()] == 0)
             continue;
 
-        if (conf.doCache) {
-            assert(solver->implCache.size() > lit.toInt());
-            const TransCache& cache1 = solver->implCache[lit.toInt()];
-            timeSpent += cache1.lits.size()/2;
-            for (const LitExtra litExtra: cache1.lits) {
-//                 cout
-//                 << "Seen size: " << seen.size()
-//                 << ", litExtra.getLit().toInt(): " << litExtra.getLit().toInt()
-//                 << ", nVars: " << nVars()
-//                 << endl;
-
-                assert(seen.size() > litExtra.getLit().toInt());
-                if (seen[(~(litExtra.getLit())).toInt()]) {
-                    stats.cacheShrinkedClause++;
-                    seen[(~(litExtra.getLit())).toInt()] = 0;
-                }
+        assert(solver->implCache.size() > lit.toInt());
+        const TransCache& cache1 = solver->implCache[lit.toInt()];
+        limit -= (int64_t)cache1.lits.size()/2;
+        for (const LitExtra litExtra: cache1.lits) {
+            assert(seen.size() > litExtra.getLit().toInt());
+            if (seen[(~(litExtra.getLit())).toInt()]) {
+                stats.cacheShrinkedClause++;
+                seen[(~(litExtra.getLit())).toInt()] = 0;
             }
         }
+    }
+}
+
+void Searcher::binary_based_more_minim(vector<Lit>& cl)
+{
+    int64_t limit  = more_red_minim_limit_binary_actual;
+    for (const Lit lit: cl) {
+        //Already removed this literal
+        if (seen[lit.toInt()] == 0)
+            continue;
 
         //Watchlist-based minimisation
         watch_subarray_const ws = watches[lit.toInt()];
         for (watch_subarray_const::const_iterator
             i = ws.begin()
             , end = ws.end()
-            ; i != end && timeSpent < conf.moreMinimLimit
+            ; i != end && limit > 0
             ; i++
         ) {
-            timeSpent++;
+            limit--;
             if (i->isBinary()) {
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
@@ -2533,6 +2522,27 @@ void Searcher::minimise_redundant_more(vector<Lit>& cl)
             }
         }
     }
+}
+
+void Searcher::minimise_redundant_more(vector<Lit>& cl)
+{
+    stats.furtherShrinkAttempt++;
+
+    //Set all literals' seen[lit] = 1 in learnt clause
+    //We will 'clean' the learnt clause by setting these to 0
+    for (vector<Lit>::const_iterator
+        it = cl.begin(), end = cl.end()
+        ; it != end
+        ; it++
+    ) {
+        seen[it->toInt()] = 1;
+    }
+
+    if (conf.doCache) {
+        cache_based_more_minim(cl);
+    }
+
+   binary_based_more_minim(cl);
 
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.

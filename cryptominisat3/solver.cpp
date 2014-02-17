@@ -1448,24 +1448,25 @@ void Solver::check_minimization_effectiveness(const lbool status)
                 << endl;
             }
         } else if (remPercent > 7.0) {
-            conf.moreMinimLimit = 800;
+            more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
+            more_red_minim_limit_cache_actual  = 3*conf.more_red_minim_limit_cache;
             if (conf.verbosity >= 2) {
                 cout
                 << "c more minimization effectiveness good: "
                 << std::fixed << std::setprecision(2) << remPercent
-                << " % --> increasing limit to " << conf.moreMinimLimit
+                << " % --> increasing limit to 3x"
                 << endl;
             }
         } else {
-            conf.moreMinimLimit = 300;
+            more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
+            more_red_minim_limit_cache_actual  = conf.more_red_minim_limit_cache;
             if (conf.verbosity >= 2) {
                 cout
                 << "c more minimization effectiveness OK: "
                 << std::fixed << std::setprecision(2) << remPercent
-                << " % --> setting limit to norm " << conf.moreMinimLimit
+                << " % --> setting limit to norm"
                 << endl;
             }
-            conf.moreMinimLimit = 300;
         }
     }
 }

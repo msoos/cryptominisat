@@ -783,14 +783,20 @@ class Searcher : public HyperEngine
         void              insertVarOrder(const Var x);  ///< Insert a variable in heap
         void  genRandomVarActMultDiv();
 
-        ////////////
-        // Transitive on-the-fly self-subsuming resolution
-        void   minimise_redundant_more(vector<Lit>& cl);
-        void   stampBasedRedMinim(vector<Lit>& cl);
+
+        uint64_t more_red_minim_limit_binary_actual;
+        uint64_t more_red_minim_limit_cache_actual;
         const Stats& getStats() const;
         size_t memUsed() const;
 
     private:
+        ////////////
+        // Transitive on-the-fly self-subsuming resolution
+        void   minimise_redundant_more(vector<Lit>& cl);
+        void   binary_based_more_minim(vector<Lit>& cl);
+        void   cache_based_more_minim(vector<Lit>& cl);
+        void   stampBasedRedMinim(vector<Lit>& cl);
+
         //For printint longest decision trail
         vector<Lit> longest_dec_trail;
         size_t last_confl_longest_dec_trail_printed = 0;

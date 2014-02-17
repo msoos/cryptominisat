@@ -151,7 +151,8 @@ class SolverConf
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
-        uint64_t moreMinimLimit;
+        uint64_t more_red_minim_limit_cache;
+        uint64_t more_red_minim_limit_binary;
         int extra_bump_var_activities_based_on_glue;
 
         //Verbosity
