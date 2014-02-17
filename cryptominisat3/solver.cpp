@@ -78,7 +78,6 @@ Solver::Solver(const SolverConf _conf) :
 
     //Stuff
     , nextCleanLimit(0)
-    , num_solve_calls(0)
 {
     if (conf.doSQL) {
         #ifdef USE_MYSQL
