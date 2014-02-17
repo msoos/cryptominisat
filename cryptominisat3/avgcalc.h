@@ -57,7 +57,7 @@ public:
 
     void push(const T x) {
         sum += x;
-        sumSqare += x*x;
+        sumSqare += (double)x*(double)x;
         num++;
 
         max = std::max(max, x);
