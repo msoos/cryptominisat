@@ -79,8 +79,6 @@ Solver::Solver(const SolverConf _conf) :
     //Stuff
     , nextCleanLimit(0)
     , numDecisionVars(0)
-    , zeroLevAssignsByCNF(0)
-    , zeroLevAssignsByThreads(0)
     , num_solve_calls(0)
 {
     if (conf.doSQL) {

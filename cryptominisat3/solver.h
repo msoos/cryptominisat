@@ -496,8 +496,8 @@ class Solver : public Searcher
         uint32_t             numDecisionVars;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
-        size_t               zeroLevAssignsByCNF;
-        size_t               zeroLevAssignsByThreads;
+        size_t               zeroLevAssignsByCNF = 0;
+        size_t               zeroLevAssignsByThreads = 0;
         vector<LitReachData> litReachable;
         void calcReachability();
 
