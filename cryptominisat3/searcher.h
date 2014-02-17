@@ -785,7 +785,7 @@ class Searcher : public HyperEngine
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
-        void   minimiseRedFurther(vector<Lit>& cl);
+        void   minimise_redundant_more(vector<Lit>& cl);
         void   stampBasedRedMinim(vector<Lit>& cl);
         const Stats& getStats() const;
         size_t memUsed() const;

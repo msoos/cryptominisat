@@ -526,7 +526,7 @@ void Searcher::mimimize_learnt_clause_based_on_cache()
         stats.moreMinimLitsStart += learnt_clause.size();
 
         //Binary&cache-based minim
-        minimiseRedFurther(learnt_clause);
+        minimise_redundant_more(learnt_clause);
 
         //Stamp-based minimization
         if (conf.doStamp) {
@@ -2454,13 +2454,7 @@ Lit Searcher::pickBranchLit()
     return next;
 }
 
-/**
-@brief Performs on-the-fly self-subsuming resolution
-
-Only uses binary and tertiary clauses already in the watchlists in native
-form to carry out the forward-self-subsuming resolution
-*/
-void Searcher::minimiseRedFurther(vector<Lit>& cl)
+void Searcher::minimise_redundant_more(vector<Lit>& cl)
 {
     stats.furtherShrinkAttempt++;
 
