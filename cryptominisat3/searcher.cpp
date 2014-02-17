@@ -2542,7 +2542,7 @@ void Searcher::minimise_redundant_more(vector<Lit>& cl)
         cache_based_more_minim(cl);
     }
 
-   binary_based_more_minim(cl);
+    binary_based_more_minim(cl);
 
     //Finally, remove the literals that have seen[literal] = 0
     //Here, we can count do stats, etc.
