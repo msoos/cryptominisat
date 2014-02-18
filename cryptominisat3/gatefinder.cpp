@@ -55,13 +55,6 @@ bool GateFinder::doAll()
     if (solver->conf.doPrintGateDot)
         printDot();
 
-    //TODO enable below
-    /*if (solver->conf.doFindXors && solver->conf.doMixXorAndGates) {
-        if (!mixXorAndGates())
-            goto end;
-    }*/
-
-
 end:
     //Stats
     if (solver->conf.verbosity >= 1) {

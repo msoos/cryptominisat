@@ -310,10 +310,6 @@ private:
         , FoundXors& foundCls
     ) const;*/
 
-
-    //const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
-    bool mixXorAndGates();
-
     //Information extraction
     bool extractInfo();
     void cutIntoBlocks(const vector<size_t>& xorsToUse);
