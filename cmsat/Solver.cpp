@@ -464,6 +464,14 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse) throw (std::out_of_range)
         fprintf(libraryCNFFile, "0\n");
     }
 
+    //Flip signs accordingly
+    for(size_t i = 0; i < ps.size(); i++) {
+        if (ps[i].sign()) {
+            ps[i] = ps[i].unsign();
+            xorEqualFalse ^= true;
+        }
+    }
+
     if (!ok)
         return false;
     assert(qhead == trail.size());
