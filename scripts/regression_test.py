@@ -48,7 +48,7 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
-                    , default="../build/cryptominisat"
+                    , default="../build/cryptominisat3"
                     , help="SAT solver executable. Default: %default"
                     )
 
@@ -176,7 +176,7 @@ class Tester:
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
-        cmd += "--elimstrategy %s " % random.randint(0,1)
+        cmd += "--elimstrategy %s " % random.choice(["heuristic", "calculate"])
         cmd += "--elimcomplexupdate %s " % random.randint(0,1)
         cmd += "--occredmax %s " % random.randint(0,100)
         cmd += "--asymmte %s " % random.randint(0,1)
