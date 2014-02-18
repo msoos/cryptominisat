@@ -85,7 +85,7 @@ do
 		--calcreach $(bool) \
 		--cachecutoff $(int 0 2000) \
 		--varelim $(bool) \
-		--elimstrategy $(bool) \
+		--elimstrategy $(choice heuristic calculate) \
 		--elimcomplexupdate $(bool) \
 		--subsume1 $(bool) \
 		--asymmte $(bool) \
