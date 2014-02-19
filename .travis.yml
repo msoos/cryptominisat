@@ -10,7 +10,7 @@ install:
   - sudo apt-get install libboost-program-options-dev libboost-test-dev gcc-4.7 g++-4.7
   - sudo apt-get install cmake
 script:
-  - mkdir build
+  - mkdir -p build
   - cd build
   - CC="gcc-4.7" CXX="g++-4.7" cmake ..
   - make
