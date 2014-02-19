@@ -127,22 +127,6 @@ Solver::~Solver()
     delete subsumeImplicit;
 }
 
-/*bool Solver::addXorClause(const vector<Var>& vars, bool rhs)
-{
-    vector<Lit> ps(vars.size());
-    for(size_t i = 0; i < vars.size(); i++) {
-        ps[i] = Lit(vars[i], false);
-    }
-
-    if (!addClauseHelper(ps))
-        return false;
-
-    if (!addXorClauseInt(ps, rhs, true))
-        return false;
-
-    return okay();
-}*/
-
 bool Solver::addXorClauseInt(
     const vector< Lit >& lits
     , bool rhs

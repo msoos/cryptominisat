@@ -107,7 +107,6 @@ class Solver : public Searcher
         //////////////////////////////
         // Problem specification:
         void new_external_var();
-        //bool addXorClause(const vector<Var>& vars, bool rhs);
         /*bool addRedClause(
             const vector<Lit>& ps
             , const ClauseStats& stats = ClauseStats()
