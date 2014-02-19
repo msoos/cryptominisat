@@ -805,7 +805,7 @@ bool VarReplacer::handleOneSet(
 bool VarReplacer::replace(
     Var var1
     , Var var2
-    , const bool xorEqualFalse
+    , const bool xor_is_true
     , bool addLaterAsTwoBins
 )
 {
@@ -820,14 +820,14 @@ bool VarReplacer::replace(
 
     #ifdef DRUP_DEBUG
     (*solver->drup)
-    << Lit(var1, true)  << " " << (Lit(var2, false) ^ !xorEqualFalse) << fin
-    << Lit(var1, false) << " " << (Lit(var2, true)  ^ !xorEqualFalse) << fin
+    << Lit(var1, true)  << " " << (Lit(var2, false) ^ xor_is_true) << fin
+    << Lit(var1, false) << " " << (Lit(var2, true)  ^ xor_is_true) << fin
     ;
     #endif
 
     //Move forward
     const Lit lit1 = getLitReplacedWith(Lit(var1, false));
-    const Lit lit2 = getLitReplacedWith(Lit(var2, false)) ^ !xorEqualFalse;
+    const Lit lit2 = getLitReplacedWith(Lit(var2, false)) ^ xor_is_true;
 
     //Already inside?
     if (lit1.var() == lit2.var()) {

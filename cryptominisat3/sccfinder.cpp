@@ -155,10 +155,9 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 Var vars[2];
                 vars[0] = Lit::toLit(tmp[0]).var();
                 vars[1] = Lit::toLit(tmp[i]).var();
-                const bool xorEqualsFalse =
+                const bool xor_is_true =
                     Lit::toLit(tmp[0]).sign()
-                    ^ Lit::toLit(tmp[i]).sign()
-                    ^ true;
+                    ^ Lit::toLit(tmp[i]).sign();
 
                 //Both are UNDEF, so this is a proper binary XOR
                 if (solver->value(vars[0]) == l_Undef
@@ -170,13 +169,13 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     << vars[0] +1
                     << " XOR "
                     << vars[1] +1
-                    << " = " << !xorEqualsFalse
+                    << " = " << xor_is_true
                     << endl;
                     #endif
                     solver->varReplacer->replace(
                         vars[0]
                         , vars[1]
-                        , xorEqualsFalse
+                        , xor_is_true
                         //Because otherwise queued varreplacer could be reducible
                         //and during var-elim, we would remove one of the binary clauses
                         //and then we would be in a giant mess: the equivalence is stored in replacer

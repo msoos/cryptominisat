@@ -65,7 +65,7 @@ class VarReplacer
         bool replace(
             Var lit1
             , Var lit2
-            , const bool xorEqualFalse
+            , bool xor_is_true
             , bool addLaterAsTwoBins
         );
         void print_equivalent_literals(std::ostream *os) const;
