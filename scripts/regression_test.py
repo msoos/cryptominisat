@@ -761,8 +761,6 @@ class Tester:
         else:
             numtodo = 0
 
-        numtodo = 0
-
         #based on length and number of solve()-s to add, intersperse
         #file with ::solve()
         file_len = self.file_len_no_comment(fname1)
