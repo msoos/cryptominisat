@@ -429,8 +429,10 @@ void DimacsParser::readFullClause(StreamBuffer& in) throw (DimacsParseError)
 
     if (xor_clause) {
         bool xorEqualFalse = false;
-        for (uint32_t i = 0; i < lits.size(); i++)
+        for (uint32_t i = 0; i < lits.size(); i++) {
             xorEqualFalse ^= lits[i].sign();
+            lits[i] = lits[i].unsign();
+        }
 
         solver->addXorClause(lits, xorEqualFalse);
         numXorClauses++;
