@@ -756,12 +756,20 @@ class Tester:
     def intersperse_with_debuglib(self, fname1, fname2) :
 
         #approx number of solve()-s to add
-        numtodo = random.randint(1,10)
+        if random.randint(0,1) == 1:
+            numtodo = random.randint(0,10)
+        else:
+            numtodo = 0
+
+        numtodo = 0
 
         #based on length and number of solve()-s to add, intersperse
         #file with ::solve()
         file_len = self.file_len_no_comment(fname1)
-        nextToAdd = random.randint(1,(file_len/numtodo)*2+1)
+        if numtodo > 0:
+            nextToAdd = random.randint(1,(file_len/numtodo)*2+1)
+        else :
+            nextToAdd = file_len + 1
 
         fin = open(fname1, "r")
         fout = open(fname2, "w")
