@@ -2207,6 +2207,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
+    calculate_and_set_polars();
     genRandomVarActMultDiv();
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
@@ -3144,4 +3145,14 @@ void Searcher::restore_activities_and_polarities()
         activities[i] = act_polar_backup.activity[i];
     }
     var_inc = act_polar_backup.var_inc;
+}
+
+void Searcher::calculate_and_set_polars()
+{
+    CalcDefPolars calculator(solver);
+    vector<unsigned char> calc_polars = calculator.calculate();
+    assert(calc_polars.size() == nVars());
+    for(size_t i = 0; i < calc_polars.size(); i++) {
+        varData[i].polarity = calc_polars[i];
+    }
 }

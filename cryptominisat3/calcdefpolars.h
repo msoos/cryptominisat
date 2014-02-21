@@ -35,11 +35,12 @@ class CalcDefPolars
 {
     public:
         CalcDefPolars(Solver* solver);
-        const vector<char> calculate();
+        const vector<unsigned char> calculate();
 
     private:
-        void tallyVotes(const vector<ClOffset>& cs);
-        void tallyVotesBinTri(const watch_array& watched);
+        void tally_clause_votes(const vector<ClOffset>& cs);
+        void tally_implicit_votes(const watch_array& watched);
+        void add_vote(const Lit lit, const double value);
 
         vector<double> votes;
 

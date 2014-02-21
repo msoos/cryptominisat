@@ -804,14 +804,10 @@ class Searcher : public HyperEngine
 
         struct ActPolarBackup
         {
-            ActPolarBackup() :
-                saved(0)
-            {}
-
             vector<uint32_t> activity;
             vector<bool>     polarity;
             uint32_t         var_inc;
-            bool             saved;
+            bool             saved = false;
 
             size_t memUsed() const
             {
@@ -826,6 +822,7 @@ class Searcher : public HyperEngine
         ActPolarBackup act_polar_backup;
         void backup_activities_and_polarities();
         void restore_activities_and_polarities();
+        void calculate_and_set_polars();
         void restore_order_heap();
 
         //Variable activities
