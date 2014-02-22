@@ -2188,6 +2188,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     assert(ok);
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
+    num_search_called++;
 
     if (solver->conf.verbosity >= 6) {
         cout
@@ -2207,7 +2208,11 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
-    calculate_and_set_polars();
+    if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
+        || conf.do_calc_polarity_every_time
+    ) {
+        calculate_and_set_polars();
+    }
     genRandomVarActMultDiv();
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;

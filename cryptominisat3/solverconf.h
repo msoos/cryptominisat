@@ -123,6 +123,8 @@ class SolverConf
          * Controls which polarity the decision heuristic chooses.
         **/
         PolarityMode polarity_mode;
+        int do_calc_polarity_first_time;
+        int do_calc_polarity_every_time;
 
         //Clause cleaning
         ClauseCleaningTypes clauseCleaningType;

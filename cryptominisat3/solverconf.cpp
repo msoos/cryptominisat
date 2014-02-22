@@ -34,6 +34,8 @@ SolverConf::SolverConf() :
         , random_var_freq_increase_for(3)
         , random_picks_from_top_T(20)
         , polarity_mode(PolarityMode::automatic)
+        , do_calc_polarity_first_time(true)
+        , do_calc_polarity_every_time(false)
 
         //Clause cleaning
         , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_based)

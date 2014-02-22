@@ -790,6 +790,7 @@ class Searcher : public HyperEngine
         size_t memUsed() const;
 
     private:
+        uint32_t num_search_called = 0;
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimise_redundant_more(vector<Lit>& cl);
