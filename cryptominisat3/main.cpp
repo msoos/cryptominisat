@@ -337,6 +337,12 @@ void Main::add_supported_options()
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ;
 
+    std::ostringstream s_random_var_freq_for_top_N;
+    s_random_var_freq_for_top_N << std::setprecision(5) << conf.random_var_freq_for_top_N;
+
+    std::ostringstream s_random_var_freq;
+    s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
+
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
     ("vincmult", po::value<uint32_t>(&conf.var_inc_multiplier)->default_value(conf.var_inc_multiplier)
@@ -347,7 +353,7 @@ void Main::add_supported_options()
         , "variable activity divider and multiplier are both changed +/- with this amount, randomly, in sync")
     ("vincstart", po::value<uint32_t>(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
-    ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq)
+    ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
@@ -359,7 +365,7 @@ void Main::add_supported_options()
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
     ("topnrndpick", po::value<uint32_t>(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
         , "When randomly picking brancing variable, pick from the top N")
-    ("topnrndpickfreq", po::value<double>(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N)
+    ("topnrndpickfreq", po::value<double>(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N, s_random_var_freq_for_top_N.str())
         , "Frequency of increased random  picking brancing variable from top N")
     ("topnincnum", po::value<uint32_t>(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
         , "Until what decision level should the increase in variable branch randomness be. 0 means none, 1 means only dec. level 0, etc.")
