@@ -1343,6 +1343,7 @@ void Searcher::add_otf_subsume_implicit_clause()
 
 void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
+    assert(decisionLevel() > 0);
     hist.trailDepthHist.push(trail.size() - trail_lim[0]);
     hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
 
