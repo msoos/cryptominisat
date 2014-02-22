@@ -3290,10 +3290,11 @@ bool Simplifier::bva_simplify_system()
             return false;
     }
 
+    fill_m_cls_lits_and_red();
     for(const lit_pair replace_lit: m_lits) {
        //cout << "Doing lit " << replace_lit << " replacing lit " << lit << endl;
-        for(const OccurClause cl: m_cls) {
-            remove_matching_clause(cl, replace_lit);
+        for(const m_cls_lits_and_red& cl_lits_and_red: m_cls_lits) {
+            remove_matching_clause(cl_lits_and_red, replace_lit);
         }
     }
 
@@ -3320,8 +3321,41 @@ void Simplifier::update_touched_lits_in_bva()
     touched.clear();
 }
 
+void Simplifier::fill_m_cls_lits_and_red()
+{
+    m_cls_lits.clear();
+    vector<Lit> tmp;
+    for(OccurClause& cl: m_cls) {
+        tmp.clear();
+        bool red;
+        switch(cl.ws.getType()) {
+            case CMSat::watch_binary_t:
+                tmp.push_back(cl.ws.lit2());
+                red = cl.ws.red();
+                break;
+
+            case CMSat::watch_tertiary_t:
+                tmp.push_back(cl.ws.lit2());
+                tmp.push_back(cl.ws.lit3());
+                red = cl.ws.red();
+                break;
+
+            case CMSat::watch_clause_t:
+                const Clause* cl_orig = solver->clAllocator.getPointer(cl.ws.getOffset());
+                for(const Lit lit: *cl_orig) {
+                    if (cl.lit != lit) {
+                        tmp.push_back(lit);
+                    }
+                }
+                red = cl_orig->red();
+                break;
+        }
+        m_cls_lits.push_back(m_cls_lits_and_red(tmp, red));
+    }
+}
+
 void Simplifier::remove_matching_clause(
-    const OccurClause& cl
+    const m_cls_lits_and_red& cl_lits_and_red
     , const lit_pair lit_replace
 ) {
     if (solver->conf.verbosity >= 6 || bva_verbosity) {
@@ -3331,47 +3365,27 @@ void Simplifier::remove_matching_clause(
         << endl;
     }
 
-    bool red;
-    vector<Lit> torem;
-    torem.push_back(lit_replace.lit1);
+    to_remove.clear();
+    to_remove.push_back(lit_replace.lit1);
     if (lit_replace.lit2 != lit_Undef) {
-        torem.push_back(lit_replace.lit2);
+        to_remove.push_back(lit_replace.lit2);
     }
-    switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
-            torem.push_back(cl.ws.lit2());
-            red = cl.ws.red();
-            break;
-
-        case CMSat::watch_tertiary_t:
-            torem.push_back(cl.ws.lit2());
-            torem.push_back(cl.ws.lit3());
-            red = cl.ws.red();
-            break;
-
-        case CMSat::watch_clause_t:
-            const Clause* cl_orig = solver->clAllocator.getPointer(cl.ws.getOffset());
-            for(const Lit lit: *cl_orig) {
-                if (cl.lit != lit) {
-                    torem.push_back(lit);
-                }
-            }
-            red = cl_orig->red();
-            break;
+    for(const Lit cl_lit: cl_lits_and_red.lits) {
+        to_remove.push_back(cl_lit);
     }
-    touched.touch(torem);
+    touched.touch(to_remove);
 
-    switch(torem.size()) {
+    switch(to_remove.size()) {
         case 2:
-            solver->detachBinClause(torem[0], torem[1], red);
+            solver->detachBinClause(to_remove[0], to_remove[1], cl_lits_and_red.red);
             break;
 
         case 3:
-            solver->detachTriClause(torem[0], torem[1], torem[2], red);
+            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], cl_lits_and_red.red);
             break;
 
         default:
-            Clause* cl_new = find_cl_for_bva(torem, red);
+            Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);
             unlinkClause(solver->clAllocator.getOffset(cl_new));
             break;
     }

@@ -642,6 +642,16 @@ private:
         OccurClause occur_cl;
         string to_string(const Solver* solver) const;
     };
+    struct m_cls_lits_and_red
+    {
+        //Used during removal to lower overhead
+        m_cls_lits_and_red(const vector<Lit>& _lits, bool _red) :
+            lits(_lits)
+            , red(_red)
+        {}
+        vector<Lit> lits;
+        bool red;
+    };
     bool bounded_var_addition();
     size_t calc_watch_irred_size(const Lit lit) const;
     vector<size_t> calc_watch_irred_sizes() const;
@@ -661,13 +671,16 @@ private:
     bool add_longer_clause(const Lit lit, const OccurClause& cl);
     void remove_duplicates_from_m_cls();
     void remove_matching_clause(
-        const OccurClause& cl
+        const m_cls_lits_and_red& cl_lits
         , const lit_pair lit_replace
     );
     Clause* find_cl_for_bva(
         const vector<Lit>& torem
         , const bool red
     ) const;
+    void fill_m_cls_lits_and_red();
+    vector<m_cls_lits_and_red> m_cls_lits; //used during removal to lower overhead
+    vector<Lit> to_remove; //to reduce overhead
     vector<PotentialClause> potential;
     vector<lit_pair> m_lits;
     vector<lit_pair> m_lits_this_cl;
