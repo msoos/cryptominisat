@@ -1245,7 +1245,7 @@ void Solver::print_best_irred_clauses_if_required() const
     }
 }
 
-CleaningStats Solver::reduceDB()
+CleaningStats Solver::reduceDB(bool lock_most_uip)
 {
     //Clean the clause database before doing cleaning
     //varReplacer->performReplace();
@@ -1272,7 +1272,9 @@ CleaningStats Solver::reduceDB()
     CompleteDetachReatacher detachReattach(this);
     detachReattach.detachNonBinsNonTris();
 
-    lock_most_UIP_used_clauses();
+    if (lock_most_uip)
+        lock_most_UIP_used_clauses();
+
     pre_clean_clause_db(tmpStats, sumConfl);
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
     sort_red_cls_as_required(tmpStats);
@@ -1528,6 +1530,7 @@ lbool Solver::solve()
     }
 
     //Initialise
+    fullReduce(false);
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
     if (!origAssumptions.empty()) {
@@ -1977,7 +1980,7 @@ void Solver::clearClauseStats(vector<ClOffset>& clauseset)
     }
 }
 
-void Solver::fullReduce()
+void Solver::fullReduce(bool lock_most_uip)
 {
     ClauseUsageStats irredStats = sumClauseData(longIrredCls, false);
     ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
@@ -2019,7 +2022,7 @@ void Solver::fullReduce()
         //printClauseStatsSQL(clauses);
         //printClauseStatsSQL(learnts);
     }
-    CleaningStats iterCleanStat = reduceDB();
+    CleaningStats iterCleanStat = reduceDB(lock_most_uip);
     consolidateMem();
 
     if (conf.doSQL) {

@@ -435,9 +435,9 @@ class Solver : public Searcher
 
         ///////////////////////////
         // Clause cleaning
-        void fullReduce();
+        void fullReduce(bool lock_most_uip = true);
         void clearClauseStats(vector<ClOffset>& clauseset);
-        CleaningStats reduceDB();
+        CleaningStats reduceDB(bool lock_most_uip);
         void lock_most_UIP_used_clauses();
         struct reduceDBStructGlue
         {
