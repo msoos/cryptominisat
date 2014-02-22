@@ -233,7 +233,7 @@ void ClauseAllocator::consolidate(
     //2) There is too much empty, unused space (>30%)
     if (!force
         && ((double)currentlyUsedSize/(double)size > 0.7)
-       ) {
+    ) {
         if (solver->conf.verbosity >= 3) {
             cout << "c Not consolidating memory." << endl;
         }
