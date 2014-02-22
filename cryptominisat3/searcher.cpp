@@ -68,7 +68,7 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
     more_red_minim_limit_binary_actual = _conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = _conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
-    hist.setSize(conf.shortTermHistorySize);
+    hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
 }
 
 Searcher::~Searcher()
@@ -1137,7 +1137,7 @@ void Searcher::checkNeedRestart()
                 && hist.glueHist.isvalid()
                 && hist.trailDepthHistLonger.isvalid()
                 && decisionLevel() > 0
-                && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*1.4
+                && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
             ) {
                 hist.glueHist.clear();
             }

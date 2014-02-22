@@ -148,6 +148,8 @@ class SolverConf
         uint64_t    burstSearchLen;
         Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
         int       do_blocking_restart;
+        uint32_t blocking_restart_trail_hist_length;
+        double   blocking_restart_multip;
 
         //Clause minimisation
         int doRecursiveMinim;

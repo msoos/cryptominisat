@@ -131,11 +131,11 @@ class Searcher : public HyperEngine
                 #endif
             }
 
-            void setSize(const size_t shortTermHistorySize)
+            void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
                 trailDepthHist.clearAndResize(shortTermHistorySize);
-                trailDepthHistLonger.clearAndResize(shortTermHistorySize*50);
+                trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
             }
 
             void print() const
