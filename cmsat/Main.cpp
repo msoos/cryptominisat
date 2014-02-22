@@ -445,7 +445,7 @@ void Main::parseCommandLine()
             conf.origFilename.assign(tmpFilename);
             conf.needToDumpOrig = true;
         } else if ((value = hasPrefix(argv[i], "--alsoread="))) {
-            if (sscanf(value, "%400s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
+            if (sscanf(value, "%200s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
                 printf("ERROR! wrong filename '%s'\n", tmpFilename);
                 exit(0);
             }
