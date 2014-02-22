@@ -247,12 +247,6 @@ struct WrongParam
 
 void Main::add_supported_options()
 {
-    std::ostringstream s_maxtime;
-    s_maxtime << std::setprecision(2) << conf.maxTime;
-
-    std::ostringstream s_maxconfl;
-    s_maxconfl << std::setprecision(2) << std::fixed << conf.maxConfl;
-
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
@@ -263,9 +257,9 @@ void Main::add_supported_options()
         , "[0..] Sets random seed")
     ("threads,t", po::value<int>(&numThreads)->default_value(1)
         , "Number of threads to use")
-    ("maxtime", po::value<double>(&conf.maxTime)->default_value(conf.maxTime, s_maxtime.str())
+    ("maxtime", po::value<double>(&conf.maxTime)->default_value(conf.maxTime, "MAX")
         , "Stop solving after this much time, print stats and exit")
-    ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl, s_maxconfl.str())
+    ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
         , "Stop solving after this many conflicts, print stats and exit")
     ("occsimp", po::value<int>(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
         , "Perform occurrence-list-based optimisations (var-elim, subsumption, blocking, etc)")
