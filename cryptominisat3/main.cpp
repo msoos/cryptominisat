@@ -273,8 +273,6 @@ void Main::add_supported_options()
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
         , "Perform recursive minimisation")
-    ("blockingrestart", po::value<int>(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
-        , "Perform blocking restarts as per Glucose 3.0")
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
     ("drupexistscheck", po::value<int>(&drupExistsCheck)->default_value(drupExistsCheck)
@@ -291,6 +289,9 @@ void Main::add_supported_options()
     std::ostringstream ssAgilL;
     ssAgilL << std::setprecision(6) << conf.agilityLimit;
 
+    std::ostringstream s_blocking_multip;
+    s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
+
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
     ("agilg", po::value<double>(&conf.agilityG)->default_value(conf.agilityG, ssAgilG.str())
@@ -303,6 +304,12 @@ void Main::add_supported_options()
         , "Number of agility limit violations over which to demand a restart")
     ("gluehist", po::value<uint32_t>(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
+    ("blkrest", po::value<int>(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
+        , "Perform blocking restarts as per Glucose 3.0")
+    ("blkrestlen", po::value<uint32_t>(&conf.blocking_restart_trail_hist_length)->default_value(conf.blocking_restart_trail_hist_length)
+        , "Length of the long term trail size for blocking restart")
+    ("blkrestmultip", po::value<double>(&conf.blocking_restart_multip)->default_value(conf.blocking_restart_multip, s_blocking_multip.str())
+        , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ;
 
     std::ostringstream s_perf_multip;
