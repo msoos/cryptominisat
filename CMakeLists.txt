@@ -40,6 +40,7 @@ if (SANITIZE)
     add_cxx_flag("-fsanitize=enum")
     add_cxx_flag("-fsanitize=float-cast-overflow")
     add_cxx_flag("-Wno-bitfield-constant-conversion")
+    add_cxx_flag("-Wunreachable-code")
 endif()
 
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O3 -mtune=native")
@@ -71,6 +72,7 @@ add_cxx_flag_if_supported("-Wno-deprecated")
 add_cxx_flag_if_supported("-Wstrict-aliasing")
 add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wheader-guard")
+add_cxx_flag_if_supported("-Wunreachable-code")
 
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
