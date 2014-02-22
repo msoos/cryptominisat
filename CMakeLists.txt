@@ -95,6 +95,15 @@ ELSE (ZLIB_FOUND)
     MESSAGE(STATUS "WARNING: Did not find ZLIB, gzipped file support will be disabled")
 ENDIF (ZLIB_FOUND)
 
+find_package(Valgrind)
+if (VALGRIND_FOUND)
+    message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
+    add_definitions(-DUSE_VALGRIND)
+    include_directories(${VALGRIND_INCLUDE_DIR})
+else()
+    message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
+endif()
+
 # -----------------------------------------------------------------------------
 # Add GIT version
 # -----------------------------------------------------------------------------

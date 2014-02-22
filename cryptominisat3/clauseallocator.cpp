@@ -31,6 +31,10 @@
 #include "time_mem.h"
 #include "simplifier.h"
 #include "completedetachreattacher.h"
+#ifdef USE_VALGRIND
+#include "valgrind/valgrind.h"
+#include "valgrind/memcheck.h"
+#endif
 
 using namespace CMSat;
 
@@ -196,6 +200,10 @@ void ClauseAllocator::clauseFree(Clause* cl)
     size_t bytes_freed = (sizeof(Clause) + cl->size()*sizeof(Lit));
     size_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
     currentlyUsedSize -= elems_freed;
+
+    #ifdef VALGRIND_MAKE_MEM_UNDEFINED
+    VALGRIND_MAKE_MEM_UNDEFINED(((char*)cl)+sizeof(Clause), cl->size()*sizeof(Lit));
+    #endif
 }
 
 void ClauseAllocator::clauseFree(ClOffset offset)
@@ -247,6 +255,9 @@ void ClauseAllocator::consolidate(
         Clause* clause = (Clause*)tmpDataStart;
         //Already freed, so skip entirely
         if (clause->freed()) {
+            #ifdef VALGRIND_MAKE_MEM_DEFINED
+            VALGRIND_MAKE_MEM_DEFINED(((char*)clause)+sizeof(Clause), clause->size()*sizeof(Lit));
+            #endif
             tmpDataStart += size;
             continue;
         }
