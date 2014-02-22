@@ -122,9 +122,14 @@ public:
         longTermAvg.clear();
     }
 
-    size_t size()
+    size_t get_size() const
     {
         return queuesize;
+    }
+
+    size_t get_maxsize() const
+    {
+        return maxsize;
     }
 };
 

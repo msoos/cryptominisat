@@ -58,7 +58,7 @@ SolverConf::SolverConf() :
         , restart_inc(2)
         , burstSearchLen(300)
         , restartType(Restart::automatic)
-        , optimiseUnsat(0)
+        , do_blocking_restart(1)
 
         //Clause minimisation
         , doRecursiveMinim (true)

@@ -1133,19 +1133,19 @@ void Searcher::checkNeedRestart()
             break;
 
         case Restart::glue:
+            if (conf.do_blocking_restart
+                && hist.glueHist.isvalid()
+                && hist.trailDepthHistLonger.isvalid()
+                && decisionLevel() > 0
+                && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*1.4
+            ) {
+                hist.glueHist.clear();
+            }
+
             if (hist.glueHist.isvalid()
                 && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
-                //If not optimising for UNSAT, we might have SAT, indicated by
-                //a long trail
-                if (!conf.optimiseUnsat
-                    && hist.trailDepthHist.isvalid()
-                    && hist.trailDepthHist.avg() > hist.trailDepthHistLT.avg()*1.8
-                ) {
-                    //Nothing
-                } else {
-                    params.needToStopSearch = true;
-                }
+                params.needToStopSearch = true;
             }
 
             break;
@@ -1345,6 +1345,7 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
     assert(decisionLevel() > 0);
     hist.trailDepthHist.push(trail.size() - trail_lim[0]);
+    hist.trailDepthHistLonger.push(trail.size() - trail_lim[0]);
     hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
 
     hist.branchDepthHist.push(decisionLevel());

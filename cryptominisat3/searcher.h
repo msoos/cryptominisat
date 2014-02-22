@@ -72,7 +72,8 @@ class Searcher : public HyperEngine
             AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
             bqueue<uint32_t>   trailDepthHist;
-            AvgCalc<uint32_t>   trailDepthHistLT;
+            bqueue<uint32_t>   trailDepthHistLonger;
+            AvgCalc<uint32_t>  trailDepthHistLT;
 
             AvgCalc<uint32_t>   trailDepthDeltaHist;
             AvgCalc<uint32_t>   trailDepthDeltaHistLT;
@@ -134,6 +135,7 @@ class Searcher : public HyperEngine
             {
                 glueHist.clearAndResize(shortTermHistorySize);
                 trailDepthHist.clearAndResize(shortTermHistorySize);
+                trailDepthHistLonger.clearAndResize(shortTermHistorySize*50);
             }
 
             void print() const
