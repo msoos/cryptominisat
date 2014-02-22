@@ -284,10 +284,10 @@ void Main::add_supported_options()
     ;
 
     std::ostringstream ssAgilG;
-    ssAgilG << std::setprecision(6) << conf.agilityG;
+    ssAgilG << std::setprecision(7) << conf.agilityG;
 
     std::ostringstream ssAgilL;
-    ssAgilL << std::setprecision(6) << conf.agilityLimit;
+    ssAgilL << std::setprecision(7) << conf.agilityLimit;
 
     std::ostringstream s_blocking_multip;
     s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
