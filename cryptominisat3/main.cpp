@@ -31,6 +31,7 @@
 #include <fstream>
 #include <signal.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "main.h"
 #include "time_mem.h"
@@ -118,7 +119,7 @@ void Main::readInAFile(const string& filename)
         << filename
         << "' for reading" << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     DimacsParser parser(solver, debugLib, debugNewVar);
@@ -147,7 +148,7 @@ void Main::readInStandardInput()
 
     if (in == NULL) {
         cout << "ERROR! Could not open standard input for reading" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     DimacsParser parser(solver, debugLib, debugNewVar);
@@ -169,7 +170,7 @@ void Main::parseInAllFiles()
         << "to parse in more than one file"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 
     for (vector<string>::const_iterator
@@ -262,7 +263,7 @@ void Main::add_supported_options()
     ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
         , "Stop solving after this many conflicts, print stats and exit")
     ("occsimp", po::value<int>(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
-        , "Perform occurrence-list-based optimisations (var-elim, subsumption, blocking, etc)")
+        , "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)")
     ("clbtwsimp", po::value<uint64_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
     ("recur", po::value<int>(&conf.doRecursiveMinim)->default_value(conf.doRecursiveMinim)
@@ -272,7 +273,7 @@ void Main::add_supported_options()
     ("drupexistscheck", po::value<int>(&drupExistsCheck)->default_value(drupExistsCheck)
         , "Check if the drup file provided already exists")
     ("drupdebug", po::bool_switch(&drupDebug)
-        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20. The --drup option must still be given")
+        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -649,7 +650,7 @@ void Main::check_options_correctness()
             << " DIMACS." << endl;
 
             cout << cmdline_options << endl;
-            exit(0);
+            std::exit(0);
         }
 
         po::notify(vm);
@@ -659,14 +660,14 @@ void Main::check_options_correctness()
         cerr
         << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl
         << "       Unkown option: " << c.what() << endl;
-        exit(-1);
+        std::exit(-1);
     } catch (boost::bad_any_cast &e) {
         std::cerr
         << "ERROR! You probably gave a wrong argument type" << endl
         << "       Bad cast: " << e.what()
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::invalid_option_value> > what
     ) {
@@ -675,7 +676,7 @@ void Main::check_options_correctness()
         << "       given to option '" << what.get_option_name() << "'"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
     ) {
@@ -684,7 +685,7 @@ void Main::check_options_correctness()
         << what.get_option_name() << "'"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::required_option> > what
     ) {
@@ -693,7 +694,7 @@ void Main::check_options_correctness()
         << what.get_option_name() << "'"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::too_many_positional_options_error> > what
     ) {
@@ -702,7 +703,7 @@ void Main::check_options_correctness()
         << "       the 1st the CNF file input, the 2nd the DRUP file output"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::ambiguous_option> > what
     ) {
@@ -719,7 +720,7 @@ void Main::check_options_correctness()
         }
         cout << endl;
 
-        exit(-1);
+        std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> > what
     ) {
@@ -728,7 +729,7 @@ void Main::check_options_correctness()
         << "       argument is given with space between the equal sign." << endl
         << "       detailed error message: " << what.what() << endl
         ;
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -745,7 +746,7 @@ void Main::handle_drup_option()
             << endl
             << "DRUP filename"
             << endl;
-            exit(-1);
+            std::exit(-1);
         }
         std::ofstream* drupfTmp = new std::ofstream;
         drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
@@ -756,7 +757,7 @@ void Main::handle_drup_option()
             << " for writing"
             << endl;
 
-            exit(-1);
+            std::exit(-1);
         }
         drupf = drupfTmp;
     }
@@ -814,7 +815,7 @@ void Main::parse_cleaning_type()
         << typeclean << "'" << " but that none of the possiblities listed."
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -830,7 +831,7 @@ void Main::parse_var_elim_strategy()
         << var_elim_strategy << "'" << " but that none of the possiblities listed."
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -877,7 +878,7 @@ void Main::manually_parse_some_options()
         << "LHBR needs binary clauses propagated first."
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 
     if (conf.shortTermHistorySize <= 0) {
@@ -886,7 +887,7 @@ void Main::manually_parse_some_options()
         << "  greater than 0!"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 
     if (vm.count("dumpresult")) {
@@ -947,7 +948,7 @@ void Main::parseCommandLine()
     check_options_correctness();
     if (vm.count("version")) {
         printVersionInfo();
-        exit(0);
+        std::exit(0);
     }
     manually_parse_some_options();
 }
@@ -1005,7 +1006,7 @@ int Main::solve()
             << conf.resultFilename
             << "' for writing!"
             << endl;
-            exit(-1);
+            std::exit(-1);
         }
     }
 
@@ -1102,7 +1103,7 @@ int Main::correctReturnValue(const lbool ret) const
         << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True"
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 
     return retval;

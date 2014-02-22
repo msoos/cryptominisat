@@ -845,7 +845,7 @@ size_t Prober::memUsed() const
 //         solver->enqueue(*l);
 //     }
 //     solver->ok = solver->propagate().isNULL();
-//     //exit(-1);
+//     //std::exit(-1);
 //
 //     return solver->ok;
 // }

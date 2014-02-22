@@ -89,7 +89,7 @@ class Solver : public Searcher
                     << nVarsOutside()
                     << endl;
                     assert(false);
-                    exit(-1);
+                    std::exit(-1);
                 }
                 release_assert(lit.var() < nVarsOutside()
                 && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");

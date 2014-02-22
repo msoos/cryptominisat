@@ -98,7 +98,7 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
         << " At line " << lineNum
         << " we expected a number"
         << endl;
-        exit(3);
+        std::exit(3);
     }
     while (*in >= '0' && *in <= '9') {
         lenParsed++;
@@ -150,7 +150,7 @@ void DimacsParser::readClause(StreamBuffer& in)
                 << var << endl
                 << "--> At line " << lineNum+1
                 << endl;
-                exit(-1);
+                std::exit(-1);
             }
 
             while (var >= solver->nVars()) {
@@ -198,7 +198,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
         << "PARSE ERROR! Unexpected char: '" << *in
         << "' in the header, at line " << lineNum+1
         << endl;
-        exit(3);
+        std::exit(3);
     }
 }
 
@@ -233,7 +233,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     partFile.open(s.c_str());
     if (!partFile) {
         cout << "ERROR: Cannot open part file '" << s << "'";
-        exit(-1);
+        std::exit(-1);
     }
 
     //Output to part file the result
@@ -251,7 +251,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
         partFile << "s UNSAT" << endl;
     } else if (ret == l_Undef) {
         cout << "c timeout, exiting" << endl;
-        exit(15);
+        std::exit(15);
     } else {
         assert(false);
     }
@@ -297,7 +297,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 {
     if ( *in == 'x') {
         cout << "ERROR: Cannot read XOR clause!" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     lits.clear();

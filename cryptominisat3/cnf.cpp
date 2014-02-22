@@ -11,7 +11,7 @@ void CNF::newVar(const bool bva, const Var orig_outer)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     minNumVars++;

@@ -362,7 +362,7 @@ void Searcher::normalClMinim()
             case null_clause_t:
             default:
                 release_assert(false);
-                exit(-1);
+                std::exit(-1);
                 break;
         }
 
@@ -387,7 +387,7 @@ void Searcher::normalClMinim()
 
                 case null_clause_t:
                     release_assert(false);
-                    exit(-1);
+                    std::exit(-1);
                     break;
             }
 
@@ -754,7 +754,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             case null_clause_t:
             default:
                 release_assert(false);
-                exit(-1);
+                std::exit(-1);
                 size = 0;
                 break;
         }
@@ -784,7 +784,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 case null_clause_t:
                 default:
                     release_assert(false);
-                    exit(-1);
+                    std::exit(-1);
                     break;
             }
             stats.recMinimCost++;
@@ -2942,7 +2942,7 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     if (!file) {
         cout << "Couldn't open filename " << filename << endl;
         cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
-        exit(-1);
+        std::exit(-1);
     }
     file << "digraph G {" << endl;
 

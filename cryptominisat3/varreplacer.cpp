@@ -935,7 +935,7 @@ void VarReplacer::checkUnsetSanity()
             << endl;
 
             assert(solver->value(i) == solver->value(repLit));
-            exit(-1);
+            std::exit(-1);
         }
     }
 }

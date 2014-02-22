@@ -24,6 +24,7 @@
 
 #include <string>
 #include <cstdint>
+#include <cstdlib>
 
 namespace CMSat {
 
@@ -66,7 +67,7 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
             return "activity";
 
         default:
-            exit(-1);
+            std::exit(-1);
             //assert(false && "Unknown clause cleaning type?");
     };
 
@@ -89,7 +90,7 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
             return "calculate";
 
         default:
-            exit(-1);
+            std::exit(-1);
             //assert(false);
 
         return "";

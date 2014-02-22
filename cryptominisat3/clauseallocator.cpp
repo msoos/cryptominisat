@@ -318,7 +318,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         << endl;
 
         assert(origNumClauses == offsets.size());
-        exit(-1);
+        std::exit(-1);
     }
 
     //Clear clauses

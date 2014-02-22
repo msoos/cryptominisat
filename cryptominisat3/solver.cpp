@@ -89,7 +89,7 @@ Solver::Solver(const SolverConf _conf) :
         << "Cannot use SQL: no SQL library was found during compilation."
         << endl;
 
-        exit(-1);
+        std::exit(-1);
         #endif
     } else {
         sqlStats = NULL;
@@ -174,7 +174,7 @@ bool Solver::addXorClauseInt(
 
     if (ps.size() > (0x01UL << 18)) {
         cout << "Too long clause!" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
 
@@ -488,7 +488,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Check for too long clauses
     if (ps.size() > (0x01UL << 18)) {
         cout << "Too long clause!" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     //Check for too large variable number
@@ -500,7 +500,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             << nVarsOuter()
             << endl;
             assert(false);
-            exit(-1);
+            std::exit(-1);
         }
         assert(lit.var() < nVarsOuter()
         && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
@@ -588,7 +588,7 @@ bool Solver::addClause(const vector<Lit>& lits)
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
         << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1487,7 +1487,7 @@ void Solver::set_up_sql_writer()
         if (conf.doSQL == 2) {
             cout
             << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
-            exit(-1);
+            std::exit(-1);
         }
         delete sqlStats;
         sqlStats = NULL;
@@ -3013,7 +3013,7 @@ void Solver::findAllAttach() const
                 << endl;
 
                 assert(false);
-                exit(-1);
+                std::exit(-1);
             }
 
             //Clause in one of the lists
@@ -3023,7 +3023,7 @@ void Solver::findAllAttach() const
                 << endl;
 
                 assert(false);
-                exit(1);
+                std::exit(1);
             }
         }
     }
@@ -3049,7 +3049,7 @@ void Solver::findAllAttach(const vector<ClOffset>& cs) const
             << endl;
 
             assert(false);
-            exit(-1);
+            std::exit(-1);
         }
 
         ret = findWCl(watches[cl[1].toInt()], *it);
@@ -3061,7 +3061,7 @@ void Solver::findAllAttach(const vector<ClOffset>& cs) const
             << endl;
 
             assert(false);
-            exit(-1);
+            std::exit(-1);
         }
     }
 }
@@ -3445,7 +3445,7 @@ void Solver::open_file_and_dump_red_clauses(const string redDumpFname) const
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -3470,7 +3470,7 @@ void Solver::open_file_and_dump_irred_clauses(const string irredDumpFname) const
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -3483,7 +3483,7 @@ void Solver::open_dump_file(std::ofstream& outfile, std::string filename) const
         << filename
         << "' for writing. exiting"
         << endl;
-        exit(-1);
+        std::exit(-1);
     }
     outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 }

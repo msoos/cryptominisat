@@ -27,32 +27,32 @@ MySQLStats::~MySQLStats()
     my_bool ret = mysql_stmt_close(stmtRst.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     ret = mysql_stmt_close(stmtReduceDB.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     #ifdef STATS_NEEDED_EXTRA
     ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     ret = mysql_stmt_close(stmtClsDistribSize.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
-        exit(-1);
+        std::exit(-1);
     }
 
     ret = mysql_stmt_close(stmtClsDistribGlue.stmt);
     if (ret) {
         cout << "Error closing prepared statement" << endl;
-        exit(-1);
+        std::exit(-1);
     }
     #endif
 
@@ -182,7 +182,7 @@ void MySQLStats::getID(const Solver* solver)
             << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
             ;
 
-            exit(-1);
+            std::exit(-1);
         }
     }
 
@@ -210,7 +210,7 @@ void MySQLStats::add_tags(const Solver* solver)
         //Inserting element into solverruns to get unique ID
         if (mysql_query(serverConn, ss.str().c_str())) {
             cout << "Couldn't insert into table 'tags'" << endl;
-            exit(1);
+            std::exit(1);
         }
     }
 }
@@ -227,7 +227,7 @@ void MySQLStats::addStartupData(const Solver* solver)
 
     if (mysql_query(serverConn, ss.str().c_str())) {
         cout << "Couldn't insert into table 'startup'" << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -243,7 +243,7 @@ void MySQLStats::finishup(const lbool status)
 
     if (mysql_query(serverConn, ss.str().c_str())) {
         cout << "Couldn't insert into table 'finishup'" << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -334,7 +334,7 @@ void MySQLStats::initRestartSTMT(
     stmtRst.stmt = mysql_stmt_init(serverConn);
     if (!stmtRst.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     //Prepare the statement
@@ -346,7 +346,7 @@ void MySQLStats::initRestartSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        exit(0);
+        std::exit(0);
     }
 
     if (verbosity >= 6) {
@@ -362,7 +362,7 @@ void MySQLStats::initRestartSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     memset(stmtRst.bind, 0, sizeof(stmtRst.bind));
@@ -483,7 +483,7 @@ void MySQLStats::initRestartSTMT(
     if (mysql_stmt_bind_param(stmtRst.stmt, stmtRst.bind)) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtRst.stmt) << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -533,7 +533,7 @@ void MySQLStats::initReduceDBSTMT(
     stmtReduceDB.stmt = mysql_stmt_init(serverConn);
     if (!stmtReduceDB.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     //Prepare the statement
@@ -545,7 +545,7 @@ void MySQLStats::initReduceDBSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        exit(0);
+        std::exit(0);
     }
 
     if (verbosity >= 6) {
@@ -561,7 +561,7 @@ void MySQLStats::initReduceDBSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     memset(stmtReduceDB.bind, 0, sizeof(stmtReduceDB.bind));
@@ -635,7 +635,7 @@ void MySQLStats::initReduceDBSTMT(
     if (mysql_stmt_bind_param(stmtReduceDB.stmt, stmtReduceDB.bind)) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtReduceDB.stmt) << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -673,7 +673,7 @@ void MySQLStats::initClauseDistribSTMT(
     mystruct.stmt = mysql_stmt_init(serverConn);
     if (!mystruct.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     //Prepare the statement
@@ -685,7 +685,7 @@ void MySQLStats::initClauseDistribSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        exit(0);
+        std::exit(0);
     }
 
     if (solver->getConf().verbosity >= 6) {
@@ -701,7 +701,7 @@ void MySQLStats::initClauseDistribSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     //Clear mem of bind, get enough mem for vars
@@ -724,7 +724,7 @@ void MySQLStats::initClauseDistribSTMT(
     if (mysql_stmt_bind_param(mystruct.stmt, &mystruct.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(mystruct.stmt) << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -760,7 +760,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
     stmtSizeGlueScatter.stmt = mysql_stmt_init(serverConn);
     if (!stmtSizeGlueScatter.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     //Prepare the statement
@@ -772,7 +772,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        exit(0);
+        std::exit(0);
     }
 
     if (solver->getConf().verbosity >= 6) {
@@ -788,7 +788,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     //Clear mem of bind, get enough mem for vars
@@ -813,7 +813,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
     if (mysql_stmt_bind_param(stmtSizeGlueScatter.stmt, &stmtSizeGlueScatter.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtSizeGlueScatter.stmt) << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -863,7 +863,7 @@ void MySQLStats::initVarSTMT(
     stmtVar.stmt = mysql_stmt_init(serverConn);
     if (!stmtVar.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        exit(1);
+        std::exit(1);
     }
 
     //Prepare the statement
@@ -875,7 +875,7 @@ void MySQLStats::initVarSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        exit(0);
+        std::exit(0);
     }
 
     if (solver->getConf().verbosity >= 6) {
@@ -891,7 +891,7 @@ void MySQLStats::initVarSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        exit(1);
+        std::exit(1);
     }
 
     //Clear bind
@@ -925,7 +925,7 @@ void MySQLStats::initVarSTMT(
     if (mysql_stmt_bind_param(stmtVar.stmt, &stmtVar.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtVar.stmt) << endl;
-        exit(1);
+        std::exit(1);
     }
 }
 
@@ -954,7 +954,7 @@ void MySQLStats::varDataDump(
             cout << "c Couldn't insert into table `varDataInit`" << endl;
             cout << "c " << mysql_error(serverConn) << endl;
         }
-        exit(-1);
+        std::exit(-1);
     }
     my_ulonglong id = mysql_insert_id(serverConn);
 
@@ -1014,7 +1014,7 @@ void MySQLStats::varDataDump(
                 << mysql_stmt_error(stmtVar->stmt)
                 << endl;
 
-                exit(-1);
+                std::exit(-1);
             }
             at = 0;
         }
@@ -1053,7 +1053,7 @@ void MySQLStats::clauseSizeDistrib(
         << mysql_stmt_error(stmtClsDistribSize.stmt)
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -1079,7 +1079,7 @@ void MySQLStats::clauseGlueDistrib(
         << mysql_stmt_error(stmtClsDistribGlue.stmt)
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -1112,7 +1112,7 @@ void MySQLStats::clauseSizeGlueScatter(
                     << mysql_stmt_error(stmtSizeGlueScatter.stmt)
                     << endl;
 
-                    exit(-1);
+                    std::exit(-1);
                 }
                 at = 0;
             }
@@ -1156,7 +1156,7 @@ void MySQLStats::reduceDB(
         << mysql_stmt_error(stmtReduceDB.stmt)
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 
@@ -1287,7 +1287,7 @@ void MySQLStats::restart(
         << mysql_stmt_error(stmtRst.stmt)
         << endl;
 
-        exit(-1);
+        std::exit(-1);
     }
 }
 

@@ -10,7 +10,7 @@ void SQLStats::getRandomID()
     int randomData = open("/dev/urandom", O_RDONLY);
     if (randomData == -1) {
         cout << "Error reading from /dev/urandom !" << endl;
-        exit(-1);
+        std::exit(-1);
     }
     ssize_t ret = read(randomData, &runID, sizeof(runID));
 
@@ -20,7 +20,7 @@ void SQLStats::getRandomID()
 
     if (ret != sizeof(runID)) {
         cout << "Couldn't read from /dev/urandom!" << endl;
-        exit(-1);
+        std::exit(-1);
     }
     close(randomData);
 }

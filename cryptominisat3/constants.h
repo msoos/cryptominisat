@@ -23,6 +23,7 @@
 #define __CONSTANTS_H__
 
 #include <cstdint>
+#include <cstdlib>
 
 #define release_assert(a) \
     do { \

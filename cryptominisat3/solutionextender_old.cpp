@@ -101,7 +101,7 @@ void SolutionExtender::extend()
                 << endl;
                 assert(false);
 
-                exit(-1);
+                std::exit(-1);
             }
         }
     }

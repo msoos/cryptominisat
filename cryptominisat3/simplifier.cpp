@@ -491,7 +491,7 @@ bool Simplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
             << endl;
 
             assert(false);
-            exit(-1);
+            std::exit(-1);
         }
     }
 
@@ -1252,7 +1252,7 @@ void Simplifier::sanityCheckElimedVars()
                 << endl
                 << "wrongly left in clause: " << *cl
                 << endl;
-                exit(-1);
+                std::exit(-1);
             }
         }
     }
@@ -1279,7 +1279,7 @@ void Simplifier::sanityCheckElimedVars()
                     << "Error: A var is elimed in a binary clause: "
                     << lit << " , " << it2->lit2()
                     << endl;
-                    exit(-1);
+                    std::exit(-1);
                 }
             }
         }
@@ -1506,7 +1506,7 @@ void Simplifier::cleanBlockedClauses()
             << " value: " << solver->value(blockedOn)
             << endl;
             assert(false);
-            exit(-1);
+            std::exit(-1);
         }
 
         if (blockedClauses[at].toRemove) {
@@ -2595,7 +2595,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
             cout
             << "ERROR: Invalid var-elim cost estimation strategy"
             << endl;
-            exit(-1);
+            std::exit(-1);
             break;
     }
 
