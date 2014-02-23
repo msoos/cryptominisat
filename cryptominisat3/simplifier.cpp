@@ -2113,13 +2113,11 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
     if (ps.isClause()) {
         Clause& cl = *solver->clAllocator.getPointer(ps.getOffset());
         *limit_to_decrease -= (long)cl.size();
-        for (uint32_t i = 0; i < cl.size(); i++){
-            //Skip noPosLit
-            if (cl[i] == posLit)
-                continue;
-
-            seen[cl[i].toInt()] = 1;
-            dummy.push_back(cl[i]);
+        for (const Lit lit : cl){
+            if (lit != posLit) {
+                seen[lit.toInt()] = 1;
+                dummy.push_back(lit);
+            }
         }
     }
 }
