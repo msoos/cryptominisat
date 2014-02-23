@@ -1676,7 +1676,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
 
     //Check if we should do aggressive check or not
     bool aggressive = (aggressive_elim_time_limit > 0);
-    runStats.usedAgressiveCheckToELim += aggressive;
+    runStats.usedAggressiveCheckToELim += aggressive;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -2176,7 +2176,7 @@ bool Simplifier::reverse_vivification_of_dummy(
     /*
     //TODO
     //Use watchlists
-    if (numMaxVarElimAgressiveCheck > 0) {
+    if (numMaxVarElimAggressiveCheck > 0) {
         if (aggressiveCheck(lit, noPosLit, retval))
             goto end;
     }*/

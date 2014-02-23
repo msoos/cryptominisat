@@ -144,7 +144,7 @@ public:
             , numRedBinVarRemAdded(0)
             , testedToElimVars(0)
             , triedToElimVars(0)
-            , usedAgressiveCheckToELim(0)
+            , usedAggressiveCheckToELim(0)
             , newClauses(0)
 
             , zeroDepthAssings(0)
@@ -197,7 +197,7 @@ public:
             numRedBinVarRemAdded += other.numRedBinVarRemAdded;
             testedToElimVars += other.testedToElimVars;
             triedToElimVars += other.triedToElimVars;
-            usedAgressiveCheckToELim += other.usedAgressiveCheckToELim;
+            usedAggressiveCheckToELim += other.usedAggressiveCheckToELim;
             newClauses += other.newClauses;
 
             zeroDepthAssings += other.zeroDepthAssings;
@@ -231,7 +231,7 @@ public:
                 << " tried: " << triedToElimVars
                 << " tested: " << testedToElimVars
                 << " ("
-                << (double)usedAgressiveCheckToELim/(double)testedToElimVars*100.0
+                << (double)usedAggressiveCheckToELim/(double)testedToElimVars*100.0
                 << " % aggressive)"
                 << endl;
 
@@ -295,7 +295,7 @@ public:
 
             printStatsLine("c tried to elim"
                 , triedToElimVars
-                , (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
+                , (double)usedAggressiveCheckToELim/(double)triedToElimVars*100.0
                 , "% aggressively"
             );
 
@@ -367,7 +367,7 @@ public:
         uint64_t numRedBinVarRemAdded;
         uint64_t testedToElimVars;
         uint64_t triedToElimVars;
-        uint64_t usedAgressiveCheckToELim;
+        uint64_t usedAggressiveCheckToELim;
         uint64_t newClauses;
 
         //General stat
