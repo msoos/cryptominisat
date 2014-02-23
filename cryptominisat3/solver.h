@@ -284,6 +284,8 @@ class Solver : public Searcher
         ) const;
         void checkImplicitStats() const;
         bool find_with_stamp_a_or_b(Lit a, Lit b) const;
+        bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
+        bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
     protected:
         bool addClause(const vector<Lit>& ps);
@@ -660,6 +662,55 @@ inline bool Solver::find_with_stamp_a_or_b(Lit a, const Lit b) const
         const uint64_t end_inv_other = solver->stamp.tstamp[(a).toInt()].end[STAMP_IRRED];
         const uint64_t end_eqLit = solver->stamp.tstamp[b.toInt()].end[STAMP_IRRED];
         if (end_inv_other > end_eqLit) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline bool Solver::find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const
+{
+    const vector<LitExtra>& cache = solver->implCache[a.toInt()].lits;
+    *limit -= cache.size();
+    for (LitExtra cacheLit: cache) {
+        if (cacheLit.getOnlyIrredBin()
+            && cacheLit.getLit() == b
+        ) {
+            return true;
+        }
+    }
+
+    std::swap(a,b);
+
+    const vector<LitExtra>& cache2 = solver->implCache[a.toInt()].lits;
+    *limit -= cache2.size();
+    for (LitExtra cacheLit: cache) {
+        if (cacheLit.getOnlyIrredBin()
+            && cacheLit.getLit() == b
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const
+{
+    if (watches[a.toInt()].size() > watches[b.toInt()].size()) {
+        std::swap(a,b);
+    }
+
+    watch_subarray_const ws = watches[a.toInt()];
+    *limit -= ws.size();
+    for (const Watched w: ws) {
+        if (!w.isBinary())
+            continue;
+
+        if (!w.red()
+            && w.lit2() == b
+        ) {
             return true;
         }
     }

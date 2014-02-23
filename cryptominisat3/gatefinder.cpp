@@ -341,44 +341,22 @@ void GateFinder::findOrGate(
         //This is the other lineral in the binary clause
         //We are looking for a binary clause '~otherlit V eqLit'
 
-        if (solver->conf.doStamp) {
+        if (solver->conf.doStamp && solver->conf.otfHyperbin) {
             if (solver->find_with_stamp_a_or_b(~otherLit, eqLit))
-                goto next;
+                continue;
         }
 
-        if (solver->conf.doCache) {
-            const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
-            *simplifier->limit_to_decrease -= cache.size();
-            for (LitExtra cacheLit: cache) {
-                if (cacheLit.getOnlyIrredBin()
-                    && cacheLit.getLit() == eqLit
-                ) {
-                    goto next;
-                }
-            }
+        if (solver->conf.doCache && solver->conf.otfHyperbin) {
+            if (solver->find_with_cache_a_or_b(~otherLit, eqLit, simplifier->limit_to_decrease))
+                continue;
         }
 
-        //Try to find corresponding binary clause in watchlist
-        {
-            watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
-            *simplifier->limit_to_decrease -= ws.size();
-            for (const Watched w: ws) {
-                if (!w.isBinary())
-                    continue;
-
-                if (!w.red()
-                    && w.lit2() == eqLit
-                ) {
-                    goto next;
-                }
-            }
+        if (solver->find_with_watchlist_a_or_b(~otherLit, eqLit, simplifier->limit_to_decrease)) {
+            continue;
         }
 
         //We have to find the binary clause. If not, this is not a gate
         return;
-
-        next:
-        ;
     }
 
     OrGate gate(eqLit, lit1, lit2, false);
