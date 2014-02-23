@@ -116,6 +116,7 @@ SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
+        , do_empty_varelim (true)
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)

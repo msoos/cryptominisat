@@ -206,6 +206,7 @@ class SolverConf
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
+        int      do_empty_varelim;
         int      updateVarElimComplexityOTF;
         uint32_t updateVarElimComplexityOTF_limitvars;
         int      updateVarElimComplexityOTF_limitavg;

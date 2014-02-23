@@ -1024,7 +1024,7 @@ bool Simplifier::simplify()
     }
 
     solver->clauseCleaner->clean_implicit_clauses();
-    if (solver->conf.doVarElim) {
+    if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
         eliminate_empty_resolvent_vars();
         if (!eliminateVars())
             goto end;
