@@ -283,7 +283,7 @@ class Solver : public Searcher
             , bool allowFreed
         ) const;
         void checkImplicitStats() const;
-        bool find_with_stamp_a_or_b(const Lit a, const Lit b) const;
+        bool find_with_stamp_a_or_b(Lit a, Lit b) const;
 
     protected:
         bool addClause(const vector<Lit>& ps);
@@ -646,10 +646,14 @@ inline lbool Solver::solve_with_assumptions(
     return solve();
 }
 
-inline bool Solver::find_with_stamp_a_or_b(const Lit a, const Lit b) const
+inline bool Solver::find_with_stamp_a_or_b(Lit a, const Lit b) const
 {
     //start STAMP of A < start STAMP of B
     //end STAMP of A > start STAMP of B
+    //means: ~A V B is inside
+    //so, invert A
+    a = ~a;
+
     const uint64_t start_inv_other = solver->stamp.tstamp[(a).toInt()].start[STAMP_IRRED];
     const uint64_t start_eqLit = solver->stamp.tstamp[b.toInt()].end[STAMP_IRRED];
     if (start_inv_other < start_eqLit) {
