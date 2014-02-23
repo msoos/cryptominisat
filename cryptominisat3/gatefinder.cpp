@@ -78,7 +78,7 @@ void GateFinder::findOrGates()
     numMaxGateFinder = 100LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
-    findOrGates(false);
+    findOrGates_real();
 
     for(const auto orgate: orGates) {
         if (orgate.red) {
@@ -283,7 +283,7 @@ size_t GateFinder::findEqOrGates()
         }
 }*/
 
-void GateFinder::findOrGates(const bool redGatesToo)
+void GateFinder::findOrGates_real()
 {
     if (solver->nVars() < 1)
         return;
@@ -303,113 +303,85 @@ void GateFinder::findOrGates(const bool redGatesToo)
                 break;
             }
 
-            if (!ws.isTri())
+            if (!ws.isTri() || ws.red())
                 continue;
 
-            //if no learnt gates are allowed and this is learnt, skip
-            if (ws.red() && !redGatesToo)
-                continue;
-
-            const bool wasRed = ws.red();
-
-            //Check how many literals have zero cache&binary clause
-            //If too many have 0, it cannot possibly be an OR gate
-            bool OK = true;
-            for (const Lit l: ws) {
-                //TODO stamping
-                const vector<LitExtra>& cache = solver->implCache[(~l).toInt()].lits;
-                watch_subarray_const ws = solver->watches[(~l).toInt()];
-
-                if (cache.size() == 0
-                    && ws.size() == 0
-                ) {
-                    OK = false;
-                    break;
-                }
-            }
-
-            //Too many zeroes
-            if (!OK)
+            if (any_literal_has_zero_cache_and_watch(ws))
                 continue;
 
             //Try to find a gate with eqlit (~*l)
-            findOrGate(~lit, ws.lit2(), ws.lit3(), redGatesToo, wasRed);
+            findOrGate(~lit, ws.lit2(), ws.lit3());
         }
     }
+}
+
+bool GateFinder::any_literal_has_zero_cache_and_watch(const Watched ws) const
+{
+    for (const Lit l: ws) {
+        //TODO stamping
+        const vector<LitExtra>& cache = solver->implCache[(~l).toInt()].lits;
+        watch_subarray_const ws = solver->watches[(~l).toInt()];
+
+        if (cache.size() == 0
+            && ws.size() == 0
+        ) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void GateFinder::findOrGate(
     const Lit eqLit
     , const Lit lit1
     , const Lit lit2
-    , const bool redGatesToo
-    , bool wasRed
 ) {
-    bool isEqual = true;
     for (const Lit otherLit: std::array<Lit, 2>{{lit1, lit2}}) {
         //This is the other lineral in the binary clause
-        //We are looking for a binary clause '~otherlit V ~eqLit'
-        bool OK = false;
+        //We are looking for a binary clause '~otherlit V eqLit'
 
         if (solver->conf.doStamp) {
-            //looking for "~otherLit V eqLit"
-            //start STAMP of ~otherLit < start STAMP of eqLit
-            //end STAMP of ~otherLit > start STAMP of eqLit
-            const uint64_t start_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].start[STAMP_IRRED];
-            const uint64_t start_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
-            if (start_inv_other < start_eqLit) {
-                const uint64_t end_inv_other = solver->stamp.tstamp[(~otherLit).toInt()].end[STAMP_IRRED];
-                const uint64_t end_eqLit = solver->stamp.tstamp[eqLit.toInt()].end[STAMP_IRRED];
-                if (end_inv_other > end_eqLit) {
-                    OK = true;
-                }
-            }
+            if (solver->find_with_stamp_a_or_b(~otherLit, eqLit))
+                goto next;
         }
 
         if (solver->conf.doCache) {
-            //Try to find corresponding binary clause in cache
             const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
             *simplifier->limit_to_decrease -= cache.size();
             for (LitExtra cacheLit: cache) {
-                if ((redGatesToo || cacheLit.getOnlyIrredBin())
-                     && cacheLit.getLit() == eqLit
+                if (cacheLit.getOnlyIrredBin()
+                    && cacheLit.getLit() == eqLit
                 ) {
-                    wasRed |= !cacheLit.getOnlyIrredBin();
-                    OK = true;
-                    break;
+                    goto next;
                 }
             }
         }
 
         //Try to find corresponding binary clause in watchlist
-        watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
-        *simplifier->limit_to_decrease -= ws.size();
-        for (const Watched w: ws) {
-            //Only binary clauses are of importance
-            if (!w.isBinary())
-                continue;
+        {
+            watch_subarray_const ws = solver->watches[(~otherLit).toInt()];
+            *simplifier->limit_to_decrease -= ws.size();
+            for (const Watched w: ws) {
+                if (!w.isBinary())
+                    continue;
 
-            if ((redGatesToo || !w.red())
-                 && w.lit2() == eqLit
-            ) {
-                wasRed |= w.red();
-                OK = true;
-                break;
+                if (!w.red()
+                    && w.lit2() == eqLit
+                ) {
+                    goto next;
+                }
             }
         }
 
         //We have to find the binary clause. If not, this is not a gate
-        if (!OK) {
-            isEqual = false;
-            break;
-        }
-    }
-
-    //Does not make a gate, return
-    if (!isEqual)
         return;
 
-    OrGate gate(eqLit, lit1, lit2, wasRed);
+        next:
+        ;
+    }
+
+    OrGate gate(eqLit, lit1, lit2, false);
 
     //Find if there are any gates that are the same
     for (uint32_t at: gateOccEq[gate.eqLit.toInt()]) {

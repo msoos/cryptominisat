@@ -167,13 +167,12 @@ private:
 
     //Finding
     void findOrGates();
-    void findOrGates(const bool redGatesToo);
+    bool any_literal_has_zero_cache_and_watch(const Watched ws) const;
+    void findOrGates_real();
     void findOrGate(
         const Lit eqLit
         , const Lit lit1
         , const Lit lit2
-        , const bool redGatesToo
-        , bool wasRed
     );
 
     bool doAllOptimisationWithGates();
