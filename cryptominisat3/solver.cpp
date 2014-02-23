@@ -1532,7 +1532,7 @@ lbool Solver::solve()
     //Initialise
     fullReduce(false);
     nextCleanLimitInc = conf.startClean;
-    nextCleanLimit += nextCleanLimitInc;
+    nextCleanLimit = sumStats.conflStats.numConflicts + nextCleanLimitInc;
     if (!origAssumptions.empty()) {
         //origAssumptions = *_assumptions;
         set_assumptions();
