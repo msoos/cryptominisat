@@ -1901,6 +1901,13 @@ bool Simplifier::add_varelim_resolvent(
         }
     }
 
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "adding v-elim resolvent: "
+        << finalLits
+        << endl;
+    }
+
     //Add clause and do subsumption
     newCl = solver->addClauseInt(
         finalLits //Literals in new clause
