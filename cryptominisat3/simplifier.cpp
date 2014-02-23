@@ -1828,45 +1828,62 @@ void Simplifier::print_var_eliminate_stat(const Lit lit) const
     printOccur(~lit);
 }
 
-void Simplifier::check_if_new_2_long_subsumes_3_long(const vector<Lit>& lits)
+bool Simplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits_orig)
 {
-    assert(lits.size() == 2);
-    for(watch_subarray::const_iterator
-        it2 = solver->watches[lits[0].toInt()].begin()
-        , end2 = solver->watches[lits[0].toInt()].end()
-        ; it2 != end2
-        ; it2++
-    ) {
-        if (it2->isTri() && !it2->red()
-            && (it2->lit2() == lits[1]
-                || it2->lit3() == lits[1])
+    assert(lits_orig.size() == 2);
+    Lit lits[2];
+    lits[0] = lits_orig[0];
+    lits[1] = lits_orig[1];
+    if (solver->watches[lits[0].toInt()].size() > solver->watches[lits[1].toInt()].size()) {
+        std::swap(lits[0], lits[1]);
+    }
+
+    bool already_inside = false;
+    *limit_to_decrease -= solver->watches[lits[0].toInt()].size()/2;
+    Watched* i = solver->watches[lits[0].toInt()].begin();
+    Watched* j = i;
+    for(Watched* end = solver->watches[lits[0].toInt()].end(); i != end; i++) {
+        const Watched& w = *i;
+
+        if (w.isBinary()
+            && !w.red()
+            && w.lit2() == lits[1]
+        ) {
+            if (solver->conf.verbosity >= 6) {
+                cout
+                << "Not adding resolvd BIN, it's aready inside"
+                << " irred bin: "
+                << lits[0]
+                << ", " << w.lit2()
+                << endl;
+            }
+            already_inside = true;
+        }
+
+        if (w.isTri()
+            && !w.red()
+            && (   w.lit2() == lits[1]
+                || w.lit3() == lits[1]
+            )
         ) {
             if (solver->conf.verbosity >= 6) {
                 cout
                 << "Removing irred tri-clause due to addition of"
                 << " irred bin: "
                 << lits[0]
-                << ", " << it2->lit2()
-                << ", " << it2->lit3()
+                << ", " << w.lit2()
+                << ", " << w.lit3()
                 << endl;
             }
-
-            touched.touch(it2->lit2());
-            touched.touch(it2->lit3());
-
             runStats.subsumedByVE++;
-            solver->detachTriClause(
-                lits[0]
-                , it2->lit2()
-                , it2->lit3()
-                , it2->red()
-            );
-
-            //We have to break: we just modified the stuff we are
-            //going through...
-            break;
+            solver->remove_tri_but_lit1(lits[0],w.lit2(), w.lit3(), w.red(), *limit_to_decrease);
+        } else {
+            *j++ = *i;
         }
     }
+    solver->watches[lits[0].toInt()].shrink(i-j);
+
+    return already_inside;
 }
 
 bool Simplifier::add_varelim_resolvent(
@@ -1874,14 +1891,18 @@ bool Simplifier::add_varelim_resolvent(
     , const ClauseStats& stats
 ) {
     runStats.newClauses++;
+    Clause* newCl = NULL;
 
     //Check if a new 2-long would subsume a 3-long
     if (finalLits.size() == 2) {
-        check_if_new_2_long_subsumes_3_long(finalLits);
+        bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
+        if (already_inside) {
+            goto subsume;
+        }
     }
 
     //Add clause and do subsumption
-    Clause* newCl = solver->addClauseInt(
+    newCl = solver->addClauseInt(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
         , stats //Statistics for this new clause (usage, etc.)
@@ -1899,6 +1920,7 @@ bool Simplifier::add_varelim_resolvent(
         runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
         //Subsume long
+        subsume:
         SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
             std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
             , finalLits //Literals in this binary clause

@@ -524,7 +524,7 @@ private:
     int         test_elim_and_fill_resolvents(Var var);
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
-    void        check_if_new_2_long_subsumes_3_long(const vector<Lit>& lits);
+    bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const Var var);
     void        print_var_elim_complexity_stats(const Var var) const;
     vector<pair<vector<Lit>, ClauseStats> > resolvents;
