@@ -190,16 +190,31 @@ size_t CNF::cl_size(const Watched& ws) const
     }
 }
 
+string CNF::watches_to_string(const Lit lit, watch_subarray_const ws) const
+{
+    std::stringstream ss;
+    for(Watched w: ws) {
+        ss << watched_to_string(lit, w) << " --  ";
+    }
+    return ss.str();
+}
+
 string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
 {
     std::stringstream ss;
     switch(ws.getType()) {
         case watch_binary_t:
             ss << otherLit << ", " << ws.lit2();
+            if (ws.red()) {
+                ss << "(red)";
+            }
             break;
 
         case CMSat::watch_tertiary_t:
             ss << otherLit << ", " << ws.lit2() << ", " << ws.lit3();
+            if (ws.red()) {
+                ss << "(red)";
+            }
             break;
 
         case watch_clause_t: {
@@ -208,6 +223,9 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
                 ss << (*cl)[i];
                 if (i + 1 < cl->size())
                     ss << ", ";
+            }
+            if (cl->red()) {
+                ss << "(red)";
             }
             break;
         }
