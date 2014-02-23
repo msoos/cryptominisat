@@ -232,7 +232,7 @@ public:
                 << " tested: " << testedToElimVars
                 << " ("
                 << (double)usedAgressiveCheckToELim/(double)testedToElimVars*100.0
-                << " % agressive)"
+                << " % aggressive)"
                 << endl;
 
                 cout
@@ -296,7 +296,7 @@ public:
             printStatsLine("c tried to elim"
                 , triedToElimVars
                 , (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
-                , "% agressively"
+                , "% aggressively"
             );
 
             printStatsLine("c asymmSub"
@@ -588,7 +588,7 @@ private:
        const Watched ps
         , const Watched qs
     );
-    bool agressiveCheck(
+    bool aggressiveCheck(
         const Lit lit
         , const Lit noPosLit
         , bool& retval

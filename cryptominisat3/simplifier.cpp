@@ -1674,9 +1674,9 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return 1000;
     }
 
-    //Check if we should do agressive check or not
-    bool agressive = (aggressive_elim_time_limit > 0);
-    runStats.usedAgressiveCheckToELim += agressive;
+    //Check if we should do aggressive check or not
+    bool aggressive = (aggressive_elim_time_limit > 0);
+    runStats.usedAgressiveCheckToELim += aggressive;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -1723,7 +1723,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
                 continue;
 
             //Resolve the two clauses
-            bool tautological = resolve_clauses(*it, *it2, lit, agressive);
+            bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
             if (tautological)
                 continue;
 
@@ -2155,7 +2155,7 @@ bool Simplifier::reverse_vivification_of_dummy(
     //TODO
     //Use watchlists
     if (numMaxVarElimAgressiveCheck > 0) {
-        if (agressiveCheck(lit, noPosLit, retval))
+        if (aggressiveCheck(lit, noPosLit, retval))
             goto end;
     }*/
 
@@ -2268,7 +2268,7 @@ bool Simplifier::resolve_clauses(
     return tautological;
 }
 
-bool Simplifier::agressiveCheck(
+bool Simplifier::aggressiveCheck(
     const Lit lit
     , const Lit noPosLit
     , bool& retval
