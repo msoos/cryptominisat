@@ -1861,7 +1861,7 @@ bool Simplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(const
         }
 
         if (w.isTri()
-            && !w.red()
+            && w.red()
             && (   w.lit2() == lits[1]
                 || w.lit3() == lits[1]
             )
