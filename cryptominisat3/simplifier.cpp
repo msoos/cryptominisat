@@ -1868,7 +1868,7 @@ bool Simplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(const
         ) {
             if (solver->conf.verbosity >= 6) {
                 cout
-                << "Removing irred tri-clause due to addition of"
+                << "Removing tri-clause due to addition of"
                 << " irred bin: "
                 << lits[0]
                 << ", " << w.lit2()
@@ -2157,7 +2157,6 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
                 return true;
             }
 
-            //Add the literal
             if (!seen[lit.toInt()]) {
                 dummy.push_back(lit);
                 seen[lit.toInt()] = 1;
