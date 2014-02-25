@@ -376,9 +376,9 @@ void Main::add_supported_options()
     ("flippolf", po::value<uint32_t>(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
         , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ("calcpolar1st", po::value<int>(&conf.do_calc_polarity_first_time)->default_value(conf.do_calc_polarity_first_time)
-        , "Calculate the polarity of variables based on their occurrences")
+        , "Calculate the polarity of variables based on their occurrences at startup of solve()")
     ("calcpolarall", po::value<int>(&conf.do_calc_polarity_every_time)->default_value(conf.do_calc_polarity_every_time)
-        , "Calculate the polarity of variables based on their occurrences")
+        , "Calculate the polarity of variables based on their occurrences at startup & after every simplification")
     ;
 
 
