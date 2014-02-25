@@ -47,6 +47,7 @@
 #include "clauseallocator.h"
 #include "xorfinderabst.h"
 #include "subsumeimplicit.h"
+#include "sqlstats.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -3075,14 +3076,26 @@ bool Simplifier::bounded_var_addition()
             break;
     }
 
+    bool time_out = *limit_to_decrease <= 0;
+    double time_used = cpuTime() - my_time;
+    double time_remain = ((double)*limit_to_decrease/(double)limit_orig);
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [bva] added: " << bva_worked
         << " simp: " << bva_simp_size
-        << " T: " << cpuTime() - my_time
-        << " T-out: " << (*limit_to_decrease <= 0 ? "Y" : "N")
-        << " T-r: " << ((double)*limit_to_decrease/(double)limit_orig*100.0) << "%"
+        << " T: " << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
+        << " T-r: " << time_remain*100.0  << "%"
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "bva"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     return solver->okay();

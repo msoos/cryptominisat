@@ -27,6 +27,14 @@ public:
         , const Searcher* searcher
     ) = 0;
 
+    virtual void time_passed(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+        , bool time_out
+        , double percent_time_remain
+    ) = 0;
+
     #ifdef STATS_NEEDED_EXTRA
     virtual void clauseSizeDistrib(
         uint64_t sumConflicts

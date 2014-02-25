@@ -56,6 +56,14 @@ public:
         , const Solver* solver
     );
 
+    virtual void time_passed(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+        , bool time_out
+        , double percent_time_remain
+    );
+
     virtual bool setup(const Solver* solver);
     virtual void finishup(lbool status);
 
@@ -68,6 +76,7 @@ private:
 
     void addStartupData(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
+    void initTimePassedSTMT();
     #ifdef STATS_NEEDED_EXTRA
     struct StmtClsDistrib {
         StmtClsDistrib() :
@@ -123,6 +132,21 @@ private:
         bindAt++;
     }
 
+    template<typename T>
+    void bindTo(
+        T& t
+        , char* str
+        , unsigned long* str_len
+    ) {
+        t.bind[bindAt].buffer_type= MYSQL_TYPE_STRING;
+        t.bind[bindAt].buffer= str;
+        t.bind[bindAt].buffer_length = 200;
+        t.bind[bindAt].is_null= 0;
+        t.bind[bindAt].length= str_len;
+
+        bindAt++;
+    }
+
     struct StmtReduceDB {
         StmtReduceDB() :
             stmt(NULL)
@@ -151,6 +175,25 @@ private:
     };
     StmtReduceDB stmtReduceDB;
     void initReduceDBSTMT(uint64_t verbosity);
+
+    struct StmtTimePassed {
+        StmtTimePassed() :
+            stmt(NULL)
+        {};
+
+        MYSQL_BIND  bind[1+7];
+        MYSQL_STMT  *stmt;
+
+        uint64_t numSimplify;
+        uint64_t sumConflicts;
+        double cpuTime;
+        char name[200];
+        unsigned long name_len;
+        double time_passed;
+        uint64_t time_out;
+        double percent_time_remain;
+    };
+    StmtTimePassed stmtTimePassed;
 
     size_t bindAt;
     struct StmtRst {

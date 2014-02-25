@@ -7,6 +7,7 @@
 #include "simplifier.h"
 #include <string>
 #include <time.h>
+#include "constants.h"
 
 using namespace CMSat;
 using std::cout;
@@ -72,6 +73,7 @@ bool MySQLStats::setup(const Solver* solver)
     addStartupData(solver);
     initRestartSTMT(solver->getConf().verbosity);
     initReduceDBSTMT(solver->getConf().verbosity);
+    initTimePassedSTMT();
     #ifdef STATS_NEEDED_EXTRA
     initVarSTMT(solver, stmtVarSingle, 1);
     initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
@@ -262,6 +264,77 @@ void MySQLStats::writeQuestionMarks(
             ss << "?";
     }
     ss << ")";
+}
+
+void MySQLStats::initTimePassedSTMT()
+{
+    const size_t numElems = sizeof(stmtTimePassed.bind)/sizeof(MYSQL_BIND);
+
+    std::stringstream ss;
+    ss << "insert into `timepassed`"
+    << "("
+    //Position
+    << "  `runID`, `simplifications`, `conflicts`, `time`"
+
+    //Clause stats
+    << ", `name`, `elapsed`, `timeout`, `percenttimeremain`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Get memory for statement
+    stmtTimePassed.stmt = mysql_stmt_init(serverConn);
+    if (!stmtTimePassed.stmt) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        std::exit(1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtTimePassed.stmt, ss.str().c_str(), ss.str().length())) {
+        cout
+        << "Error in mysql_stmt_prepare(), INSERT failed"
+        << endl
+        << mysql_stmt_error(stmtTimePassed.stmt)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(0);
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtTimePassed.stmt);
+    if (param_count != numElems) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        std::exit(1);
+    }
+
+    memset(stmtTimePassed.bind, 0, sizeof(stmtTimePassed.bind));
+
+
+    //Bind the local variables to the statement
+    bindAt =0;
+    bindTo(stmtTimePassed, runID);
+    bindTo(stmtTimePassed, stmtTimePassed.numSimplify);
+    bindTo(stmtTimePassed, stmtTimePassed.sumConflicts);
+    bindTo(stmtTimePassed, stmtTimePassed.cpuTime);
+    bindTo(stmtTimePassed, stmtTimePassed.name, &stmtTimePassed.name_len);
+    bindTo(stmtTimePassed, stmtTimePassed.time_passed);
+    bindTo(stmtTimePassed, stmtTimePassed.time_out);
+    bindTo(stmtTimePassed, stmtTimePassed.percent_time_remain);
+    assert(bindAt == numElems);
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(stmtTimePassed.stmt, stmtTimePassed.bind)) {
+        cout << "mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtTimePassed.stmt) << endl;
+        std::exit(1);
+    }
 }
 
 //Prepare statement for restart
@@ -1160,6 +1233,36 @@ void MySQLStats::reduceDB(
     }
 }
 
+void MySQLStats::time_passed(
+    const Solver* solver
+    , const string& name
+    , double time_passed
+    , bool time_out
+    , double percent_time_remain
+) {
+    stmtTimePassed.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtTimePassed.sumConflicts    = solver->sumConflicts();
+    stmtTimePassed.cpuTime         = cpuTime();
+    release_assert(name.size() < sizeof(stmtTimePassed.name)-1);
+    strncpy(stmtTimePassed.name, name.c_str(), sizeof(stmtTimePassed.name));
+    stmtTimePassed.name[sizeof(stmtTimePassed.name)-1] = '\0';
+    stmtTimePassed.name_len = strlen(stmtTimePassed.name);
+    stmtTimePassed.time_passed = time_passed;
+    stmtTimePassed.time_out = time_out;
+    stmtTimePassed.percent_time_remain = percent_time_remain;
+
+    if (mysql_stmt_execute(stmtTimePassed.stmt)) {
+        cout
+        << "ERROR: while executing clause DB cleaning MySQL prepared statement"
+        << endl;
+
+        cout << "Error from mysql: "
+        << mysql_stmt_error(stmtTimePassed.stmt)
+        << endl;
+
+        std::exit(-1);
+    }
+}
 
 void MySQLStats::restart(
     const PropStats& thisPropStats
