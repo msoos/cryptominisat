@@ -242,7 +242,7 @@ Clause* Solver::addClauseInt(
     #endif //VERBOSE_DEBUG
 
     //Make stats sane
-    stats.conflictNumIntroduced = std::min<uint64_t>(Searcher::sumConflicts(), stats.conflictNumIntroduced);
+    stats.introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts(), stats.introduced_at_conflict);
 
     vector<Lit> ps = lits;
 
@@ -1049,8 +1049,8 @@ bool Solver::reduceDBStructPropConfl::operator() (
         return (x->stats.numPropAndConfl() < y->stats.numPropAndConfl());
 
     //Second tie: size
-    if (x->stats.numUsedUIP != y->stats.numUsedUIP)
-        return x->stats.numUsedUIP < y->stats.numUsedUIP;
+    if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
+        return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
 
     return x->size() > y->size();
 }
@@ -1068,15 +1068,15 @@ void Solver::pre_clean_clause_db(
             assert(cl->size() > 3);
             if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
                 && !cl->stats.locked
-                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
+                && cl->stats.introduced_at_conflict + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
             ) {
                 //Stat update
                 tmpStats.preRemove.incorporate(cl);
-                tmpStats.preRemove.age += sumConfl - cl->stats.conflictNumIntroduced;
+                tmpStats.preRemove.age += sumConfl - cl->stats.introduced_at_conflict;
 
                 //Check
-                assert(cl->stats.conflictNumIntroduced <= sumConfl);
+                assert(cl->stats.introduced_at_conflict <= sumConfl);
 
                 if (cl->stats.glue > cl->size() + 1000) {
                     cout
@@ -1113,19 +1113,19 @@ void Solver::real_clean_clause_db(
         assert(cl->size() > 3);
 
         //Don't delete if not aged long enough or locked
-        if (cl->stats.conflictNumIntroduced + conf.min_time_in_db_before_eligible_for_cleaning
+        if (cl->stats.introduced_at_conflict + conf.min_time_in_db_before_eligible_for_cleaning
                 >= Searcher::sumConflicts()
              || cl->stats.locked
         ) {
             longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
-            tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
+            tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
             continue;
         }
 
         //Stats Update
         tmpStats.removed.incorporate(cl);
-        tmpStats.removed.age += sumConfl - cl->stats.conflictNumIntroduced;
+        tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
 
         //free clause
         *drup << del << *cl << fin;
@@ -1139,16 +1139,16 @@ void Solver::real_clean_clause_db(
 
         //Stats Update
         tmpStats.remain.incorporate(cl);
-        tmpStats.remain.age += sumConfl - cl->stats.conflictNumIntroduced;
+        tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
 
-        if (cl->stats.conflictNumIntroduced > sumConfl) {
+        if (cl->stats.introduced_at_conflict > sumConfl) {
             cout
             << "c DEBUG: conflict introduction numbers are wrong."
-            << " according to CL, introduction: " << cl->stats.conflictNumIntroduced
+            << " according to CL, introduction: " << cl->stats.introduced_at_conflict
             << " but we think max confl: "  << sumConfl
             << endl;
         }
-        assert(cl->stats.conflictNumIntroduced <= sumConfl);
+        assert(cl->stats.introduced_at_conflict <= sumConfl);
 
         longRedCls[j++] = offset;
     }
@@ -1307,7 +1307,7 @@ void Solver::lock_most_UIP_used_clauses()
             const Clause& a_cl = *clAllocator.getPointer(a);
             const Clause& b_cl = *clAllocator.getPointer(b);
 
-            return a_cl.stats.numUsedUIP > b_cl.stats.numUsedUIP;
+            return a_cl.stats.used_for_uip_creation > b_cl.stats.used_for_uip_creation;
     };
     std::sort(longRedCls.begin(), longRedCls.end(), uipsort);
 

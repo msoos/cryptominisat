@@ -297,8 +297,8 @@ PropResult PropEngine::prop_normal_helper(
     , const Lit p
 ) {
     #ifdef STATS_NEEDED
-    c.stats.numLookedAt++;
-    c.stats.numLitVisited++;
+    c.stats.clause_looked_at++;
+    c.stats.visited_literals++;
     #endif
 
     // Make sure the false literal is data[1]:
@@ -326,7 +326,7 @@ PropResult PropEngine::prop_normal_helper(
             c[1] = *k;
             #ifdef STATS_NEEDED
             //propStats.bogoProps += numLitVisited/10;
-            c.stats.numLitVisited+= numLitVisited;
+            c.stats.visited_literals+= numLitVisited;
             #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
@@ -335,7 +335,7 @@ PropResult PropEngine::prop_normal_helper(
     }
     #ifdef STATS_NEEDED
     //propStats.bogoProps += numLitVisited/10;
-    c.stats.numLitVisited+= numLitVisited;
+    c.stats.visited_literals+= numLitVisited;
     #endif
 
     return PROP_TODO;
@@ -356,7 +356,7 @@ PropResult PropEngine::handle_normal_prop_fail(
     #endif //VERBOSE_DEBUG_FULLPROP
 
     //Update stats
-    c.stats.numConfl++;
+    c.stats.conflicts_made++;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
@@ -394,7 +394,7 @@ PropResult PropEngine::propNormalClause(
     }
 
     //Update stats
-    c.stats.numProp++;
+    c.stats.propagations_made++;
     #ifdef STATS_NEEDED
     if (c.red())
         propStats.propsLongRed++;
@@ -431,8 +431,8 @@ bool PropEngine::propNormalClauseAnyOrder(
     const ClOffset offset = i->getOffset();
     Clause& c = *clAllocator.getPointer(offset);
     #ifdef STATS_NEEDED
-    c.stats.numLookedAt++;
-    c.stats.numLitVisited++;
+    c.stats.clause_looked_at++;
+    c.stats.visited_literals++;
     #endif
 
     // Make sure the false literal is data[1]:
@@ -465,7 +465,7 @@ bool PropEngine::propNormalClauseAnyOrder(
             c[1] = *k;
             //propStats.bogoProps += numLitVisited/10;
             #ifdef STATS_NEEDED
-            c.stats.numLitVisited+= numLitVisited;
+            c.stats.visited_literals+= numLitVisited;
             #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
@@ -474,7 +474,7 @@ bool PropEngine::propNormalClauseAnyOrder(
     }
     #ifdef STATS_NEEDED
     //propStats.bogoProps += numLitVisited/10;
-    c.stats.numLitVisited+= numLitVisited;
+    c.stats.visited_literals+= numLitVisited;
     #endif
 
     // Did not find watch -- clause is unit under assignment:
@@ -491,7 +491,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         #endif //VERBOSE_DEBUG_FULLPROP
 
         //Update stats
-        c.stats.numConfl++;
+        c.stats.conflicts_made++;
         if (c.red())
             lastConflictCausedBy = ConflCausedBy::longred;
         else
@@ -502,7 +502,7 @@ bool PropEngine::propNormalClauseAnyOrder(
     } else {
 
         //Update stats
-        c.stats.numProp++;
+        c.stats.propagations_made++;
         #ifdef STATS_NEEDED
         if (c.red())
             propStats.propsLongRed++;

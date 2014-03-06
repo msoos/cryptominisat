@@ -436,7 +436,7 @@ void CompHandler::moveClausesLong(
 
         //Add 'tmp' to the new solver
         if (cl.red()) {
-            cl.stats.conflictNumIntroduced = 0;
+            cl.stats.introduced_at_conflict = 0;
             //newSolver->addRedClause(tmp, cl.stats);
         } else {
             saveClause(cl);

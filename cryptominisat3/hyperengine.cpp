@@ -1053,7 +1053,7 @@ PropResult HyperEngine::propNormalClauseComplex(
     }
 
     //Update stats
-    c.stats.numProp++;
+    c.stats.propagations_made++;
     #ifdef STATS_NEEDED
     if (c.red())
         propStats.propsLongRed++;

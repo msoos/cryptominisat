@@ -670,7 +670,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLookedAt);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numUsedUIP);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.used_for_uip_creation);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
@@ -685,7 +685,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLookedAt);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numUsedUIP);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.used_for_uip_creation);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.lits);
@@ -700,7 +700,7 @@ void MySQLStats::initReduceDBSTMT(
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLookedAt);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numUsedUIP);
+    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.used_for_uip_creation);
 
     assert(bindAt == numElems);
 

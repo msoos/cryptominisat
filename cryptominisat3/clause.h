@@ -85,33 +85,33 @@ struct ClauseStats
     ClauseStats() :
         glue(std::numeric_limits<uint32_t>::max())
         , activity(0)
-        , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
-        , numProp(0)
-        , numConfl(0)
+        , introduced_at_conflict(std::numeric_limits<uint32_t>::max())
+        , propagations_made(0)
+        , conflicts_made(0)
         #ifdef STATS_NEEDED
-        , numLitVisited(0)
-        , numLookedAt(0)
+        , visited_literals(0)
+        , clause_looked_at(0)
         #endif
-        , numUsedUIP(0)
+        , used_for_uip_creation(0)
         , locked(false)
     {}
 
     uint32_t numPropAndConfl() const
     {
-        return numProp + numConfl;
+        return propagations_made + conflicts_made;
     }
 
     //Stored data
     uint32_t glue;    ///<Clause glue
     double   activity;
-    uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
-    uint32_t numProp; ///<Number of times caused propagation
-    uint32_t numConfl; ///<Number of times caused conflict
+    uint32_t introduced_at_conflict; ///<At what conflict number the clause  was introduced
+    uint32_t propagations_made; ///<Number of times caused propagation
+    uint32_t conflicts_made; ///<Number of times caused conflict
     #ifdef STATS_NEEDED
-    uint32_t numLitVisited; ///<Number of literals visited
-    uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
+    uint64_t visited_literals; ///<Number of literals visited
+    uint64_t clause_looked_at; ///<Number of times the clause has been deferenced during propagation
     #endif
-    uint32_t numUsedUIP; ///Number of times the claue was using during 1st UIP conflict generation
+    uint32_t used_for_uip_creation; ///Number of times the claue was using during 1st UIP conflict generation
     bool locked;
 
     ///Number of resolutions it took to make the clause when it was
@@ -121,13 +121,13 @@ struct ClauseStats
     void clearAfterReduceDB(const double multiplier)
     {
         activity = 0;
-        numProp = (double)numProp * multiplier;
-        numConfl = (double)numConfl * multiplier;
+        propagations_made = (double)propagations_made * multiplier;
+        conflicts_made = (double)conflicts_made * multiplier;
         #ifdef STATS_NEEDED
-        numLitVisited = 0;
-        numLookedAt = 0;
+        visited_literals = 0;
+        clause_looked_at = 0;
         #endif
-        numUsedUIP = (double)numUsedUIP*multiplier;
+        used_for_uip_creation = (double)used_for_uip_creation*multiplier;
     }
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
@@ -138,14 +138,14 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
-        ret.conflictNumIntroduced = std::min(first.conflictNumIntroduced, second.conflictNumIntroduced);
-        ret.numProp = first.numProp + second.numProp;
-        ret.numConfl = first.numConfl + second.numConfl;
+        ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
+        ret.propagations_made = first.propagations_made + second.propagations_made;
+        ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         #ifdef STATS_NEEDED
-        ret.numLitVisited = first.numLitVisited + second.numLitVisited;
-        ret.numLookedAt = first.numLookedAt + second.numLookedAt;
+        ret.visited_literals = first.visited_literals + second.visited_literals;
+        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
-        ret.numUsedUIP = first.numUsedUIP + second.numUsedUIP;
+        ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
         ret.locked = first.locked | second.locked;
 
         return ret;
@@ -156,14 +156,14 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 {
 
     os << "glue " << stats.glue << " ";
-    os << "conflIntro " << stats.conflictNumIntroduced<< " ";
-    os << "numProp " << stats.numProp<< " ";
-    os << "numConfl " << stats.numConfl<< " ";
+    os << "conflIntro " << stats.introduced_at_conflict<< " ";
+    os << "numProp " << stats.propagations_made<< " ";
+    os << "numConfl " << stats.conflicts_made<< " ";
     #ifdef STATS_NEEDED
-    os << "numLitVisit " << stats.numLitVisited<< " ";
-    os << "numLook " << stats.numLookedAt<< " ";
+    os << "numLitVisit " << stats.visited_literals<< " ";
+    os << "numLook " << stats.clause_looked_at<< " ";
     #endif
-    os << "numUsedUIP" << stats.numUsedUIP << " ";
+    os << "used_for_uip_creation" << stats.used_for_uip_creation << " ";
 
     return os;
 }
@@ -203,11 +203,11 @@ public:
     ClauseStats stats;
 
     template<class V>
-    Clause(const V& ps, const uint32_t _conflictNumIntroduced)
+    Clause(const V& ps, const uint32_t _introduced_at_conflict)
     {
         //assert(ps.size() > 2);
 
-        stats.conflictNumIntroduced = _conflictNumIntroduced;
+        stats.introduced_at_conflict = _introduced_at_conflict;
         stats.glue = std::min<uint32_t>(stats.glue, ps.size());
         isFreed = false;
         mySize = ps.size();
@@ -380,20 +380,20 @@ public:
             cout << " glue : " << std::setw(4) << stats.glue;
         }
         cout
-        << " Props: " << std::setw(10) << stats.numProp
-        << " Confls: " << std::setw(10) << stats.numConfl
+        << " Props: " << std::setw(10) << stats.propagations_made
+        << " Confls: " << std::setw(10) << stats.conflicts_made
         #ifdef STATS_NEEDED
-        << " Lit visited: " << std::setw(10)<< stats.numLitVisited
-        << " Looked at: " << std::setw(10)<< stats.numLookedAt
+        << " Lit visited: " << std::setw(10)<< stats.visited_literals
+        << " Looked at: " << std::setw(10)<< stats.clause_looked_at
         << " Props&confls/Litsvisited*10: ";
-        if (stats.numLitVisited > 0) {
+        if (stats.visited_literals > 0) {
             cout
             << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats.numPropAndConfl()/(double)stats.numLitVisited);
+            << (10.0*(double)stats.numPropAndConfl()/(double)stats.visited_literals);
         }
         #endif
         ;
-        cout << " UIP used: " << std::setw(10)<< stats.numUsedUIP;
+        cout << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
         cout << endl;
     }
 };
@@ -448,13 +448,13 @@ struct ClauseUsageStats
     void addStat(const Clause& cl)
     {
         num++;
-        sumProp += cl.stats.numProp;
-        sumConfl += cl.stats.numConfl;
+        sumProp += cl.stats.propagations_made;
+        sumConfl += cl.stats.conflicts_made;
         #ifdef STATS_NEEDED
-        sumLitVisited += cl.stats.numLitVisited;
-        sumLookedAt += cl.stats.numLookedAt;
+        sumLitVisited += cl.stats.visited_literals;
+        sumLookedAt += cl.stats.clause_looked_at;
         #endif
-        sumUsedUIP += cl.stats.numUsedUIP;
+        sumUsedUIP += cl.stats.used_for_uip_creation;
     }
 
     void print() const
@@ -505,7 +505,7 @@ struct CleaningStats
             numConfl += other.numConfl;
             numLitVisited += other.numLitVisited;
             numLookedAt += other.numLookedAt;
-            numUsedUIP += other.numUsedUIP;
+            used_for_uip_creation += other.used_for_uip_creation;
             resol += other.resol;
 
             act += other.act;
@@ -522,7 +522,7 @@ struct CleaningStats
         uint64_t numConfl = 0;
         uint64_t numLitVisited = 0;
         uint64_t numLookedAt = 0;
-        uint64_t numUsedUIP = 0;
+        uint64_t used_for_uip_creation = 0;
         ResolutionTypes<uint64_t> resol;
         double   act = 0.0;
 
@@ -532,14 +532,14 @@ struct CleaningStats
             lits += cl->size();
             glue += cl->stats.glue;
             act += cl->stats.activity;
-            numConfl += cl->stats.numConfl;
+            numConfl += cl->stats.conflicts_made;
             #ifdef STATS_NEEDED
-            numLitVisited += cl->stats.numLitVisited;
-            numLookedAt += cl->stats.numLookedAt;
+            numLitVisited += cl->stats.visited_literals;
+            numLookedAt += cl->stats.clause_looked_at;
             #endif
-            numProp += cl->stats.numProp;
+            numProp += cl->stats.propagations_made;
             resol += cl->stats.resolutions;
-            numUsedUIP += cl->stats.numUsedUIP;
+            used_for_uip_creation += cl->stats.used_for_uip_creation;
         }
 
 
