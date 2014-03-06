@@ -88,6 +88,8 @@ struct ClauseStats
         , introduced_at_conflict(std::numeric_limits<uint32_t>::max())
         , propagations_made(0)
         , conflicts_made(0)
+        , sum_of_branch_depth_conflict(0)
+        , sum_of_branch_depth_propagation(0)
         #ifdef STATS_NEEDED
         , visited_literals(0)
         , clause_looked_at(0)
@@ -107,6 +109,8 @@ struct ClauseStats
     uint32_t introduced_at_conflict; ///<At what conflict number the clause  was introduced
     uint32_t propagations_made; ///<Number of times caused propagation
     uint32_t conflicts_made; ///<Number of times caused conflict
+    uint64_t sum_of_branch_depth_conflict;
+    uint64_t sum_of_branch_depth_propagation;
     #ifdef STATS_NEEDED
     uint64_t visited_literals; ///<Number of literals visited
     uint64_t clause_looked_at; ///<Number of times the clause has been deferenced during propagation
@@ -123,6 +127,8 @@ struct ClauseStats
         activity = 0;
         propagations_made = (double)propagations_made * multiplier;
         conflicts_made = (double)conflicts_made * multiplier;
+        sum_of_branch_depth_conflict = (double)sum_of_branch_depth_conflict * multiplier;
+        sum_of_branch_depth_propagation = (double)sum_of_branch_depth_propagation * multiplier;
         #ifdef STATS_NEEDED
         visited_literals = 0;
         clause_looked_at = 0;
@@ -141,6 +147,8 @@ struct ClauseStats
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
+        ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
+        ret.sum_of_branch_depth_propagation = first.sum_of_branch_depth_propagation * second.sum_of_branch_depth_propagation;
         #ifdef STATS_NEEDED
         ret.visited_literals = first.visited_literals + second.visited_literals;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
