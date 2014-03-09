@@ -50,7 +50,8 @@ SolverConf::SolverConf() :
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
-        , lock_per_dbclean(500)
+        , lock_uip_per_dbclean(500)
+        , lock_topclean_per_dbclean(200)
         , multiplier_perf_values_after_cl_clean(0)
 
         //Restarting

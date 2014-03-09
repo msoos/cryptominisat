@@ -1245,7 +1245,7 @@ void Solver::print_best_irred_clauses_if_required() const
     }
 }
 
-CleaningStats Solver::reduceDB(bool lock_most_uip)
+CleaningStats Solver::reduceDB(bool lock_clauses_in)
 {
     //Clean the clause database before doing cleaning
     //varReplacer->performReplace();
@@ -1272,7 +1272,7 @@ CleaningStats Solver::reduceDB(bool lock_most_uip)
     CompleteDetachReatacher detachReattach(this);
     detachReattach.detachNonBinsNonTris();
 
-    if (lock_most_uip)
+    if (lock_clauses_in)
         lock_most_UIP_used_clauses();
 
     pre_clean_clause_db(tmpStats, sumConfl);
@@ -1280,6 +1280,9 @@ CleaningStats Solver::reduceDB(bool lock_most_uip)
     sort_red_cls_as_required(tmpStats);
     print_best_irred_clauses_if_required();
     real_clean_clause_db(tmpStats, sumConfl, removeNum);
+
+    if (lock_clauses_in)
+        lock_in_top_N_uncleaned();
 
     //Reattach what's left
     detachReattach.reattachLongs();
@@ -1297,9 +1300,35 @@ CleaningStats Solver::reduceDB(bool lock_most_uip)
     return tmpStats;
 }
 
+void Solver::lock_in_top_N_uncleaned()
+{
+    size_t locked = 0;
+    size_t skipped = 0;
+
+    long cutoff = (long)longRedCls.size() - (long)conf.lock_topclean_per_dbclean;
+    for(long i = (long)longRedCls.size()-1
+        ; i >= 0 && i >= cutoff
+        ; i--
+    ) {
+        const ClOffset offs = longRedCls[i];
+        Clause& cl = *clAllocator.getPointer(offs);
+        if (!cl.stats.locked) {
+            cl.stats.locked = true;
+            locked++;
+        } else {
+            skipped++;
+        }
+    }
+
+    if (conf.verbosity >= 2) {
+        cout << "c [DBclean] TOP uncleaned"
+        << " locked: " << locked << " skipped: " << skipped << endl;
+    }
+}
+
 void Solver::lock_most_UIP_used_clauses()
 {
-    if (conf.lock_per_dbclean == 0)
+    if (conf.lock_uip_per_dbclean == 0)
         return;
 
     std::function<bool (const ClOffset, const ClOffset)> uipsort
@@ -1314,7 +1343,7 @@ void Solver::lock_most_UIP_used_clauses()
     size_t locked = 0;
     size_t skipped = 0;
     for(size_t i = 0
-        ; i < longRedCls.size() && locked < conf.lock_per_dbclean
+        ; i < longRedCls.size() && locked < conf.lock_uip_per_dbclean
         ; i++
     ) {
         const ClOffset offs = longRedCls[i];
@@ -1328,7 +1357,8 @@ void Solver::lock_most_UIP_used_clauses()
     }
 
     if (conf.verbosity >= 2) {
-        cout << "c [DBclean] Locked: " << locked << " skipped: " << skipped <<endl;
+        cout << "c [DBclean] UIP"
+        << " Locked: " << locked << " skipped: " << skipped << endl;
     }
 }
 
@@ -1980,7 +2010,7 @@ void Solver::clearClauseStats(vector<ClOffset>& clauseset)
     }
 }
 
-void Solver::fullReduce(bool lock_most_uip)
+void Solver::fullReduce(bool lock_clauses_in)
 {
     ClauseUsageStats irredStats = sumClauseData(longIrredCls, false);
     ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
@@ -2022,7 +2052,7 @@ void Solver::fullReduce(bool lock_most_uip)
         //printClauseStatsSQL(clauses);
         //printClauseStatsSQL(learnts);
     }
-    CleaningStats iterCleanStat = reduceDB(lock_most_uip);
+    CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
     consolidateMem();
 
     if (conf.doSQL) {

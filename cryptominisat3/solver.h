@@ -438,10 +438,11 @@ class Solver : public Searcher
 
         ///////////////////////////
         // Clause cleaning
-        void fullReduce(bool lock_most_uip = true);
+        void fullReduce(bool lock_clauses_in = true);
         void clearClauseStats(vector<ClOffset>& clauseset);
-        CleaningStats reduceDB(bool lock_most_uip);
+        CleaningStats reduceDB(bool lock_clauses_in);
         void lock_most_UIP_used_clauses();
+        void lock_in_top_N_uncleaned();
         struct reduceDBStructGlue
         {
             reduceDBStructGlue(ClauseAllocator& _clAllocator) :
