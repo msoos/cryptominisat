@@ -1559,8 +1559,13 @@ lbool Solver::solve()
         goto end;
     }
 
-    //Initialise
+
+    //Clean up as a startup
+    nextCleanLimitInc = 0;
+    nextCleanLimit = 0;
     fullReduce(false);
+
+    //Initialise
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit = sumStats.conflStats.numConflicts + nextCleanLimitInc;
     if (!origAssumptions.empty()) {
