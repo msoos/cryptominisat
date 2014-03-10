@@ -34,18 +34,12 @@ DimacsParser::DimacsParser(
     , lineNum(0)
 {}
 
-/**
-@brief Skips all whitespaces
-*/
 void DimacsParser::skipWhitespace(StreamBuffer& in)
 {
     while ((*in >= 9 && *in <= 13 && *in != 10) || *in == 32)
         ++in;
 }
 
-/**
-@brief Skips until the end of the line
-*/
 void DimacsParser::skipLine(StreamBuffer& in)
 {
     lineNum++;
@@ -74,9 +68,6 @@ std::string DimacsParser::untilEnd(StreamBuffer& in)
     return ret;
 }
 
-/**
-@brief Parses in an integer
-*/
 int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
 {
     lenParsed = 0;
@@ -128,10 +119,6 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
     }
 }
 
-/**
-@brief Reads in a clause and puts it in lit
-@p[out] lits
-*/
 void DimacsParser::readClause(StreamBuffer& in)
 {
     int32_t parsed_lit;
@@ -270,10 +257,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     skipLine(in);
 }
 
-/**
-@brief Parses in a clause and its optional attributes
-*/
-void DimacsParser::readFullClause(StreamBuffer& in)
+void DimacsParser::parse_and_add_clause_and_attrs(StreamBuffer& in)
 {
     if ( *in == 'x') {
         cout << "ERROR: Cannot read XOR clause!" << endl;
@@ -294,9 +278,6 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     }
 }
 
-/**
-@brief The main function: parses in a full DIMACS file
-*/
 void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 {
     std::string str;
@@ -323,7 +304,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             skipLine(in);
             break;
         default:
-            readFullClause(in);
+            parse_and_add_clause_and_attrs(in);
             break;
         }
     }

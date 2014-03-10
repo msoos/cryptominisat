@@ -34,7 +34,7 @@ class DimacsParser
         int32_t parseInt(StreamBuffer& in, uint32_t& len);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in);
-        void readFullClause(StreamBuffer& in);
+        void parse_and_add_clause_and_attrs(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
         void parseComments(StreamBuffer& in, const std::string str);
