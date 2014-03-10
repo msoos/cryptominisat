@@ -15,15 +15,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <complex>
 #include "assert.h"
 
-#ifdef VERBOSE_DEBUG
-#define DEBUG_COMMENT_PARSING
-#endif //VERBOSE_DEBUG
-
 using std::vector;
 using std::cout;
 using std::endl;
-
-//#define DEBUG_COMMENT_PARSING
 
 DimacsParser::DimacsParser(
     MainSolver* _solver
