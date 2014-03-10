@@ -357,7 +357,7 @@ PropResult PropEngine::handle_normal_prop_fail(
 
     //Update stats
     c.stats.conflicts_made++;
-    c.stats.sum_of_branch_depth_conflict += decisionLevel();
+    c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
@@ -396,7 +396,7 @@ PropResult PropEngine::propNormalClause(
 
     //Update stats
     c.stats.propagations_made++;
-    c.stats.sum_of_branch_depth_propagation += decisionLevel();
+    c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
     #ifdef STATS_NEEDED
     if (c.red())
         propStats.propsLongRed++;
@@ -494,7 +494,7 @@ bool PropEngine::propNormalClauseAnyOrder(
 
         //Update stats
         c.stats.conflicts_made++;
-        c.stats.sum_of_branch_depth_conflict += decisionLevel();
+        c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
         if (c.red())
             lastConflictCausedBy = ConflCausedBy::longred;
         else
@@ -506,7 +506,7 @@ bool PropEngine::propNormalClauseAnyOrder(
 
         //Update stats
         c.stats.propagations_made++;
-        c.stats.sum_of_branch_depth_propagation += decisionLevel();
+        c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
         #ifdef STATS_NEEDED
         if (c.red())
             propStats.propsLongRed++;

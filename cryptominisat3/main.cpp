@@ -316,7 +316,7 @@ void Main::add_supported_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
     ("clean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
-        , "Metric to use to clean clauses: 'size', 'glue', 'activity' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
+        , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'prconfdep' for (propagations+conflicts)/(depth at which they were caused)")
     ("lockuip", po::value<size_t>(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
     ("locktop", po::value<size_t>(&conf.lock_topclean_per_dbclean)->default_value(conf.lock_topclean_per_dbclean)
@@ -818,14 +818,21 @@ void Main::handle_drup_option()
 
 void Main::parse_cleaning_type()
 {
-    if (typeclean == "glue") {
+    if (typeclean == getNameOfCleanType(ClauseCleaningTypes::glue_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::glue_based;
-    } else if (typeclean == "size") {
+
+    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::size_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::size_based;
-    } else if (typeclean == "propconfl") {
+
+    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_prop_confl_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_based;
-    } else if (typeclean == "activity") {
+
+    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_prop_confl_depth_based)) {
+        conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_depth_based;
+
+    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_activity_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::sum_activity_based;
+
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--clean'. It's '"

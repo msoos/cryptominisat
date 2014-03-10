@@ -1054,6 +1054,7 @@ PropResult HyperEngine::propNormalClauseComplex(
 
     //Update stats
     c.stats.propagations_made++;
+    c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
     #ifdef STATS_NEEDED
     if (c.red())
         propStats.propsLongRed++;

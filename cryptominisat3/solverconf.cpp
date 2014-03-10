@@ -38,7 +38,7 @@ SolverConf::SolverConf() :
         , do_calc_polarity_every_time(false)
 
         //Clause cleaning
-        , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_based)
+        , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_depth_based)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)

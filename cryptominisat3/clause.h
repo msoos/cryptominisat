@@ -103,6 +103,20 @@ struct ClauseStats
         return propagations_made + conflicts_made;
     }
 
+    double prop_confl_usefulness() const
+    {
+        double useful = 0;
+        if (propagations_made > 0) {
+            assert(sum_of_branch_depth_propagation > 0);
+            useful += (double)propagations_made/(double)sum_of_branch_depth_propagation;
+        }
+        if (conflicts_made > 0) {
+            assert(sum_of_branch_depth_conflict > 0);
+            useful += (double)conflicts_made/(double)sum_of_branch_depth_conflict;
+        }
+        return useful;
+    }
+
     //Stored data
     uint32_t glue;    ///<Clause glue
     double   activity;

@@ -1210,7 +1210,7 @@ void Searcher::add_otf_subsume_long_clauses()
     for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
         const ClOffset offset = otf_subsuming_long_cls[i];
         Clause& cl = *solver->clAllocator.getPointer(offset);
-        cl.stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
+        //cl.stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
 
         //Find the l_Undef
         size_t at = std::numeric_limits<size_t>::max();
@@ -1524,7 +1524,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (cl->red() && cl->stats.glue > glue) {
         cl->stats.glue = glue;
     }
-    cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
+    //cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
 
     return cl;
 }

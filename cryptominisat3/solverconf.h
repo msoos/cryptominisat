@@ -32,6 +32,7 @@ enum class ClauseCleaningTypes {
     glue_based
     , size_based
     , sum_prop_confl_based
+    , sum_prop_confl_depth_based
     ,  sum_activity_based
 };
 
@@ -61,7 +62,10 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
             return "size";
 
         case ClauseCleaningTypes::sum_prop_confl_based:
-            return "propconfl";
+            return "prconf";
+
+        case ClauseCleaningTypes::sum_prop_confl_depth_based:
+            return "prconfdep";
 
         case ClauseCleaningTypes::sum_activity_based:
             return "activity";

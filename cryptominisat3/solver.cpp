@@ -1028,7 +1028,6 @@ bool Solver::reduceDBStructSize::operator () (
     return x->stats.glue > y->stats.glue;
 }
 
-/// @brief Sort clauses according to size: small prop+confl first
 bool Solver::reduceDBStructPropConfl::operator() (
     const ClOffset xOff
     , const ClOffset yOff
@@ -1043,10 +1042,40 @@ bool Solver::reduceDBStructPropConfl::operator() (
     //No clause should be less than 3-long: 2&3-long are not removed
     assert(xsize > 2 && ysize > 2);
 
-    //First tie: numPropAndConfl -- notice the reversal of 1/0
-    //Larger is better --> should be last in the sorted list
     if (x->stats.numPropAndConfl() != y->stats.numPropAndConfl())
         return (x->stats.numPropAndConfl() < y->stats.numPropAndConfl());
+
+    //Second tie: size
+    if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
+        return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
+
+    return x->size() > y->size();
+}
+
+bool Solver::reduceDBStructPropConflDepth::operator() (
+    const ClOffset xOff
+    , const ClOffset yOff
+) {
+    //Get their pointers
+    const Clause* x = clAllocator.getPointer(xOff);
+    const Clause* y = clAllocator.getPointer(yOff);
+
+    const uint32_t xsize = x->size();
+    const uint32_t ysize = y->size();
+
+    //No clause should be less than 3-long: 2&3-long are not removed
+    assert(xsize > 2 && ysize > 2);
+
+    if (x->stats.numPropAndConfl() == 0 && x->stats.numPropAndConfl() == 0)
+        return false;
+
+    if (x->stats.numPropAndConfl() == 0)
+        return true;
+    if (y->stats.numPropAndConfl() == 0)
+        return false;
+
+    if (x->stats.prop_confl_usefulness() != y->stats.prop_confl_usefulness())
+        return (x->stats.prop_confl_usefulness() < y->stats.prop_confl_usefulness());
 
     //Second tie: size
     if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
@@ -1215,6 +1244,13 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructPropConfl(clAllocator));
+        tmpStats.propConflBasedClean = 1;
+        break;
+
+    case ClauseCleaningTypes::sum_prop_confl_depth_based :
+        //Sort for glue-based removal
+        std::sort(longRedCls.begin(), longRedCls.end()
+            , reduceDBStructPropConflDepth(clAllocator));
         tmpStats.propConflBasedClean = 1;
         break;
     }
