@@ -168,16 +168,6 @@ bool DimacsParser::match(StreamBuffer& in, const char* str)
     return true;
 }
 
-/**
-@brief Prints the data in "p cnf VARS CLAUSES" header in DIMACS
-
-We don't actually do \b anything with these. It's just printed for user
-happyness. However, I think it's useless to print it, since it might mislead
-users to think that their headers are correct, even though a lot of headers are
-completely wrong, thanks to MiniSat printing the header, but not checking it.
-Not checking it is \b not a problem. The problem is printing it such that
-people believe it's validated
-*/
 void DimacsParser::printHeader(StreamBuffer& in)
 {
     uint32_t len;
