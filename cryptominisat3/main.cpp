@@ -255,8 +255,8 @@ void Main::add_supported_options()
     ("input", po::value< vector<string> >(), "file(s) to read")
     ("random,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
-    ("threads,t", po::value<int>(&numThreads)->default_value(1)
-        , "Number of threads to use")
+//     ("threads,t", po::value<int>(&numThreads)->default_value(1)
+//         , "Number of threads to use")
     ("maxtime", po::value<double>(&conf.maxTime)->default_value(conf.maxTime, "MAX")
         , "Stop solving after this much time, print stats and exit")
     ("maxconfl", po::value<uint64_t>(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
@@ -930,11 +930,11 @@ void Main::manually_parse_some_options()
     parse_restart_type();
     parse_var_elim_strategy();
 
-    if (numThreads < 1)
-        throw WrongParam("threads", "Num threads must be at least 1");
-
-    if (numThreads > 1)
-        throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
+//     if (numThreads < 1)
+//         throw WrongParam("threads", "Num threads must be at least 1");
+//
+//     if (numThreads > 1)
+//         throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
 
     if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
