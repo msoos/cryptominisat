@@ -85,7 +85,6 @@ class Main
         SolverConf conf;
         int numThreads;
         bool debugLib;
-        bool debugNewVar;
         int printResult;
         string commandLine;
 

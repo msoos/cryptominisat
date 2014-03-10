@@ -60,8 +60,7 @@ bool fileExists(const std::string& filename)
 
 
 Main::Main(int _argc, char** _argv) :
-        debugLib (false)
-        , debugNewVar (false)
+        debugLib(false)
         , printResult (true)
         , max_nr_of_solutions (1)
         , fileNamePresent (false)
@@ -122,7 +121,7 @@ void Main::readInAFile(const string& filename)
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib, debugNewVar);
+    DimacsParser parser(solver, debugLib);
     parser.parse_DIMACS(in);
 
     #ifndef USE_ZLIB
@@ -151,7 +150,7 @@ void Main::readInStandardInput()
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib, debugNewVar);
+    DimacsParser parser(solver, debugLib);
     parser.parse_DIMACS(in);
 
     #ifdef USE_ZLIB
@@ -164,7 +163,7 @@ void Main::parseInAllFiles()
     const double myTime = cpuTime();
 
     //First read normal extra files
-    if ((debugLib || debugNewVar) && filesToRead.size() > 1) {
+    if (debugLib && filesToRead.size() > 1) {
         cout
         << "debugNewVar and debugLib must both be OFF"
         << "to parse in more than one file"
@@ -394,8 +393,6 @@ void Main::add_supported_options()
         , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
-    ("debugnewvar", po::bool_switch(&debugNewVar)
-        , "Add new vars at specific 'newVar()' points in 6CNF file")
     ("dumpresult", po::value<std::string>(&conf.resultFilename)
         , "Write result(s) to this file")
     ;

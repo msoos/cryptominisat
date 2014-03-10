@@ -22,7 +22,7 @@ using namespace CMSat;
 class DimacsParser
 {
     public:
-        DimacsParser(MainSolver* solver, const bool debugLib, const bool debugNewVar);
+        DimacsParser(MainSolver* solver, const bool debugLib);
 
         template <class T> void parse_DIMACS(T input_stream);
 
@@ -44,7 +44,6 @@ class DimacsParser
 
         MainSolver* solver;
         const bool debugLib;
-        const bool debugNewVar;
 
         //Stat
         size_t lineNum;

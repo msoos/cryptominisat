@@ -28,11 +28,9 @@ using std::endl;
 DimacsParser::DimacsParser(
     MainSolver* _solver
     , const bool _debugLib
-    , const bool _debugNewVar
 ):
     solver(_solver)
     , debugLib(_debugLib)
-    , debugNewVar(_debugNewVar)
     , lineNum(0)
 {}
 
@@ -143,19 +141,17 @@ void DimacsParser::readClause(StreamBuffer& in)
         parsed_lit = parseInt(in, len);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        if (!debugNewVar) {
-            if (var >= (1ULL<<28)) {
-                cout
-                << "ERROR! Variable requested is far too large: "
-                << var << endl
-                << "--> At line " << lineNum+1
-                << endl;
-                std::exit(-1);
-            }
+        if (var >= (1ULL<<28)) {
+            cout
+            << "ERROR! Variable requested is far too large: "
+            << var << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            std::exit(-1);
+        }
 
-            while (var >= solver->nVars()) {
-                solver->new_var();
-            }
+        while (var >= solver->nVars()) {
+            solver->new_var();
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
@@ -263,17 +259,11 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     }
 }
 
-/**
-@brief Parse up comment lines which could contain important information
-*/
 void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
-    #ifdef DEBUG_COMMENT_PARSING
-    cout << "Parsing comments" << endl;
-    #endif //DEBUG_COMMENT_PARSING
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
-    } else if (debugNewVar && str == "Solver::newVar()") {
+    } else if (debugLib && str == "Solver::newVar()") {
         solver->new_var();
 
         if (solver->get_conf().verbosity >= 6) {
