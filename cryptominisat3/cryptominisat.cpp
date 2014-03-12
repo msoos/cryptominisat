@@ -21,7 +21,7 @@ bool MainSolver::add_clause(const vector< Lit >& lits)
 
 lbool MainSolver::solve(vector< Lit >* assumptions)
 {
-    return toLbool(((CMSat::Solver*)solver)->solve_with_assumptions(assumptions).getchar());
+    return ((CMSat::Solver*)solver)->solve_with_assumptions(assumptions);
 }
 
 const vector< lbool >& MainSolver::get_model() const

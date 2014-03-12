@@ -100,11 +100,6 @@ public:
     {
     };
 
-    char getchar() const
-    {
-        return value;
-    }
-
     bool operator==(lbool b) const
     {
         return value == b.value;
