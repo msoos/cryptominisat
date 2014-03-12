@@ -309,7 +309,7 @@ PropResult PropEngine::prop_normal_helper(
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
-    if (value(c[0]).getBool()) {
+    if (value(c[0]) == l_True) {
         *j = Watched(offset, c[0]);
         j++;
         return PROP_NOTHING;
@@ -374,7 +374,7 @@ PropResult PropEngine::propNormalClause(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()).getBool()) {
+    if (value(i->getBlockedLit()) == l_True) {
         *j++ = *i;
         return PROP_NOTHING;
     }
@@ -425,7 +425,7 @@ bool PropEngine::propNormalClauseAnyOrder(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()).getBool()) {
+    if (value(i->getBlockedLit()) == l_True) {
         *j++ = *i;
         return true;
     }
@@ -445,7 +445,7 @@ bool PropEngine::propNormalClauseAnyOrder(
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
-    if (value(c[0]).getBool()) {
+    if (value(c[0]) == l_True) {
         *j = Watched(offset, c[0]);
         j++;
         return true;

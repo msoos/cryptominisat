@@ -1032,7 +1032,7 @@ PropResult HyperEngine::propNormalClauseComplex(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()).getBool()) {
+    if (value(i->getBlockedLit()) == l_True) {
         *j++ = *i;
         return PROP_NOTHING;
     }

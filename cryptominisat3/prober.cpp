@@ -490,12 +490,12 @@ void Prober::checkAndSetBothProp(Var var, bool first)
         propagated[var] = true;
 
         //Set propValue
-        if (solver->value(var).getBool())
+        if (solver->value(var) == l_True)
             propValue[var] = true;
         else
             propValue[var] = false;
     } else if (propagated[var]) {
-        if (propValue[var] == solver->value(var).getBool()) {
+        if (propValue[var] == (solver->value(var) == l_True)) {
 
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);

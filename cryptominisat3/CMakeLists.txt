@@ -12,7 +12,6 @@ set(cryptominisat3_public_headers "")
 set(cryptoms_lib_files
     cnf.cpp
     propengine.cpp
-    packedrow.cpp
     varreplacer.cpp
     clausecleaner.cpp
     prober.cpp

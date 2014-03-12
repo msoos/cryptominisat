@@ -150,7 +150,7 @@ bool Solver::addXorClauseInt(
 
             //Flip rhs if neccessary
             if (value(ps[i]) != l_Undef) {
-                rhs ^= value(ps[i]).getBool();
+                rhs ^= value(ps[i]) == l_True;
             }
 
         } else if (value(ps[i]) == l_Undef) {
@@ -167,7 +167,7 @@ bool Solver::addXorClauseInt(
         } else {
             //modify rhs instead of adding
             assert(value(ps[i]) != l_Undef);
-            rhs ^= value(ps[i]).getBool();
+            rhs ^= value(ps[i]) == l_True;
         }
     }
     ps.resize(ps.size() - (i - j));
@@ -250,7 +250,7 @@ Clause* Solver::addClauseInt(
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
-        if (value(ps[i]).getBool() || ps[i] == ~p)
+        if (value(ps[i]) == l_True || ps[i] == ~p)
             return NULL;
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];

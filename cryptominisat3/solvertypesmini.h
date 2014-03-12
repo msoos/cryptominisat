@@ -105,16 +105,6 @@ public:
         return value;
     }
 
-    bool isDef() const
-    {
-        return value;
-    }
-
-    bool getBool() const
-    {
-        return value == 1;
-    }
-
     bool operator==(lbool b) const
     {
         return value == b.value;
