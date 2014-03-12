@@ -108,11 +108,11 @@ struct ClauseStats
         double useful = 0;
         if (propagations_made > 0) {
             assert(sum_of_branch_depth_propagation > 0);
-            useful += (double)propagations_made/(double)sum_of_branch_depth_propagation;
+            useful += ((double)propagations_made*(double)propagations_made)/(double)sum_of_branch_depth_propagation;
         }
         if (conflicts_made > 0) {
             assert(sum_of_branch_depth_conflict > 0);
-            useful += (double)conflicts_made/(double)sum_of_branch_depth_conflict;
+            useful += ((double)conflicts_made*(double)conflicts_made)/(double)sum_of_branch_depth_conflict;
         }
         return useful;
     }
