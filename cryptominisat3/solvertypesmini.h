@@ -115,7 +115,6 @@ public:
         //return b ? lbool(-value) : lbool(value);
         return lbool(value * (-2*(char)b + 1));
     }
-    //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
 
     friend lbool toLbool(const char v);
     friend lbool boolToLBool(const bool b);
