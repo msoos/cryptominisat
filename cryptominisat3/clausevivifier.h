@@ -192,7 +192,7 @@ class ClauseVivifier {
         StrImplicitData str_impl_data;
         // end
 
-        ClOffset testVivify(
+        ClOffset try_vivify_clause_and_return_new(
             ClOffset offset
             , const bool red
             , const uint32_t queueByBy
@@ -301,7 +301,7 @@ class ClauseVivifier {
         ) const;
 
         //Actual algorithms used
-        bool asymmClausesLongIrred();
+        bool vivify_long_irred_cls();
         bool vivifyClausesTriIrred();
         bool vivifyClausesCache(
             vector<ClOffset>& clauses

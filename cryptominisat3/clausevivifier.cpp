@@ -75,7 +75,7 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
     }
 
     if (alsoStrengthen
-        && !asymmClausesLongIrred()
+        && !vivify_long_irred_cls()
     ) {
         goto end;
     }
@@ -146,7 +146,7 @@ bool ClauseVivifier::vivifyClausesTriIrred()
                 lits[0] = lit;
                 lits[1] = ws.lit2();
                 lits[2] = ws.lit3();
-                testVivify(
+                try_vivify_clause_and_return_new(
                     CL_OFFSET_MAX
                     , ws.red()
                     , 2
@@ -199,10 +199,7 @@ struct ClauseSizeSorter
     }
 };
 
-/**
-@brief Performs clause vivification (by Hamadi et al.)
-*/
-bool ClauseVivifier::asymmClausesLongIrred()
+bool ClauseVivifier::vivify_long_irred_cls()
 {
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
@@ -286,7 +283,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
         std::copy(cl.begin(), cl.end(), lits.begin());
 
         //Try to vivify clause
-        ClOffset offset2 = testVivify(
+        ClOffset offset2 = try_vivify_clause_and_return_new(
             offset
             , cl.red()
             , queueByBy
@@ -332,7 +329,7 @@ bool ClauseVivifier::asymmClausesLongIrred()
     return solver->ok;
 }
 
-ClOffset ClauseVivifier::testVivify(
+ClOffset ClauseVivifier::try_vivify_clause_and_return_new(
     ClOffset offset
     , const bool red
     , const uint32_t queueByBy
