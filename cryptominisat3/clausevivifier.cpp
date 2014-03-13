@@ -25,6 +25,7 @@
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "sqlstats.h"
 
 #include <iomanip>
 using namespace CMSat;
@@ -218,7 +219,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
 
     extraTime = 0;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
-    bool needToFinish = false;
+    bool time_out = false;
     runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
 
@@ -239,7 +240,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
         ; i++
     ) {
         //Check if we are in state where we only copy offsets around
-        if (needToFinish || !solver->ok) {
+        if (time_out || !solver->ok) {
             *j++ = *i;
             continue;
         }
@@ -252,7 +253,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
                 << endl;
             }
             runStats.timeOut++;
-            needToFinish = true;
+            time_out = true;
         }
 
         //Get pointer
@@ -308,18 +309,26 @@ bool ClauseVivifier::vivify_long_irred_cls()
         }
     }
 
+    const double time_used = cpuTime() - myTime;
+    const double time_remain = (double)(solver->propStats.bogoProps-oldBogoProps + extraTime)/(double)maxNumProps;
     if (solver->conf.verbosity >= 2) {
         cout << "c [asymm] longirred"
-        << " tried: "
-        << runStats.checkedClauses << "/" << solver->longIrredCls.size()
-        << " cl-rem:"
-        << runStats.numClShorten- origClShorten
-        << " lits-rem:"
-        << runStats.numLitsRem - origLitRem
-        << " T: "
-        << std::setprecision(2) << cpuTime() - myTime
+        << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
+        << " cl-rem:" << runStats.numClShorten- origClShorten
+        << " lits-rem:" << runStats.numLitsRem - origLitRem
+        << " T: " << std::setprecision(2) << time_used
         << " T-out: " << (needToFinish ? "Y" : "N")
+        << " T-r: " << std::setprecision(2) << time_remain*100.0 << "%"
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "assym long irred"
+            , time_used
+            , needToFinish
+            , time_remain
+        );
     }
 
     //Update stats
