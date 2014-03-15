@@ -312,7 +312,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
     const double time_used = cpuTime() - myTime;
     const double time_remain = (double)(solver->propStats.bogoProps-oldBogoProps + extraTime)/(double)maxNumProps;
     if (solver->conf.verbosity >= 2) {
-        cout << "c [asymm] longirred"
+        cout << "c [vivif] longirred"
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
         << " cl-rem:" << runStats.numClShorten- origClShorten
         << " lits-rem:" << runStats.numLitsRem - origLitRem
@@ -324,7 +324,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed(
             solver
-            , "assym long irred"
+            , "vivif long irred"
             , time_used
             , needToFinish
             , time_remain
