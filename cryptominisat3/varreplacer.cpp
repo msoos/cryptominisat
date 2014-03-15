@@ -21,17 +21,16 @@
 
 #include "varreplacer.h"
 #include "varupdatehelper.h"
-#include <iostream>
-#include <iomanip>
-#include <set>
-using std::cout;
-using std::endl;
-
 #include "solver.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solutionextender.h"
 #include "clauseallocator.h"
+#include <iostream>
+#include <iomanip>
+#include <set>
+using std::cout;
+using std::endl;
 
 #ifdef VERBOSE_DEBUG
 #define REPLACE_STATISTICS
