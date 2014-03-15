@@ -64,6 +64,12 @@ public:
         , double percent_time_remain
     );
 
+    virtual void time_passed_min(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+    );
+
     virtual bool setup(const Solver* solver);
     virtual void finishup(lbool status);
 
@@ -77,6 +83,7 @@ private:
     void addStartupData(const Solver* solver);
     void initRestartSTMT(uint64_t verbosity);
     void initTimePassedSTMT();
+    void initTimePassedMinSTMT();
     #ifdef STATS_NEEDED_EXTRA
     struct StmtClsDistrib {
         StmtClsDistrib() :
@@ -194,6 +201,23 @@ private:
         double percent_time_remain;
     };
     StmtTimePassed stmtTimePassed;
+
+    struct StmtTimePassedMin {
+        StmtTimePassedMin() :
+            stmt(NULL)
+        {};
+
+        MYSQL_BIND  bind[1+5];
+        MYSQL_STMT  *stmt;
+
+        uint64_t numSimplify;
+        uint64_t sumConflicts;
+        double cpuTime;
+        char name[200];
+        unsigned long name_len;
+        double time_passed;
+    };
+    StmtTimePassedMin stmtTimePassedMin;
 
     size_t bindAt;
     struct StmtRst {

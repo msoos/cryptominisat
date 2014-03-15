@@ -35,6 +35,12 @@ public:
         , double percent_time_remain
     ) = 0;
 
+    virtual void time_passed_min(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+    ) = 0;
+
     #ifdef STATS_NEEDED_EXTRA
     virtual void clauseSizeDistrib(
         uint64_t sumConflicts
