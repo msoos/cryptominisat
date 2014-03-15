@@ -26,6 +26,7 @@
 #include "time_mem.h"
 #include "solutionextender.h"
 #include "clauseallocator.h"
+#include "sqlstats.h"
 #include <iostream>
 #include <iomanip>
 #include <set>
@@ -268,7 +269,7 @@ end:
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
 
     return solver->ok;
@@ -1089,10 +1090,10 @@ void VarReplacer::Stats::print(const size_t nVars) const
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
 }
 
-void VarReplacer::Stats::printShort() const
+void VarReplacer::Stats::printShort(Solver* solver) const
 {
     cout
-    << "c vrep"
+    << "c [vrep]"
     << " vars " << actuallyReplacedVars
     << " lits " << replacedLits
     << " rem-bin-cls " << removedBinClauses
@@ -1101,6 +1102,14 @@ void VarReplacer::Stats::printShort() const
     << " T: " << std::fixed << std::setprecision(2)
     << cpu_time << " s "
     << endl;
+
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "[vrep]"
+            , cpu_time
+        );
+    }
 }
 
 VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)

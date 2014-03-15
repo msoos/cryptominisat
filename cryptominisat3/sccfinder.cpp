@@ -28,6 +28,7 @@
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "solver.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -72,7 +73,7 @@ bool SCCFinder::performSCC()
         if (solver->conf.verbosity >= 3)
             runStats.print();
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
     globalStats += runStats;
     solver->binTri.numNewBinsSinceSCC = 0;
@@ -185,6 +186,24 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 }
             }
         }
+    }
+}
+
+void SCCFinder::Stats::printShort(Solver* solver) const
+{
+    cout
+    << "c [scc]"
+    << " new: " << foundXorsNew
+    << " T: " << std::fixed << std::setprecision(2)
+    <<  cpu_time << " s"
+    << endl;
+
+    if (solver && solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "scc"
+            , cpu_time
+        );
     }
 }
 

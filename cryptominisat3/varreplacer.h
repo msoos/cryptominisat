@@ -102,7 +102,7 @@ class VarReplacer
 
             Stats& operator+=(const Stats& other);
             void print(const size_t nVars) const;
-            void printShort() const;
+            void printShort(Solver* solver) const;
 
             uint64_t numCalls = 0;
             double cpu_time = 0;

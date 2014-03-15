@@ -2181,7 +2181,7 @@ void Solver::printMinStats() const
         , sCCFinder->getStats().cpu_time/cpu_time*100.0
         , "% time"
     );
-    sCCFinder->getStats().printShort();
+    sCCFinder->getStats().printShort(NULL);
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->getStats().printShort(nVars());

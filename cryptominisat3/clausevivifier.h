@@ -187,6 +187,8 @@ class ClauseVivifier {
                 const size_t trail_diff
                 , const double myTime
                 , const int64_t timeAvailable
+                , const int64_t orig_time
+                , Solver* solver
             ) const;
         };
         StrImplicitData str_impl_data;

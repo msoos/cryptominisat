@@ -1047,6 +1047,7 @@ bool ClauseVivifier::strengthenImplicit()
 
     const size_t origTrailSize = solver->trail.size();
     timeAvailable = 1000LL*1000LL*1000LL;
+    const int64_t orig_time = timeAvailable;
     double myTime = cpuTime();
 
     //Cannot handle empty
@@ -1088,6 +1089,8 @@ end:
             solver->trail.size() - origTrailSize
             , myTime
             , timeAvailable
+            , orig_time
+            , solver
         );
     }
 
@@ -1102,7 +1105,13 @@ void ClauseVivifier::StrImplicitData::print(
     const size_t trail_diff
     , const double myTime
     , const int64_t timeAvailable
+    , const int64_t orig_time
+    , Solver* solver
 ) const {
+    const double time_used = cpuTime() - myTime;
+    bool time_out = timeAvailable <= 0;
+    const double time_remain = (double)timeAvailable/(double)orig_time;
+
     cout
     << "c [implicit] str"
     << " lit bin: " << remLitFromBin
@@ -1111,11 +1120,21 @@ void ClauseVivifier::StrImplicitData::print(
     << " (by stamp: " << stampRem << ")"
     << " set-var: " << trail_diff
 
-    << " T: " << std::fixed << std::setprecision(2)
-    << (cpuTime() - myTime)
-    << " T-out: " << (timeAvailable <= 0 ? "Y" : "N")
+    << " T: " << std::fixed << std::setprecision(2) << time_used
+    << " T-out: " << (time_out ? "Y" : "N")
+    << " T-r: " << time_remain * 100.0
     << " w-visit: " << numWatchesLooked
     << endl;
+
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "implicit str"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
 }
 
 ClauseVivifier::Stats& ClauseVivifier::Stats::operator+=(const Stats& other)

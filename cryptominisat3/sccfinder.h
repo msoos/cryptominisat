@@ -89,16 +89,7 @@ class SCCFinder {
                 cout << "c ----- SCC STATS END --------" << endl;
             }
 
-            void printShort() const
-            {
-                cout
-                << "c SCC"
-                //<< " found: " << foundXors
-                << " new: " << foundXorsNew
-                << " T: " << std::fixed << std::setprecision(2)
-                <<  cpu_time << " s"
-                << endl;
-            }
+            void printShort(Solver* solver) const;
         };
 
         const Stats& getStats() const;
