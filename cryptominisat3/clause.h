@@ -107,17 +107,19 @@ struct ClauseStats
     {
         double useful = 0;
         if (propagations_made > 0) {
-            if (sum_of_branch_depth_propagation == 0) {
-                sum_of_branch_depth_propagation = 1;
+            uint64_t sum_tmp = sum_of_branch_depth_propagation;
+            if (sum_tmp == 0) {
+                sum_tmp = 1;
             }
 
-            useful += ((double)propagations_made*(double)propagations_made)/(double)sum_of_branch_depth_propagation;
+            useful += ((double)propagations_made*(double)propagations_made)/(double)sum_tmp;
         }
         if (conflicts_made > 0) {
-            if (sum_of_branch_depth_conflict == 0) {
-                sum_of_branch_depth_conflict = 0;
+            uint64_t sum_tmp = sum_of_branch_depth_conflict;
+            if (sum_tmp == 0) {
+                sum_tmp = 1;
             }
-            useful += ((double)conflicts_made*(double)conflicts_made)/(double)sum_of_branch_depth_conflict;
+            useful += ((double)conflicts_made*(double)conflicts_made)/(double)sum_tmp;
         }
         return useful;
     }
