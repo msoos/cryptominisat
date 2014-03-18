@@ -285,7 +285,7 @@ class ClauseVivifier {
             , Watched* wit
             , const Clause& cl
         );
-        bool strenghten_clause_with_cache(const Lit lit);
+        bool strengthen_clause_with_cache(const Lit lit);
         void try_subsuming_by_stamping(const bool red);
         void remove_lits_through_stamping_red();
         void remove_lits_through_stamping_irred();

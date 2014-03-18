@@ -548,22 +548,28 @@ bool ClauseVivifier::subsume_clause_with_watch(
     return false;
 }
 
-bool ClauseVivifier::strenghten_clause_with_cache(const Lit lit)
+bool ClauseVivifier::strengthen_clause_with_cache(const Lit lit)
 {
-    timeAvailable -= 2*(long)solver->implCache[lit.toInt()].lits.size();
-    for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
-         if (seen[(~(elit.getLit())).toInt()]) {
-            seen[(~(elit.getLit())).toInt()] = 0;
-            thisRemLitCache++;
+    if (solver->conf.doCache
+        && seen[lit.toInt()] //We haven't yet removed this literal from the clause
+     ) {
+        timeAvailable -= 2*(long)solver->implCache[lit.toInt()].lits.size();
+        for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
+             if (seen[(~(elit.getLit())).toInt()]) {
+                seen[(~(elit.getLit())).toInt()] = 0;
+                thisRemLitCache++;
+             }
+
+             if (seen_subs[elit.getLit().toInt()]
+                 && elit.getOnlyIrredBin()
+             ) {
+                 isSubsumed = true;
+                 cache_based_data.subCache++;
+                 return true;
+             }
          }
 
-         if (seen_subs[elit.getLit().toInt()]
-             && elit.getOnlyIrredBin()
-         ) {
-             isSubsumed = true;
-             cache_based_data.subCache++;
-             return true;
-         }
+         return false;
      }
 
      return false;
@@ -574,15 +580,11 @@ void ClauseVivifier::vivify_clause_with_lit(
     , const Lit lit
     , const bool alsoStrengthen
 ) {
-    //Use cache
-    if (alsoStrengthen
-        && solver->conf.doCache
-        && seen[lit.toInt()] //We haven't yet removed this literal from the clause
-     ) {
-         const bool subsumed = strenghten_clause_with_cache(lit);
-         if (subsumed)
-             return;
-     }
+    if (alsoStrengthen) {
+        bool subsumed = strengthen_clause_with_cache(lit);
+        if (subsumed)
+            return;
+    }
 
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit.toInt()];
