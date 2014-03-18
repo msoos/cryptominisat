@@ -296,9 +296,9 @@ bool ClauseVivifier::vivify_long_irred_cls()
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
 
-    //If went through the whole list, then reset 'asymmed' flag
-    //so next time we start from the beginning
-    if (!needToFinish) {
+    //TODO why? This should be opposite, right?
+    //---> Should only reset if we went through all, right?
+    if (!time_out) {
         for (vector<ClOffset>::const_iterator
             it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
             ; it != end
@@ -317,7 +317,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
         << " cl-rem:" << runStats.numClShorten- origClShorten
         << " lits-rem:" << runStats.numLitsRem - origLitRem
         << " T: " << std::setprecision(2) << time_used
-        << " T-out: " << (needToFinish ? "Y" : "N")
+        << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << std::setprecision(2) << time_remain*100.0 << "%"
         << endl;
     }
@@ -326,7 +326,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
             solver
             , "vivif long irred"
             , time_used
-            , needToFinish
+            , time_out
             , time_remain
         );
     }
