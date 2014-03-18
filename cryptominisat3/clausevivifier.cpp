@@ -548,7 +548,7 @@ bool ClauseVivifier::subsume_clause_with_watch(
     return false;
 }
 
-bool ClauseVivifier::strengthen_clause_with_cache(const Lit lit)
+bool ClauseVivifier::str_and_sub_clause_with_cache(const Lit lit)
 {
     if (solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
@@ -668,7 +668,7 @@ bool ClauseVivifier::shorten_clause_with_cache_watch_stamp(
         ; lit++
     ) {
         if (alsoStrengthen) {
-            bool subsumed = strengthen_clause_with_cache(*lit);
+            bool subsumed = str_and_sub_clause_with_cache(*lit);
             if (subsumed)
                 break;
         }
