@@ -296,8 +296,7 @@ bool ClauseVivifier::vivify_long_irred_cls()
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
 
-    //TODO why? This should be opposite, right?
-    //---> Should only reset if we went through all, right?
+    //Didn't time out, so it went through the whole list. Reset asymm for all.
     if (!time_out) {
         for (vector<ClOffset>::const_iterator
             it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
