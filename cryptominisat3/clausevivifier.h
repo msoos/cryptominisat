@@ -290,8 +290,8 @@ class ClauseVivifier {
         void remove_lits_through_stamping_red();
         void remove_lits_through_stamping_irred();
         Stats::CacheBased tmpStats;
-        bool needToFinish;
-        bool vivify_clause(
+        //bool needToFinish;
+        bool shorten_clause_with_cache_watch_stamp(
             ClOffset& offset
             , bool red
             , const bool alsoStrengthen
@@ -304,8 +304,8 @@ class ClauseVivifier {
 
         //Actual algorithms used
         bool vivify_long_irred_cls();
-        bool vivifyClausesTriIrred();
-        bool vivifyClausesCache(
+        bool vivify_tri_irred_cls();
+        bool shorten_all_clauses_with_cache_watch_stamp(
             vector<ClOffset>& clauses
             , bool red
             , bool alsoStrengthen

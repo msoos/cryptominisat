@@ -61,17 +61,17 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
     runStats.redCacheBased.clear();
     runStats.irredCacheBased.clear();
 
-    if (!vivifyClausesCache(solver->longIrredCls, false, false))
+    if (!shorten_all_clauses_with_cache_watch_stamp(solver->longIrredCls, false, false))
         goto end;
 
-    if (!vivifyClausesCache(solver->longRedCls, true, false))
+    if (!shorten_all_clauses_with_cache_watch_stamp(solver->longRedCls, true, false))
         goto end;
 
     if (alsoStrengthen) {
-        if (!vivifyClausesCache(solver->longIrredCls, false, true))
+        if (!shorten_all_clauses_with_cache_watch_stamp(solver->longIrredCls, false, true))
             goto end;
 
-        if (!vivifyClausesCache(solver->longRedCls, true, true))
+        if (!shorten_all_clauses_with_cache_watch_stamp(solver->longRedCls, true, true))
             goto end;
     }
 
@@ -82,7 +82,7 @@ bool ClauseVivifier::vivify(const bool alsoStrengthen)
     }
 
     if (alsoStrengthen
-        && !vivifyClausesTriIrred()
+        && !vivify_tri_irred_cls()
     ) {
         goto end;
     }
@@ -101,7 +101,7 @@ end:
     return solver->ok;
 }
 
-bool ClauseVivifier::vivifyClausesTriIrred()
+bool ClauseVivifier::vivify_tri_irred_cls()
 {
     if (solver->conf.verbosity >= 6) {
         cout
@@ -642,7 +642,7 @@ void ClauseVivifier::remove_lits_through_stamping_irred()
     }
 }
 
-bool ClauseVivifier::vivify_clause(
+bool ClauseVivifier::shorten_clause_with_cache_watch_stamp(
     ClOffset& offset
     , bool red
     , const bool alsoStrengthen
@@ -717,10 +717,6 @@ bool ClauseVivifier::vivify_clause(
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
     Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
-    if (!solver->ok) {
-        needToFinish = true;
-    }
-
     if (c2 != NULL) {
         solver->detachClause(offset);
         solver->clAllocator.clauseFree(offset);
@@ -773,7 +769,7 @@ uint64_t ClauseVivifier::calc_time_available(
     return maxCountTime;
 }
 
-bool ClauseVivifier::vivifyClausesCache(
+bool ClauseVivifier::shorten_all_clauses_with_cache_watch_stamp(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -788,7 +784,7 @@ bool ClauseVivifier::vivifyClausesCache(
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
     cache_based_data.clear();
-    needToFinish = false;
+    bool need_to_finish = false;
     randomise_order_of_clauses(clauses);
 
     size_t i = 0;
@@ -799,19 +795,21 @@ bool ClauseVivifier::vivifyClausesCache(
         ; i++
     ) {
         //Timeout?
-        if (timeAvailable <= 0) {
-            needToFinish = true;
+        if (timeAvailable <= 0
+            || !solver->okay()
+        ) {
+            need_to_finish = true;
             tmpStats.ranOutOfTime++;
         }
 
         //Check status
-        if (needToFinish) {
+        if (need_to_finish) {
             clauses[j++] = clauses[i];
             continue;
         }
 
         ClOffset offset = clauses[i];
-        const bool remove = vivify_clause(offset, red, alsoStrengthen);
+        const bool remove = shorten_clause_with_cache_watch_stamp(offset, red, alsoStrengthen);
         if (remove) {
             solver->detachClause(offset);
             solver->clAllocator.clauseFree(offset);
