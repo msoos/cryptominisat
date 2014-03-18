@@ -271,7 +271,7 @@ class ClauseVivifier {
         bool isSubsumed;
         size_t thisRemLitCache;
         size_t thisRemLitBinTri;
-        void vivify_clause_with_lit(
+        void str_and_sub_using_watch(
             Clause& cl
             , const Lit lit
             , const bool alsoStrengthen
