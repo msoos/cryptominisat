@@ -267,7 +267,7 @@ class Searcher : public HyperEngine
                 //Time
                 , cpu_time(0)
 
-            {};
+            {}
 
             void clear()
             {

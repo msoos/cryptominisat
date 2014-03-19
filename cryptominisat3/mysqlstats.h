@@ -157,7 +157,7 @@ private:
     struct StmtReduceDB {
         StmtReduceDB() :
             stmt(NULL)
-        {};
+        {}
 
         MYSQL_BIND  bind[10 + 14*3];
         MYSQL_STMT  *stmt;
@@ -186,7 +186,7 @@ private:
     struct StmtTimePassed {
         StmtTimePassed() :
             stmt(NULL)
-        {};
+        {}
 
         MYSQL_BIND  bind[1+7];
         MYSQL_STMT  *stmt;
@@ -205,7 +205,7 @@ private:
     struct StmtTimePassedMin {
         StmtTimePassedMin() :
             stmt(NULL)
-        {};
+        {}
 
         MYSQL_BIND  bind[1+5];
         MYSQL_STMT  *stmt;
@@ -223,7 +223,7 @@ private:
     struct StmtRst {
         StmtRst() :
             stmt(NULL)
-        {};
+        {}
 
         MYSQL_BIND  bind[79+1]; //+1 == runID
         MYSQL_STMT  *stmt;
