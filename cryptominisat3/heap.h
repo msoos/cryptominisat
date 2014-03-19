@@ -172,8 +172,10 @@ class Heap {
                 indices[heap[i]] = std::numeric_limits<uint32_t>::max();
 
         heap.shrink(i - j);
-        for (int i = ((int)heap.size()) / 2 - 1; i >= 0; i--)
-            percolateDown(i);
+
+        for (int k = ((int)heap.size()) / 2 - 1; k >= 0; k--) {
+            percolateDown(k);
+        }
 
         assert(heapProperty());
     }
