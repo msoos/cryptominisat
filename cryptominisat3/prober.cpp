@@ -55,7 +55,7 @@ struct ActSorter
 {
     ActSorter(const vector<uint32_t>& _activities) :
         activities(_activities)
-    {};
+    {}
 
     const vector<uint32_t>& activities;
 

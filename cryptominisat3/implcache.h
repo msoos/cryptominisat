@@ -35,7 +35,7 @@ class Solver;
 
 class LitExtra {
 public:
-    LitExtra() {};
+    LitExtra() {}
 
     LitExtra(const Lit l, const bool onlyNLBin)
     {
@@ -82,7 +82,7 @@ class TransCache {
 public:
     TransCache()
         //conflictLastUpdated(std::numeric_limits<uint64_t>::max())
-    {};
+    {}
 
     bool merge(
         const vector<LitExtra>& otherLits

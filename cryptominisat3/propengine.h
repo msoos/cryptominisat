@@ -71,7 +71,7 @@ struct PolaritySorter
 {
     PolaritySorter(const vector<VarData>& _varData) :
         varData(_varData)
-    {};
+    {}
 
     bool operator()(const Lit lit1, const Lit lit2) {
         const bool value1 = varData[lit1.var()].polarity ^ lit1.sign();

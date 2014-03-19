@@ -260,7 +260,7 @@ struct AssignStats
         , sumAssignNeg(0)
         , sumFlippedPolar(0)
         , sumFlippedPolarByDecider(0)
-    {};
+    {}
 
     uint64_t sumAssignPos;
     uint64_t sumAssignNeg;

@@ -10,7 +10,7 @@ static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
 class Lit
 {
     uint32_t x;
-    explicit Lit(uint32_t i) : x(i) { };
+    explicit Lit(uint32_t i) : x(i) { }
 public:
     Lit() : x(2*var_Undef) {}   // (lit_Undef)
     explicit Lit(Var var, bool sign) :
@@ -98,7 +98,7 @@ public:
     lbool() :
         value(0)
     {
-    };
+    }
 
     bool operator==(lbool b) const
     {

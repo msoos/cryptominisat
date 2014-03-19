@@ -435,7 +435,7 @@ private:
     struct LinkInData
     {
         LinkInData()
-        {};
+        {}
 
         LinkInData(uint64_t _cl_linked, uint64_t _cl_not_linked) :
             cl_linked(_cl_linked)
@@ -537,7 +537,7 @@ private:
             , longer(0)
             , lit(0)
             , count(std::numeric_limits<uint32_t>::max()) //resolution count (if can be counted, otherwise MAX)
-        {};
+        {}
 
         uint32_t totalCls() const
         {

@@ -178,7 +178,7 @@ struct ClauseStats
         ret.locked = first.locked | second.locked;
 
         return ret;
-    };
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
