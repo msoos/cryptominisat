@@ -37,7 +37,7 @@ public:
         return x >> 1;
     }
     Lit  unsign() const {
-        return Lit(x & ~1);
+        return Lit(x & ~1U);
     }
     bool operator==(const Lit& p) const {
         return x == p.x;

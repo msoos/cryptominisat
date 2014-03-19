@@ -434,7 +434,7 @@ uint32_t PropEngine::calcGlue(const T& ps)
     typename T::const_iterator l, end;
 
     for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        int32_t lev = varData[l->var()].level;
+        uint32_t lev = varData[l->var()].level;
         if (!seen2[lev]) {
             nbLevels++;
             seen2[lev] = 1;
@@ -442,7 +442,7 @@ uint32_t PropEngine::calcGlue(const T& ps)
     }
 
     for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        int32_t lev = varData[l->var()].level;
+        uint32_t lev = varData[l->var()].level;
         seen2[lev] = 0;
     }
     return nbLevels;
