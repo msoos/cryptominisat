@@ -44,12 +44,6 @@ class vec {
 
     void     init(uint32_t size, const T& pad);
     void     grow(uint32_t min_cap);
-
-    static inline uint32_t imax(int x, int y) {
-        int mask = (y - x) >> (sizeof(int) * 8 - 1);
-        return (x & mask) + (y & (~mask));
-    }
-
     void     myCopy (const vec<T>& other);
 
 public:
