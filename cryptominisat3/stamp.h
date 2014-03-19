@@ -34,13 +34,6 @@ struct Timestamp
         numDom[STAMP_RED] = 0;
     }
 
-    Timestamp& operator=(const Timestamp& other)
-    {
-        memmove(this, &other, sizeof(Timestamp));
-
-        return *this;
-    }
-
     uint64_t start[2];
     uint64_t end[2];
 
