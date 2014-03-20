@@ -165,7 +165,11 @@ SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
 
-        //optimisations to do
+        //Vivification
+        , doClausVivif(true)
+        , max_props_vivif_long_irred_cls(20ULL*1000ULL*1000ULL)
+
+        //Memory savings
         , doRenumberVars   (true)
         , doSaveMem        (true)
 
@@ -177,7 +181,6 @@ SolverConf::SolverConf() :
         , compFindLimitMega (500)
 
         , doExtBinSubs     (true)
-        , doClausVivif     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
 

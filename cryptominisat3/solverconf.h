@@ -259,6 +259,9 @@ class SolverConf
         uint64_t maxOccurRedMB;
         uint64_t maxOccurRedLitLinkedM;
 
+        //Vivification
+        int      doClausVivif;
+        uint64_t max_props_vivif_long_irred_cls;
 
         //Optimisations to do
         int       doRenumberVars;
@@ -273,8 +276,6 @@ class SolverConf
 
 
         int      doExtBinSubs;
-
-        int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
 
