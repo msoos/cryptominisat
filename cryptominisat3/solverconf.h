@@ -263,7 +263,7 @@ class SolverConf
         int      doClausVivif;
         uint64_t max_props_vivif_long_irred_cls;
 
-        //Optimisations to do
+        //Memory savings
         int       doRenumberVars;
         int       doSaveMem;
 
@@ -275,6 +275,7 @@ class SolverConf
         uint64_t  compFindLimitMega;
 
 
+        //Misc Optimisations
         int      doExtBinSubs;
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;

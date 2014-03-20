@@ -180,11 +180,12 @@ SolverConf::SolverConf() :
         , compVarLimit      (1ULL*1000ULL*1000ULL)
         , compFindLimitMega (500)
 
+        //Misc optimisations
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
 
-
+        //Gates
         , doGateFind       (true)
         , maxGateSize      (20)
         , maxGateBasedClReduceSize(20)
