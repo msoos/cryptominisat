@@ -51,9 +51,6 @@ ClauseVivifier::ClauseVivifier(Solver* _solver) :
 bool ClauseVivifier::vivify(const bool alsoStrengthen)
 {
     assert(solver->ok);
-    #ifdef VERBOSE_DEBUG
-    cout << "c clauseVivifier started" << endl;
-    #endif //VERBOSE_DEBUG
     numCalls++;
 
     solver->clauseCleaner->cleanClauses(solver->longIrredCls);
