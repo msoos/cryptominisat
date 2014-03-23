@@ -2046,12 +2046,7 @@ void Searcher::reduce_db_if_needed()
     if (sumConflicts() > solver->getNextCleanLimit()) {
         if (conf.verbosity >= 3) {
             cout
-            << "c th "
-            #ifdef USE_OMP
-            << omp_get_thread_num()
-            #else
-            << "1"
-            #endif
+            << "c "
             << " cleaning"
             << " getNextCleanLimit(): " << solver->getNextCleanLimit()
             << " numConflicts : " << stats.conflStats.numConflicts
