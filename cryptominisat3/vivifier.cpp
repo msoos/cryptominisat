@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "clausevivifier.h"
+#include "vivifier.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"

@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef CLAUSEVIVIFIER_H
-#define CLAUSEVIVIFIER_H
+#ifndef __VIVIFIER_H__
+#define __VIVIFIER_H__
 
 #include <vector>
 #include "clause.h"
@@ -100,4 +100,4 @@ inline const Vivifier::Stats& Vivifier::getStats() const
 
 } //end namespace
 
-#endif //CLAUSEVIVIFIER_H
+#endif //__VIVIFIER_H__

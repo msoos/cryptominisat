@@ -26,7 +26,7 @@
 #include "sccfinder.h"
 #include "simplifier.h"
 #include "prober.h"
-#include "clausevivifier.h"
+#include "vivifier.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
