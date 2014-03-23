@@ -40,6 +40,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
+#include "strengthener.h"
 
 #include <fstream>
 #include <cmath>
@@ -64,7 +65,7 @@ Solver::Solver(const SolverConf _conf) :
     , prober(NULL)
     , simplifier(NULL)
     , sCCFinder(NULL)
-    , clauseVivifier(NULL)
+    , vivifier(NULL)
     , clauseCleaner(NULL)
     , varReplacer(NULL)
     , compHandler(NULL)
@@ -98,7 +99,8 @@ Solver::Solver(const SolverConf _conf) :
         simplifier = new Simplifier(this);
     }
     sCCFinder = new SCCFinder(this);
-    clauseVivifier = new ClauseVivifier(this);
+    vivifier = new Vivifier(this);
+    strengthener = new Strengthener(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -117,7 +119,8 @@ Solver::~Solver()
     delete prober;
     delete simplifier;
     delete sCCFinder;
-    delete clauseVivifier;
+    delete vivifier;
+    delete strengthener;
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
@@ -1791,7 +1794,10 @@ lbool Solver::simplifyProblem()
     }
 
     //Don't replace first -- the stamps won't work so well
-    if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
+    if (conf.doClausVivif && !strengthener->strengthen(true)) {
+        goto end;
+    }
+    if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
     }
 
@@ -1819,7 +1825,7 @@ lbool Solver::simplifyProblem()
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
-        if (!clauseVivifier->strengthenImplicit()) {
+        if (!strengthener->strengthenImplicit()) {
             goto end;
         }
 
@@ -1831,7 +1837,10 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify(true)) {
+    if (conf.doClausVivif && !strengthener->strengthen(true)) {
+        goto end;
+    }
+    if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
     }
 
@@ -2182,18 +2191,18 @@ void Solver::printMinStats() const
 
     //varReplacer->getStats().printShort(nVars());
     printStatsLine("c asymm time"
-                    , clauseVivifier->getStats().timeNorm
-                    , clauseVivifier->getStats().timeNorm/cpu_time*100.0
+                    , vivifier->getStats().timeNorm
+                    , vivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time"
     );
-    printStatsLine("c vivif cache-irred time"
-                    , clauseVivifier->getStats().irredCacheBased.cpu_time
-                    , clauseVivifier->getStats().irredCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c strength cache-irred time"
+                    , strengthener->getStats().irredCacheBased.cpu_time
+                    , strengthener->getStats().irredCacheBased.cpu_time/cpu_time*100.0
                     , "% time"
     );
-    printStatsLine("c vivif cache-red time"
-                    , clauseVivifier->getStats().redCacheBased.cpu_time
-                    , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c strength cache-red time"
+                    , strengthener->getStats().redCacheBased.cpu_time
+                    , strengthener->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time"
     );
     printStatsLine("c Conflicts in UIP"
@@ -2307,18 +2316,19 @@ void Solver::printFullStats() const
 
     //Vivifier-ASYMM stats
     printStatsLine("c vivif time"
-                    , clauseVivifier->getStats().timeNorm
-                    , clauseVivifier->getStats().timeNorm/cpu_time*100.0
+                    , vivifier->getStats().timeNorm
+                    , vivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time");
-    printStatsLine("c vivif cache-irred time"
-                    , clauseVivifier->getStats().irredCacheBased.cpu_time
-                    , clauseVivifier->getStats().irredCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c strength cache-irred time"
+                    , strengthener->getStats().irredCacheBased.cpu_time
+                    , strengthener->getStats().irredCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    printStatsLine("c vivif cache-red time"
-                    , clauseVivifier->getStats().redCacheBased.cpu_time
-                    , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c strength cache-red time"
+                    , strengthener->getStats().redCacheBased.cpu_time
+                    , strengthener->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    clauseVivifier->getStats().print(nVars());
+    vivifier->getStats().print(nVars());
+    strengthener->getStats().print();
 
     if (conf.doStrSubImplicit) {
         subsumeImplicit->getStats().print();

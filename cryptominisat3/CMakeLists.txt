@@ -21,6 +21,7 @@ set(cryptoms_lib_files
     sccfinder.cpp
     solverconf.cpp
     clausevivifier.cpp
+    strengthener.cpp
     calcdefpolars.cpp
     solutionextender.cpp
     completedetachreattacher.cpp
