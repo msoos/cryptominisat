@@ -49,10 +49,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-#ifdef USE_OMP
-#include <omp.h>
-#endif
-
 #ifdef USE_MYSQL
 #include "mysqlstats.h"
 #endif
