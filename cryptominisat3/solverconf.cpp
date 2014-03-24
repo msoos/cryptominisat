@@ -152,7 +152,8 @@ SolverConf::SolverConf() :
         , doLHBR           (false)
         , propBinFirst     (false)
         , dominPickFreq    (400)
-        , polarity_flip_frequency_multiplier(0)
+        , polarity_flip_min_depth(50)
+        , polarity_flip_frequency_multiplier(100)
 
         //Simplifier
         , simplify_at_startup(false)

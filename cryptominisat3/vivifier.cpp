@@ -82,7 +82,7 @@ bool Vivifier::vivify_tri_irred_cls()
 {
     if (solver->conf.verbosity >= 6) {
         cout
-        << "c Doing asymm branch for tri irred clauses"
+        << "c Doing vivif for tri irred clauses"
         << endl;
     }
 
@@ -146,8 +146,8 @@ bool Vivifier::vivify_tri_irred_cls()
     const double time_remain = 1.0 - (double)(diff_bogoprops + extraTime)/(double)maxNumProps;
     if (solver->conf.verbosity >= 3) {
         cout
-        << "c [vivif] tri "
-        << " tri-shorten: " << runStats.numClShorten - origShorten
+        << "c [vivif] tri irred"
+        << " shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail.size() - origTrailSize
         << " T: " << std::setprecision(2) << time_used
@@ -309,7 +309,7 @@ bool Vivifier::vivify_long_irred_cls()
         << " lits-rem:" << runStats.numLitsRem - origLitRem
         << " T: " << std::setprecision(2) << time_used
         << " T-out: " << (time_out ? "Y" : "N")
-        << " T-r: " << std::setprecision(2) << time_remain*100.0 << "%"
+        << " T-rem: " << std::setprecision(2) << time_remain*100.0 << "%"
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -323,7 +323,7 @@ bool Vivifier::vivify_long_irred_cls()
     }
 
     //Update stats
-    runStats.timeNorm = cpuTime() - myTime;
+    runStats.time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
 
     return solver->ok;
@@ -429,7 +429,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
 
 Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
 {
-    timeNorm += other.timeNorm;
+    time_used += other.time_used;
     timeOut += other.timeOut;
     zeroDepthAssigns += other.zeroDepthAssigns;
     numClShorten += other.numClShorten;
@@ -449,7 +449,7 @@ void Vivifier::Stats::printShort() const
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << " T: " << timeNorm << " s"
+    << " T: " << time_used << " s"
     << " T-out: " << (timeOut ? "Y" : "N")
     << endl;
 }
@@ -459,8 +459,8 @@ void Vivifier::Stats::print(const size_t nVars) const
     //Asymm
     cout << "c -------- ASYMM STATS --------" << endl;
     printStatsLine("c time"
-        , timeNorm
-        , timeNorm/(double)numCalled
+        , time_used
+        , time_used/(double)numCalled
         , "per call"
     );
 

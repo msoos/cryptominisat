@@ -54,7 +54,7 @@ class Vivifier {
             void print(const size_t nVars) const;
 
             //Asymm
-            double timeNorm = 0.0;
+            double time_used = 0.0;
             uint64_t timeOut = 0;
             uint64_t zeroDepthAssigns = 0;
             uint64_t numClShorten = 0;
@@ -77,7 +77,6 @@ class Vivifier {
         //Actual algorithms used
         bool vivify_long_irred_cls();
         bool vivify_tri_irred_cls();
-        int64_t timeAvailable;
         Solver* solver;
 
         //For vivify

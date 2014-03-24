@@ -2409,8 +2409,11 @@ Lit Searcher::pickBranchLit()
     }
 
     //Flip polaritiy if need be
-    if (next != lit_Undef && mtrand.randInt(conf.polarity_flip_frequency_multiplier) == 1) {
-        next ^= 1;
+    if (next != lit_Undef
+        && decisionLevel() > conf.polarity_flip_min_depth
+        && mtrand.randInt(conf.polarity_flip_frequency_multiplier) == 1
+    ) {
+        next ^= true;
         stats.decisionFlippedPolar++;
     }
 
