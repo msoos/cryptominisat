@@ -2054,7 +2054,7 @@ void Searcher::reduce_db_if_needed()
             << " maxConfls:" << max_conflicts
             << " Trail size: " << trail.size() << endl;
         }
-        solver->fullReduce();
+        solver->reduce_db_and_update_reset_stats();
 
         genRandomVarActMultDiv();
 

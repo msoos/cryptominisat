@@ -441,7 +441,7 @@ class Solver : public Searcher
 
         ///////////////////////////
         // Clause cleaning
-        void fullReduce(bool lock_clauses_in = true);
+        void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
         void clearClauseStats(vector<ClOffset>& clauseset);
         CleaningStats reduceDB(bool lock_clauses_in);
         void lock_most_UIP_used_clauses();

@@ -1598,7 +1598,7 @@ lbool Solver::solve()
     //Clean up as a startup
     nextCleanLimitInc = 0;
     nextCleanLimit = 0;
-    fullReduce(false);
+    reduce_db_and_update_reset_stats(false);
 
     //Initialise
     nextCleanLimitInc = conf.startClean;
@@ -1669,7 +1669,7 @@ lbool Solver::solve()
             break;
         }
 
-        fullReduce();
+        reduce_db_and_update_reset_stats();
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         //Simplify
@@ -1975,16 +1975,6 @@ ClauseUsageStats Solver::sumClauseData(
             cl.print_extra_stats();
     }
 
-    if (conf.verbosity >= 1) {
-        //Print SUM stats
-        if (red) {
-            cout << "c red  ";
-        } else {
-            cout << "c irred";
-        }
-        stats.print();
-    }
-
     //Print more stats
     if (conf.verbosity >= 4) {
         printPropConflStats("clause-len", perSizeStats);
@@ -2056,53 +2046,29 @@ void Solver::clearClauseStats(vector<ClOffset>& clauseset)
     }
 }
 
-void Solver::fullReduce(bool lock_clauses_in)
+void Solver::reduce_db_and_update_reset_stats(bool lock_clauses_in)
 {
-    ClauseUsageStats irredStats = sumClauseData(longIrredCls, false);
-    ClauseUsageStats redStats   = sumClauseData(longRedCls, true);
-
-    //Calculating summary
-    ClauseUsageStats stats;
-    stats += irredStats;
-    stats += redStats;
-
+    ClauseUsageStats irred_cl_usage_stats = sumClauseData(longIrredCls, false);
+    ClauseUsageStats red_cl_usage_stats = sumClauseData(longRedCls, true);
+    ClauseUsageStats sum_cl_usage_stats;
+    sum_cl_usage_stats += irred_cl_usage_stats;
+    sum_cl_usage_stats += red_cl_usage_stats;
     if (conf.verbosity >= 1) {
-        cout
-        << "c sum   lits visit: "
-        << std::setw(8) << stats.sumLitVisited/1000UL
-        << "K";
+        cout << "c irred";
+        irred_cl_usage_stats.print();
 
-        cout
-        << " cls visit: "
-        << std::setw(7) << stats.sumLookedAt/1000UL
-        << "K";
+        cout << "c red  ";
+        red_cl_usage_stats.print();
 
-        cout
-        << " prop: "
-        << std::setw(5) << stats.sumProp/1000UL
-        << "K";
-
-        cout
-        << " conf: "
-        << std::setw(5) << stats.sumConfl/1000UL
-        << "K";
-
-        cout
-        << " UIP used: "
-        << std::setw(5) << stats.sumUsedUIP/1000UL
-        << "K"
-        << endl;
+        cout << "c sum  ";
+        sum_cl_usage_stats.print();
     }
 
-    if (conf.doSQL) {
-        //printClauseStatsSQL(clauses);
-        //printClauseStatsSQL(learnts);
-    }
     CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
     consolidateMem();
 
     if (conf.doSQL) {
-        sqlStats->reduceDB(irredStats, redStats, iterCleanStat, solver);
+        sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);
     }
 
     if (conf.doClearStatEveryClauseCleaning) {
