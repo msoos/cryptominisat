@@ -77,7 +77,6 @@ class Vivifier {
         //Actual algorithms used
         bool vivify_long_irred_cls();
         bool vivify_tri_irred_cls();
-        int64_t timeAvailable;
         Solver* solver;
 
         //For vivify
