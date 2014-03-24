@@ -50,6 +50,7 @@ echo -ne "Creating todo..."
 for file in  $fileloc
 do
     filename=$(basename "$file")
+    #todo="zcat $file | shuf --random-source=myrnd | /usr/bin/time --verbose -o $output/$filename.timeout $solver $opts > $output/$filename.out 2>&1"
     todo="/usr/bin/time --verbose -o $output/$filename.timeout $solver $opts $file > $output/$filename.out 2>&1"
     #todo="$solver $file > $output/$filename.out"
     echo $todo >> todo
