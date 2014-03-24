@@ -35,10 +35,10 @@ SolverConf::SolverConf() :
         , random_picks_from_top_T(20)
         , polarity_mode(PolarityMode::automatic)
         , do_calc_polarity_first_time(true)
-        , do_calc_polarity_every_time(false)
+        , do_calc_polarity_every_time(true)
 
         //Clause cleaning
-        , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_depth_based)
+        , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_based)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
@@ -51,7 +51,7 @@ SolverConf::SolverConf() :
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
         , lock_uip_per_dbclean(500)
-        , lock_topclean_per_dbclean(200)
+        , lock_topclean_per_dbclean(0)
         , multiplier_perf_values_after_cl_clean(0)
 
         //Restarting
