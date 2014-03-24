@@ -323,7 +323,7 @@ bool Vivifier::vivify_long_irred_cls()
     }
 
     //Update stats
-    runStats.timeNorm = cpuTime() - myTime;
+    runStats.time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
 
     return solver->ok;
@@ -429,7 +429,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
 
 Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
 {
-    timeNorm += other.timeNorm;
+    time_used += other.time_used;
     timeOut += other.timeOut;
     zeroDepthAssigns += other.zeroDepthAssigns;
     numClShorten += other.numClShorten;
@@ -449,7 +449,7 @@ void Vivifier::Stats::printShort() const
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << " T: " << timeNorm << " s"
+    << " T: " << time_used << " s"
     << " T-out: " << (timeOut ? "Y" : "N")
     << endl;
 }
@@ -459,8 +459,8 @@ void Vivifier::Stats::print(const size_t nVars) const
     //Asymm
     cout << "c -------- ASYMM STATS --------" << endl;
     printStatsLine("c time"
-        , timeNorm
-        , timeNorm/(double)numCalled
+        , time_used
+        , time_used/(double)numCalled
         , "per call"
     );
 

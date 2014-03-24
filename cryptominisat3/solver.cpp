@@ -2191,8 +2191,8 @@ void Solver::printMinStats() const
 
     //varReplacer->getStats().printShort(nVars());
     printStatsLine("c asymm time"
-                    , vivifier->getStats().timeNorm
-                    , vivifier->getStats().timeNorm/cpu_time*100.0
+                    , vivifier->getStats().time_used
+                    , vivifier->getStats().time_used/cpu_time*100.0
                     , "% time"
     );
     printStatsLine("c strength cache-irred time"
@@ -2316,8 +2316,8 @@ void Solver::printFullStats() const
 
     //Vivifier-ASYMM stats
     printStatsLine("c vivif time"
-                    , vivifier->getStats().timeNorm
-                    , vivifier->getStats().timeNorm/cpu_time*100.0
+                    , vivifier->getStats().time_used
+                    , vivifier->getStats().time_used/cpu_time*100.0
                     , "% time");
     printStatsLine("c strength cache-irred time"
                     , strengthener->getStats().irredCacheBased.cpu_time
