@@ -108,7 +108,7 @@ struct DrupFile: public Drup
 
             case DrupFlag::findelay:
                 assert(delete_filled);
-                *file << "d " << todel;
+                *file << "d " << todel.str();
                 todel.clear();
                 delete_filled = false;
                 break;
