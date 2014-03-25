@@ -32,7 +32,7 @@ enum class ClauseCleaningTypes {
     glue_based
     , size_based
     , sum_prop_confl_based
-    , sum_prop_confl_depth_based
+    , sum_confl_depth_based
     ,  sum_activity_based
 };
 
@@ -64,8 +64,8 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
         case ClauseCleaningTypes::sum_prop_confl_based:
             return "prconf";
 
-        case ClauseCleaningTypes::sum_prop_confl_depth_based:
-            return "prconfdep";
+        case ClauseCleaningTypes::sum_confl_depth_based:
+            return "confdep";
 
         case ClauseCleaningTypes::sum_activity_based:
             return "activity";
@@ -133,6 +133,7 @@ class SolverConf
 
         //Clause cleaning
         ClauseCleaningTypes clauseCleaningType;
+        uint64_t  clean_confl_multiplier;
         int       doPreClauseCleanPropAndConfl;
         uint32_t  preClauseCleanLimit;
         uint32_t  preCleanMinConflTime;

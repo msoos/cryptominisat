@@ -39,6 +39,7 @@ SolverConf::SolverConf() :
 
         //Clause cleaning
         , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_based)
+        , clean_confl_multiplier(20ULL)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)

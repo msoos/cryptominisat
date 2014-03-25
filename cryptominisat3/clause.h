@@ -98,22 +98,14 @@ struct ClauseStats
         , locked(false)
     {}
 
-    uint32_t numPropAndConfl() const
+    uint64_t numPropAndConfl(const uint64_t confl_multiplier) const
     {
-        return propagations_made + conflicts_made;
+        return (uint64_t)propagations_made + (uint64_t)conflicts_made*confl_multiplier;
     }
 
-    double prop_confl_usefulness() const
+    double confl_usefulness() const
     {
         double useful = 0;
-        if (propagations_made > 0) {
-            uint64_t sum_tmp = sum_of_branch_depth_propagation;
-            if (sum_tmp == 0) {
-                sum_tmp = 1;
-            }
-
-            useful += ((double)propagations_made*(double)propagations_made)/(double)sum_tmp;
-        }
         if (conflicts_made > 0) {
             uint64_t sum_tmp = sum_of_branch_depth_conflict;
             if (sum_tmp == 0) {
@@ -418,7 +410,7 @@ public:
         if (stats.visited_literals > 0) {
             cout
             << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats.numPropAndConfl()/(double)stats.visited_literals);
+            << (10.0*(double)stats.numPropAndConfl(1)/(double)stats.visited_literals);
         }
         #endif
         ;

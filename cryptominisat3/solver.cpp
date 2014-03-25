@@ -1049,17 +1049,19 @@ bool Solver::reduceDBStructPropConfl::operator() (
     //No clause should be less than 3-long: 2&3-long are not removed
     assert(xsize > 2 && ysize > 2);
 
-    if (x->stats.numPropAndConfl() != y->stats.numPropAndConfl())
-        return (x->stats.numPropAndConfl() < y->stats.numPropAndConfl());
+    const uint64_t x_useful = x->stats.numPropAndConfl(confl_multiplier);
+    const uint64_t y_useful = y->stats.numPropAndConfl(confl_multiplier);
+    if (x_useful != y_useful)
+        return x_useful < y_useful;
 
-    //Second tie: size
+    //Second tie: UIP usage
     if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
         return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
 
     return x->size() > y->size();
 }
 
-bool Solver::reduceDBStructPropConflDepth::operator() (
+bool Solver::reduceDBStructConflDepth::operator() (
     const ClOffset xOff
     , const ClOffset yOff
 ) {
@@ -1073,18 +1075,20 @@ bool Solver::reduceDBStructPropConflDepth::operator() (
     //No clause should be less than 3-long: 2&3-long are not removed
     assert(xsize > 2 && ysize > 2);
 
-    if (x->stats.numPropAndConfl() == 0 && x->stats.numPropAndConfl() == 0)
+    if (x->stats.numPropAndConfl(1) == 0 && y->stats.numPropAndConfl(1) == 0)
         return false;
 
-    if (x->stats.numPropAndConfl() == 0)
+    if (x->stats.numPropAndConfl(1) == 0)
         return true;
-    if (y->stats.numPropAndConfl() == 0)
+    if (y->stats.numPropAndConfl(1) == 0)
         return false;
 
-    if (x->stats.prop_confl_usefulness() != y->stats.prop_confl_usefulness())
-        return (x->stats.prop_confl_usefulness() < y->stats.prop_confl_usefulness());
+    const double x_useful = x->stats.confl_usefulness();
+    const double y_useful = y->stats.confl_usefulness();
+    if (x_useful != y_useful)
+        return x_useful < y_useful;
 
-    //Second tie: size
+    //Second tie: UIP usage
     if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
         return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
 
@@ -1102,7 +1106,7 @@ void Solver::pre_clean_clause_db(
             ClOffset offset = longRedCls[i];
             Clause* cl = clAllocator.getPointer(offset);
             assert(cl->size() > 3);
-            if (cl->stats.numPropAndConfl() < conf.preClauseCleanLimit
+            if (cl->stats.numPropAndConfl(conf.clean_confl_multiplier) < conf.preClauseCleanLimit
                 && !cl->stats.locked
                 && cl->stats.introduced_at_conflict + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
@@ -1250,14 +1254,14 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
     case ClauseCleaningTypes::sum_prop_confl_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
-            , reduceDBStructPropConfl(clAllocator));
+            , reduceDBStructPropConfl(clAllocator, conf.clean_confl_multiplier));
         tmpStats.propConflBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::sum_prop_confl_depth_based :
+    case ClauseCleaningTypes::sum_confl_depth_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
-            , reduceDBStructPropConflDepth(clAllocator));
+            , reduceDBStructConflDepth(clAllocator));
         tmpStats.propConflBasedClean = 1;
         break;
     }

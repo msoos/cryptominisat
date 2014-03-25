@@ -475,16 +475,21 @@ class Solver : public Searcher
         };
         struct reduceDBStructPropConfl
         {
-            reduceDBStructPropConfl(ClauseAllocator& _clAllocator) :
+            reduceDBStructPropConfl(
+                ClauseAllocator& _clAllocator
+                , uint64_t _confl_multiplier
+            ) :
                 clAllocator(_clAllocator)
+                , confl_multiplier(_confl_multiplier)
             {}
             ClauseAllocator& clAllocator;
+            uint64_t confl_multiplier;
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
-        struct reduceDBStructPropConflDepth
+        struct reduceDBStructConflDepth
         {
-            reduceDBStructPropConflDepth(ClauseAllocator& _clAllocator) :
+            reduceDBStructConflDepth(ClauseAllocator& _clAllocator) :
                 clAllocator(_clAllocator)
             {}
             ClauseAllocator& clAllocator;

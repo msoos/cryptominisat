@@ -315,7 +315,9 @@ void Main::add_supported_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
     ("clean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
-        , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'prconfdep' for (propagations+conflicts)/(depth at which they were caused)")
+        , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'confdep' for (propagations+conflicts)/(depth at which they were caused)")
+    ("cleanconflmult", po::value<uint64_t>(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
+        , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("lockuip", po::value<size_t>(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
     ("locktop", po::value<size_t>(&conf.lock_topclean_per_dbclean)->default_value(conf.lock_topclean_per_dbclean)
@@ -826,8 +828,8 @@ void Main::parse_cleaning_type()
     } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_prop_confl_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_based;
 
-    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_prop_confl_depth_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_depth_based;
+    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_confl_depth_based)) {
+        conf.clauseCleaningType = ClauseCleaningTypes::sum_confl_depth_based;
 
     } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_activity_based)) {
         conf.clauseCleaningType = ClauseCleaningTypes::sum_activity_based;
