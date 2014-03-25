@@ -79,14 +79,22 @@ Solver::Solver(const SolverConf _conf) :
     if (conf.doSQL) {
         #ifdef USE_MYSQL
         sqlStats = new MySQLStats();
-
         #else
-
-        cout<< "ERROR: "
-        << "Cannot use SQL: no SQL library was found during compilation."
-        << endl;
-
-        std::exit(-1);
+        if (conf.doSQL == 2) {
+            cout
+            << "ERROR: "
+            << "Cannot use SQL: no SQL library was found during compilation."
+            << endl;
+            std::exit(-1);
+        } else {
+            sqlStats = NULL;
+            conf.doSQL = 0;
+            if (conf.verbosity >= 2) {
+                cout
+                << "c SQL not found during compilation, not dumping to DB"
+                << endl;
+            }
+        }
         #endif
     } else {
         sqlStats = NULL;
