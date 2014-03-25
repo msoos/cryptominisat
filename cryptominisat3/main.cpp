@@ -422,9 +422,9 @@ void Main::add_supported_options()
         , "Perform variable elimination as per Een and Biere")
     ("emptyelim", po::value<int>(&conf.do_empty_varelim)->default_value(conf.do_empty_varelim)
         , "Perform empty resolvent elimination using bit-map trick")
-    ("elimstrategy", po::value<string>(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.var_elim_strategy))
+    ("elimstrgy", po::value<string>(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.var_elim_strategy))
         , "Sort variable elimination order by intelligent guessing ('heuristic') or by exact calculation ('calculate')")
-    ("elimcomplexupdate", po::value<int>(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
+    ("elimcplxupd", po::value<int>(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
         , "Update estimated elimination complexity on-the-fly while eliminating")
     ("elimcoststrategy", po::value<int>(&conf.varElimCostEstimateStrategy)->default_value(conf.varElimCostEstimateStrategy)
         , "How simple strategy (guessing, above) is calculated. Valid values: [0..1]")
@@ -850,7 +850,7 @@ void Main::parse_var_elim_strategy()
         conf.var_elim_strategy = ElimStrategy::calculate_exactly;
     } else {
         std::cerr
-        << "ERROR: Cannot parse option given to '--elimstrategy'. It's '"
+        << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"
         << var_elim_strategy << "'" << " but that none of the possiblities listed."
         << endl;
 
