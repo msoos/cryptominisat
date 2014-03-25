@@ -609,7 +609,7 @@ struct ConflStats
         );
 
         long diff = (long)numConflicts
-            - (long)(conflsBinIrred + conflsBinRed
+            - (long)(conflsBinIrred + (long)conflsBinRed
                 + (long)conflsTriIrred + (long)conflsTriRed
                 + (long)conflsLongIrred + (long)conflsLongRed
             );
