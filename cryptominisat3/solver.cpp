@@ -66,6 +66,7 @@ Solver::Solver(const SolverConf _conf) :
     , simplifier(NULL)
     , sCCFinder(NULL)
     , vivifier(NULL)
+    , strengthener(NULL)
     , clauseCleaner(NULL)
     , varReplacer(NULL)
     , compHandler(NULL)
