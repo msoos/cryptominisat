@@ -2736,7 +2736,6 @@ size_t Simplifier::memUsed() const
     b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);
     b += toClear.capacity()*sizeof(Lit);
-    b += finalLits.capacity()*sizeof(Lit);
     b += subsumeStrengthen->memUsed();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()

@@ -510,18 +510,18 @@ void Prober::checkAndSetBothProp(Var var, bool first)
 
 void Prober::addRestOfLitsToCache(Lit lit)
 {
-    tmp.clear();
+    tmp_lits.clear();
     for (int64_t c = solver->trail.size()-1
         ; c != (int64_t)solver->trail_lim[0] - 1
         ; c--
     ) {
         extraTime += 2;
         const Lit thisLit = solver->trail[c];
-        tmp.push_back(thisLit);
+        tmp_lits.push_back(thisLit);
     }
 
     bool taut = solver->implCache[(~lit).toInt()].merge(
-        tmp
+        tmp_lits
         , lit_Undef
         , true //Red step -- we don't know, so we assume
         , lit.var()
@@ -715,7 +715,7 @@ size_t Prober::memUsed() const
     mem += visitedAlready.capacity()*sizeof(char);
     mem += propagatedBitSet.capacity()*sizeof(uint32_t);
     mem += toEnqueue.capacity()*sizeof(Lit);
-    mem += tmp.capacity()*sizeof(Lit);
+    mem += tmp_lits.capacity()*sizeof(Lit);
     mem += propagated.capacity()/8;
     mem += propValue.capacity()/8;
     //mem += candidates.capacity()*sizeof(TwoSignVar);

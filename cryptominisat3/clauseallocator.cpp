@@ -251,21 +251,21 @@ void ClauseAllocator::consolidate(
 
     assert(sizeof(Clause) % sizeof(BASE_DATA_TYPE) == 0);
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
-    for (const size_t size: origClauseSizes) {
+    for (const size_t sz: origClauseSizes) {
         Clause* clause = (Clause*)tmpDataStart;
         //Already freed, so skip entirely
         if (clause->freed()) {
             #ifdef VALGRIND_MAKE_MEM_DEFINED
             VALGRIND_MAKE_MEM_DEFINED(((char*)clause)+sizeof(Clause), clause->size()*sizeof(Lit));
             #endif
-            tmpDataStart += size;
+            tmpDataStart += sz;
             continue;
         }
 
         //Move to new position
         size_t bytesNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
         size_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
-        assert(sizeNeeded <= size && "New clause size must not be bigger than orig clause size");
+        assert(sizeNeeded <= sz && "New clause size must not be bigger than orig clause size");
         memmove(newDataStart, tmpDataStart, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
         //Record position
@@ -277,7 +277,7 @@ void ClauseAllocator::consolidate(
 
         //Move pointers along
         newDataStart += sizeNeeded;
-        tmpDataStart += size;
+        tmpDataStart += sz;
     }
 
     if (solver->conf.verbosity >= 3) {

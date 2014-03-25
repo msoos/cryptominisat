@@ -221,7 +221,7 @@ private:
     );
 
     ClOffset findAndGateOtherCl(
-        const vector<ClOffset>& sizeSortedOcc
+        const vector<ClOffset>& this_sizeSortedOcc
         , const Lit lit
         , const CL_ABST_TYPE abst2
         , const bool gate_is_red

@@ -405,7 +405,6 @@ private:
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()
-    vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits
     uint64_t clause_lits_added;

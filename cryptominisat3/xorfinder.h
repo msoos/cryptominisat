@@ -80,10 +80,10 @@ class FoundXors
     public:
         FoundXors(
             const vector<Lit>& cl
-            , CL_ABST_TYPE abst
+            , CL_ABST_TYPE _abst
             , vector<uint16_t>& seen
         ) :
-            abst(abst)
+            abst(_abst)
             , size(cl.size())
         {
             #ifdef VERBOSE_DEBUG_XOR_FINDER

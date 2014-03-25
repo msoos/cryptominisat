@@ -430,8 +430,8 @@ void CompHandler::moveClausesLong(
 
         //Create temporary space 'tmp' and copy to backup
         tmp.resize(cl.size());
-        for (size_t i = 0; i < cl.size(); i++) {
-            tmp[i] = updateLit(cl[i]);
+        for (size_t i2 = 0; i2 < cl.size(); i2++) {
+            tmp[i2] = updateLit(cl[i2]);
         }
 
         //Add 'tmp' to the new solver

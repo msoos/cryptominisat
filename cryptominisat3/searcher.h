@@ -271,8 +271,8 @@ class Searcher : public HyperEngine
 
             void clear()
             {
-                Stats stats;
-                *this = stats;
+                Stats tmp;
+                *this = tmp;
             }
 
             Stats& operator+=(const Stats& other)

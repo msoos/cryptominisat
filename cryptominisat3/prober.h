@@ -363,7 +363,7 @@ class Prober {
         vector<bool> propagated; ///<These lits have been propagated by propagating the lit picked
         vector<bool> propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> toEnqueue;
-        vector<Lit> tmp;
+        vector<Lit> tmp_lits;
         void clearUpBeforeFirstSet();
 
         void updateCache(Lit thisLit, Lit lit, size_t numElemsSet);

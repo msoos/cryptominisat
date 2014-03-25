@@ -320,10 +320,10 @@ bool GateFinder::any_literal_has_zero_cache_and_watch(const Watched ws) const
     for (const Lit l: ws) {
         //TODO stamping
         const vector<LitExtra>& cache = solver->implCache[(~l).toInt()].lits;
-        watch_subarray_const ws = solver->watches[(~l).toInt()];
+        watch_subarray_const ws2 = solver->watches[(~l).toInt()];
 
         if (cache.size() == 0
-            && ws.size() == 0
+            && ws2.size() == 0
         ) {
             return true;
         }
@@ -881,14 +881,14 @@ void GateFinder::treatAndGateClause(
 }
 
 ClOffset GateFinder::findAndGateOtherCl(
-    const vector<ClOffset>& sizeSortedOcc
+    const vector<ClOffset>& this_sizeSortedOcc
     , const Lit otherLit
     , const CL_ABST_TYPE abst
     , const bool gate_is_red
     , const bool only_irred
 ) {
-    *(simplifier->limit_to_decrease) -= sizeSortedOcc.size();
-    for (const ClOffset offset: sizeSortedOcc) {
+    *(simplifier->limit_to_decrease) -= this_sizeSortedOcc.size();
+    for (const ClOffset offset: this_sizeSortedOcc) {
         const Clause& cl = *solver->clAllocator.getPointer(offset);
         if (cl.red() && only_irred)
             continue;

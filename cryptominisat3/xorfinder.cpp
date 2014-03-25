@@ -785,7 +785,6 @@ size_t XorFinder::memUsed() const
         mem += blocks[i].capacity()*sizeof(Var);
     }
     mem += varToBlock.capacity()*sizeof(size_t);
-    vector<size_t> varToBlock; ///<variable-> block index map
 
     //Temporary
     mem += tmpClause.capacity()*sizeof(Lit);
