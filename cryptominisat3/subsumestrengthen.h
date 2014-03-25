@@ -22,7 +22,7 @@ public:
         Sub0Ret() :
             subsumedIrred(false)
             , numSubsumed(0)
-        {};
+        {}
 
         bool subsumedIrred;
         ClauseStats stats;
@@ -33,7 +33,7 @@ public:
         Sub1Ret() :
             sub(0)
             , str(0)
-        {};
+        {}
 
         Sub1Ret& operator+=(const Sub1Ret& other)
         {
