@@ -26,6 +26,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 
+#include <cmath>
 #include <iomanip>
 using std::cout;
 using std::endl;

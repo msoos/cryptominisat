@@ -30,6 +30,7 @@
 #include <set>
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 
 #include "simplifier.h"
