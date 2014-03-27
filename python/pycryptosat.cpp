@@ -8,6 +8,7 @@
 
 #include <python2.7/Python.h>
 
+#include "assert.h"
 #include "../cryptominisat3/cryptominisat.h"
 using namespace CMSat;
 
@@ -26,28 +27,23 @@ using namespace CMSat;
 #define PyUnicode_FromString  PyString_FromString
 #endif
 
-/* Add the inverse of the (current) solution to the clauses.
-   This function is essentially the same as the function blocksol in app.c
-   in the picosat source. */
-static int blocksol(CryptoMiniSat *cmsat, signed char *mem)
+// Add the inverse of the solution to the clauses.
+static int blocksol(MainSolver *cmsat)
 {
-    int max_idx, i;
+    std::vector<Lit> clause;
 
-    max_idx = picosat_variables(cmsat);
-    if (mem == NULL) {
-        mem = PyMem_Malloc(max_idx + 1);
-        if (mem == NULL) {
-            PyErr_NoMemory();
-            return -1;
+    const uint32_t max_vars = cmsat->nVars();
+    for (uint32_t i = 0; i < max_vars; i++) {
+        lbool val = cmsat->get_model()[i];
+        if (val == l_Undef) {
+            continue;
         }
+
+        Lit lit(i, val == l_True);
+        clause.push_back(lit);
     }
-    for (i = 1; i <= max_idx; i++)
-        mem[i] = (picosat_deref(cmsat, i) > 0) ? 1 : -1;
 
-    for (i = 1; i <= max_idx; i++)
-        picosat_add(cmsat, (mem[i] < 0) ? i : -i);
-
-    picosat_add(cmsat, 0);
+    cmsat->add_clause(clause);
     return 0;
 }
 
@@ -55,12 +51,12 @@ static int add_clause(MainSolver *cmsat, PyObject *clause)
 {
     PyObject *iterator;         /* each clause is an iterable of literals */
     PyObject *lit;              /* the literals are integers */
-    int v;
 
     iterator = PyObject_GetIter(clause);
     if (iterator == NULL)
         return -1;
 
+    std::vector<Lit> clause;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         if (!IS_INT(lit))  {
             Py_DECREF(lit);
@@ -68,19 +64,33 @@ static int add_clause(MainSolver *cmsat, PyObject *clause)
             PyErr_SetString(PyExc_TypeError, "integer expected");
             return -1;
         }
-        v = PyLong_AsLong(lit);
+        long v = PyLong_AsLong(lit);
         Py_DECREF(lit);
         if (v == 0) {
             Py_DECREF(iterator);
             PyErr_SetString(PyExc_ValueError, "non-zero integer expected");
             return -1;
         }
-        picosat_add(cmsat, v);
+        if (v > std::numeric_limits<int>::max()
+            || v < std::numeric_limits<int>::min()
+        ) {
+            Py_DECREF(iterator);
+            PyErr_SetString(PyExc_ValueError, "Integer is too small or too large");
+            return -1;
+        }
+
+        bool sign = false;
+        if (v < 0) {
+            v *= -1;
+            sign = true;
+        }
+        clause.push_back(Lit(v-1, sign));
     }
     Py_DECREF(iterator);
     if (PyErr_Occurred())
         return -1;
-    picosat_add(cmsat, 0);
+
+    cmsat->add_clause(clause);
     return 0;
 }
 
@@ -107,35 +117,33 @@ static int add_clauses(MainSolver *cmsat, PyObject *clauses)
     return 0;
 }
 
-static MainSolver* setup_picosat(PyObject *args, PyObject *kwds)
+static MainSolver* setup_cryptominisat(PyObject *args, PyObject *kwds)
 {
     MainSolver *cmsat;
     PyObject *clauses;          /* iterable of clauses */
-    int vars = -1, verbose = 0;
+    int verbose = 0;
     unsigned long long prop_limit = 0;
-    static char* kwlist[] = {"clauses",
-                             "vars", "verbose", "prop_limit", NULL};
+    static char* kwlist[] = {"clauses", "verbose", "prop_limit", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiK:(iter)solve", kwlist,
-                                     &clauses,
-                                     &vars, &verbose, &prop_limit))
-        return NULL;
-
-    cmsat = cmsat_minit(NULL, py_malloc, py_realloc, py_free);
-    picosat_set_verbosity(cmsat, verbose);
-    if (vars != -1)
-        picosat_adjust(cmsat, vars);
-
-    if (prop_limit)
-        picosat_set_propagation_limit(cmsat, prop_limit);
-
-    if (add_clauses(cmsat, clauses) < 0) {
-        picosat_reset(cmsat);
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iK:(iter)solve", kwlist,
+                                     &clauses, &verbose, &prop_limit))
+    {
         return NULL;
     }
 
-    if (verbose >= 2)
-        picosat_print(cmsat, stdout);
+    cmsat = new MainSolver;
+    //picosat_set_verbosity(cmsat, verbose);
+
+    //if (prop_limit)
+    //    picosat_set_propagation_limit(cmsat, prop_limit);
+
+    if (add_clauses(cmsat, clauses) < 0) {
+        delete cmsat;
+        return NULL;
+    }
+
+    //if (verbose >= 2)
+    //    picosat_print(cmsat, stdout);
 
     return cmsat;
 }
@@ -144,21 +152,20 @@ static MainSolver* setup_picosat(PyObject *args, PyObject *kwds)
 static PyObject* get_solution(MainSolver *cmsat)
 {
     PyObject *list;
-    int max_idx, i, v;
 
-    max_idx = picosat_variables(cmsat);
+    uint32_t max_idx = cmsat->nVars();
     list = PyList_New((Py_ssize_t) max_idx);
     if (list == NULL) {
-        picosat_reset(cmsat);
+        delete cmsat;
         return NULL;
     }
-    for (i = 1; i <= max_idx; i++) {
-        v = picosat_deref(cmsat, i);
+    for (uint32_t i = 0; i < max_idx; i++) {
+        int v = cmsat->get_model()[i] == l_True ? 1 : -1;
+
         assert(v == -1 || v == 1);
-        if (PyList_SetItem(list, (Py_ssize_t) (i - 1),
-                           PyInt_FromLong((long) (v * i))) < 0) {
+        if (PyList_SetItem(list, (Py_ssize_t)i, PyInt_FromLong((long) (v * (i+1)))) < 0) {
             Py_DECREF(list);
-            picosat_reset(cmsat);
+            delete cmsat;
             return NULL;
         }
     }
@@ -169,34 +176,34 @@ static PyObject* solve(PyObject *self, PyObject *args, PyObject *kwds)
 {
     MainSolver *cmsat;
     PyObject *result = NULL;    /* return value */
-    int res;
 
-    cmsat = setup_picosat(args, kwds);
+    cmsat = setup_cryptominisat(args, kwds);
     if (cmsat == NULL)
         return NULL;
 
+    lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
-    res = picosat_sat(cmsat, -1);
+    res = cmsat->solve();
     Py_END_ALLOW_THREADS
 
     switch (res) {
-    case PICOSAT_SATISFIABLE:
-        result = get_solution(cmsat);
-        break;
+        case l_True:
+            result = get_solution(cmsat);
+            break;
 
-    case PICOSAT_UNSATISFIABLE:
-        result = PyUnicode_FromString("UNSAT");
-        break;
+        case l_False:
+            result = PyUnicode_FromString("UNSAT");
+            break;
 
-    case PICOSAT_UNKNOWN:
-        result = PyUnicode_FromString("UNKNOWN");
-        break;
+        case l_Undef:
+            result = PyUnicode_FromString("UNKNOWN");
+            break;
 
-    default:
-        PyErr_Format(PyExc_SystemError, "CryptoMiniSat return value: %d", res);
+        default:
+            PyErr_Format(PyExc_SystemError, "CryptoMiniSat return value: %d", res);
     }
 
-    picosat_reset(cmsat);
+    delete cmsat;
     return result;
 }
 
@@ -227,7 +234,7 @@ static PyObject* itersolve(PyObject *self, PyObject *args, PyObject *kwds)
     if (it == NULL)
         return NULL;
 
-    it->cmsat = setup_picosat(args, kwds);
+    it->cmsat = setup_cryptominisat(args, kwds);
     if (it->cmsat == NULL)
         return NULL;
 
@@ -246,31 +253,30 @@ Please see " PYCOSAT_URL " for more details.");
 static PyObject* soliter_next(soliterobject *it)
 {
     PyObject *result = NULL;    /* return value */
-    int res;
+    lbool res;
 
     assert(SolIter_Check(it));
 
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
-    res = picosat_sat(it->cmsat, -1);
+    res = it->cmsat->solve();
     Py_END_ALLOW_THREADS
 
     switch (res) {
-    case PICOSAT_SATISFIABLE:
-        result = get_solution(it->cmsat);
-        if (result == NULL) {
-            PyErr_SetString(PyExc_SystemError, "failed to create list");
-            return NULL;
-        }
-        /* add inverse solution to the clauses, for next interation */
-        if (blocksol(it->cmsat, it->mem) < 0)
-            return NULL;
-        break;
+        case l_True:
+            result = get_solution(it->cmsat);
+            if (result == NULL) {
+                PyErr_SetString(PyExc_SystemError, "failed to create list");
+                return NULL;
+            }
+            /* add inverse solution to the clauses, for next interation */
+            if (blocksol(it->cmsat, it->mem) < 0)
+                return NULL;
+            break;
 
-    case PICOSAT_UNSATISFIABLE:
-    case PICOSAT_UNKNOWN:
-        /* no more solutions -- stop iteration */
-        break;
-
+        case l_False:
+        case l_Undef:
+            /* no more solutions -- stop iteration */
+            break;
     default:
         PyErr_Format(PyExc_SystemError, "CryptoMiniSat return value: %d", res);
     }
@@ -282,7 +288,8 @@ static void soliter_dealloc(soliterobject *it)
     PyObject_GC_UnTrack(it);
     if (it->mem)
         PyMem_Free(it->mem);
-    picosat_reset(it->cmsat);
+    delete it->cmsat;
+    it->cmsat = NULL;
     PyObject_GC_Del(it);
 }
 
@@ -343,12 +350,12 @@ PyDoc_STRVAR(module_doc, "\
 pycosat: bindings to CryptoMiniSat\n\
 ============================\n\n\
 There are two functions in this module, solve and itersolve.\n\
-Please see " PYCOSAT_URL " for more details.");
+Please see " PYCRYPTOSAT_URL " for more details.");
 
 /* initialization routine for the shared libary */
 #ifdef IS_PY3K
 static PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT, "pycosat", module_doc, -1, module_functions,
+    PyModuleDef_HEAD_INIT, "pycryptosat", module_doc, -1, module_functions,
 };
 PyMODINIT_FUNC PyInit_pycosat(void)
 #else
@@ -366,14 +373,14 @@ PyMODINIT_FUNC initpycosat(void)
 #else
     if (PyType_Ready(&SolIter_Type) < 0)
         return;
-    m = Py_InitModule3("pycosat", module_functions, module_doc);
+    m = Py_InitModule3("pycryptosat", module_functions, module_doc);
     if (m == NULL)
         return;
 #endif
 
 #ifdef PYCOSAT_VERSION
     PyModule_AddObject(m, "__version__",
-                       PyUnicode_FromString(PYCOSAT_VERSION));
+                       PyUnicode_FromString(MainSolver::get_version());
 #endif
 
 #ifdef IS_PY3K

@@ -54,9 +54,9 @@ SolverConf MainSolver::get_conf() const
     return ((CMSat::Solver*)solver)->getConf();
 }
 
-std::string MainSolver::get_version() const
+const char* MainSolver::get_version()
 {
-    return ((CMSat::Solver*)solver)->getVersion();
+    return CMSat::Solver::getVersion();
 }
 
 void MainSolver::print_stats() const

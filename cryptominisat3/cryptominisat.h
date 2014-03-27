@@ -21,7 +21,7 @@ namespace CMSat {
         const std::vector<Lit>& get_unitary_clauses() const;
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         SolverConf get_conf() const;
-        std::string get_version() const;
+        static const char* get_version();
         void print_stats() const;
         void set_drup(std::ostream* os);
         void interrupt_asap();

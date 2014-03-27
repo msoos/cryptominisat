@@ -47,6 +47,7 @@ if (SANITIZE)
     add_cxx_flag("-Wextra-semi")
     #add_cxx_flag("-Wsign-conversion")
     add_cxx_flag("-Wdeprecated")
+    add_cxx_flag("-fPIC")
 
 endif()
 
