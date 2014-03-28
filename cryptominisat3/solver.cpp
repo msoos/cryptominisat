@@ -1253,9 +1253,14 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
         break;
 
     case ClauseCleaningTypes::sum_prop_confl_based :
+        uint64_t multiplier = conf.clean_confl_multiplier;
+        if (longIrredCls.size() < conf.lim_lirred_clean_multiplier_reset) {
+            multiplier = 1;
+        }
+
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
-            , reduceDBStructPropConfl(clAllocator, conf.clean_confl_multiplier));
+            , reduceDBStructPropConfl(clAllocator, multiplier));
         tmpStats.propConflBasedClean = 1;
         break;
 
