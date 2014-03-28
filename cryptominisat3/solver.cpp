@@ -1205,10 +1205,15 @@ uint64_t Solver::calc_how_many_to_remove()
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
-    uint64_t maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
+    double maxToHave = (double)(longIrredCls.size() + binTri.irredTris + nVars() + 300ULL)
         * (double)solveStats.nbReduceDB
         * conf.maxNumRedsRatio;
-    uint64_t removeNum = std::max<long long>(origRemoveNum, (long)longRedCls.size()-(long)maxToHave);
+
+    //To guard against infinity and undefined cast to integer
+    if (maxToHave > 1000.0*1000.0*1000.0) {
+        maxToHave = 1000.0*1000.0*1000.0;
+    }
+    uint64_t removeNum = std::max<long long>((long long)origRemoveNum, (long long)longRedCls.size()-(long long)maxToHave);
 
     if (removeNum != origRemoveNum) {
         if (conf.verbosity >= 2) {
