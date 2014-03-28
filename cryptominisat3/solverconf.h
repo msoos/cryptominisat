@@ -177,7 +177,7 @@ class SolverConf
 
         //Limits
         double   maxTime;
-        uint64_t   maxConfl;
+        long     maxConfl;
 
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities

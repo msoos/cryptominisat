@@ -1,18 +1,10 @@
 PYTHON=python
 
-pycosat.so: libpicosat.a pycosat.c
+pycosat.so: ../build/lib/libcryptominisat3.so pycryptosat.cpp
 	$(PYTHON) setup.py build_ext --inplace
 
-picosat.o: picosat.c picosat.h
-	$(CC) $(CFLAGS) -fPIC -c $<
-
-libpicosat.a: picosat.o
-	ar rc $@ picosat.o 
-
-
-test: pycosat.so
-	$(PYTHON) test_pycosat.py
-
+test: pycryptosat.so
+	$(PYTHON) test_pycryptosat.py
 
 clean:
 	rm -rf build dist *.egg-info

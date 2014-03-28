@@ -4,8 +4,27 @@ import random
 from os.path import basename
 import unittest
 
-import pycosat
-from pycosat import solve, itersolve
+import pycryptosat
+from pycryptosat import solve, itersolve
+
+def check_clause(clause, solution) :
+    for lit in clause:
+        var = abs(lit)
+        if lit < 0:
+            sign = -1
+        else :
+            sign = 1
+
+        if solution[var-1]*sign > 0 :
+            return True
+
+def check_solution(clauses, solution) :
+    for clause in clauses:
+        if check_clause(clause, solution) == False :
+            return False
+
+    return True
+
 
 # -------------------------- utility functions ---------------------------
 
@@ -31,19 +50,9 @@ def read_cnf(path):
     assert len(clauses) == n_clauses
     return clauses, n_vars
 
-def evaluate(clauses, sol):
-    """
-    evaluate the clauses with the solution
-    """
-    sol_vars = {} # variable number -> bool
-    for i in sol:
-        sol_vars[abs(i)] = bool(i > 0)
-    return all(any(sol_vars[abs(i)] ^ bool(i < 0) for i in clause)
-               for clause in clauses)
-
 def py_itersolve(clauses):
     while True:
-        sol = pycosat.solve(clauses)
+        sol = pycryptosat.solve(clauses)
         if isinstance(sol, list):
             yield sol
             clauses.append([-x for x in sol])
@@ -58,10 +67,10 @@ def process_cnf_file(path):
     sys.stdout.write('vars: %6d   cls: %6d   ' % (n_vars, len(clauses)))
     sys.stdout.flush()
     n_sol = 0
-    for sol in itersolve(clauses, n_vars):
+    for sol in itersolve(clauses):
         sys.stdout.write('.')
         sys.stdout.flush()
-        assert evaluate(clauses, sol)
+        assert check_solution(clauses, sol)
         n_sol += 1
     sys.stdout.write("%d\n" % n_sol)
     sys.stdout.flush()
@@ -93,47 +102,54 @@ tests = []
 class TestSolve(unittest.TestCase):
 
     def test_wrong_args(self):
-        self.assertRaises(TypeError, solve, [[1, 2], [-3]], 'A')
+        self.assertRaises(TypeError, solve, 'A')
         self.assertRaises(TypeError, solve, 1)
         self.assertRaises(TypeError, solve, 1.0)
         self.assertRaises(TypeError, solve, object())
         self.assertRaises(TypeError, solve, ['a'])
-        self.assertRaises(TypeError, solve, [[1, 2], [3, None]], 5)
+        self.assertRaises(TypeError, solve, [[1, 2], [3, None]])
         self.assertRaises(ValueError, solve, [[1, 2], [3, 0]])
 
     def test_no_clauses(self):
         for n in range(7):
-            self.assertEqual(solve([], n), [-i for i in range(1, n + 1)])
+            self.assertEqual(solve([]), [])
 
     def test_cnf1(self):
-        self.assertEqual(solve(clauses1), [1, -2, -3, -4, 5])
+        solution = solve(clauses1)
+        self.assertTrue(check_solution(clauses1, solution))
+
         if sys.version_info[0] == 2:
             cls = [[long(lit) for lit in clause] for clause in clauses1]
-            self.assertEqual(solve(cls), [1, -2, -3, -4, 5])
+            solution = solve(cls)
+            self.assertTrue(check_solution(cls, solution))
 
     def test_iter_clauses(self):
-        self.assertEqual(solve(iter(clauses1)), [1, -2, -3, -4, 5])
+        solution = solve(iter(clauses1))
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_each_clause_iter(self):
-        self.assertEqual(solve([iter(clause) for clause in clauses1]),
-                         [1, -2, -3, -4, 5])
+        solution = solve([iter(clause) for clause in clauses1])
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_tuple_caluses(self):
-        self.assertEqual(solve(tuple(clauses1)), [1, -2, -3, -4, 5])
+        solution = solve(tuple(clauses1))
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_each_clause_tuples(self):
-        self.assertEqual(solve([tuple(clause) for clause in clauses1]),
-                         [1, -2, -3, -4, 5])
+        solution = solve([tuple(clause) for clause in clauses1])
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_gen_clauses(self):
         def gen_clauses():
             for clause in clauses1:
                 yield clause
-        self.assertEqual(solve(gen_clauses()), [1, -2, -3, -4, 5])
+
+        solution = solve(gen_clauses())
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_each_clause_gen(self):
-        self.assertEqual(solve([(x for x in clause) for clause in clauses1]),
-                         [1, -2, -3, -4, 5])
+        solution = solve([(x for x in clause) for clause in clauses1])
+        self.assertTrue(check_solution(clauses1, solution))
 
     def test_bad_iter(self):
         class Liar:
@@ -144,19 +160,13 @@ class TestSolve(unittest.TestCase):
         self.assertEqual(solve(clauses2), "UNSAT")
 
     def test_cnf3(self):
-        self.assertEqual(solve(clauses3), [-1, -2])
+        solution = solve(clauses3)
+        self.assertTrue(check_solution(clauses3, solution))
 
-    def test_cnf3_3vars(self):
-        self.assertEqual(solve(clauses3, vars=3), [-1, -2, -3])
-
-    def test_cnf1_prop_limit(self):
+    def test_cnf1_confl_limit(self):
         for lim in range(1, 20):
-            self.assertEqual(solve(clauses1, prop_limit=lim),
-                             "UNKNOWN" if lim < 8 else [1, -2, -3, -4, 5])
-
-    def test_cnf1_vars(self):
-        self.assertEqual(solve(clauses1, vars=7),
-                         [1, -2, -3, -4, 5, -6, -7])
+            solution = solve(clauses1, confl_limit=lim)
+            self.assertTrue(solution == "UNKNOWN" or check_solution(clauses1, solution))
 
 tests.append(TestSolve)
 
@@ -165,43 +175,45 @@ tests.append(TestSolve)
 class TestIterSolve(unittest.TestCase):
 
     def test_wrong_args(self):
-        self.assertRaises(TypeError, itersolve, [[1, 2], [-3]], 'A')
+        self.assertRaises(TypeError, itersolve, 'A')
         self.assertRaises(TypeError, itersolve, 1)
         self.assertRaises(TypeError, itersolve, 1.0)
         self.assertRaises(TypeError, itersolve, object())
         self.assertRaises(TypeError, itersolve, ['a'])
-        self.assertRaises(TypeError, itersolve, [[1, 2], [3, None]], 5)
+        self.assertRaises(TypeError, itersolve, [[1, 2], [3, None]])
         self.assertRaises(ValueError, itersolve, [[1, 2], [3, 0]])
 
     def test_no_clauses(self):
-        for n in range(7):
-            self.assertEqual(len(list(itersolve([], vars=n))), 2 ** n)
+        self.assertEqual(list(itersolve([])), [[]])
+
+    def test_no_clauses2(self):
+        self.assertEqual(list(itersolve([[]])), [])
 
     def test_iter_clauses(self):
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve(iter(clauses1))))
 
     def test_each_clause_iter(self):
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve([iter(clause) for clause in clauses1])))
 
     def test_tuple_caluses(self):
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve(tuple(clauses1))))
 
     def test_each_clause_tuples(self):
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve([tuple(clause) for clause in clauses1])))
 
     def test_gen_clauses(self):
         def gen_clauses():
             for clause in clauses1:
                 yield clause
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve(gen_clauses())))
 
     def test_each_clause_gen(self):
-        self.assertTrue(all(evaluate(clauses1, sol) for sol in
+        self.assertTrue(all(check_solution(clauses1, sol) for sol in
                             itersolve([(x for x in clause) for clause in
                                        clauses1])))
 
@@ -213,9 +225,9 @@ class TestIterSolve(unittest.TestCase):
     def test_cnf1(self):
         for sol in itersolve(clauses1, nvars1):
             #sys.stderr.write('%r\n' % repr(sol))
-            self.assertTrue(evaluate(clauses1, sol))
+            self.assertTrue(check_solution(clauses1, sol))
 
-        sols = list(itersolve(clauses1, vars=nvars1))
+        sols = list(itersolve(clauses1))
         self.assertEqual(len(sols), 18)
         # ensure solutions are unique
         self.assertEqual(len(set(tuple(sol) for sol in sols)), 18)
@@ -239,22 +251,25 @@ class TestIterSolve(unittest.TestCase):
     def test_cnf2(self):
         self.assertEqual(list(itersolve(clauses2, nvars2)), [])
 
-    def test_cnf3_3vars(self):
-        self.assertEqual(list(itersolve(clauses3, 3)),
-                         [[-1, -2, -3], [-1, -2, 3]])
+    def test_cnf3_3(self):
+        solutions = list(itersolve([[1, 2]]))
+        self.assertIn([1 ,2], solutions)
+        self.assertIn([-1,2], solutions)
+        self.assertIn([1 ,-2], solutions)
 
-    def test_cnf1_prop_limit(self):
-        self.assertEqual(list(itersolve(clauses1, prop_limit=2)), [])
+    def test_cnf1_confl_limit(self):
+        self.assertEqual(list(itersolve(clauses1, confl_limit=0, verbose=2)), "UNKNOWN")
+        pass
 
 tests.append(TestIterSolve)
 
 # ------------------------------------------------------------------------
 
-def run(verbosity=1, repeat=1):
+def run(verbosity=0, repeat=1):
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s" % sys.version)
     try:
-        print("pycosat version: %r" % pycosat.__version__)
+        print("pycryptosat version: %r" % pycryptosat.__version__)
     except AttributeError:
         pass
     suite = unittest.TestSuite()

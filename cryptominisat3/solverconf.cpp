@@ -83,7 +83,7 @@ SolverConf::SolverConf() :
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())
-        , maxConfl         (std::numeric_limits<size_t>::max())
+        , maxConfl         (std::numeric_limits<long>::max())
 
         //Agilities
         , agilityG                  (0.9999)

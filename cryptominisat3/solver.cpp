@@ -1649,14 +1649,15 @@ lbool Solver::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        uint32_t numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
+        long numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
-            numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
+            numConfls += (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
         }
 
         //Abide by maxConfl limit
-        numConfls = std::min<uint32_t>(numConfls, conf.maxConfl - sumStats.conflStats.numConflicts);
+        numConfls = std::min<long>((long)numConfls, conf.maxConfl - (long)sumStats.conflStats.numConflicts);
+        if (numConfls <= 0) break;
         status = Searcher::solve(numConfls);
 
         //Check for effectiveness
@@ -1695,7 +1696,7 @@ lbool Solver::solve()
     if (status == l_True) {
         extend_solution();
         cancelUntil(0);
-    } else {
+    } else if (status == l_False) {
         //TODO
         //update_conflict_to_orig_assumptions();
 
