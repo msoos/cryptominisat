@@ -151,13 +151,10 @@ static MainSolver* setup_cryptominisat(PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    //if (verbose >= 2)
-    //    picosat_print(cmsat, stdout);
-
     return cmsat;
 }
 
-/* read the solution from the picosat object and return a Python list */
+/* read the solution from the CryptoMiniSat object and return a Python list */
 static PyObject* get_solution(MainSolver *cmsat)
 {
     PyObject *list;
