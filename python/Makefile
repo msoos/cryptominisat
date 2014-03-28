@@ -1,10 +1,13 @@
 PYTHON=python
 
-pycosat.so: ../build/lib/libcryptominisat3.so pycryptosat.cpp
+pycryptosat.so: pycryptosat.cpp
 	$(PYTHON) setup.py build_ext --inplace
 
 test: pycryptosat.so
 	$(PYTHON) test_pycryptosat.py
+
+install: pycryptosat.so
+	$(PYTHON) setup.py install
 
 clean:
 	rm -rf build dist *.egg-info
