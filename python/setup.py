@@ -18,7 +18,7 @@ ext_kwds = dict(
 setup(
     name = "pycryptosat",
     version = version,
-    author = "Mate Soos, adapter from code by Ilan Schnell",
+    author = "Mate Soos (adapted from code by Ilan Schnell)",
     author_email = "soos.mate@gmail.com",
     url = "https://github.com/msoos/cryptominisat",
     license = "LGPL",
