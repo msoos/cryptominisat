@@ -1252,7 +1252,7 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
         tmpStats.actBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::sum_prop_confl_based :
+    case ClauseCleaningTypes::sum_prop_confl_based : {
         uint64_t multiplier = conf.clean_confl_multiplier;
         if (longIrredCls.size() < conf.lim_lirred_clean_multiplier_reset) {
             multiplier = 1;
@@ -1263,6 +1263,7 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
             , reduceDBStructPropConfl(clAllocator, multiplier));
         tmpStats.propConflBasedClean = 1;
         break;
+    }
 
     case ClauseCleaningTypes::sum_confl_depth_based :
         //Sort for glue-based removal
