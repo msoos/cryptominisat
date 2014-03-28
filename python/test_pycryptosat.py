@@ -82,18 +82,18 @@ def process_cnf_file(path):
 # 1 -5 4 0
 # -1 5 3 4 0
 # -3 -4 0
-nvars1, clauses1 = 5, [[1, -5, 4], [-1, 5, 3, 4], [-3, -4]]
+clauses1 = [[1, -5, 4], [-1, 5, 3, 4], [-3, -4]]
 
 # p cnf 2 2
 # -1 0
 # 1 0
-nvars2, clauses2 = 2, [[-1], [1]]
+clauses2 = [[-1], [1]]
 
 # p cnf 2 3
 # -1 2 0
 # -1 -2 0
 # 1 -2 0
-nvars3, clauses3 = 2, [[-1, 2], [-1, -2], [1, -2]]
+clauses3 = [[-1, 2], [-1, -2], [1, -2]]
 
 # -------------------------- actual unit tests ---------------------------
 
@@ -223,7 +223,7 @@ class TestIterSolve(unittest.TestCase):
         self.assertRaises(TypeError, itersolve, Liar())
 
     def test_cnf1(self):
-        for sol in itersolve(clauses1, nvars1):
+        for sol in itersolve(clauses1):
             #sys.stderr.write('%r\n' % repr(sol))
             self.assertTrue(check_solution(clauses1, sol))
 
@@ -249,7 +249,7 @@ class TestIterSolve(unittest.TestCase):
                          ref_sols)
 
     def test_cnf2(self):
-        self.assertEqual(list(itersolve(clauses2, nvars2)), [])
+        self.assertEqual(list(itersolve(clauses2)), [])
 
     def test_cnf3_3(self):
         solutions = list(itersolve([[1, 2]]))
@@ -258,14 +258,13 @@ class TestIterSolve(unittest.TestCase):
         self.assertIn([1 ,-2], solutions)
 
     def test_cnf1_confl_limit(self):
-        self.assertEqual(list(itersolve(clauses1, confl_limit=0, verbose=2)), "UNKNOWN")
-        pass
+        self.assertEqual(list(itersolve(clauses1, confl_limit=0)), [])
 
 tests.append(TestIterSolve)
 
 # ------------------------------------------------------------------------
 
-def run(verbosity=0, repeat=1):
+def run(repeat=1):
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s" % sys.version)
     try:
@@ -277,7 +276,7 @@ def run(verbosity=0, repeat=1):
         for _ in range(repeat):
             suite.addTest(unittest.makeSuite(cls))
 
-    runner = unittest.TextTestRunner(verbosity=verbosity)
+    runner = unittest.TextTestRunner()
     return runner.run(suite)
 
 
