@@ -33,7 +33,7 @@ using std::map;
 using std::vector;
 using std::pair;
 
-class MainSolver;
+class SATSolver;
 class Solver;
 class CompFinder;
 
@@ -77,15 +77,15 @@ class CompHandler
         };
         bool assumpsInsideComponent(const vector<Var>& vars);
         void move_decision_level_zero_vars_here(
-            const MainSolver* newSolver
+            const SATSolver* newSolver
         );
         void save_solution_to_savedstate(
-            const MainSolver* newSolver
+            const SATSolver* newSolver
             , const vector<Var>& vars
             , const uint32_t comp
         );
         void check_solution_is_unassigned_in_main_solver(
-            const MainSolver* newSolver
+            const SATSolver* newSolver
             , const vector<Var>& vars
         );
         void check_local_vardata_sanity();
@@ -101,20 +101,20 @@ class CompHandler
         ) const;
 
         void moveVariablesBetweenSolvers(
-            MainSolver* newSolver
+            SATSolver* newSolver
             , const vector<Var>& vars
             , const uint32_t comp
         );
 
         //For moving clauses
         void moveClausesImplicit(
-            MainSolver* newSolver
+            SATSolver* newSolver
             , const uint32_t comp
             , const vector<Var>& vars
         );
         void moveClausesLong(
             vector<ClOffset>& cs
-            , MainSolver* newSolver
+            , SATSolver* newSolver
             , const uint32_t comp
         );
 

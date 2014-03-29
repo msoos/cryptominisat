@@ -7,11 +7,11 @@
 #include "cryptominisat3/solvertypesmini.h"
 
 namespace CMSat {
-    class MainSolver
+    class SATSolver
     {
     public:
-        MainSolver(SolverConf conf = SolverConf());
-        ~MainSolver();
+        SATSolver(SolverConf conf = SolverConf());
+        ~SATSolver();
         uint32_t nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
         void new_var();

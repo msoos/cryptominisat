@@ -211,7 +211,7 @@ bool CompHandler::solve_component(
 
     //Set up new solver
     SolverConf conf = configureNewSolver(vars.size());
-    MainSolver newSolver(conf);
+    SATSolver newSolver(conf);
     moveVariablesBetweenSolvers(&newSolver, vars, comp);
 
     //Move clauses over
@@ -265,7 +265,7 @@ void CompHandler::check_local_vardata_sanity()
 }
 
 void CompHandler::check_solution_is_unassigned_in_main_solver(
-    const MainSolver* newSolver
+    const SATSolver* newSolver
     , const vector<Var>& vars
 ) {
     for (size_t i = 0; i < vars.size(); i++) {
@@ -277,7 +277,7 @@ void CompHandler::check_solution_is_unassigned_in_main_solver(
 }
 
 void CompHandler::save_solution_to_savedstate(
-    const MainSolver* newSolver
+    const SATSolver* newSolver
     , const vector<Var>& vars
     , const uint32_t comp
 ) {
@@ -295,7 +295,7 @@ void CompHandler::save_solution_to_savedstate(
 }
 
 void CompHandler::move_decision_level_zero_vars_here(
-    const MainSolver* newSolver
+    const SATSolver* newSolver
 ) {
     const vector<Lit> zero_assigned = newSolver->get_zero_assigned_lits();
     for (Lit lit: zero_assigned) {
@@ -347,7 +347,7 @@ This implies making the right variables decision in the new solver,
 and making it non-decision in the old solver.
 */
 void CompHandler::moveVariablesBetweenSolvers(
-    MainSolver* newSolver
+    SATSolver* newSolver
     , const vector<Var>& vars
     , const uint32_t comp
 ) {
@@ -374,7 +374,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
 void CompHandler::moveClausesLong(
     vector<ClOffset>& cs
-    , MainSolver* newSolver
+    , SATSolver* newSolver
     , const uint32_t comp
 ) {
     vector<Lit> tmp;
@@ -451,7 +451,7 @@ void CompHandler::moveClausesLong(
 }
 
 void CompHandler::moveClausesImplicit(
-    MainSolver* newSolver
+    SATSolver* newSolver
     , const uint32_t comp
     , const vector<Var>& vars
 ) {

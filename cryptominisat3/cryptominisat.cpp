@@ -4,100 +4,100 @@
 
 using namespace CMSat;
 
-MainSolver::MainSolver(const SolverConf conf)
+SATSolver::SATSolver(const SolverConf conf)
 {
     solver = (void*)(new ::CMSat::Solver(conf));
 }
 
-MainSolver::~MainSolver()
+SATSolver::~SATSolver()
 {
     delete ((CMSat::Solver*)solver);
 }
 
-bool MainSolver::add_clause(const vector< Lit >& lits)
+bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     return ((CMSat::Solver*)solver)->addClauseOuter(lits);
 }
 
-lbool MainSolver::solve(vector< Lit >* assumptions)
+lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     return ((CMSat::Solver*)solver)->solve_with_assumptions(assumptions);
 }
 
-const vector< lbool >& MainSolver::get_model() const
+const vector< lbool >& SATSolver::get_model() const
 {
     return (vector<lbool>&)((CMSat::Solver*)solver)->model;
 }
 
-const std::vector<Lit>& MainSolver::get_conflict() const
+const std::vector<Lit>& SATSolver::get_conflict() const
 {
     return (vector<Lit>&)(((CMSat::Solver*)solver)->conflict);
 }
 
-uint32_t MainSolver::nVars() const
+uint32_t SATSolver::nVars() const
 {
     return ((CMSat::Solver*)solver)->nVarsOutside();
 }
 
-void MainSolver::new_var()
+void SATSolver::new_var()
 {
     ((CMSat::Solver*)solver)->new_external_var();
 }
 
-void MainSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
+void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
     ((CMSat::Solver*)solver)->add_sql_tag(tagname, tag);
 }
 
-SolverConf MainSolver::get_conf() const
+SolverConf SATSolver::get_conf() const
 {
     return ((CMSat::Solver*)solver)->getConf();
 }
 
-const char* MainSolver::get_version()
+const char* SATSolver::get_version()
 {
     return CMSat::Solver::getVersion();
 }
 
-void MainSolver::print_stats() const
+void SATSolver::print_stats() const
 {
     ((CMSat::Solver*)solver)->printStats();
 }
 
-void MainSolver::set_drup(std::ostream* os)
+void SATSolver::set_drup(std::ostream* os)
 {
     CMSat::DrupFile* drup = new CMSat::DrupFile();
     drup->setFile(os);
     ((CMSat::Solver*)solver)->drup = drup;
 }
 
-void MainSolver::interrupt_asap()
+void SATSolver::interrupt_asap()
 {
     ((CMSat::Solver*)solver)->setNeedToInterrupt();
 }
 
-void MainSolver::open_file_and_dump_irred_clauses(std::string fname) const
+void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     ((CMSat::Solver*)solver)->open_file_and_dump_irred_clauses(fname);
 }
 
-void MainSolver::open_file_and_dump_red_clauses(std::string fname) const
+void SATSolver::open_file_and_dump_red_clauses(std::string fname) const
 {
     ((CMSat::Solver*)solver)->open_file_and_dump_red_clauses(fname);
 }
 
-void MainSolver::add_in_partial_solving_stats()
+void SATSolver::add_in_partial_solving_stats()
 {
     ((CMSat::Solver*)solver)->add_in_partial_solving_stats();
 }
 
-std::vector<Lit> MainSolver::get_zero_assigned_lits() const
+std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
     return ((CMSat::Solver*)solver)->get_zero_assigned_lits();
 }
 
 
-unsigned long MainSolver::get_sql_id() const
+unsigned long SATSolver::get_sql_id() const
 {
     return ((CMSat::Solver*)solver)->get_sql_id();
 }

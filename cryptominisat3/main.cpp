@@ -70,13 +70,13 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-MainSolver* solverToInterrupt;
+SATSolver* solverToInterrupt;
 string redDumpFname;
 string irredDumpFname;
 
 void SIGINT_handler(int)
 {
-    MainSolver* solver = solverToInterrupt;
+    SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
     if (!redDumpFname.empty() || !irredDumpFname.empty()) {
@@ -1014,7 +1014,7 @@ void Main::dumpIfNeeded() const
 
 int Main::solve()
 {
-    solver = new MainSolver(conf);
+    solver = new SATSolver(conf);
     solverToInterrupt = solver;
     if (drupf) {
         solver->set_drup(drupf);

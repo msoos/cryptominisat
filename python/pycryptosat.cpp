@@ -31,27 +31,44 @@ using namespace CMSat;
 #define PyUnicode_FromString  PyString_FromString
 #endif
 
-// Add the inverse of the solution to the clauses.
-static int blocksol(MainSolver *cmsat)
+PyDoc_STRVAR(solve_doc,
+"solve(clauses [, kwargs]) -> list\n\
+\n\
+Solve the SAT problem for the clauses, and return a solution as a\n\
+list of integers, or one of the strings \"UNSAT\", \"UNKNOWN\".\n\
+Please see " PYCRYPTOSAT_URL " for more details.");
+
+static int add_clauses(SATSolver *cmsat, PyObject *clauses);
+
+static SATSolver* setup_cryptominisat(PyObject *args, PyObject *kwds)
 {
-    std::vector<Lit> clause;
+    static char* kwlist[] = {"clauses", "verbose", "confl_limit", NULL};
 
-    const uint32_t vars = cmsat->nVars();
-    for (uint32_t i = 0; i < vars; i++) {
-        lbool val = cmsat->get_model()[i];
-        if (val == l_Undef) {
-            continue;
-        }
-
-        Lit lit(i, val == l_True);
-        clause.push_back(lit);
+    PyObject *clauses;
+    int verbose = 0;
+    long confl_limit = std::numeric_limits<long>::max();
+    if (!PyArg_ParseTupleAndKeywords(
+        args, kwds, "O|iK:(iter)solve", kwlist,
+        &clauses, &verbose, &confl_limit))
+    {
+        return NULL;
     }
 
-    cmsat->add_clause(clause);
-    return 0;
+    SolverConf conf;
+    conf.verbosity = verbose;
+    conf.maxConfl = confl_limit;
+
+    SATSolver *cmsat = new SATSolver(conf);
+
+    if (add_clauses(cmsat, clauses) < 0) {
+        delete cmsat;
+        return NULL;
+    }
+
+    return cmsat;
 }
 
-static int add_clause(MainSolver *cmsat, PyObject *clause)
+static int add_clause(SATSolver *cmsat, PyObject *clause)
 {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL)
@@ -104,7 +121,7 @@ static int add_clause(MainSolver *cmsat, PyObject *clause)
     return 0;
 }
 
-static int add_clauses(MainSolver *cmsat, PyObject *clauses)
+static int add_clauses(SATSolver *cmsat, PyObject *clauses)
 {
     PyObject *iterator;       /* clauses can be any iterable */
     PyObject *item;           /* each clause is an iterable of intergers */
@@ -127,36 +144,7 @@ static int add_clauses(MainSolver *cmsat, PyObject *clauses)
     return 0;
 }
 
-static MainSolver* setup_cryptominisat(PyObject *args, PyObject *kwds)
-{
-    MainSolver *cmsat;
-    PyObject *clauses;          /* iterable of clauses */
-    int verbose = 0;
-    long confl_limit = std::numeric_limits<long>::max();
-    static char* kwlist[] = {"clauses", "verbose", "confl_limit", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iK:(iter)solve", kwlist,
-                                     &clauses, &verbose, &confl_limit))
-    {
-        return NULL;
-    }
-
-    SolverConf conf;
-    conf.verbosity = verbose;
-    conf.maxConfl = confl_limit;
-
-    cmsat = new MainSolver(conf);
-
-    if (add_clauses(cmsat, clauses) < 0) {
-        delete cmsat;
-        return NULL;
-    }
-
-    return cmsat;
-}
-
-/* read the solution from the CryptoMiniSat object and return a Python list */
-static PyObject* get_solution(MainSolver *cmsat)
+static PyObject* get_solution(SATSolver *cmsat)
 {
     PyObject *list;
 
@@ -181,7 +169,7 @@ static PyObject* get_solution(MainSolver *cmsat)
 
 static PyObject* solve(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    MainSolver *cmsat;
+    SATSolver *cmsat;
     PyObject *result = NULL;    /* return value */
 
     cmsat = setup_cryptominisat(args, kwds);
@@ -205,18 +193,11 @@ static PyObject* solve(PyObject *self, PyObject *args, PyObject *kwds)
     return result;
 }
 
-PyDoc_STRVAR(solve_doc,
-"solve(clauses [, kwargs]) -> list\n\
-\n\
-Solve the SAT problem for the clauses, and return a solution as a\n\
-list of integers, or one of the strings \"UNSAT\", \"UNKNOWN\".\n\
-Please see " PYCRYPTOSAT_URL " for more details.");
-
 /*********************** Solution Iterator *********************/
 
 typedef struct {
     PyObject_HEAD
-    MainSolver *cmsat;
+    SATSolver *cmsat;
     signed char *mem;           /* temporary storage */
 } soliterobject;
 
@@ -225,6 +206,25 @@ itersolve(clauses [, kwargs]) -> interator\n\n\
 Solve the SAT problem for the clauses, and return an iterator over\n\
 the solutions (which are lists of integers).\n\
 Please see www.msoos.org for more details.");
+
+static int block_solution(SATSolver *cmsat)
+{
+    std::vector<Lit> clause;
+
+    const uint32_t vars = cmsat->nVars();
+    for (uint32_t i = 0; i < vars; i++) {
+        lbool val = cmsat->get_model()[i];
+        if (val == l_Undef) {
+            continue;
+        }
+
+        Lit lit(i, val == l_True);
+        clause.push_back(lit);
+    }
+
+    cmsat->add_clause(clause);
+    return 0;
+}
 
 static PyObject* soliter_next(soliterobject *it)
 {
@@ -241,11 +241,11 @@ static PyObject* soliter_next(soliterobject *it)
         result = get_solution(it->cmsat);
         if (result == NULL) {
             PyErr_SetString(PyExc_SystemError, "failed to create list");
-                return NULL;
+            return NULL;
         }
 
         /* add inverse solution to the clauses, for next interation */
-        if (blocksol(it->cmsat) < 0)
+        if (block_solution(it->cmsat) < 0)
             return NULL;
     }
     return result;
@@ -326,10 +326,8 @@ static PyObject* itersolve(PyObject *self, PyObject *args, PyObject *kwds)
 
 /* declaration of methods supported by this module */
 static PyMethodDef module_functions[] = {
-    {"solve",     (PyCFunction) solve,     METH_VARARGS | METH_KEYWORDS,
-      solve_doc},
-    {"itersolve", (PyCFunction) itersolve, METH_VARARGS | METH_KEYWORDS,
-      itersolve_doc},
+    {"solve",     (PyCFunction) solve,     METH_VARARGS | METH_KEYWORDS, solve_doc},
+    {"itersolve", (PyCFunction) itersolve, METH_VARARGS | METH_KEYWORDS, itersolve_doc},
     {NULL,        NULL}  /* sentinel */
 };
 
@@ -365,7 +363,7 @@ PyMODINIT_FUNC initpycryptosat(void)
         return;
 #endif
 
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString(MainSolver::get_version()));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
 
 #ifdef IS_PY3K
     return m;

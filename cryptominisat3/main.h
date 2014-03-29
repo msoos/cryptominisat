@@ -64,7 +64,7 @@ class Main
         po::variables_map vm;
         po::options_description cmdline_options;
 
-        MainSolver* solver;
+        SATSolver* solver;
 
         //File reading
         void readInAFile(const string& filename);

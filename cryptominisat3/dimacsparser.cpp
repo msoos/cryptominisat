@@ -20,7 +20,7 @@ using std::cout;
 using std::endl;
 
 DimacsParser::DimacsParser(
-    MainSolver* _solver
+    SATSolver* _solver
     , const bool _debugLib
 ):
     solver(_solver)
