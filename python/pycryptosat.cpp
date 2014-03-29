@@ -53,14 +53,12 @@ static int blocksol(MainSolver *cmsat)
 
 static int add_clause(MainSolver *cmsat, PyObject *clause)
 {
-    PyObject *iterator;         /* each clause is an iterable of literals */
-    PyObject *lit;              /* the literals are integers */
-
-    iterator = PyObject_GetIter(clause);
+    PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL)
         return -1;
 
     std::vector<Lit> lits;
+    PyObject *lit;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         if (!IS_INT(lit))  {
             Py_DECREF(lit);
@@ -222,7 +220,11 @@ typedef struct {
     signed char *mem;           /* temporary storage */
 } soliterobject;
 
-PyDoc_STRVAR(itersolve_doc, "itersolve(clauses [, kwargs]) -> interator\n\nSolve the SAT problem for the clauses, and return an iterator over\nthe solutions (which are lists of integers).\nPlease see WHATEVER for more details.");
+PyDoc_STRVAR(itersolve_doc, "\
+itersolve(clauses [, kwargs]) -> interator\n\n\
+Solve the SAT problem for the clauses, and return an iterator over\n\
+the solutions (which are lists of integers).\n\
+Please see www.msoos.org for more details.");
 
 static PyObject* soliter_next(soliterobject *it)
 {
@@ -337,10 +339,6 @@ pycryptosat: bindings to CryptoMiniSat\n\
 There are two functions in this module, solve and itersolve.\n\
 Please see " PYCRYPTOSAT_URL " for more details.");
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 /* initialization routine for the shared libary */
 #ifdef IS_PY3K
 static PyModuleDef moduledef = {
@@ -373,8 +371,3 @@ PyMODINIT_FUNC initpycryptosat(void)
     return m;
 #endif
 }
-
-//#ifdef __cplusplus
-//}  // extern "C"
-//#endif
-
