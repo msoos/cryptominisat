@@ -151,7 +151,7 @@ static PyObject* get_solution(SATSolver *cmsat)
     uint32_t max_idx = cmsat->nVars();
     list = PyList_New((Py_ssize_t) max_idx);
     if (list == NULL) {
-        delete cmsat;
+        PyErr_SetString(PyExc_SystemError, "failed to create list");
         return NULL;
     }
     for (long i = 0; i < max_idx; i++) {
@@ -159,8 +159,8 @@ static PyObject* get_solution(SATSolver *cmsat)
 
         assert(v == -1 || v == 1);
         if (PyList_SetItem(list, (Py_ssize_t)i, PyInt_FromLong((long) (v * (i+1)))) < 0) {
+            PyErr_SetString(PyExc_SystemError, "failed to create list");
             Py_DECREF(list);
-            delete cmsat;
             return NULL;
         }
     }
@@ -198,7 +198,7 @@ static PyObject* solve(PyObject *self, PyObject *args, PyObject *kwds)
 typedef struct {
     PyObject_HEAD
     SATSolver *cmsat;
-    signed char *mem;           /* temporary storage */
+    signed char *mem; //temp storage
 } soliterobject;
 
 PyDoc_STRVAR(itersolve_doc, "\
@@ -228,7 +228,7 @@ static int block_solution(SATSolver *cmsat)
 
 static PyObject* soliter_next(soliterobject *it)
 {
-    PyObject *result = NULL;    /* return value */
+    PyObject *result = NULL;
     lbool res;
 
     //assert(SolIter_Check(it));
@@ -240,7 +240,6 @@ static PyObject* soliter_next(soliterobject *it)
     if (res == l_True) {
         result = get_solution(it->cmsat);
         if (result == NULL) {
-            PyErr_SetString(PyExc_SystemError, "failed to create list");
             return NULL;
         }
 
@@ -257,7 +256,6 @@ static void soliter_dealloc(soliterobject *it)
     if (it->mem)
         PyMem_Free(it->mem);
     delete it->cmsat;
-    it->cmsat = NULL;
     PyObject_GC_Del(it);
 }
 
