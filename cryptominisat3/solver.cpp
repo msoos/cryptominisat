@@ -3702,3 +3702,14 @@ void Solver::add_in_partial_solving_stats()
     sumStats += Searcher::getStats();
     sumPropStats += propStats;
 }
+
+unsigned long Solver::get_sql_id() const
+{
+    if (!conf.doSQL
+        || sqlStats == NULL)
+    {
+        return 0;
+    }
+
+    return sqlStats->get_runID();
+}

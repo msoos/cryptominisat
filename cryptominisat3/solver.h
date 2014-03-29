@@ -136,6 +136,7 @@ class Solver : public Searcher
         Var numActiveVars() const;
         void printMemStats() const;
         uint64_t printWatchMemUsed(uint64_t totalMem) const;
+        unsigned long get_sql_id() const;
 
 
         ///Return number of variables waiting to be replaced

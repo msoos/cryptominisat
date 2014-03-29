@@ -23,13 +23,18 @@ void SQLStats::getRandomID()
         std::exit(-1);
     }
     close(randomData);
+
+    if (runID == 0)
+        runID = 1;
 }
 #else
 #include <ctime>
 void SQLStats::getRandomID()
 {
     srand((unsigned) time(NULL));
-    int numbers[10];
     runID = rand();
+    if (runID == 0) {
+        runID = 1;
+    }
 }
 #endif

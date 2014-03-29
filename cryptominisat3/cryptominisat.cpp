@@ -96,3 +96,8 @@ std::vector<Lit> MainSolver::get_zero_assigned_lits() const
     return ((CMSat::Solver*)solver)->get_zero_assigned_lits();
 }
 
+
+unsigned long MainSolver::get_sql_id() const
+{
+    return ((CMSat::Solver*)solver)->get_sql_id();
+}
