@@ -134,7 +134,6 @@ class SolverConf
         //Clause cleaning
         ClauseCleaningTypes clauseCleaningType;
         uint64_t  clean_confl_multiplier;
-        uint64_t  lim_lirred_clean_multiplier_reset;
         int       doPreClauseCleanPropAndConfl;
         uint32_t  preClauseCleanLimit;
         uint32_t  preCleanMinConflTime;
