@@ -1,3 +1,6 @@
+pycryptominisat (all of the python bindings, icluding makefile, test, etc)
+License: MIT
+===========================
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
               2014  Mate Soos
 
@@ -18,3 +21,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
+
+CryptoMiniSat is under an LGPLv2 license. Please see LICENSE-LGPL file

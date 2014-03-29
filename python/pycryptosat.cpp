@@ -3,6 +3,9 @@
                 2014, Mate Soos
   Python bindings to CryptoMiniSat (http://msoos.org)
   This file is published under an MIT style license (see LICENSE)
+
+  CryptoMiniSat is published under the LGPLv2 license, so the actual compiled
+  package is under LGPLv2.
 */
 
 #define PYCRYPTOSAT_URL  "https://pypi.python.org/pypi/pycryptosat"
