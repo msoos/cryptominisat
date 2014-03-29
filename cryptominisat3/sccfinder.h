@@ -82,7 +82,7 @@ class SCCFinder {
 
                 printStatsLine("c found"
                     , foundXorsNew
-                    , (double)foundXorsNew/(double)foundXors
+                    , stats_line_percent(foundXorsNew, foundXors)
                     , "% of all found"
                 );
 

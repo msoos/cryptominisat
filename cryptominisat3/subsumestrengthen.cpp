@@ -221,7 +221,7 @@ void SubsumeStrengthen::performSubsumption()
         << "c [sub] rem cl: " << subsumed
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " (" << std::setprecision(1) << std::fixed
-        << (double)wenThrough/(double)simplifier->clauses.size()*100.0
+        << stats_line_percent(wenThrough, simplifier->clauses.size())
         << "%)"
         << " T: " << cpuTime() - myTime
         << " T-out: " << (*simplifier->limit_to_decrease <= 0 ? "Y" : "N")

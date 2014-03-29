@@ -1076,55 +1076,55 @@ void GateFinder::Stats::print(const size_t nVars) const
 
     printStatsLine("c find gate time"
         , findGateTime
-        , findGateTime/totalTime()*100.0
+        , stats_line_percent(findGateTime, totalTime())
         , "% time"
     );
 
     printStatsLine("c gate-based cl-sh time"
         , orBasedTime
-        , orBasedTime/totalTime()*100.0
+        , stats_line_percent(orBasedTime, totalTime())
         , "% time"
     );
 
     printStatsLine("c gate-based cl-rem time"
         , andBasedTime
-        , andBasedTime/totalTime()*100.0
+        , stats_line_percent(andBasedTime, totalTime())
         , "% time"
     );
 
     printStatsLine("c gate-based varrep time"
         , varReplaceTime
-        , varReplaceTime/totalTime()*100.0
+        , stats_line_percent(varReplaceTime, totalTime())
         , "% time"
     );
 
     printStatsLine("c gatefinder cl-short"
         , orGateUseful
-        , (double)orGateUseful/(double)numLongCls
+        , stats_line_percent(orGateUseful, numLongCls)
         , "% long cls"
     );
 
     printStatsLine("c gatefinder lits-rem"
         , litsRem
-        , (double)litsRem/(double)numLongClsLits
+        , stats_line_percent(litsRem, numLongClsLits)
         , "% long cls lits"
     );
 
     printStatsLine("c gatefinder cl-rem"
         , andGateUseful
-        , (double)andGateUseful/(double)numLongCls
+        , stats_line_percent(andGateUseful, numLongCls)
         , "% long cls"
     );
 
     printStatsLine("c gatefinder cl-rem's lits"
         , clauseSizeRem
-        , (double)clauseSizeRem/(double)numLongClsLits
+        , stats_line_percent(clauseSizeRem, numLongClsLits)
         , "% long cls lits"
     );
 
     printStatsLine("c gatefinder var-rep"
         , varReplaced
-        , (double)varReplaced/(double)nVars
+        , stats_line_percent(varReplaced, nVars)
         , "% vars"
     );
 

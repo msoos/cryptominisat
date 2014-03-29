@@ -2116,7 +2116,7 @@ void Solver::printStats() const
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     printStatsLine("c UIP search time"
         , sumStats.cpu_time
-        , sumStats.cpu_time/cpu_time*100.0
+        , stats_line_percent(sumStats.cpu_time, cpu_time)
         , "% time"
     );
 
@@ -2139,17 +2139,17 @@ void Solver::printMinStats() const
     );
 
     printStatsLine("c 0-depth assigns", trail.size()
-        , (double)trail.size()/(double)nVars()*100.0
+        , stats_line_percent(trail.size(), nVars())
         , "% vars"
     );
     printStatsLine("c 0-depth assigns by thrds"
         , zeroLevAssignsByThreads
-        , (double)zeroLevAssignsByThreads/(double)nVars()*100.0
+        , stats_line_percent(zeroLevAssignsByThreads, nVars())
         , "% vars"
     );
     printStatsLine("c 0-depth assigns by CNF"
         , zeroLevAssignsByCNF
-        , (double)zeroLevAssignsByCNF/(double)nVars()*100.0
+        , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
 
@@ -2157,7 +2157,7 @@ void Solver::printMinStats() const
     if (conf.doProbe) {
         printStatsLine("c probing time"
             , prober->getStats().cpu_time
-            , prober->getStats().cpu_time/cpu_time*100.0
+            , stats_line_percent(prober->getStats().cpu_time, cpu_time)
             , "% time"
         );
 
@@ -2167,14 +2167,14 @@ void Solver::printMinStats() const
     if (conf.perform_occur_based_simp) {
         printStatsLine("c Simplifier time"
             , simplifier->getStats().totalTime()
-            , simplifier->getStats().totalTime()/cpu_time*100.0
+            , stats_line_percent(simplifier->getStats().totalTime() ,cpu_time)
             , "% time"
         );
         simplifier->getStats().printShort(nVars());
     }
     printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
-        , sCCFinder->getStats().cpu_time/cpu_time*100.0
+        , stats_line_percent(sCCFinder->getStats().cpu_time, cpu_time)
         , "% time"
     );
     sCCFinder->getStats().printShort(NULL);
@@ -2183,17 +2183,17 @@ void Solver::printMinStats() const
     //varReplacer->getStats().printShort(nVars());
     printStatsLine("c asymm time"
                     , vivifier->getStats().time_used
-                    , vivifier->getStats().time_used/cpu_time*100.0
+                    , stats_line_percent(vivifier->getStats().time_used, cpu_time)
                     , "% time"
     );
     printStatsLine("c strength cache-irred time"
                     , strengthener->getStats().irredCacheBased.cpu_time
-                    , strengthener->getStats().irredCacheBased.cpu_time/cpu_time*100.0
+                    , stats_line_percent(strengthener->getStats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     printStatsLine("c strength cache-red time"
                     , strengthener->getStats().redCacheBased.cpu_time
-                    , strengthener->getStats().redCacheBased.cpu_time/cpu_time*100.0
+                    , stats_line_percent(strengthener->getStats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     printStatsLine("c Conflicts in UIP"
@@ -2227,30 +2227,30 @@ void Solver::printFullStats() const
 
     printStatsLine("c clause clean time"
         , cleaningStats.cpu_time
-        , (double)cleaningStats.cpu_time/cpu_time*100.0
+        , stats_line_percent(cleaningStats.cpu_time, cpu_time)
         , "% time"
     );
     cleaningStats.print(solveStats.nbReduceDB);
 
     printStatsLine("c reachability time"
         , reachStats.cpu_time
-        , (double)reachStats.cpu_time/cpu_time*100.0
+        , stats_line_percent(reachStats.cpu_time, cpu_time)
         , "% time"
     );
     reachStats.print();
 
     printStatsLine("c 0-depth assigns", trail.size()
-        , (double)trail.size()/(double)nVars()*100.0
+        , stats_line_percent(trail.size(), nVars())
         , "% vars"
     );
     printStatsLine("c 0-depth assigns by thrds"
         , zeroLevAssignsByThreads
-        , (double)zeroLevAssignsByThreads/(double)nVars()*100.0
+        , stats_line_percent(zeroLevAssignsByThreads, nVars())
         , "% vars"
     );
     printStatsLine("c 0-depth assigns by CNF"
         , zeroLevAssignsByCNF
-        , (double)zeroLevAssignsByCNF/(double)nVars()*100.0
+        , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
 
@@ -2258,7 +2258,7 @@ void Solver::printFullStats() const
     if (conf.doProbe) {
         printStatsLine("c probing time"
             , prober->getStats().cpu_time
-            , prober->getStats().cpu_time/cpu_time*100.0
+            , stats_line_percent(prober->getStats().cpu_time, cpu_time)
             , "% time"
         );
 
@@ -2269,7 +2269,7 @@ void Solver::printFullStats() const
     if (conf.perform_occur_based_simp) {
         printStatsLine("c Simplifier time"
             , simplifier->getStats().totalTime()
-            , simplifier->getStats().totalTime()/cpu_time*100.0
+            , stats_line_percent(simplifier->getStats().totalTime(), cpu_time)
             , "% time"
         );
 
@@ -2297,7 +2297,7 @@ void Solver::printFullStats() const
     //VarReplacer stats
     printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
-        , sCCFinder->getStats().cpu_time/cpu_time*100.0
+        , stats_line_percent(sCCFinder->getStats().cpu_time, cpu_time)
         , "% time"
     );
     sCCFinder->getStats().print();
@@ -2308,15 +2308,15 @@ void Solver::printFullStats() const
     //Vivifier-ASYMM stats
     printStatsLine("c vivif time"
                     , vivifier->getStats().time_used
-                    , vivifier->getStats().time_used/cpu_time*100.0
+                    , stats_line_percent(vivifier->getStats().time_used, cpu_time)
                     , "% time");
     printStatsLine("c strength cache-irred time"
                     , strengthener->getStats().irredCacheBased.cpu_time
-                    , strengthener->getStats().irredCacheBased.cpu_time/cpu_time*100.0
+                    , stats_line_percent(strengthener->getStats().irredCacheBased.cpu_time, cpu_time)
                     , "% time");
     printStatsLine("c strength cache-red time"
                     , strengthener->getStats().redCacheBased.cpu_time
-                    , strengthener->getStats().redCacheBased.cpu_time/cpu_time*100.0
+                    , stats_line_percent(strengthener->getStats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
     vivifier->getStats().print(nVars());
     strengthener->getStats().print();
@@ -2345,7 +2345,7 @@ uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
     printStatsLine("c Mem for watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
-        , (double)alloc/(double)totalMem*100.0
+        , stats_line_percent(alloc, totalMem)
         , "%"
     );
 
@@ -2353,7 +2353,7 @@ uint64_t Solver::printWatchMemUsed(const uint64_t totalMem) const
     printStatsLine("c Mem for watch array"
         , array/(1024UL*1024UL)
         , "MB"
-        , (double)array/(double)totalMem*100.0
+        , stats_line_percent(array, totalMem)
         , "%"
     );
 
@@ -2382,7 +2382,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for vars"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
 
     );
@@ -2395,7 +2395,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for impl cache"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2404,7 +2404,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for history stats"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2413,7 +2413,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2426,7 +2426,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for temporaries"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2435,7 +2435,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2445,7 +2445,7 @@ void Solver::printMemStats() const
         printStatsLine("c Mem for simplifier"
             , mem/(1024UL*1024UL)
             , "MB"
-            , (double)mem/(double)totalMem*100.0
+            , stats_line_percent(mem, totalMem)
             , "%"
         );
         account += mem;
@@ -2454,7 +2454,7 @@ void Solver::printMemStats() const
         printStatsLine("c Mem for xor-finder"
             , mem/(1024UL*1024UL)
             , "MB"
-            , (double)mem/(double)totalMem*100.0
+            , stats_line_percent(mem, totalMem)
             , "%"
         );
         account += mem;
@@ -2464,7 +2464,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for varReplacer"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2473,7 +2473,7 @@ void Solver::printMemStats() const
     printStatsLine("c Mem for SCC"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
     account += mem;
@@ -2483,14 +2483,14 @@ void Solver::printMemStats() const
         printStatsLine("c Mem for prober"
             , mem/(1024UL*1024UL)
             , "MB"
-            , (double)mem/(double)totalMem*100.0
+            , stats_line_percent(mem, totalMem)
             , "%"
         );
         account += mem;
     }
 
     printStatsLine("c Accounted for mem"
-        , (double)account/(double)totalMem*100.0
+        , stats_line_percent(account, totalMem)
         , "%"
     );
 }

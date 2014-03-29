@@ -108,13 +108,13 @@ class Strengthener {
 
                     printStatsLine("c lits-rem"
                         , numLitsRem
-                        , (double)numLitsRem/(double)totalLits*100.0
+                        , stats_line_percent(numLitsRem, totalLits)
                         , "% of lits tried"
                     );
 
                     printStatsLine("c called "
                         , numCalled
-                        , (double)ranOutOfTime/(double)numCalled*100.0
+                        , stats_line_percent(ranOutOfTime, numCalled)
                         , "% ran out of time"
                     );
                 }

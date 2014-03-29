@@ -1018,7 +1018,7 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
 {
     printStatsLine("c vrep replace time"
         , globalStats.cpu_time
-        , globalStats.cpu_time/global_cpu_time*100.0
+        , stats_line_percent(globalStats.cpu_time, global_cpu_time)
         , "% time"
     );
 
@@ -1058,13 +1058,13 @@ void VarReplacer::Stats::print(const size_t nVars) const
 
         printStatsLine("c trees' crown"
             , actuallyReplacedVars
-            , 100.0*(double)actuallyReplacedVars/(double)nVars
+            , stats_line_percent(actuallyReplacedVars, nVars)
             , "% of vars"
         );
 
         printStatsLine("c 0-depth assigns"
             , zeroDepthAssigns
-            , (double)zeroDepthAssigns/(double)nVars*100.0
+            , stats_line_percent(zeroDepthAssigns, nVars)
             , "% vars"
         );
 

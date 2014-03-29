@@ -1130,7 +1130,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
     printStatsLine("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"
-        , (double)mem/(double)totalMem*100.0
+        , stats_line_percent(mem, totalMem)
         , "%"
     );
 

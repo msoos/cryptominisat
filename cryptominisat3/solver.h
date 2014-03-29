@@ -234,12 +234,12 @@ class Solver : public Searcher
                 );
 
                 printStatsLine("c dominator lits"
-                    , (double)dominators/(double)numLits*100.0
+                    , stats_line_percent(dominators, numLits)
                     , "% of unknowns lits"
                 );
 
                 printStatsLine("c dependent lits"
-                    , (double)(numLitsDependent)/(double)numLits*100.0
+                    , stats_line_percent(numLitsDependent, numLits)
                     , "% of unknown lits"
                 );
 
@@ -255,15 +255,15 @@ class Solver : public Searcher
                 cout
                 << "c [reach]"
                 << " dom lits: " << std::fixed << std::setprecision(2)
-                << (double)dominators/(double)numLits*100.0
+                << stats_line_percent(dominators, numLits)
                 << " %"
 
                 << " dep-lits: " << std::fixed << std::setprecision(2)
-                << (double)numLitsDependent/(double)numLits*100.0
+                << stats_line_percent(numLitsDependent, numLits)
                 << " %"
 
                 << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
-                << (double)numLitsDependent/(double)dominators
+                << stats_line_percent(numLitsDependent, dominators)
 
                 << " T: " << std::fixed << std::setprecision(2)
                 << cpu_time << " s"

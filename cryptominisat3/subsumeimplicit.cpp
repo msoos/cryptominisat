@@ -290,7 +290,7 @@ void SubsumeImplicit::Stats::print() const
 
     printStatsLine("c timed out"
         , time_out
-        , (double)time_out/(double)numCalled*100.0
+        , stats_line_percent(time_out, numCalled)
         , "% of calls"
     );
 

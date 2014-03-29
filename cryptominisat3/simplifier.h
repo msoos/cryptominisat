@@ -231,7 +231,7 @@ public:
                 << " tried: " << triedToElimVars
                 << " tested: " << testedToElimVars
                 << " ("
-                << (double)usedAggressiveCheckToELim/(double)testedToElimVars*100.0
+                << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
                 << " % aggressive)"
                 << endl;
 
@@ -256,12 +256,12 @@ public:
             cout << "c -------- Simplifier STATS ----------" << endl;
             printStatsLine("c time"
                 , totalTime()
-                , varElimTime/totalTime()*100.0
+                , stats_line_percent(varElimTime, totalTime())
                 , "% var-elim"
             );
 
             printStatsLine("c timeouted"
-                , (double)varElimTimeOut/(double)numCalls*100.0
+                , stats_line_percent(varElimTimeOut, numCalls)
                 , "% called"
             );
 
@@ -273,7 +273,7 @@ public:
 
             printStatsLine("c v-elimed"
                 , numVarsElimed
-                , (double)numVarsElimed/(double)nVars*100.0
+                , stats_line_percent(numVarsElimed, nVars)
                 , "% vars"
             );
 
@@ -285,7 +285,7 @@ public:
 
             printStatsLine("c 0-depth assigns"
                 , zeroDepthAssings
-                , (double)zeroDepthAssings/(double)nVars*100.0
+                , stats_line_percent(zeroDepthAssings, nVars)
                 , "% vars"
             );
 
@@ -295,7 +295,7 @@ public:
 
             printStatsLine("c tried to elim"
                 , triedToElimVars
-                , (double)usedAggressiveCheckToELim/(double)triedToElimVars*100.0
+                , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
                 , "% aggressively"
             );
 

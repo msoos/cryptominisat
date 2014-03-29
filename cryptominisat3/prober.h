@@ -155,12 +155,12 @@ class Prober {
 
                 printStatsLine("c 0-depth-assigns"
                     , zeroDepthAssigns
-                    , (double)zeroDepthAssigns/(double)nVars*100.0
+                    , stats_line_percent(zeroDepthAssigns, nVars)
                     , "% vars");
 
                 printStatsLine("c bothsame"
                     , bothSameAdded
-                    , (double)bothSameAdded/(double)numVisited*100.0
+                    , stats_line_percent(bothSameAdded, numVisited)
                     , "% visited"
                 );
 
@@ -172,21 +172,20 @@ class Prober {
 
                 printStatsLine("c loop iters"
                     , numLoopIters
-                    , (double)numVarProbed/(double)numLoopIters*100.0
+                    , stats_line_percent(numVarProbed, numLoopIters)
                     , "% var probed"
                 );
 
                 printStatsLine("c failed"
                     , numFailed
-                    , 100.0*(double)numFailed
-                    /(double)numProbed
+                    , stats_line_percent(numFailed, numProbed)
                     , "% of probes"
                 );
 
                 printStatsLine("c visited"
                     , (double)numVisited/(1000.0*1000.0)
                     , "M lits"
-                    , (100.0*(double)numVisited/(double)(origNumFreeVars*2))
+                    , stats_line_percent(numVisited, origNumFreeVars*2)
                     , "% of available lits"
                 );
 
@@ -197,19 +196,19 @@ class Prober {
 
                 printStatsLine("c bin add"
                     , addedBin
-                    , (double)addedBin/(double)origNumBins*100.0
+                    , stats_line_percent(addedBin, origNumBins)
                     , "% of bins"
                 );
 
                 printStatsLine("c irred bin rem"
                     , removedIrredBin
-                    , (double)removedIrredBin/(double)origNumBins*100.0
+                    , stats_line_percent(removedIrredBin, origNumBins)
                     , "% of bins"
                 );
 
                 printStatsLine("c red bin rem"
                     , removedRedBin
-                    , (double)removedRedBin/(double)origNumBins*100.0
+                    , stats_line_percent(removedRedBin, origNumBins)
                     , "% of bins"
                 );
 
@@ -233,7 +232,7 @@ class Prober {
                 // x2 because it's LITERAL visit
                 << " Visited: " << numVisited << "/" << (origNumFreeVars*2)
                 << "(" << std::setprecision(1)
-                << (100.0*(double)numVisited/(double)(origNumFreeVars*2))
+                << stats_line_percent(numVisited, origNumFreeVars*2)
                 << "%)"
                 << endl;
 
@@ -242,7 +241,7 @@ class Prober {
                 << " probed: " << numProbed
                 << "(" << std::setprecision(1)
                 // x2 because it's LITERAL probed
-                << (100.0*(double)numProbed/(double)(origNumFreeVars*2))
+                << stats_line_percent(numProbed, origNumFreeVars*2)
                 << "%)"
 
                 << " hyperBin:" << addedBin

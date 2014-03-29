@@ -403,7 +403,7 @@ class Searcher : public HyperEngine
                 );
                 printStatsLine("c time", cpu_time);
                 printStatsLine("c decisions", decisions
-                    , (double)decisionsRand*100.0/(double)decisions
+                    , stats_line_percent(decisionsRand, decisions)
                     , "% random"
                 );
 
@@ -440,22 +440,22 @@ class Searcher : public HyperEngine
                 cout << "c LEARNT stats" << endl;
                 printStatsLine("c units learnt"
                     , learntUnits
-                    , (double)learntUnits/(double)conflStats.numConflicts*100.0
+                    , stats_line_percent(learntUnits, conflStats.numConflicts)
                     , "% of conflicts");
 
                 printStatsLine("c bins learnt"
                     , learntBins
-                    , (double)learntBins/(double)conflStats.numConflicts*100.0
+                    , stats_line_percent(learntBins, conflStats.numConflicts)
                     , "% of conflicts");
 
                 printStatsLine("c tris learnt"
                     , learntTris
-                    , (double)learntTris/(double)conflStats.numConflicts*100.0
+                    , stats_line_percent(learntTris, conflStats.numConflicts)
                     , "% of conflicts");
 
                 printStatsLine("c long learnt"
                     , learntLongs
-                    , (double)learntLongs/(double)conflStats.numConflicts*100.0
+                    , stats_line_percent(learntLongs, conflStats.numConflicts)
                     , "% of conflicts"
                 );
 
@@ -467,19 +467,19 @@ class Searcher : public HyperEngine
 
                 printStatsLine("c otf-subs implicit"
                     , otfSubsumedImplicit
-                    , (double)otfSubsumedImplicit/(double)otfSubsumed*100.0
+                    , stats_line_percent(otfSubsumedImplicit, otfSubsumed)
                     , "%"
                 );
 
                 printStatsLine("c otf-subs long"
                     , otfSubsumedLong
-                    , (double)otfSubsumedLong/(double)otfSubsumed*100.0
+                    , stats_line_percent(otfSubsumedLong, otfSubsumed)
                     , "%"
                 );
 
                 printStatsLine("c otf-subs learnt"
                     , otfSubsumedRed
-                    , (double)otfSubsumedRed/(double)otfSubsumed*100.0
+                    , stats_line_percent(otfSubsumedRed, otfSubsumed)
                     , "% otf subsumptions"
                 );
 
@@ -518,43 +518,43 @@ class Searcher : public HyperEngine
 
                 printStatsLine("c rec-min effective"
                     , recMinCl
-                    , (double)recMinCl/(double)conflStats.numConflicts*100.0
+                    , stats_line_percent(recMinCl, conflStats.numConflicts)
                     , "% attempt successful"
                 );
 
                 printStatsLine("c rec-min lits"
                     , recMinLitRem
-                    , (double)recMinLitRem/(double)litsRedNonMin*100.0
+                    , stats_line_percent(recMinLitRem, litsRedNonMin)
                     , "% less overall"
                 );
 
                 printStatsLine("c further-min call%"
-                    , (double)furtherShrinkAttempt/(double)conflStats.numConflicts*100.0
-                    , (double)furtherShrinkedSuccess/(double)furtherShrinkAttempt*100.0
+                    , stats_line_percent(furtherShrinkAttempt, conflStats.numConflicts)
+                    , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
                     , "% attempt successful"
                 );
 
                 printStatsLine("c bintri-min lits"
                     , binTriShrinkedClause
-                    , (double)binTriShrinkedClause/(double)litsRedNonMin*100.0
+                    , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
                     , "% less overall"
                 );
 
                 printStatsLine("c cache-min lits"
                     , cacheShrinkedClause
-                    , (double)cacheShrinkedClause/(double)litsRedNonMin*100.0
+                    , stats_line_percent(cacheShrinkedClause, litsRedNonMin)
                     , "% less overall"
                 );
 
                 printStatsLine("c stamp-min call%"
-                    , (double)stampShrinkAttempt/(double)conflStats.numConflicts*100.0
-                    , (double)stampShrinkCl/(double)stampShrinkAttempt*100.0
+                    , stats_line_percent(stampShrinkAttempt, conflStats.numConflicts)
+                    , stats_line_percent(stampShrinkCl, stampShrinkAttempt)
                     , "% attempt successful"
                 );
 
                 printStatsLine("c stamp-min lits"
                     , stampShrinkLit
-                    , (double)stampShrinkLit/(double)litsRedNonMin*100.0
+                    , stats_line_percent(stampShrinkLit, litsRedNonMin)
                     , "% less overall"
                 );
 

@@ -91,13 +91,13 @@ void ImplCache::printStatsSort(const Solver* solver) const
 
     printStatsLine(
         "c lits having cache"
-        , (double)numHasElems/(double)activeLits * 100.0
+        , stats_line_percent(numHasElems, activeLits)
         , "% of decision lits"
     );
 
     printStatsLine(
         "c num elems in cache/lit"
-        , (double)totalElems/(double)numHasElems
+        , stats_line_percent(totalElems, numHasElems)
         , "extralits"
     );
 }

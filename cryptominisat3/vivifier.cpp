@@ -466,7 +466,7 @@ void Vivifier::Stats::print(const size_t nVars) const
 
     printStatsLine("c timed out"
         , timeOut
-        , (double)timeOut/(double)numCalled*100.0
+        , stats_line_percent(timeOut, numCalled)
         , "% of calls"
     );
 
@@ -481,7 +481,7 @@ void Vivifier::Stats::print(const size_t nVars) const
     );
     printStatsLine("c 0-depth-assigns",
         zeroDepthAssigns
-        , (double)zeroDepthAssigns/(double)nVars*100.0
+        , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"
     );
     cout << "c -------- ASYMM STATS END --------" << endl;

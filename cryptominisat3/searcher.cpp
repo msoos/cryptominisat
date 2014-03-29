@@ -2093,8 +2093,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
             << solver->binTri.numNewBinsSinceSCC
             << " free vars %:"
             << std::fixed << std::setprecision(2) << std::setw(4)
-            << (double)solver->binTri.numNewBinsSinceSCC
-            /(double)solver->getNumFreeVars()*100.0
+            << stats_line_percent(solver->binTri.numNewBinsSinceSCC, solver->getNumFreeVars())
             << endl;
         }
 

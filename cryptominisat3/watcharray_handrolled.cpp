@@ -72,7 +72,7 @@ void watch_array::print_stat(bool detailed) const
     << free_mem_used << "/" << free_mem_not_used
     << " ("
     << std::fixed << std::setprecision(2)
-    << (double)free_mem_used/(double)(free_mem_not_used+free_mem_used)*100.0
+    << stats_line_percent(free_mem_used, free_mem_not_used+free_mem_used)
     << "%)"
     << endl;
 
