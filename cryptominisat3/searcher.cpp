@@ -505,9 +505,9 @@ void Searcher::minimize_learnt_clause()
     } else {
         normalClMinim();
     }
-    for (size_t i = 0; i < toClear.size(); i++) {
-        seen2[toClear[i].toInt()] = 0;
-        seen[toClear[i].var()] = 0;
+    for (const Lit lit: toClear) {
+        seen2[lit.toInt()] = 0;
+        seen[lit.var()] = 0;
     }
     toClear.clear();
 

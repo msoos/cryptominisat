@@ -903,12 +903,8 @@ Lit HyperEngine::deepestCommonAcestor()
 
     //Clear nodes we have visited
     propStats.otfHyperTime += toClear.size()/2;
-    for(std::vector<Lit>::const_iterator
-        it = toClear.begin(), end = toClear.end()
-        ; it != end
-        ; it++
-    ) {
-        seen[it->toInt()] = 0;
+    for(const Lit lit: toClear) {
+        seen[lit.toInt()] = 0;
     }
 
     return foundLit;
