@@ -1701,8 +1701,7 @@ bool Simplifier::skip_resolution_thanks_to_gate(
     if (!gate_found_elim)
         return false;
 
-    if (poss_gate_parts[at_poss] == negs_gate_parts[at_negs])
-        return true;
+    return poss_gate_parts[at_poss] == negs_gate_parts[at_negs];
 }
 
 int Simplifier::test_elim_and_fill_resolvents(const Var var)
