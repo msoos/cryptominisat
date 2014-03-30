@@ -121,7 +121,7 @@ struct ClauseStats
     //Stored data
     uint32_t glue;    ///<Clause glue
     double   activity;
-    uint32_t introduced_at_conflict; ///<At what conflict number the clause  was introduced
+    uint64_t introduced_at_conflict; ///<At what conflict number the clause  was introduced
     uint32_t propagations_made; ///<Number of times caused propagation
     uint32_t conflicts_made; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict;

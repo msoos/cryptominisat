@@ -9,7 +9,7 @@ ext_kwds = dict(
     name = "pycryptosat",
     sources = ["pycryptosat.cpp"],
     define_macros = [],
-    extra_compile_args = ['--std=c++11'],
+    #extra_compile_args = ['--std=c++11'],
     library_dirs=['.', '/usr/local/lib'],
     libraries = ['cryptominisat3']
 )

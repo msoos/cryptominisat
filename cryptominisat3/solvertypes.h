@@ -46,22 +46,22 @@ using std::string;
 inline std::string restart_type_to_string(const Restart type)
 {
     switch(type) {
-        case Restart::glue:
+        case restart_type_glue:
             return "glue-based";
 
-        case Restart::glue_agility:
+        case restart_type_glue_agility:
             return "glue&agility based";
 
-        case Restart::geom:
+        case restart_type_geom:
             return "geometric";
 
-        case Restart::agility:
+        case restart_type_agility:
             return "agility-based";
 
-        case Restart::never:
+        case restart_type_never:
             return "never restart";
 
-        case Restart::automatic:
+        case restart_type_automatic:
             return "automatic";
     }
 

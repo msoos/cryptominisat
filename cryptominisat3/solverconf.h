@@ -23,51 +23,50 @@
 #define SOLVERCONF_H
 
 #include <string>
-#include <cstdint>
 #include <cstdlib>
 
 namespace CMSat {
 
-enum class ClauseCleaningTypes {
-    glue_based
-    , size_based
-    , sum_prop_confl_based
-    , sum_confl_depth_based
-    ,  sum_activity_based
+enum ClauseCleaningTypes {
+    clean_glue_based
+    , clean_size_based
+    , clean_sum_prop_confl_based
+    , clean_sum_confl_depth_based
+    ,  clean_sum_activity_based
 };
 
-enum class PolarityMode {
-    pos
-    , neg
-    , rnd
-    , automatic
+enum PolarityMode {
+    polarmode_pos
+    , polarmode_neg
+    , polarmode_rnd
+    , polarmode_automatic
 };
 
-enum class Restart {
-    glue
-    , glue_agility
-    , geom
-    , agility
-    , never
-    , automatic
+enum Restart {
+    restart_type_glue
+    , restart_type_glue_agility
+    , restart_type_geom
+    , restart_type_agility
+    , restart_type_never
+    , restart_type_automatic
 };
 
 inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
 {
     switch(clauseCleaningType) {
-        case ClauseCleaningTypes::glue_based :
+        case clean_glue_based :
             return "glue";
 
-        case ClauseCleaningTypes::size_based:
+        case clean_size_based:
             return "size";
 
-        case ClauseCleaningTypes::sum_prop_confl_based:
+        case clean_sum_prop_confl_based:
             return "prconf";
 
-        case ClauseCleaningTypes::sum_confl_depth_based:
+        case clean_sum_confl_depth_based:
             return "confdep";
 
-        case ClauseCleaningTypes::sum_activity_based:
+        case clean_sum_activity_based:
             return "activity";
 
         default:
@@ -78,19 +77,19 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
     return "";
 }
 
-enum class ElimStrategy {
-    heuristic
-    , calculate_exactly
+enum ElimStrategy {
+    elimstrategy_heuristic
+    , elimstrategy_calculate_exactly
 };
 
 inline std::string getNameOfElimStrategy(ElimStrategy strategy)
 {
     switch(strategy)
     {
-        case ElimStrategy::heuristic:
+        case elimstrategy_heuristic:
             return "heuristic";
 
-        case ElimStrategy::calculate_exactly:
+        case elimstrategy_calculate_exactly:
             return "calculate";
 
         default:
@@ -107,51 +106,51 @@ class SolverConf
         SolverConf();
 
         //Variable activities
-        uint32_t  var_inc_start;
-        uint32_t  var_inc_multiplier;
-        uint32_t  var_inc_divider;
-        uint32_t  var_inc_variability;
+        unsigned  var_inc_start;
+        unsigned  var_inc_multiplier;
+        unsigned  var_inc_divider;
+        unsigned  var_inc_variability;
         double random_var_freq;
-        uint32_t random_var_freq_increase_for;
+        unsigned random_var_freq_increase_for;
         double random_var_freq_for_top_N;
-        uint32_t random_picks_from_top_T;
+        unsigned random_picks_from_top_T;
         PolarityMode polarity_mode;
         int do_calc_polarity_first_time;
         int do_calc_polarity_every_time;
 
         //Clause cleaning
         ClauseCleaningTypes clauseCleaningType;
-        uint64_t  clean_confl_multiplier;
+        unsigned clean_confl_multiplier;
         int       doPreClauseCleanPropAndConfl;
-        uint32_t  preClauseCleanLimit;
-        uint32_t  preCleanMinConflTime;
+        unsigned  long long preClauseCleanLimit;
+        unsigned  long long preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
         double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round
-        uint64_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
-        uint64_t    startClean;
+        unsigned  numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
+        unsigned  startClean;
         double    increaseClean;
         double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;
-        uint64_t min_time_in_db_before_eligible_for_cleaning;
+        unsigned  min_time_in_db_before_eligible_for_cleaning;
         size_t   lock_uip_per_dbclean;
         size_t   lock_topclean_per_dbclean;
         double   multiplier_perf_values_after_cl_clean;
 
         //For restarting
-        uint64_t    restart_first;      ///<The initial restart limit.                                                                (default 100)
+        unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
-        uint64_t    burstSearchLen;
+        unsigned   burstSearchLen;
         Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
         int       do_blocking_restart;
-        uint32_t blocking_restart_trail_hist_length;
+        unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
 
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
-        uint64_t more_red_minim_limit_cache;
-        uint64_t more_red_minim_limit_binary;
+        unsigned more_red_minim_limit_cache;
+        unsigned more_red_minim_limit_binary;
         int extra_bump_var_activities_based_on_glue;
 
         //Verbosity
@@ -160,7 +159,7 @@ class SolverConf
         int  doPrintConflDot; ///< Print DOT file for each conflict
         int  printFullStats;
         int  verbStats;
-        uint32_t  doPrintLongestTrail;
+        unsigned  doPrintLongestTrail;
         int  doPrintBestRedClauses;
 
         //Limits
@@ -170,11 +169,11 @@ class SolverConf
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities
         double    agilityLimit; ///The agility below which the agility is considered too low
-        uint64_t  agilityViolationLimit;
+        unsigned  agilityViolationLimit;
 
         //Glues
         int       updateGlues;
-        uint32_t  shortTermHistorySize; ///< Rolling avg. glue window size
+        unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
 
         //OTF stuff
         int       otfHyperbin;
@@ -184,14 +183,14 @@ class SolverConf
 
         //SQL
         int       doSQL;
-        uint64_t    dumpTopNVars; //Only dump information about the "top" N active variables
+        size_t   dumpTopNVars; //Only dump information about the "top" N active variables
         int       dump_tree_variance_stats;
         #ifdef STATS_NEEDED_EXTRA
-        uint64_t    dumpClauseDistribPer;
-        uint64_t    dumpClauseDistribMaxSize;
-        uint64_t    dumpClauseDistribMaxGlue;
-        uint64_t    preparedDumpSizeScatter;
-        uint64_t    preparedDumpSizeVarData;
+        unsigned    dumpClauseDistribPer;
+        unsigned    dumpClauseDistribMaxSize;
+        unsigned    dumpClauseDistribMaxGlue;
+        unsigned    preparedDumpSizeScatter;
+        unsigned    preparedDumpSizeVarData;
         #endif
         std::string    sqlServer;
         std::string    sqlUser;
@@ -202,7 +201,7 @@ class SolverConf
         int      doVarElim;          ///<Perform variable elimination
         int      do_empty_varelim;
         int      updateVarElimComplexityOTF;
-        uint32_t updateVarElimComplexityOTF_limitvars;
+        unsigned updateVarElimComplexityOTF_limitvars;
         int      updateVarElimComplexityOTF_limitavg;
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
@@ -216,15 +215,15 @@ class SolverConf
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;
         int      doCache;
-        uint64_t   cacheUpdateCutoff;
-        uint64_t   maxCacheSizeMB;
+        unsigned   cacheUpdateCutoff;
+        unsigned   maxCacheSizeMB;
 
         //XORs
         int      doFindXors;
         int      maxXorToFind;
         int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
-        uint64_t  maxXORMatrix;
+        unsigned long long  maxXORMatrix;
 
         //Var-replacement
         int doFindAndReplaceEqLits;
@@ -234,9 +233,9 @@ class SolverConf
         //Propagation & searching
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
-        uint32_t  dominPickFreq;
-        uint32_t  polarity_flip_min_depth;
-        uint32_t  polarity_flip_frequency_multiplier;
+        unsigned  dominPickFreq;
+        unsigned  polarity_flip_min_depth;
+        unsigned  polarity_flip_frequency_multiplier;
 
         //Simplifier
         int      simplify_at_startup;
@@ -244,13 +243,13 @@ class SolverConf
         int      perform_occur_based_simp;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
-        uint64_t maxOccurIrredMB;
-        uint64_t maxOccurRedMB;
-        uint64_t maxOccurRedLitLinkedM;
+        unsigned maxOccurIrredMB;
+        unsigned maxOccurRedMB;
+        unsigned long long maxOccurRedLitLinkedM;
 
         //Vivification
         int      doClausVivif;
-        uint64_t max_props_vivif_long_irred_cls;
+        unsigned long long max_props_vivif_long_irred_cls;
 
         //Memory savings
         int       doRenumberVars;
@@ -259,9 +258,9 @@ class SolverConf
         //Component handling
         int       doFindComps;
         int       doCompHandler;
-        uint64_t    handlerFromSimpNum;
-        uint64_t    compVarLimit;
-        uint64_t  compFindLimitMega;
+        unsigned  handlerFromSimpNum;
+        size_t    compVarLimit;
+        unsigned long long  compFindLimitMega;
 
 
         //Misc Optimisations
@@ -271,7 +270,7 @@ class SolverConf
 
         //Gates
         int      doGateFind; ///< Find OR gates
-        uint64_t    maxGateSize;
+        //unsigned  maxGateSize;
         unsigned maxGateBasedClReduceSize;
 
 
@@ -286,8 +285,8 @@ class SolverConf
         //interrupting & dumping
         bool      needResultFile;     ///<If set to TRUE, result will be written to a file
         std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
-        uint32_t  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
-        uint32_t origSeed;
+        unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
+        unsigned origSeed;
 };
 
 } //end namespace

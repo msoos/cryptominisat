@@ -1236,28 +1236,28 @@ uint64_t Solver::calc_how_many_to_remove()
 void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
 {
     switch (conf.clauseCleaningType) {
-    case ClauseCleaningTypes::glue_based :
+    case clean_glue_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructGlue(clAllocator));
         tmpStats.glueBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::size_based :
+    case clean_size_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructSize(clAllocator));
         tmpStats.sizeBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::sum_activity_based :
+    case clean_sum_activity_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructActivity(clAllocator));
         tmpStats.actBasedClean = 1;
         break;
 
-    case ClauseCleaningTypes::sum_prop_confl_based : {
+    case clean_sum_prop_confl_based : {
         uint64_t multiplier = conf.clean_confl_multiplier;
 
         //Sort for glue-based removal
@@ -1267,7 +1267,7 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
         break;
     }
 
-    case ClauseCleaningTypes::sum_confl_depth_based :
+    case clean_sum_confl_depth_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
             , reduceDBStructConflDepth(clAllocator));

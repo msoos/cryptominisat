@@ -253,7 +253,7 @@ void Main::add_supported_options()
     ("help,h", "Prints this help")
     ("version,v", "Print version number")
     ("input", po::value< vector<string> >(), "file(s) to read")
-    ("random,r", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
+    ("random,r", po::value<unsigned>(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
 //     ("threads,t", po::value<int>(&numThreads)->default_value(1)
 //         , "Number of threads to use")
@@ -263,7 +263,7 @@ void Main::add_supported_options()
         , "Stop solving after this many conflicts, print stats and exit")
     ("occsimp", po::value<int>(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
         , "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)")
-    ("clbtwsimp", po::value<uint64_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
+    ("clbtwsimp", po::value<unsigned>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
     ("drup,d", po::value<string>(&drupfilname)
         , "Put DRUP verification information into this file")
@@ -292,13 +292,13 @@ void Main::add_supported_options()
         , "{geom, agility, glue, glueagility}  Restart strategy to follow.")
     ("agillim", po::value<double>(&conf.agilityLimit)->default_value(conf.agilityLimit, ssAgilL.str())
         , "The agility below which the agility is considered too low")
-    ("agilviollim", po::value<uint64_t>(&conf.agilityViolationLimit)->default_value(conf.agilityViolationLimit)
+    ("agilviollim", po::value<unsigned>(&conf.agilityViolationLimit)->default_value(conf.agilityViolationLimit)
         , "Number of agility limit violations over which to demand a restart")
-    ("gluehist", po::value<uint32_t>(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
+    ("gluehist", po::value<unsigned>(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ("blkrest", po::value<int>(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
         , "Perform blocking restarts as per Glucose 3.0")
-    ("blkrestlen", po::value<uint32_t>(&conf.blocking_restart_trail_hist_length)->default_value(conf.blocking_restart_trail_hist_length)
+    ("blkrestlen", po::value<unsigned>(&conf.blocking_restart_trail_hist_length)->default_value(conf.blocking_restart_trail_hist_length)
         , "Length of the long term trail size for blocking restart")
     ("blkrestmultip", po::value<double>(&conf.blocking_restart_multip)->default_value(conf.blocking_restart_multip, s_blocking_multip.str())
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
@@ -316,7 +316,7 @@ void Main::add_supported_options()
         , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
     ("clean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
         , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'confdep' for (propagations+conflicts)/(depth at which they were caused)")
-    ("cleanconflmult", po::value<uint64_t>(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
+    ("cleanconflmult", po::value<uint32_t>(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("lockuip", po::value<size_t>(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
@@ -326,13 +326,13 @@ void Main::add_supported_options()
         , "Multiply clause performance values by this number after every clause cleaning")
     ("preclean", po::value<int>(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
         , "Before cleaning clauses with whatever sorting strategy, remove redundant clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
-    ("precleanlim", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
+    ("precleanlim", po::value<unsigned long long>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
         , "Limit of sum of propagation&conflicts for pre-cleaning of clauses. See previous option")
-    ("precleantime", po::value<uint32_t>(&conf.preCleanMinConflTime)->default_value(conf.preCleanMinConflTime)
+    ("precleantime", po::value<unsigned long long>(&conf.preCleanMinConflTime)->default_value(conf.preCleanMinConflTime)
         , "At least this many conflict must have passed since creation of the clause before preclean can remove it")
     ("clearstat", po::value<int>(&conf.doClearStatEveryClauseCleaning)->default_value(conf.doClearStatEveryClauseCleaning)
         , "Clear clause statistics data of each clause after clause cleaning")
-    ("startclean", po::value<uint64_t>(&conf.startClean)->default_value(conf.startClean)
+    ("startclean", po::value<unsigned>(&conf.startClean)->default_value(conf.startClean)
         , "Clean first time after this many conflicts")
     ("incclean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean, s_incclean.str())
         , "Clean increment cleaning by this factor for next cleaning")
@@ -348,25 +348,25 @@ void Main::add_supported_options()
 
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vincmult", po::value<uint32_t>(&conf.var_inc_multiplier)->default_value(conf.var_inc_multiplier)
+    ("vincmult", po::value<unsigned>(&conf.var_inc_multiplier)->default_value(conf.var_inc_multiplier)
         , "variable activity increase multiplier")
-    ("vincdiv", po::value<uint32_t>(&conf.var_inc_divider)->default_value(conf.var_inc_divider)
+    ("vincdiv", po::value<unsigned>(&conf.var_inc_divider)->default_value(conf.var_inc_divider)
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vincvary", po::value<uint32_t>(&conf.var_inc_variability)->default_value(conf.var_inc_variability)
+    ("vincvary", po::value<unsigned>(&conf.var_inc_variability)->default_value(conf.var_inc_variability)
         , "variable activity divider and multiplier are both changed +/- with this amount, randomly, in sync")
-    ("vincstart", po::value<uint32_t>(&conf.var_inc_start)->default_value(conf.var_inc_start)
+    ("vincstart", po::value<unsigned>(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
     ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
-    ("dompickf", po::value<uint32_t>(&conf.dominPickFreq)->default_value(conf.dominPickFreq)
+    ("dompickf", po::value<unsigned>(&conf.dominPickFreq)->default_value(conf.dominPickFreq)
         , "Use dominating literal every once in N when picking decision literal")
     ("morebump", po::value<int>(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
-    ("topnrndpick", po::value<uint32_t>(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
+    ("topnrndpick", po::value<unsigned>(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
         , "When randomly picking brancing variable, pick from the top N")
     ("topnrndpickfreq", po::value<double>(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N, s_random_var_freq_for_top_N.str())
         , "Frequency of increased random  picking brancing variable from top N")
-    ("topnincnum", po::value<uint32_t>(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
+    ("topnincnum", po::value<unsigned>(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
         , "Until what decision level should the increase in variable branch randomness be. 0 means none, 1 means only dec. level 0, etc.")
     ;
 
@@ -374,7 +374,7 @@ void Main::add_supported_options()
     polar_options.add_options()
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
-    ("flippolf", po::value<uint32_t>(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
+    ("flippolf", po::value<unsigned>(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
         , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ("calcpolar1st", po::value<int>(&conf.do_calc_polarity_first_time)->default_value(conf.do_calc_polarity_first_time)
         , "Calculate the polarity of variables based on their occurrences at startup of solve()")
@@ -389,7 +389,7 @@ void Main::add_supported_options()
         , "Search for given amount of solutions")
     ("dumpred", po::value<string>(&redDumpFname)
         , "If stopped dump redundant clauses here")
-    ("maxdump", po::value<uint32_t>(&conf.maxDumpRedsSize)
+    ("maxdump", po::value<unsigned>(&conf.maxDumpRedsSize)
         , "Maximum length of redundant clause dumped")
     ("dumpirred", po::value<string>(&irredDumpFname)
         , "If stopped, dump irred original problem here")
@@ -453,7 +453,7 @@ void Main::add_supported_options()
         , "Use cache when finding XORs. Finds a LOT more XORs, but takes a lot more time")
     ("echelonxor", po::value<int>(&conf.doEchelonizeXOR)->default_value(conf.doEchelonizeXOR)
         , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
-    ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
+    ("maxxormat", po::value<long long unsigned>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
     //Not implemented yet
     //("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
@@ -480,8 +480,8 @@ void Main::add_supported_options()
         , "Remove clauses with AND gates")
     ("gateeqlit", po::value<int>(&conf.doFindEqLitsWithGates)->default_value(conf.doFindEqLitsWithGates)
         , "Find equivalent literals using gates")
-    ("maxgatesz", po::value<uint64_t>(&conf.maxGateSize)->default_value(conf.maxGateSize)
-        , "Maximum gate size to discover")
+    /*("maxgatesz", po::value<unsigned>(&conf.maxGateSize)->default_value(conf.maxGateSize)
+        , "Maximum gate size to discover")*/
     ("printgatedot", po::value<int>(&conf.doPrintGateDot)->default_value(conf.doPrintGateDot)
         , "Print gate structure regularly to file 'gatesX.dot'")
     ;
@@ -492,9 +492,9 @@ void Main::add_supported_options()
         , "Perform recursive minimisation")
     ("moreminim", po::value<int>(&conf.doMinimRedMore)->default_value(conf.doMinimRedMore)
         , "Perform strong minimisation at conflict gen.")
-    ("moreminimcache", po::value<uint64_t>(&conf.more_red_minim_limit_cache)->default_value(conf.more_red_minim_limit_cache)
+    ("moreminimcache", po::value<unsigned>(&conf.more_red_minim_limit_cache)->default_value(conf.more_red_minim_limit_cache)
         , "Time-out in microsteps for each more minimisation with cache. Only active if 'moreminim' is on")
-    ("moreminimcache", po::value<uint64_t>(&conf.more_red_minim_limit_binary)->default_value(conf.more_red_minim_limit_binary)
+    ("moreminimcache", po::value<unsigned>(&conf.more_red_minim_limit_binary)->default_value(conf.more_red_minim_limit_binary)
         , "Time-out in microsteps for each more minimisation with cache. Only active if 'moreminim' is on")
     ("alwaysmoremin", po::value<int>(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
@@ -526,11 +526,11 @@ void Main::add_supported_options()
         , "Use time stamping as per Heule&Jarvisalo&Biere paper")
     ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
         , "Use implication cache -- may use a lot of memory")
-    ("cachesize", po::value<uint64_t>(&conf.maxCacheSizeMB)->default_value(conf.maxCacheSizeMB)
+    ("cachesize", po::value<unsigned>(&conf.maxCacheSizeMB)->default_value(conf.maxCacheSizeMB)
         , "Maximum size of the implication cache in MB. It may temporarily reach higher usage, but will be deleted&disabled if this limit is reached.")
     ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
         , "Calculate literal reachability")
-    ("cachecutoff", po::value<uint64_t>(&conf.cacheUpdateCutoff)->default_value(conf.cacheUpdateCutoff)
+    ("cachecutoff", po::value<unsigned>(&conf.cacheUpdateCutoff)->default_value(conf.cacheUpdateCutoff)
         , "If the number of literals propagated by a literal is more than this, it's not included into the implication cache")
     ;
 
@@ -539,16 +539,16 @@ void Main::add_supported_options()
     ("sql", po::value<int>(&conf.doSQL)->default_value(conf.doSQL)
         , "Write to SQL. 1 = try writing to DB, if fails, continue. 2 = abort if cannot write to DB")
     #ifdef STATS_NEEDED_EXTRA
-    ("cldistribper", po::value<uint64_t>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
+    ("cldistribper", po::value<unsigned>(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump redundant clause size distribution every N conflicts. If set to 0, it is never dumped.")
-    ("cldistmaxsize", po::value<uint64_t>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
+    ("cldistmaxsize", po::value<unsigned>(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
         , "Dumped redundant clause size maximum -- longer will be 'truncated' in the statistics output")
-    ("cldistmaxglue", po::value<uint64_t>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
+    ("cldistmaxglue", po::value<unsigned>(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
         , "Dumped redundant clause glue maximum -- longer will be 'truncated' in the statistics output")
-    ("prepstmtscatter", po::value<uint64_t>(&conf.preparedDumpSizeScatter)->default_value(conf.preparedDumpSizeScatter)
+    ("prepstmtscatter", po::value<unsigned>(&conf.preparedDumpSizeScatter)->default_value(conf.preparedDumpSizeScatter)
         , "When dumping scatter data, dump by chunks of this size (depends on SQL server, default should be safe)")
     #endif
-    ("topnvars", po::value<uint64_t>(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
+    ("topnvars", po::value<size_t>(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
         , "At every restart, dump the data about the top N variables. If set to 0, nothing is dumped")
     ("dumptreevar", po::value<int>(&conf.dump_tree_variance_stats)->default_value(conf.dump_tree_variance_stats)
         , "Dump variance stats of the variables' decision and trail depths")
@@ -572,7 +572,7 @@ void Main::add_supported_options()
         , "Print more thorough, but different stats")
     ("printsol,s", po::value<int>(&printResult)->default_value(printResult)
         , "Print assignment if solution is SAT")
-    ("printtrail", po::value<uint32_t>(&conf.doPrintLongestTrail)->default_value(conf.doPrintLongestTrail)
+    ("printtrail", po::value<unsigned>(&conf.doPrintLongestTrail)->default_value(conf.doPrintLongestTrail)
         , "Print longest decision trail of the last N conflicts. Value '0' means never print it")
     ("printbest", po::value<int>(&conf.doPrintBestRedClauses)->default_value(conf.doPrintBestRedClauses)
         , "Print the best N irredundant longer-than-3 learnt clauses. Value '0' means not to print anything.")
@@ -583,7 +583,7 @@ void Main::add_supported_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("vivif", po::value<int>(&conf.doClausVivif)->default_value(conf.doClausVivif)
         , "Regularly execute clause vivification")
-    ("viviflongmax", po::value<uint64_t>(&conf.max_props_vivif_long_irred_cls)->default_value(conf.max_props_vivif_long_irred_cls)
+    ("viviflongmax", po::value<unsigned long long>(&conf.max_props_vivif_long_irred_cls)->default_value(conf.max_props_vivif_long_irred_cls)
         , "Maximum number of bogoprops(~time) to spend on viviying long irred cls by enqueueing and propagating")
     ("sortwatched", po::value<int>(&conf.doSortWatched)->default_value(conf.doSortWatched)
         , "Sort watches according to size")
@@ -601,11 +601,11 @@ void Main::add_supported_options()
         , "Find components, but do not treat them")
     ("comps", po::value<int>(&conf.doCompHandler)->default_value(conf.doCompHandler)
         , "Perform component-finding and separate handling")
-    ("compsfrom", po::value<uint64_t>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
+    ("compsfrom", po::value<unsigned>(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
         , "Component finding only after this many simplification rounds")
-    ("compsvar", po::value<uint64_t>(&conf.compVarLimit)->default_value(conf.compVarLimit)
+    ("compsvar", po::value<size_t>(&conf.compVarLimit)->default_value(conf.compVarLimit)
         , "Only use components in case the number of variables is below this limit")
-    ("compslimit", po::value<uint64_t>(&conf.compFindLimitMega)->default_value(conf.compFindLimitMega)
+    ("compslimit", po::value<unsigned long long>(&conf.compFindLimitMega)->default_value(conf.compFindLimitMega)
         , "Limit how much time is spent in component-finding");
 
     p.add("input", 1);
@@ -815,20 +815,20 @@ void Main::handle_drup_option()
 
 void Main::parse_cleaning_type()
 {
-    if (typeclean == getNameOfCleanType(ClauseCleaningTypes::glue_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::glue_based;
+    if (typeclean == getNameOfCleanType(clean_glue_based)) {
+        conf.clauseCleaningType = clean_glue_based;
 
-    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::size_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::size_based;
+    } else if (typeclean == getNameOfCleanType(clean_size_based)) {
+        conf.clauseCleaningType = clean_size_based;
 
-    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_prop_confl_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::sum_prop_confl_based;
+    } else if (typeclean == getNameOfCleanType(clean_sum_prop_confl_based)) {
+        conf.clauseCleaningType = clean_sum_prop_confl_based;
 
-    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_confl_depth_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::sum_confl_depth_based;
+    } else if (typeclean == getNameOfCleanType(clean_sum_confl_depth_based)) {
+        conf.clauseCleaningType = clean_sum_confl_depth_based;
 
-    } else if (typeclean == getNameOfCleanType(ClauseCleaningTypes::sum_activity_based)) {
-        conf.clauseCleaningType = ClauseCleaningTypes::sum_activity_based;
+    } else if (typeclean == getNameOfCleanType(clean_sum_activity_based)) {
+        conf.clauseCleaningType = clean_sum_activity_based;
 
     } else {
         std::cerr
@@ -842,10 +842,10 @@ void Main::parse_cleaning_type()
 
 void Main::parse_var_elim_strategy()
 {
-    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
-        conf.var_elim_strategy = ElimStrategy::heuristic;
-    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
-        conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+    if (var_elim_strategy == getNameOfElimStrategy(elimstrategy_heuristic)) {
+        conf.var_elim_strategy = elimstrategy_heuristic;
+    } else if (var_elim_strategy == getNameOfElimStrategy(elimstrategy_calculate_exactly)) {
+        conf.var_elim_strategy = elimstrategy_calculate_exactly;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"
@@ -861,13 +861,13 @@ void Main::parse_restart_type()
     if (vm.count("restart")) {
         string type = vm["restart"].as<string>();
         if (type == "geom")
-            conf.restartType = Restart::geom;
+            conf.restartType = restart_type_geom;
         else if (type == "glue")
-            conf.restartType = Restart::glue;
+            conf.restartType = restart_type_glue;
         else if (type == "agility")
-            conf.restartType = Restart::agility;
+            conf.restartType = restart_type_agility;
         else if (type == "glueagility")
-            conf.restartType = Restart::glue_agility;
+            conf.restartType = restart_type_glue_agility;
         else throw WrongParam("restart", "unknown restart type");
     }
 }
@@ -877,10 +877,10 @@ void Main::parse_polarity_type()
     if (vm.count("polar")) {
         string mode = vm["polar"].as<string>();
 
-        if (mode == "true") conf.polarity_mode = PolarityMode::pos;
-        else if (mode == "false") conf.polarity_mode = PolarityMode::neg;
-        else if (mode == "rnd") conf.polarity_mode = PolarityMode::rnd;
-        else if (mode == "auto") conf.polarity_mode = PolarityMode::automatic;
+        if (mode == "true") conf.polarity_mode = polarmode_pos;
+        else if (mode == "false") conf.polarity_mode = polarmode_neg;
+        else if (mode == "rnd") conf.polarity_mode = polarmode_rnd;
+        else if (mode == "auto") conf.polarity_mode = polarmode_automatic;
         else throw WrongParam(mode, "unknown polarity-mode");
     }
 }

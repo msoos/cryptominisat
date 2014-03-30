@@ -33,12 +33,12 @@ SolverConf::SolverConf() :
         , random_var_freq_increase_for(0)
         , random_var_freq_for_top_N(0)
         , random_picks_from_top_T(20)
-        , polarity_mode(PolarityMode::automatic)
+        , polarity_mode(polarmode_automatic)
         , do_calc_polarity_first_time(true)
         , do_calc_polarity_every_time(true)
 
         //Clause cleaning
-        , clauseCleaningType(ClauseCleaningTypes::sum_prop_confl_based)
+        , clauseCleaningType(clean_sum_prop_confl_based)
         , clean_confl_multiplier(1ULL)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
@@ -59,7 +59,7 @@ SolverConf::SolverConf() :
         , restart_first(300)
         , restart_inc(2)
         , burstSearchLen(300)
-        , restartType(Restart::automatic)
+        , restartType(restart_type_automatic)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
@@ -122,7 +122,7 @@ SolverConf::SolverConf() :
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
-        , var_elim_strategy  (ElimStrategy::heuristic)
+        , var_elim_strategy  (elimstrategy_heuristic)
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
         , do_bounded_variable_addition(true)
@@ -188,7 +188,7 @@ SolverConf::SolverConf() :
 
         //Gates
         , doGateFind       (true)
-        , maxGateSize      (20)
+        //, maxGateSize      (20)
         , maxGateBasedClReduceSize(20)
 
         , doCalcReach      (true)

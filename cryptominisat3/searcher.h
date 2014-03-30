@@ -703,7 +703,7 @@ class Searcher : public HyperEngine
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
             uint64_t numAgilityNeedRestart;
-            Restart rest_type = Restart::never;
+            Restart rest_type = restart_type_never;
         };
         SearchParams params;
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
