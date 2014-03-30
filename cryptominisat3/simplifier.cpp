@@ -1774,8 +1774,14 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             if (solver->redundant(*it2))
                 continue;
 
-            if (skip_resolution_thanks_to_gate(at_poss, at_negs))
+            if (solver->conf.otfHyperbin
+                //Below: Always resolve binaries so that cache&stamps stay OK
+                && !(it->isBinary() && it2->isBinary())
+                //Real check
+                && skip_resolution_thanks_to_gate(at_poss, at_negs)
+            ) {
                 continue;
+            }
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
