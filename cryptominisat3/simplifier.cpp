@@ -1553,7 +1553,9 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     }
 
     //Too expensive to check, it's futile
-    if (pos.totalCls() >= 40 && neg.totalCls() >= 40) {
+    if (pos.totalCls() >= solver->conf.varelim_cutoff_too_many_clauses
+        && neg.totalCls() >= solver->conf.varelim_cutoff_too_many_clauses
+    ) {
         return 1000;
     }
 
