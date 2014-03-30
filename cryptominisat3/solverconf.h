@@ -288,8 +288,6 @@ class SolverConf
         bool      needResultFile;     ///<If set to TRUE, result will be written to a file
         std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
         uint32_t  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
-
-        int printAllRestarts;
         uint32_t origSeed;
 };
 

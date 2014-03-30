@@ -1999,8 +1999,7 @@ void Searcher::print_restart_stat()
 {
     //Print restart stat
     if (conf.verbosity >= 2
-        && ((lastRestartPrint + 2000) < stats.conflStats.numConflicts
-            || conf.printAllRestarts)
+        && ((lastRestartPrint + 2000) < stats.conflStats.numConflicts)
     ) {
         //Print restart output header
         if (lastRestartPrintHeader == 0
