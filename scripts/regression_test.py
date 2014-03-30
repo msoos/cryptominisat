@@ -160,7 +160,7 @@ class Tester:
         cmd += "--gluehist %s " % random.randint(1,500)
         cmd += "--updateglue %s " % random.randint(0,1)
         cmd += "--otfhyper %s " % random.randint(0,1)
-        cmd += "--clean %s " % random.choice(["size", "glue", "activity", "propconfl"])
+        cmd += "--clean %s " % random.choice(["size", "glue", "activity", "prconf"])
         cmd += "--preclean %s " % random.randint(0,1)
         cmd += "--precleanlim %s " % random.randint(0,10)
         cmd += "--precleantime %s " % random.randint(0,20000)
@@ -176,10 +176,9 @@ class Tester:
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
-        cmd += "--elimstrategy %s " % random.choice(["heuristic", "calculate"])
-        cmd += "--elimcomplexupdate %s " % random.randint(0,1)
+        cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
+        cmd += "--elimcplxupd %s " % random.randint(0,1)
         cmd += "--occredmax %s " % random.randint(0,100)
-        cmd += "--asymmte %s " % random.randint(0,1)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)
         cmd += "--vivif %s " % random.randint(0,1)
@@ -203,10 +202,6 @@ class Tester:
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0,1))
 
-            cmd += "--maxgatesz %d " % random.randint(3,20)
-
-
-
         return cmd
 
     def execute(self, fname, newVar=False, needToLimitTime=False, fnameDrup=None, extraOptions=""):
@@ -225,7 +220,7 @@ class Tester:
             command += "--verb 0 "
         if newVar :
             command += "--debugnewvar "
-        command += "--threads=%d " % options.num_threads
+        #command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += extraOptions
         command += fname
