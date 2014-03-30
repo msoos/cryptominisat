@@ -117,7 +117,6 @@ public:
             //Time
             , linkInTime(0)
             , blockTime(0)
-            , asymmTime(0)
             , varElimTime(0)
             , finalCleanupTime(0)
 
@@ -128,7 +127,6 @@ public:
             , origNumRedLongClauses(0)
 
             //Each algo
-            , asymmSubs(0)
             , subsumedByVE(0)
 
             //Elimination
@@ -153,7 +151,7 @@ public:
 
         double totalTime() const
         {
-            return linkInTime + blockTime + asymmTime
+            return linkInTime + blockTime
                 + varElimTime + finalCleanupTime;
         }
 
@@ -170,7 +168,6 @@ public:
             //Time
             linkInTime += other.linkInTime;
             blockTime += other.blockTime;
-            asymmTime += other.asymmTime;
             varElimTime += other.varElimTime;
             finalCleanupTime += other.finalCleanupTime;
 
@@ -181,7 +178,6 @@ public:
             origNumRedLongClauses += other.origNumRedLongClauses;
 
             //Each algo
-            asymmSubs += other.asymmSubs;
             subsumedByVE  += other.subsumedByVE;
 
             //Elim
@@ -299,9 +295,6 @@ public:
                 , "% aggressively"
             );
 
-            printStatsLine("c asymmSub"
-                , asymmSubs);
-
             printStatsLine("c elim-bin-lt-cl"
                 , binRedClRemThroughElim);
 
@@ -340,7 +333,6 @@ public:
         //Time stats
         double linkInTime;
         double blockTime;
-        double asymmTime;
         double varElimTime;
         double finalCleanupTime;
 
@@ -351,7 +343,6 @@ public:
         uint64_t origNumRedLongClauses;
 
         //Each algorithm
-        uint64_t asymmSubs;
         uint64_t subsumedByVE;
 
         //Stats for var-elim
@@ -414,7 +405,6 @@ private:
     int64_t  norm_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
-    int64_t  asymm_time_limit;
     int64_t  aggressive_elim_time_limit;
     int64_t bounded_var_elim_time_limit;
     int64_t* limit_to_decrease;
@@ -705,7 +695,6 @@ private:
 
     /////////////////////
     //Blocked clause elimination
-    void asymmTE();
     bool anythingHasBeenBlocked;
     vector<BlockedClause> blockedClauses;
     map<Var, vector<size_t> > blk_var_to_cl;

@@ -1017,10 +1017,6 @@ bool Simplifier::simplify()
     }
     #endif
 
-    /*if (solver->conf.doAsymmTE) {
-        asymmTE();
-    }*/
-
     if (!propagate()) {
         goto end;
     }
@@ -1288,144 +1284,6 @@ void Simplifier::sanityCheckElimedVars()
     }
 }
 
-void Simplifier::asymmTE()
-{
-    assert(false && "asymmTE has a bug (unknown), cannot be used");
-    //Random system would die here
-    if (clauses.empty())
-        return;
-
-    blockedMapBuilt = false;
-
-    const double myTime = cpuTime();
-    uint32_t asymmSubsumed = 0;
-    uint32_t removed = 0;
-    size_t wenThrough = 0;
-
-    vector<Lit> tmpCl;
-    limit_to_decrease = &asymm_time_limit;
-    while(*limit_to_decrease > 0
-        && wenThrough < 2*clauses.size()
-    ) {
-        *limit_to_decrease -= 2;
-        wenThrough++;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 10000 == 0
-        ) {
-            cout << "toDecrease: " << *limit_to_decrease << endl;
-        }
-
-        size_t num = solver->mtrand.randInt(clauses.size()-1);
-        ClOffset offset = clauses[num];
-        Clause& cl = *solver->clAllocator.getPointer(offset);
-
-        //Already removed or redundant
-        if (cl.getFreed() || cl.red())
-            continue;
-
-
-        *limit_to_decrease -= (long)cl.size()*2;
-
-        //Fill tmpCl, seen
-        tmpCl.clear();
-        for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            seen[l->toInt()] = true;
-            tmpCl.push_back(*l);
-        }
-
-        //add to tmpCl literals that could be added through reverse strengthening
-        //ONLY irred
-        //TODO stamping
-        /*for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
-            *toDecrease -= cache.size();
-            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                if (cacheLit->getOnlyIrredBin()
-                    && !seen[(~cacheLit->getLit()).toInt()]
-                ) {
-                    const Lit toAdd = ~(cacheLit->getLit());
-                    tmpCl.push_back(toAdd);
-                    seen[toAdd.toInt()] = true;
-                }
-            }
-        }*/
-
-
-        //subsumption with binary clauses
-        bool toRemove = false;
-        if (solver->conf.doExtBinSubs) {
-            //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
-//            for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-
-                //TODO stamping
-                /*const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
-                *toDecrease -= cache.size();
-                for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                    if ((cacheLit->getOnlyIrredBin() || cl.red()) //subsume irred with irred
-                        && seen[cacheLit->getLit().toInt()]
-                    ) {
-                        toRemove = true;
-                        asymmSubsumed++;
-                        #ifdef VERBOSE_DEBUG_ASYMTE
-                        cout << "c AsymLitAdd removing: " << cl << endl;
-                        #endif
-                        goto next;
-                    }
-                }*/
-//            }
-        }
-
-        if (cl.red())
-            goto next;
-
-        /*
-        //subsumption with irred larger clauses
-        CL_ABST_TYPE abst;
-        abst = calcAbstraction(tmpCl);
-        *toDecrease -= tmpCl.size()*2;
-        for (vector<Lit>::const_iterator it = tmpCl.begin(), end = tmpCl.end(); it != end; it++) {
-            const Occur& occ = occur[it->toInt()];
-            *toDecrease -= occ.size();
-            for (Occur::const_iterator it2 = occ.begin(), end2 = occ.end(); it2 != end2; it2++) {
-                if (it2->index != index
-                    && subsetAbst(clauseData[it2->index].abst, abst)
-                    && clauses[it2->index] != NULL
-                    && !clauses[it2->index]->red()
-                    && subsetReverse(*clauses[it2->index])
-                )  {
-                    #ifdef VERBOSE_DEBUG_ASYMTE
-                    cout << "c AsymTE removing: " << cl << " -- subsumed by cl: " << *clauses[it2->index] << endl;
-                    #endif
-                    toRemove = true;
-                    goto next;
-                }
-            }
-        }*/
-
-        next:
-        if (toRemove) {
-            unlinkClause(offset);
-            removed++;
-        }
-
-        //Clear seen
-        for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
-            seen[l->toInt()] = false;
-        }
-    }
-
-    if (solver->conf.verbosity >= 1) {
-        cout << "c AsymmTElim"
-        << " asymm subsumed: " << asymmSubsumed
-        << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
-        << endl;
-    }
-    runStats.asymmSubs += asymmSubsumed;
-    runStats.asymmTime += cpuTime() - myTime;
-}
-
 void Simplifier::setLimits()
 {
     subsumption_time_limit     = 850LL*1000LL*1000LL;
@@ -1433,7 +1291,6 @@ void Simplifier::setLimits()
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*1000LL;
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
-    asymm_time_limit           = 40LL *1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
     bounded_var_elim_time_limit= 400LL *1000LL*1000LL;
 
@@ -2275,14 +2132,11 @@ bool Simplifier::resolve_clauses(
     bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
     toClear = dummy;
 
-    if (!tautological && aggressive
-        && solver->conf.doAsymmTE
-    ) {
+    if (!tautological && aggressive) {
         tautological = reverse_vivification_of_dummy(ps, qs, posLit);
     }
 
     if (!tautological && aggressive
-        && solver->conf.doAsymmTE
         && solver->conf.doStamp
     ) {
         tautological = subsume_dummy_through_stamping(ps, qs);

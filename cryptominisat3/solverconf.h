@@ -243,7 +243,6 @@ class SolverConf
         int      regularly_simplify_problem;
         int      perform_occur_based_simp;
         int      doSubsume1;         ///<Perform self-subsuming resolution
-        int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
         unsigned maxRedLinkInSize;
         uint64_t maxOccurIrredMB;
         uint64_t maxOccurRedMB;
