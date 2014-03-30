@@ -111,22 +111,10 @@ class SolverConf
         uint32_t  var_inc_multiplier;
         uint32_t  var_inc_divider;
         uint32_t  var_inc_variability;
-        /**
-         * The frequency with which the decision heuristic tries to choose
-         * a random variable.
-         * This is really strange. If the number of variables set is large
-         * , then the random chance is in fact _far_ lower than this value.
-         * This is because the algorithm tries to set one variable randomly,
-         * but if that variable is already set, then it _silently_ fails
-         * , and moves on (doing non-random flip)!
-        **/
         double random_var_freq;
         uint32_t random_var_freq_increase_for;
         double random_var_freq_for_top_N;
         uint32_t random_picks_from_top_T;
-        /**
-         * Controls which polarity the decision heuristic chooses.
-        **/
         PolarityMode polarity_mode;
         int do_calc_polarity_first_time;
         int do_calc_polarity_every_time;
