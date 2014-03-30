@@ -396,6 +396,7 @@ private:
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()
+    vector<Lit>     gate_lits_of_elim_cls;
 
     //Limits
     uint64_t clause_lits_added;
@@ -511,12 +512,26 @@ private:
     bool        maybeEliminate(const Var x);
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(Var var);
+    void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
+    void        mark_gate_parts(
+        Lit elim_lit
+        , watch_subarray_const a
+        , watch_subarray_const b
+        , vector<char>& a_mark
+        , vector<char>& b_mark
+    );
+    bool        find_gate(Lit elim_lit, watch_subarray_const a, watch_subarray_const b);
+    bool        skip_resolution_thanks_to_gate(const size_t at_poss, const size_t at_negs) const;
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
     bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const Var var);
     void        print_var_elim_complexity_stats(const Var var) const;
     vector<pair<vector<Lit>, ClauseStats> > resolvents;
+    vector<char> poss_gate_parts;
+    vector<char> negs_gate_parts;
+    bool gate_found_elim;
+    bool gate_found_elim_pos;
 
     struct HeuristicData
     {

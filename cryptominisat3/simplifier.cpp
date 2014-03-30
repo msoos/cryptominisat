@@ -1519,6 +1519,192 @@ uint32_t Simplifier::numIrredBins(const Lit lit) const
     return num;
 }
 
+bool Simplifier::find_gate(
+    Lit elim_lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+) {
+    bool found_better = false;
+    assert(toClear.empty());
+    for(const Watched w: a) {
+        if (w.isBinary()
+            && !w.red()
+        ) {
+            seen[(~w.lit2()).toInt()] = 1;
+            toClear.push_back(~w.lit2());
+        }
+    }
+
+    for(const Watched w: b) {
+        if (w.isBinary()
+            || (w.isTri() && w.red())
+        ) {
+            continue;
+        }
+
+        if (w.isTri() && gate_lits_of_elim_cls.size() < 2) {
+            gate_lits_of_elim_cls.clear();
+            assert(!w.red());
+            if (seen[w.lit2().toInt()] && seen[w.lit3().toInt()]) {
+                gate_lits_of_elim_cls.push_back(w.lit2());
+                gate_lits_of_elim_cls.push_back(w.lit3());
+                found_better = true;
+            }
+        }
+
+        if (w.isClause()) {
+            const Clause* cl = solver->clAllocator.getPointer(w.getOffset());
+            assert(cl->size() > 3);
+            if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
+                bool OK = true;
+                for(const Lit lit: *cl) {
+                    if (lit != ~elim_lit) {
+                        if (!seen[lit.toInt()]) {
+                            OK = false;
+                            break;
+                        }
+                    }
+                }
+
+                //Found all lits inside
+                if (OK) {
+                    gate_lits_of_elim_cls.clear();
+                    for(const Lit lit: *cl) {
+                        if (lit != ~elim_lit) {
+                            gate_lits_of_elim_cls.push_back(lit);
+                        }
+                    }
+                    found_better = true;
+                }
+            }
+        }
+    }
+
+    for(Lit l: toClear) {
+        seen[l.toInt()] = 0;
+    }
+    toClear.clear();
+
+    return found_better;
+}
+
+void Simplifier::mark_gate_in_poss_negs(
+    Lit elim_lit
+    , watch_subarray_const poss
+    , watch_subarray_const negs
+)
+{
+    gate_found_elim = false;
+    gate_lits_of_elim_cls.clear();
+    find_gate(elim_lit, poss, negs);
+    gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+    if (!gate_lits_of_elim_cls.empty()
+        && solver->conf.verbosity >= 10
+    ) {
+        cout
+        << "Lit: " << elim_lit
+        << " gate_lits_of_elim_cls.size():" << gate_lits_of_elim_cls << endl
+        << " gate_found_elim_pos:" << gate_found_elim_pos
+        << endl;
+    }
+    if (!gate_lits_of_elim_cls.empty()) {
+        gate_found_elim = true;
+        if (!gate_found_elim_pos) {
+            mark_gate_parts(elim_lit, poss, negs, poss_gate_parts, negs_gate_parts);
+        } else {
+            mark_gate_parts(~elim_lit, negs, poss, negs_gate_parts, poss_gate_parts);
+        }
+    }
+}
+
+void Simplifier::mark_gate_parts(
+    Lit elim_lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+    , vector<char>& a_mark
+    , vector<char>& b_mark
+) {
+    a_mark.clear();
+    a_mark.resize(a.size(), 0);
+    b_mark.clear();
+    b_mark.resize(b.size(), 0);
+
+    for(Lit lit: gate_lits_of_elim_cls) {
+        seen[lit.toInt()] = 1;
+    }
+
+    size_t num_found = 0;
+    size_t at = 0;
+    for(Watched w: a) {
+        if (w.isBinary()
+            && !w.red()
+            && seen[(~w.lit2()).toInt()]
+        ) {
+            num_found++;
+            a_mark[at] = 1;
+        }
+        at++;
+    }
+    assert(num_found >= gate_lits_of_elim_cls.size()
+        && "We have to find all, but there could be multiple that are the same"
+        //NOTE: this is not a precise check but it's better than nothing
+    );
+
+    at = 0;
+    num_found = 0;
+    for(Watched w: b) {
+        if (gate_lits_of_elim_cls.size() == 2
+            && w.isTri()
+            && !w.red()
+            && seen[w.lit2().toInt()]
+            && seen[w.lit3().toInt()]
+        ) {
+            b_mark[at] = 1;
+            num_found++;
+        }
+
+        if (gate_lits_of_elim_cls.size() >= 3
+            && w.isClause()
+        ) {
+            const Clause* cl = solver->clAllocator.getPointer(w.getOffset());
+            if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
+                bool found_it = true;
+                for(const Lit lit: *cl) {
+                    if (lit != ~elim_lit) {
+                        if (!seen[lit.toInt()]) {
+                            found_it = false;
+                            break;
+                        }
+                    }
+                }
+                if (found_it) {
+                    b_mark[at] = 1;
+                    num_found++;
+                }
+            }
+        }
+        at++;
+    }
+    assert(num_found >= 1
+        && "We have to find the matching gate clause. But there could be multiple matching"
+    );
+
+    for(Lit lit: gate_lits_of_elim_cls) {
+        seen[lit.toInt()] = 0;
+    }
+}
+
+bool Simplifier::skip_resolution_thanks_to_gate(
+    const size_t at_poss
+    , const size_t at_negs
+) const {
+    if (!gate_found_elim)
+        return false;
+
+    if (poss_gate_parts[at_poss] == negs_gate_parts[at_negs])
+        return true;
+}
+
 int Simplifier::test_elim_and_fill_resolvents(const Var var)
 {
     assert(solver->ok);
@@ -1559,6 +1745,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return 1000;
     }
 
+    mark_gate_in_poss_negs(lit, poss, negs);
+
     // Count clauses/literals after elimination
     uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
     uint32_t after_clauses = 0;
@@ -1566,22 +1754,28 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     uint32_t after_bin = 0;
     uint32_t after_tri = 0;
     uint32_t after_literals = 0;
+
+    size_t at_poss = 0;
     for (watch_subarray::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
-        ; it++
+        ; it++, at_poss++
     ) {
         *limit_to_decrease -= 3;
         if (solver->redundant(*it))
             continue;
 
+        size_t at_negs = 0;
         for (watch_subarray::const_iterator
             it2 = negs.begin(), end2 = negs.end()
             ; it2 != end2
-            ; it2++
+            ; it2++, at_negs++
         ) {
             *limit_to_decrease -= 3;
             if (solver->redundant(*it2))
+                continue;
+
+            if (skip_resolution_thanks_to_gate(at_poss, at_negs))
                 continue;
 
             //Resolve the two clauses
@@ -2590,6 +2784,9 @@ void Simplifier::checkElimedUnassignedAndStats() const
 size_t Simplifier::memUsed() const
 {
     size_t b = 0;
+    b += poss_gate_parts.capacity()*sizeof(char);
+    b += negs_gate_parts.capacity()*sizeof(char);
+    b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
     b += seen.capacity()*sizeof(char);
     b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);
