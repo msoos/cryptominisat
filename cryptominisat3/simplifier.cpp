@@ -961,6 +961,7 @@ void Simplifier::checkAllLinkedIn()
 bool Simplifier::simplify()
 {
     assert(solver->okay());
+    assert(toClear.empty());
 
     //Test & debug
     solver->testAllClauseAttach();
@@ -2127,7 +2128,7 @@ bool Simplifier::resolve_clauses(
     }
 
     dummy.clear();
-    toClear.clear();
+    assert(toClear.empty());
     add_pos_lits_to_dummy_and_seen(ps, posLit);
     bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
     toClear = dummy;
@@ -2146,6 +2147,7 @@ bool Simplifier::resolve_clauses(
     for (const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
+    toClear.clear();
 
     return tautological;
 }

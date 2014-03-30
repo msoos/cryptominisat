@@ -686,7 +686,7 @@ Clause* Searcher::analyze_conflict(
 ) {
     //Set up environment
     learnt_clause.clear();
-    toClear.clear();
+    assert(toClear.empty());
     lastDecisionLevel.clear();
     otf_subsuming_short_cls.clear();
     otf_subsuming_long_cls.clear();

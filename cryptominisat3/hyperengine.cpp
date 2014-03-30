@@ -846,7 +846,7 @@ Lit HyperEngine::deepestCommonAcestor()
 {
     //Then, we go back on each ancestor recursively, and exit on the first one
     //that unifies ALL the previous ancestors. That is the lowest common ancestor
-    toClear.clear();
+    assert(toClear.empty());
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
@@ -906,6 +906,7 @@ Lit HyperEngine::deepestCommonAcestor()
     for(const Lit lit: toClear) {
         seen[lit.toInt()] = 0;
     }
+    toClear.clear();
 
     return foundLit;
 }
