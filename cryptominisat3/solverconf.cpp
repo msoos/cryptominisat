@@ -118,6 +118,7 @@ SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
+        , varelim_cutoff_too_many_clauses(40)
         , do_empty_varelim (true)
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)

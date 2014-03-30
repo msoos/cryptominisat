@@ -199,7 +199,7 @@ class SolverConf
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
-        unsigned varelim_cutoff_too_many_clauses(40);
+        unsigned varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
         int      updateVarElimComplexityOTF;
         unsigned updateVarElimComplexityOTF_limitvars;
