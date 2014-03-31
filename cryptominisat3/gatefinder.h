@@ -176,7 +176,7 @@ private:
         , const Lit lit2
     );
 
-    bool doAllOptimisationWithGates();
+    bool all_simplifications_with_gates();
     bool shortenWithOrGate(const OrGate& gate);
     size_t findEqOrGates();
 

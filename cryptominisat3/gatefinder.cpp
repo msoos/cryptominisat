@@ -50,7 +50,7 @@ bool GateFinder::doAll()
     clearIndexes();
 
     find_or_gates_and_update_stats();
-    if (!doAllOptimisationWithGates())
+    if (!all_simplifications_with_gates())
         goto end;
 
     if (solver->conf.doPrintGateDot)
@@ -130,7 +130,7 @@ void GateFinder::clearIndexes()
         gateOccEq[i].clear();
 }
 
-bool GateFinder::doAllOptimisationWithGates()
+bool GateFinder::all_simplifications_with_gates()
 {
     assert(solver->ok);
 
