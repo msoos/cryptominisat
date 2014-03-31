@@ -101,8 +101,7 @@ struct ClauseStats
     uint64_t numPropAndConfl(const uint64_t confl_multiplier) const
     {
         return (uint64_t)propagations_made
-        + (uint64_t)conflicts_made*confl_multiplier
-        + (uint64_t)used_for_uip_creation;
+        + (uint64_t)conflicts_made*confl_multiplier;
     }
 
     double confl_usefulness() const
