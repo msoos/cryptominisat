@@ -164,11 +164,12 @@ private:
     //Setup
     void clearIndexes();
     void link_in_gate(const OrGate& gate);
+    void add_gate_if_not_already_inside(Lit eqLit, Lit lit1, Lit lit2);
+    void or_gates_in_sweep_mode(Lit lit);
 
     //Finding
-    void findOrGates();
-    bool any_literal_has_zero_cache_and_watch(const Watched ws) const;
-    void findOrGates_real();
+    void find_or_gates_and_update_stats();
+    void find_or_gates();
     void findOrGate(
         const Lit eqLit
         , const Lit lit1
@@ -308,6 +309,7 @@ private:
     Solver *solver;
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
+    vector<Lit>& toClear;
 };
 
 inline const GateFinder::Stats& GateFinder::getStats() const
