@@ -1,5 +1,5 @@
 ===========================================
-pycryptosat: bindings to picosat (a SAT solver)
+pycryptosat: bindings to the CryptoMiniSat SAT solver
 ===========================================
 
 This package provides Python bindings to CryptoMiniSat on the C++ level,
