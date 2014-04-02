@@ -18,7 +18,6 @@ namespace CMSat {
         lbool solve(std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
-        const std::vector<Lit>& get_unitary_clauses() const;
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         unsigned long get_sql_id() const;
 
