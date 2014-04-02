@@ -93,7 +93,7 @@ public:
         return assigns[p.var()] ^ p.sign();
     }
 
-    bool redundant(const Watched& ws) const;
+    bool redundant(const Watched& ws, bool locked_is_redundant = true) const;
     size_t cl_size(const Watched& ws) const;
     string watched_to_string(Lit otherLit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;

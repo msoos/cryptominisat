@@ -432,8 +432,12 @@ void Main::add_supported_options()
         , "How simple strategy (guessing, above) is calculated. Valid values: [0..1]")
     ("subsume1", po::value<int>(&conf.doSubsume1)->default_value(conf.doSubsume1)
         , "Perform clause contraction through resolution")
-    ("bva", po::value<int>(&conf.do_bounded_variable_addition)->default_value(conf.do_bounded_variable_addition)
+    ("bva", po::value<int>(&conf.do_bva)->default_value(conf.do_bva)
         , "Perform bounded variable addition")
+    ("bvared", po::value<int>(&conf.bva_also_red)->default_value(conf.bva_also_red)
+        , "BVA on redundant clauses, too")
+    ("bva2lit", po::value<int>(&conf.bva_also_twolit_diff)->default_value(conf.bva_also_twolit_diff)
+        , "BVA with 2-lit difference hack, too. Beware, this reduces the effectiveness of 1-lit diff")
     ("noextbinsubs", po::value<int>(&conf.doExtBinSubs)->default_value(conf.doExtBinSubs)
         , "No extended subsumption with binary clauses")
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
@@ -767,13 +771,13 @@ void Main::handle_drup_option()
         drupf = drupfTmp;
     }
 
-    if (conf.do_bounded_variable_addition) {
+    if (conf.do_bva) {
         if (conf.verbosity >= 2) {
             cout
             << "c BVA is not allowed for DRUP. Turning it off."
             << endl;
         }
-        conf.do_bounded_variable_addition = false;
+        conf.do_bva = false;
     }
 
     if (!conf.otfHyperbin) {

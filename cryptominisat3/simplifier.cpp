@@ -3026,8 +3026,12 @@ void Simplifier::fill_potential(const Lit lit)
             //cout << "Under scrutiny: "<< solver->watched_to_string(d.lit, d.ws) << endl;
             if (c.ws != d.ws
                 && (solver->cl_size(c.ws) == solver->cl_size(d.ws)
-                    || solver->cl_size(c.ws)+1 == solver->cl_size(d.ws))
-                && !solver->redundant(d.ws)
+                    || (solver->cl_size(c.ws)+1 == solver->cl_size(d.ws)
+                        && solver->conf.bva_also_twolit_diff
+                        && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start
+                    )
+                )
+                && !solver->redundant(d.ws, solver->conf.bva_also_red && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start)
                 && lit_diff_watches(c, d) == lit
             ) {
                 const lit_pair diff = lit_diff_watches(d, c);
@@ -3093,7 +3097,7 @@ bool Simplifier::bounded_var_addition()
 {
     bva_verbosity = false;
     assert(solver->ok);
-    if (!solver->conf.do_bounded_variable_addition)
+    if (!solver->conf.do_bva)
         return solver->okay();
 
     if (solver->conf.verbosity >= 3 || bva_verbosity) {
@@ -3143,6 +3147,8 @@ bool Simplifier::bounded_var_addition()
         cout
         << "c [bva] added: " << bva_worked
         << " simp: " << bva_simp_size
+        << " 2lit: " << ((solver->conf.bva_also_twolit_diff && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
+        << " red: " << ((solver->conf.bva_also_twolit_diff && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" :"N")
         << " T: " << time_used
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << time_remain*100.0  << "%"
@@ -3234,10 +3240,15 @@ void Simplifier::remove_duplicates_from_m_cls()
         }
 
         bool del = false;
+        bool mark_irred = false;
         switch(prev.getType()) {
             case CMSat::watch_binary_t: {
-                if (prev.lit2() == next.lit2())
+                if (prev.lit2() == next.lit2()) {
                     del = true;
+                    if (del && !prev.red() && next.red()) {
+                        mark_irred = true;
+                    }
+                }
                 break;
             }
 
@@ -3268,6 +3279,9 @@ void Simplifier::remove_duplicates_from_m_cls()
 
         if (!del) {
             m_cls[j+1] = m_cls[i+1];
+            //if (mark_irred) {
+            //    m_cls[j+1].ws.setRed(false);
+            //}
             j++;
         }
     }
@@ -3290,7 +3304,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     m_lits.clear();
     m_lits.push_back(lit);
     for(const Watched w: solver->watches[lit.toInt()]) {
-        if (!solver->redundant(w)) {
+        if (!solver->redundant(w, solver->conf.bva_also_red && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start)) {
             m_cls.push_back(OccurClause(lit, w));
             if (solver->conf.verbosity >= 6 || bva_verbosity) {
                 cout << "1st adding to m_cls "
@@ -3475,13 +3489,20 @@ void Simplifier::remove_matching_clause(
     touched.touch(to_remove);
 
     switch(to_remove.size()) {
-        case 2:
-            solver->detachBinClause(to_remove[0], to_remove[1], cl_lits_and_red.red);
+        case 2: {
+            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            bool red = findWBin(solver->watches, to_remove[0], to_remove[1], false);
+            solver->detachBinClause(to_remove[0], to_remove[1], !red);
             break;
+        }
 
-        case 3:
-            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], cl_lits_and_red.red);
+        case 3: {
+            std::sort(to_remove.begin(), to_remove.end());
+            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            bool red = findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
+            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], !red);
             break;
+        }
 
         default:
             Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);

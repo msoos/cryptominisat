@@ -207,7 +207,10 @@ class SolverConf
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
-        int      do_bounded_variable_addition;
+        int      do_bva;
+        int      bva_also_red;
+        int      bva_also_twolit_diff;
+        int      bva_extra_lit_and_red_start;
 
         //Probing
         int      doProbe;

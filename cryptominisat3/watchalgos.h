@@ -77,6 +77,31 @@ static inline Watched& findWatchedOfTri(
     return *ws.begin();
 }
 
+static inline bool findWTri(
+    const watch_array& wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const bool red
+) {
+    watch_subarray_const ws = wsFull[lit1.toInt()];
+    for (watch_subarray_const::const_iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->isTri()
+            && it->lit2() == lit2
+            && it->lit3() == lit3
+            && it->red() == red
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static inline const Watched& findWatchedOfTri(
     const watch_array& wsFull
     , const Lit lit1
