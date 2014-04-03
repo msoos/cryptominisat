@@ -11,9 +11,9 @@ CryptoMiniSat which is LGPL.
 Usage
 -----
 
-The ``pycryptosat`` module has two functions ``solve`` and ``itersolve``,
-both of which take an iterable of clauses as an argument. Each clause
-is itself represented as an iterable of (non-zero) integers.
+The ``pycryptosat`` module has one object, Solver which has two functions
+``solve`` and ``add_clause``, both of which take a clause as an argument.
+Aclause is represented as an iterable of (non-zero) integers.
 
 The function ``solve`` returns one of the following:
   * one solution (a list of integers)
@@ -21,15 +21,17 @@ The function ``solve`` returns one of the following:
   * the string "UNKNOWN" (when a solution could not be determined within the
     propagation limit)
 
-The function ``itersolve`` returns an iterator over solutions.  When the
-propagation limit is specified, exhausting the iterator may not yield all
-possible solutions.
+The function ``solver`` can take an argument ``assumptions`` that allows
+the user to set values to specific variables in the solver in a temporary
+fashion. This means that in case the problem is satisfiable, but e.g it's
+unsatisfiable if variable 2 is FALSE, then ``solve([-2])`` will return
+UNSAT. However, a subsequent call to ``solve()`` will still return a solution.
+If instead of an assumption ``add_clause`` would have been used, subsequent
+``solve()`` calls would have returned unsatisfiable.
 
-Both functions take the following keyword arguments:
-  * ``prop_limit``: the propagation limit (integer)
-  * ``vars``: number of variables (integer)
+Solver takes the following keyword arguments:
+  * ``confl_limit``: the propagation limit (integer)
   * ``verbose``: the verbosity level (integer)
-
 
 Example
 -------
@@ -54,60 +56,12 @@ corresponds to the Boolean value (+ for True and - for False) and the
 absolute value corresponds to i\ :sup:`th` variable::
 
    >>> import pycryptosat
-   >>> cnf = [[1, -5, 4], [-1, 5, 3, 4], [-3, -4]]
-   >>> pycryptosat.solve(cnf)
+   >>> solver = pycryptosat.Solver()
+   >>> solver.add_clause([1, -5, 4])
+   >>> solver.add_clause([-1, 5, 3, 4])
+   >>> solver.add_clause([-3, -4]])
+   >>> pycryptosat.solve()
    [1, -2, -3, 4, 5]
 
 This solution translates to: x\ :sub:`1` = x\ :sub:`5` = True,
 x\ :sub:`2` = x\ :sub:`3` = x\ :sub:`4` = False
-
-To find all solutions, use ``itersolve``::
-
-   >>> for sol in pycryptosat.itersolve(cnf):
-   ...     print sol
-   ...
-   [1, -2, -3, -4, 5]
-   [1, -2, -3, 4, -5]
-   [1, -2, -3, 4, 5]
-   ...
-   >>> len(list(pycryptosat.itersolve(cnf)))
-   18
-
-In this example, there are a total of 18 possible solutions, which had to
-be an even number because x\ :sub:`2` was left unspecified in the clauses.
-
-The fact that ``itersolve`` returns an iterator, makes it very elegant
-and efficient for many types of operations.  For example, using
-the ``itertools`` module from the standard library, here is how one
-would construct a list of (up to) 3 solutions::
-
-   >>> import itertools
-   >>> list(itertools.islice(pycryptosat.itersolve(cnf), 3))
-   [[1, -2, -3, -4, 5], [1, -2, -3, 4, -5], [1, -2, -3, 4, 5]]
-
-
-Implementation of itersolve
----------------------------
-
-How does one go from having found one solution to another solution?
-The answer is surprisingly simple.  One adds the *inverse* of the already
-found solution as a new clause.  This new clause ensures that another
-solution is searched for, as it *excludes* the already found solution.
-Here is basically a pure Python implementation of ``itersolve`` in terms
-of ``solve``::
-
-   def py_itersolve(clauses): # don't use this function!
-       while True:            # (it is only here to explain things)
-           sol = pycryptosat.solve(clauses)
-           if isinstance(sol, list):
-               yield sol
-               clauses.append([-x for x in sol])
-           else: # no more solutions -- stop iteration
-               return
-
-This implementation has several problems.  Firstly, it is quite slow as
-``pycryptosat.solve`` has to convert the list of clauses over and over and over
-again.  Secondly, after calling ``py_itersolve`` the list of clauses will
-be modified.  In pycryptosat, ``itersolve`` is implemented on the C level,
-making use of the picosat C interface (which makes it much, much faster
-than the naive Python implementation above).
