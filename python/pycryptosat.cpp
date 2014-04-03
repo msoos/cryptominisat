@@ -29,8 +29,6 @@ typedef struct {
     SATSolver* cmsat;
 } Solver;
 
-static int add_clauses(SATSolver *cmsat, PyObject *clauses);
-
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "confl_limit", NULL};
@@ -47,6 +45,36 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 
     SATSolver *cmsat = new SATSolver(conf);
     return cmsat;
+}
+
+static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
+{
+    if (!IS_INT(lit))  {
+        PyErr_SetString(PyExc_TypeError, "integer expected");
+        return 0;
+    }
+
+    long val = PyLong_AsLong(lit);
+    if (val == 0) {
+        PyErr_SetString(PyExc_ValueError, "non-zero integer expected");
+        return 0;
+    }
+    if (val > std::numeric_limits<int>::max()/2
+        || val < std::numeric_limits<int>::min()/2
+    ) {
+        PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", var);
+        return 0;
+    }
+
+    sign = false;
+    if (val < 0) {
+        val *= -1;
+        sign = true;
+    }
+    val--;
+    var = val;
+
+    return 1;
 }
 
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
@@ -66,41 +94,22 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     std::vector<Lit> lits;
     PyObject *lit;
     while ((lit = PyIter_Next(iterator)) != NULL) {
-        if (!IS_INT(lit))  {
-            Py_DECREF(lit);
-            Py_DECREF(iterator);
-            PyErr_SetString(PyExc_TypeError, "integer expected");
-            return 0;
-        }
-        long v = PyLong_AsLong(lit);
+        long var;
+        bool sign;
+        int ret = convert_lit_to_sign_and_var(lit, var, sign);
         Py_DECREF(lit);
-        if (v == 0) {
+        if (!ret) {
             Py_DECREF(iterator);
-            PyErr_SetString(PyExc_ValueError, "non-zero integer expected");
-            return 0;
-        }
-        if (v > std::numeric_limits<int>::max()/2
-            || v < std::numeric_limits<int>::min()/2
-        ) {
-            Py_DECREF(iterator);
-            PyErr_SetString(PyExc_ValueError, "Integer is too small or too large");
             return 0;
         }
 
-        bool sign = false;
-        if (v < 0) {
-            v *= -1;
-            sign = true;
-        }
-        v--;
-
-        if (v >= self->cmsat->nVars()) {
-            for(unsigned long i = self->cmsat->nVars(); i <= v ; i++) {
+        if (var >= self->cmsat->nVars()) {
+            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
                 self->cmsat->new_var();
             }
         }
 
-        lits.push_back(Lit(v, sign));
+        lits.push_back(Lit(var, sign));
     }
     Py_DECREF(iterator);
     if (PyErr_Occurred()) {
@@ -112,29 +121,6 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     Py_INCREF(Py_None);
     return Py_None;
 }
-
-/*static int add_clauses(SATSolver *cmsat, PyObject *clauses)
-{
-    PyObject *iterator;       //clauses can be any iterable
-    PyObject *item;           // each clause is an iterable of intergers
-
-    iterator = PyObject_GetIter(clauses);
-    if (iterator == NULL)
-        return -1;
-
-    while ((item = PyIter_Next(iterator)) != NULL) {
-        if (add_clause(cmsat, item) < 0) {
-            Py_DECREF(item);
-            Py_DECREF(iterator);
-            return -1;
-        }
-        Py_DECREF(item);
-    }
-    Py_DECREF(iterator);
-    if (PyErr_Occurred())
-        return -1;
-    return 0;
-}*/
 
 static PyObject* get_solution(SATSolver *cmsat)
 {
@@ -159,13 +145,61 @@ static PyObject* get_solution(SATSolver *cmsat)
     return list;
 }
 
-static PyObject* solve(Solver *self)
+static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
+    PyObject *iterator = PyObject_GetIter(assumptions);
+    if (iterator == NULL) {
+        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        return 0;
+    }
+
+    PyObject *lit;
+    while ((lit = PyIter_Next(iterator)) != NULL) {
+        long var;
+        bool sign;
+        int ret = convert_lit_to_sign_and_var(lit, var, sign);
+        Py_DECREF(lit);
+        if (!ret) {
+            Py_DECREF(iterator);
+            return 0;
+        }
+
+        if (var >= cmsat->nVars()) {
+            Py_DECREF(iterator);
+            PyErr_Format(PyExc_ValueError, "Variable %ld not used in clauses", var+1);
+            return 0;
+        }
+
+        assumption_lits.push_back(Lit(var, sign));
+    }
+    Py_DECREF(iterator);
+    if (PyErr_Occurred()) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
+{
+    PyObject* assumptions = NULL;
+    static char* kwlist[] = {"assumptions", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+        return NULL;
+    }
+
+    std::vector<Lit> assumption_lits;
+    if (assumptions) {
+        if (!parse_assumption_lits(assumptions, self->cmsat, assumption_lits)) {
+            return 0;
+        }
+    }
+
     PyObject *result = NULL;
 
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
-    res = self->cmsat->solve();
+    res = self->cmsat->solve(&assumption_lits);
     Py_END_ALLOW_THREADS
 
     if (res == l_True) {
@@ -179,32 +213,6 @@ static PyObject* solve(Solver *self)
     return result;
 }
 
-static PyObject* full_solve(PyObject *self, PyObject *args, PyObject *kwds)
-{
-    SATSolver *cmsat;
-    PyObject *result = NULL;
-
-    cmsat = setup_solver(args, kwds);
-    if (cmsat == NULL)
-        return NULL;
-
-    lbool res;
-    Py_BEGIN_ALLOW_THREADS      /* release GIL */
-    res = cmsat->solve();
-    Py_END_ALLOW_THREADS
-
-    if (res == l_True) {
-        result = get_solution(cmsat);
-    } else if (res == l_False) {
-        result = PyUnicode_FromString("UNSAT");
-    } else if (res == l_Undef) {
-        result = PyUnicode_FromString("UNKNOWN");
-    }
-    delete cmsat;
-
-    return result;
-}
-
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
@@ -213,16 +221,10 @@ static PyMethodDef module_methods[] = {
 };
 
 static PyMethodDef Solver_methods[] = {
-    {"solve",     (PyCFunction) solve,       METH_NOARGS, "solves the system"},
+    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a cluse to the system"},
     {NULL,        NULL}  /* sentinel */
 };
-
-PyDoc_STRVAR(module_doc, "\
-pycryptosat: bindings to CryptoMiniSat\n\
-============================\n\n\
-There are two functions in this module, solve and itersolve.\n\
-Please see " PYCRYPTOSAT_URL " for more details.");
 
 static void
 Solver_dealloc(Solver* self)
