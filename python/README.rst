@@ -63,5 +63,5 @@ absolute value corresponds to i\ :sup:`th` variable::
    >>> pycryptosat.solve()
    [1, -2, -3, 4, 5]
 
-This solution translates to: x\ :sub:`1` = x\ :sub:`5` = x\ :sub:`4` = True,
+This solution translates to: x\ :sub:`1` = x\ :sub:`4` = x\ :sub:`5` = True,
 x\ :sub:`2` = x\ :sub:`3` = False
