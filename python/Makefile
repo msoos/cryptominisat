@@ -7,7 +7,10 @@ test: pycryptosat.so
 	$(PYTHON) test_pycryptosat.py
 
 install: pycryptosat.so
-	$(PYTHON) setup.py install
+	$(PYTHON) setup.py install --record files.txt
+
+uninstall: pycryptosat.so
+	cat files.txt | xargs rm
 
 clean:
 	rm -rf build dist *.egg-info
