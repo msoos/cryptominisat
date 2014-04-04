@@ -15,21 +15,21 @@ The ``pycryptosat`` module has one object, Solver which has two functions
 ``solve`` and ``add_clause``, both of which take a clause as an argument.
 Aclause is represented as an iterable of (non-zero) integers.
 
-The function ``solve`` returns one of the following:
+The function ``solve()`` returns one of the following:
   * one solution (a list of integers)
   * the string "UNSAT" (when the clauses are unsatisfiable)
   * the string "UNKNOWN" (when a solution could not be determined within the
     propagation limit)
 
-The function ``solver`` can take an argument ``assumptions`` that allows
+The function ``solve()`` can take an argument ``assumptions`` that allows
 the user to set values to specific variables in the solver in a temporary
 fashion. This means that in case the problem is satisfiable, but e.g it's
 unsatisfiable if variable 2 is FALSE, then ``solve([-2])`` will return
 UNSAT. However, a subsequent call to ``solve()`` will still return a solution.
-If instead of an assumption ``add_clause`` would have been used, subsequent
+If instead of an assumption ``add_clause()`` would have been used, subsequent
 ``solve()`` calls would have returned unsatisfiable.
 
-Solver takes the following keyword arguments:
+``Solver`` takes the following keyword arguments:
   * ``confl_limit``: the propagation limit (integer)
   * ``verbose``: the verbosity level (integer)
 
