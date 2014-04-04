@@ -3240,14 +3240,10 @@ void Simplifier::remove_duplicates_from_m_cls()
         }
 
         bool del = false;
-        bool mark_irred = false;
         switch(prev.getType()) {
             case CMSat::watch_binary_t: {
                 if (prev.lit2() == next.lit2()) {
                     del = true;
-                    if (del && !prev.red() && next.red()) {
-                        mark_irred = true;
-                    }
                 }
                 break;
             }
