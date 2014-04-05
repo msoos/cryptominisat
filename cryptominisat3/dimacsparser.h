@@ -2,8 +2,7 @@
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
-Original code by MiniSat authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
+File under MIT licence.
 ******************************************************************************/
 
 #ifndef DIMACSPARSER_H

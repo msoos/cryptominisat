@@ -2,8 +2,7 @@
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
-Original code by MiniSat authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
+File under MIT licence
 ******************************************************************************/
 
 #include "dimacsparser.h"
@@ -325,11 +324,9 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 
     if (solver->get_conf().verbosity >= 1) {
         cout
-        << "c -- clauses added: " << std::setw(12) << norm_clauses_added
-        << endl
-        << "c -- xor clauses added: " << std::setw(12) << xor_clauses_added
-        << endl
-        << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
+        << "c -- clauses added: " << norm_clauses_added << endl
+        << "c -- xor clauses added: " << xor_clauses_added << endl
+        << "c -- vars added " << (solver->nVars() - origNumVars)
         << endl;
     }
 }
