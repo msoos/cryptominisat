@@ -74,22 +74,15 @@ class Solver : public Searcher
 
         void add_sql_tag(const string& tagname, const string& tag);
         const vector<std::pair<string, string> >& get_sql_tags() const;
-        void add_in_partial_solving_stats();
-        bool addClauseOuter(const vector<Lit>& lits);
+        void new_external_var();
+        bool add_clause_outer(const vector<Lit>& lits);
 
-        template<class T>
-        lbool solve_with_assumptions(const vector<T>* _assumptions = NULL);
+        lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  setNeedToInterrupt();
         lbool modelValue (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
 
-        //////////////////////////////
-        // Problem specification:
-        void new_external_var();
-
-        //////////////////////////
-        //Stats
         struct SolveStats
         {
             SolveStats& operator+=(const SolveStats& other)
@@ -124,6 +117,7 @@ class Solver : public Searcher
         uint64_t printWatchMemUsed(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
         const SolveStats& getSolveStats() const;
+        void add_in_partial_solving_stats();
 
 
         ///Return number of variables waiting to be replaced
@@ -133,27 +127,10 @@ class Solver : public Searcher
 
         ///////////////////////////////////
         // State Dumping
-        void dumpUnitaryClauses(std::ostream* os) const;
-        void dumpEquivalentLits(std::ostream* os) const;
-        void dumpBinClauses(
-            const bool dumpRed
-            , const bool dumpIrred
-            , std::ostream* outfile
-        ) const;
-
-        void dumpTriClauses(
-            const bool alsoRed
-            , const bool alsoIrred
-            , std::ostream* outfile
-        ) const;
-
-        ///Dump all redundant clauses into a file
         void dumpRedClauses(
             std::ostream* os
             , const uint32_t maxSize
         ) const;
-
-        ///Dump irredundant clasues intto a file
         void dumpIrredClauses(
             std::ostream* os
         ) const;
@@ -182,7 +159,7 @@ class Solver : public Searcher
     protected:
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
-        virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
+        virtual void new_var(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
 
         void set_up_sql_writer();
         SQLStats* sqlStats;
@@ -236,6 +213,19 @@ class Solver : public Searcher
         );
 
     private:
+        void dumpUnitaryClauses(std::ostream* os) const;
+        void dumpEquivalentLits(std::ostream* os) const;
+        void dumpBinClauses(
+            const bool dumpRed
+            , const bool dumpIrred
+            , std::ostream* outfile
+        ) const;
+
+        void dumpTriClauses(
+            const bool alsoRed
+            , const bool alsoIrred
+            , std::ostream* outfile
+        ) const;
         void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         uint64_t count_irred_clauses_for_dump() const;
         struct ReachabilityStats
@@ -621,13 +611,12 @@ inline Var Solver::numActiveVars() const
     return numActive;
 }
 
-template<class T>
 inline lbool Solver::solve_with_assumptions(
-    const vector<T>* _assumptions
+    const vector<Lit>* _assumptions
 ) {
     origAssumptions.clear();
     if (_assumptions) {
-        for(const T& lit: *_assumptions) {
+        for(const Lit lit: *_assumptions) {
             origAssumptions.push_back(Lit(lit.var(), lit.sign()));
         }
     }

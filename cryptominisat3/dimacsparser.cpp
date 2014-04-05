@@ -234,11 +234,11 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
-    } else if (debugLib && str == "Solver::newVar()") {
+    } else if (debugLib && str == "Solver::new_var()") {
         solver->new_var();
 
         if (solver->get_conf().verbosity >= 6) {
-            cout << "c Parsed Solver::newVar()" << endl;
+            cout << "c Parsed Solver::new_var()" << endl;
         }
     } else {
         if (solver->get_conf().verbosity >= 6) {

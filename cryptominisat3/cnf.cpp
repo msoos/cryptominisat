@@ -7,7 +7,7 @@
 
 using namespace CMSat;
 
-void CNF::newVar(const bool bva, const Var orig_outer)
+void CNF::new_var(const bool bva, const Var orig_outer)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
@@ -17,10 +17,10 @@ void CNF::newVar(const bool bva, const Var orig_outer)
     minNumVars++;
     enlarge_minimal_datastructs();
     if (conf.doCache) {
-        implCache.newVar(orig_outer);
+        implCache.new_var(orig_outer);
     }
     if (conf.doStamp) {
-        stamp.newVar(orig_outer);
+        stamp.new_var(orig_outer);
     }
 
     if (orig_outer == std::numeric_limits<Var>::max()) {

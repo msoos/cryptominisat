@@ -952,7 +952,7 @@ void GateFinder::printDot()
     printDot2();
 }
 
-void GateFinder::newVar(const Var)
+void GateFinder::new_var(const Var)
 {
     gateOcc.push_back(vector<uint32_t>());
     gateOcc.push_back(vector<uint32_t>());

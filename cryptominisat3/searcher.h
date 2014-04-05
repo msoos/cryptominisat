@@ -622,7 +622,7 @@ class Searcher : public HyperEngine
         };
 
     protected:
-        virtual void newVar(bool bva, Var orig_outer);
+        virtual void new_var(bool bva, Var orig_outer);
         void saveVarMem();
         void updateVars(
             const vector<uint32_t>& outerToInter

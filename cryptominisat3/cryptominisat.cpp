@@ -16,7 +16,7 @@ SATSolver::~SATSolver()
 
 bool SATSolver::add_clause(const vector< Lit >& lits)
 {
-    return ((CMSat::Solver*)solver)->addClauseOuter(lits);
+    return ((CMSat::Solver*)solver)->add_clause_outer(lits);
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)

@@ -511,7 +511,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             std::exit(-1);
         }
         assert(lit.var() < nVarsOuter()
-        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+        && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
     }
 
     //Undo var replacement
@@ -530,7 +530,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     for(Lit& lit: ps) {
         if (map_outer_to_inter(lit).var() >= nVars()) {
-            newVar(false, lit.var());
+            new_var(false, lit.var());
         }
     }
 
@@ -923,23 +923,23 @@ void Solver::check_switchoff_limits_newvar()
     }
 }
 
-void Solver::newVar(const bool bva, const Var orig_outer)
+void Solver::new_var(const bool bva, const Var orig_outer)
 {
     check_switchoff_limits_newvar();
-    Searcher::newVar(bva, orig_outer);
+    Searcher::new_var(bva, orig_outer);
     if (conf.doCache) {
         litReachable.push_back(LitReachData());
         litReachable.push_back(LitReachData());
     }
 
-    varReplacer->newVar(orig_outer);
+    varReplacer->new_var(orig_outer);
 
     if (conf.perform_occur_based_simp) {
-        simplifier->newVar(orig_outer);
+        simplifier->new_var(orig_outer);
     }
 
     if (conf.doCompHandler) {
-        compHandler->newVar(orig_outer);
+        compHandler->new_var(orig_outer);
     }
 
     //Too expensive
@@ -3679,7 +3679,7 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 
 void Solver::new_external_var()
 {
-    newVar(false);
+    new_var(false);
 }
 
 void Solver::add_in_partial_solving_stats()
@@ -3700,7 +3700,7 @@ unsigned long Solver::get_sql_id() const
     return sqlStats->get_runID();
 }
 
-bool Solver::addClauseOuter(const vector<Lit>& lits)
+bool Solver::add_clause_outer(const vector<Lit>& lits)
 {
     //Check for too large variable number
     for (const Lit lit: lits) {
@@ -3714,7 +3714,7 @@ bool Solver::addClauseOuter(const vector<Lit>& lits)
             std::exit(-1);
         }
         release_assert(lit.var() < nVarsOutside()
-        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+        && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
     }
 
     vector<Lit> lits2 = back_number_from_caller(lits);

@@ -60,9 +60,9 @@ PropEngine::~PropEngine()
 {
 }
 
-void PropEngine::newVar(const bool bva, Var orig_outer)
+void PropEngine::new_var(const bool bva, Var orig_outer)
 {
-    CNF::newVar(bva, orig_outer);
+    CNF::new_var(bva, orig_outer);
     //TODO
     //trail... update x->whatever
 }

@@ -125,7 +125,7 @@ public:
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
-    virtual void newVar(const bool bva, Var orig_outer);
+    virtual void new_var(const bool bva, Var orig_outer);
     void saveVarMem();
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.

@@ -52,7 +52,7 @@ CompHandler::~CompHandler()
     }
 }
 
-void CompHandler::newVar(const Var orig_outer)
+void CompHandler::new_var(const Var orig_outer)
 {
     if (orig_outer == std::numeric_limits<Var>::max())
         savedState.push_back(l_Undef);

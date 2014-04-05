@@ -111,7 +111,7 @@ Simplifier::~Simplifier()
     delete gateFinder;
 }
 
-void Simplifier::newVar(const Var orig_outer)
+void Simplifier::new_var(const Var orig_outer)
 {
     if (solver->conf.doGateFind
         && solver->nVars() > 10ULL*1000ULL*1000ULL
@@ -128,7 +128,7 @@ void Simplifier::newVar(const Var orig_outer)
     }
 
     if (solver->conf.doGateFind) {
-        gateFinder->newVar(orig_outer);
+        gateFinder->new_var(orig_outer);
     }
 }
 
@@ -3378,7 +3378,7 @@ bool Simplifier::bva_simplify_system()
     bva_worked++;
     bva_simp_size += simp_size;
 
-    solver->newVar(true);
+    solver->new_var(true);
     const Var newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 

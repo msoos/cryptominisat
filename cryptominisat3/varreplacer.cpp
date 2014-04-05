@@ -56,7 +56,7 @@ VarReplacer::~VarReplacer()
 {
 }
 
-void VarReplacer::newVar(const Var orig_outer)
+void VarReplacer::new_var(const Var orig_outer)
 {
     if (orig_outer == std::numeric_limits<Var>::max()) {
         table.push_back(Lit(table.size(), false));

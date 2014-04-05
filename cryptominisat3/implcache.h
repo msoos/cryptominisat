@@ -169,7 +169,7 @@ public:
         return implCache[at];
     }
 
-    void newVar(const Var)
+    void new_var(const Var)
     {
         implCache.push_back(TransCache());
         implCache.push_back(TransCache());

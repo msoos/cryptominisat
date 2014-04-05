@@ -59,7 +59,7 @@ class VarReplacer
     public:
         VarReplacer(Solver* solver);
         ~VarReplacer();
-        void newVar(Var orig_outer);
+        void new_var(Var orig_outer);
         void saveVarMem();
         bool performReplace();
         bool replace(

@@ -60,7 +60,7 @@ public:
     void saveVarMem(const uint32_t newNumVars);
 
     vector<Timestamp>   tstamp;
-    void newVar(const Var)
+    void new_var(const Var)
     {
         tstamp.push_back(Timestamp());
         tstamp.push_back(Timestamp());

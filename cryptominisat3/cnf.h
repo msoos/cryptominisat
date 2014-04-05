@@ -153,7 +153,7 @@ public:
 
 protected:
     vector<Var> build_outer_to_without_bva_map() const;
-    virtual void newVar(bool bva, Var orig_outer);
+    virtual void new_var(bool bva, Var orig_outer);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const
     {
