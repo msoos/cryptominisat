@@ -85,18 +85,8 @@ class Solver : public Searcher
 
         struct SolveStats
         {
-            SolveStats& operator+=(const SolveStats& other)
-            {
-                numSimplify += other.numSimplify;
-                nbReduceDB += other.nbReduceDB;
-                numCallReachCalc += other.numCallReachCalc;
-
-                return *this;
-            }
-
             uint64_t numSimplify = 0;
             uint64_t nbReduceDB = 0;
-            uint64_t numCallReachCalc = 0;
         };
         static const char* getVersion();
         vector<Lit> get_zero_assigned_lits() const;
