@@ -187,7 +187,7 @@ class Solver : public Searcher
         ) override;
         void detachClause(const Clause& c, const bool removeDrup = true);
         void detachClause(const ClOffset offset, const bool removeDrup = true);
-        void  detachModifiedClause(
+        void detachModifiedClause(
             const Lit lit1
             , const Lit lit2
             , const uint32_t origSize
