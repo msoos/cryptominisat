@@ -53,7 +53,7 @@ struct DrupFile: public Drup
         file = _file;
     }
 
-    bool enabled()
+    bool enabled() override
     {
         return true;
     }
@@ -62,7 +62,7 @@ struct DrupFile: public Drup
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    Drup& operator<<(const Lit lit)
+    Drup& operator<<(const Lit lit) override
     {
         if (must_delete_next) {
             todel << lit << " ";
@@ -73,7 +73,7 @@ struct DrupFile: public Drup
         return *this;
     }
 
-    Drup& operator<<(const Clause& cl)
+    Drup& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
             todel << cl;
@@ -84,7 +84,7 @@ struct DrupFile: public Drup
         return *this;
     }
 
-    Drup& operator<<(const DrupFlag flag)
+    Drup& operator<<(const DrupFlag flag) override
     {
         switch (flag)
         {
@@ -126,7 +126,7 @@ struct DrupFile: public Drup
         return *this;
     }
 
-    Drup& operator<<(const vector<Lit>& lits)
+    Drup& operator<<(const vector<Lit>& lits) override
     {
          if (must_delete_next) {
             todel << lits;

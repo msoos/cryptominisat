@@ -15,63 +15,63 @@ class MySQLStats: public SQLStats
 {
 public:
     MySQLStats();
-	virtual ~MySQLStats();
+    ~MySQLStats() override;
 
-    virtual void restart(
+    void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
         , const VariableVariance& varVarStats
         , const Solver* solver
         , const Searcher* searcher
-    );
+    ) override;
 
     #ifdef STATS_NEEDED_EXTRA
-    virtual void clauseSizeDistrib(
+    void clauseSizeDistrib(
         uint64_t sumConflicts
         , const vector<uint32_t>& sizes
-    );
+    ) override;
 
-    virtual void clauseGlueDistrib(
+    void clauseGlueDistrib(
         uint64_t sumConflicts
         , const vector<uint32_t>& glues
-    );
+    ) override;
 
-    virtual void clauseSizeGlueScatter(
+    void clauseSizeGlueScatter(
         uint64_t sumConflicts
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
-    );
+    ) override;
 
-    virtual void varDataDump(
+    void varDataDump(
         const Solver* solver
         , const Searcher* search
         , const vector<Var>& varsToDump
         , const vector<VarData>& varData
-    );
+    ) override;
     #endif
 
-    virtual void reduceDB(
+    void reduceDB(
         const ClauseUsageStats& irredStats
         , const ClauseUsageStats& redStats
         , const CleaningStats& clean
         , const Solver* solver
-    );
+    ) override;
 
-    virtual void time_passed(
+    void time_passed(
         const Solver* solver
         , const string& name
         , double time_passed
         , bool time_out
         , double percent_time_remain
-    );
+    ) override;
 
-    virtual void time_passed_min(
+    void time_passed_min(
         const Solver* solver
         , const string& name
         , double time_passed
-    );
+    ) override;
 
-    virtual bool setup(const Solver* solver);
-    virtual void finishup(lbool status);
+    bool setup(const Solver* solver) override;
+    void finishup(lbool status) override;
 
 private:
 

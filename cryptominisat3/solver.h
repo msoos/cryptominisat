@@ -70,7 +70,7 @@ class Solver : public Searcher
 {
     public:
         Solver(const SolverConf _conf = SolverConf());
-        virtual ~Solver();
+        ~Solver() override;
 
         void add_sql_tag(const string& tagname, const string& tag);
         const vector<std::pair<string, string> >& get_sql_tags() const;
@@ -159,50 +159,50 @@ class Solver : public Searcher
     protected:
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
-        virtual void new_var(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
+        void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
 
         void set_up_sql_writer();
         SQLStats* sqlStats;
         vector<std::pair<string, string> > sql_tags;
 
         //Attaching-detaching clauses
-        virtual void attachClause(
+        void attachClause(
             const Clause& c
             , const bool checkAttach = true
-        );
-        virtual void attachBinClause(
+        ) override;
+        void attachBinClause(
             const Lit lit1
             , const Lit lit2
             , const bool red
             , const bool checkUnassignedFirst = true
-        );
-        virtual void attachTriClause(
+        ) override;
+        void attachTriClause(
             const Lit lit1
             , const Lit lit2
             , const Lit lit3
             , const bool red
-        );
-        virtual void detachTriClause(
+        ) override;
+        void detachTriClause(
             Lit lit1
             , Lit lit2
             , Lit lit3
             , bool red
             , bool allow_empty_watch = false
-        );
-        virtual void detachBinClause(
+        ) override;
+        void detachBinClause(
             Lit lit1
             , Lit lit2
             , bool red
             , bool allow_empty_watch = false
-        );
-        virtual void  detachClause(const Clause& c, const bool removeDrup = true);
-        virtual void  detachClause(const ClOffset offset, const bool removeDrup = true);
-        virtual void  detachModifiedClause(
+        ) override;
+        void detachClause(const Clause& c, const bool removeDrup = true);
+        void detachClause(const ClOffset offset, const bool removeDrup = true);
+        void  detachModifiedClause(
             const Lit lit1
             , const Lit lit2
             , const uint32_t origSize
             , const Clause* address
-        );
+        ) override;
         Clause* addClauseInt(
             const vector<Lit>& lits
             , const bool red = false
