@@ -1,3 +1,9 @@
+/*
+ * This library header is under MIT license but the library itself is under
+ * LGPLv2 license. This means you can link to this library as you wish in
+ * proprietary code. Please read the LGPLv2 license for details.
+*/
+
 #ifndef __SOLVERTYPESMINI_H__
 #define __SOLVERTYPESMINI_H__
 

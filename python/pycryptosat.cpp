@@ -2,7 +2,7 @@
   Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
                 2014, Mate Soos
   Python bindings to CryptoMiniSat (http://msoos.org)
-  This file is published under an MIT style license (see LICENSE)
+  This file is published under an MIT style license (see LICENSE-MIT)
 
   CryptoMiniSat is published under the LGPLv2 license, so the actual compiled
   package is under LGPLv2.

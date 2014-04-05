@@ -1,3 +1,9 @@
+/*
+ * This library header is under MIT license but the library itself is under
+ * LGPLv2 license. This means you can link to this library as you wish in
+ * proprietary code. Please read the LGPLv2 license for details.
+*/
+
 #ifndef __CRYPTOMINISAT_H__
 #define __CRYPTOMINISAT_H__
 
