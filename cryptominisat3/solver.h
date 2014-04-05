@@ -291,8 +291,7 @@ class Solver : public Searcher
             size_t numLitsDependent;
         };
 
-        template<class T>
-        vector<Lit> clauseBackNumbered(const T& cl) const;
+        template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
 
         lbool solve();
         template<class T>
