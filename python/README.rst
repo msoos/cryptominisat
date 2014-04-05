@@ -11,19 +11,34 @@ CryptoMiniSat which is LGPL.
 Usage
 -----
 
-The ``pycryptosat`` module has one object, Solver which has two functions
-``solve`` and ``add_clause``, both of which take a clause as an argument.
-Aclause is represented as an iterable of (non-zero) integers.
+The ``pycryptosat`` module has one object, ``Solver`` that has two functions
+``solve`` and ``add_clause``.
 
-The function ``solve()`` returns one of the following:
-  * one solution (a list of integers)
-  * the string "UNSAT" (when the clauses are unsatisfiable)
-  * the string "UNKNOWN" (when a solution could not be determined within the
-    propagation limit)
+The funcion ``add_clause()`` takes an iterable list of literals such as
+``[1, 2]`` which represents the truth ``1 or 2 = True``. For example,
+``add_clause([1])`` sets variable ``1`` to ``True``.
 
-The function ``solve()`` can take an argument ``assumptions`` that allows
-the user to set values to specific variables in the solver in a temporary
-fashion. This means that in case the problem is satisfiable, but e.g it's
+The function ``solve()`` solves the system of equations that have been added
+with ``add_clause()``:
+
+   > from pycryptosat import Solver
+   > s = Solver()
+   > s.add_clause([1, 2])
+   > sat, solution = s.solve()
+   > print sat
+   True
+   > print solution
+   (None, True, True)
+
+The return value is a tuple. First part of the tuple indicates whether the
+problem is satisfiable. In this case, it's ``True``, i.e. satisfiable. The second
+part is a tuple contains the solution, preceded by None, so you can index into
+it with the variable number. E.g. ``solution[1]`` returns the value for
+variabe ``1``.
+
+The ``solve()`` method optionally takes an argument ``assumptions`` that
+allows the user to set values to specific variables in the solver in a temporary
+fashion. This means that in case the problem is satisfiable but e.g it's
 unsatisfiable if variable 2 is FALSE, then ``solve([-2])`` will return
 UNSAT. However, a subsequent call to ``solve()`` will still return a solution.
 If instead of an assumption ``add_clause()`` would have been used, subsequent
@@ -32,6 +47,9 @@ If instead of an assumption ``add_clause()`` would have been used, subsequent
 ``Solver`` takes the following keyword arguments:
   * ``confl_limit``: the propagation limit (integer)
   * ``verbose``: the verbosity level (integer)
+
+The ``confl_limit`` argument sets a kind of time-out limit to the solver. If
+the solver runs out of time, it returns with ``(None, None)``.
 
 Example
 -------
@@ -61,7 +79,7 @@ absolute value corresponds to i\ :sup:`th` variable::
    >>> solver.add_clause([-1, 5, 3, 4])
    >>> solver.add_clause([-3, -4]])
    >>> pycryptosat.solve()
-   [1, -2, -3, 4, 5]
+   (True, (None, True, False, False, True, True))
 
 This solution translates to: x\ :sub:`1` = x\ :sub:`4` = x\ :sub:`5` = True,
 x\ :sub:`2` = x\ :sub:`3` = False
