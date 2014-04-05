@@ -3710,3 +3710,24 @@ unsigned long Solver::get_sql_id() const
 
     return sqlStats->get_runID();
 }
+
+bool Solver::addClauseOuter(const vector<Lit>& lits)
+{
+    //Check for too large variable number
+    for (const Lit lit: lits) {
+        if (lit.var() >= nVarsOutside()) {
+            cout
+            << "ERROR: Variable " << lit.var() + 1
+            << " inserted, but max var is "
+            << nVarsOutside()
+            << endl;
+            assert(false);
+            std::exit(-1);
+        }
+        release_assert(lit.var() < nVarsOutside()
+        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
+    }
+
+    vector<Lit> lits2 = back_number_from_caller(lits);
+    return addClause(lits2);
+}

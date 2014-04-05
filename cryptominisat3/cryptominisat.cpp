@@ -26,12 +26,12 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
 
 const vector< lbool >& SATSolver::get_model() const
 {
-    return (vector<lbool>&)((CMSat::Solver*)solver)->model;
+    return (vector<lbool>&)((CMSat::Solver*)solver)->get_model();
 }
 
 const std::vector<Lit>& SATSolver::get_conflict() const
 {
-    return (vector<Lit>&)(((CMSat::Solver*)solver)->conflict);
+    return (vector<Lit>&)(((CMSat::Solver*)solver)->get_final_conflict());
 }
 
 uint32_t SATSolver::nVars() const

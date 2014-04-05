@@ -75,50 +75,38 @@ class Solver : public Searcher
         void add_sql_tag(const string& tagname, const string& tag);
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void add_in_partial_solving_stats();
-
-        //Solving
-        //
-        template<class T>
-        bool addClauseOuter(const vector<T>& lits)
-        {
-            //Check for too large variable number
-            for (const T lit: lits) {
-                if (lit.var() >= nVarsOutside()) {
-                    cout
-                    << "ERROR: Variable " << lit.var() + 1
-                    << " inserted, but max var is "
-                    << nVarsOutside()
-                    << endl;
-                    assert(false);
-                    std::exit(-1);
-                }
-                release_assert(lit.var() < nVarsOutside()
-                && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
-            }
-
-            vector<Lit> lits2 = back_number_from_caller(lits);
-            return addClause(lits2);
-        }
+        bool addClauseOuter(const vector<Lit>& lits);
 
         template<class T>
         lbool solve_with_assumptions(const vector<T>* _assumptions = NULL);
         void  setNeedToInterrupt();
-        lbool   modelValue (const Lit p) const;  ///<Found model value for lit
+        lbool modelValue (const Lit p) const;  ///<Found model value for lit
+        const vector<lbool>& get_model() const;
+        const vector<Lit>& get_final_conflict() const;
 
         //////////////////////////////
         // Problem specification:
         void new_external_var();
-        /*bool addRedClause(
-            const vector<Lit>& ps
-            , const ClauseStats& stats = ClauseStats()
-        );*/
 
         //////////////////////////
         //Stats
-        static const char* getVersion();
+        struct SolveStats
+        {
+            SolveStats& operator+=(const SolveStats& other)
+            {
+                numSimplify += other.numSimplify;
+                nbReduceDB += other.nbReduceDB;
+                numCallReachCalc += other.numCallReachCalc;
 
+                return *this;
+            }
+
+            uint64_t numSimplify = 0;
+            uint64_t nbReduceDB = 0;
+            uint64_t numCallReachCalc = 0;
+        };
+        static const char* getVersion();
         vector<Lit> get_zero_assigned_lits() const;
-        uint64_t getNumLongClauses() const;
         void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         void     open_file_and_dump_irred_clauses(string fname) const;
         void     open_file_and_dump_red_clauses(string fname) const;
@@ -137,6 +125,7 @@ class Solver : public Searcher
         void printMemStats() const;
         uint64_t printWatchMemUsed(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
+        const SolveStats& getSolveStats() const;
 
 
         ///Return number of variables waiting to be replaced
@@ -146,8 +135,6 @@ class Solver : public Searcher
 
         ///////////////////////////////////
         // State Dumping
-        template<class T>
-        vector<Lit> clauseBackNumbered(const T& cl) const;
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
@@ -172,7 +159,6 @@ class Solver : public Searcher
         void dumpIrredClauses(
             std::ostream* os
         ) const;
-        uint64_t count_irred_clauses_for_dump() const;
         void dump_clauses(
             const vector<ClOffset>& cls
             , std::ostream* os
@@ -182,30 +168,77 @@ class Solver : public Searcher
         void dump_component_clauses(std::ostream* os) const;
         void write_irred_stats_to_cnf(std::ostream* os) const;
 
-        struct SolveStats
-        {
-            SolveStats() :
-                numSimplify(0)
-                , nbReduceDB(0)
-                , numCallReachCalc(0)
-            {}
 
-            SolveStats& operator+=(const SolveStats& other)
-            {
-                numSimplify += other.numSimplify;
-                nbReduceDB += other.nbReduceDB;
-                numCallReachCalc += other.numCallReachCalc;
+        //Checks
+        void checkImplicitPropagated() const;
+        void checkStats(const bool allowFreed = false) const;
+        uint64_t countLits(
+            const vector<ClOffset>& clause_array
+            , bool allowFreed
+        ) const;
+        void checkImplicitStats() const;
+        bool find_with_stamp_a_or_b(Lit a, Lit b) const;
+        bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
+        bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
-                return *this;
-            }
+    protected:
+        uint64_t getNumLongClauses() const;
+        bool addClause(const vector<Lit>& ps);
+        virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
 
-            uint64_t numSimplify;
-            uint64_t nbReduceDB;
-            uint64_t numCallReachCalc;
-        };
-        const SolveStats& getSolveStats() const;
+        void set_up_sql_writer();
+        SQLStats* sqlStats;
+        vector<std::pair<string, string> > sql_tags;
 
+        //Attaching-detaching clauses
+        virtual void attachClause(
+            const Clause& c
+            , const bool checkAttach = true
+        );
+        virtual void attachBinClause(
+            const Lit lit1
+            , const Lit lit2
+            , const bool red
+            , const bool checkUnassignedFirst = true
+        );
+        virtual void attachTriClause(
+            const Lit lit1
+            , const Lit lit2
+            , const Lit lit3
+            , const bool red
+        );
+        virtual void detachTriClause(
+            Lit lit1
+            , Lit lit2
+            , Lit lit3
+            , bool red
+            , bool allow_empty_watch = false
+        );
+        virtual void detachBinClause(
+            Lit lit1
+            , Lit lit2
+            , bool red
+            , bool allow_empty_watch = false
+        );
+        virtual void  detachClause(const Clause& c, const bool removeDrup = true);
+        virtual void  detachClause(const ClOffset offset, const bool removeDrup = true);
+        virtual void  detachModifiedClause(
+            const Lit lit1
+            , const Lit lit2
+            , const uint32_t origSize
+            , const Clause* address
+        );
+        Clause* addClauseInt(
+            const vector<Lit>& lits
+            , const bool red = false
+            , const ClauseStats stats = ClauseStats()
+            , const bool attach = true
+            , vector<Lit>* finalLits = NULL
+            , bool addDrup = true
+        );
 
+    private:
+        uint64_t count_irred_clauses_for_dump() const;
         struct ReachabilityStats
         {
             ReachabilityStats() :
@@ -277,74 +310,9 @@ class Solver : public Searcher
             size_t numLitsDependent;
         };
 
-        //Checks
-        void checkImplicitPropagated() const;
-        void checkStats(const bool allowFreed = false) const;
-        uint64_t countLits(
-            const vector<ClOffset>& clause_array
-            , bool allowFreed
-        ) const;
-        void checkImplicitStats() const;
-        bool find_with_stamp_a_or_b(Lit a, Lit b) const;
-        bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
-        bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
+        template<class T>
+        vector<Lit> clauseBackNumbered(const T& cl) const;
 
-    protected:
-        bool addClause(const vector<Lit>& ps);
-        virtual void newVar(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max());
-
-        void set_up_sql_writer();
-        SQLStats* sqlStats;
-        vector<std::pair<string, string> > sql_tags;
-
-        //Attaching-detaching clauses
-        virtual void attachClause(
-            const Clause& c
-            , const bool checkAttach = true
-        );
-        virtual void attachBinClause(
-            const Lit lit1
-            , const Lit lit2
-            , const bool red
-            , const bool checkUnassignedFirst = true
-        );
-        virtual void attachTriClause(
-            const Lit lit1
-            , const Lit lit2
-            , const Lit lit3
-            , const bool red
-        );
-        virtual void detachTriClause(
-            Lit lit1
-            , Lit lit2
-            , Lit lit3
-            , bool red
-            , bool allow_empty_watch = false
-        );
-        virtual void detachBinClause(
-            Lit lit1
-            , Lit lit2
-            , bool red
-            , bool allow_empty_watch = false
-        );
-        virtual void  detachClause(const Clause& c, const bool removeDrup = true);
-        virtual void  detachClause(const ClOffset offset, const bool removeDrup = true);
-        virtual void  detachModifiedClause(
-            const Lit lit1
-            , const Lit lit2
-            , const uint32_t origSize
-            , const Clause* address
-        );
-        Clause* addClauseInt(
-            const vector<Lit>& lits
-            , const bool red = false
-            , const ClauseStats stats = ClauseStats()
-            , const bool attach = true
-            , vector<Lit>* finalLits = NULL
-            , bool addDrup = true
-        );
-
-    private:
         uint32_t num_solve_calls = 0;
         lbool solve();
         template<class T>
@@ -735,6 +703,16 @@ inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) con
     }
 
     return false;
+}
+
+inline const vector<lbool>& Solver::get_model() const
+{
+    return model;
+}
+
+inline const vector<Lit>& Solver::get_final_conflict() const
+{
+    return conflict;
 }
 
 } //end namespace
