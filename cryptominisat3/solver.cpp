@@ -135,7 +135,7 @@ Solver::~Solver()
     delete subsumeImplicit;
 }
 
-bool Solver::addXorClauseInt(
+bool Solver::add_xor_clause_inter(
     const vector< Lit >& lits
     , bool rhs
     , const bool attach
@@ -145,11 +145,17 @@ bool Solver::addXorClauseInt(
     assert(decisionLevel() == 0);
 
     vector<Lit> ps(lits);
+    for(Lit& lit: ps) {
+        if (lit.sign()) {
+            rhs ^= true;
+            lit ^= true;
+        }
+    }
     std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        assert(!ps[i].sign()); //Every literal has to be unsigned
+        assert(ps[i].sign() == false);
 
         if (ps[i].var() == p.var()) {
             //added, but easily removed
@@ -162,12 +168,6 @@ bool Solver::addXorClauseInt(
             }
 
         } else if (value(ps[i]) == l_Undef) {
-            //If signed, unsign it and flip rhs
-            if (ps[i].sign()) {
-                rhs ^= true;
-                ps[i] = ps[i].unsign();
-            }
-
             //Add and remember as last one to have been added
             ps[j++] = p = ps[i];
 
@@ -184,47 +184,116 @@ bool Solver::addXorClauseInt(
         cout << "Too long clause!" << endl;
         std::exit(-1);
     }
+    //cout << "Cleaned ps is: " << ps << endl;
 
-
-    switch(ps.size()) {
-        case 0:
-            if (rhs) {
-                *drup << fin;
-                ok = false;
-            }
-            return ok;
-
-        case 1: {
-            Lit lit = Lit(ps[0].var(), !rhs);
-            enqueue(lit);
-            *drup << lit << fin;
-
-            #ifdef STATS_NEEDED
-            propStats.propsUnit++;
-            #endif
-            if (attach)
-                ok = propagate().isNULL();
-            return ok;
+    if (!ps.empty()) {
+        ps[0] ^= rhs;
+    } else {
+        if (rhs) {
+            *drup << fin;
+            ok = false;
         }
-
-        case 2:
-            ps[0] ^= !rhs;
-            addClauseInt(ps, false, ClauseStats(), attach);
-            if (!ok)
-                return false;
-
-            ps[0] ^= true;
-            ps[1] ^= true;
-            addClauseInt(ps, false, ClauseStats(), attach);
-            break;
-
-        default:
-            assert(false && "larger than 2-long XORs are not supported yet");
-            break;
+        return ok;
     }
+
+    //cout << "without rhs is: " << ps << endl;
+    add_every_combination_xor(ps, attach);
 
     return ok;
 }
+
+void Solver::add_every_combination_xor(const vector<Lit>& lits, bool attach)
+{
+    //cout << "add_every_combination got: " << lits << endl;
+
+    size_t at = 0;
+    size_t num = 0;
+    vector<Lit> xorlits;
+    Lit lastlit_added = lit_Undef;
+    while(at != lits.size()) {
+        xorlits.clear();
+        size_t last_at = at;
+        for(; at < last_at+2 && at < lits.size(); at++) {
+            xorlits.push_back(lits[at]);
+        }
+
+        //Connect to old cut
+        if (lastlit_added != lit_Undef) {
+            xorlits.push_back(lastlit_added);
+        } else if (at < lits.size()) {
+            xorlits.push_back(lits[at]);
+            at++;
+        }
+
+        if (at + 1 == lits.size()) {
+            xorlits.push_back(lits[at]);
+            at++;
+        }
+
+        //New lit to connect to next cut
+        if (at != lits.size()) {
+            new_var(true);
+            const Var newvar = solver->nVars()-1;
+            const Lit toadd = Lit(newvar, false);
+            xorlits.push_back(toadd);
+            lastlit_added = toadd;
+        }
+
+        add_xor_clause_inter_cleaned_cut(xorlits, attach);
+        if (!ok)
+            break;
+
+        num++;
+    }
+}
+
+void Solver::add_xor_clause_inter_cleaned_cut(
+    const vector<Lit>& lits
+    , bool attach
+) {
+    if (lits.size() == 1) {
+        vector<Lit> new_lits;
+        new_lits.push_back(~lits[0]);
+        addClauseInt(new_lits, false, ClauseStats(), attach);
+        return;
+    }
+
+    //cout << "xor_inter_cleaned_cut got: " << lits << endl;
+    vector<Lit> new_lits;
+    for(size_t i = 0; i < (1ULL<<lits.size()); i++) {
+        unsigned bits_set = num_bits_set(i, lits.size());
+        if (bits_set % 2 == lits.size() % 2) {
+            continue;
+        }
+
+        new_lits.clear();
+        for(size_t at = 0; at < lits.size(); at++) {
+            bool xorwith = (i >> at)&1;
+            new_lits.push_back(lits[at] ^ xorwith);
+        }
+        //cout << "Added. " << new_lits << endl;
+        Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach);
+        if (cl) {
+            solver->longIrredCls.push_back(clAllocator.getOffset(cl));
+        }
+
+        if (!ok)
+            return;
+    }
+}
+
+unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
+{
+    unsigned bits_set = 0;
+    for(size_t i = 0; i < max_size; i++) {
+        if ((x>>i)&1) {
+            bits_set++;
+        }
+    }
+
+    return bits_set;
+}
+
 
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally
@@ -3702,7 +3771,23 @@ unsigned long Solver::get_sql_id() const
 
 bool Solver::add_clause_outer(const vector<Lit>& lits)
 {
-    //Check for too large variable number
+    check_too_large_variable_number(lits);
+    vector<Lit> lits2 = back_number_from_caller(lits);
+    return addClause(lits2);
+}
+
+bool Solver::add_xor_clause_outer(const vector<Lit>& lits, bool rhs)
+{
+    check_too_large_variable_number(lits);
+
+    vector<Lit> lits2 = back_number_from_caller(lits);
+    add_xor_clause_inter(lits, rhs, true);
+
+    return ok;
+}
+
+void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
+{
     for (const Lit lit: lits) {
         if (lit.var() >= nVarsOutside()) {
             cout
@@ -3716,7 +3801,4 @@ bool Solver::add_clause_outer(const vector<Lit>& lits)
         release_assert(lit.var() < nVarsOutside()
         && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
     }
-
-    vector<Lit> lits2 = back_number_from_caller(lits);
-    return addClause(lits2);
 }

@@ -77,21 +77,17 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
     return 1;
 }
 
-static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
-{
-    PyObject *clause;
-    static char* kwlist[] = {"clause", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
-        return NULL;
-    }
-
+static int parse_clause(
+    Solver *self
+    , PyObject *clause
+    , std::vector<Lit>& lits
+) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
         PyErr_SetString(PyExc_TypeError, "interable object expected");
         return 0;
     }
 
-    std::vector<Lit> lits;
     PyObject *lit;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         long var;
@@ -116,7 +112,56 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
 
+    return 1;
+}
+
+static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"clause", NULL};
+    PyObject *clause;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
+        return NULL;
+    }
+
+    std::vector<Lit> lits;
+    if (!parse_clause(self, clause, lits)) {
+        return 0;
+    }
     self->cmsat->add_clause(lits);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"xor_clause", "rhs", NULL};
+    PyObject *rhs;
+    PyObject *clause;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &clause, &rhs)) {
+        return NULL;
+    }
+    if (!PyBool_Check(rhs)) {
+        PyErr_SetString(PyExc_TypeError, "rhs must be boolean");
+        return NULL;
+    }
+    bool real_rhs = PyObject_IsTrue(rhs);
+
+    std::vector<Lit> lits;
+    if (!parse_clause(self, clause, lits)) {
+        return 0;
+    }
+    for(std::vector<Lit>::const_iterator
+        it = lits.begin(), end = lits.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->sign()) {
+            PyErr_SetString(PyExc_ValueError, "XOR clause must contiain only positive variables (not inverted literals)");
+            return NULL;
+        }
+    }
+    self->cmsat->add_xor_clause(lits, real_rhs);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -260,7 +305,8 @@ static PyMethodDef module_methods[] = {
 
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
-    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a cluse to the system"},
+    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
+    {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
     {NULL,        NULL}  /* sentinel */
 };
 

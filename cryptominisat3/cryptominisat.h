@@ -14,6 +14,7 @@ namespace CMSat {
         ~SATSolver();
         uint32_t nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
+        bool add_xor_clause(const std::vector<Lit>& lits, bool rhs);
         void new_var();
         lbool solve(std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;

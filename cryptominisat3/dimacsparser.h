@@ -34,7 +34,8 @@ class DimacsParser
         int32_t parseInt(StreamBuffer& in, uint32_t& len);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in);
-        void parse_and_add_clause_and_attrs(StreamBuffer& in);
+        void parse_and_add_clause(StreamBuffer& in);
+        void parse_and_add_xor_clause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
         void parseComments(StreamBuffer& in, const std::string str);
@@ -50,7 +51,8 @@ class DimacsParser
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         std::vector<Lit> lits; ///<To reduce temporary creation overhead
-        uint32_t numNormClauses; ///<Number of irred, non-xor claues added
+        size_t norm_clauses_added = 0;
+        size_t xor_clauses_added = 0;
 };
 
 #endif //DIMACSPARSER_H

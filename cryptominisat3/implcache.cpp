@@ -315,7 +315,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
                 continue;
 
             //Add the clause
-            solver->addXorClauseInt(it->first, it->second, true);
+            solver->add_xor_clause_inter(it->first, it->second, true);
 
             //Check if this caused UNSAT
             if  (!solver->ok)

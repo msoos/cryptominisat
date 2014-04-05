@@ -76,6 +76,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         bool add_clause_outer(const vector<Lit>& lits);
+        bool add_xor_clause_outer(const vector<Lit>& lits, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  setNeedToInterrupt();
@@ -204,6 +205,10 @@ class Solver : public Searcher
         );
 
     private:
+        void add_every_combination_xor(const vector<Lit>& lits, bool attach);
+        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach);
+        unsigned num_bits_set(const size_t x, const unsigned max_size) const;
+        void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
@@ -315,7 +320,7 @@ class Solver : public Searcher
         void printMinStats() const;
         void printFullStats() const;
 
-        bool addXorClauseInt(
+        bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
             , const bool attach

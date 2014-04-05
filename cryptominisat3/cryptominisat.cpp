@@ -19,6 +19,14 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     return ((CMSat::Solver*)solver)->add_clause_outer(lits);
 }
 
+bool SATSolver::add_xor_clause(const std::vector<Lit>& lits, bool rhs)
+{
+    for(const Lit lit: lits) {
+        assert(lit.sign() == false);
+    }
+    return ((CMSat::Solver*)solver)->add_xor_clause_outer(lits, rhs);
+}
+
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     return ((CMSat::Solver*)solver)->solve_with_assumptions(assumptions);

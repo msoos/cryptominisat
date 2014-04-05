@@ -251,25 +251,32 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     skipLine(in);
 }
 
-void DimacsParser::parse_and_add_clause_and_attrs(StreamBuffer& in)
+void DimacsParser::parse_and_add_clause(StreamBuffer& in)
 {
-    if ( *in == 'x') {
-        cout << "ERROR: Cannot read XOR clause!" << endl;
-        std::exit(-1);
-    }
-
     lits.clear();
     readClause(in);
     skipLine(in);
     solver->add_clause(lits);
-    numNormClauses++;
+    norm_clauses_added++;
+}
 
-    if (*in == 'c') {
-        ++in;
-        std::string str;
-        parseString(in, str);
-        parseComments(in, str);
+void DimacsParser::parse_and_add_xor_clause(StreamBuffer& in)
+{
+    lits.clear();
+    readClause(in);
+    skipLine(in);
+    if (lits.empty())
+        return;
+
+    bool rhs = true;
+    for(Lit& lit: lits) {
+        if (lit.sign()) {
+            lit ^= true;
+            rhs ^= true;
+        }
     }
+    solver->add_xor_clause(lits, rhs);
+    xor_clauses_added++;
 }
 
 void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
@@ -290,6 +297,10 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             parseString(in, str);
             parseComments(in, str);
             break;
+        case 'x':
+            ++in;
+            parse_and_add_xor_clause(in);
+            break;
         case '\n':
             cout
             << "c WARNING: Empty line at line number " << lineNum+1
@@ -298,7 +309,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             skipLine(in);
             break;
         default:
-            parse_and_add_clause_and_attrs(in);
+            parse_and_add_clause(in);
             break;
         }
     }
@@ -307,19 +318,18 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
-    numNormClauses = 0;
     const uint32_t origNumVars = solver->nVars();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
     if (solver->get_conf().verbosity >= 1) {
-        cout << "c -- clauses added: "
-        << std::setw(12) << numNormClauses
-        << " irredundant"
-        << endl;
-
-        cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
+        cout
+        << "c -- clauses added: " << std::setw(12) << norm_clauses_added
+        << endl
+        << "c -- xor clauses added: " << std::setw(12) << xor_clauses_added
+        << endl
+        << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
         << endl;
     }
 }

@@ -306,7 +306,7 @@ bool XorFinder::extractInfoFromBlock(
             case 0:
                 //0-long XOR clause is equal to 1? If so, it's UNSAT
                 if (rhs) {
-                    solver->addXorClauseInt(lits, 1, false);
+                    solver->add_xor_clause_inter(lits, 1, false);
                     assert(!solver->okay());
                     goto end;
                 }
@@ -314,7 +314,7 @@ bool XorFinder::extractInfoFromBlock(
 
             case 1: {
                 runStats.newUnits++;
-                solver->addXorClauseInt(lits, rhs, false);
+                solver->add_xor_clause_inter(lits, rhs, false);
                 if (!solver->okay())
                     goto end;
                 break;
@@ -322,7 +322,7 @@ bool XorFinder::extractInfoFromBlock(
 
             case 2: {
                 runStats.newBins++;
-                solver->addXorClauseInt(lits, rhs, false);
+                solver->add_xor_clause_inter(lits, rhs, false);
                 if (!solver->okay())
                     goto end;
                 break;
