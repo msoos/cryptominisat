@@ -201,6 +201,17 @@ inline double stats_line_percent(double num, double total)
     }
 }
 
+inline void print_value_kilo_mega(const uint64_t value)
+{
+    if (value > 20*1000ULL*1000ULL) {
+        cout << " " << std::setw(4) << value/(1000ULL*1000ULL) << "M";
+    } else if (value > 20ULL*1000ULL) {
+        cout << " " << std::setw(4) << value/1000 << "K";
+    } else {
+        cout << " " << std::setw(5) << value;
+    }
+}
+
 template<class T, class T2> void printStatsLine(
     string left
     , T value

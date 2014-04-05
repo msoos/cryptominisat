@@ -3185,17 +3185,6 @@ size_t Solver::getNumFreeVars() const
     return freeVars;
 }
 
-void Solver::print_value_kilo_mega(const uint64_t value) const
-{
-    if (value > 20*1000ULL*1000ULL) {
-        cout << " " << std::setw(4) << value/(1000ULL*1000ULL) << "M";
-    } else if (value > 20ULL*1000ULL) {
-        cout << " " << std::setw(4) << value/1000 << "K";
-    } else {
-        cout << " " << std::setw(5) << value;
-    }
-}
-
 void Solver::printClauseStats() const
 {
     //Irredundant

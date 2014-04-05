@@ -107,12 +107,10 @@ class Solver : public Searcher
         };
         static const char* getVersion();
         vector<Lit> get_zero_assigned_lits() const;
-        void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         void     open_file_and_dump_irred_clauses(string fname) const;
         void     open_file_and_dump_red_clauses(string fname) const;
         void     printStats() const;
         void     printClauseStats() const;
-        void     print_value_kilo_mega(uint64_t value) const;
         size_t   getNumFreeVars() const;
         const SolverConf& getConf() const;
         const vector<std::pair<string, string> >& get_tags() const;
@@ -238,6 +236,7 @@ class Solver : public Searcher
         );
 
     private:
+        void     open_dump_file(std::ofstream& outfile, std::string filename) const;
         uint64_t count_irred_clauses_for_dump() const;
         struct ReachabilityStats
         {
