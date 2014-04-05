@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef THREADCONTROL_H
-#define THREADCONTROL_H
+#ifndef SOLVER_H
+#define SOLVER_H
 
 #include "constants.h"
 #include <vector>
@@ -739,4 +739,4 @@ inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) con
 
 } //end namespace
 
-#endif //THREADCONTROL_H
+#endif //SOLVER_H
