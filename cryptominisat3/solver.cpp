@@ -1565,7 +1565,7 @@ void Solver::extend_solution()
 
 void Solver::set_up_sql_writer()
 {
-    if (!conf.doSQL || num_solve_calls > 1) {
+    if (!conf.doSQL || solveStats.num_solve_calls > 1) {
         //Either it's already initialized, or it's not needed
         return;
     }
@@ -1585,7 +1585,7 @@ void Solver::set_up_sql_writer()
 
 lbool Solver::solve()
 {
-    num_solve_calls++;
+    solveStats.num_solve_calls++;
     conflict.clear();
     release_assert(!(conf.doLHBR && !conf.propBinFirst)
         && "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first."

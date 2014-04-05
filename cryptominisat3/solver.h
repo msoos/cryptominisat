@@ -87,6 +87,7 @@ class Solver : public Searcher
         {
             uint64_t numSimplify = 0;
             uint64_t nbReduceDB = 0;
+            uint32_t num_solve_calls = 0;
         };
         static const char* getVersion();
         vector<Lit> get_zero_assigned_lits() const;
@@ -292,7 +293,6 @@ class Solver : public Searcher
         template<class T>
         vector<Lit> clauseBackNumbered(const T& cl) const;
 
-        uint32_t num_solve_calls = 0;
         lbool solve();
         template<class T>
         vector<Lit> back_number_from_caller(const vector<T>& lits) const
