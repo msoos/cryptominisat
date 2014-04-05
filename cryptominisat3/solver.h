@@ -204,6 +204,7 @@ class Solver : public Searcher
         );
 
     private:
+        void set_assumptions();
         void dumpUnitaryClauses(std::ostream* os) const;
         void dumpEquivalentLits(std::ostream* os) const;
         void dumpBinClauses(
@@ -504,8 +505,6 @@ class Solver : public Searcher
             std::string name
             , const vector<ClauseUsageStats>& stats
         ) const;
-
-        void set_assumptions();
         void check_model_for_assumptions() const;
 };
 
