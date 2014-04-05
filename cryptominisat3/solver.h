@@ -476,10 +476,10 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        void                reArrangeClauses();
-        void                reArrangeClause(ClOffset offset);
-        void                printAllClauses() const;
-        void                consolidateMem();
+        void reArrangeClauses();
+        void reArrangeClause(ClOffset offset);
+        void printAllClauses() const;
+        void consolidateMem();
 
         //////////////////
         // Stamping
