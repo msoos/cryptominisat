@@ -124,25 +124,44 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyObject* get_solution(SATSolver *cmsat)
 {
-    PyObject *list;
+    PyObject *tuple;
 
     uint32_t max_idx = cmsat->nVars();
-    list = PyList_New((Py_ssize_t) max_idx);
-    if (list == NULL) {
-        PyErr_SetString(PyExc_SystemError, "failed to create list");
+    tuple = PyTuple_New((Py_ssize_t) max_idx+1);
+    if (tuple == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
     }
+
+    Py_INCREF(Py_None);
+    if (PyTuple_SetItem(tuple, (Py_ssize_t)0, Py_None) < 0) {
+        PyErr_SetString(PyExc_SystemError, "failed to add 1st element to tuple");
+        Py_DECREF(tuple);
+        return NULL;
+    }
+
     for (long i = 0; i < max_idx; i++) {
-        long v = cmsat->get_model()[i] == l_True ? 1 : -1;
+        lbool v = cmsat->get_model()[i];
+        PyObject *py_value = NULL;
+        if (v == l_True) {
+            Py_INCREF(Py_True);
+            py_value = Py_True;
+        } else if (v == l_False) {
+            Py_INCREF(Py_False);
+            py_value = Py_False;
+        } else if (v == l_Undef) {
+            Py_INCREF(Py_None);
+            py_value = Py_None;
+        }
 
         assert(v == -1 || v == 1);
-        if (PyList_SetItem(list, (Py_ssize_t)i, PyInt_FromLong((long) (v * (i+1)))) < 0) {
-            PyErr_SetString(PyExc_SystemError, "failed to create list");
-            Py_DECREF(list);
+        if (PyTuple_SetItem(tuple, (Py_ssize_t)i+1, py_value) < 0) {
+            PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
+            Py_DECREF(tuple);
             return NULL;
         }
     }
-    return list;
+    return tuple;
 }
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
@@ -197,17 +216,36 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
     PyObject *result = NULL;
 
+    result = PyTuple_New((Py_ssize_t) 2);
+    if (result == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
+        return NULL;
+    }
+
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
     Py_END_ALLOW_THREADS
 
     if (res == l_True) {
-        result = get_solution(self->cmsat);
+        PyObject* solution = get_solution(self->cmsat);
+        if (!solution) {
+            Py_DECREF(result);
+            return NULL;
+        }
+        Py_INCREF(Py_True);
+        PyTuple_SetItem(result, 0, Py_True);
+        PyTuple_SetItem(result, 1, solution);
     } else if (res == l_False) {
-        result = PyUnicode_FromString("UNSAT");
+        Py_INCREF(Py_False);
+        PyTuple_SetItem(result, 0, Py_False);
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(result, 1, Py_None);
     } else if (res == l_Undef) {
-        result = PyUnicode_FromString("UNKNOWN");
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(result, 0, Py_None);
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(result, 1, Py_None);
     }
 
     return result;
