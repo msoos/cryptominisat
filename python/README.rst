@@ -21,13 +21,13 @@ The funcion ``add_clause()`` takes an iterable list of literals such as
 The function ``solve()`` solves the system of equations that have been added
 with ``add_clause()``:
 
-   > from pycryptosat import Solver
-   > s = Solver()
-   > s.add_clause([1, 2])
-   > sat, solution = s.solve()
-   > print sat
+   >>> from pycryptosat import Solver
+   >>> s = Solver()
+   >>> s.add_clause([1, 2])
+   >>> sat, solution = s.solve()
+   >>> print sat
    True
-   > print solution
+   >>> print solution
    (None, True, True)
 
 The return value is a tuple. First part of the tuple indicates whether the
