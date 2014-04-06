@@ -159,13 +159,12 @@ size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
     return mem;
 }
 
-bool CNF::redundant(const Watched& ws, bool locked_is_redundant) const
+bool CNF::redundant(const Watched& ws) const
 {
-    return (   (ws.isBinary() && (locked_is_redundant && ws.red()))
-            || (ws.isTri()   && (locked_is_redundant && ws.red()))
+    return (   (ws.isBinary() && ws.red())
+            || (ws.isTri()   && ws.red())
             || (ws.isClause()
                 && clAllocator.getPointer(ws.getOffset())->red()
-                && (locked_is_redundant || clAllocator.getPointer(ws.getOffset())->stats.locked)
                 )
     );
 }

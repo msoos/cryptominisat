@@ -3031,7 +3031,7 @@ void Simplifier::fill_potential(const Lit lit)
                         && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start
                     )
                 )
-                && !solver->redundant(d.ws, solver->conf.bva_also_red && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start)
+                && !solver->redundant(d.ws)
                 && lit_diff_watches(c, d) == lit
             ) {
                 const lit_pair diff = lit_diff_watches(d, c);
@@ -3300,7 +3300,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     m_lits.clear();
     m_lits.push_back(lit);
     for(const Watched w: solver->watches[lit.toInt()]) {
-        if (!solver->redundant(w, solver->conf.bva_also_red && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start)) {
+        if (!solver->redundant(w)) {
             m_cls.push_back(OccurClause(lit, w));
             if (solver->conf.verbosity >= 6 || bva_verbosity) {
                 cout << "1st adding to m_cls "
