@@ -1691,6 +1691,10 @@ lbool Solver::solve()
     reduce_db_and_update_reset_stats(false);
 
     //Initialise
+    if (conf.startClean <= 100) {
+        cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
+        exit(-1);
+    }
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit = sumStats.conflStats.numConflicts + nextCleanLimitInc;
     if (!origAssumptions.empty()) {
@@ -1728,6 +1732,7 @@ lbool Solver::solve()
         vector<lbool> statuses;
         long numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
+        assert(nextCleanLimitInc >= 1);
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls += (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
         }
