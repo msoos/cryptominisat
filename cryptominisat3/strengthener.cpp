@@ -257,6 +257,7 @@ void Strengthener::str_and_sub_using_watch(
 void Strengthener::try_subsuming_by_stamping(const bool red)
 {
     if (solver->conf.doStamp
+        && solver->conf.otfHyperbin
         && !isSubsumed
         && !red
     ) {

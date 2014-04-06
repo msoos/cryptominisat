@@ -2248,6 +2248,7 @@ bool Simplifier::reverse_vivification_of_dummy(
     if (ps.isBinary()
         || qs.isBinary()
         || !solver->conf.doCache
+        || !solver->conf.otfHyperbin
     ) {
         return false;
     }
@@ -2338,6 +2339,7 @@ bool Simplifier::resolve_clauses(
 
     if (!tautological && aggressive
         && solver->conf.doStamp
+        && solver->conf.otfHyperbin
     ) {
         tautological = subsume_dummy_through_stamping(ps, qs);
     }
