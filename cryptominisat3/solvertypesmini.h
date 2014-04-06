@@ -131,9 +131,9 @@ inline lbool toLbool(const char   v)
     return lbool(v);
 }
 
-const lbool l_True  = toLbool( 1);
-const lbool l_False = toLbool(-1);
-const lbool l_Undef = toLbool( 0);
+static const lbool l_True  = toLbool( 1);
+static const lbool l_False = toLbool(-1);
+static const lbool l_Undef = toLbool( 0);
 
 inline lbool boolToLBool(const bool b)
 {
