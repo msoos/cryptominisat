@@ -1443,9 +1443,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
                 //so delete explicitly
 
                 //Drup
-                if (!solver->conf.doStamp
-                    && !solver->conf.doCache
-                ) {
+                if (!solver->conf.doStamp && !solver->conf.doCache) {
                    (*solver->drup) << del << lits[0] << lits[1] << fin;
                 }
             }
