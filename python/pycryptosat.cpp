@@ -115,6 +115,49 @@ static int parse_clause(
     return 1;
 }
 
+static int parse_xor_clause(
+    Solver *self
+    , PyObject *clause
+    , std::vector<Var>& vars
+) {
+    PyObject *iterator = PyObject_GetIter(clause);
+    if (iterator == NULL) {
+        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        return 0;
+    }
+
+    PyObject *lit;
+    while ((lit = PyIter_Next(iterator)) != NULL) {
+        long var;
+        bool sign;
+        int ret = convert_lit_to_sign_and_var(lit, var, sign);
+        Py_DECREF(lit);
+        if (!ret) {
+            Py_DECREF(iterator);
+            return 0;
+        }
+        if (sign) {
+            PyErr_SetString(PyExc_ValueError, "XOR clause must contiain only positive variables (not inverted literals)");
+            Py_DECREF(iterator);
+            return 0;
+        }
+
+        if (var >= self->cmsat->nVars()) {
+            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+                self->cmsat->new_var();
+            }
+        }
+
+        vars.push_back(var);
+    }
+    Py_DECREF(iterator);
+    if (PyErr_Occurred()) {
+        return 0;
+    }
+
+    return 1;
+}
+
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
@@ -147,21 +190,12 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
     bool real_rhs = PyObject_IsTrue(rhs);
 
-    std::vector<Lit> lits;
-    if (!parse_clause(self, clause, lits)) {
+    std::vector<Var> vars;
+    if (!parse_xor_clause(self, clause, vars)) {
         return 0;
     }
-    for(std::vector<Lit>::const_iterator
-        it = lits.begin(), end = lits.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->sign()) {
-            PyErr_SetString(PyExc_ValueError, "XOR clause must contiain only positive variables (not inverted literals)");
-            return NULL;
-        }
-    }
-    self->cmsat->add_xor_clause(lits, real_rhs);
+
+    self->cmsat->add_xor_clause(vars, real_rhs);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -171,7 +205,7 @@ static PyObject* get_solution(SATSolver *cmsat)
 {
     PyObject *tuple;
 
-    uint32_t max_idx = cmsat->nVars();
+    unsigned max_idx = cmsat->nVars();
     tuple = PyTuple_New((Py_ssize_t) max_idx+1);
     if (tuple == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
@@ -185,7 +219,7 @@ static PyObject* get_solution(SATSolver *cmsat)
         return NULL;
     }
 
-    for (long i = 0; i < max_idx; i++) {
+    for (unsigned i = 0; i < max_idx; i++) {
         lbool v = cmsat->get_model()[i];
         PyObject *py_value = NULL;
         if (v == l_True) {
