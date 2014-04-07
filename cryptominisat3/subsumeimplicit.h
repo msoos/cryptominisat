@@ -51,7 +51,7 @@ public:
         void printShort() const;
         void print() const;
 
-        double time_used;
+        double time_used = 0.0;
         uint64_t numCalled = 0;
         uint64_t time_out = 0;
         uint64_t remBins = 0;
