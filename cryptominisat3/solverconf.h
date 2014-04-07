@@ -193,7 +193,6 @@ class SolverConf
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
         int      do_bva;
-        int      bva_also_red;
         int      bva_also_twolit_diff;
         int      bva_extra_lit_and_red_start;
 

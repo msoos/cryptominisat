@@ -22,6 +22,7 @@
 #include "cryptominisat.h"
 #include "solver.h"
 #include "drup.h"
+#include <stdexcept>
 
 using namespace CMSat;
 
@@ -43,7 +44,9 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
 bool SATSolver::add_xor_clause(const std::vector<Lit>& lits, bool rhs)
 {
     for(const Lit lit: lits) {
-        assert(lit.sign() == false);
+        if (lit.sign()) {
+            throw std::range_error("Literals cannot be inverted in an XOR clause");
+        }
     }
     return ((CMSat::Solver*)solver)->add_xor_clause_outer(lits, rhs);
 }

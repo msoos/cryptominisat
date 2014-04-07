@@ -127,7 +127,6 @@ SolverConf::SolverConf() :
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
         , do_bva(true)
-        , bva_also_red(true)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(100ULL*1000ULL)
 
