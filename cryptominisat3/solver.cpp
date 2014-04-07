@@ -251,18 +251,11 @@ void Solver::add_xor_clause_inter_cleaned_cut(
     const vector<Lit>& lits
     , bool attach
 ) {
-    if (lits.size() == 1) {
-        vector<Lit> new_lits;
-        new_lits.push_back(~lits[0]);
-        addClauseInt(new_lits, false, ClauseStats(), attach);
-        return;
-    }
-
     //cout << "xor_inter_cleaned_cut got: " << lits << endl;
     vector<Lit> new_lits;
     for(size_t i = 0; i < (1ULL<<lits.size()); i++) {
         unsigned bits_set = num_bits_set(i, lits.size());
-        if (bits_set % 2 == lits.size() % 2) {
+        if (bits_set % 2 == 0) {
             continue;
         }
 
