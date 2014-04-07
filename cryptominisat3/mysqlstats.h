@@ -91,7 +91,7 @@ private:
         {}
 
         vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         //Variables
         uint64_t sumConflicts;
@@ -160,7 +160,7 @@ private:
         {}
 
         MYSQL_BIND  bind[10 + 14*3];
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         //Position
         uint64_t numSimplify;
@@ -189,7 +189,7 @@ private:
         {}
 
         MYSQL_BIND  bind[1+7];
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         uint64_t numSimplify;
         uint64_t sumConflicts;
@@ -208,7 +208,7 @@ private:
         {}
 
         MYSQL_BIND  bind[1+5];
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         uint64_t numSimplify;
         uint64_t sumConflicts;
@@ -226,7 +226,7 @@ private:
         {}
 
         MYSQL_BIND  bind[79+1]; //+1 == runID
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         //Position
         uint64_t numSimplify;
@@ -337,7 +337,7 @@ private:
 
         uint64_t varInitID;
         vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         struct Data {
             uint64_t var;
@@ -376,7 +376,7 @@ private:
             stmt(NULL)
         {}
         vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt;
+        MYSQL_STMT  *stmt = NULL;
 
         //Variables
         uint64_t sumConflicts;
