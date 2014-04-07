@@ -76,7 +76,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         bool add_clause_outer(const vector<Lit>& lits);
-        bool add_xor_clause_outer(const vector<Lit>& lits, bool rhs);
+        bool add_xor_clause_outer(const vector<Var>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  setNeedToInterrupt();

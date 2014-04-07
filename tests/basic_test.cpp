@@ -53,64 +53,49 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( xor_interface )
 bool is_critical(const std::range_error&) { return true; }
 
-BOOST_AUTO_TEST_CASE(xorcheck_no_inverted_lits)
-{
-    SATSolver s;
-    s.new_var();
-    BOOST_REQUIRE_EXCEPTION(s.add_xor_clause(vector<Lit>{Lit(0, true)}, false);, std::range_error, is_critical);
-}
-
-BOOST_AUTO_TEST_CASE(xor_check_no_inverted_lits2)
-{
-    SATSolver s;
-    s.new_var();
-    s.new_var();
-    vector<Lit> lits;
-    lits.push_back(Lit(0, false));
-    lits.push_back(Lit(1, true));
-    BOOST_REQUIRE_EXCEPTION(s.add_xor_clause(lits, true);, std::range_error, is_critical);
-}
-
 BOOST_AUTO_TEST_CASE(xor_check_sat_solution)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
+    s.add_xor_clause(vector<unsigned>{0U}, false);
+    s.add_xor_clause(vector<unsigned>{0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_False);
     }
+    BOOST_CHECK_EQUAL( s.nVars(), 1);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_unsat_solution)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
+    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<Var>{0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_True);
     }
+    BOOST_CHECK_EQUAL( s.nVars(), 1);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_solution_values)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
+    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<Var>{0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_True);
     }
+    BOOST_CHECK_EQUAL( s.nVars(), 1);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
@@ -118,8 +103,8 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(1, false)}, true);
+    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<Var>{1U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
@@ -128,6 +113,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
         BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
         BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
     }
+    BOOST_CHECK_EQUAL( s.nVars(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_solution_values3)
@@ -135,7 +121,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values3)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(0, false)}, true);
+    s.add_xor_clause(vector<Var>{0U, 0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
 }
@@ -145,9 +131,10 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values4)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(0, false)}, false);
+    s.add_xor_clause(vector<Var>{0U, 0U}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.nVars(), 2);
 }
 
 
@@ -156,12 +143,13 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values5)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false)}, true);
+    s.add_xor_clause(vector<Var>{0U, 1U}, true);
     vector<Lit> assump = {Lit(0, false)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_solution_values6)
@@ -169,12 +157,13 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values6)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false)}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U}, false);
     vector<Lit> assump = {Lit(0, true)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(xor_check_solution_values7)
@@ -183,13 +172,14 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values7)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false), Lit(2, false)}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
     vector<Lit> assump = {Lit(0, false), Lit(1, false)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(xor_3_long)
@@ -198,14 +188,15 @@ BOOST_AUTO_TEST_CASE(xor_3_long)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false), Lit(2, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(1, false)}, true);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    s.add_xor_clause(vector<Var>{0}, true);
+    s.add_xor_clause(vector<Var>{1}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[2], l_True);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(xor_3_long2)
@@ -214,14 +205,15 @@ BOOST_AUTO_TEST_CASE(xor_3_long2)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false), Lit(2, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(1, false)}, true);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<Var>{1U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(xor_4_long)
@@ -231,16 +223,17 @@ BOOST_AUTO_TEST_CASE(xor_4_long)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false), Lit(2, false), Lit(3, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(1, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(2, false)}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U, 3U}, false);
+    s.add_xor_clause(vector<Var>{0U}, false);
+    s.add_xor_clause(vector<Var>{1U}, false);
+    s.add_xor_clause(vector<Var>{2U}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[3], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(xor_4_long2)
@@ -250,29 +243,30 @@ BOOST_AUTO_TEST_CASE(xor_4_long2)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Lit>{Lit(0, false), Lit(1, false), Lit(2, false), Lit(3, false)}, true);
-    s.add_xor_clause(vector<Lit>{Lit(0, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(1, false)}, false);
-    s.add_xor_clause(vector<Lit>{Lit(2, false)}, true);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U, 3U}, true);
+    s.add_xor_clause(vector<Var>{0U}, false);
+    s.add_xor_clause(vector<Var>{1U}, false);
+    s.add_xor_clause(vector<Var>{2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[2], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[3], l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(xor_very_long)
 {
     SATSolver s;
-    vector<Lit> lits;
+    vector<Var> vars;
     for(unsigned i = 0; i < 30; i++) {
         s.new_var();
-        lits.push_back(Lit(i, false));
+        vars.push_back(i);
     }
-    s.add_xor_clause(lits, false);
+    s.add_xor_clause(vars, false);
     for(unsigned i = 0; i < 29; i++) {
-        s.add_xor_clause(vector<Lit>{Lit(i, false)}, false);
+        s.add_xor_clause(vector<Var>{i}, false);
     }
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -284,22 +278,25 @@ BOOST_AUTO_TEST_CASE(xor_very_long)
 
 BOOST_AUTO_TEST_CASE(xor_very_long2)
 {
-    SATSolver s;
-    vector<Lit> lits;
-    for(unsigned i = 0; i < 30; i++) {
-        s.new_var();
-        lits.push_back(Lit(i, false));
+    for(size_t num = 3; num < 30; num++) {
+        SATSolver s;
+        vector<Var> vars;
+        for(unsigned i = 0; i < num; i++) {
+            s.new_var();
+            vars.push_back(i);
+        }
+        s.add_xor_clause(vars, true);
+        for(unsigned i = 0; i < num-1; i++) {
+            s.add_xor_clause(vector<Var>{i}, false);
+        }
+        lbool ret = s.solve();
+        BOOST_CHECK_EQUAL( ret, l_True);
+        for(unsigned i = 0; i < num-1; i++) {
+            BOOST_CHECK_EQUAL(s.get_model()[i], l_False);
+        }
+        BOOST_CHECK_EQUAL(s.get_model()[num-1], l_True);
+        BOOST_CHECK_EQUAL( s.nVars(), num);
     }
-    s.add_xor_clause(lits, true);
-    for(unsigned i = 0; i < 29; i++) {
-        s.add_xor_clause(vector<Lit>{Lit(i, false)}, false);
-    }
-    lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    for(unsigned i = 0; i < 29; i++) {
-        BOOST_CHECK_EQUAL(s.get_model()[i], l_False);
-    }
-    BOOST_CHECK_EQUAL(s.get_model()[29], l_True);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

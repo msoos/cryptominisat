@@ -3774,8 +3774,12 @@ bool Solver::add_clause_outer(const vector<Lit>& lits)
     return addClause(lits2);
 }
 
-bool Solver::add_xor_clause_outer(const vector<Lit>& lits, bool rhs)
+bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
 {
+    vector<Lit> lits(vars.size());
+    for(size_t i = 0; i < vars.size(); i++) {
+        lits[i] = Lit(vars[i], false);
+    }
     check_too_large_variable_number(lits);
 
     vector<Lit> lits2 = back_number_from_caller(lits);

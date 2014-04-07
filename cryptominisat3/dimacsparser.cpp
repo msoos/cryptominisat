@@ -268,13 +268,14 @@ void DimacsParser::parse_and_add_xor_clause(StreamBuffer& in)
         return;
 
     bool rhs = true;
+    vector<Var> vars;
     for(Lit& lit: lits) {
+        vars.push_back(lit.var());
         if (lit.sign()) {
-            lit ^= true;
             rhs ^= true;
         }
     }
-    solver->add_xor_clause(lits, rhs);
+    solver->add_xor_clause(vars, rhs);
     xor_clauses_added++;
 }
 

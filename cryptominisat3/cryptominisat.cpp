@@ -41,14 +41,9 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     return ((CMSat::Solver*)solver)->add_clause_outer(lits);
 }
 
-bool SATSolver::add_xor_clause(const std::vector<Lit>& lits, bool rhs)
+bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
-    for(const Lit lit: lits) {
-        if (lit.sign()) {
-            throw std::range_error("Literals cannot be inverted in an XOR clause");
-        }
-    }
-    return ((CMSat::Solver*)solver)->add_xor_clause_outer(lits, rhs);
+    return ((CMSat::Solver*)solver)->add_xor_clause_outer(vars, rhs);
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
