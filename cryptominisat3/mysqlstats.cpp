@@ -37,6 +37,18 @@ MySQLStats::~MySQLStats()
         std::exit(-1);
     }
 
+    ret = mysql_stmt_close(stmtTimePassed.stmt);
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
+    ret = mysql_stmt_close(stmtTimePassedMin.stmt);
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     #ifdef STATS_NEEDED_EXTRA
     ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
     if (ret) {
