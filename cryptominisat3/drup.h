@@ -24,6 +24,15 @@ struct Drup
         return false;
     }
 
+    virtual void forget_delay()
+    {
+    }
+
+    virtual bool something_delayed()
+    {
+        return false;
+    }
+
     virtual Drup& operator<<(const Lit)
     {
 
@@ -51,6 +60,18 @@ struct DrupFile: public Drup
     void setFile(std::ostream* _file)
     {
         file = _file;
+    }
+
+    bool something_delayed() override
+    {
+        return delete_filled;
+    }
+
+    void forget_delay() override
+    {
+        todel.clear();
+        must_delete_next = false;
+        delete_filled = false;
     }
 
     bool enabled() override
@@ -99,8 +120,10 @@ struct DrupFile: public Drup
                 break;
 
             case DrupFlag::deldelay:
+                assert(!delete_filled);
+                assert(todel.str() == "");
+                todel.str(string());
                 //delete_filled could be set to true, but that's now ignored
-                todel.clear();
                 delete_filled = false;
 
                 must_delete_next = true;
@@ -109,13 +132,13 @@ struct DrupFile: public Drup
             case DrupFlag::findelay:
                 assert(delete_filled);
                 *file << "d " << todel.str();
-                todel.clear();
+                todel.str(string());
                 delete_filled = false;
                 break;
 
             case DrupFlag::del:
                 //delete_filled could be set to true, but that's now ignored
-                todel.clear();
+                todel.str(string());
                 delete_filled = false;
 
                 must_delete_next = false;

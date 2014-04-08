@@ -564,9 +564,12 @@ bool VarReplacer::replaceImplicit()
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs)
 {
+    assert(!solver->drup->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+        assert(!solver->drup->something_delayed());
+
         Clause& c = *solver->clAllocator.getPointer(*i);
         assert(c.size() > 3);
 
@@ -592,9 +595,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
             }
         } else {
             *j++ = *i;
+            solver->drup->forget_delay();
         }
+
     }
     cs.resize(cs.size() - (i-j));
+    assert(!solver->drup->something_delayed());
 
     return solver->ok;
 }

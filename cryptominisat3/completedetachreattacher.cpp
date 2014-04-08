@@ -113,6 +113,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());
     }
+    assert(!solver->drup->something_delayed());
 
     return solver->ok;
 }
@@ -126,6 +127,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
     vector<ClOffset>& cs
     , bool removeStatsFirst
 ) {
+    assert(!solver->drup->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
@@ -185,6 +187,8 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
     //Drup
     if (i != j) {
         (*solver->drup) << *cl << fin << findelay;
+    } else {
+        solver->drup->forget_delay();
     }
 
     switch (ps.size()) {

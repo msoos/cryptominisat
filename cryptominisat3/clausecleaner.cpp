@@ -147,6 +147,7 @@ void ClauseCleaner::clean_implicit_watchlist(
             *j++ = *i;
             continue;
         }
+        assert(!solver->drup->something_delayed());
 
         if (i->isBinary()) {
             clean_binary_implicit(*i, j, lit);
@@ -161,6 +162,7 @@ void ClauseCleaner::clean_implicit_watchlist(
 
 void ClauseCleaner::clean_implicit_clauses()
 {
+    assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
     size_t wsLit = 0;
@@ -184,6 +186,7 @@ void ClauseCleaner::clean_implicit_clauses()
 
 void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
 {
+    assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
     assert(solver->qhead == solver->trail.size());
 
@@ -213,6 +216,7 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
 
 inline bool ClauseCleaner::cleanClause(ClOffset offset)
 {
+    assert(!solver->drup->something_delayed());
     Clause& cl = *solver->clAllocator.getPointer(offset);
     assert(cl.size() > 3);
     const uint32_t origSize = cl.size();
@@ -239,6 +243,8 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     if (i != j) {
         cl.shrink(i-j);
         (*solver->drup) << cl << fin << findelay;
+    } else {
+        solver->drup->forget_delay();
     }
 
     assert(cl.size() > 1);

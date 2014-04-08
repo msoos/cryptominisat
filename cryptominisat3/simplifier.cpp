@@ -223,6 +223,7 @@ void Simplifier::unlinkClause(const ClOffset offset, bool doDrup, bool allow_emp
 
 lbool Simplifier::cleanClause(ClOffset offset)
 {
+    assert(!solver->drup->something_delayed());
     assert(solver->ok);
 
     bool satisfied = false;
@@ -278,6 +279,8 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
     if (i-j > 0) {
         (*solver->drup) << cl << fin << findelay;
+    } else {
+        solver->drup->forget_delay();
     }
 
     switch(cl.size()) {
@@ -541,6 +544,7 @@ void Simplifier::addBackToSolver()
 
 bool Simplifier::completeCleanClause(Clause& cl)
 {
+    assert(!solver->drup->something_delayed());
     assert(cl.size() > 3);
     (*solver->drup) << deldelay << cl << fin;
 
@@ -570,6 +574,8 @@ bool Simplifier::completeCleanClause(Clause& cl)
     //Drup
     if (i - j > 0) {
         (*solver->drup) << cl << fin << findelay;
+    } else {
+        solver->drup->forget_delay();
     }
 
     switch (cl.size()) {
