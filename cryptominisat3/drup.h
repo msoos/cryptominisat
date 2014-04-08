@@ -69,7 +69,7 @@ struct DrupFile: public Drup
 
     void forget_delay() override
     {
-        todel.clear();
+        todel.str(string());
         must_delete_next = false;
         delete_filled = false;
     }
