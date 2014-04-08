@@ -123,7 +123,6 @@ struct DrupFile: public Drup
                 assert(!delete_filled);
                 assert(todel.str() == "");
                 todel.str(string());
-                //delete_filled could be set to true, but that's now ignored
                 delete_filled = false;
 
                 must_delete_next = true;
@@ -137,7 +136,6 @@ struct DrupFile: public Drup
                 break;
 
             case DrupFlag::del:
-                //delete_filled could be set to true, but that's now ignored
                 todel.str(string());
                 delete_filled = false;
 

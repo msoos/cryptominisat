@@ -95,9 +95,6 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     return stay;
 }
 
-/**
-@brief Completely attach all clauses
-*/
 bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 {
     if (solver->conf.verbosity >= 6) {
@@ -106,8 +103,6 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
-
-    //Treat implicits
     solver->clauseCleaner->clean_implicit_clauses();
 
     if (solver->ok) {
