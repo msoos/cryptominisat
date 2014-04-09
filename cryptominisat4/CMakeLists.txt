@@ -130,7 +130,7 @@ install(TARGETS libcryptominisat4
 )
 
 
-add_executable(cryptominisat4
+add_executable(cryptominisat
     dimacsparser.cpp
     main.cpp
 )
@@ -144,14 +144,14 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-set_target_properties(cryptominisat4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set_target_properties(cryptominisat4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-target_link_libraries(cryptominisat4
+set_target_properties(cryptominisat PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set_target_properties(cryptominisat PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+target_link_libraries(cryptominisat
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat4
+install(TARGETS cryptominisat
     EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
 
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4")
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")

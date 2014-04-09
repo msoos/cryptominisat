@@ -204,7 +204,7 @@ set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
 set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
 
 # Export targets
-export(TARGETS libcryptominisat4 cryptominisat4 FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
+export(TARGETS libcryptominisat4 cryptominisat FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 
 # Create cryptominisat4Config file
 set(EXPORT_TYPE "Build-tree")
