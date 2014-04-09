@@ -1684,7 +1684,7 @@ lbool Solver::solve()
     reduce_db_and_update_reset_stats(false);
 
     //Initialise
-    if (conf.startClean <= 100) {
+    if (conf.startClean < 100) {
         cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
         exit(-1);
     }
