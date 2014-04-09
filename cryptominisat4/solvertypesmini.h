@@ -20,8 +20,8 @@ class Lit
     explicit Lit(uint32_t i) : x(i) { }
 public:
     Lit() : x(2*var_Undef) {}   // (lit_Undef)
-    explicit Lit(Var var, bool sign) :
-        x((2*var) | (uint32_t)sign)
+    explicit Lit(Var var, bool is_inverted) :
+        x((2*var) | (uint32_t)is_inverted)
     {}
 
     const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.
