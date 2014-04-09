@@ -16,13 +16,13 @@ Compiling and installing
 
 You have to use cmake to compile and install. I suggest::
 
-  tar xzvf my-cryptominisat-tarball.tar.gz
-  cd cryptominisat-version
-  mkdir build
-  cd build
-  cmake ..
-  make -j4
-  sudo make install
+  $ tar xzvf my-cryptominisat-tarball.tar.gz
+  $ cd cryptominisat-version
+  $ mkdir build
+  $ cd build
+  $ cmake ..
+  $ make -j4
+  $ sudo make install
 
 Once cryptominisat is installed, the binary is available under
 `/usr/local/bin/cryptominisat4`, the library shared library is available
@@ -30,10 +30,10 @@ under `/usr/local/lib/libcryptominisat4.so` and the 3 header files are
 available under `/usr/local/include/cryptominisat4/`. We can now install the
 python bindings::
 
-  cd cryptoinisat-version
-  cd python
-  make
-  sudo make install
+  $ cd cryptoinisat-version
+  $ cd python
+  $ make
+  $ sudo make install
 
 You can uninstall both by simply doing `sudo make uninstall` in their respective
 directories.
@@ -53,6 +53,7 @@ The files has 3 clauses and 2 variables, this is reflected in the header
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
 True. The only solution to this problem is::
 
+  $ cryptominisat4 --verb 0 file.cnf
   s SATISFIABLE
   v 1 -2 3 0
 
