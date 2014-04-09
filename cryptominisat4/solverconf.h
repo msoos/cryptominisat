@@ -149,7 +149,7 @@ class SolverConf
 
         //Limits
         double   maxTime;
-        long     maxConfl;
+        long maxConfl;
 
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities
@@ -194,7 +194,7 @@ class SolverConf
         double    varElimRatioPerIter;
         int      do_bva;
         int      bva_also_twolit_diff;
-        int      bva_extra_lit_and_red_start;
+        long     bva_extra_lit_and_red_start;
 
         //Probing
         int      doProbe;

@@ -14,7 +14,7 @@ In downloaded cryptominisat homedir:
 * cmake ../
 * make -j4
 
-You now have the 'cryptominisat3' executable in build/
+You now have the 'cryptominisat4' executable in build/
 
 --
 Many thanks to Jonathan Heusser who sent me this howto and who

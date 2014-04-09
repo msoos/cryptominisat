@@ -3034,7 +3034,7 @@ void Simplifier::fill_potential(const Lit lit)
                 && (solver->cl_size(c.ws) == solver->cl_size(d.ws)
                     || (solver->cl_size(c.ws)+1 == solver->cl_size(d.ws)
                         && solver->conf.bva_also_twolit_diff
-                        && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start
+                        && (long)solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start
                     )
                 )
                 && !solver->redundant(d.ws)
@@ -3153,8 +3153,8 @@ bool Simplifier::bounded_var_addition()
         cout
         << "c [bva] added: " << bva_worked
         << " simp: " << bva_simp_size
-        << " 2lit: " << ((solver->conf.bva_also_twolit_diff && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
-        << " red: " << ((solver->conf.bva_also_twolit_diff && solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" :"N")
+        << " 2lit: " << ((solver->conf.bva_also_twolit_diff && (long)solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
+        << " red: " << ((solver->conf.bva_also_twolit_diff && (long)solver->sumConflicts() > solver->conf.bva_extra_lit_and_red_start) ? "Y" :"N")
         << " T: " << time_used
         << " T-out: " << (time_out ? "Y" : "N")
         << " T-r: " << time_remain*100.0  << "%"

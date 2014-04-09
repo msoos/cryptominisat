@@ -11,7 +11,7 @@ ELSE()
   "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-PROJECT(cryptominisat3)
+PROJECT(cryptominisat4)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
@@ -173,12 +173,12 @@ endmacro()
 # -----------------------------------------------------------------------------
 # Provide an export name to be used by targets that wish to export themselves.
 # -----------------------------------------------------------------------------
-set(CRYPTOMINISAT3_EXPORT_NAME "cryptominisat3Targets")
+set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
-add_subdirectory(cryptominisat3 cmsat3-src)
+add_subdirectory(cryptominisat4 cmsat3-src)
 add_subdirectory(tests)
 
 # -----------------------------------------------------------------------------
@@ -198,57 +198,57 @@ ADD_TEST (assump_test tests/assump_test)
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with
-# the build of cryptominisat3 in the build-tree
+# the build of cryptominisat4 in the build-tree
 # -----------------------------------------------------------------------------
-set(CRYPTOMINISAT3_TARGETS_FILENAME "cryptominisat3Targets.cmake")
-set(CRYPTOMINISAT3_CONFIG_FILENAME "cryptominisat3Config.cmake")
+set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
+set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
 
 # Export targets
-export(TARGETS libcryptominisat3 cryptominisat3 FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT3_TARGETS_FILENAME}")
+export(TARGETS libcryptominisat4 cryptominisat4 FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 
-# Create cryptominisat3Config file
+# Create cryptominisat4Config file
 set(EXPORT_TYPE "Build-tree")
 set(CONF_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/include")
-configure_file(cryptominisat3Config.cmake.in
-    "${CMAKE_BINARY_DIR}/${CRYPTOMINISAT3_CONFIG_FILENAME}" @ONLY
+configure_file(cryptominisat4Config.cmake.in
+    "${CMAKE_BINARY_DIR}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
 )
 
 # Export this package to the CMake user package registry
-# Now the user can just use find_package(cryptominisat3) on their system
-export(PACKAGE cryptominisat3)
+# Now the user can just use find_package(cryptominisat4) on their system
+export(PACKAGE cryptominisat4)
 
 
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat3)
+  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat4)
 endif()
-set(CRYPTOMINISAT3_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-    "Installation directory for cryptominisat3 CMake files")
+set(CRYPTOMINISAT4_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+    "Installation directory for cryptominisat4 CMake files")
 
-# Create cryptominisat3Config file
+# Create cryptominisat4Config file
 set(EXPORT_TYPE "installed")
 set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(cryptominisat3Config.cmake.in
-   "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT3_CONFIG_FILENAME}" @ONLY
+configure_file(cryptominisat4Config.cmake.in
+   "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
 )
 
 install(FILES
-    "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT3_CONFIG_FILENAME}"
-    DESTINATION "${CRYPTOMINISAT3_INSTALL_CMAKE_DIR}"
+    "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}"
+    DESTINATION "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
 
 # Install the export set for use with the install-tree
-install(EXPORT ${CRYPTOMINISAT3_EXPORT_NAME} DESTINATION
-    "${CRYPTOMINISAT3_INSTALL_CMAKE_DIR}"
+install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
+    "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
 
-set(CPACK_PACKAGE_NAME "cryptominisat3")
+set(CPACK_PACKAGE_NAME "cryptominisat4")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "3.3.0")
-set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "3")
+set(CPACK_PACKAGE_VERSION "4.0.0")
+set(CPACK_PACKAGE_VERSION_MAJOR "4")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME

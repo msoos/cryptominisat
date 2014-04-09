@@ -56,7 +56,7 @@ do
         #--cache $(bool) \
         #--scc $(bool) \
         #--presimp $(bool) \
-        ../build/cryptominisat3 \
+        ../build/cryptominisat4 \
 		--random $RANDOM \
 		--clbtwsimp $(int 0 3) \
 		--restart $(choice geom agility glue glueagility) \

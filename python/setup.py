@@ -1,9 +1,7 @@
 import sys
 from distutils.core import setup, Extension
 
-
-version = '3.4.0.dev'
-
+version = '4.0.0'
 
 ext_kwds = dict(
     name = "pycryptosat",
@@ -11,9 +9,8 @@ ext_kwds = dict(
     define_macros = [],
     #extra_compile_args = ['--std=c++11'],
     library_dirs=['.', '/usr/local/lib'],
-    libraries = ['cryptominisat3']
+    libraries = ['cryptominisat4']
 )
-
 
 setup(
     name = "pycryptosat",

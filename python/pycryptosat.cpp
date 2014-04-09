@@ -14,7 +14,7 @@
 #include <structmember.h>
 
 #include "assert.h"
-#include <cryptominisat3/cryptominisat.h>
+#include <cryptominisat4/cryptominisat.h>
 using namespace CMSat;
 
 #define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))

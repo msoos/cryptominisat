@@ -6,8 +6,8 @@ include_directories(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
-#set(cryptominisat3_lib_objects "")
-set(cryptominisat3_public_headers "")
+#set(cryptominisat4_lib_objects "")
+set(cryptominisat4_public_headers "")
 
 set(cryptoms_lib_files
     cnf.cpp
@@ -80,35 +80,35 @@ endif (Perftools_FOUND)
 
 
 if (STATICCOMPILE)
-    add_library(libcryptominisat3 STATIC
+    add_library(libcryptominisat4 STATIC
         ${cryptoms_lib_files}
     )
 else (STATICCOMPILE)
-    add_library(libcryptominisat3 SHARED
+    add_library(libcryptominisat4 SHARED
         ${cryptoms_lib_files}
     )
 endif (STATICCOMPILE)
 
-target_link_libraries(libcryptominisat3
+target_link_libraries(libcryptominisat4
     ${cryptoms_lib_link_libs}
 )
-set_target_properties(libcryptominisat3 PROPERTIES
-    OUTPUT_NAME cryptominisat3
-    PUBLIC_HEADER "${cryptominisat3_public_headers}"
+set_target_properties(libcryptominisat4 PROPERTIES
+    OUTPUT_NAME cryptominisat4
+    PUBLIC_HEADER "${cryptominisat4_public_headers}"
 )
 
-cmsat_add_public_header(libcryptominisat3 cryptominisat.h )
-cmsat_add_public_header(libcryptominisat3 solverconf.h )
-cmsat_add_public_header(libcryptominisat3 solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat4 cryptominisat.h )
+cmsat_add_public_header(libcryptominisat4 solverconf.h )
+cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
-# This is done so that projects that use cryptominisat3 as external project (not via CMake)
+# This is done so that projects that use cryptominisat4 as external project (not via CMake)
 # can find the public header files.
 # -----------------------------------------------------------------------------
-set(HEADER_DEST "${CMAKE_BINARY_DIR}/include/cryptominisat3")
+set(HEADER_DEST "${CMAKE_BINARY_DIR}/include/cryptominisat4")
 add_custom_target(CopyPublicHeaders ALL)
-foreach(public_header ${cryptominisat3_public_headers})
+foreach(public_header ${cryptominisat4_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
     add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
                        COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -122,36 +122,36 @@ foreach(public_header ${cryptominisat3_public_headers})
                       )
 endforeach()
 
-install(TARGETS libcryptominisat3
-    EXPORT ${CRYPTOMINISAT3_EXPORT_NAME}
+install(TARGETS libcryptominisat4
+    EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat3"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
 )
 
 
-add_executable(cryptominisat3
+add_executable(cryptominisat4
     dimacsparser.cpp
     main.cpp
 )
 
 set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
-    libcryptominisat3
+    libcryptominisat4
 )
 
 IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-set_target_properties(cryptominisat3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set_target_properties(cryptominisat3 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-target_link_libraries(cryptominisat3
+set_target_properties(cryptominisat4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set_target_properties(cryptominisat4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+target_link_libraries(cryptominisat4
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat3
-    EXPORT ${CRYPTOMINISAT3_EXPORT_NAME}
+install(TARGETS cryptominisat4
+    EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
 
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat3")
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4")

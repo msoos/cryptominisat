@@ -1,0 +1,16 @@
+# Config file for the @EXPORT_TYPE@ CryptoMiniSat Package
+# It defines the following variables
+#  CRYPTOMINISAT4_INCLUDE_DIRS - include directories for cryptominisat4
+#  CRYPTOMINISAT4_LIBRARIES    - libraries to link against
+#  CRYPTOMINISAT4_EXECUTABLE   - the cryptominisat executable
+
+# Compute paths
+get_filename_component(CRYPTOMINISAT4_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(CRYPTOMINISAT4_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+include("${CRYPTOMINISAT4_CMAKE_DIR}/@CRYPTOMINISAT4_TARGETS_FILENAME@")
+
+# These are IMPORTED targets created by @CRYPTOMINISAT4_TARGETS_FILENAME@
+set(CRYPTOMINISAT4_LIBRARIES libcryptominisat4)
+set(CRYPTOMINISAT4_EXECUTABLE cryptominisat4)

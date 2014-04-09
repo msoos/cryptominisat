@@ -48,7 +48,7 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
-                    , default="../build/cryptominisat3"
+                    , default="../build/cryptominisat4"
                     , help="SAT solver executable. Default: %default"
                     )
 
@@ -735,8 +735,6 @@ class Tester:
         #handle special fuzzer
         file_names_multi = []
         if len(fuzzer) == 2 and fuzzer[1] == "special":
-            #create N files
-            file_names_multi = []
 
             #sometimes just fuzz with all SAT problems
             fixed = random.getrandbits(1)  == 1
