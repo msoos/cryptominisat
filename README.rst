@@ -14,30 +14,26 @@ provides the best of both words: ease of use and a powerful interface.
 Compiling and installing
 -----
 
-You have to use cmake to compile and install. I suggest:
+You have to use cmake to compile and install. I suggest::
 
-```
-   $ tar xzvf my-cryptominisat-tarball.tar.gz
-   $ cd cryptominisat-version
-   $ mkdir build
-   $ cd build
-   $ cmake ..
-   $ make -j4
-   $ sudo make install
-```
+  tar xzvf my-cryptominisat-tarball.tar.gz
+  cd cryptominisat-version
+  mkdir build
+  cd build
+  cmake ..
+  make -j4
+  sudo make install
 
 Once cryptominisat is installed, the binary is available under
 `/usr/local/bin/cryptominisat4`, the library shared library is available
 under `/usr/local/lib/libcryptominisat4.so` and the 3 header files are
 available under `/usr/local/include/cryptominisat4/`. We can now install the
-python bindings:
+python bindings::
 
-```
-$ cd cryptoinisat-version
-$ cd python
-$ make
-$ sudo make install
-```
+  cd cryptoinisat-version
+  cd python
+  make
+  sudo make install
 
 You can uninstall both by simply doing `sudo make uninstall` in their respective
 directories.
@@ -46,31 +42,26 @@ Command-line usage
 -----
 
 Let's take the file:
-```
-p cnf 2 3
-1 0
--2 0
--1 2 3 0
-```
+  p cnf 2 3
+  1 0
+  -2 0
+  -1 2 3 0
 
 The files has 3 clauses and 2 variables, this is reflected in the header
 `p cnf 2 3`. Every clause is ended by '0'. The clauses say: 1 must be True, 2
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
-True. The only solution to this problem is:
+True. The only solution to this problem is::
 
-```
-s SATISFIABLE
-v 1 -2 3 0
-```
+  s SATISFIABLE
+  v 1 -2 3 0
 
-If the file had contained
-```
-p cnf 2 4
-1 0
--2 0
--3 0
--1 2 3 0
-```
+If the file had contained::
+
+  p cnf 2 4
+  1 0
+  -2 0
+  -3 0
+  -1 2 3 0
 
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
@@ -112,48 +103,45 @@ Library usage
 -----
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
-such, the 1st CNF above would become:
+such, the 1st CNF above would become::
 
-```
-#include <cryptominisat4/cryptominisat.h>
-using namespace CMSat;
-#include <assert.h>
+  #include <cryptominisat4/cryptominisat.h>
+  using namespace CMSat;
+  #include <assert.h>
 
-int main()
-{
-    Solver solver;
-    vector<Lit> clause;
+  int main()
+  {
+      Solver solver;
+      vector<Lit> clause;
 
-    //adds "1 0"
-    clause.push_back(Lit(0, false));
-    solver.add_clause(clause);
+      //adds "1 0"
+      clause.push_back(Lit(0, false));
+      solver.add_clause(clause);
 
-    //adds "-2 0"
-    clause.clear();
-    clause.push_back(Lit(1, true));
-    solver.add_clause(clause);
+      //adds "-2 0"
+      clause.clear();
+      clause.push_back(Lit(1, true));
+      solver.add_clause(clause);
 
-    //adds "-1 2 3 0"
-    clause.clear();
-    clause.push_back(Lit(0, true));
-    clause.push_back(Lit(1, false));
-    clause.push_back(Lit(2, false));
-    solver.add_clause(clause);
+      //adds "-1 2 3 0"
+      clause.clear();
+      clause.push_back(Lit(0, true));
+      clause.push_back(Lit(1, false));
+      clause.push_back(Lit(2, false));
+      solver.add_clause(clause);
 
-    lbool ret = solver.solve();
-    assert(ret == l_True);
-    assert(solver.get_model()[0] == l_True);
-    assert(solver.get_model()[1] == l_False);
-    assert(solver.get_model()[2] == l_True);
+      lbool ret = solver.solve();
+      assert(ret == l_True);
+      assert(solver.get_model()[0] == l_True);
+      assert(solver.get_model()[1] == l_False);
+      assert(solver.get_model()[2] == l_True);
 
-    return 0;
-}
-```
+      return 0;
+  }
 
 The library usage also allows for assumptions. We can add these lines just
-before the `return 0;` above:
+before the `return 0;` above::
 
-```
     vector<Lit> assumptions;
     assumptions.push_back(Lit(2, true));
     lbool ret = solver.solve(assumptions);
@@ -161,7 +149,6 @@ before the `return 0;` above:
 
     lbool ret = solver.solve();
     assert(ret == l_True);
-```
 
 Since we assume that variabe 2 must be false, there is no solution. However,
 if we solve again, without the assumption, we get back the original solution.
