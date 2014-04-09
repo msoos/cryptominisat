@@ -342,12 +342,6 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         if ((!cl.red() && gate.red))
             continue;
 
-        #ifdef VERBOSE_ORGATE_REPLACE
-        cout << "OR gate-based cl-shortening" << endl;
-        cout << "Gate used: " << gate << endl;
-        cout << "orig Clause: " << *clauses[c.index]<< endl;
-        #endif
-
         runStats.orGateUseful++;
 
         //Go through clause, check if RHS (eqLit) is inside the clause
@@ -365,6 +359,12 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         }
         if (eqLitInside)
             continue;
+
+        if (solver->conf.verbosity >= 6) {
+            cout << "OR gate-based cl-shortening" << endl;
+            cout << "Gate used: " << gate << endl;
+            cout << "orig Clause: " << cl<< endl;
+        }
 
         //Set up future clause's lits
         vector<Lit> lits;
@@ -406,10 +406,10 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         ClOffset offset2 = solver->clAllocator.getOffset(cl2);
         simplifier->clauses.push_back(offset2);
 
-        #ifdef VERBOSE_ORGATE_REPLACE
-        cout << "new  Clause : " << cl << endl;
-        cout << "-----------" << endl;
-        #endif
+        if (solver->conf.verbosity >= 6) {
+            cout << "new clause after gate: " << lits << endl;
+            cout << "-----------" << endl;
+        }
     }
 
     return true;
@@ -769,17 +769,17 @@ void GateFinder::treatAndGateClause(
     , const OrGate& gate
     , const ClOffset this_cl_offset
 ) {
-    #ifdef VERBOSE_ORGATE_REPLACE
-    cout << "AND gate-based cl rem" << endl;
-    cout << "clause 1: " << cl << endl;
-    //cout << "clause 2: " << *clauses[other_cl_offset.index] << endl;
-    cout << "gate : " << gate << endl;
-    #endif
-
     //Update stats
     runStats.andGateUseful++;
     const Clause& this_cl = *solver->clAllocator.getPointer(this_cl_offset);
     runStats.clauseSizeRem += this_cl.size();
+
+    if (solver->conf.verbosity >= 6) {
+        cout << "AND gate-based cl rem" << endl;
+        cout << "clause 1: " << this_cl << endl;
+        //cout << "clause 2: " << *clauses[other_cl_offset.index] << endl;
+        cout << "gate : " << gate << endl;
+    }
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
@@ -799,10 +799,10 @@ void GateFinder::treatAndGateClause(
     const bool red = other_cl.red() && this_cl.red();
     ClauseStats stats = ClauseStats::combineStats(this_cl.stats, other_cl.stats);
 
-    #ifdef VERBOSE_ORGATE_REPLACE
-    cout << "new clause:" << lits << endl;
-    cout << "-----------" << endl;
-    #endif
+    if (solver->conf.verbosity >= 6) {
+        cout << "gate new clause:" << lits << endl;
+        cout << "-----------" << endl;
+    }
 
     //Create and link in new clause
     Clause* clNew = solver->addClauseInt(lits, red, stats, false);
