@@ -243,7 +243,7 @@ install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
     "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
 
-set(CPACK_PACKAGE_NAME "cryptominisat4")
+set(CPACK_PACKAGE_NAME "cryptominisat")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
 set(CPACK_PACKAGE_VERSION "4.0.0")
