@@ -337,10 +337,6 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         ClOffset offset = subs[i];
         Clause& cl = *solver->clAllocator.getPointer(offset);
 
-        // OLD STUFF
-        //  //Don't shorten definitions of OR gates
-        //  // -- we could be manipulating the definition of the gate itself
-
         //Don't shorten irred clauses with red gates
         // -- potential loss if e.g. red clause is removed later
         if ((!cl.red() && gate.red))
