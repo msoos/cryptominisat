@@ -265,9 +265,12 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/gitstats/"
   "/matrixes/"
   "/man/"
+  "/desc/"
   "/.kdev4/"
+  "/web/file_creator.py"
   "/web/dat*"
   "/web/dygraphs-.*"
+  "/web/dygraphs_*"
   "/web/jquery/docs/"
   "/web/jquery/examples/"
   "/web/scriptaculous-js-1.9.0/test/"
@@ -277,6 +280,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   "tar.bz2$"
   ".kdev4$"
   ".directory$"
+  "HOWTO-ANALYSIS"
 )
 include(CPack)
 

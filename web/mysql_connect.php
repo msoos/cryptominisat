@@ -4,6 +4,9 @@ error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors',1);
 
 $username="cmsat_presenter";
+
+#this is for my local MySQL install, not my website
+#sorry for getting your hopes up
 $password="neud21kahgsdk";
 $database="cmsat";
 
