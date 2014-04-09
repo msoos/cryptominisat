@@ -41,7 +41,8 @@ directories.
 Command-line usage
 -----
 
-Let's take the file:
+Let's take the file::
+
   p cnf 2 3
   1 0
   -2 0
@@ -69,7 +70,7 @@ Python usage
 -----
 
 The python module is under the directory `python`. You have to first compile
-and install this module, as explained above. You can then use it as:
+and install this module, as explained above. You can then use it as::
 
    >>> from pycryptosat import Solver
    >>> s = Solver()
@@ -83,7 +84,7 @@ and install this module, as explained above. You can then use it as:
    >>> print solution
    (None, True, False, True)
 
-We can also try to assume any variable values for a single solver run:
+We can also try to assume any variable values for a single solver run::
 
    >>> sat, solution = s.solve([-3])
    >>> print sat
