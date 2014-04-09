@@ -1,11 +1,11 @@
 ===========================================
-CryptoMiniSat: and advanced SAT solver
+CryptoMiniSat SAT solver
 ===========================================
 
 This system provides CryptoMiniSat, an advanced SAT solver. The system has 3
 interfaces: command-line, C++ library and python. The command-line interface
 takes a `cnf <http://en.wikipedia.org/wiki/Conjunctive_normal_form>`_ as an
-input in the ` DIMACS <http://www.satcompetition.org/2009/format-benchmarks2009.html>`_
+input in the `DIMACS <http://www.satcompetition.org/2009/format-benchmarks2009.html>`_
 format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
@@ -17,13 +17,13 @@ Compiling and installing
 You have to use cmake to compile and install. I suggest:
 
 ```
-$ tar xzvf my-cryptominisat-tarball.tar.gz
-$ cd cryptominisat-version
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make -j4
-$ sudo make install
+   $ tar xzvf my-cryptominisat-tarball.tar.gz
+   $ cd cryptominisat-version
+   $ mkdir build
+   $ cd build
+   $ cmake ..
+   $ make -j4
+   $ sudo make install
 ```
 
 Once cryptominisat is installed, the binary is available under
