@@ -388,7 +388,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Future clause's stat
         const bool red = cl.red();
-        ClauseStats stats = cl.stats;
+        const ClauseStats stats = cl.stats;
 
         //Free the old clause and allocate new one
         (*solver->drup) << deldelay << cl << fin;
