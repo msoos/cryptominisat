@@ -108,8 +108,10 @@ be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
 such, the 1st CNF above would become::
 
   #include <cryptominisat4/cryptominisat.h>
-  using namespace CMSat;
   #include <assert.h>
+  #include <vector>
+  using std::vector;
+  using namespace CMSat;
 
   int main()
   {
