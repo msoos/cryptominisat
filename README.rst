@@ -53,7 +53,7 @@ The files has 3 clauses and 2 variables, this is reflected in the header
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
 True. The only solution to this problem is::
 
-  $ cryptominisat4 --verb 0 file.cnf
+  $ cryptominisat --verb 0 file.cnf
   s SATISFIABLE
   v 1 -2 3 0
 
