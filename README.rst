@@ -31,7 +31,7 @@ available under `/usr/local/include/cryptominisat4/`. We can now install the
 python bindings::
 
   $ sudo ldconfig
-  $ cd cryptoinisat-version
+  $ cd cryptominisat-version
   $ cd python
   $ make
   $ sudo make install
