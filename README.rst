@@ -30,6 +30,7 @@ under `/usr/local/lib/libcryptominisat4.so` and the 3 header files are
 available under `/usr/local/include/cryptominisat4/`. We can now install the
 python bindings::
 
+  $ sudo ldconfig
   $ cd cryptoinisat-version
   $ cd python
   $ make
