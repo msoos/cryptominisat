@@ -4,8 +4,8 @@ using namespace CMSat;
 
 void ClauseUsageStats::print() const
 {
-    #ifdef STATS_NEEDED
     cout
+    #ifdef STATS_NEEDED
     << " lits visit: "
     << std::setw(8) << sumLitVisited/1000UL
     << "K"
