@@ -445,6 +445,10 @@ void Main::add_supported_options()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("occredmax", po::value(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
         , "Don't add to occur list any redundant clause larger than this")
+    ("occirredmaxmb", po::value(&conf.maxOccurIrredMB)->default_value(conf.maxOccurIrredMB)
+        , "Don't allow irredundant occur size to be beyond this many MB")
+    ("occredmaxmb", po::value(&conf.maxOccurRedMB)->default_value(conf.maxOccurRedMB)
+        , "Don't allow redundant occur size to be beyond this many MB")
     ;
 
     std::ostringstream sccFindPercent;

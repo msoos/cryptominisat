@@ -414,7 +414,7 @@ bool Simplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 {
     //over + irred -> exit
     if (irred
-        && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurIrredMB
+        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurIrredMB
     ) {
         if (solver->conf.verbosity >= 2) {
             cout
@@ -426,7 +426,7 @@ bool Simplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 
     //over + red -> don't link
     if (!irred
-        && memUsage/(1024ULL*1024ULL) > solver->conf.maxOccurRedMB
+        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurRedMB
     ) {
         if (solver->conf.verbosity >= 2) {
             cout

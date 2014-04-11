@@ -189,6 +189,8 @@ class Tester:
         cmd += "--compslimit %d " % random.randint(0,3000)
         cmd += "--implicitmanip %s " % random.randint(0,1)
         cmd += "--occsimp %s " % random.randint(0,1)
+        cmd += "--occirredmaxmb %s " % random.randint(0,10)
+        cmd += "--occredmaxmb %s " % random.randint(0,10)
 
         #the most buggy ones, don't turn them off much, please
         if random.randint(0,1) == 1 :
