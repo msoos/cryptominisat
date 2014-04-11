@@ -2189,6 +2189,7 @@ void Searcher::print_search_loop_num()
 
 lbool Searcher::solve(const uint64_t _maxConfls)
 {
+    double myTime = cpuTime();
     assert(ok);
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
@@ -2209,6 +2210,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     if (status != l_Undef)
         goto end;
 
+    myTime = cpuTime();
     restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
@@ -2248,6 +2250,14 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
     end:
     finish_up_solve(status);
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "solving"
+            , cpuTime()-myTime
+        );
+    }
+
     return status;
 }
 
