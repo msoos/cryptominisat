@@ -1631,7 +1631,7 @@ void Searcher::resetStats()
 
 lbool Searcher::burstSearch()
 {
-    //Print what we will be doing
+    const double myTime = cpuTime();
     if (conf.verbosity >= 2) {
         cout
         << "c Doing burst search for " << conf.burstSearchLen << " conflicts"
@@ -1670,17 +1670,26 @@ lbool Searcher::burstSearch()
     var_inc_multiplier = backup_var_inc_multiplier;
 
     //Print what has happened
+    const double time_used = cpuTime() - myTime;
     if (conf.verbosity >= 2) {
         cout
         << "c "
         << conf.burstSearchLen << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
+        << " T: " << std::setprecision(2) << std::fixed << time_used
         #ifdef STATS_NEEDED
         << " LHBR: "
         << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
         #endif
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "burst search"
+            , time_used
+        );
     }
 
     return status;
