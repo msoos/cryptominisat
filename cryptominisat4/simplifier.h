@@ -617,6 +617,19 @@ private:
             return lit1 == other.lit1 && lit2 == other.lit2;
         }
 
+        unsigned hash(const uint32_t N) const
+        {
+            unsigned long h;
+            h = lit1.toInt();
+            if (lit2 == lit_Undef)
+                return h % N;
+
+            h ^= lit2.toInt()*37;
+            h += lit2.toInt();
+
+            return h % N;
+        }
+
         bool operator!=(const lit_pair& other) const
         {
             return !(*this == other);
