@@ -3134,7 +3134,9 @@ bool Simplifier::bounded_var_addition()
 
     double my_time = cpuTime();
     while(!var_bva_order.empty()) {
-        if (*limit_to_decrease < 0)
+        if (*limit_to_decrease < 0
+            || bva_worked >= solver->conf.bva_limit_per_call
+        )
             break;
 
         const Lit lit = Lit::toLit(var_bva_order.removeMin());
