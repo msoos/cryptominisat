@@ -32,6 +32,7 @@
 #include "time_mem.h"
 #include "clausecleaner.h"
 #include "completedetachreattacher.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::make_pair;
@@ -65,6 +66,11 @@ struct ActSorter
         return (activities[var1] < activities[var2]);
     }
 };
+
+uint64_t Prober::limit_used() const
+{
+    return solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime + extraTimeCache;
+}
 
 void Prober::checkOTFRatio()
 {
@@ -240,10 +246,7 @@ bool Prober::probe()
     assert(solver->propStats.otfHyperTime == 0);
     for(size_t i = 0
         ; i < possCh.size()
-            && solver->propStats.bogoProps
-                + solver->propStats.otfHyperTime
-                + extraTime + extraTimeCache
-                < numPropsTodo
+            && limit_used() < numPropsTodo
         ; i++
     ) {
         extraTime += 20;
@@ -393,11 +396,23 @@ end:
             runStats.numVisited++;
     }
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
-    runStats.cpu_time = cpuTime() - myTime;
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (limit_used() < numPropsTodo);
+    const double time_remain = ((double)numPropsTodo-(double)limit_used())/numPropsTodo;
+    runStats.cpu_time = time_used;
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;
     runStats.numCalls = 1;
     globalStats += runStats;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "probe"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
 
     //Check if we need to disable OTF hyper-bin&transitive reduction
     const double ratioUsedTime =

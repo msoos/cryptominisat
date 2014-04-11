@@ -341,6 +341,7 @@ class Prober {
             Var var[2];
             bool inverted;
         };
+        uint64_t limit_used() const;
 
         //For cancidate selection
         struct TwoSignVar
