@@ -227,7 +227,6 @@ bool XorFinder::extractInfo()
 
 end:
 
-    //Update stats
     const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     runStats.extractTime += time_used;
