@@ -48,7 +48,7 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc, formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar= "SOLVER", dest="solver"
-                    , default="../build/cryptominisat4"
+                    , default="../build/cryptominisat"
                     , help="SAT solver executable. Default: %default"
                     )
 
