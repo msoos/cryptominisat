@@ -27,6 +27,7 @@
 #include "clauseallocator.h"
 #include <array>
 #include <utility>
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -76,7 +77,8 @@ void GateFinder::find_or_gates_and_update_stats()
     assert(solver->ok);
 
     double myTime = cpuTime();
-    numMaxGateFinder = 100LL*1000LL*1000LL;
+    const int64_t orig_numMaxGateFinder = 100LL*1000LL*1000LL;
+    numMaxGateFinder = orig_numMaxGateFinder;
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
     find_or_gates();
@@ -90,9 +92,19 @@ void GateFinder::find_or_gates_and_update_stats()
             runStats.numIrred++;
         }
     }
-    runStats.findGateTime += cpuTime() - myTime;
-    if (*simplifier->limit_to_decrease <= 0) {
-        runStats.find_gate_timeout++;
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (numMaxGateFinder <= 0);
+    const double time_remain = (double)numMaxGateFinder/(double)orig_numMaxGateFinder;
+    runStats.findGateTime += time_used;
+    runStats.find_gate_timeout += time_out;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "gate find"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 }
 
@@ -136,8 +148,9 @@ bool GateFinder::all_simplifications_with_gates()
 
     //OR gate treatment
     if (solver->conf.doShortenWithOrGates) {
-        double myTime = cpuTime();
-        numMaxShortenWithGates = 100LL*1000LL*1000LL;
+        const double myTime = cpuTime();
+        const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*1000LL;
+        numMaxShortenWithGates = orig_numMaxShortenWithGates;
         simplifier->limit_to_decrease = &numMaxShortenWithGates;
         runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
             simplifier->runStats.origNumRedLongClauses;
@@ -145,15 +158,27 @@ bool GateFinder::all_simplifications_with_gates()
 
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
-            if (*simplifier->limit_to_decrease < 0) {
+            if (numMaxShortenWithGates < 0) {
                 break;
             }
 
             if (!shortenWithOrGate(gate))
                 break;
         }
-        runStats.orBasedTime += cpuTime() - myTime;
-        runStats.or_based_timeout += (*simplifier->limit_to_decrease <= 0);
+        const double time_used = cpuTime() - myTime;
+        const bool time_out = (numMaxShortenWithGates <= 0);
+        const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
+        runStats.orBasedTime += time_used;
+        runStats.or_based_timeout += time_out;
+        if (solver->conf.doSQL) {
+            solver->sqlStats->time_passed(
+                solver
+                , "gate shorten cl"
+                , time_used
+                , time_out
+                , time_remain
+            );
+        }
 
         if (!solver->ok)
             return false;
@@ -161,16 +186,17 @@ bool GateFinder::all_simplifications_with_gates()
 
     //AND gate treatment
     if (solver->conf.doRemClWithAndGates) {
-        numMaxClRemWithGates = 100LL*1000LL*1000LL;
+        const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*1000LL;
+        numMaxClRemWithGates = orig_numMaxClRemWithGates;
         simplifier->limit_to_decrease = &numMaxClRemWithGates;
-        double myTime = cpuTime();
+        const double myTime = cpuTime();
 
         //Do clause removal
         uint32_t foundPotential;
 
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
-            if (*simplifier->limit_to_decrease < 0) {
+            if (numMaxClRemWithGates < 0) {
                 break;
             }
 
@@ -180,8 +206,20 @@ bool GateFinder::all_simplifications_with_gates()
             if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
                 break;
         }
-        runStats.andBasedTime += cpuTime() - myTime;
-        runStats.and_based_timeout += (*simplifier->limit_to_decrease <= 0);
+        const double time_used = cpuTime() - myTime;
+        const bool time_out = (numMaxClRemWithGates <= 0);
+        const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
+        runStats.andBasedTime += time_used;
+        runStats.and_based_timeout += time_out;
+        if (solver->conf.doSQL) {
+            solver->sqlStats->time_passed(
+                solver
+                , "gate rem cl"
+                , time_used
+                , time_out
+                , time_remain
+            );
+        }
 
         if (!solver->ok)
             return false;
@@ -189,14 +227,20 @@ bool GateFinder::all_simplifications_with_gates()
 
     //EQ gate treatment
     if (solver->conf.doFindEqLitsWithGates) {
-        //Setup
-        double myTime = cpuTime();
+        const double myTime = cpuTime();
 
         //Do equivalence checking
         runStats.varReplaced += findEqOrGates();
 
-        //Handle results
-        runStats.varReplaceTime += cpuTime() - myTime;
+        const double time_used = cpuTime() - myTime;
+        runStats.varReplaceTime += time_used;
+        if (solver->conf.doSQL) {
+            solver->sqlStats->time_passed_min(
+                solver
+                , "gate eq-var"
+                , time_used
+            );
+        }
 
         if (!solver->ok)
             return false;

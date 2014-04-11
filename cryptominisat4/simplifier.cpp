@@ -632,6 +632,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
 {
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
+    const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
     limit_to_decrease = &empty_varelim_time_limit;
 
     size_t num = 0;
@@ -655,12 +656,24 @@ void Simplifier::eliminate_empty_resolvent_vars()
         var_elimed++;
     }
 
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (*limit_to_decrease <= 0);
+    const double time_remain = (double)*limit_to_decrease/(double)orig_empty_varelim_time_limit;
     if (solver->conf.verbosity >= 2) {
         cout
         << "c Empty resolvent elimed: " << var_elimed
-        << " T:" << (cpuTime() - myTime)
-        << " T-out: " << (*limit_to_decrease <= 0 ? "Y" : "N")
+        << " T:" << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "empty resolvent"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 }
 

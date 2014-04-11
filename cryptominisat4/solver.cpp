@@ -1405,7 +1405,7 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
     //Reattach what's left
     detachReattach.reattachLongs();
 
-    //Print results
+    //Stats
     tmpStats.cpu_time = cpuTime() - myTime;
     if (conf.verbosity >= 1) {
         if (conf.verbosity >= 3)
@@ -1414,6 +1414,13 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
             tmpStats.printShort();
     }
     cleaningStats += tmpStats;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "dbclean"
+            , tmpStats.cpu_time
+        );
+    }
 
     return tmpStats;
 }
