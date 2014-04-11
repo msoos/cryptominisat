@@ -300,47 +300,6 @@ class Prober {
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
         void checkOTFRatio();
-
-        //2-long xor-finding
-        /**
-        @brief used to find 2-long xor by shortening longer xors to this size
-
-        -# We propagate "var" and record all xors that become 2-long
-        -# We propagate "~var" and record all xors that become 2-long
-        -# if (1) and (2) have something in common, we add it as a variable
-        replacement instruction
-
-        We must be able to order these 2-long xors, so that we can search
-        for matching couples fast. This class is used for that
-        */
-        class TwoLongXor
-        {
-        public:
-            bool operator==(const TwoLongXor& other) const
-            {
-                if (var[0] == other.var[0]
-                    && var[1] == other.var[1]
-                    && inverted == other.inverted)
-                    return true;
-                return false;
-            }
-            bool operator<(const TwoLongXor& other) const
-            {
-                if (var[0] < other.var[0]) return true;
-                if (var[0] > other.var[0]) return false;
-
-                if (var[1] < other.var[1]) return true;
-                if (var[1] > other.var[1]) return false;
-
-                if (inverted < other.inverted) return true;
-                if (inverted > other.inverted) return false;
-
-                return false;
-            }
-
-            Var var[2];
-            bool inverted;
-        };
         uint64_t limit_used() const;
 
         //For cancidate selection
