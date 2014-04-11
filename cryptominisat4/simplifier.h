@@ -384,6 +384,7 @@ private:
     void checkAllLinkedIn();
 
     bool fill_occur();
+    bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;
     bool subsumeWithBinaries();

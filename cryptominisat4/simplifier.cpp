@@ -998,6 +998,32 @@ void Simplifier::checkAllLinkedIn()
     }
 }
 
+bool Simplifier::fill_occur_and_print_stats()
+{
+    double myTime = cpuTime();
+    removeAllLongsFromWatches();
+    if (!fill_occur()) {
+        return false;
+    }
+    sanityCheckElimedVars();
+    const double linkInTime = cpuTime() - myTime;
+    runStats.linkInTime += linkInTime;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occur build"
+            , linkInTime
+        );
+    }
+
+    //Print memory usage after occur link-in
+    if (solver->conf.verbosity >= 2) {
+        solver->printWatchMemUsed(memUsedTotal());
+    }
+
+    return true;
+}
+
 
 bool Simplifier::simplify()
 {
@@ -1026,21 +1052,11 @@ bool Simplifier::simplify()
     runStats.numCalls++;
     clauses.clear();
     limit_to_decrease = &strengthening_time_limit;
-
-    double myTime = cpuTime();
-    removeAllLongsFromWatches();
-    if (!fill_occur())
+    if (!fill_occur_and_print_stats()) {
         return solver->okay();
-    sanityCheckElimedVars();
-    const double linkInTime = cpuTime() - myTime;
-
-    //Print memory usage after occur link-in
-    if (solver->conf.verbosity >= 2) {
-        solver->printWatchMemUsed(memUsedTotal());
     }
 
     setLimits();
-    runStats.linkInTime += linkInTime;
     runStats.origNumFreeVars = solver->getNumFreeVars();
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail.size();
@@ -1240,9 +1256,8 @@ void Simplifier::finishUp(
     size_t origTrailSize
 ) {
     bool somethingSet = (solver->trail.size() - origTrailSize) > 0;
-
     runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
-    double myTime = cpuTime();
+    const double myTime = cpuTime();
 
     //Add back clauses to solver
     propagate();
@@ -1262,7 +1277,15 @@ void Simplifier::finishUp(
     }
 
     //Update global stats
-    runStats.finalCleanupTime += cpuTime() - myTime;
+    const double time_used = cpuTime() - myTime;
+    runStats.finalCleanupTime += time_used;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occur cleanup"
+            , time_used
+        );
+    }
     globalStats += runStats;
     subsumeStrengthen->finishedRun();
 
