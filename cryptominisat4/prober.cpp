@@ -106,11 +106,24 @@ void Prober::checkOTFRatio()
     }
 }
 
-bool Prober::probe()
+void Prober::reset_stats_and_state()
 {
-    assert(solver->decisionLevel() == 0);
-    assert(solver->nVars() > 0);
+    extraTime = 0;
+    extraTimeCache = 0;
+    solver->propStats.clear();
+    runStats.clear();
+    runStats.origNumBins = solver->binTri.redBins + solver->binTri.irredBins;
 
+    visitedAlready.clear();
+    visitedAlready.resize(solver->nVars()*2, 0);
+    propagatedBitSet.clear();
+    propagated.clear();
+    propagated.resize(solver->nVars(), 0);
+    propValue.resize(solver->nVars());
+}
+
+uint64_t Prober::calc_numpropstodo()
+{
     uint64_t numPropsTodo = 1900LL*1000LL*1000LL;
 
     //Bogoprops for hyper-bin is MUCH more precise, so if no propagateFull???
@@ -133,6 +146,8 @@ bool Prober::probe()
     if (solver->litStats.redLits + solver->litStats.irredLits > 20LL*1000LL*1000LL) {
         numPropsTodo *= 0.8;
     }
+
+    runStats.origNumFreeVars = numActiveVars;
     if (solver->conf.verbosity >= 2) {
     cout
         << "c [probe] lits : "
@@ -145,11 +160,11 @@ bool Prober::probe()
         << endl;
     }
 
-    solver->testAllClauseAttach();
-    const double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    return numPropsTodo;
+}
 
-    //Clean clauses
+void Prober::clean_clauses_before_probe()
+{
     if (solver->conf.verbosity >= 6) {
         cout << "c Cleaning clauses before probing." << endl;
     }
@@ -157,25 +172,12 @@ bool Prober::probe()
     if (solver->conf.verbosity >= 6) {
         cout << "c Cleaning clauses before probing finished." << endl;
     }
+}
 
-    //Stats
-    extraTime = 0;
-    extraTimeCache = 0;
-    solver->propStats.clear();
-    runStats.clear();
-    runStats.origNumFreeVars = numActiveVars;
-    runStats.origNumBins = solver->binTri.redBins + solver->binTri.irredBins;
-
-    //State
-    visitedAlready.clear();
-    visitedAlready.resize(solver->nVars()*2, 0);
-    propagatedBitSet.clear();
-    propagated.clear();
-    propagated.resize(solver->nVars(), 0);
-    propValue.resize(solver->nVars());
-
-    //If failed var searching is going good, do successively more and more of it
-    double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)numActiveVars * 100.0;
+uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numPropsTodo)
+{
+     //If failed var searching is going good, do successively more and more of it
+    double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)runStats.origNumFreeVars * 100.0;
     if (percentEffectLast > 20.0) {
         //It's doing VERY well
         numPropsMultiplier = std::min(numPropsMultiplier*2, 5.0);
@@ -210,120 +212,71 @@ bool Prober::probe()
         << endl;
     }
 
-    //Use candidates
-    //sortAndResetCandidates();
-    //candidates.clear();
+    return numPropsTodo;
+}
 
-    //Calculate the set of possible variables for branching on randomly
-    vector<Var> possCh;
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        if (solver->value(i) == l_Undef
-            && (solver->varData[i].removed == Removed::none
-                || solver->varData[i].removed == Removed::queued_replacer)
-        ) {
-            possCh.push_back(i);
-        }
-    }
+void Prober::clean_clauses_after_probe()
+{
+    double time = cpuTime();
+    bool advancedCleanup = false;
 
-    //Random swap
-    for (size_t i = 0
-        ; i + 1< possCh.size()
-        ; i++
+    //If more than 10% were set, detach&reattach. It's faster
+    if ((double)runStats.origNumFreeVars - (double)solver->getNumFreeVars()
+            >  (double)runStats.origNumFreeVars/10.0
+        && solver->getNumLongClauses() > 200000
     ) {
-        std::swap(
-            possCh[i]
-            , possCh[i+solver->mtrand.randInt(possCh.size()-1-i)]
-        );
+        if (solver->conf.verbosity >= 5)
+            cout << "c Advanced cleanup after probing" << endl;
+
+        advancedCleanup = true;
+        CompleteDetachReatacher reattacher(solver);
+        reattacher.detachNonBinsNonTris();
+        const bool ret = reattacher.reattachLongs();
+        release_assert(ret == true);
+    } else {
+        if (solver->conf.verbosity >= 5)
+            cout << "c Standard cleanup after probing" << endl;
+
+        solver->clauseCleaner->removeAndCleanAll();
     }
 
-    //For fast black-listing, O(1)-time lookup
-    vector<size_t> lookup(solver->nVars(), std::numeric_limits<size_t>::max());
-    for (size_t i = 0; i < possCh.size(); i++) {
-        lookup[possCh[i]] = i;
-    }
-
-    assert(solver->propStats.bogoProps == 0);
-    assert(solver->propStats.otfHyperTime == 0);
-    for(size_t i = 0
-        ; i < possCh.size()
-            && limit_used() < numPropsTodo
-        ; i++
+    if (solver->conf.verbosity  >= 1 &&
+        (runStats.zeroDepthAssigns > 100 || advancedCleanup)
     ) {
-        extraTime += 20;
-        runStats.numLoopIters++;
-        const Var var = possCh[i];
-
-        //Check if already blacklisted
-        if (var == std::numeric_limits<Var>::max())
-            continue;
-
-        //Probe 'false' first --> this is not critical
-        //but one has to be chosen.
-        Lit lit = Lit(var, false);
-
-        //Check if var is set already
-        if (solver->value(lit.var()) != l_Undef
-            || !solver->varData[lit.var()].is_decision
-            || visitedAlready[lit.toInt()]
-        ) {
-            continue;
-        }
-
-        if (solver->conf.doStamp) {
-            //If this lit is reachable from somewhere else, then reach it from there
-            if (solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
-                const Lit betterlit = solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED];
-                if (solver->value(betterlit.var()) == l_Undef
-                    && solver->varData[betterlit.var()].is_decision
-                ) {
-                    //Update lit
-                    lit = betterlit;
-
-                    //Blacklist new lit
-                    possCh[lookup[lit.var()]] = std::numeric_limits<Var>::max();
-
-                    //Must not have visited it already, otherwise the stamp dominator would be incorrect
-                    assert(!visitedAlready[lit.toInt()]);
-                }
-            }
-        } else if (solver->conf.doCache) {
-            if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
-                const Lit betterlit = solver->litReachable[lit.toInt()].lit;
-                if (solver->value(betterlit.var()) == l_Undef
-                    && solver->varData[betterlit.var()].is_decision
-                ) {
-                    //Update lit
-                    lit = betterlit;
-                }
-            }
-        }
-
-        //Update stats
-        runStats.numVarProbed++;
-        extraTime += 20;
-
-        //Try it
-        if (!tryThis(lit, true))
-            goto end;
-
-        //If we are still unset, do the opposite, too
-        //this lets us carry out BothProp
-        if (solver->value(lit) == l_Undef
-            && !tryThis((~lit), false)
-        ) {
-            goto end;
-        }
+        cout
+        << "c [probe] cleaning up after T: "
+        << std::setw(8) << std::fixed << std::setprecision(2)
+        << cpuTime() - time << " s "
+        << endl;
     }
+}
 
-end:
+void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo)
+{
+    const double ratioUsedTime =
+        (solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime)
+        /(double)numPropsTodo
+    ;
+    if (solver->conf.otfHyperbin
+        //Visited less than half
+        && (double)runStats.numVisited/(double)(runStats.origNumFreeVars*2) < 0.4
+        //And we used up most of the time
+        && ratioUsedTime > 0.8
+    ) {
+        checkOTFRatio();
+    }
+}
 
+void Prober::check_if_must_disable_cache_update()
+{
     //If time wasted on cache updating (extraTime) is large, stop cache
     //updation
     double timeOnCache = (double)extraTimeCache
             /(double)(solver->propStats.bogoProps
                + solver->propStats.otfHyperTime
                + extraTime + extraTimeCache
-            ) * 100.0;
+             ) * 100.0;
+
 
     //More than 50% of the time is spent updating the cache... that's a lot
     //Disable and free
@@ -347,6 +300,139 @@ end:
             << endl;
         }
     }
+}
+
+Lit Prober::update_lit_for_dominator(
+    Lit lit
+    , vector<Var>& poss_choice
+    , const vector<size_t>& fast_rnd_lookup
+) {
+    if (solver->conf.doStamp) {
+        //If this lit is reachable from somewhere else, then reach it from there
+        if (solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
+            const Lit betterlit = solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED];
+            if (solver->value(betterlit.var()) == l_Undef
+                && solver->varData[betterlit.var()].is_decision
+            ) {
+                //Update lit
+                lit = betterlit;
+
+                //Blacklist new lit
+                poss_choice[fast_rnd_lookup[lit.var()]] = std::numeric_limits<Var>::max();
+
+                //Must not have visited it already, otherwise the stamp dominator would be incorrect
+                assert(!visitedAlready[lit.toInt()]);
+            }
+        }
+    } else if (solver->conf.doCache) {
+        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
+            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+            if (solver->value(betterlit.var()) == l_Undef
+                && solver->varData[betterlit.var()].is_decision
+            ) {
+                //Update lit
+                lit = betterlit;
+            }
+        }
+    }
+
+    return lit;
+}
+
+vector<Var> Prober::randomize_possible_choices()
+{
+    vector<Var> poss_choice;
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        if (solver->value(i) == l_Undef
+            && (solver->varData[i].removed == Removed::none
+                || solver->varData[i].removed == Removed::queued_replacer)
+        ) {
+            poss_choice.push_back(i);
+        }
+    }
+
+    //Random swap
+    for (size_t i = 0
+        ; i + 1< poss_choice.size()
+        ; i++
+    ) {
+        std::swap(
+            poss_choice[i]
+            , poss_choice[i+solver->mtrand.randInt(poss_choice.size()-1-i)]
+        );
+    }
+
+    return poss_choice;
+}
+
+vector<size_t> Prober::create_fast_random_lookup(const vector<Var>& poss_choice)
+{
+    vector<size_t> lookup(solver->nVars(), std::numeric_limits<size_t>::max());
+    for (size_t i = 0; i < poss_choice.size(); i++) {
+        lookup[poss_choice[i]] = i;
+    }
+
+    return lookup;
+}
+
+bool Prober::probe()
+{
+    assert(solver->decisionLevel() == 0);
+    assert(solver->nVars() > 0);
+    solver->testAllClauseAttach();
+
+    clean_clauses_before_probe();
+    reset_stats_and_state();
+    uint64_t numPropsTodo = calc_numpropstodo();
+
+    const double myTime = cpuTime();
+    const size_t origTrailSize = solver->trail.size();
+    numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
+
+    vector<Var> poss_choice = randomize_possible_choices();
+    const vector<size_t> fast_rnd_lookup = create_fast_random_lookup(poss_choice);
+
+    assert(solver->propStats.bogoProps == 0);
+    assert(solver->propStats.otfHyperTime == 0);
+    for(size_t i = 0
+        ; i < poss_choice.size()
+            && limit_used() < numPropsTodo
+        ; i++
+    ) {
+        extraTime += 20;
+        runStats.numLoopIters++;
+        const Var var = poss_choice[i];
+
+        //Check if already blacklisted
+        if (var == std::numeric_limits<Var>::max())
+            continue;
+
+        //Probe 'false' first --> this is not critical
+        Lit lit = Lit(var, false);
+
+        //Check if var is set already
+        if (solver->value(lit.var()) != l_Undef
+            || !solver->varData[lit.var()].is_decision
+            || visitedAlready[lit.toInt()]
+        ) {
+            continue;
+        }
+
+        lit = update_lit_for_dominator(lit, poss_choice, fast_rnd_lookup);
+        runStats.numVarProbed++;
+        extraTime += 20;
+
+        if (!tryThis(lit, true))
+            goto end;
+
+        if (solver->value(lit) == l_Undef
+            && !tryThis((~lit), false)
+        ) {
+            goto end;
+        }
+    }
+
+end:
 
     //Delete any remaining binaries to add or remove
     //next time, variables will be renumbered/etc. so it will be wrong
@@ -356,41 +442,19 @@ end:
 
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
-        double time = cpuTime();
-        bool advancedCleanup = false;
-        //If more than 10% were set, detach&reattach. It's faster
-        if ((double)runStats.origNumFreeVars - (double)solver->getNumFreeVars()
-                >  (double)runStats.origNumFreeVars/10.0
-            && solver->getNumLongClauses() > 200000
-        ) {
-            //Advanced cleanup
-            if (solver->conf.verbosity >= 5)
-                cout << "c Advanced cleanup after probing" << endl;
-            advancedCleanup = true;
-            CompleteDetachReatacher reattacher(solver);
-            reattacher.detachNonBinsNonTris();
-            const bool ret = reattacher.reattachLongs();
-            release_assert(ret == true);
-        } else {
-            //Standard cleanup
-            if (solver->conf.verbosity >= 5)
-                cout << "c Standard cleanup after probing" << endl;
-            solver->clauseCleaner->removeAndCleanAll();
-        }
-
-        //Tell me about the speed of cleanup
-        if (solver->conf.verbosity  >= 1 &&
-            (runStats.zeroDepthAssigns > 100 || advancedCleanup)
-        ) {
-            cout
-            << "c [probe] cleaning up after T: "
-            << std::setw(8) << std::fixed << std::setprecision(2)
-            << cpuTime() - time << " s "
-            << endl;
-        }
+        clean_clauses_after_probe();
     }
 
-    //Update stats
+    update_and_print_stats(myTime, numPropsTodo);
+    check_if_must_disable_otf_hyperbin_and_tred(numPropsTodo);
+    check_if_must_disable_cache_update();
+
+    solver->testAllClauseAttach();
+    return solver->ok;
+}
+
+void Prober::update_and_print_stats(const double myTime, const uint64_t numPropsTodo)
+{
     for(size_t i = 0; i < visitedAlready.size(); i++) {
         if (visitedAlready[i])
             runStats.numVisited++;
@@ -404,6 +468,14 @@ end:
     runStats.timeAllocated += numPropsTodo;
     runStats.numCalls = 1;
     globalStats += runStats;
+
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3)
+            runStats.print(solver->nVars());
+        else
+            runStats.printShort();
+    }
+
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed(
             solver
@@ -413,30 +485,6 @@ end:
             , time_remain
         );
     }
-
-    //Check if we need to disable OTF hyper-bin&transitive reduction
-    const double ratioUsedTime =
-        (solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime)
-        /(double)numPropsTodo
-    ;
-    if (solver->conf.otfHyperbin
-        //Visited less than half
-        && (double)runStats.numVisited/(double)(runStats.origNumFreeVars*2) < 0.4
-        //And we used up most of the time
-        && ratioUsedTime > 0.8
-    ) {
-        checkOTFRatio();
-    }
-
-    //Print & update stats
-    if (solver->conf.verbosity >= 1) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
-        else
-            runStats.printShort();
-    }
-    solver->testAllClauseAttach();
-    return solver->ok;
 }
 
 void Prober::clearUpBeforeFirstSet()
@@ -733,7 +781,6 @@ size_t Prober::memUsed() const
     mem += tmp_lits.capacity()*sizeof(Lit);
     mem += propagated.capacity()/8;
     mem += propValue.capacity()/8;
-    //mem += candidates.capacity()*sizeof(TwoSignVar);
 
     return mem;
 }

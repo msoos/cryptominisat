@@ -301,21 +301,21 @@ class Prober {
         Solver* solver; ///<The solver we are updating&working with
         void checkOTFRatio();
         uint64_t limit_used() const;
-
-        //For cancidate selection
-        struct TwoSignVar
-        {
-            size_t minOfPolarities;
-            size_t var;
-
-            //Sort them according to largest firest
-            bool operator<(const TwoSignVar& other) const
-            {
-                return minOfPolarities > other.minOfPolarities;
-            }
-        };
-        //vector<TwoSignVar> candidates;
-        void sortAndResetCandidates();
+        void reset_stats_and_state();
+        uint64_t calc_numpropstodo();
+        void clean_clauses_before_probe();
+        uint64_t update_numpropstodo_based_on_prev_performance(uint64_t numPropsTodo);
+        void clean_clauses_after_probe();
+        void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo);
+        void check_if_must_disable_cache_update();
+        vector<Var> randomize_possible_choices();
+        vector<size_t> create_fast_random_lookup(const vector<Var>& poss_choice);
+        Lit update_lit_for_dominator(
+            Lit lit
+            , vector<Var>& poss_choice
+            , const vector<size_t>& fast_rnd_lookup
+        );
+        void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);
 
         //For bothprop
         vector<uint32_t> propagatedBitSet;
