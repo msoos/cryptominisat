@@ -9,7 +9,7 @@ shopt -s nullglob
 rm -f todo
 touch todo
 fileloc="/home/soos/sat/examples/satcomp091113/*cnf.gz"
-solver="/home/soos/cryptominisat/build/cryptominisat4"
+solver="/home/soos/cryptominisat/build/cryptominisat"
 #solver="/home/soos/cmsat-satrace/solver"
 #solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
 #solver="/home/soos/lingeling-ala-b02aa1a-121013/lingeling -v"
