@@ -3,6 +3,7 @@
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "sqlstats.h"
 #include <array>
 
 using namespace CMSat;
@@ -189,6 +190,7 @@ void SubsumeStrengthen::performSubsumption()
     double myTime = cpuTime();
     size_t wenThrough = 0;
     size_t subsumed = 0;
+    const int64_t orig_limit = simplifier->subsumption_time_limit;
     simplifier->limit_to_decrease = &simplifier->subsumption_time_limit;
     while (*simplifier->limit_to_decrease > 0
         && wenThrough < 1.5*(double)simplifier->clauses.size()
@@ -216,6 +218,9 @@ void SubsumeStrengthen::performSubsumption()
         subsumed += subsume0(offset);
     }
 
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (*simplifier->limit_to_decrease <= 0);
+    const double time_remain = (double)*simplifier->limit_to_decrease/(double)orig_limit;
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [sub] rem cl: " << subsumed
@@ -223,9 +228,18 @@ void SubsumeStrengthen::performSubsumption()
         << " (" << std::setprecision(1) << std::fixed
         << stats_line_percent(wenThrough, simplifier->clauses.size())
         << "%)"
-        << " T: " << cpuTime() - myTime
-        << " T-out: " << (*simplifier->limit_to_decrease <= 0 ? "Y" : "N")
+        << " T: " << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "subsume"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     //Update time used
@@ -239,6 +253,7 @@ bool SubsumeStrengthen::performStrengthening()
 
     double myTime = cpuTime();
     size_t wenThrough = 0;
+    const int64_t orig_limit = simplifier->strengthening_time_limit;
     simplifier->limit_to_decrease = &simplifier->strengthening_time_limit;
     Sub1Ret ret;
     while(*simplifier->limit_to_decrease > 0
@@ -267,6 +282,9 @@ bool SubsumeStrengthen::performStrengthening()
 
     }
 
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = *simplifier->limit_to_decrease <= 0;
+    const double time_remain = (double)*simplifier->limit_to_decrease/(double)orig_limit;
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [str] sub: " << ret.sub
@@ -275,9 +293,18 @@ bool SubsumeStrengthen::performStrengthening()
         << " (" << std::setprecision(1) << std::fixed
         << (double)wenThrough/(double)simplifier->clauses.size()*100.0
         << "%)"
-        << " T: " << cpuTime() - myTime
-        << " T-out: " << (*simplifier->limit_to_decrease <= 0 ? "Y" : "N")
+        << " T: " << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "strengthen"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     //Update time used

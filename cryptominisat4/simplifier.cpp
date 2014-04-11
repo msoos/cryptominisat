@@ -948,8 +948,15 @@ void Simplifier::subsumeReds()
     setLimits();
 
     //Print link-in and startup time
-    double linkInTime = cpuTime() - myTime;
+    const double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occur build"
+            , linkInTime
+        );
+    }
 
     //Carry out subsume0
     subsumeStrengthen->performSubsumption();
