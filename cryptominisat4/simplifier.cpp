@@ -723,13 +723,28 @@ bool Simplifier::eliminateVars()
     }
 
 end:
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (*limit_to_decrease <= 0);
+    const double time_remain = (double)*limit_to_decrease/(double)norm_varelim_time_limit;
+
     if (solver->conf.verbosity >= 2) {
         cout
         << "c  #try to eliminate: " << wenThrough << endl
         << "c  #var-elim: " << vars_elimed << endl
-        << "c  #T-out: " << ((*limit_to_decrease <= 0) ? "Y" : "N") << endl
-        << "c  #T: " << (cpuTime() - myTime) << endl;
+        << "c  #T-o: " << (time_out ? "Y" : "N") << endl
+        << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
+        << "c  #T: " << time_used << endl;
     }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "bve"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
     assert(limit_to_decrease == &norm_varelim_time_limit);
 
     runStats.varElimTimeOut += (*limit_to_decrease <= 0);
