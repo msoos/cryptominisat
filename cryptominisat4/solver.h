@@ -205,6 +205,7 @@ class Solver : public Searcher
         );
 
     private:
+        void handle_found_solution(const lbool status);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach);
         void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;

@@ -1773,8 +1773,19 @@ lbool Solver::solve()
             status = simplifyProblem();
         }
     }
+    handle_found_solution(status);
 
-    //Handle found solution
+    end:
+    if (sqlStats) {
+        sqlStats->finishup(status);
+    }
+
+    return status;
+}
+
+void Solver::handle_found_solution(const lbool status)
+{
+    const double myTime = cpuTime();
     if (status == l_True) {
         extend_solution();
         cancelUntil(0);
@@ -1787,13 +1798,13 @@ lbool Solver::solve()
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
-
-    end:
-    if (sqlStats) {
-        sqlStats->finishup(status);
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "finishup"
+            , cpuTime()-myTime
+        );
     }
-
-    return status;
 }
 
 void Solver::checkDecisionVarCorrectness() const
