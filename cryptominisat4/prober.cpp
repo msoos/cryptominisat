@@ -670,8 +670,6 @@ bool Prober::tryThis(const Lit lit, const bool first)
     solver->newDecisionLevel();
     solver->enqueue(lit);
     solver->varData[lit.var()].depth = 0;
-
-    //Display what we are doing in case of high verbosity
     if (solver->conf.verbosity >= 6) {
         cout
         << "c Probing lit " << lit
@@ -762,9 +760,6 @@ bool Prober::tryThis(const Lit lit, const bool first)
     std::pair<size_t, size_t> tmp = solver->removeUselessBins();
     runStats.removedIrredBin += tmp.first;
     runStats.removedRedBin += tmp.second;
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    testBinRemoval(lit);
-    #endif
 
     //Add toEnqueue
     assert(solver->ok);
