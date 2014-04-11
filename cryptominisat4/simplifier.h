@@ -607,10 +607,20 @@ private:
     size_t bva_worked;
     size_t bva_simp_size;
     struct lit_pair{
-        lit_pair(const Lit a, const Lit b = lit_Undef) :
-            lit1(a)
-            , lit2(b)
-        {}
+        lit_pair(Lit a, Lit b = lit_Undef)
+        {
+            if (b == lit_Undef) {
+                lit1 = a;
+            } else {
+                assert(false && "lits are supposed to be sorted in occur lists");
+                assert(a != b);
+                if (a > b) {
+                    std::swap(a, b);
+                }
+                lit1 = a;
+                lit2 = b;
+            }
+        }
 
         bool operator==(const lit_pair& other) const
         {
