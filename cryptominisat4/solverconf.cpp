@@ -191,6 +191,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
+        , subsume_implicit_timeoutM(1900LL)
 
         //Gates
         , doGateFind       (true)

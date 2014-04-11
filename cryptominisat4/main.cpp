@@ -602,6 +602,8 @@ void Main::add_supported_options()
         , "Save memory by deallocating variable space after renumbering. Only works if renumbering is active.")
     ("implicitmanip", po::value(&conf.doStrSubImplicit)->default_value(conf.doStrSubImplicit)
         , "Subsume and strengthen implicit clauses with each other")
+    ("implsubsto", po::value(&conf.subsume_implicit_timeoutM)->default_value(conf.subsume_implicit_timeoutM)
+        , "Timeout (in bogoprop Millions) of implicit subsumption")
     ;
 
     po::options_description componentOptions("Component options");

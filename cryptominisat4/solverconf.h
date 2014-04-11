@@ -256,6 +256,7 @@ class SolverConf
         int      doExtBinSubs;
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
+        long long  subsume_implicit_timeoutM;
 
         //Gates
         int      doGateFind; ///< Find OR gates

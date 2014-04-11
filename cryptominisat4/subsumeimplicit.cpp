@@ -25,6 +25,7 @@
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
+#include "sqlstats.h"
 
 #include <cmath>
 #include <iomanip>
@@ -180,7 +181,8 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 {
     assert(solver->okay());
     const double myTime = cpuTime();
-    timeAvailable = 1900LL*1000LL*1000LL;
+    const uint64_t orig_timeAvailable = solver->conf.subsume_implicit_timeoutM*1000LL*1000LL;
+    timeAvailable = orig_timeAvailable;
     const bool doStamp = solver->conf.doStamp;
     runStats.clear();
 
@@ -240,11 +242,23 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         solver->checkStats();
     }
 
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (timeAvailable <= 0);
+    const double time_remain = (double)timeAvailable/(double)orig_timeAvailable;
     runStats.numCalled++;
-    runStats.time_used += cpuTime() - myTime;
-    runStats.time_out += (timeAvailable <= 0);
+    runStats.time_used += time_used;
+    runStats.time_out += time_out;
     if (solver->conf.verbosity >= 1) {
         runStats.printShort();
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "subsume implicit"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     globalStats += runStats;

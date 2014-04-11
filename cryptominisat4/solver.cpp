@@ -3696,11 +3696,19 @@ void Solver::calcReachability()
         }
     }
 
+    const bool time_used = cpuTime() - myTime;
     if (conf.verbosity >= 1) {
         cout
         << "c calculated reachability. T: "
-        << std::setprecision(3) << (cpuTime() - myTime)
+        << std::setprecision(3) << time_used
         << endl;
+    }
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "calc reachability"
+            , time_used
+        );
     }
 }
 
