@@ -27,6 +27,7 @@
 #include "clauseallocator.h"
 #include <m4ri/m4ri.h>
 #include <limits>
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -42,7 +43,8 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
 
 bool XorFinder::findXors()
 {
-    maxTimeFindXors = 200LL*1000LL*1000LL;
+    const int64_t orig_max_time_find_xors = 200LL*1000LL*1000LL;
+    maxTimeFindXors = orig_max_time_find_xors;
     double myTime = cpuTime();
     numCalls++;
     runStats.clear();
@@ -117,10 +119,19 @@ bool XorFinder::findXors()
         }
     }
 
-
-    //Calculate & display stats
+    const bool time_out = (maxTimeFindXors < 0);
+    const double time_remain = (double)maxTimeFindXors/(double)orig_max_time_find_xors;
     runStats.findTime = cpuTime() - myTime;
     assert(runStats.foundXors == xors.size());
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "xorfind"
+            , cpuTime() - myTime
+            , time_out
+            , time_remain
+        );
+    }
 
     if (solver->conf.verbosity >= 5) {
         cout << "c Found XORs: " << endl;
@@ -217,8 +228,16 @@ bool XorFinder::extractInfo()
 end:
 
     //Update stats
+    const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
-    runStats.extractTime += cpuTime() - myTime;
+    runStats.extractTime += time_used;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "xorextract"
+            , time_used
+        );
+    }
 
     return solver->ok;
 }
