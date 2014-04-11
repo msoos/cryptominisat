@@ -666,15 +666,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
         clearUpBeforeFirstSet();
     }
     toEnqueue.clear();
-
-    //Start-up cleaning
     runStats.numProbed++;
-
-    //Test removal of irred binary clauses
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    fillTestUselessBinRemoval(lit);
-    #endif
-
     solver->newDecisionLevel();
     solver->enqueue(lit);
     solver->varData[lit.var()].depth = 0;
