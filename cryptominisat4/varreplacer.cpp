@@ -1112,7 +1112,7 @@ void VarReplacer::Stats::printShort(Solver* solver) const
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
             solver
-            , "[vrep]"
+            , "vrep"
             , cpu_time
         );
     }
