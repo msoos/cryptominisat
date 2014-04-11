@@ -316,6 +316,7 @@ class Prober {
             , const vector<size_t>& fast_rnd_lookup
         );
         void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);
+        bool check_timeout_due_to_hyperbin();
 
         //For bothprop
         vector<uint32_t> propagatedBitSet;

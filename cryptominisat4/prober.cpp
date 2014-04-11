@@ -622,6 +622,43 @@ void Prober::handleFailedLit(Lit lit, Lit failed)
     clearUpBeforeFirstSet();
 }
 
+bool Prober::check_timeout_due_to_hyperbin()
+{
+    //If we timed out on ONE call, turn otf hyper-bin off
+    //and return --> the "visitedAlready" will be wrong
+    if (solver->timedOutPropagateFull
+        && !solver->drup->enabled()
+    ) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [probe] intra-propagation timout,"
+            << " turning off OTF hyper-bin&trans-red"
+            << endl;
+        }
+
+        solver->conf.otfHyperbin = false;
+        solver->cancelZeroLight();
+
+        runStats.addedBin += solver->hyperBinResAll();
+        std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+        runStats.removedIrredBin += tmp.first;
+        runStats.removedRedBin += tmp.second;
+
+        for(vector<uint32_t>::const_iterator
+            it = propagatedBitSet.begin(), end = propagatedBitSet.end()
+            ; it != end
+            ; it++
+        ) {
+            propagated[*it] = false;
+        }
+        propagatedBitSet.clear();
+        toEnqueue.clear();
+        return true;
+    }
+
+    return false;
+}
+
 bool Prober::tryThis(const Lit lit, const bool first)
 {
     //Clean state if this is the 1st of two
@@ -671,35 +708,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
             );
         }
 
-        //If we timed out on ONE call, turn otf hyper-bin off
-        //and return --> the "visitedAlready" will be wrong
-        if (solver->timedOutPropagateFull
-            && !solver->drup->enabled()
-        ) {
-            if (solver->conf.verbosity >= 2) {
-                cout
-                << "c [probe] intra-propagation timout,"
-                << " turning off OTF hyper-bin&trans-red"
-                << endl;
-            }
-
-            solver->conf.otfHyperbin = false;
-            solver->cancelZeroLight();
-
-            runStats.addedBin += solver->hyperBinResAll();
-            std::pair<size_t, size_t> tmp = solver->removeUselessBins();
-            runStats.removedIrredBin += tmp.first;
-            runStats.removedRedBin += tmp.second;
-
-            for(vector<uint32_t>::const_iterator
-                it = propagatedBitSet.begin(), end = propagatedBitSet.end()
-                ; it != end
-                ; it++
-            ) {
-                propagated[*it] = false;
-            }
-            propagatedBitSet.clear();
-            toEnqueue.clear();
+        if (check_timeout_due_to_hyperbin()) {
             return solver->okay();
         }
     } else {
