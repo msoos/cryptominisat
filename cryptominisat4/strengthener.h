@@ -173,7 +173,7 @@ class Strengthener {
 
             void print(
                 const size_t trail_diff
-                , const double myTime
+                , const double time_used
                 , const int64_t timeAvailable
                 , const int64_t orig_time
                 , Solver* solver

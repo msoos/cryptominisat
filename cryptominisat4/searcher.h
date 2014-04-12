@@ -792,6 +792,7 @@ class Searcher : public HyperEngine
         size_t memUsed() const;
 
     private:
+        void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;
         ////////////
         // Transitive on-the-fly self-subsuming resolution

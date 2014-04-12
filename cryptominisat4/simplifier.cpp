@@ -1268,14 +1268,6 @@ void Simplifier::finishUp(
         solver->clauseCleaner->removeAndCleanAll();
     }
 
-    //Sanity checks
-    if (solver->ok && somethingSet) {
-        solver->testAllClauseAttach();
-        solver->checkNoWrongAttach();
-        solver->checkStats();
-        solver->checkImplicitPropagated();
-    }
-
     //Update global stats
     const double time_used = cpuTime() - myTime;
     runStats.finalCleanupTime += time_used;
@@ -1288,6 +1280,14 @@ void Simplifier::finishUp(
     }
     globalStats += runStats;
     subsumeStrengthen->finishedRun();
+
+    //Sanity checks
+    if (solver->ok && somethingSet) {
+        solver->testAllClauseAttach();
+        solver->checkNoWrongAttach();
+        solver->checkStats();
+        solver->checkImplicitPropagated();
+    }
 
     if (solver->ok) {
         checkElimedUnassignedAndStats();

@@ -774,11 +774,19 @@ void Solver::reArrangeClauses()
         reArrangeClause(longRedCls[i]);
     }
 
+    const double time_used = cpuTime() - myTime;
     if (conf.verbosity >= 3) {
         cout
         << "c Rearrange lits in clauses "
-        << std::setprecision(2) << (cpuTime() - myTime)  << " s"
+        << std::setprecision(2) << time_used  << " s"
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "rearrange claues"
+            , time_used
+        );
     }
 }
 
@@ -1022,6 +1030,7 @@ void Solver::saveVarMem(const uint32_t newNumVars)
 
     //printMemStats();
 
+    const double myTime = cpuTime();
     minNumVars = newNumVars;
     Searcher::saveVarMem();
 
@@ -1033,6 +1042,15 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     }
     if (conf.doCompHandler) {
         compHandler->saveVarMem();
+    }
+
+    const double time_used = cpuTime() - myTime;
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "save var mem"
+            , time_used
+        );
     }
     //printMemStats();
 }
@@ -1623,6 +1641,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 void Solver::extend_solution()
 {
     checkStats();
+    const double myTime = cpuTime();
     model = solver->back_number_solution(model);
 
     //Extend solution to stored solution in component handler
@@ -1638,6 +1657,13 @@ void Solver::extend_solution()
     }
     model = map_back_to_without_bva(model);
     check_model_for_assumptions();
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "extend solution"
+            , cpuTime()-myTime
+        );
+    }
 }
 
 void Solver::set_up_sql_writer()
@@ -1806,13 +1832,6 @@ void Solver::handle_found_solution(const lbool status)
     }
     checkDecisionVarCorrectness();
     checkImplicitStats();
-    if (conf.doSQL) {
-        sqlStats->time_passed_min(
-            this
-            , "finishup"
-            , cpuTime()-myTime
-        );
-    }
 }
 
 void Solver::checkDecisionVarCorrectness() const
@@ -2024,6 +2043,7 @@ end:
     testAllClauseAttach();
     checkNoWrongAttach();
 
+    //TODO not so good....
     //The algorithms above probably have changed the propagation&usage data
     //so let's clear it
     if (conf.doClearStatEveryClauseCleaning) {
@@ -2197,7 +2217,16 @@ void Solver::reduce_db_and_update_reset_stats(bool lock_clauses_in)
 
 void Solver::consolidateMem()
 {
+    const double myTime = cpuTime();
     clAllocator.consolidate(this, true);
+    const double time_used = cpuTime() - myTime;
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "consolidate mem"
+            , time_used
+        );
+    }
 }
 
 void Solver::printStats() const
@@ -3304,6 +3333,7 @@ void Solver::checkImplicitStats() const
     #ifdef NDEBUG
     return;
     #endif
+    const double myTime = cpuTime();
 
     //Check number of red & irred binary clauses
     uint64_t thisNumRedBins = 0;
@@ -3401,6 +3431,15 @@ void Solver::checkImplicitStats() const
     }
     assert(thisNumRedTris % 3 == 0);
     assert(thisNumRedTris/3 == binTri.redTris);
+
+    const double time_used = cpuTime() - myTime;
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "check implicit stats"
+            , time_used
+        );
+    }
 }
 
 uint64_t Solver::countLits(
@@ -3433,6 +3472,7 @@ void Solver::checkStats(const bool allowFreed) const
 
     checkImplicitStats();
 
+    const double myTime = cpuTime();
     uint64_t numLitsIrred = countLits(longIrredCls, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         cout << "ERROR: " << endl;
@@ -3448,6 +3488,15 @@ void Solver::checkStats(const bool allowFreed) const
         cout << "->litStats.redLits: " << litStats.redLits << endl;
     }
     assert(numLitsRed == litStats.redLits);
+
+    const double time_used = cpuTime() - myTime;
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "check literal stats"
+            , time_used
+        );
+    }
 }
 
 size_t Solver::getNewToReplaceVars() const
@@ -3496,6 +3545,7 @@ void Solver::printWatchlist(watch_subarray_const ws, const Lit lit) const
 
 void Solver::checkImplicitPropagated() const
 {
+    const double myTime = cpuTime();
     size_t wsLit = 0;
     for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
@@ -3558,6 +3608,14 @@ void Solver::checkImplicitPropagated() const
                 }
             }
         }
+    }
+    const double time_used = cpuTime() - myTime;
+    if (conf.doSQL) {
+        sqlStats->time_passed_min(
+            this
+            , "check implicit propagated"
+            , time_used
+        );
     }
 }
 

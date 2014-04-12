@@ -248,28 +248,36 @@ bool VarReplacer::performReplace()
         }
     }
 
-    solver->testAllClauseAttach();
-    solver->checkNoWrongAttach();
-    solver->checkStats();
-
 end:
     assert(solver->qhead == solver->trail.size() || !solver->ok);
-    if (solver->okay()) {
-        checkUnsetSanity();
-    }
 
     //Update stamp dominators
     solver->stamp.updateDominators(this);
 
     //Update stats
+    const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns += solver->trail.size() - origTrailSize;
-    runStats.cpu_time = cpuTime() - myTime;
+    runStats.cpu_time = time_used;
     globalStats += runStats;
     if (solver->conf.verbosity  >= 1) {
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
             runStats.printShort(solver);
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "vrep"
+            , time_used
+        );
+    }
+
+    if (solver->okay()) {
+        solver->testAllClauseAttach();
+        solver->checkNoWrongAttach();
+        solver->checkStats();
+        checkUnsetSanity();
     }
 
     return solver->ok;
@@ -1108,14 +1116,6 @@ void VarReplacer::Stats::printShort(Solver* solver) const
     << " T: " << std::fixed << std::setprecision(2)
     << cpu_time << " s "
     << endl;
-
-    if (solver->conf.doSQL) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "vrep"
-            , cpu_time
-        );
-    }
 }
 
 VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)

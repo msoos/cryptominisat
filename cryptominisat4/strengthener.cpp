@@ -432,7 +432,8 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     //Stats
     double myTime = cpuTime();
 
-    timeAvailable = calc_time_available(alsoStrengthen, red);
+    const int64_t orig_time_available = calc_time_available(alsoStrengthen, red);
+    timeAvailable = orig_time_available;
     tmpStats = Stats::CacheBased();
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
@@ -476,17 +477,34 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     #endif
 
     //Set stats
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = timeAvailable < 0;
+    const double time_remain = (double)timeAvailable/(double)orig_time_available;
     tmpStats.numClSubsumed += cache_based_data.get_cl_subsumed();
     tmpStats.numLitsRem += cache_based_data.get_lits_rem();
-    tmpStats.cpu_time = cpuTime() - myTime;
+    tmpStats.cpu_time = time_used;
     if (red) {
         runStats.redCacheBased += tmpStats;
     } else {
         runStats.irredCacheBased += tmpStats;
     }
-
     if (solver->conf.verbosity >= 2) {
         cache_based_data.print();
+    }
+    if (solver->conf.doSQL) {
+        std::stringstream ss;
+        ss << "shorten"
+        << (alsoStrengthen ? "and str" : "")
+        << (red ? "red" : "irred")
+        <<  "cls with cache and stamp"
+        ;
+        solver->sqlStats->time_passed(
+            solver
+            , ss.str()
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     return solver->ok;
@@ -733,32 +751,27 @@ bool Strengthener::strengthenImplicit()
 
 end:
 
-    solver->checkStats();
     if (solver->conf.verbosity >= 1) {
         str_impl_data.print(
             solver->trail.size() - origTrailSize
-            , myTime
+            , cpuTime() - myTime
             , timeAvailable
             , orig_time
             , solver
         );
     }
-
-    //Update stats
-    //TODO
-    //solver->solveStats.subsBinWithBinTime += cpuTime() - myTime;
+    solver->checkStats();
 
     return solver->okay();
 }
 
 void Strengthener::StrImplicitData::print(
     const size_t trail_diff
-    , const double myTime
+    , const double time_used
     , const int64_t timeAvailable
     , const int64_t orig_time
     , Solver* solver
 ) const {
-    const double time_used = cpuTime() - myTime;
     bool time_out = timeAvailable <= 0;
     const double time_remain = (double)timeAvailable/(double)orig_time;
 

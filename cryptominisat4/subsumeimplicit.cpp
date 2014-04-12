@@ -238,9 +238,6 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         }
         ws.shrink(i-j);
     }
-    if (check_stats) {
-        solver->checkStats();
-    }
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (timeAvailable <= 0);
@@ -259,6 +256,10 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
             , time_out
             , time_remain
         );
+    }
+
+    if (check_stats) {
+        solver->checkStats();
     }
 
     globalStats += runStats;

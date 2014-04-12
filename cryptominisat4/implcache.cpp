@@ -385,12 +385,20 @@ bool ImplCache::tryBoth(Solver* solver)
     }
 
 end:
+    const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
-    runStats.cpu_time = cpuTime() - myTime;
+    runStats.cpu_time = time_used;
     if (solver->conf.verbosity >= 1) {
         runStats.printShort();
     }
     globalStats += runStats;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "cache extractboth"
+            , time_used
+        );
+    }
 
     return solver->ok;
 }

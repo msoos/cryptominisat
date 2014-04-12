@@ -995,11 +995,6 @@ lbool Searcher::search()
     agility.reset(conf.agilityLimit);
     hist.clear();
 
-    //Debug
-    #ifdef VERBOSE_DEBUG
-    cout << "c started Searcher::search()" << endl;
-    #endif //VERBOSE_DEBUG
-
     assert(solver->qhead == solver->trail.size());
 
     //Loop until restart or finish (SAT/UNSAT)
@@ -1021,22 +1016,28 @@ lbool Searcher::search()
             #endif
             last_decision_ended_in_conflict = true;
             handle_longest_decision_trail();
-            if (!handle_conflict(confl))
+            if (!handle_conflict(confl)) {
+                dump_search_sql(myTime);
                 return l_False;
+            }
         } else {
             assert(ok);
             last_decision_ended_in_conflict = false;
             const lbool ret = new_decision();
-            if (ret != l_Undef)
+            if (ret != l_Undef) {
+                dump_search_sql(myTime);
                 return ret;
+            }
         }
 
         again:
         if (conf.otfHyperbin && decisionLevel() == 1) {
             bool must_continue;
             lbool ret = otf_hyper_prop_first_dec_level(must_continue);
-            if (ret != l_Undef)
+            if (ret != l_Undef) {
+                dump_search_sql(myTime);
                 return ret;
+            }
             if (must_continue)
                 goto again;
             confl = PropBy();
@@ -1052,6 +1053,12 @@ lbool Searcher::search()
 
     cancelUntil(0);
     assert(solver->qhead == solver->trail.size());
+    dump_search_sql(myTime);
+    return l_Undef;
+}
+
+void Searcher::dump_search_sql(const double myTime)
+{
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
             solver
@@ -1059,8 +1066,6 @@ lbool Searcher::search()
             , cpuTime()-myTime
         );
     }
-
-    return l_Undef;
 }
 
 /**
@@ -1691,13 +1696,6 @@ lbool Searcher::burstSearch()
         << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
         #endif
         << endl;
-    }
-    if (solver->conf.doSQL) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "burst search"
-            , time_used
-        );
     }
 
     return status;
