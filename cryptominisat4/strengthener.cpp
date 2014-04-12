@@ -494,9 +494,9 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     if (solver->conf.doSQL) {
         std::stringstream ss;
         ss << "shorten"
-        << (alsoStrengthen ? "and str" : "")
-        << (red ? "red" : "irred")
-        <<  "cls with cache and stamp"
+        << (alsoStrengthen ? " and str" : "")
+        << (red ? " red" : " irred")
+        <<  " cls with cache and stamp"
         ;
         solver->sqlStats->time_passed(
             solver
