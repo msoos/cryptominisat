@@ -987,6 +987,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
 lbool Searcher::search()
 {
     assert(ok);
+    const double myTime = cpuTime();
 
     //Stats reset & update
     if (params.update)
@@ -1051,6 +1052,13 @@ lbool Searcher::search()
 
     cancelUntil(0);
     assert(solver->qhead == solver->trail.size());
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "search"
+            , cpuTime()-myTime
+        );
+    }
 
     return l_Undef;
 }
@@ -2189,7 +2197,6 @@ void Searcher::print_search_loop_num()
 
 lbool Searcher::solve(const uint64_t _maxConfls)
 {
-    double myTime = cpuTime();
     assert(ok);
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
@@ -2210,7 +2217,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     if (status != l_Undef)
         goto end;
 
-    myTime = cpuTime();
     restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
@@ -2250,13 +2256,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
     end:
     finish_up_solve(status);
-    if (solver->conf.doSQL) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "solving"
-            , cpuTime()-myTime
-        );
-    }
 
     return status;
 }
