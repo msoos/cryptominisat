@@ -926,12 +926,20 @@ void Solver::renumberVariables()
     test_reflectivity_of_renumbering();
 
     //Print results
+    const double time_used = cpuTime() - myTime;
     if (conf.verbosity >= 3) {
         cout
         << "c Reordered variables T: "
         << std::fixed << std::setw(5) << std::setprecision(2)
-        << (cpuTime() - myTime)
+        << time_used
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "renumber"
+            , time_used
+        );
     }
 
     if (conf.doSaveMem) {
