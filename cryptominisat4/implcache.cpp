@@ -28,6 +28,7 @@
 #include "varreplacer.h"
 #include "varupdatehelper.h"
 #include "time_mem.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -247,12 +248,20 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         *setSomething = (solver->trail.size() != origTrailDepth);
     }
 
+    const double time_used = cpuTime()-myTime;
     if (solver->conf.verbosity >= 1) {
-        cout << "c Cache cleaned."
+        cout << "c [cache] cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
         << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
         << " Freed: " << std::setw(7) << numFreed/1000 << " K"
-        << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << endl;
+        << " T: " << std::setprecision(2) << std::fixed  << time_used << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "clean cache"
+            , time_used
+        );
     }
 
     return solver->okay();
