@@ -408,7 +408,7 @@ uint64_t Strengthener::calc_time_available(
         stats = &(globalStats.irredCacheBased);
     }
 
-    uint64_t maxCountTime = 300ULL*1000ULL*1000ULL;
+    uint64_t maxCountTime = solver->conf.watch_cache_stamp_based_str_timeoutM*1000LL*1000LL;
     if (!alsoStrengthen) {
         maxCountTime *= 2;
     }

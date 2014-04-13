@@ -174,7 +174,8 @@ SolverConf::SolverConf() :
 
         //Vivification
         , doClausVivif(true)
-        , max_props_vivif_long_irred_cls(20ULL*1000ULL*1000ULL)
+        , max_props_vivif_long_irred_clsM(20ULL)
+        , watch_cache_stamp_based_str_timeoutM(400LL)
 
         //Memory savings
         , doRenumberVars   (true)

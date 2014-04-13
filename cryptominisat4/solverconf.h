@@ -238,7 +238,8 @@ class SolverConf
 
         //Vivification
         int      doClausVivif;
-        unsigned long long max_props_vivif_long_irred_cls;
+        unsigned long long max_props_vivif_long_irred_clsM;
+        long watch_cache_stamp_based_str_timeoutM;
 
         //Memory savings
         int       doRenumberVars;
