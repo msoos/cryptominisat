@@ -80,13 +80,9 @@ endif (Perftools_FOUND)
 
 
 if (STATICCOMPILE)
-    add_library(libcryptominisat4 STATIC
-        ${cryptoms_lib_files}
-    )
+    add_library(libcryptominisat4 STATIC ${cryptoms_lib_files})
 else (STATICCOMPILE)
-    add_library(libcryptominisat4 SHARED
-        ${cryptoms_lib_files}
-    )
+    add_library(libcryptominisat4 SHARED ${cryptoms_lib_files})
 endif (STATICCOMPILE)
 
 target_link_libraries(libcryptominisat4
@@ -134,6 +130,9 @@ add_executable(cryptominisat
     dimacsparser.cpp
     main.cpp
 )
+if (STATICCOMPILE)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 1)
+endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
@@ -153,5 +152,8 @@ install(TARGETS cryptominisat
     EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
+if (STATICCOMPILE)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
+endif (STATICCOMPILE)
 
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")

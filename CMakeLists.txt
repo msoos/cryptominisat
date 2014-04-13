@@ -87,9 +87,9 @@ add_cxx_flag_if_supported("-Wheader-guard")
 # -----------------------------------------------------------------------------
 option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    SET(CMAKE_EXE_LINKER_FLAGS "-static")
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 
 # -----------------------------------------------------------------------------
