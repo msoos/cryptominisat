@@ -632,13 +632,17 @@ private:
         {
             unsigned long h;
             h = lit1.toInt();
+            return h;
+
+            //Disable hashing
+            /*
             if (lit2 == lit_Undef)
                 return h % N;
 
             h ^= lit2.toInt()*37;
             h += lit2.toInt();
 
-            return h % N;
+            return h % N;*/
         }
 
         bool operator!=(const lit_pair& other) const

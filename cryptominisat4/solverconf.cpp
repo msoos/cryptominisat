@@ -129,7 +129,7 @@ SolverConf::SolverConf() :
 
         //Bounded variable addition
         , do_bva(true)
-        , bva_limit_per_call(80000)
+        , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(100LL*1000LL)
 

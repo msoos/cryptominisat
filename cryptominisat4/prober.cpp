@@ -307,17 +307,7 @@ Lit Prober::update_lit_for_dominator(
     , vector<Var>& poss_choice
     , const vector<size_t>& fast_rnd_lookup
 ) {
-    if (solver->conf.doCache) {
-        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
-            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
-            if (solver->value(betterlit.var()) == l_Undef
-                && solver->varData[betterlit.var()].is_decision
-            ) {
-                //Update lit
-                lit = betterlit;
-            }
-        }
-    } else  if (solver->conf.doStamp) {
+    if (solver->conf.doStamp) {
         //If this lit is reachable from somewhere else, then reach it from there
         if (solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED] != lit_Undef) {
             const Lit betterlit = solver->stamp.tstamp[lit.toInt()].dominator[STAMP_IRRED];
@@ -332,6 +322,16 @@ Lit Prober::update_lit_for_dominator(
 
                 //Must not have visited it already, otherwise the stamp dominator would be incorrect
                 assert(!visitedAlready[lit.toInt()]);
+            }
+        }
+    } else  if (solver->conf.doCache) {
+        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
+            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+            if (solver->value(betterlit.var()) == l_Undef
+                && solver->varData[betterlit.var()].is_decision
+            ) {
+                //Update lit
+                lit = betterlit;
             }
         }
     }
