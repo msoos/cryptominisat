@@ -130,7 +130,8 @@ gateeqlit | gates in {1}
 
 # Misc
 vivif {0,1}[1]
-viviflongmax [5000000,200000000][20000000]il
+viviflongmaxm [5,200][20]il
+viviffastmaxm [100,2000][400]il
 
 # turn off verbosity
 printsol {0}[0]
