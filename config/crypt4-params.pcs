@@ -132,3 +132,6 @@ gateeqlit | gates in {1}
 vivif {0,1}[1]
 viviflongmax [5000000,200000000][20000000]il
 
+# turn off verbosity
+printsol {0}[0]
+verb {0}[0]
