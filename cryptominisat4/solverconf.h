@@ -199,7 +199,7 @@ class SolverConf
 
         //Probing
         int      doProbe;
-        double   probeMultiplier; //Increase failed lit time by this multiplier
+        unsigned long long   probe_bogoprops_timeoutM;
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;
