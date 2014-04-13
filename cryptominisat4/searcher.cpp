@@ -31,10 +31,7 @@
 #include "propbyforgraph.h"
 #include <algorithm>
 #include <cstddef>
-
-#ifdef STATS_NEEDED
 #include "sqlstats.h"
-#endif
 
 using namespace CMSat;
 using std::cout;
