@@ -75,7 +75,7 @@ rewardotfsubsume [1,32][1]il
 rewardotfsubsume | otfsubsume in {1}
 
 # Probing 
-probemultip{0.6,1.0,1.2,1.5}[1.0]
+probemaxm [600,4000][1600]i
 transred {0,1}[1]
 
 # Stamping
