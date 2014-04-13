@@ -628,7 +628,7 @@ private:
             return lit1 == other.lit1 && lit2 == other.lit2;
         }
 
-        unsigned hash(const uint32_t N) const
+        unsigned hash(const uint32_t) const
         {
             unsigned long h;
             h = lit1.toInt();
