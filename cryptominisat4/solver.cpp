@@ -2773,20 +2773,19 @@ vector<Lit> Solver::get_zero_assigned_lits() const
             lits.push_back(map_inter_to_outer(lit));
 
             //Everything it repaces has also been set
-            const map<Var, vector<Var> >::const_iterator it = varReplacer->get_vars_replacing(lit.var());
-            if (it != varReplacer->get_vars_replacing_end()) {
-                for(const Var var: it->second) {
-                    if (varData[var].is_bva)
-                        continue;
+            const vector<Var> vars = varReplacer->get_vars_replacing(lit.var());
+            for(const Var var: vars) {
+                if (varData[var].is_bva)
+                    continue;
 
-                    Lit tmp_lit = Lit(var, false);
-                    if (lit != varReplacer->getLitReplacedWith(tmp_lit)) {
-                        tmp_lit ^= true;
-                    }
-                    assert(lit == varReplacer->getLitReplacedWith(tmp_lit));
-
-                    lits.push_back(map_inter_to_outer(tmp_lit));
+                Lit tmp_lit = Lit(var, false);
+                assert(varReplacer->getLitReplacedWith(tmp_lit).var() == lit.var());
+                if (lit != varReplacer->getLitReplacedWith(tmp_lit)) {
+                    tmp_lit ^= true;
                 }
+                assert(lit == varReplacer->getLitReplacedWith(tmp_lit));
+
+                lits.push_back(map_inter_to_outer(tmp_lit));
             }
         }
     }

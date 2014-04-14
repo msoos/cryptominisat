@@ -82,8 +82,7 @@ class VarReplacer
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
         bool replacingVar(const Var var) const;
-        map<Var, vector<Var> >::const_iterator get_vars_replacing(const Var var) const;
-        map<Var, vector<Var> >::const_iterator get_vars_replacing_end() const;
+        vector<Var> get_vars_replacing(Var var) const;
         bool addLaterAddBinXor();
         void updateVars(
             const vector<uint32_t>& outerToInter
@@ -274,16 +273,6 @@ inline bool VarReplacer::isReplaced(const Lit lit) const
 inline bool VarReplacer::replacingVar(const Var var) const
 {
     return (reverseTable.find(var) != reverseTable.end());
-}
-
-inline map<Var, vector<Var> >::const_iterator VarReplacer::get_vars_replacing(const Var var) const
-{
-    return reverseTable.find(var);
-}
-
-inline map<Var, vector<Var> >::const_iterator VarReplacer::get_vars_replacing_end() const
-{
-    return reverseTable.end();
 }
 
 inline size_t VarReplacer::getNumTrees() const

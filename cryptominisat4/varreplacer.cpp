@@ -1152,3 +1152,17 @@ Var VarReplacer::getVarReplacedWith(Var var) const
     Var var2 = table[var].var();
     return solver->map_outer_to_inter(var2);
 }
+
+vector<Var> VarReplacer::get_vars_replacing(Var var) const
+{
+    vector<Var> ret;
+    var = solver->map_inter_to_outer(var);
+    map<Var, vector<Var> >::const_iterator it = reverseTable.find(var);
+    if (it != reverseTable.end()) {
+        for(Var var: it->second) {
+            ret.push_back(solver->map_outer_to_inter(var));
+        }
+    }
+
+    return ret;
+}
