@@ -2037,7 +2037,7 @@ lbool Solver::simplifyProblem()
 
     //Re-calculate reachability after re-numbering and new cache data
     if (conf.doCache) {
-        calcReachability();
+        calculate_reachability();
     }
 
     //Free unused watch memory
@@ -3751,7 +3751,7 @@ void Solver::updateDominators()
     }
 }
 
-void Solver::calcReachability()
+void Solver::calculate_reachability()
 {
     double myTime = cpuTime();
 

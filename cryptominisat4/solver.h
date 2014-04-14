@@ -472,7 +472,7 @@ class Solver : public Searcher
         size_t               zeroLevAssignsByCNF = 0;
         size_t               zeroLevAssignsByThreads = 0;
         vector<LitReachData> litReachable;
-        void calcReachability();
+        void calculate_reachability();
 
         //Main up stats
         Stats sumStats;
