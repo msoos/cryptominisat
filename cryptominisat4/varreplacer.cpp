@@ -263,7 +263,7 @@ end:
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver);
+            runStats.printShort();
     }
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
