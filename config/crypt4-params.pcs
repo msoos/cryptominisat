@@ -4,12 +4,12 @@
 
 #restarts
 restart {geom, agility, glue, glueagility}[geom]
-agilg [0.00001,1][0.9999]
-agilg | restart in {agil}
-agillim [0,1][0.03]l
-agillim | restart in {agil}
+agilg [0.00001,1][0.9999]l
+agilg | restart in {agility}
+agillim [0.0001,1][0.03]l
+agillim | restart in {agility}
 agilviollim [2,1024][20]li
-agilviollim | restart in {agil}
+agilviollim | restart in {agility}
 gluehist [1,10000][100]li
 gluehist | restart in {glue}
 blkrest {0,1}[1]
@@ -32,14 +32,14 @@ cleanconflmult [1,64][1]li
 cleanconflmult | clean in {confdep}
 lockuip [1,1000000][500]li
 locktop [1,1000000][1]i
-perfmult [0,0.8][0]l
+perfmult [0.00001,0.8][0.00001]l
 preclean {0,1}[0]
-precleanlim [1,64][2]i
+precleanlim [1,64][2]il
 precleanlim | preclean in {1}
 precleantime [1,1000000][10000]li
 precleantime | preclean in {1}
 clearstat {0,1}[1]
-startclean [1,1000000][10000]li
+startclean [100,1000000][10000]li
 incclean [1,2][1.1]
 maxredratio [1,10000][10]li
 
@@ -48,16 +48,16 @@ vincmult [5,20][11]li
 vincdiv [6,12][10]li # smac cannot model something like "smaller"
 vincvary [0,5][0]i
 vincstart [1,1024][128]i
-freq[0,0.2][0]l
+freq[0,0.2][0]
 dompickf [1,1000000][400]li
 morebump {0,1}[1]
 topnrndpick [1,1000][20]il
-topnrndpickfreq [0,1][0]l
-topnincnum [0,128][0]li
+topnrndpickfreq [0.0000001,1][0.000001]l
+topnincnum [1,128][1]li
 
 # Variable polarity
 polar{true,false,rnd,auto}[auto]
-flippolf [0,1][0] # ???
+flippolf {0,400}[0] # fixed.
 flippolf | polar in {true,rnd,auto}
 calcpolar1st {0,1} [1]
 calcpolar1st | polar in {true,rnd,auto}
@@ -67,8 +67,10 @@ calcpolarall | polar in {true,rnd,auto}
 # Conflict
 recur {0,1}[1]
 moreminim {0,1}[1]
-moreminimcache [1,1000000][200]il # this option is twice in --help
+moreminimcache [1,1000000][200]il
 moreminimcache | moreminim in {1}
+moreminimbin [1,1000000][100]il
+moreminimbin | moreminim in {1}
 alwaysmoremin {0,1}[0]
 otfsubsume {0,1}[1]
 rewardotfsubsume [1,32][1]il
@@ -93,17 +95,17 @@ presimp {0,1}[0]
 emptyelim {0,1}[1]
 elimstrgy {heuristic,calculate}[heuristic]
 elimcplxupd {0,1}[1]
-elimcoststrategy [0,1][0]
+elimcoststrategy {0,1}[0]
 subsume1 {0,1}[1]
 bva {0,1}[1]
 bva2lit {0,1}[1]
 noextbinsubs {0,1}[1]
-eratio [0,1][0.12]l
+eratio [0.00001,1][0.12]l
 occredmax [10,400][200]il
 
 # Equivalent literal
 extscc {0,1}[1]
-sccperc [0,1][0.02]l
+sccperc [0.001,0.5][0.02]l
 
 # Component
 comps {0,1}[1]
@@ -135,4 +137,4 @@ viviffastmaxm [100,2000][400]il
 
 # turn off verbosity
 printsol {0}[0]
-verb {0}[0]
+#verb {0}[0]
