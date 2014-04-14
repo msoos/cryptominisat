@@ -2767,11 +2767,27 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     for(size_t i = 0; i < assigns.size(); i++) {
         if (assigns[i] != l_Undef) {
             Lit lit(i, assigns[i] == l_False);
-            if (varData[lit.var()].is_bva)
-                continue;
 
-            lit = map_inter_to_outer(lit);
-            lits.push_back(lit);
+            //Update to higher-up
+            lit = varReplacer->getLitReplacedWith(lit);
+            lits.push_back(map_inter_to_outer(lit));
+
+            //Everything it repaces has also been set
+            const map<Var, vector<Var> >::const_iterator it = varReplacer->get_vars_replacing(lit.var());
+            if (it != varReplacer->get_vars_replacing_end()) {
+                for(const Var var: it->second) {
+                    if (varData[var].is_bva)
+                        continue;
+
+                    Lit tmp_lit = Lit(var, false);
+                    if (lit != varReplacer->getLitReplacedWith(tmp_lit)) {
+                        tmp_lit ^= true;
+                    }
+                    assert(lit == varReplacer->getLitReplacedWith(tmp_lit));
+
+                    lits.push_back(map_inter_to_outer(tmp_lit));
+                }
+            }
         }
     }
     vector<Var> my_map = build_outer_to_without_bva_map();
