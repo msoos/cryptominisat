@@ -224,8 +224,12 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         //1) set irred right (above we might have it set later)
         //2) clear 'inside'
         //3) clear 'irred'
-        for (vector<LitExtra>::iterator it = trans->lits.begin(), end = trans->lits.end(); it != end; it++) {
-            Lit lit = it->getLit();
+        for (vector<LitExtra>::iterator
+            it2 = trans->lits.begin(), end2 = trans->lits.end()
+            ;it2 != end2
+            ; it2++
+        ) {
+            Lit lit = it2->getLit();
 
             //Clear 'inside'
             inside[lit.toInt()] = false;
@@ -235,9 +239,9 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
             irred[lit.toInt()] = false;
 
             //Set non-leartness correctly
-            *it = LitExtra(lit, nRed);
-            assert(solver->varData[it->getLit().var()].removed == Removed::none);
-            assert(solver->value(it->getLit()) == l_Undef);
+            *it2 = LitExtra(lit, nRed);
+            assert(solver->varData[it2->getLit().var()].removed == Removed::none);
+            assert(solver->value(it2->getLit()) == l_Undef);
         }
         numCleaned += origSize-trans->lits.size();
     }

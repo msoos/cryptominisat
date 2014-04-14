@@ -332,8 +332,8 @@ void GateFinder::or_gates_in_sweep_mode(const Lit lit)
     }
 
     *simplifier->limit_to_decrease -= toClear.size();
-    for(const Lit lit: toClear) {
-        seen[lit.toInt()] = 0;
+    for(const Lit toclear: toClear) {
+        seen[toclear.toInt()] = 0;
     }
     toClear.clear();
 }
