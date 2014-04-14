@@ -3761,41 +3761,32 @@ void Solver::calculate_reachability()
     }
 
     //Go through each that is decision variable
-    for (Var var = 0; var < nVars(); var++) {
+    for (size_t i = 0, end = solver->nVars()*2; i < end; i++) {
+        const Lit lit = Lit::toLit(i);
 
         //Check if it's a good idea to look at the variable as a dominator
-        if (value(var) != l_Undef
-            || varData[var].removed != Removed::none
-            || !varData[var].is_decision
+        if (value(lit) != l_Undef
+            || varData[lit.var()].removed != Removed::none
+            || !varData[lit.var()].is_decision
         ) {
             continue;
         }
 
-        //Both poliarities
-        for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
-            const Lit lit = Lit(var, sig1);
+        const vector<LitExtra>& cache = implCache[lit.toInt()].lits;
+        uint32_t cacheSize = cache.size();
+        for (vector<LitExtra>::const_iterator
+            it = cache.begin(), end = cache.end()
+            ; it != end
+            ; it++
+        ) {
+            assert(it->getLit() != lit);
+            assert(it->getLit() != ~lit);
 
-            const vector<LitExtra>& cache = implCache[lit.toInt()].lits;
-            uint32_t cacheSize = cache.size();
-            for (vector<LitExtra>::const_iterator
-                it = cache.begin(), end = cache.end()
-                ; it != end
-                ; it++
+            if (litReachable[it->getLit().toInt()].lit == lit_Undef
+                || litReachable[it->getLit().toInt()].numInCache < cacheSize
             ) {
-                /*if (solver.value(it->var()) != l_Undef
-                || solver.subsumer->getVarElimed()[it->var()]
-                || solver.xorSubsumer->getVarElimed()[it->var()])
-                continue;*/
-
-                assert(it->getLit() != lit);
-                assert(it->getLit() != ~lit);
-
-                if (litReachable[it->getLit().toInt()].lit == lit_Undef
-                    || litReachable[it->getLit().toInt()].numInCache < cacheSize
-                ) {
-                    litReachable[it->getLit().toInt()].lit = ~lit;
-                    litReachable[it->getLit().toInt()].numInCache = cacheSize;
-                }
+                litReachable[it->getLit().toInt()].lit = ~lit;
+                litReachable[it->getLit().toInt()].numInCache = cacheSize;
             }
         }
     }
