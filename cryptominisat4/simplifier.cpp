@@ -3145,16 +3145,14 @@ size_t Simplifier::calc_watch_irred_size(const Lit lit) const
     return num;
 }
 
-vector<size_t> Simplifier::calc_watch_irred_sizes() const
+void Simplifier::calc_watch_irred_sizes() const
 {
-    vector<size_t> watch_irred_sizes;
+    watch_irred_sizes.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
         const size_t irred_size = calc_watch_irred_size(lit);
         watch_irred_sizes.push_back(irred_size);
     }
-
-    return watch_irred_sizes;
 }
 
 bool Simplifier::bounded_var_addition()
@@ -3179,7 +3177,7 @@ bool Simplifier::bounded_var_addition()
     bva_worked = 0;
     bva_simp_size = 0;
     var_bva_order.clear();
-    watch_irred_sizes = calc_watch_irred_sizes();
+    calc_watch_irred_sizes();
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
         if (solver->value(lit) != l_Undef
