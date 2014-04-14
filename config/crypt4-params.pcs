@@ -30,8 +30,8 @@ ltclean [0,1][0.5]
 clean {size, glue, activity, prconf, confdep}[prconf]
 cleanconflmult [1,64][1]li
 cleanconflmult | clean in {confdep}
-lockuip [1,1000000][500]li
-locktop [1,1000000][1]i
+lockuip [0,2000][500]i
+locktop [0,2000][1]i
 perfmult [0.00001,0.8][0.00001]l
 preclean {0,1}[0]
 precleanlim [1,64][2]il
@@ -39,8 +39,8 @@ precleanlim | preclean in {1}
 precleantime [1,1000000][10000]li
 precleantime | preclean in {1}
 clearstat {0,1}[1]
-startclean [100,1000000][10000]li
-incclean [1,2][1.1]
+startclean [100,50000][10000]li
+incclean [1,3][1.1]
 maxredratio [1,10000][10]li
 
 # Variable branching
@@ -65,7 +65,7 @@ calcpolarall {0,1} [1]
 calcpolarall | polar in {true,rnd,auto}
 
 # Conflict
-recur {0,1}[1]
+# recur {0,1}[1] # not a good idea to set it to 0
 moreminim {0,1}[1]
 moreminimcache [1,1000000][200]il
 moreminimcache | moreminim in {1}
