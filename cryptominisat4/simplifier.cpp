@@ -3327,9 +3327,9 @@ void Simplifier::remove_duplicates_from_m_cls()
                 if (cl1.size() != cl2.size()) {
                     break;
                 }
-                for(size_t i = 0; i < cl1.size(); i++) {
+                for(size_t at = 0; at < cl1.size(); at++) {
                     *limit_to_decrease -= 1;
-                    if (cl1[i] != cl2[i]) {
+                    if (cl1[at] != cl2[at]) {
                         del = false;
                         break;
                     }
