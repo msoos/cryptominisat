@@ -205,6 +205,7 @@ class Solver : public Searcher
         );
 
     private:
+        void check_config_parameters() const;
         void handle_found_solution(const lbool status);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach);
         void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach);
