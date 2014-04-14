@@ -1104,7 +1104,7 @@ void VarReplacer::Stats::print(const size_t nVars) const
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
 }
 
-void VarReplacer::Stats::printShort(Solver* solver) const
+void VarReplacer::Stats::printShort() const
 {
     cout
     << "c [vrep]"
