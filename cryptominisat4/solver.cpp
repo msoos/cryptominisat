@@ -1764,7 +1764,7 @@ lbool Solver::solve()
     while (status == l_Undef
         && !needToInterrupt
         && cpuTime() < conf.maxTime
-        && sumStats.conflStats.numConflicts < conf.maxConfl
+        && sumStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
         if (conf.verbosity >= 2)
             printClauseSizeDistrib();
