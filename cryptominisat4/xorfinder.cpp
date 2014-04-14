@@ -447,13 +447,13 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 
                 //add remaining vars
                 for(vector<Var>::const_iterator
-                    it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
-                    ; it2 != end2
-                    ; it2++
+                    it3 = thisXor.vars.begin(), end3 = thisXor.vars.end()
+                    ; it3 != end3
+                    ; it3++
                 ) {
-                    if (varToBlock[*it2] == std::numeric_limits<size_t>::max()) {
-                        finalBlock.push_back(*it2);
-                        varToBlock[*it2] = blockNum;
+                    if (varToBlock[*it3] == std::numeric_limits<size_t>::max()) {
+                        finalBlock.push_back(*it3);
+                        varToBlock[*it3] = blockNum;
                     }
                 }
             }
