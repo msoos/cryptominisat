@@ -673,8 +673,8 @@ void XorFinder::findXorMatchExt(
         //cout << "Not OK" << endl;
 
         //Clear 'seen2'
-        for(const Lit lit: tmpClause) {
-            seen2[lit.var()] = false;
+        for(const Lit tmp_lit: tmpClause) {
+            seen2[tmp_lit.var()] = false;
         }
     }
 }
