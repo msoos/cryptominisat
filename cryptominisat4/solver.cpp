@@ -3800,7 +3800,7 @@ void Solver::calculate_reachability()
         }
     }
 
-    const bool time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - myTime;
     if (conf.verbosity >= 1) {
         cout
         << "c calculated reachability. T: "
