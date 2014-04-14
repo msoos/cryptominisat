@@ -1946,11 +1946,6 @@ lbool Solver::simplifyProblem()
         goto end;
     }
 
-    //Treat implicits
-    if (conf.doStrSubImplicit) {
-        subsumeImplicit->subsume_implicit();
-    }
-
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
         if (!sCCFinder->performSCC())
@@ -1963,6 +1958,11 @@ lbool Solver::simplifyProblem()
     //Check if time is up
     if (needToInterrupt)
         return l_Undef;
+
+    //Treat implicits
+    if (conf.doStrSubImplicit) {
+        subsumeImplicit->subsume_implicit();
+    }
 
     //Var-elim, gates, subsumption, strengthening
     if (conf.perform_occur_based_simp && !simplifier->simplify())
