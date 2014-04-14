@@ -466,7 +466,7 @@ void Solver::attachBinClause(
     , const bool red
     , const bool checkUnassignedFirst
 ) {
-    #if defined(DRUP_DEBUG) && defined(DRUP)
+    #if defined(DRUP_DEBUG)
     *drup << lit1 << lit2 << fin;
     #endif
 
