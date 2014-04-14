@@ -673,12 +673,8 @@ void XorFinder::findXorMatchExt(
         //cout << "Not OK" << endl;
 
         //Clear 'seen2'
-        for(vector<Lit>::const_iterator
-            it = tmpClause.begin(), end = tmpClause.end()
-            ; it != end
-            ; it++
-        ) {
-            seen2[it->var()] = false;
+        for(const Lit lit: tmpClause) {
+            seen2[lit.var()] = false;
         }
     }
 }
