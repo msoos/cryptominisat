@@ -755,16 +755,12 @@ void XorFinder::findXorMatch(
 
         //Check RHS
         bool rhs = true;
-        for (const Lit
-            *l = cl.begin(), *end = cl.end()
-            ; l != end
-            ; l++
-        ) {
+        for (const Lit cl_lit :cl) {
             //early-abort, contains literals not in original clause
-            if (!seen[l->var()])
+            if (!seen[cl_lit.var()])
                 goto end;
 
-            rhs ^= l->sign();
+            rhs ^= cl_lit.sign();
         }
         //either the invertedness has to match, or the size must be smaller
         if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize())
