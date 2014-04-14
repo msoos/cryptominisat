@@ -105,11 +105,11 @@ void SubsumeImplicit::try_subsume_tri(
         && solver->conf.doCache
         && (solver->conf.otfHyperbin || !solver->drup->enabled())
     ) {
-        for(size_t i = 0; i < tmplits.size() && !remove; i++) {
+        for(size_t at = 0; at < tmplits.size() && !remove; at++) {
             timeAvailable -= solver->implCache[lit.toInt()].lits.size();
             for (vector<LitExtra>::const_iterator
-                it2 = solver->implCache[tmplits[i].toInt()].lits.begin()
-                , end2 = solver->implCache[tmplits[i].toInt()].lits.end()
+                it2 = solver->implCache[tmplits[at].toInt()].lits.begin()
+                , end2 = solver->implCache[tmplits[at].toInt()].lits.end()
                 ; it2 != end2
                 ; it2++
             ) {
