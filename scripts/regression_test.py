@@ -172,7 +172,7 @@ class Tester:
         cmd += "--alwaysmoremin %s " % random.randint(0,1)
         cmd += "--rewardotfsubsume %s " % random.randint(0,100)
         cmd += "--bothprop %s " % random.randint(0,1)
-        cmd += "--probemultip %s " % random.randint(0,10)
+        cmd += "--probemaxm %s " % random.choice([0,10,100,1000])
         cmd += "--cachesize %s " % random.randint(10, 100)
         cmd += "--calcreach %s " % random.randint(0,1)
         cmd += "--cachecutoff %s " % random.randint(0,2000)
