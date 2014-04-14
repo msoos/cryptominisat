@@ -249,8 +249,8 @@ CREATE TABLE `timepassed` (
   `time` double unsigned NOT NULL,
   `name` varchar(200) NOT NULL,
   `elapsed` double unsigned NOT NULL,
-  `timeout` int(20) unsigned NOT NULL,
-  `percenttimeremain` float unsigned NOT NULL,
+  `timeout` int(20) unsigned DEFAULT NULL,
+  `percenttimeremain` float unsigned DEFAULT NULL,
   KEY `idx1` (`runID`,`conflicts`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
