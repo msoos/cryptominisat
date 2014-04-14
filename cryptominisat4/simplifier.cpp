@@ -3145,7 +3145,7 @@ size_t Simplifier::calc_watch_irred_size(const Lit lit) const
     return num;
 }
 
-void Simplifier::calc_watch_irred_sizes() const
+void Simplifier::calc_watch_irred_sizes()
 {
     watch_irred_sizes.clear();
     for(size_t i = 0; i < solver->nVars()*2; i++) {

@@ -686,7 +686,7 @@ private:
     };
     bool bounded_var_addition();
     size_t calc_watch_irred_size(const Lit lit) const;
-    void calc_watch_irred_sizes() const;
+    void calc_watch_irred_sizes();
     lit_pair most_occuring_lit_in_potential(size_t& num_occur);
     lit_pair lit_diff_watches(const OccurClause& a, const OccurClause& b);
     Lit least_occurring_except(const OccurClause& c);
