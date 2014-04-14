@@ -2312,7 +2312,7 @@ bool Simplifier::reverse_vivification_of_dummy(
     if (ps.isBinary()
         || qs.isBinary()
         || !solver->conf.doCache
-        || !solver->conf.otfHyperbin
+        || (!solver->conf.otfHyperbin && solver->drup->enabled())
     ) {
         return false;
     }
@@ -3554,16 +3554,18 @@ void Simplifier::remove_matching_clause(
     switch(to_remove.size()) {
         case 2: {
             *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            bool red = findWBin(solver->watches, to_remove[0], to_remove[1], false);
-            solver->detachBinClause(to_remove[0], to_remove[1], !red);
+            //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
+            bool red = false;
+            solver->detachBinClause(to_remove[0], to_remove[1], red);
             break;
         }
 
         case 3: {
             std::sort(to_remove.begin(), to_remove.end());
             *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            bool red = findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
-            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], !red);
+            //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
+            bool red = false;
+            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], red);
             break;
         }
 

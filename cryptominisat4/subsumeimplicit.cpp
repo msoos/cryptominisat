@@ -92,7 +92,9 @@ void SubsumeImplicit::try_subsume_tri(
     tmplits.push_back(i->lit3());
 
     //Subsumed by stamp
-    if (doStamp && !remove && solver->conf.otfHyperbin) {
+    if (doStamp && !remove
+        && (solver->conf.otfHyperbin || !solver->drup->enabled())
+    ) {
         timeAvailable -= 15;
         remove = solver->stamp.stampBasedClRem(tmplits);
         runStats.stampTriRem += remove;
@@ -101,7 +103,7 @@ void SubsumeImplicit::try_subsume_tri(
     //Subsumed by cache
     if (!remove
         && solver->conf.doCache
-        && solver->conf.otfHyperbin
+        && (solver->conf.otfHyperbin || !solver->drup->enabled())
     ) {
         for(size_t i = 0; i < tmplits.size() && !remove; i++) {
             timeAvailable -= solver->implCache[lit.toInt()].lits.size();

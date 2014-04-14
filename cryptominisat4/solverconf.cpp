@@ -131,7 +131,7 @@ SolverConf::SolverConf() :
         , do_bva(true)
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
-        , bva_extra_lit_and_red_start(100LL*1000LL)
+        , bva_extra_lit_and_red_start(0)
 
         //Probing
         , doProbe          (true)
