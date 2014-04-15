@@ -2170,7 +2170,10 @@ bool Simplifier::maybeEliminate(const Var var)
         if (!ok)
             goto end;
     }
-    update_varelim_complexity_heap(var);
+
+    if (*limit_to_decrease > 0) {
+        update_varelim_complexity_heap(var);
+    }
 
 end:
     set_var_as_eliminated(var, lit);
