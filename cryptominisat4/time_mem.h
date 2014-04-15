@@ -23,7 +23,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "constants.h"
 #include "assert.h"
 
-#if defined (_MSC_VER)
+#if defined (_MSC_VER) || defined(CROSS_COMPILE)
 #include <ctime>
 
 static inline double cpuTime(void)
