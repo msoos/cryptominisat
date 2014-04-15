@@ -2363,7 +2363,7 @@ bool Simplifier::subsume_dummy_through_stamping(
     //pendency
 
     if (!ps.isBinary() && !qs.isBinary()) {
-        aggressive_elim_time_limit -= 20;
+        aggressive_elim_time_limit -= toClear.size()*5;
         if (solver->stamp.stampBasedClRem(toClear)) {
             return true;
         }

@@ -135,7 +135,7 @@ SolverConf::SolverConf() :
 
         //Probing
         , doProbe          (true)
-        , probe_bogoprops_timeoutM  (1600ULL)
+        , probe_bogoprops_timeoutM  (1900ULL)
         , doBothProp       (true)
         , doTransRed       (true)
         , doStamp          (true)
