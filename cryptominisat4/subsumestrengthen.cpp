@@ -658,17 +658,17 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
             continue;
         }
 
-        ClOffset offset2 = it->getOffset();
+        const ClOffset offset2 = it->getOffset();
         const Clause& cl2 = *solver->clAllocator.getPointer(offset2);
 
-        if (ps.size() > cl2.size())
+        if (ps.size() > cl2.size() || cl2.getRemoved())
             continue;
 
         *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
-            out_subsumed.push_back(it->getOffset());
+            out_subsumed.push_back(offset2);
             #ifdef VERBOSE_DEBUG
-            cout << "subsumed cl offset: " << it->getOffset() << endl;
+            cout << "subsumed cl offset: " << offset2 << endl;
             #endif
         }
     }

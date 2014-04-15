@@ -189,26 +189,32 @@ void Simplifier::extendModel(SolutionExtender* extender)
     }
 }
 
-/**
-@brief Removes&free-s a clause from everywhere
-*/
-void Simplifier::unlinkClause(const ClOffset offset, bool doDrup, bool allow_empty_watch)
-{
+void Simplifier::unlinkClause(
+    const ClOffset offset
+    , bool doDrup
+    , bool allow_empty_watch
+    , bool only_set_is_removed
+) {
     Clause& cl = *solver->clAllocator.getPointer(offset);
     if (solver->drup->enabled() && doDrup) {
        (*solver->drup) << del << cl << fin;
     }
 
-    //Remove from occur
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        *limit_to_decrease -= 2*(long)solver->watches[cl[i].toInt()].size();
-
-        if (!(allow_empty_watch && solver->watches[cl[i].toInt()].empty())) {
-            removeWCl(solver->watches[cl[i].toInt()], offset);
+    if (!only_set_is_removed) {
+        for (const Lit lit: cl) {
+            if (!(allow_empty_watch && solver->watches[lit.toInt()].empty())) {
+                *limit_to_decrease -= 2*(long)solver->watches[lit.toInt()].size();
+                removeWCl(solver->watches[lit.toInt()], offset);
+            }
         }
+    } else {
+        cl.setRemoved();
+    }
 
-        if (!cl.red())
-            touched.touch(cl[i]);
+    if (!cl.red()) {
+        for (const Lit lit: cl) {
+            touched.touch(lit);
+        }
     }
 
     if (cl.red()) {
@@ -217,8 +223,11 @@ void Simplifier::unlinkClause(const ClOffset offset, bool doDrup, bool allow_emp
         solver->litStats.irredLits -= cl.size();
     }
 
-    //Free and set to NULL
-    solver->clAllocator.clauseFree(&cl);
+    if (!only_set_is_removed) {
+        solver->clAllocator.clauseFree(&cl);
+    } else {
+        cl_to_free_later.push_back(offset);
+    }
 }
 
 lbool Simplifier::cleanClause(ClOffset offset)
@@ -514,6 +523,8 @@ void Simplifier::addBackToSolver()
         if (cl->getFreed())
             continue;
 
+        assert(!cl->getRemoved());
+
         //All clauses are larger than 2-long
         assert(cl->size() > 3);
 
@@ -634,6 +645,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
     double myTime = cpuTime();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
     limit_to_decrease = &empty_varelim_time_limit;
+    cl_to_free_later.clear();
 
     size_t num = 0;
     for(size_t var = solver->mtrand.randInt(solver->nVars())
@@ -656,6 +668,10 @@ void Simplifier::eliminate_empty_resolvent_vars()
         var_elimed++;
     }
 
+    if (!cl_to_free_later.empty()) {
+        clean_occur_from_removed_clauses();
+        free_clauses_to_free();
+    }
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = (double)*limit_to_decrease/(double)orig_empty_varelim_time_limit;
@@ -698,6 +714,7 @@ bool Simplifier::eliminateVars()
     time_spent_on_calc_otf_update = 0;
     num_otf_update_until_now = 0;
     limit_to_decrease = &norm_varelim_time_limit;
+    cl_to_free_later.clear();
 
     order_vars_for_elim();
     if (solver->conf.verbosity >= 5) {
@@ -736,6 +753,8 @@ bool Simplifier::eliminateVars()
     }
 
 end:
+    clean_occur_from_removed_clauses();
+    free_clauses_to_free();
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = (double)*limit_to_decrease/(double)norm_varelim_time_limit;
@@ -764,6 +783,38 @@ end:
     runStats.varElimTime += cpuTime() - myTime;
 
     return solver->ok;
+}
+
+void Simplifier::free_clauses_to_free()
+{
+    for(ClOffset off: cl_to_free_later) {
+        Clause* cl = solver->clAllocator.getPointer(off);
+        solver->clAllocator.clauseFree(cl);
+    }
+    cl_to_free_later.clear();
+}
+
+void Simplifier::clean_occur_from_removed_clauses()
+{
+    for(watch_subarray w: solver->watches) {
+        size_t i = 0;
+        size_t j = 0;
+        size_t end = w.size();
+        for(; i < end; i++) {
+            const Watched ws = w[i];
+            if (ws.isBinary() || ws.isTri()) {
+                w[j++] = w[i];
+                continue;
+            }
+
+            assert(ws.isClause());
+            Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
+            if (!cl->getRemoved()) {
+                w[j++] = w[i];
+            }
+        }
+        w.shrink(i-j);
+    }
 }
 
 bool Simplifier::propagate()
@@ -1465,6 +1516,9 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
             Clause& cl = *solver->clAllocator.getPointer(offset);
+            if (cl.getRemoved()) {
+                continue;
+            }
 
             //Update stats
             if (!cl.red()) {
@@ -1481,7 +1535,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
 
             //Remove -- only DRUP the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
-            unlinkClause(offset, cl.red(), true);
+            unlinkClause(offset, cl.red(), true, true);
         }
 
         if (watch.isBinary()) {
@@ -1823,7 +1877,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         ; it++, at_poss++
     ) {
         *limit_to_decrease -= 3;
-        if (solver->redundant(*it))
+        if (solver->redundant_or_removed(*it))
             continue;
 
         size_t at_negs = 0;
@@ -1833,7 +1887,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             ; it2++, at_negs++
         ) {
             *limit_to_decrease -= 3;
-            if (solver->redundant(*it2))
+            if (solver->redundant_or_removed(*it2))
                 continue;
 
             /*if (solver->conf.otfHyperbin
@@ -2530,9 +2584,11 @@ Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
 
             case watch_clause_t: {
                 const Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
-                assert(!cl->freed() && "Inside occur, so cannot be freed");
-                ret.longer++;
-                ret.lit += cl->size();
+                if (!cl->getRemoved()) {
+                    assert(!cl->freed() && "Inside occur, so cannot be freed");
+                    ret.longer++;
+                    ret.lit += cl->size();
+                }
                 break;
             }
 
@@ -2663,6 +2719,9 @@ int Simplifier::checkEmptyResolventHelper(
 
         if (ws.isClause()) {
             const Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
+            if (cl->getRemoved()) {
+                continue;
+            }
 
             //If in occur then it cannot be freed
             assert(!cl->freed());

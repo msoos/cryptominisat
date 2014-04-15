@@ -169,6 +169,17 @@ bool CNF::redundant(const Watched& ws) const
     );
 }
 
+bool CNF::redundant_or_removed(const Watched& ws) const
+{
+    if (ws.isBinary() || ws.isTri()) {
+        return ws.red();
+    }
+
+   assert(ws.isClause());
+   const Clause* cl = clAllocator.getPointer(ws.getOffset());
+   return cl->red() || cl->getRemoved();
+}
+
 size_t CNF::cl_size(const Watched& ws) const
 {
     switch(ws.getType()) {
