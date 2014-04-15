@@ -2016,8 +2016,8 @@ bool Simplifier::add_varelim_resolvent(
     runStats.newClauses++;
     Clause* newCl = NULL;
 
-    //Check if a new 2-long would subsume a 3-long
-    if (finalLits.size() == 2) {
+    //Check if a new 2-long would subsume a 3-long if we have time
+    if (finalLits.size() == 2 && *limit_to_decrease > 10ULL*1000ULL) {
         bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
         if (already_inside) {
             goto subsume;
@@ -2048,19 +2048,9 @@ bool Simplifier::add_varelim_resolvent(
         clauses.push_back(offset);
         runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-        //Subsume long
-        subsume:
-        SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
-            std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
-            , finalLits //Literals in this binary clause
-            , calcAbstraction(finalLits) //Abstraction of literals
-            , true //subsume implicit ones
-        );
-        runStats.subsumedByVE += ret.numSubsumed;
-        if (ret.numSubsumed > 0) {
-            if (solver->conf.verbosity >= 5) {
-                cout << "Subsumed: " << ret.numSubsumed << endl;
-            }
+        if (*limit_to_decrease > 10ULL*1000ULL) {
+            subsume:
+            try_to_subsume_with_new_bin_or_tri(finalLits);
         }
     }
 
@@ -2070,6 +2060,22 @@ bool Simplifier::add_varelim_resolvent(
         touched.touch(lit);
 
     return true;
+}
+
+void Simplifier::try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits)
+{
+    SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
+        std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
+        , lits //Literals in this binary clause
+        , calcAbstraction(lits) //Abstraction of literals
+        , true //subsume implicit ones
+    );
+    runStats.subsumedByVE += ret.numSubsumed;
+    if (ret.numSubsumed > 0) {
+        if (solver->conf.verbosity >= 5) {
+            cout << "Subsumed: " << ret.numSubsumed << endl;
+        }
+    }
 }
 
 void Simplifier::update_varelim_complexity_heap(const Var var)
@@ -2150,7 +2156,10 @@ bool Simplifier::maybeEliminate(const Var var)
     print_var_elim_complexity_stats(var);
     runStats.testedToElimVars++;
 
-    if (test_elim_and_fill_resolvents(var) == 1000) {
+    //Heuristic says no, or we ran out of time
+    if (test_elim_and_fill_resolvents(var) == 1000
+        || *limit_to_decrease < 0
+    ) {
         return false;
     }
     runStats.triedToElimVars++;

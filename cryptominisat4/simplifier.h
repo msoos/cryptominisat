@@ -511,6 +511,7 @@ private:
 
     TouchList   touched;
     bool        maybeEliminate(const Var x);
+    void        try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits);
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(Var var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
