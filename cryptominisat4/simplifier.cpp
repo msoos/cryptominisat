@@ -1789,8 +1789,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     const Lit lit = Lit(var, false);
     watch_subarray poss = solver->watches[lit.toInt()];
     watch_subarray negs = solver->watches[(~lit).toInt()];
-    std::sort(poss.begin(), poss.end(), WatchSorter());
-    std::sort(negs.begin(), negs.end(), WatchSorter());
+    std::sort(poss.begin(), poss.end(), watch_sort_smallest_first());
+    std::sort(negs.begin(), negs.end(), watch_sort_smallest_first());
     resolvents.clear();
 
     //Pure literal, no resolvents

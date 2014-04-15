@@ -460,7 +460,7 @@ private:
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
-    struct WatchSorter {
+    struct watch_sort_smallest_first {
         bool operator()(const Watched& first, const Watched& second)
         {
             //Anything but clause!
