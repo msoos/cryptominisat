@@ -697,8 +697,6 @@ bool HyperEngine::isAncestorOf(
     while(thisAncestor != lit_Undef
         && bottom <= varData[thisAncestor.var()].depth
     ) {
-        propStats.otfHyperTime += 1;
-
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
         << " redundant step? " << varData[thisAncestor.var()].reason.isRedStep()
@@ -731,6 +729,7 @@ bool HyperEngine::isAncestorOf(
         }
 
         thisAncestor = data.getAncestor();
+        propStats.otfHyperTime += 1;
     }
 
     #ifdef VERBOSE_DEBUG_FULLPROP
