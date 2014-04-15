@@ -2241,7 +2241,7 @@ bool Simplifier::maybeEliminate(const Var var)
 end:
     set_var_as_eliminated(var, lit);
 
-    return solver->ok;
+    return true;
 }
 
 /*void Simplifier::addRedBinaries(const Var var)
