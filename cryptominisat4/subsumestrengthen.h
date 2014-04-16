@@ -98,7 +98,7 @@ private:
     friend class GateFinder;
 
     template<class T>
-    void findSubsumed0(
+    void find_subsumed(
         const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs

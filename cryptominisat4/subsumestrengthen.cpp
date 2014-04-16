@@ -88,7 +88,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     Sub0Ret ret;
 
     subs.clear();
-    findSubsumed0(offset, ps, abs, subs, removeImplicit);
+    find_subsumed(offset, ps, abs, subs, removeImplicit);
 
     //Go through each clause that can be subsumed
     for (vector<ClOffset>::const_iterator
@@ -580,7 +580,7 @@ size_t SubsumeStrengthen::find_smallest_watchlist_for_clause(const T& ps) const
 Only handles backward-subsumption. Uses occurrence lists
 @param[out] out_subsumed The set of clauses subsumed by the given
 */
-template<class T> void SubsumeStrengthen::findSubsumed0(
+template<class T> void SubsumeStrengthen::find_subsumed(
     const ClOffset offset //Will not match with index of the name value
     , const T& ps //Literals in clause
     , const CL_ABST_TYPE abs //Abstraction of literals in clause
@@ -588,7 +588,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
     , bool removeImplicit
 ) {
     #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed0: ";
+    cout << "find_subsumed: ";
     for (const Lit lit: ps) {
         cout << lit << " , ";
     }
@@ -682,7 +682,7 @@ template<class T> void SubsumeStrengthen::findSubsumed0(
     }
     occ.shrink(it-it2);
 }
-template void SubsumeStrengthen::findSubsumed0(
+template void SubsumeStrengthen::find_subsumed(
     const ClOffset offset
     , const std::array<Lit, 2>& ps
     , const CL_ABST_TYPE abs //Abstraction of literals in clause
