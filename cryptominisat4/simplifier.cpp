@@ -1938,7 +1938,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
                     , solver->clAllocator.getPointer(it2->getOffset())->stats
             );
 
-            resolvents.push_back(std::make_pair(dummy, stats));
+            resolvents.push_back(Resolvent(dummy, stats));
         }
     }
 
@@ -2227,9 +2227,13 @@ bool Simplifier::maybeEliminate(const Var var)
     rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
     rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
 
+    //It's best to add resolvents with largest first. Then later, the smaller ones
+    //can subsume the larger ones. While adding, we do subsumption check.
+    std::sort(resolvents.begin(), resolvents.end());
+
     //Add resolvents
-    for(auto& resolvent: resolvents) {
-        bool ok = add_varelim_resolvent(resolvent.first, resolvent.second);
+    for(Resolvent& resolvent: resolvents) {
+        bool ok = add_varelim_resolvent(resolvent.lits, resolvent.stats);
         if (!ok)
             goto end;
     }

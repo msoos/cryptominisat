@@ -532,7 +532,19 @@ private:
     bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const Var var);
     void        print_var_elim_complexity_stats(const Var var) const;
-    vector<pair<vector<Lit>, ClauseStats> > resolvents;
+    struct Resolvent {
+        Resolvent(const vector<Lit>& _lits, const ClauseStats _stats) :
+            lits(_lits)
+            , stats(_stats)
+        {}
+        vector<Lit> lits;
+        ClauseStats stats;
+        bool operator<(const Resolvent& other) const
+        {
+            return lits.size() > other.lits.size();
+        }
+    };
+    vector<Resolvent> resolvents;
     vector<char> poss_gate_parts;
     vector<char> negs_gate_parts;
     bool gate_found_elim;
