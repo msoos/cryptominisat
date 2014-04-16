@@ -157,6 +157,7 @@ bool GateFinder::all_simplifications_with_gates()
         runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
 
         //Go through each gate, see if we can do something with it
+        simplifier->cl_to_free_later.clear();
         for (const OrGate& gate: orGates) {
             if (numMaxShortenWithGates < 0) {
                 break;
@@ -165,6 +166,9 @@ bool GateFinder::all_simplifications_with_gates()
             if (!shortenWithOrGate(gate))
                 break;
         }
+        simplifier->clean_occur_from_removed_clauses();
+        simplifier->free_clauses_to_free();
+
         const double time_used = cpuTime() - myTime;
         const bool time_out = (numMaxShortenWithGates <= 0);
         const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
@@ -436,7 +440,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Free the old clause and allocate new one
         (*solver->drup) << deldelay << cl << fin;
-        simplifier->unlinkClause(offset, false);
+        simplifier->unlinkClause(offset, false, false, true);
         Clause* cl2 = solver->addClauseInt(lits, red, stats, false);
         (*solver->drup) << findelay;
         if (!solver->ok)
