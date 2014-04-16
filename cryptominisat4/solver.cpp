@@ -1830,7 +1830,6 @@ lbool Solver::solve()
 
 void Solver::handle_found_solution(const lbool status)
 {
-    const double myTime = cpuTime();
     if (status == l_True) {
         extend_solution();
         cancelUntil(0);
