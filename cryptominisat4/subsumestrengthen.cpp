@@ -512,7 +512,7 @@ bool SubsumeStrengthen::subset(const T1& A, const T2& B)
 
 @note: Assumes 'seen' is cleared (will leave it cleared)
 
-Helper function findSubsumed1. Does two things in one go:
+Helper function for strengthening. Does two things in one go:
 1) decides if clause A could subsume clause B
 2) decides if clause A could be used to perform self-subsuming resoltuion on
 clause B
