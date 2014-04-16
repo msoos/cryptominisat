@@ -1009,8 +1009,8 @@ void Simplifier::subsumeReds()
         );
     }
 
-    //Carry out subsume0
-    subsumeStrengthen->performSubsumption();
+
+    subsumeStrengthen->backward_subsumption_with_all_clauses();
 
     //Add irred to occur, but only temporarily
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
@@ -1113,7 +1113,7 @@ bool Simplifier::simplify()
     const size_t origTrailSize = solver->trail.size();
 
     //subsumeStrengthen->subsumeWithTris();
-    subsumeStrengthen->performSubsumption();
+    subsumeStrengthen->backward_subsumption_with_all_clauses();
     if (!subsumeStrengthen->performStrengthening())
         goto end;
 
@@ -1444,7 +1444,7 @@ void Simplifier::setLimits()
     }
     runStats.origNumMaxElimVars = varelim_num_limit;
 
-    if (!solver->conf.doSubsume1) {
+    if (!solver->conf.doStrengthen) {
         strengthening_time_limit = 0;
     }
 
@@ -2100,7 +2100,7 @@ bool Simplifier::add_varelim_resolvent(
         linkInClause(*newCl);
         ClOffset offset = solver->clAllocator.getOffset(newCl);
         clauses.push_back(offset);
-        runStats.subsumedByVE += subsumeStrengthen->subsume0(offset);
+        runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
         if (*limit_to_decrease > 10ULL*1000ULL) {
             subsume:
@@ -2118,7 +2118,7 @@ bool Simplifier::add_varelim_resolvent(
 
 void Simplifier::try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits)
 {
-    SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume0AndUnlink(
+    SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume_and_unlink(
         std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
         , lits //Literals in this binary clause
         , calcAbstraction(lits) //Abstraction of literals

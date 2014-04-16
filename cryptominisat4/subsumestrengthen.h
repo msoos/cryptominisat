@@ -34,28 +34,18 @@ class SubsumeStrengthen
 public:
     SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
     size_t memUsed() const;
-    void performSubsumption();
+    void backward_subsumption_with_all_clauses();
     bool performStrengthening();
-    uint32_t subsume0(ClOffset offset);
+    uint32_t subsume_and_unlink_and_markirred(ClOffset offset);
     //bool subsumeWithTris();
 
     struct Sub0Ret {
-        Sub0Ret() :
-            subsumedIrred(false)
-            , numSubsumed(0)
-        {}
-
-        bool subsumedIrred;
+        bool subsumedIrred = 0;
         ClauseStats stats;
-        uint32_t numSubsumed;
+        uint32_t numSubsumed = 0;
     };
 
     struct Sub1Ret {
-        Sub1Ret() :
-            sub(0)
-            , str(0)
-        {}
-
         Sub1Ret& operator+=(const Sub1Ret& other)
         {
             sub += other.sub;
@@ -64,12 +54,12 @@ public:
             return *this;
         }
 
-        size_t sub;
-        size_t str;
+        size_t sub = 0;
+        size_t str = 0;
     };
 
     template<class T>
-    Sub0Ret subsume0AndUnlink(
+    Sub0Ret subsume_and_unlink(
         const ClOffset offset
         , const T& ps
         , const CL_ABST_TYPE abs
@@ -78,15 +68,6 @@ public:
 
     struct Stats
     {
-        Stats() :
-            subsumedBySub(0)
-            , subsumedByStr(0)
-            , litsRemStrengthen(0)
-
-            , subsumeTime(0)
-            , strengthenTime(0)
-        {}
-
         Stats& operator+=(const Stats& other)
         {
             subsumedBySub += other.subsumedBySub;
@@ -134,12 +115,12 @@ public:
             cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
         }
 
-        uint64_t subsumedBySub;
-        uint64_t subsumedByStr;
-        uint64_t litsRemStrengthen;
+        uint64_t subsumedBySub = 0;
+        uint64_t subsumedByStr = 0;
+        uint64_t litsRemStrengthen = 0;
 
-        double subsumeTime;
-        double strengthenTime;
+        double subsumeTime = 0.0;
+        double strengthenTime = 0.0;
     };
 
     void finishedRun();
@@ -153,7 +134,7 @@ private:
     Simplifier* simplifier;
     Solver* solver;
 
-    void strengthen(ClOffset c, const Lit toRemoveLit);
+    void remove_literal(ClOffset c, const Lit toRemoveLit);
     friend class GateFinder;
 
     template<class T>
@@ -192,7 +173,7 @@ private:
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
-    Sub1Ret subsume1(ClOffset offset);
+    Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     vector<ClOffset> subs;
     vector<Lit> subsLits;

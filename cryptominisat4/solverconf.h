@@ -230,7 +230,7 @@ class SolverConf
         int      simplify_at_startup;
         int      regularly_simplify_problem;
         int      perform_occur_based_simp;
-        int      doSubsume1;         ///<Perform self-subsuming resolution
+        int      doStrengthen;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
         unsigned maxOccurIrredMB;
         unsigned maxOccurRedMB;

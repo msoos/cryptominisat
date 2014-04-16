@@ -166,7 +166,7 @@ SolverConf::SolverConf() :
         , simplify_at_startup(false)
         , regularly_simplify_problem(true)
         , perform_occur_based_simp(true)
-        , doSubsume1       (true)
+        , doStrengthen       (true)
         , maxRedLinkInSize (200)
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
