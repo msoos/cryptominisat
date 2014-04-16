@@ -373,7 +373,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
     assert(solver->ok);
 
     //Find clauses that potentially could be shortened
-    vector<ClOffset> subs;
+    subs.clear();
     simplifier->subsumeStrengthen->findSubsumed0(
         std::numeric_limits< uint32_t >::max()
         , gate.getLits()

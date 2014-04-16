@@ -177,6 +177,7 @@ private:
     );
 
     bool all_simplifications_with_gates();
+    vector<ClOffset> subs; //to reduce overhead of allocation
     bool shortenWithOrGate(const OrGate& gate);
     size_t findEqOrGates();
 
