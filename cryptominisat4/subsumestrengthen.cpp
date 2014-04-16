@@ -704,6 +704,51 @@ void SubsumeStrengthen::finishedRun()
     globalstats += runStats;
 }
 
+void SubsumeStrengthen::Stats::printShort() const
+{
+    cout << "c [subs] long"
+    << " subBySub: " << subsumedBySub
+    << " subByStr: " << subsumedByStr
+    << " lits-rem-str: " << litsRemStrengthen
+    << " T: " << std::fixed << std::setprecision(2)
+    << (subsumeTime+strengthenTime)
+    << " s"
+    << endl;
+}
+
+void SubsumeStrengthen::Stats::print() const
+{
+    cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
+    printStatsLine("c cl-subs"
+        , subsumedBySub + subsumedByStr
+        , " Clauses"
+    );
+    printStatsLine("c cl-str rem lit"
+        , litsRemStrengthen
+        , " Lits"
+    );
+    printStatsLine("c cl-sub T"
+        , subsumeTime
+        , " s"
+    );
+    printStatsLine("c cl-str T"
+        , strengthenTime
+        , " s"
+    );
+    cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
+}
+
+SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& other)
+{
+    subsumedBySub += other.subsumedBySub;
+    subsumedByStr += other.subsumedByStr;
+    litsRemStrengthen += other.litsRemStrengthen;
+
+    subsumeTime += other.subsumeTime;
+    strengthenTime += other.strengthenTime;
+
+    return *this;
+}
 
 // struct WatchTriFirst
 // {

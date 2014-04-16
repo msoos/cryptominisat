@@ -68,52 +68,9 @@ public:
 
     struct Stats
     {
-        Stats& operator+=(const Stats& other)
-        {
-            subsumedBySub += other.subsumedBySub;
-            subsumedByStr += other.subsumedByStr;
-            litsRemStrengthen += other.litsRemStrengthen;
-
-            subsumeTime += other.subsumeTime;
-            strengthenTime += other.strengthenTime;
-
-            return *this;
-        }
-
-        void printShort() const
-        {
-            //STRENGTH + SUBSUME
-            cout << "c [subs] long"
-            << " subBySub: " << subsumedBySub
-            << " subByStr: " << subsumedByStr
-            << " lits-rem-str: " << litsRemStrengthen
-            << " T: " << std::fixed << std::setprecision(2)
-            << (subsumeTime+strengthenTime)
-            << " s"
-            << endl;
-        }
-
-        void print() const
-        {
-            cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
-            printStatsLine("c cl-subs"
-                , subsumedBySub + subsumedByStr
-                , " Clauses"
-            );
-            printStatsLine("c cl-str rem lit"
-                , litsRemStrengthen
-                , " Lits"
-            );
-            printStatsLine("c cl-sub T"
-                , subsumeTime
-                , " s"
-            );
-            printStatsLine("c cl-str T"
-                , strengthenTime
-                , " s"
-            );
-            cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
-        }
+        Stats& operator+=(const Stats& other);
+        void printShort() const;
+        void print() const;
 
         uint64_t subsumedBySub = 0;
         uint64_t subsumedByStr = 0;
