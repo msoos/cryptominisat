@@ -19,6 +19,9 @@
  * MA 02110-1301  USA
 */
 
+#ifndef __SUBSUMESTRENGTHEN_H__
+#define __SUBSUMESTRENGTHEN_H__
+
 #include "solver.h"
 #include "cloffset.h"
 #include <vector>
@@ -147,3 +150,5 @@ inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getStats() const
 }
 
 } //end namespace
+
+#endif //__SUBSUMESTRENGTHEN_H__
