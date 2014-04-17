@@ -780,15 +780,6 @@ void Main::handle_drup_option()
         drupf = drupfTmp;
     }
 
-    if (conf.do_bva) {
-        if (conf.verbosity >= 2) {
-            cout
-            << "c BVA is not allowed for DRUP. Turning it off."
-            << endl;
-        }
-        conf.do_bva = false;
-    }
-
     if (!conf.otfHyperbin) {
         if (conf.verbosity >= 2) {
             cout

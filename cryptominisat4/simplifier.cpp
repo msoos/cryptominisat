@@ -3628,6 +3628,7 @@ void Simplifier::remove_matching_clause(
             *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
             //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
             bool red = false;
+            *(solver->drup) << del << to_remove << fin;
             solver->detachBinClause(to_remove[0], to_remove[1], red);
             break;
         }
@@ -3637,6 +3638,7 @@ void Simplifier::remove_matching_clause(
             *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
             //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
             bool red = false;
+            *(solver->drup) << del << to_remove << fin;
             solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], red);
             break;
         }
