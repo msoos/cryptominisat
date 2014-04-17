@@ -3684,10 +3684,6 @@ void Solver::open_file_and_dump_red_clauses(const string redDumpFname) const
 
 void Solver::open_file_and_dump_irred_clauses(const string irredDumpFname) const
 {
-    if (conf.doStrSubImplicit && okay()) {
-        subsumeImplicit->subsume_implicit();
-    }
-
     std::ofstream outfile;
     open_dump_file(outfile, irredDumpFname);
 
