@@ -727,7 +727,7 @@ private:
         , const bool red
     ) const;
     void fill_m_cls_lits_and_red();
-    vector<Lit> bva_tmp_lits;
+    vector<Lit> bva_tmp_lits; //To reduce overhead
     vector<m_cls_lits_and_red> m_cls_lits; //used during removal to lower overhead
     vector<Lit> to_remove; //to reduce overhead
     vector<PotentialClause> potential;
