@@ -196,7 +196,7 @@ class Tester:
         #the most buggy ones, don't turn them off much, please
         if random.randint(0,1) == 1 :
             opts = ["scc", "varelim" \
-            , "comps", "subsume1", "probe"
+            , "comps", "strengthen", "probe"
             , "binpri", "stamp", "cache"
             , "otfsubsume", "renumber", "savemem"
             , "moreminim", "gates", "bva"
