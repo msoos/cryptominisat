@@ -3691,7 +3691,8 @@ Clause* Simplifier::find_cl_for_bva(
 
 bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
 {
-    vector<Lit> lits;
+    vector<Lit>& lits = bva_tmp_lits;
+    lits.clear();
     switch(cl.ws.getType()) {
         case CMSat::watch_binary_t: {
             lits.resize(2);
