@@ -3522,14 +3522,14 @@ bool Simplifier::bva_simplify_system()
     const Lit new_lit(newvar, false);
 
     for(const lit_pair m_lit: m_lits) {
-        vector<Lit> lits;
-        lits.push_back(m_lit.lit1);
+        bva_tmp_lits.clear();
+        bva_tmp_lits.push_back(m_lit.lit1);
         if (m_lit.lit2 != lit_Undef) {
-            lits.push_back(m_lit.lit2);
+            bva_tmp_lits.push_back(m_lit.lit2);
         }
-        lits.push_back(new_lit);
-        solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
-        touched.touch(lits);
+        bva_tmp_lits.push_back(new_lit);
+        solver->addClauseInt(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits);
+        touched.touch(bva_tmp_lits);
     }
 
     for(const OccurClause m_cl: m_cls) {
