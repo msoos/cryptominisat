@@ -3528,7 +3528,7 @@ bool Simplifier::bva_simplify_system()
             bva_tmp_lits.push_back(m_lit.lit2);
         }
         bva_tmp_lits.push_back(new_lit);
-        solver->addClauseInt(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits);
+        solver->addClauseInt(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
         touched.touch(bva_tmp_lits);
     }
 
@@ -3698,7 +3698,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
+            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
             break;
         }
 
@@ -3707,7 +3707,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
             lits[2] = cl.ws.lit3();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits);
+            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
             break;
         }
 
@@ -3721,7 +3721,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                     lits[i] = orig_cl[i];
                 }
             }
-            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits);
+            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits, true, new_lit);
             if (newCl != NULL) {
                 linkInClause(*newCl);
                 ClOffset offset = solver->clAllocator.getOffset(newCl);

@@ -202,6 +202,7 @@ class Solver : public Searcher
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
             , bool addDrup = true
+            , const Lit drup_first = lit_Undef
         );
 
     private:

@@ -303,6 +303,7 @@ Clause* Solver::addClauseInt(
     , const bool attach
     , vector<Lit>* finalLits
     , bool addDrup
+    , const Lit drup_first
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -355,7 +356,17 @@ Clause* Solver::addClauseInt(
     }
 
     if (addDrup) {
+        size_t i = 0;
+        if (drup_first != lit_Undef) {
+            for(i = 0; i < ps.size(); i++) {
+                if (ps[i] == drup_first) {
+                    break;
+                }
+            }
+        }
+        std::swap(ps[0], ps[i]);
         *drup << ps << fin;
+        std::swap(ps[0], ps[i]);
     }
 
     //Handle special cases
