@@ -244,11 +244,11 @@ bool DataSync::shareUnitData()
         }
     }
 
-    if (solver->conf.verbosity >= 3
-        && (thisGotUnitData > 0 || thisSentUnitData > 0)
+    if (solver->conf.verbosity >= 2
+        //&& (thisGotUnitData > 0 || thisSentUnitData > 0)
     ) {
         cout
-        << "c [th] got units " << thisGotUnitData
+        << "c [sync] got units " << thisGotUnitData
         << " sent units " << thisSentUnitData
         << endl;
     }
