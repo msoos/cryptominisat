@@ -119,8 +119,7 @@ Solver::Solver(const SolverConf _conf) :
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
-    SharedData* shared_data = new SharedData;
-    datasync = new DataSync(this, shared_data);
+    datasync = new DataSync(this, NULL);
     Searcher::solver = this;
 }
 
@@ -136,6 +135,12 @@ Solver::~Solver()
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
+}
+
+void Solver::set_shared_data(SharedData* shared_data)
+{
+    delete datasync;
+    datasync = new DataSync(this, shared_data);
 }
 
 bool Solver::add_xor_clause_inter(

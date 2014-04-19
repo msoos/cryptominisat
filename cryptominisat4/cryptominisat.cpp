@@ -22,109 +22,255 @@
 #include "cryptominisat.h"
 #include "solver.h"
 #include "drup.h"
+#include "shareddata.h"
 #include <stdexcept>
+#include <thread>
+#include <mutex>
+using std::thread;
+using std::mutex;
+
+#define MY_SOLVERS vector<Solver*>* solvers = (vector<Solver*>*)solvers;
 
 using namespace CMSat;
 
 SATSolver::SATSolver(const SolverConf conf)
 {
-    solver = (void*)(new ::CMSat::Solver(conf));
+    shared_data = NULL;
+    s = (void*)new vector<Solver*>;
+    MY_SOLVERS
+    solvers->push_back(new Solver(conf));
 }
 
 SATSolver::~SATSolver()
 {
-    delete ((CMSat::Solver*)solver);
+    MY_SOLVERS
+    for(Solver* this_s: *solvers) {
+        delete this_s;
+    }
+    delete solvers;
+}
+
+void SATSolver::set_num_threads(unsigned num)
+{
+    MY_SOLVERS
+    if (num <= 0) {
+        std::cerr << "Number of threads must be at least 1" << endl;
+        exit(-1);
+    }
+    for(unsigned i = 1; i < num; i++) {
+        SolverConf conf = solvers->at(0)->getConf();
+        switch(i) {
+            case 1: {
+                conf.restartType = restart_type_geom;
+                conf.verbosity = 0;
+                break;
+            }
+            case 2: {
+                conf.propBinFirst = 1;
+                conf.doLHBR = 1;
+                conf.verbosity = 0;
+                break;
+            }
+            case 3: {
+                conf.doVarElim = 0;
+                conf.verbosity = 0;
+                break;
+            }
+            default: {
+                conf.startClean = conf.startClean*(i-2);
+                conf.verbosity = 0;
+            }
+        }
+        solvers->push_back(new Solver(conf));
+    }
+    if (num > 1) {
+        for(unsigned i = 0; i < num; i++) {
+            SolverConf conf = solvers->at(i)->getConf();
+            conf.do_bva = false;
+            solvers->at(i)->setConf(conf);
+            solvers->at(i)->set_shared_data((SharedData*)shared_data);
+        }
+    }
+    shared_data = (void*)new SharedData;
 }
 
 bool SATSolver::add_clause(const vector< Lit >& lits)
 {
-    return ((CMSat::Solver*)solver)->add_clause_outer(lits);
+    MY_SOLVERS
+    bool ret = true;
+    for(size_t i = 0; i < solvers->size(); i++) {
+        ret = solvers->at(i)->add_clause_outer(lits);
+    }
+    return ret;
 }
 
 bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
-    return ((CMSat::Solver*)solver)->add_xor_clause_outer(vars, rhs);
+    MY_SOLVERS
+    bool ret = true;
+    for(size_t i = 0; i < solvers->size(); i++) {
+        ret = solvers->at(i)->add_xor_clause_outer(vars, rhs);
+    }
+    return ret;
+}
+
+struct topass
+{
+    vector<Solver*> *solvers;
+    vector<Lit> *assumptions;
+    mutex* update_mutex;
+    int tid;
+    int *which_solved;
+    lbool* ret;
+};
+
+static void one_thread(
+    topass data
+) {
+    cout << "Starting thread" << data.tid << std::endl;
+    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.assumptions);
+
+    if (ret != l_Undef) {
+        data.update_mutex->lock();
+        *data.which_solved = data.tid;
+        *data.ret = ret;
+        for(size_t i = 0; i < data.solvers->size(); i++) {
+            if (i == data.tid)
+                continue;
+
+            data.solvers->at(i)->setNeedToInterrupt();
+        }
+        data.update_mutex->unlock();
+    }
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
-    return ((CMSat::Solver*)solver)->solve_with_assumptions(assumptions);
+    MY_SOLVERS
+    lbool* ret = new lbool;
+
+    topass data;
+    data.solvers = solvers;
+    data.assumptions = assumptions;
+    data.update_mutex = new mutex;
+    data.which_solved = &which_solved;
+    data.ret = ret;
+
+    std::vector<std::thread> thds;
+    for(size_t i = 0; i < solvers->size(); i++) {
+        data.tid = i;
+        thds.push_back(thread(one_thread, data));
+    }
+    for(auto& thread : thds){
+        thread.join();
+    }
+    lbool real_ret = *ret;
+    delete ret;
+    delete data.update_mutex;
+
+    return real_ret;
 }
 
 const vector< lbool >& SATSolver::get_model() const
 {
-    return (vector<lbool>&)((CMSat::Solver*)solver)->get_model();
+    MY_SOLVERS
+    return solvers->at(which_solved)->get_model();
 }
 
 const std::vector<Lit>& SATSolver::get_conflict() const
 {
-    return (vector<Lit>&)(((CMSat::Solver*)solver)->get_final_conflict());
+    MY_SOLVERS
+    return solvers->at(which_solved)->get_final_conflict();
 }
 
 uint32_t SATSolver::nVars() const
 {
-    return ((CMSat::Solver*)solver)->nVarsOutside();
+    MY_SOLVERS
+    return solvers->at(0)->nVarsOutside();
 }
 
 void SATSolver::new_var()
 {
-    ((CMSat::Solver*)solver)->new_external_var();
+    MY_SOLVERS
+    for(size_t i = 0; i < solvers->size(); i++) {
+        solvers->at(i)->new_external_var();
+    }
 }
 
 void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
-    ((CMSat::Solver*)solver)->add_sql_tag(tagname, tag);
+    MY_SOLVERS
+    for(size_t i = 0; i < solvers->size(); i++) {
+        solvers->at(i)->add_sql_tag(tagname, tag);
+    }
 }
 
 SolverConf SATSolver::get_conf() const
 {
-    return ((CMSat::Solver*)solver)->getConf();
+    MY_SOLVERS
+    return solvers->at(0)->getConf();
 }
 
 const char* SATSolver::get_version()
 {
-    return CMSat::Solver::getVersion();
+    return Solver::getVersion();
 }
 
 void SATSolver::print_stats() const
 {
-    ((CMSat::Solver*)solver)->printStats();
+    MY_SOLVERS
+    for(size_t i = 0; i < solvers->size(); i++) {
+        solvers->at(i)->printStats();
+    }
 }
 
 void SATSolver::set_drup(std::ostream* os)
 {
-    CMSat::DrupFile* drup = new CMSat::DrupFile();
+    MY_SOLVERS
+    assert(solvers->size() == 1);
+    DrupFile* drup = new DrupFile();
     drup->setFile(os);
-    ((CMSat::Solver*)solver)->drup = drup;
+    solvers->at(0)->drup = drup;
 }
 
 void SATSolver::interrupt_asap()
 {
-    ((CMSat::Solver*)solver)->setNeedToInterrupt();
+    MY_SOLVERS
+    for(size_t i = 0; i < solvers->size(); i++) {
+        solvers->at(i)->setNeedToInterrupt();
+    }
 }
 
 void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
-    ((CMSat::Solver*)solver)->open_file_and_dump_irred_clauses(fname);
+    MY_SOLVERS
+    assert(solvers->size() == 1);
+    solvers->at(0)->open_file_and_dump_irred_clauses(fname);
 }
 
 void SATSolver::open_file_and_dump_red_clauses(std::string fname) const
 {
-    ((CMSat::Solver*)solver)->open_file_and_dump_red_clauses(fname);
+    MY_SOLVERS
+    assert(solvers->size() == 1);
+    solvers->at(0)->open_file_and_dump_red_clauses(fname);
 }
 
 void SATSolver::add_in_partial_solving_stats()
 {
-    ((CMSat::Solver*)solver)->add_in_partial_solving_stats();
+    MY_SOLVERS
+    assert(solvers->size() == 1);
+    solvers->at(0)->add_in_partial_solving_stats();
 }
 
 std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
-    return ((CMSat::Solver*)solver)->get_zero_assigned_lits();
+    MY_SOLVERS
+    return solvers->at(0)->get_zero_assigned_lits();
 }
-
 
 unsigned long SATSolver::get_sql_id() const
 {
-    return ((CMSat::Solver*)solver)->get_sql_id();
+    MY_SOLVERS
+    assert(solvers->size() == 1);
+    return solvers->at(0)->get_sql_id();
 }

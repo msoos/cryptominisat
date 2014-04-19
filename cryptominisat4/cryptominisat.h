@@ -18,6 +18,7 @@ namespace CMSat {
     public:
         SATSolver(SolverConf conf = SolverConf());
         ~SATSolver();
+        void set_num_threads(unsigned n);
         unsigned nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
@@ -38,7 +39,9 @@ namespace CMSat {
         void add_in_partial_solving_stats();
         std::vector<Lit> get_zero_assigned_lits() const;
     private:
-        void* solver;
+        void *s;
+        void *shared_data;
+        int which_solved;
     };
 }
 

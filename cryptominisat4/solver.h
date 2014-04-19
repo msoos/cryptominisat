@@ -55,6 +55,7 @@ class CompHandler;
 class SubsumeStrengthen;
 class SubsumeImplicit;
 class DataSync;
+class SharedData;
 
 class LitReachData {
     public:
@@ -81,6 +82,7 @@ class Solver : public Searcher
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  setNeedToInterrupt();
+        void  set_shared_data(SharedData* shared_data);
         lbool modelValue (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
@@ -99,6 +101,7 @@ class Solver : public Searcher
         void     printClauseStats() const;
         size_t   getNumFreeVars() const;
         const SolverConf& getConf() const;
+        void setConf(SolverConf conf);
         const vector<std::pair<string, string> >& get_tags() const;
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
@@ -700,6 +703,11 @@ inline const vector<lbool>& Solver::get_model() const
 inline const vector<Lit>& Solver::get_final_conflict() const
 {
     return conflict;
+}
+
+inline void Solver::setConf(const SolverConf _conf)
+{
+    conf = _conf;
 }
 
 } //end namespace

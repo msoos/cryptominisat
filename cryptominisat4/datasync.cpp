@@ -49,12 +49,14 @@ bool DataSync::syncData()
     assert(solver->decisionLevel() == 0);
 
     bool ok;
-    #pragma omp critical (unitData)
+    sharedData->unit_mutex.lock();
     ok = shareUnitData();
+    sharedData->unit_mutex.unlock();
     if (!ok) return false;
 
-    #pragma omp critical (binData)
+    sharedData->bin_mutex.lock();
     ok = shareBinData();
+    sharedData->bin_mutex.unlock();
     if (!ok) return false;
 
     lastSyncConf = solver->sumConflicts();
