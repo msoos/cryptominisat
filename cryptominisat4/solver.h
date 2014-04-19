@@ -54,6 +54,7 @@ class CompFinder;
 class CompHandler;
 class SubsumeStrengthen;
 class SubsumeImplicit;
+class DataSync;
 
 class LitReachData {
     public:
@@ -359,6 +360,7 @@ class Solver : public Searcher
         friend class CompHandler;
         friend class TransCache;
         friend class SubsumeImplicit;
+        friend class DataSync;
         Prober              *prober;
         Simplifier          *simplifier;
         SCCFinder           *sCCFinder;
@@ -368,6 +370,7 @@ class Solver : public Searcher
         VarReplacer         *varReplacer;
         CompHandler         *compHandler;
         SubsumeImplicit     *subsumeImplicit;
+        DataSync            *datasync = NULL;
         MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////

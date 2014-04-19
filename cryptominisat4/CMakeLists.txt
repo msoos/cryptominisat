@@ -37,6 +37,7 @@ set(cryptoms_lib_files
     subsumeimplicit.cpp
     cryptominisat.cpp
     clause.cpp
+    datasync.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

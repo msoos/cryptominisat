@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstddef>
 #include "sqlstats.h"
+#include "datasync.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1050,7 +1051,11 @@ lbool Searcher::search()
 
     cancelUntil(0);
     assert(solver->qhead == solver->trail.size());
+    if (!solver->datasync->syncData()) {
+        return l_False;
+    }
     dump_search_sql(myTime);
+
     return l_Undef;
 }
 
@@ -1342,6 +1347,7 @@ void Searcher::add_otf_subsume_implicit_clause()
 
             //Attach new binary/tertiary clause
             if (it->size == 2) {
+                solver->datasync->signalNewBinClause(it->lits);
                 solver->attachBinClause(it->lits[0], it->lits[1], true);
             } else {
                 solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
@@ -1423,6 +1429,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 2:
             //Binary learnt
             stats.learntBins++;
+            solver->datasync->signalNewBinClause(learnt_clause);
             solver->attachBinClause(learnt_clause[0], learnt_clause[1], true);
             if (conf.otfHyperbin && decisionLevel() == 1)
                 enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);

@@ -41,6 +41,7 @@
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "strengthener.h"
+#include "datasync.h"
 
 #include <fstream>
 #include <cmath>
@@ -118,6 +119,8 @@ Solver::Solver(const SolverConf _conf) :
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
+    SharedData* shared_data = new SharedData;
+    datasync = new DataSync(this, shared_data);
     Searcher::solver = this;
 }
 
@@ -367,6 +370,10 @@ Clause* Solver::addClauseInt(
         std::swap(ps[0], ps[i]);
         *drup << ps << fin;
         std::swap(ps[0], ps[i]);
+
+        if (ps.size() == 2) {
+            datasync->signalNewBinClause(ps);
+        }
     }
 
     //Handle special cases
@@ -1030,6 +1037,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
     if (conf.doCompHandler) {
         compHandler->new_var(orig_outer);
     }
+    datasync->new_var();
 
     //Too expensive
     //test_reflectivity_of_renumbering();

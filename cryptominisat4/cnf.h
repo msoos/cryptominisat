@@ -173,6 +173,11 @@ protected:
         return assigns.size();
     }
 
+    uint32_t get_num_bva_vars() const
+    {
+        return num_bva_vars;
+    }
+
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
 
 private:
