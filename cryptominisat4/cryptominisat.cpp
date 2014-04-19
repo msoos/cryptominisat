@@ -57,41 +57,43 @@ void SATSolver::set_num_threads(unsigned num)
         std::cerr << "Number of threads must be at least 1" << endl;
         exit(-1);
     }
+    if (num == 1)
+        return;
+
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = solvers->at(0)->getConf();
         switch(i) {
             case 1: {
                 conf.restartType = restart_type_geom;
-                conf.verbosity = 0;
                 break;
             }
             case 2: {
                 conf.propBinFirst = 1;
                 conf.doLHBR = 1;
-                conf.verbosity = 0;
                 break;
             }
             case 3: {
                 conf.doVarElim = 0;
-                conf.verbosity = 0;
                 break;
             }
             default: {
                 conf.startClean = conf.startClean*(i-2);
-                conf.verbosity = 0;
             }
         }
         solvers->push_back(new Solver(conf));
     }
-    if (num > 1) {
-        for(unsigned i = 0; i < num; i++) {
-            SolverConf conf = solvers->at(i)->getConf();
-            conf.do_bva = false;
-            solvers->at(i)->setConf(conf);
-            solvers->at(i)->set_shared_data((SharedData*)shared_data);
-        }
-    }
+
+    //unset BVA, set shared data
     shared_data = (void*)new SharedData;
+    for(unsigned i = 0; i < num; i++) {
+        SolverConf conf = solvers->at(i)->getConf();
+        conf.do_bva = 0;
+        if (i > 1) {
+            conf.verbosity = 0;
+        }
+        solvers->at(i)->setConf(conf);
+        solvers->at(i)->set_shared_data((SharedData*)shared_data);
+    }
 }
 
 bool SATSolver::add_clause(const vector< Lit >& lits)
