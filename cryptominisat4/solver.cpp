@@ -135,6 +135,7 @@ Solver::~Solver()
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
+    delete datasync;
 }
 
 void Solver::set_shared_data(SharedData* shared_data)
