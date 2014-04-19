@@ -98,8 +98,8 @@ bool DataSync::shareBinData()
 
     syncBinToOthers();
 
-    if (solver->conf.verbosity >= 3) {
-        std::cout << "c got bins " << std::setw(10) << (stats.recvBinData - oldRecvBinData)
+    if (solver->conf.verbosity >= 2) {
+        std::cout << "c [sync] got bins " << std::setw(10) << (stats.recvBinData - oldRecvBinData)
         << std::setw(10) << " sent bins " << (stats.sentBinData - oldSentBinData) << std::endl;
     }
 
