@@ -29,7 +29,7 @@
 using std::thread;
 using std::mutex;
 
-#define MY_SOLVERS vector<Solver*>* solvers = (vector<Solver*>*)solvers;
+#define MY_SOLVERS vector<Solver*>* solvers = (vector<Solver*>*)s;
 
 using namespace CMSat;
 
