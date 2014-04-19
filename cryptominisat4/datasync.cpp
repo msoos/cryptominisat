@@ -176,9 +176,11 @@ void DataSync::syncBinToOthers()
     newBinClauses.clear();
 }
 
-void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
+void DataSync::addOneBinToOthers(Lit lit1, Lit lit2)
 {
-    assert(lit1.toInt() < lit2.toInt());
+    if (lit1 > lit2) {
+        std::swap(lit1, lit2);
+    }
 
     vector<Lit>& bins = sharedData->bins[lit1.toInt()];
     for (const Lit lit : bins) {
