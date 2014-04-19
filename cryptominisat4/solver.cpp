@@ -3898,7 +3898,8 @@ bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
     check_too_large_variable_number(lits);
 
     vector<Lit> lits2 = back_number_from_caller(lits);
-    add_xor_clause_inter(lits, rhs, true);
+    addClauseHelper(lits2);
+    add_xor_clause_inter(lits2, rhs, true);
 
     return ok;
 }
