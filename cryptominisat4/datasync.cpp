@@ -69,7 +69,7 @@ bool DataSync::shareBinData()
     uint32_t oldRecvBinData = stats.recvBinData;
     uint32_t oldSentBinData = stats.sentBinData;
 
-    assert(solver->conf.do_bva = 0);
+    assert(solver->conf.do_bva == 0);
     assert(solver->get_num_bva_vars() == 0);
     if (sharedData->bins.size() < (solver->nVarsOutside())*2) {
         sharedData->bins.resize(solver->nVarsOutside()*2);
