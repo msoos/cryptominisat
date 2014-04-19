@@ -43,7 +43,13 @@ void DataSync::new_var()
 bool DataSync::syncData()
 {
     if (sharedData == NULL
-        || lastSyncConf + SYNC_EVERY_CONFL >= solver->sumConflicts()) return true;
+        || lastSyncConf + SYNC_EVERY_CONFL >= solver->sumConflicts()
+    ) {
+        //cout << "sharedData:" << sharedData << endl;
+        //cout << "conf: " << solver->sumConflicts() << endl;
+        //cout << "todo: " << lastSyncConf + SYNC_EVERY_CONFL << endl;
+        return true;
+    }
 
     assert(sharedData != NULL);
     assert(solver->decisionLevel() == 0);
