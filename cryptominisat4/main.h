@@ -86,6 +86,7 @@ class Main
         bool debugLib;
         int printResult;
         string commandLine;
+        unsigned num_threads;
 
         //Multi-start solving
         uint32_t max_nr_of_solutions;

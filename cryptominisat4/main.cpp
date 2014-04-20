@@ -256,8 +256,8 @@ void Main::add_supported_options()
     ("input", po::value< vector<string> >(), "file(s) to read")
     ("random,r", po::value(&conf.origSeed)->default_value(conf.origSeed)
         , "[0..] Sets random seed")
-//     ("threads,t", po::value(&numThreads)->default_value(1)
-//         , "Number of threads to use")
+    ("threads,t", po::value(&num_threads)->default_value(1)
+        ,"Number of threads")
     ("maxtime", po::value(&conf.maxTime)->default_value(conf.maxTime, "MAX")
         , "Stop solving after this much time, print stats and exit")
     ("maxconfl", po::value(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
@@ -1019,6 +1019,7 @@ int Main::solve()
     if (drupf) {
         solver->set_drup(drupf);
     }
+    solver->set_num_threads(num_threads);
 
     std::ofstream resultfile;
 
