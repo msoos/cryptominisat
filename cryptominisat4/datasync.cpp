@@ -31,19 +31,18 @@ using namespace CMSat;
 DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     solver(_solver)
     , sharedData(_sharedData)
+    , seen(solver->seen)
+    , toClear(solver->toClear)
 {}
 
 void DataSync::new_var()
 {
     syncFinish.push_back(0);
     syncFinish.push_back(0);
-    seen.resize(solver->nVars()*2, 0);
 }
 
 void DataSync::saveVarMem()
 {
-    seen.resize(solver->nVars()*2,0);
-    seen.shrink_to_fit();
 }
 
 void DataSync::updateVars(

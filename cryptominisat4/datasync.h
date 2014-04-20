@@ -67,13 +67,13 @@ class DataSync
         vector<uint32_t> syncFinish;
         Stats stats;
 
-        //misc
-        vector<Lit> toClear;
-        vector<char> seen;
-
-        //main data
+        //Other systems
         Solver* solver;
         SharedData* sharedData;
+
+        //misc
+        vector<uint16_t>& seen;
+        vector<Lit>& toClear;
 };
 
 inline const DataSync::Stats& DataSync::getStats() const
