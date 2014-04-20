@@ -182,6 +182,7 @@ public:
         uint64_t numBlocks = 0;
 
         //Usefulness stats
+        uint64_t time_outs = 0;
         uint64_t newUnits = 0;
         uint64_t newBins = 0;
 

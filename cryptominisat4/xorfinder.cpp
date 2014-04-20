@@ -122,6 +122,7 @@ bool XorFinder::findXors()
     const bool time_out = (maxTimeFindXors < 0);
     const double time_remain = (double)maxTimeFindXors/(double)orig_max_time_find_xors;
     runStats.findTime = cpuTime() - myTime;
+    runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed(
@@ -814,9 +815,9 @@ void XorFinder::Stats::printShort() const
     << " Num XORs: " << std::setw(6) << foundXors
     << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
     << ((double)sumSizeXors/(double)foundXors)
-
     << " T: "
     << std::fixed << std::setprecision(2) << findTime
+    << " T-o: " << (time_outs ? "Y" : "N")
     << endl;
 
     cout
@@ -857,6 +858,12 @@ void XorFinder::Stats::print(const size_t numCalls) const
     printStatsLine("c XOR bin found"
         , newBins
     );
+
+    printStatsLine("c XOR finding time"
+        , findTime
+        , (double)time_outs/(double)numCalls*100.0
+        , "time-out"
+    );
     cout << "c --------- XOR STATS END ----------" << endl;
 }
 
@@ -874,6 +881,7 @@ XorFinder::Stats& XorFinder::Stats::operator+=(const XorFinder::Stats& other)
     numBlocks += other.numBlocks;
 
     //Usefulness
+    time_outs += other.time_outs;
     newUnits += other.newUnits;
     newBins += other.newBins;
     zeroDepthAssigns += other.zeroDepthAssigns;
