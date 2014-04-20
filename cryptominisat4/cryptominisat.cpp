@@ -229,9 +229,7 @@ const char* SATSolver::get_version()
 void SATSolver::print_stats() const
 {
     MY_SOLVERS
-    for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->printStats();
-    }
+    solvers->at(which_solved)->printStats();
 }
 
 void SATSolver::set_drup(std::ostream* os)
