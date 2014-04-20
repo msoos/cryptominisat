@@ -65,19 +65,27 @@ void SATSolver::set_num_threads(unsigned num)
         switch(i) {
             case 1: {
                 conf.restartType = restart_type_geom;
+                conf.polarity_mode = CMSat::polarmode_neg;
+                conf.varElimRatioPerIter = 1;
                 break;
             }
             case 2: {
+                conf.simplify_at_startup = 1;
                 conf.propBinFirst = 1;
                 conf.doLHBR = 1;
+                conf.increaseClean = 1.15;
                 break;
             }
             case 3: {
                 conf.doVarElim = 0;
+                conf.numCleanBetweenSimplify = 3;
+                conf.clauseCleaningType = CMSat::clean_glue_based;
+                conf.increaseClean = 1.08;
                 break;
             }
             default: {
-                conf.startClean = conf.startClean*(i-2);
+                conf.increaseClean = std::sqrt((double)i);
+                conf.polarity_mode = CMSat::polarmode_pos;
             }
         }
         solvers->push_back(new Solver(conf));
