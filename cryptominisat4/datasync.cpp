@@ -159,6 +159,7 @@ bool DataSync::syncBinFromOthers(
         ) {
             continue;
         }
+        assert(seen.size() > otherLit.toInt());
         if (!seen[otherLit.toInt()]) {
             stats.recvBinData++;
             lits[0] = lit;
