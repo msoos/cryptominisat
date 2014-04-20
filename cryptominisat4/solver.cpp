@@ -1069,6 +1069,7 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     if (conf.doCompHandler) {
         compHandler->saveVarMem();
     }
+    datasync->saveVarMem();
 
     const double time_used = cpuTime() - myTime;
     if (conf.doSQL) {

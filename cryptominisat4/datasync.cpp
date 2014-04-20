@@ -40,6 +40,12 @@ void DataSync::new_var()
     seen.resize(solver->nVars()*2, 0);
 }
 
+void DataSync::saveVarMem()
+{
+    seen.resize(solver->nVars()*2,0);
+    seen.shrink_to_fit();
+}
+
 void DataSync::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter

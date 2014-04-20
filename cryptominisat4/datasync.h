@@ -33,6 +33,7 @@ class DataSync
         DataSync(Solver* solver, SharedData* sharedData);
         void new_var();
         bool syncData();
+        void saveVarMem();
         void updateVars(
            const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
