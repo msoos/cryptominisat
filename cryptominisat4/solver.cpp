@@ -952,6 +952,7 @@ void Solver::renumberVariables()
     if (conf.doCache) {
         implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
     }
+    datasync->updateVars(outerToInter, interToOuter);
 
     //Tests
     test_renumbering();

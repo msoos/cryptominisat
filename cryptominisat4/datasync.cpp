@@ -40,6 +40,17 @@ void DataSync::new_var()
     seen.resize(solver->nVars()*2, 0);
 }
 
+void DataSync::updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& interToOuter
+) {
+    assert(solver->decisionLevel() == 0);
+    for(std::pair<Lit, Lit>& p : newBinClauses) {
+        p.first = getUpdatedLit(p.first, outerToInter);
+        p.second = getUpdatedLit(p.second, outerToInter);
+    }
+}
+
 bool DataSync::syncData()
 {
     if (sharedData == NULL

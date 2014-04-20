@@ -33,6 +33,10 @@ class DataSync
         DataSync(Solver* solver, SharedData* sharedData);
         void new_var();
         bool syncData();
+        void updateVars(
+           const vector<uint32_t>& outerToInter
+            , const vector<uint32_t>& interToOuter
+        );
 
         template <class T> void signalNewBinClause(T& ps);
         void signalNewBinClause(Lit lit1, Lit lit2);
