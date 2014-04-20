@@ -806,3 +806,77 @@ size_t XorFinder::memUsed() const
 
     return mem;
 }
+
+void XorFinder::Stats::printShort() const
+{
+    cout
+    << "c XOR finding "
+    << " Num XORs: " << std::setw(6) << foundXors
+    << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
+    << ((double)sumSizeXors/(double)foundXors)
+
+    << " T: "
+    << std::fixed << std::setprecision(2) << findTime
+    << endl;
+
+    cout
+    << "c Cut XORs into " << numBlocks << " block(s)"
+    << " sum vars: " << numVarsInBlocks
+    << " T: " << std::fixed << std::setprecision(2) << blockCutTime
+    << endl;
+
+    cout
+    << "c Extracted XOR info."
+    << " Units: " << newUnits
+    << " Bins: " << newBins
+    << " 0-depth-assigns: " << zeroDepthAssigns
+    << " T: " << std::fixed << std::setprecision(2) << extractTime
+    << endl;
+}
+
+void XorFinder::Stats::print(const size_t numCalls) const
+{
+    cout << "c --------- XOR STATS ----------" << endl;
+    printStatsLine("c num XOR found on avg"
+        , (double)foundXors/(double)numCalls
+        , "avg size"
+    );
+
+    printStatsLine("c XOR avg size"
+        , (double)sumSizeXors/(double)foundXors
+    );
+
+    printStatsLine("c XOR 0-depth assings"
+        , zeroDepthAssigns
+    );
+
+    printStatsLine("c XOR unit found"
+        , newUnits
+    );
+
+    printStatsLine("c XOR bin found"
+        , newBins
+    );
+    cout << "c --------- XOR STATS END ----------" << endl;
+}
+
+XorFinder::Stats& XorFinder::Stats::operator+=(const XorFinder::Stats& other)
+{
+    //Time
+    findTime += other.findTime;
+    extractTime += other.extractTime;
+    blockCutTime += other.blockCutTime;
+
+    //XOR
+    foundXors += other.foundXors;
+    sumSizeXors += other.sumSizeXors;
+    numVarsInBlocks += other.numVarsInBlocks;
+    numBlocks += other.numBlocks;
+
+    //Usefulness
+    newUnits += other.newUnits;
+    newBins += other.newBins;
+    zeroDepthAssigns += other.zeroDepthAssigns;
+
+    return *this;
+}

@@ -155,24 +155,6 @@ public:
 
     struct Stats
     {
-        Stats() :
-            //Time
-            findTime(0)
-            , extractTime(0)
-            , blockCutTime(0)
-
-            //XOR
-            , foundXors(0)
-            , sumSizeXors(0)
-            , numVarsInBlocks(0)
-            , numBlocks(0)
-
-            //Usefulness
-            , newUnits(0)
-            , newBins(0)
-            , zeroDepthAssigns(0)
-        {}
-
         void clear()
         {
             Stats tmp;
@@ -184,96 +166,26 @@ public:
             return findTime + extractTime + blockCutTime;
         }
 
-        Stats& operator+=(const Stats& other)
-        {
-            //Time
-            findTime += other.findTime;
-            extractTime += other.extractTime;
-            blockCutTime += other.blockCutTime;
-
-            //XOR
-            foundXors += other.foundXors;
-            sumSizeXors += other.sumSizeXors;
-            numVarsInBlocks += other.numVarsInBlocks;
-            numBlocks += other.numBlocks;
-
-            //Usefulness
-            newUnits += other.newUnits;
-            newBins += other.newBins;
-            zeroDepthAssigns += other.zeroDepthAssigns;
-
-            return *this;
-        }
-
-        void printShort() const
-        {
-            cout
-            << "c XOR finding "
-            << " Num XORs: " << std::setw(6) << foundXors
-            << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
-            << ((double)sumSizeXors/(double)foundXors)
-
-            << " T: "
-            << std::fixed << std::setprecision(2) << findTime
-            << endl;
-
-            cout
-            << "c Cut XORs into " << numBlocks << " block(s)"
-            << " sum vars: " << numVarsInBlocks
-            << " T: " << std::fixed << std::setprecision(2) << blockCutTime
-            << endl;
-
-            cout
-            << "c Extracted XOR info."
-            << " Units: " << newUnits
-            << " Bins: " << newBins
-            << " 0-depth-assigns: " << zeroDepthAssigns
-            << " T: " << std::fixed << std::setprecision(2) << extractTime
-            << endl;
-        }
-
-        void print(const size_t numCalls) const
-        {
-            cout << "c --------- XOR STATS ----------" << endl;
-            printStatsLine("c num XOR found on avg"
-                , (double)foundXors/(double)numCalls
-                , "avg size"
-            );
-
-            printStatsLine("c XOR avg size"
-                , (double)sumSizeXors/(double)foundXors
-            );
-
-            printStatsLine("c XOR 0-depth assings"
-                , zeroDepthAssigns
-            );
-
-            printStatsLine("c XOR unit found"
-                , newUnits
-            );
-
-            printStatsLine("c XOR bin found"
-                , newBins
-            );
-            cout << "c --------- XOR STATS END ----------" << endl;
-        }
+        Stats& operator+=(const Stats& other);
+        void printShort() const;
+        void print(const size_t numCalls) const;
 
         //Time
-        double findTime;
-        double extractTime;
-        double blockCutTime;
+        double findTime = 0.0;
+        double extractTime = 0.0;
+        double blockCutTime = 0.0;
 
         //XOR stats
-        uint64_t foundXors;
-        uint64_t sumSizeXors;
-        uint64_t numVarsInBlocks;
-        uint64_t numBlocks;
+        uint64_t foundXors = 0;
+        uint64_t sumSizeXors = 0;
+        uint64_t numVarsInBlocks = 0;
+        uint64_t numBlocks = 0;
 
         //Usefulness stats
-        uint64_t newUnits;
-        uint64_t newBins;
+        uint64_t newUnits = 0;
+        uint64_t newBins = 0;
 
-        size_t zeroDepthAssigns;
+        size_t zeroDepthAssigns = 0;
     };
 
     const Stats& getStats() const;
