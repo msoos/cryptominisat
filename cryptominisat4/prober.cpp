@@ -396,7 +396,9 @@ bool Prober::probe()
     assert(solver->propStats.otfHyperTime == 0);
     for(size_t i = 0
         ; i < poss_choice.size()
-            && limit_used() < numPropsTodo
+        && limit_used() < numPropsTodo
+        && cpuTime() <= solver->conf.maxTime
+        && !solver->needToInterrupt
         ; i++
     ) {
         extraTime += 20;
