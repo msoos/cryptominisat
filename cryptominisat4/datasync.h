@@ -22,10 +22,10 @@
 #include "solvertypes.h"
 #include "watched.h"
 #include "watcharray.h"
-#include "shareddata.h"
 
 namespace CMSat {
 
+class SharedData;
 class Solver;
 class DataSync
 {

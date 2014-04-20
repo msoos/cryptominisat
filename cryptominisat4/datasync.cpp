@@ -22,6 +22,7 @@
 #include "datasync.h"
 #include "varreplacer.h"
 #include "solver.h"
+#include "shareddata.h"
 #include <iomanip>
 
 #define SYNC_EVERY_CONFL 6000
