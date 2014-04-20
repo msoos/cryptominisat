@@ -1002,6 +1002,7 @@ lbool Searcher::search()
         (!params.needToStopSearch
             && sumConflicts() <= solver->getNextCleanLimit()
             && cpuTime() < conf.maxTime
+            && !needToInterrupt
         )
             || !confl.isNULL() //always finish the last conflict
     ) {
