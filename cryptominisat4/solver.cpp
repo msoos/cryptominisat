@@ -1949,16 +1949,21 @@ lbool Solver::simplifyProblem()
     if (conf.doStrSubImplicit) {
         subsumeImplicit->subsume_implicit();
     }
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
+        return l_Undef;
+    }
 
     //PROBE
     updateDominators();
     if (conf.doProbe && !prober->probe()) {
         goto end;
     }
-
-    //If we are over the limit, exit
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
+        || needToInterrupt
     ) {
         return l_Undef;
     }
@@ -1970,6 +1975,12 @@ lbool Solver::simplifyProblem()
     if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
     }
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
+        return l_Undef;
+    }
 
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
@@ -1979,10 +1990,12 @@ lbool Solver::simplifyProblem()
         if (!varReplacer->performReplace())
             goto end;
     }
-
-    //Check if time is up
-    if (needToInterrupt)
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
         return l_Undef;
+    }
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
@@ -2001,6 +2014,12 @@ lbool Solver::simplifyProblem()
 
         subsumeImplicit->subsume_implicit();
     }
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
+        return l_Undef;
+    }
 
     //Clean cache before vivif
     if (conf.doCache && !implCache.clean(this))
@@ -2012,6 +2031,12 @@ lbool Solver::simplifyProblem()
     }
     if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
+    }
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
+        return l_Undef;
     }
 
     //Search & replace 2-long XORs
@@ -2044,6 +2069,12 @@ lbool Solver::simplifyProblem()
             litReachable.swap(tmp);
             conf.doCache = false;
         }
+    }
+    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        || cpuTime() > conf.maxTime
+        || needToInterrupt
+    ) {
+        return l_Undef;
     }
 
     if (conf.doRenumberVars) {
