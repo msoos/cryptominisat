@@ -48,6 +48,8 @@ SATSolver::~SATSolver()
         delete this_s;
     }
     delete solvers;
+    SharedData* sh = (SharedData*)shared_data;
+    delete sh;
 }
 
 void SATSolver::set_num_threads(unsigned num)
