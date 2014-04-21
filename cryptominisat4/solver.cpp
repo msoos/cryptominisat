@@ -1044,7 +1044,9 @@ void Solver::new_var(const bool bva, const Var orig_outer)
     if (conf.doCompHandler) {
         compHandler->new_var(orig_outer);
     }
-    datasync->new_var(bva);
+    if (orig_outer == std::numeric_limits<Var>::max()) {
+        datasync->new_var(bva);
+    }
 
     //Too expensive
     //test_reflectivity_of_renumbering();
