@@ -606,6 +606,8 @@ void Main::add_supported_options()
         , "Subsume and strengthen implicit clauses with each other")
     ("implsubsto", po::value(&conf.subsume_implicit_timeoutM)->default_value(conf.subsume_implicit_timeoutM)
         , "Timeout (in bogoprop Millions) of implicit subsumption")
+    ("burst", po::value(&conf.burstSearchLen)->default_value(conf.burstSearchLen)
+        , "Number of conflicts to do in burst search")
     ;
 
     po::options_description componentOptions("Component options");
