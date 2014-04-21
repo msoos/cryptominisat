@@ -154,6 +154,7 @@ static void one_thread(
         }
         data.update_mutex->unlock();
     }
+    data.solvers->at(data.tid)->unsetNeedToInterrupt();
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)

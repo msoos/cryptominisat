@@ -73,7 +73,6 @@ Solver::Solver(const SolverConf _conf) :
     , compHandler(NULL)
     , subsumeImplicit(NULL)
     , mtrand(_conf.origSeed)
-    , needToInterrupt(false)
 
     //Stuff
     , nextCleanLimit(0)
@@ -3224,9 +3223,12 @@ bool Solver::verifyModel() const
 
 void Solver::setNeedToInterrupt()
 {
-    Searcher::setNeedToInterrupt();
-
     needToInterrupt = true;
+}
+
+void Solver::unsetNeedToInterrupt()
+{
+    needToInterrupt = false;
 }
 
 lbool Solver::modelValue (const Lit p) const

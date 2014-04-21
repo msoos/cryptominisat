@@ -2646,11 +2646,6 @@ bool Searcher::VarFilter::operator()(uint32_t var) const
     return (cc->value(var) == l_Undef && solver->varData[var].is_decision);
 }
 
-void Searcher::setNeedToInterrupt()
-{
-    needToInterrupt = true;
-}
-
 void Searcher::printAgilityStats()
 {
     cout

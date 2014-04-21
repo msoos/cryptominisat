@@ -217,8 +217,6 @@ class Searcher : public HyperEngine
         uint64_t sumRestarts() const;
         const Hist& getHistory() const;
 
-        void     setNeedToInterrupt();
-
         struct Stats
         {
             Stats() :

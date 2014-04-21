@@ -82,6 +82,7 @@ class Solver : public Searcher
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  setNeedToInterrupt();
+        void  unsetNeedToInterrupt();
         void  set_shared_data(SharedData* shared_data);
         lbool modelValue (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;
@@ -471,7 +472,6 @@ class Solver : public Searcher
 
         /////////////////////
         // Data
-        bool                 needToInterrupt;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
         void setDecisionVar(const uint32_t var);
