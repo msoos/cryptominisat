@@ -2852,6 +2852,9 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     }
     vector<Var> my_map = build_outer_to_without_bva_map();
     updateLitsMap(lits, my_map);
+    for(const Lit lit: lits) {
+        assert(lit.var() < nVarsOutside());
+    }
     return lits;
 }
 
