@@ -88,10 +88,10 @@ void SIGINT_handler(int)
         << endl;
     } else {
         if (solver->nVars() > 0) {
-            if (solver->get_conf().verbosity >= 1) {
+            //if (conf.verbosity >= 1) {
                 solver->add_in_partial_solving_stats();
                 solver->print_stats();
-            }
+            //}
         } else {
             cout
             << "No clauses or variables were put into the solver, exiting without stats"
@@ -122,7 +122,7 @@ void Main::readInAFile(const string& filename)
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib);
+    DimacsParser parser(solver, debugLib, conf.verbosity);
     parser.parse_DIMACS(in);
 
     #ifndef USE_ZLIB
@@ -134,7 +134,7 @@ void Main::readInAFile(const string& filename)
 
 void Main::readInStandardInput()
 {
-    if (solver->get_conf().verbosity) {
+    if (conf.verbosity) {
         cout
         << "c Reading from standard input... Use '-h' or '--help' for help."
         << endl;
@@ -151,7 +151,7 @@ void Main::readInStandardInput()
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib);
+    DimacsParser parser(solver, debugLib, conf.verbosity);
     parser.parse_DIMACS(in);
 
     #ifdef USE_ZLIB

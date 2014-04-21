@@ -29,7 +29,6 @@ namespace CMSat {
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         unsigned long get_sql_id() const;
 
-        SolverConf get_conf() const;
         static const char* get_version();
         void print_stats() const;
         void set_drup(std::ostream* os);

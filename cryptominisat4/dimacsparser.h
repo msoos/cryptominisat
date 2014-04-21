@@ -21,7 +21,7 @@ using namespace CMSat;
 class DimacsParser
 {
     public:
-        DimacsParser(SATSolver* solver, const bool debugLib);
+        DimacsParser(SATSolver* solver, const bool debugLib, unsigned _verbosity);
 
         template <class T> void parse_DIMACS(T input_stream);
 
@@ -44,6 +44,7 @@ class DimacsParser
 
         SATSolver* solver;
         const bool debugLib;
+        unsigned verbosity;
 
         //Stat
         size_t lineNum;

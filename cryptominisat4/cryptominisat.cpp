@@ -218,12 +218,6 @@ void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
     }
 }
 
-SolverConf SATSolver::get_conf() const
-{
-    MY_SOLVERS
-    return solvers->at(0)->getConf();
-}
-
 const char* SATSolver::get_version()
 {
     return Solver::getVersion();
@@ -255,28 +249,25 @@ void SATSolver::interrupt_asap()
 void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     MY_SOLVERS
-    assert(solvers->size() == 1);
-    solvers->at(0)->open_file_and_dump_irred_clauses(fname);
+    solvers->at(which_solved)->open_file_and_dump_irred_clauses(fname);
 }
 
 void SATSolver::open_file_and_dump_red_clauses(std::string fname) const
 {
     MY_SOLVERS
-    assert(solvers->size() == 1);
-    solvers->at(0)->open_file_and_dump_red_clauses(fname);
+    solvers->at(which_solved)->open_file_and_dump_red_clauses(fname);
 }
 
 void SATSolver::add_in_partial_solving_stats()
 {
     MY_SOLVERS
-    assert(solvers->size() == 1);
-    solvers->at(0)->add_in_partial_solving_stats();
+    solvers->at(which_solved)->add_in_partial_solving_stats();
 }
 
 std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
     MY_SOLVERS
-    return solvers->at(0)->get_zero_assigned_lits();
+    return solvers->at(which_solved)->get_zero_assigned_lits();
 }
 
 unsigned long SATSolver::get_sql_id() const

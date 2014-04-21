@@ -21,9 +21,11 @@ using std::endl;
 DimacsParser::DimacsParser(
     SATSolver* _solver
     , const bool _debugLib
+    , unsigned _verbosity
 ):
     solver(_solver)
     , debugLib(_debugLib)
+    , verbosity(_verbosity)
     , lineNum(0)
 {}
 
@@ -155,7 +157,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (solver->get_conf().verbosity >= 1) {
+        if (verbosity >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
@@ -179,7 +181,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
         skipWhitespace(in);
     }
 
-    if (solver->get_conf().verbosity >= 2) {
+    if (verbosity >= 2) {
         cout
         << "c -----------> Solver::solve() called (number: "
         << std::setw(3) << debugLibPart << ") with assumps :";
@@ -224,7 +226,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     partFile.close();
     debugLibPart++;
 
-    if (solver->get_conf().verbosity >= 6) {
+    if (verbosity >= 6) {
         cout << "c Parsed Solver::solve()" << endl;
     }
 }
@@ -236,11 +238,11 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     } else if (debugLib && str == "Solver::new_var()") {
         solver->new_var();
 
-        if (solver->get_conf().verbosity >= 6) {
+        if (verbosity >= 6) {
             cout << "c Parsed Solver::new_var()" << endl;
         }
     } else {
-        if (solver->get_conf().verbosity >= 6) {
+        if (verbosity >= 6) {
             cout
             << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"
@@ -323,7 +325,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (solver->get_conf().verbosity >= 1) {
+    if (verbosity >= 1) {
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
         << "c -- xor clauses added: " << xor_clauses_added << endl
