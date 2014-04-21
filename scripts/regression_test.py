@@ -192,6 +192,10 @@ class Tester:
         cmd += "--occirredmaxmb %s " % random.randint(0,10)
         cmd += "--occredmaxmb %s " % random.randint(0,10)
         cmd += "--implsubsto %s " % random.choice([0,10,1000])
+        if options.num_threads > 1 :
+            cmd += "--xor 0 "
+            cmd += "--sql 0 "
+
 
         #the most buggy ones, don't turn them off much, please
         if random.randint(0,1) == 1 :
@@ -201,6 +205,8 @@ class Tester:
             , "otfsubsume", "renumber", "savemem"
             , "moreminim", "gates", "bva"
             , "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
+            if options.num_threads == 1 :
+                opts.append("xor")
 
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0,1))
@@ -223,7 +229,7 @@ class Tester:
             command += "--verb 0 "
         if newVar :
             command += "--debugnewvar "
-        #command += "--threads=%d " % options.num_threads
+        command += "--threads=%d " % options.num_threads
         command += options.extra_options + " "
         command += extraOptions
         command += fname
