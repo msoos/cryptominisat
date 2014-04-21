@@ -292,7 +292,7 @@ bool XorFinder::extractInfoFromBlock(
             ; it2++
         ) {
             const Var var = outerToInterVarMap[*it2];
-            assert(var < numCols);
+            assert(var < numCols-1);
             mzd_write_bit(mat, row, var, 1);
         }
 
