@@ -52,6 +52,7 @@
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
+#include "datasync.h"
 #endif
 
 //#define VERBOSE_DEBUG
@@ -3278,6 +3279,7 @@ bool Simplifier::bounded_var_addition()
         if (!ok)
             break;
     }
+    solver->datasync->rebuild_bva_map();
 
     bool time_out = *limit_to_decrease <= 0;
     double time_used = cpuTime() - my_time;

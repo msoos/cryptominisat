@@ -36,14 +36,28 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     , toClear(solver->toClear)
 {}
 
-void DataSync::new_var()
+void DataSync::new_var(bool bva)
 {
-    syncFinish.push_back(0);
-    syncFinish.push_back(0);
+    if (sharedData == NULL)
+        return;
+
+    if (!bva) {
+        syncFinish.push_back(0);
+        syncFinish.push_back(0);
+    }
+    assert(solver->nVarsOutside()*2 == syncFinish.size());
 }
 
 void DataSync::saveVarMem()
 {
+}
+
+void DataSync::rebuild_bva_map()
+{
+    if (sharedData == NULL)
+        return;
+
+    outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
 }
 
 void DataSync::updateVars(
@@ -92,14 +106,13 @@ bool DataSync::shareBinData()
     uint32_t oldRecvBinData = stats.recvBinData;
     uint32_t oldSentBinData = stats.sentBinData;
 
-    assert(solver->conf.do_bva == 0);
-    assert(solver->get_num_bva_vars() == 0);
     if (sharedData->bins.size() < (solver->nVarsOutside())*2) {
         sharedData->bins.resize(solver->nVarsOutside()*2);
     }
 
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
         Lit lit1 = Lit::toLit(wsLit);
+        lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->getLitReplacedWithOuter(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->varData[lit1.var()].removed != Removed::none
@@ -152,6 +165,7 @@ bool DataSync::syncBinFromOthers(
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
         Lit otherLit = bins[i];
+        otherLit = solver->map_to_with_bva(otherLit);
         otherLit = solver->varReplacer->getLitReplacedWithOuter(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
         if (solver->varData[otherLit.var()].removed != Removed::none
@@ -186,8 +200,15 @@ bool DataSync::syncBinFromOthers(
 void DataSync::syncBinToOthers()
 {
     for(const std::pair<Lit, Lit>& bin: newBinClauses) {
-        const Lit lit1 = solver->map_inter_to_outer(bin.first);
-        const Lit lit2 = solver->map_inter_to_outer(bin.second);
+        if (solver->varData[bin.first.var()].is_bva)
+            continue;
+        if (solver->varData[bin.second.var()].is_bva)
+            continue;
+
+        Lit lit1 = solver->map_inter_to_outer(bin.first);
+        lit1 = map_outside_without_bva(lit1);
+        Lit lit2 = solver->map_inter_to_outer(bin.second);
+        lit2 = map_outside_without_bva(lit2);
         addOneBinToOthers(lit1, lit2);
     }
 

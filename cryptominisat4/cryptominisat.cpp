@@ -94,11 +94,10 @@ void SATSolver::set_num_threads(unsigned num)
         solvers->push_back(new Solver(conf));
     }
 
-    //unset BVA, set shared data
+    //set shared data
     shared_data = (void*)new SharedData;
     for(unsigned i = 0; i < num; i++) {
         SolverConf conf = solvers->at(i)->getConf();
-        conf.do_bva = 0;
         if (i > 1) {
             conf.verbosity = 0;
         }

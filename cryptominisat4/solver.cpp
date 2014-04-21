@@ -1044,7 +1044,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
     if (conf.doCompHandler) {
         compHandler->new_var(orig_outer);
     }
-    datasync->new_var();
+    datasync->new_var(bva);
 
     //Too expensive
     //test_reflectivity_of_renumbering();
@@ -1761,6 +1761,7 @@ lbool Solver::solve()
     nextCleanLimitInc = 0;
     nextCleanLimit = 0;
     reduce_db_and_update_reset_stats(false);
+    datasync->rebuild_bva_map();
 
     //Initialise
     if (conf.startClean < 100) {
