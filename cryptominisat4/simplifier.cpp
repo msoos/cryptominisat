@@ -49,10 +49,10 @@
 #include "xorfinderabst.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
+#include "datasync.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
-#include "datasync.h"
 #endif
 
 //#define VERBOSE_DEBUG
