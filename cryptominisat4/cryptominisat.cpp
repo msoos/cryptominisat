@@ -35,6 +35,7 @@ using namespace CMSat;
 
 SATSolver::SATSolver(const SolverConf conf)
 {
+    which_solved = 0;
     shared_data = NULL;
     s = (void*)new vector<Solver*>;
     MY_SOLVERS
