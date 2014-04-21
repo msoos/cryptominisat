@@ -160,8 +160,11 @@ static void one_thread(
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     MY_SOLVERS
-    lbool* ret = new lbool;
+    if (solvers->size() == 1) {
+        return solvers->at(0)->solve_with_assumptions(assumptions);
+    }
 
+    lbool* ret = new lbool;
     topass data;
     data.solvers = solvers;
     data.assumptions = assumptions;
