@@ -2829,7 +2829,9 @@ vector<Lit> Solver::get_zero_assigned_lits() const
 
             //Update to higher-up
             lit = varReplacer->getLitReplacedWith(lit);
-            lits.push_back(map_inter_to_outer(lit));
+            if (varData[lit.var()].is_bva == false) {
+                lits.push_back(map_inter_to_outer(lit));
+            }
 
             //Everything it repaces has also been set
             const vector<Var> vars = varReplacer->get_vars_replacing(lit.var());
