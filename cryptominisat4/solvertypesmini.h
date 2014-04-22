@@ -12,7 +12,7 @@
 namespace CMSat {
 
 typedef uint32_t Var;
-static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
+static const Var var_Undef(0xffffffffU >> 1);
 
 class Lit
 {
