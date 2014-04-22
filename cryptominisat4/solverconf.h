@@ -258,20 +258,14 @@ class SolverConf
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
         long long  subsume_implicit_timeoutM;
+        int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //Gates
         int      doGateFind; ///< Find OR gates
-        //unsigned  maxGateSize;
         unsigned maxGateBasedClReduceSize;
-
-
-        int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
-
-
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
-        int      doMixXorAndGates; ///<Try to gain knowledge by mixing XORs and gates
 
         //interrupting & dumping
         bool      needResultFile;     ///<If set to TRUE, result will be written to a file

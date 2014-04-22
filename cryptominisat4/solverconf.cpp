@@ -193,18 +193,16 @@ SolverConf::SolverConf() :
         , doSortWatched    (true)
         , doStrSubImplicit (true)
         , subsume_implicit_timeoutM(1900LL)
+        , doCalcReach      (true)
 
         //Gates
         , doGateFind       (true)
-        //, maxGateSize      (20)
         , maxGateBasedClReduceSize(20)
-
-        , doCalcReach      (true)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)
-        , doMixXorAndGates (false)
 
+        //Misc
         , needResultFile       (false)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
