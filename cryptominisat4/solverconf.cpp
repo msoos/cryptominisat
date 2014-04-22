@@ -206,5 +206,6 @@ SolverConf::SolverConf() :
         , needResultFile       (false)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
+        , sync_every_confl(6000)
 {
 }

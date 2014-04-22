@@ -25,8 +25,6 @@
 #include "shareddata.h"
 #include <iomanip>
 
-#define SYNC_EVERY_CONFL 6000
-
 using namespace CMSat;
 
 DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
@@ -69,7 +67,7 @@ void DataSync::updateVars(
 bool DataSync::syncData()
 {
     if (sharedData == NULL
-        || lastSyncConf + SYNC_EVERY_CONFL >= solver->sumConflicts()
+        || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts()
     ) {
         //cout << "sharedData:" << sharedData << endl;
         //cout << "conf: " << solver->sumConflicts() << endl;

@@ -272,6 +272,7 @@ class SolverConf
         std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
+        unsigned long long sync_every_confl;
 };
 
 } //end namespace
