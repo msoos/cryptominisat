@@ -68,6 +68,9 @@ void DataSync::updateVars(
     for(std::pair<Lit, Lit>& p : newBinClauses) {
         p.first = getUpdatedLit(p.first, outerToInter);
         p.second = getUpdatedLit(p.second, outerToInter);
+        if (p.first > p.second) {
+            std::swap(p.first, p.second);
+        }
     }
 }
 
