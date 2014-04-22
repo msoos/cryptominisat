@@ -92,7 +92,6 @@ bool CompHandler::handle()
 {
     assert(solver->okay());
     double myTime = cpuTime();
-    solver->clauseCleaner->removeAndCleanAll();
     compFinder = new CompFinder(solver);
     if (!compFinder->findComps()) {
         return false;
