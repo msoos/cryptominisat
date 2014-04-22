@@ -299,7 +299,9 @@ void CompHandler::move_decision_level_zero_vars_here(
     const vector<Lit> zero_assigned = newSolver->get_zero_assigned_lits();
     for (Lit lit: zero_assigned) {
         assert(lit.var() < newSolver->nVars());
+        assert(lit.var() < interToOuter.size());
         lit = Lit(interToOuter[lit.var()], lit.sign());
+        assert(solver->value(lit) == l_Undef);
         solver->varData[lit.var()].removed = Removed::none;
         const Var outer = solver->map_inter_to_outer(lit.var());
         savedState[outer] = l_Undef;
