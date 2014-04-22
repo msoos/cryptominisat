@@ -64,15 +64,15 @@ void CompHandler::saveVarMem()
 
 void CompHandler::createRenumbering(const vector<Var>& vars)
 {
-    interToOuter.resize(vars.size());
-    outerToInter.resize(solver->nVars());
+    smallsolver_to_bigsolver.resize(vars.size());
+    bigsolver_to_smallsolver.resize(solver->nVars());
 
     for(size_t i = 0, size = vars.size()
         ; i < size
         ; i++
     ) {
-        outerToInter[vars[i]] = i;
-        interToOuter[i] = vars[i];
+        bigsolver_to_smallsolver[vars[i]] = i;
+        smallsolver_to_bigsolver[i] = vars[i];
     }
 }
 
@@ -269,7 +269,7 @@ void CompHandler::check_solution_is_unassigned_in_main_solver(
 ) {
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
-        if (newSolver->get_model()[updateVar(var)] != l_Undef) {
+        if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
             assert(solver->value(var) == l_Undef);
         }
     }
@@ -284,11 +284,11 @@ void CompHandler::save_solution_to_savedstate(
     for (size_t i = 0; i < vars.size(); i++) {
         Var var = vars[i];
         Var outerVar = solver->map_inter_to_outer(var);
-        if (newSolver->get_model()[updateVar(var)] != l_Undef) {
+        if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
             assert(savedState[outerVar] == l_Undef);
             assert(compFinder->getVarComp(var) == comp);
 
-            savedState[outerVar] = newSolver->get_model()[updateVar(var)];
+            savedState[outerVar] = newSolver->get_model()[upd_bigsolver_to_smallsolver(var)];
         }
     }
 }
@@ -299,8 +299,8 @@ void CompHandler::move_decision_level_zero_vars_here(
     const vector<Lit> zero_assigned = newSolver->get_zero_assigned_lits();
     for (Lit lit: zero_assigned) {
         assert(lit.var() < newSolver->nVars());
-        assert(lit.var() < interToOuter.size());
-        lit = Lit(interToOuter[lit.var()], lit.sign());
+        assert(lit.var() < smallsolver_to_bigsolver.size());
+        lit = Lit(smallsolver_to_bigsolver[lit.var()], lit.sign());
         assert(solver->value(lit) == l_Undef);
         solver->varData[lit.var()].removed = Removed::none;
         const Var outer = solver->map_inter_to_outer(lit.var());
@@ -433,7 +433,7 @@ void CompHandler::moveClausesLong(
         //Create temporary space 'tmp' and copy to backup
         tmp.resize(cl.size());
         for (size_t i2 = 0; i2 < cl.size(); i2++) {
-            tmp[i2] = updateLit(cl[i2]);
+            tmp[i2] = upd_bigsolver_to_smallsolver(cl[i2]);
         }
 
         //Add 'tmp' to the new solver
@@ -518,7 +518,7 @@ void CompHandler::moveClausesImplicit(
                 if (lit < lit2) {
 
                     //Add clause
-                    lits = {updateLit(lit), updateLit(lit2)};
+                    lits = {upd_bigsolver_to_smallsolver(lit), upd_bigsolver_to_smallsolver(lit2)};
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
 
@@ -605,7 +605,7 @@ void CompHandler::moveClausesImplicit(
                 ) {
 
                     //Add clause
-                    lits = {updateLit(lit), updateLit(lit2), updateLit(lit3)};
+                    lits = {upd_bigsolver_to_smallsolver(lit), upd_bigsolver_to_smallsolver(lit2), upd_bigsolver_to_smallsolver(lit3)};
                     assert(compFinder->getVarComp(lit.var()) == comp);
                     assert(compFinder->getVarComp(lit2.var()) == comp);
                     assert(compFinder->getVarComp(lit3.var()) == comp);
