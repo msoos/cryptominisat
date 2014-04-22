@@ -247,6 +247,9 @@ bool XorFinder::extractInfoFromBlock(
     , const size_t blockNum
 ) {
     assert(solver->okay());
+    if (block.empty()) {
+        return solver->okay();
+    }
 
     //Outer-inner var mapping is needed because not all vars are in the matrix
     size_t num = 0;
