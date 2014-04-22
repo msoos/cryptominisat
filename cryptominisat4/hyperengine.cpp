@@ -1,7 +1,5 @@
 #include "hyperengine.h"
 #include "clauseallocator.h"
-#include <boost/concept_check.hpp>
-
 
 using namespace CMSat;
 
