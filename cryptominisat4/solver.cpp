@@ -2850,11 +2850,21 @@ vector<Lit> Solver::get_zero_assigned_lits() const
             }
         }
     }
+
+    //Remove duplicates. Because of above replacing-mimicing algo
+    //multipe occurrences of literals can be inside
+    vector<Lit>::iterator it;
+    std::sort(lits.begin(), lits.end());
+    it = std::unique (lits.begin(), lits.end());
+    lits.resize( std::distance(lits.begin(),it) );
+
+    //Update to outer without BVA
     vector<Var> my_map = build_outer_to_without_bva_map();
     updateLitsMap(lits, my_map);
     for(const Lit lit: lits) {
         assert(lit.var() < nVarsOutside());
     }
+
     return lits;
 }
 
