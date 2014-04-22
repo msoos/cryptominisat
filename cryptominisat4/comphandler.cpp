@@ -64,7 +64,7 @@ void CompHandler::saveVarMem()
 
 void CompHandler::createRenumbering(const vector<Var>& vars)
 {
-    interToOuter.resize(solver->nVars());
+    interToOuter.resize(vars.size());
     outerToInter.resize(solver->nVars());
 
     for(size_t i = 0, size = vars.size()
