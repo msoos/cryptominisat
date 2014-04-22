@@ -36,7 +36,7 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
 
 void DataSync::new_var(bool bva)
 {
-    if (sharedData == NULL)
+    if (!enabled())
         return;
 
     if (!bva) {
