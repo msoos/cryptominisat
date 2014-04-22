@@ -31,6 +31,7 @@ class DataSync
 {
     public:
         DataSync(Solver* solver, SharedData* sharedData);
+        bool enabled();
         void new_var(bool bva);
         bool syncData();
         void saveVarMem();
@@ -98,6 +99,11 @@ inline Lit DataSync::map_outside_without_bva(const Lit lit) const
 {
     return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
 
+}
+
+inline bool DataSync::enabled()
+{
+    return sharedData != NULL;
 }
 
 }

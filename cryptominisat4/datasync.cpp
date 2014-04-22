@@ -52,7 +52,7 @@ void DataSync::saveVarMem()
 
 void DataSync::rebuild_bva_map()
 {
-    if (sharedData == NULL)
+    if (!enabled())
         return;
 
     outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
@@ -66,7 +66,7 @@ void DataSync::updateVars(
 
 bool DataSync::syncData()
 {
-    if (sharedData == NULL
+    if (!enabled()
         || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts()
     ) {
         //cout << "sharedData:" << sharedData << endl;
@@ -282,7 +282,7 @@ bool DataSync::shareUnitData()
 
 void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
 {
-    if (sharedData == NULL) {
+    if (!enabled()) {
         return;
     }
 
