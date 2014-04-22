@@ -19,6 +19,7 @@ from random import choice
 from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
+import calendar
 from xor_to_cnf_class import *
 
 maxTime = 80
@@ -422,14 +423,14 @@ class Tester:
         #execute with the other solver
         toexec = "../../lingeling-587f/lingeling -f %s" % tmpfname
         print "Solving with other solver.."
-        currTime = time.gmtime()
+        currTime = calendar.timegm(time.gmtime())
         p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                              preexec_fn=setlimits)
         consoleOutput2 = p.communicate()[0]
         os.unlink(tmpfname)
 
         #if other solver was out of time, then we can't say anything
-        diffTime = time.gmtime() - currTime
+        diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > maxTime-maxTimeDiff:
             print "Other solver: too much time to solve, aborted!"
             return None
@@ -583,18 +584,18 @@ class Tester:
                 os.unlink(tmpfname)
 
     def check_dump_irred(self, fname):
-        currTime = time.gmtime()
+        currTime = calendar.timegm(time.gmtime())
         irred_cnf = "irred_data.cnf"
         self.needDebugLib = False
         extra_optins = " --dumpirred %s --maxconfl 1000 " % irred_cnf
         consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
         self.needDebugLib = True
-        diffTime = time.gmtime() - currTime
+        diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
             print "Too much time to solve, aborted!"
             return
         else:
-            print "Within time limit: %f s" % (time.gmtime() - currTime)
+            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
 
         if not file_exists(irred_cnf):
             print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
@@ -607,19 +608,19 @@ class Tester:
         os.unlink(irred_cnf)
 
     def check_dump_red(self, fname):
-        currTime = time.gmtime()
+        currTime = calendar.timegm(time.gmtime())
         irred_cnf = "irred_data.cnf"
         red_cnf = "red_data.cnf"
         self.needDebugLib = False
         extra_optins = " --dumpirred %s --dumpred %s --maxconfl 1000 " % (irred_cnf, red_cnf)
         consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
         self.needDebugLib = True
-        diffTime = time.gmtime() - currTime
+        diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
             print "Too much time to solve, aborted!"
             return
         else:
-            print "Within time limit: %f s" % (time.gmtime() - currTime)
+            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
 
         if not file_exists(irred_cnf):
             print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
@@ -637,7 +638,7 @@ class Tester:
 
         consoleOutput = ""
         if checkAgainst == None: checkAgainst = fname
-        currTime = time.gmtime()
+        currTime = calendar.timegm(time.gmtime())
 
         #Do we need to solve the problem, or is it already solved?
         if needSolve:
@@ -654,12 +655,12 @@ class Tester:
         #if time was limited, we need to know if we were over the time limit
         #and that is why there is no solution
         if needToLimitTime:
-            diffTime = time.gmtime() - currTime
+            diffTime = calendar.timegm(time.gmtime()) - currTime
             if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
-                print "Within time limit: %f s" % (time.gmtime() - currTime)
+                print "Within time limit: %3ds" % (calendar.timegm(time.gmtime()) - currTime)
 
         print "filename: %s" % fname
 
@@ -687,7 +688,7 @@ class Tester:
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
-            diffTime = time.gmtime() - currTime
+            diffTime = calendar.timegm(time.gmtime()) - currTime
 
             #find verification code
             foundVerif = False
