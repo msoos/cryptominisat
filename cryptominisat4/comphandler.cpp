@@ -288,7 +288,7 @@ void CompHandler::save_solution_to_savedstate(
             assert(savedState[outerVar] == l_Undef);
             assert(compFinder->getVarComp(var) == comp);
 
-            savedState[outerVar] = *((lbool*)(&newSolver->get_model()[updateVar(var)]));
+            savedState[outerVar] = newSolver->get_model()[updateVar(var)];
         }
     }
 }
