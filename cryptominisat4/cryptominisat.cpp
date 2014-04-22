@@ -100,6 +100,7 @@ void SATSolver::set_num_threads(unsigned num)
         SolverConf conf = solvers->at(i)->getConf();
         if (i > 1) {
             conf.verbosity = 0;
+            conf.doSQL = 0;
         }
         solvers->at(i)->setConf(conf);
         solvers->at(i)->set_shared_data((SharedData*)shared_data);
