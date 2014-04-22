@@ -94,17 +94,6 @@ inline void DataSync::signalNewBinClause(T& ps)
     signalNewBinClause(ps[0], ps[1]);
 }
 
-inline void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
-{
-    if (sharedData == NULL) {
-        return;
-    }
-    if (lit1.toInt() > lit2.toInt()) {
-        std::swap(lit1, lit2);
-    }
-    newBinClauses.push_back(std::make_pair(lit1, lit2));
-}
-
 inline Lit DataSync::map_outside_without_bva(const Lit lit) const
 {
     return Lit(outer_to_without_bva_map[lit.var()], lit.sign());

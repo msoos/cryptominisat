@@ -64,14 +64,6 @@ void DataSync::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    assert(solver->decisionLevel() == 0);
-    for(std::pair<Lit, Lit>& p : newBinClauses) {
-        p.first = getUpdatedLit(p.first, outerToInter);
-        p.second = getUpdatedLit(p.second, outerToInter);
-        if (p.first > p.second) {
-            std::swap(p.first, p.second);
-        }
-    }
 }
 
 bool DataSync::syncData()
@@ -203,16 +195,7 @@ bool DataSync::syncBinFromOthers(
 void DataSync::syncBinToOthers()
 {
     for(const std::pair<Lit, Lit>& bin: newBinClauses) {
-        if (solver->varData[bin.first.var()].is_bva)
-            continue;
-        if (solver->varData[bin.second.var()].is_bva)
-            continue;
-
-        Lit lit1 = solver->map_inter_to_outer(bin.first);
-        lit1 = map_outside_without_bva(lit1);
-        Lit lit2 = solver->map_inter_to_outer(bin.second);
-        lit2 = map_outside_without_bva(lit2);
-        addOneBinToOthers(lit1, lit2);
+        addOneBinToOthers(bin.first, bin.second);
     }
 
     newBinClauses.clear();
@@ -220,10 +203,7 @@ void DataSync::syncBinToOthers()
 
 void DataSync::addOneBinToOthers(Lit lit1, Lit lit2)
 {
-    if (lit1 > lit2) {
-        std::swap(lit1, lit2);
-    }
-
+    assert(lit1 < lit2);
     vector<Lit>& bins = sharedData->bins[lit1.toInt()];
     for (const Lit lit : bins) {
         if (lit == lit2)
@@ -300,4 +280,26 @@ bool DataSync::shareUnitData()
     stats.sentUnitData += thisSentUnitData;
 
     return true;
+}
+
+void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
+{
+    if (sharedData == NULL) {
+        return;
+    }
+
+    if (solver->varData[lit1.var()].is_bva)
+        return;
+    if (solver->varData[lit2.var()].is_bva)
+        return;
+
+    lit1 = solver->map_inter_to_outer(lit1);
+    lit1 = map_outside_without_bva(lit1);
+    lit2 = solver->map_inter_to_outer(lit2);
+    lit2 = map_outside_without_bva(lit2);
+
+    if (lit1.toInt() > lit2.toInt()) {
+        std::swap(lit1, lit2);
+    }
+    newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
