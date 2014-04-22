@@ -284,6 +284,5 @@ std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 unsigned long SATSolver::get_sql_id() const
 {
     MY_SOLVERS
-    assert(solvers->size() == 1);
     return solvers->at(0)->get_sql_id();
 }
