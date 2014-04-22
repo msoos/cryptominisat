@@ -245,6 +245,7 @@ bool DataSync::shareUnitData()
     }
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
         Lit thisLit = Lit(var, false);
+        thisLit = solver->map_to_with_bva(thisLit);
         thisLit = solver->varReplacer->getLitReplacedWithOuter(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
         const lbool thisVal = solver->value(thisLit);
