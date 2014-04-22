@@ -193,6 +193,7 @@ class Tester:
         cmd += "--occirredmaxmb %s " % random.randint(0,10)
         cmd += "--occredmaxmb %s " % random.randint(0,10)
         cmd += "--implsubsto %s " % random.choice([0,10,1000])
+        cmd += "--sync %d " % random.choice([100,1000,6000,100000])
         if options.num_threads > 1 :
             cmd += "--xor 0 "
             cmd += "--sql 0 "
