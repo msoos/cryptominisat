@@ -365,6 +365,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
         newSolver->new_var();
         assert(compFinder->getVarComp(var) == comp);
+        assert(solver->value(var) == l_Undef);
 
         assert(solver->varData[var].removed == Removed::none);
         assert(solver->varData[var].is_decision);
