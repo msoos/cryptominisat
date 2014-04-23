@@ -20,6 +20,7 @@ from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 import calendar
+import glob
 from xor_to_cnf_class import *
 
 maxTime = 80
@@ -941,6 +942,8 @@ class Tester:
                     os.unlink(name)
                 if fnameDrup != None :
                     os.unlink(fnameDrup)
+                for i in glob.glob(u'fuzz*'):
+                    os.unlink (i)
 
     def checkDir(self) :
         self.ignoreNoSolution = True
