@@ -21,3 +21,11 @@ target_link_libraries(assump_test
     ${Boost_LIBRARIES}
     libcryptominisat4
 )
+
+add_executable(readme_test
+    readme_test.cpp
+)
+
+target_link_libraries(readme_test
+    libcryptominisat4
+)

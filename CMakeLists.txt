@@ -195,6 +195,7 @@ add_custom_target(uninstall
 enable_testing()
 ADD_TEST (basic_test tests/basic_test)
 ADD_TEST (assump_test tests/assump_test)
+add_test (readme_test tests/readme_test)
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with
