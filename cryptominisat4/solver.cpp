@@ -1834,6 +1834,7 @@ lbool Solver::solve()
         //If we are over the limit, exit
         if (sumStats.conflStats.numConflicts >= conf.maxConfl
             || cpuTime() > conf.maxTime
+            || must_interrupt_asap()
         ) {
             status = l_Undef;
             break;

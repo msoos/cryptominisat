@@ -2183,6 +2183,15 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
+    if (solver->must_interrupt_asap()) {
+        if (conf.verbosity >= 3) {
+            cout
+            << "c search interrupting as requested"
+            << endl;
+        }
+        return true;
+    }
+
     return false;
 }
 
@@ -2231,6 +2240,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     for(loop_num = 0
         ; !must_interrupt_asap()
           && stats.conflStats.numConflicts < max_conflicts
+          && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
         print_search_loop_num();

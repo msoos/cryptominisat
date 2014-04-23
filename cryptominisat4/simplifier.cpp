@@ -1116,8 +1116,11 @@ bool Simplifier::simplify()
 
     //subsumeStrengthen->subsumeWithTris();
     subsumeStrengthen->backward_subsumption_with_all_clauses();
-    if (!subsumeStrengthen->performStrengthening())
+    if (!subsumeStrengthen->performStrengthening()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
+    }
 
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
@@ -1128,28 +1131,39 @@ bool Simplifier::simplify()
     }
     #endif
 
-    if (!propagate()) {
+    if (!propagate()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
         eliminate_empty_resolvent_vars();
-        if (!eliminateVars())
+        if (!eliminateVars()
+            || solver->must_interrupt_asap()
+        )
             goto end;
     }
 
-    if (!propagate()) {
+    if (!propagate()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
-    if (!bounded_var_addition()) {
+    if (!bounded_var_addition()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
     if (solver->conf.doCache && solver->conf.doGateFind) {
-        if (!gateFinder->doAll())
+        if (!gateFinder->doAll()
+            || solver->must_interrupt_asap()
+        ) {
             goto end;
+        }
     }
 
 end:

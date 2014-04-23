@@ -159,7 +159,9 @@ bool GateFinder::all_simplifications_with_gates()
         //Go through each gate, see if we can do something with it
         simplifier->cl_to_free_later.clear();
         for (const OrGate& gate: orGates) {
-            if (numMaxShortenWithGates < 0) {
+            if (numMaxShortenWithGates < 0
+                || solver->must_interrupt_asap()
+            ) {
                 break;
             }
 
@@ -200,7 +202,9 @@ bool GateFinder::all_simplifications_with_gates()
 
         //Go through each gate, see if we can do something with it
         for (const OrGate& gate: orGates) {
-            if (numMaxClRemWithGates < 0) {
+            if (numMaxClRemWithGates < 0
+                || solver->must_interrupt_asap()
+            ) {
                 break;
             }
 
@@ -288,7 +292,9 @@ void GateFinder::find_or_gates()
 
     const size_t offs = solver->mtrand.randInt(solver->nVars()*2-1);
     for(size_t i = 0
-        ; i < solver->nVars()*2 && *simplifier->limit_to_decrease > 0
+        ; i < solver->nVars()*2
+            && *simplifier->limit_to_decrease > 0
+            && !solver->must_interrupt_asap()
         ; i++
     ) {
         const size_t at = (offs + i) % (solver->nVars()*2);
