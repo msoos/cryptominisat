@@ -47,8 +47,8 @@ if (SANITIZE)
     add_cxx_flag("-Wextra-semi")
     #add_cxx_flag("-Wsign-conversion")
     add_cxx_flag("-Wdeprecated")
-    add_cxx_flag("-fPIC")
-
+    #add_cxx_flag("-fPIC")
+    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 endif()
 
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++0x -g -O3 -mtune=native")
