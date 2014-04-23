@@ -108,6 +108,7 @@ public:
     //
     PropEngine(
         const SolverConf& _conf
+        , bool* _needToInterrupt
     );
     ~PropEngine();
 

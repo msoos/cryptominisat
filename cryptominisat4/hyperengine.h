@@ -36,7 +36,7 @@ using namespace CMSat;
 
 class HyperEngine : public PropEngine {
 public:
-    HyperEngine(const SolverConf& _conf);
+    HyperEngine(const SolverConf& _conf, bool* _needToInterrupt);
     size_t print_stamp_mem(size_t totalMem) const;
 
     bool timedOutPropagateFull;

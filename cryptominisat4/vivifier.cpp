@@ -102,7 +102,7 @@ bool Vivifier::vivify_tri_irred_cls()
 
     ) {
         if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps
-            || solver->needToInterrupt
+            || solver->must_interrupt_asap()
         ) {
             break;
         }
@@ -241,7 +241,7 @@ bool Vivifier::vivify_long_irred_cls()
 
         //if done enough, stop doing it
         if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps
-            || solver->needToInterrupt
+            || solver->must_interrupt_asap()
         ) {
             if (solver->conf.verbosity >= 3) {
                 cout

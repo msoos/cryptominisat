@@ -61,8 +61,8 @@ using std::endl;
 
 //#define DEBUG_TRI_SORTED_SANITY
 
-Solver::Solver(const SolverConf _conf) :
-    Searcher(_conf, this)
+Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
+    Searcher(_conf, this, _needToInterrupt)
     , prober(NULL)
     , simplifier(NULL)
     , sCCFinder(NULL)
@@ -1791,7 +1791,7 @@ lbool Solver::solve()
 
     //Iterate until solved
     while (status == l_Undef
-        && !needToInterrupt
+        && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
         && sumStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
@@ -1954,7 +1954,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -1966,7 +1966,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -1980,7 +1980,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -1995,7 +1995,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -2019,7 +2019,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -2037,7 +2037,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -2075,7 +2075,7 @@ lbool Solver::simplifyProblem()
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
         || cpuTime() > conf.maxTime
-        || needToInterrupt
+        || must_interrupt_asap()
     ) {
         return l_Undef;
     }
@@ -3234,16 +3234,6 @@ bool Solver::verifyModel() const
     }
 
     return verificationOK;
-}
-
-void Solver::setNeedToInterrupt()
-{
-    needToInterrupt = true;
-}
-
-void Solver::unsetNeedToInterrupt()
-{
-    needToInterrupt = false;
 }
 
 lbool Solver::modelValue (const Lit p) const

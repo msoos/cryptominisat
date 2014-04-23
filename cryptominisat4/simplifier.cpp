@@ -726,7 +726,7 @@ bool Simplifier::eliminateVars()
     while(!varElimOrder.empty()
         && *limit_to_decrease > 0
         && varelim_num_limit > 0
-        && !solver->needToInterrupt
+        && !solver->must_interrupt_asap()
     ) {
         assert(limit_to_decrease == &norm_varelim_time_limit);
         Var var = varElimOrder.removeMin();
@@ -3268,7 +3268,7 @@ bool Simplifier::bounded_var_addition()
     while(!var_bva_order.empty()) {
         if (*limit_to_decrease < 0
             || bva_worked >= solver->conf.bva_limit_per_call
-            || solver->needToInterrupt
+            || solver->must_interrupt_asap()
         ) {
             break;
         }

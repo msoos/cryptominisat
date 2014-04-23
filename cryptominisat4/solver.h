@@ -71,7 +71,7 @@ class LitReachData {
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf _conf = SolverConf());
+        Solver(const SolverConf _conf = SolverConf(), bool* _needToInterrupt = NULL);
         ~Solver() override;
 
         void add_sql_tag(const string& tagname, const string& tag);
@@ -81,8 +81,6 @@ class Solver : public Searcher
         bool add_xor_clause_outer(const vector<Var>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
-        void  setNeedToInterrupt();
-        void  unsetNeedToInterrupt();
         void  set_shared_data(SharedData* shared_data);
         lbool modelValue (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;

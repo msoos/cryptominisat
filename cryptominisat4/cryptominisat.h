@@ -16,7 +16,7 @@ namespace CMSat {
     class SATSolver
     {
     public:
-        SATSolver(SolverConf conf = SolverConf());
+        SATSolver(SolverConf conf = SolverConf(), bool* interrupt_asap = NULL);
         ~SATSolver();
         void set_num_threads(unsigned n);
         unsigned nVars() const;
@@ -41,6 +41,7 @@ namespace CMSat {
         void *s;
         void *shared_data;
         int which_solved;
+        bool* inter;
     };
 }
 

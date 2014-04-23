@@ -33,13 +33,14 @@ using std::mutex;
 
 using namespace CMSat;
 
-SATSolver::SATSolver(const SolverConf conf)
+SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
 {
+    inter = interrupt_asap;
     which_solved = 0;
     shared_data = NULL;
     s = (void*)new vector<Solver*>;
     MY_SOLVERS
-    solvers->push_back(new Solver(conf));
+    solvers->push_back(new Solver(conf, inter));
 }
 
 SATSolver::~SATSolver()
@@ -91,7 +92,7 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.polarity_mode = CMSat::polarmode_pos;
             }
         }
-        solvers->push_back(new Solver(conf));
+        solvers->push_back(new Solver(conf, inter));
     }
 
     //set shared data
@@ -158,11 +159,11 @@ static void one_thread(
             if (i == data.tid)
                 continue;
 
-            data.solvers->at(i)->setNeedToInterrupt();
+            data.solvers->at(i)->set_must_interrupt_asap();
         }
         data.update_mutex->unlock();
     }
-    data.solvers->at(data.tid)->unsetNeedToInterrupt();
+    data.solvers->at(data.tid)->unset_must_interrupt_asap();
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
@@ -253,7 +254,7 @@ void SATSolver::interrupt_asap()
 {
     MY_SOLVERS
     for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->setNeedToInterrupt();
+        solvers->at(i)->set_must_interrupt_asap();
     }
 }
 

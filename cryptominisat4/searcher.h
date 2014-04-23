@@ -59,7 +59,7 @@ struct VariableVariance
 class Searcher : public HyperEngine
 {
     public:
-        Searcher(const SolverConf& _conf, Solver* solver);
+        Searcher(const SolverConf& _conf, Solver* solver, bool* _needToInterrupt);
         virtual ~Searcher();
 
         //History
@@ -653,7 +653,6 @@ class Searcher : public HyperEngine
         //Settings
         Solver*   solver;          ///< Thread control class
         MTRand           mtrand;           ///< random number generator
-        bool             needToInterrupt;  ///<If set to TRUE, interrupt cleanly ASAP
 
         //Stats printing
         void printAgilityStats();

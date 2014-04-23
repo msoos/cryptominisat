@@ -398,7 +398,7 @@ bool Prober::probe()
         ; i < poss_choice.size()
         && limit_used() < numPropsTodo
         && cpuTime() <= solver->conf.maxTime
-        && !solver->needToInterrupt
+        && !solver->must_interrupt_asap()
         ; i++
     ) {
         extraTime += 20;

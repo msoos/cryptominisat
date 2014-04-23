@@ -51,14 +51,14 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
+Searcher::Searcher(const SolverConf& _conf, Solver* _solver, bool* _needToInterrupt) :
         HyperEngine(
             _conf
+            , _needToInterrupt
         )
 
         //variables
         , solver(_solver)
-        , needToInterrupt(false)
         , var_inc(_conf.var_inc_start)
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
@@ -1002,7 +1002,7 @@ lbool Searcher::search()
         (!params.needToStopSearch
             && sumConflicts() <= solver->getNextCleanLimit()
             && cpuTime() < conf.maxTime
-            && !needToInterrupt
+            && !must_interrupt_asap()
         )
             || !confl.isNULL() //always finish the last conflict
     ) {
@@ -1130,9 +1130,9 @@ lbool Searcher::new_decision()
 
 void Searcher::checkNeedRestart()
 {
-    if (needToInterrupt)  {
+    if (must_interrupt_asap())  {
         if (conf.verbosity >= 3)
-            cout << "c needToInterrupt is set, restartig as soon as possible!" << endl;
+            cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
         params.needToStopSearch = true;
     }
 
@@ -2229,7 +2229,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
     for(loop_num = 0
-        ; !needToInterrupt
+        ; !must_interrupt_asap()
           && stats.conflStats.numConflicts < max_conflicts
         ; loop_num ++
     ) {
