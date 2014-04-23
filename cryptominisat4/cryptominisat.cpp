@@ -99,7 +99,7 @@ void SATSolver::set_num_threads(unsigned num)
     shared_data = (void*)new SharedData;
     for(unsigned i = 0; i < num; i++) {
         SolverConf conf = solvers->at(i)->getConf();
-        if (i > 1) {
+        if (i >= 1) {
             conf.verbosity = 0;
             conf.doSQL = 0;
         }
