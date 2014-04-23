@@ -2761,7 +2761,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
     learnt_clause.push_back(lit_Undef);      // (leave room for the asserting literal)
     int index   = trail.size() - 1;
     out_btlevel = 0;
-    std::stringstream resolutions;
+    std::stringstream resolutions_str;
 
     PropByForGraph confl(conflHalf, failBinLit, clAllocator);
     do {
@@ -2769,9 +2769,9 @@ string Searcher::analyze_confl_for_graphviz_graph(
 
         //Update resolutions output
         if (p != lit_Undef) {
-            resolutions << " | ";
+            resolutions_str << " | ";
         }
-        resolutions << "{ " << confl << " | " << pathC << " -- ";
+        resolutions_str << "{ " << confl << " | " << pathC << " -- ";
 
         for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
             Lit q = confl[j];
@@ -2794,7 +2794,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
                 }
             }
         }
-        resolutions << pathC << " }";
+        resolutions_str << pathC << " }";
 
         //Go through the trail backwards, select the one that is to be resolved
         while (!seen[trail[index--].var()]);
@@ -2814,7 +2814,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
     //Calculate glue
     glue = calcGlue(learnt_clause);
 
-    return resolutions.str();
+    return resolutions_str.str();
 }
 
 void Searcher::print_edges_for_graphviz_file(std::ofstream& file) const
