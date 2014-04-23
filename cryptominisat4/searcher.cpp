@@ -761,21 +761,21 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             ; i < size
             ; i++
         ) {
-            Lit p;
+            Lit p2;
             switch (type) {
                 case clause_t:
-                    p = (*cl)[i+1];
+                    p2 = (*cl)[i+1];
                     break;
 
                 case binary_t:
-                    p = reason.lit2();
+                    p2 = reason.lit2();
                     break;
 
                 case tertiary_t:
                     if (i == 0) {
-                        p = reason.lit2();
+                        p2 = reason.lit2();
                     } else {
-                        p = reason.lit3();
+                        p2 = reason.lit3();
                     }
                     break;
 
@@ -787,13 +787,13 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
             stats.recMinimCost++;
 
-            if (!seen[p.var()] && varData[p.var()].level > 0) {
-                if (!varData[p.var()].reason.isNULL()
-                    && (abstractLevel(p.var()) & abstract_levels) != 0
+            if (!seen[p2.var()] && varData[p2.var()].level > 0) {
+                if (!varData[p2.var()].reason.isNULL()
+                    && (abstractLevel(p2.var()) & abstract_levels) != 0
                 ) {
-                    seen[p.var()] = 1;
-                    analyze_stack.push(p);
-                    toClear.push_back(p);
+                    seen[p2.var()] = 1;
+                    analyze_stack.push(p2);
+                    toClear.push_back(p2);
                 } else {
                     //Return to where we started before function executed
                     for (size_t j = top; j < toClear.size(); j++) {
