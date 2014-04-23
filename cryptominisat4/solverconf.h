@@ -9,7 +9,11 @@
 
 #include <string>
 #include <cstdlib>
-#include <stdint.h>
+#if defined(_MSC_VER) || __cplusplus>=201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+    #include <cstdint>
+#else
+    #include <stdint.h>
+#endif
 
 namespace CMSat {
 
