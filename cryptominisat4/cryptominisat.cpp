@@ -102,6 +102,7 @@ void SATSolver::set_num_threads(unsigned num)
         if (i >= 1) {
             conf.verbosity = 0;
             conf.doSQL = 0;
+            conf.doFindXors = 0;
         }
         solvers->at(i)->setConf(conf);
         solvers->at(i)->set_shared_data((SharedData*)shared_data);
