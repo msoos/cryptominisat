@@ -221,6 +221,11 @@ bool CompHandler::solve_component(
     const lbool status = newSolver.solve();
     //Out of time
     if (status == l_Undef) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c subcomponent returned l_Undef -- timeout or interrupt."
+            << endl;
+        }
         readdRemovedClauses();
         return false;
     }
