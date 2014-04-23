@@ -1854,7 +1854,7 @@ lbool Solver::solve()
     handle_found_solution(status);
 
     end:
-    if (sqlStats) {
+    if (solver->conf.doSQL) {
         sqlStats->finishup(status);
     }
 
