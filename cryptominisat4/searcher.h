@@ -897,7 +897,6 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         Stats    stats;
-        size_t   origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
 };

@@ -1640,9 +1640,6 @@ void Searcher::resetStats()
     lastSQLGlobalStats = stats;
     #endif
 
-    //Set already set vars
-    origTrailSize = trail.size();
-
     order_heap.filter(VarFilter(this, solver));
     lastCleanZeroDepthAssigns = trail.size();
 }
