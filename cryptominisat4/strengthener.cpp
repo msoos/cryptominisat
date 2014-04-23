@@ -637,9 +637,9 @@ void Strengthener::strengthen_tri_with_bin_tri_stamp(
         str_impl_data.stampRem += tmp.second;
         if (lits.size() > 1) {
             timeAvailable -= 15;
-            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            str_impl_data.stampRem += tmp.first;
-            str_impl_data.stampRem += tmp.second;
+            std::pair<size_t, size_t> tmp2 = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
+            str_impl_data.stampRem += tmp2.first;
+            str_impl_data.stampRem += tmp2.second;
         }
 
         if (lits.size() == 2) {
