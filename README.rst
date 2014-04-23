@@ -118,6 +118,11 @@ such, the 1st CNF above would become::
   {
       SATSolver solver;
       vector<Lit> clause;
+      
+      //We need 3 variables
+      solver.new_var();
+      solver.new_var();
+      solver.new_var();
 
       //adds "1 0"
       clause.push_back(Lit(0, false));
