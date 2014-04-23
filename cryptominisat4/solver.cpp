@@ -1913,6 +1913,7 @@ lbool Solver::simplifyProblem()
 
     if (conf.doFindComps
         && getNumFreeVars() < conf.compVarLimit
+        && !solver->must_interrupt_asap()
     ) {
         CompFinder findParts(this);
         if (!findParts.findComps()) {
@@ -1925,6 +1926,7 @@ lbool Solver::simplifyProblem()
         && solveStats.numSimplify >= conf.handlerFromSimpNum
         //Only every 2nd, since it can be costly to find parts
         && solveStats.numSimplify % 2 == 0
+        && !solver->must_interrupt_asap()
     ) {
         if (!compHandler->handle())
             goto end;
@@ -1933,6 +1935,7 @@ lbool Solver::simplifyProblem()
     //SCC&VAR-REPL
     if (solveStats.numSimplify > 0
         && conf.doFindAndReplaceEqLits
+        && !solver->must_interrupt_asap()
     ) {
         if (!sCCFinder->performSCC())
             goto end;
@@ -1944,7 +1947,9 @@ lbool Solver::simplifyProblem()
     }
 
     //Cache clean before probing (for speed)
-    if (conf.doCache) {
+    if (conf.doCache
+        && !solver->must_interrupt_asap()
+    ) {
         if (!implCache.clean(this))
             goto end;
 
@@ -1953,7 +1958,9 @@ lbool Solver::simplifyProblem()
     }
 
     //Treat implicits
-    if (conf.doStrSubImplicit) {
+    if (conf.doStrSubImplicit
+        && !solver->must_interrupt_asap()
+    ) {
         subsumeImplicit->subsume_implicit();
     }
     if (sumStats.conflStats.numConflicts >= conf.maxConfl
