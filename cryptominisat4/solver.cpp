@@ -1594,10 +1594,11 @@ void Solver::check_model_for_assumptions() const
 
 void Solver::check_recursive_minimization_effectiveness(const lbool status)
 {
+    const Searcher::Stats& stats = Searcher::getStats();
     if (status == l_Undef
         && conf.doRecursiveMinim
+        && stats.recMinLitRem + stats.litsRedNonMin > 100000
     ) {
-        const Searcher::Stats& stats = Searcher::getStats();
         double remPercent =
             (double)stats.recMinLitRem/(double)stats.litsRedNonMin*100.0;
 
@@ -1625,8 +1626,10 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
 
 void Solver::check_minimization_effectiveness(const lbool status)
 {
- if (status == l_Undef
+    const Searcher::Stats& stats = Searcher::getStats();
+    if (status == l_Undef
         && conf.doMinimRedMore
+        && stats.moreMinimLitsStart > 100000
     ) {
         const Searcher::Stats& stats = Searcher::getStats();
         double remPercent =
