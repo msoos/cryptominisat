@@ -101,7 +101,9 @@ bool Vivifier::vivify_tri_irred_cls()
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps
+            || solver->needToInterrupt
+        ) {
             break;
         }
 
@@ -238,7 +240,9 @@ bool Vivifier::vivify_long_irred_cls()
         }
 
         //if done enough, stop doing it
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps
+            || solver->needToInterrupt
+        ) {
             if (solver->conf.verbosity >= 3) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
