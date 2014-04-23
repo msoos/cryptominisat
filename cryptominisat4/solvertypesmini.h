@@ -8,6 +8,7 @@
 #define __SOLVERTYPESMINI_H__
 
 #include <limits>
+#include <stdint.h>
 
 namespace CMSat {
 
