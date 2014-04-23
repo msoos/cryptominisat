@@ -49,6 +49,12 @@ fi
 
 AM_CONDITIONAL([HAVE_M4RI], []test x$have_m4ri = xtrue)
 
+
+# GIT Version
+
+GIT_SHA1=`git describe --abbrev=40 --always`
+AC_SUBST(GIT_SHA1)
+
 AC_DEFINE(STATS_NEEDED,1,[something]) # do we need stats? Yes we do!
 
 
@@ -57,6 +63,6 @@ AC_SUBST(RELEASE)
 
 AC_PROG_MAKE_SET
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile cryptominisat4/GitSHA1.cpp])
 AC_OUTPUT
 

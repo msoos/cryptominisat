@@ -4,8 +4,6 @@ AM_CXXFLAGS=${DEBUG_FLAGS} ${M4RI_CFLAGS} $(CRYPTOMINISAT4_M4RI_CFLAGS)
 
 lib_LTLIBRARIES = libcryptominisat4.la
 
-
-
 libcryptominisat4_la_SOURCES = cryptominisat4/calcdefpolars.cpp \
 		cryptominisat4/clauseallocator.cpp \
 		cryptominisat4/clausecleaner.cpp \
@@ -15,8 +13,10 @@ libcryptominisat4_la_SOURCES = cryptominisat4/calcdefpolars.cpp \
 		cryptominisat4/comphandler.cpp \
 		cryptominisat4/completedetachreattacher.cpp \
 		cryptominisat4/cryptominisat.cpp \
+		cryptominisat4/datasync.cpp \
 		cryptominisat4/dimacsparser.cpp \
 		cryptominisat4/gatefinder.cpp \
+		cryptominisat4/GitSHA1.cpp \
 		cryptominisat4/hyperengine.cpp \
 		cryptominisat4/implcache.cpp \
 		cryptominisat4/prober.cpp \
