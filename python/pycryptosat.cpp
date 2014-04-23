@@ -12,6 +12,7 @@
 
 #include <Python.h>
 #include <structmember.h>
+#include <limits>
 
 #include "assert.h"
 #include <cryptominisat4/cryptominisat.h>
