@@ -116,7 +116,7 @@ such, the 1st CNF above would become::
 
   int main()
   {
-      Solver solver;
+      SATSolver solver;
       vector<Lit> clause;
 
       //adds "1 0"
