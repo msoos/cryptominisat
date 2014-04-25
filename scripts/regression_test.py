@@ -685,7 +685,7 @@ class Tester:
 
         #it's UNSAT, let's check with DRUP
         if fnameDrup:
-            toexec = "drupcheck %s %s" % (fname, fnameDrup)
+            toexec = "drat %s %s" % (fname, fnameDrup)
             print "Checking DRUP...: ", toexec
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
