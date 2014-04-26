@@ -685,7 +685,7 @@ class Tester:
 
         #it's UNSAT, let's check with DRUP
         if fnameDrup:
-            toexec = "drupcheck %s %s" % (fname, fnameDrup)
+            toexec = "drat-trim %s %s" % (fname, fnameDrup)
             print "Checking DRUP...: ", toexec
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
@@ -918,18 +918,15 @@ class Tester:
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
 
-                #adding debuglib to fuzz file
-                self.needDebugLib = True
-
-                #delete old debugLibPart files
-                dirList = os.listdir(".")
-                for fname in dirList:
-                    if fnmatch.fnmatch(fname, 'debugLibPart*'):
-                        os.unlink(fname)
-
-                file_name2 = unique_fuzz_file("fuzzTest");
-                self.intersperse_with_debuglib(file_name, file_name2)
-                os.unlink(file_name)
+                if not options.drup :
+                    self.needDebugLib = True
+                    self.delete_debuglibpart_files()
+                    file_name2 = unique_fuzz_file("fuzzTest");
+                    self.intersperse_with_debuglib(file_name, file_name2)
+                    os.unlink(file_name)
+                else:
+                    self.needDebugLib = False
+                    file_name2 = file_name
 
                 #check file
                 self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
@@ -944,6 +941,12 @@ class Tester:
                     os.unlink(fnameDrup)
                 for i in glob.glob(u'fuzz*'):
                     os.unlink (i)
+
+    def delete_debuglibpart_files(self):
+        dirList = os.listdir(".")
+        for fname in dirList:
+            if fnmatch.fnmatch(fname, 'debugLibPart*'):
+                os.unlink(fname)
 
     def checkDir(self) :
         self.ignoreNoSolution = True
