@@ -127,10 +127,18 @@ install(TARGETS libcryptominisat4
 )
 
 
-add_executable(cryptominisat
-    dimacsparser.cpp
-    main.cpp
-)
+if (NOT SIMPLE)
+    add_executable(cryptominisat
+        dimacsparser.cpp
+        main.cpp
+    )
+else()
+    add_executable(cryptominisat
+        dimacsparser.cpp
+        main_simple.cpp
+    )
+endif()
+
 if (STATICCOMPILE)
     set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 1)
 endif (STATICCOMPILE)

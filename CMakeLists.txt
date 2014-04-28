@@ -93,6 +93,41 @@ IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 
 # -----------------------------------------------------------------------------
+# Add GIT version
+# -----------------------------------------------------------------------------
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+option(SIMPLE "Very simplistic executable -- no Boost needed")
+#set(SIMPLE "ON")
+if (NOT SIMPLE)
+    if (NOT NOTESTS)
+        find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
+    else()
+        find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
+    endif()
+else()
+    set(NOTESTS "ON")
+    set(NOZLIB "ON")
+endif()
+
+option(NOSTATS "Don't use statistics at all")
+if (NOT NOSTATS)
+    add_definitions( -DSTATS_NEEDED )
+    find_package(MySQL)
+    IF (MYSQL_FOUND)
+        MESSAGE(STATUS "OK, Found MySQL!")
+        include_directories(${MySQL_INCLUDE_DIR})
+        link_directories(${MySQL_LIB_DIR})
+        add_definitions( -DUSE_MYSQL )
+    else (MYSQL_FOUND)
+        MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
+    endif (MYSQL_FOUND)
+ELSE ()
+    MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
+ENDIF ()
+
+# -----------------------------------------------------------------------------
 # Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
 if (NOT NOZLIB)
@@ -114,34 +149,6 @@ if (NOT NOZLIB)
     else()
         message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
     endif()
-endif()
-
-# -----------------------------------------------------------------------------
-# Add GIT version
-# -----------------------------------------------------------------------------
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-
-option(NOSTATS "Don't use statistics at all")
-if (NOT NOSTATS)
-    add_definitions( -DSTATS_NEEDED )
-    find_package(MySQL)
-    IF (MYSQL_FOUND)
-        MESSAGE(STATUS "OK, Found MySQL!")
-        include_directories(${MySQL_INCLUDE_DIR})
-        link_directories(${MySQL_LIB_DIR})
-        add_definitions( -DUSE_MYSQL )
-    else (MYSQL_FOUND)
-        MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
-    endif (MYSQL_FOUND)
-ELSE ()
-    MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
-ENDIF ()
-
-if (NOT NOTESTS)
-    find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
-else()
-    find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
 endif()
 
 #M4RI
