@@ -93,25 +93,27 @@ IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 
 # -----------------------------------------------------------------------------
-# Look for ZLIP (For reading zipped CNFs)
+# Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
-find_package(ZLIB)
-IF (ZLIB_FOUND)
-    MESSAGE(STATUS "OK, Found ZLIB!")
-    include_directories(${ZLIB_INCLUDE_DIR})
-    link_directories(${ZLIB_LIB_DIR})
-    add_definitions( -DUSE_ZLIB )
-ELSE (ZLIB_FOUND)
-    MESSAGE(STATUS "WARNING: Did not find ZLIB, gzipped file support will be disabled")
-ENDIF (ZLIB_FOUND)
+if (NOT NOZLIB)
+    find_package(ZLIB)
+    IF (ZLIB_FOUND)
+        MESSAGE(STATUS "OK, Found ZLIB!")
+        include_directories(${ZLIB_INCLUDE_DIR})
+        link_directories(${ZLIB_LIB_DIR})
+        add_definitions( -DUSE_ZLIB )
+    ELSE (ZLIB_FOUND)
+        MESSAGE(STATUS "WARNING: Did not find ZLIB, gzipped file support will be disabled")
+    ENDIF (ZLIB_FOUND)
 
-find_package(Valgrind)
-if (VALGRIND_FOUND)
-    message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
-    add_definitions(-DUSE_VALGRIND)
-    include_directories(${VALGRIND_INCLUDE_DIR})
-else()
-    message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
+    find_package(Valgrind)
+    if (VALGRIND_FOUND)
+        message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
+        add_definitions(-DUSE_VALGRIND)
+        include_directories(${VALGRIND_INCLUDE_DIR})
+    else()
+        message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
+    endif()
 endif()
 
 # -----------------------------------------------------------------------------
@@ -179,7 +181,10 @@ set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
 add_subdirectory(cryptominisat4 cmsat4-src)
-add_subdirectory(tests)
+
+if (NOT NOTESTS)
+    add_subdirectory(tests)
+endif()
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
@@ -192,10 +197,12 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-enable_testing()
-ADD_TEST (basic_test tests/basic_test)
-ADD_TEST (assump_test tests/assump_test)
-add_test (readme_test tests/readme_test)
+if (NOT NOTESTS)
+    enable_testing()
+    ADD_TEST (basic_test tests/basic_test)
+    ADD_TEST (assump_test tests/assump_test)
+    add_test (readme_test tests/readme_test)
+endif()
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with
