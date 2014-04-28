@@ -43,7 +43,6 @@ using std::endl;
 
 Vivifier::Vivifier(Solver* _solver) :
     solver(_solver)
-    , seen(solver->seen)
 {}
 
 bool Vivifier::vivify(const bool alsoStrengthen)

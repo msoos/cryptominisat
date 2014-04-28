@@ -83,7 +83,6 @@ class Vivifier {
         vector<Lit> lits;
         vector<Lit> uselessLits;
         uint64_t extraTime;
-        vector<uint16_t>& seen;
 
         //Global status
         Stats runStats;
