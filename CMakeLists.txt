@@ -138,7 +138,11 @@ ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
 ENDIF ()
 
-find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
+if (NOT NOTESTS)
+    find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
+else()
+    find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
+endif()
 
 #M4RI
 find_package(M4RI)
