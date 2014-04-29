@@ -42,6 +42,16 @@ static void SIGINT_handler(int) {
     exit(1);
 }
 
+void printVersionInfo()
+{
+    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
+    #ifdef __GNUC__
+    cout << "c compiled with gcc version " << __VERSION__ << endl;
+    #else
+    cout << "c compiled with non-gcc compiler" << endl;
+    #endif
+}
+
 void drup_stuff(SolverConf& conf)
 {
     drupf = &std::cout;
@@ -157,7 +167,7 @@ int main(int argc, char** argv)
     }
     solver->set_num_threads(num_threads);
 
-    printf("c This is CryptoMiniSat 4.1.0\n");
+    printVersionInfo();
     double cpu_time = cpuTime();
 
     solver = &S;
