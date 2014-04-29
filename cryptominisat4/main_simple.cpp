@@ -167,7 +167,7 @@ int main(int argc, char** argv)
     if (argc == 1)
         printf("Reading from standard input... Use '-h' or '--help' for help.\n");
 
-    FILE* in = (argc == 1) ? fopen(0, "rb") : fopen(argv[1], "rb");
+    FILE* in = (argc == 1) ? stdin : fopen(argv[1], "rb");
     if (in == NULL)
         printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
 
