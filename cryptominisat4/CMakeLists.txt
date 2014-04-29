@@ -145,6 +145,7 @@ endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
     libcryptominisat4
 )
 

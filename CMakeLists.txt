@@ -51,9 +51,9 @@ if (SANITIZE)
     #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 endif()
 
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++11 -g -O3 -mtune=native")
-SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -Wno-deprecated -O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O2 -g -DNDEBUG -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++11 -pthread -g -O3 -mtune=native")
+SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -pthread -O0 -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pthread -g0 -DNDEBUG -mtune=native")
 
 
 include(CheckCXXCompilerFlag)
@@ -110,6 +110,8 @@ else()
     set(NOTESTS "ON")
     set(NOZLIB "ON")
 endif()
+
+find_package (Threads REQUIRED)
 
 option(NOSTATS "Don't use statistics at all")
 if (NOT NOSTATS)
