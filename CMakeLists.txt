@@ -53,7 +53,7 @@ endif()
 
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++11 -pthread -g -O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -pthread -O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pthread -g0 -DNDEBUG -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pthread -O3 -g0 -DNDEBUG -mtune=native")
 
 
 include(CheckCXXCompilerFlag)
