@@ -1,139 +1,65 @@
 #Config parametrization file by T. Marius Lindauer, updated by Mate Soos.
 #All rights reserved.
 
-
 #restarts
-restart {geom, agility, glue, glueagility}[geom]
-agilg [0.00001,1][0.9999]l
-agilg | restart in {agility}
-agillim [0.0001,1][0.03]l
-agillim | restart in {agility}
-agilviollim [2,1024][20]li
-agilviollim | restart in {agility}
-gluehist [1,10000][100]li
+gluehist [80,300][100]li
 gluehist | restart in {glue}
 blkrest {0,1}[1]
-blkrestlen [1,1000000][5000]li
+blkrestlen [2000,10000][5000]li
 blkrestlen | blkrest in {1}
-blkrestmultip [1,2][1.4]
+blkrestmultip [1.1,2][1.4]
 blkrestmultip | blkrest in {1}
-
-#Propagation
-updateglue {0,1}[1]
-binpri {0,1}[0]
-lhbr {0,1}[0]
-lhbr | binpri in {1}
-otfhyper {0,1}[1]
+burst {100,300,1000,2000}[300]
+clbtwsimp [1,5][2]li
 
 # Red clause removal 
-ltclean [0,1][0.5]
-clean {size, glue, activity, prconf, confdep}[prconf]
-cleanconflmult [1,64][1]li
-cleanconflmult | clean in {confdep}
-lockuip [0,2000][500]i
-locktop [0,2000][1]i
+ltclean [0.3,0.7][0.5]
+cleanconflmult [0,2][1]li
+lockuip [50,1000][500]i
+locktop [0,2000][0]i
 perfmult [0.00001,0.8][0.00001]l
-preclean {0,1}[0]
-precleanlim [1,64][2]il
-precleanlim | preclean in {1}
-precleantime [1,1000000][10000]li
-precleantime | preclean in {1}
-clearstat {0,1}[1]
 startclean [100,50000][10000]li
-incclean [1,3][1.1]
-maxredratio [1,10000][10]li
+incclean [1.02,1.8][1.1]
 
 # Variable branching
-vincmult [5,20][11]li
-vincdiv [6,12][10]li # smac cannot model something like "smaller"
-vincvary [0,5][0]i
-vincstart [1,1024][128]i
-freq[0,0.2][0]
-dompickf [1,1000000][400]li
+freq[0,0.05][0]
+dompickf [100,10000][400]li
 morebump {0,1}[1]
-topnrndpick [1,1000][20]il
-topnrndpickfreq [0.0000001,1][0.000001]l
-topnincnum [1,128][1]li
+#topnrndpick [5,1000][20]il
+#topnrndpickfreq [0.0000001,1][0.000001]l
 
 # Variable polarity
-polar{true,false,rnd,auto}[auto]
-flippolf {0,400}[0] # fixed.
-flippolf | polar in {true,rnd,auto}
+flippolf {0,400}[0]
 calcpolar1st {0,1} [1]
-calcpolar1st | polar in {true,rnd,auto}
 calcpolarall {0,1} [1]
-calcpolarall | polar in {true,rnd,auto}
 
 # Conflict
 # recur {0,1}[1] # not a good idea to set it to 0
-moreminim {0,1}[1]
-moreminimcache [1,1000000][200]il
-moreminimcache | moreminim in {1}
-moreminimbin [1,1000000][100]il
-moreminimbin | moreminim in {1}
-alwaysmoremin {0,1}[0]
-otfsubsume {0,1}[1]
-rewardotfsubsume [1,32][1]il
-rewardotfsubsume | otfsubsume in {1}
+moreminimcache [20,600][200]il
+moreminimbin [20,5000][100]il
 
 # Probing 
-probemaxm [600,4000][1600]i
-transred {0,1}[1]
+probemaxm [800,4000][1600]i
 
 # Stamping
-stamp {0,1}[1]
-cache {0,1}[1]
-cachesize [1,4096][2048]il
-cachesize | cache in {1}
-calcreach {0,1}[1]
-cachecutoff [1,1000000][2000]il
+cachesize [1024,4096][2048]il
 
-# Simplification 
-#schedsimp {0,1}[1]
+calcreach {0,1}[1]
+cachecutoff [600,5000][2000]il
+
+# Simplification
 presimp {0,1}[0]
-#varelim {0,1}[1]
-emptyelim {0,1}[1]
-elimstrgy {heuristic,calculate}[heuristic]
-elimcplxupd {0,1}[1]
 elimcoststrategy {0,1}[0]
-subsume1 {0,1}[1]
-bva {0,1}[1]
 bva2lit {0,1}[1]
-noextbinsubs {0,1}[1]
-eratio [0.00001,1][0.12]l
-occredmax [10,400][200]il
+eratio [0.05,1][0.12]l
+occredmax [100,400][200]il
 
 # Equivalent literal
-extscc {0,1}[1]
 sccperc [0.001,0.5][0.02]l
 
-# Component
-comps {0,1}[1]
-compsfrom [0,10][0]i
-compsfrom | comps in {1}
-compsvar [1,10000000][1000000]il
-compsvar | comps in {1}
-compslimit [1,1000000][500]il
-
-# XOR-related - required?
-xor {0,1}[1]
-echelonxor {0,1}[1]
-maxxormat [5000000,50000000][10000000]il
-maxxormat | xor in {1}
-
-# Gate-related
-gates {0,1}[1]
-gorshort {0,1}[1]
-gorshort | gates in {1}
-gandrem {0,1}[1]
-gandrem | gates in {1}
-gateeqlit {0,1}[1]
-gateeqlit | gates in {1}
-
 # Misc
-vivif {0,1}[1]
-viviflongmaxm [5,200][20]il
-viviffastmaxm [100,2000][400]il
+viviflongmaxm [5,80][20]il
+viviffastmaxm [100,1000][400]il
 
 # turn off verbosity
 printsol {0}[0]
