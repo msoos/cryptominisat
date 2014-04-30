@@ -3,7 +3,6 @@
 
 #restarts
 gluehist [80,300][100]li
-gluehist | restart in {glue}
 blkrest {0,1}[1]
 blkrestlen [2000,10000][5000]li
 blkrestlen | blkrest in {1}
@@ -12,9 +11,9 @@ blkrestmultip | blkrest in {1}
 burst {100,300,1000,2000}[300]
 clbtwsimp [1,5][2]li
 
-# Red clause removal 
+# Red clause removal
 ltclean [0.3,0.7][0.5]
-cleanconflmult [0,2][1]li
+cleanconflmult {0,1,2}[1]
 lockuip [50,1000][500]i
 locktop [0,2000][0]i
 perfmult [0.00001,0.8][0.00001]l
@@ -38,7 +37,7 @@ calcpolarall {0,1} [1]
 moreminimcache [20,600][200]il
 moreminimbin [20,5000][100]il
 
-# Probing 
+# Probing
 probemaxm [800,4000][1600]i
 
 # Stamping
