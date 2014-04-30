@@ -111,6 +111,8 @@ else()
     set(NOZLIB "ON")
 endif()
 
+find_package (Threads REQUIRED)
+
 option(NOSTATS "Don't use statistics at all")
 if (NOT NOSTATS)
     add_definitions( -DSTATS_NEEDED )
