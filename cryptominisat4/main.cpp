@@ -72,6 +72,7 @@ Main::Main(int _argc, char** _argv) :
 }
 
 SATSolver* solverToInterrupt;
+int clear_interrupt;
 string redDumpFname;
 string irredDumpFname;
 
@@ -80,7 +81,7 @@ void SIGINT_handler(int)
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (!redDumpFname.empty() || !irredDumpFname.empty()) {
+    if (!redDumpFname.empty() || !irredDumpFname.empty() || clear_interrupt) {
         solver->interrupt_asap();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl
@@ -610,6 +611,8 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit subsumption")
     ("burst", po::value(&conf.burstSearchLen)->default_value(conf.burstSearchLen)
         , "Number of conflicts to do in burst search")
+    ("clearinter", po::value(&clear_interrupt)->default_value(0)
+        , "Interrupt threads cleanly, all the time")
     ;
 
     po::options_description componentOptions("Component options");
@@ -962,6 +965,7 @@ void Main::manually_parse_some_options()
 
 void Main::parseCommandLine()
 {
+    clear_interrupt = 0;
     conf.verbosity = 2;
     conf.verbStats = 1;
 
