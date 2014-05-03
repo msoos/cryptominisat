@@ -143,12 +143,12 @@ static void one_thread(
     topass data
 ) {
     data.update_mutex->lock();
-    cout << "Starting thread" << data.tid << endl;
+    //cout << "Starting thread" << data.tid << endl;
     data.update_mutex->unlock();
 
     lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.assumptions);
     data.update_mutex->lock();
-    cout << "Finished tread " << data.tid << " with result: " << ret << endl;
+    //cout << "Finished tread " << data.tid << " with result: " << ret << endl;
     data.update_mutex->unlock();
 
 
