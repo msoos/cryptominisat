@@ -30,7 +30,7 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData);
+        DataSync(Solver* solver, SharedData* sharedData, uint32_t thread_num);
         bool enabled();
         void new_var(bool bva);
         bool syncData();
@@ -55,10 +55,13 @@ class DataSync
 
     private:
         //functions
+        void extend_bins_if_needed();
         Lit map_outside_without_bva(Lit lit) const;
         bool shareUnitData();
+        bool syncBinFromOthers();
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
+        void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         bool shareBinData();
 
@@ -73,6 +76,7 @@ class DataSync
         //Other systems
         Solver* solver;
         SharedData* sharedData;
+        uint32_t thread_num;
 
         //misc
         vector<uint16_t>& seen;

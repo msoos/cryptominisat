@@ -96,7 +96,7 @@ void SATSolver::set_num_threads(unsigned num)
     }
 
     //set shared data
-    shared_data = (void*)new SharedData;
+    shared_data = (void*)new SharedData(solvers->size());
     for(unsigned i = 0; i < num; i++) {
         SolverConf conf = solvers->at(i)->getConf();
         if (i >= 1) {
@@ -105,7 +105,7 @@ void SATSolver::set_num_threads(unsigned num)
             conf.doFindXors = 0;
         }
         solvers->at(i)->setConf(conf);
-        solvers->at(i)->set_shared_data((SharedData*)shared_data);
+        solvers->at(i)->set_shared_data((SharedData*)shared_data, i);
     }
 }
 
