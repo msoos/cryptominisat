@@ -2700,7 +2700,11 @@ void Solver::dumpBinClauses(
     , const bool dumpIrred
     , std::ostream* outfile
 ) const {
-    //Go trough each watchlist
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     size_t wsLit = 0;
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
@@ -2743,6 +2747,11 @@ void Solver::dumpTriClauses(
     , const bool alsoIrred
     , std::ostream* outfile
 ) const {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     uint32_t wsLit = 0;
     for (watch_array::const_iterator
         it = watches.begin(), end = watches.end()
@@ -2821,6 +2830,11 @@ void Solver::printClauseSizeDistrib()
 
 void Solver::dumpEquivalentLits(std::ostream* os) const
 {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     *os
     << "c " << endl
     << "c ---------------------------------------" << endl
@@ -2881,6 +2895,11 @@ vector<Lit> Solver::get_zero_assigned_lits() const
 
 void Solver::dumpUnitaryClauses(std::ostream* os) const
 {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     *os
     << "c " << endl
     << "c ---------" << endl
@@ -2899,6 +2918,11 @@ void Solver::dumpRedClauses(
     std::ostream* os
     , const uint32_t maxSize
 ) const {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     dumpUnitaryClauses(os);
 
     *os
@@ -2970,6 +2994,11 @@ void Solver::dump_clauses(
     , std::ostream* os
     , size_t max_size
 ) const {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     for(vector<ClOffset>::const_iterator
         it = cls.begin(), end = cls.end()
         ; it != end
@@ -2983,6 +3012,11 @@ void Solver::dump_clauses(
 
 void Solver::dump_blocked_clauses(std::ostream* os) const
 {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     if (conf.perform_occur_based_simp) {
         const vector<BlockedClause>& blockedClauses
             = simplifier->getBlockedClauses();
@@ -3011,6 +3045,11 @@ void Solver::dump_blocked_clauses(std::ostream* os) const
 
 void Solver::dump_component_clauses(std::ostream* os) const
 {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     if (conf.doCompHandler) {
         const CompHandler::RemovedClauses& removedClauses = compHandler->getRemovedClauses();
 
@@ -3032,6 +3071,11 @@ void Solver::dump_component_clauses(std::ostream* os) const
 
 void Solver::dumpIrredClauses(std::ostream* os) const
 {
+    if (conf.do_bva) {
+        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        exit(-1);
+    }
+
     *os
     << "p cnf "
     << nVarsOuter()
