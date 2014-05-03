@@ -2118,7 +2118,7 @@ bool Simplifier::add_varelim_resolvent(
         clauses.push_back(offset);
         runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-        if (*limit_to_decrease > 10ULL*1000ULL) {
+        if (*limit_to_decrease > 10LL*1000LL) {
             subsume:
             try_to_subsume_with_new_bin_or_tri(finalLits);
         }
