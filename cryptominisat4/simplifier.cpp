@@ -3181,10 +3181,11 @@ void Simplifier::fill_potential(const Lit lit)
                 goto end;
 
             OccurClause d(l_min, d_ws);
-            //cout << "Under scrutiny: "<< solver->watched_to_string(d.lit, d.ws) << endl;
+            size_t sz_c = solver->cl_size(c.ws);
+            size_t sz_d = solver->cl_size(d.ws);
             if (c.ws != d.ws
-                && (solver->cl_size(c.ws) == solver->cl_size(d.ws)
-                    || (solver->cl_size(c.ws)+1 == solver->cl_size(d.ws)
+                && (sz_c == sz_d
+                    || (sz_c+1 == sz_d
                         && solver->conf.bva_also_twolit_diff
                         && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start
                     )
