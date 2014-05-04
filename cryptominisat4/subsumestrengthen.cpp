@@ -201,9 +201,9 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
     const int64_t orig_limit = simplifier->subsumption_time_limit;
     simplifier->limit_to_decrease = &simplifier->subsumption_time_limit;
     while (*simplifier->limit_to_decrease > 0
-        && wenThrough < 1.5*(double)simplifier->clauses.size()
+        && (double)wenThrough < solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size()
     ) {
-        *simplifier->limit_to_decrease -= 2;
+        *simplifier->limit_to_decrease -= 3;
 
         //Print status
         if (solver->conf.verbosity >= 5
@@ -222,7 +222,6 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
 
         wenThrough++;
         *simplifier->limit_to_decrease -= 20;
-
         subsumed += subsume_and_unlink_and_markirred(offset);
     }
 

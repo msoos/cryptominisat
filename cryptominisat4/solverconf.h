@@ -243,6 +243,7 @@ class SolverConf
         unsigned maxOccurIrredMB;
         unsigned maxOccurRedMB;
         unsigned long long maxOccurRedLitLinkedM;
+        double   subsume_gothrough_multip;
 
         //Vivification
         int      doClausVivif;

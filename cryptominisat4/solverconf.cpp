@@ -172,6 +172,7 @@ SolverConf::SolverConf() :
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
+        , subsume_gothrough_multip(4.0)
 
         //Vivification
         , doClausVivif(true)
