@@ -3181,8 +3181,8 @@ void Simplifier::fill_potential(const Lit lit)
                 goto end;
 
             OccurClause d(l_min, d_ws);
-            size_t sz_c = solver->cl_size(c.ws);
-            size_t sz_d = solver->cl_size(d.ws);
+            const size_t sz_c = solver->cl_size(c.ws);
+            const size_t sz_d = solver->cl_size(d.ws);
             if (c.ws != d.ws
                 && (sz_c == sz_d
                     || (sz_c+1 == sz_d
