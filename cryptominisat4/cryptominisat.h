@@ -42,6 +42,7 @@ namespace CMSat {
         void *shared_data;
         int which_solved;
         bool* inter;
+        unsigned cls;
     };
 }
 

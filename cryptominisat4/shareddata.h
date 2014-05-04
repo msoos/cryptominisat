@@ -58,7 +58,7 @@ class SharedData
         mutex unit_mutex;
         mutex bin_mutex;
 
-        const uint32_t num_threads;
+        uint32_t num_threads;
 
         size_t calc_memory_use_bins()
         {

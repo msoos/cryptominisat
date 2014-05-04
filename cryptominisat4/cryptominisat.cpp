@@ -35,6 +35,7 @@ using namespace CMSat;
 
 SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
 {
+    cls = 0;
     inter = interrupt_asap;
     which_solved = 0;
     shared_data = NULL;
@@ -151,6 +152,24 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     for(size_t i = 0; i < solvers->size(); i++) {
         ret = solvers->at(i)->add_clause_outer(lits);
     }
+
+    cls++;
+    if (cls % 100000 == 99999) {
+        double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
+        if (usedGB > 10 && solvers->size() > 1) {
+            const size_t newsz = solvers->size() >> 1;
+            cout
+            << "c After " << cls/1000 << "K cls"
+            << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
+            << " deleting 50% threads. New num th: " << newsz << endl;
+
+            for(size_t i = newsz; i < solvers->size(); i++) {
+                delete solvers->at(i);
+            }
+            solvers->resize(newsz);
+            ((SharedData*)shared_data)->num_threads = solvers->size();
+        }
+    }
     return ret;
 }
 
@@ -255,6 +274,23 @@ void SATSolver::new_var()
     MY_SOLVERS
     for(size_t i = 0; i < solvers->size(); i++) {
         solvers->at(i)->new_external_var();
+    }
+
+    if (nVars() % 100000 == 99999) {
+        double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
+        if (usedGB > 7 && solvers->size() > 1) {
+            const size_t newsz = solvers->size() >> 1;
+            cout
+            << "c After " << (nVars()/1000) << "K vars"
+            << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
+            << " deleting 50% threads. New num th: " << newsz << endl;
+
+            for(size_t i = newsz; i < solvers->size(); i++) {
+                delete solvers->at(i);
+            }
+            solvers->resize(newsz);
+            ((SharedData*)shared_data)->num_threads = solvers->size();
+        }
     }
 }
 
