@@ -1876,7 +1876,9 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return 1000;
     }
 
-    //mark_gate_in_poss_negs(lit, poss, negs);
+    if (solver->conf.skip_some_bve_resolvents) {
+        mark_gate_in_poss_negs(lit, poss, negs);
+    }
 
     // Count clauses/literals after elimination
     uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
@@ -1906,14 +1908,15 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             if (solver->redundant_or_removed(*it2))
                 continue;
 
-            /*if (solver->conf.otfHyperbin
+            if (solver->conf.skip_some_bve_resolvents
+                && solver->conf.otfHyperbin
                 //Below: Always resolve binaries so that cache&stamps stay OK
                 && !(it->isBinary() && it2->isBinary())
                 //Real check
                 && skip_resolution_thanks_to_gate(at_poss, at_negs)
             ) {
                 continue;
-            }*/
+            }
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit, aggressive);

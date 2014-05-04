@@ -197,6 +197,9 @@ class SolverConf
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
+        int      skip_some_bve_resolvents;
+
+        //BVA
         int      do_bva;
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
