@@ -3162,6 +3162,7 @@ void Simplifier::fill_potential(const Lit lit)
             continue;
 
         m_lits_this_cl = m_lits;
+        *limit_to_decrease -= m_lits_this_cl.size();
         for(const lit_pair lits: m_lits_this_cl) {
             seen2[lits.hash(seen2.size())] = 1;
         }
@@ -3174,7 +3175,7 @@ void Simplifier::fill_potential(const Lit lit)
             << endl;
         }
 
-        *limit_to_decrease -= (long)solver->watches[l_min.toInt()].size();
+        *limit_to_decrease -= (long)solver->watches[l_min.toInt()].size()*3;
         for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
             if (*limit_to_decrease < 0)
                 goto end;
@@ -3193,6 +3194,7 @@ void Simplifier::fill_potential(const Lit lit)
             ) {
                 const lit_pair diff = lit_diff_watches(d, c);
                 if (seen2[diff.hash(seen2.size())] == 0) {
+                    *limit_to_decrease -= 3;
                     potential.push_back(PotentialClause(diff, c));
                     m_lits_this_cl.push_back(diff);
                     seen2[diff.hash(seen2.size())] = 1;
@@ -3459,6 +3461,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     m_cls.clear();
     m_lits.clear();
     m_lits.push_back(lit);
+    *limit_to_decrease -= solver->watches[lit.toInt()].size();
     for(const Watched w: solver->watches[lit.toInt()]) {
         if (!solver->redundant(w)) {
             m_cls.push_back(OccurClause(lit, w));
@@ -3482,6 +3485,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
         if (simplifies_system(num_occur)) {
             m_lits.push_back(l_max);
             m_cls.clear();
+            *limit_to_decrease -= potential.size()*3;
             for(const PotentialClause pot: potential) {
                 if (pot.lits == l_max) {
                     m_cls.push_back(pot.occur_cl);
