@@ -2087,7 +2087,7 @@ bool Simplifier::add_varelim_resolvent(
     Clause* newCl = NULL;
 
     //Check if a new 2-long would subsume a 3-long if we have time
-    if (finalLits.size() == 2 && *limit_to_decrease > 10ULL*1000ULL) {
+    if (finalLits.size() == 2 && *limit_to_decrease > 10LL*1000LL) {
         bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
         if (already_inside) {
             goto subsume;
