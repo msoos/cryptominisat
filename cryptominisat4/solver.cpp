@@ -695,32 +695,31 @@ bool Solver::addClause(const vector<Lit>& lits)
         return false;
     }
 
-    vector<Lit> finalCl;
-    vector<Lit> origCl = ps;
+    finalCl_tmp.clear();
+    std::sort(ps.begin(), ps.end());
     Clause* cl = addClauseInt(
         ps
         , false //irred
         , ClauseStats() //default stats
         , true //yes, attach
-        , &finalCl
+        , &finalCl_tmp
         , false
     );
 
     //Drup -- We manipulated the clause, delete
-    std::sort(origCl.begin(), origCl.end());
     if (drup->enabled()
-        && origCl != finalCl
+        && ps != finalCl_tmp
     ) {
         //Dump only if non-empty (UNSAT handled later)
-        if (!finalCl.empty()) {
-            *drup << finalCl << fin;
+        if (!finalCl_tmp.empty()) {
+            *drup << finalCl_tmp << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!solver->okay()) {
             *drup << fin;
         }
-        *drup << del << origCl << fin;
+        *drup << del << ps << fin;
     }
 
     if (cl != NULL) {
@@ -1565,7 +1564,8 @@ void Solver::lock_most_UIP_used_clauses()
 void Solver::set_assumptions()
 {
     assert(solver->okay());
-    assumptions = back_number_from_caller(origAssumptions);
+    back_number_from_caller(origAssumptions);
+    assumptions = back_number_from_caller_tmp;
     addClauseHelper(assumptions);
     for(const Lit lit: assumptions) {
         if (lit.var() < assumptionsSet.size()) {
@@ -4023,8 +4023,8 @@ unsigned long Solver::get_sql_id() const
 bool Solver::add_clause_outer(const vector<Lit>& lits)
 {
     check_too_large_variable_number(lits);
-    vector<Lit> lits2 = back_number_from_caller(lits);
-    return addClause(lits2);
+    back_number_from_caller(lits);
+    return addClause(back_number_from_caller_tmp);
 }
 
 bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
@@ -4035,9 +4035,9 @@ bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
     }
     check_too_large_variable_number(lits);
 
-    vector<Lit> lits2 = back_number_from_caller(lits);
-    addClauseHelper(lits2);
-    add_xor_clause_inter(lits2, rhs, true);
+    back_number_from_caller(lits);
+    addClauseHelper(back_number_from_caller_tmp);
+    add_xor_clause_inter(back_number_from_caller_tmp, rhs, true);
 
     return ok;
 }

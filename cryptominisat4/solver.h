@@ -154,6 +154,7 @@ class Solver : public Searcher
 
     protected:
         uint64_t getNumLongClauses() const;
+        vector<Lit> finalCl_tmp;
         bool addClause(const vector<Lit>& ps);
         void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
         void new_vars(size_t n) override;
@@ -307,17 +308,16 @@ class Solver : public Searcher
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
 
         lbool solve();
+        vector<Lit> back_number_from_caller_tmp;
         template<class T>
-        vector<Lit> back_number_from_caller(const vector<T>& lits) const
+        void back_number_from_caller(const vector<T>& lits)
         {
-            vector<Lit> lits2;
+            back_number_from_caller_tmp.clear();
             for (const T& lit: lits) {
                 assert(lit.var() < nVarsOutside());
-                lits2.push_back(map_to_with_bva(lit));
-                assert(lits2.back().var() < nVarsOuter());
+                back_number_from_caller_tmp.push_back(map_to_with_bva(lit));
+                assert(back_number_from_caller_tmp.back().var() < nVarsOuter());
             }
-
-            return lits2;
         }
         void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> origAssumptions;
