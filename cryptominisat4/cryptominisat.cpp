@@ -322,7 +322,6 @@ void SATSolver::new_vars(size_t n)
     MY_SOLVERS
     for(size_t d = 0; d < n/500000ULL; d++) {
         for(size_t i = 0; i < solvers->size(); i++) {
-            cout << "adding: " << (d+1)*500000ULL << endl;
             solvers->at(i)->new_external_vars((d+1)*500000ULL);
         }
         check_over_mem_limit();
