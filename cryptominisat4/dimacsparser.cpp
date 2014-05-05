@@ -86,8 +86,8 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     }
     while (*in >= '0' && *in <= '9') {
         lenParsed++;
-        val = val*10 + (*in - '0'),
-              ++in;
+        val = val*10 + (*in - '0');
+        ++in;
     }
     return neg ? -val : val;
 }
