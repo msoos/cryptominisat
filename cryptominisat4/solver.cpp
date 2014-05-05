@@ -982,10 +982,10 @@ void Solver::renumberVariables()
     //backed up activities and then rebuilt at the start of Searcher
 }
 
-void Solver::check_switchoff_limits_newvar()
+void Solver::check_switchoff_limits_newvar(size_t n)
 {
     if (conf.doStamp
-        && nVars() > 15ULL*1000ULL*1000ULL
+        && nVars() + n > 15ULL*1000ULL*1000ULL
     ) {
         conf.doStamp = false;
         stamp.freeMem();
@@ -997,7 +997,9 @@ void Solver::check_switchoff_limits_newvar()
         }
     }
 
-    if (conf.doCache && nVars() > 8ULL*1000ULL*1000ULL) {
+    if (conf.doCache
+        && nVars() + n > 8ULL*1000ULL*1000ULL
+    ) {
         conf.doCache = false;
         implCache.free();
 
@@ -1011,7 +1013,7 @@ void Solver::check_switchoff_limits_newvar()
 
     if (conf.perform_occur_based_simp
         && conf.doFindXors
-        && nVars() > 1ULL*1000ULL*1000ULL
+        && nVars() + n > 1ULL*1000ULL*1000ULL
     ) {
         conf.doFindXors = false;
         simplifier->freeXorMem();
@@ -1023,6 +1025,25 @@ void Solver::check_switchoff_limits_newvar()
             << endl;
         }
     }
+}
+
+void Solver::new_vars(size_t n)
+{
+    check_switchoff_limits_newvar(n);
+    Searcher::new_vars(n);
+    if (conf.doCache) {
+        litReachable.resize(litReachable.size()+n*2, LitReachData());
+    }
+    varReplacer->new_vars(n);
+
+    if (conf.perform_occur_based_simp) {
+        simplifier->new_vars(n);
+    }
+
+    if (conf.doCompHandler) {
+        compHandler->new_vars(n);
+    }
+    datasync->new_vars(n);
 }
 
 void Solver::new_var(const bool bva, const Var orig_outer)
@@ -3974,6 +3995,11 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 void Solver::new_external_var()
 {
     new_var(false);
+}
+
+void Solver::new_external_vars(size_t n)
+{
+    new_vars(n);
 }
 
 void Solver::add_in_partial_solving_stats()

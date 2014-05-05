@@ -621,6 +621,7 @@ class Searcher : public HyperEngine
 
     protected:
         void new_var(bool bva, Var orig_outer) override;
+        void new_vars(size_t n) override;
         void saveVarMem();
         void updateVars(
             const vector<uint32_t>& outerToInter

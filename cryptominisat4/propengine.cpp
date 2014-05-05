@@ -67,6 +67,13 @@ void PropEngine::new_var(const bool bva, Var orig_outer)
     //trail... update x->whatever
 }
 
+void PropEngine::new_vars(size_t n)
+{
+    CNF::new_vars(n);
+    //TODO
+    //trail... update x->whatever
+}
+
 void PropEngine::saveVarMem()
 {
     CNF::saveVarMem();

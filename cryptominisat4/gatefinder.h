@@ -100,6 +100,7 @@ public:
     GateFinder(Simplifier *subsumer, Solver *control);
 
     void new_var(const Var orig_outer);
+    void new_vars(size_t n);
     void saveVarMem();
     bool doAll();
 

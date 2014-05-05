@@ -33,6 +33,7 @@ class DataSync
         DataSync(Solver* solver, SharedData* sharedData, uint32_t thread_num);
         bool enabled();
         void new_var(bool bva);
+        void new_vars(size_t n);
         bool syncData();
         void saveVarMem();
         void rebuild_bva_map();

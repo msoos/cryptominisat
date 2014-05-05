@@ -63,6 +63,15 @@ void VarReplacer::new_var(const Var orig_outer)
     }
 }
 
+void VarReplacer::new_vars(const size_t n)
+{
+    size_t oldsize = table.size();
+    table.resize(table.size()+n, lit_Undef);
+    for(size_t i = oldsize; i < table.size(); i++) {
+        table[i] = Lit(i, false);
+    }
+}
+
 void VarReplacer::saveVarMem()
 {
 }

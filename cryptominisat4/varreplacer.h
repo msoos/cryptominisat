@@ -60,6 +60,7 @@ class VarReplacer
         VarReplacer(Solver* solver);
         ~VarReplacer();
         void new_var(Var orig_outer);
+        void new_vars(size_t n);
         void saveVarMem();
         bool performReplace();
         bool replace(

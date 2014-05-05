@@ -54,8 +54,14 @@ CompHandler::~CompHandler()
 
 void CompHandler::new_var(const Var orig_outer)
 {
-    if (orig_outer == std::numeric_limits<Var>::max())
+    if (orig_outer == std::numeric_limits<Var>::max()) {
         savedState.push_back(l_Undef);
+    }
+}
+
+void CompHandler::new_vars(size_t n)
+{
+    savedState.resize(savedState.size()+n, l_Undef);
 }
 
 void CompHandler::saveVarMem()

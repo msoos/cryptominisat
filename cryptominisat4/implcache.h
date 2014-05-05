@@ -169,10 +169,15 @@ public:
         return implCache[at];
     }
 
-    void new_var(const Var)
+    void new_var()
     {
         implCache.push_back(TransCache());
         implCache.push_back(TransCache());
+    }
+
+    void new_vars(size_t n)
+    {
+        implCache.resize(implCache.size()+2*n);
     }
 
     size_t size() const

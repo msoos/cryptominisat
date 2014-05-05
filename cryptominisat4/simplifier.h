@@ -99,6 +99,7 @@ public:
     bool simplify();
     void subsumeReds();
     void new_var(const Var orig_outer);
+    void new_vars(size_t n);
     void saveVarMem();
     bool unEliminate(const Var var);
     size_t memUsed() const;
@@ -375,7 +376,6 @@ public:
     void freeXorMem();
 
 private:
-
     friend class SubsumeStrengthen;
     SubsumeStrengthen* subsumeStrengthen;
 
@@ -383,6 +383,7 @@ private:
     bool subsetReverse(const Clause& B) const;
     void checkAllLinkedIn();
 
+    void check_delete_gatefinder();
     bool fill_occur();
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);

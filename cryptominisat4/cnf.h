@@ -186,6 +186,7 @@ public:
 protected:
     vector<Var> build_outer_to_without_bva_map() const;
     virtual void new_var(bool bva, Var orig_outer);
+    virtual void new_vars(size_t n);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const
     {
@@ -213,8 +214,8 @@ protected:
 
 private:
     bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
-    void enlarge_minimal_datastructs();
-    void enlarge_nonminimial_datastructs();
+    void enlarge_minimal_datastructs(size_t n = 1);
+    void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const Var which);
 
     bool needToInterrupt_is_foreign;

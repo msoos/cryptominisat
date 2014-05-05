@@ -84,6 +84,19 @@ void Searcher::new_var(const bool bva, const Var orig_outer)
     act_polar_backup.polarity.push_back(false);
 }
 
+void Searcher::new_vars(size_t n)
+{
+    PropEngine::new_vars(n);
+    activities.resize(activities.size() + n, 0);
+    for(int i = n-1; i >= 0; i--) {
+        insertVarOrder((int)nVars()-i-1);
+    }
+    assumptionsSet.resize(assumptionsSet.size() + n, false);
+
+    act_polar_backup.activity.resize(act_polar_backup.activity.size() + n, 0);
+    act_polar_backup.polarity.resize(act_polar_backup.polarity.size() + n, false);
+}
+
 void Searcher::saveVarMem()
 {
     PropEngine::saveVarMem();
@@ -1030,7 +1043,7 @@ lbool Searcher::search()
         }
 
         again:
-        if (conf.otfHyperbin && decisionLevel() == 1) {
+        if (conf.otfHyperbin && decisionLevel() == 1 && nVars() < 500ULL*1000ULL) {
             bool must_continue;
             lbool ret = otf_hyper_prop_first_dec_level(must_continue);
             if (ret != l_Undef) {

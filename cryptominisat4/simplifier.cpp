@@ -112,7 +112,7 @@ Simplifier::~Simplifier()
     delete gateFinder;
 }
 
-void Simplifier::new_var(const Var orig_outer)
+void Simplifier::check_delete_gatefinder()
 {
     if (solver->conf.doGateFind
         && solver->nVars() > 10ULL*1000ULL*1000ULL
@@ -127,9 +127,23 @@ void Simplifier::new_var(const Var orig_outer)
         gateFinder = NULL;
         solver->conf.doGateFind = false;
     }
+}
+
+void Simplifier::new_var(const Var orig_outer)
+{
+    check_delete_gatefinder();
 
     if (solver->conf.doGateFind) {
         gateFinder->new_var(orig_outer);
+    }
+}
+
+void Simplifier::new_vars(size_t n)
+{
+    check_delete_gatefinder();
+
+    if (solver->conf.doGateFind) {
+        gateFinder->new_vars(n);
     }
 }
 

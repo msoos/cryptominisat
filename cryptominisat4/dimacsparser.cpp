@@ -161,6 +161,9 @@ void DimacsParser::printHeader(StreamBuffer& in)
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
+         if (solver->nVars() <= vars) {
+            solver->new_vars(vars-solver->nVars()+1);
+        }
     } else {
         cout
         << "PARSE ERROR! Unexpected char: '" << *in

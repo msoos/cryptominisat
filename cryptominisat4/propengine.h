@@ -127,6 +127,7 @@ public:
 
 protected:
     void new_var(const bool bva, Var orig_outer) override;
+    void new_vars(size_t n) override;
     void saveVarMem();
     //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.

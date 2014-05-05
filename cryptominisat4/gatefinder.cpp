@@ -1012,6 +1012,12 @@ void GateFinder::new_var(const Var)
     gateOccEq.push_back(vector<uint32_t>());
 }
 
+void GateFinder::new_vars(size_t n)
+{
+    gateOcc.resize(gateOcc.size() + 2*n);
+    gateOccEq.resize(gateOccEq.size() + 2*n);
+}
+
 void GateFinder::saveVarMem()
 {
     gateOcc.resize(solver->nVars()*2);

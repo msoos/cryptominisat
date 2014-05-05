@@ -77,6 +77,7 @@ class Solver : public Searcher
         void add_sql_tag(const string& tagname, const string& tag);
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
+        void new_external_vars(size_t n);
         bool add_clause_outer(const vector<Lit>& lits);
         bool add_xor_clause_outer(const vector<Var>& vars, bool rhs);
 
@@ -155,6 +156,7 @@ class Solver : public Searcher
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
         void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
+        void new_vars(size_t n) override;
 
         void set_up_sql_writer();
         SQLStats* sqlStats;
@@ -317,7 +319,7 @@ class Solver : public Searcher
 
             return lits2;
         }
-        void check_switchoff_limits_newvar();
+        void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;
         bool enqueueThese(const vector<Lit>& toEnqueue);

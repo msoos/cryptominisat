@@ -23,6 +23,7 @@ namespace CMSat {
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
         void new_var();
+        void new_vars(size_t n);
         lbool solve(std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
@@ -38,6 +39,7 @@ namespace CMSat {
         void add_in_partial_solving_stats();
         std::vector<Lit> get_zero_assigned_lits() const;
     private:
+        void check_over_mem_limit();
         void *s;
         void *shared_data;
         int which_solved;

@@ -185,20 +185,7 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
 
     cls++;
     if (cls % 100000 == 99999) {
-        double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
-        if (usedGB > 7 && solvers->size() > 1) {
-            const size_t newsz = solvers->size() >> 1;
-            cout
-            << "c After " << cls/1000 << "K cls"
-            << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
-            << " deleting 50% threads. New num th: " << newsz << endl;
-
-            for(size_t i = newsz; i < solvers->size(); i++) {
-                delete solvers->at(i);
-            }
-            solvers->resize(newsz);
-            ((SharedData*)shared_data)->num_threads = solvers->size();
-        }
+        check_over_mem_limit();
     }
     return ret;
 }
@@ -307,20 +294,41 @@ void SATSolver::new_var()
     }
 
     if (nVars() % 100000 == 99999) {
-        double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
-        if (usedGB > 5 && solvers->size() > 1) {
-            const size_t newsz = solvers->size() >> 1;
-            cout
-            << "c After " << (nVars()/1000) << "K vars"
-            << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
-            << " deleting 50% threads. New num th: " << newsz << endl;
+        check_over_mem_limit();
+    }
+}
 
-            for(size_t i = newsz; i < solvers->size(); i++) {
-                delete solvers->at(i);
-            }
-            solvers->resize(newsz);
-            ((SharedData*)shared_data)->num_threads = solvers->size();
+void SATSolver::check_over_mem_limit()
+{
+    MY_SOLVERS
+    double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
+    if (usedGB > 5 && solvers->size() > 1) {
+        const size_t newsz = solvers->size() >> 1;
+        cout
+        << "c After " << (nVars()/1000) << "K vars"
+        << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
+        << " deleting 50% threads. New num th: " << newsz << endl;
+
+        for(size_t i = newsz; i < solvers->size(); i++) {
+            delete solvers->at(i);
         }
+        solvers->resize(newsz);
+        ((SharedData*)shared_data)->num_threads = solvers->size();
+    }
+}
+
+void SATSolver::new_vars(size_t n)
+{
+    MY_SOLVERS
+    for(size_t d = 0; d < n/500000ULL; d++) {
+        for(size_t i = 0; i < solvers->size(); i++) {
+            cout << "adding: " << (d+1)*500000ULL << endl;
+            solvers->at(i)->new_external_vars((d+1)*500000ULL);
+        }
+        check_over_mem_limit();
+    }
+    for(size_t i = 0; i < solvers->size(); i++) {
+        solvers->at(i)->new_external_vars(n % 100000ULL);
     }
 }
 

@@ -60,10 +60,14 @@ public:
     void saveVarMem(const uint32_t newNumVars);
 
     vector<Timestamp>   tstamp;
-    void new_var(const Var)
+    void new_var()
     {
         tstamp.push_back(Timestamp());
         tstamp.push_back(Timestamp());
+    }
+    void new_vars(size_t n)
+    {
+        tstamp.resize(tstamp.size() + 2*n, Timestamp());
     }
     size_t memUsed() const
     {

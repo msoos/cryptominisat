@@ -47,6 +47,15 @@ void DataSync::new_var(bool bva)
     assert(solver->nVarsOutside()*2 == syncFinish.size());
 }
 
+void DataSync::new_vars(size_t n)
+{
+    if (!enabled())
+        return;
+
+    syncFinish.resize(syncFinish.size() + 2*n, 0);
+    assert(solver->nVarsOutside()*2 == syncFinish.size());
+}
+
 void DataSync::saveVarMem()
 {
 }
