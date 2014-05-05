@@ -1043,7 +1043,11 @@ lbool Searcher::search()
         }
 
         again:
-        if (conf.otfHyperbin && decisionLevel() == 1 && nVars() < 500ULL*1000ULL) {
+        if (conf.otfHyperbin
+            && decisionLevel() == 1
+            && nVars() < 500ULL*1000ULL
+            && binTri.irredBins + binTri.redBins < 1500ULL*1000ULL
+        ) {
             bool must_continue;
             lbool ret = otf_hyper_prop_first_dec_level(must_continue);
             if (ret != l_Undef) {
