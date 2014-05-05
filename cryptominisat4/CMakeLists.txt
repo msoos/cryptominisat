@@ -79,6 +79,9 @@ if (Perftools_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
 endif (Perftools_FOUND)
 
+if (TBB_FOUND)
+    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_LIBRARIES})
+endif()
 
 if (STATICCOMPILE)
     add_library(libcryptominisat4 STATIC ${cryptoms_lib_files})

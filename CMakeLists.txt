@@ -112,6 +112,12 @@ else()
 endif()
 
 find_package (Threads REQUIRED)
+find_package (TBB)
+if (TBB_FOUND)
+    add_definitions(-DFOUND_TBB)
+else()
+    message(STATUS "Did not find Threading Buliding Blocks. Threads will be slower to allocate memory")
+endif()
 
 option(NOSTATS "Don't use statistics at all")
 if (NOT NOSTATS)
