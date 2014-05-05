@@ -124,8 +124,38 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.ratioRemoveClauses = 0.55;
                 break;
             }
-            default: {
+            case 8: {
+                conf.numCleanBetweenSimplify = 1;
+                conf.skip_some_bve_resolvents = 1;
                 conf.ratioRemoveClauses = 0.7;
+                break;
+            }
+            case 9: {
+                conf.polarity_mode = CMSat::polarmode_pos;
+                conf.ratioRemoveClauses = 0.6;
+                break;
+            }
+            case 10: {
+                conf.do_bva = 0;
+                conf.doGateFind = 0;
+                conf.more_red_minim_limit_cache = 800;
+                conf.more_red_minim_limit_binary = 400;
+                conf.polarity_mode = CMSat::polarmode_neg;
+                conf.ratioRemoveClauses = 0.6;
+                break;
+            }
+            case 11: {
+                conf.do_bva = 0;
+                conf.doGateFind = 0;
+                conf.restartType = CMSat::restart_type_agility;
+                conf.clauseCleaningType = CMSat::clean_glue_based;
+                conf.ratioRemoveClauses = 0.6;
+                break;
+            }
+            default: {
+                conf.clauseCleaningType = CMSat::clean_glue_based;
+                conf.ratioRemoveClauses = 0.7;
+                break;
             }
         }
         solvers->push_back(new Solver(conf, inter));
