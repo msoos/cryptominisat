@@ -1011,6 +1011,7 @@ lbool Searcher::search()
     //Loop until restart or finish (SAT/UNSAT)
     last_decision_ended_in_conflict = false;
     PropBy confl;
+
     while (
         (!params.needToStopSearch
             && sumConflicts() <= solver->getNextCleanLimit()
@@ -1043,10 +1044,8 @@ lbool Searcher::search()
         }
 
         again:
-        if (conf.otfHyperbin
+        if (do_otf_this_round
             && decisionLevel() == 1
-            && nVars() < 500ULL*1000ULL
-            && binTri.irredBins + binTri.redBins < 1500ULL*1000ULL
         ) {
             bool must_continue;
             lbool ret = otf_hyper_prop_first_dec_level(must_continue);
@@ -1270,7 +1269,7 @@ void Searcher::add_otf_subsume_long_clauses()
         if (at == 0) {
             //If none found, we have a propagating clause_t
 
-            if (conf.otfHyperbin && decisionLevel() == 1) {
+            if (do_otf_this_round && decisionLevel() == 1) {
                 addHyperBin(cl[0], cl);
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
@@ -1326,7 +1325,7 @@ void Searcher::add_otf_subsume_implicit_clause()
 
         if (at == 0) {
             //If none found, we have a propagation
-            if (conf.otfHyperbin && decisionLevel() == 1) {
+            if (do_otf_this_round && decisionLevel() == 1) {
                 if (it->size == 2) {
                     enqueueComplex(it->lits[0], ~it->lits[1], true);
                 } else {
@@ -1449,7 +1448,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attachBinClause(learnt_clause[0], learnt_clause[1], true);
-            if (conf.otfHyperbin && decisionLevel() == 1)
+            if (do_otf_this_round && decisionLevel() == 1)
                 enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
@@ -1465,7 +1464,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
-            if (conf.otfHyperbin && decisionLevel() == 1)
+            if (do_otf_this_round && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
@@ -1481,7 +1480,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntLongs++;
             std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
-            if (conf.otfHyperbin && decisionLevel() == 1)
+            if (do_otf_this_round && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
             else
                 enqueue(learnt_clause[0], PropBy(clAllocator.getOffset(cl)));
@@ -2227,6 +2226,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
     num_search_called++;
+    do_otf_this_round = nVars() < 500ULL*1000ULL && binTri.irredBins + binTri.redBins < 1500ULL*1000ULL && conf.otfHyperbin;
 
     if (solver->conf.verbosity >= 6) {
         cout
