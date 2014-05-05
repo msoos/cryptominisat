@@ -75,16 +75,6 @@ void SATSolver::set_num_threads(unsigned num)
                 break;
             }
             case 2: {
-                conf.simplify_at_startup = 1;
-                conf.propBinFirst = 1;
-                conf.doLHBR = 1;
-                conf.increaseClean = 1.12;
-                conf.ratioRemoveClauses = 0.7;
-                break;
-            }
-            case 3: {
-                conf.doVarElim = 0;
-                conf.numCleanBetweenSimplify = 3;
                 conf.shortTermHistorySize = 80;
                 conf.clauseCleaningType = CMSat::clean_glue_based;
                 conf.restartType = CMSat::restart_type_glue;
@@ -92,7 +82,8 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.ratioRemoveClauses = 0.55;
                 break;
             }
-            case 4: {
+            case 3: {
+                conf.doVarElim = 0;
                 conf.doGateFind = 0;
                 conf.more_red_minim_limit_cache = 400;
                 conf.more_red_minim_limit_binary = 200;
@@ -101,7 +92,7 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.ratioRemoveClauses = 0.6;
                 break;
             }
-            case 5: {
+            case 4: {
                 conf.simplify_at_startup = 1;
                 conf.regularly_simplify_problem = 0;
                 conf.varElimRatioPerIter = 1;
@@ -111,12 +102,18 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.ratioRemoveClauses = 0.65;
                 break;
             }
-            case 6: {
+            case 5: {
                 conf.doGateFind = 0;
                 conf.more_red_minim_limit_cache = 100;
                 conf.more_red_minim_limit_binary = 100;
                 conf.probe_bogoprops_timeoutM = 4000;
                 conf.ratioRemoveClauses = 0.6;
+                break;
+            }
+            case 6: {
+                conf.numCleanBetweenSimplify = 1;
+                conf.skip_some_bve_resolvents = 1;
+                conf.ratioRemoveClauses = 0.7;
                 break;
             }
             case 7: {
@@ -125,17 +122,11 @@ void SATSolver::set_num_threads(unsigned num)
                 break;
             }
             case 8: {
-                conf.numCleanBetweenSimplify = 1;
-                conf.skip_some_bve_resolvents = 1;
-                conf.ratioRemoveClauses = 0.7;
-                break;
-            }
-            case 9: {
                 conf.polarity_mode = CMSat::polarmode_pos;
                 conf.ratioRemoveClauses = 0.6;
                 break;
             }
-            case 10: {
+            case 9: {
                 conf.do_bva = 0;
                 conf.doGateFind = 0;
                 conf.more_red_minim_limit_cache = 800;
@@ -144,12 +135,20 @@ void SATSolver::set_num_threads(unsigned num)
                 conf.ratioRemoveClauses = 0.6;
                 break;
             }
-            case 11: {
+            case 10: {
                 conf.do_bva = 0;
                 conf.doGateFind = 0;
                 conf.restartType = CMSat::restart_type_agility;
                 conf.clauseCleaningType = CMSat::clean_glue_based;
                 conf.ratioRemoveClauses = 0.6;
+                break;
+            }
+            case 11: {
+                conf.simplify_at_startup = 1;
+                conf.propBinFirst = 1;
+                conf.doLHBR = 1;
+                conf.increaseClean = 1.12;
+                conf.ratioRemoveClauses = 0.7;
                 break;
             }
             default: {
