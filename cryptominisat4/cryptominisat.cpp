@@ -186,7 +186,7 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     cls++;
     if (cls % 100000 == 99999) {
         double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
-        if (usedGB > 8 && solvers->size() > 1) {
+        if (usedGB > 7 && solvers->size() > 1) {
             const size_t newsz = solvers->size() >> 1;
             cout
             << "c After " << cls/1000 << "K cls"
@@ -308,7 +308,7 @@ void SATSolver::new_var()
 
     if (nVars() % 100000 == 99999) {
         double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
-        if (usedGB > 6 && solvers->size() > 1) {
+        if (usedGB > 5 && solvers->size() > 1) {
             const size_t newsz = solvers->size() >> 1;
             cout
             << "c After " << (nVars()/1000) << "K vars"
