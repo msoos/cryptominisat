@@ -39,7 +39,9 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     , numCalls(0)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
-{}
+{
+    m4ri_build_all_codes();
+}
 
 bool XorFinder::findXors()
 {
