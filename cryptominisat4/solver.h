@@ -695,7 +695,7 @@ inline void Solver::setConf(const SolverConf _conf)
 
 inline bool Solver::prop_at_head() const
 {
-    return solver->prop_at_head();
+    return qhead == trail.size();
 }
 
 } //end namespace
