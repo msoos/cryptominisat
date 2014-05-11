@@ -1162,7 +1162,7 @@ void HyperEngine::enqueueComplex(
     assert(varData[ancestor.var()].level != 0);
 
     varData[p.var()].depth = varData[ancestor.var()].depth + 1;
-    #if defined(DEBUG_DEPTH) or defined(VERBOSE_DEBUG_FULLPROP)
+    #if defined(DEBUG_DEPTH) || defined(VERBOSE_DEBUG_FULLPROP)
     cout
     << "Enqueued "
     << std::setw(6) << (p)
