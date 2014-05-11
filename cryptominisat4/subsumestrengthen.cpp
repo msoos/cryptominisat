@@ -786,7 +786,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
 //
 //     //Stats
 //     toDecrease = &numMaxTriSub;
-//     const size_t origTrailSize = solver->trail.size();
+//     const size_t origTrailSize = solver->trail_size();
 //     double myTime = cpuTime();
 //     size_t subsumed = 0;
 //
@@ -855,12 +855,12 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
 //         << " tried: " << tried
 //         << " str: " << strSucceed
 //         << " toDecrease: " << *simplifier->toDecrease
-//         << " 0-depth ass: " << solver->trail.size() - origTrailSize
+//         << " 0-depth ass: " << solver->trail_size() - origTrailSize
 //         << " time: " << cpuTime() - myTime
 //         << endl;
 //     }
 //
-//     //runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+//     //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 //
 //     return solver->ok;
 // }

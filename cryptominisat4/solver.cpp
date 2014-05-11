@@ -63,18 +63,16 @@ using std::endl;
 
 Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     Searcher(_conf, this, _needToInterrupt)
-    , prober(NULL)
-    , simplifier(NULL)
-    , sCCFinder(NULL)
-    , vivifier(NULL)
-    , strengthener(NULL)
+    , mtrand(_conf.origSeed)
     , clauseCleaner(NULL)
     , varReplacer(NULL)
-    , compHandler(NULL)
     , subsumeImplicit(NULL)
-    , mtrand(_conf.origSeed)
-
-    //Stuff
+    , sCCFinder(NULL)
+    , prober(NULL)
+    , simplifier(NULL)
+    , vivifier(NULL)
+    , strengthener(NULL)
+    , compHandler(NULL)
     , nextCleanLimit(0)
 {
     if (conf.doSQL) {
@@ -1704,7 +1702,7 @@ void Solver::extend_solution()
     if (conf.perform_occur_based_simp
         || conf.doFindAndReplaceEqLits
     ) {
-        SolutionExtender extender(this);
+        SolutionExtender extender(this, simplifier);
         extender.extend();
     }
     model = map_back_to_without_bva(model);
@@ -1856,7 +1854,7 @@ lbool Solver::solve()
         }
 
         //If we are over the limit, exit
-        if (sumStats.conflStats.numConflicts >= conf.maxConfl
+        if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
@@ -1984,7 +1982,7 @@ lbool Solver::simplifyProblem()
     ) {
         subsumeImplicit->subsume_implicit();
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -1996,7 +1994,7 @@ lbool Solver::simplifyProblem()
     if (conf.doProbe && !prober->probe()) {
         goto end;
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -2010,7 +2008,7 @@ lbool Solver::simplifyProblem()
     if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -2025,7 +2023,7 @@ lbool Solver::simplifyProblem()
         if (!varReplacer->performReplace())
             goto end;
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -2049,7 +2047,7 @@ lbool Solver::simplifyProblem()
 
         subsumeImplicit->subsume_implicit();
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -2067,7 +2065,7 @@ lbool Solver::simplifyProblem()
     if (conf.doClausVivif && !vivifier->vivify(true)) {
         goto end;
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -2105,7 +2103,7 @@ lbool Solver::simplifyProblem()
             conf.doCache = false;
         }
     }
-    if (sumStats.conflStats.numConflicts >= conf.maxConfl
+    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
@@ -4057,4 +4055,9 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
         release_assert(lit.var() < nVarsOutside()
         && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
     }
+}
+
+void Solver::bva_changed()
+{
+    datasync->rebuild_bva_map();
 }

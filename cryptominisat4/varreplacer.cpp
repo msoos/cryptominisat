@@ -186,7 +186,7 @@ bool VarReplacer::performReplace()
     runStats.clear();
     runStats.numCalls = 1;
     const double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     #ifdef REPLACE_STATISTICS
     uint32_t numRedir = 0;
@@ -219,7 +219,7 @@ bool VarReplacer::performReplace()
     lastReplacedVars = replacedVars;
 
     solver->testAllClauseAttach();
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
 
     #ifdef DEBUG_IMPLICIT_STATS
     solver->checkImplicitStats();
@@ -258,14 +258,14 @@ bool VarReplacer::performReplace()
     }
 
 end:
-    assert(solver->qhead == solver->trail.size() || !solver->ok);
+    assert(solver->prop_at_head() || !solver->ok);
 
     //Update stamp dominators
     solver->stamp.updateDominators(this);
 
     //Update stats
     const double time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns += solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     globalStats += runStats;
     if (solver->conf.verbosity  >= 1) {

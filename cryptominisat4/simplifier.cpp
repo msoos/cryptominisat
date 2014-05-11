@@ -712,7 +712,7 @@ bool Simplifier::can_eliminate_var(const Var var) const
 {
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        ||  solver->assumptionsSet[var]
+        ||  solver->var_inside_assumptions(var)
     ) {
         return false;
     }
@@ -833,151 +833,6 @@ void Simplifier::clean_occur_from_removed_clauses()
     }
 }
 
-bool Simplifier::propagate()
-{
-    if (!solver->okay())
-        return false;
-
-    while (solver->qhead < solver->trail.size()) {
-        const Lit p = solver->trail[solver->qhead];
-        solver->qhead++;
-        watch_subarray ws = solver->watches[(~p).toInt()];
-
-        //Go through each occur
-        for (watch_subarray::const_iterator
-            it = ws.begin(), end = ws.end()
-            ; it != end
-            ; it++
-        ) {
-            if (it->isClause()) {
-                if (!propagate_long_clause(it->getOffset()))
-                    return false;
-            }
-
-            if (it->isTri()) {
-                if (!propagate_tri_clause(*it))
-                    return false;
-            }
-
-            if (it->isBinary()) {
-                if (!propagate_binary_clause(*it))
-                    return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Simplifier::propagate_tri_clause(const Watched& ws)
-{
-    const lbool val2 = solver->value(ws.lit2());
-    const lbool val3 = solver->value(ws.lit3());
-    if (val2 == l_True
-        || val3 == l_True
-    ) {
-        return true;
-    }
-
-    if (val2 == l_Undef
-        && val3 == l_Undef
-    ) {
-        return true;
-    }
-
-    if (val2 == l_False
-        && val3 == l_False
-    ) {
-        solver->ok = false;
-        return false;
-    }
-
-    #ifdef STATS_NEEDED
-    if (ws.red())
-        solver->propStats.propsTriRed++;
-    else
-        solver->propStats.propsTriIrred++;
-    #endif
-
-    if (val2 == l_Undef) {
-        solver->enqueue(ws.lit2());
-    } else {
-        solver->enqueue(ws.lit3());
-    }
-    return true;
-}
-
-bool Simplifier::propagate_binary_clause(const Watched& ws)
-{
-    const lbool val = solver->value(ws.lit2());
-    if (val == l_False) {
-        solver->ok = false;
-        return false;
-    }
-
-    if (val == l_Undef) {
-        solver->enqueue(ws.lit2());
-        #ifdef STATS_NEEDED
-        if (ws.red())
-            solver->propStats.propsBinRed++;
-        else
-            solver->propStats.propsBinIrred++;
-        #endif
-    }
-
-    return true;
-}
-
-bool Simplifier::propagate_long_clause(const ClOffset offset)
-{
-    const Clause& cl = *solver->clAllocator.getPointer(offset);
-    assert(!cl.getFreed() && "Cannot be already removed in occur");
-
-    Lit lastUndef = lit_Undef;
-    uint32_t numUndef = 0;
-    bool satisfied = false;
-    for (const Lit lit: cl) {
-        const lbool val = solver->value(lit);
-        if (val == l_True) {
-            satisfied = true;
-            break;
-        }
-        if (val == l_Undef) {
-            numUndef++;
-            if (numUndef > 1) break;
-            lastUndef = lit;
-        }
-    }
-    if (satisfied)
-        return true;
-
-    //Problem is UNSAT
-    if (numUndef == 0) {
-        solver->ok = false;
-        return false;
-    }
-
-    if (numUndef > 1)
-        return true;
-
-    solver->enqueue(lastUndef);
-    #ifdef STATS_NEEDED
-    if (cl.size() == 3)
-        if (cl.red())
-            solver->propStats.propsTriRed++;
-        else
-            solver->propStats.propsTriIrred++;
-    else {
-        if (cl.red())
-            solver->propStats.propsLongRed++;
-        else
-            solver->propStats.propsLongIrred++;
-    }
-    #endif
-
-    return true;
-}
-
 void Simplifier::subsumeReds()
 {
     double myTime = cpuTime();
@@ -998,7 +853,7 @@ void Simplifier::subsumeReds()
     runStats.clear();
     clauses.clear();
     limit_to_decrease = &strengthening_time_limit;
-    size_t origTrailSize = solver->trail.size();
+    size_t origTrailSize = solver->trail_size();
 
     //Remove all long clauses from watches
     removeAllLongsFromWatches();
@@ -1126,7 +981,7 @@ bool Simplifier::simplify()
     setLimits();
     runStats.origNumFreeVars = solver->getNumFreeVars();
     const size_t origBlockedSize = blockedClauses.size();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     //subsumeStrengthen->subsumeWithTris();
     subsumeStrengthen->backward_subsumption_with_all_clauses();
@@ -1145,7 +1000,7 @@ bool Simplifier::simplify()
     }
     #endif
 
-    if (!propagate()
+    if (!solver->propagate_occur()
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -1160,7 +1015,7 @@ bool Simplifier::simplify()
             goto end;
     }
 
-    if (!propagate()
+    if (!solver->propagate_occur()
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -1336,15 +1191,15 @@ void Simplifier::buildBlockedMap()
 void Simplifier::finishUp(
     size_t origTrailSize
 ) {
-    bool somethingSet = (solver->trail.size() - origTrailSize) > 0;
-    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
+    bool somethingSet = (solver->trail_size() - origTrailSize) > 0;
+    runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
 
     //Add back clauses to solver
-    propagate();
+    solver->propagate_occur();
     removeAllLongsFromWatches();
     addBackToSolver();
-    propagate();
+    solver->propagate_occur();
     if (solver->ok) {
         solver->clauseCleaner->removeAndCleanAll();
     }
@@ -3276,7 +3131,9 @@ bool Simplifier::bounded_var_addition()
         cout << "c [bva] Running BVA" << endl;
     }
 
-    propagate();
+    if (!solver->propagate_occur())
+        return false;
+
     limit_to_decrease = &bounded_var_elim_time_limit;
     int64_t limit_orig = *limit_to_decrease;
     solver->clauseCleaner->clean_implicit_clauses();
@@ -3315,7 +3172,7 @@ bool Simplifier::bounded_var_addition()
         if (!ok)
             break;
     }
-    solver->datasync->rebuild_bva_map();
+    solver->bva_changed();
 
     bool time_out = *limit_to_decrease <= 0;
     double time_used = cpuTime() - my_time;

@@ -90,7 +90,7 @@ bool Vivifier::vivify_tri_irred_cls()
     double myTime = cpuTime();
     uint64_t maxNumProps = 2LL*1000LL*1000LL;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
-    size_t origTrailSize = solver->trail.size();
+    size_t origTrailSize = solver->trail_size();
 
     //Randomize start in the watchlist
     size_t upI;
@@ -150,7 +150,7 @@ bool Vivifier::vivify_tri_irred_cls()
         << "c [vivif] tri irred"
         << " shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
-        << " 0-depth ass: " << solver->trail.size() - origTrailSize
+        << " 0-depth ass: " << solver->trail_size() - origTrailSize
         << " T: " << std::setprecision(2) << time_used
         << " T-out: " << std::setprecision(2) << (time_out ? "Y" : "N")
         << " T-rem: " << std::setprecision(2) << time_remain *100.0 << "%"
@@ -166,7 +166,7 @@ bool Vivifier::vivify_tri_irred_cls()
         );
     }
 
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }
@@ -203,7 +203,7 @@ bool Vivifier::vivify_long_irred_cls()
     }
 
     double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
     uint64_t maxNumProps = solver->conf.max_props_vivif_long_irred_clsM*1000LL*1000ULL;
@@ -327,7 +327,7 @@ bool Vivifier::vivify_long_irred_cls()
 
     //Update stats
     runStats.time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }

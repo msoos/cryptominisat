@@ -188,7 +188,7 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
 {
     assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
 
     #ifdef VERBOSE_DEBUG
     cout << "Cleaning  clauses" << endl;

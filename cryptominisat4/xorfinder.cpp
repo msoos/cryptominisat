@@ -161,7 +161,7 @@ bool XorFinder::findXors()
 bool XorFinder::extractInfo()
 {
     double myTime = cpuTime();
-    size_t origTrailSize = solver->trail.size();
+    size_t origTrailSize = solver->trail_size();
 
     vector<uint32_t> varsIn(solver->nVars(), 0);
     for(const Xor& x: xors) {
@@ -229,7 +229,7 @@ bool XorFinder::extractInfo()
 end:
 
     const double time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.extractTime += time_used;
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(

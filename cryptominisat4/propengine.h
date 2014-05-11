@@ -124,16 +124,21 @@ public:
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
     bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
+    size_t trail_size() const {
+        return trail.size();
+    }
+    void cancelZeroLight();
+    bool propagate_occur();
+    PropStats propStats;
+    void enqueue(const Lit p, const PropBy from = PropBy());
+    void newDecisionLevel();
 
 protected:
     void new_var(const bool bva, Var orig_outer) override;
     void new_vars(size_t n) override;
     void saveVarMem();
-    //Non-categorised functions
-    void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
     template<class T> uint32_t calcGlue(const T& ps); ///<Calculates the glue of a clause
     friend class SQLStats;
-    PropStats propStats;
 
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
@@ -145,8 +150,6 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
 
-    void   enqueue (const Lit p, const PropBy from = PropBy());
-    void   newDecisionLevel();
     PropBy propagateAnyOrder();
     PropBy propagateBinFirst(
         #ifdef STATS_NEEDED
@@ -233,6 +236,10 @@ protected:
     }
 
 private:
+    bool propagate_tri_clause_occur(const Watched& ws);
+    bool propagate_binary_clause_occur(const Watched& ws);
+    bool propagate_long_clause_occur(const ClOffset offset);
+
     bool propBinaryClause(
         watch_subarray_const::const_iterator i
         , const Lit p

@@ -619,6 +619,15 @@ class Searcher : public HyperEngine
             double cpu_time;
         };
 
+        size_t hyperBinResAll();
+        std::pair<size_t, size_t> removeUselessBins();
+        bool var_inside_assumptions(const Var var) const
+        {
+            assert(assumptionsSet.size() > var);
+            return assumptionsSet[var];
+        }
+        void filterOrderHeap();
+
     protected:
         void new_var(bool bva, Var orig_outer) override;
         void new_vars(size_t n) override;
@@ -634,14 +643,9 @@ class Searcher : public HyperEngine
 
         friend class CalcDefPolars;
         friend class VarReplacer;
-        void filterOrderHeap();
 
         //For connection with Solver
         void  resetStats();
-
-        //For hyper-bin and transitive reduction
-        size_t hyperBinResAll();
-        std::pair<size_t, size_t> removeUselessBins();
 
         Hist hist;
         #ifdef STATS_NEEDED_EXTRA

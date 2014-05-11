@@ -183,18 +183,6 @@ public:
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
     }
 
-protected:
-    vector<Var> build_outer_to_without_bva_map() const;
-    virtual void new_var(bool bva, Var orig_outer);
-    virtual void new_vars(size_t n);
-    void test_reflectivity_of_renumbering() const;
-    vector<lbool> back_number_solution(const vector<lbool>& solution) const
-    {
-        vector<lbool> back_numbered = solution;
-        updateArrayRev(back_numbered, interToOuterMain);
-        return back_numbered;
-    }
-
     uint32_t nVars() const
     {
         return minNumVars;
@@ -208,6 +196,18 @@ protected:
     uint32_t get_num_bva_vars() const
     {
         return num_bva_vars;
+    }
+    vector<Var> build_outer_to_without_bva_map() const;
+
+protected:
+    virtual void new_var(bool bva, Var orig_outer);
+    virtual void new_vars(size_t n);
+    void test_reflectivity_of_renumbering() const;
+    vector<lbool> back_number_solution(const vector<lbool>& solution) const
+    {
+        vector<lbool> back_numbered = solution;
+        updateArrayRev(back_numbered, interToOuterMain);
+        return back_numbered;
     }
 
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;

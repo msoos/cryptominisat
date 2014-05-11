@@ -85,8 +85,7 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
 bool CompHandler::assumpsInsideComponent(const vector<Var>& vars)
 {
     for(Var var: vars) {
-        assert(solver->assumptionsSet.size() > var && "Variables that have been set must NOT be in a component");
-        if (solver->assumptionsSet[var]) {
+        if (solver->var_inside_assumptions(var)) {
             return true;
         }
     }

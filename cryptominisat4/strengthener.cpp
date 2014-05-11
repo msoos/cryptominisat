@@ -713,7 +713,7 @@ bool Strengthener::strengthenImplicit()
 {
     str_impl_data.clear();
 
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
     timeAvailable = 1000LL*1000LL*1000LL;
     const int64_t orig_time = timeAvailable;
     double myTime = cpuTime();
@@ -753,7 +753,7 @@ end:
 
     if (solver->conf.verbosity >= 1) {
         str_impl_data.print(
-            solver->trail.size() - origTrailSize
+            solver->trail_size() - origTrailSize
             , cpuTime() - myTime
             , timeAvailable
             , orig_time

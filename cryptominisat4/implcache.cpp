@@ -246,10 +246,10 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         numCleaned += origSize-trans->lits.size();
     }
 
-    size_t origTrailDepth = solver->trail.size();
+    size_t origTrailDepth = solver->trail_size();
     solver->enqueueThese(toEnqueue);
     if (setSomething) {
-        *setSomething = (solver->trail.size() != origTrailDepth);
+        *setSomething = (solver->trail_size() != origTrailDepth);
     }
 
     const double time_used = cpuTime()-myTime;
@@ -364,7 +364,7 @@ bool ImplCache::tryBoth(Solver* solver)
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
     runStats.clear();
     runStats.numCalls = 1;
 
@@ -390,7 +390,7 @@ bool ImplCache::tryBoth(Solver* solver)
 
 end:
     const double time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     if (solver->conf.verbosity >= 1) {
         runStats.printShort();

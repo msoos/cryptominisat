@@ -152,16 +152,36 @@ class Solver : public Searcher
         bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
-    protected:
+        MTRand mtrand;
+        SQLStats* sqlStats;
+        ClauseCleaner *clauseCleaner;
+        VarReplacer *varReplacer;
+        SubsumeImplicit *subsumeImplicit;
+        SCCFinder *sCCFinder;
+        DataSync *datasync = NULL;
+        vector<LitReachData> litReachable;
+
+        Stats sumStats;
+        PropStats sumPropStats;
+
+        void testAllClauseAttach() const;
+        void checkNoWrongAttach() const;
+        bool prop_at_head() const;
+        void setDecisionVar(const uint32_t var);
+        void unsetDecisionVar(const uint32_t var);
+        bool enqueueThese(const vector<Lit>& toEnqueue);
+        void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
+
         uint64_t getNumLongClauses() const;
-        vector<Lit> finalCl_tmp;
         bool addClause(const vector<Lit>& ps);
+        bool add_xor_clause_inter(
+            const vector< Lit >& lits
+            , bool rhs
+            , const bool attach
+        );
         void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
         void new_vars(size_t n) override;
-
-        void set_up_sql_writer();
-        SQLStats* sqlStats;
-        vector<std::pair<string, string> > sql_tags;
+        void bva_changed();
 
         //Attaching-detaching clauses
         void attachClause(
@@ -212,6 +232,12 @@ class Solver : public Searcher
         );
 
     private:
+        friend class Prober;
+
+        vector<Lit> finalCl_tmp;
+        void set_up_sql_writer();
+        vector<std::pair<string, string> > sql_tags;
+
         void check_config_parameters() const;
         void handle_found_solution(const lbool status);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach);
@@ -322,17 +348,10 @@ class Solver : public Searcher
         void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> origAssumptions;
         void checkDecisionVarCorrectness() const;
-        bool enqueueThese(const vector<Lit>& toEnqueue);
 
         //Stats printing
         void printMinStats() const;
         void printFullStats() const;
-
-        bool add_xor_clause_inter(
-            const vector< Lit >& lits
-            , bool rhs
-            , const bool attach
-        );
 
         lbool simplifyProblem();
         SolveStats solveStats;
@@ -342,40 +361,11 @@ class Solver : public Searcher
 
         /////////////////////
         // Objects that help us accomplish the task
-        friend class ClauseAllocator;
-        friend class StateSaver;
-        friend class SolutionExtender;
-        friend class VarReplacer;
-        friend class SCCFinder;
-        friend class Prober;
-        friend class Vivifier;
-        friend class Strengthener;
-        friend class Simplifier;
-        friend class SubsumeStrengthen;
-        friend class ClauseCleaner;
-        friend class CompleteDetachReatacher;
-        friend class CalcDefPolars;
-        friend class ImplCache;
-        friend class Searcher;
-        friend class XorFinder;
-        friend class GateFinder;
-        friend class PropEngine;
-        friend class CompFinder;
-        friend class CompHandler;
-        friend class TransCache;
-        friend class SubsumeImplicit;
-        friend class DataSync;
         Prober              *prober;
         Simplifier          *simplifier;
-        SCCFinder           *sCCFinder;
         Vivifier            *vivifier;
         Strengthener        *strengthener;
-        ClauseCleaner       *clauseCleaner;
-        VarReplacer         *varReplacer;
         CompHandler         *compHandler;
-        SubsumeImplicit     *subsumeImplicit;
-        DataSync            *datasync = NULL;
-        MTRand              mtrand;           ///< random number generator
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
@@ -404,7 +394,6 @@ class Solver : public Searcher
 
         ///////////////////////////
         // Clause cleaning
-        void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
         void clearClauseStats(vector<ClOffset>& clauseset);
         CleaningStats reduceDB(bool lock_clauses_in);
         void lock_most_UIP_used_clauses();
@@ -474,16 +463,11 @@ class Solver : public Searcher
         // Data
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
-        void setDecisionVar(const uint32_t var);
-        void unsetDecisionVar(const uint32_t var);
         size_t               zeroLevAssignsByCNF = 0;
         size_t               zeroLevAssignsByThreads = 0;
-        vector<LitReachData> litReachable;
         void calculate_reachability();
 
         //Main up stats
-        Stats sumStats;
-        PropStats sumPropStats;
         CleaningStats cleaningStats;
         ReachabilityStats reachStats;
 
@@ -502,12 +486,11 @@ class Solver : public Searcher
 
         /////////////////
         // Debug
-        void testAllClauseAttach() const;
+
         bool normClauseIsAttached(const ClOffset offset) const;
         void findAllAttach() const;
         void findAllAttach(const vector<ClOffset>& cs) const;
         bool findClause(const ClOffset offset) const;
-        void checkNoWrongAttach() const;
         void printWatchlist(watch_subarray_const ws, const Lit lit) const;
         void printClauseSizeDistrib();
         ClauseUsageStats sumClauseData(
@@ -708,6 +691,11 @@ inline const vector<Lit>& Solver::get_final_conflict() const
 inline void Solver::setConf(const SolverConf _conf)
 {
     conf = _conf;
+}
+
+inline bool Solver::prop_at_head() const
+{
+    return solver->prop_at_head();
 }
 
 } //end namespace

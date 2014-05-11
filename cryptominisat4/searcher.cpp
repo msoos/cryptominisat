@@ -1006,7 +1006,7 @@ lbool Searcher::search()
     agility.reset(conf.agilityLimit);
     hist.clear();
 
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
 
     //Loop until restart or finish (SAT/UNSAT)
     last_decision_ended_in_conflict = false;
@@ -1067,7 +1067,7 @@ lbool Searcher::search()
     }
 
     cancelUntil(0);
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
     if (!solver->datasync->syncData()) {
         return l_False;
     }
