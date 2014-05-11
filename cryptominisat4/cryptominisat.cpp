@@ -227,7 +227,7 @@ static void one_thread(
         *data.which_solved = data.tid;
         *data.ret = ret;
         for(size_t i = 0; i < data.solvers->size(); i++) {
-            if (i == data.tid)
+            if ((int)i == data.tid)
                 continue;
 
             data.solvers->at(i)->set_must_interrupt_asap();
