@@ -333,7 +333,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
         data.tid = i;
         thds.push_back(thread(one_thread, data));
     }
-    for(auto& thread : thds){
+    for(std::thread& thread : thds){
         thread.join();
     }
     lbool real_ret = *ret;
