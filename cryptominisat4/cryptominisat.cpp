@@ -261,9 +261,8 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
             }
         }
     } else {
-        for(size_t i = 0; i < solvers->size(); i++) {
-            ret = solvers->at(i)->add_clause_outer(lits);
-        }
+        assert(solvers->size() == 1);
+        ret = solvers->at(0)->add_clause_outer(lits);
     }
 
     return ret;
