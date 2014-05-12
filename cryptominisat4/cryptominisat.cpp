@@ -29,9 +29,20 @@
 using std::thread;
 using std::mutex;
 
+#define CACHE_SIZE 10ULL*1000ULL*1000UL
 #define MY_SOLVERS vector<Solver*>* solvers = (vector<Solver*>*)s;
 
 using namespace CMSat;
+
+struct topass
+{
+    vector<Solver*> *solvers;
+    vector<Lit> *lits;
+    mutex* update_mutex;
+    int tid;
+    int *which_solved;
+    lbool* ret;
+};
 
 SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
 {
@@ -42,6 +53,7 @@ SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
     s = (void*)new vector<Solver*>;
     MY_SOLVERS
     solvers->push_back(new Solver(conf, inter));
+    cls_lits.reserve(CACHE_SIZE);
 }
 
 SATSolver::~SATSolver()
@@ -174,18 +186,86 @@ void SATSolver::set_num_threads(unsigned num)
     }
 }
 
+static void one_thread_add_cls(
+    topass data
+) {
+    vector<Lit> lits;
+    bool ret = true;
+    size_t at = 0;
+    Solver* solver = data.solvers->at(data.tid);
+    const vector<Lit>& orig_lits = (*data.lits);
+    size_t size = orig_lits.size();
+    while(at < size && ret) {
+        lits.clear();
+        for(; at < size && orig_lits[at] != lit_Undef
+            ; at++
+        ) {
+            lits.push_back(orig_lits[at]);
+        }
+        at++;
+        ret = solver->add_clause_outer(lits);
+    }
+
+    if (!ret) {
+        data.update_mutex->lock();
+        *data.ret = l_False;
+        data.update_mutex->unlock();
+    }
+}
+
+bool SATSolver::actually_add_clauses_to_threads()
+{
+    if (cls_lits.empty())
+        return true;
+
+    MY_SOLVERS
+
+    topass data;
+    data.solvers = solvers;
+    data.lits = &cls_lits;
+    data.update_mutex = new mutex;
+    data.ret = new lbool;
+    *data.ret = l_True;
+
+    std::vector<std::thread> thds;
+    for(size_t i = 0; i < solvers->size(); i++) {
+        data.tid = i;
+        thds.push_back(thread(one_thread_add_cls, data));
+    }
+    for(std::thread& thread : thds){
+        thread.join();
+    }
+    delete data.update_mutex;
+    bool ret = (*data.ret == l_True);
+    delete data.ret;
+    cls_lits.clear();
+
+    return ret;
+}
+
 bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     MY_SOLVERS
     bool ret = true;
-    for(size_t i = 0; i < solvers->size(); i++) {
-        ret = solvers->at(i)->add_clause_outer(lits);
+    if (solvers->size() > 1) {
+        for(Lit lit: lits) {
+            cls_lits.push_back(lit);
+        }
+        cls_lits.push_back(lit_Undef);
+
+        if (cls_lits.size() > CACHE_SIZE) {
+            ret = actually_add_clauses_to_threads();
+            cls++;
+            if (cls % 10 == 9) {
+                check_over_mem_limit();
+            }
+        }
+    } else {
+        for(size_t i = 0; i < solvers->size(); i++) {
+            ret = solvers->at(i)->add_clause_outer(lits);
+        }
     }
 
-    cls++;
-    if (cls % 100000 == 99999) {
-        check_over_mem_limit();
-    }
     return ret;
 }
 
@@ -199,16 +279,6 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
     return ret;
 }
 
-struct topass
-{
-    vector<Solver*> *solvers;
-    vector<Lit> *assumptions;
-    mutex* update_mutex;
-    int tid;
-    int *which_solved;
-    lbool* ret;
-};
-
 static void one_thread(
     topass data
 ) {
@@ -218,7 +288,7 @@ static void one_thread(
         data.update_mutex->unlock();
     }
 
-    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.assumptions);
+    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.lits);
 
     if (false) {
         data.update_mutex->lock();
@@ -244,6 +314,8 @@ static void one_thread(
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
+    actually_add_clauses_to_threads();
+
     MY_SOLVERS
     if (solvers->size() == 1) {
         return solvers->at(0)->solve_with_assumptions(assumptions);
@@ -252,7 +324,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     lbool* ret = new lbool;
     topass data;
     data.solvers = solvers;
-    data.assumptions = assumptions;
+    data.lits = assumptions;
     data.update_mutex = new mutex;
     data.which_solved = &which_solved;
     data.ret = ret;

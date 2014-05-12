@@ -80,7 +80,8 @@ if (Perftools_FOUND)
 endif (Perftools_FOUND)
 
 if (TBB_FOUND)
-    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_LIBRARIES})
+    #set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES} ${TBB_MALLOC_PROXY_LIBRARY_NAMES})
+    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
 endif()
 
 if (STATICCOMPILE)
