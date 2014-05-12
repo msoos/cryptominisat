@@ -142,7 +142,7 @@ void Solver::set_shared_data(SharedData* shared_data, uint32_t thread_num)
 }
 
 bool Solver::add_xor_clause_inter(
-    const vector< Lit >& lits
+    const vector<Lit>& lits
     , bool rhs
     , const bool attach
 ) {
