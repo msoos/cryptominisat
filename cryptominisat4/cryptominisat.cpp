@@ -76,6 +76,11 @@ void SATSolver::set_num_threads(unsigned num)
     if (num == 1)
         return;
 
+    if (cls > 0 || nVars() > 0) {
+        std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
+        exit(-1);
+    }
+
     cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = solvers->at(0)->getConf();
@@ -263,6 +268,7 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     } else {
         assert(solvers->size() == 1);
         ret = solvers->at(0)->add_clause_outer(lits);
+        cls++;
     }
 
     return ret;
