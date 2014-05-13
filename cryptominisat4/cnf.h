@@ -183,17 +183,17 @@ public:
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
     }
 
-    uint32_t nVars() const
+    size_t nVars() const
     {
         return minNumVars;
     }
 
-    uint32_t nVarsOuter() const
+    size_t nVarsOuter() const
     {
         return assigns.size();
     }
 
-    uint32_t get_num_bva_vars() const
+    size_t get_num_bva_vars() const
     {
         return num_bva_vars;
     }
