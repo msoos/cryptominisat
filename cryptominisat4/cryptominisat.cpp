@@ -53,7 +53,6 @@ SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
     s = (void*)new vector<Solver*>;
     MY_SOLVERS
     solvers->push_back(new Solver(conf, inter));
-    cls_lits.reserve(CACHE_SIZE);
 }
 
 SATSolver::~SATSolver()
@@ -77,6 +76,7 @@ void SATSolver::set_num_threads(unsigned num)
     if (num == 1)
         return;
 
+    cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = solvers->at(0)->getConf();
         switch(i) {
