@@ -399,7 +399,7 @@ void SATSolver::check_over_mem_limit()
     }
 }
 
-void SATSolver::new_vars(size_t n)
+void SATSolver::new_vars(const size_t n)
 {
     MY_SOLVERS
     for(size_t d = 0; d < n/500000ULL; d++) {
