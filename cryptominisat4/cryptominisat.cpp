@@ -371,7 +371,12 @@ const std::vector<Lit>& SATSolver::get_conflict() const
 uint32_t SATSolver::nVars() const
 {
     MY_SOLVERS
-    return solvers->at(0)->nVarsOutside();
+    if (solvers->size() == 0) {
+        assert(vars_to_add == 0);
+        return (*solvers)[0]->nVarsOutside();
+    } else {
+        return (*solvers)[0]->nVarsOutside() + vars_to_add;
+    }
 }
 
 void SATSolver::new_var()
