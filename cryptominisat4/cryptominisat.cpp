@@ -70,7 +70,7 @@ void SATSolver::set_num_threads(unsigned num)
 {
     MY_SOLVERS
     if (num <= 0) {
-        std::cerr << "Number of threads must be at least 1" << endl;
+        std::cerr << "ERROR: Number of threads must be at least 1" << endl;
         exit(-1);
     }
     if (num == 1)
