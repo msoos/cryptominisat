@@ -43,11 +43,13 @@ struct topass
     int tid;
     int *which_solved;
     lbool* ret;
+    uint32_t vars_to_add;
 };
 
 SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
 {
     cls = 0;
+    vars_to_add = 0;
     inter = interrupt_asap;
     which_solved = 0;
     shared_data = NULL;
@@ -195,10 +197,12 @@ void SATSolver::set_num_threads(unsigned num)
 static void one_thread_add_cls(
     topass data
 ) {
+    Solver& solver = *data.solvers->at(data.tid);
+    solver.new_external_vars(data.vars_to_add);
+
     vector<Lit> lits;
     bool ret = true;
     size_t at = 0;
-    Solver* solver = data.solvers->at(data.tid);
     const vector<Lit>& orig_lits = (*data.lits_to_add);
     const size_t size = orig_lits.size();
     while(at < size && ret) {
@@ -209,7 +213,7 @@ static void one_thread_add_cls(
             lits.push_back(orig_lits[at]);
         }
         at++;
-        ret = solver->add_clause_outer(lits);
+        ret = solver.add_clause_outer(lits);
     }
 
     if (!ret) {
@@ -221,9 +225,6 @@ static void one_thread_add_cls(
 
 bool SATSolver::actually_add_clauses_to_threads()
 {
-    if (cls_lits.empty())
-        return true;
-
     MY_SOLVERS
 
     topass data;
@@ -232,6 +233,7 @@ bool SATSolver::actually_add_clauses_to_threads()
     data.update_mutex = new mutex;
     data.ret = new lbool;
     *data.ret = l_True;
+    data.vars_to_add = vars_to_add;
 
     std::vector<std::thread> thds;
     for(size_t i = 0; i < solvers->size(); i++) {
@@ -241,10 +243,13 @@ bool SATSolver::actually_add_clauses_to_threads()
     for(std::thread& thread : thds){
         thread.join();
     }
-    delete data.update_mutex;
     bool ret = (*data.ret == l_True);
+    delete data.update_mutex;
     delete data.ret;
+
+    //clear what has been added
     cls_lits.clear();
+    vars_to_add = 0;
 
     return ret;
 }
@@ -261,10 +266,6 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
 
         if (cls_lits.size() > CACHE_SIZE) {
             ret = actually_add_clauses_to_threads();
-            cls++;
-            if (cls % 10 == 9) {
-                check_over_mem_limit();
-            }
         }
     } else {
         assert(solvers->size() == 1);
@@ -334,6 +335,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     data.update_mutex = new mutex;
     data.which_solved = &which_solved;
     data.ret = ret;
+    data.vars_to_add = vars_to_add;
 
     std::vector<std::thread> thds;
     for(size_t i = 0; i < solvers->size(); i++) {
@@ -343,11 +345,13 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     for(std::thread& thread : thds){
         thread.join();
     }
-    cls_lits.clear();
-
     lbool real_ret = *ret;
     delete ret;
     delete data.update_mutex;
+
+    //clear what has been added
+    cls_lits.clear();
+    vars_to_add = 0;
 
     return real_ret;
 }
@@ -373,45 +377,20 @@ uint32_t SATSolver::nVars() const
 void SATSolver::new_var()
 {
     MY_SOLVERS
-    for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->new_external_var();
-    }
-
-    if (nVars() % 100000 == 99999) {
-        check_over_mem_limit();
-    }
-}
-
-void SATSolver::check_over_mem_limit()
-{
-    MY_SOLVERS
-    double usedGB = ((double)memUsedTotal()) / (1024.0*1024.0*1024.0);
-    if (usedGB > 5 && solvers->size() > 1) {
-        const size_t newsz = solvers->size() >> 1;
-        cout
-        << "c After " << (nVars()/1000) << "K vars"
-        << " used mem: " << std::fixed << std::setprecision(2) << usedGB << " GB"
-        << " deleting 50% threads. New num th: " << newsz << endl;
-
-        for(size_t i = newsz; i < solvers->size(); i++) {
-            delete solvers->at(i);
-        }
-        solvers->resize(newsz);
-        ((SharedData*)shared_data)->num_threads = solvers->size();
+    if (solvers->size() == 1) {
+        solvers->at(0)->new_external_var();
+    } else {
+        vars_to_add += 1;
     }
 }
 
 void SATSolver::new_vars(const size_t n)
 {
     MY_SOLVERS
-    for(size_t d = 0; d < n/500000ULL; d++) {
-        for(size_t i = 0; i < solvers->size(); i++) {
-            solvers->at(i)->new_external_vars((d+1)*500000ULL);
-        }
-        check_over_mem_limit();
-    }
-    for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->new_external_vars(n % 100000ULL);
+    if (solvers->size() == 1) {
+        solvers->at(0)->new_external_vars(n);
+    } else {
+        vars_to_add += n;
     }
 }
 
