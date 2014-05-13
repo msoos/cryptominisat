@@ -37,7 +37,8 @@ using namespace CMSat;
 struct topass
 {
     vector<Solver*> *solvers;
-    vector<Lit> *lits;
+    vector<Lit> *lits_to_add;
+    vector<Lit> *assumptions;
     mutex* update_mutex;
     int tid;
     int *which_solved;
@@ -198,8 +199,8 @@ static void one_thread_add_cls(
     bool ret = true;
     size_t at = 0;
     Solver* solver = data.solvers->at(data.tid);
-    const vector<Lit>& orig_lits = (*data.lits);
-    size_t size = orig_lits.size();
+    const vector<Lit>& orig_lits = (*data.lits_to_add);
+    const size_t size = orig_lits.size();
     while(at < size && ret) {
         lits.clear();
         for(; at < size && orig_lits[at] != lit_Undef
@@ -227,7 +228,7 @@ bool SATSolver::actually_add_clauses_to_threads()
 
     topass data;
     data.solvers = solvers;
-    data.lits = &cls_lits;
+    data.lits_to_add = &cls_lits;
     data.update_mutex = new mutex;
     data.ret = new lbool;
     *data.ret = l_True;
@@ -284,7 +285,7 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
     return ret;
 }
 
-static void one_thread(
+static void one_thread_solve(
     topass data
 ) {
     if (false) {
@@ -293,7 +294,8 @@ static void one_thread(
         data.update_mutex->unlock();
     }
 
-    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.lits);
+    one_thread_add_cls(data);
+    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.assumptions);
 
     if (false) {
         data.update_mutex->lock();
@@ -319,8 +321,6 @@ static void one_thread(
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
-    actually_add_clauses_to_threads();
-
     MY_SOLVERS
     if (solvers->size() == 1) {
         return solvers->at(0)->solve_with_assumptions(assumptions);
@@ -329,7 +329,8 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     lbool* ret = new lbool;
     topass data;
     data.solvers = solvers;
-    data.lits = assumptions;
+    data.assumptions = assumptions;
+    data.lits_to_add = &cls_lits;
     data.update_mutex = new mutex;
     data.which_solved = &which_solved;
     data.ret = ret;
@@ -337,7 +338,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     std::vector<std::thread> thds;
     for(size_t i = 0; i < solvers->size(); i++) {
         data.tid = i;
-        thds.push_back(thread(one_thread, data));
+        thds.push_back(thread(one_thread_solve, data));
     }
     for(std::thread& thread : thds){
         thread.join();
