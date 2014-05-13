@@ -343,6 +343,8 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     for(std::thread& thread : thds){
         thread.join();
     }
+    cls_lits.clear();
+
     lbool real_ret = *ret;
     delete ret;
     delete data.update_mutex;
