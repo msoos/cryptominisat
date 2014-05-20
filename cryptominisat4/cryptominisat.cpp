@@ -30,43 +30,71 @@ using std::thread;
 using std::mutex;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
-#define MY_SOLVERS vector<Solver*>* solvers = (vector<Solver*>*)s;
+#define MY_SOLVERS \
+    Data& data = *((Data*)s);
 
 using namespace CMSat;
 
-struct topass
+static const bool print_thread_start_and_finish = false;
+
+struct Data {
+    Data(bool* _interrupt_asap) {
+        cls = 0;
+        vars_to_add = 0;
+        inter = _interrupt_asap;
+        which_solved = 0;
+        shared_data = NULL;
+    }
+    vector<Solver*> solvers;
+    SharedData *shared_data;
+    int which_solved;
+    bool* inter;
+    unsigned cls;
+    unsigned vars_to_add;
+    vector<Lit> cls_lits;
+};
+
+struct DataForThread
 {
-    vector<Solver*> *solvers;
+    explicit DataForThread(Data& data, vector<Lit>* _assumptions = NULL) :
+        solvers(data.solvers)
+        , lits_to_add(&data.cls_lits)
+        , vars_to_add(data.vars_to_add)
+        , assumptions(_assumptions)
+        , update_mutex(new mutex)
+        , which_solved(&data.which_solved)
+        , ret(new lbool(l_True))
+    {
+    }
+
+    ~DataForThread()
+    {
+        delete update_mutex;
+        delete ret;
+    }
+    vector<Solver*>& solvers;
     vector<Lit> *lits_to_add;
+    uint32_t vars_to_add;
     vector<Lit> *assumptions;
     mutex* update_mutex;
-    int tid;
     int *which_solved;
     lbool* ret;
-    uint32_t vars_to_add;
 };
 
 SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
 {
-    cls = 0;
-    vars_to_add = 0;
-    inter = interrupt_asap;
-    which_solved = 0;
-    shared_data = NULL;
-    s = (void*)new vector<Solver*>;
+    s = (void*)(new Data(interrupt_asap));
     MY_SOLVERS
-    solvers->push_back(new Solver(conf, inter));
+    data.solvers.push_back(new Solver(conf, data.inter));
 }
 
 SATSolver::~SATSolver()
 {
     MY_SOLVERS
-    for(Solver* this_s: *solvers) {
+    for(Solver* this_s: data.solvers) {
         delete this_s;
     }
-    delete solvers;
-    SharedData* sh = (SharedData*)shared_data;
-    delete sh;
+    delete data.shared_data;
 }
 
 void SATSolver::set_num_threads(unsigned num)
@@ -79,14 +107,14 @@ void SATSolver::set_num_threads(unsigned num)
     if (num == 1)
         return;
 
-    if (cls > 0 || nVars() > 0) {
+    if (data.cls > 0 || nVars() > 0) {
         std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
         exit(-1);
     }
 
-    cls_lits.reserve(CACHE_SIZE);
+    data.cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
-        SolverConf conf = solvers->at(0)->getConf();
+        SolverConf conf = data.solvers[0]->getConf();
         switch(i) {
             case 1: {
                 conf.restartType = restart_type_geom;
@@ -177,33 +205,33 @@ void SATSolver::set_num_threads(unsigned num)
                 break;
             }
         }
-        solvers->push_back(new Solver(conf, inter));
+        data.solvers.push_back(new Solver(conf, data.inter));
     }
 
     //set shared data
-    shared_data = (void*)new SharedData(solvers->size());
+    data.shared_data = new SharedData(data.solvers.size());
     for(unsigned i = 0; i < num; i++) {
-        SolverConf conf = solvers->at(i)->getConf();
+        SolverConf conf = data.solvers[i]->getConf();
         if (i >= 1) {
             conf.verbosity = 0;
             conf.doSQL = 0;
             conf.doFindXors = 0;
         }
-        solvers->at(i)->setConf(conf);
-        solvers->at(i)->set_shared_data((SharedData*)shared_data, i);
+        data.solvers[i]->setConf(conf);
+        data.solvers[i]->set_shared_data((SharedData*)data.shared_data, i);
     }
 }
 
 static void one_thread_add_cls(
-    topass data
+    DataForThread data_for_thread
 ) {
-    Solver& solver = *data.solvers->at(data.tid);
-    solver.new_external_vars(data.vars_to_add);
+    Solver& solver = *data_for_thread.solvers[data_for_thread.tid];
+    solver.new_external_vars(data_for_thread.vars_to_add);
 
     vector<Lit> lits;
     bool ret = true;
     size_t at = 0;
-    const vector<Lit>& orig_lits = (*data.lits_to_add);
+    const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
     const size_t size = orig_lits.size();
     while(at < size && ret) {
         lits.clear();
@@ -217,39 +245,28 @@ static void one_thread_add_cls(
     }
 
     if (!ret) {
-        data.update_mutex->lock();
-        *data.ret = l_False;
-        data.update_mutex->unlock();
+        data_for_thread.update_mutex->lock();
+        *data_for_thread.ret = l_False;
+        data_for_thread.update_mutex->unlock();
     }
 }
 
-bool SATSolver::actually_add_clauses_to_threads()
+static bool actually_add_clauses_to_threads(Data& data)
 {
-    MY_SOLVERS
-
-    topass data;
-    data.solvers = solvers;
-    data.lits_to_add = &cls_lits;
-    data.update_mutex = new mutex;
-    data.ret = new lbool;
-    *data.ret = l_True;
-    data.vars_to_add = vars_to_add;
-
+    DataForThread data_for_thread(data);
     std::vector<std::thread> thds;
-    for(size_t i = 0; i < solvers->size(); i++) {
-        data.tid = i;
-        thds.push_back(thread(one_thread_add_cls, data));
+    for(size_t i = 0; i < data.solvers.size(); i++) {
+        data_for_thread.tid = i;
+        thds.push_back(thread(one_thread_add_cls, data_for_thread, i));
     }
     for(std::thread& thread : thds){
         thread.join();
     }
-    bool ret = (*data.ret == l_True);
-    delete data.update_mutex;
-    delete data.ret;
+    bool ret = (*data_for_thread.ret == l_True);
 
     //clear what has been added
-    cls_lits.clear();
-    vars_to_add = 0;
+    data.cls_lits.clear();
+    data.vars_to_add = 0;
 
     return ret;
 }
@@ -258,19 +275,19 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     MY_SOLVERS
     bool ret = true;
-    if (solvers->size() > 1) {
-        for(Lit lit: lits) {
-            cls_lits.push_back(lit);
+    if (data.solvers.size() > 1) {
+        if (data.cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
+            ret = actually_add_clauses_to_threads(data);
         }
-        cls_lits.push_back(lit_Undef);
 
-        if (cls_lits.size() > CACHE_SIZE) {
-            ret = actually_add_clauses_to_threads();
+        for(Lit lit: lits) {
+            data.cls_lits.push_back(lit);
         }
+        data.cls_lits.push_back(lit_Undef);
     } else {
-        assert(solvers->size() == 1);
-        ret = solvers->at(0)->add_clause_outer(lits);
-        cls++;
+        assert(data.solvers.size() == 1);
+        ret = data.solvers[0]->add_clause_outer(lits);
+        data.cls++;
     }
 
     return ret;
@@ -280,78 +297,67 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
     MY_SOLVERS
     bool ret = true;
-    for(size_t i = 0; i < solvers->size(); i++) {
-        ret = solvers->at(i)->add_xor_clause_outer(vars, rhs);
+    for(size_t i = 0; i < data.solvers.size(); i++) {
+        ret = data.solvers[i]->add_xor_clause_outer(vars, rhs);
     }
     return ret;
 }
 
 static void one_thread_solve(
-    topass data
+    DataForThread data_for_thread
 ) {
-    if (false) {
-        data.update_mutex->lock();
-        cout << "Starting thread" << data.tid << endl;
-        data.update_mutex->unlock();
+    if (print_thread_start_and_finish) {
+        data_for_thread.update_mutex->lock();
+        cout << "Starting thread" << data_for_thread.tid << endl;
+        data_for_thread.update_mutex->unlock();
     }
 
-    one_thread_add_cls(data);
-    lbool ret = data.solvers->at(data.tid)->solve_with_assumptions(data.assumptions);
+    one_thread_add_cls(data_for_thread);
+    lbool ret = data_for_thread.solvers[data_for_thread.tid]->solve_with_assumptions(data_for_thread.assumptions);
 
-    if (false) {
-        data.update_mutex->lock();
-        cout << "Finished tread " << data.tid << " with result: " << ret << endl;
-        data.update_mutex->unlock();
+    if (print_thread_start_and_finish) {
+        data_for_thread.update_mutex->lock();
+        cout << "Finished tread " << data_for_thread.tid << " with result: " << ret << endl;
+        data_for_thread.update_mutex->unlock();
     }
 
 
     if (ret != l_Undef) {
-        data.update_mutex->lock();
-        *data.which_solved = data.tid;
-        *data.ret = ret;
-        for(size_t i = 0; i < data.solvers->size(); i++) {
-            if ((int)i == data.tid)
+        data_for_thread.update_mutex->lock();
+        *data_for_thread.which_solved = data_for_thread.tid;
+        *data_for_thread.ret = ret;
+        for(size_t i = 0; i < data_for_thread.solvers.size(); i++) {
+            if ((int)i == data_for_thread.tid)
                 continue;
 
-            data.solvers->at(i)->set_must_interrupt_asap();
+            data_for_thread.solvers[i]->set_must_interrupt_asap();
         }
-        data.update_mutex->unlock();
+        data_for_thread.update_mutex->unlock();
     }
-    data.solvers->at(data.tid)->unset_must_interrupt_asap();
+    data_for_thread.solvers[data_for_thread.tid]->unset_must_interrupt_asap();
 }
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     MY_SOLVERS
-    if (solvers->size() == 1) {
-        return solvers->at(0)->solve_with_assumptions(assumptions);
+    if (data.solvers.size() == 1) {
+        return data.solvers[0]->solve_with_assumptions(assumptions);
     }
 
-    lbool* ret = new lbool;
-    topass data;
-    data.solvers = solvers;
-    data.assumptions = assumptions;
-    data.lits_to_add = &cls_lits;
-    data.update_mutex = new mutex;
-    data.which_solved = &which_solved;
-    data.ret = ret;
-    data.vars_to_add = vars_to_add;
-
+    DataForThread data_for_thread(data, assumptions);
     std::vector<std::thread> thds;
-    for(size_t i = 0; i < solvers->size(); i++) {
-        data.tid = i;
-        thds.push_back(thread(one_thread_solve, data));
+    for(size_t i = 0; i < data.solvers.size(); i++) {
+        data_for_thread.tid = i;
+        thds.push_back(thread(one_thread_solve, data_for_thread));
     }
     for(std::thread& thread : thds){
         thread.join();
     }
-    lbool real_ret = *ret;
-    delete ret;
-    delete data.update_mutex;
+    lbool real_ret = *data_for_thread.ret;
 
     //clear what has been added
-    cls_lits.clear();
-    vars_to_add = 0;
+    data.cls_lits.clear();
+    data.vars_to_add = 0;
 
     return real_ret;
 }
@@ -359,51 +365,51 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
 const vector< lbool >& SATSolver::get_model() const
 {
     MY_SOLVERS
-    return solvers->at(which_solved)->get_model();
+    return data.solvers[data.which_solved]->get_model();
 }
 
 const std::vector<Lit>& SATSolver::get_conflict() const
 {
     MY_SOLVERS
-    return solvers->at(which_solved)->get_final_conflict();
+    return data.solvers[data.which_solved]->get_final_conflict();
 }
 
 uint32_t SATSolver::nVars() const
 {
     MY_SOLVERS
-    if (solvers->size() == 0) {
-        assert(vars_to_add == 0);
-        return (*solvers)[0]->nVarsOutside();
+    if (data.solvers.size() == 0) {
+        assert(data.vars_to_add == 0);
+        return data.solvers[0]->nVarsOutside();
     } else {
-        return (*solvers)[0]->nVarsOutside() + vars_to_add;
+        return data.solvers[0]->nVarsOutside() + data.vars_to_add;
     }
 }
 
 void SATSolver::new_var()
 {
     MY_SOLVERS
-    if (solvers->size() == 1) {
-        solvers->at(0)->new_external_var();
+    if (data.solvers.size() == 1) {
+        data.solvers[0]->new_external_var();
     } else {
-        vars_to_add += 1;
+        data.vars_to_add += 1;
     }
 }
 
 void SATSolver::new_vars(const size_t n)
 {
     MY_SOLVERS
-    if (solvers->size() == 1) {
-        solvers->at(0)->new_external_vars(n);
+    if (data.solvers.size() == 1) {
+        data.solvers[0]->new_external_vars(n);
     } else {
-        vars_to_add += n;
+        data.vars_to_add += n;
     }
 }
 
 void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
     MY_SOLVERS
-    for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->add_sql_tag(tagname, tag);
+    for(size_t i = 0; i < data.solvers.size(); i++) {
+        data.solvers[i]->add_sql_tag(tagname, tag);
     }
 }
 
@@ -415,52 +421,52 @@ const char* SATSolver::get_version()
 void SATSolver::print_stats() const
 {
     MY_SOLVERS
-    solvers->at(which_solved)->printStats();
+    data.solvers[data.which_solved]->printStats();
 }
 
 void SATSolver::set_drup(std::ostream* os)
 {
     MY_SOLVERS
-    assert(solvers->size() == 1);
+    assert(data.solvers.size() == 1);
     DrupFile* drup = new DrupFile();
     drup->setFile(os);
-    solvers->at(0)->drup = drup;
+    data.solvers[0]->drup = drup;
 }
 
 void SATSolver::interrupt_asap()
 {
     MY_SOLVERS
-    for(size_t i = 0; i < solvers->size(); i++) {
-        solvers->at(i)->set_must_interrupt_asap();
+    for(Solver* solver: data.solvers) {
+        solver->set_must_interrupt_asap();
     }
 }
 
 void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     MY_SOLVERS
-    solvers->at(which_solved)->open_file_and_dump_irred_clauses(fname);
+    data.solvers[data.which_solved]->open_file_and_dump_irred_clauses(fname);
 }
 
 void SATSolver::open_file_and_dump_red_clauses(std::string fname) const
 {
     MY_SOLVERS
-    solvers->at(which_solved)->open_file_and_dump_red_clauses(fname);
+    data.solvers[data.which_solved]->open_file_and_dump_red_clauses(fname);
 }
 
 void SATSolver::add_in_partial_solving_stats()
 {
     MY_SOLVERS
-    solvers->at(which_solved)->add_in_partial_solving_stats();
+    data.solvers[data.which_solved]->add_in_partial_solving_stats();
 }
 
 std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
     MY_SOLVERS
-    return solvers->at(which_solved)->get_zero_assigned_lits();
+    return data.solvers[data.which_solved]->get_zero_assigned_lits();
 }
 
 unsigned long SATSolver::get_sql_id() const
 {
     MY_SOLVERS
-    return solvers->at(0)->get_sql_id();
+    return data.solvers[0]->get_sql_id();
 }

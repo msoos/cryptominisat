@@ -39,14 +39,7 @@ namespace CMSat {
         void add_in_partial_solving_stats();
         std::vector<Lit> get_zero_assigned_lits() const;
     private:
-        bool actually_add_clauses_to_threads();
         void *s;
-        void *shared_data;
-        int which_solved;
-        bool* inter;
-        unsigned cls;
-        unsigned vars_to_add;
-        std::vector<Lit> cls_lits;
     };
 }
 
