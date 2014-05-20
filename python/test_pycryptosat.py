@@ -88,8 +88,6 @@ clauses3 = [[-1, 2], [-1, -2], [1, -2]]
 
 # -------------------------- actual unit tests ---------------------------
 
-tests = []
-
 class TestXor(unittest.TestCase) :
     def test_wrong_args(self) :
         solver = Solver()
@@ -149,12 +147,12 @@ class TestXor(unittest.TestCase) :
             self.assertEqual(res, True)
             self.assertEqual(solution, tuple(solution_expected))
 
-tests.append(TestXor)
-
 class TestSolve(unittest.TestCase):
+    def setUp(self) :
+        self.num_threads = 2
 
     def test_wrong_args(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         self.assertRaises(TypeError, solver.add_clause, 'A')
         self.assertRaises(TypeError, solver.add_clause, 1)
         self.assertRaises(TypeError, solver.add_clause, 1.0)
@@ -173,12 +171,12 @@ class TestSolve(unittest.TestCase):
         self.assertRaises(TypeError, Solver, confl_limit = "fail")
 
     def test_no_clauses(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         for n in range(7):
             self.assertEqual(solver.solve([]), (True, (None,)))
 
     def test_cnf1(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         for cl in clauses1:
             solver.add_clause(cl)
         res, solution = solver.solve()
@@ -186,19 +184,19 @@ class TestSolve(unittest.TestCase):
         self.assertTrue(check_solution(clauses1, solution))
 
     def test_bad_iter(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         class Liar:
             def __iter__(self): return None
         self.assertRaises(TypeError, solver.add_clause, Liar())
 
     def test_cnf2(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         for cl in clauses2:
             solver.add_clause(cl)
         self.assertEqual(solver.solve(), (False, None))
 
     def test_cnf3(self):
-        solver = Solver()
+        solver = Solver(threads = self.num_threads)
         for cl in clauses3:
             solver.add_clause(cl)
         res, solution = solver.solve()
@@ -207,18 +205,16 @@ class TestSolve(unittest.TestCase):
 
     def test_cnf1_confl_limit(self):
         for lim in range(1, 20):
-            solver = Solver(confl_limit=lim)
+            solver = Solver(confl_limit=lim, threads = self.num_threads)
             for cl in clauses1:
                 solver.add_clause(cl)
 
             res, solution = solver.solve()
             self.assertTrue(res == None or check_solution(clauses1, solution))
 
-tests.append(TestSolve)
-
 # ------------------------------------------------------------------------
 
-def run(repeat=1):
+def run():
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s" % sys.version)
     try:
@@ -226,9 +222,8 @@ def run(repeat=1):
     except AttributeError:
         pass
     suite = unittest.TestSuite()
-    for cls in tests:
-        for _ in range(repeat):
-            suite.addTest(unittest.makeSuite(cls))
+    suite.addTest(unittest.makeSuite(TestXor))
+    suite.addTest(unittest.makeSuite(TestSolve))
 
     runner = unittest.TextTestRunner()
     return runner.run(suite)
