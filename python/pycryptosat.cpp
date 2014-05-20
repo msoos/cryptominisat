@@ -40,16 +40,16 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
         return NULL;
     }
-    if (num_threads <= 0) {
-        PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
+    if (verbose < 0) {
+        PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
         return NULL;
     }
     if (confl_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
         return NULL;
     }
-    if (verbose < 0) {
-        PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
+    if (num_threads <= 0) {
+        PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
         return NULL;
     }
 
@@ -375,8 +375,6 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->cmsat = setup_solver(args, kwds);
-        //self->cmsat = new SATSolver;
-        self->cmsat = NULL;
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -390,7 +388,10 @@ static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
     self->cmsat = setup_solver(args, kwds);
-    return 0;
+    if (!self->cmsat) {
+        return -1;
+    }
+    return NULL;
 }
 
 static PyMemberDef Solver_members[] = {

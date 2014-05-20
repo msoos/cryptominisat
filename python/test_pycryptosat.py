@@ -163,6 +163,15 @@ class TestSolve(unittest.TestCase):
         self.assertRaises(TypeError, solver.add_clause, [[1, 2], [3, None]])
         self.assertRaises(ValueError, solver.add_clause, [1, 0])
 
+    def test_wrong_args_to_solver(self):
+        self.assertRaises(ValueError, Solver, threads = -1)
+        self.assertRaises(ValueError, Solver, threads = 0)
+        self.assertRaises(ValueError, Solver, verbose = -1)
+        self.assertRaises(ValueError, Solver, confl_limit = -1)
+        self.assertRaises(TypeError, Solver, threads = "fail")
+        self.assertRaises(TypeError, Solver, verbose = "fail")
+        self.assertRaises(TypeError, Solver, confl_limit = "fail")
+
     def test_no_clauses(self):
         solver = Solver()
         for n in range(7):
