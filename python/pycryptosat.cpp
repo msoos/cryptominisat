@@ -32,11 +32,24 @@ typedef struct {
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"verbose", "confl_limit", NULL};
+    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
+    int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|il", kwlist, &verbose, &confl_limit)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+        return NULL;
+    }
+    if (num_threads <= 0) {
+        PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
+        return NULL;
+    }
+    if (confl_limit < 0) {
+        PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
+        return NULL;
+    }
+    if (verbose < 0) {
+        PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
         return NULL;
     }
 
@@ -45,6 +58,8 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     conf.maxConfl = confl_limit;
 
     SATSolver *cmsat = new SATSolver(conf);
+    cmsat->set_num_threads(num_threads);
+
     return cmsat;
 }
 
