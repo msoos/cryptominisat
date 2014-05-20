@@ -177,7 +177,8 @@ class Solver : public Searcher
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
-            , const bool attach
+            , bool attach
+            , bool addDrup = true
         );
         void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
         void new_vars(size_t n) override;
@@ -240,8 +241,8 @@ class Solver : public Searcher
 
         void check_config_parameters() const;
         void handle_found_solution(const lbool status);
-        void add_every_combination_xor(const vector<Lit>& lits, bool attach);
-        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach);
+        void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrup);
+        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrup);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();

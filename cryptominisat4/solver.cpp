@@ -145,6 +145,7 @@ bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
     , const bool attach
+    , bool addDrup
 ) {
     assert(ok);
     assert(!attach || qhead == trail.size());
@@ -203,12 +204,12 @@ bool Solver::add_xor_clause_inter(
     }
 
     //cout << "without rhs is: " << ps << endl;
-    add_every_combination_xor(ps, attach);
+    add_every_combination_xor(ps, attach, addDrup);
 
     return ok;
 }
 
-void Solver::add_every_combination_xor(const vector<Lit>& lits, bool attach)
+void Solver::add_every_combination_xor(const vector<Lit>& lits, const bool attach, const bool addDrup)
 {
     //cout << "add_every_combination got: " << lits << endl;
 
@@ -245,7 +246,7 @@ void Solver::add_every_combination_xor(const vector<Lit>& lits, bool attach)
             lastlit_added = toadd;
         }
 
-        add_xor_clause_inter_cleaned_cut(xorlits, attach);
+        add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrup);
         if (!ok)
             break;
 
@@ -255,7 +256,8 @@ void Solver::add_every_combination_xor(const vector<Lit>& lits, bool attach)
 
 void Solver::add_xor_clause_inter_cleaned_cut(
     const vector<Lit>& lits
-    , bool attach
+    , const bool attach
+    , const bool addDrup
 ) {
     //cout << "xor_inter_cleaned_cut got: " << lits << endl;
     vector<Lit> new_lits;
@@ -271,7 +273,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             new_lits.push_back(lits[at] ^ xorwith);
         }
         //cout << "Added. " << new_lits << endl;
-        Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach);
+        Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach, NULL, addDrup);
         if (cl) {
             solver->longIrredCls.push_back(clAllocator.getOffset(cl));
         }
@@ -4035,7 +4037,7 @@ bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
 
     back_number_from_caller(lits);
     addClauseHelper(back_number_from_caller_tmp);
-    add_xor_clause_inter(back_number_from_caller_tmp, rhs, true);
+    add_xor_clause_inter(back_number_from_caller_tmp, rhs, true, false);
 
     return ok;
 }
