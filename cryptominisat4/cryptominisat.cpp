@@ -237,19 +237,38 @@ struct OneThreadAddCls
         solver.new_external_vars(data_for_thread.vars_to_add);
 
         vector<Lit> lits;
+        vector<Var> vars;
         bool ret = true;
         size_t at = 0;
         const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
         const size_t size = orig_lits.size();
         while(at < size && ret) {
-            lits.clear();
-            for(; at < size && orig_lits[at] != lit_Undef
-                ; at++
-            ) {
-                lits.push_back(orig_lits[at]);
+            if (orig_lits[at] == lit_Undef) {
+                lits.clear();
+                at++;
+                for(; at < size
+                    && orig_lits[at] != lit_Undef
+                    && orig_lits[at] != lit_Error
+                    ; at++
+                ) {
+                    lits.push_back(orig_lits[at]);
+                }
+                ret = solver.add_clause_outer(lits);
+            } else {
+                vars.clear();
+                at++;
+                bool rhs = orig_lits[at].sign();
+                at++;
+                for(; at < size
+                    && orig_lits[at] != lit_Undef
+                    && orig_lits[at] != lit_Error
+                    ; at++
+                ) {
+                    vars.push_back(orig_lits[at].var());
+                }
+                at++;
+                ret = solver.add_xor_clause_outer(vars, rhs);
             }
-            at++;
-            ret = solver.add_clause_outer(lits);
         }
 
         if (!ret) {
@@ -291,10 +310,10 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
             ret = actually_add_clauses_to_threads(data);
         }
 
+        data.cls_lits.push_back(lit_Undef);
         for(Lit lit: lits) {
             data.cls_lits.push_back(lit);
         }
-        data.cls_lits.push_back(lit_Undef);
     } else {
         assert(data.solvers.size() == 1);
         ret = data.solvers[0]->add_clause_outer(lits);
@@ -308,9 +327,22 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
     MY_SOLVERS
     bool ret = true;
-    for(size_t i = 0; i < data.solvers.size(); i++) {
-        ret = data.solvers[i]->add_xor_clause_outer(vars, rhs);
+    if (data.solvers.size() > 1) {
+        if (data.cls_lits.size() + vars.size() + 1 > CACHE_SIZE) {
+            ret = actually_add_clauses_to_threads(data);
+        }
+
+        data.cls_lits.push_back(lit_Error);
+        data.cls_lits.push_back(Lit(0, rhs));
+        for(Var var: vars) {
+            data.cls_lits.push_back(Lit(var, false));
+        }
+    } else {
+        assert(data.solvers.size() == 1);
+        ret = data.solvers[0]->add_xor_clause_outer(vars, rhs);
+        data.cls++;
     }
+
     return ret;
 }
 
