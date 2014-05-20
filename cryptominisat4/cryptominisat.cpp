@@ -491,3 +491,9 @@ unsigned long SATSolver::get_sql_id() const
     MY_SOLVERS
     return data.solvers[0]->get_sql_id();
 }
+
+SolverConf SATSolver::get_conf() const
+{
+    MY_SOLVERS
+    return data.solvers[0]->getConf();
+}
