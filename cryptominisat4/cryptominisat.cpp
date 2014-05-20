@@ -97,7 +97,7 @@ SATSolver::~SATSolver()
     delete data.shared_data;
 }
 
-void SATSolver::set_num_threads(unsigned num)
+void SATSolver::set_num_threads(const unsigned num)
 {
     MY_SOLVERS
     if (num <= 0) {
