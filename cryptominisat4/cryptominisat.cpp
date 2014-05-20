@@ -104,8 +104,9 @@ void SATSolver::set_num_threads(unsigned num)
         std::cerr << "ERROR: Number of threads must be at least 1" << endl;
         exit(-1);
     }
-    if (num == 1)
+    if (num == 1) {
         return;
+    }
 
     if (data.cls > 0 || nVars() > 0) {
         std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
