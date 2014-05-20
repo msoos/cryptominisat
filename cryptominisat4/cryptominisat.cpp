@@ -222,42 +222,52 @@ void SATSolver::set_num_threads(unsigned num)
     }
 }
 
-static void one_thread_add_cls(
-    DataForThread data_for_thread
-) {
-    Solver& solver = *data_for_thread.solvers[data_for_thread.tid];
-    solver.new_external_vars(data_for_thread.vars_to_add);
+struct OneThreadAddCls
+{
+    OneThreadAddCls(DataForThread& _data_for_thread, size_t _tid) :
+        data_for_thread(_data_for_thread)
+        , tid(_tid)
+    {
+    }
 
-    vector<Lit> lits;
-    bool ret = true;
-    size_t at = 0;
-    const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
-    const size_t size = orig_lits.size();
-    while(at < size && ret) {
-        lits.clear();
-        for(; at < size && orig_lits[at] != lit_Undef
-            ; at++
-        ) {
-            lits.push_back(orig_lits[at]);
+    void operator()()
+    {
+        Solver& solver = *data_for_thread.solvers[tid];
+        solver.new_external_vars(data_for_thread.vars_to_add);
+
+        vector<Lit> lits;
+        bool ret = true;
+        size_t at = 0;
+        const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
+        const size_t size = orig_lits.size();
+        while(at < size && ret) {
+            lits.clear();
+            for(; at < size && orig_lits[at] != lit_Undef
+                ; at++
+            ) {
+                lits.push_back(orig_lits[at]);
+            }
+            at++;
+            ret = solver.add_clause_outer(lits);
         }
-        at++;
-        ret = solver.add_clause_outer(lits);
+
+        if (!ret) {
+            data_for_thread.update_mutex->lock();
+            *data_for_thread.ret = l_False;
+            data_for_thread.update_mutex->unlock();
+        }
     }
 
-    if (!ret) {
-        data_for_thread.update_mutex->lock();
-        *data_for_thread.ret = l_False;
-        data_for_thread.update_mutex->unlock();
-    }
-}
+    DataForThread& data_for_thread;
+    size_t tid;
+};
 
 static bool actually_add_clauses_to_threads(Data& data)
 {
     DataForThread data_for_thread(data);
     std::vector<std::thread> thds;
     for(size_t i = 0; i < data.solvers.size(); i++) {
-        data_for_thread.tid = i;
-        thds.push_back(thread(one_thread_add_cls, data_for_thread, i));
+        thds.push_back(thread(OneThreadAddCls(data_for_thread, i)));
     }
     for(std::thread& thread : thds){
         thread.join();
@@ -303,39 +313,51 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
     return ret;
 }
 
-static void one_thread_solve(
-    DataForThread data_for_thread
-) {
-    if (print_thread_start_and_finish) {
-        data_for_thread.update_mutex->lock();
-        cout << "Starting thread" << data_for_thread.tid << endl;
-        data_for_thread.update_mutex->unlock();
-    }
+struct OneThreadSolve
+{
+    OneThreadSolve(DataForThread& _data_for_thread, size_t _tid) :
+        data_for_thread(_data_for_thread)
+        , tid(_tid)
+    {}
 
-    one_thread_add_cls(data_for_thread);
-    lbool ret = data_for_thread.solvers[data_for_thread.tid]->solve_with_assumptions(data_for_thread.assumptions);
-
-    if (print_thread_start_and_finish) {
-        data_for_thread.update_mutex->lock();
-        cout << "Finished tread " << data_for_thread.tid << " with result: " << ret << endl;
-        data_for_thread.update_mutex->unlock();
-    }
-
-
-    if (ret != l_Undef) {
-        data_for_thread.update_mutex->lock();
-        *data_for_thread.which_solved = data_for_thread.tid;
-        *data_for_thread.ret = ret;
-        for(size_t i = 0; i < data_for_thread.solvers.size(); i++) {
-            if ((int)i == data_for_thread.tid)
-                continue;
-
-            data_for_thread.solvers[i]->set_must_interrupt_asap();
+    void operator()()
+    {
+        if (print_thread_start_and_finish) {
+            data_for_thread.update_mutex->lock();
+            cout << "Starting thread" << tid << endl;
+            data_for_thread.update_mutex->unlock();
         }
-        data_for_thread.update_mutex->unlock();
+
+        OneThreadAddCls cls_adder(data_for_thread, tid);
+        cls_adder();
+        lbool ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions);
+
+        if (print_thread_start_and_finish) {
+            data_for_thread.update_mutex->lock();
+            cout << "Finished tread " << tid << " with result: " << ret << endl;
+            data_for_thread.update_mutex->unlock();
+        }
+
+
+        if (ret != l_Undef) {
+            data_for_thread.update_mutex->lock();
+            *data_for_thread.which_solved = tid;
+            *data_for_thread.ret = ret;
+            for(size_t i = 0; i < data_for_thread.solvers.size(); i++) {
+                if (i == tid) {
+                    continue;
+                }
+
+                data_for_thread.solvers[i]->set_must_interrupt_asap();
+            }
+            data_for_thread.update_mutex->unlock();
+        }
+        data_for_thread.solvers[tid]->unset_must_interrupt_asap();
     }
-    data_for_thread.solvers[data_for_thread.tid]->unset_must_interrupt_asap();
-}
+
+    DataForThread& data_for_thread;
+    size_t tid;
+};
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
@@ -347,8 +369,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     DataForThread data_for_thread(data, assumptions);
     std::vector<std::thread> thds;
     for(size_t i = 0; i < data.solvers.size(); i++) {
-        data_for_thread.tid = i;
-        thds.push_back(thread(one_thread_solve, data_for_thread));
+        thds.push_back(thread(OneThreadSolve(data_for_thread, i)));
     }
     for(std::thread& thread : thds){
         thread.join();
