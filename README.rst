@@ -120,9 +120,10 @@ such, the 1st CNF above would become::
       vector<Lit> clause;
       
       //We need 3 variables
-      solver.new_var();
-      solver.new_var();
-      solver.new_var();
+      solver.new_vars(3);
+      
+      //Let's use 4 threads
+      solver.set_num_threads(4);
 
       //adds "1 0"
       clause.push_back(Lit(0, false));
