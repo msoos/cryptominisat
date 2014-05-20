@@ -259,7 +259,7 @@ struct OneThreadAddCls
     }
 
     DataForThread& data_for_thread;
-    size_t tid;
+    const size_t tid;
 };
 
 static bool actually_add_clauses_to_threads(Data& data)
@@ -356,7 +356,7 @@ struct OneThreadSolve
     }
 
     DataForThread& data_for_thread;
-    size_t tid;
+    const size_t tid;
 };
 
 lbool SATSolver::solve(vector< Lit >* assumptions)
