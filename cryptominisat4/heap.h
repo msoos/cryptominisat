@@ -71,7 +71,6 @@ class Heap {
         return i >= heap.size()
             || ((i == 0 || !lt(heap[i], heap[parent(i)])) && heapProperty(left(i)) && heapProperty(right(i))); }
 
-
   public:
     Heap(const Comp& c) : lt(c) { }
     Heap(const Heap<Comp>& other) : lt(other.lt) {
@@ -101,21 +100,25 @@ class Heap {
             + indices.capacity()*sizeof(uint32_t);
     }
 
-    uint32_t  size      ()          const { return heap.size(); }
-    bool empty     ()          const { return heap.size() == 0; }
-    bool inHeap    (uint32_t n)     const { return n < indices.size() && indices[n] != std::numeric_limits<uint32_t>::max(); }
-    uint32_t  operator[](uint32_t index) const { assert(index < heap.size()); return heap[index]; }
+    uint32_t size() const {
+        return heap.size();
+    }
+    bool empty() const {
+        return heap.size() == 0;
+    }
+    uint32_t operator[](uint32_t index) const {
+        return heap[index];
+    }
 
-    void decrease  (uint32_t n) { assert(inHeap(n)); percolateUp(indices[n]); }
-
-    // RENAME WHEN THE DEPRECATED INCREASE IS REMOVED.
-    void increase_ (uint32_t n) { assert(inHeap(n)); percolateDown(indices[n]); }
-
+    void decrease  (uint32_t n) {
+        //assert(inHeap(n));
+        percolateUp(indices[n]);
+    }
 
     void insert(uint32_t n)
     {
         indices.growTo(n+1, std::numeric_limits<uint32_t>::max());
-        assert(!inHeap(n));
+        //assert(!inHeap(n));
 
         indices[n] = heap.size();
         heap.push(n);
@@ -160,7 +163,6 @@ class Heap {
 
 
     // Delete elements from the heap using a given filter function (-object).
-    // *** this could probaly be replaced with a more general "buildHeap(vec<int>&)" method ***
     template <class F>
     void filter(const F& filt) {
         uint32_t i,j;
@@ -180,8 +182,13 @@ class Heap {
         assert(heapProperty());
     }
 
+    bool inHeap(uint32_t n) const {
+        return n < indices.size()
+            && indices[n] != std::numeric_limits<uint32_t>::max();
 
-    // DEBUG: consistency checking
+    }
+
+    // consistency checking
     bool heapProperty() const {
         return heapProperty(1); }
 
