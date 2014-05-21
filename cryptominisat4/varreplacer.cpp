@@ -148,7 +148,7 @@ void VarReplacer::update_vardata_and_activities(
     //The activities of the others don't need to be updated -- they are not
     //set to be decision vars anyway
     solver->activities[replaced_with] += solver->activities[orig];
-    solver->order_heap.update(orig);
+    solver->order_heap.update(replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
