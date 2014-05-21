@@ -918,13 +918,8 @@ inline void Searcher::bump_var_activitiy(Var var)
         || var_inc > ((0x1U) << 24)
     ) {
         // Rescale:
-        for (vector<uint32_t>::iterator
-            it = activities.begin()
-            , end = activities.end()
-            ; it != end
-            ; it++
-        ) {
-            *it >>= 14;
+        for (uint32_t& act : activities) {
+            act >>= 14;
         }
 
         //Reset var_inc
@@ -945,8 +940,9 @@ inline void Searcher::bump_var_activitiy(Var var)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.inHeap(var))
+    if (order_heap.inHeap(var)) {
         order_heap.decrease(var);
+    }
 }
 
 inline uint32_t Searcher::abstractLevel(const Var x) const
