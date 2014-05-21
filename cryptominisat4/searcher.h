@@ -32,6 +32,7 @@
 #include "time_mem.h"
 #include "avgcalc.h"
 #include "hyperengine.h"
+
 namespace CMSat {
 
 class Solver;
