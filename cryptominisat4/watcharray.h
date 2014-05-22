@@ -4,7 +4,7 @@
 #include "watched.h"
 #include <vector>
 
-#ifdef FOUND_TBB
+#ifdef USE_TBB
 #include "tbb/scalable_allocator.h"
 #define TBB ,tbb::scalable_allocator<Watched>
 #else
