@@ -266,7 +266,6 @@ struct OneThreadAddCls
                 ) {
                     vars.push_back(orig_lits[at].var());
                 }
-                at++;
                 ret = solver.add_xor_clause_outer(vars, rhs);
             }
         }
