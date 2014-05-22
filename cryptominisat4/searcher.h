@@ -915,6 +915,10 @@ inline void Searcher::varDecayActivity()
 inline void Searcher::bump_var_activitiy(Var var)
 {
     activities[var] += var_inc;
+
+    #ifdef MORE_DEBUG
+    bool rescaled = false;
+    #endif
     if ( (activities[var]) > ((0x1U) << 24)
         || var_inc > ((0x1U) << 24)
     ) {
@@ -922,6 +926,9 @@ inline void Searcher::bump_var_activitiy(Var var)
         for (uint32_t& act : activities) {
             act >>= 14;
         }
+        #ifdef MORE_DEBUG
+        rescaled = true;
+        #endif
 
         //Reset var_inc
         var_inc >>= 14;
@@ -937,6 +944,12 @@ inline void Searcher::bump_var_activitiy(Var var)
     if (order_heap.inHeap(var)) {
         order_heap.decrease(var);
     }
+
+    #ifdef MORE_DEBUG
+    if (rescaled) {
+        assert(order_heap.heapProperty());
+    }
+    #endif
 }
 
 inline uint32_t Searcher::abstractLevel(const Var x) const
