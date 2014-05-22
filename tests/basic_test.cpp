@@ -379,6 +379,20 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
     BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
+BOOST_AUTO_TEST_CASE(xor_norm_mix_unsat_multi_thread)
+{
+    SATSolver s;
+    //s.set_num_threads(3);
+    s.new_vars(3);
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_clause(vector<Lit>{Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(2, false)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 /*struct F {
