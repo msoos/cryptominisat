@@ -108,6 +108,11 @@ void SATSolver::set_num_threads(const unsigned num)
         return;
     }
 
+    if (data.solvers[0]->drup) {
+        std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
+        exit(-1);
+    }
+
     if (data.cls > 0 || nVars() > 0) {
         std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
         exit(-1);
@@ -480,7 +485,10 @@ void SATSolver::print_stats() const
 void SATSolver::set_drup(std::ostream* os)
 {
     MY_SOLVERS
-    assert(data.solvers.size() == 1);
+    if (data.solvers.size() > 0) {
+        std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
+        exit(-1);
+    }
     DrupFile* drup = new DrupFile();
     drup->setFile(os);
     data.solvers[0]->drup = drup;
