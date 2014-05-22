@@ -929,13 +929,6 @@ inline void Searcher::bump_var_activitiy(Var var)
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
         if (var_inc < conf.var_inc_start) {
-            /*cout
-            << "WHAAAAAAAAAAAAAT!!!? var_inc < conf.var_inc_start ! "
-            << var_inc
-            << ", "
-            << conf.var_inc_start
-            << endl;*/
-
             var_inc = conf.var_inc_start;
         }
     }
