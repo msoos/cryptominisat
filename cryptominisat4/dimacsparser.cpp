@@ -161,7 +161,16 @@ void DimacsParser::printHeader(StreamBuffer& in)
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
-         if (solver->nVars() <= vars) {
+        if (vars < 0) {
+            std::cerr << "ERROR: Number of variables in header cannot be less than 0" << endl;
+            exit(-1);
+        }
+        if (clauses < 0) {
+            std::cerr << "ERROR: Number of clauses in header cannot be less than 0" << endl;
+            exit(-1);
+        }
+
+        if (solver->nVars() <= (size_t)vars) {
             solver->new_vars(vars-solver->nVars()+1);
         }
     } else {
