@@ -24,8 +24,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "constants.h"
 #include <algorithm>
 
-
-
 // A heap implementation with support for decrease/increase key.
 template<class Comp>
 class Heap {
@@ -141,12 +139,15 @@ class Heap {
 
     void clear(bool dealloc = false)
     {
-        for (uint32_t i = 0; i != heap.size(); i++)
+        for (uint32_t i = 0; i != heap.size(); i++) {
             indices[heap[i]] = std::numeric_limits<uint32_t>::max();
-#ifndef NDEBUG
-        for (uint32_t i = 0; i != indices.size(); i++)
+        }
+
+        #ifndef NDEBUG
+        for (uint32_t i = 0; i != indices.size(); i++) {
             assert(indices[i] == std::numeric_limits<uint32_t>::max());
-#endif
+        }
+        #endif
         heap.clear(dealloc);
     }
 
@@ -195,6 +196,4 @@ class Heap {
 
 };
 
-
-//=================================================================================================
 #endif
