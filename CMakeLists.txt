@@ -92,6 +92,11 @@ if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 endif()
 
+option(MORE_DEBUG "Use more debug flags" OFF)
+IF(MORE_DEBUG)
+    add_definitions(-DMORE_DEBUG)
+endif()
+
 # -----------------------------------------------------------------------------
 # Add GIT version
 # -----------------------------------------------------------------------------
