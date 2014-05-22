@@ -69,7 +69,8 @@ class Heap {
 
     bool heapProperty (uint32_t i) const {
         return i >= heap.size()
-            || ((i == 0 || !lt(heap[i], heap[parent(i)])) && heapProperty(left(i)) && heapProperty(right(i))); }
+            || ((i == 0 || !lt(heap[i], heap[parent(i)])) && heapProperty(left(i)) && heapProperty(right(i)));
+    }
 
   public:
     Heap(const Comp& c) : lt(c) { }
