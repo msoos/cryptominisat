@@ -86,11 +86,11 @@ add_cxx_flag_if_supported("-Wheader-guard")
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
 option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
-IF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
-ENDIF(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+endif()
 
 # -----------------------------------------------------------------------------
 # Add GIT version
