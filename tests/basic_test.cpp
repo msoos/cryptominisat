@@ -47,6 +47,38 @@ BOOST_AUTO_TEST_CASE(multi_solve_unsat)
         BOOST_CHECK_EQUAL( ret, l_False);
     }
 }
+
+BOOST_AUTO_TEST_CASE(multi_solve_unsat_multi_thread)
+{
+    SATSolver s;
+    s.set_num_threads(2);
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(vector<Lit>{Lit(0, true)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_False);
+    for(size_t i = 0;i < 10; i++) {
+        lbool ret = s.solve();
+        BOOST_CHECK_EQUAL( ret, l_False);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(solve_multi_thread)
+{
+    SATSolver s;
+    s.set_num_threads(2);
+    s.new_vars(2);
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    s.add_clause(vector<Lit>{Lit(0, true)});
+    ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
+    BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 
@@ -297,6 +329,54 @@ BOOST_AUTO_TEST_CASE(xor_very_long2)
         BOOST_CHECK_EQUAL(s.get_model()[num-1], l_True);
         BOOST_CHECK_EQUAL( s.nVars(), num);
     }
+}
+
+BOOST_AUTO_TEST_CASE(xor_check_unsat)
+{
+    SATSolver s;
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
+}
+
+BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_thread)
+{
+    SATSolver s;
+    s.set_num_threads(3);
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
+}
+
+BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
+{
+    SATSolver s;
+    s.set_num_threads(3);
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0U, 1U}, false);
+    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
+
+    s.add_xor_clause(vector<Var>{0U}, false);
+    ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.get_model()[0], l_False);
+    BOOST_CHECK_EQUAL( s.get_model()[1], l_False);
+    BOOST_CHECK_EQUAL( s.get_model()[2], l_True);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
+
+    s.add_xor_clause(vector<Var>{1U}, true);
+    ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
