@@ -94,7 +94,7 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
     str.clear();
     skipWhitespace(in);
     while (*in != ' ' && *in != '\n') {
-        str += *in;
+        str.push_back(*in);
         ++in;
     }
 }
