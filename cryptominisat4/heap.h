@@ -53,7 +53,7 @@ class Heap {
         uint32_t x = heap[i];
         while (left(i) < heap.size()) {
             uint32_t child;
-            if ((right(i) >= heap.size())
+            if ((right(i) < heap.size())
                 && lt(heap[right(i)], heap[left(i)])
             ) {
                 child = right(i);
@@ -146,7 +146,7 @@ class Heap {
     {
         uint32_t x       = heap[1];
         heap[1]          = heap.back();
-        indices[heap[1]] = 0;
+        indices[heap[1]] = 1;
         indices[x]       = std::numeric_limits<uint32_t>::max();
         heap.pop();
         if (heap.size() > 2) {
