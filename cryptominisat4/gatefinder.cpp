@@ -471,7 +471,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
 void GateFinder::set_seen2_and_abstraction(
     const Clause& cl
-    , CL_ABST_TYPE& abstraction
+    , cl_abst_type& abstraction
 ) {
     *simplifier->limit_to_decrease -= cl.size();
     for (const Lit lit: cl) {
@@ -479,18 +479,18 @@ void GateFinder::set_seen2_and_abstraction(
             seen2[lit.toInt()] = true;
             seen2Set.push_back(lit.toInt());
         }
-        abstraction |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+        abstraction |= abst_var(lit.var());
     }
 }
 
-CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
+cl_abst_type GateFinder::calc_sorted_occ_and_set_seen2(
     const OrGate& gate
     , uint32_t& maxSize
     , uint32_t& minSize
     , const bool only_irred
 ) {
     assert(seen2Set.empty());
-    CL_ABST_TYPE abstraction = 0;
+    cl_abst_type abstraction = 0;
     for (vector<ClOffset>& certain_size_occ: sizeSortedOcc)
         certain_size_occ.clear();
 
@@ -553,20 +553,20 @@ void GateFinder::set_seen2_tri(
     }
 }
 
-CL_ABST_TYPE GateFinder::calc_abst_and_set_seen(
+cl_abst_type GateFinder::calc_abst_and_set_seen(
     const Clause& cl
     , const OrGate& gate
 ) {
-    CL_ABST_TYPE abst = 0;
+    cl_abst_type abst = 0;
     for (const Lit lit: cl) {
         //lit1 doesn't count into abstraction
         if (lit == ~(gate.lit1))
             continue;
 
         seen[lit.toInt()] = 1;
-        abst |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+        abst |= 1UL << abst_var(lit.var());
     }
-    abst |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
+    abst |= abst_var((~(gate.lit2)).var());
 
     return abst;
 }
@@ -614,7 +614,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const Watched& ws
     , const size_t minSize
     , const size_t maxSize
-    , const CL_ABST_TYPE general_abst
+    , const cl_abst_type general_abst
     , const OrGate& gate
     , const bool only_irred
 ) {
@@ -640,7 +640,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         return CL_OFFSET_MAX;
 
 
-    const CL_ABST_TYPE this_cl_abst = calc_abst_and_set_seen(this_cl, gate);
+    const cl_abst_type this_cl_abst = calc_abst_and_set_seen(this_cl, gate);
     const ClOffset other_cl_offs = findAndGateOtherCl(
         sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
         , ~(gate.lit2) //this is the LIT that is meant to be in the clause
@@ -713,8 +713,8 @@ bool GateFinder::remove_clauses_using_and_gate(
 
     uint32_t maxSize = 0;
     uint32_t minSize = std::numeric_limits<uint32_t>::max();
-    CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
-    general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
+    cl_abst_type general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
+    general_abst |= abst_var(gate.lit1.var());
     if (maxSize == 0)
         return solver->okay();
 
@@ -870,7 +870,7 @@ void GateFinder::treatAndGateClause(
 ClOffset GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& this_sizeSortedOcc
     , const Lit otherLit
-    , const CL_ABST_TYPE abst
+    , const cl_abst_type abst
     , const bool gate_is_red
     , const bool only_irred
 ) {

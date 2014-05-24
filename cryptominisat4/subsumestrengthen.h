@@ -65,7 +65,7 @@ public:
     Sub0Ret subsume_and_unlink(
         const ClOffset offset
         , const T& ps
-        , const CL_ABST_TYPE abs
+        , const cl_abst_type abs
         , const bool removeImplicit = false
     );
 
@@ -101,7 +101,7 @@ private:
     void find_subsumed(
         const ClOffset offset
         , const T& ps
-        , const CL_ABST_TYPE abs
+        , const cl_abst_type abs
         , vector<ClOffset>& out_subsumed
         , const bool removeImplicit = false
     );
@@ -112,7 +112,7 @@ private:
     void findStrengthened(
         const ClOffset offset
         , const T& ps
-        , const CL_ABST_TYPE abs
+        , const cl_abst_type abs
         , vector<ClOffset>& out_subsumed
         , vector<Lit>& out_lits
     );
@@ -121,7 +121,7 @@ private:
     void fillSubs(
         const ClOffset offset
         , const T& ps
-        , CL_ABST_TYPE abs
+        , cl_abst_type abs
         , vector<ClOffset>& out_subsumed
         , vector<Lit>& out_lits
         , const Lit lit
@@ -132,7 +132,7 @@ private:
 
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
-    bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
+    bool subsetAbst(const cl_abst_type A, const cl_abst_type B);
     Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     vector<ClOffset> subs;

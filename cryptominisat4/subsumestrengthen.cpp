@@ -71,7 +71,7 @@ uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(ClOffset offset)
 template SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         const ClOffset offset
         , const vector<Lit>& ps
-        , const CL_ABST_TYPE abs
+        , const cl_abst_type abs
         , const bool removeImplicit = false
     );
 
@@ -82,7 +82,7 @@ template<class T>
 SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     const ClOffset offset
     , const T& ps
-    , const CL_ABST_TYPE abs
+    , const cl_abst_type abs
     , const bool removeImplicit
 ) {
     Sub0Ret ret;
@@ -331,7 +331,7 @@ template<class T>
 void inline SubsumeStrengthen::fillSubs(
     const ClOffset offset
     , const T& cl
-    , const CL_ABST_TYPE abs
+    , const cl_abst_type abs
     , vector<ClOffset>& out_subsumed
     , vector<Lit>& out_lits
     , const Lit lit
@@ -394,7 +394,7 @@ template<class T>
 void SubsumeStrengthen::findStrengthened(
     ClOffset offset
     , const T& cl
-    , const CL_ABST_TYPE abs
+    , const cl_abst_type abs
     , vector<ClOffset>& out_subsumed
     , vector<Lit>& out_lits
 )
@@ -454,7 +454,7 @@ For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
 contains even one bit, it means that A contains something that B doesn't. So
 A may be a subset of B only if (A & ~B) == 0
 */
-bool SubsumeStrengthen::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
+bool SubsumeStrengthen::subsetAbst(const cl_abst_type A, const cl_abst_type B)
 {
     return ((A & ~B) == 0);
 }
@@ -582,7 +582,7 @@ Only handles backward-subsumption. Uses occurrence lists
 template<class T> void SubsumeStrengthen::find_subsumed(
     const ClOffset offset //Will not match with index of the name value
     , const T& ps //Literals in clause
-    , const CL_ABST_TYPE abs //Abstraction of literals in clause
+    , const cl_abst_type abs //Abstraction of literals in clause
     , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
     , bool removeImplicit
 ) {
@@ -684,7 +684,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
 template void SubsumeStrengthen::find_subsumed(
     const ClOffset offset
     , const std::array<Lit, 2>& ps
-    , const CL_ABST_TYPE abs //Abstraction of literals in clause
+    , const cl_abst_type abs //Abstraction of literals in clause
     , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
     , bool removeImplicit
 );
@@ -822,7 +822,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
 //                 lits[0] = lit;
 //                 lits[1] = ws[i].lit2();
 //                 lits[2] = ws[i].lit3();
-//                 CL_ABST_TYPE abstr = calcAbstraction(lits);
+//                 cl_abst_type abstr = calcAbstraction(lits);
 //
 //                 Sub0Ret ret = subsumeFinal(
 //                     CL_OFFSET_MAX

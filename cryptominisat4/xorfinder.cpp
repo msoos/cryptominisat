@@ -485,7 +485,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 }
 
-void XorFinder::findXor(vector<Lit>& lits, CL_ABST_TYPE abst)
+void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 {
     //Set this clause as the base for the FoundXors
     //fill 'seen' with variables

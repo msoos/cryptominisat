@@ -221,7 +221,7 @@ protected:
     }
 
 public:
-    CL_ABST_TYPE abst;
+    cl_abst_type abst;
     ClauseStats stats;
 
     template<class V>

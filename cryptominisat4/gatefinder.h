@@ -190,7 +190,7 @@ private:
         , uint32_t& reduction
     );
 
-    CL_ABST_TYPE  calc_sorted_occ_and_set_seen2(
+    cl_abst_type  calc_sorted_occ_and_set_seen2(
         const OrGate& gate
         , uint32_t& maxSize
         , uint32_t& minSize
@@ -198,7 +198,7 @@ private:
     );
     void set_seen2_and_abstraction(
         const Clause& cl
-        , CL_ABST_TYPE& abstraction
+        , cl_abst_type& abstraction
     );
     bool check_seen_and_gate_against_cl(
         const Clause& this_cl
@@ -210,7 +210,7 @@ private:
         , const OrGate& gate
         , const ClOffset this_cl_offset
     );
-    CL_ABST_TYPE calc_abst_and_set_seen(
+    cl_abst_type calc_abst_and_set_seen(
        const Clause& cl
         , const OrGate& gate
     );
@@ -218,7 +218,7 @@ private:
         const Watched& ws
         , const size_t minSize
         , const size_t maxSize
-        , const CL_ABST_TYPE abstraction
+        , const cl_abst_type abstraction
         , const OrGate& gate
         , const bool only_irred
     );
@@ -226,7 +226,7 @@ private:
     ClOffset findAndGateOtherCl(
         const vector<ClOffset>& this_sizeSortedOcc
         , const Lit lit
-        , const CL_ABST_TYPE abst2
+        , const cl_abst_type abst2
         , const bool gate_is_red
         , const bool only_irred
     );

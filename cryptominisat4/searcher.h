@@ -746,7 +746,7 @@ class Searcher : public HyperEngine
         );
         void debug_print_resolving_clause(const PropBy confl) const;
         size_t tmp_learnt_clause_size;
-        CL_ABST_TYPE tmp_learnt_clause_abst;
+        cl_abst_type tmp_learnt_clause_abst;
 
         void add_lit_to_learnt(Lit lit, bool fromProber);
         void analyzeFinal(const Lit p, vector<Lit>& out_conflict);
