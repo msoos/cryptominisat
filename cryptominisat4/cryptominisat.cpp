@@ -108,7 +108,7 @@ void SATSolver::set_num_threads(const unsigned num)
         return;
     }
 
-    if (data.solvers[0]->drup) {
+    if (data.solvers[0]->drup->enabled()) {
         std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
