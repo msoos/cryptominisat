@@ -46,19 +46,6 @@ class OrGate {
                 std::swap(lit1, lit2);
         }
 
-        bool operator<(const OrGate& other) const
-        {
-            if (eqLit != other.eqLit) {
-                return (eqLit < other.eqLit);
-            }
-
-            if (lit1 != other.lit1) {
-                return (lit1 < other.lit1);
-            }
-
-            return (lit2 < other.lit2);
-        }
-
         bool operator==(const OrGate& other) const
         {
             return
@@ -81,6 +68,21 @@ class OrGate {
 
         //Data about gate
         bool red;
+};
+
+struct GateCompareForEq
+{
+    bool operator()(const OrGate& a, const OrGate& b) const
+    {
+        if (a.lit1 != b.lit1) {
+            return (a.lit1 < b.lit1);
+        }
+
+        if (a.lit2 != b.lit2) {
+            return (a.lit2 < b.lit2);
+        }
+        return (a.eqLit < b.eqLit);
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)

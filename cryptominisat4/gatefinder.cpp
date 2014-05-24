@@ -272,7 +272,7 @@ size_t GateFinder::findEqOrGates()
     assert(solver->ok);
     size_t foundRep = 0;
     vector<OrGate> gates = orGates;
-    std::sort(gates.begin(), gates.end());
+    std::sort(gates.begin(), gates.end(), GateCompareForEq());
 
     vector<Lit> tmp(2);
     for (uint32_t i = 1; i < gates.size(); i++) {
