@@ -48,21 +48,6 @@ void DimacsParser::skipLine(StreamBuffer& in)
     }
 }
 
-/**
-@brief Returns line until the end of line
-*/
-std::string DimacsParser::untilEnd(StreamBuffer& in)
-{
-    std::string ret;
-
-    while(*in != EOF && *in != '\0' && *in != '\n') {
-        ret += *in;
-        ++in;
-    }
-
-    return ret;
-}
-
 int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
 {
     lenParsed = 0;
