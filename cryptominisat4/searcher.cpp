@@ -2424,7 +2424,7 @@ Lit Searcher::pickBranchLit()
     if (decisionLevel() < conf.random_var_freq_increase_for) {
         frq = conf.random_var_freq_for_top_N;
     }
-    if (rand < frq
+    /*if (rand < frq
         && order_heap.size() > conf.random_picks_from_top_T
     ) {
         const Var next_var = order_heap[mtrand.randInt(conf.random_picks_from_top_T)];
@@ -2434,7 +2434,7 @@ Lit Searcher::pickBranchLit()
             stats.decisionsRand++;
             next = Lit(next_var, !pickPolarity(next_var));
         }
-    }
+    }*/
 
     // Activity based decision:
     while (next == lit_Undef
