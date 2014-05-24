@@ -26,6 +26,15 @@ add_executable(readme_test
     readme_test.cpp
 )
 
+add_executable(heap_test
+    heap_test.cpp
+)
+
+target_link_libraries(heap_test
+    ${Boost_LIBRARIES}
+    libcryptominisat4
+)
+
 target_link_libraries(readme_test
     libcryptominisat4
 )

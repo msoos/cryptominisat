@@ -52,8 +52,17 @@ class Heap {
     {
         uint32_t x = heap[i];
         while (left(i) < heap.size()) {
-            uint32_t child = right(i) < heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
-            if (!lt(heap[child], x)) break;
+            uint32_t child;
+            if ((right(i) >= heap.size())
+                && lt(heap[right(i)], heap[left(i)])
+            ) {
+                child = right(i);
+            } else {
+                child = left(i);
+            }
+            if (!lt(heap[child], x)) {
+                break;
+            }
             heap[i]          = heap[child];
             indices[heap[i]] = i;
             i                = child;
@@ -133,14 +142,16 @@ class Heap {
     }
 
 
-    uint32_t  removeMin()
+    uint32_t removeMin()
     {
         uint32_t x       = heap[1];
         heap[1]          = heap.back();
         indices[heap[1]] = 0;
         indices[x]       = std::numeric_limits<uint32_t>::max();
         heap.pop();
-        if (heap.size() > 2) percolateDown(1);
+        if (heap.size() > 2) {
+            percolateDown(1);
+        }
         return x;
     }
 
@@ -198,7 +209,7 @@ class Heap {
 
     // consistency checking
     bool heapProperty() const {
-        return heapProperty(2);
+        return heapProperty(1);
     }
 
 };
