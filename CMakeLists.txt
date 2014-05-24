@@ -231,7 +231,7 @@ if (NOT NOTESTS)
     ADD_TEST (basic_test tests/basic_test)
     ADD_TEST (assump_test tests/assump_test)
     add_test (readme_test tests/readme_test)
-    add_test (readme_test tests/heap_test)
+    add_test (heap_test tests/heap_test)
 endif()
 
 # -----------------------------------------------------------------------------
