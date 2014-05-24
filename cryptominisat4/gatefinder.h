@@ -168,6 +168,10 @@ private:
     void add_gate_if_not_already_inside(Lit eqLit, Lit lit1, Lit lit2);
     void or_gates_in_sweep_mode(Lit lit);
 
+    //High-level functions
+    bool remove_clauses_with_all_or_gates();
+    bool shorten_with_all_or_gates();
+
     //Finding
     void find_or_gates_and_update_stats();
     void find_or_gates();

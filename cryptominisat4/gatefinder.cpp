@@ -142,102 +142,112 @@ void GateFinder::clearIndexes()
         gateOccEq[i].clear();
 }
 
+bool GateFinder::shorten_with_all_or_gates()
+{
+    const double myTime = cpuTime();
+    const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*1000LL;
+    numMaxShortenWithGates = orig_numMaxShortenWithGates;
+    simplifier->limit_to_decrease = &numMaxShortenWithGates;
+    runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
+        simplifier->runStats.origNumRedLongClauses;
+    runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
+
+    //Go through each gate, see if we can do something with it
+    simplifier->cl_to_free_later.clear();
+    for (const OrGate& gate: orGates) {
+        if (numMaxShortenWithGates < 0
+            || solver->must_interrupt_asap()
+        ) {
+            break;
+        }
+
+        if (!shortenWithOrGate(gate))
+            break;
+    }
+    simplifier->clean_occur_from_removed_clauses();
+    simplifier->free_clauses_to_free();
+
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (numMaxShortenWithGates <= 0);
+    const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
+    runStats.orBasedTime += time_used;
+    runStats.or_based_timeout += time_out;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "gate shorten cl"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+    return solver->ok;
+}
+
+bool GateFinder::remove_clauses_with_all_or_gates()
+{
+    const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*1000LL;
+    numMaxClRemWithGates = orig_numMaxClRemWithGates;
+    simplifier->limit_to_decrease = &numMaxClRemWithGates;
+    const double myTime = cpuTime();
+
+    //Do clause removal
+    uint32_t foundPotential;
+
+    //Go through each gate, see if we can do something with it
+    for (const OrGate& gate: orGates) {
+        if (numMaxClRemWithGates < 0
+            || solver->must_interrupt_asap()
+        ) {
+            break;
+        }
+
+        if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
+            break;
+
+        if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
+            break;
+    }
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (numMaxClRemWithGates <= 0);
+    const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
+    runStats.andBasedTime += time_used;
+    runStats.and_based_timeout += time_out;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "gate rem cl"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+    return solver->ok;
+}
+
 bool GateFinder::all_simplifications_with_gates()
 {
     assert(solver->ok);
 
     //OR gate treatment
     if (solver->conf.doShortenWithOrGates) {
-        const double myTime = cpuTime();
-        const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*1000LL;
-        numMaxShortenWithGates = orig_numMaxShortenWithGates;
-        simplifier->limit_to_decrease = &numMaxShortenWithGates;
-        runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
-            simplifier->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
-
-        //Go through each gate, see if we can do something with it
-        simplifier->cl_to_free_later.clear();
-        for (const OrGate& gate: orGates) {
-            if (numMaxShortenWithGates < 0
-                || solver->must_interrupt_asap()
-            ) {
-                break;
-            }
-
-            if (!shortenWithOrGate(gate))
-                break;
-        }
-        simplifier->clean_occur_from_removed_clauses();
-        simplifier->free_clauses_to_free();
-
-        const double time_used = cpuTime() - myTime;
-        const bool time_out = (numMaxShortenWithGates <= 0);
-        const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
-        runStats.orBasedTime += time_used;
-        runStats.or_based_timeout += time_out;
-        if (solver->conf.doSQL) {
-            solver->sqlStats->time_passed(
-                solver
-                , "gate shorten cl"
-                , time_used
-                , time_out
-                , time_remain
-            );
-        }
-
-        if (!solver->ok)
+        if (!shorten_with_all_or_gates()) {
             return false;
+        }
     }
 
     //AND gate treatment
     if (solver->conf.doRemClWithAndGates) {
-        const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*1000LL;
-        numMaxClRemWithGates = orig_numMaxClRemWithGates;
-        simplifier->limit_to_decrease = &numMaxClRemWithGates;
-        const double myTime = cpuTime();
-
-        //Do clause removal
-        uint32_t foundPotential;
-
-        //Go through each gate, see if we can do something with it
-        for (const OrGate& gate: orGates) {
-            if (numMaxClRemWithGates < 0
-                || solver->must_interrupt_asap()
-            ) {
-                break;
-            }
-
-            if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
-                break;
-
-            if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
-                break;
-        }
-        const double time_used = cpuTime() - myTime;
-        const bool time_out = (numMaxClRemWithGates <= 0);
-        const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
-        runStats.andBasedTime += time_used;
-        runStats.and_based_timeout += time_out;
-        if (solver->conf.doSQL) {
-            solver->sqlStats->time_passed(
-                solver
-                , "gate rem cl"
-                , time_used
-                , time_out
-                , time_remain
-            );
-        }
-
-        if (!solver->ok)
+        if (!remove_clauses_with_all_or_gates()) {
             return false;
+        }
     }
 
     //EQ gate treatment
     if (solver->conf.doFindEqLitsWithGates) {
         const double myTime = cpuTime();
-
-        //Do equivalence checking
         runStats.varReplaced += findEqOrGates();
 
         const double time_used = cpuTime() - myTime;
