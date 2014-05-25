@@ -142,7 +142,7 @@ class Solver : public Searcher
 
         //Checks
         void checkImplicitPropagated() const;
-        void checkStats(const bool allowFreed = false) const;
+        void check_stats(const bool allowFreed = false) const;
         uint64_t countLits(
             const vector<ClOffset>& clause_array
             , bool allowFreed

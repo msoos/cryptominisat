@@ -761,7 +761,7 @@ end:
         );
     }
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkStats();
+    solver->check_stats();
     #endif
 
     return solver->okay();

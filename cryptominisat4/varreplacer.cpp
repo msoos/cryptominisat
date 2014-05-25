@@ -286,7 +286,7 @@ end:
         solver->testAllClauseAttach();
         solver->checkNoWrongAttach();
         #ifdef DEBUG_IMPLICIT_STATS
-        solver->checkStats();
+        solver->check_stats();
         #endif
         checkUnsetSanity();
     }
