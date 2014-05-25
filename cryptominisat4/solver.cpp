@@ -1369,7 +1369,7 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
     }
 }
 
-void Solver::print_best_irred_clauses_if_required() const
+void Solver::print_best_red_clauses_if_required() const
 {
     if (longRedCls.empty()
         || conf.doPrintBestRedClauses == 0
@@ -1418,7 +1418,7 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
 
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
     sort_red_cls_as_required(tmpStats);
-    print_best_irred_clauses_if_required();
+    print_best_red_clauses_if_required();
     real_clean_clause_db(tmpStats, sumConfl, removeNum);
 
     if (lock_clauses_in) {
