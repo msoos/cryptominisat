@@ -1656,7 +1656,6 @@ void Searcher::resetStats()
     lastSQLGlobalStats = stats;
     #endif
 
-    order_heap.filter(VarFilter(this, solver));
     lastCleanZeroDepthAssigns = trail.size();
 }
 

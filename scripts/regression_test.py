@@ -64,11 +64,6 @@ parser.add_option("--verbose", "-v", action="store_true"
                     , help="Print more output"
                     )
 
-parser.add_option("-t", "--threads", dest="num_threads", metavar="NUM"
-                    , default=1, type="int"
-                    , help="Number of threads"
-                    )
-
 #for fuzz-testing
 parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     , default=False, action="store_true"
@@ -82,11 +77,6 @@ parser.add_option("--regtest", dest="regressionTest"
                     )
 parser.add_option("--testdir", dest="testDir"
                     , default= "../tests/cnfs/"
-                    , help="Directory where the tests are"
-                    )
-
-parser.add_option("--testdirNewVar", dest="testDirNewVar"
-                    , default= "../tests/cnfs/newVar/"
                     , help="Directory where the tests are"
                     )
 
@@ -148,8 +138,6 @@ def file_exists(fname) :
 class Tester:
     def __init__(self):
         self.check_unsat = False
-        self.testDir = options.testDir
-        self.testDirNewVar = options.testDirNewVar
         self.ignoreNoSolution = False
         self.fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
@@ -207,7 +195,7 @@ class Tester:
         cmd += "--occredmaxmb %s " % random.randint(0,10)
         cmd += "--implsubsto %s " % random.choice([0,10,1000])
         cmd += "--sync %d " % random.choice([100,1000,6000,100000])
-        if options.num_threads > 1 :
+        if self.num_threads > 1 :
             cmd += "--xor 0 "
             cmd += "--sql 0 "
 
@@ -220,7 +208,7 @@ class Tester:
             , "otfsubsume", "renumber", "savemem"
             , "moreminim", "gates", "bva"
             , "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
-            if options.num_threads == 1 :
+            if self.num_threads == 1 :
                 opts.append("xor")
 
             for opt in opts:
@@ -244,7 +232,7 @@ class Tester:
             command += "--verb 0 "
         if newVar :
             command += "--debugnewvar "
-        command += "--threads=%d " % options.num_threads
+        command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += extraOptions
         command += fname
@@ -354,42 +342,42 @@ class Tester:
 
         return (unsat, solution)
 
-    def check_regular_clause(self, line, solution):
-        lits = line.split()
-        final = False
-        for lit in lits:
-            numlit = int(lit)
-            if numlit != 0:
-                if (abs(numlit) not in solution): continue
-                if numlit < 0:
-                    final |= ~solution[abs(numlit)]
-                else:
-                    final |= solution[numlit]
-                if final == True:
-                    break
-        if final == False:
-            print "Error: clause '%s' not satisfied." % line
-            print "Error code 100"
-            exit(100)
-
-    def check_xor_clause(self, line, solution):
-        line = line.lstrip('x')
-        lits = line.split()
-        final = False
-        for lit in lits:
-            numlit = int(lit)
-            if numlit != 0:
-                if abs(numlit) not in solution:
-                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
-                    print "Error code 200"
-                    exit(200)
-                final ^= solution[abs(numlit)]
-                final ^= numlit < 0
-        if final == False:
-            print "Error: xor-clause '%s' not satisfied." % line
-            exit(-1)
-
     def test_found_solution(self, solution, fname, debugLibPart=None):
+        def check_regular_clause(line, solution):
+            lits = line.split()
+            final = False
+            for lit in lits:
+                numlit = int(lit)
+                if numlit != 0:
+                    if (abs(numlit) not in solution): continue
+                    if numlit < 0:
+                        final |= ~solution[abs(numlit)]
+                    else:
+                        final |= solution[numlit]
+                    if final == True:
+                        break
+            if final == False:
+                print "Error: clause '%s' not satisfied." % line
+                print "Error code 100"
+                exit(100)
+
+        def check_xor_clause(line, solution):
+            line = line.lstrip('x')
+            lits = line.split()
+            final = False
+            for lit in lits:
+                numlit = int(lit)
+                if numlit != 0:
+                    if abs(numlit) not in solution:
+                        print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
+                        print "Error code 200"
+                        exit(200)
+                    final ^= solution[abs(numlit)]
+                    final ^= numlit < 0
+            if final == False:
+                print "Error: xor-clause '%s' not satisfied." % line
+                exit(-1)
+
         if debugLibPart == None:
             print "Verifying solution for CNF file %s" % fname
         else:
@@ -421,9 +409,9 @@ class Tester:
             #check solution against clause
             if line[0] != 'c' and line[0] != 'p':
                 if line[0] != 'x':
-                    self.check_regular_clause(line, solution)
+                    check_regular_clause(line, solution)
                 else:
-                    self.check_xor_clause(line, solution)
+                    check_xor_clause(line, solution)
 
                 clauses += 1
 
@@ -597,56 +585,6 @@ class Tester:
                 #delete temporary file
                 os.unlink(tmpfname)
 
-    def check_dump_irred(self, fname):
-        currTime = calendar.timegm(time.gmtime())
-        irred_cnf = "irred_data.cnf"
-        self.needDebugLib = False
-        extra_optins = " --dumpirred %s --maxconfl 1000 " % irred_cnf
-        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
-        self.needDebugLib = True
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
-            print "Too much time to solve, aborted!"
-            return
-        else:
-            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
-
-        if not file_exists(irred_cnf):
-            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
-            print "Error log: ", consoleOutput
-            exit()
-
-        self.needDebugLib = False
-        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True)
-        self.needDebugLib = True
-        os.unlink(irred_cnf)
-
-    def check_dump_red(self, fname):
-        currTime = calendar.timegm(time.gmtime())
-        irred_cnf = "irred_data.cnf"
-        red_cnf = "red_data.cnf"
-        self.needDebugLib = False
-        extra_optins = " --dumpirred %s --dumpred %s --maxconfl 1000 " % (irred_cnf, red_cnf)
-        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
-        self.needDebugLib = True
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
-            print "Too much time to solve, aborted!"
-            return
-        else:
-            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
-
-        if not file_exists(irred_cnf):
-            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
-            print "Error log: ", consoleOutput
-            exit()
-
-        self.needDebugLib = False
-        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True, extraOptions=" --input %s " % red_cnf)
-        self.needDebugLib = True
-        os.unlink(irred_cnf)
-        os.unlink(red_cnf)
-
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False, checkAgainst=None, extraOptions=""):
 
@@ -670,7 +608,7 @@ class Tester:
         #and that is why there is no solution
         if needToLimitTime:
             diffTime = calendar.timegm(time.gmtime()) - currTime
-            if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
+            if diffTime > (maxTime - maxTimeDiff)/self.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
@@ -958,8 +896,7 @@ class Tester:
         print "You gave testdir (where solutions are):", options.checkDirSol
         print "You gave CNF dir (where problems are) :", options.checkDirProb
 
-        dirList = os.listdir(options.checkDirSol)
-        for fname in dirList:
+        for fname in os.listdir(options.checkDirSol):
 
             if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
                 #add dir, remove trailing .out
@@ -971,20 +908,9 @@ class Tester:
                    fnameSolution=fnameSol, needSolve=False)
 
     def regressionTest(self) :
-
-        if False:
-            #first, test stuff with newVar
-            dirList = os.listdir(self.testDirNewVar)
-            for fname in dirList:
-                if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    self.check(fname=self.testDirNewVar + fname, newVar=True, needToLimitTime=True)
-
-        dirList = os.listdir(self.testDir)
-
-        #test stuff without newVar
-        for fname in dirList:
+        for fname in os.listdir(options.testDir):
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                self.check(fname=self.testDir + fname, newVar=False)
+                self.check(fname=options.testDir + fname, newVar=False)
 
 tester = Tester()
 
