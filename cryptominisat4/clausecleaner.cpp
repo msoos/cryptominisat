@@ -180,7 +180,7 @@ void ClauseCleaner::clean_implicit_clauses()
     impl_data.update_solver_stats(solver);
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 }
 

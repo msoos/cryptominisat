@@ -147,7 +147,7 @@ class Solver : public Searcher
             const vector<ClOffset>& clause_array
             , bool allowFreed
         ) const;
-        void checkImplicitStats() const;
+        void check_implicit_stats() const;
         bool find_with_stamp_a_or_b(Lit a, Lit b) const;
         bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;

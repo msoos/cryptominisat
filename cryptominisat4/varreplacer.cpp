@@ -222,7 +222,7 @@ bool VarReplacer::performReplace()
     assert(solver->prop_at_head());
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     //Replace implicits
@@ -494,7 +494,7 @@ void VarReplacer::updateStatsFromImplStats()
     solver->binTri.irredTris -= impl_tmp_stats.removedIrredTri/3;
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;

@@ -1859,7 +1859,7 @@ void Solver::handle_found_solution(const lbool status)
         solver->map_inter_to_outer(conflict);
     }
     checkDecisionVarCorrectness();
-    checkImplicitStats();
+    check_implicit_stats();
 }
 
 void Solver::checkDecisionVarCorrectness() const
@@ -3460,7 +3460,7 @@ void Solver::printClauseStats() const
     ;
 }
 
-void Solver::checkImplicitStats() const
+void Solver::check_implicit_stats() const
 {
     //Don't check if in crazy mode
     #ifdef NDEBUG
@@ -3603,7 +3603,7 @@ void Solver::checkStats(const bool allowFreed) const
     return;
     #endif
 
-    checkImplicitStats();
+    check_implicit_stats();
 
     const double myTime = cpuTime();
     uint64_t numLitsIrred = countLits(longIrredCls, allowFreed);

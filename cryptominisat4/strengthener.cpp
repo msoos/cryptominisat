@@ -473,7 +473,7 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     //Set stats
