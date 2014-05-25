@@ -485,7 +485,7 @@ void SATSolver::print_stats() const
 void SATSolver::set_drup(std::ostream* os)
 {
     MY_SOLVERS
-    if (data.solvers.size() > 0) {
+    if (data.solvers.size() > 1) {
         std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
