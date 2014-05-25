@@ -22,7 +22,8 @@ enum ClauseCleaningTypes {
     , clean_size_based
     , clean_sum_prop_confl_based
     , clean_sum_confl_depth_based
-    ,  clean_sum_activity_based
+    , clean_sum_activity_based
+    , clean_none
 };
 
 enum PolarityMode {

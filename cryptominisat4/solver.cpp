@@ -1366,6 +1366,10 @@ void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
             , reduceDBStructConflDepth(clAllocator));
         tmpStats.propConflBasedClean = 1;
         break;
+
+    default:
+        assert(false);
+
     }
 }
 
