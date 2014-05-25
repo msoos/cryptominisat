@@ -529,18 +529,6 @@ struct CleaningStats
 
 
     };
-    CleaningStats() :
-        cpu_time(0)
-        //Before remove
-        , origNumClauses(0)
-        , origNumLits(0)
-
-        //Type of clean
-        , glueBasedClean(0)
-        , sizeBasedClean(0)
-        , propConflBasedClean(0)
-        , actBasedClean(0)
-    {}
 
     CleaningStats& operator+=(const CleaningStats& other)
     {
@@ -567,18 +555,18 @@ struct CleaningStats
     void print(const size_t nbReduceDB) const;
     void printShort() const;
 
-    double cpu_time;
+    double cpu_time = 0;
 
     //Before remove
-    uint64_t origNumClauses;
-    uint64_t origNumLits;
+    uint64_t origNumClauses = 0;
+    uint64_t origNumLits = 0;
 
     //Clean type
-    ClauseCleaningTypes clauseCleaningType;
-    size_t glueBasedClean;
-    size_t sizeBasedClean;
-    size_t propConflBasedClean;
-    size_t actBasedClean;
+    ClauseCleaningTypes clauseCleaningType = clean_none;
+    size_t glueBasedClean = 0;
+    size_t sizeBasedClean = 0;
+    size_t propConflBasedClean = 0;
+    size_t actBasedClean = 0;
 
     //Clause Cleaning
     Data removed;
