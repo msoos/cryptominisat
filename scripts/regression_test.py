@@ -163,6 +163,7 @@ class Tester:
             , ["cnf-fuzz-xor.py"] \
             , ["build/sgen4 -sat -n 50", "-s"] \
         ]
+        self.fuzzer_directory = "../../cnf-utils/"
 
     def random_options(self) :
         cmd = " "
@@ -740,12 +741,12 @@ class Tester:
                 os.unlink(fname_unlink)
                 None
 
-    def callFromFuzzer(self, directory, fuzzer, file_name) :
+    def callFromFuzzer(self, fuzzer, file_name) :
         if (len(fuzzer) == 1) :
-            call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+            call = "{0}{1} > {2}".format(self.fuzzer_directory, fuzzer[0], file_name)
         elif(len(fuzzer) == 2) :
             seed = struct.unpack("<L", os.urandom(4))[0]
-            call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+            call = "{0}{1} {2} {3} > {4}".format(self.fuzzer_directory, fuzzer[0], fuzzer[1], seed, file_name)
         elif(len(fuzzer) == 3) :
             seed = struct.unpack("<L", os.urandom(4))[0]
             hashbits = (random.getrandbits(20) % 79) + 1
@@ -753,7 +754,7 @@ class Tester:
 
         return call
 
-    def create_fuzz(self, fuzzer, directory, file_name) :
+    def create_fuzz(self, fuzzer, file_name) :
 
         #handle special fuzzer
         file_names_multi = []
@@ -776,13 +777,13 @@ class Tester:
                     fuzzer2 = self.fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
-                call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                call = self.callFromFuzzer(self.fuzzer_directory, fuzzer2, file_name2)
                 print "calling sub-fuzzer:", call
                 out = commands.getstatusoutput(call)
 
             #construct multi-fuzzer call
             call = ""
-            call += directory
+            call += self.fuzzer_directory
             call += fuzzer[0]
             call += " "
             for name in file_names_multi :
@@ -793,7 +794,7 @@ class Tester:
 
         #handle normal fuzzer
         else :
-            return self.callFromFuzzer(directory, fuzzer, file_name), []
+            return self.callFromFuzzer(self.fuzzer_directory, fuzzer, file_name), []
 
     def file_len_no_comment(self, fname):
         i = 0;
@@ -903,7 +904,6 @@ class Tester:
 
 
     def fuzz_test(self) :
-        directory = "../../cnf-utils/"
         while True:
             for fuzzer in self.fuzzers :
                 file_name = unique_fuzz_file("fuzzTest");
@@ -912,7 +912,7 @@ class Tester:
                     fnameDrup = unique_fuzz_file("fuzzTest");
 
                 #create the fuzz file
-                call, todel = self.create_fuzz(fuzzer, directory, file_name)
+                call, todel = self.create_fuzz(fuzzer, file_name)
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
 
