@@ -449,7 +449,6 @@ class Solver : public Searcher
 
             bool operator () (const ClOffset x, const ClOffset y);
         };
-        void pre_clean_clause_db(CleaningStats& tmpStats, uint64_t sumConfl);
         void real_clean_clause_db(
             CleaningStats& tmpStats
             , uint64_t sumConflicts

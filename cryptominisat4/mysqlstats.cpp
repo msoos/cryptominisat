@@ -660,12 +660,6 @@ void MySQLStats::initReduceDBSTMT(
     << ", `redClsVisited`, `redLitsVisited`"
 
     //Clean data
-    << ", preRemovedNum, preRemovedLits, preRemovedGlue"
-    << ", preRemovedResolBin, preRemovedResolTri, preRemovedResolLIrred, preRemovedResolLRed"
-    << ", preRemovedAge, preRemovedAct"
-    << ", preRemovedLitVisited, preRemovedProp, preRemovedConfl"
-    << ", preRemovedLookedAt, preRemovedUsedUIP"
-
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
     << ", removedAge, removedAct"
@@ -738,21 +732,6 @@ void MySQLStats::initReduceDBSTMT(
     //Clause stats -- red
     bindTo(stmtReduceDB, stmtReduceDB.redClsVisited);
     bindTo(stmtReduceDB, stmtReduceDB.redLitsVisited);
-
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.num);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.lits);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.glue);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.bin);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.tri);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.irredL);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.resol.redL);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.age);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.act);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLitVisited);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numProp);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numConfl);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.numLookedAt);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.preRemove.used_for_uip_creation);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);

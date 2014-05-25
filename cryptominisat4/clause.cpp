@@ -32,27 +32,6 @@ void ClauseUsageStats::print() const
 void CleaningStats::print(const size_t nbReduceDB) const
 {
     cout << "c ------ CLEANING STATS ---------" << endl;
-    //Pre-clean
-    printStatsLine("c pre-removed"
-        , preRemove.num
-        , stats_line_percent(preRemove.num, origNumClauses)
-        , "% long redundant clauses"
-    );
-
-    printStatsLine("c pre-removed lits"
-        , preRemove.lits
-        , stats_line_percent(preRemove.lits,origNumLits)
-        , "% long red lits"
-    );
-    printStatsLine("c pre-removed cl avg size"
-        , (double)preRemove.lits/(double)preRemove.num
-    );
-    printStatsLine("c pre-removed cl avg glue"
-        , (double)preRemove.glue/(double)preRemove.num
-    );
-    printStatsLine("c pre-removed cl avg num resolutions"
-        , (double)preRemove.sumResolutions()/(double)preRemove.num
-    );
 
     //Types of clean
     printStatsLine("c clean by glue"
@@ -117,13 +96,7 @@ void CleaningStats::printShort() const
     //Pre-clean
     cout
     << "c [DBclean]"
-    << " Pre-removed: "
-    << preRemove.num
-    << " clean type will be " << getNameOfCleanType(clauseCleaningType)
-    << endl;
-
-    cout
-    << "c [DBclean]"
+    << " clean type is " << getNameOfCleanType(clauseCleaningType)
     << " rem " << removed.num
 
     << " avgGlue " << std::fixed << std::setprecision(2)

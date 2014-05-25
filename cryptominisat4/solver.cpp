@@ -1232,49 +1232,6 @@ bool Solver::reduceDBStructConflDepth::operator() (
     return x->size() > y->size();
 }
 
-void Solver::pre_clean_clause_db(
-    CleaningStats& tmpStats
-    , uint64_t sumConfl
-) {
-    if (conf.doPreClauseCleanPropAndConfl) {
-        //Reduce based on props&confls
-        size_t i, j;
-        for (i = j = 0; i < longRedCls.size(); i++) {
-            ClOffset offset = longRedCls[i];
-            Clause* cl = clAllocator.getPointer(offset);
-            assert(cl->size() > 3);
-            if (cl->stats.numPropAndConfl(conf.clean_confl_multiplier) < conf.preClauseCleanLimit
-                && !cl->stats.locked
-                && cl->stats.introduced_at_conflict + conf.preCleanMinConflTime
-                    < sumStats.conflStats.numConflicts
-            ) {
-                //Stat update
-                tmpStats.preRemove.incorporate(cl);
-                tmpStats.preRemove.age += sumConfl - cl->stats.introduced_at_conflict;
-
-                //Check
-                assert(cl->stats.introduced_at_conflict <= sumConfl);
-
-                if (cl->stats.glue > cl->size() + 1000) {
-                    cout
-                    << "c DEBUG strangely large glue: " << *cl
-                    << " glue: " << cl->stats.glue
-                    << " size: " << cl->size()
-                    << endl;
-                }
-
-                //detach&free
-                *drup << del << *cl << fin;
-                clAllocator.clauseFree(offset);
-
-            } else {
-                longRedCls[j++] = offset;
-            }
-        }
-        longRedCls.resize(longRedCls.size() -(i-j));
-    }
-}
-
 void Solver::real_clean_clause_db(
     CleaningStats& tmpStats
     , uint64_t sumConfl
@@ -1459,7 +1416,6 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
         lock_most_UIP_used_clauses();
     }
 
-    pre_clean_clause_db(tmpStats, sumConfl);
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
     sort_red_cls_as_required(tmpStats);
     print_best_irred_clauses_if_required();

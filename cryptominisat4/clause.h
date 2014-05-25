@@ -558,7 +558,6 @@ struct CleaningStats
         actBasedClean += other.actBasedClean;
 
         //Clause Cleaning data
-        preRemove += other.preRemove;
         removed += other.removed;
         remain += other.remain;
 
@@ -573,9 +572,6 @@ struct CleaningStats
     //Before remove
     uint64_t origNumClauses;
     uint64_t origNumLits;
-
-    //Clause Cleaning --pre-remove
-    Data preRemove;
 
     //Clean type
     ClauseCleaningTypes clauseCleaningType;
