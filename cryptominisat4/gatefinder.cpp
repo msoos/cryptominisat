@@ -309,12 +309,12 @@ void GateFinder::find_or_gates()
     ) {
         const size_t at = (offs + i) % (solver->nVars()*2);
         const Lit lit = Lit::toLit(at);
-        or_gates_in_sweep_mode(lit);
-        or_gates_in_sweep_mode(~lit);
+        find_or_gates_in_sweep_mode(lit);
+        find_or_gates_in_sweep_mode(~lit);
     }
 }
 
-void GateFinder::or_gates_in_sweep_mode(const Lit lit)
+void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 {
     assert(toClear.empty());
     watch_subarray_const ws = solver->watches[lit.toInt()];

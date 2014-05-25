@@ -168,7 +168,7 @@ private:
     void clearIndexes();
     void link_in_gate(const OrGate& gate);
     void add_gate_if_not_already_inside(Lit eqLit, Lit lit1, Lit lit2);
-    void or_gates_in_sweep_mode(Lit lit);
+    void find_or_gates_in_sweep_mode(Lit lit);
 
     //High-level functions
     bool remove_clauses_with_all_or_gates();
