@@ -417,22 +417,6 @@ class MainDataGetter
             )
         );
 
-//         $this->print_one_graph(
-//             "Clause-cleaning pre-removed clauses with resolutions"
-//             , array(
-//                   "preRemovedResolBin"
-//                 , "preRemovedResolTri"
-//                 , "preRemovedResolLIrred"
-//                 , "preRemovedResolLRed"
-//             )
-//             ,array(
-//                   "bin"
-//                 , "tri"
-//                 , "long irred"
-//                 , "long red"
-//             )
-//         );
-
         $this->print_one_graph(
             "Cleaning removed learnt cls with resolutions %"
             , array(
