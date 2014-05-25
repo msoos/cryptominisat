@@ -1232,6 +1232,17 @@ bool Solver::reduceDBStructConflDepth::operator() (
     return x->size() > y->size();
 }
 
+bool Solver::red_cl_too_young(const Clause* cl)
+{
+    return cl->stats.introduced_at_conflict + conf.min_time_in_db_before_eligible_for_cleaning
+            >= Searcher::sumConflicts();
+}
+
+bool Solver::red_cl_introduced_since_last_reducedb(const Clause* cl)
+{
+    return cl->stats.introduced_at_conflict >= last_reducedb_num_conflicts;
+}
+
 void Solver::real_clean_clause_db(
     CleaningStats& tmpStats
     , uint64_t sumConfl
@@ -1247,8 +1258,7 @@ void Solver::real_clean_clause_db(
         assert(cl->size() > 3);
 
         //Don't delete if not aged long enough or locked
-        if (cl->stats.introduced_at_conflict + conf.min_time_in_db_before_eligible_for_cleaning
-                >= Searcher::sumConflicts()
+        if (red_cl_too_young(cl)
              || cl->stats.locked
         ) {
             longRedCls[j++] = offset;
@@ -1326,9 +1336,9 @@ uint64_t Solver::calc_how_many_to_remove()
     return removeNum;
 }
 
-void Solver::sort_red_cls_as_required(CleaningStats& tmpStats)
+void Solver::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
 {
-    switch (conf.clauseCleaningType) {
+    switch (clean_type) {
     case clean_glue_based :
         //Sort for glue-based removal
         std::sort(longRedCls.begin(), longRedCls.end()
@@ -1421,7 +1431,7 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
     }
 
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
-    sort_red_cls_as_required(tmpStats);
+    sort_red_cls(tmpStats, conf.clauseCleaningType);
     print_best_red_clauses_if_required();
     real_clean_clause_db(tmpStats, sumConfl, removeNum);
 
@@ -1448,6 +1458,7 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
         );
     }
 
+    last_reducedb_num_conflicts = sumConflicts();
     return tmpStats;
 }
 
