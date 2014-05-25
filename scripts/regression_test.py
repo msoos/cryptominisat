@@ -839,7 +839,7 @@ class Tester:
     def fuzz_test(self) :
         while True:
             fuzzer = random.choice(self.fuzzers)
-            self.num_threads = random.randint(1, 3)
+            self.num_threads = random.choice([1, 2, 10])
             file_name = unique_fuzz_file("fuzzTest");
             self.drup = self.num_threads == 1 and random.choice([True, False])
             fnameDrup = None
