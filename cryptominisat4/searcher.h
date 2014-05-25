@@ -627,7 +627,6 @@ class Searcher : public HyperEngine
             assert(assumptionsSet.size() > var);
             return assumptionsSet[var];
         }
-        void filterOrderHeap();
 
     protected:
         void new_var(bool bva, Var orig_outer) override;
@@ -963,11 +962,6 @@ inline const Searcher::Stats& Searcher::getStats() const
 inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
-}
-
-inline void Searcher::filterOrderHeap()
-{
-    order_heap.filter(VarFilter(this, solver));
 }
 
 inline void Searcher::add_in_partial_solving_stats()

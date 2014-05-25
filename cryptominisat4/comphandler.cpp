@@ -166,7 +166,6 @@ bool CompHandler::handle()
     }
 
     //Filter out the variables that have been made non-decision
-    solver->filterOrderHeap();
     check_local_vardata_sanity();
 
     delete compFinder;
