@@ -159,7 +159,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[10 + 14*3];
+        MYSQL_BIND  bind[10 + 14*2];
         MYSQL_STMT  *stmt = NULL;
 
         //Position
