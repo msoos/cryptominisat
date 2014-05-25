@@ -87,16 +87,6 @@ public:
     const Stats& getStats() const;
     const Stats& getRunStats() const;
 
-private:
-    Stats globalstats;
-    Stats runStats;
-
-    Simplifier* simplifier;
-    Solver* solver;
-
-    void remove_literal(ClOffset c, const Lit toRemoveLit);
-    friend class GateFinder;
-
     template<class T>
     void find_subsumed(
         const ClOffset offset
@@ -105,6 +95,16 @@ private:
         , vector<ClOffset>& out_subsumed
         , const bool removeImplicit = false
     );
+
+private:
+    Stats globalstats;
+    Stats runStats;
+
+    Simplifier* simplifier;
+    Solver* solver;
+
+    void remove_literal(ClOffset c, const Lit toRemoveLit);
+
     template<class T>
     size_t find_smallest_watchlist_for_clause(const T& ps) const;
 

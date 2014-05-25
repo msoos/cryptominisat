@@ -642,7 +642,6 @@ class Searcher : public HyperEngine
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         void add_in_partial_solving_stats();
 
-        friend class CalcDefPolars;
         friend class VarReplacer;
 
         //For connection with Solver
@@ -872,7 +871,6 @@ class Searcher : public HyperEngine
 
 
         //SQL
-        friend class SQLStats;
         vector<Var> calcVarsToDump() const;
         #ifdef STATS_NEEDED
         void printRestartSQL();

@@ -138,7 +138,6 @@ protected:
     void new_vars(size_t n) override;
     void saveVarMem();
     template<class T> uint32_t calcGlue(const T& ps); ///<Calculates the glue of a clause
-    friend class SQLStats;
 
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;

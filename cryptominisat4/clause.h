@@ -246,8 +246,6 @@ public:
     typedef Lit* iterator;
     typedef const Lit* const_iterator;
 
-    friend class ClauseAllocator;
-
     uint32_t size() const
     {
         return mySize;

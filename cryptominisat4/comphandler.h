@@ -65,8 +65,6 @@ class CompHandler
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
 
-        friend class ClauseAllocator;
-
     private:
         struct sort_pred {
             bool operator()(

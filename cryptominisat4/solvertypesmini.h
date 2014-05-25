@@ -129,7 +129,6 @@ public:
 
     friend lbool toLbool(const char v);
     friend lbool boolToLBool(const bool b);
-    friend class llbool;
 };
 inline lbool toLbool(const char   v)
 {
