@@ -150,8 +150,19 @@ class Tester:
         self.check_unsat = False
         self.testDir = options.testDir
         self.testDirNewVar = options.testDirNewVar
-
         self.ignoreNoSolution = False
+        self.fuzzers = [
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
+            #, ["build/cnf-fuzz-nossum"] \
+            #, ["build/largefuzzer"] \
+            , ["cnf-fuzz-brummayer.py"] \
+            , ["multipart.py", "special"] \
+            , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["cnf-fuzz-xor.py"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
+        ]
 
     def random_options(self) :
         cmd = " "
@@ -742,7 +753,7 @@ class Tester:
 
         return call
 
-    def create_fuzz(self, fuzzers, fuzzer, directory, file_name) :
+    def create_fuzz(self, fuzzer, directory, file_name) :
 
         #handle special fuzzer
         file_names_multi = []
@@ -758,11 +769,11 @@ class Tester:
                 #chose a ranom fuzzer, not multipart
                 fuzzer2 = ["multipart.py", "special"]
                 while (fuzzer2[0] == "multipart.py") :
-                    fuzzer2 = choice(fuzzers)
+                    fuzzer2 = choice(self.fuzzers)
 
                 #sometimes fuzz with SAT problems only
                 if (fixed) :
-                    fuzzer2 = fuzzers[0]
+                    fuzzer2 = self.fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
                 call = self.callFromFuzzer(directory, fuzzer2, file_name2)
@@ -892,29 +903,16 @@ class Tester:
 
 
     def fuzz_test(self) :
-        fuzzers = [
-            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["build/cnf-fuzz-biere"] \
-            #, ["build/cnf-fuzz-nossum"] \
-            #, ["build/largefuzzer"] \
-            , ["cnf-fuzz-brummayer.py"] \
-            , ["multipart.py", "special"] \
-            , ["build/sgen4 -unsat -n 50", "-s"] \
-            , ["cnf-fuzz-xor.py"] \
-            , ["build/sgen4 -sat -n 50", "-s"] \
-        ]
-
         directory = "../../cnf-utils/"
         while True:
-            for fuzzer in fuzzers :
+            for fuzzer in self.fuzzers :
                 file_name = unique_fuzz_file("fuzzTest");
                 fnameDrup = None
                 if options.drup :
                     fnameDrup = unique_fuzz_file("fuzzTest");
 
                 #create the fuzz file
-                call, todel = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
+                call, todel = self.create_fuzz(fuzzer, directory, file_name)
                 print "calling ", fuzzer, " : ", call
                 out = commands.getstatusoutput(call)
 
