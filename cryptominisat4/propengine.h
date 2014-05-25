@@ -134,7 +134,7 @@ public:
     void newDecisionLevel();
 
 protected:
-    void new_var(const bool bva, Var orig_outer) override;
+    void new_var(bool bva, Var orig_outer) override;
     void new_vars(size_t n) override;
     void saveVarMem();
     template<class T> uint32_t calcGlue(const T& ps); ///<Calculates the glue of a clause

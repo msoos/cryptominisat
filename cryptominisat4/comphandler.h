@@ -58,7 +58,7 @@ class CompHandler
 
         bool handle();
         const vector<lbool>& getSavedState();
-        void new_var(const Var orig_outer);
+        void new_var(Var orig_outer);
         void new_vars(size_t n);
         void saveVarMem();
         void addSavedState(vector<lbool>& solution);
