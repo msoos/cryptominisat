@@ -71,7 +71,7 @@ parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     )
 
 #for regression testing
-parser.add_option("--regtest", dest="regressionTest"
+parser.add_option("--regtest", dest="regression_test"
                     , default=False, action="store_true"
                     , help="Regression test"
                     )
@@ -86,10 +86,10 @@ parser.add_option("--checksol", dest="checkSol"
                     , help="Check solution at specified dir against problems at specified dir"
                     )
 
-parser.add_option("--soldir", dest="checkDirSol"
+parser.add_option("--soldir", dest="check_dir_cnfs_solutions"
                     ,  help="Check solutions found here"
                     )
-parser.add_option("--probdir", dest="checkDirProb"
+parser.add_option("--probdir", dest="check_dir_cnfs_problems"
                     , default="/home/soos/media/sat/examples/satcomp09/"
                     , help="Directory of CNF files checked against"
                     )
@@ -132,7 +132,7 @@ def file_exists(fname) :
 
 class Tester:
     def __init__(self):
-        self.check_unsat = False
+        self.check_for_unsat = False
         self.ignoreNoSolution = False
         self.fuzzers = [
             ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
@@ -413,7 +413,7 @@ class Tester:
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def checkUNSAT(self, fname) :
+    def check_unsat(self, fname) :
         a = XorToCNF()
         tmpfname = unique_fuzz_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname )
@@ -439,7 +439,7 @@ class Tester:
         #check if the other solver agrees with us
         return otherSolverUNSAT
 
-    def extractLibPart(self, fname, debug_num, assumps, tofile) :
+    def extract_lib_part(self, fname, debug_num, assumps, tofile) :
         fromf = open(fname, "r")
         thisDebugLibPart = 0
         maxvar = 0
@@ -533,7 +533,7 @@ class Tester:
 
         print "OK, all assumptions inside solution"
 
-    def checkDebugLib(self, fname) :
+    def check_debug_lib(self, fname) :
         largestPart = -1
         dirList2 = os.listdir(".")
         for fname_debug in dirList2:
@@ -565,10 +565,10 @@ class Tester:
             else:
                 print "debugLib is UNSAT"
                 tmpfname = unique_fuzz_file("tempfile_for_extract_libpart")
-                self.extractLibPart(fname, debugLibPart, assumps, tmpfname)
+                self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
                 #check with other solver
-                ret = self.checkUNSAT(tmpfname)
+                ret = self.check_unsat(tmpfname)
                 if ret == None :
                     print "Cannot check, other solver took too much time"
                 elif ret == True :
@@ -613,7 +613,7 @@ class Tester:
 
         #if library debug is set, check it
         if (self.needDebugLib) :
-            self.checkDebugLib(checkAgainst)
+            self.check_debug_lib(checkAgainst)
 
         print "Checking console output..."
         (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
@@ -624,7 +624,7 @@ class Tester:
             return;
 
         #it's UNSAT and we should not check, so exit
-        if self.check_unsat == False:
+        if self.check_for_unsat == False:
             print "Cannot check -- output is UNSAT"
             return
 
@@ -657,7 +657,7 @@ class Tester:
                 print "OK, DRUP says:", drupLine
 
         #check with other solver
-        ret = self.checkUNSAT(checkAgainst)
+        ret = self.check_unsat(checkAgainst)
         if ret == None :
             print "Other solver time-outed, cannot check"
         elif ret == True:
@@ -667,14 +667,14 @@ class Tester:
             exit()
 
 
-    def removeDebugLibParts(self) :
+    def remove_debug_lib_parts(self) :
         dirList = os.listdir(".")
         for fname_unlink in dirList:
             if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
                 os.unlink(fname_unlink)
                 None
 
-    def callFromFuzzer(self, fuzzer, file_name) :
+    def call_from_fuzzer(self, fuzzer, file_name) :
         if (len(fuzzer) == 1) :
             call = "{0}{1} > {2}".format(self.fuzzer_directory, fuzzer[0], file_name)
         elif(len(fuzzer) == 2) :
@@ -710,7 +710,7 @@ class Tester:
                     fuzzer2 = self.fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
-                call = self.callFromFuzzer(fuzzer2, file_name2)
+                call = self.call_from_fuzzer(fuzzer2, file_name2)
                 print "calling sub-fuzzer:", call
                 out = commands.getstatusoutput(call)
 
@@ -727,7 +727,7 @@ class Tester:
 
         #handle normal fuzzer
         else :
-            return self.callFromFuzzer(fuzzer, file_name), []
+            return self.call_from_fuzzer(fuzzer, file_name), []
 
     def file_len_no_comment(self, fname):
         i = 0;
@@ -878,30 +878,30 @@ class Tester:
             if fnmatch.fnmatch(fname, 'debugLibPart*'):
                 os.unlink(fname)
 
-    def checkDir(self) :
+    def check_dir_cnfs(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
 
-        #check if options.checkDirSol has bee set
-        if options.checkDirSol == "":
+        #check if options.check_dir_cnfs_solutions has bee set
+        if options.check_dir_cnfs_solutions == "":
             print "When checking, you must give test dir"
             exit()
 
-        print "You gave testdir (where solutions are):", options.checkDirSol
-        print "You gave CNF dir (where problems are) :", options.checkDirProb
+        print "You gave testdir (where solutions are):", options.check_dir_cnfs_solutions
+        print "You gave CNF dir (where problems are) :", options.check_dir_cnfs_problems
 
-        for fname in os.listdir(options.checkDirSol):
+        for fname in os.listdir(options.check_dir_cnfs_solutions):
 
             if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
                 #add dir, remove trailing .out
                 fname = fname[:len(fname) - 4]
-                fnameSol = options.checkDirSol + "/" + fname
+                fnameSol = options.check_dir_cnfs_solutions + "/" + fname
 
                 #check now
-                self.check(fname=options.checkDirProb + "/" + fname, \
+                self.check(fname=options.check_dir_cnfs_problems + "/" + fname, \
                    fnameSolution=fnameSol, needSolve=False)
 
-    def regressionTest(self) :
+    def regression_test(self) :
         for fname in os.listdir(options.testDir):
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
                 self.check(fname=options.testDir + fname, newVar=False)
@@ -909,17 +909,17 @@ class Tester:
 tester = Tester()
 
 if options.checkFile :
-    tester.check_unsat = True
+    tester.check_for_unsat = True
     tester.needDebugLib = False
     tester.check(options.checkFile, options.solutionFile, needSolve=False)
 
 if options.fuzz_test:
     tester.needDebugLib = False
-    tester.check_unsat = True
+    tester.check_for_unsat = True
     tester.fuzz_test()
 
 if options.checkSol:
-    tester.checkDir()
+    tester.check_dir_cnfs()
 
-if options.regressionTest:
-    tester.regressionTest()
+if options.regression_test:
+    tester.regression_test()
