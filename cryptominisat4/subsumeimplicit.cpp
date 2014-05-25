@@ -261,7 +261,9 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     }
 
     if (check_stats) {
+        #ifdef DEBUG_IMPLICIT_STATS
         solver->checkStats();
+        #endif
     }
 
     globalStats += runStats;

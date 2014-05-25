@@ -760,7 +760,9 @@ end:
             , solver
         );
     }
+    #ifdef DEBUG_IMPLICIT_STATS
     solver->checkStats();
+    #endif
 
     return solver->okay();
 }
