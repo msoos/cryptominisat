@@ -80,11 +80,6 @@ parser.add_option("--testdir", dest="testDir"
                     , help="Directory where the tests are"
                     )
 
-parser.add_option("--drup", dest="drup"
-                    , default= False, action="store_true"
-                    , help="Directory where the tests are"
-                    )
-
 #check dir stuff
 parser.add_option("--checksol", dest="checkSol"
                     , default=False, action="store_true"
@@ -715,7 +710,7 @@ class Tester:
                     fuzzer2 = self.fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
-                call = self.callFromFuzzer(self.fuzzer_directory, fuzzer2, file_name2)
+                call = self.callFromFuzzer(fuzzer2, file_name2)
                 print "calling sub-fuzzer:", call
                 out = commands.getstatusoutput(call)
 
@@ -732,7 +727,7 @@ class Tester:
 
         #handle normal fuzzer
         else :
-            return self.callFromFuzzer(self.fuzzer_directory, fuzzer, file_name), []
+            return self.callFromFuzzer(fuzzer, file_name), []
 
     def file_len_no_comment(self, fname):
         i = 0;
@@ -843,40 +838,39 @@ class Tester:
 
     def fuzz_test(self) :
         while True:
-            for fuzzer in self.fuzzers :
-                file_name = unique_fuzz_file("fuzzTest");
-                fnameDrup = None
-                if options.drup :
-                    fnameDrup = unique_fuzz_file("fuzzTest");
+            fuzzer = random.choice(self.fuzzers)
+            self.num_threads = random.randint(1, 3)
+            file_name = unique_fuzz_file("fuzzTest");
+            self.drup = self.num_threads == 1 and random.choice([True, False])
+            fnameDrup = None
+            if self.drup :
+                fnameDrup = unique_fuzz_file("fuzzTest");
 
-                #create the fuzz file
-                call, todel = self.create_fuzz(fuzzer, file_name)
-                print "calling ", fuzzer, " : ", call
-                out = commands.getstatusoutput(call)
+            #create the fuzz file
+            call, todel = self.create_fuzz(fuzzer, file_name)
+            print "calling ", fuzzer, " : ", call
+            out = commands.getstatusoutput(call)
 
-                if not options.drup :
-                    self.needDebugLib = True
-                    self.delete_debuglibpart_files()
-                    file_name2 = unique_fuzz_file("fuzzTest");
-                    self.intersperse_with_debuglib(file_name, file_name2)
-                    os.unlink(file_name)
-                else:
-                    self.needDebugLib = False
-                    file_name2 = file_name
+            if not self.drup :
+                self.needDebugLib = True
+                self.delete_debuglibpart_files()
+                file_name2 = unique_fuzz_file("fuzzTest");
+                self.intersperse_with_debuglib(file_name, file_name2)
+                os.unlink(file_name)
+            else:
+                self.needDebugLib = False
+                file_name2 = file_name
 
-                #check file
-                self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
-                #self.check_dump_irred(fname=file_name2)
-                #self.check_dump_red(fname=file_name2)
+            self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
 
-                #remove temporary filenames
-                os.unlink(file_name2)
-                for name in todel :
-                    os.unlink(name)
-                if fnameDrup != None :
-                    os.unlink(fnameDrup)
-                for i in glob.glob(u'fuzz*'):
-                    os.unlink (i)
+            #remove temporary filenames
+            os.unlink(file_name2)
+            for name in todel :
+                os.unlink(name)
+            if fnameDrup != None :
+                os.unlink(fnameDrup)
+            for i in glob.glob(u'fuzz*'):
+                os.unlink (i)
 
     def delete_debuglibpart_files(self):
         dirList = os.listdir(".")
