@@ -1656,7 +1656,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 
 void Solver::extend_solution()
 {
-    checkStats();
+    check_stats();
     const double myTime = cpuTime();
     model = solver->back_number_solution(model);
 
@@ -1886,7 +1886,7 @@ lbool Solver::simplifyProblem()
     assert(ok);
     testAllClauseAttach();
     #ifdef DEBUG_IMPLICIT_STATS
-    checkStats();
+    check_stats();
     #endif
     reArrangeClauses();
 
@@ -2122,7 +2122,7 @@ end:
     if (!ok) {
         return l_False;
     } else {
-        checkStats();
+        check_stats();
         checkImplicitPropagated();
         return l_Undef;
     }
@@ -3596,7 +3596,7 @@ uint64_t Solver::countLits(
     return lits;
 }
 
-void Solver::checkStats(const bool allowFreed) const
+void Solver::check_stats(const bool allowFreed) const
 {
     //If in crazy mode, don't check
     #ifdef NDEBUG

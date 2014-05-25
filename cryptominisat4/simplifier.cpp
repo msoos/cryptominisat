@@ -1221,7 +1221,7 @@ void Simplifier::finishUp(
     if (solver->ok && somethingSet) {
         solver->testAllClauseAttach();
         solver->checkNoWrongAttach();
-        solver->checkStats();
+        solver->check_stats();
         solver->checkImplicitPropagated();
     }
 
