@@ -1449,23 +1449,15 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
     tmpStats.origNumClauses = longRedCls.size();
     tmpStats.origNumLits = litStats.redLits;
     uint64_t removeNum = calc_how_many_to_remove();
-
-    //Subsume
     uint64_t sumConfl = sumConflicts();
-    //simplifier->subsumeReds();
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time wasted on clean&replace&sub: "
-        << std::setprecision(3) << cpuTime()-myTime
-        << endl;
-    }
 
     //Complete detach&reattach of OK clauses will be *much* faster
     CompleteDetachReatacher detachReattach(this);
     detachReattach.detachNonBinsNonTris();
 
-    if (lock_clauses_in)
+    if (lock_clauses_in) {
         lock_most_UIP_used_clauses();
+    }
 
     pre_clean_clause_db(tmpStats, sumConfl);
     tmpStats.clauseCleaningType = conf.clauseCleaningType;
@@ -1473,21 +1465,21 @@ CleaningStats Solver::reduceDB(bool lock_clauses_in)
     print_best_irred_clauses_if_required();
     real_clean_clause_db(tmpStats, sumConfl, removeNum);
 
-    if (lock_clauses_in)
+    if (lock_clauses_in) {
         lock_in_top_N_uncleaned();
+    }
 
     //Reattach what's left
     detachReattach.reattachLongs();
 
-    //Stats
     tmpStats.cpu_time = cpuTime() - myTime;
-    if (conf.verbosity >= 1) {
-        if (conf.verbosity >= 3)
-            tmpStats.print(1);
-        else
-            tmpStats.printShort();
+    if (conf.verbosity >= 3)
+        tmpStats.print(1);
+    else if (conf.verbosity >= 1) {
+        tmpStats.printShort();
     }
     cleaningStats += tmpStats;
+
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
             solver
