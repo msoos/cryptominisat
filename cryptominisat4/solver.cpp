@@ -20,6 +20,16 @@
 */
 
 #include "solver.h"
+
+#include <fstream>
+#include <cmath>
+#include <fcntl.h>
+#include <functional>
+#include <limits>
+#include <string>
+#include <algorithm>
+#include <vector>
+
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "searcher.h"
@@ -36,17 +46,11 @@
 #include "compfinder.h"
 #include "comphandler.h"
 #include "subsumestrengthen.h"
-#include "varupdatehelper.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "strengthener.h"
 #include "datasync.h"
-
-#include <fstream>
-#include <cmath>
-#include <fcntl.h>
-#include <functional>
 
 using namespace CMSat;
 using std::cout;
