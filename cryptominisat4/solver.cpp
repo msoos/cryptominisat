@@ -210,8 +210,11 @@ bool Solver::add_xor_clause_inter(
     return ok;
 }
 
-void Solver::add_every_combination_xor(const vector<Lit>& lits, const bool attach, const bool addDrup)
-{
+void Solver::add_every_combination_xor(
+    const vector<Lit>& lits
+    , const bool attach
+    , const bool addDrup
+) {
     //cout << "add_every_combination got: " << lits << endl;
 
     size_t at = 0;
@@ -425,9 +428,9 @@ Clause* Solver::addClauseInt(
             c->stats = stats;
 
             //In class 'Simplifier' we don't need to attach normall
-            if (attach)
+            if (attach) {
                 attachClause(*c);
-            else {
+            } else {
                 if (red)
                     litStats.redLits += ps.size();
                 else
