@@ -113,6 +113,7 @@ class SolverConf
         unsigned  long long preClauseCleanLimit;
         unsigned  long long preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
+        int       dont_remove_fresh_glue2;
         double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round
         unsigned  numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         unsigned  startClean;

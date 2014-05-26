@@ -1267,7 +1267,7 @@ void Solver::real_clean_clause_db(
 
         //Don't delete if not aged long enough or locked
         if (red_cl_too_young(cl)
-             || (cl->stats.glue == 2 && red_cl_introduced_since_last_reducedb(cl))
+             || (conf.dont_remove_fresh_glue2 && cl->stats.glue == 2 && red_cl_introduced_since_last_reducedb(cl))
              || cl->stats.locked
         ) {
             longRedCls[j++] = offset;

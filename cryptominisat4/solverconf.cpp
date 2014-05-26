@@ -41,6 +41,7 @@ SolverConf::SolverConf() :
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
+        , dont_remove_fresh_glue2(false)
         , ratioRemoveClauses(0.5)
         , numCleanBetweenSimplify(2)
         , startClean(10000)
