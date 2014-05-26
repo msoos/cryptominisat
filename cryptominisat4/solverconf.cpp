@@ -199,7 +199,7 @@ SolverConf::SolverConf() :
         , maxGateBasedClReduceSize(20)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
-        , doFindEqLitsWithGates(false)
+        , doFindEqLitsWithGates(true)
 
         //Misc
         , needResultFile       (false)
