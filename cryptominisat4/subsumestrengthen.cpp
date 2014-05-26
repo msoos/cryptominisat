@@ -69,11 +69,11 @@ uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(ClOffset offset)
     return ret.numSubsumed;
 }
 template SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
-        const ClOffset offset
-        , const vector<Lit>& ps
-        , const cl_abst_type abs
-        , const bool removeImplicit = false
-    );
+    const ClOffset offset
+    , const vector<Lit>& ps
+    , const cl_abst_type abs
+    , const bool removeImplicit
+);
 
 /**
 @brief Backward-subsumption using given clause
