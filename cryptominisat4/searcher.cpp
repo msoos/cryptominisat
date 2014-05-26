@@ -2420,20 +2420,15 @@ Lit Searcher::pickBranchLit()
     // Random decision:
     double rand = mtrand.randDblExc();
     double frq = conf.random_var_freq;
-    if (decisionLevel() < conf.random_var_freq_increase_for) {
-        frq = conf.random_var_freq_for_top_N;
-    }
-    /*if (rand < frq
-        && order_heap.size() > conf.random_picks_from_top_T
-    ) {
-        const Var next_var = order_heap[mtrand.randInt(conf.random_picks_from_top_T)];
+    if (rand < frq && order_heap.size() > 0) {
+        const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
         if (value(next_var) == l_Undef
             && solver->varData[next_var].is_decision
         ) {
             stats.decisionsRand++;
             next = Lit(next_var, !pickPolarity(next_var));
         }
-    }*/
+    }
 
     // Activity based decision:
     while (next == lit_Undef

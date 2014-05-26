@@ -122,9 +122,9 @@ class Heap {
     bool empty() const {
         return heap.size() == 1;
     }
-    /*uint32_t operator[](uint32_t index) const {
-        return heap[index];
-    }*/
+    uint32_t operator[](uint32_t index) const {
+        return heap[1+index];
+    }
 
     void decrease  (uint32_t n) {
         //assert(inHeap(n));

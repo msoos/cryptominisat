@@ -338,9 +338,6 @@ void Main::add_supported_options()
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ;
 
-    std::ostringstream s_random_var_freq_for_top_N;
-    s_random_var_freq_for_top_N << std::setprecision(5) << conf.random_var_freq_for_top_N;
-
     std::ostringstream s_random_var_freq;
     s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
 
@@ -360,12 +357,6 @@ void Main::add_supported_options()
         , "Use dominating literal every once in N when picking decision literal")
     ("morebump", po::value(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
-    ("topnrndpick", po::value(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
-        , "When randomly picking brancing variable, pick from the top N")
-    ("topnrndpickfreq", po::value(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N, s_random_var_freq_for_top_N.str())
-        , "Frequency of increased random  picking brancing variable from top N")
-    ("topnincnum", po::value(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
-        , "Until what decision level should the increase in variable branch randomness be. 0 means none, 1 means only dec. level 0, etc.")
     ;
 
     po::options_description polar_options("Variable polarity options");
