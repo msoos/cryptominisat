@@ -46,6 +46,7 @@
 #include <fstream>
 #include <cmath>
 #include <fcntl.h>
+#include <functional>
 
 using namespace CMSat;
 using std::cout;

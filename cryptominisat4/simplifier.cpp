@@ -31,6 +31,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <functional>
 
 
 #include "simplifier.h"
