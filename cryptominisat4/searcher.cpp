@@ -33,6 +33,7 @@
 #include <cstddef>
 #include "sqlstats.h"
 #include "datasync.h"
+#include "reducedb.h"
 
 using namespace CMSat;
 using std::cout;
@@ -2085,7 +2086,7 @@ void Searcher::reduce_db_if_needed()
             << " maxConfls:" << max_conflicts
             << " Trail size: " << trail.size() << endl;
         }
-        solver->reduce_db_and_update_reset_stats();
+        solver->reduceDB->reduce_db_and_update_reset_stats();
 
         genRandomVarActMultDiv();
 

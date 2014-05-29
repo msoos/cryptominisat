@@ -24,6 +24,7 @@
 
 #include "constants.h"
 #include <vector>
+#include <fstream>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -31,7 +32,8 @@
 #include "propengine.h"
 #include "searcher.h"
 #include "GitSHA1.h"
-#include <fstream>
+#include "cleaningstats.h"
+#include "clauseusagestats.h"
 
 namespace CMSat {
 
@@ -56,6 +58,7 @@ class SubsumeStrengthen;
 class SubsumeImplicit;
 class DataSync;
 class SharedData;
+class ReduceDB;
 
 class LitReachData {
     public:
@@ -159,6 +162,7 @@ class Solver : public Searcher
         SubsumeImplicit *subsumeImplicit;
         SCCFinder *sCCFinder;
         DataSync *datasync = NULL;
+        ReduceDB* reduceDB = NULL;
         vector<LitReachData> litReachable;
 
         Stats sumStats;
@@ -170,7 +174,6 @@ class Solver : public Searcher
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
         bool enqueueThese(const vector<Lit>& toEnqueue);
-        void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
 
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
@@ -231,6 +234,7 @@ class Solver : public Searcher
             , bool addDrup = true
             , const Lit drup_first = lit_Undef
         );
+        void clear_clauses_stats();
 
     private:
         friend class Prober;
@@ -393,74 +397,6 @@ class Solver : public Searcher
         bool verifyImplicitClauses() const;
         bool verifyClauses(const vector<ClOffset>& cs) const;
 
-        ///////////////////////////
-        // Clause cleaning
-        size_t last_reducedb_num_conflicts = 0;
-        bool red_cl_too_young(const Clause* cl);
-        bool red_cl_introduced_since_last_reducedb(const Clause* cl);
-        void clearClauseStats(vector<ClOffset>& clauseset);
-        CleaningStats reduceDB(bool lock_clauses_in);
-        void lock_most_UIP_used_clauses();
-        void lock_in_top_N_uncleaned();
-        struct reduceDBStructGlue
-        {
-            reduceDBStructGlue(ClauseAllocator& _clAllocator) :
-                clAllocator(_clAllocator)
-            {}
-            ClauseAllocator& clAllocator;
-
-            bool operator () (const ClOffset x, const ClOffset y);
-        };
-        struct reduceDBStructSize
-        {
-            reduceDBStructSize(ClauseAllocator& _clAllocator) :
-                clAllocator(_clAllocator)
-            {}
-            ClauseAllocator& clAllocator;
-
-            bool operator () (const ClOffset x, const ClOffset y);
-        };
-        struct reduceDBStructActivity
-        {
-            reduceDBStructActivity(ClauseAllocator& _clAllocator) :
-                clAllocator(_clAllocator)
-            {}
-            ClauseAllocator& clAllocator;
-
-            bool operator () (const ClOffset x, const ClOffset y);
-        };
-        struct reduceDBStructPropConfl
-        {
-            reduceDBStructPropConfl(
-                ClauseAllocator& _clAllocator
-                , uint64_t _confl_multiplier
-            ) :
-                clAllocator(_clAllocator)
-                , confl_multiplier(_confl_multiplier)
-            {}
-            ClauseAllocator& clAllocator;
-            uint64_t confl_multiplier;
-
-            bool operator () (const ClOffset x, const ClOffset y);
-        };
-        struct reduceDBStructConflDepth
-        {
-            reduceDBStructConflDepth(ClauseAllocator& _clAllocator) :
-                clAllocator(_clAllocator)
-            {}
-            ClauseAllocator& clAllocator;
-
-            bool operator () (const ClOffset x, const ClOffset y);
-        };
-        void real_clean_clause_db(
-            CleaningStats& tmpStats
-            , uint64_t sumConflicts
-            , uint64_t removeNum
-        );
-        uint64_t calc_how_many_to_remove();
-        void sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type);
-        void print_best_red_clauses_if_required() const;
-
 
         /////////////////////
         // Data
@@ -496,10 +432,6 @@ class Solver : public Searcher
         bool findClause(const ClOffset offset) const;
         void printWatchlist(watch_subarray_const ws, const Lit lit) const;
         void printClauseSizeDistrib();
-        ClauseUsageStats sumClauseData(
-            const vector<ClOffset>& toprint
-            , bool red
-        ) const;
         void printPropConflStats(
             std::string name
             , const vector<ClauseUsageStats>& stats

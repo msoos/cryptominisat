@@ -36,8 +36,9 @@ set(cryptoms_lib_files
     hyperengine.cpp
     subsumeimplicit.cpp
     cryptominisat.cpp
-    clause.cpp
+    cleaningstats.cpp
     datasync.cpp
+    reducedb.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

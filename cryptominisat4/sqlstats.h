@@ -3,6 +3,8 @@
 
 #include "searcher.h"
 #include "clause.h"
+#include "cleaningstats.h"
+#include "clauseusagestats.h"
 
 #ifdef STATS_NEEDED_EXTRA
 #include "boost/multi_array.hpp"
