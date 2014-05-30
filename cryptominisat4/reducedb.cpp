@@ -167,6 +167,11 @@ struct SortRedClsConflDepth : public MySorter
     }
 };
 
+ReduceDB::ReduceDB(Solver* _solver) :
+    solver(_solver)
+{
+}
+
 void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
 {
     MySorter* my_sorter;
@@ -227,7 +232,7 @@ void ReduceDB::print_best_red_clauses_if_required() const
         ClOffset offset = solver->longRedCls[i];
         const Clause* cl = solver->clAllocator.getPointer(offset);
         cout
-        << "c [best-red-cl] Red " << solver->solveStats.nbReduceDB
+        << "c [best-red-cl] Red " << nbReduceDB
         << " No. " << at << " > "
         << solver->clauseBackNumbered(*cl)
         << endl;
@@ -243,7 +248,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     solver->clauseCleaner->removeAndCleanAll();
 
     const double myTime = cpuTime();
-    solver->solveStats.nbReduceDB++;
+    nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = solver->longRedCls.size();
     tmpStats.origNumLits = solver->litStats.redLits;
@@ -251,7 +256,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     uint64_t sumConfl = solver->sumConflicts();
 
     //Complete detach&reattach of OK clauses will be *much* faster
-    CompleteDetachReatacher detachReattach(this);
+    CompleteDetachReatacher detachReattach(solver);
     detachReattach.detachNonBinsNonTris();
 
     if (lock_clauses_in) {
@@ -276,7 +281,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     else if (solver->conf.verbosity >= 1) {
         tmpStats.printShort();
     }
-    solver->cleaningStats += tmpStats;
+    cleaningStats += tmpStats;
 
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
@@ -356,7 +361,7 @@ void ReduceDB::lock_most_UIP_used_clauses()
 bool ReduceDB::red_cl_too_young(const Clause* cl)
 {
     return cl->stats.introduced_at_conflict + solver->conf.min_time_in_db_before_eligible_for_cleaning
-            >= Searcher::sumConflicts();
+            >= solver->sumConflicts();
 }
 
 bool ReduceDB::red_cl_introduced_since_last_reducedb(const Clause* cl)
@@ -380,7 +385,7 @@ void ReduceDB::real_clean_clause_db(
 
         //Don't delete if not aged long enough or locked
         if (red_cl_too_young(cl)
-             || (solver->lconf.dont_remove_fresh_glue2 && cl->stats.glue == 2 && red_cl_introduced_since_last_reducedb(cl))
+             || (solver->conf.dont_remove_fresh_glue2 && cl->stats.glue == 2 && red_cl_introduced_since_last_reducedb(cl))
              || cl->stats.locked
         ) {
             solver->longRedCls[j++] = offset;
@@ -394,7 +399,7 @@ void ReduceDB::real_clean_clause_db(
         tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
 
         //free clause
-        *drup << del << *cl << fin;
+        *solver->drup << del << *cl << fin;
         solver->clAllocator.clauseFree(offset);
     }
 
@@ -431,7 +436,7 @@ uint64_t ReduceDB::calc_how_many_to_remove()
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
     double maxToHave = (double)(solver->longIrredCls.size() + solver->binTri.irredTris + solver->nVars() + 300ULL)
-        * (double)solver->solveStats.nbReduceDB
+        * (double)nbReduceDB
         * solver->conf.maxNumRedsRatio;
 
     //To guard against infinity and undefined cast to integer
@@ -540,13 +545,19 @@ ClauseUsageStats ReduceDB::sumClauseData(
     }
 
     //Print more stats
-    if (solver->conf.verbosity >= 4) {
+    /*if (solver->conf.verbosity >= 4) {
         solver->printPropConflStats("clause-len", perSizeStats);
 
         if (red) {
             solver->printPropConflStats("clause-glue", perGlueStats);
         }
-    }
+    }*/
 
     return stats;
+}
+
+void ReduceDB::increment_next_clean_limit()
+{
+    nextCleanLimitInc = solver->conf.startClean;
+    nextCleanLimit = solver->sumConflicts() + nextCleanLimitInc;
 }

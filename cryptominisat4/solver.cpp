@@ -79,7 +79,6 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     , vivifier(NULL)
     , strengthener(NULL)
     , compHandler(NULL)
-    , nextCleanLimit(0)
 {
     if (conf.doSQL) {
         #ifdef USE_MYSQL
@@ -1335,8 +1334,7 @@ lbool Solver::solve()
 
 
     //Clean up as a startup
-    nextCleanLimitInc = 0;
-    nextCleanLimit = 0;
+    reduceDB->reset_next_clean_limit();
     reduceDB->reduce_db_and_update_reset_stats(false);
     datasync->rebuild_bva_map();
 
@@ -1345,8 +1343,7 @@ lbool Solver::solve()
         cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
         exit(-1);
     }
-    nextCleanLimitInc = conf.startClean;
-    nextCleanLimit = sumStats.conflStats.numConflicts + nextCleanLimitInc;
+    reduceDB->increment_next_clean_limit();
     if (!origAssumptions.empty()) {
         //origAssumptions = *_assumptions;
         set_assumptions();
@@ -1380,11 +1377,11 @@ lbool Solver::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        long numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
+        long numConfls = reduceDB->nextCleanLimit - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
-        assert(nextCleanLimitInc >= 1);
+        assert(reduceDB->nextCleanLimitInc >= 1);
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
-            numConfls += (double)nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
+            numConfls += (double)reduceDB->nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
         }
 
         //Abide by maxConfl limit
@@ -1904,11 +1901,11 @@ void Solver::printFullStats() const
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
 
     printStatsLine("c clause clean time"
-        , cleaningStats.cpu_time
-        , stats_line_percent(cleaningStats.cpu_time, cpu_time)
+        , reduceDB->cleaningStats.cpu_time
+        , stats_line_percent(reduceDB->cleaningStats.cpu_time, cpu_time)
         , "% time"
     );
-    cleaningStats.print(solveStats.nbReduceDB);
+    //reduceDB->cleaningStats.print(reduceDB->nbReduceDB);
 
     printStatsLine("c reachability time"
         , reachStats.cpu_time
@@ -3519,4 +3516,9 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
 void Solver::bva_changed()
 {
     datasync->rebuild_bva_map();
+}
+
+uint64_t Solver::getNextCleanLimit() const
+{
+    return reduceDB->nextCleanLimit;
 }

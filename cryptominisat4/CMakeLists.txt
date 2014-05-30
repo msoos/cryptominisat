@@ -14,6 +14,7 @@ set(cryptoms_lib_files
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
+    clauseusagestats.cpp
     prober.cpp
     simplifier.cpp
     subsumestrengthen.cpp

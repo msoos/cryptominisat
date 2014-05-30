@@ -8,6 +8,7 @@
 #include <string>
 #include <time.h>
 #include "constants.h"
+#include "reducedb.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1268,7 +1269,7 @@ void MySQLStats::reduceDB(
     stmtReduceDB.sumRestarts     = solver->sumRestarts();
     stmtReduceDB.sumConflicts    = solver->sumConflicts();
     stmtReduceDB.cpuTime         = cpuTime();
-    stmtReduceDB.reduceDBs       = solver->getSolveStats().nbReduceDB;
+    stmtReduceDB.reduceDBs       = solver->reduceDB->get_nbReduceDB();
 
     //Clause data for IRRED
     stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;

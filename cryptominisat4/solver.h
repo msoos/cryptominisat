@@ -93,7 +93,7 @@ class Solver : public Searcher
         struct SolveStats
         {
             uint64_t numSimplify = 0;
-            uint64_t nbReduceDB = 0;
+            //uint64_t nbReduceDB = 0;
             uint32_t num_solve_calls = 0;
         };
         static const char* getVersion();
@@ -235,6 +235,8 @@ class Solver : public Searcher
             , const Lit drup_first = lit_Undef
         );
         void clear_clauses_stats();
+        template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
+        void consolidateMem();
 
     private:
         friend class Prober;
@@ -336,8 +338,6 @@ class Solver : public Searcher
             size_t numLitsDependent;
         };
 
-        template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
-
         lbool solve();
         vector<Lit> back_number_from_caller_tmp;
         template<class T>
@@ -400,14 +400,11 @@ class Solver : public Searcher
 
         /////////////////////
         // Data
-        uint64_t             nextCleanLimit;
-        uint64_t             nextCleanLimitInc;
         size_t               zeroLevAssignsByCNF = 0;
         size_t               zeroLevAssignsByThreads = 0;
         void calculate_reachability();
 
         //Main up stats
-        CleaningStats cleaningStats;
         ReachabilityStats reachStats;
 
         /////////////////////
@@ -416,7 +413,6 @@ class Solver : public Searcher
         void reArrangeClauses();
         void reArrangeClause(ClOffset offset);
         void printAllClauses() const;
-        void consolidateMem();
 
         //////////////////
         // Stamping
@@ -462,11 +458,6 @@ inline uint64_t Solver::getNumLongClauses() const
 inline const Searcher::Stats& Solver::getStats() const
 {
     return sumStats;
-}
-
-inline uint64_t Solver::getNextCleanLimit() const
-{
-    return nextCleanLimit;
 }
 
 inline const Solver::SolveStats& Solver::getSolveStats() const
