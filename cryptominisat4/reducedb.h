@@ -28,6 +28,7 @@ public:
     }
     uint64_t get_nextCleanLimitInc() const
     {
+        assert(get_nextCleanLimitInc() >= 1);
         return nextCleanLimitInc;
     }
 

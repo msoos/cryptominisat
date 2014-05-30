@@ -1379,7 +1379,6 @@ lbool Solver::solve()
         vector<lbool> statuses;
         long numConfls = reduceDB->get_nextCleanLimit() - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
-        assert(reduceDB->get_nextCleanLimitInc() >= 1);
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls += (double)reduceDB->get_nextCleanLimitInc() * std::pow(conf.increaseClean, (int)i);
         }
