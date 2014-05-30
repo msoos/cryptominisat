@@ -16,22 +16,26 @@ public:
     void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
     CleaningStats cleaningStats;
 
-    void reset_next_clean_limit()
-    {
-        nextCleanLimitInc = 0;
-        nextCleanLimit = 0;
-    }
+    void reset_next_clean_limit();
     void increment_next_clean_limit();
-    uint64_t nextCleanLimit = 0;
-    uint64_t nextCleanLimitInc;
     uint64_t get_nbReduceDB() const
     {
         return nbReduceDB;
+    }
+    uint64_t get_nextCleanLimit() const
+    {
+        return nextCleanLimit;
+    }
+    uint64_t get_nextCleanLimitInc() const
+    {
+        return nextCleanLimitInc;
     }
 
 private:
     Solver* solver;
     uint64_t nbReduceDB = 0;
+    uint64_t nextCleanLimit = 0;
+    uint64_t nextCleanLimitInc;
 
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl);

@@ -8,6 +8,9 @@ using namespace CMSat;
 
 struct MySorter
 {
+    virtual ~MySorter()
+    {}
+
     virtual bool operator()(const ClOffset, const ClOffset) const
     {
         return false;
@@ -560,4 +563,10 @@ void ReduceDB::increment_next_clean_limit()
 {
     nextCleanLimitInc = solver->conf.startClean;
     nextCleanLimit = solver->sumConflicts() + nextCleanLimitInc;
+}
+
+void ReduceDB::reset_next_clean_limit()
+{
+    nextCleanLimitInc = 0;
+    nextCleanLimit = 0;
 }

@@ -1377,11 +1377,11 @@ lbool Solver::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        long numConfls = reduceDB->nextCleanLimit - sumStats.conflStats.numConflicts;
+        long numConfls = reduceDB->get_nextCleanLimit() - sumStats.conflStats.numConflicts;
         assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
-        assert(reduceDB->nextCleanLimitInc >= 1);
+        assert(reduceDB->get_nextCleanLimitInc() >= 1);
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
-            numConfls += (double)reduceDB->nextCleanLimitInc * std::pow(conf.increaseClean, (int)i);
+            numConfls += (double)reduceDB->get_nextCleanLimitInc() * std::pow(conf.increaseClean, (int)i);
         }
 
         //Abide by maxConfl limit
@@ -3520,5 +3520,5 @@ void Solver::bva_changed()
 
 uint64_t Solver::getNextCleanLimit() const
 {
-    return reduceDB->nextCleanLimit;
+    return reduceDB->get_nextCleanLimit();
 }
