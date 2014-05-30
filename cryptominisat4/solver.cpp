@@ -1339,10 +1339,6 @@ lbool Solver::solve()
     datasync->rebuild_bva_map();
 
     //Initialise
-    if (conf.startClean < 100) {
-        cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
-        exit(-1);
-    }
     reduceDB->increment_next_clean_limit();
     if (!origAssumptions.empty()) {
         //origAssumptions = *_assumptions;
