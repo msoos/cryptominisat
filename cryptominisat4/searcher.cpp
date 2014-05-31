@@ -2240,8 +2240,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     setup_restart_print();
     lbool status = l_Undef;
     status = burstSearch();
-    if (status != l_Undef)
+    if (status != l_Undef) {
         goto end;
+    }
 
     restore_activities_and_polarities();
     restore_order_heap();
@@ -2266,11 +2267,13 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         params.clear();
         params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
-        if (params.rest_type == restart_type_geom)
+        if (params.rest_type == restart_type_geom) {
             max_conflicts_geometric *= conf.restart_inc;
+        }
 
-        if (must_abort(status))
+        if (must_abort(status)) {
             goto end;
+        }
 
         reduce_db_if_needed();
         clean_clauses_if_needed();
