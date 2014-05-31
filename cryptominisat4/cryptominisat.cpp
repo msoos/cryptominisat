@@ -317,7 +317,7 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     MY_SOLVERS
     if (data.log) {
-        (*data.log) << lits << " 0\n";
+        (*data.log) << lits << " 0" << endl;
     }
 
     bool ret = true;
@@ -343,7 +343,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
 {
     if (vars.size() == 0) {
         if (rhs) {
-            (*file) << "0\n";
+            (*file) << "0" << endl;;
         }
     } else {
         if (!rhs) {
@@ -352,7 +352,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
         for(unsigned var: vars) {
             (*file) << (var+1) << " ";
         }
-        (*file) << " 0\n";
+        (*file) << " 0" << endl;;
     }
 }
 
@@ -483,7 +483,7 @@ void SATSolver::new_var()
 {
     MY_SOLVERS
     if (data.log) {
-        (*data.log) << "c Solver::new_var()\n";
+        (*data.log) << "c Solver::new_var()" << endl;
     }
     if (data.solvers.size() == 1) {
         data.solvers[0]->new_external_var();
@@ -495,6 +495,10 @@ void SATSolver::new_var()
 void SATSolver::new_vars(const size_t n)
 {
     MY_SOLVERS
+    if (data.log) {
+        (*data.log) << "c Solver::new_vars( " << n << " )" << endl;
+    }
+
     if (data.solvers.size() == 1) {
         data.solvers[0]->new_external_vars(n);
     } else {

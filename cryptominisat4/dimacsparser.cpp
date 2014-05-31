@@ -238,6 +238,15 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_var()" << endl;
         }
+    } else if (debugLib && str == "Solver::new_vars(") {
+        skipWhitespace(in);
+        uint32_t len = 0;
+        int n = parseInt(in, len);
+        solver->new_vars(n);
+
+        if (verbosity >= 6) {
+            cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
+        }
     } else {
         if (verbosity >= 6) {
             cout
