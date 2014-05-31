@@ -2239,9 +2239,12 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     restore_order_heap();
     setup_restart_print();
     lbool status = l_Undef;
-    status = burstSearch();
-    if (status != l_Undef) {
-        goto end;
+
+    if (conf.burstSearchLen > 0) {
+        status = burstSearch();
+        if (status != l_Undef) {
+            goto end;
+        }
     }
 
     restore_activities_and_polarities();

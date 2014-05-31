@@ -1309,12 +1309,11 @@ void Solver::check_config_parameters() const
 lbool Solver::solve()
 {
     solveStats.num_solve_calls++;
-    //If lots of small solve() calls, don't do burst search every time
-    if (solveStats.num_solve_calls> 1) {
-        conf.burstSearchLen = 0;
-    }
     conflict.clear();
     check_config_parameters();
+    uint64_t backup_burst_len = conf.burstSearchLen;
+    conf.burstSearchLen = 0;
+    size_t iteration_num = 0;
 
     if (conf.verbosity >= 6) {
         cout
@@ -1368,8 +1367,13 @@ lbool Solver::solve()
         && cpuTime() < conf.maxTime
         && sumStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
+        iteration_num++;
         if (conf.verbosity >= 2)
             printClauseSizeDistrib();
+
+        if (iteration_num > 1) {
+            conf.burstSearchLen = backup_burst_len;
+        }
 
         //This is crucial, since we need to attach() clauses to threads
         clauseCleaner->removeAndCleanAll();
