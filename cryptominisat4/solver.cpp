@@ -1037,6 +1037,10 @@ void Solver::check_switchoff_limits_newvar(size_t n)
 
 void Solver::new_vars(size_t n)
 {
+    if (n == 0) {
+        return;
+    }
+
     check_switchoff_limits_newvar(n);
     Searcher::new_vars(n);
     if (conf.doCache) {

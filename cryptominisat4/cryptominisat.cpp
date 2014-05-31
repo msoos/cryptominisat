@@ -331,7 +331,9 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
             data.cls_lits.push_back(lit);
         }
     } else {
-        assert(data.solvers.size() == 1);
+        data.solvers[0]->new_vars(data.vars_to_add);
+        data.vars_to_add = 0;
+
         ret = data.solvers[0]->add_clause_outer(lits);
         data.cls++;
     }
@@ -375,7 +377,9 @@ bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
             data.cls_lits.push_back(Lit(var, false));
         }
     } else {
-        assert(data.solvers.size() == 1);
+        data.solvers[0]->new_vars(data.vars_to_add);
+        data.vars_to_add = 0;
+
         ret = data.solvers[0]->add_xor_clause_outer(vars, rhs);
         data.cls++;
     }
@@ -433,6 +437,9 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     MY_SOLVERS
     if (data.solvers.size() == 1) {
+        data.solvers[0]->new_vars(data.vars_to_add);
+        data.vars_to_add = 0;
+
         lbool ret = data.solvers[0]->solve_with_assumptions(assumptions);
         data.okay = data.solvers[0]->okay();
         return ret;
@@ -471,12 +478,7 @@ const std::vector<Lit>& SATSolver::get_conflict() const
 uint32_t SATSolver::nVars() const
 {
     MY_SOLVERS
-    if (data.solvers.size() == 0) {
-        assert(data.vars_to_add == 0);
-        return data.solvers[0]->nVarsOutside();
-    } else {
-        return data.solvers[0]->nVarsOutside() + data.vars_to_add;
-    }
+    return data.solvers[0]->nVarsOutside() + data.vars_to_add;
 }
 
 void SATSolver::new_var()
@@ -485,11 +487,7 @@ void SATSolver::new_var()
     if (data.log) {
         (*data.log) << "c Solver::new_var()" << endl;
     }
-    if (data.solvers.size() == 1) {
-        data.solvers[0]->new_external_var();
-    } else {
-        data.vars_to_add += 1;
-    }
+    data.vars_to_add += 1;
 }
 
 void SATSolver::new_vars(const size_t n)
@@ -499,11 +497,7 @@ void SATSolver::new_vars(const size_t n)
         (*data.log) << "c Solver::new_vars( " << n << " )" << endl;
     }
 
-    if (data.solvers.size() == 1) {
-        data.solvers[0]->new_external_vars(n);
-    } else {
-        data.vars_to_add += n;
-    }
+    data.vars_to_add += n;
 }
 
 void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
