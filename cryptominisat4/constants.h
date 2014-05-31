@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <stdio.h>
 
 #define release_assert(a) \
     do { \
