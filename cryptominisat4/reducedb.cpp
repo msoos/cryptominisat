@@ -509,14 +509,7 @@ ClauseUsageStats ReduceDB::sumClauseData(
     //Reset stats
     ClauseUsageStats stats;
 
-    for(vector<ClOffset>::const_iterator
-        it = toprint.begin()
-        , end = toprint.end()
-        ; it != end
-        ; it++
-    ) {
-        //Clause data
-        ClOffset offset = *it;
+    for(ClOffset offset: toprint) {
         Clause& cl = *solver->clAllocator.getPointer(offset);
         const uint32_t clause_size = cl.size();
 
