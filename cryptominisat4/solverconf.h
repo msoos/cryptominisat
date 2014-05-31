@@ -275,8 +275,6 @@ class SolverConf
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
 
         //interrupting & dumping
-        bool      needResultFile;     ///<If set to TRUE, result will be written to a file
-        std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;

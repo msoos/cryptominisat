@@ -386,7 +386,7 @@ void Main::add_supported_options()
         , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
-    ("dumpresult", po::value(&conf.resultFilename)
+    ("dumpresult", po::value(&resultFilename)
         , "Write result(s) to this file")
     ;
 
@@ -912,7 +912,7 @@ void Main::manually_parse_some_options()
     }
 
     if (vm.count("dumpresult")) {
-        conf.needResultFile = true;
+        needResultFile = true;
     }
 
     parse_polarity_type();
@@ -1021,12 +1021,12 @@ int Main::solve()
     std::ofstream resultfile;
 
     //For dumping result into file
-    if (conf.needResultFile) {
-        resultfile.open(conf.resultFilename.c_str());
+    if (needResultFile) {
+        resultfile.open(resultFilename.c_str());
         if (!resultfile) {
             cout
             << "ERROR: Couldn't open file '"
-            << conf.resultFilename
+            << resultFilename
             << "' for writing!"
             << endl;
             std::exit(-1);
@@ -1056,7 +1056,7 @@ int Main::solve()
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             //Print result
             printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-            if (conf.needResultFile) {
+            if (needResultFile) {
                 printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
             }
 
@@ -1094,7 +1094,7 @@ int Main::solve()
 
     //Final print of solution
     printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-    if (conf.needResultFile) {
+    if (needResultFile) {
         printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
     }
 

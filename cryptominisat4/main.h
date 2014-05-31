@@ -83,6 +83,9 @@ class Main
 
         //Config
         SolverConf conf;
+        bool needResultFile = false;
+        std::string resultFilename;
+
         bool debugLib;
         int printResult;
         string commandLine;
