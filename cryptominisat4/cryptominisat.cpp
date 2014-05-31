@@ -44,6 +44,7 @@ struct Data {
         inter = _interrupt_asap;
         which_solved = 0;
         shared_data = NULL;
+        okay = true;
     }
     vector<Solver*> solvers;
     SharedData *shared_data;
@@ -52,6 +53,7 @@ struct Data {
     unsigned cls;
     unsigned vars_to_add;
     vector<Lit> cls_lits;
+    bool okay;
 };
 
 struct DataForThread
@@ -400,7 +402,9 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     MY_SOLVERS
     if (data.solvers.size() == 1) {
-        return data.solvers[0]->solve_with_assumptions(assumptions);
+        lbool ret = data.solvers[0]->solve_with_assumptions(assumptions);
+        data.okay = data.solvers[0]->okay();
+        return ret;
     }
 
     DataForThread data_for_thread(data, assumptions);
@@ -416,6 +420,7 @@ lbool SATSolver::solve(vector< Lit >* assumptions)
     //clear what has been added
     data.cls_lits.clear();
     data.vars_to_add = 0;
+    data.okay = data.solvers[*data_for_thread.which_solved]->okay();
 
     return real_ret;
 }
@@ -536,4 +541,10 @@ SolverConf SATSolver::get_conf() const
 {
     MY_SOLVERS
     return data.solvers[0]->getConf();
+}
+
+bool SATSolver::okay() const
+{
+    MY_SOLVERS
+    return data.okay;
 }

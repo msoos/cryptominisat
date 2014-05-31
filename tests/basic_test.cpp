@@ -13,6 +13,7 @@ BOOST_AUTO_TEST_CASE(start)
     SATSolver s;
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.okay(), true);
 }
 
 BOOST_AUTO_TEST_CASE(onelit)
@@ -22,6 +23,7 @@ BOOST_AUTO_TEST_CASE(onelit)
     s.add_clause(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.okay(), true);
 }
 
 BOOST_AUTO_TEST_CASE(twolit)
@@ -32,6 +34,7 @@ BOOST_AUTO_TEST_CASE(twolit)
     s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.okay(), false);
 }
 
 BOOST_AUTO_TEST_CASE(multi_solve_unsat)
@@ -42,9 +45,11 @@ BOOST_AUTO_TEST_CASE(multi_solve_unsat)
     s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_False);
+        BOOST_CHECK_EQUAL( s.okay(), false);
     }
 }
 
@@ -57,9 +62,11 @@ BOOST_AUTO_TEST_CASE(multi_solve_unsat_multi_thread)
     s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_False);
+        BOOST_CHECK_EQUAL( s.okay(), false);
     }
 }
 
@@ -111,6 +118,7 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_solution)
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_True);
+        BOOST_CHECK_EQUAL( s.okay(), true);
     }
     BOOST_CHECK_EQUAL( s.nVars(), 1);
 }
@@ -126,6 +134,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values)
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_True);
+        BOOST_CHECK_EQUAL( s.okay(), true);
     }
     BOOST_CHECK_EQUAL( s.nVars(), 1);
 }
@@ -179,6 +188,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values5)
     vector<Lit> assump = {Lit(0, false)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
+    BOOST_CHECK_EQUAL( s.okay(), true);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
     BOOST_CHECK_EQUAL( s.nVars(), 2);
@@ -351,6 +361,7 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_thread)
     s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.okay(), false);
     BOOST_CHECK_EQUAL( s.nVars(), 3);
 }
 
