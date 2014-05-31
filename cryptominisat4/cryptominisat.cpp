@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <thread>
 #include <mutex>
+#include <fstream>
 using std::thread;
 using std::mutex;
 
@@ -54,6 +55,7 @@ struct Data {
     unsigned vars_to_add;
     vector<Lit> cls_lits;
     bool okay;
+    std::ofstream* log = NULL;
 };
 
 struct DataForThread
@@ -97,6 +99,10 @@ SATSolver::~SATSolver()
         delete this_s;
     }
     delete data.shared_data;
+    if (data.log) {
+        data.log->close();
+        delete data.log;
+    }
 }
 
 void SATSolver::set_num_threads(const unsigned num)
@@ -310,6 +316,10 @@ static bool actually_add_clauses_to_threads(Data& data)
 bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     MY_SOLVERS
+    if (data.log) {
+        (*data.log) << lits << " 0\n";
+    }
+
     bool ret = true;
     if (data.solvers.size() > 1) {
         if (data.cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
@@ -329,9 +339,30 @@ bool SATSolver::add_clause(const vector< Lit >& lits)
     return ret;
 }
 
+void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofstream* file)
+{
+    if (vars.size() == 0) {
+        if (rhs) {
+            (*file) << "0\n";
+        }
+    } else {
+        if (!rhs) {
+            (*file) << "-";
+        }
+        for(unsigned var: vars) {
+            (*file) << (var+1) << " ";
+        }
+        (*file) << " 0\n";
+    }
+}
+
 bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
     MY_SOLVERS
+    if (data.log) {
+       add_xor_clause_to_log(vars, rhs, data.log);
+    }
+
     bool ret = true;
     if (data.solvers.size() > 1) {
         if (data.cls_lits.size() + vars.size() + 1 > CACHE_SIZE) {
@@ -451,6 +482,9 @@ uint32_t SATSolver::nVars() const
 void SATSolver::new_var()
 {
     MY_SOLVERS
+    if (data.log) {
+        (*data.log) << "c Solver::new_var()\n";
+    }
     if (data.solvers.size() == 1) {
         data.solvers[0]->new_external_var();
     } else {
@@ -547,4 +581,26 @@ bool SATSolver::okay() const
 {
     MY_SOLVERS
     return data.okay;
+}
+
+void SATSolver::log_to_file(std::string filename)
+{
+    MY_SOLVERS
+    if (data.log) {
+        std::cerr
+        << "ERROR: A file has already been designated for logging!"
+        << endl;
+        exit(-1);
+    }
+
+    data.log = new std::ofstream();
+    data.log->exceptions( std::ofstream::failbit | std::ofstream::badbit );
+    data.log->open(filename.c_str(), std::ios::out);
+    if (!data.log->is_open()) {
+        std::cerr
+        << "ERROR: Cannot open record file '" << filename << "'"
+        << " for writing."
+        << endl;
+        exit(-1);
+    }
 }

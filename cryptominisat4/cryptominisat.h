@@ -30,6 +30,7 @@ namespace CMSat {
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         unsigned long get_sql_id() const;
         bool okay() const;
+        void log_to_file(std::string filename);
 
         SolverConf get_conf() const;
         static const char* get_version();
