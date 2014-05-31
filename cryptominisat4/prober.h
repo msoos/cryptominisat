@@ -28,7 +28,6 @@
 
 #include "solvertypes.h"
 #include "clause.h"
-#include "bitarray.h"
 
 namespace CMSat {
 
