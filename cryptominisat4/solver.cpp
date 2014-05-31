@@ -1309,6 +1309,10 @@ void Solver::check_config_parameters() const
 lbool Solver::solve()
 {
     solveStats.num_solve_calls++;
+    //If lots of small solve() calls, don't do burst search every time
+    if (solveStats.num_solve_calls> 1) {
+        conf.burstSearchLen = 0;
+    }
     conflict.clear();
     check_config_parameters();
 
