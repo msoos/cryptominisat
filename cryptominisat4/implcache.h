@@ -175,7 +175,7 @@ public:
         implCache.push_back(TransCache());
     }
 
-    void new_vars(size_t n)
+    void new_vars(const size_t n)
     {
         implCache.resize(implCache.size()+2*n);
     }

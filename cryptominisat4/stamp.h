@@ -65,7 +65,7 @@ public:
         tstamp.push_back(Timestamp());
         tstamp.push_back(Timestamp());
     }
-    void new_vars(size_t n)
+    void new_vars(const size_t n)
     {
         tstamp.resize(tstamp.size() + 2*n, Timestamp());
     }

@@ -183,8 +183,8 @@ class Solver : public Searcher
             , bool attach
             , bool addDrup = true
         );
-        void new_var(bool bva = false, Var orig_outer = std::numeric_limits<Var>::max()) override;
-        void new_vars(size_t n) override;
+        void new_var(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max()) override;
+        void new_vars(const size_t n) override;
         void bva_changed();
 
         //Attaching-detaching clauses

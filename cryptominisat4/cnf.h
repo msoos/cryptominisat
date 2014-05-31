@@ -200,8 +200,8 @@ public:
     vector<Var> build_outer_to_without_bva_map() const;
 
 protected:
-    virtual void new_var(bool bva, Var orig_outer);
-    virtual void new_vars(size_t n);
+    virtual void new_var(const bool bva, const Var orig_outer);
+    virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const
     {

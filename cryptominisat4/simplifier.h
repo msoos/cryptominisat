@@ -98,8 +98,8 @@ public:
     //Called from main
     bool simplify();
     void subsumeReds();
-    void new_var(Var orig_outer);
-    void new_vars(size_t n);
+    void new_var(const Var orig_outer);
+    void new_vars(const size_t n);
     void saveVarMem();
     bool unEliminate(const Var var);
     size_t memUsed() const;

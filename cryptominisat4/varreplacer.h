@@ -59,8 +59,8 @@ class VarReplacer
     public:
         VarReplacer(Solver* solver);
         ~VarReplacer();
-        void new_var(Var orig_outer);
-        void new_vars(size_t n);
+        void new_var(const Var orig_outer);
+        void new_vars(const size_t n);
         void saveVarMem();
         bool performReplace();
         bool replace(

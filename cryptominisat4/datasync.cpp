@@ -35,7 +35,7 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData, uint32_t _thread_nu
     , toClear(solver->toClear)
 {}
 
-void DataSync::new_var(bool bva)
+void DataSync::new_var(const bool bva)
 {
     if (!enabled())
         return;
