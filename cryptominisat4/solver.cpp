@@ -1341,12 +1341,11 @@ lbool Solver::solve()
 
 
     //Clean up as a startup
-    reduceDB->reset_next_clean_limit();
-    reduceDB->reduce_db_and_update_reset_stats(false);
+    reduceDB->reset_for_next_clean_limit();
     datasync->rebuild_bva_map();
 
     //Initialise
-    reduceDB->increment_next_clean_limit();
+    reduceDB->reset_for_next_clean_limit();
     if (!origAssumptions.empty()) {
         //origAssumptions = *_assumptions;
         set_assumptions();

@@ -495,6 +495,12 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
         solver->clear_clauses_stats();
     }
 
+    increment_for_next_reduce();
+}
+
+void ReduceDB::increment_for_next_reduce()
+{
+
     nextCleanLimit += nextCleanLimitInc;
     nextCleanLimitInc *= solver->conf.increaseClean;
 }
@@ -552,7 +558,7 @@ ClauseUsageStats ReduceDB::sumClauseData(
     return stats;
 }
 
-void ReduceDB::increment_next_clean_limit()
+void ReduceDB::reset_for_next_clean_limit()
 {
     if (solver->conf.startClean < 100) {
         cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
@@ -561,10 +567,4 @@ void ReduceDB::increment_next_clean_limit()
 
     nextCleanLimitInc = solver->conf.startClean;
     nextCleanLimit = solver->sumConflicts() + nextCleanLimitInc;
-}
-
-void ReduceDB::reset_next_clean_limit()
-{
-    nextCleanLimitInc = 0;
-    nextCleanLimit = 0;
 }

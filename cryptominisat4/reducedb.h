@@ -16,8 +16,9 @@ public:
     void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
     CleaningStats cleaningStats;
 
-    void reset_next_clean_limit();
-    void increment_next_clean_limit();
+    void reset_for_next_clean_limit();
+    void increment_for_next_reduce();
+
     uint64_t get_nbReduceDB() const
     {
         return nbReduceDB;
