@@ -240,6 +240,7 @@ class Solver : public Searcher
 
     private:
         friend class Prober;
+        lbool iterate_until_solved();
 
         vector<Lit> finalCl_tmp;
         void set_up_sql_writer();

@@ -1315,9 +1315,6 @@ lbool Solver::solve()
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
-    uint64_t backup_burst_len = conf.burstSearchLen;
-    conf.burstSearchLen = 0;
-    size_t iteration_num = 0;
 
     if (conf.verbosity >= 6) {
         cout
@@ -1365,17 +1362,38 @@ lbool Solver::solve()
         status = simplifyProblem();
     }
 
-    //Iterate until solved
+    if (status != l_Undef) {
+        status = iterate_until_solved();
+    }
+    handle_found_solution(status);
+
+    end:
+    if (solver->conf.doSQL) {
+        sqlStats->finishup(status);
+    }
+
+    return status;
+}
+
+lbool Solver::iterate_until_solved()
+{
+    uint64_t backup_burst_len = conf.burstSearchLen;
+    conf.burstSearchLen = 0;
+
+    size_t iteration_num = 0;
+    lbool status = l_Undef;
+
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
         && sumStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
         iteration_num++;
-        if (conf.verbosity >= 2)
+        if (conf.verbosity >= 2 && iteration_num >= 2) {
             printClauseSizeDistrib();
+        }
 
-        if (iteration_num > 1) {
+        if (iteration_num >= 2) {
             conf.burstSearchLen = backup_burst_len;
         }
 
@@ -1393,7 +1411,10 @@ lbool Solver::solve()
 
         //Abide by maxConfl limit
         numConfls = std::min<long>((long)numConfls, conf.maxConfl - (long)sumStats.conflStats.numConflicts);
-        if (numConfls <= 0) break;
+        if (numConfls <= 0) {
+            conf.burstSearchLen = backup_burst_len;
+            return status;
+        }
         status = Searcher::solve(numConfls);
 
         //Check for effectiveness
@@ -1408,7 +1429,8 @@ lbool Solver::solve()
 
         //Solution has been found
         if (status != l_Undef) {
-            break;
+            conf.burstSearchLen = backup_burst_len;
+            return status;
         }
 
         //If we are over the limit, exit
@@ -1416,25 +1438,19 @@ lbool Solver::solve()
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
-            status = l_Undef;
-            break;
+            conf.burstSearchLen = backup_burst_len;
+            return l_Undef;
         }
 
         reduceDB->reduce_db_and_update_reset_stats();
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
-        //Simplify
         if (conf.regularly_simplify_problem) {
             status = simplifyProblem();
         }
     }
-    handle_found_solution(status);
 
-    end:
-    if (solver->conf.doSQL) {
-        sqlStats->finishup(status);
-    }
-
+    conf.burstSearchLen = backup_burst_len;
     return status;
 }
 
