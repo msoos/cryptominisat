@@ -1315,6 +1315,9 @@ lbool Solver::solve()
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
+    if (solveStats.num_solve_calls > 1) {
+        conf.do_calc_polarity_first_time = false;
+    }
 
     if (conf.verbosity >= 6) {
         cout
