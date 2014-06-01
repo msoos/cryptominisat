@@ -1019,8 +1019,6 @@ int Main::solve()
     solver->set_num_threads(num_threads);
 
     std::ofstream resultfile;
-
-    //For dumping result into file
     if (needResultFile) {
         resultfile.open(resultFilename.c_str());
         if (!resultfile) {
