@@ -1365,7 +1365,7 @@ lbool Solver::solve()
         status = simplifyProblem();
     }
 
-    if (status != l_Undef) {
+    if (status == l_Undef) {
         status = iterate_until_solved();
     }
     handle_found_solution(status);
