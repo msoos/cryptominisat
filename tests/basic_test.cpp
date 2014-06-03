@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE basic_interface
 #include <boost/test/unit_test.hpp>
+#include <fstream>
 
 #include "cryptominisat4/cryptominisat.h"
 using namespace CMSat;
@@ -85,6 +86,86 @@ BOOST_AUTO_TEST_CASE(solve_multi_thread)
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
     BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
 }
+
+BOOST_AUTO_TEST_CASE(logfile)
+{
+    SATSolver* s = new SATSolver();
+    s->log_to_file("testfile");
+    s->new_vars(2);
+    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    lbool ret = s->solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+    delete s;
+
+    std::ifstream infile("testfile");
+    std::string line;
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "1 2 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+}
+
+BOOST_AUTO_TEST_CASE(logfile2)
+{
+    SATSolver* s = new SATSolver();
+    s->log_to_file("testfile");
+    s->new_vars(2);
+    s->add_clause(vector<Lit>{Lit(0, false)});
+    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    lbool ret = s->solve();
+    s->add_clause(vector<Lit>{Lit(1, false)});
+    ret = s->solve();
+    delete s;
+
+    std::ifstream infile("testfile");
+    std::string line;
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "1 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "1 2 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "2 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+}
+
+BOOST_AUTO_TEST_CASE(logfile2_assumps)
+{
+    SATSolver* s = new SATSolver();
+    s->log_to_file("testfile");
+    s->new_vars(2);
+    s->add_clause(vector<Lit>{Lit(0, false)});
+    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    std::vector<Lit> assumps {Lit(0, false), Lit(1, true)};
+    lbool ret = s->solve(&assumps);
+    s->add_clause(vector<Lit>{Lit(1, false)});
+    assumps.clear();
+    assumps.push_back(Lit(1, true));
+    ret = s->solve(&assumps);
+    delete s;
+
+    std::ifstream infile("testfile");
+    std::string line;
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "1 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "1 2 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::solve( 1 -2 )");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "2 0");
+    std::getline(infile, line);
+    BOOST_CHECK_EQUAL(line, "c Solver::solve( -2 )");
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

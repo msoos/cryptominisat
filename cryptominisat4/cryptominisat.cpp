@@ -436,6 +436,15 @@ struct OneThreadSolve
 lbool SATSolver::solve(vector< Lit >* assumptions)
 {
     MY_SOLVERS
+
+    if (data.log) {
+        (*data.log) << "c Solver::solve( ";
+        if (assumptions) {
+            (*data.log) << *assumptions;
+        }
+        (*data.log) << " )" << endl;
+    }
+
     if (data.solvers.size() == 1) {
         data.solvers[0]->new_vars(data.vars_to_add);
         data.vars_to_add = 0;
