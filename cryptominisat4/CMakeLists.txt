@@ -44,17 +44,6 @@ set(cryptoms_lib_files
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-# foreach(target ${stp_lib_targets})
-#     list(APPEND stp_lib_objects $<TARGET_OBJECTS:${target}>)
-#
-#     get_target_property(TARGETS_PUBLIC_HEADERS ${target} PUBLIC_HEADER)
-#     if (EXISTS "${TARGETS_PUBLIC_HEADERS}")
-#         list(APPEND stp_public_headers "${TARGETS_PUBLIC_HEADERS}")
-#         message("Adding public header(s) ${TARGETS_PUBLIC_HEADERS} to target libstp")
-#     endif()
-# endforeach()
-
-
 set(cryptoms_lib_link_libs "")
 
 if (M4RI_FOUND)
