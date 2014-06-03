@@ -1042,6 +1042,7 @@ int Main::solve()
     solver->add_sql_tag("commandline", commandLine);
 
     //Parse in DIMACS (maybe gzipped) files
+    //solver->log_to_file("mydump.cnf");
     parseInAllFiles();
 
     //Multi-solutions
