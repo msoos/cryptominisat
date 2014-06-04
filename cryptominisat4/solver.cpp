@@ -1317,7 +1317,6 @@ lbool Solver::solve()
     conflict.clear();
     check_config_parameters();
     if (solveStats.num_solve_calls > 1) {
-        //conf.do_calc_polarity_first_time = false;
         conf.do_calc_polarity_every_time = false;
     }
 
