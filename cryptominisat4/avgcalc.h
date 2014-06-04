@@ -124,6 +124,11 @@ public:
         min = std::min(min, other.min);
         max = std::max(max, other.max);
     }
+
+    size_t num_data_elements() const
+    {
+        return num;
+    }
 };
 
 } //end namespace
