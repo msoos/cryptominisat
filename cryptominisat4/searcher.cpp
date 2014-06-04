@@ -1660,12 +1660,12 @@ void Searcher::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
-lbool Searcher::burstSearch()
+lbool Searcher::burst_search()
 {
     const double myTime = cpuTime();
     if (conf.verbosity >= 2) {
         cout
-        << "c Doing burst search for " << conf.burstSearchLen << " conflicts"
+        << "c Doing burst search for " << conf.burst_search_len << " conflicts"
         << endl;
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
@@ -1689,7 +1689,7 @@ lbool Searcher::burstSearch()
 
     //Do burst
     params.clear();
-    params.conflictsToDo = conf.burstSearchLen;
+    params.conflictsToDo = conf.burst_search_len;
     params.rest_type = restart_type_never;
     lbool status = search();
     longest_dec_trail.clear();
@@ -1705,7 +1705,7 @@ lbool Searcher::burstSearch()
     if (conf.verbosity >= 2) {
         cout
         << "c "
-        << conf.burstSearchLen << "-long burst search "
+        << conf.burst_search_len << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
         << " T: " << std::setprecision(2) << std::fixed << time_used
@@ -2235,13 +2235,12 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     }
 
     resetStats();
-    restore_activities_and_polarities();
-    restore_order_heap();
-    setup_restart_print();
     lbool status = l_Undef;
-
-    if (conf.burstSearchLen > 0) {
-        status = burstSearch();
+    if (conf.burst_search_len > 0) {
+        restore_activities_and_polarities();
+        restore_order_heap();
+        setup_restart_print();
+        status = burst_search();
         if (status != l_Undef) {
             goto end;
         }

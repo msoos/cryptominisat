@@ -666,7 +666,7 @@ class Searcher : public HyperEngine
         /// Search for a given number of conflicts.
         bool last_decision_ended_in_conflict;
         lbool search();
-        lbool burstSearch();
+        lbool burst_search();
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, size_t glue);
         void  attach_and_enqueue_learnt_clause(Clause* cl);
