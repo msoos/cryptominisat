@@ -93,7 +93,6 @@ class Solver : public Searcher
         struct SolveStats
         {
             uint64_t numSimplify = 0;
-            //uint64_t nbReduceDB = 0;
             uint32_t num_solve_calls = 0;
         };
         static const char* getVersion();
