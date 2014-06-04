@@ -139,6 +139,7 @@ Solver::~Solver()
     delete varReplacer;
     delete subsumeImplicit;
     delete datasync;
+    delete reduceDB;
 }
 
 void Solver::set_shared_data(SharedData* shared_data, uint32_t thread_num)
