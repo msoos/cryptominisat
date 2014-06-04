@@ -1349,11 +1349,9 @@ lbool Solver::solve()
     //Initialise
     reduceDB->reset_for_next_clean_limit();
     if (!origAssumptions.empty()) {
-        //origAssumptions = *_assumptions;
         set_assumptions();
     } else {
         std::fill(assumptionsSet.begin(), assumptionsSet.end(), false);
-        //origAssumptions.clear();
         assumptions.clear();
     }
 
