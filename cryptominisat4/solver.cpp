@@ -1322,9 +1322,7 @@ lbool Solver::solve()
     }
 
     if (conf.verbosity >= 6) {
-        cout
-        << "c Solver::solve() called"
-        << endl;
+        cout << "c Solver::solve() called" << endl;
     }
 
     set_up_sql_writer();
@@ -1334,13 +1332,10 @@ lbool Solver::solve()
     if (!ok) {
         status = l_False;
         if (conf.verbosity >= 6) {
-            cout
-            << "c Solver status l_Fase on startup of solve()"
-            << endl;
+            cout << "c Solver status l_Fase on startup of solve()" << endl;
         }
         goto end;
     }
-
 
     //Clean up as a startup
     reduceDB->reset_for_next_clean_limit();
