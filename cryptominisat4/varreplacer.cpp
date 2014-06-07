@@ -1058,20 +1058,6 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
     );
 }
 
-size_t VarReplacer::get_num_bin_clauses() const
-{
-    size_t num = 0;
-    for (Var var = 0; var < table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
-
-        num += 2;
-    }
-
-    return num;
-}
-
 void VarReplacer::Stats::print(const size_t nVars) const
 {
         cout << "c --------- VAR REPLACE STATS ----------" << endl;

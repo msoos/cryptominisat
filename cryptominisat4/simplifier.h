@@ -159,6 +159,7 @@ private:
     SubsumeStrengthen* subsumeStrengthen;
 
     //debug
+    void checkElimedUnassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
     void checkAllLinkedIn();
 
@@ -182,7 +183,6 @@ private:
     //Limits
     uint64_t clause_lits_added;
     int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
-//     int64_t  numMaxTriSub;
     int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
     int64_t  norm_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
@@ -541,11 +541,6 @@ private:
     ///Stats globally
     Stats globalStats;
 };
-
-inline const vector<BlockedClause>& Simplifier::getBlockedClauses() const
-{
-    return blockedClauses;
-}
 
 inline const Simplifier::Stats& Simplifier::getStats() const
 {
