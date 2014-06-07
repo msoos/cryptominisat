@@ -111,6 +111,12 @@ public:
 
     struct Stats
     {
+        void print(const size_t nVars) const;
+        void printShort(const bool print_var_elim = true) const;
+        Stats& operator+=(const Stats& other);
+        void clear();
+        double totalTime() const;
+
         uint64_t numCalls = 0;
 
         //Time stats

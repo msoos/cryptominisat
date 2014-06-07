@@ -3648,7 +3648,7 @@ Simplifier::Stats& Simplifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Simplifier::Stats::printShort(const bool print_var_elim = true) const
+void Simplifier::Stats::printShort(const bool print_var_elim) const
 {
 
     cout
