@@ -1373,9 +1373,6 @@ lbool Solver::solve()
 
 lbool Solver::iterate_until_solved()
 {
-    uint64_t backup_burst_len = conf.burst_search_len;
-    conf.burst_search_len = 0;
-
     size_t iteration_num = 0;
     lbool status = l_Undef;
 
@@ -1387,10 +1384,6 @@ lbool Solver::iterate_until_solved()
         iteration_num++;
         if (conf.verbosity >= 2 && iteration_num >= 2) {
             printClauseSizeDistrib();
-        }
-
-        if (iteration_num >= 2) {
-            conf.burst_search_len = backup_burst_len;
         }
 
         //This is crucial, since we need to attach() clauses to threads
@@ -1408,7 +1401,6 @@ lbool Solver::iterate_until_solved()
         //Abide by maxConfl limit
         numConfls = std::min<long>((long)numConfls, conf.maxConfl - (long)sumStats.conflStats.numConflicts);
         if (numConfls <= 0) {
-            conf.burst_search_len = backup_burst_len;
             return status;
         }
         status = Searcher::solve(numConfls);
@@ -1425,7 +1417,6 @@ lbool Solver::iterate_until_solved()
 
         //Solution has been found
         if (status != l_Undef) {
-            conf.burst_search_len = backup_burst_len;
             return status;
         }
 
@@ -1434,7 +1425,6 @@ lbool Solver::iterate_until_solved()
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
-            conf.burst_search_len = backup_burst_len;
             return l_Undef;
         }
 
@@ -1446,7 +1436,6 @@ lbool Solver::iterate_until_solved()
         }
     }
 
-    conf.burst_search_len = backup_burst_len;
     return status;
 }
 
