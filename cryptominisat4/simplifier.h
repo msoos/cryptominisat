@@ -110,267 +110,47 @@ public:
     void print_blocked_clauses_reverse() const;
     void extendModel(SolutionExtender* extender);
 
-    //Get-functions
     struct Stats
     {
-        Stats() :
-            numCalls(0)
-            //Time
-            , linkInTime(0)
-            , blockTime(0)
-            , varElimTime(0)
-            , finalCleanupTime(0)
-
-            //Startup stats
-            , origNumFreeVars(0)
-            , origNumMaxElimVars(0)
-            , origNumIrredLongClauses(0)
-            , origNumRedLongClauses(0)
-
-            //Each algo
-            , subsumedByVE(0)
-
-            //Elimination
-            , numVarsElimed(0)
-            , varElimTimeOut(0)
-            , clauses_elimed_long(0)
-            , clauses_elimed_tri(0)
-            , clauses_elimed_bin(0)
-            , clauses_elimed_sumsize(0)
-            , longRedClRemThroughElim(0)
-            , triRedClRemThroughElim(0)
-            , binRedClRemThroughElim(0)
-            , numRedBinVarRemAdded(0)
-            , testedToElimVars(0)
-            , triedToElimVars(0)
-            , usedAggressiveCheckToELim(0)
-            , newClauses(0)
-
-            , zeroDepthAssings(0)
-        {
-        }
-
-        double totalTime() const
-        {
-            return linkInTime + blockTime
-                + varElimTime + finalCleanupTime;
-        }
-
-        void clear()
-        {
-            Stats stats;
-            *this = stats;
-        }
-
-        Stats& operator+=(const Stats& other)
-        {
-            numCalls += other.numCalls;
-
-            //Time
-            linkInTime += other.linkInTime;
-            blockTime += other.blockTime;
-            varElimTime += other.varElimTime;
-            finalCleanupTime += other.finalCleanupTime;
-
-            //Startup stats
-            origNumFreeVars += other.origNumFreeVars;
-            origNumMaxElimVars += other.origNumMaxElimVars;
-            origNumIrredLongClauses += other.origNumIrredLongClauses;
-            origNumRedLongClauses += other.origNumRedLongClauses;
-
-            //Each algo
-            subsumedByVE  += other.subsumedByVE;
-
-            //Elim
-            numVarsElimed += other.numVarsElimed;
-            varElimTimeOut += other.varElimTimeOut;
-            clauses_elimed_long += other.clauses_elimed_long;
-            clauses_elimed_tri += other.clauses_elimed_tri;
-            clauses_elimed_bin += other.clauses_elimed_bin;
-            clauses_elimed_sumsize += other.clauses_elimed_sumsize;
-            longRedClRemThroughElim += other.longRedClRemThroughElim;
-            triRedClRemThroughElim += other.triRedClRemThroughElim;
-            binRedClRemThroughElim += other.binRedClRemThroughElim;
-            numRedBinVarRemAdded += other.numRedBinVarRemAdded;
-            testedToElimVars += other.testedToElimVars;
-            triedToElimVars += other.triedToElimVars;
-            usedAggressiveCheckToELim += other.usedAggressiveCheckToELim;
-            newClauses += other.newClauses;
-
-            zeroDepthAssings += other.zeroDepthAssings;
-
-            return *this;
-        }
-
-        void printShort(const bool print_var_elim = true) const
-        {
-
-            cout
-            << "c [occur] " << linkInTime+finalCleanupTime << " is overhead"
-            << endl;
-
-            //About elimination
-            if (print_var_elim) {
-                cout
-                << "c [v-elim]"
-                << " elimed: " << numVarsElimed
-                << " / " << origNumMaxElimVars
-                << " / " << origNumFreeVars
-                //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
-                << " T: " << std::fixed << std::setprecision(2)
-                << varElimTime << " s"
-                << " T-out: " << (varElimTimeOut ? "Y" : "N")
-                << endl;
-
-                cout
-                << "c [v-elim]"
-                << " cl-new: " << newClauses
-                << " tried: " << triedToElimVars
-                << " tested: " << testedToElimVars
-                << " ("
-                << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
-                << " % aggressive)"
-                << endl;
-
-                cout
-                << "c [v-elim]"
-                << " subs: "  << subsumedByVE
-                << " red-bin rem: " << binRedClRemThroughElim
-                << " red-tri rem: " << triRedClRemThroughElim
-                << " red-long rem: " << longRedClRemThroughElim
-                << " v-fix: " << std::setw(4) << zeroDepthAssings
-                << endl;
-            }
-
-            cout
-            << "c [simp] link-in T: " << linkInTime
-            << " cleanup T: " << finalCleanupTime
-            << endl;
-        }
-
-        void print(const size_t nVars) const
-        {
-            cout << "c -------- Simplifier STATS ----------" << endl;
-            printStatsLine("c time"
-                , totalTime()
-                , stats_line_percent(varElimTime, totalTime())
-                , "% var-elim"
-            );
-
-            printStatsLine("c timeouted"
-                , stats_line_percent(varElimTimeOut, numCalls)
-                , "% called"
-            );
-
-            printStatsLine("c called"
-                ,  numCalls
-                , (double)totalTime()/(double)numCalls
-                , "s per call"
-            );
-
-            printStatsLine("c v-elimed"
-                , numVarsElimed
-                , stats_line_percent(numVarsElimed, nVars)
-                , "% vars"
-            );
-
-            cout << "c"
-            << " v-elimed: " << numVarsElimed
-            << " / " << origNumMaxElimVars
-            << " / " << origNumFreeVars
-            << endl;
-
-            printStatsLine("c 0-depth assigns"
-                , zeroDepthAssings
-                , stats_line_percent(zeroDepthAssings, nVars)
-                , "% vars"
-            );
-
-            printStatsLine("c cl-new"
-                , newClauses
-            );
-
-            printStatsLine("c tried to elim"
-                , triedToElimVars
-                , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
-                , "% aggressively"
-            );
-
-            printStatsLine("c elim-bin-lt-cl"
-                , binRedClRemThroughElim);
-
-            printStatsLine("c elim-tri-lt-cl"
-                , triRedClRemThroughElim);
-
-            printStatsLine("c elim-long-lt-cl"
-                , longRedClRemThroughElim);
-
-            printStatsLine("c lt-bin added due to v-elim"
-                , numRedBinVarRemAdded);
-
-            printStatsLine("c cl-elim-bin"
-                , clauses_elimed_bin);
-
-            printStatsLine("c cl-elim-tri"
-                , clauses_elimed_tri);
-
-            printStatsLine("c cl-elim-long"
-                , clauses_elimed_long);
-
-            printStatsLine("c cl-elim-avg-s",
-                ((double)clauses_elimed_sumsize
-                /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
-            );
-
-            printStatsLine("c v-elim-sub"
-                , subsumedByVE
-            );
-
-            cout << "c -------- Simplifier STATS END ----------" << endl;
-        }
-
-        uint64_t numCalls;
+        uint64_t numCalls = 0;
 
         //Time stats
-        double linkInTime;
-        double blockTime;
-        double varElimTime;
-        double finalCleanupTime;
+        double linkInTime = 0;
+        double blockTime = 0;
+        double varElimTime = 0;
+        double finalCleanupTime = 0;
 
         //Startup stats
-        uint64_t origNumFreeVars;
-        uint64_t origNumMaxElimVars;
-        uint64_t origNumIrredLongClauses;
-        uint64_t origNumRedLongClauses;
+        uint64_t origNumFreeVars = 0;
+        uint64_t origNumMaxElimVars = 0;
+        uint64_t origNumIrredLongClauses = 0;
+        uint64_t origNumRedLongClauses = 0;
 
         //Each algorithm
-        uint64_t subsumedByVE;
+        uint64_t subsumedByVE = 0;
 
         //Stats for var-elim
-        int64_t numVarsElimed;
-        uint64_t varElimTimeOut;
-        uint64_t clauses_elimed_long;
-        uint64_t clauses_elimed_tri;
-        uint64_t clauses_elimed_bin;
-        uint64_t clauses_elimed_sumsize;
-        uint64_t longRedClRemThroughElim;
-        uint64_t triRedClRemThroughElim;
-        uint64_t binRedClRemThroughElim;
-        uint64_t numRedBinVarRemAdded;
-        uint64_t testedToElimVars;
-        uint64_t triedToElimVars;
-        uint64_t usedAggressiveCheckToELim;
-        uint64_t newClauses;
+        int64_t numVarsElimed = 0;
+        uint64_t varElimTimeOut = 0;
+        uint64_t clauses_elimed_long = 0;
+        uint64_t clauses_elimed_tri = 0;
+        uint64_t clauses_elimed_bin = 0;
+        uint64_t clauses_elimed_sumsize = 0;
+        uint64_t longRedClRemThroughElim = 0;
+        uint64_t triRedClRemThroughElim = 0;
+        uint64_t binRedClRemThroughElim = 0;
+        uint64_t numRedBinVarRemAdded = 0;
+        uint64_t testedToElimVars = 0;
+        uint64_t triedToElimVars = 0;
+        uint64_t usedAggressiveCheckToELim = 0;
+        uint64_t newClauses = 0;
 
         //General stat
-        uint64_t zeroDepthAssings;
+        uint64_t zeroDepthAssings = 0;
     };
 
-    const vector<BlockedClause>& getBlockedClauses() const;
-    //const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
     const SubsumeStrengthen* getSubsumeStrengthen() const;
-    void checkElimedUnassignedAndStats() const;
     void checkElimedUnassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
