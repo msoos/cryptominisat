@@ -1469,10 +1469,6 @@ void Solver::checkDecisionVarCorrectness() const
 
 /**
 @brief The function that brings together almost all CNF-simplifications
-
-It burst-searches for given number of conflicts, then it tries all sorts of
-things like variable elimination, subsumption, failed literal probing, etc.
-to try to simplifcy the problem at hand.
 */
 lbool Solver::simplifyProblem()
 {
