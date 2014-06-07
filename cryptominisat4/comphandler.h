@@ -64,6 +64,7 @@ class CompHandler
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
+        void dump_removed_clauses(std::ostream* outfile) const;
 
     private:
         struct sort_pred {

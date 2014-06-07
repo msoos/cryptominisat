@@ -751,3 +751,20 @@ void CompHandler::readdRemovedClauses()
     removedClauses.lits.clear();
     removedClauses.sizes.clear();
 }
+
+void CompHandler::dump_removed_clauses(std::ostream* outfile) const
+{
+    vector<Lit> tmp;
+    size_t at = 0;
+    for (uint32_t size :removedClauses.sizes) {
+        tmp.clear();
+        for(size_t i = at; i < at + size; i++) {
+            tmp.push_back(removedClauses.lits[i]);
+        }
+        std::sort(tmp.begin(), tmp.end());
+        *outfile << tmp << " 0" << endl;
+
+        //Move 'at' along
+        at += size;
+    }
+}

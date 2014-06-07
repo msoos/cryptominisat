@@ -89,6 +89,8 @@ class Solver : public Searcher
         lbool modelValue (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
+        void open_file_and_dump_irred_clauses(string fname) const;
+        void open_file_and_dump_red_clauses(string fname) const;
 
         struct SolveStats
         {
@@ -97,8 +99,6 @@ class Solver : public Searcher
         };
         static const char* getVersion();
         vector<Lit> get_zero_assigned_lits() const;
-        void     open_file_and_dump_irred_clauses(string fname) const;
-        void     open_file_and_dump_red_clauses(string fname) const;
         void     printStats() const;
         void     printClauseStats() const;
         size_t   getNumFreeVars() const;
@@ -122,24 +122,6 @@ class Solver : public Searcher
         size_t getNewToReplaceVars() const;
         const Stats& getStats() const;
         uint64_t getNextCleanLimit() const;
-
-        ///////////////////////////////////
-        // State Dumping
-        void dumpRedClauses(
-            std::ostream* os
-            , const uint32_t maxSize
-        ) const;
-        void dumpIrredClauses(
-            std::ostream* os
-        ) const;
-        void dump_clauses(
-            const vector<ClOffset>& cls
-            , std::ostream* os
-            , size_t max_size = std::numeric_limits<size_t>::max()
-        ) const;
-        void dump_blocked_clauses(std::ostream* os) const;
-        void dump_component_clauses(std::ostream* os) const;
-        void write_irred_stats_to_cnf(std::ostream* os) const;
 
 
         //Checks
@@ -239,6 +221,7 @@ class Solver : public Searcher
 
     private:
         friend class Prober;
+        friend class ClauseDumper;
         lbool iterate_until_solved();
 
         vector<Lit> finalCl_tmp;
@@ -252,21 +235,6 @@ class Solver : public Searcher
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();
-        void dumpUnitaryClauses(std::ostream* os) const;
-        void dumpEquivalentLits(std::ostream* os) const;
-        void dumpBinClauses(
-            const bool dumpRed
-            , const bool dumpIrred
-            , std::ostream* outfile
-        ) const;
-
-        void dumpTriClauses(
-            const bool alsoRed
-            , const bool alsoIrred
-            , std::ostream* outfile
-        ) const;
-        void     open_dump_file(std::ofstream& outfile, std::string filename) const;
-        uint64_t count_irred_clauses_for_dump() const;
         struct ReachabilityStats
         {
             ReachabilityStats() :

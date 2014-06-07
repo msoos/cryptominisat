@@ -52,6 +52,7 @@
 #include "strengthener.h"
 #include "datasync.h"
 #include "reducedb.h"
+#include "clausedumper.h"
 
 using namespace CMSat;
 using std::cout;
@@ -2174,100 +2175,6 @@ void Solver::printMemStats() const
     );
 }
 
-void Solver::dumpBinClauses(
-    const bool dumpRed
-    , const bool dumpIrred
-    , std::ostream* outfile
-) const {
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    size_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
-
-        //Each element in the watchlist
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //Only dump binaries
-            if (it2->isBinary() && lit < it2->lit2()) {
-                bool toDump = false;
-                if (it2->red() && dumpRed) toDump = true;
-                if (!it2->red() && dumpIrred) toDump = true;
-
-                if (toDump) {
-                    tmpCl.clear();
-                    tmpCl.push_back(map_inter_to_outer(it2->lit2()));
-                    tmpCl.push_back(map_inter_to_outer(lit));
-                    std::sort(tmpCl.begin(), tmpCl.end());
-
-                    *outfile
-                    << tmpCl[0] << " "
-                    << tmpCl[1]
-                    << " 0\n";
-                }
-            }
-        }
-    }
-}
-
-void Solver::dumpTriClauses(
-    const bool alsoRed
-    , const bool alsoIrred
-    , std::ostream* outfile
-) const {
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //Only one instance of tri clause
-            if (it2->isTri() && lit < it2->lit2()) {
-                bool toDump = false;
-                if (it2->red() && alsoRed) toDump = true;
-                if (!it2->red() && alsoIrred) toDump = true;
-
-                if (toDump) {
-                    tmpCl.clear();
-                    tmpCl.push_back(map_inter_to_outer(it2->lit2()));
-                    tmpCl.push_back(map_inter_to_outer(it2->lit3()));
-                    tmpCl.push_back(map_inter_to_outer(lit));
-                    std::sort(tmpCl.begin(), tmpCl.end());
-
-                    *outfile
-                    << tmpCl[0] << " "
-                    << tmpCl[1] << " "
-                    << tmpCl[2]
-                    << " 0\n";
-                }
-            }
-        }
-    }
-}
-
 void Solver::printClauseSizeDistrib()
 {
     size_t size4 = 0;
@@ -2307,21 +2214,6 @@ void Solver::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void Solver::dumpEquivalentLits(std::ostream* os) const
-{
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    *os
-    << "c " << endl
-    << "c ---------------------------------------" << endl
-    << "c equivalent literals" << endl
-    << "c ---------------------------------------" << endl;
-
-    varReplacer->print_equivalent_literals(os);
-}
 
 vector<Lit> Solver::get_zero_assigned_lits() const
 {
@@ -2370,256 +2262,6 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     }
 
     return lits;
-}
-
-void Solver::dumpUnitaryClauses(std::ostream* os) const
-{
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    *os
-    << "c " << endl
-    << "c ---------" << endl
-    << "c unitaries" << endl
-    << "c ---------" << endl;
-
-    //'trail' cannot be trusted between 0....size()
-    assert(decisionLevel() == 0);
-    vector<Lit> lits = get_zero_assigned_lits();
-    for(const Lit lit: lits) {
-        *os << lit << " 0\n";
-    }
-}
-
-void Solver::dumpRedClauses(
-    std::ostream* os
-    , const uint32_t maxSize
-) const {
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    dumpUnitaryClauses(os);
-
-    *os
-    << "c " << endl
-    << "c ---------------------------------" << endl
-    << "c redundant binary clauses (extracted from watchlists)" << endl
-    << "c ---------------------------------" << endl;
-    if (maxSize >= 2) {
-        dumpBinClauses(true, false, os);
-    }
-
-    *os
-    << "c " << endl
-    << "c ---------------------------------" << endl
-    << "c redundant tertiary clauses (extracted from watchlists)" << endl
-    << "c ---------------------------------" << endl;
-    if (maxSize >= 3) {
-        dumpTriClauses(true, false, os);
-    }
-
-    if (maxSize >= 2) {
-        dumpEquivalentLits(os);
-    }
-
-    *os
-    << "c " << endl
-    << "c --------------------" << endl
-    << "c redundant long clauses" << endl
-    << "c --------------------" << endl;
-    dump_clauses(longRedCls, os, maxSize);
-}
-
-uint64_t Solver::count_irred_clauses_for_dump() const
-{
-    uint64_t numClauses = 0;
-
-    //unitary clauses
-    for (size_t
-        i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size()
-        ; i < end; i++
-    ) {
-        numClauses++;
-    }
-
-    //binary XOR clauses
-    if (varReplacer) {
-        varReplacer->get_num_bin_clauses();
-    }
-
-    //Normal clauses
-    numClauses += binTri.irredBins;
-    numClauses += binTri.irredTris;
-    numClauses += longIrredCls.size();
-    if (conf.doCompHandler) {
-        compHandler->getRemovedClauses().sizes.size();
-    }
-
-    //previously eliminated clauses
-    if (conf.perform_occur_based_simp) {
-        const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
-        numClauses += blockedClauses.size();
-    }
-
-    return numClauses;
-}
-
-void Solver::dump_clauses(
-    const vector<ClOffset>& cls
-    , std::ostream* os
-    , size_t max_size
-) const {
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    for(vector<ClOffset>::const_iterator
-        it = cls.begin(), end = cls.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause* cl = clAllocator.getPointer(*it);
-        if (cl->size() <= max_size)
-            *os << sortLits(clauseBackNumbered(*cl)) << " 0\n";
-    }
-}
-
-void Solver::dump_blocked_clauses(std::ostream* os) const
-{
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    if (conf.perform_occur_based_simp) {
-        const vector<BlockedClause>& blockedClauses
-            = simplifier->getBlockedClauses();
-
-        for (vector<BlockedClause>::const_iterator
-            it = blockedClauses.begin(); it != blockedClauses.end()
-            ; it++
-        ) {
-            if (it->dummy)
-                continue;
-
-            //Print info about clause
-            *os
-            << "c next clause is eliminated/blocked on lit "
-            << it->blockedOn
-            << endl;
-
-            //Print clause
-            *os
-            << sortLits(it->lits)
-            << " 0"
-            << endl;
-        }
-    }
-}
-
-void Solver::dump_component_clauses(std::ostream* os) const
-{
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    if (conf.doCompHandler) {
-        const CompHandler::RemovedClauses& removedClauses = compHandler->getRemovedClauses();
-
-        vector<Lit> tmp;
-        size_t at = 0;
-        for (uint32_t size :removedClauses.sizes) {
-            tmp.clear();
-            for(size_t i = at; i < at + size; i++) {
-                tmp.push_back(removedClauses.lits[i]);
-            }
-            std::sort(tmp.begin(), tmp.end());
-            *os << tmp << " 0" << endl;
-
-            //Move 'at' along
-            at += size;
-        }
-    }
-}
-
-void Solver::dumpIrredClauses(std::ostream* os) const
-{
-    if (conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
-    *os
-    << "p cnf "
-    << nVarsOuter()
-    << " " << count_irred_clauses_for_dump()
-    << endl;
-
-    dumpUnitaryClauses(os);
-    dumpEquivalentLits(os);
-
-    *os
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c binary clauses" << endl
-    << "c ---------------" << endl;
-    dumpBinClauses(false, true, os);
-
-    *os
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c tertiary clauses" << endl
-    << "c ---------------" << endl;
-    dumpTriClauses(false, true, os);
-
-    *os
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c normal clauses" << endl
-    << "c ---------------" << endl;
-    dump_clauses(longIrredCls, os);
-
-    *os
-    << "c " << endl
-    << "c -------------------------------" << endl
-    << "c previously eliminated variables" << endl
-    << "c -------------------------------" << endl;
-    dump_blocked_clauses(os);
-
-    *os
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c clauses in components" << endl
-    << "c ---------------" << endl;
-    dump_component_clauses(os);
-
-    write_irred_stats_to_cnf(os);
-}
-
-void Solver::write_irred_stats_to_cnf(std::ostream* os) const
-{
-    *os << "c units: " << ((trail_lim.size() > 0) ? trail_lim[0] : trail.size()) << endl;
-    if (varReplacer) {
-        *os << "c binaries related to binary XORs: " << varReplacer->get_num_bin_clauses() << endl;
-    }
-    *os << "c normal binary cls: " << binTri.irredBins << endl;
-    *os << "c normal tertiary cls: " << binTri.irredTris << endl;
-    *os << "c normal long cls: " << longIrredCls.size() << endl;
-    if (conf.doCompHandler) {
-        *os << "c disconnected component cls: "
-        << compHandler->getRemovedClauses().sizes.size()
-        << endl;
-    }
-    if (conf.perform_occur_based_simp) {
-        const vector<BlockedClause>& blockedClauses = simplifier->getBlockedClauses();
-        *os << "c blocked cls: " << blockedClauses.size() << endl;
-    }
 }
 
 void Solver::printAllClauses() const
@@ -3260,65 +2902,6 @@ size_t Solver::getNumVarsReplaced() const
     return varReplacer->getNumReplacedVars();
 }
 
-void Solver::open_file_and_dump_red_clauses(const string redDumpFname) const
-{
-    if (conf.doStrSubImplicit && okay()) {
-        subsumeImplicit->subsume_implicit();
-    }
-
-    std::ofstream outfile;
-    open_dump_file(outfile, redDumpFname);
-    try {
-        if (!okay()) {
-            outfile
-            << "p cnf 0 1\n"
-            << "0\n";
-        } else {
-            dumpRedClauses(&outfile, conf.maxDumpRedsSize);
-        }
-    } catch (std::ifstream::failure e) {
-        cout
-        << "Error writing clause dump to file: " << e.what()
-        << endl;
-        std::exit(-1);
-    }
-}
-
-void Solver::open_file_and_dump_irred_clauses(const string irredDumpFname) const
-{
-    std::ofstream outfile;
-    open_dump_file(outfile, irredDumpFname);
-
-    try {
-        if (!okay()) {
-            outfile
-            << "p cnf 0 1\n"
-            << "0\n";
-        } else {
-            dumpIrredClauses(&outfile);
-        }
-    } catch (std::ifstream::failure e) {
-        cout
-        << "Error writing clause dump to file: " << e.what()
-        << endl;
-        std::exit(-1);
-    }
-}
-
-void Solver::open_dump_file(std::ofstream& outfile, std::string filename) const
-{
-    outfile.open(filename.c_str());
-    if (!outfile) {
-        cout
-        << "Cannot open file '"
-        << filename
-        << "' for writing. exiting"
-        << endl;
-        std::exit(-1);
-    }
-    outfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-}
-
 Lit Solver::updateLitForDomin(Lit lit) const
 {
     //Nothing to update
@@ -3525,4 +3108,16 @@ void Solver::bva_changed()
 uint64_t Solver::getNextCleanLimit() const
 {
     return reduceDB->get_nextCleanLimit();
+}
+
+void Solver::open_file_and_dump_irred_clauses(string fname) const
+{
+    ClauseDumper dumper(this);
+    dumper.open_file_and_dump_irred_clauses(fname);
+}
+
+void Solver::open_file_and_dump_red_clauses(string fname) const
+{
+    ClauseDumper dumper(this);
+    dumper.open_file_and_dump_red_clauses(fname);
 }

@@ -104,6 +104,7 @@ public:
     size_t memUsed() const;
     size_t memUsedXor() const;
     void printGateFinderStats() const;
+    void dump_blocked_clauses(std::ostream* outfile) const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;

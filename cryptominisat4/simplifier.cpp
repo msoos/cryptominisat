@@ -3642,6 +3642,26 @@ string Simplifier::PotentialClause::to_string(const Solver* solver) const
     return ss.str();
 }
 
+void Simplifier::dump_blocked_clauses(std::ostream* outfile) const
+{
+    for (BlockedClause blocked: blockedClauses) {
+        if (blocked.dummy)
+            continue;
+
+        //Print info about clause
+        *outfile
+        << "c next clause is eliminated/blocked on lit "
+        << blocked.blockedOn
+        << endl;
+
+        //Print clause
+        *outfile
+        << sortLits(blocked.lits)
+        << " 0"
+        << endl;
+    }
+}
+
 /*const GateFinder* Simplifier::getGateFinder() const
 {
     return gateFinder;
