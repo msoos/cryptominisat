@@ -96,7 +96,6 @@ public:
 
     //Called from main
     bool simplify();
-    void subsumeReds();
     void new_var(const Var orig_outer);
     void new_vars(const size_t n);
     void saveVarMem();
