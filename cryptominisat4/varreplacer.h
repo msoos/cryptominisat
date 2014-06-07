@@ -28,7 +28,6 @@
 #include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
-#include "vec.h"
 #include "watcharray.h"
 
 namespace CMSat {
