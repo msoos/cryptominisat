@@ -1,7 +1,47 @@
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2013, Mate Soos. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.0 of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
-bool Simplifier::bounded_var_addition()
+#include "bva.h"
+#include "simplifier.h"
+#include "solver.h"
+#include "clausecleaner.h"
+#include "subsumeimplicit.h"
+#include "sqlstats.h"
+
+using namespace CMSat;
+
+BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
+    solver(_solver)
+    , simplifier(_simplifier)
+    , var_bva_order(VarBVAOrder(watch_irred_sizes))
+    , seen(solver->seen)
+    , seen2(solver->seen)
+    , toClear(solver->toClear)
+{}
+
+bool BVA::bounded_var_addition()
 {
+    bounded_var_elim_time_limit= 2ULL*400LL *1000LL*1000LL;
     bva_verbosity = false;
+
     assert(solver->ok);
     if (!solver->conf.do_bva)
         return solver->okay();
@@ -13,8 +53,8 @@ bool Simplifier::bounded_var_addition()
     if (!solver->propagate_occur())
         return false;
 
-    limit_to_decrease = &bounded_var_elim_time_limit;
-    int64_t limit_orig = *limit_to_decrease;
+    simplifier->limit_to_decrease = &bounded_var_elim_time_limit;
+    int64_t limit_orig = *simplifier->limit_to_decrease;
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doStrSubImplicit) {
         solver->subsumeImplicit->subsume_implicit(false);
@@ -36,7 +76,7 @@ bool Simplifier::bounded_var_addition()
 
     double my_time = cpuTime();
     while(!var_bva_order.empty()) {
-        if (*limit_to_decrease < 0
+        if (*simplifier->limit_to_decrease < 0
             || bva_worked >= solver->conf.bva_limit_per_call
             || solver->must_interrupt_asap()
         ) {
@@ -53,9 +93,9 @@ bool Simplifier::bounded_var_addition()
     }
     solver->bva_changed();
 
-    bool time_out = *limit_to_decrease <= 0;
+    bool time_out = *simplifier->limit_to_decrease <= 0;
     double time_used = cpuTime() - my_time;
-    double time_remain = ((double)*limit_to_decrease/(double)limit_orig);
+    double time_remain = ((double)*simplifier->limit_to_decrease/(double)limit_orig);
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [bva] added: " << bva_worked
@@ -80,7 +120,7 @@ bool Simplifier::bounded_var_addition()
     return solver->okay();
 }
 
-void Simplifier::remove_duplicates_from_m_cls()
+void BVA::remove_duplicates_from_m_cls()
 {
     if (m_cls.size() <= 1)
         return;
@@ -118,7 +158,7 @@ void Simplifier::remove_duplicates_from_m_cls()
                     return a.ws.lit3() < b.ws.lit3();
                 }
                 case CMSat::watch_clause_t: {
-                    *limit_to_decrease -= 20;
+                    *simplifier->limit_to_decrease -= 20;
                     const Clause& cl_a = *solver->clAllocator.getPointer(a.ws.getOffset());
                     const Clause& cl_b = *solver->clAllocator.getPointer(b.ws.getOffset());
                     if (cl_a.size() != cl_b.size()) {
@@ -126,7 +166,7 @@ void Simplifier::remove_duplicates_from_m_cls()
                     }
                     //Clauses' lits are sorted, yay!
                     for(size_t i = 0; i < cl_a.size(); i++) {
-                        *limit_to_decrease -= 1;
+                        *simplifier->limit_to_decrease -= 1;
                         if (cl_a[i] != cl_b[i]) {
                             return cl_a[i] < cl_b[i];
                         }
@@ -139,7 +179,7 @@ void Simplifier::remove_duplicates_from_m_cls()
             return false;
     };
 
-    *limit_to_decrease -= 2*(long)m_cls.size()*(long)std::sqrt(m_cls.size());
+    *simplifier->limit_to_decrease -= 2*(long)m_cls.size()*(long)std::sqrt(m_cls.size());
     std::sort(m_cls.begin(), m_cls.end(), mysort);
     size_t i = 0;
     size_t j = 0;
@@ -168,7 +208,7 @@ void Simplifier::remove_duplicates_from_m_cls()
             }
 
             case CMSat::watch_clause_t: {
-                *limit_to_decrease -= 10;
+                *simplifier->limit_to_decrease -= 10;
                 const Clause& cl1 = *solver->clAllocator.getPointer(prev.getOffset());
                 const Clause& cl2 = *solver->clAllocator.getPointer(next.getOffset());
                 del = true;
@@ -176,7 +216,7 @@ void Simplifier::remove_duplicates_from_m_cls()
                     break;
                 }
                 for(size_t at = 0; at < cl1.size(); at++) {
-                    *limit_to_decrease -= 1;
+                    *simplifier->limit_to_decrease -= 1;
                     if (cl1[at] != cl2[at]) {
                         del = false;
                         break;
@@ -204,7 +244,7 @@ void Simplifier::remove_duplicates_from_m_cls()
     }
 }
 
-bool Simplifier::try_bva_on_lit(const Lit lit)
+bool BVA::try_bva_on_lit(const Lit lit)
 {
     assert(solver->value(lit) == l_Undef);
     assert(solver->varData[lit.var()].removed == Removed::none);
@@ -212,7 +252,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     m_cls.clear();
     m_lits.clear();
     m_lits.push_back(lit);
-    *limit_to_decrease -= solver->watches[lit.toInt()].size();
+    *simplifier->limit_to_decrease -= solver->watches[lit.toInt()].size();
     for(const Watched w: solver->watches[lit.toInt()]) {
         if (!solver->redundant(w)) {
             m_cls.push_back(OccurClause(lit, w));
@@ -228,7 +268,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     while(true) {
         potential.clear();
         fill_potential(lit);
-        if (*limit_to_decrease < 0)
+        if (*simplifier->limit_to_decrease < 0)
             break;
 
         size_t num_occur;
@@ -236,7 +276,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
         if (simplifies_system(num_occur)) {
             m_lits.push_back(l_max);
             m_cls.clear();
-            *limit_to_decrease -= potential.size()*3;
+            *simplifier->limit_to_decrease -= potential.size()*3;
             for(const PotentialClause pot: potential) {
                 if (pot.lits == l_max) {
                     m_cls.push_back(pot.occur_cl);
@@ -253,7 +293,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
         }
     }
 
-    if (*limit_to_decrease < 0)
+    if (*simplifier->limit_to_decrease < 0)
         return solver->okay();
 
     const int simp_size = simplification_size(m_lits.size(), m_cls.size());
@@ -265,7 +305,7 @@ bool Simplifier::try_bva_on_lit(const Lit lit)
     return ok;
 }
 
-bool Simplifier::bva_simplify_system()
+bool BVA::bva_simplify_system()
 {
     touched.clear();
     int simp_size = simplification_size(m_lits.size(), m_cls.size());
@@ -327,7 +367,7 @@ bool Simplifier::bva_simplify_system()
     return solver->okay();
 }
 
-void Simplifier::update_touched_lits_in_bva()
+void BVA::update_touched_lits_in_bva()
 {
     const vector<uint32_t>& touched_list = touched.getTouchedList();
     for(const uint32_t lit_uint: touched_list) {
@@ -345,7 +385,7 @@ void Simplifier::update_touched_lits_in_bva()
     touched.clear();
 }
 
-void Simplifier::fill_m_cls_lits_and_red()
+void BVA::fill_m_cls_lits_and_red()
 {
     m_cls_lits.clear();
     vector<Lit> tmp;
@@ -378,7 +418,7 @@ void Simplifier::fill_m_cls_lits_and_red()
     }
 }
 
-void Simplifier::remove_matching_clause(
+void BVA::remove_matching_clause(
     const m_cls_lits_and_red& cl_lits_and_red
     , const lit_pair lit_replace
 ) {
@@ -401,7 +441,7 @@ void Simplifier::remove_matching_clause(
 
     switch(to_remove.size()) {
         case 2: {
-            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
             //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
@@ -411,7 +451,7 @@ void Simplifier::remove_matching_clause(
 
         case 3: {
             std::sort(to_remove.begin(), to_remove.end());
-            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
             //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
@@ -421,12 +461,12 @@ void Simplifier::remove_matching_clause(
 
         default:
             Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);
-            unlinkClause(solver->clAllocator.getOffset(cl_new));
+            simplifier->unlinkClause(solver->clAllocator.getOffset(cl_new));
             break;
     }
 }
 
-Clause* Simplifier::find_cl_for_bva(
+Clause* BVA::find_cl_for_bva(
     const vector<Lit>& torem
     , const bool red
 ) const {
@@ -465,7 +505,7 @@ Clause* Simplifier::find_cl_for_bva(
     return cl;
 }
 
-bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
+bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
 {
     vector<Lit>& lits = bva_tmp_lits;
     lits.clear();
@@ -499,9 +539,9 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             }
             Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits, true, new_lit);
             if (newCl != NULL) {
-                linkInClause(*newCl);
+                simplifier->linkInClause(*newCl);
                 ClOffset offset = solver->clAllocator.getOffset(newCl);
-                clauses.push_back(offset);
+                simplifier->clauses.push_back(offset);
             }
             break;
         }
@@ -511,7 +551,7 @@ bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
     return solver->okay();
 }
 
-string Simplifier::PotentialClause::to_string(const Solver* solver) const
+string BVA::PotentialClause::to_string(const Solver* solver) const
 {
     std::stringstream ss;
     ss << solver->watched_to_string(occur_cl.lit, occur_cl.ws)
@@ -520,39 +560,17 @@ string Simplifier::PotentialClause::to_string(const Solver* solver) const
     return ss.str();
 }
 
-void Simplifier::dump_blocked_clauses(std::ostream* outfile) const
-{
-    for (BlockedClause blocked: blockedClauses) {
-        if (blocked.dummy)
-            continue;
-
-        //Print info about clause
-        *outfile
-        << "c next clause is eliminated/blocked on lit "
-        << blocked.blockedOn
-        << endl;
-
-        //Print clause
-        *outfile
-        << sortLits(blocked.lits)
-        << " 0"
-        << endl;
-    }
-}
-
-
-
-int Simplifier::simplification_size(
+int BVA::simplification_size(
     const int m_lits_size
     , const int m_cls_size
 ) const {
     return m_lits_size*m_cls_size-m_lits_size-m_cls_size;
 }
 
-void Simplifier::fill_potential(const Lit lit)
+void BVA::fill_potential(const Lit lit)
 {
     for(const OccurClause& c: m_cls) {
-        if (*limit_to_decrease < 0)
+        if (*simplifier->limit_to_decrease < 0)
             break;
 
         const Lit l_min = least_occurring_except(c);
@@ -560,7 +578,7 @@ void Simplifier::fill_potential(const Lit lit)
             continue;
 
         m_lits_this_cl = m_lits;
-        *limit_to_decrease -= m_lits_this_cl.size();
+        *simplifier->limit_to_decrease -= m_lits_this_cl.size();
         for(const lit_pair lits: m_lits_this_cl) {
             seen2[lits.hash(seen2.size())] = 1;
         }
@@ -573,9 +591,9 @@ void Simplifier::fill_potential(const Lit lit)
             << endl;
         }
 
-        *limit_to_decrease -= (long)solver->watches[l_min.toInt()].size()*3;
+        *simplifier->limit_to_decrease -= (long)solver->watches[l_min.toInt()].size()*3;
         for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
-            if (*limit_to_decrease < 0)
+            if (*simplifier->limit_to_decrease < 0)
                 goto end;
 
             OccurClause d(l_min, d_ws);
@@ -593,7 +611,7 @@ void Simplifier::fill_potential(const Lit lit)
             ) {
                 const lit_pair diff = lit_diff_watches(d, c);
                 if (seen2[diff.hash(seen2.size())] == 0) {
-                    *limit_to_decrease -= 3;
+                    *simplifier->limit_to_decrease -= 3;
                     potential.push_back(PotentialClause(diff, c));
                     m_lits_this_cl.push_back(diff);
                     seen2[diff.hash(seen2.size())] = 1;
@@ -616,14 +634,14 @@ void Simplifier::fill_potential(const Lit lit)
 }
 
 
-bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const
+bool BVA::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const
 {
     return watch_irred_sizes[lit1_uint] > watch_irred_sizes[lit2_uint];
 }
 
 
 
-bool Simplifier::simplifies_system(const size_t num_occur) const
+bool BVA::simplifies_system(const size_t num_occur) const
 {
     //If first run, at least 2 must match, nothing else matters
     if (m_lits.size() == 1) {
@@ -645,12 +663,12 @@ bool Simplifier::simplifies_system(const size_t num_occur) const
 
 
 
-Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
+BVA::lit_pair BVA::most_occuring_lit_in_potential(size_t& largest)
 {
     largest = 0;
     lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
     if (potential.size() > 1) {
-        *limit_to_decrease -= (double)potential.size()*(double)std::log(potential.size())*0.2;
+        *simplifier->limit_to_decrease -= (double)potential.size()*(double)std::log(potential.size())*0.2;
         std::sort(potential.begin(), potential.end());
     }
 
@@ -683,11 +701,11 @@ Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
     return most_occur;
 }
 
-Simplifier::lit_pair Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
+BVA::lit_pair BVA::lit_diff_watches(const OccurClause& a, const OccurClause& b)
 {
     //assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
     assert(a.lit != b.lit);
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;}, limit_to_decrease);
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;}, simplifier->limit_to_decrease);
 
     size_t num = 0;
     lit_pair toret = lit_pair(lit_Undef, lit_Undef);
@@ -701,8 +719,8 @@ Simplifier::lit_pair Simplifier::lit_diff_watches(const OccurClause& a, const Oc
             num++;
         }
     };
-    solver->for_each_lit(a, check_seen, limit_to_decrease);
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;}, limit_to_decrease);
+    solver->for_each_lit(a, check_seen, simplifier->limit_to_decrease);
+    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;}, simplifier->limit_to_decrease);
 
     if (num >= 1 && num <= 2)
         return toret;
@@ -712,9 +730,9 @@ Simplifier::lit_pair Simplifier::lit_diff_watches(const OccurClause& a, const Oc
 
 
 
-Lit Simplifier::least_occurring_except(const OccurClause& c)
+Lit BVA::least_occurring_except(const OccurClause& c)
 {
-    *limit_to_decrease -= (long)m_lits.size();
+    *simplifier->limit_to_decrease -= (long)m_lits.size();
     for(const lit_pair lits: m_lits) {
         seen[lits.lit1.toInt()] = 1;
         if (lits.lit2 != lit_Undef) {
@@ -735,7 +753,7 @@ Lit Simplifier::least_occurring_except(const OccurClause& c)
             smallest_val = watch_size;
         }
     };
-    solver->for_each_lit_except_watched(c, check_smallest, limit_to_decrease);
+    solver->for_each_lit_except_watched(c, check_smallest, simplifier->limit_to_decrease);
 
     for(const lit_pair lits: m_lits) {
         seen[lits.lit1.toInt()] = 0;
@@ -745,4 +763,32 @@ Lit Simplifier::least_occurring_except(const OccurClause& c)
     }
 
     return smallest;
+}
+
+void BVA::calc_watch_irred_sizes()
+{
+    watch_irred_sizes.clear();
+    for(size_t i = 0; i < solver->nVars()*2; i++) {
+        const Lit lit = Lit::toLit(i);
+        const size_t irred_size = calc_watch_irred_size(lit);
+        watch_irred_sizes.push_back(irred_size);
+    }
+}
+
+size_t BVA::calc_watch_irred_size(const Lit lit) const
+{
+    size_t num = 0;
+    watch_subarray_const ws = solver->watches[lit.toInt()];
+    for(const Watched w: ws) {
+        if (w.isBinary() || w.isTri()) {
+            num += !w.red();
+            continue;
+        }
+
+        assert(w.isClause());
+        const Clause& cl = *solver->clAllocator.getPointer(w.getOffset());
+        num += !cl.red();
+    }
+
+    return num;
 }

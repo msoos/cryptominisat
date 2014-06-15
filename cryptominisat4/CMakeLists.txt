@@ -41,6 +41,7 @@ set(cryptoms_lib_files
     datasync.cpp
     reducedb.cpp
     clausedumper.cpp
+    bva.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

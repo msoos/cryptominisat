@@ -51,6 +51,7 @@
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
+#include "bva.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -86,12 +87,12 @@ Simplifier::Simplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , varElimOrder(VarOrderLt(varElimComplexity))
-    , var_bva_order(VarBVAOrder(watch_irred_sizes))
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
+    bva = new BVA(solver, this);
     xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
     if (solver->conf.doFindXors) {
@@ -163,15 +164,35 @@ void Simplifier::print_blocked_clauses_reverse() const
     ) {
         if (it->dummy) {
             cout
-            << "dummy blocked clause for literal " << it->blockedOn
+            << "dummy blocked clause for literal (internal number) " << it->blockedOn
             << endl;
         } else {
             cout
-            << "blocked clause " << it->lits
-            << " blocked on var "
+            << "blocked clause (internal number) " << it->lits
+            << " blocked on var (internal numbering) "
             << solver->map_outer_to_inter(it->blockedOn.var()) + 1
             << endl;
         }
+    }
+}
+
+void Simplifier::dump_blocked_clauses(std::ostream* outfile) const
+{
+    for (BlockedClause blocked: blockedClauses) {
+        if (blocked.dummy)
+            continue;
+
+        //Print info about clause
+        *outfile
+        << "c next clause is eliminated/blocked on lit "
+        << blocked.blockedOn
+        << endl;
+
+        //Print clause
+        *outfile
+        << sortLits(blocked.lits)
+        << " 0"
+        << endl;
     }
 }
 
@@ -298,7 +319,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->litStats.irredLits -= i-j;
 
-    if (solver->conf.verbosity >= 6 || bva_verbosity) {
+    if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
@@ -956,7 +977,7 @@ bool Simplifier::simplify()
         goto end;
     }
 
-    if (!bounded_var_addition()
+    if (!bva->bounded_var_addition()
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -1228,7 +1249,6 @@ void Simplifier::setLimits()
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*1000LL;
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
-    bounded_var_elim_time_limit= 400LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1248,7 +1268,6 @@ void Simplifier::setLimits()
         empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
-        bounded_var_elim_time_limit *= 2;
     }
 
     if (clause_lits_added < 3ULL*1000ULL*1000ULL) {
@@ -2819,42 +2838,6 @@ void Simplifier::printGateFinderStats() const
     }
 }
 
-bool Simplifier::inside(const vector<Lit>& lits, const Lit notin) const
-{
-    for(const Lit lit: lits) {
-        if (lit == notin)
-            return true;
-    }
-    return false;
-}
-
-size_t Simplifier::calc_watch_irred_size(const Lit lit) const
-{
-    size_t num = 0;
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    for(const Watched w: ws) {
-        if (w.isBinary() || w.isTri()) {
-            num += !w.red();
-            continue;
-        }
-
-        assert(w.isClause());
-        const Clause& cl = *solver->clAllocator.getPointer(w.getOffset());
-        num += !cl.red();
-    }
-
-    return num;
-}
-
-void Simplifier::calc_watch_irred_sizes()
-{
-    watch_irred_sizes.clear();
-    for(size_t i = 0; i < solver->nVars()*2; i++) {
-        const Lit lit = Lit::toLit(i);
-        const size_t irred_size = calc_watch_irred_size(lit);
-        watch_irred_sizes.push_back(irred_size);
-    }
-}
 double Simplifier::Stats::totalTime() const
 {
     return linkInTime + blockTime
