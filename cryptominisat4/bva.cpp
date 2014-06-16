@@ -33,7 +33,7 @@ BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
     , simplifier(_simplifier)
     , var_bva_order(VarBVAOrder(watch_irred_sizes))
     , seen(solver->seen)
-    , seen2(solver->seen)
+    , seen2(solver->seen2)
     , toClear(solver->toClear)
 {}
 
