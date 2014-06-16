@@ -553,7 +553,7 @@ string BVA::PotentialClause::to_string(const Solver* solver) const
 {
     std::stringstream ss;
     ss << solver->watched_to_string(occur_cl.lit, occur_cl.ws)
-    << " -- lit: " << lits.lit1 << ", " << lits.lit2;
+    << " -- (diff) lit: " << lits.lit1 << ", " << lits.lit2;
 
     return ss.str();
 }
