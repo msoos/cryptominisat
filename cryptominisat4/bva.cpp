@@ -268,8 +268,9 @@ bool BVA::try_bva_on_lit(const Lit lit)
     while(true) {
         potential.clear();
         fill_potential(lit);
-        if (*simplifier->limit_to_decrease < 0)
-            break;
+        if (*simplifier->limit_to_decrease < 0) {
+            return solver->okay();
+        }
 
         size_t num_occur;
         const lit_pair l_max = most_occuring_lit_in_potential(num_occur);
@@ -292,9 +293,6 @@ bool BVA::try_bva_on_lit(const Lit lit)
             break;
         }
     }
-
-    if (*simplifier->limit_to_decrease < 0)
-        return solver->okay();
 
     const int simp_size = simplification_size(m_lits.size(), m_cls.size());
     if (simp_size <= 0) {
