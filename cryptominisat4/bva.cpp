@@ -691,7 +691,7 @@ BVA::lit_pair BVA::most_occuring_lit_in_potential(size_t& largest)
         most_occur = last_occur;
     }
 
-    if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 5 || bva_verbosity) {
         cout
         << "c [bva] ---> Most occuring lit in p: " << most_occur.lit1 << ", " << most_occur.lit2
         << " occur num: " << largest
