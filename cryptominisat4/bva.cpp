@@ -25,6 +25,7 @@
 #include "clausecleaner.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
+#include <functional>
 
 using namespace CMSat;
 
