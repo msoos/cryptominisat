@@ -13,6 +13,7 @@
 #include "cryptominisat4/solvertypesmini.h"
 
 namespace CMSat {
+    struct CMSatPrivateData;
     class SATSolver
     {
     public:
@@ -42,7 +43,7 @@ namespace CMSat {
         void add_in_partial_solving_stats();
         std::vector<Lit> get_zero_assigned_lits() const;
     private:
-        void *s;
+        CMSatPrivateData *data;
     };
 }
 
