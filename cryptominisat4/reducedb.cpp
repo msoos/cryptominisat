@@ -3,6 +3,7 @@
 #include "sqlstats.h"
 #include "clausecleaner.h"
 #include "completedetachreattacher.h"
+#include <functional>
 
 using namespace CMSat;
 
