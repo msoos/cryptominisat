@@ -137,7 +137,8 @@ else()
 endif()
 
 if (STATICCOMPILE)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 1)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
@@ -158,8 +159,5 @@ install(TARGETS cryptominisat
     EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
-if (STATICCOMPILE)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
-endif (STATICCOMPILE)
 
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
