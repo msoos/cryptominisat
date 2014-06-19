@@ -6,9 +6,6 @@ include_directories(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
-#set(cryptominisat4_lib_objects "")
-set(cryptominisat4_public_headers "")
-
 set(cryptoms_lib_files
     cnf.cpp
     propengine.cpp
@@ -97,11 +94,12 @@ cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
-# This is done so that projects that use cryptominisat4 as external project (not via CMake)
-# can find the public header files.
+# The cryptominisat4Config.cmake we generate in the build directory depends on
+# this.
 # -----------------------------------------------------------------------------
 set(HEADER_DEST "${CMAKE_BINARY_DIR}/include/cryptominisat4")
 add_custom_target(CopyPublicHeaders ALL)
+get_target_property(cryptominisat4_public_headers libcryptominisat4 PUBLIC_HEADER)
 foreach(public_header ${cryptominisat4_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
     add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
