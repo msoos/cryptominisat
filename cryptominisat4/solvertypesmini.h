@@ -13,6 +13,8 @@
     #include <stdint.h>
 #endif
 
+#include <iostream>
+
 namespace CMSat {
 
 typedef uint32_t Var;
