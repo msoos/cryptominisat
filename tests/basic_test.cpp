@@ -487,6 +487,112 @@ BOOST_AUTO_TEST_CASE(xor_norm_mix_unsat_multi_thread)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE( learnt_interface )
+
+BOOST_AUTO_TEST_CASE(unit)
+{
+    SATSolver s;
+    s.new_vars(3);
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<Lit> units = s.get_zero_assigned_lits();
+    BOOST_CHECK_EQUAL( units.size(), 1);
+    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+}
+
+BOOST_AUTO_TEST_CASE(unit2)
+{
+    SATSolver s;
+    s.new_vars(3);
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<Lit> units = s.get_zero_assigned_lits();
+    BOOST_CHECK_EQUAL( units.size(), 1);
+    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+
+    s.add_clause(vector<Lit>{Lit(1, true)});
+    ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    units = s.get_zero_assigned_lits();
+    BOOST_CHECK_EQUAL( units.size(), 2);
+    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+    BOOST_CHECK_EQUAL( units[1], Lit(1, true));
+}
+
+BOOST_AUTO_TEST_CASE(unit3)
+{
+    SATSolver s;
+    s.new_vars(3);
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<Lit> units = s.get_zero_assigned_lits();
+    BOOST_CHECK_EQUAL( units.size(), 2);
+    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+    BOOST_CHECK_EQUAL( units[1], Lit(1, true));
+}
+
+BOOST_AUTO_TEST_CASE(xor1)
+{
+    SolverConf conf;
+    conf.simplify_at_startup = true;
+    SATSolver s(conf);
+
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0, 1}, false);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
+    BOOST_CHECK_EQUAL( pairs.size(), 1);
+}
+
+BOOST_AUTO_TEST_CASE(xor2)
+{
+    SolverConf conf;
+    conf.simplify_at_startup = true;
+    SATSolver s(conf);
+
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0, 1}, false);
+    s.add_xor_clause(vector<Var>{1, 2}, false);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
+    BOOST_CHECK_EQUAL( pairs.size(), 2);
+}
+
+BOOST_AUTO_TEST_CASE(xor3)
+{
+    SolverConf conf;
+    conf.simplify_at_startup = true;
+    SATSolver s(conf);
+
+    s.new_vars(3);
+    s.add_xor_clause(vector<Var>{0, 1}, false);
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+
+    vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
+    BOOST_CHECK_EQUAL( pairs.size(), 1);
+
+    s.add_xor_clause(vector<Var>{1, 2}, false);
+    ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_True);
+    pairs = s.get_all_binary_xors();
+    BOOST_CHECK_EQUAL( pairs.size(), 2);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
 /*struct F {
     F() : i( 1 ) { BOOST_TEST_MESSAGE( "setup fixture" ); }
     ~F()         { BOOST_TEST_MESSAGE( "teardown fixture" ); }

@@ -24,6 +24,7 @@
 
 #include <map>
 #include <vector>
+#include <utility>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -114,6 +115,7 @@ class VarReplacer
         };
         const Stats& getStats() const;
         size_t memUsed() const;
+        vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
 
     private:
         Solver* solver;

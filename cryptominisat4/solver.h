@@ -91,6 +91,7 @@ class Solver : public Searcher
         const vector<Lit>& get_final_conflict() const;
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
+        vector<pair<Lit, Lit> > get_all_binary_xors() const;
 
         struct SolveStats
         {

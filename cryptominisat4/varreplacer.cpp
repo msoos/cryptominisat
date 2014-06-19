@@ -1163,3 +1163,15 @@ vector<Var> VarReplacer::get_vars_replacing(Var var) const
 
     return ret;
 }
+
+vector<pair<Lit, Lit> > VarReplacer::get_all_binary_xors_outer() const
+{
+    vector<pair<Lit, Lit> > ret;
+    for(size_t i = 0; i < table.size(); i++) {
+        if (table[i] != Lit(i, false)) {
+            ret.push_back(std::make_pair(Lit(i, false), table[i]));
+        }
+    }
+
+    return ret;
+}

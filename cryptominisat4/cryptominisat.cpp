@@ -593,3 +593,8 @@ void SATSolver::log_to_file(std::string filename)
         exit(-1);
     }
 }
+
+std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() const
+{
+    return data->solvers[0]->get_all_binary_xors();
+}

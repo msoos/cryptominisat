@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <iostream>
+#include <utility>
 #include "cryptominisat4/solverconf.h"
 #include "cryptominisat4/solvertypesmini.h"
 
@@ -41,7 +42,9 @@ namespace CMSat {
         void open_file_and_dump_irred_clauses(std::string fname) const;
         void open_file_and_dump_red_clauses(std::string fname) const;
         void add_in_partial_solving_stats();
+
         std::vector<Lit> get_zero_assigned_lits() const;
+        std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const;
     private:
         CMSatPrivateData *data;
     };

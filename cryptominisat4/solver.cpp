@@ -3127,3 +3127,29 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
 }
+
+vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
+{
+    vector<pair<Lit, Lit> > bin_xors = varReplacer->get_all_binary_xors_outer();
+
+    //Update to outer without BVA
+    vector<pair<Lit, Lit> > ret;
+    const vector<Var> my_map = build_outer_to_without_bva_map();
+    for(std::pair<Lit, Lit> p: bin_xors) {
+        if (p.first.var() < my_map.size()
+            && p.second.var() < my_map.size()
+        ) {
+            ret.push_back(std::make_pair(
+                getUpdatedLit(p.first, my_map)
+                , getUpdatedLit(p.second, my_map)
+            ));
+        }
+    }
+
+    for(const std::pair<Lit, Lit> val: ret) {
+        assert(val.first.var() < nVarsOutside());
+        assert(val.second.var() < nVarsOutside());
+    }
+
+    return ret;
+}
