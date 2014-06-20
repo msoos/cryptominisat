@@ -1,11 +1,12 @@
 /*
  * This library header is under MIT license but the library itself is under
  * LGPLv2 license. This means you can link to this library as you wish in
- * proprietary code. Please read the LGPLv2 license for details.
+ * proprietary code without affecting the license of your products.
+ * Please read the LGPLv2 license for details.
 */
 
-#ifndef __CRYPTOMINISAT_H__
-#define __CRYPTOMINISAT_H__
+#ifndef __CRYPTOMINISAT4_H__
+#define __CRYPTOMINISAT4_H__
 
 #include <vector>
 #include <iostream>
@@ -50,4 +51,4 @@ namespace CMSat {
     };
 }
 
-#endif //__CRYPTOMINISAT_H__
+#endif //__CRYPTOMINISAT4_H__
