@@ -156,7 +156,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
         }
 
         if (solver->nVars() <= (size_t)vars) {
-            solver->new_vars(vars-solver->nVars()+1);
+            solver->new_vars(vars-solver->nVars());
         }
     } else {
         cout
