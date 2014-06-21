@@ -1,0 +1,6 @@
+[submodule "scripts/OutputCheck"]
+	path = scripts/OutputCheck
+	url = git@github.com:stp/OutputCheck.git
+[submodule "scripts/gtest"]
+	path = scripts/gtest
+	url = git@github.com:stp/googletest.git
