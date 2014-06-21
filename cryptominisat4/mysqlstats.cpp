@@ -12,6 +12,7 @@
 
 using namespace CMSat;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
 
@@ -137,12 +138,12 @@ bool MySQLStats::connectServer(const Solver* solver)
         , NULL
         , 0)
     ) {
-        cout
+        cerr
         << "c ERROR while connecting to MySQL server:"
         << mysql_error(serverConn)
         << endl;
 
-        cout
+        cerr
         << "c If your MySQL server is running then you did not create the database" << endl
         << "c and/or didn't add the correct user. Read cmsat_mysql_setup.txt to fix this issue " << endl
         ;
@@ -167,8 +168,8 @@ bool MySQLStats::tryIDInSQL(const Solver* solver)
     if (mysql_query(serverConn, ss.str().c_str())) {
 
         if (solver->getConf().verbosity >= 6) {
-            cout << "c Couldn't insert into table 'solverruns'" << endl;
-            cout << "c " << mysql_error(serverConn) << endl;
+            cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
+            cerr << "c " << mysql_error(serverConn) << endl;
         }
 
         return false;
@@ -187,12 +188,12 @@ void MySQLStats::getID(const Solver* solver)
 
         //Check if we have been in this loop for too long
         if (numTries > 10) {
-            cout
-            << " Something is wrong while adding runID!" << endl
+            cerr
+            << "ERROR: Something is wrong while adding runID!" << endl
             << " Exiting!"
             << endl;
 
-            cout
+            cerr
             << "Maybe you didn't create the tables in the database?" << endl
             << "You can fix this by executing: " << endl
             << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
@@ -225,7 +226,7 @@ void MySQLStats::add_tags(const Solver* solver)
 
         //Inserting element into solverruns to get unique ID
         if (mysql_query(serverConn, ss.str().c_str())) {
-            cout << "Couldn't insert into table 'tags'" << endl;
+            cerr << "ERROR Couldn't insert into table 'tags'" << endl;
             std::exit(1);
         }
     }
@@ -242,7 +243,7 @@ void MySQLStats::addStartupData(const Solver* solver)
     << ");";
 
     if (mysql_query(serverConn, ss.str().c_str())) {
-        cout << "Couldn't insert into table 'startup'" << endl;
+        cerr << "ERROR Couldn't insert into table 'startup'" << endl;
         std::exit(1);
     }
 }
@@ -258,7 +259,7 @@ void MySQLStats::finishup(const lbool status)
     << ");";
 
     if (mysql_query(serverConn, ss.str().c_str())) {
-        cout << "Couldn't insert into table 'finishup'" << endl;
+        cerr << "ERROR Couldn't insert into table 'finishup'" << endl;
         std::exit(1);
     }
 }
@@ -308,14 +309,13 @@ void MySQLStats::initTimePassedSTMT()
 
     //Prepare the statement
     if (mysql_stmt_prepare(stmtTimePassed.stmt, ss.str().c_str(), ss.str().length())) {
-        cout
-        << "Error in mysql_stmt_prepare(), INSERT failed"
+        cerr << "ERROR  in mysql_stmt_prepare(), INSERT failed"
         << endl
         << mysql_stmt_error(stmtTimePassed.stmt)
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
+        std::exit(1);
     }
 
     //Validate parameter count
@@ -345,7 +345,7 @@ void MySQLStats::initTimePassedSTMT()
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtTimePassed.stmt, stmtTimePassed.bind)) {
-        cout << "mysql_stmt_bind_param() failed" << endl
+        cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtTimePassed.stmt) << endl;
         std::exit(1);
     }
@@ -373,14 +373,13 @@ void MySQLStats::initTimePassedMinSTMT()
     //Get memory for statement
     stmtTimePassedMin.stmt = mysql_stmt_init(serverConn);
     if (!stmtTimePassedMin.stmt) {
-        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        cerr << "ERROR mysql_stmt_init() out of memory" << endl;
         std::exit(1);
     }
 
     //Prepare the statement
     if (mysql_stmt_prepare(stmtTimePassedMin.stmt, ss.str().c_str(), ss.str().length())) {
-        cout
-        << "Error in mysql_stmt_prepare(), INSERT failed"
+        cerr << "ERROR in mysql_stmt_prepare(), INSERT failed"
         << endl
         << mysql_stmt_error(stmtTimePassedMin.stmt)
         << endl
@@ -392,8 +391,7 @@ void MySQLStats::initTimePassedMinSTMT()
     //Validate parameter count
     unsigned long param_count = mysql_stmt_param_count(stmtTimePassedMin.stmt);
     if (param_count != numElems) {
-        cout
-        << "invalid parameter count returned by MySQL"
+        cerr << "ERROR invalid parameter count returned by MySQL"
         << endl;
 
         std::exit(1);
@@ -414,7 +412,7 @@ void MySQLStats::initTimePassedMinSTMT()
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtTimePassedMin.stmt, stmtTimePassedMin.bind)) {
-        cout << "mysql_stmt_bind_param() failed" << endl
+        cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtTimePassedMin.stmt) << endl;
         std::exit(1);
     }
@@ -495,8 +493,7 @@ void MySQLStats::initRestartSTMT(
 
     //Prepare the statement
     if (mysql_stmt_prepare(stmtRst.stmt, ss.str().c_str(), ss.str().length())) {
-        cout
-        << "Error in mysql_stmt_prepare(), INSERT failed"
+        cerr << "ERROR in mysql_stmt_prepare(), INSERT failed"
         << endl
         << mysql_stmt_error(stmtRst.stmt)
         << endl
@@ -514,8 +511,7 @@ void MySQLStats::initRestartSTMT(
     //Validate parameter count
     unsigned long param_count = mysql_stmt_param_count(stmtRst.stmt);
     if (param_count != numElems) {
-        cout
-        << "invalid parameter count returned by MySQL"
+        cerr << "ERROR invalid parameter count returned by MySQL"
         << endl;
 
         std::exit(1);
@@ -637,7 +633,7 @@ void MySQLStats::initRestartSTMT(
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtRst.stmt, stmtRst.bind)) {
-        cout << "mysql_stmt_bind_param() failed" << endl
+        cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtRst.stmt) << endl;
         std::exit(1);
     }
@@ -682,7 +678,7 @@ void MySQLStats::initReduceDBSTMT(
     //Get memory for statement
     stmtReduceDB.stmt = mysql_stmt_init(serverConn);
     if (!stmtReduceDB.stmt) {
-        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        cerr << "ERROR  mysql_stmt_init() out of memory" << endl;
         std::exit(1);
     }
 
@@ -699,8 +695,7 @@ void MySQLStats::initReduceDBSTMT(
     }
 
     if (verbosity >= 6) {
-        cout
-        << "prepare INSERT successful"
+        cerr << "ERROR prepare INSERT successful"
         << endl;
     }
 
@@ -768,7 +763,7 @@ void MySQLStats::initReduceDBSTMT(
 
     // Bind the buffers
     if (mysql_stmt_bind_param(stmtReduceDB.stmt, stmtReduceDB.bind)) {
-        cout << "mysql_stmt_bind_param() failed" << endl
+        cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtReduceDB.stmt) << endl;
         std::exit(1);
     }
@@ -1314,11 +1309,9 @@ void MySQLStats::time_passed(
     stmtTimePassed.percent_time_remain = percent_time_remain;
 
     if (mysql_stmt_execute(stmtTimePassed.stmt)) {
-        cout
-        << "ERROR: while executing clause DB cleaning MySQL prepared statement"
-        << endl;
-
-        cout << "Error from mysql: "
+        cerr << "ERROR while executing clause DB cleaning MySQL prepared statement"
+        << endl
+        << "Error from mysql: "
         << mysql_stmt_error(stmtTimePassed.stmt)
         << endl;
 
@@ -1341,11 +1334,9 @@ void MySQLStats::time_passed_min(
     stmtTimePassedMin.time_passed = time_passed;
 
     if (mysql_stmt_execute(stmtTimePassedMin.stmt)) {
-        cout
-        << "ERROR: while executing clause DB cleaning MySQL prepared statement"
-        << endl;
-
-        cout << "Error from mysql: "
+        cerr << "ERROR while executing clause DB cleaning MySQL prepared statement"
+        << endl
+        << "Error from mysql: "
         << mysql_stmt_error(stmtTimePassedMin.stmt)
         << endl;
 
@@ -1471,11 +1462,9 @@ void MySQLStats::restart(
     stmtRst.trailSize       = search->getTrailSize();
 
     if (mysql_stmt_execute(stmtRst.stmt)) {
-        cout
-        << "ERROR: while executing restart insertion MySQL prepared statement"
-        << endl;
-
-        cout << "Error from mysql: "
+        cerr << "ERROR  while executing restart insertion MySQL prepared statement"
+        << endl
+        << "Error from mysql: "
         << mysql_stmt_error(stmtRst.stmt)
         << endl;
 
