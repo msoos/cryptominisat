@@ -1,3 +1,0 @@
-[submodule "scripts/gtest"]
-	path = scripts/gtest
-	url = git@github.com:stp/googletest.git
