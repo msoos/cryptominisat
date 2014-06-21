@@ -84,6 +84,7 @@ class Main
         //Config
         SolverConf conf;
         bool needResultFile = false;
+        bool zero_exit_status = false;
         std::string resultFilename;
 
         bool debugLib;

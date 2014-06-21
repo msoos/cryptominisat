@@ -602,6 +602,8 @@ void Main::add_supported_options()
         , "Number of conflicts to do in burst search")
     ("clearinter", po::value(&clear_interrupt)->default_value(0)
         , "Interrupt threads cleanly, all the time")
+    ("zero-exit-status", po::bool_switch(&zero_exit_status)
+        , "Exit with status zero in case the solving has finished without an issue")
     ;
 
     po::options_description componentOptions("Component options");
@@ -1116,6 +1118,10 @@ int Main::solve()
 
 int Main::correctReturnValue(const lbool ret) const
 {
+    if (zero_exit_status) {
+        return 0;
+    }
+
     int retval = -1;
     if      (ret == l_True)  retval = 10;
     else if (ret == l_False) retval = 20;

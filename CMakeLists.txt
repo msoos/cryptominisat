@@ -214,27 +214,35 @@ set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 # -----------------------------------------------------------------------------
 add_subdirectory(cryptominisat4 cmsat4-src)
 
-if (NOT NOTESTS)
-    add_subdirectory(tests)
-endif()
-
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
 # -----------------------------------------------------------------------------
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-    IMMEDIATE @ONLY)
+    IMMEDIATE @ONLY
+)
 
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 if (NOT NOTESTS)
     enable_testing()
-    ADD_TEST (basic_test tests/basic_test)
-    ADD_TEST (assump_test tests/assump_test)
+    add_test (basic_test tests/basic_test)
+    add_test (assump_test tests/assump_test)
     add_test (readme_test tests/readme_test)
     add_test (heap_test tests/heap_test)
+
+    message(STATUS "Testing is enabled")
+    set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
+
+    add_custom_target(check
+          COMMENT "top level target to invoke all other tests"
+    )
+    add_subdirectory(tests)
+
+else()
+    message(WARNING "Testing is disabled")
 endif()
 
 # -----------------------------------------------------------------------------
