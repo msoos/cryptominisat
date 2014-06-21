@@ -262,11 +262,6 @@ configure_file(cryptominisat4Config.cmake.in
     "${CMAKE_BINARY_DIR}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
 )
 
-# Export this package to the CMake user package registry
-# Now the user can just use find_package(cryptominisat4) on their system
-export(PACKAGE cryptominisat4)
-
-
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
