@@ -19,5 +19,5 @@ script:
   - make
   - test -f lib/libcryptominisat4.so
   - test -f ./cryptominisat
-  - make test
+  - ctest -V
   - sudo make install
