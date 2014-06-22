@@ -3,9 +3,7 @@
 
 #include "cryptominisat4/cryptominisat.h"
 
-#include <vector>
 #include "cryptominisat4/heap.h"
-using std::vector;
 
 BOOST_AUTO_TEST_SUITE( heap_minim )
 
