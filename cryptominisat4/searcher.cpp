@@ -2447,7 +2447,7 @@ Lit Searcher::pickBranchLit()
             break;
         }
 
-        const Var next_var = order_heap.removeMin();
+        const Var next_var = order_heap.remove_min();
         next = Lit(next_var, !pickPolarity(next_var));
     }
 
@@ -2658,7 +2658,7 @@ void Searcher::stamp_based_more_minim(vector<Lit>& cl)
 
 void Searcher::insertVarOrder(const Var x)
 {
-    if (!order_heap.inHeap(x)
+    if (!order_heap.in_heap(x)
         && solver->varData[x].is_decision
     ) {
         order_heap.insert(x);

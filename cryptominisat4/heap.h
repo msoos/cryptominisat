@@ -131,7 +131,7 @@ class Heap {
     }
 
     void decrease  (uint32_t n) {
-        //assert(inHeap(n));
+        //assert(in_heap(n));
         percolate_up(indices[n]);
     }
 
@@ -140,7 +140,7 @@ class Heap {
         if (indices.size() <= n) {
             indices.resize(n+1, std::numeric_limits<uint32_t>::max());
         }
-        //assert(!inHeap(n));
+        //assert(!in_heap(n));
 
         indices[n] = heap.size();
         heap.push_back(n);
@@ -148,7 +148,7 @@ class Heap {
     }
 
 
-    uint32_t removeMin()
+    uint32_t remove_min()
     {
         uint32_t x       = heap[1];
         heap[1]          = heap.back();
@@ -179,7 +179,7 @@ class Heap {
     // Fool proof variant of insert/decrease/increase
     void update (uint32_t n)
     {
-        if (!inHeap(n))
+        if (!in_heap(n))
             insert(n);
         else {
             percolate_up(indices[n]);
@@ -206,7 +206,7 @@ class Heap {
         assert(heap_property());
     }
 
-    bool inHeap(uint32_t n) const {
+    bool in_heap(uint32_t n) const {
         return n < indices.size()
             && indices[n] != std::numeric_limits<uint32_t>::max();
 

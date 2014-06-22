@@ -938,7 +938,7 @@ inline void Searcher::bump_var_activitiy(Var var)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.inHeap(var)) {
+    if (order_heap.in_heap(var)) {
         order_heap.decrease(var);
     }
 

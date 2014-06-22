@@ -84,7 +84,7 @@ bool BVA::bounded_var_addition()
             break;
         }
 
-        const Lit lit = Lit::toLit(var_bva_order.removeMin());
+        const Lit lit = Lit::toLit(var_bva_order.remove_min());
         if (solver->conf.verbosity >= 5 || bva_verbosity) {
             cout << "c [bva] trying lit " << lit << endl;
         }
@@ -371,12 +371,12 @@ void BVA::update_touched_lits_in_bva()
     const vector<uint32_t>& touched_list = touched.getTouchedList();
     for(const uint32_t lit_uint: touched_list) {
         const Lit lit = Lit::toLit(lit_uint);
-        if (var_bva_order.inHeap(lit.toInt())) {
+        if (var_bva_order.in_heap(lit.toInt())) {
             watch_irred_sizes[lit.toInt()] = calc_watch_irred_size(lit);
             var_bva_order.update(lit.toInt());
         }
 
-        if (var_bva_order.inHeap((~lit).toInt())) {
+        if (var_bva_order.in_heap((~lit).toInt())) {
             watch_irred_sizes[(~lit).toInt()] = calc_watch_irred_size(~lit);
             var_bva_order.update((~lit).toInt());
         }

@@ -762,7 +762,7 @@ bool Simplifier::eliminateVars()
         && !solver->must_interrupt_asap()
     ) {
         assert(limit_to_decrease == &norm_varelim_time_limit);
-        Var var = varElimOrder.removeMin();
+        Var var = varElimOrder.remove_min();
 
         //Stats
         *limit_to_decrease -= 20;
@@ -2000,7 +2000,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
         if (touchVar == var
-            || !varElimOrder.inHeap(touchVar)
+            || !varElimOrder.in_heap(touchVar)
             || solver->value(touchVar) != l_Undef
             || solver->varData[touchVar].removed != Removed::none
         ) {
@@ -2698,7 +2698,7 @@ void Simplifier::order_vars_for_elim()
             continue;
 
         *limit_to_decrease -= 50;
-        assert(!varElimOrder.inHeap(var));
+        assert(!varElimOrder.in_heap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);
         varElimOrder.insert(var);
     }
