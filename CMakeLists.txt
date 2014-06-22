@@ -82,6 +82,13 @@ add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wheader-guard")
 #add_cxx_flag_if_supported("-fopt-info")
 
+option(ENABLE_TESTING "Enable testing" OFF)
+if(ENABLE_TESTING)
+    message(STATUS "Testing is enabled")
+else()
+    message(WARNING "Testing is disabled")
+endif()
+
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
@@ -92,7 +99,7 @@ if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static-libgcc -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
     set(CMAKE_EXE_LINKER_FLAGS "-static")
     set(NOMYSQL ON)
-    set(NOTESTS ON)
+    set(ENABLE_TESTING OFF)
 endif()
 
 option(MORE_DEBUG "Use more debug flags" OFF)
@@ -109,7 +116,7 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 option(SIMPLE "Very simplistic executable -- no Boost needed")
 #set(SIMPLE "ON")
 if (NOT SIMPLE)
-    if (NOT NOTESTS)
+    if (ENABLE_TESTING)
         find_package( Boost 1.46 REQUIRED COMPONENTS program_options unit_test_framework)
     else()
         find_package( Boost 1.46 REQUIRED COMPONENTS program_options)
@@ -226,7 +233,7 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-if (NOT NOTESTS)
+if (ENABLE_TESTING)
     enable_testing()
     add_test (basic_test tests/basic_test)
     add_test (assump_test tests/assump_test)
@@ -235,10 +242,6 @@ if (NOT NOTESTS)
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
-
-    add_custom_target(check
-          COMMENT "top level target to invoke all other tests"
-    )
     add_subdirectory(tests)
 
 else()
