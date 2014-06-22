@@ -109,6 +109,7 @@ Simplifier::Simplifier(Solver* _solver):
 
 Simplifier::~Simplifier()
 {
+    delete bva;
     delete xorFinder;
     delete subsumeStrengthen;
     delete gateFinder;

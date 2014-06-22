@@ -38,7 +38,7 @@ static const bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
-        CMSatPrivateData(bool* _interrupt_asap) {
+        explicit CMSatPrivateData(bool* _interrupt_asap) {
             cls = 0;
             vars_to_add = 0;
             inter = _interrupt_asap;
@@ -46,6 +46,13 @@ namespace CMSat {
             shared_data = NULL;
             okay = true;
         }
+        ~CMSatPrivateData()
+        {
+            delete log;
+        }
+        CMSatPrivateData(CMSatPrivateData& other); //copy should fail
+        CMSatPrivateData(const CMSatPrivateData& other); //copy should fail
+
         vector<Solver*> solvers;
         SharedData *shared_data;
         int which_solved;
@@ -97,10 +104,7 @@ SATSolver::~SATSolver()
         delete this_s;
     }
     delete data->shared_data;
-    if (data->log) {
-        data->log->close();
-        delete data->log;
-    }
+    delete data;
 }
 
 void update_config(SolverConf& conf, unsigned thread_num)
