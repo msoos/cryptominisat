@@ -1650,7 +1650,7 @@ lbool Solver::simplifyProblem()
 
     //Delete and disable cache if too large
     if (conf.doCache) {
-        const size_t memUsedMB = implCache.memUsed()/(1024UL*1024UL);
+        const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
         if (memUsedMB > conf.maxCacheSizeMB) {
             if (conf.verbosity >= 2) {
                 cout
@@ -1889,7 +1889,7 @@ void Solver::printMinStats() const
     );
     printStatsLine("c Total time", cpu_time);
     printStatsLine("c Mem used"
-        , memUsed()/(1024UL*1024UL)
+        , mem_used()/(1024UL*1024UL)
         , "MB"
     );
     if (conf.doCache) {
@@ -2076,7 +2076,7 @@ void Solver::printMemStats() const
 
     account += print_stamp_mem(totalMem);
 
-    mem = implCache.memUsed();
+    mem = implCache.mem_used();
     mem += litReachable.capacity()*sizeof(LitReachData);
     printStatsLine("c Mem for impl cache"
         , mem/(1024UL*1024UL)
@@ -2086,7 +2086,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = hist.memUsed();
+    mem = hist.mem_used();
     printStatsLine("c Mem for history stats"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2095,7 +2095,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = memUsed();
+    mem = mem_used();
     printStatsLine("c Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2127,7 +2127,7 @@ void Solver::printMemStats() const
     account += mem;
 
     if (conf.perform_occur_based_simp) {
-        mem = simplifier->memUsed();
+        mem = simplifier->mem_used();
         printStatsLine("c Mem for simplifier"
             , mem/(1024UL*1024UL)
             , "MB"
@@ -2146,7 +2146,7 @@ void Solver::printMemStats() const
         account += mem;
     }
 
-    mem = varReplacer->memUsed();
+    mem = varReplacer->mem_used();
     printStatsLine("c Mem for varReplacer"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2155,7 +2155,7 @@ void Solver::printMemStats() const
     );
     account += mem;
 
-    mem = sCCFinder->memUsed();
+    mem = sCCFinder->mem_used();
     printStatsLine("c Mem for SCC"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2165,7 +2165,7 @@ void Solver::printMemStats() const
     account += mem;
 
     if (conf.doProbe) {
-        mem = prober->memUsed();
+        mem = prober->mem_used();
         printStatsLine("c Mem for prober"
             , mem/(1024UL*1024UL)
             , "MB"

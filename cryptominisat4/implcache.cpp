@@ -46,7 +46,7 @@ void ImplCache::makeAllRed()
     }
 }
 
-size_t ImplCache::memUsed() const
+size_t ImplCache::mem_used() const
 {
     size_t numBytes = 0;
     for(vector<TransCache>::const_iterator

@@ -992,7 +992,7 @@ bool VarReplacer::addLaterAddBinXor()
     return true;
 }
 
-size_t VarReplacer::memUsed() const
+size_t VarReplacer::mem_used() const
 {
     size_t b = 0;
     b += delayedEnqueue.capacity()*sizeof(Lit);

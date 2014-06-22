@@ -120,7 +120,7 @@ class Heap {
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
-    size_t memUsed() const
+    size_t mem_used() const
     {
         return heap.capacity()*sizeof(uint32_t)
             + indices.capacity()*sizeof(uint32_t);

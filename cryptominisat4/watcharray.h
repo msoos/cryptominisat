@@ -160,7 +160,7 @@ struct watch_array
         watches.resize(new_size);
     }
 
-    size_t memUsed() const
+    size_t mem_used() const
     {
         size_t mem = watches.capacity()*sizeof(vector<Watched TBB >);
         for(size_t i = 0; i < watches.size(); i++) {

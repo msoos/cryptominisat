@@ -36,7 +36,7 @@ class XorFinderAbst
         }
         virtual ~XorFinderAbst()
         {}
-        virtual size_t memUsed() const
+        virtual size_t mem_used() const
         {
             return 0;
         }

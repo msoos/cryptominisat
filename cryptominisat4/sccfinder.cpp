@@ -202,7 +202,7 @@ void SCCFinder::Stats::printShort(Solver* solver) const
     }
 }
 
-size_t SCCFinder::memUsed() const
+size_t SCCFinder::mem_used() const
 {
     size_t mem = 0;
     mem += index.capacity()*sizeof(uint32_t);

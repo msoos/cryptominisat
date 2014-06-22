@@ -69,7 +69,7 @@ public:
     {
         tstamp.resize(tstamp.size() + 2*n, Timestamp());
     }
-    size_t memUsed() const
+    size_t mem_used() const
     {
         return tstamp.capacity()*sizeof(Timestamp);
     }

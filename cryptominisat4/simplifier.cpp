@@ -2763,7 +2763,7 @@ void Simplifier::checkElimedUnassignedAndStats() const
     }
 }
 
-size_t Simplifier::memUsed() const
+size_t Simplifier::mem_used() const
 {
     size_t b = 0;
     b += poss_gate_parts.capacity()*sizeof(char);
@@ -2773,7 +2773,7 @@ size_t Simplifier::memUsed() const
     b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);
     b += toClear.capacity()*sizeof(Lit);
-    b += subsumeStrengthen->memUsed();
+    b += subsumeStrengthen->mem_used();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end
@@ -2790,9 +2790,9 @@ size_t Simplifier::memUsed() const
         b += it->lits.capacity()*sizeof(Lit);
     }
     b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>)); //TODO under-counting
-    b += varElimOrder.memUsed();
+    b += varElimOrder.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;
-    b += touched.memUsed();
+    b += touched.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
 
     return b;
@@ -2801,7 +2801,7 @@ size_t Simplifier::memUsed() const
 size_t Simplifier::memUsedXor() const
 {
     if (xorFinder)
-        return xorFinder->memUsed();
+        return xorFinder->mem_used();
     else
         return 0;
 }

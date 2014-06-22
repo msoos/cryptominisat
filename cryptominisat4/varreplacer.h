@@ -114,7 +114,7 @@ class VarReplacer
             uint64_t removedLongLits = 0;
         };
         const Stats& getStats() const;
-        size_t memUsed() const;
+        size_t mem_used() const;
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
 
     private:

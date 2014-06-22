@@ -98,7 +98,7 @@ class Searcher : public HyperEngine
             AvgCalc<size_t>     watchListSizeTraversed;
             #endif
 
-            size_t memUsed() const
+            size_t mem_used() const
             {
                 uint64_t used = sizeof(Hist);
                 used += sizeof(AvgCalc<uint32_t>)*16;
@@ -790,7 +790,7 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_binary_actual;
         uint64_t more_red_minim_limit_cache_actual;
         const Stats& getStats() const;
-        size_t memUsed() const;
+        size_t mem_used() const;
 
     private:
         bool do_otf_this_round;
@@ -815,7 +815,7 @@ class Searcher : public HyperEngine
             uint32_t         var_inc;
             bool             saved = false;
 
-            size_t memUsed() const
+            size_t mem_used() const
             {
                 size_t mem = 0;
                 mem += activity.capacity()*sizeof(uint32_t);

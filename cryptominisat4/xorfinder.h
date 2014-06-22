@@ -191,7 +191,7 @@ public:
 
     const Stats& getStats() const;
     size_t getNumCalls() const;
-    virtual size_t memUsed() const;
+    virtual size_t mem_used() const;
 
 private:
 

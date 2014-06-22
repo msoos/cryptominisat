@@ -99,7 +99,7 @@ public:
     void new_vars(const size_t n);
     void saveVarMem();
     bool unEliminate(const Var var);
-    size_t memUsed() const;
+    size_t mem_used() const;
     size_t memUsedXor() const;
     void printGateFinderStats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;

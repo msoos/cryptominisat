@@ -787,7 +787,7 @@ void XorFinder::findXorMatch(
     }
 }
 
-size_t XorFinder::memUsed() const
+size_t XorFinder::mem_used() const
 {
     size_t mem = 0;
     mem += xors.capacity()*sizeof(Xor);

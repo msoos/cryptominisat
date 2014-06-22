@@ -92,7 +92,7 @@ class SCCFinder {
         };
 
         const Stats& getStats() const;
-        size_t memUsed() const;
+        size_t mem_used() const;
 
     private:
 

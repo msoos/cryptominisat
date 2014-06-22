@@ -129,7 +129,7 @@ class ImplCache  {
 public:
     void printStats(const Solver* solver) const;
     void printStatsSort(const Solver* solver) const;
-    size_t memUsed() const;
+    size_t mem_used() const;
     void makeAllRed();
     void saveVarMems(uint32_t newNumVars)
     {

@@ -3091,16 +3091,16 @@ PropBy Searcher::propagate(
     return ret;
 }
 
-size_t Searcher::memUsed() const
+size_t Searcher::mem_used() const
 {
-    size_t mem = HyperEngine::memUsed();
-    mem += act_polar_backup.memUsed();
+    size_t mem = HyperEngine::mem_used();
+    mem += act_polar_backup.mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += activities.capacity()*sizeof(uint32_t);
-    mem += order_heap.memUsed();
+    mem += order_heap.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
-    mem += hist.memUsed();
+    mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
     mem += model.capacity()*sizeof(lbool);
 
@@ -3137,7 +3137,7 @@ size_t Searcher::memUsed() const
 
         cout
         << "c order_heap bytes: "
-        << order_heap.memUsed()
+        << order_heap.mem_used()
         << endl;
 
         cout
@@ -3147,7 +3147,7 @@ size_t Searcher::memUsed() const
 
         cout
         << "c hist bytes: "
-        << hist.memUsed()
+        << hist.mem_used()
         << endl;
 
         cout

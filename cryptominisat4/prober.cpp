@@ -769,7 +769,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     return solver->enqueueThese(toEnqueue);
 }
 
-size_t Prober::memUsed() const
+size_t Prober::mem_used() const
 {
     size_t mem = 0;
     mem += visitedAlready.capacity()*sizeof(char);

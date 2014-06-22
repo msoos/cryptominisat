@@ -36,7 +36,7 @@ class SubsumeStrengthen
 {
 public:
     SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
-    size_t memUsed() const;
+    size_t mem_used() const;
     void backward_subsumption_with_all_clauses();
     bool performStrengthening();
     uint32_t subsume_and_unlink_and_markirred(ClOffset offset);

@@ -189,7 +189,7 @@ void CNF::updateVars(
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
-    mem += clAllocator.memUsed();
+    mem += clAllocator.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
     printStatsLine("c Mem for longclauses"

@@ -689,7 +689,7 @@ template void SubsumeStrengthen::find_subsumed(
     , bool removeImplicit
 );
 
-size_t SubsumeStrengthen::memUsed() const
+size_t SubsumeStrengthen::mem_used() const
 {
     size_t b = 0;
     b += subs.capacity()*sizeof(ClOffset);

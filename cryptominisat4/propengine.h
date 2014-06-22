@@ -224,7 +224,7 @@ protected:
     );
     void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
 
-    virtual size_t memUsed() const
+    virtual size_t mem_used() const
     {
         size_t mem = 0;
         mem += trail.capacity()*sizeof(Lit);
