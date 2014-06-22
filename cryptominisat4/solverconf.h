@@ -230,7 +230,6 @@ class SolverConf
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
         unsigned  dominPickFreq;
-        unsigned  polarity_flip_frequency_multiplier;
 
         //Simplifier
         int      simplify_at_startup;

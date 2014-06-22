@@ -2452,9 +2452,8 @@ Lit Searcher::pickBranchLit()
     }
 
     //Flip polaritiy if need be
-    if (next != lit_Undef
-        && hist.branchDepthDeltaHist.num_data_elements() > 20
-        && mtrand.randInt(hist.branchDepthDeltaHist.avg()*conf.polarity_flip_frequency_multiplier) == 1
+    if (false
+        && next != lit_Undef
     ) {
         next ^= true;
         stats.decisionFlippedPolar++;
