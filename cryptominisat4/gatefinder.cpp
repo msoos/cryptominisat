@@ -574,7 +574,7 @@ cl_abst_type GateFinder::calc_abst_and_set_seen(
             continue;
 
         seen[lit.toInt()] = 1;
-        abst |= 1UL << abst_var(lit.var());
+        abst |= abst_var(lit.var());
     }
     abst |= abst_var((~(gate.lit2)).var());
 
