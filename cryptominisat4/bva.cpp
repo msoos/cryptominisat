@@ -32,10 +32,10 @@ using namespace CMSat;
 BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
     solver(_solver)
     , simplifier(_simplifier)
-    , var_bva_order(VarBVAOrder(watch_irred_sizes))
     , seen(solver->seen)
     , seen2(solver->seen2)
     , toClear(solver->toClear)
+    , var_bva_order(VarBVAOrder(watch_irred_sizes))
 {}
 
 bool BVA::bounded_var_addition()
