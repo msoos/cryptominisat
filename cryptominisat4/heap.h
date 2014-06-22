@@ -105,10 +105,10 @@ class Heap {
     uint32_t random_element(MTRand& rand) const
     {
         assert(!empty());
-        if (size() == 1) {
+        if (heap.size() == 2) {
             return heap[1];
         }
-        return heap[rand.randInt(size()-1)+1];
+        return heap[rand.randInt(heap.size()-2)+1];
     }
 
     void operator=(const Heap<Comp>& other)
@@ -126,9 +126,6 @@ class Heap {
             + indices.capacity()*sizeof(uint32_t);
     }
 
-    uint32_t size() const {
-        return heap.size()-1;
-    }
     bool empty() const {
         return heap.size() == 1;
     }

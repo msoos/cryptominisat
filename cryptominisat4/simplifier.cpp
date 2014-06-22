@@ -754,9 +754,6 @@ bool Simplifier::eliminateVars()
     cl_to_free_later.clear();
 
     order_vars_for_elim();
-    if (solver->conf.verbosity >= 5) {
-        cout << "c #order size:" << varElimOrder.size() << endl;
-    }
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
