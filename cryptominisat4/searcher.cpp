@@ -2069,7 +2069,7 @@ void Searcher::restore_order_heap()
             insertVarOrder(var);
         }
     }
-    assert(order_heap.heapProperty());
+    assert(order_heap.heap_property());
 }
 
 void Searcher::reduce_db_if_needed()

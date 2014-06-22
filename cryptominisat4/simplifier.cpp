@@ -2702,7 +2702,7 @@ void Simplifier::order_vars_for_elim()
         varElimComplexity[var] = strategyCalcVarElimScore(var);
         varElimOrder.insert(var);
     }
-    assert(varElimOrder.heapProperty());
+    assert(varElimOrder.heap_property());
 
     //Print sorted listed list
     #ifdef VERBOSE_DEBUG_VARELIM

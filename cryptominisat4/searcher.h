@@ -944,7 +944,7 @@ inline void Searcher::bump_var_activitiy(Var var)
 
     #ifdef MORE_DEBUG
     if (rescaled) {
-        assert(order_heap.heapProperty());
+        assert(order_heap.heap_property());
     }
     #endif
 }

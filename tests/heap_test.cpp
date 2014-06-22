@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(simple)
     heap.insert(1);
     heap.insert(2);
     heap.insert(3);
-    BOOST_CHECK_EQUAL( heap.heapProperty(), true);
+    BOOST_CHECK_EQUAL( heap.heap_property(), true);
 }
 
 BOOST_AUTO_TEST_CASE(empty)
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(empty)
     heap.insert(2);
     BOOST_CHECK_EQUAL(heap.removeMin(), 1);
     BOOST_CHECK_EQUAL(heap.removeMin(), 2);
-    BOOST_CHECK_EQUAL( heap.heapProperty(), true);
+    BOOST_CHECK_EQUAL( heap.heap_property(), true);
 }
 
 BOOST_AUTO_TEST_CASE(empty2)
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(empty2)
     BOOST_CHECK_EQUAL(heap.removeMin(), 1);
     BOOST_CHECK_EQUAL(heap.removeMin(), 2);
     BOOST_CHECK_EQUAL(heap.removeMin(), 3);
-    BOOST_CHECK_EQUAL( heap.heapProperty(), true);
+    BOOST_CHECK_EQUAL( heap.heap_property(), true);
 }
 
 BOOST_AUTO_TEST_CASE(empty_lots)
@@ -55,11 +55,11 @@ BOOST_AUTO_TEST_CASE(empty_lots)
     Heap<Comp> heap(cmp);
     for(size_t i = 0; i < 100; i++) {
         heap.insert(99-i);
-        BOOST_CHECK_EQUAL( heap.heapProperty(), true);
+        BOOST_CHECK_EQUAL( heap.heap_property(), true);
     }
     for(size_t i = 0; i < 100; i++) {
         BOOST_CHECK_EQUAL(heap.removeMin(), i);
-        BOOST_CHECK_EQUAL(heap.heapProperty(), true);
+        BOOST_CHECK_EQUAL(heap.heap_property(), true);
     }
 }
 
@@ -69,12 +69,12 @@ BOOST_AUTO_TEST_CASE(copy_heap)
     Heap<Comp> heap(cmp);
     for(size_t i = 0; i < 100; i++) {
         heap.insert(99-i);
-        BOOST_CHECK_EQUAL( heap.heapProperty(), true);
+        BOOST_CHECK_EQUAL( heap.heap_property(), true);
     }
     Heap<Comp> mycopy(heap);
     for(size_t i = 0; i < 100; i++) {
         BOOST_CHECK_EQUAL(mycopy.removeMin(), i);
-        BOOST_CHECK_EQUAL(mycopy.heapProperty(), true);
+        BOOST_CHECK_EQUAL(mycopy.heap_property(), true);
     }
 }
 

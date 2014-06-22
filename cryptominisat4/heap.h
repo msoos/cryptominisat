@@ -39,7 +39,7 @@ class Heap {
     static inline uint32_t right (uint32_t i) { return i*2+1; }
     static inline uint32_t parent(uint32_t i) { return i/2; }
 
-    inline void percolateUp(uint32_t i)
+    inline void percolate_up(uint32_t i)
     {
         uint32_t x = heap[i];
         while (i > 1 && lt(x, heap[parent(i)])) {
@@ -51,7 +51,7 @@ class Heap {
         indices[x] = i;
     }
 
-    inline void percolateDown(uint32_t i)
+    inline void percolate_down(uint32_t i)
     {
         uint32_t x = heap[i];
         while (left(i) < heap.size()) {
@@ -76,11 +76,11 @@ class Heap {
 
 
     //i: position in heap
-    bool heapProperty (uint32_t i) const {
+    bool heap_property (uint32_t i) const {
         return i >= heap.size()
             || ( (i == 1 || !lt(heap[i], heap[parent(i)]))
-                  && heapProperty( left(i)  )
-                  && heapProperty( right(i) )
+                  && heap_property( left(i)  )
+                  && heap_property( right(i) )
                );
     }
 
@@ -132,7 +132,7 @@ class Heap {
 
     void decrease  (uint32_t n) {
         //assert(inHeap(n));
-        percolateUp(indices[n]);
+        percolate_up(indices[n]);
     }
 
     void insert(uint32_t n)
@@ -144,7 +144,7 @@ class Heap {
 
         indices[n] = heap.size();
         heap.push_back(n);
-        percolateUp(indices[n]);
+        percolate_up(indices[n]);
     }
 
 
@@ -156,7 +156,7 @@ class Heap {
         indices[x]       = std::numeric_limits<uint32_t>::max();
         heap.pop_back();
         if (heap.size() > 2) {
-            percolateDown(1);
+            percolate_down(1);
         }
         return x;
     }
@@ -182,8 +182,8 @@ class Heap {
         if (!inHeap(n))
             insert(n);
         else {
-            percolateUp(indices[n]);
-            percolateDown(indices[n]);
+            percolate_up(indices[n]);
+            percolate_down(indices[n]);
         }
     }
 
@@ -201,9 +201,9 @@ class Heap {
         heap.resize(heap.size()-(i - j));
 
         for (int k = ((int)heap.size()) / 2 - 1; k >= 1; k--) {
-            percolateDown(k);
+            percolate_down(k);
         }
-        assert(heapProperty());
+        assert(heap_property());
     }
 
     bool inHeap(uint32_t n) const {
@@ -213,8 +213,8 @@ class Heap {
     }
 
     // consistency checking
-    bool heapProperty() const {
-        return heapProperty(1);
+    bool heap_property() const {
+        return heap_property(1);
     }
 
 };
