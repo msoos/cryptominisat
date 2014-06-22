@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "MersenneTwister.h"
 #include "constants.h"
+#include <assert.h>
 #include <algorithm>
 #include <vector>
 using std::vector;
