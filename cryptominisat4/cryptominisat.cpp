@@ -48,7 +48,8 @@ namespace CMSat {
         }
         ~CMSatPrivateData()
         {
-            delete log;
+            delete log; //this will also close the file
+            delete shared_data;
         }
         CMSatPrivateData(CMSatPrivateData& other); //copy should fail
         CMSatPrivateData(const CMSatPrivateData& other); //copy should fail
@@ -103,7 +104,6 @@ SATSolver::~SATSolver()
     for(Solver* this_s: data->solvers) {
         delete this_s;
     }
-    delete data->shared_data;
     delete data;
 }
 
