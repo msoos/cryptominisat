@@ -2426,8 +2426,8 @@ Lit Searcher::pickBranchLit()
     // Random decision:
     double rand = mtrand.randDblExc();
     double frq = conf.random_var_freq;
-    if (rand < frq && order_heap.size() > 0) {
-        const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
+    if (rand < frq && !order_heap.empty()) {
+        const Var next_var = order_heap.random_element(mtrand);
         if (value(next_var) == l_Undef
             && solver->varData[next_var].is_decision
         ) {

@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Heap_h
 
 #include "vec.h"
+#include "MersenneTwister.h"
 #include "constants.h"
 #include <algorithm>
 
@@ -81,6 +82,10 @@ class Heap {
                );
     }
 
+    uint32_t operator[](uint32_t index) const {
+        return heap[index];
+    }
+
   public:
     Heap(const Comp& c) :
         lt(c)
@@ -93,6 +98,15 @@ class Heap {
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
         indices.growTo(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
+    }
+
+    uint32_t random_element(MTRand& rand) const
+    {
+        assert(!empty());
+        if (size() == 1) {
+            return heap[1];
+        }
+        return heap[rand.randInt(size()-1)+1];
     }
 
     void operator=(const Heap<Comp>& other)
@@ -121,9 +135,6 @@ class Heap {
     }
     bool empty() const {
         return heap.size() == 1;
-    }
-    uint32_t operator[](uint32_t index) const {
-        return heap[1+index];
     }
 
     void decrease  (uint32_t n) {
