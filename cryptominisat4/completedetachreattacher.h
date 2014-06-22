@@ -23,7 +23,6 @@
 #define __COMPLETE_DETACH_REATTACHER__
 
 #include "constants.h"
-#include "vec.h"
 #include "watched.h"
 #include "watcharray.h"
 

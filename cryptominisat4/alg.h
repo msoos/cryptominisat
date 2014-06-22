@@ -21,7 +21,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Alg_h
 
 #include <iostream>
-#include "vec.h"
 #include "solvertypes.h"
 #include "watched.h"
 #include "constants.h"

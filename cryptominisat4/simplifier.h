@@ -33,7 +33,6 @@
 #include <fstream>
 
 #include "clause.h"
-#include "queue.h"
 #include "solvertypes.h"
 #include "heap.h"
 #include "touchlist.h"

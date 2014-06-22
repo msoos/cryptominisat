@@ -24,7 +24,6 @@
 #ifndef CSET_H
 #define CSET_H
 
-#include "vec.h"
 #include <limits>
 #include "constants.h"
 

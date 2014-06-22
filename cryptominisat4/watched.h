@@ -28,7 +28,6 @@
 #include "constants.h"
 #include "cloffset.h"
 #include "solvertypes.h"
-#include "vec.h"
 
 #include <limits>
 

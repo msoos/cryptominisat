@@ -26,7 +26,6 @@
 #include "constants.h"
 #include "cloffset.h"
 #include <stdlib.h>
-#include "vec.h"
 #include <map>
 #include <vector>
 

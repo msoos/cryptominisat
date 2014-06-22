@@ -22,7 +22,6 @@
 #ifndef SCCFINDER_H
 #define SCCFINDER_H
 
-#include "vec.h"
 #include "clause.h"
 #include <stack>
 

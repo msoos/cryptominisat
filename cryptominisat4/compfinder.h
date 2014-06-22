@@ -65,11 +65,6 @@ class CompFinder {
             }
         };
 
-        /*const uint32_t setComps();
-        template<class T>
-        void calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp);
-        void calcInBins(vector<uint32_t>& numClauseInComp, vector<uint32_t>& sumLitsInComp);*/
-
         //comp -> vars
         map<uint32_t, vector<Var> > reverseTable;
 

@@ -20,17 +20,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Heap_h
 #define Heap_h
 
-#include "vec.h"
 #include "MersenneTwister.h"
 #include "constants.h"
 #include <algorithm>
+#include <vector>
+using std::vector;
 
 // A heap implementation with support for decrease/increase key.
 template<class Comp>
 class Heap {
     Comp lt;
-    vec<uint32_t> heap;     // heap of ints
-    vec<uint32_t> indices;  // int -> index in heap
+    vector<uint32_t> heap;     // heap of ints
+    vector<uint32_t> indices;  // int -> index in heap
 
     // Index "traversal" functions
     static inline uint32_t left  (uint32_t i) { return i*2; }
@@ -90,13 +91,13 @@ class Heap {
     Heap(const Comp& c) :
         lt(c)
     {
-        heap.push(std::numeric_limits<uint32_t>::max());
+        heap.push_back(std::numeric_limits<uint32_t>::max());
     }
 
     Heap(const Heap<Comp>& other) : lt(other.lt) {
-        heap.growTo(other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
-        indices.growTo(other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
@@ -111,16 +112,10 @@ class Heap {
 
     void operator=(const Heap<Comp>& other)
     {
-        if (other.heap.size() > heap.size())
-            heap.growTo(other.heap.size());
-        else
-            heap.shrink(heap.size()-other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
 
-        if (other.indices.size() > indices.size())
-            indices.growTo(other.indices.size());
-        else
-            indices.shrink(indices.size() - other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
@@ -144,11 +139,13 @@ class Heap {
 
     void insert(uint32_t n)
     {
-        indices.growTo(n+1, std::numeric_limits<uint32_t>::max());
+        if (indices.size() <= n) {
+            indices.resize(n+1, std::numeric_limits<uint32_t>::max());
+        }
         //assert(!inHeap(n));
 
         indices[n] = heap.size();
-        heap.push(n);
+        heap.push_back(n);
         percolateUp(indices[n]);
     }
 
@@ -159,7 +156,7 @@ class Heap {
         heap[1]          = heap.back();
         indices[heap[1]] = 1;
         indices[x]       = std::numeric_limits<uint32_t>::max();
-        heap.pop();
+        heap.pop_back();
         if (heap.size() > 2) {
             percolateDown(1);
         }
@@ -169,17 +166,16 @@ class Heap {
 
     void clear(bool dealloc = false)
     {
-        for (uint32_t i = 1; i < heap.size(); i++) {
-            indices[heap[i]] = std::numeric_limits<uint32_t>::max();
+        indices.clear();
+        if (dealloc) {
+            indices.shrink_to_fit();
         }
 
-        #ifndef NDEBUG
-        for (uint32_t i = 0; i < indices.size(); i++) {
-            assert(indices[i] == std::numeric_limits<uint32_t>::max());
+        heap.clear();
+        heap.push_back(std::numeric_limits<uint32_t>::max());
+        if (dealloc) {
+            heap.shrink_to_fit();
         }
-        #endif
-        heap.clear(dealloc);
-        heap.push(std::numeric_limits<uint32_t>::max());
     }
 
     // Fool proof variant of insert/decrease/increase
@@ -204,7 +200,7 @@ class Heap {
                 indices[heap[i]] = std::numeric_limits<uint32_t>::max();
             }
         }
-        heap.shrink(i - j);
+        heap.resize(heap.size()-(i - j));
 
         for (int k = ((int)heap.size()) / 2 - 1; k >= 1; k--) {
             percolateDown(k);

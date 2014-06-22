@@ -34,7 +34,6 @@
 
 #include "avgcalc.h"
 #include "propby.h"
-#include "vec.h"
 #include "heap.h"
 #include "alg.h"
 #include "MersenneTwister.h"
