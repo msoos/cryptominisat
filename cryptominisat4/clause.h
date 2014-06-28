@@ -136,7 +136,7 @@ struct ClauseStats
     ///originally learnt. Only makes sense for redundant clauses
     ResolutionTypes<uint16_t> resolutions;
 
-    void clearAfterReduceDB(const double multiplier)
+    void clear(const double multiplier)
     {
         activity = 0;
         propagations_made = (double)propagations_made * multiplier;
@@ -221,7 +221,7 @@ protected:
     }
 
 public:
-    CL_ABST_TYPE abst;
+    cl_abst_type abst;
     ClauseStats stats;
 
     template<class V>
@@ -245,8 +245,6 @@ public:
 
     typedef Lit* iterator;
     typedef const Lit* const_iterator;
-
-    friend class ClauseAllocator;
 
     uint32_t size() const
     {
@@ -431,165 +429,6 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
 
     return os;
 }
-
-struct ClauseUsageStats
-{
-    uint64_t sumPropAndConfl() const
-    {
-        return sumProp + sumConfl;
-    }
-
-    uint64_t num = 0;
-    uint64_t sumProp = 0;
-    uint64_t sumConfl = 0;
-    uint64_t sumLitVisited = 0;
-    uint64_t sumLookedAt = 0;
-    uint64_t sumUsedUIP = 0;
-
-    ClauseUsageStats& operator+=(const ClauseUsageStats& other)
-    {
-        num += other.num;
-        sumProp += other.sumProp;
-        sumConfl += other.sumConfl;
-        sumLitVisited += other.sumLitVisited;
-        sumLookedAt += other.sumLookedAt;
-        sumUsedUIP += other.sumUsedUIP;
-
-        return *this;
-    }
-
-    void addStat(const Clause& cl)
-    {
-        num++;
-        sumProp += cl.stats.propagations_made;
-        sumConfl += cl.stats.conflicts_made;
-        #ifdef STATS_NEEDED
-        sumLitVisited += cl.stats.visited_literals;
-        sumLookedAt += cl.stats.clause_looked_at;
-        #endif
-        sumUsedUIP += cl.stats.used_for_uip_creation;
-    }
-    void print() const;
-};
-
-struct CleaningStats
-{
-    struct Data
-    {
-        uint64_t sumResolutions() const
-        {
-            return resol.sum();
-        }
-
-        Data& operator+=(const Data& other)
-        {
-            num += other.num;
-            lits += other.lits;
-            age += other.age;
-
-            glue += other.glue;
-            numProp += other.numProp;
-            numConfl += other.numConfl;
-            numLitVisited += other.numLitVisited;
-            numLookedAt += other.numLookedAt;
-            used_for_uip_creation += other.used_for_uip_creation;
-            resol += other.resol;
-
-            act += other.act;
-
-            return *this;
-        }
-
-        uint64_t num = 0;
-        uint64_t lits = 0;
-        uint64_t age = 0;
-
-        uint64_t glue = 0;
-        uint64_t numProp = 0;
-        uint64_t numConfl = 0;
-        uint64_t numLitVisited = 0;
-        uint64_t numLookedAt = 0;
-        uint64_t used_for_uip_creation = 0;
-        ResolutionTypes<uint64_t> resol;
-        double   act = 0.0;
-
-        void incorporate(const Clause* cl)
-        {
-            num ++;
-            lits += cl->size();
-            glue += cl->stats.glue;
-            act += cl->stats.activity;
-            numConfl += cl->stats.conflicts_made;
-            #ifdef STATS_NEEDED
-            numLitVisited += cl->stats.visited_literals;
-            numLookedAt += cl->stats.clause_looked_at;
-            #endif
-            numProp += cl->stats.propagations_made;
-            resol += cl->stats.resolutions;
-            used_for_uip_creation += cl->stats.used_for_uip_creation;
-        }
-
-
-    };
-    CleaningStats() :
-        cpu_time(0)
-        //Before remove
-        , origNumClauses(0)
-        , origNumLits(0)
-
-        //Type of clean
-        , glueBasedClean(0)
-        , sizeBasedClean(0)
-        , propConflBasedClean(0)
-        , actBasedClean(0)
-    {}
-
-    CleaningStats& operator+=(const CleaningStats& other)
-    {
-        //Time
-        cpu_time += other.cpu_time;
-
-        //Before remove
-        origNumClauses += other.origNumClauses;
-        origNumLits += other.origNumLits;
-
-        //Type of clean
-        glueBasedClean += other.glueBasedClean;
-        sizeBasedClean += other.sizeBasedClean;
-        propConflBasedClean += other.propConflBasedClean;
-        actBasedClean += other.actBasedClean;
-
-        //Clause Cleaning data
-        preRemove += other.preRemove;
-        removed += other.removed;
-        remain += other.remain;
-
-        return *this;
-    }
-
-    void print(const size_t nbReduceDB) const;
-    void printShort() const;
-
-    double cpu_time;
-
-    //Before remove
-    uint64_t origNumClauses;
-    uint64_t origNumLits;
-
-    //Clause Cleaning --pre-remove
-    Data preRemove;
-
-    //Clean type
-    ClauseCleaningTypes clauseCleaningType;
-    size_t glueBasedClean;
-    size_t sizeBasedClean;
-    size_t propConflBasedClean;
-    size_t actBasedClean;
-
-    //Clause Cleaning
-    Data removed;
-    Data remain;
-};
 
 } //end namespace
 

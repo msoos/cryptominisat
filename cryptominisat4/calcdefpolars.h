@@ -22,7 +22,6 @@
 #ifndef CALCDEFAULTPOLARITIES__H
 #define CALCDEFAULTPOLARITIES__H
 
-#include "vec.h"
 #include "clause.h"
 #include "watchalgos.h"
 

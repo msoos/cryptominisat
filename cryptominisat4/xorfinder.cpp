@@ -39,7 +39,9 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     , numCalls(0)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
-{}
+{
+    m4ri_build_all_codes();
+}
 
 bool XorFinder::findXors()
 {
@@ -161,7 +163,7 @@ bool XorFinder::findXors()
 bool XorFinder::extractInfo()
 {
     double myTime = cpuTime();
-    size_t origTrailSize = solver->trail.size();
+    size_t origTrailSize = solver->trail_size();
 
     vector<uint32_t> varsIn(solver->nVars(), 0);
     for(const Xor& x: xors) {
@@ -229,7 +231,7 @@ bool XorFinder::extractInfo()
 end:
 
     const double time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.extractTime += time_used;
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
@@ -483,7 +485,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 }
 
-void XorFinder::findXor(vector<Lit>& lits, CL_ABST_TYPE abst)
+void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 {
     //Set this clause as the base for the FoundXors
     //fill 'seen' with variables
@@ -785,7 +787,7 @@ void XorFinder::findXorMatch(
     }
 }
 
-size_t XorFinder::memUsed() const
+size_t XorFinder::mem_used() const
 {
     size_t mem = 0;
     mem += xors.capacity()*sizeof(Xor);

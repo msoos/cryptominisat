@@ -36,7 +36,7 @@ using namespace CMSat;
 
 class HyperEngine : public PropEngine {
 public:
-    HyperEngine(const SolverConf& _conf);
+    HyperEngine(const SolverConf& _conf, bool* _needToInterrupt);
     size_t print_stamp_mem(size_t totalMem) const;
 
     bool timedOutPropagateFull;
@@ -48,9 +48,9 @@ public:
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
 
-    virtual size_t memUsed() const
+    virtual size_t mem_used() const
     {
-        size_t mem = PropEngine::memUsed();
+        size_t mem = PropEngine::mem_used();
         return mem;
     }
 

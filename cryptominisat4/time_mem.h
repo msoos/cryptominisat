@@ -57,6 +57,21 @@ static inline double cpuTimeTotal(void)
 
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0;
 }
+
+static inline double realTime()
+{
+    struct timeval start;
+
+    long seconds, useconds;
+
+    gettimeofday(&start, NULL);
+
+    seconds  = start.tv_sec;
+    useconds = start.tv_usec;
+
+    return ((double)(seconds + useconds))/(1000.0*1000.0);
+}
+
 #endif //CROSS_COMPILE
 
 

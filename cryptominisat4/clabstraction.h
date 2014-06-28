@@ -1,21 +1,20 @@
 #ifndef __CL_ABSTRACTION__H__
 #define __CL_ABSTRACTION__H__
 
-#define CL_ABST_TYPE uint32_t
-#define CLAUSE_ABST_SIZE 32
-#include "constants.h"
+typedef uint32_t cl_abst_type;
+static const int cl_abst_modulo = 29;
 
-inline CL_ABST_TYPE abst_var(const uint32_t v)
+inline cl_abst_type abst_var(const uint32_t v)
 {
-    return 1UL << (v % CLAUSE_ABST_SIZE);
+    return 1UL << (v % cl_abst_modulo);
 }
 
 template <class T>
-CL_ABST_TYPE calcAbstraction(const T& ps)
+cl_abst_type calcAbstraction(const T& ps)
 {
-    CL_ABST_TYPE abstraction = 0;
+    cl_abst_type abstraction = 0;
     if (ps.size() > 100) {
-        return ~((CL_ABST_TYPE)(0ULL));
+        return ~((cl_abst_type)(0ULL));
     }
 
     for (auto l: ps)

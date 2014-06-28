@@ -20,6 +20,7 @@ from subprocess import Popen, PIPE, STDOUT
 #from optparse import OptionParser
 import optparse
 import calendar
+import glob
 from xor_to_cnf_class import *
 
 maxTime = 80
@@ -63,11 +64,6 @@ parser.add_option("--verbose", "-v", action="store_true"
                     , help="Print more output"
                     )
 
-parser.add_option("-t", "--threads", dest="num_threads", metavar="NUM"
-                    , default=1, type="int"
-                    , help="Number of threads"
-                    )
-
 #for fuzz-testing
 parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     , default=False, action="store_true"
@@ -75,22 +71,12 @@ parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     )
 
 #for regression testing
-parser.add_option("--regtest", dest="regressionTest"
+parser.add_option("--regtest", dest="regression_test"
                     , default=False, action="store_true"
                     , help="Regression test"
                     )
 parser.add_option("--testdir", dest="testDir"
                     , default= "../tests/cnfs/"
-                    , help="Directory where the tests are"
-                    )
-
-parser.add_option("--testdirNewVar", dest="testDirNewVar"
-                    , default= "../tests/cnfs/newVar/"
-                    , help="Directory where the tests are"
-                    )
-
-parser.add_option("--drup", dest="drup"
-                    , default= False, action="store_true"
                     , help="Directory where the tests are"
                     )
 
@@ -100,10 +86,10 @@ parser.add_option("--checksol", dest="checkSol"
                     , help="Check solution at specified dir against problems at specified dir"
                     )
 
-parser.add_option("--soldir", dest="checkDirSol"
+parser.add_option("--soldir", dest="check_dir_cnfs_solutions"
                     ,  help="Check solutions found here"
                     )
-parser.add_option("--probdir", dest="checkDirProb"
+parser.add_option("--probdir", dest="check_dir_cnfs_problems"
                     , default="/home/soos/media/sat/examples/satcomp09/"
                     , help="Directory of CNF files checked against"
                     )
@@ -146,11 +132,21 @@ def file_exists(fname) :
 
 class Tester:
     def __init__(self):
-        self.check_unsat = False
-        self.testDir = options.testDir
-        self.testDirNewVar = options.testDirNewVar
-
+        self.check_for_unsat = False
         self.ignoreNoSolution = False
+        self.fuzzers = [
+            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["build/cnf-fuzz-biere"] \
+            #, ["build/cnf-fuzz-nossum"] \
+            #, ["build/largefuzzer"] \
+            , ["cnf-fuzz-brummayer.py"] \
+            , ["multipart.py", "special"] \
+            , ["build/sgen4 -unsat -n 50", "-s"] \
+            , ["cnf-fuzz-xor.py"] \
+            , ["build/sgen4 -sat -n 50", "-s"] \
+        ]
+        self.fuzzer_directory = "../../cnf-utils/"
 
     def random_options(self) :
         cmd = " "
@@ -162,9 +158,6 @@ class Tester:
         cmd += "--updateglue %s " % random.randint(0,1)
         cmd += "--otfhyper %s " % random.randint(0,1)
         cmd += "--clean %s " % random.choice(["size", "glue", "activity", "prconf"])
-        cmd += "--preclean %s " % random.randint(0,1)
-        cmd += "--precleanlim %s " % random.randint(0,10)
-        cmd += "--precleantime %s " % random.randint(0,20000)
         cmd += "--clearstat %s " % random.randint(0,1)
         cmd += "--startclean %s " % random.randint(100,16000)
         cmd += "--maxredratio %s " % random.randint(2,20)
@@ -194,7 +187,7 @@ class Tester:
         cmd += "--occredmaxmb %s " % random.randint(0,10)
         cmd += "--implsubsto %s " % random.choice([0,10,1000])
         cmd += "--sync %d " % random.choice([100,1000,6000,100000])
-        if options.num_threads > 1 :
+        if self.num_threads > 1 :
             cmd += "--xor 0 "
             cmd += "--sql 0 "
 
@@ -207,7 +200,7 @@ class Tester:
             , "otfsubsume", "renumber", "savemem"
             , "moreminim", "gates", "bva"
             , "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
-            if options.num_threads == 1 :
+            if self.num_threads == 1 :
                 opts.append("xor")
 
             for opt in opts:
@@ -231,7 +224,7 @@ class Tester:
             command += "--verb 0 "
         if newVar :
             command += "--debugnewvar "
-        command += "--threads=%d " % options.num_threads
+        command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += extraOptions
         command += fname
@@ -341,42 +334,42 @@ class Tester:
 
         return (unsat, solution)
 
-    def check_regular_clause(self, line, solution):
-        lits = line.split()
-        final = False
-        for lit in lits:
-            numlit = int(lit)
-            if numlit != 0:
-                if (abs(numlit) not in solution): continue
-                if numlit < 0:
-                    final |= ~solution[abs(numlit)]
-                else:
-                    final |= solution[numlit]
-                if final == True:
-                    break
-        if final == False:
-            print "Error: clause '%s' not satisfied." % line
-            print "Error code 100"
-            exit(100)
-
-    def check_xor_clause(self, line, solution):
-        line = line.lstrip('x')
-        lits = line.split()
-        final = False
-        for lit in lits:
-            numlit = int(lit)
-            if numlit != 0:
-                if abs(numlit) not in solution:
-                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
-                    print "Error code 200"
-                    exit(200)
-                final ^= solution[abs(numlit)]
-                final ^= numlit < 0
-        if final == False:
-            print "Error: xor-clause '%s' not satisfied." % line
-            exit(-1)
-
     def test_found_solution(self, solution, fname, debugLibPart=None):
+        def check_regular_clause(line, solution):
+            lits = line.split()
+            final = False
+            for lit in lits:
+                numlit = int(lit)
+                if numlit != 0:
+                    if (abs(numlit) not in solution): continue
+                    if numlit < 0:
+                        final |= ~solution[abs(numlit)]
+                    else:
+                        final |= solution[numlit]
+                    if final == True:
+                        break
+            if final == False:
+                print "Error: clause '%s' not satisfied." % line
+                print "Error code 100"
+                exit(100)
+
+        def check_xor_clause(line, solution):
+            line = line.lstrip('x')
+            lits = line.split()
+            final = False
+            for lit in lits:
+                numlit = int(lit)
+                if numlit != 0:
+                    if abs(numlit) not in solution:
+                        print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
+                        print "Error code 200"
+                        exit(200)
+                    final ^= solution[abs(numlit)]
+                    final ^= numlit < 0
+            if final == False:
+                print "Error: xor-clause '%s' not satisfied." % line
+                exit(-1)
+
         if debugLibPart == None:
             print "Verifying solution for CNF file %s" % fname
         else:
@@ -408,16 +401,16 @@ class Tester:
             #check solution against clause
             if line[0] != 'c' and line[0] != 'p':
                 if line[0] != 'x':
-                    self.check_regular_clause(line, solution)
+                    check_regular_clause(line, solution)
                 else:
-                    self.check_xor_clause(line, solution)
+                    check_xor_clause(line, solution)
 
                 clauses += 1
 
         f.close()
         print "Verified %d original xor&regular clauses" % clauses
 
-    def checkUNSAT(self, fname) :
+    def check_unsat(self, fname) :
         a = XorToCNF()
         tmpfname = unique_fuzz_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname )
@@ -443,7 +436,7 @@ class Tester:
         #check if the other solver agrees with us
         return otherSolverUNSAT
 
-    def extractLibPart(self, fname, debug_num, assumps, tofile) :
+    def extract_lib_part(self, fname, debug_num, assumps, tofile) :
         fromf = open(fname, "r")
         thisDebugLibPart = 0
         maxvar = 0
@@ -537,7 +530,7 @@ class Tester:
 
         print "OK, all assumptions inside solution"
 
-    def checkDebugLib(self, fname) :
+    def check_debug_lib(self, fname) :
         largestPart = -1
         dirList2 = os.listdir(".")
         for fname_debug in dirList2:
@@ -569,10 +562,10 @@ class Tester:
             else:
                 print "debugLib is UNSAT"
                 tmpfname = unique_fuzz_file("tempfile_for_extract_libpart")
-                self.extractLibPart(fname, debugLibPart, assumps, tmpfname)
+                self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
                 #check with other solver
-                ret = self.checkUNSAT(tmpfname)
+                ret = self.check_unsat(tmpfname)
                 if ret == None :
                     print "Cannot check, other solver took too much time"
                 elif ret == True :
@@ -583,56 +576,6 @@ class Tester:
 
                 #delete temporary file
                 os.unlink(tmpfname)
-
-    def check_dump_irred(self, fname):
-        currTime = calendar.timegm(time.gmtime())
-        irred_cnf = "irred_data.cnf"
-        self.needDebugLib = False
-        extra_optins = " --dumpirred %s --maxconfl 1000 " % irred_cnf
-        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
-        self.needDebugLib = True
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
-            print "Too much time to solve, aborted!"
-            return
-        else:
-            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
-
-        if not file_exists(irred_cnf):
-            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
-            print "Error log: ", consoleOutput
-            exit()
-
-        self.needDebugLib = False
-        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True)
-        self.needDebugLib = True
-        os.unlink(irred_cnf)
-
-    def check_dump_red(self, fname):
-        currTime = calendar.timegm(time.gmtime())
-        irred_cnf = "irred_data.cnf"
-        red_cnf = "red_data.cnf"
-        self.needDebugLib = False
-        extra_optins = " --dumpirred %s --dumpred %s --maxconfl 1000 " % (irred_cnf, red_cnf)
-        consoleOutput = self.execute(fname, needToLimitTime = True, extraOptions=extra_optins)
-        self.needDebugLib = True
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
-            print "Too much time to solve, aborted!"
-            return
-        else:
-            print "Within time limit: %f s" % (calendar.timegm(time.gmtime()) - currTime)
-
-        if not file_exists(irred_cnf):
-            print "ERROR: CNF file '%s' containing irredundant clauses has not been created" % irred_cnf
-            print "Error log: ", consoleOutput
-            exit()
-
-        self.needDebugLib = False
-        self.check(irred_cnf, checkAgainst=fname, needToLimitTime=True, extraOptions=" --input %s " % red_cnf)
-        self.needDebugLib = True
-        os.unlink(irred_cnf)
-        os.unlink(red_cnf)
 
     def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
               needSolve=True, needToLimitTime=False, checkAgainst=None, extraOptions=""):
@@ -657,7 +600,7 @@ class Tester:
         #and that is why there is no solution
         if needToLimitTime:
             diffTime = calendar.timegm(time.gmtime()) - currTime
-            if diffTime > (maxTime - maxTimeDiff)/options.num_threads:
+            if diffTime > (maxTime - maxTimeDiff)/self.num_threads:
                 print "Too much time to solve, aborted!"
                 return
             else:
@@ -667,7 +610,7 @@ class Tester:
 
         #if library debug is set, check it
         if (self.needDebugLib) :
-            self.checkDebugLib(checkAgainst)
+            self.check_debug_lib(checkAgainst)
 
         print "Checking console output..."
         (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
@@ -678,13 +621,13 @@ class Tester:
             return;
 
         #it's UNSAT and we should not check, so exit
-        if self.check_unsat == False:
+        if self.check_for_unsat == False:
             print "Cannot check -- output is UNSAT"
             return
 
         #it's UNSAT, let's check with DRUP
         if fnameDrup:
-            toexec = "drupcheck %s %s" % (fname, fnameDrup)
+            toexec = "drat-trim %s %s" % (fname, fnameDrup)
             print "Checking DRUP...: ", toexec
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
@@ -711,7 +654,7 @@ class Tester:
                 print "OK, DRUP says:", drupLine
 
         #check with other solver
-        ret = self.checkUNSAT(checkAgainst)
+        ret = self.check_unsat(checkAgainst)
         if ret == None :
             print "Other solver time-outed, cannot check"
         elif ret == True:
@@ -721,19 +664,19 @@ class Tester:
             exit()
 
 
-    def removeDebugLibParts(self) :
+    def remove_debug_lib_parts(self) :
         dirList = os.listdir(".")
         for fname_unlink in dirList:
             if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
                 os.unlink(fname_unlink)
                 None
 
-    def callFromFuzzer(self, directory, fuzzer, file_name) :
+    def call_from_fuzzer(self, fuzzer, file_name) :
         if (len(fuzzer) == 1) :
-            call = "{0}{1} > {2}".format(directory, fuzzer[0], file_name)
+            call = "{0}{1} > {2}".format(self.fuzzer_directory, fuzzer[0], file_name)
         elif(len(fuzzer) == 2) :
             seed = struct.unpack("<L", os.urandom(4))[0]
-            call = "{0}{1} {2} {3} > {4}".format(directory, fuzzer[0], fuzzer[1], seed, file_name)
+            call = "{0}{1} {2} {3} > {4}".format(self.fuzzer_directory, fuzzer[0], fuzzer[1], seed, file_name)
         elif(len(fuzzer) == 3) :
             seed = struct.unpack("<L", os.urandom(4))[0]
             hashbits = (random.getrandbits(20) % 79) + 1
@@ -741,7 +684,7 @@ class Tester:
 
         return call
 
-    def create_fuzz(self, fuzzers, fuzzer, directory, file_name) :
+    def create_fuzz(self, fuzzer, file_name) :
 
         #handle special fuzzer
         file_names_multi = []
@@ -757,20 +700,20 @@ class Tester:
                 #chose a ranom fuzzer, not multipart
                 fuzzer2 = ["multipart.py", "special"]
                 while (fuzzer2[0] == "multipart.py") :
-                    fuzzer2 = choice(fuzzers)
+                    fuzzer2 = choice(self.fuzzers)
 
                 #sometimes fuzz with SAT problems only
                 if (fixed) :
-                    fuzzer2 = fuzzers[0]
+                    fuzzer2 = self.fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
-                call = self.callFromFuzzer(directory, fuzzer2, file_name2)
+                call = self.call_from_fuzzer(fuzzer2, file_name2)
                 print "calling sub-fuzzer:", call
                 out = commands.getstatusoutput(call)
 
             #construct multi-fuzzer call
             call = ""
-            call += directory
+            call += self.fuzzer_directory
             call += fuzzer[0]
             call += " "
             for name in file_names_multi :
@@ -781,7 +724,7 @@ class Tester:
 
         #handle normal fuzzer
         else :
-            return self.callFromFuzzer(directory, fuzzer, file_name), []
+            return self.call_from_fuzzer(fuzzer, file_name), []
 
     def file_len_no_comment(self, fname):
         i = 0;
@@ -891,111 +834,89 @@ class Tester:
 
 
     def fuzz_test(self) :
-        fuzzers = [
-            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            #, ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["build/cnf-fuzz-biere"] \
-            #, ["build/cnf-fuzz-nossum"] \
-            #, ["build/largefuzzer"] \
-            , ["cnf-fuzz-brummayer.py"] \
-            , ["multipart.py", "special"] \
-            , ["build/sgen4 -unsat -n 50", "-s"] \
-            , ["cnf-fuzz-xor.py"] \
-            , ["build/sgen4 -sat -n 50", "-s"] \
-        ]
-
-        directory = "../../cnf-utils/"
         while True:
-            for fuzzer in fuzzers :
-                file_name = unique_fuzz_file("fuzzTest");
-                fnameDrup = None
-                if options.drup :
-                    fnameDrup = unique_fuzz_file("fuzzTest");
+            fuzzer = random.choice(self.fuzzers)
+            self.num_threads = random.choice([1, 2, 10])
+            file_name = unique_fuzz_file("fuzzTest");
+            self.drup = self.num_threads == 1 and random.choice([True, False])
+            fnameDrup = None
+            if self.drup :
+                fnameDrup = unique_fuzz_file("fuzzTest");
 
-                #create the fuzz file
-                call, todel = self.create_fuzz(fuzzers, fuzzer, directory, file_name)
-                print "calling ", fuzzer, " : ", call
-                out = commands.getstatusoutput(call)
+            #create the fuzz file
+            call, todel = self.create_fuzz(fuzzer, file_name)
+            print "calling ", fuzzer, " : ", call
+            out = commands.getstatusoutput(call)
 
-                #adding debuglib to fuzz file
+            if not self.drup :
                 self.needDebugLib = True
-
-                #delete old debugLibPart files
-                dirList = os.listdir(".")
-                for fname in dirList:
-                    if fnmatch.fnmatch(fname, 'debugLibPart*'):
-                        os.unlink(fname)
-
+                self.delete_debuglibpart_files()
                 file_name2 = unique_fuzz_file("fuzzTest");
                 self.intersperse_with_debuglib(file_name, file_name2)
                 os.unlink(file_name)
+            else:
+                self.needDebugLib = False
+                file_name2 = file_name
 
-                #check file
-                self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
-                #self.check_dump_irred(fname=file_name2)
-                #self.check_dump_red(fname=file_name2)
+            self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
 
-                #remove temporary filenames
-                os.unlink(file_name2)
-                for name in todel :
-                    os.unlink(name)
-                if fnameDrup != None :
-                    os.unlink(fnameDrup)
+            #remove temporary filenames
+            os.unlink(file_name2)
+            for name in todel :
+                os.unlink(name)
+            if fnameDrup != None :
+                os.unlink(fnameDrup)
+            for i in glob.glob(u'fuzz*'):
+                os.unlink (i)
 
-    def checkDir(self) :
+    def delete_debuglibpart_files(self):
+        dirList = os.listdir(".")
+        for fname in dirList:
+            if fnmatch.fnmatch(fname, 'debugLibPart*'):
+                os.unlink(fname)
+
+    def check_dir_cnfs(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
 
-        #check if options.checkDirSol has bee set
-        if options.checkDirSol == "":
+        #check if options.check_dir_cnfs_solutions has bee set
+        if options.check_dir_cnfs_solutions == "":
             print "When checking, you must give test dir"
             exit()
 
-        print "You gave testdir (where solutions are):", options.checkDirSol
-        print "You gave CNF dir (where problems are) :", options.checkDirProb
+        print "You gave testdir (where solutions are):", options.check_dir_cnfs_solutions
+        print "You gave CNF dir (where problems are) :", options.check_dir_cnfs_problems
 
-        dirList = os.listdir(options.checkDirSol)
-        for fname in dirList:
+        for fname in os.listdir(options.check_dir_cnfs_solutions):
 
             if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
                 #add dir, remove trailing .out
                 fname = fname[:len(fname) - 4]
-                fnameSol = options.checkDirSol + "/" + fname
+                fnameSol = options.check_dir_cnfs_solutions + "/" + fname
 
                 #check now
-                self.check(fname=options.checkDirProb + "/" + fname, \
+                self.check(fname=options.check_dir_cnfs_problems + "/" + fname, \
                    fnameSolution=fnameSol, needSolve=False)
 
-    def regressionTest(self) :
-
-        if False:
-            #first, test stuff with newVar
-            dirList = os.listdir(self.testDirNewVar)
-            for fname in dirList:
-                if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    self.check(fname=self.testDirNewVar + fname, newVar=True, needToLimitTime=True)
-
-        dirList = os.listdir(self.testDir)
-
-        #test stuff without newVar
-        for fname in dirList:
+    def regression_test(self) :
+        for fname in os.listdir(options.testDir):
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                self.check(fname=self.testDir + fname, newVar=False)
+                self.check(fname=options.testDir + fname, newVar=False)
 
 tester = Tester()
 
 if options.checkFile :
-    tester.check_unsat = True
+    tester.check_for_unsat = True
     tester.needDebugLib = False
     tester.check(options.checkFile, options.solutionFile, needSolve=False)
 
 if options.fuzz_test:
     tester.needDebugLib = False
-    tester.check_unsat = True
+    tester.check_for_unsat = True
     tester.fuzz_test()
 
 if options.checkSol:
-    tester.checkDir()
+    tester.check_dir_cnfs()
 
-if options.regressionTest:
-    tester.regressionTest()
+if options.regression_test:
+    tester.regression_test()

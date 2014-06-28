@@ -24,8 +24,8 @@
 
 using namespace CMSat;
 
-HyperEngine::HyperEngine(const SolverConf& _conf) :
-    PropEngine(_conf)
+HyperEngine::HyperEngine(const SolverConf& _conf, bool* _needToInterrupt) :
+    PropEngine(_conf, _needToInterrupt)
     , stampingTime(0)
 {
 }
@@ -1141,7 +1141,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
     mem += toPropBin.capacity()*sizeof(Lit);
     mem += toPropRedBin.capacity()*sizeof(Lit);
     mem += currAncestors.capacity()*sizeof(Lit);
-    mem += stamp.memUsed();
+    mem += stamp.mem_used();
     printStatsLine("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -1162,7 +1162,7 @@ void HyperEngine::enqueueComplex(
     assert(varData[ancestor.var()].level != 0);
 
     varData[p.var()].depth = varData[ancestor.var()].depth + 1;
-    #if defined(DEBUG_DEPTH) or defined(VERBOSE_DEBUG_FULLPROP)
+    #if defined(DEBUG_DEPTH) || defined(VERBOSE_DEBUG_FULLPROP)
     cout
     << "Enqueued "
     << std::setw(6) << (p)

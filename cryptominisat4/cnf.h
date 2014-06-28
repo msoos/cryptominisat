@@ -42,16 +42,27 @@ public:
         uint64_t redLits = 0;
     };
 
-    CNF(const SolverConf& _conf) :
+    CNF(const SolverConf& _conf, bool* _needToInterrupt) :
         conf(_conf)
         , minNumVars(0)
     {
         drup = new Drup();
+        if (_needToInterrupt != NULL) {
+            needToInterrupt = _needToInterrupt;
+            needToInterrupt_is_foreign = true;
+        } else {
+            needToInterrupt = new bool;
+            *needToInterrupt = false;
+            needToInterrupt_is_foreign = false;
+        }
     }
 
     ~CNF()
     {
         delete drup;
+        if (!needToInterrupt_is_foreign) {
+            delete needToInterrupt;
+        }
     }
 
     ClauseAllocator clAllocator;
@@ -91,6 +102,26 @@ public:
     lbool value (const Lit p) const
     {
         return assigns[p.var()] ^ p.sign();
+    }
+
+    bool must_interrupt_asap() const
+    {
+        return *needToInterrupt;
+    }
+
+    void set_must_interrupt_asap()
+    {
+        *needToInterrupt = true;
+    }
+
+    void unset_must_interrupt_asap()
+    {
+        *needToInterrupt = false;
+    }
+
+    bool* get_must_interrupt_asap_ptr()
+    {
+        return needToInterrupt;
     }
 
     bool redundant(const Watched& ws) const;
@@ -152,9 +183,25 @@ public:
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
     }
 
-protected:
+    size_t nVars() const
+    {
+        return minNumVars;
+    }
+
+    size_t nVarsOuter() const
+    {
+        return assigns.size();
+    }
+
+    size_t get_num_bva_vars() const
+    {
+        return num_bva_vars;
+    }
     vector<Var> build_outer_to_without_bva_map() const;
-    virtual void new_var(bool bva, Var orig_outer);
+
+protected:
+    virtual void new_var(const bool bva, const Var orig_outer);
+    virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution(const vector<lbool>& solution) const
     {
@@ -163,28 +210,15 @@ protected:
         return back_numbered;
     }
 
-    uint32_t nVars() const
-    {
-        return minNumVars;
-    }
-
-    uint32_t nVarsOuter() const
-    {
-        return assigns.size();
-    }
-
-    uint32_t get_num_bva_vars() const
-    {
-        return num_bva_vars;
-    }
-
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
 
 private:
-    void enlarge_minimal_datastructs();
-    void enlarge_nonminimial_datastructs();
+    bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
+    void enlarge_minimal_datastructs(size_t n = 1);
+    void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const Var which);
 
+    bool needToInterrupt_is_foreign;
     vector<Var> outerToInterMain;
     vector<Var> interToOuterMain;
     size_t num_bva_vars = 0;

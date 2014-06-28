@@ -1,58 +1,15 @@
-#include "clause.h"
+#include "cleaningstats.h"
+#include "solvertypes.h"
 
 using namespace CMSat;
 
-void ClauseUsageStats::print() const
-{
-    cout
-    #ifdef STATS_NEEDED
-    << " lits visit: "
-    << std::setw(8) << sumLitVisited/1000UL
-    << "K"
-
-    << " cls visit: "
-    << std::setw(7) << sumLookedAt/1000UL
-    << "K"
-    #endif
-
-    << " prop: "
-    << std::setw(5) << sumProp/1000UL
-    << "K"
-
-    << " conf: "
-    << std::setw(5) << sumConfl/1000UL
-    << "K"
-
-    << " UIP used: "
-    << std::setw(5) << sumUsedUIP/1000UL
-    << "K"
-    << endl;
-}
+#include <iostream>
+using std::cout;
+using std::endl;
 
 void CleaningStats::print(const size_t nbReduceDB) const
 {
     cout << "c ------ CLEANING STATS ---------" << endl;
-    //Pre-clean
-    printStatsLine("c pre-removed"
-        , preRemove.num
-        , stats_line_percent(preRemove.num, origNumClauses)
-        , "% long redundant clauses"
-    );
-
-    printStatsLine("c pre-removed lits"
-        , preRemove.lits
-        , stats_line_percent(preRemove.lits,origNumLits)
-        , "% long red lits"
-    );
-    printStatsLine("c pre-removed cl avg size"
-        , (double)preRemove.lits/(double)preRemove.num
-    );
-    printStatsLine("c pre-removed cl avg glue"
-        , (double)preRemove.glue/(double)preRemove.num
-    );
-    printStatsLine("c pre-removed cl avg num resolutions"
-        , (double)preRemove.sumResolutions()/(double)preRemove.num
-    );
 
     //Types of clean
     printStatsLine("c clean by glue"
@@ -117,13 +74,7 @@ void CleaningStats::printShort() const
     //Pre-clean
     cout
     << "c [DBclean]"
-    << " Pre-removed: "
-    << preRemove.num
-    << " clean type will be " << getNameOfCleanType(clauseCleaningType)
-    << endl;
-
-    cout
-    << "c [DBclean]"
+    << " clean type is " << getNameOfCleanType(clauseCleaningType)
     << " rem " << removed.num
 
     << " avgGlue " << std::fixed << std::setprecision(2)

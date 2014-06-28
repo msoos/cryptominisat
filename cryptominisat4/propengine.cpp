@@ -47,9 +47,9 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const SolverConf& _conf
+    const SolverConf& _conf, bool* _needToInterrupt
 ) :
-        CNF(_conf)
+        CNF(_conf, _needToInterrupt)
         // Stats
         , qhead(0)
         , agility(_conf.agilityG, _conf.agilityLimit)
@@ -63,6 +63,13 @@ PropEngine::~PropEngine()
 void PropEngine::new_var(const bool bva, Var orig_outer)
 {
     CNF::new_var(bva, orig_outer);
+    //TODO
+    //trail... update x->whatever
+}
+
+void PropEngine::new_vars(size_t n)
+{
+    CNF::new_vars(n);
     //TODO
     //trail... update x->whatever
 }
@@ -1069,4 +1076,150 @@ void PropEngine::print_trail()
         << " reason: " << varData[trail[i].var()].reason
         << endl;
     }
+}
+
+
+bool PropEngine::propagate_occur()
+{
+    if (!ok)
+        return false;
+
+    while (qhead < trail_size()) {
+        const Lit p = trail[qhead];
+        qhead++;
+        watch_subarray ws = watches[(~p).toInt()];
+
+        //Go through each occur
+        for (watch_subarray::const_iterator
+            it = ws.begin(), end = ws.end()
+            ; it != end
+            ; it++
+        ) {
+            if (it->isClause()) {
+                if (!propagate_long_clause_occur(it->getOffset()))
+                    return false;
+            }
+
+            if (it->isTri()) {
+                if (!propagate_tri_clause_occur(*it))
+                    return false;
+            }
+
+            if (it->isBinary()) {
+                if (!propagate_binary_clause_occur(*it))
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool PropEngine::propagate_tri_clause_occur(const Watched& ws)
+{
+    const lbool val2 = value(ws.lit2());
+    const lbool val3 = value(ws.lit3());
+    if (val2 == l_True
+        || val3 == l_True
+    ) {
+        return true;
+    }
+
+    if (val2 == l_Undef
+        && val3 == l_Undef
+    ) {
+        return true;
+    }
+
+    if (val2 == l_False
+        && val3 == l_False
+    ) {
+        ok = false;
+        return false;
+    }
+
+    #ifdef STATS_NEEDED
+    if (ws.red())
+        propStats.propsTriRed++;
+    else
+        propStats.propsTriIrred++;
+    #endif
+
+    if (val2 == l_Undef) {
+        enqueue(ws.lit2());
+    } else {
+        enqueue(ws.lit3());
+    }
+    return true;
+}
+
+bool PropEngine::propagate_binary_clause_occur(const Watched& ws)
+{
+    const lbool val = value(ws.lit2());
+    if (val == l_False) {
+        ok = false;
+        return false;
+    }
+
+    if (val == l_Undef) {
+        enqueue(ws.lit2());
+        #ifdef STATS_NEEDED
+        if (ws.red())
+            propStats.propsBinRed++;
+        else
+            propStats.propsBinIrred++;
+        #endif
+    }
+
+    return true;
+}
+
+bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
+{
+    const Clause& cl = *clAllocator.getPointer(offset);
+    assert(!cl.getFreed() && "Cannot be already removed in occur");
+
+    Lit lastUndef = lit_Undef;
+    uint32_t numUndef = 0;
+    bool satisfied = false;
+    for (const Lit lit: cl) {
+        const lbool val = value(lit);
+        if (val == l_True) {
+            satisfied = true;
+            break;
+        }
+        if (val == l_Undef) {
+            numUndef++;
+            if (numUndef > 1) break;
+            lastUndef = lit;
+        }
+    }
+    if (satisfied)
+        return true;
+
+    //Problem is UNSAT
+    if (numUndef == 0) {
+        ok = false;
+        return false;
+    }
+
+    if (numUndef > 1)
+        return true;
+
+    enqueue(lastUndef);
+    #ifdef STATS_NEEDED
+    if (cl.size() == 3)
+        if (cl.red())
+            propStats.propsTriRed++;
+        else
+            propStats.propsTriIrred++;
+    else {
+        if (cl.red())
+            propStats.propsLongRed++;
+        else
+            propStats.propsLongIrred++;
+    }
+    #endif
+
+    return true;
 }

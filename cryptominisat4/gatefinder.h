@@ -46,19 +46,6 @@ class OrGate {
                 std::swap(lit1, lit2);
         }
 
-        bool operator<(const OrGate& other) const
-        {
-            if (eqLit != other.eqLit) {
-                return (eqLit < other.eqLit);
-            }
-
-            if (lit1 != other.lit1) {
-                return (lit1 < other.lit1);
-            }
-
-            return (lit2 < other.lit2);
-        }
-
         bool operator==(const OrGate& other) const
         {
             return
@@ -83,6 +70,21 @@ class OrGate {
         bool red;
 };
 
+struct GateCompareForEq
+{
+    bool operator()(const OrGate& a, const OrGate& b) const
+    {
+        if (a.lit1 != b.lit1) {
+            return (a.lit1 < b.lit1);
+        }
+
+        if (a.lit2 != b.lit2) {
+            return (a.lit2 < b.lit2);
+        }
+        return (a.eqLit < b.eqLit);
+    }
+};
+
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
     os
@@ -100,6 +102,7 @@ public:
     GateFinder(Simplifier *subsumer, Solver *control);
 
     void new_var(const Var orig_outer);
+    void new_vars(const size_t n);
     void saveVarMem();
     bool doAll();
 
@@ -165,7 +168,11 @@ private:
     void clearIndexes();
     void link_in_gate(const OrGate& gate);
     void add_gate_if_not_already_inside(Lit eqLit, Lit lit1, Lit lit2);
-    void or_gates_in_sweep_mode(Lit lit);
+    void find_or_gates_in_sweep_mode(Lit lit);
+
+    //High-level functions
+    bool remove_clauses_with_all_or_gates();
+    bool shorten_with_all_or_gates();
 
     //Finding
     void find_or_gates_and_update_stats();
@@ -189,7 +196,7 @@ private:
         , uint32_t& reduction
     );
 
-    CL_ABST_TYPE  calc_sorted_occ_and_set_seen2(
+    cl_abst_type  calc_sorted_occ_and_set_seen2(
         const OrGate& gate
         , uint32_t& maxSize
         , uint32_t& minSize
@@ -197,7 +204,7 @@ private:
     );
     void set_seen2_and_abstraction(
         const Clause& cl
-        , CL_ABST_TYPE& abstraction
+        , cl_abst_type& abstraction
     );
     bool check_seen_and_gate_against_cl(
         const Clause& this_cl
@@ -209,7 +216,7 @@ private:
         , const OrGate& gate
         , const ClOffset this_cl_offset
     );
-    CL_ABST_TYPE calc_abst_and_set_seen(
+    cl_abst_type calc_abst_and_set_seen(
        const Clause& cl
         , const OrGate& gate
     );
@@ -217,7 +224,7 @@ private:
         const Watched& ws
         , const size_t minSize
         , const size_t maxSize
-        , const CL_ABST_TYPE abstraction
+        , const cl_abst_type abstraction
         , const OrGate& gate
         , const bool only_irred
     );
@@ -225,7 +232,7 @@ private:
     ClOffset findAndGateOtherCl(
         const vector<ClOffset>& this_sizeSortedOcc
         , const Lit lit
-        , const CL_ABST_TYPE abst2
+        , const cl_abst_type abst2
         , const bool gate_is_red
         , const bool only_irred
     );

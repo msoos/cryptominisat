@@ -1,15 +1,8 @@
-Mate Soos <soos.mate@gmail.com> and others
+Mate Soos <soos.mate@gmail.com>
 
-Bug-hunting thanks to:
-- Martin Maurer for helping with Visual C-specific things
-  and reporting on multiple important bugs
-- Vegard Nossum for extensive help with many issues, incl. gcc
-  bug and some latent bugs
-- Trevor Hansen, for fuzztesting the code on millions of problems
-  and reporting on a good number of bugs
-- Vijay Ganesh for finding a lots of bugs
-- Oliver Kullmann for help and ideas with gcc bug hunting
-- Users of STP (Simple Theorem Prover) for their feedback
-- Robert Aston for debugging memory manager-related problems
-- Yuri Pirola for some long-standing bugs
-- and a long list of people for bug reports
+Acknowledgements:
+The author would like to thank in no particular order Horst Samulowitz,
+Marius T. Lindauer, Martin Maurer, Martin Albrecht, Vegard Nossum,
+Valentin Mayer-Eichberger, George Katsirelos, Karsten Nohl,
+Luca Melette, Marijn Heule, Vijay Ganesh, Trevor Hansen and Robert
+Aston for their help.

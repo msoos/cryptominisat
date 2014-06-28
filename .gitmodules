@@ -1,0 +1,6 @@
+[submodule "utils/OutputCheck"]
+	path = utils/OutputCheck
+	url = https://github.com/stp/OutputCheck.git
+[submodule "utils/gtest"]
+	path = utils/gtest
+	url = https://github.com/stp/googletest.git

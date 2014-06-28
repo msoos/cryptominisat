@@ -32,6 +32,7 @@
 #include "time_mem.h"
 #include "avgcalc.h"
 #include "hyperengine.h"
+
 namespace CMSat {
 
 class Solver;
@@ -59,7 +60,7 @@ struct VariableVariance
 class Searcher : public HyperEngine
 {
     public:
-        Searcher(const SolverConf& _conf, Solver* solver);
+        Searcher(const SolverConf& _conf, Solver* solver, bool* _needToInterrupt);
         virtual ~Searcher();
 
         //History
@@ -97,7 +98,7 @@ class Searcher : public HyperEngine
             AvgCalc<size_t>     watchListSizeTraversed;
             #endif
 
-            size_t memUsed() const
+            size_t mem_used() const
             {
                 uint64_t used = sizeof(Hist);
                 used += sizeof(AvgCalc<uint32_t>)*16;
@@ -619,8 +620,17 @@ class Searcher : public HyperEngine
             double cpu_time;
         };
 
+        size_t hyperBinResAll();
+        std::pair<size_t, size_t> removeUselessBins();
+        bool var_inside_assumptions(const Var var) const
+        {
+            assert(assumptionsSet.size() > var);
+            return assumptionsSet[var];
+        }
+
     protected:
-        void new_var(bool bva, Var orig_outer) override;
+        void new_var(const bool bva, const Var orig_outer) override;
+        void new_vars(const size_t n) override;
         void saveVarMem();
         void updateVars(
             const vector<uint32_t>& outerToInter
@@ -631,16 +641,10 @@ class Searcher : public HyperEngine
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         void add_in_partial_solving_stats();
 
-        friend class CalcDefPolars;
         friend class VarReplacer;
-        void filterOrderHeap();
 
         //For connection with Solver
         void  resetStats();
-
-        //For hyper-bin and transitive reduction
-        size_t hyperBinResAll();
-        std::pair<size_t, size_t> removeUselessBins();
 
         Hist hist;
         #ifdef STATS_NEEDED_EXTRA
@@ -653,7 +657,6 @@ class Searcher : public HyperEngine
         //Settings
         Solver*   solver;          ///< Thread control class
         MTRand           mtrand;           ///< random number generator
-        bool             needToInterrupt;  ///<If set to TRUE, interrupt cleanly ASAP
 
         //Stats printing
         void printAgilityStats();
@@ -663,7 +666,7 @@ class Searcher : public HyperEngine
         /// Search for a given number of conflicts.
         bool last_decision_ended_in_conflict;
         lbool search();
-        lbool burstSearch();
+        lbool burst_search();
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, size_t glue);
         void  attach_and_enqueue_learnt_clause(Clause* cl);
@@ -741,7 +744,7 @@ class Searcher : public HyperEngine
         );
         void debug_print_resolving_clause(const PropBy confl) const;
         size_t tmp_learnt_clause_size;
-        CL_ABST_TYPE tmp_learnt_clause_abst;
+        cl_abst_type tmp_learnt_clause_abst;
 
         void add_lit_to_learnt(Lit lit, bool fromProber);
         void analyzeFinal(const Lit p, vector<Lit>& out_conflict);
@@ -787,9 +790,10 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_binary_actual;
         uint64_t more_red_minim_limit_cache_actual;
         const Stats& getStats() const;
-        size_t memUsed() const;
+        size_t mem_used() const;
 
     private:
+        bool do_otf_this_round;
         void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;
         ////////////
@@ -811,7 +815,7 @@ class Searcher : public HyperEngine
             uint32_t         var_inc;
             bool             saved = false;
 
-            size_t memUsed() const
+            size_t mem_used() const
             {
                 size_t mem = 0;
                 mem += activity.capacity()*sizeof(uint32_t);
@@ -866,7 +870,6 @@ class Searcher : public HyperEngine
 
 
         //SQL
-        friend class SQLStats;
         vector<Var> calcVarsToDump() const;
         #ifdef STATS_NEEDED
         void printRestartSQL();
@@ -897,7 +900,6 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         Stats    stats;
-        size_t   origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
 };
@@ -910,18 +912,20 @@ inline void Searcher::varDecayActivity()
 inline void Searcher::bump_var_activitiy(Var var)
 {
     activities[var] += var_inc;
+
+    #ifdef MORE_DEBUG
+    bool rescaled = false;
+    #endif
     if ( (activities[var]) > ((0x1U) << 24)
         || var_inc > ((0x1U) << 24)
     ) {
         // Rescale:
-        for (vector<uint32_t>::iterator
-            it = activities.begin()
-            , end = activities.end()
-            ; it != end
-            ; it++
-        ) {
-            *it >>= 14;
+        for (uint32_t& act : activities) {
+            act >>= 14;
         }
+        #ifdef MORE_DEBUG
+        rescaled = true;
+        #endif
 
         //Reset var_inc
         var_inc >>= 14;
@@ -929,20 +933,20 @@ inline void Searcher::bump_var_activitiy(Var var)
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
         if (var_inc < conf.var_inc_start) {
-            /*cout
-            << "WHAAAAAAAAAAAAAT!!!? var_inc < conf.var_inc_start ! "
-            << var_inc
-            << ", "
-            << conf.var_inc_start
-            << endl;*/
-
             var_inc = conf.var_inc_start;
         }
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.inHeap(var))
+    if (order_heap.in_heap(var)) {
         order_heap.decrease(var);
+    }
+
+    #ifdef MORE_DEBUG
+    if (rescaled) {
+        assert(order_heap.heap_property());
+    }
+    #endif
 }
 
 inline uint32_t Searcher::abstractLevel(const Var x) const
@@ -958,11 +962,6 @@ inline const Searcher::Stats& Searcher::getStats() const
 inline const Searcher::Hist& Searcher::getHistory() const
 {
     return hist;
-}
-
-inline void Searcher::filterOrderHeap()
-{
-    order_heap.filter(VarFilter(this, solver));
 }
 
 inline void Searcher::add_in_partial_solving_stats()

@@ -20,29 +20,29 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Heap_h
 #define Heap_h
 
-#include "vec.h"
+#include "MersenneTwister.h"
 #include "constants.h"
+#include <assert.h>
 #include <algorithm>
-
-
+#include <vector>
+using std::vector;
 
 // A heap implementation with support for decrease/increase key.
 template<class Comp>
 class Heap {
-    Comp     lt;
-    vec<uint32_t> heap;     // heap of ints
-    vec<uint32_t> indices;  // int -> index in heap
+    Comp lt;
+    vector<uint32_t> heap;     // heap of ints
+    vector<uint32_t> indices;  // int -> index in heap
 
     // Index "traversal" functions
-    static inline uint32_t left  (uint32_t i) { return i*2+1; }
-    static inline uint32_t right (uint32_t i) { return (i+1)*2; }
-    static inline uint32_t parent(uint32_t i) { return (i-1) >> 1; }
+    static inline uint32_t left  (uint32_t i) { return i*2; }
+    static inline uint32_t right (uint32_t i) { return i*2+1; }
+    static inline uint32_t parent(uint32_t i) { return i/2; }
 
-
-    inline void percolateUp(uint32_t i)
+    inline void percolate_up(uint32_t i)
     {
         uint32_t x = heap[i];
-        while (i != 0 && lt(x, heap[parent(i)])){
+        while (i > 1 && lt(x, heap[parent(i)])) {
             heap[i]          = heap[parent(i)];
             indices[heap[i]] = i;
             i                = parent(i);
@@ -51,13 +51,21 @@ class Heap {
         indices[x] = i;
     }
 
-
-    inline void percolateDown(uint32_t i)
+    inline void percolate_down(uint32_t i)
     {
         uint32_t x = heap[i];
-        while (left(i) < heap.size()){
-            uint32_t child = right(i) < heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
-            if (!lt(heap[child], x)) break;
+        while (left(i) < heap.size()) {
+            uint32_t child;
+            if ((right(i) < heap.size())
+                && lt(heap[right(i)], heap[left(i)])
+            ) {
+                child = right(i);
+            } else {
+                child = left(i);
+            }
+            if (!lt(heap[child], x)) {
+                break;
+            }
             heap[i]          = heap[child];
             indices[heap[i]] = i;
             i                = child;
@@ -67,126 +75,148 @@ class Heap {
     }
 
 
-    bool heapProperty (uint32_t i) const {
+    //i: position in heap
+    bool heap_property (uint32_t i) const {
         return i >= heap.size()
-            || ((i == 0 || !lt(heap[i], heap[parent(i)])) && heapProperty(left(i)) && heapProperty(right(i))); }
+            || ( (i == 1 || !lt(heap[i], heap[parent(i)]))
+                  && heap_property( left(i)  )
+                  && heap_property( right(i) )
+               );
+    }
 
+    uint32_t operator[](uint32_t index) const {
+        return heap[index];
+    }
 
   public:
-    Heap(const Comp& c) : lt(c) { }
+    Heap(const Comp& c) :
+        lt(c)
+    {
+        heap.push_back(std::numeric_limits<uint32_t>::max());
+    }
+
     Heap(const Heap<Comp>& other) : lt(other.lt) {
-        heap.growTo(other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
-        indices.growTo(other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
+    }
+
+    uint32_t random_element(MTRand& rand) const
+    {
+        assert(!empty());
+        if (heap.size() == 2) {
+            return heap[1];
+        }
+        return heap[rand.randInt(heap.size()-2)+1];
     }
 
     void operator=(const Heap<Comp>& other)
     {
-        if (other.heap.size() > heap.size())
-            heap.growTo(other.heap.size());
-        else
-            heap.shrink(heap.size()-other.heap.size());
+        heap.resize(other.heap.size());
         std::copy(other.heap.begin(), other.heap.end(), heap.begin());
 
-        if (other.indices.size() > indices.size())
-            indices.growTo(other.indices.size());
-        else
-            indices.shrink(indices.size() - other.indices.size());
+        indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
-    size_t memUsed() const
+
+    size_t mem_used() const
     {
         return heap.capacity()*sizeof(uint32_t)
             + indices.capacity()*sizeof(uint32_t);
     }
 
-    uint32_t  size      ()          const { return heap.size(); }
-    bool empty     ()          const { return heap.size() == 0; }
-    bool inHeap    (uint32_t n)     const { return n < indices.size() && indices[n] != std::numeric_limits<uint32_t>::max(); }
-    uint32_t  operator[](uint32_t index) const { assert(index < heap.size()); return heap[index]; }
+    bool empty() const {
+        return heap.size() == 1;
+    }
 
-    void decrease  (uint32_t n) { assert(inHeap(n)); percolateUp(indices[n]); }
-
-    // RENAME WHEN THE DEPRECATED INCREASE IS REMOVED.
-    void increase_ (uint32_t n) { assert(inHeap(n)); percolateDown(indices[n]); }
-
+    void decrease  (uint32_t n) {
+        //assert(in_heap(n));
+        percolate_up(indices[n]);
+    }
 
     void insert(uint32_t n)
     {
-        indices.growTo(n+1, std::numeric_limits<uint32_t>::max());
-        assert(!inHeap(n));
+        if (indices.size() <= n) {
+            indices.resize(n+1, std::numeric_limits<uint32_t>::max());
+        }
+        //assert(!in_heap(n));
 
         indices[n] = heap.size();
-        heap.push(n);
-        percolateUp(indices[n]);
+        heap.push_back(n);
+        percolate_up(indices[n]);
     }
 
 
-    uint32_t  removeMin()
+    uint32_t remove_min()
     {
-        uint32_t x       = heap[0];
-        heap[0]          = heap.back();
-        indices[heap[0]] = 0;
+        uint32_t x       = heap[1];
+        heap[1]          = heap.back();
+        indices[heap[1]] = 1;
         indices[x]       = std::numeric_limits<uint32_t>::max();
-        heap.pop();
-        if (heap.size() > 1) percolateDown(0);
+        heap.pop_back();
+        if (heap.size() > 2) {
+            percolate_down(1);
+        }
         return x;
     }
 
 
     void clear(bool dealloc = false)
     {
-        for (uint32_t i = 0; i != heap.size(); i++)
-            indices[heap[i]] = std::numeric_limits<uint32_t>::max();
-#ifndef NDEBUG
-        for (uint32_t i = 0; i != indices.size(); i++)
-            assert(indices[i] == std::numeric_limits<uint32_t>::max());
-#endif
-        heap.clear(dealloc);
-    }
+        indices.clear();
+        if (dealloc) {
+            indices.shrink_to_fit();
+        }
 
+        heap.clear();
+        heap.push_back(std::numeric_limits<uint32_t>::max());
+        if (dealloc) {
+            heap.shrink_to_fit();
+        }
+    }
 
     // Fool proof variant of insert/decrease/increase
     void update (uint32_t n)
     {
-        if (!inHeap(n))
+        if (!in_heap(n))
             insert(n);
         else {
-            percolateUp(indices[n]);
-            percolateDown(indices[n]);
+            percolate_up(indices[n]);
+            percolate_down(indices[n]);
         }
     }
-
 
     // Delete elements from the heap using a given filter function (-object).
-    // *** this could probaly be replaced with a more general "buildHeap(vec<int>&)" method ***
-    template <class F>
-    void filter(const F& filt) {
+    template <class F> void filter(const F& filt) {
         uint32_t i,j;
-        for (i = j = 0; i != heap.size(); i++)
-            if (filt(heap[i])){
+        for (i = j = 1; i < heap.size(); i++) {
+            if (filt(heap[i])) {
                 heap[j]          = heap[i];
                 indices[heap[i]] = j++;
-            }else
+            } else {
                 indices[heap[i]] = std::numeric_limits<uint32_t>::max();
-
-        heap.shrink(i - j);
-
-        for (int k = ((int)heap.size()) / 2 - 1; k >= 0; k--) {
-            percolateDown(k);
+            }
         }
+        heap.resize(heap.size()-(i - j));
 
-        assert(heapProperty());
+        for (int k = ((int)heap.size()) / 2 - 1; k >= 1; k--) {
+            percolate_down(k);
+        }
+        assert(heap_property());
     }
 
+    bool in_heap(uint32_t n) const {
+        return n < indices.size()
+            && indices[n] != std::numeric_limits<uint32_t>::max();
 
-    // DEBUG: consistency checking
-    bool heapProperty() const {
-        return heapProperty(1); }
+    }
+
+    // consistency checking
+    bool heap_property() const {
+        return heap_property(1);
+    }
 
 };
 
-
-//=================================================================================================
 #endif

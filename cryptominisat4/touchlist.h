@@ -79,7 +79,7 @@ public:
         touched.clear();
     }
 
-    size_t memUsed() const
+    size_t mem_used() const
     {
         uint64_t mem = 0;
         mem += touched.capacity()*sizeof(uint32_t);

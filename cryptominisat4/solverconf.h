@@ -9,6 +9,11 @@
 
 #include <string>
 #include <cstdlib>
+#if defined(_MSC_VER) || __cplusplus>=201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+    #include <cstdint>
+#else
+    #include <stdint.h>
+#endif
 
 namespace CMSat {
 
@@ -17,7 +22,8 @@ enum ClauseCleaningTypes {
     , clean_size_based
     , clean_sum_prop_confl_based
     , clean_sum_confl_depth_based
-    ,  clean_sum_activity_based
+    , clean_sum_activity_based
+    , clean_none
 };
 
 enum PolarityMode {
@@ -96,9 +102,6 @@ class SolverConf
         unsigned  var_inc_divider;
         unsigned  var_inc_variability;
         double random_var_freq;
-        unsigned random_var_freq_increase_for;
-        double random_var_freq_for_top_N;
-        unsigned random_picks_from_top_T;
         PolarityMode polarity_mode;
         int do_calc_polarity_first_time;
         int do_calc_polarity_every_time;
@@ -110,6 +113,7 @@ class SolverConf
         unsigned  long long preClauseCleanLimit;
         unsigned  long long preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
+        int       dont_remove_fresh_glue2;
         double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round
         unsigned  numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         unsigned  startClean;
@@ -124,7 +128,7 @@ class SolverConf
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
-        unsigned   burstSearchLen;
+        unsigned   burst_search_len;
         Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
@@ -192,6 +196,9 @@ class SolverConf
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
+        int      skip_some_bve_resolvents;
+
+        //BVA
         int      do_bva;
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
@@ -223,8 +230,6 @@ class SolverConf
         int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
         unsigned  dominPickFreq;
-        unsigned  polarity_flip_min_depth;
-        unsigned  polarity_flip_frequency_multiplier;
 
         //Simplifier
         int      simplify_at_startup;
@@ -235,6 +240,7 @@ class SolverConf
         unsigned maxOccurIrredMB;
         unsigned maxOccurRedMB;
         unsigned long long maxOccurRedLitLinkedM;
+        double   subsume_gothrough_multip;
 
         //Vivification
         int      doClausVivif;
@@ -268,8 +274,6 @@ class SolverConf
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
 
         //interrupting & dumping
-        bool      needResultFile;     ///<If set to TRUE, result will be written to a file
-        std::string resultFilename;    ///<Write result to this file. Only active if "needResultFile" is set to TRUE
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;

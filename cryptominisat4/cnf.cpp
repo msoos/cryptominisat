@@ -17,10 +17,10 @@ void CNF::new_var(const bool bva, const Var orig_outer)
     minNumVars++;
     enlarge_minimal_datastructs();
     if (conf.doCache) {
-        implCache.new_var(orig_outer);
+        implCache.new_var();
     }
     if (conf.doStamp) {
-        stamp.new_var(orig_outer);
+        stamp.new_var();
     }
 
     if (orig_outer == std::numeric_limits<Var>::max()) {
@@ -64,6 +64,52 @@ void CNF::new_var(const bool bva, const Var orig_outer)
     #endif
 }
 
+void CNF::new_vars(size_t n)
+{
+    if (nVars() + n >= 1ULL<<28) {
+        cout << "ERROR! Variable requested is far too large" << endl;
+        std::exit(-1);
+    }
+
+    minNumVars += n;
+    enlarge_minimal_datastructs(n);
+    if (conf.doCache) {
+        implCache.new_vars(n);
+    }
+    if (conf.doStamp) {
+        stamp.new_vars(n);
+    }
+
+    enlarge_nonminimial_datastructs(n);
+
+    interToOuterMain.reserve(interToOuterMain.size() + n);
+    outerToInterMain.reserve(outerToInterMain.size() + n);
+    outer_to_with_bva_map.reserve(outer_to_with_bva_map.size() + n);
+    for(int i = n-1; i >= 0; i--) {
+        Var minVar = nVars()-i-1;
+        Var maxVar = nVarsOuter()-i-1;
+        //cout << "nVars(): " << nVars() << endl;
+        //cout << "N: " << n << " i: " << i << " minVar: " << minVar << " maxVar: " << maxVar << endl;
+
+        interToOuterMain.push_back(maxVar);
+        const Var x = interToOuterMain[minVar];
+        interToOuterMain[minVar] = maxVar;
+        interToOuterMain[maxVar] = x;
+
+        outerToInterMain.push_back(maxVar);
+        outerToInterMain[maxVar] = minVar;
+        outerToInterMain[x] = maxVar;
+
+        swapVars(nVarsOuter()-i-1);
+        varData[nVars()-i-1].is_bva = false;
+        outer_to_with_bva_map.push_back(nVarsOuter()-i-1);
+    }
+
+    #ifdef MORE_DEBUG
+    test_reflectivity_of_renumbering();
+    #endif
+}
+
 void CNF::swapVars(const Var which)
 {
     std::swap(assigns[nVars()-1], assigns[which]);
@@ -74,23 +120,20 @@ void CNF::swapVars(const Var which)
     #endif
 }
 
-void CNF::enlarge_nonminimial_datastructs()
+void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
-    assigns.push_back(l_Undef);
-    varData.push_back(VarData());
+    assigns.resize(assigns.size() + n, l_Undef);
+    varData.resize(varData.size() + n, VarData());
     #ifdef STATS_NEEDED
-    varDataLT.push_back(VarData());
+    varDataLT.resize(varDataLT.size() + n, VarData());
     #endif
 }
 
-void CNF::enlarge_minimal_datastructs()
+void CNF::enlarge_minimal_datastructs(size_t n)
 {
     watches.resize(nVars()*2);
-
-    seen      .push_back(0);
-    seen      .push_back(0);
-    seen2     .push_back(0);
-    seen2     .push_back(0);
+    seen.resize(seen.size() + 2*n, 0);
+    seen2.resize(seen2.size() + 2*n,0);
 }
 
 void CNF::saveVarMem()
@@ -146,7 +189,7 @@ void CNF::updateVars(
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
-    mem += clAllocator.memUsed();
+    mem += clAllocator.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
     printStatsLine("c Mem for longclauses"

@@ -80,7 +80,7 @@ class FoundXors
     public:
         FoundXors(
             const vector<Lit>& cl
-            , CL_ABST_TYPE _abst
+            , cl_abst_type _abst
             , vector<uint16_t>& seen
         ) :
             abst(_abst)
@@ -101,7 +101,7 @@ class FoundXors
         }
 
         //GET-type functions
-        CL_ABST_TYPE      getAbst() const;
+        cl_abst_type      getAbst() const;
         uint32_t          getSize() const;
         bool              getRHS() const;
         bool              foundAll() const;
@@ -141,7 +141,7 @@ class FoundXors
         // 0 0 1
         vector<bool> foundComb;
         Lit origCl[5];
-        const CL_ABST_TYPE abst;
+        const cl_abst_type abst;
         uint32_t size;
         bool rhs;
 };
@@ -191,14 +191,14 @@ public:
 
     const Stats& getStats() const;
     size_t getNumCalls() const;
-    virtual size_t memUsed() const;
+    virtual size_t mem_used() const;
 
 private:
 
     int64_t maxTimeFindXors;
 
     //Find XORs
-    void findXor(vector<Lit>& lits, CL_ABST_TYPE abst);
+    void findXor(vector<Lit>& lits, cl_abst_type abst);
 
     ///Normal finding of matching clause for XOR
     void findXorMatch(
@@ -258,7 +258,7 @@ private:
 };
 
 
-inline CL_ABST_TYPE FoundXors::getAbst() const
+inline cl_abst_type FoundXors::getAbst() const
 {
     return abst;
 }

@@ -9,9 +9,15 @@ before_install:
 install:
   - sudo apt-get install libboost-program-options-dev libboost-test-dev gcc-4.7 g++-4.7
   - sudo apt-get install cmake
+  - sudo pip install lit
+# Initialise our submodules
+  - git submodule init
+  - git submodule update
+  - mkdir build && cd build
+  - CC="gcc-4.7" CXX="g++-4.7" cmake -DENABLE_TESTING=ON ..
 script:
-  - mkdir build
-  - cd build
-  - CC="gcc-4.7" CXX="g++-4.7" cmake ..
   - make
-  - make test
+  - test -f lib/libcryptominisat4.so
+  - test -f ./cryptominisat
+  - ctest -V
+  - sudo make install

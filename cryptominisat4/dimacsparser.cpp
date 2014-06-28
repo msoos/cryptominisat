@@ -48,21 +48,6 @@ void DimacsParser::skipLine(StreamBuffer& in)
     }
 }
 
-/**
-@brief Returns line until the end of line
-*/
-std::string DimacsParser::untilEnd(StreamBuffer& in)
-{
-    std::string ret;
-
-    while(*in != EOF && *in != '\0' && *in != '\n') {
-        ret += *in;
-        ++in;
-    }
-
-    return ret;
-}
-
 int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
 {
     lenParsed = 0;
@@ -86,8 +71,8 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     }
     while (*in >= '0' && *in <= '9') {
         lenParsed++;
-        val = val*10 + (*in - '0'),
-              ++in;
+        val = val*10 + (*in - '0');
+        ++in;
     }
     return neg ? -val : val;
 }
@@ -109,7 +94,7 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
     str.clear();
     skipWhitespace(in);
     while (*in != ' ' && *in != '\n') {
-        str += *in;
+        str.push_back(*in);
         ++in;
     }
 }
@@ -160,6 +145,18 @@ void DimacsParser::printHeader(StreamBuffer& in)
         if (verbosity >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
+        }
+        if (vars < 0) {
+            std::cerr << "ERROR: Number of variables in header cannot be less than 0" << endl;
+            exit(-1);
+        }
+        if (clauses < 0) {
+            std::cerr << "ERROR: Number of clauses in header cannot be less than 0" << endl;
+            exit(-1);
+        }
+
+        if (solver->nVars() <= (size_t)vars) {
+            solver->new_vars(vars-solver->nVars());
         }
     } else {
         cout
@@ -241,6 +238,15 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_var()" << endl;
         }
+    } else if (debugLib && str == "Solver::new_vars(") {
+        skipWhitespace(in);
+        uint32_t len = 0;
+        int n = parseInt(in, len);
+        solver->new_vars(n);
+
+        if (verbosity >= 6) {
+            cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
+        }
     } else {
         if (verbosity >= 6) {
             cout
@@ -270,7 +276,7 @@ void DimacsParser::parse_and_add_xor_clause(StreamBuffer& in)
         return;
 
     bool rhs = true;
-    vector<Var> vars;
+    vars.clear();
     for(Lit& lit: lits) {
         vars.push_back(lit.var());
         if (lit.sign()) {

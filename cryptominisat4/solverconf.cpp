@@ -30,9 +30,6 @@ SolverConf::SolverConf() :
         , var_inc_divider(10)
         , var_inc_variability(0)
         , random_var_freq(0)
-        , random_var_freq_increase_for(0)
-        , random_var_freq_for_top_N(0)
-        , random_picks_from_top_T(20)
         , polarity_mode(polarmode_automatic)
         , do_calc_polarity_first_time(true)
         , do_calc_polarity_every_time(true)
@@ -44,6 +41,7 @@ SolverConf::SolverConf() :
         , preClauseCleanLimit(2)
         , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
+        , dont_remove_fresh_glue2(false)
         , ratioRemoveClauses(0.5)
         , numCleanBetweenSimplify(2)
         , startClean(10000)
@@ -58,7 +56,7 @@ SolverConf::SolverConf() :
         //Restarting
         , restart_first(300)
         , restart_inc(2)
-        , burstSearchLen(300)
+        , burst_search_len(300)
         , restartType(restart_type_automatic)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
@@ -126,6 +124,7 @@ SolverConf::SolverConf() :
         , var_elim_strategy  (elimstrategy_heuristic)
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
+        , skip_some_bve_resolvents(false)
 
         //Bounded variable addition
         , do_bva(true)
@@ -159,8 +158,6 @@ SolverConf::SolverConf() :
         , doLHBR           (false)
         , propBinFirst     (false)
         , dominPickFreq    (400)
-        , polarity_flip_min_depth(50)
-        , polarity_flip_frequency_multiplier(0)
 
         //Simplifier
         , simplify_at_startup(false)
@@ -171,6 +168,7 @@ SolverConf::SolverConf() :
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
+        , subsume_gothrough_multip(4.0)
 
         //Vivification
         , doClausVivif(true)
@@ -203,7 +201,6 @@ SolverConf::SolverConf() :
         , doFindEqLitsWithGates(true)
 
         //Misc
-        , needResultFile       (false)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(6000)

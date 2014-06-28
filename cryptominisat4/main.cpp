@@ -72,6 +72,7 @@ Main::Main(int _argc, char** _argv) :
 }
 
 SATSolver* solverToInterrupt;
+int clear_interrupt;
 string redDumpFname;
 string irredDumpFname;
 
@@ -80,7 +81,7 @@ void SIGINT_handler(int)
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (!redDumpFname.empty() || !irredDumpFname.empty()) {
+    if (!redDumpFname.empty() || !irredDumpFname.empty() || clear_interrupt) {
         solver->interrupt_asap();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl
@@ -319,6 +320,8 @@ void Main::add_supported_options()
         , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
     ("clean", po::value(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
         , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'confdep' for (propagations+conflicts)/(depth at which they were caused)")
+    ("noremfreshgl2", po::value(&conf.dont_remove_fresh_glue2)->default_value(conf.dont_remove_fresh_glue2)
+        , "Don't remove glue 2 claues that are fresh")
     ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("lockuip", po::value(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
@@ -327,12 +330,6 @@ void Main::add_supported_options()
         , "How many clauses should be locked into DB per cleaning based on the best uncleaned clauses as per selected heuristic")
     ("perfmult", po::value(&conf.multiplier_perf_values_after_cl_clean)->default_value(conf.multiplier_perf_values_after_cl_clean, s_perf_multip.str())
         , "Multiply clause performance values by this number after every clause cleaning")
-    ("preclean", po::value(&conf.doPreClauseCleanPropAndConfl)->default_value(conf.doPreClauseCleanPropAndConfl)
-        , "Before cleaning clauses with whatever sorting strategy, remove redundant clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
-    ("precleanlim", po::value(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
-        , "Limit of sum of propagation&conflicts for pre-cleaning of clauses. See previous option")
-    ("precleantime", po::value(&conf.preCleanMinConflTime)->default_value(conf.preCleanMinConflTime)
-        , "At least this many conflict must have passed since creation of the clause before preclean can remove it")
     ("clearstat", po::value(&conf.doClearStatEveryClauseCleaning)->default_value(conf.doClearStatEveryClauseCleaning)
         , "Clear clause statistics data of each clause after clause cleaning")
     ("startclean", po::value(&conf.startClean)->default_value(conf.startClean)
@@ -342,9 +339,6 @@ void Main::add_supported_options()
     ("maxredratio", po::value(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ;
-
-    std::ostringstream s_random_var_freq_for_top_N;
-    s_random_var_freq_for_top_N << std::setprecision(5) << conf.random_var_freq_for_top_N;
 
     std::ostringstream s_random_var_freq;
     s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
@@ -365,20 +359,12 @@ void Main::add_supported_options()
         , "Use dominating literal every once in N when picking decision literal")
     ("morebump", po::value(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
-    ("topnrndpick", po::value(&conf.random_picks_from_top_T)->default_value(conf.random_picks_from_top_T)
-        , "When randomly picking brancing variable, pick from the top N")
-    ("topnrndpickfreq", po::value(&conf.random_var_freq_for_top_N)->default_value(conf.random_var_freq_for_top_N, s_random_var_freq_for_top_N.str())
-        , "Frequency of increased random  picking brancing variable from top N")
-    ("topnincnum", po::value(&conf.random_var_freq_increase_for)->default_value(conf.random_var_freq_increase_for)
-        , "Until what decision level should the increase in variable branch randomness be. 0 means none, 1 means only dec. level 0, etc.")
     ;
 
     po::options_description polar_options("Variable polarity options");
     polar_options.add_options()
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
-    ("flippolf", po::value(&conf.polarity_flip_frequency_multiplier)->default_value(conf.polarity_flip_frequency_multiplier)
-        , "Flip polarity frequency once every N, multiplied by avg. branch depth delta")
     ("calcpolar1st", po::value(&conf.do_calc_polarity_first_time)->default_value(conf.do_calc_polarity_first_time)
         , "Calculate the polarity of variables based on their occurrences at startup of solve()")
     ("calcpolarall", po::value(&conf.do_calc_polarity_every_time)->default_value(conf.do_calc_polarity_every_time)
@@ -398,7 +384,7 @@ void Main::add_supported_options()
         , "If stopped, dump irred original problem here")
     ("debuglib", po::bool_switch(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
-    ("dumpresult", po::value(&conf.resultFilename)
+    ("dumpresult", po::value(&resultFilename)
         , "Write result(s) to this file")
     ;
 
@@ -445,6 +431,8 @@ void Main::add_supported_options()
         , "No extended subsumption with binary clauses")
     ("eratio", po::value(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
+    ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
+        , "Skip BVE resolvents in case they belong to a gate")
     ("occredmax", po::value(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
         , "Don't add to occur list any redundant clause larger than this")
     ("occirredmaxmb", po::value(&conf.maxOccurIrredMB)->default_value(conf.maxOccurIrredMB)
@@ -608,8 +596,12 @@ void Main::add_supported_options()
         , "Subsume and strengthen implicit clauses with each other")
     ("implsubsto", po::value(&conf.subsume_implicit_timeoutM)->default_value(conf.subsume_implicit_timeoutM)
         , "Timeout (in bogoprop Millions) of implicit subsumption")
-    ("burst", po::value(&conf.burstSearchLen)->default_value(conf.burstSearchLen)
+    ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
         , "Number of conflicts to do in burst search")
+    ("clearinter", po::value(&clear_interrupt)->default_value(0)
+        , "Interrupt threads cleanly, all the time")
+    ("zero-exit-status", po::bool_switch(&zero_exit_status)
+        , "Exit with status zero in case the solving has finished without an issue")
     ;
 
     po::options_description componentOptions("Component options");
@@ -920,7 +912,7 @@ void Main::manually_parse_some_options()
     }
 
     if (vm.count("dumpresult")) {
-        conf.needResultFile = true;
+        needResultFile = true;
     }
 
     parse_polarity_type();
@@ -962,6 +954,7 @@ void Main::manually_parse_some_options()
 
 void Main::parseCommandLine()
 {
+    clear_interrupt = 0;
     conf.verbosity = 2;
     conf.verbStats = 1;
 
@@ -1026,14 +1019,12 @@ int Main::solve()
     solver->set_num_threads(num_threads);
 
     std::ofstream resultfile;
-
-    //For dumping result into file
-    if (conf.needResultFile) {
-        resultfile.open(conf.resultFilename.c_str());
+    if (needResultFile) {
+        resultfile.open(resultFilename.c_str());
         if (!resultfile) {
             cout
             << "ERROR: Couldn't open file '"
-            << conf.resultFilename
+            << resultFilename
             << "' for writing!"
             << endl;
             std::exit(-1);
@@ -1051,6 +1042,7 @@ int Main::solve()
     solver->add_sql_tag("commandline", commandLine);
 
     //Parse in DIMACS (maybe gzipped) files
+    //solver->log_to_file("mydump.cnf");
     parseInAllFiles();
 
     //Multi-solutions
@@ -1063,7 +1055,7 @@ int Main::solve()
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             //Print result
             printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-            if (conf.needResultFile) {
+            if (needResultFile) {
                 printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
             }
 
@@ -1101,7 +1093,7 @@ int Main::solve()
 
     //Final print of solution
     printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-    if (conf.needResultFile) {
+    if (needResultFile) {
         printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
     }
 
@@ -1124,6 +1116,10 @@ int Main::solve()
 
 int Main::correctReturnValue(const lbool ret) const
 {
+    if (zero_exit_status) {
+        return 0;
+    }
+
     int retval = -1;
     if      (ret == l_True)  retval = 10;
     else if (ret == l_False) retval = 20;

@@ -59,12 +59,12 @@ class CompHandler
         bool handle();
         const vector<lbool>& getSavedState();
         void new_var(const Var orig_outer);
+        void new_vars(const size_t n);
         void saveVarMem();
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
-
-        friend class ClauseAllocator;
+        void dump_removed_clauses(std::ostream* outfile) const;
 
     private:
         struct sort_pred {
@@ -127,17 +127,17 @@ class CompHandler
         //Re-numbering
         void createRenumbering(const vector<Var>& vars);
         vector<Var> useless; //temporary
-        vector<Var> interToOuter;
-        vector<Var> outerToInter;
+        vector<Var> smallsolver_to_bigsolver;
+        vector<Var> bigsolver_to_smallsolver;
 
-        Lit updateLit(const Lit lit) const
+        Lit upd_bigsolver_to_smallsolver(const Lit lit) const
         {
-            return Lit(updateVar(lit.var()), lit.sign());
+            return Lit(upd_bigsolver_to_smallsolver(lit.var()), lit.sign());
         }
 
-        Var updateVar(const Var var) const
+        Var upd_bigsolver_to_smallsolver(const Var var) const
         {
-            return outerToInter[var];
+            return bigsolver_to_smallsolver[var];
         }
 
         //Saving clauses

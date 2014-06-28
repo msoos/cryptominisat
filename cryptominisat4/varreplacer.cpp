@@ -63,6 +63,15 @@ void VarReplacer::new_var(const Var orig_outer)
     }
 }
 
+void VarReplacer::new_vars(const size_t n)
+{
+    size_t oldsize = table.size();
+    table.resize(table.size()+n, lit_Undef);
+    for(size_t i = oldsize; i < table.size(); i++) {
+        table[i] = Lit(i, false);
+    }
+}
+
 void VarReplacer::saveVarMem()
 {
 }
@@ -139,7 +148,7 @@ void VarReplacer::update_vardata_and_activities(
     //The activities of the others don't need to be updated -- they are not
     //set to be decision vars anyway
     solver->activities[replaced_with] += solver->activities[orig];
-    solver->order_heap.update(orig);
+    solver->order_heap.update(replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
@@ -177,7 +186,7 @@ bool VarReplacer::performReplace()
     runStats.clear();
     runStats.numCalls = 1;
     const double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     #ifdef REPLACE_STATISTICS
     uint32_t numRedir = 0;
@@ -210,10 +219,10 @@ bool VarReplacer::performReplace()
     lastReplacedVars = replacedVars;
 
     solver->testAllClauseAttach();
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     //Replace implicits
@@ -249,14 +258,14 @@ bool VarReplacer::performReplace()
     }
 
 end:
-    assert(solver->qhead == solver->trail.size() || !solver->ok);
+    assert(solver->prop_at_head() || !solver->ok);
 
     //Update stamp dominators
     solver->stamp.updateDominators(this);
 
     //Update stats
     const double time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns += solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     globalStats += runStats;
     if (solver->conf.verbosity  >= 1) {
@@ -276,7 +285,9 @@ end:
     if (solver->okay()) {
         solver->testAllClauseAttach();
         solver->checkNoWrongAttach();
-        solver->checkStats();
+        #ifdef DEBUG_IMPLICIT_STATS
+        solver->check_stats();
+        #endif
         checkUnsetSanity();
     }
 
@@ -485,7 +496,7 @@ void VarReplacer::updateStatsFromImplStats()
     solver->binTri.irredTris -= impl_tmp_stats.removedIrredTri/3;
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
@@ -981,7 +992,7 @@ bool VarReplacer::addLaterAddBinXor()
     return true;
 }
 
-size_t VarReplacer::memUsed() const
+size_t VarReplacer::mem_used() const
 {
     size_t b = 0;
     b += delayedEnqueue.capacity()*sizeof(Lit);
@@ -1045,20 +1056,6 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
         , (double)getNumReplacedVars()/(double)getNumTrees()
         , "leafs/tree"
     );
-}
-
-size_t VarReplacer::get_num_bin_clauses() const
-{
-    size_t num = 0;
-    for (Var var = 0; var < table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
-
-        num += 2;
-    }
-
-    return num;
 }
 
 void VarReplacer::Stats::print(const size_t nVars) const
@@ -1159,8 +1156,20 @@ vector<Var> VarReplacer::get_vars_replacing(Var var) const
     var = solver->map_inter_to_outer(var);
     map<Var, vector<Var> >::const_iterator it = reverseTable.find(var);
     if (it != reverseTable.end()) {
-        for(Var var: it->second) {
-            ret.push_back(solver->map_outer_to_inter(var));
+        for(Var v: it->second) {
+            ret.push_back(solver->map_outer_to_inter(v));
+        }
+    }
+
+    return ret;
+}
+
+vector<pair<Lit, Lit> > VarReplacer::get_all_binary_xors_outer() const
+{
+    vector<pair<Lit, Lit> > ret;
+    for(size_t i = 0; i < table.size(); i++) {
+        if (table[i] != Lit(i, false)) {
+            ret.push_back(std::make_pair(Lit(i, false), table[i]));
         }
     }
 

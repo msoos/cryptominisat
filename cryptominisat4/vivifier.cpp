@@ -43,7 +43,6 @@ using std::endl;
 
 Vivifier::Vivifier(Solver* _solver) :
     solver(_solver)
-    , seen(solver->seen)
 {}
 
 bool Vivifier::vivify(const bool alsoStrengthen)
@@ -91,7 +90,7 @@ bool Vivifier::vivify_tri_irred_cls()
     double myTime = cpuTime();
     uint64_t maxNumProps = 2LL*1000LL*1000LL;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
-    size_t origTrailSize = solver->trail.size();
+    size_t origTrailSize = solver->trail_size();
 
     //Randomize start in the watchlist
     size_t upI;
@@ -101,7 +100,9 @@ bool Vivifier::vivify_tri_irred_cls()
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps
+            || solver->must_interrupt_asap()
+        ) {
             break;
         }
 
@@ -149,7 +150,7 @@ bool Vivifier::vivify_tri_irred_cls()
         << "c [vivif] tri irred"
         << " shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
-        << " 0-depth ass: " << solver->trail.size() - origTrailSize
+        << " 0-depth ass: " << solver->trail_size() - origTrailSize
         << " T: " << std::setprecision(2) << time_used
         << " T-out: " << std::setprecision(2) << (time_out ? "Y" : "N")
         << " T-rem: " << std::setprecision(2) << time_remain *100.0 << "%"
@@ -165,7 +166,7 @@ bool Vivifier::vivify_tri_irred_cls()
         );
     }
 
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }
@@ -202,7 +203,7 @@ bool Vivifier::vivify_long_irred_cls()
     }
 
     double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
     uint64_t maxNumProps = solver->conf.max_props_vivif_long_irred_clsM*1000LL*1000ULL;
@@ -238,7 +239,9 @@ bool Vivifier::vivify_long_irred_cls()
         }
 
         //if done enough, stop doing it
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps) {
+        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps
+            || solver->must_interrupt_asap()
+        ) {
             if (solver->conf.verbosity >= 3) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"
@@ -324,7 +327,7 @@ bool Vivifier::vivify_long_irred_cls()
 
     //Update stats
     runStats.time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }

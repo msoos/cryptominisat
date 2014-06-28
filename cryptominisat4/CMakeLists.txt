@@ -6,14 +6,12 @@ include_directories(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
-#set(cryptominisat4_lib_objects "")
-set(cryptominisat4_public_headers "")
-
 set(cryptoms_lib_files
     cnf.cpp
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
+    clauseusagestats.cpp
     prober.cpp
     simplifier.cpp
     subsumestrengthen.cpp
@@ -36,22 +34,14 @@ set(cryptoms_lib_files
     hyperengine.cpp
     subsumeimplicit.cpp
     cryptominisat.cpp
-    clause.cpp
+    cleaningstats.cpp
     datasync.cpp
+    reducedb.cpp
+    clausedumper.cpp
+    bva.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
-
-# foreach(target ${stp_lib_targets})
-#     list(APPEND stp_lib_objects $<TARGET_OBJECTS:${target}>)
-#
-#     get_target_property(TARGETS_PUBLIC_HEADERS ${target} PUBLIC_HEADER)
-#     if (EXISTS "${TARGETS_PUBLIC_HEADERS}")
-#         list(APPEND stp_public_headers "${TARGETS_PUBLIC_HEADERS}")
-#         message("Adding public header(s) ${TARGETS_PUBLIC_HEADERS} to target libstp")
-#     endif()
-# endforeach()
-
 
 set(cryptoms_lib_link_libs "")
 
@@ -79,6 +69,10 @@ if (Perftools_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
 endif (Perftools_FOUND)
 
+if (TBB_FOUND)
+    #set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES} ${TBB_MALLOC_PROXY_LIBRARY_NAMES})
+    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
+endif()
 
 if (STATICCOMPILE)
     add_library(libcryptominisat4 STATIC ${cryptoms_lib_files})
@@ -100,11 +94,12 @@ cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
-# This is done so that projects that use cryptominisat4 as external project (not via CMake)
-# can find the public header files.
+# The cryptominisat4Config.cmake we generate in the build directory depends on
+# this.
 # -----------------------------------------------------------------------------
 set(HEADER_DEST "${CMAKE_BINARY_DIR}/include/cryptominisat4")
 add_custom_target(CopyPublicHeaders ALL)
+get_target_property(cryptominisat4_public_headers libcryptominisat4 PUBLIC_HEADER)
 foreach(public_header ${cryptominisat4_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
     add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
@@ -127,12 +122,21 @@ install(TARGETS libcryptominisat4
 )
 
 
-add_executable(cryptominisat
-    dimacsparser.cpp
-    main.cpp
-)
+if (NOT SIMPLE)
+    add_executable(cryptominisat
+        dimacsparser.cpp
+        main.cpp
+    )
+else()
+    add_executable(cryptominisat
+        dimacsparser.cpp
+        main_simple.cpp
+    )
+endif()
+
 if (STATICCOMPILE)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 1)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
@@ -153,8 +157,5 @@ install(TARGETS cryptominisat
     EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
-if (STATICCOMPILE)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
-endif (STATICCOMPILE)
 
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")

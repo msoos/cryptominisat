@@ -28,7 +28,6 @@
 #include "constants.h"
 #include "cloffset.h"
 #include "solvertypes.h"
-#include "vec.h"
 
 #include <limits>
 
@@ -64,7 +63,7 @@ class Watched {
         /**
         @brief Constructor for a long (>3) clause
         */
-        Watched(const ClOffset offset, CL_ABST_TYPE abst) :
+        Watched(const ClOffset offset, cl_abst_type abst) :
             data1(abst)
             , type(watch_clause_t)
             , data2(offset)
@@ -214,7 +213,7 @@ class Watched {
             return Lit::toLit(data1);
         }
 
-        CL_ABST_TYPE getAbst() const
+        cl_abst_type getAbst() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());

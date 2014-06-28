@@ -7,8 +7,9 @@
 
 using namespace CMSat;
 
-SolutionExtender::SolutionExtender(Solver* _solver) :
+SolutionExtender::SolutionExtender(Solver* _solver, Simplifier* _simplifier) :
     solver(_solver)
+    , simplifier(_simplifier)
 {
 }
 
@@ -17,8 +18,8 @@ void SolutionExtender::extend()
     if (solver->varReplacer)
         solver->varReplacer->extendModel();
 
-    if (solver->simplifier)
-        solver->simplifier->extendModel(this);
+    if (simplifier)
+        simplifier->extendModel(this);
 }
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const

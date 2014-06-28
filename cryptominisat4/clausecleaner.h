@@ -23,9 +23,15 @@
 #define CLAUSECLEANER_H
 
 #include "constants.h"
-#include "simplifier.h"
+#include "watched.h"
+#include "watcharray.h"
+#include "clause.h"
+#include <vector>
+using std::vector;
 
 namespace CMSat {
+
+class Solver;
 
 /**
 @brief Cleans clauses from false literals & removes satisfied clauses

@@ -24,11 +24,11 @@
 
 #include <map>
 #include <vector>
+#include <utility>
 
 #include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
-#include "vec.h"
 #include "watcharray.h"
 
 namespace CMSat {
@@ -59,7 +59,8 @@ class VarReplacer
     public:
         VarReplacer(Solver* solver);
         ~VarReplacer();
-        void new_var(Var orig_outer);
+        void new_var(const Var orig_outer);
+        void new_vars(const size_t n);
         void saveVarMem();
         bool performReplace();
         bool replace(
@@ -69,19 +70,16 @@ class VarReplacer
             , bool addLaterAsTwoBins
         );
         void print_equivalent_literals(std::ostream *os) const;
-        size_t get_num_bin_clauses() const;
         void print_some_stats(const double global_cpu_time) const;
 
         void extendModel();
         void extendModel(const Var var);
 
-        Lit getLitReplacedWith(Lit lit) const;
         Var getVarReplacedWith(const Var var) const;
         Var getVarReplacedWith(const Lit lit) const;
+        Lit getLitReplacedWith(Lit lit) const;
         Lit getLitReplacedWithOuter(Lit lit) const;
-        bool isReplaced(const Var var) const;
-        bool isReplaced(const Lit lit) const;
-        bool replacingVar(const Var var) const;
+
         vector<Var> get_vars_replacing(Var var) const;
         bool addLaterAddBinXor();
         void updateVars(
@@ -116,10 +114,15 @@ class VarReplacer
             uint64_t removedLongLits = 0;
         };
         const Stats& getStats() const;
-        size_t memUsed() const;
+        size_t mem_used() const;
+        vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
 
     private:
         Solver* solver;
+
+        bool isReplaced(const Var var) const;
+        bool isReplaced(const Lit lit) const;
+
         size_t getNumTrees() const;
         void set_sub_var_during_solution_extension(Var var, Var sub_var);
         void checkUnsetSanity();
@@ -268,11 +271,6 @@ inline Var VarReplacer::getVarReplacedWith(const Lit lit) const
 inline bool VarReplacer::isReplaced(const Lit lit) const
 {
     return isReplaced(lit.var());
-}
-
-inline bool VarReplacer::replacingVar(const Var var) const
-{
-    return (reverseTable.find(var) != reverseTable.end());
 }
 
 inline size_t VarReplacer::getNumTrees() const

@@ -26,7 +26,6 @@
 #include "constants.h"
 #include "cloffset.h"
 #include <stdlib.h>
-#include "vec.h"
 #include <map>
 #include <vector>
 
@@ -86,7 +85,7 @@ class ClauseAllocator {
             , const bool force = false
         );
 
-        size_t memUsed() const;
+        size_t mem_used() const;
 
     private:
         void updateAllOffsetsAndPointers(

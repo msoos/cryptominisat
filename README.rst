@@ -116,8 +116,14 @@ such, the 1st CNF above would become::
 
   int main()
   {
-      Solver solver;
+      SATSolver solver;
       vector<Lit> clause;
+      
+      //We need 3 variables
+      solver.new_vars(3);
+      
+      //Let's use 4 threads
+      solver.set_num_threads(4);
 
       //adds "1 0"
       clause.push_back(Lit(0, false));
@@ -140,6 +146,12 @@ such, the 1st CNF above would become::
       assert(solver.get_model()[0] == l_True);
       assert(solver.get_model()[1] == l_False);
       assert(solver.get_model()[2] == l_True);
+      std::cout
+      << "Solution is: "
+      << solver.get_model()[0]
+      << ", " << solver.get_model()[1]
+      << ", " << solver.get_model()[2]
+      << std::endl;
 
       return 0;
   }

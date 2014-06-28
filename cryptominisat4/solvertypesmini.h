@@ -7,12 +7,18 @@
 #ifndef __SOLVERTYPESMINI_H__
 #define __SOLVERTYPESMINI_H__
 
-#include <limits>
+#if defined(_MSC_VER) || __cplusplus>=201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+    #include <cstdint>
+#else
+    #include <stdint.h>
+#endif
+
+#include <iostream>
 
 namespace CMSat {
 
 typedef uint32_t Var;
-static const Var var_Undef(std::numeric_limits<Var>::max()>>1);
+static const Var var_Undef(0xffffffffU >> 1);
 
 class Lit
 {
@@ -125,7 +131,6 @@ public:
 
     friend lbool toLbool(const char v);
     friend lbool boolToLBool(const bool b);
-    friend class llbool;
 };
 inline lbool toLbool(const char   v)
 {

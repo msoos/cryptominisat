@@ -4,17 +4,24 @@
 #include "watched.h"
 #include <vector>
 
+#ifdef USE_TBB
+#include "tbb/scalable_allocator.h"
+#define TBB ,tbb::scalable_allocator<Watched>
+#else
+#define TBB
+#endif
+
 namespace CMSat {
 using namespace CMSat;
 using std::vector;
 
 struct watch_subarray
 {
-    explicit watch_subarray(vector<Watched>& _array) :
+    explicit watch_subarray(vector<Watched TBB>& _array) :
         array(_array)
     {}
 
-    vector<Watched>& array;
+    vector<Watched TBB>& array;
     Watched& operator[](const size_t at)
     {
         return array[at];
@@ -81,11 +88,11 @@ struct watch_subarray
 
 struct watch_subarray_const
 {
-    explicit watch_subarray_const(const vector<Watched>& _array) :
+    explicit watch_subarray_const(const vector<Watched TBB >& _array) :
         array(_array)
     {}
 
-    const vector<Watched>& array;
+    const vector<Watched TBB >& array;
 
     watch_subarray_const(const watch_subarray& other) :
         array(other.array)
@@ -126,7 +133,7 @@ struct watch_subarray_const
 
 struct watch_array
 {
-    vector<vector<Watched> > watches;
+    vector<vector<Watched TBB > > watches;
 
     watch_subarray operator[](size_t pos)
     {
@@ -153,9 +160,9 @@ struct watch_array
         watches.resize(new_size);
     }
 
-    size_t memUsed() const
+    size_t mem_used() const
     {
-        size_t mem = watches.capacity()*sizeof(vector<Watched>);
+        size_t mem = watches.capacity()*sizeof(vector<Watched TBB >);
         for(size_t i = 0; i < watches.size(); i++) {
             mem += watches[i].capacity()*sizeof(Watched);
         }
@@ -174,8 +181,8 @@ struct watch_array
 
     struct iterator
     {
-        vector<vector<Watched> >::iterator it;
-        explicit iterator(vector<vector<Watched> >::iterator _it) :
+        vector<vector<Watched TBB > >::iterator it;
+        explicit iterator(vector<vector<Watched TBB > >::iterator _it) :
             it(_it)
         {}
 
@@ -205,8 +212,8 @@ struct watch_array
 
     struct const_iterator
     {
-        vector<vector<Watched> >::const_iterator it;
-        explicit const_iterator(vector<vector<Watched> >::const_iterator _it) :
+        vector<vector<Watched TBB > >::const_iterator it;
+        explicit const_iterator(vector<vector<Watched TBB > >::const_iterator _it) :
             it(_it)
         {}
 

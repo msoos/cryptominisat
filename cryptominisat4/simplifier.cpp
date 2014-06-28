@@ -31,6 +31,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <functional>
 
 
 #include "simplifier.h"
@@ -50,6 +51,7 @@
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
+#include "bva.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -85,12 +87,12 @@ Simplifier::Simplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , varElimOrder(VarOrderLt(varElimComplexity))
-    , var_bva_order(VarBVAOrder(watch_irred_sizes))
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
+    bva = new BVA(solver, this);
     xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
     if (solver->conf.doFindXors) {
@@ -107,12 +109,13 @@ Simplifier::Simplifier(Solver* _solver):
 
 Simplifier::~Simplifier()
 {
+    delete bva;
     delete xorFinder;
     delete subsumeStrengthen;
     delete gateFinder;
 }
 
-void Simplifier::new_var(const Var orig_outer)
+void Simplifier::check_delete_gatefinder()
 {
     if (solver->conf.doGateFind
         && solver->nVars() > 10ULL*1000ULL*1000ULL
@@ -127,9 +130,23 @@ void Simplifier::new_var(const Var orig_outer)
         gateFinder = NULL;
         solver->conf.doGateFind = false;
     }
+}
+
+void Simplifier::new_var(const Var orig_outer)
+{
+    check_delete_gatefinder();
 
     if (solver->conf.doGateFind) {
         gateFinder->new_var(orig_outer);
+    }
+}
+
+void Simplifier::new_vars(size_t n)
+{
+    check_delete_gatefinder();
+
+    if (solver->conf.doGateFind) {
+        gateFinder->new_vars(n);
     }
 }
 
@@ -148,15 +165,35 @@ void Simplifier::print_blocked_clauses_reverse() const
     ) {
         if (it->dummy) {
             cout
-            << "dummy blocked clause for literal " << it->blockedOn
+            << "dummy blocked clause for literal (internal number) " << it->blockedOn
             << endl;
         } else {
             cout
-            << "blocked clause " << it->lits
-            << " blocked on var "
+            << "blocked clause (internal number) " << it->lits
+            << " blocked on var (internal numbering) "
             << solver->map_outer_to_inter(it->blockedOn.var()) + 1
             << endl;
         }
+    }
+}
+
+void Simplifier::dump_blocked_clauses(std::ostream* outfile) const
+{
+    for (BlockedClause blocked: blockedClauses) {
+        if (blocked.dummy)
+            continue;
+
+        //Print info about clause
+        *outfile
+        << "c next clause is eliminated/blocked on lit "
+        << blocked.blockedOn
+        << endl;
+
+        //Print clause
+        *outfile
+        << sortLits(blocked.lits)
+        << " 0"
+        << endl;
     }
 }
 
@@ -283,7 +320,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     else
         solver->litStats.irredLits -= i-j;
 
-    if (solver->conf.verbosity >= 6 || bva_verbosity) {
+    if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
@@ -698,7 +735,7 @@ bool Simplifier::can_eliminate_var(const Var var) const
 {
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        ||  solver->assumptionsSet[var]
+        ||  solver->var_inside_assumptions(var)
     ) {
         return false;
     }
@@ -718,17 +755,15 @@ bool Simplifier::eliminateVars()
     cl_to_free_later.clear();
 
     order_vars_for_elim();
-    if (solver->conf.verbosity >= 5) {
-        cout << "c #order size:" << varElimOrder.size() << endl;
-    }
 
     //Go through the ordered list of variables to eliminate
     while(!varElimOrder.empty()
         && *limit_to_decrease > 0
         && varelim_num_limit > 0
+        && !solver->must_interrupt_asap()
     ) {
         assert(limit_to_decrease == &norm_varelim_time_limit);
-        Var var = varElimOrder.removeMin();
+        Var var = varElimOrder.remove_min();
 
         //Stats
         *limit_to_decrease -= 20;
@@ -818,217 +853,6 @@ void Simplifier::clean_occur_from_removed_clauses()
     }
 }
 
-bool Simplifier::propagate()
-{
-    if (!solver->okay())
-        return false;
-
-    while (solver->qhead < solver->trail.size()) {
-        const Lit p = solver->trail[solver->qhead];
-        solver->qhead++;
-        watch_subarray ws = solver->watches[(~p).toInt()];
-
-        //Go through each occur
-        for (watch_subarray::const_iterator
-            it = ws.begin(), end = ws.end()
-            ; it != end
-            ; it++
-        ) {
-            if (it->isClause()) {
-                if (!propagate_long_clause(it->getOffset()))
-                    return false;
-            }
-
-            if (it->isTri()) {
-                if (!propagate_tri_clause(*it))
-                    return false;
-            }
-
-            if (it->isBinary()) {
-                if (!propagate_binary_clause(*it))
-                    return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Simplifier::propagate_tri_clause(const Watched& ws)
-{
-    const lbool val2 = solver->value(ws.lit2());
-    const lbool val3 = solver->value(ws.lit3());
-    if (val2 == l_True
-        || val3 == l_True
-    ) {
-        return true;
-    }
-
-    if (val2 == l_Undef
-        && val3 == l_Undef
-    ) {
-        return true;
-    }
-
-    if (val2 == l_False
-        && val3 == l_False
-    ) {
-        solver->ok = false;
-        return false;
-    }
-
-    #ifdef STATS_NEEDED
-    if (ws.red())
-        solver->propStats.propsTriRed++;
-    else
-        solver->propStats.propsTriIrred++;
-    #endif
-
-    if (val2 == l_Undef) {
-        solver->enqueue(ws.lit2());
-    } else {
-        solver->enqueue(ws.lit3());
-    }
-    return true;
-}
-
-bool Simplifier::propagate_binary_clause(const Watched& ws)
-{
-    const lbool val = solver->value(ws.lit2());
-    if (val == l_False) {
-        solver->ok = false;
-        return false;
-    }
-
-    if (val == l_Undef) {
-        solver->enqueue(ws.lit2());
-        #ifdef STATS_NEEDED
-        if (ws.red())
-            solver->propStats.propsBinRed++;
-        else
-            solver->propStats.propsBinIrred++;
-        #endif
-    }
-
-    return true;
-}
-
-bool Simplifier::propagate_long_clause(const ClOffset offset)
-{
-    const Clause& cl = *solver->clAllocator.getPointer(offset);
-    assert(!cl.getFreed() && "Cannot be already removed in occur");
-
-    Lit lastUndef = lit_Undef;
-    uint32_t numUndef = 0;
-    bool satisfied = false;
-    for (const Lit lit: cl) {
-        const lbool val = solver->value(lit);
-        if (val == l_True) {
-            satisfied = true;
-            break;
-        }
-        if (val == l_Undef) {
-            numUndef++;
-            if (numUndef > 1) break;
-            lastUndef = lit;
-        }
-    }
-    if (satisfied)
-        return true;
-
-    //Problem is UNSAT
-    if (numUndef == 0) {
-        solver->ok = false;
-        return false;
-    }
-
-    if (numUndef > 1)
-        return true;
-
-    solver->enqueue(lastUndef);
-    #ifdef STATS_NEEDED
-    if (cl.size() == 3)
-        if (cl.red())
-            solver->propStats.propsTriRed++;
-        else
-            solver->propStats.propsTriIrred++;
-    else {
-        if (cl.red())
-            solver->propStats.propsLongRed++;
-        else
-            solver->propStats.propsLongIrred++;
-    }
-    #endif
-
-    return true;
-}
-
-void Simplifier::subsumeReds()
-{
-    double myTime = cpuTime();
-
-    //Test & debug
-    solver->testAllClauseAttach();
-    solver->checkNoWrongAttach();
-    assert(solver->varReplacer->getNewToReplaceVars() == 0
-            && "Cannot work in an environment when elimnated vars could be replaced by other vars");
-
-    //If too many clauses, don't do it
-    if (solver->getNumLongClauses() > 10000000UL
-        || solver->litStats.irredLits > 50000000UL
-    )  return;
-
-    //Setup
-    clause_lits_added = 0;
-    runStats.clear();
-    clauses.clear();
-    limit_to_decrease = &strengthening_time_limit;
-    size_t origTrailSize = solver->trail.size();
-
-    //Remove all long clauses from watches
-    removeAllLongsFromWatches();
-
-    //Add red to occur
-    runStats.origNumRedLongClauses = solver->longRedCls.size();
-    addFromSolver(
-        solver->longRedCls
-        , true //try to add to occur
-        , false //irreduntant?
-    );
-    solver->longRedCls.clear();
-    runStats.origNumFreeVars = solver->getNumFreeVars();
-    setLimits();
-
-    //Print link-in and startup time
-    const double linkInTime = cpuTime() - myTime;
-    runStats.linkInTime += linkInTime;
-    if (solver->conf.doSQL) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "occur build"
-            , linkInTime
-        );
-    }
-
-
-    subsumeStrengthen->backward_subsumption_with_all_clauses();
-
-    //Add irred to occur, but only temporarily
-    runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    addFromSolver(solver->longIrredCls
-        , false //try to add to occur
-        , true //irreduntant?
-    );
-    solver->longIrredCls.clear();
-
-    //Add back clauses to solver etc
-    finishUp(origTrailSize);
-
-    if (solver->conf.verbosity >= 1) {
-        subsumeStrengthen->getRunStats().printShort();
-    }
-}
-
 void Simplifier::checkAllLinkedIn()
 {
     for(vector<ClOffset>::const_iterator
@@ -1111,12 +935,15 @@ bool Simplifier::simplify()
     setLimits();
     runStats.origNumFreeVars = solver->getNumFreeVars();
     const size_t origBlockedSize = blockedClauses.size();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
 
     //subsumeStrengthen->subsumeWithTris();
     subsumeStrengthen->backward_subsumption_with_all_clauses();
-    if (!subsumeStrengthen->performStrengthening())
+    if (!subsumeStrengthen->performStrengthening()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
+    }
 
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
@@ -1127,28 +954,39 @@ bool Simplifier::simplify()
     }
     #endif
 
-    if (!propagate()) {
+    if (!solver->propagate_occur()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
         eliminate_empty_resolvent_vars();
-        if (!eliminateVars())
+        if (!eliminateVars()
+            || solver->must_interrupt_asap()
+        )
             goto end;
     }
 
-    if (!propagate()) {
+    if (!solver->propagate_occur()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
-    if (!bounded_var_addition()) {
+    if (!bva->bounded_var_addition()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 
     if (solver->conf.doCache && solver->conf.doGateFind) {
-        if (!gateFinder->doAll())
+        if (!gateFinder->doAll()
+            || solver->must_interrupt_asap()
+        ) {
             goto end;
+        }
     }
 
 end:
@@ -1307,15 +1145,15 @@ void Simplifier::buildBlockedMap()
 void Simplifier::finishUp(
     size_t origTrailSize
 ) {
-    bool somethingSet = (solver->trail.size() - origTrailSize) > 0;
-    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
+    bool somethingSet = (solver->trail_size() - origTrailSize) > 0;
+    runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
 
     //Add back clauses to solver
-    propagate();
+    solver->propagate_occur();
     removeAllLongsFromWatches();
     addBackToSolver();
-    propagate();
+    solver->propagate_occur();
     if (solver->ok) {
         solver->clauseCleaner->removeAndCleanAll();
     }
@@ -1337,7 +1175,7 @@ void Simplifier::finishUp(
     if (solver->ok && somethingSet) {
         solver->testAllClauseAttach();
         solver->checkNoWrongAttach();
-        solver->checkStats();
+        solver->check_stats();
         solver->checkImplicitPropagated();
     }
 
@@ -1409,7 +1247,6 @@ void Simplifier::setLimits()
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*1000LL;
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
-    bounded_var_elim_time_limit= 400LL *1000LL*1000LL;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1429,7 +1266,6 @@ void Simplifier::setLimits()
         empty_varelim_time_limit *= 2;
         subsumption_time_limit *= 2;
         strengthening_time_limit *= 2;
-        bounded_var_elim_time_limit *= 2;
     }
 
     if (clause_lits_added < 3ULL*1000ULL*1000ULL) {
@@ -1861,7 +1697,9 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return 1000;
     }
 
-    //mark_gate_in_poss_negs(lit, poss, negs);
+    if (solver->conf.skip_some_bve_resolvents) {
+        mark_gate_in_poss_negs(lit, poss, negs);
+    }
 
     // Count clauses/literals after elimination
     uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
@@ -1891,14 +1729,15 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             if (solver->redundant_or_removed(*it2))
                 continue;
 
-            /*if (solver->conf.otfHyperbin
+            if (solver->conf.skip_some_bve_resolvents
+                && solver->conf.otfHyperbin
                 //Below: Always resolve binaries so that cache&stamps stay OK
                 && !(it->isBinary() && it2->isBinary())
                 //Real check
                 && skip_resolution_thanks_to_gate(at_poss, at_negs)
             ) {
                 continue;
-            }*/
+            }
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
@@ -2072,7 +1911,7 @@ bool Simplifier::add_varelim_resolvent(
     Clause* newCl = NULL;
 
     //Check if a new 2-long would subsume a 3-long if we have time
-    if (finalLits.size() == 2 && *limit_to_decrease > 10ULL*1000ULL) {
+    if (finalLits.size() == 2 && *limit_to_decrease > 10LL*1000LL) {
         bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
         if (already_inside) {
             goto subsume;
@@ -2103,7 +1942,7 @@ bool Simplifier::add_varelim_resolvent(
         clauses.push_back(offset);
         runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-        if (*limit_to_decrease > 10ULL*1000ULL) {
+        if (*limit_to_decrease > 10LL*1000LL) {
             subsume:
             try_to_subsume_with_new_bin_or_tri(finalLits);
         }
@@ -2162,7 +2001,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
         if (touchVar == var
-            || !varElimOrder.inHeap(touchVar)
+            || !varElimOrder.in_heap(touchVar)
             || solver->value(touchVar) != l_Undef
             || solver->varData[touchVar].removed != Removed::none
         ) {
@@ -2860,11 +2699,11 @@ void Simplifier::order_vars_for_elim()
             continue;
 
         *limit_to_decrease -= 50;
-        assert(!varElimOrder.inHeap(var));
+        assert(!varElimOrder.in_heap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);
         varElimOrder.insert(var);
     }
-    assert(varElimOrder.heapProperty());
+    assert(varElimOrder.heap_property());
 
     //Print sorted listed list
     #ifdef VERBOSE_DEBUG_VARELIM
@@ -2925,7 +2764,7 @@ void Simplifier::checkElimedUnassignedAndStats() const
     }
 }
 
-size_t Simplifier::memUsed() const
+size_t Simplifier::mem_used() const
 {
     size_t b = 0;
     b += poss_gate_parts.capacity()*sizeof(char);
@@ -2935,7 +2774,7 @@ size_t Simplifier::memUsed() const
     b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);
     b += toClear.capacity()*sizeof(Lit);
-    b += subsumeStrengthen->memUsed();
+    b += subsumeStrengthen->mem_used();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end
@@ -2952,9 +2791,9 @@ size_t Simplifier::memUsed() const
         b += it->lits.capacity()*sizeof(Lit);
     }
     b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>)); //TODO under-counting
-    b += varElimOrder.memUsed();
+    b += varElimOrder.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;
-    b += touched.memUsed();
+    b += touched.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
 
     return b;
@@ -2963,7 +2802,7 @@ size_t Simplifier::memUsed() const
 size_t Simplifier::memUsedXor() const
 {
     if (xorFinder)
-        return xorFinder->memUsed();
+        return xorFinder->mem_used();
     else
         return 0;
 }
@@ -2997,756 +2836,181 @@ void Simplifier::printGateFinderStats() const
     }
 }
 
-Lit Simplifier::least_occurring_except(const OccurClause& c)
+double Simplifier::Stats::totalTime() const
 {
-    *limit_to_decrease -= (long)m_lits.size();
-    for(const lit_pair lits: m_lits) {
-        seen[lits.lit1.toInt()] = 1;
-        if (lits.lit2 != lit_Undef) {
-            seen[lits.lit2.toInt()] = 1;
-        }
-    }
-
-    Lit smallest = lit_Undef;
-    size_t smallest_val = std::numeric_limits<size_t>::max();
-    const auto check_smallest = [&] (const Lit lit) {
-        //Must not be in m_lits
-        if (seen[lit.toInt()] != 0)
-            return;
-
-        const size_t watch_size = solver->watches[lit.toInt()].size();
-        if (watch_size < smallest_val) {
-            smallest = lit;
-            smallest_val = watch_size;
-        }
-    };
-    solver->for_each_lit_except_watched(c, check_smallest, limit_to_decrease);
-
-    for(const lit_pair lits: m_lits) {
-        seen[lits.lit1.toInt()] = 0;
-        if (lits.lit2 != lit_Undef) {
-            seen[lits.lit2.toInt()] = 0;
-        }
-    }
-
-    return smallest;
+    return linkInTime + blockTime
+        + varElimTime + finalCleanupTime;
 }
 
-Simplifier::lit_pair Simplifier::lit_diff_watches(const OccurClause& a, const OccurClause& b)
+void Simplifier::Stats::clear()
 {
-    //assert(solver->cl_size(a.ws) == solver->cl_size(b.ws));
-    assert(a.lit != b.lit);
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 1;}, limit_to_decrease);
-
-    size_t num = 0;
-    lit_pair toret = lit_pair(lit_Undef, lit_Undef);
-    const auto check_seen = [&] (const Lit lit) {
-        if (seen[lit.toInt()] == 0) {
-            if (num == 0)
-                toret.lit1 = lit;
-            else
-                toret.lit2 = lit;
-
-            num++;
-        }
-    };
-    solver->for_each_lit(a, check_seen, limit_to_decrease);
-    solver->for_each_lit(b, [&](const Lit lit) {seen[lit.toInt()] = 0;}, limit_to_decrease);
-
-    if (num >= 1 && num <= 2)
-        return toret;
-    else
-        return lit_Undef;
+    Stats stats;
+    *this = stats;
 }
 
-Simplifier::lit_pair Simplifier::most_occuring_lit_in_potential(size_t& largest)
+Simplifier::Stats& Simplifier::Stats::operator+=(const Stats& other)
 {
-    largest = 0;
-    lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
-    if (potential.size() > 1) {
-        *limit_to_decrease -= (double)potential.size()*(double)std::log(potential.size())*0.2;
-        std::sort(potential.begin(), potential.end());
-    }
+    numCalls += other.numCalls;
 
-    lit_pair last_occur = lit_pair(lit_Undef, lit_Undef);
-    size_t num = 0;
-    for(const PotentialClause pot: potential) {
-        if (last_occur != pot.lits) {
-            if (num >= largest) {
-                largest = num;
-                most_occur = last_occur;
-            }
-            last_occur = pot.lits;
-            num = 1;
-        } else {
-            num++;
-        }
-    }
-    if (num >= largest) {
-        largest = num;
-        most_occur = last_occur;
-    }
+    //Time
+    linkInTime += other.linkInTime;
+    blockTime += other.blockTime;
+    varElimTime += other.varElimTime;
+    finalCleanupTime += other.finalCleanupTime;
 
-    if (solver->conf.verbosity >= 5) {
+    //Startup stats
+    origNumFreeVars += other.origNumFreeVars;
+    origNumMaxElimVars += other.origNumMaxElimVars;
+    origNumIrredLongClauses += other.origNumIrredLongClauses;
+    origNumRedLongClauses += other.origNumRedLongClauses;
+
+    //Each algo
+    subsumedByVE  += other.subsumedByVE;
+
+    //Elim
+    numVarsElimed += other.numVarsElimed;
+    varElimTimeOut += other.varElimTimeOut;
+    clauses_elimed_long += other.clauses_elimed_long;
+    clauses_elimed_tri += other.clauses_elimed_tri;
+    clauses_elimed_bin += other.clauses_elimed_bin;
+    clauses_elimed_sumsize += other.clauses_elimed_sumsize;
+    longRedClRemThroughElim += other.longRedClRemThroughElim;
+    triRedClRemThroughElim += other.triRedClRemThroughElim;
+    binRedClRemThroughElim += other.binRedClRemThroughElim;
+    numRedBinVarRemAdded += other.numRedBinVarRemAdded;
+    testedToElimVars += other.testedToElimVars;
+    triedToElimVars += other.triedToElimVars;
+    usedAggressiveCheckToELim += other.usedAggressiveCheckToELim;
+    newClauses += other.newClauses;
+
+    zeroDepthAssings += other.zeroDepthAssings;
+
+    return *this;
+}
+
+void Simplifier::Stats::printShort(const bool print_var_elim) const
+{
+
+    cout
+    << "c [occur] " << linkInTime+finalCleanupTime << " is overhead"
+    << endl;
+
+    //About elimination
+    if (print_var_elim) {
         cout
-        << "c [bva] ---> Most occuring lit in p: " << most_occur.lit1 << ", " << most_occur.lit2
-        << " occur num: " << largest
+        << "c [v-elim]"
+        << " elimed: " << numVarsElimed
+        << " / " << origNumMaxElimVars
+        << " / " << origNumFreeVars
+        //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
+        << " T: " << std::fixed << std::setprecision(2)
+        << varElimTime << " s"
+        << " T-out: " << (varElimTimeOut ? "Y" : "N")
+        << endl;
+
+        cout
+        << "c [v-elim]"
+        << " cl-new: " << newClauses
+        << " tried: " << triedToElimVars
+        << " tested: " << testedToElimVars
+        << " ("
+        << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
+        << " % aggressive)"
+        << endl;
+
+        cout
+        << "c [v-elim]"
+        << " subs: "  << subsumedByVE
+        << " red-bin rem: " << binRedClRemThroughElim
+        << " red-tri rem: " << triRedClRemThroughElim
+        << " red-long rem: " << longRedClRemThroughElim
+        << " v-fix: " << std::setw(4) << zeroDepthAssings
         << endl;
     }
 
-    return most_occur;
+    cout
+    << "c [simp] link-in T: " << linkInTime
+    << " cleanup T: " << finalCleanupTime
+    << endl;
 }
 
-bool Simplifier::inside(const vector<Lit>& lits, const Lit notin) const
+void Simplifier::Stats::print(const size_t nVars) const
 {
-    for(const Lit lit: lits) {
-        if (lit == notin)
-            return true;
-    }
-    return false;
+    cout << "c -------- Simplifier STATS ----------" << endl;
+    printStatsLine("c time"
+        , totalTime()
+        , stats_line_percent(varElimTime, totalTime())
+        , "% var-elim"
+    );
+
+    printStatsLine("c timeouted"
+        , stats_line_percent(varElimTimeOut, numCalls)
+        , "% called"
+    );
+
+    printStatsLine("c called"
+        ,  numCalls
+        , (double)totalTime()/(double)numCalls
+        , "s per call"
+    );
+
+    printStatsLine("c v-elimed"
+        , numVarsElimed
+        , stats_line_percent(numVarsElimed, nVars)
+        , "% vars"
+    );
+
+    cout << "c"
+    << " v-elimed: " << numVarsElimed
+    << " / " << origNumMaxElimVars
+    << " / " << origNumFreeVars
+    << endl;
+
+    printStatsLine("c 0-depth assigns"
+        , zeroDepthAssings
+        , stats_line_percent(zeroDepthAssings, nVars)
+        , "% vars"
+    );
+
+    printStatsLine("c cl-new"
+        , newClauses
+    );
+
+    printStatsLine("c tried to elim"
+        , triedToElimVars
+        , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
+        , "% aggressively"
+    );
+
+    printStatsLine("c elim-bin-lt-cl"
+        , binRedClRemThroughElim);
+
+    printStatsLine("c elim-tri-lt-cl"
+        , triRedClRemThroughElim);
+
+    printStatsLine("c elim-long-lt-cl"
+        , longRedClRemThroughElim);
+
+    printStatsLine("c lt-bin added due to v-elim"
+        , numRedBinVarRemAdded);
+
+    printStatsLine("c cl-elim-bin"
+        , clauses_elimed_bin);
+
+    printStatsLine("c cl-elim-tri"
+        , clauses_elimed_tri);
+
+    printStatsLine("c cl-elim-long"
+        , clauses_elimed_long);
+
+    printStatsLine("c cl-elim-avg-s",
+        ((double)clauses_elimed_sumsize
+        /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
+    );
+
+    printStatsLine("c v-elim-sub"
+        , subsumedByVE
+    );
+
+    cout << "c -------- Simplifier STATS END ----------" << endl;
 }
-
-bool Simplifier::simplifies_system(const size_t num_occur) const
-{
-    //If first run, at least 2 must match, nothing else matters
-    if (m_lits.size() == 1) {
-        return num_occur >= 2;
-    }
-
-    assert(m_lits.size() > 1);
-    int orig_num_red = simplification_size(m_lits.size(), m_cls.size());
-    int new_num_red = simplification_size(m_lits.size()+1, num_occur);
-
-    if (new_num_red <= 0)
-        return false;
-
-    if (new_num_red < orig_num_red)
-        return false;
-
-    return true;
-}
-
-int Simplifier::simplification_size(
-    const int m_lits_size
-    , const int m_cls_size
-) const {
-    return m_lits_size*m_cls_size-m_lits_size-m_cls_size;
-}
-
-void Simplifier::fill_potential(const Lit lit)
-{
-    for(const OccurClause& c: m_cls) {
-        if (*limit_to_decrease < 0)
-            break;
-
-        const Lit l_min = least_occurring_except(c);
-        if (l_min == lit_Undef)
-            continue;
-
-        m_lits_this_cl = m_lits;
-        for(const lit_pair lits: m_lits_this_cl) {
-            seen2[lits.hash(seen2.size())] = 1;
-        }
-
-        if (solver->conf.verbosity >= 6 || bva_verbosity) {
-            cout
-            << "c [bva] Examining clause for addition to 'potential':"
-            << solver->watched_to_string(c.lit, c.ws)
-            << " -- Least occurring in this CL: " << l_min
-            << endl;
-        }
-
-        *limit_to_decrease -= (long)solver->watches[l_min.toInt()].size();
-        for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
-            if (*limit_to_decrease < 0)
-                goto end;
-
-            OccurClause d(l_min, d_ws);
-            //cout << "Under scrutiny: "<< solver->watched_to_string(d.lit, d.ws) << endl;
-            if (c.ws != d.ws
-                && (solver->cl_size(c.ws) == solver->cl_size(d.ws)
-                    || (solver->cl_size(c.ws)+1 == solver->cl_size(d.ws)
-                        && solver->conf.bva_also_twolit_diff
-                        && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start
-                    )
-                )
-                && !solver->redundant(d.ws)
-                && lit_diff_watches(c, d) == lit
-            ) {
-                const lit_pair diff = lit_diff_watches(d, c);
-                if (seen2[diff.hash(seen2.size())] == 0) {
-                    potential.push_back(PotentialClause(diff, c));
-                    m_lits_this_cl.push_back(diff);
-                    seen2[diff.hash(seen2.size())] = 1;
-
-                    if (solver->conf.verbosity >= 6 || bva_verbosity) {
-                        cout
-                        << "c [bva] Added to P: "
-                        << potential.back().to_string(solver)
-                        << endl;
-                    }
-                }
-            }
-        }
-
-        end:
-        for(const lit_pair lits: m_lits_this_cl) {
-            seen2[lits.hash(seen2.size())] = 0;
-        }
-    }
-}
-
-
-bool Simplifier::VarBVAOrder::operator()(const uint32_t lit1_uint, const uint32_t lit2_uint) const
-{
-    return watch_irred_sizes[lit1_uint] > watch_irred_sizes[lit2_uint];
-}
-
-size_t Simplifier::calc_watch_irred_size(const Lit lit) const
-{
-    size_t num = 0;
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    for(const Watched w: ws) {
-        if (w.isBinary() || w.isTri()) {
-            num += !w.red();
-            continue;
-        }
-
-        assert(w.isClause());
-        const Clause& cl = *solver->clAllocator.getPointer(w.getOffset());
-        num += !cl.red();
-    }
-
-    return num;
-}
-
-void Simplifier::calc_watch_irred_sizes()
-{
-    watch_irred_sizes.clear();
-    for(size_t i = 0; i < solver->nVars()*2; i++) {
-        const Lit lit = Lit::toLit(i);
-        const size_t irred_size = calc_watch_irred_size(lit);
-        watch_irred_sizes.push_back(irred_size);
-    }
-}
-
-bool Simplifier::bounded_var_addition()
-{
-    bva_verbosity = false;
-    assert(solver->ok);
-    if (!solver->conf.do_bva)
-        return solver->okay();
-
-    if (solver->conf.verbosity >= 3 || bva_verbosity) {
-        cout << "c [bva] Running BVA" << endl;
-    }
-
-    propagate();
-    limit_to_decrease = &bounded_var_elim_time_limit;
-    int64_t limit_orig = *limit_to_decrease;
-    solver->clauseCleaner->clean_implicit_clauses();
-    if (solver->conf.doStrSubImplicit) {
-        solver->subsumeImplicit->subsume_implicit(false);
-    }
-
-    bva_worked = 0;
-    bva_simp_size = 0;
-    var_bva_order.clear();
-    calc_watch_irred_sizes();
-    for(size_t i = 0; i < solver->nVars()*2; i++) {
-        const Lit lit = Lit::toLit(i);
-        if (solver->value(lit) != l_Undef
-            || solver->varData[lit.var()].removed != Removed::none
-        ) {
-            continue;
-        }
-        var_bva_order.insert(lit.toInt());
-    }
-
-    double my_time = cpuTime();
-    while(!var_bva_order.empty()) {
-        if (*limit_to_decrease < 0
-            || bva_worked >= solver->conf.bva_limit_per_call
-        ) {
-            break;
-        }
-
-        const Lit lit = Lit::toLit(var_bva_order.removeMin());
-        if (solver->conf.verbosity >= 5 || bva_verbosity) {
-            cout << "c [bva] trying lit " << lit << endl;
-        }
-        bool ok = try_bva_on_lit(lit);
-        if (!ok)
-            break;
-    }
-    solver->datasync->rebuild_bva_map();
-
-    bool time_out = *limit_to_decrease <= 0;
-    double time_used = cpuTime() - my_time;
-    double time_remain = ((double)*limit_to_decrease/(double)limit_orig);
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [bva] added: " << bva_worked
-        << " simp: " << bva_simp_size
-        << " 2lit: " << ((solver->conf.bva_also_twolit_diff
-            && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
-        << " T: " << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
-        << " T-r: " << time_remain*100.0  << "%"
-        << endl;
-    }
-    if (solver->conf.doSQL) {
-        solver->sqlStats->time_passed(
-            solver
-            , "bva"
-            , time_used
-            , time_out
-            , time_remain
-        );
-    }
-
-    return solver->okay();
-}
-
-void Simplifier::remove_duplicates_from_m_cls()
-{
-    if (m_cls.size() <= 1)
-        return;
-
-    std::function<bool (const OccurClause&, const OccurClause&)> mysort
-        = [&] (const OccurClause& a, const OccurClause& b) {
-            WatchType atype = a.ws.getType();
-            WatchType btype = b.ws.getType();
-            if (atype == watch_binary_t && btype != CMSat::watch_binary_t) {
-                return true;
-            }
-            if (btype == watch_binary_t && atype != CMSat::watch_binary_t) {
-                return false;
-            }
-            if (atype == watch_tertiary_t && btype != CMSat::watch_tertiary_t) {
-                return true;
-            }
-            if (btype == watch_tertiary_t && atype != CMSat::watch_tertiary_t) {
-                return false;
-            }
-
-            assert(atype == btype);
-            switch(atype) {
-                case CMSat::watch_binary_t: {
-                    //subsumption could have time-outed
-                    //assert(a.ws.lit2() != b.ws.lit2() && "Implicit has been cleaned of duplicates!!");
-                    return a.ws.lit2() < b.ws.lit2();
-                }
-                case CMSat::watch_tertiary_t: {
-                    if (a.ws.lit2() != b.ws.lit2()) {
-                        return a.ws.lit2() < b.ws.lit2();
-                    }
-                    //subsumption could have time-outed
-                    //assert(a.ws.lit3() != b.ws.lit3() && "Implicit has been cleaned of duplicates!!");
-                    return a.ws.lit3() < b.ws.lit3();
-                }
-                case CMSat::watch_clause_t: {
-                    *limit_to_decrease -= 20;
-                    const Clause& cl_a = *solver->clAllocator.getPointer(a.ws.getOffset());
-                    const Clause& cl_b = *solver->clAllocator.getPointer(b.ws.getOffset());
-                    if (cl_a.size() != cl_b.size()) {
-                        return cl_a.size() < cl_b.size();
-                    }
-                    //Clauses' lits are sorted, yay!
-                    for(size_t i = 0; i < cl_a.size(); i++) {
-                        *limit_to_decrease -= 1;
-                        if (cl_a[i] != cl_b[i]) {
-                            return cl_a[i] < cl_b[i];
-                        }
-                    }
-                    return false;
-                }
-            }
-
-            assert(false);
-            return false;
-    };
-
-    *limit_to_decrease -= 2*(long)m_cls.size()*(long)std::sqrt(m_cls.size());
-    std::sort(m_cls.begin(), m_cls.end(), mysort);
-    size_t i = 0;
-    size_t j = 0;
-    for(; i+1 < m_cls.size(); i++) {
-        const Watched& prev = m_cls[j].ws;
-        const Watched& next = m_cls[i+1].ws;
-        if (prev.getType() != next.getType()) {
-            m_cls[j+1] = m_cls[i+1];
-            j++;
-            continue;
-        }
-
-        bool del = false;
-        switch(prev.getType()) {
-            case CMSat::watch_binary_t: {
-                if (prev.lit2() == next.lit2()) {
-                    del = true;
-                }
-                break;
-            }
-
-            case CMSat::watch_tertiary_t: {
-                if (prev.lit2() == next.lit2() && prev.lit3() == next.lit3())
-                    del = true;
-                break;
-            }
-
-            case CMSat::watch_clause_t: {
-                *limit_to_decrease -= 10;
-                const Clause& cl1 = *solver->clAllocator.getPointer(prev.getOffset());
-                const Clause& cl2 = *solver->clAllocator.getPointer(next.getOffset());
-                del = true;
-                if (cl1.size() != cl2.size()) {
-                    break;
-                }
-                for(size_t at = 0; at < cl1.size(); at++) {
-                    *limit_to_decrease -= 1;
-                    if (cl1[at] != cl2[at]) {
-                        del = false;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-
-        if (!del) {
-            m_cls[j+1] = m_cls[i+1];
-            //if (mark_irred) {
-            //    m_cls[j+1].ws.setRed(false);
-            //}
-            j++;
-        }
-    }
-    m_cls.resize(m_cls.size()-(i-j));
-
-    if (solver->conf.verbosity >= 6 || bva_verbosity) {
-        cout << "m_cls after cleaning: " << endl;
-        for(const OccurClause& w: m_cls) {
-            cout << "-> " << solver->watched_to_string(w.lit, w.ws) << endl;
-        }
-    }
-}
-
-bool Simplifier::try_bva_on_lit(const Lit lit)
-{
-    assert(solver->value(lit) == l_Undef);
-    assert(solver->varData[lit.var()].removed == Removed::none);
-
-    m_cls.clear();
-    m_lits.clear();
-    m_lits.push_back(lit);
-    for(const Watched w: solver->watches[lit.toInt()]) {
-        if (!solver->redundant(w)) {
-            m_cls.push_back(OccurClause(lit, w));
-            if (solver->conf.verbosity >= 6 || bva_verbosity) {
-                cout << "1st adding to m_cls "
-                << solver->watched_to_string(lit, w)
-                << endl;
-            }
-        }
-    }
-    remove_duplicates_from_m_cls();
-
-    while(true) {
-        potential.clear();
-        fill_potential(lit);
-        if (*limit_to_decrease < 0)
-            break;
-
-        size_t num_occur;
-        const lit_pair l_max = most_occuring_lit_in_potential(num_occur);
-        if (simplifies_system(num_occur)) {
-            m_lits.push_back(l_max);
-            m_cls.clear();
-            for(const PotentialClause pot: potential) {
-                if (pot.lits == l_max) {
-                    m_cls.push_back(pot.occur_cl);
-                    if (solver->conf.verbosity >= 6 || bva_verbosity) {
-                        cout << "-- max is : (" << l_max.lit1 << ", " << l_max.lit2 << "), adding to m_cls "
-                        << solver->watched_to_string(pot.occur_cl.lit, pot.occur_cl.ws)
-                        << endl;
-                    }
-                    assert(pot.occur_cl.lit == lit);
-                }
-            }
-        } else {
-            break;
-        }
-    }
-
-    if (*limit_to_decrease < 0)
-        return solver->okay();
-
-    const int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (simp_size <= 0) {
-        return solver->okay();
-    }
-
-    const bool ok = bva_simplify_system();
-    return ok;
-}
-
-bool Simplifier::bva_simplify_system()
-{
-    touched.clear();
-    int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (solver->conf.verbosity >= 6 || bva_verbosity) {
-        cout
-        << "c [bva] YES Simplification by "
-        << simp_size
-        << " with matching lits: ";
-        for(const lit_pair l: m_lits) {
-            cout << "(" << l.lit1;
-            if (l.lit2 != lit_Undef) {
-                cout << ", " << l.lit2;
-            }
-            cout << "), ";
-        }
-        cout << endl;
-        cout << "c [bva] cls: ";
-        for(OccurClause cl: m_cls) {
-            cout
-            << "(" << solver->watched_to_string(cl.lit, cl.ws) << ")"
-            << ", ";
-        }
-        cout << endl;
-    }
-    bva_worked++;
-    bva_simp_size += simp_size;
-
-    solver->new_var(true);
-    const Var newvar = solver->nVars()-1;
-    const Lit new_lit(newvar, false);
-
-    for(const lit_pair m_lit: m_lits) {
-        bva_tmp_lits.clear();
-        bva_tmp_lits.push_back(m_lit.lit1);
-        if (m_lit.lit2 != lit_Undef) {
-            bva_tmp_lits.push_back(m_lit.lit2);
-        }
-        bva_tmp_lits.push_back(new_lit);
-        solver->addClauseInt(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
-        touched.touch(bva_tmp_lits);
-    }
-
-    for(const OccurClause m_cl: m_cls) {
-        bool ok = add_longer_clause(~new_lit, m_cl);
-        if (!ok)
-            return false;
-    }
-
-    fill_m_cls_lits_and_red();
-    for(const lit_pair replace_lit: m_lits) {
-       //cout << "Doing lit " << replace_lit << " replacing lit " << lit << endl;
-        for(const m_cls_lits_and_red& cl_lits_and_red: m_cls_lits) {
-            remove_matching_clause(cl_lits_and_red, replace_lit);
-        }
-    }
-
-    update_touched_lits_in_bva();
-
-    return solver->okay();
-}
-
-void Simplifier::update_touched_lits_in_bva()
-{
-    const vector<uint32_t>& touched_list = touched.getTouchedList();
-    for(const uint32_t lit_uint: touched_list) {
-        const Lit lit = Lit::toLit(lit_uint);
-        if (var_bva_order.inHeap(lit.toInt())) {
-            watch_irred_sizes[lit.toInt()] = calc_watch_irred_size(lit);
-            var_bva_order.update(lit.toInt());
-        }
-
-        if (var_bva_order.inHeap((~lit).toInt())) {
-            watch_irred_sizes[(~lit).toInt()] = calc_watch_irred_size(~lit);
-            var_bva_order.update((~lit).toInt());
-        }
-    }
-    touched.clear();
-}
-
-void Simplifier::fill_m_cls_lits_and_red()
-{
-    m_cls_lits.clear();
-    vector<Lit> tmp;
-    for(OccurClause& cl: m_cls) {
-        tmp.clear();
-        bool red;
-        switch(cl.ws.getType()) {
-            case CMSat::watch_binary_t:
-                tmp.push_back(cl.ws.lit2());
-                red = cl.ws.red();
-                break;
-
-            case CMSat::watch_tertiary_t:
-                tmp.push_back(cl.ws.lit2());
-                tmp.push_back(cl.ws.lit3());
-                red = cl.ws.red();
-                break;
-
-            case CMSat::watch_clause_t:
-                const Clause* cl_orig = solver->clAllocator.getPointer(cl.ws.getOffset());
-                for(const Lit lit: *cl_orig) {
-                    if (cl.lit != lit) {
-                        tmp.push_back(lit);
-                    }
-                }
-                red = cl_orig->red();
-                break;
-        }
-        m_cls_lits.push_back(m_cls_lits_and_red(tmp, red));
-    }
-}
-
-void Simplifier::remove_matching_clause(
-    const m_cls_lits_and_red& cl_lits_and_red
-    , const lit_pair lit_replace
-) {
-    if (solver->conf.verbosity >= 6 || bva_verbosity) {
-        cout
-        << "c [bva] Removing cl "
-        //<< solver->watched_to_string(lit_replace, cl.ws)
-        << endl;
-    }
-
-    to_remove.clear();
-    to_remove.push_back(lit_replace.lit1);
-    if (lit_replace.lit2 != lit_Undef) {
-        to_remove.push_back(lit_replace.lit2);
-    }
-    for(const Lit cl_lit: cl_lits_and_red.lits) {
-        to_remove.push_back(cl_lit);
-    }
-    touched.touch(to_remove);
-
-    switch(to_remove.size()) {
-        case 2: {
-            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
-            bool red = false;
-            *(solver->drup) << del << to_remove << fin;
-            solver->detachBinClause(to_remove[0], to_remove[1], red);
-            break;
-        }
-
-        case 3: {
-            std::sort(to_remove.begin(), to_remove.end());
-            *limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
-            bool red = false;
-            *(solver->drup) << del << to_remove << fin;
-            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], red);
-            break;
-        }
-
-        default:
-            Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);
-            unlinkClause(solver->clAllocator.getOffset(cl_new));
-            break;
-    }
-}
-
-Clause* Simplifier::find_cl_for_bva(
-    const vector<Lit>& torem
-    , const bool red
-) const {
-    Clause* cl = NULL;
-    for(const Lit lit: torem) {
-        seen[lit.toInt()] = 1;
-    }
-    for(Watched w: solver->watches[torem[0].toInt()]) {
-        if (!w.isClause())
-            continue;
-
-        cl = solver->clAllocator.getPointer(w.getOffset());
-        if (cl->red() != red
-            || cl->size() != torem.size()
-        ) {
-            continue;
-        }
-
-        bool OK = true;
-        for(const Lit lit: *cl) {
-            if (seen[lit.toInt()] == 0) {
-                OK = false;
-                break;
-            }
-        }
-
-        if (OK)
-            break;
-    }
-
-    for(const Lit lit: torem) {
-        seen[lit.toInt()] = 0;
-    }
-
-    assert(cl != NULL);
-    return cl;
-}
-
-bool Simplifier::add_longer_clause(const Lit new_lit, const OccurClause& cl)
-{
-    vector<Lit>& lits = bva_tmp_lits;
-    lits.clear();
-    switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t: {
-            lits.resize(2);
-            lits[0] = new_lit;
-            lits[1] = cl.ws.lit2();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
-            break;
-        }
-
-        case CMSat::watch_tertiary_t: {
-            lits.resize(3);
-            lits[0] = new_lit;
-            lits[1] = cl.ws.lit2();
-            lits[2] = cl.ws.lit3();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
-            break;
-        }
-
-        case CMSat::watch_clause_t: {
-            const Clause& orig_cl = *solver->clAllocator.getPointer(cl.ws.getOffset());
-            lits.resize(orig_cl.size());
-            for(size_t i = 0; i < orig_cl.size(); i++) {
-                if (orig_cl[i] == cl.lit) {
-                    lits[i] = new_lit;
-                } else {
-                    lits[i] = orig_cl[i];
-                }
-            }
-            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits, true, new_lit);
-            if (newCl != NULL) {
-                linkInClause(*newCl);
-                ClOffset offset = solver->clAllocator.getOffset(newCl);
-                clauses.push_back(offset);
-            }
-            break;
-        }
-    }
-    touched.touch(lits);
-
-    return solver->okay();
-}
-
-string Simplifier::PotentialClause::to_string(const Solver* solver) const
-{
-    std::stringstream ss;
-    ss << solver->watched_to_string(occur_cl.lit, occur_cl.ws)
-    << " -- lit: " << lits.lit1 << ", " << lits.lit2;
-
-    return ss.str();
-}
-
-/*const GateFinder* Simplifier::getGateFinder() const
-{
-    return gateFinder;
-}*/

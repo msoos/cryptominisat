@@ -191,7 +191,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     //Randomize starting point
     const size_t rnd_start = solver->mtrand.randInt(solver->watches.size()-1);
     size_t numDone = 0;
-    for (;numDone < solver->watches.size() && timeAvailable > 0
+    for (;numDone < solver->watches.size() && timeAvailable > 0 && !solver->must_interrupt_asap()
          ;numDone++
     ) {
         const size_t at = (rnd_start + numDone)  % solver->watches.size();
@@ -261,7 +261,9 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     }
 
     if (check_stats) {
-        solver->checkStats();
+        #ifdef DEBUG_IMPLICIT_STATS
+        solver->check_stats();
+        #endif
     }
 
     globalStats += runStats;

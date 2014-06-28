@@ -386,7 +386,7 @@ bool Prober::probe()
     uint64_t numPropsTodo = calc_numpropstodo();
 
     const double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
     numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
 
     vector<Var> poss_choice = randomize_possible_choices();
@@ -398,7 +398,7 @@ bool Prober::probe()
         ; i < poss_choice.size()
         && limit_used() < numPropsTodo
         && cpuTime() <= solver->conf.maxTime
-        && !solver->needToInterrupt
+        && !solver->must_interrupt_asap()
         ; i++
     ) {
         extraTime += 20;
@@ -442,7 +442,7 @@ end:
     solver->needToAddBinClause.clear();
     solver->uselessBin.clear();
 
-    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
         clean_clauses_after_probe();
     }
@@ -575,7 +575,7 @@ void Prober::checkAndSetBothProp(Var var, bool first)
 void Prober::addRestOfLitsToCache(Lit lit)
 {
     tmp_lits.clear();
-    for (int64_t c = solver->trail.size()-1
+    for (int64_t c = solver->trail_size()-1
         ; c != (int64_t)solver->trail_lim[0] - 1
         ; c--
     ) {
@@ -734,8 +734,8 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
-    size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
-    for (int64_t c = solver->trail.size()-1
+    size_t numElemsSet = solver->trail_size() - solver->trail_lim[0];
+    for (int64_t c = solver->trail_size()-1
         ; c != (int64_t)solver->trail_lim[0] - 1
         ; c--
     ) {
@@ -769,7 +769,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     return solver->enqueueThese(toEnqueue);
 }
 
-size_t Prober::memUsed() const
+size_t Prober::mem_used() const
 {
     size_t mem = 0;
     mem += visitedAlready.capacity()*sizeof(char);
@@ -809,7 +809,7 @@ size_t Prober::memUsed() const
 // const bool Prober::tryMultiLevelAll()
 // {
 //     assert(solver->ok);
-//     uint32_t backupNumUnits = solver->trail.size();
+//     uint32_t backupNumUnits = solver->trail_size();
 //     double myTime = cpuTime();
 //     uint32_t numTries = 0;
 //     uint32_t finished = 0;
@@ -842,7 +842,7 @@ size_t Prober::memUsed() const
 //     cout
 //     << "c multiLevelBoth tried " <<  numTries
 //     << " finished: " << finished
-//     << " units: " << (solver->trail.size() - backupNumUnits)
+//     << " units: " << (solver->trail_size() - backupNumUnits)
 //     << " enqueued: " << enqueued
 //     << " numFailed: " << numFailed
 //     << " time: " << (cpuTime() - myTime)
@@ -875,7 +875,7 @@ size_t Prober::memUsed() const
 //             return true;
 //         }
 //
-//         for (int sublevel = solver->trail.size()-1; sublevel > (int)solver->trail_lim[0]; sublevel--) {
+//         for (int sublevel = solver->trail_size()-1; sublevel > (int)solver->trail_lim[0]; sublevel--) {
 //             Var x = solver->trail[sublevel].var();
 //             if (first) {
 //                 propagated.setBit(x);

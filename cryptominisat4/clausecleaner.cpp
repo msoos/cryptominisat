@@ -180,7 +180,7 @@ void ClauseCleaner::clean_implicit_clauses()
     impl_data.update_solver_stats(solver);
 
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 }
 
@@ -188,7 +188,7 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
 {
     assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
-    assert(solver->qhead == solver->trail.size());
+    assert(solver->prop_at_head());
 
     #ifdef VERBOSE_DEBUG
     cout << "Cleaning  clauses" << endl;

@@ -27,16 +27,17 @@
 
 using namespace CMSat;
 
-DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
+DataSync::DataSync(Solver* _solver, SharedData* _sharedData, uint32_t _thread_num) :
     solver(_solver)
     , sharedData(_sharedData)
+    , thread_num(_thread_num)
     , seen(solver->seen)
     , toClear(solver->toClear)
 {}
 
-void DataSync::new_var(bool bva)
+void DataSync::new_var(const bool bva)
 {
-    if (sharedData == NULL)
+    if (!enabled())
         return;
 
     if (!bva) {
@@ -46,13 +47,22 @@ void DataSync::new_var(bool bva)
     assert(solver->nVarsOutside()*2 == syncFinish.size());
 }
 
+void DataSync::new_vars(size_t n)
+{
+    if (!enabled())
+        return;
+
+    syncFinish.resize(syncFinish.size() + 2*n, 0);
+    assert(solver->nVarsOutside()*2 == syncFinish.size());
+}
+
 void DataSync::saveVarMem()
 {
 }
 
 void DataSync::rebuild_bva_map()
 {
-    if (sharedData == NULL)
+    if (!enabled())
         return;
 
     outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
@@ -66,7 +76,7 @@ void DataSync::updateVars(
 
 bool DataSync::syncData()
 {
-    if (sharedData == NULL
+    if (!enabled()
         || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts()
     ) {
         //cout << "sharedData:" << sharedData << endl;
@@ -85,6 +95,8 @@ bool DataSync::syncData()
     if (!ok) return false;
 
     sharedData->bin_mutex.lock();
+    extend_bins_if_needed();
+    clear_set_binary_values();
     ok = shareBinData();
     sharedData->bin_mutex.unlock();
     if (!ok) return false;
@@ -94,16 +106,55 @@ bool DataSync::syncData()
     return true;
 }
 
+void DataSync::clear_set_binary_values()
+{
+    for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
+        Lit lit1 = Lit::toLit(i);
+        lit1 = solver->map_to_with_bva(lit1);
+        lit1 = solver->varReplacer->getLitReplacedWithOuter(lit1);
+        lit1 = solver->map_outer_to_inter(lit1);
+        if (solver->value(lit1) != l_Undef) {
+            sharedData->bins[i].clear();
+        }
+    }
+}
+
+void DataSync::extend_bins_if_needed()
+{
+    assert(sharedData->bins.size() <= (solver->nVarsOutside())*2);
+    if (sharedData->bins.size() == (solver->nVarsOutside())*2)
+        return;
+
+    sharedData->bins.resize(solver->nVarsOutside()*2);
+}
+
 bool DataSync::shareBinData()
 {
     uint32_t oldRecvBinData = stats.recvBinData;
     uint32_t oldSentBinData = stats.sentBinData;
 
-    if (sharedData->bins.size() < (solver->nVarsOutside())*2) {
-        sharedData->bins.resize(solver->nVarsOutside()*2);
+    syncBinFromOthers();
+    syncBinToOthers();
+    size_t mem = sharedData->calc_memory_use_bins();
+
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [sync] got bins " << (stats.recvBinData - oldRecvBinData)
+        << " sent bins " << (stats.sentBinData - oldSentBinData)
+        << " mem use: " << mem/(1024*1024) << " M"
+        << endl;
     }
 
+    return true;
+}
+
+bool DataSync::syncBinFromOthers()
+{
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
+        if (sharedData->bins[wsLit].data == NULL) {
+            continue;
+        }
+
         Lit lit1 = Lit::toLit(wsLit);
         lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->getLitReplacedWithOuter(lit1);
@@ -114,7 +165,7 @@ bool DataSync::shareBinData()
             continue;
         }
 
-        vector<Lit>& bins = sharedData->bins[wsLit];
+        vector<Lit>& bins = *sharedData->bins[wsLit].data;
         watch_subarray ws = solver->watches[lit1.toInt()];
 
         assert(syncFinish.size() > wsLit);
@@ -123,15 +174,6 @@ bool DataSync::shareBinData()
         ) {
             return false;
         }
-    }
-
-    syncBinToOthers();
-
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [sync] got bins " << std::setw(10) << (stats.recvBinData - oldRecvBinData)
-        << std::setw(10) << " sent bins " << (stats.sentBinData - oldSentBinData)
-        << endl;
     }
 
     return true;
@@ -202,7 +244,11 @@ void DataSync::syncBinToOthers()
 void DataSync::addOneBinToOthers(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
-    vector<Lit>& bins = sharedData->bins[lit1.toInt()];
+    if (sharedData->bins[lit1.toInt()].data == NULL) {
+        return;
+    }
+
+    vector<Lit>& bins = *sharedData->bins[lit1.toInt()].data;
     for (const Lit lit : bins) {
         if (lit == lit2)
             return;
@@ -282,7 +328,7 @@ bool DataSync::shareUnitData()
 
 void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
 {
-    if (sharedData == NULL) {
+    if (!enabled()) {
         return;
     }
 

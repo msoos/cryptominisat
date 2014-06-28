@@ -142,98 +142,112 @@ void GateFinder::clearIndexes()
         gateOccEq[i].clear();
 }
 
+bool GateFinder::shorten_with_all_or_gates()
+{
+    const double myTime = cpuTime();
+    const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*1000LL;
+    numMaxShortenWithGates = orig_numMaxShortenWithGates;
+    simplifier->limit_to_decrease = &numMaxShortenWithGates;
+    runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
+        simplifier->runStats.origNumRedLongClauses;
+    runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
+
+    //Go through each gate, see if we can do something with it
+    simplifier->cl_to_free_later.clear();
+    for (const OrGate& gate: orGates) {
+        if (numMaxShortenWithGates < 0
+            || solver->must_interrupt_asap()
+        ) {
+            break;
+        }
+
+        if (!shortenWithOrGate(gate))
+            break;
+    }
+    simplifier->clean_occur_from_removed_clauses();
+    simplifier->free_clauses_to_free();
+
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (numMaxShortenWithGates <= 0);
+    const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
+    runStats.orBasedTime += time_used;
+    runStats.or_based_timeout += time_out;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "gate shorten cl"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+    return solver->ok;
+}
+
+bool GateFinder::remove_clauses_with_all_or_gates()
+{
+    const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*1000LL;
+    numMaxClRemWithGates = orig_numMaxClRemWithGates;
+    simplifier->limit_to_decrease = &numMaxClRemWithGates;
+    const double myTime = cpuTime();
+
+    //Do clause removal
+    uint32_t foundPotential;
+
+    //Go through each gate, see if we can do something with it
+    for (const OrGate& gate: orGates) {
+        if (numMaxClRemWithGates < 0
+            || solver->must_interrupt_asap()
+        ) {
+            break;
+        }
+
+        if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
+            break;
+
+        if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
+            break;
+    }
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (numMaxClRemWithGates <= 0);
+    const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
+    runStats.andBasedTime += time_used;
+    runStats.and_based_timeout += time_out;
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed(
+            solver
+            , "gate rem cl"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+    return solver->ok;
+}
+
 bool GateFinder::all_simplifications_with_gates()
 {
     assert(solver->ok);
 
     //OR gate treatment
     if (solver->conf.doShortenWithOrGates) {
-        const double myTime = cpuTime();
-        const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*1000LL;
-        numMaxShortenWithGates = orig_numMaxShortenWithGates;
-        simplifier->limit_to_decrease = &numMaxShortenWithGates;
-        runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
-            simplifier->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
-
-        //Go through each gate, see if we can do something with it
-        simplifier->cl_to_free_later.clear();
-        for (const OrGate& gate: orGates) {
-            if (numMaxShortenWithGates < 0) {
-                break;
-            }
-
-            if (!shortenWithOrGate(gate))
-                break;
-        }
-        simplifier->clean_occur_from_removed_clauses();
-        simplifier->free_clauses_to_free();
-
-        const double time_used = cpuTime() - myTime;
-        const bool time_out = (numMaxShortenWithGates <= 0);
-        const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
-        runStats.orBasedTime += time_used;
-        runStats.or_based_timeout += time_out;
-        if (solver->conf.doSQL) {
-            solver->sqlStats->time_passed(
-                solver
-                , "gate shorten cl"
-                , time_used
-                , time_out
-                , time_remain
-            );
-        }
-
-        if (!solver->ok)
+        if (!shorten_with_all_or_gates()) {
             return false;
+        }
     }
 
     //AND gate treatment
     if (solver->conf.doRemClWithAndGates) {
-        const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*1000LL;
-        numMaxClRemWithGates = orig_numMaxClRemWithGates;
-        simplifier->limit_to_decrease = &numMaxClRemWithGates;
-        const double myTime = cpuTime();
-
-        //Do clause removal
-        uint32_t foundPotential;
-
-        //Go through each gate, see if we can do something with it
-        for (const OrGate& gate: orGates) {
-            if (numMaxClRemWithGates < 0) {
-                break;
-            }
-
-            if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
-                break;
-
-            if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
-                break;
-        }
-        const double time_used = cpuTime() - myTime;
-        const bool time_out = (numMaxClRemWithGates <= 0);
-        const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
-        runStats.andBasedTime += time_used;
-        runStats.and_based_timeout += time_out;
-        if (solver->conf.doSQL) {
-            solver->sqlStats->time_passed(
-                solver
-                , "gate rem cl"
-                , time_used
-                , time_out
-                , time_remain
-            );
-        }
-
-        if (!solver->ok)
+        if (!remove_clauses_with_all_or_gates()) {
             return false;
+        }
     }
 
     //EQ gate treatment
     if (solver->conf.doFindEqLitsWithGates) {
         const double myTime = cpuTime();
-
-        //Do equivalence checking
         runStats.varReplaced += findEqOrGates();
 
         const double time_used = cpuTime() - myTime;
@@ -258,7 +272,7 @@ size_t GateFinder::findEqOrGates()
     assert(solver->ok);
     size_t foundRep = 0;
     vector<OrGate> gates = orGates;
-    std::sort(gates.begin(), gates.end());
+    std::sort(gates.begin(), gates.end(), GateCompareForEq());
 
     vector<Lit> tmp(2);
     for (uint32_t i = 1; i < gates.size(); i++) {
@@ -288,17 +302,19 @@ void GateFinder::find_or_gates()
 
     const size_t offs = solver->mtrand.randInt(solver->nVars()*2-1);
     for(size_t i = 0
-        ; i < solver->nVars()*2 && *simplifier->limit_to_decrease > 0
+        ; i < solver->nVars()*2
+            && *simplifier->limit_to_decrease > 0
+            && !solver->must_interrupt_asap()
         ; i++
     ) {
         const size_t at = (offs + i) % (solver->nVars()*2);
         const Lit lit = Lit::toLit(at);
-        or_gates_in_sweep_mode(lit);
-        or_gates_in_sweep_mode(~lit);
+        find_or_gates_in_sweep_mode(lit);
+        find_or_gates_in_sweep_mode(~lit);
     }
 }
 
-void GateFinder::or_gates_in_sweep_mode(const Lit lit)
+void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 {
     assert(toClear.empty());
     watch_subarray_const ws = solver->watches[lit.toInt()];
@@ -465,7 +481,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
 void GateFinder::set_seen2_and_abstraction(
     const Clause& cl
-    , CL_ABST_TYPE& abstraction
+    , cl_abst_type& abstraction
 ) {
     *simplifier->limit_to_decrease -= cl.size();
     for (const Lit lit: cl) {
@@ -473,18 +489,18 @@ void GateFinder::set_seen2_and_abstraction(
             seen2[lit.toInt()] = true;
             seen2Set.push_back(lit.toInt());
         }
-        abstraction |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+        abstraction |= abst_var(lit.var());
     }
 }
 
-CL_ABST_TYPE GateFinder::calc_sorted_occ_and_set_seen2(
+cl_abst_type GateFinder::calc_sorted_occ_and_set_seen2(
     const OrGate& gate
     , uint32_t& maxSize
     , uint32_t& minSize
     , const bool only_irred
 ) {
     assert(seen2Set.empty());
-    CL_ABST_TYPE abstraction = 0;
+    cl_abst_type abstraction = 0;
     for (vector<ClOffset>& certain_size_occ: sizeSortedOcc)
         certain_size_occ.clear();
 
@@ -547,20 +563,20 @@ void GateFinder::set_seen2_tri(
     }
 }
 
-CL_ABST_TYPE GateFinder::calc_abst_and_set_seen(
+cl_abst_type GateFinder::calc_abst_and_set_seen(
     const Clause& cl
     , const OrGate& gate
 ) {
-    CL_ABST_TYPE abst = 0;
+    cl_abst_type abst = 0;
     for (const Lit lit: cl) {
         //lit1 doesn't count into abstraction
         if (lit == ~(gate.lit1))
             continue;
 
         seen[lit.toInt()] = 1;
-        abst |= 1UL << (lit.var() % CLAUSE_ABST_SIZE);
+        abst |= abst_var(lit.var());
     }
-    abst |= 1UL << ((~(gate.lit2)).var() % CLAUSE_ABST_SIZE);
+    abst |= abst_var((~(gate.lit2)).var());
 
     return abst;
 }
@@ -608,7 +624,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     const Watched& ws
     , const size_t minSize
     , const size_t maxSize
-    , const CL_ABST_TYPE general_abst
+    , const cl_abst_type general_abst
     , const OrGate& gate
     , const bool only_irred
 ) {
@@ -634,7 +650,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
         return CL_OFFSET_MAX;
 
 
-    const CL_ABST_TYPE this_cl_abst = calc_abst_and_set_seen(this_cl, gate);
+    const cl_abst_type this_cl_abst = calc_abst_and_set_seen(this_cl, gate);
     const ClOffset other_cl_offs = findAndGateOtherCl(
         sizeSortedOcc[this_cl.size()] //in this occur list that contains clauses of specific size
         , ~(gate.lit2) //this is the LIT that is meant to be in the clause
@@ -707,8 +723,8 @@ bool GateFinder::remove_clauses_using_and_gate(
 
     uint32_t maxSize = 0;
     uint32_t minSize = std::numeric_limits<uint32_t>::max();
-    CL_ABST_TYPE general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
-    general_abst |= 1UL << (gate.lit1.var() % CLAUSE_ABST_SIZE);
+    cl_abst_type general_abst = calc_sorted_occ_and_set_seen2(gate, maxSize, minSize, only_irred);
+    general_abst |= abst_var(gate.lit1.var());
     if (maxSize == 0)
         return solver->okay();
 
@@ -864,7 +880,7 @@ void GateFinder::treatAndGateClause(
 ClOffset GateFinder::findAndGateOtherCl(
     const vector<ClOffset>& this_sizeSortedOcc
     , const Lit otherLit
-    , const CL_ABST_TYPE abst
+    , const cl_abst_type abst
     , const bool gate_is_red
     , const bool only_irred
 ) {
@@ -1004,6 +1020,12 @@ void GateFinder::new_var(const Var)
     gateOcc.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
+}
+
+void GateFinder::new_vars(size_t n)
+{
+    gateOcc.resize(gateOcc.size() + 2*n);
+    gateOccEq.resize(gateOccEq.size() + 2*n);
 }
 
 void GateFinder::saveVarMem()

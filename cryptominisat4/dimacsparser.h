@@ -17,6 +17,7 @@ File under MIT licence.
 #endif
 
 using namespace CMSat;
+using std::vector;
 
 class DimacsParser
 {
@@ -29,7 +30,6 @@ class DimacsParser
         void parse_DIMACS_main(StreamBuffer& in);
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
-        std::string untilEnd(StreamBuffer& in);
         int32_t parseInt(StreamBuffer& in, uint32_t& len);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in);
@@ -50,7 +50,11 @@ class DimacsParser
         size_t lineNum;
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
-        std::vector<Lit> lits; ///<To reduce temporary creation overhead
+
+        //Reduce temp overhead
+        vector<Lit> lits;
+        vector<Var> vars;
+
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
 };

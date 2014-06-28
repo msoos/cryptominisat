@@ -30,8 +30,10 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData);
-        void new_var(bool bva);
+        DataSync(Solver* solver, SharedData* sharedData, uint32_t thread_num);
+        bool enabled();
+        void new_var(const bool bva);
+        void new_vars(const size_t n);
         bool syncData();
         void saveVarMem();
         void rebuild_bva_map();
@@ -54,10 +56,13 @@ class DataSync
 
     private:
         //functions
+        void extend_bins_if_needed();
         Lit map_outside_without_bva(Lit lit) const;
         bool shareUnitData();
+        bool syncBinFromOthers();
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
+        void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         bool shareBinData();
 
@@ -72,6 +77,7 @@ class DataSync
         //Other systems
         Solver* solver;
         SharedData* sharedData;
+        uint32_t thread_num;
 
         //misc
         vector<uint16_t>& seen;
@@ -98,6 +104,11 @@ inline Lit DataSync::map_outside_without_bva(const Lit lit) const
 {
     return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
 
+}
+
+inline bool DataSync::enabled()
+{
+    return sharedData != NULL;
 }
 
 }

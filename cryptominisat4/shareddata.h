@@ -34,10 +34,44 @@ namespace CMSat {
 class SharedData
 {
     public:
+        SharedData(const uint32_t _num_threads) :
+            num_threads(_num_threads)
+        {}
+
+        struct Spec {
+            Spec() {
+                data = new vector<Lit>;
+            }
+            ~Spec() {
+                delete data;
+            }
+            vector<Lit>* data;
+
+            void clear()
+            {
+                delete data;
+                data = NULL;
+            }
+        };
         vector<lbool> value;
-        vector<vector<Lit> > bins;
+        vector<Spec> bins;
         mutex unit_mutex;
         mutex bin_mutex;
+
+        uint32_t num_threads;
+
+        size_t calc_memory_use_bins()
+        {
+            size_t mem = 0;
+            mem += bins.capacity()*sizeof(Spec);
+            for(size_t i = 0; i < bins.size(); i++) {
+                if (bins[i].data) {
+                    mem += bins[i].data->capacity()*sizeof(Lit);
+                    mem += sizeof(vector<Lit>);
+                }
+            }
+            return mem;
+        }
 };
 
 }

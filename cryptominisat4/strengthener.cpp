@@ -473,7 +473,7 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS
-    solver->checkImplicitStats();
+    solver->check_implicit_stats();
     #endif
 
     //Set stats
@@ -637,9 +637,9 @@ void Strengthener::strengthen_tri_with_bin_tri_stamp(
         str_impl_data.stampRem += tmp.second;
         if (lits.size() > 1) {
             timeAvailable -= 15;
-            std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            str_impl_data.stampRem += tmp.first;
-            str_impl_data.stampRem += tmp.second;
+            std::pair<size_t, size_t> tmp2 = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
+            str_impl_data.stampRem += tmp2.first;
+            str_impl_data.stampRem += tmp2.second;
         }
 
         if (lits.size() == 2) {
@@ -713,7 +713,7 @@ bool Strengthener::strengthenImplicit()
 {
     str_impl_data.clear();
 
-    const size_t origTrailSize = solver->trail.size();
+    const size_t origTrailSize = solver->trail_size();
     timeAvailable = 1000LL*1000LL*1000LL;
     const int64_t orig_time = timeAvailable;
     double myTime = cpuTime();
@@ -753,14 +753,16 @@ end:
 
     if (solver->conf.verbosity >= 1) {
         str_impl_data.print(
-            solver->trail.size() - origTrailSize
+            solver->trail_size() - origTrailSize
             , cpuTime() - myTime
             , timeAvailable
             , orig_time
             , solver
         );
     }
-    solver->checkStats();
+    #ifdef DEBUG_IMPLICIT_STATS
+    solver->check_stats();
+    #endif
 
     return solver->okay();
 }
