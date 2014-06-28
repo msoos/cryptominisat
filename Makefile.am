@@ -2,12 +2,16 @@ AUTOMAKE_OPTIONS = gnu subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS=${DEBUG_FLAGS} ${M4RI_CFLAGS} $(CRYPTOMINISAT4_M4RI_CFLAGS)
 
+bin_PROGRAMS= cryptominisat_simple
 lib_LTLIBRARIES = libcryptominisat4.la
 
-libcryptominisat4_la_SOURCES = cryptominisat4/calcdefpolars.cpp \
+libcryptominisat4_la_SOURCES = cryptominisat4/bva.cpp \
+                cryptominisat4/calcdefpolars.cpp \
 		cryptominisat4/clauseallocator.cpp \
 		cryptominisat4/clausecleaner.cpp \
-		cryptominisat4/clause.cpp \
+		cryptominisat4/clauseusagestats.cpp \
+		cryptominisat4/clausedumper.cpp \
+		cryptominisat4/cleaningstats.cpp \
 		cryptominisat4/cnf.cpp \
 		cryptominisat4/compfinder.cpp \
 		cryptominisat4/comphandler.cpp \
@@ -21,6 +25,7 @@ libcryptominisat4_la_SOURCES = cryptominisat4/calcdefpolars.cpp \
 		cryptominisat4/implcache.cpp \
 		cryptominisat4/prober.cpp \
 		cryptominisat4/propengine.cpp \
+                cryptominisat4/reducedb.cpp \
 		cryptominisat4/sccfinder.cpp \
 		cryptominisat4/searcher.cpp \
 		cryptominisat4/simplifier.cpp \
@@ -43,7 +48,16 @@ pkgincludesub_HEADERS = cryptominisat4/solvertypesmini.h \
 
 libcryptominisat4_la_LDFLAGS = -release $(RELEASE) -no-undefined
 
-if HAVE_M4RI
-libcryptominisat4_la_SOURCES += cryptominisat4/xorfinder.cpp 
-libcryptominisat4_la_LIBADD = -lm4ri  $(CRYPTOMINISAT4_M4RI_LDFLAGS)
+libcryptominisat4_la_LIBADD =
+
+if HAVE_ZLIB
+libcryptominisat4_la_LIBADD += -lz
 endif
+
+if HAVE_M4RI
+libcryptominisat4_la_SOURCES += cryptominisat4/xorfinder.cpp
+libcryptominisat4_la_LIBADD += -lm4ri  $(CRYPTOMINISAT4_M4RI_LDFLAGS)
+endif
+
+cryptominisat_simple_SOURCES = cryptominisat4/main_simple.cpp
+cryptominisat_simple_LDADD = libcryptominisat4.la
