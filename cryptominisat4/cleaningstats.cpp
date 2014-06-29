@@ -27,6 +27,16 @@ void CleaningStats::print(const size_t nbReduceDB) const
         , stats_line_percent(propConflBasedClean,nbReduceDB)
         , "% cleans"
     );
+    printStatsLine("c clean by activities"
+        , actBasedClean
+        , stats_line_percent(actBasedClean,nbReduceDB)
+        , "% cleans"
+    );
+    printStatsLine("c clean by prop&confl / avg. depth"
+        , propConflDepthBasedClean
+        , stats_line_percent(propConflDepthBasedClean,nbReduceDB)
+        , "% cleans"
+    );
 
     //--- Actual clean --
 

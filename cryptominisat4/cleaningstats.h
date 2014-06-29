@@ -80,7 +80,7 @@ struct CleaningStats
         sizeBasedClean += other.sizeBasedClean;
         propConflBasedClean += other.propConflBasedClean;
         actBasedClean += other.actBasedClean;
-        propConflDepthBasedClean + other.propConflDepthBasedClean;
+        propConflDepthBasedClean += other.propConflDepthBasedClean;
 
         //Clause Cleaning data
         removed += other.removed;
