@@ -239,6 +239,7 @@ if (ENABLE_TESTING)
     add_test (assump_test tests/assump_test)
     add_test (readme_test tests/readme_test)
     add_test (heap_test tests/heap_test)
+    add_test (clause_test tests/clause_test)
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
