@@ -503,7 +503,7 @@ bool Simplifier::addFromSolver(
     }
 
     if (!irred && alsoOccur) {
-        std::sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->clAllocator));
+        std::stable_sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->clAllocator));
     }
 
     LinkInData link_in_data = link_in_clauses(toAdd, irred, alsoOccur);
@@ -1680,8 +1680,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     const Lit lit = Lit(var, false);
     watch_subarray poss = solver->watches[lit.toInt()];
     watch_subarray negs = solver->watches[(~lit).toInt()];
-    std::sort(poss.begin(), poss.end(), watch_sort_smallest_first());
-    std::sort(negs.begin(), negs.end(), watch_sort_smallest_first());
+    std::stable_sort(poss.begin(), poss.end(), watch_sort_smallest_first());
+    std::stable_sort(negs.begin(), negs.end(), watch_sort_smallest_first());
     resolvents.clear();
 
     //Pure literal, no resolvents
@@ -2069,7 +2069,7 @@ bool Simplifier::maybeEliminate(const Var var)
 
     //It's best to add resolvents with largest first. Then later, the smaller ones
     //can subsume the larger ones. While adding, we do subsumption check.
-    std::sort(resolvents.begin(), resolvents.end());
+    std::stable_sort(resolvents.begin(), resolvents.end());
 
     //Add resolvents
     for(Resolvent& resolvent: resolvents) {
@@ -2817,7 +2817,7 @@ void Simplifier::linkInClause(Clause& cl)
 {
     assert(cl.size() > 3);
     ClOffset offset = solver->clAllocator.getOffset(&cl);
-    std::sort(cl.begin(), cl.end());
+    std::stable_sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];
         *limit_to_decrease -= (long)ws.size();

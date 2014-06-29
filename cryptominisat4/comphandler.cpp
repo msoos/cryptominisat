@@ -134,7 +134,7 @@ bool CompHandler::handle()
     }
 
     //Sort according to smallest size first
-    std::sort(sizes.begin(), sizes.end(), sort_pred());
+    std::stable_sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
 
     size_t num_comps_solved = 0;
@@ -197,7 +197,7 @@ bool CompHandler::solve_component(
     vector<Var> vars(vars_orig);
 
     //Sort and renumber
-    std::sort(vars.begin(), vars.end());
+    std::stable_sort(vars.begin(), vars.end());
     /*for(Var var: vars) {
         cout << "var in component: " << solver->map_inter_to_outer(var) + 1 << endl;
     }*/
@@ -591,7 +591,7 @@ void CompHandler::moveClausesImplicit(
                     //We need it sorted, because that's how we know what order
                     //it is in the Watched()
                     lits = {lit, lit2, lit3};
-                    std::sort(lits.begin(), lits.end());
+                    std::stable_sort(lits.begin(), lits.end());
 
                     //Remove only 2, the remaining gets removed by not copying it over
                     if (lits[0] != lit) {
@@ -761,7 +761,7 @@ void CompHandler::dump_removed_clauses(std::ostream* outfile) const
         for(size_t i = at; i < at + size; i++) {
             tmp.push_back(removedClauses.lits[i]);
         }
-        std::sort(tmp.begin(), tmp.end());
+        std::stable_sort(tmp.begin(), tmp.end());
         *outfile << tmp << " 0" << endl;
 
         //Move 'at' along

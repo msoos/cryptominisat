@@ -641,7 +641,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
                 lits[0] = ps[smallest];
                 lits[1] = it->lit2();
                 lits[2] = it->lit3();
-                std::sort(lits + 0, lits + 3);
+                std::stable_sort(lits + 0, lits + 3);
                 removeTriAllButOne(solver->watches, ps[smallest], lits, it->red());
                 if (it->red()) {
                     solver->binTri.redTris--;
@@ -806,7 +806,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
 //         //Must re-order so that TRI-s are first
 //         //Otherwise we might re-order list while looking through.. very messy
 //         WatchTriFirst sorter;
-//         std::sort(ws.begin(), ws.end(), sorter);
+//         std::stable_sort(ws.begin(), ws.end(), sorter);
 //
 //         for (size_t i = 0
 //             ; i < ws.size() && *simplifier->toDecrease > 0

@@ -1462,7 +1462,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 3:
             //3-long learnt
             stats.learntTris++;
-            std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
+            std::stable_sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (do_otf_this_round && decisionLevel() == 1)
@@ -1479,7 +1479,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             //Long learnt
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
-            std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
+            std::stable_sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
             if (do_otf_this_round && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
@@ -1808,7 +1808,7 @@ struct MyPolarData
             , varData[i].flippedPolarity
         ));
     }
-    std::sort(polarData.begin(), polarData.end());
+    std::stable_sort(polarData.begin(), polarData.end());
 
     for(size_t i = 0; i < polarData.size(); i++) {
         solver->sqlFile
@@ -1931,7 +1931,7 @@ vector<Var> Searcher::calcVarsToDump() const
             );
         }
     }
-    std::sort(order.begin(), order.end());
+    std::stable_sort(order.begin(), order.end());
 
     //These vars need to be dumped according to above stat
     for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {
@@ -1951,7 +1951,7 @@ vector<Var> Searcher::calcVarsToDump() const
             );
         }
     }
-    std::sort(order.begin(), order.end());
+    std::stable_sort(order.begin(), order.end());
 
     //These vars need to be dumped according to above stat
     for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {

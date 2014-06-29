@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(binclause_false)
     BOOST_CHECK_EQUAL( ret, l_False);
     BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
     vector<Lit> tmp = s.get_conflict();
-    std::sort(tmp.begin(), tmp.end());
+    std::stable_sort(tmp.begin(), tmp.end());
     BOOST_CHECK_EQUAL( tmp[0], Lit(0, false) );
     BOOST_CHECK_EQUAL( tmp[1], Lit(1, false) );
 }
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(replace_false)
 
     BOOST_CHECK( s.get_conflict().size() == 2);
     vector<Lit> tmp = s.get_conflict();
-    std::sort(tmp.begin(), tmp.end());
+    std::stable_sort(tmp.begin(), tmp.end());
     BOOST_CHECK( tmp[0] == Lit(0, true) );
     BOOST_CHECK( tmp[1] == Lit(1, false) );
 }

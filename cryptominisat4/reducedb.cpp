@@ -338,7 +338,7 @@ void ReduceDB::lock_most_UIP_used_clauses()
 
             return a_cl.stats.used_for_uip_creation > b_cl.stats.used_for_uip_creation;
     };
-    std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), uipsort);
+    std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), uipsort);
 
     size_t locked = 0;
     size_t skipped = 0;

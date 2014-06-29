@@ -216,7 +216,7 @@ bool Vivifier::vivify_long_irred_cls()
     runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
 
-    std::sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), ClauseSizeSorter(solver->clAllocator));
+    std::stable_sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), ClauseSizeSorter(solver->clAllocator));
     uint64_t origLitRem = runStats.numLitsRem;
     uint64_t origClShorten = runStats.numClShorten;
 

@@ -50,7 +50,7 @@ class Xor
             for (uint32_t i = 0; i < cl.size(); i++) {
                 vars.push_back(cl[i].var());
             }
-            std::sort(vars.begin(), vars.end());
+            std::stable_sort(vars.begin(), vars.end());
         }
 
         bool operator==(const Xor& other) const

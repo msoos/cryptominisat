@@ -672,7 +672,7 @@ void XorFinder::findXorMatchExt(
         if (cl.size() == foundCls.getSize())
             triedAlready.insert(offset);
 
-        std::sort(tmpClause.begin(), tmpClause.end());
+        std::stable_sort(tmpClause.begin(), tmpClause.end());
         foundCls.add(tmpClause, varsMissing);
 
         end:;
