@@ -207,7 +207,7 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
 
         case clean_sum_confl_depth_based : {
             my_sorter = new SortRedClsGlue(solver->clAllocator);
-            tmpStats.propConflBasedClean = 1;
+            tmpStats.propConflDepthBasedClean = 1;
             break;
         }
 
