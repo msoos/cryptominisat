@@ -2428,6 +2428,7 @@ Lit Searcher::pickBranchLit()
     double frq = conf.random_var_freq;
     if (rand < frq && !order_heap.empty()) {
         const Var next_var = order_heap.random_element(mtrand);
+
         if (value(next_var) == l_Undef
             && solver->varData[next_var].is_decision
         ) {
