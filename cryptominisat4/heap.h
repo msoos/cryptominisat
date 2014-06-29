@@ -84,10 +84,6 @@ class Heap {
                );
     }
 
-    uint32_t operator[](uint32_t index) const {
-        return heap[index];
-    }
-
   public:
     Heap(const Comp& c) :
         lt(c)
