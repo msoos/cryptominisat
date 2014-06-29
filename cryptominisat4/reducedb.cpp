@@ -344,8 +344,10 @@ void ReduceDB::lock_most_UIP_used_clauses()
         if (!cl.stats.locked) {
             cl.stats.locked = true;
             locked++;
+            //std::cout << "Locked: " << cl << endl;
         } else {
             skipped++;
+            //std::cout << "skipped: " << cl << endl;
         }
     }
 
