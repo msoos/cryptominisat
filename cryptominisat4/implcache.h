@@ -287,7 +287,12 @@ private:
 namespace std
 {
     template <>
-    inline void swap (CMSat::TransCache& m1, CMSat::TransCache& m2) noexcept (true)
+    inline void swap (CMSat::TransCache& m1, CMSat::TransCache& m2)
+    #ifdef _MSC_VER
+    throw()
+    #else
+    noexcept (true)
+    #endif
     {
          m1.lits.swap(m2.lits);
     }
