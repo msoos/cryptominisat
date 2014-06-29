@@ -12,10 +12,7 @@ struct MySorter
     virtual ~MySorter()
     {}
 
-    virtual bool operator()(const ClOffset, const ClOffset) const
-    {
-        return false;
-    }
+    virtual bool operator()(const ClOffset, const ClOffset) const = 0;
 };
 
 struct SortRedClsGlue: public MySorter
@@ -178,35 +175,34 @@ ReduceDB::ReduceDB(Solver* _solver) :
 
 void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
 {
-    MySorter* my_sorter;
     switch (clean_type) {
         case clean_glue_based : {
-            my_sorter = new SortRedClsGlue(solver->clAllocator);
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->clAllocator));
             tmpStats.glueBasedClean = 1;
             break;
         }
 
         case clean_size_based : {
-            my_sorter = new SortRedClsSize(solver->clAllocator);
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->clAllocator));
             tmpStats.sizeBasedClean = 1;
             break;
         }
 
         case clean_sum_activity_based : {
-            my_sorter = new SortRedClsAct(solver->clAllocator);
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->clAllocator));
             tmpStats.actBasedClean = 1;
             break;
         }
 
         case clean_sum_prop_confl_based : {
             uint64_t multiplier = solver->conf.clean_confl_multiplier;
-            my_sorter = new SortRedClsPropConfl(solver->clAllocator, multiplier);
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsPropConfl(solver->clAllocator, multiplier));
             tmpStats.propConflBasedClean = 1;
             break;
         }
 
         case clean_sum_confl_depth_based : {
-            my_sorter = new SortRedClsGlue(solver->clAllocator);
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->clAllocator));
             tmpStats.propConflDepthBasedClean = 1;
             break;
         }
@@ -215,9 +211,6 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
             assert(false);
         }
     }
-
-    std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), *my_sorter);
-    delete my_sorter;
 }
 
 void ReduceDB::print_best_red_clauses_if_required() const
