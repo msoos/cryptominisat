@@ -237,8 +237,9 @@ public:
         isRemoved = false;
         isAsymmed = false;
 
-        for (uint32_t i = 0; i < ps.size(); i++)
+        for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
+        }
 
         setChanged();
     }
