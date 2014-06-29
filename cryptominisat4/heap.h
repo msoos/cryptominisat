@@ -194,7 +194,7 @@ class Heap {
         }
         heap.resize(heap.size()-(i - j));
 
-        for (int k = ((int)heap.size()) / 2 - 1; k >= 1; k--) {
+        for (long k = ((long)heap.size()) / 2; k >= 1; k--) {
             percolate_down(k);
         }
         assert(heap_property());
