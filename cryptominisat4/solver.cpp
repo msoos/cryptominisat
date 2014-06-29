@@ -1338,8 +1338,8 @@ lbool Solver::solve()
     }
 
     //Clean up as a startup
-    reduceDB->reset_for_next_clean_limit();
     datasync->rebuild_bva_map();
+    //reduceDB->reduce_db_and_update_reset_stats(false);
 
     //Initialise
     reduceDB->reset_for_next_clean_limit();
