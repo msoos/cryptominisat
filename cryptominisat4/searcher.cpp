@@ -34,6 +34,7 @@
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
+//#define DEBUG_RESOLV
 
 using namespace CMSat;
 using std::cout;
@@ -2486,15 +2487,15 @@ Lit Searcher::pickBranchLit()
         }
     }
 
-    //No vars in heap: solution found
-    #ifdef VERBOSE_DEBUG
-    if (next == lit_Undef) {
-        cout << "SAT!" << endl;
-    } else {
-        cout << "decided on: " << next << endl;
+    if (conf.verbosity >= 10) {
+        if (next == lit_Undef) {
+            cout << "SAT!" << endl;
+        } else {
+            cout << "decided on: " << next << endl;
+        }
     }
-    #endif
 
+    //No vars in heap: solution found
     if (next != lit_Undef) {
         assert(solver->varData[next.var()].is_decision);
         assert(solver->varData[next.var()].removed == Removed::none

@@ -89,9 +89,15 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
 ) const {
     size_t remLitTimeStamp = 0;
     StampSorter sorter(tstamp, stampType, true);
+
+    #ifdef DEBUG_STAMPING
+    cout << "Ori clause: " << lits << endl;
+    #endif
+
     std::stable_sort(lits.begin(), lits.end(), sorter);
 
     #ifdef DEBUG_STAMPING
+    cout << "sorted clause: " << lits << endl;
     cout << "Timestamps: ";
     for(size_t i = 0; i < lits.size(); i++) {
         cout
@@ -99,7 +105,6 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
         << "," << tstamp[lits[i].toInt()].end[stampType];
     }
     cout << endl;
-    cout << "Ori clause: " << lits << endl;
     #endif
 
     assert(!lits.empty());

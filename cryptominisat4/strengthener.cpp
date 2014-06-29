@@ -297,6 +297,10 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     Clause& cl = *solver->clAllocator.getPointer(offset);
     assert(cl.size() > 3);
 
+    if (solver->conf.verbosity >= 10) {
+        cout << "Examining str clause:" << cl << endl;
+    }
+
     timeAvailable -= (long)cl.size()*2;
     tmpStats.totalLits += cl.size();
     tmpStats.triedCls++;
@@ -489,6 +493,9 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
         runStats.irredCacheBased += tmpStats;
     }
     if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity >= 10) {
+            cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
+        }
         cache_based_data.print();
     }
     if (solver->conf.doSQL) {

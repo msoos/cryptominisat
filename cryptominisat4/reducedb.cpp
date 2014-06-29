@@ -536,7 +536,7 @@ ClauseUsageStats ReduceDB::sumClauseData(
             perSizeStats[glue].addStat(cl);
         }
 
-        if (solver->conf.verbosity >= 4)
+        if (solver->conf.verbosity >= 6)
             cl.print_extra_stats();
     }
 

@@ -638,7 +638,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         assert(lit.var() < nVarsOuter());
         lit = map_outer_to_inter(lit);
 
-        if (conf.verbosity >= 12) {
+        if (conf.verbosity >= 52) {
             cout
             << "var-renumber updating lit "
             << origLit
