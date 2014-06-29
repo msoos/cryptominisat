@@ -8,68 +8,69 @@
 using namespace CMSat;
 
 struct F {
-    F() : c_ptr(NULL) {
+    F() {
     }
 
     ~F() {
-        delete c_ptr;
     }
 
-    void allocate_space_for_two()
+    Clause* allocate_space_for(size_t n)
     {
-        void* tmp = malloc(sizeof(Clause) + 2*sizeof(Lit));
+        void* tmp = malloc(sizeof(Clause) + n*sizeof(Lit));
         std::vector<Lit> lits;
-        lits.push_back(Lit(0, false));
-        lits.push_back(Lit(1, false));
-        c_ptr = new(tmp) Clause(lits, 0);
+        for(size_t i = 0; i < n ; i++) {
+            lits.push_back(Lit(i, false));
+        }
+        Clause* c_ptr = new(tmp) Clause(lits, 0);
+        return c_ptr;
     }
-
-    Clause* c_ptr;
 };
 
 BOOST_FIXTURE_TEST_SUITE( clause_test, F )
 
 BOOST_AUTO_TEST_CASE(convert_to_string)
 {
-    allocate_space_for_two();
-    (*c_ptr)[0] = Lit(0, false);
-    (*c_ptr)[1] = Lit(1, false);
+    Clause& cl = *allocate_space_for(3);
+    cl[0] = Lit(0, false);
+    cl[1] = Lit(1, false);
+    cl[2] = Lit(2, false);
 
     std::stringstream ss;
-    ss << *c_ptr;
-    BOOST_CHECK_EQUAL( ss.str(), "1 2");
+    ss << cl;
+    BOOST_CHECK_EQUAL( ss.str(), "1 2 3");
 }
 
 BOOST_AUTO_TEST_CASE(convert_to_string2)
 {
-    allocate_space_for_two();
-    (*c_ptr)[0] = Lit(0, false);
-    (*c_ptr)[1] = Lit(1, true);
+    Clause& cl = *allocate_space_for(3);
+    cl[0] = Lit(0, false);
+    cl[1] = Lit(1, true);
+    cl[2] = Lit(2, false);
 
     std::stringstream ss;
-    ss << *c_ptr;
-    BOOST_CHECK_EQUAL( ss.str(), "1 -2");
+    ss << cl;
+    BOOST_CHECK_EQUAL( ss.str(), "1 -2 3");
 }
 
 BOOST_AUTO_TEST_CASE(numPropAndConfl)
 {
-    allocate_space_for_two();
-    c_ptr->stats.propagations_made = 10;
-    c_ptr->stats.conflicts_made = 7;
+    Clause& cl = *allocate_space_for(3);
+    cl.stats.propagations_made = 10;
+    cl.stats.conflicts_made = 7;
 
-    BOOST_CHECK_EQUAL( c_ptr->stats.numPropAndConfl(1), 17);
-    BOOST_CHECK_EQUAL( c_ptr->stats.numPropAndConfl(2), 24);
+    BOOST_CHECK_EQUAL( cl.stats.numPropAndConfl(1), 17);
+    BOOST_CHECK_EQUAL( cl.stats.numPropAndConfl(2), 24);
 }
 
 BOOST_AUTO_TEST_CASE(clear)
 {
-    allocate_space_for_two();
-    c_ptr->stats.propagations_made = 10;
-    c_ptr->stats.conflicts_made = 7;
-    c_ptr->stats.clear(0.0);
+    Clause& cl = *allocate_space_for(3);
+    cl.stats.propagations_made = 10;
+    cl.stats.conflicts_made = 7;
+    cl.stats.clear(0.0);
 
-    BOOST_CHECK_EQUAL( c_ptr->stats.propagations_made, 0);
-    BOOST_CHECK_EQUAL( c_ptr->stats.conflicts_made, 0);
+    BOOST_CHECK_EQUAL( cl.stats.propagations_made, 0);
+    BOOST_CHECK_EQUAL( cl.stats.conflicts_made, 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
