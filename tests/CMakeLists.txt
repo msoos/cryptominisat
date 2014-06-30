@@ -28,7 +28,7 @@ if(NOT EXISTS "${LIT_TOOL}")
     message(FATAL_ERROR "LIT_TOOL is set but the path does not seem to exist. Try deleting the LIT_TOOL cache variable and reconfiguring")
 endif()
 
-set(LIT_ARGS -v -s CACHE STRING "Arguments to pass to lit")
+set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
 
 # -----------------------------------------------------------------------------
 # Find GTest library which will be used to drive tests
