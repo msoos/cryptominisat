@@ -97,8 +97,11 @@ void printUsage(char** argv)
 {
     printf("USAGE: %s [options] <input-file> \n\n  where input is plain DIMACS.\n\n", argv[0]);
     printf("OPTIONS:\n\n");
-    printf("  -verbosity     = {0,1,2}\n");
-    printf("  -drup     = {0,1}\n");
+    printf("  --verbosity     = [0...] Sets verbosity level. Anything higher\n");
+    printf("                           than 2 will give debug log\n");
+    printf("  --drup          = {0,1}  Sets whether DRUP should be dumped to\n");
+    printf("                           the console as per SAT COMPETITION'14 guidelines\n");
+    printf("  --threads       = [1...] Sets number of threads\n");
     printf("\n");
 }
 
