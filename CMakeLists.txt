@@ -51,10 +51,11 @@ if (SANITIZE)
     #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 endif()
 
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-std=c++11 -pthread -g -O3 -mtune=native")
-SET(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -pthread -O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -pthread -O3 -g0 -DNDEBUG -mtune=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
 
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 
 include(CheckCXXCompilerFlag)
 macro(add_cxx_flag_if_supported flagname)
