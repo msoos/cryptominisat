@@ -1,0 +1,13 @@
+Source: cryptominisat
+Section: math
+Priority: optional
+Maintainer: Mate Soos <soos.mate@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), cmake, libboost-program-options-dev (>= 1.54)
+Standards-Version: 3.9.4
+Homepage: http://msoos.org
+
+Package: cryptominisat
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: An advanced SAT solver
+ CryptoMiniSat is an award-winning SAT solver
