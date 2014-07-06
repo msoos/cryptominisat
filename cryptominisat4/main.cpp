@@ -536,7 +536,7 @@ void Main::add_supported_options()
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
     ("sql", po::value(&conf.doSQL)->default_value(conf.doSQL)
-        , "Write to SQL. 1 = try writing to DB, if fails, continue. 2 = abort if cannot write to DB")
+        , "Write to SQL. 0 = don't attempt to writ to DB, 1 = try but continue if fails, 2 = abort if cannot write to DB")
     #ifdef STATS_NEEDED_EXTRA
     ("cldistribper", po::value(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump redundant clause size distribution every N conflicts. If set to 0, it is never dumped.")
