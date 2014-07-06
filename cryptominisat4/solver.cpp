@@ -85,7 +85,7 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
         #ifdef USE_MYSQL
         sqlStats = new MySQLStats();
         #else
-        if (conf.doSQL == 2) {
+        if (conf.doSQL >= 2) {
             cout
             << "ERROR: "
             << "Cannot use SQL: no SQL library was found during compilation."
