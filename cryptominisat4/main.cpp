@@ -561,6 +561,12 @@ void Main::add_supported_options()
         , "SQL server hostname/IP")
     ;
 
+    po::options_description sqlOptionsNone;
+    sqlOptionsNone.add_options()
+    ("sql", po::value(&conf.doSQL)->default_value(0)
+        , "Cannot be set, SQL support has not been compiled into the program")
+    ;
+
     po::options_description printOptions("Printing options");
     printOptions.add_options()
     ("verb", po::value(&conf.verbosity)->default_value(conf.verbosity)
@@ -622,6 +628,9 @@ void Main::add_supported_options()
 
     cmdline_options
     .add(generalOptions)
+    #ifndef USE_MYSQL
+    .add(sqlOptionsNone)
+    #endif
     .add(restartOptions)
     .add(printOptions)
     .add(propOptions)
