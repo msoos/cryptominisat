@@ -117,13 +117,6 @@ add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wheader-guard")
 #add_cxx_flag_if_supported("-fopt-info")
 
-option(ENABLE_TESTING "Enable testing" OFF)
-if(ENABLE_TESTING)
-    message(STATUS "Testing is enabled")
-else()
-    message(WARNING "Testing is disabled")
-endif()
-
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
@@ -141,6 +134,8 @@ option(MORE_DEBUG "Use more debug flags" OFF)
 IF(MORE_DEBUG)
     add_definitions(-DMORE_DEBUG)
 endif()
+
+option(ENABLE_TESTING "Enable testing" OFF)
 
 # -----------------------------------------------------------------------------
 # Add GIT version
