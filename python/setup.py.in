@@ -8,6 +8,7 @@ ext_kwds = dict(
     sources = ["${CMAKE_CURRENT_SOURCE_DIR}/pycryptosat.cpp"],
     define_macros = [],
     extra_compile_args = ['--std=c++11', '-I${PROJECT_SOURCE_DIR}'],
+    language = "c++",
     library_dirs=['.', '/usr/local/lib', '${PROJECT_BINARY_DIR}/lib'],
     libraries = ['cryptominisat4']
 )
