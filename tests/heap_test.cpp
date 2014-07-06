@@ -12,7 +12,7 @@ struct Comp
     bool operator()(uint32_t a, uint32_t b) const
     {
         return a < b;
-    };
+    }
 };
 
 BOOST_AUTO_TEST_CASE(simple)
