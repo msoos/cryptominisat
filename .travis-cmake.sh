@@ -14,6 +14,10 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
+    NORMAL)
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
     STATIC_BIN)
         eval cmake ${COMMON_CMAKE_ARGS} \
                    -DSTATICCOMPILE:BOOL=OFF \
