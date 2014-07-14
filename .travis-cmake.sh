@@ -20,7 +20,7 @@ case $CMS_CONFIG in
     ;;
     STATIC_BIN)
         eval cmake ${COMMON_CMAKE_ARGS} \
-                   -DSTATICCOMPILE:BOOL=OFF \
+                   -DSTATICCOMPILE:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
