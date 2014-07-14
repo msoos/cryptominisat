@@ -248,7 +248,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     runStats.time_used += time_used;
     runStats.time_out += time_out;
     if (solver->conf.verbosity >= 1) {
-        runStats.printShort();
+        runStats.printShort(solver);
     }
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed(
@@ -283,17 +283,14 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
     return *this;
 }
 
-void SubsumeImplicit::Stats::printShort() const
+void SubsumeImplicit::Stats::printShort(const Solver* solver) const
 {
     cout
     << "c [impl sub]"
     << " bin: " << remBins
     << " tri: " << remTris
     << " (stamp: " << stampTriRem << ", cache: " << cacheTriRem << ")"
-
-    << " T: " << std::fixed << std::setprecision(2)
-    << time_used
-    << " T-out: " << (time_out ? "Y" : "N")
+    << solver->conf.print_times(time_used, time_out)
     << " w-visit: " << numWatchesLooked
     << endl;
 }

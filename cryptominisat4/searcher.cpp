@@ -1709,11 +1709,11 @@ lbool Searcher::burst_search()
         << conf.burst_search_len << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
-        << " T: " << std::setprecision(2) << std::fixed << time_used
         #ifdef STATS_NEEDED
         << " LHBR: "
         << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
         #endif
+        << solver->conf.print_times(time_used)
         << endl;
     }
 

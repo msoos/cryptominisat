@@ -475,7 +475,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed(
@@ -909,3 +909,41 @@ size_t Prober::mem_used() const
 //     return solver->ok;
 // }
 
+void Prober::Stats::printShort(const Solver* solver) const
+{
+    cout
+    << "c [probe]"
+    << " 0-depth assigns: " << zeroDepthAssigns
+    << " bsame: " << bothSameAdded
+    << " Flit: " << numFailed
+
+    // x2 because it's LITERAL visit
+    << " Visited: " << numVisited << "/" << (origNumFreeVars*2)
+    << "(" << std::setprecision(1)
+    << stats_line_percent(numVisited, origNumFreeVars*2)
+    << "%)"
+    << endl;
+
+    cout
+    << "c [probe]"
+    << " probed: " << numProbed
+    << "(" << std::setprecision(1)
+    // x2 because it's LITERAL probed
+    << stats_line_percent(numProbed, origNumFreeVars*2)
+    << "%)"
+
+    << " hyperBin:" << addedBin
+    << " transR-Irred:" << removedIrredBin
+    << " transR-Red:" << removedRedBin
+    << endl;
+
+    cout
+    << "c [probe]"
+    << " BP: " << std::fixed << std::setprecision(1)
+    << (double)(propStats.bogoProps)/1000000.0  << "M"
+    << " HP: " << std::fixed << std::setprecision(1)
+    << (double)(propStats.otfHyperTime)/1000000.0  << "M"
+
+    << solver->conf.print_times(cpu_time)
+    << endl;
+}

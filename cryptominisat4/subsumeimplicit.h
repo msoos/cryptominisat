@@ -48,7 +48,7 @@ public:
             *this = Stats();
         }
         Stats operator+=(const Stats& other);
-        void printShort() const;
+        void printShort(const Solver* solver) const;
         void print() const;
 
         double time_used = 0.0;

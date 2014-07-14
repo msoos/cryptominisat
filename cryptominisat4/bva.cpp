@@ -95,7 +95,7 @@ bool BVA::bounded_var_addition()
     solver->bva_changed();
 
     bool time_out = *simplifier->limit_to_decrease <= 0;
-    double time_used = cpuTime() - my_time;
+    const double time_used = cpuTime() - my_time;
     double time_remain = ((double)*simplifier->limit_to_decrease/(double)limit_orig);
     if (solver->conf.verbosity >= 2) {
         cout
@@ -103,9 +103,7 @@ bool BVA::bounded_var_addition()
         << " simp: " << bva_simp_size
         << " 2lit: " << ((solver->conf.bva_also_twolit_diff
             && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
-        << " T: " << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
-        << " T-r: " << time_remain*100.0  << "%"
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->conf.doSQL) {

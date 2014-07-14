@@ -70,7 +70,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
     runStats.clear();
 
@@ -151,9 +151,7 @@ bool Vivifier::vivify_tri_irred_cls()
         << " shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << " T: " << std::setprecision(2) << time_used
-        << " T-out: " << std::setprecision(2) << (time_out ? "Y" : "N")
-        << " T-rem: " << std::setprecision(2) << time_remain *100.0 << "%"
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -310,9 +308,7 @@ bool Vivifier::vivify_long_irred_cls()
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
         << " cl-rem:" << runStats.numClShorten- origClShorten
         << " lits-rem:" << runStats.numLitsRem - origLitRem
-        << " T: " << std::setprecision(2) << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
-        << " T-rem: " << std::setprecision(2) << time_remain*100.0 << "%"
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -444,7 +440,7 @@ Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Vivifier::Stats::printShort() const
+void Vivifier::Stats::printShort(const Solver* solver) const
 {
     cout
     << "c [vivif] asymm (tri+long)"
@@ -452,8 +448,7 @@ void Vivifier::Stats::printShort() const
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << " T: " << time_used << " s"
-    << " T-out: " << (timeOut ? "Y" : "N")
+    << solver->conf.print_times(time_used, timeOut)
     << endl;
 }
 

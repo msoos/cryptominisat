@@ -14,6 +14,7 @@
 #endif
 
 #include <iostream>
+#include <vector>
 
 namespace CMSat {
 

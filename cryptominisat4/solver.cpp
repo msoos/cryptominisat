@@ -1847,7 +1847,7 @@ void Solver::printMinStats() const
             , "% time"
         );
 
-        prober->getStats().printShort();
+        prober->getStats().printShort(this);
     }
     //Simplifier stats
     if (conf.perform_occur_based_simp) {
@@ -1856,7 +1856,7 @@ void Solver::printMinStats() const
             , stats_line_percent(simplifier->getStats().totalTime() ,cpu_time)
             , "% time"
         );
-        simplifier->getStats().printShort(nVars());
+        simplifier->getStats().printShort(this, nVars());
     }
     printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
@@ -3152,4 +3152,58 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
     }
 
     return ret;
+}
+
+Solver::ReachabilityStats& Solver::ReachabilityStats::operator+=(const ReachabilityStats& other)
+{
+    cpu_time += other.cpu_time;
+
+    numLits += other.numLits;
+    dominators += other.dominators;
+    numLitsDependent += other.numLitsDependent;
+
+    return *this;
+}
+
+void Solver::ReachabilityStats::print() const
+{
+    cout << "c ------- REACHABILITY STATS -------" << endl;
+    printStatsLine("c time"
+        , cpu_time
+    );
+
+    printStatsLine("c dominator lits"
+        , stats_line_percent(dominators, numLits)
+        , "% of unknowns lits"
+    );
+
+    printStatsLine("c dependent lits"
+        , stats_line_percent(numLitsDependent, numLits)
+        , "% of unknown lits"
+    );
+
+    printStatsLine("c avg num. dominated lits"
+        , (double)numLitsDependent/(double)dominators
+    );
+
+    cout << "c ------- REACHABILITY STATS END -------" << endl;
+}
+
+void Solver::ReachabilityStats::printShort(const Solver* solver) const
+{
+    cout
+    << "c [reach]"
+    << " dom lits: " << std::fixed << std::setprecision(2)
+    << stats_line_percent(dominators, numLits)
+    << " %"
+
+    << " dep-lits: " << std::fixed << std::setprecision(2)
+    << stats_line_percent(numLitsDependent, numLits)
+    << " %"
+
+    << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
+    << stats_line_percent(numLitsDependent, dominators)
+
+    << solver->conf.print_times(cpu_time)
+    << endl;
 }

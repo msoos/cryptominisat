@@ -197,51 +197,21 @@ public:
 
     struct TryBothStats
     {
-        TryBothStats() :
-            numCalls(0)
-            , cpu_time(0)
-            , zeroDepthAssigns(0)
-            , varReplaced(0)
-            , bProp(0)
-            , bXProp(0)
-        {}
-
         void clear()
         {
             TryBothStats tmp;
             *this = tmp;
         }
 
-        TryBothStats& operator+=(const TryBothStats& other)
-        {
-            numCalls += other.numCalls;
-            cpu_time += other.cpu_time;
-            zeroDepthAssigns += other.zeroDepthAssigns;
-            varReplaced += other.varReplaced;
-            bProp += other.bProp;
-            bXProp += other.bXProp;
+        TryBothStats& operator+=(const TryBothStats& other);
+        void printShort(Solver* solver) const;
 
-            return *this;
-        }
-
-        void printShort() const
-        {
-            cout
-            << "c [bcache] "
-            //<< " set: " << bProp
-            << " 0-depth ass: " << zeroDepthAssigns
-            //<< " BXProp: " << bXProp
-            << " BXprop: " << bXProp
-            << " T: " << cpu_time
-            << endl;
-        }
-
-        uint64_t numCalls;
-        double cpu_time;
-        uint64_t zeroDepthAssigns;
-        uint64_t varReplaced;
-        uint64_t bProp;
-        uint64_t bXProp;
+        uint64_t numCalls = 0;
+        double cpu_time = 0;
+        uint64_t zeroDepthAssigns = 0;
+        uint64_t varReplaced = 0;
+        uint64_t bProp = 0;
+        uint64_t bXProp = 0;
     };
 
     TryBothStats runStats;

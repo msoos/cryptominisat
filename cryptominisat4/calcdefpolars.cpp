@@ -142,7 +142,7 @@ const vector<unsigned char> CalcDefPolars::calculate()
         << " pos: " << std::setw(7) << pos_polars
         << " neg: " << std::setw(7) << neg_polars
         << " undec: " << std::setw(7) << undecided_polars
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << " s"
+        << solver->conf.print_times(cpuTime() - myTime)
         << std:: endl;
     }
 

@@ -6,6 +6,8 @@
 
 namespace CMSat {
 
+class Solver;
+
 struct CleaningStats
 {
     struct Data
@@ -65,32 +67,10 @@ struct CleaningStats
 
 
     };
-
-    CleaningStats& operator+=(const CleaningStats& other)
-    {
-        //Time
-        cpu_time += other.cpu_time;
-
-        //Before remove
-        origNumClauses += other.origNumClauses;
-        origNumLits += other.origNumLits;
-
-        //Type of clean
-        glueBasedClean += other.glueBasedClean;
-        sizeBasedClean += other.sizeBasedClean;
-        propConflBasedClean += other.propConflBasedClean;
-        actBasedClean += other.actBasedClean;
-        propConflDepthBasedClean += other.propConflDepthBasedClean;
-
-        //Clause Cleaning data
-        removed += other.removed;
-        remain += other.remain;
-
-        return *this;
-    }
+    CleaningStats& operator+=(const CleaningStats& other);
 
     void print(const size_t nbReduceDB) const;
-    void printShort() const;
+    void printShort(const Solver* solver) const;
 
     double cpu_time = 0;
 

@@ -716,8 +716,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
     if (solver->conf.verbosity >= 2) {
         cout
         << "c Empty resolvent elimed: " << var_elimed
-        << " T:" << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
+        << solver->conf.print_times(time_used, time_out)
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -999,7 +998,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver->conf.doVarElim);
+            runStats.printShort(solver, solver->conf.doVarElim);
     }
 
     return solver->ok;
@@ -2888,7 +2887,7 @@ Simplifier::Stats& Simplifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Simplifier::Stats::printShort(const bool print_var_elim) const
+void Simplifier::Stats::printShort(const Solver* solver, const bool print_var_elim) const
 {
 
     cout
@@ -2903,9 +2902,7 @@ void Simplifier::Stats::printShort(const bool print_var_elim) const
         << " / " << origNumMaxElimVars
         << " / " << origNumFreeVars
         //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
-        << " T: " << std::fixed << std::setprecision(2)
-        << varElimTime << " s"
-        << " T-out: " << (varElimTimeOut ? "Y" : "N")
+        << solver->conf.print_times(varElimTime, varElimTimeOut)
         << endl;
 
         cout

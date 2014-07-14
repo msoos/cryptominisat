@@ -272,7 +272,7 @@ end:
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
@@ -1101,7 +1101,7 @@ void VarReplacer::Stats::print(const size_t nVars) const
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
 }
 
-void VarReplacer::Stats::printShort() const
+void VarReplacer::Stats::printShort(const Solver* solver) const
 {
     cout
     << "c [vrep]"
@@ -1110,8 +1110,7 @@ void VarReplacer::Stats::printShort() const
     << " rem-bin-cls " << removedBinClauses
     << " rem-tri-cls " << removedTriClauses
     << " rem-long-cls " << removedLongClauses
-    << " T: " << std::fixed << std::setprecision(2)
-    << cpu_time << " s "
+    << solver->conf.print_times(cpu_time)
     << endl;
 }
 

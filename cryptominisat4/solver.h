@@ -238,73 +238,14 @@ class Solver : public Searcher
         void set_assumptions();
         struct ReachabilityStats
         {
-            ReachabilityStats() :
-                cpu_time(0)
-                , numLits(0)
-                , dominators(0)
-                , numLitsDependent(0)
-            {}
+            ReachabilityStats& operator+=(const ReachabilityStats& other);
+            void print() const;
+            void printShort(const Solver* solver) const;
 
-            ReachabilityStats& operator+=(const ReachabilityStats& other)
-            {
-                cpu_time += other.cpu_time;
-
-                numLits += other.numLits;
-                dominators += other.dominators;
-                numLitsDependent += other.numLitsDependent;
-
-                return *this;
-            }
-
-            void print() const
-            {
-                cout << "c ------- REACHABILITY STATS -------" << endl;
-                printStatsLine("c time"
-                    , cpu_time
-                );
-
-                printStatsLine("c dominator lits"
-                    , stats_line_percent(dominators, numLits)
-                    , "% of unknowns lits"
-                );
-
-                printStatsLine("c dependent lits"
-                    , stats_line_percent(numLitsDependent, numLits)
-                    , "% of unknown lits"
-                );
-
-                printStatsLine("c avg num. dominated lits"
-                    , (double)numLitsDependent/(double)dominators
-                );
-
-                cout << "c ------- REACHABILITY STATS END -------" << endl;
-            }
-
-            void printShort() const
-            {
-                cout
-                << "c [reach]"
-                << " dom lits: " << std::fixed << std::setprecision(2)
-                << stats_line_percent(dominators, numLits)
-                << " %"
-
-                << " dep-lits: " << std::fixed << std::setprecision(2)
-                << stats_line_percent(numLitsDependent, numLits)
-                << " %"
-
-                << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
-                << stats_line_percent(numLitsDependent, dominators)
-
-                << " T: " << std::fixed << std::setprecision(2)
-                << cpu_time << " s"
-                << endl;
-            }
-
-            double cpu_time;
-
-            size_t numLits;
-            size_t dominators;
-            size_t numLitsDependent;
+            double cpu_time = 0.0;
+            size_t numLits = 0;
+            size_t dominators = 0;
+            size_t numLitsDependent = 0;
         };
 
         lbool solve();

@@ -25,6 +25,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "sqlstats.h"
+#include "solver.h"
 #include <array>
 
 using namespace CMSat;
@@ -235,8 +236,7 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
         << " (" << std::setprecision(1) << std::fixed
         << stats_line_percent(wenThrough, simplifier->clauses.size())
         << "%)"
-        << " T: " << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
+        << solver->conf.print_times(time_used, time_out)
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -300,8 +300,7 @@ bool SubsumeStrengthen::performStrengthening()
         << " (" << std::setprecision(1) << std::fixed
         << (double)wenThrough/(double)simplifier->clauses.size()*100.0
         << "%)"
-        << " T: " << time_used
-        << " T-out: " << (time_out ? "Y" : "N")
+        << solver->conf.print_times(time_used, time_out)
         << endl;
     }
     if (solver->conf.doSQL) {
@@ -703,15 +702,13 @@ void SubsumeStrengthen::finishedRun()
     globalstats += runStats;
 }
 
-void SubsumeStrengthen::Stats::printShort() const
+void SubsumeStrengthen::Stats::printShort(const Solver* solver) const
 {
     cout << "c [subs] long"
     << " subBySub: " << subsumedBySub
     << " subByStr: " << subsumedByStr
     << " lits-rem-str: " << litsRemStrengthen
-    << " T: " << std::fixed << std::setprecision(2)
-    << (subsumeTime+strengthenTime)
-    << " s"
+    << solver->conf.print_times(subsumeTime+strengthenTime)
     << endl;
 }
 

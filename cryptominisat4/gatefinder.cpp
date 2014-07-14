@@ -64,7 +64,7 @@ end:
             runStats.print(solver->nVars());
             printGateStats();
         } else {
-            runStats.printShort();
+            runStats.printShort(solver);
         }
     }
     globalStats += runStats;
@@ -1134,7 +1134,7 @@ void GateFinder::Stats::print(const size_t nVars) const
     cout << "c -------- GATE FINDING END ----------" << endl;
 }
 
-void GateFinder::Stats::printShort() const
+void GateFinder::Stats::printShort(const Solver* solver) const
 {
     //Gate find
     cout << "c [gate] found"
@@ -1144,33 +1144,26 @@ void GateFinder::Stats::printShort() const
     << " red: " << numRed
     /*<< " avg-s: " << std::fixed << std::setprecision(1)
     << ((double)learntGatesSize/(double)numRed)*/
-    << " T: " << std::fixed << std::setprecision(2)
-    << findGateTime
-    << " T-out: " << (find_gate_timeout ? "Y" : "N")
+    << solver->conf.print_times(findGateTime, find_gate_timeout)
     << endl;
 
     //gate-based shorten
     cout << "c [gate] shorten"
     << " cl: " << std::setw(5) << orGateUseful
     << " l-rem: " << std::setw(6) << litsRem
-    << " T: " << std::fixed << std::setw(7) << std::setprecision(2)
-    << orBasedTime
-    << " T-out: " << (or_based_timeout ? "Y" : "N")
+    << solver->conf.print_times(orBasedTime, or_based_timeout)
     << endl;
 
     //gate-based cl-rem
     cout << "c [gate] rem"
     << " cl: " << andGateUseful
     << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
-    << " T: " << std::fixed << std::setprecision(2)
-    << andBasedTime
-    << " T-out: " << (and_based_timeout ? "Y" : "N")
+    << solver->conf.print_times(andBasedTime, and_based_timeout)
     << endl;
 
     //var-replace
     cout << "c [gate] eqlit"
     << " v-rep: " << std::setw(3) << varReplaced
-    << " T: " << std::fixed << std::setprecision(2)
-    << varReplaceTime
+    << solver->conf.print_times(varReplaceTime)
     << endl;
 }

@@ -4,6 +4,7 @@
 using namespace CMSat;
 
 #include <iostream>
+#include "solver.h"
 using std::cout;
 using std::endl;
 
@@ -79,7 +80,7 @@ void CleaningStats::print(const size_t nbReduceDB) const
     cout << "c ------ CLEANING STATS END ---------" << endl;
 }
 
-void CleaningStats::printShort() const
+void CleaningStats::printShort(const Solver* solver) const
 {
     //Pre-clean
     cout
@@ -105,7 +106,29 @@ void CleaningStats::printShort() const
     << " avgSize " << std::fixed << std::setprecision(2)
     << ((double)remain.lits/(double)remain.num)
 
-    << " T " << std::fixed << std::setprecision(2)
-    << cpu_time
+    << solver->conf.print_times(cpu_time)
     << endl;
+}
+
+CleaningStats& CleaningStats::operator+=(const CleaningStats& other)
+{
+    //Time
+    cpu_time += other.cpu_time;
+
+    //Before remove
+    origNumClauses += other.origNumClauses;
+    origNumLits += other.origNumLits;
+
+    //Type of clean
+    glueBasedClean += other.glueBasedClean;
+    sizeBasedClean += other.sizeBasedClean;
+    propConflBasedClean += other.propConflBasedClean;
+    actBasedClean += other.actBasedClean;
+    propConflDepthBasedClean += other.propConflDepthBasedClean;
+
+    //Clause Cleaning data
+    removed += other.removed;
+    remain += other.remain;
+
+    return *this;
 }

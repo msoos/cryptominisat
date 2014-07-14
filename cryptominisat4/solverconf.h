@@ -95,6 +95,18 @@ class SolverConf
 {
     public:
         SolverConf();
+        std::string print_times(
+            const double time_used
+            , const bool time_out
+            , const double time_remain
+        ) const;
+        std::string print_times(
+            const double time_used
+            , const bool time_out
+        ) const;
+        std::string print_times(
+            const double time_used
+        ) const;
 
         //Variable activities
         unsigned  var_inc_start;
@@ -150,6 +162,7 @@ class SolverConf
         int  verbStats;
         unsigned  doPrintLongestTrail;
         int  doPrintBestRedClauses;
+        int do_print_times; ///Print times during verbose output
 
         //Limits
         double   maxTime;

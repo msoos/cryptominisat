@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <iomanip>
 #include "cryptominisat.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::make_pair;
@@ -738,13 +739,21 @@ void CompHandler::readdRemovedClauses()
     }
 
     //Explain what we just did
+    const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [comp] re-added components. Lits: "
         << removedClauses.lits.size()
         << " cls:" << removedClauses.sizes.size()
-        << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
+        << solver->conf.print_times(time_used)
         << endl;
+    }
+    if (solver->conf.doSQL) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "comp re-adding"
+            , time_used
+        );
     }
 
     //Clear added data
