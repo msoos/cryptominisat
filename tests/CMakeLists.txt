@@ -73,10 +73,14 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
 )
 
-ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
 add_executable(basic_test
     basic_test.cpp
 )
+
+if (STATICCOMPILE)
+    set_target_properties(basic_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(basic_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
 
 target_link_libraries(basic_test
     ${Boost_LIBRARIES}
@@ -86,6 +90,11 @@ target_link_libraries(basic_test
 add_executable(assump_test
     assump_test.cpp
 )
+
+if (STATICCOMPILE)
+    set_target_properties(assump_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(assump_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
 
 target_link_libraries(assump_test
     ${Boost_LIBRARIES}
@@ -104,6 +113,11 @@ add_executable(heap_test
     heap_test.cpp
 )
 
+if (STATICCOMPILE)
+    set_target_properties(heap_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(heap_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
+
 target_link_libraries(heap_test
     ${Boost_LIBRARIES}
     libcryptominisat4
@@ -112,6 +126,11 @@ target_link_libraries(heap_test
 add_executable(clause_test
     clause_test.cpp
 )
+
+if (STATICCOMPILE)
+    set_target_properties(clause_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(clause_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
 
 target_link_libraries(clause_test
     ${Boost_LIBRARIES}
