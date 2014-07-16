@@ -177,16 +177,42 @@ int main(int argc, char** argv)
     signal(SIGINT,SIGINT_handler);
     signal(SIGHUP,SIGINT_handler);
 
-    if (argc == 1)
+    if (argc == 1) {
         printf("Reading from standard input... Use '-h' or '--help' for help.\n");
+        #ifndef USE_ZLIB
+        FILE* in = stdin;
+        #else
+        gzFile in = gzdopen(fileno(stdin), "rb");
+        #endif
 
-    FILE* in = (argc == 1) ? stdin : fopen(argv[1], "rb");
-    if (in == NULL)
-        printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
+        DimacsParser parser(solver, false, conf.verbosity);
+        parser.parse_DIMACS(in);
 
-    DimacsParser parser(solver, false, conf.verbosity);
-    parser.parse_DIMACS(in);
-    fclose(in);
+        #ifndef USE_ZLIB
+        fclose(in);
+        #else
+        gzclose(in);
+        #endif
+    } else {
+        #ifndef USE_ZLIB
+        FILE* in = fopen(argv[1], "rb");
+        #else
+        gzFile in = gzopen(argv[1], "rb");
+        #endif
+
+        if (in == NULL) {
+            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
+            std::exit(1);
+        }
+        DimacsParser parser(solver, false, conf.verbosity);
+        parser.parse_DIMACS(in);
+
+        #ifndef USE_ZLIB
+        fclose(in);
+        #else
+        gzclose(in);
+        #endif
+    }
 
     double parse_time = cpuTime() - cpu_time;
     printf("c  Parsing time:         %-12.2f s\n", parse_time);
