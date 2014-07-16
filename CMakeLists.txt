@@ -94,7 +94,6 @@ if (SANITIZE)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
-
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
@@ -132,7 +131,8 @@ option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
-    set(CMAKE_EXE_LINKER_FLAGS "-static -lpthread")
+    set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
+
     set(NOMYSQL ON)
 else()
     add_definitions(-DBOOST_TEST_DYN_LINK)
@@ -290,9 +290,7 @@ add_custom_target(uninstall
 )
 
 if (ENABLE_TESTING)
-    if (NOT STATICCOMPILE)
-        add_test (basic_test tests/basic_test)
-    endif()
+    add_test (basic_test tests/basic_test)
     add_test (assump_test tests/assump_test)
     add_test (readme_test tests/readme_test)
     add_test (heap_test tests/heap_test)
