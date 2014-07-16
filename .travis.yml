@@ -5,7 +5,8 @@ env:
   # These are used by .travis-cmake.sh to set a configuration
   - CMS_CONFIG=NORMAL
   - CMS_CONFIG=STATIC_BIN
-#  - CMS_CONFIG=SIMPLE
+  - CMS_CONFIG=SIMPLE
+  - CMS_CONFIG=SIMPLE_STATIC
   - CMS_CONFIG=MORE_DEBUG
   - CMS_CONFIG=NOSTATS
   - CMS_CONFIG=NOZLIB

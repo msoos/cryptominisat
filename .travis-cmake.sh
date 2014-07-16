@@ -26,7 +26,14 @@ case $CMS_CONFIG in
 
     SIMPLE)
         eval cmake ${COMMON_CMAKE_ARGS} \
-                   -DSIMPLE=ON \
+                   -DSIMPLE:BOOL=ON \
+                   ${SOURCE_DIR}
+    ;;
+
+    SIMPLE_STATIC)
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   -DSIMPLE:BOOL=ON \
+                   -DSTATICCOMPILE:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
