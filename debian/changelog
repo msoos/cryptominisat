@@ -1,3 +1,7 @@
+cryptominisat (4.2.0-1) trusty; urgency=medium
+
+  * Release of 4.2.0 to the general public
+
 cryptominisat (4.2-1) trusty; urgency=medium
 
   * Initial release. (Closes: #XXXXXX)
