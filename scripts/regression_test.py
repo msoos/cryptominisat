@@ -162,7 +162,6 @@ class Tester:
         cmd += "--startclean %s " % random.randint(100,16000)
         cmd += "--maxredratio %s " % random.randint(2,20)
         cmd += "--dompickf %s " % random.randint(1,20)
-        cmd += "--flippolf %s " % random.randint(1,3000)
         cmd += "--alwaysmoremin %s " % random.randint(0,1)
         cmd += "--rewardotfsubsume %s " % random.randint(0,100)
         cmd += "--bothprop %s " % random.randint(0,1)
