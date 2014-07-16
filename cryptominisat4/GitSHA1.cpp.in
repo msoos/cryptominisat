@@ -1,8 +1,14 @@
 #define GIT_SHA1 "@GIT_SHA1@"
-static const char myversion[] = GIT_SHA1;
-const char* get_git_version()
+#define GIT_TAG "@GIT_TAG@"
+static const char myversion_sha1[] = GIT_SHA1;
+static const char myversion_tag[] = GIT_TAG;
+
+const char* get_git_version_sha1()
 {
-    return myversion;
+    return myversion_sha1;
 }
 
-
+const char* get_git_version_tag()
+{
+    return myversion_tag;
+}

@@ -2779,13 +2779,22 @@ size_t Solver::getNewToReplaceVars() const
     return varReplacer->getNewToReplaceVars();
 }
 
-const char* Solver::getVersion()
+const char* Solver::getVersionSHA1()
 {
     #ifdef _MSC_VER
     return "MSVC-compiled, without GIT";
     #else
-    return get_git_version();
-    #endif //_MSC_VER
+    return get_git_version_sha1();
+    #endif
+}
+
+const char* Solver::getVersionTag()
+{
+    #ifdef _MSC_VER
+    return "MSVC-compiled, without GIT";
+    #else
+    return get_git_version_tag();
+    #endif
 }
 
 

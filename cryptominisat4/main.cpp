@@ -985,6 +985,7 @@ void Main::parseCommandLine()
 void Main::printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
+    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else

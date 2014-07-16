@@ -150,6 +150,7 @@ option(ENABLE_TESTING "Enable testing" OFF)
 # -----------------------------------------------------------------------------
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_get_exact_tag(GIT_TAG)
 
 set (boost_components "")
 if (ENABLE_TESTING)

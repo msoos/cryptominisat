@@ -98,7 +98,8 @@ class Solver : public Searcher
             uint64_t numSimplify = 0;
             uint32_t num_solve_calls = 0;
         };
-        static const char* getVersion();
+        static const char* getVersionTag();
+        static const char* getVersionSHA1();
         vector<Lit> get_zero_assigned_lits() const;
         void     printStats() const;
         void     printClauseStats() const;
