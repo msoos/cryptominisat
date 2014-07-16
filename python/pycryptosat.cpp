@@ -249,7 +249,6 @@ static PyObject* get_solution(SATSolver *cmsat)
             py_value = Py_None;
         }
 
-        assert(v == -1 || v == 1);
         if (PyTuple_SetItem(tuple, (Py_ssize_t)i+1, py_value) < 0) {
             PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
             Py_DECREF(tuple);

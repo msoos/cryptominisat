@@ -220,45 +220,7 @@ class Prober {
                 cout << "c -------- PROBE STATS END ----------" << endl;
             }
 
-            void printShort() const
-            {
-                cout
-                << "c [probe]"
-                << " 0-depth assigns: " << zeroDepthAssigns
-                << " bsame: " << bothSameAdded
-                << " Flit: " << numFailed
-
-                // x2 because it's LITERAL visit
-                << " Visited: " << numVisited << "/" << (origNumFreeVars*2)
-                << "(" << std::setprecision(1)
-                << stats_line_percent(numVisited, origNumFreeVars*2)
-                << "%)"
-                << endl;
-
-                cout
-                << "c [probe]"
-                << " probed: " << numProbed
-                << "(" << std::setprecision(1)
-                // x2 because it's LITERAL probed
-                << stats_line_percent(numProbed, origNumFreeVars*2)
-                << "%)"
-
-                << " hyperBin:" << addedBin
-                << " transR-Irred:" << removedIrredBin
-                << " transR-Red:" << removedRedBin
-                << endl;
-
-                cout
-                << "c [probe]"
-                << " BP: " << std::fixed << std::setprecision(1)
-                << (double)(propStats.bogoProps)/1000000.0  << "M"
-                << " HP: " << std::fixed << std::setprecision(1)
-                << (double)(propStats.otfHyperTime)/1000000.0  << "M"
-
-                << " T: " << std::fixed << std::setprecision(2)
-                << cpu_time
-                << endl;
-            }
+            void printShort(const Solver* solver) const;
 
             //Time
             double cpu_time;

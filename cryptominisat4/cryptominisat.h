@@ -37,6 +37,7 @@ namespace CMSat {
 
         SolverConf get_conf() const;
         static const char* get_version();
+        static const char* get_version_sha1();
         void print_stats() const;
         void set_drup(std::ostream* os);
         void interrupt_asap();

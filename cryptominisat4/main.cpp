@@ -581,6 +581,8 @@ void Main::add_supported_options()
         , "Print longest decision trail of the last N conflicts. Value '0' means never print it")
     ("printbest", po::value(&conf.doPrintBestRedClauses)->default_value(conf.doPrintBestRedClauses)
         , "Print the best N irredundant longer-than-3 learnt clauses. Value '0' means not to print anything.")
+    ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
+        , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
     ;
 
     po::options_description miscOptions("Misc options");
@@ -983,6 +985,7 @@ void Main::parseCommandLine()
 void Main::printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
+    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else

@@ -51,7 +51,7 @@ class Strengthener {
             }
 
             Stats& operator+=(const Stats& other);
-            void printShort() const;
+            void printShort(const Solver* solver) const;
             void print() const;
 
             struct CacheBased
@@ -72,20 +72,7 @@ class Strengthener {
                     *this = tmp;
                 }
 
-                void printShort(const string type) const
-                {
-                    cout << "c [vivif] cache-based "
-                    << std::setw(5) << type
-                    << "-- "
-                    << " cl tried " << std::setw(8) << triedCls
-                    << " cl-sh " << std::setw(5) << shrinked
-                    << " cl-rem " << std::setw(4) << numClSubsumed
-                    << " lit-rem " << std::setw(6) << numLitsRem
-                    << " T-out " << (ranOutOfTime ? "Y" : "N")
-                    << " T: " << std::setprecision(2) << cpu_time
-                    << endl;
-                }
-
+                void printShort(const string type, const Solver* solver) const;
                 void print() const
                 {
                     printStatsLine("c time"

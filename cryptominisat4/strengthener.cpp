@@ -78,7 +78,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print();
         else
-            runStats.printShort();
+            runStats.printShort(solver);
     }
     runStats.clear();
 
@@ -791,10 +791,7 @@ void Strengthener::StrImplicitData::print(
     << " (by tri: " << remLitFromTriByTri << ")"
     << " (by stamp: " << stampRem << ")"
     << " set-var: " << trail_diff
-
-    << " T: " << std::fixed << std::setprecision(2) << time_used
-    << " T-out: " << (time_out ? "Y" : "N")
-    << " T-r: " << time_remain * 100.0
+    << solver->conf.print_times(time_used, time_out, time_remain)
     << " w-visit: " << numWatchesLooked
     << endl;
 
@@ -816,10 +813,10 @@ Strengthener::Stats& Strengthener::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Strengthener::Stats::printShort() const
+void Strengthener::Stats::printShort(const Solver* solver) const
 {
-    irredCacheBased.printShort("irred");
-    redCacheBased.printShort("red");
+    irredCacheBased.printShort("irred", solver);
+    redCacheBased.printShort("red", solver);
 }
 
 void Strengthener::Stats::print() const
@@ -831,4 +828,18 @@ void Strengthener::Stats::print() const
     cout << "c --> cache-based on red cls" << endl;
     redCacheBased.print();
     cout << "c -------- STRENGTHEN STATS END --------" << endl;
+}
+
+
+void Strengthener::Stats::CacheBased::printShort(const string type, const Solver* solver) const
+{
+    cout << "c [vivif] cache-based "
+    << std::setw(5) << type
+    << "-- "
+    << " cl tried " << std::setw(8) << triedCls
+    << " cl-sh " << std::setw(5) << shrinked
+    << " cl-rem " << std::setw(4) << numClSubsumed
+    << " lit-rem " << std::setw(6) << numLitsRem
+    << solver->conf.print_times(cpu_time, ranOutOfTime)
+    << endl;
 }

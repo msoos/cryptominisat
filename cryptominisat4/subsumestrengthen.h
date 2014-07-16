@@ -22,8 +22,10 @@
 #ifndef __SUBSUMESTRENGTHEN_H__
 #define __SUBSUMESTRENGTHEN_H__
 
-#include "solver.h"
 #include "cloffset.h"
+#include "solvertypesmini.h"
+#include "clabstraction.h"
+#include "clause.h"
 #include <vector>
 using std::vector;
 
@@ -31,6 +33,7 @@ namespace CMSat {
 
 class Simplifier;
 class GateFinder;
+class Solver;
 
 class SubsumeStrengthen
 {
@@ -72,7 +75,7 @@ public:
     struct Stats
     {
         Stats& operator+=(const Stats& other);
-        void printShort() const;
+        void printShort(const Solver* solver) const;
         void print() const;
 
         uint64_t subsumedBySub = 0;

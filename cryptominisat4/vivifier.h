@@ -50,7 +50,7 @@ class Vivifier {
             }
 
             Stats& operator+=(const Stats& other);
-            void printShort() const;
+            void printShort(const Solver* solver) const;
             void print(const size_t nVars) const;
 
             //Asymm

@@ -21,6 +21,8 @@
 
 #include "solverconf.h"
 #include <limits>
+#include <iomanip>
+#include <sstream>
 using namespace CMSat;
 
 SolverConf::SolverConf() :
@@ -78,6 +80,7 @@ SolverConf::SolverConf() :
         , verbStats        (0)
         , doPrintLongestTrail(0)
         , doPrintBestRedClauses(0)
+        , do_print_times(1)
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())
@@ -205,4 +208,53 @@ SolverConf::SolverConf() :
         , origSeed(0)
         , sync_every_confl(6000)
 {
+}
+
+
+std::string SolverConf::print_times(
+    const double time_used
+    , const bool time_out
+    , const double time_remain
+) const {
+    if (do_print_times) {
+        std::stringstream ss;
+        ss
+        << " T: " << std::setprecision(2) << std::fixed << time_used
+        << " T-out: " << (time_out ? "Y" : "N")
+        << " T-r: " << time_remain*100.0  << "%";
+
+        return ss.str();
+    }
+
+    return std::string();
+}
+
+std::string SolverConf::print_times(
+    const double time_used
+    , const bool time_out
+) const {
+    if (do_print_times) {
+        std::stringstream ss;
+        ss
+        << " T: " << std::setprecision(2) << std::fixed << time_used
+        << " T-out: " << (time_out ? "Y" : "N");
+
+        return ss.str();
+    }
+
+    return std::string();
+}
+
+std::string SolverConf::print_times(
+    const double time_used
+) const {
+    if (do_print_times) {
+        std::stringstream ss;
+        ss
+        << " T: " << std::setprecision(2) << std::fixed << time_used;
+
+        return ss.str();
+    }
+
+    return std::string();
 }

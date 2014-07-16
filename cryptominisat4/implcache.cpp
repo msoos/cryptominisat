@@ -258,7 +258,8 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
         << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
         << " Freed: " << std::setw(7) << numFreed/1000 << " K"
-        << " T: " << std::setprecision(2) << std::fixed  << time_used << endl;
+        << solver->conf.print_times(time_used)
+        << endl;
     }
     if (solver->conf.doSQL) {
         solver->sqlStats->time_passed_min(
@@ -393,7 +394,7 @@ end:
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     if (solver->conf.verbosity >= 1) {
-        runStats.printShort();
+        runStats.printShort(solver);
     }
     globalStats += runStats;
     if (solver->conf.doSQL) {
@@ -656,6 +657,29 @@ void ImplCache::updateVars(
     for(size_t i = 0; i < implCache.size(); i++) {
         implCache[i].updateVars(outerToInter, newMaxVar);
     }
+}
+
+ImplCache::TryBothStats& ImplCache::TryBothStats::operator+=(const TryBothStats& other)
+{
+    numCalls += other.numCalls;
+    cpu_time += other.cpu_time;
+    zeroDepthAssigns += other.zeroDepthAssigns;
+    varReplaced += other.varReplaced;
+    bProp += other.bProp;
+    bXProp += other.bXProp;
+
+    return *this;
+}
+
+void ImplCache::TryBothStats::printShort(Solver* solver) const
+{
+    cout
+    << "c [bcache] "
+    //<< " set: " << bProp
+    << " 0-depth ass: " << zeroDepthAssigns
+    << " BXprop: " << bXProp
+    << solver->conf.print_times(cpu_time)
+    << endl;
 }
 
 

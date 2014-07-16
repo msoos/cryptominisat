@@ -1,3 +1,9 @@
+cryptominisat (4.2.0-1) trusty; urgency=medium
+
+  * Release of 4.2.0 to the general public
+ 
+ -- Mate Soos <soos.mate@gmail.com>  Thu, 16 Jul 2014 20:00:00 +0200
+
 cryptominisat (4.2-2) trusty; urgency=medium
 
   * Fixing build problem

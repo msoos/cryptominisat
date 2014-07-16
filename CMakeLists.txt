@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
 
+set(CPACK_PACKAGE_NAME "cryptominisat")
+set(CPACK_PACKAGE_VENDOR "www.msoos.org")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
+set(CPACK_PACKAGE_VERSION "4.2.0")
+set(CPACK_PACKAGE_VERSION_MAJOR "4")
+set(CPACK_PACKAGE_VERSION_MINOR "2")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
 # -----------------------------------------------------------------------------
@@ -36,6 +44,8 @@ foreach (build_config ${build_types})
     endforeach()
 endforeach()
 
+PROJECT(cryptominisat4)
+
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
 if (ENABLE_ASSERTIONS)
     # NDEBUG was already removed.
@@ -44,8 +54,6 @@ else()
     add_definitions(-DNDEBUG)
 endif()
 
-
-PROJECT(cryptominisat4)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
@@ -86,7 +94,6 @@ if (SANITIZE)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
-
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
@@ -124,10 +131,11 @@ option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
-    #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static-libgcc -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
-    set(CMAKE_EXE_LINKER_FLAGS "-static")
+    set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
+
     set(NOMYSQL ON)
-    set(ENABLE_TESTING OFF)
+else()
+    add_definitions(-DBOOST_TEST_DYN_LINK)
 endif()
 
 option(MORE_DEBUG "Use more debug flags" OFF)
@@ -142,19 +150,20 @@ option(ENABLE_TESTING "Enable testing" OFF)
 # -----------------------------------------------------------------------------
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_get_exact_tag(GIT_TAG)
 
 set (boost_components "")
 if (ENABLE_TESTING)
     set(boost_components ${boost_components} unit_test_framework)
 endif()
+set(boost_components ${boost_components} program_options)
+find_package( Boost 1.46 COMPONENTS ${boost_components})
 
-option(SIMPLE "Very simplistic executable -- no Boost needed")
-if (NOT SIMPLE)
-    set(boost_components ${boost_components} program_options)
-else()
-    set(NOZLIB "ON")
+option(SIMPLE "Very simplistic executable -- no Boost needed" OFF)
+if(NOT Boost_FOUND)
+    set(SIMPLE ON)
+    set(ENABLE_TESTING OFF)
 endif()
-find_package( Boost 1.46 REQUIRED COMPONENTS ${boost_components})
 
 find_package (Threads REQUIRED)
 find_package (TBB)
@@ -165,7 +174,7 @@ else()
     message(STATUS "Did not find Intel Threading Buliding Blocks. Threads will be slower to allocate memory")
 endif()
 
-option(NOSTATS "Don't use statistics at all")
+option(NOSTATS "Don't use statistics at all" OFF)
 if (NOT NOSTATS)
     add_definitions( -DSTATS_NEEDED )
     if (NOT NOMYSQL)
@@ -241,15 +250,32 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
     endif()
 endmacro()
 
+if (ENABLE_TESTING)
+    enable_testing()
+endif()
+
 # -----------------------------------------------------------------------------
 # Provide an export name to be used by targets that wish to export themselves.
 # -----------------------------------------------------------------------------
 set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 
-# -----------------------------------------------------------------------------
-# Compile all subdirs: solver, utilities, fuzzers, etc.
-# -----------------------------------------------------------------------------
 add_subdirectory(cryptominisat4 cmsat4-src)
+
+# -----------------------------------------------------------------------------
+# Look for python
+# -----------------------------------------------------------------------------
+find_package (PythonInterp 2.7)
+find_package (PythonLibs 2.7)
+if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY)
+#     message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
+#     message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")
+#     message(STATUS "PYTHON_INCLUDE_DIR:FILEPATH=${PYTHON_INCLUDE_DIR}")
+#     message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+    message(STATUS "OK, found python interpreter and libs, building plugin")
+    add_subdirectory(python py-lib)
+else()
+    message(WARNING "Cannot find python interpreter and libs, not building python plugin")
+endif()
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
@@ -261,10 +287,10 @@ configure_file(
 )
 
 add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+)
 
 if (ENABLE_TESTING)
-    enable_testing()
     add_test (basic_test tests/basic_test)
     add_test (assump_test tests/assump_test)
     add_test (readme_test tests/readme_test)
@@ -321,13 +347,6 @@ install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
     "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
 
-set(CPACK_PACKAGE_NAME "cryptominisat")
-set(CPACK_PACKAGE_VENDOR "www.msoos.org")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "4.1.0")
-set(CPACK_PACKAGE_VERSION_MAJOR "4")
-set(CPACK_PACKAGE_VERSION_MINOR "0")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
