@@ -535,8 +535,11 @@ void Main::add_supported_options()
 
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
-    ("sql", po::value(&conf.doSQL)->default_value(conf.doSQL)
-        , "Write to SQL. 0 = don't attempt to writ to DB, 1 = try but continue if fails, 2 = abort if cannot write to DB")
+    ("sql", po::value(&conf.doSQL)->default_value(0)
+        , "Write to SQL. 0 = don't attempt to writ to DB, \
+1 = try to write to MySQL but continue if fails, \
+2 = try to write to SQLite but continue if fails, \
+3 = abort if cannot write to DB")
     #ifdef STATS_NEEDED_EXTRA
     ("cldistribper", po::value(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump redundant clause size distribution every N conflicts. If set to 0, it is never dumped.")
@@ -630,7 +633,7 @@ void Main::add_supported_options()
 
     cmdline_options
     .add(generalOptions)
-    #ifndef USE_MYSQL
+    #if !defined(USE_MYSQL) and !defined(USE_SQLITE3)
     .add(sqlOptionsNone)
     #endif
     .add(restartOptions)
@@ -650,7 +653,7 @@ void Main::add_supported_options()
     .add(xorOptions)
     #endif
     .add(gateOptions)
-    #ifdef USE_MYSQL
+    #if defined(USE_MYSQL) or defined(USE_SQLITE3)
     .add(sqlOptions)
     #endif
     .add(miscOptions)

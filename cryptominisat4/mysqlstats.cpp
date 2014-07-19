@@ -227,7 +227,7 @@ void MySQLStats::add_tags(const Solver* solver)
         //Inserting element into solverruns to get unique ID
         if (mysql_query(serverConn, ss.str().c_str())) {
             cerr << "ERROR Couldn't insert into table 'tags'" << endl;
-            std::exit(1);
+            std::exit(-1);
         }
     }
 }
@@ -244,7 +244,7 @@ void MySQLStats::addStartupData(const Solver* solver)
 
     if (mysql_query(serverConn, ss.str().c_str())) {
         cerr << "ERROR Couldn't insert into table 'startup'" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -260,7 +260,7 @@ void MySQLStats::finishup(const lbool status)
 
     if (mysql_query(serverConn, ss.str().c_str())) {
         cerr << "ERROR Couldn't insert into table 'finishup'" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -304,7 +304,7 @@ void MySQLStats::initTimePassedSTMT()
     stmtTimePassed.stmt = mysql_stmt_init(serverConn);
     if (!stmtTimePassed.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -315,7 +315,7 @@ void MySQLStats::initTimePassedSTMT()
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Validate parameter count
@@ -325,7 +325,7 @@ void MySQLStats::initTimePassedSTMT()
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     memset(stmtTimePassed.bind, 0, sizeof(stmtTimePassed.bind));
@@ -347,7 +347,7 @@ void MySQLStats::initTimePassedSTMT()
     if (mysql_stmt_bind_param(stmtTimePassed.stmt, stmtTimePassed.bind)) {
         cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtTimePassed.stmt) << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -374,7 +374,7 @@ void MySQLStats::initTimePassedMinSTMT()
     stmtTimePassedMin.stmt = mysql_stmt_init(serverConn);
     if (!stmtTimePassedMin.stmt) {
         cerr << "ERROR mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -385,7 +385,7 @@ void MySQLStats::initTimePassedMinSTMT()
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
+        std::exit(-1);
     }
 
     //Validate parameter count
@@ -394,7 +394,7 @@ void MySQLStats::initTimePassedMinSTMT()
         cerr << "ERROR invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     memset(stmtTimePassedMin.bind, 0, sizeof(stmtTimePassedMin.bind));
@@ -414,7 +414,7 @@ void MySQLStats::initTimePassedMinSTMT()
     if (mysql_stmt_bind_param(stmtTimePassedMin.stmt, stmtTimePassedMin.bind)) {
         cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtTimePassedMin.stmt) << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -461,10 +461,6 @@ void MySQLStats::initRestartSTMT(
     //Reds
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
-    //Misc
-    << ", `watchListSizeTraversed`, `watchListSizeTraversedSD`"
-    << ", `watchListSizeTraversedMin`, `watchListSizeTraversedMax`"
-
     //Resolutions
     << ", `resolBin`, `resolTri`, `resolLIrred`, `resolLRed`"
 
@@ -488,7 +484,7 @@ void MySQLStats::initRestartSTMT(
     stmtRst.stmt = mysql_stmt_init(serverConn);
     if (!stmtRst.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -499,7 +495,7 @@ void MySQLStats::initRestartSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
+        std::exit(-1);
     }
 
     if (verbosity >= 6) {
@@ -514,7 +510,7 @@ void MySQLStats::initRestartSTMT(
         cerr << "ERROR invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     memset(stmtRst.bind, 0, sizeof(stmtRst.bind));
@@ -601,12 +597,6 @@ void MySQLStats::initRestartSTMT(
     bindTo(stmtRst, stmtRst.learntTris);
     bindTo(stmtRst, stmtRst.learntLongs);
 
-    //Misc
-    bindTo(stmtRst, stmtRst.watchListSizeTraversed);
-    bindTo(stmtRst, stmtRst.watchListSizeTraversedSD);
-    bindTo(stmtRst, stmtRst.watchListSizeTraversedMin);
-    bindTo(stmtRst, stmtRst.watchListSizeTraversedMax);
-
     //Resolutions
     bindTo(stmtRst, stmtRst.resolv.bin);
     bindTo(stmtRst, stmtRst.resolv.tri);
@@ -635,7 +625,7 @@ void MySQLStats::initRestartSTMT(
     if (mysql_stmt_bind_param(stmtRst.stmt, stmtRst.bind)) {
         cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtRst.stmt) << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -679,7 +669,7 @@ void MySQLStats::initReduceDBSTMT(
     stmtReduceDB.stmt = mysql_stmt_init(serverConn);
     if (!stmtReduceDB.stmt) {
         cerr << "ERROR  mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -691,12 +681,7 @@ void MySQLStats::initReduceDBSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
-    }
-
-    if (verbosity >= 6) {
-        cerr << "ERROR prepare INSERT successful"
-        << endl;
+        std::exit(-1);
     }
 
     //Validate parameter count
@@ -706,7 +691,7 @@ void MySQLStats::initReduceDBSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     memset(stmtReduceDB.bind, 0, sizeof(stmtReduceDB.bind));
@@ -765,7 +750,7 @@ void MySQLStats::initReduceDBSTMT(
     if (mysql_stmt_bind_param(stmtReduceDB.stmt, stmtReduceDB.bind)) {
         cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtReduceDB.stmt) << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -803,7 +788,7 @@ void MySQLStats::initClauseDistribSTMT(
     mystruct.stmt = mysql_stmt_init(serverConn);
     if (!mystruct.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -815,7 +800,7 @@ void MySQLStats::initClauseDistribSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
+        std::exit(-1);
     }
 
     if (solver->getConf().verbosity >= 6) {
@@ -831,7 +816,7 @@ void MySQLStats::initClauseDistribSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Clear mem of bind, get enough mem for vars
@@ -854,7 +839,7 @@ void MySQLStats::initClauseDistribSTMT(
     if (mysql_stmt_bind_param(mystruct.stmt, &mystruct.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(mystruct.stmt) << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 }
 
@@ -890,7 +875,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
     stmtSizeGlueScatter.stmt = mysql_stmt_init(serverConn);
     if (!stmtSizeGlueScatter.stmt) {
         cout << "Error: mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Prepare the statement
@@ -902,7 +887,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
         << endl
         << "Query was: " << ss.str()
         << endl;
-        std::exit(0);
+        std::exit(-1);
     }
 
     if (solver->getConf().verbosity >= 6) {
@@ -918,7 +903,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
         << "invalid parameter count returned by MySQL"
         << endl;
 
-        std::exit(1);
+        std::exit(-1);
     }
 
     //Clear mem of bind, get enough mem for vars
@@ -943,221 +928,7 @@ void MySQLStats::initSizeGlueScatterSTMT(
     if (mysql_stmt_bind_param(stmtSizeGlueScatter.stmt, &stmtSizeGlueScatter.bind[0])) {
         cout << "mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtSizeGlueScatter.stmt) << endl;
-        std::exit(1);
-    }
-}
-
-void MySQLStats::initVarSTMT(
-    const Solver* solver
-    , StmtVar& stmtVar
-    , uint64_t numInserts
-) {
-    const size_t numElems = 15;
-
-    //Output what we are trying to
-    if (solver->getConf().verbosity >= 6)
-        cout
-        << "c Trying to prepare statement with " << numInserts
-        << " bulk inserts"
-        << endl;
-
-    stmtVar.data.resize(numInserts);
-    stmtVar.bind.resize(numElems*numInserts);
-
-    std::stringstream ss;
-    ss << "insert into `vars`"
-    << "("
-
-    //Position
-    << " `varInitID`, `var`"
-
-    //Actual data
-    << ", `posPolarSet`, `negPolarSet`, `flippedPolarity`"
-    << ", `posDecided`, `negDecided`"
-
-    //Dec level history stats
-    << ", `decLevelAvg`, `decLevelSD`, `decLevelMin`, `decLevelMax`"
-
-    //Trail level history stats
-    << ", `trailLevelAvg`, `trailLevelSD`, `trailLevelMin`, `trailLevelMax`"
-    << ") values ";
-    for(size_t i = 0; i < stmtVar.data.size(); i++) {
-        writeQuestionMarks(numElems, ss);
-
-        if (i != stmtVar.data.size()-1)
-            ss << " , ";
-    }
-    ss << ";";
-
-    //Get memory for statement
-    stmtVar.stmt = mysql_stmt_init(serverConn);
-    if (!stmtVar.stmt) {
-        cout << "Error: mysql_stmt_init() out of memory" << endl;
-        std::exit(1);
-    }
-
-    //Prepare the statement
-    if (mysql_stmt_prepare(stmtVar.stmt, ss.str().c_str(), ss.str().length())) {
-        cout
-        << "Error in mysql_stmt_prepare(), INSERT failed"
-        << endl
-        << mysql_stmt_error(stmtVar.stmt)
-        << endl
-        << "Query was: " << ss.str()
-        << endl;
-        std::exit(0);
-    }
-
-    if (solver->getConf().verbosity >= 6) {
-        cout
-        << "prepare INSERT successful"
-        << endl;
-    }
-
-    //Validate parameter count
-    unsigned long param_count = mysql_stmt_param_count(stmtVar.stmt);
-    if (param_count != numElems*numInserts) {
-        cout
-        << "invalid parameter count returned by MySQL"
-        << endl;
-
-        std::exit(1);
-    }
-
-    //Clear bind
-    assert(!stmtVar.bind.empty());
-    memset(&stmtVar.bind[0], 0, numElems*numInserts*sizeof(MYSQL_BIND));
-
-    //Bind the local variables to the statement
-    bindAt = 0;
-    for(size_t i = 0; i < stmtVar.data.size(); i++) {
-        bindTo(stmtVar, stmtVar.varInitID);
-        bindTo(stmtVar, stmtVar.data[i].var);
-        bindTo(stmtVar, stmtVar.data[i].posPolarSet);
-        bindTo(stmtVar, stmtVar.data[i].negPolarSet);
-        bindTo(stmtVar, stmtVar.data[i].flippedPolarity);
-        bindTo(stmtVar, stmtVar.data[i].posDecided);
-        bindTo(stmtVar, stmtVar.data[i].negDecided);
-
-        bindTo(stmtVar, stmtVar.data[i].decLevelAvg);
-        bindTo(stmtVar, stmtVar.data[i].decLevelSD);
-        bindTo(stmtVar, stmtVar.data[i].decLevelMin);
-        bindTo(stmtVar, stmtVar.data[i].decLevelMax);
-
-        bindTo(stmtVar, stmtVar.data[i].trailLevelAvg);
-        bindTo(stmtVar, stmtVar.data[i].trailLevelSD);
-        bindTo(stmtVar, stmtVar.data[i].trailLevelMin);
-        bindTo(stmtVar, stmtVar.data[i].trailLevelMax);
-    }
-    assert(bindAt == numElems*numInserts);
-
-    // Bind the buffers
-    if (mysql_stmt_bind_param(stmtVar.stmt, &stmtVar.bind[0])) {
-        cout << "mysql_stmt_bind_param() failed" << endl
-        << mysql_stmt_error(stmtVar.stmt) << endl;
-        std::exit(1);
-    }
-}
-
-void MySQLStats::varDataDump(
-    const Solver* solver
-    , const Searcher* search
-    , const vector<Var>& varsToDump
-    , const vector<VarData>& varData
-) {
-    double myTime = cpuTime();
-
-    //Get ID for varDataInit
-    std::stringstream ss;
-    ss
-    << "INSERT INTO varDataInit (`runID`, `simplifications`, `restarts`, `conflicts`, `time`)"
-    << " values ("
-    << runID
-    << ", " << solver->getSolveStats().numSimplify
-    << ", " << search->sumRestarts()
-    << ", " << search->sumConflicts()
-    << ", " << cpuTime()
-    << ");";
-
-    if (mysql_query(serverConn, ss.str().c_str())) {
-        if (solver->getConf().verbosity >= 6) {
-            cout << "c Couldn't insert into table `varDataInit`" << endl;
-            cout << "c " << mysql_error(serverConn) << endl;
-        }
         std::exit(-1);
-    }
-    my_ulonglong id = mysql_insert_id(serverConn);
-
-    //Do bulk insert by defult
-    StmtVar* stmtVar = &stmtVarBulk;
-
-    //Go through top N variables
-
-    size_t at = 0;
-    size_t i = 0;
-    size_t numToDump = varsToDump.size();
-
-    for(vector<Var>::const_iterator
-        it = varsToDump.begin(), end = varsToDump.end()
-        ; it != end
-        ; it++, i++
-    ) {
-        size_t var = *it;
-
-        //If we are at beginning of bulk, but not enough is left, do one-by-one
-        if ((at == 0 && numToDump-i < stmtVarBulk.data.size())) {
-            stmtVar = &stmtVarSingle;
-            at = 0;
-        }
-
-        stmtVar->varInitID = id;
-        //Back-number variables
-        stmtVar->data[at].var = solver->map_inter_to_outer(var);
-
-        //Overall stats
-        stmtVar->data[at].posPolarSet = varData[var].stats.posPolarSet;
-        stmtVar->data[at].negPolarSet = varData[var].stats.negPolarSet;
-        stmtVar->data[at].flippedPolarity  = varData[var].stats.flippedPolarity;
-        stmtVar->data[at].posDecided  = varData[var].stats.posDecided;
-        stmtVar->data[at].negDecided  = varData[var].stats.negDecided;
-
-        //Dec level history stats
-        stmtVar->data[at].decLevelAvg  = varData[var].stats.decLevelHist.avg();
-        stmtVar->data[at].decLevelSD   = sqrt(varData[var].stats.decLevelHist.var());
-        stmtVar->data[at].decLevelMin  = varData[var].stats.decLevelHist.getMin();
-        stmtVar->data[at].decLevelMax  = varData[var].stats.decLevelHist.getMax();
-
-        //Trail level history stats
-        stmtVar->data[at].trailLevelAvg  = varData[var].stats.trailLevelHist.avg();
-        stmtVar->data[at].trailLevelSD   = sqrt(varData[var].stats.trailLevelHist.var());
-        stmtVar->data[at].trailLevelMin  = varData[var].stats.trailLevelHist.getMin();
-        stmtVar->data[at].trailLevelMax  = varData[var].stats.trailLevelHist.getMax();
-        at++;
-
-        if (at == stmtVar->data.size()) {
-            if (mysql_stmt_execute(stmtVar->stmt)) {
-                cout
-                << "ERROR: while executing restart insertion MySQL prepared statement"
-                << endl;
-
-                cout << "Error from mysql: "
-                << mysql_stmt_error(stmtVar->stmt)
-                << endl;
-
-                std::exit(-1);
-            }
-            at = 0;
-        }
-    }
-    assert(at == 0 && "numInserts must be divisible");
-
-    if (solver->getConf().verbosity >= 6) {
-        cout
-        << "c Time to insert variables' stats into DB: "
-        << std::fixed << std::setprecision(2) << std::setw(3)
-        << cpuTime() - myTime
-        << " s"
-        << endl;
     }
 }
 
@@ -1267,12 +1038,12 @@ void MySQLStats::reduceDB(
     stmtReduceDB.reduceDBs       = solver->reduceDB->get_nbReduceDB();
 
     //Clause data for IRRED
-    stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
     stmtReduceDB.irredClsVisited    = irredStats.sumLookedAt;
+    stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
 
     //Clause data for RED
-    stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
     stmtReduceDB.redClsVisited      = redStats.sumLookedAt;
+    stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
 
     //Clean data
     stmtReduceDB.clean              = clean;
@@ -1391,7 +1162,7 @@ void MySQLStats::restart(
         searchHist.numResolutionsHist.getMax();
 
     stmtRst.conflictAfterConflict =
-        searchHist.conflictAfterConflict.avg()*100.0;
+        searchHist.conflictAfterConflict.avg();
 
     //Search stats
     stmtRst.branchDepthHist         = searchHist.branchDepthHist.avg();
@@ -1439,18 +1210,12 @@ void MySQLStats::restart(
     stmtRst.learntTris  = thisStats.learntTris;
     stmtRst.learntLongs = thisStats.learntLongs;
 
-    //Misc
-    stmtRst.watchListSizeTraversed   = searchHist.watchListSizeTraversed.avg();
-    stmtRst.watchListSizeTraversedSD = sqrt(searchHist.watchListSizeTraversed.var());
-    stmtRst.watchListSizeTraversedMin= searchHist.watchListSizeTraversed.getMin();
-    stmtRst.watchListSizeTraversedMax= searchHist.watchListSizeTraversed.getMax();
-
     //Resolv stats
     stmtRst.resolv          = thisStats.resolvs;
 
     //Var stats
-    stmtRst.decisions       = thisStats.decisions;
     stmtRst.propagations    = thisPropStats.propagations;
+    stmtRst.decisions       = thisStats.decisions;
     stmtRst.varVarStats     = varVarStats;
 
     stmtRst.varFlipped      = thisPropStats.varFlipped;

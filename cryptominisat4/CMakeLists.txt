@@ -62,7 +62,12 @@ endif (M4RI_FOUND)
 if (MYSQL_FOUND AND NOT NOSTATS)
     SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
-endif (MYSQL_FOUND AND NOT NOSTATS)
+endif ()
+
+if (SQLITE3_FOUND AND NOT NOSTATS)
+    SET(cryptoms_lib_files ${cryptoms_lib_files} sqlitestats.cpp)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
+endif ()
 
 if (Perftools_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})

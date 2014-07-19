@@ -62,6 +62,10 @@ using std::endl;
 #include "mysqlstats.h"
 #endif
 
+#ifdef USE_SQLITE3
+#include "sqlitestats.h"
+#endif
+
 //#define DRUP_DEBUG
 
 //#define DEBUG_RENUMBER
@@ -82,24 +86,32 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     , compHandler(NULL)
 {
     if (conf.doSQL) {
-        #ifdef USE_MYSQL
-        sqlStats = new MySQLStats();
-        #else
-        if (conf.doSQL >= 2) {
-            cout
-            << "ERROR: "
-            << "Cannot use SQL: no SQL library was found during compilation."
+        #if defined(USE_MYSQL) or defined(USE_SQLITE3)
+        if (conf.doSQL == 1) {
+            #if defined(USE_MYSQL)
+            sqlStats = new MySQLStats();
+            #else
+            cerr << "MySQL support was not compiled in, cannot use it. Exiting."
             << endl;
             std::exit(-1);
-        } else {
-            sqlStats = NULL;
-            conf.doSQL = 0;
-            if (conf.verbosity >= 2) {
-                cout
-                << "c SQL not found during compilation, not dumping to DB"
-                << endl;
-            }
+            #endif
         }
+
+        if (conf.doSQL == 2) {
+            #if defined(USE_SQLITE3)
+            sqlStats = new SQLiteStats();
+            #else
+            cerr << "SQLite support was not compiled in, cannot use it. Exiting."
+            << endl;
+            std::exit(-1);
+            #endif
+        }
+        #else
+        cerr
+        << "ERROR: "
+        << "Cannot use SQL: no SQL library was found during compilation."
+        << endl;
+        std::exit(-1);
         #endif
     } else {
         sqlStats = NULL;

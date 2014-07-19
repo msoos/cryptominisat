@@ -40,13 +40,6 @@ public:
         uint64_t sumConflicts
         , boost::multi_array<uint32_t, 2>& sizeAndGlue
     ) override;
-
-    void varDataDump(
-        const Solver* solver
-        , const Searcher* search
-        , const vector<Var>& varsToDump
-        , const vector<VarData>& varData
-    ) override;
     #endif
 
     void reduceDB(
@@ -225,7 +218,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[79+1]; //+1 == runID
+        MYSQL_BIND  bind[75+1]; //+1 == runID
         MYSQL_STMT  *stmt = NULL;
 
         //Position
@@ -307,12 +300,6 @@ private:
         uint64_t learntTris;
         uint64_t learntLongs;
 
-        //Misc
-        double watchListSizeTraversed;
-        double watchListSizeTraversedSD;
-        uint64_t watchListSizeTraversedMin;
-        uint64_t watchListSizeTraversedMax;
-
         //Resolution stats
         ResolutionTypes<uint64_t> resolv;
 
@@ -330,47 +317,6 @@ private:
     };
 
     #ifdef STATS_NEEDED_EXTRA
-    struct StmtVar {
-        StmtVar() :
-            stmt(NULL)
-        {};
-
-        uint64_t varInitID;
-        vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt = NULL;
-
-        struct Data {
-            uint64_t var;
-
-            //Overall stats
-            uint64_t posPolarSet;
-            uint64_t negPolarSet;
-            uint64_t flippedPolarity;
-            uint64_t posDecided;
-            uint64_t negDecided;
-
-            //Dec level history stats
-            double decLevelAvg;
-            double decLevelSD;
-            uint64_t decLevelMin;
-            uint64_t decLevelMax;
-
-            //Trail level history stats
-            double trailLevelAvg;
-            double trailLevelSD;
-            uint64_t trailLevelMin;
-            uint64_t trailLevelMax;
-        };
-        vector<Data> data;
-    };
-    StmtVar stmtVarBulk;
-    StmtVar stmtVarSingle;
-    void initVarSTMT(
-        const Solver* solver
-        , MySQLStats::StmtVar& stmtVar
-        , uint64_t numInserts
-    );
-
     struct StmtSizeGlueScatter {
         StmtSizeGlueScatter() :
             stmt(NULL)
