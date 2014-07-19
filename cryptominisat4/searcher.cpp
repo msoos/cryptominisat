@@ -1883,13 +1883,6 @@ void Searcher::printRestartSQL()
 
     lastSQLPropStats = propStats;
     lastSQLGlobalStats = stats;
-
-    //Variable stats
-    #ifdef STATS_NEEDED_EXTRA
-    if (conf.dumpTopNVars > 0) {
-        solver->sqlStats->varDataDump(solver, this, calcVarsToDump(), varData);
-    }
-    #endif
 }
 #endif
 
