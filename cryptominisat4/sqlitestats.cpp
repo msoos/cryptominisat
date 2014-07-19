@@ -93,7 +93,7 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
     if (rc) {
         if (solver->getConf().verbosity >= 6) {
             cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
-            cerr << "c " << sqlite3_errstr(rc) << endl;
+            cerr << "c " << sqlite3_errmsg(db) << endl;
         }
 
         return false;
