@@ -91,7 +91,7 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
             #if defined(USE_MYSQL)
             sqlStats = new MySQLStats();
             #else
-            cerr << "MySQL support was not compiled in, cannot use it. Exiting."
+            std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
             << endl;
             std::exit(-1);
             #endif
@@ -101,13 +101,13 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
             #if defined(USE_SQLITE3)
             sqlStats = new SQLiteStats();
             #else
-            cerr << "SQLite support was not compiled in, cannot use it. Exiting."
+            std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
             << endl;
             std::exit(-1);
             #endif
         }
         #else
-        cerr
+        std::cerr
         << "ERROR: "
         << "Cannot use SQL: no SQL library was found during compilation."
         << endl;
