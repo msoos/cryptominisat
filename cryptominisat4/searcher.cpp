@@ -2076,7 +2076,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 void Searcher::save_search_loop_stats()
 {
     #ifdef STATS_NEEDED
-    if (conf.doSQL) {
+    if (sqlStats) {
         printRestartSQL();
     }
     #endif
@@ -2268,7 +2268,7 @@ void Searcher::finish_up_solve(const lbool status)
     }
 
     #ifdef STATS_NEEDED
-    if (conf.doSQL) {
+    if (sqlStats) {
         printRestartSQL();
         //printVarStatsSQL();
 

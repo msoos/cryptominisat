@@ -1159,7 +1159,7 @@ void Solver::saveVarMem(const uint32_t newNumVars)
     datasync->saveVarMem();
 
     const double time_used = cpuTime() - myTime;
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "save var mem"
@@ -1317,7 +1317,7 @@ void Solver::extend_solution()
     }
     model = map_back_to_without_bva(model);
     check_model_for_assumptions();
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "extend solution"
@@ -1328,7 +1328,7 @@ void Solver::extend_solution()
 
 void Solver::set_up_sql_writer()
 {
-    if (!conf.doSQL || solveStats.num_solve_calls > 1) {
+    if (!sqlStats || solveStats.num_solve_calls > 1) {
         //Either it's already initialized, or it's not needed
         return;
     }
@@ -1838,7 +1838,7 @@ void Solver::consolidateMem()
     const double myTime = cpuTime();
     clAllocator.consolidate(this, true);
     const double time_used = cpuTime() - myTime;
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "consolidate mem"
@@ -2759,7 +2759,7 @@ void Solver::check_implicit_stats() const
     assert(thisNumRedTris/3 == binTri.redTris);
 
     const double time_used = cpuTime() - myTime;
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "check implicit stats"
@@ -2816,7 +2816,7 @@ void Solver::check_stats(const bool allowFreed) const
     assert(numLitsRed == litStats.redLits);
 
     const double time_used = cpuTime() - myTime;
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "check literal stats"
@@ -2945,7 +2945,7 @@ void Solver::checkImplicitPropagated() const
         }
     }
     const double time_used = cpuTime() - myTime;
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "check implicit propagated"
@@ -3043,7 +3043,7 @@ void Solver::calculate_reachability()
         << std::setprecision(3) << time_used
         << endl;
     }
-    if (conf.doSQL) {
+    if (sqlStats) {
         sqlStats->time_passed_min(
             this
             , "calc reachability"
