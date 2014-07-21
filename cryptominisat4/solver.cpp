@@ -302,7 +302,7 @@ void Solver::add_every_combination_xor(
         //New lit to connect to next cut
         if (at != lits.size()) {
             new_var(true);
-            const Var newvar = solver->nVars()-1;
+            const Var newvar = nVars()-1;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
             lastlit_added = toadd;
@@ -337,7 +337,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         //cout << "Added. " << new_lits << endl;
         Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach, NULL, addDrup);
         if (cl) {
-            solver->longIrredCls.push_back(clAllocator.getOffset(cl));
+            longIrredCls.push_back(clAllocator.getOffset(cl));
         }
 
         if (!ok)
@@ -461,7 +461,7 @@ Clause* Solver::addClauseInt(
             propStats.propsUnit++;
             #endif
             if (attach) {
-                ok = (solver->propagate().isNULL());
+                ok = (propagate().isNULL());
             }
 
             return NULL;
@@ -778,7 +778,7 @@ bool Solver::addClause(const vector<Lit>& lits)
         }
 
         //Empty clause, it's UNSAT
-        if (!solver->okay()) {
+        if (!okay()) {
             *drup << fin;
         }
         *drup << del << ps << fin;
@@ -865,8 +865,8 @@ void Solver::reArrangeClauses()
         << std::setprecision(2) << time_used  << " s"
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (sqlStats) {
+        sqlStats->time_passed_min(
             solver
             , "rearrange claues"
             , time_used
@@ -1027,8 +1027,8 @@ void Solver::renumberVariables()
         << time_used
         << endl;
     }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
+    if (sqlStats) {
+        sqlStats->time_passed_min(
             solver
             , "renumber"
             , time_used
@@ -1171,7 +1171,7 @@ void Solver::saveVarMem(const uint32_t newNumVars)
 
 void Solver::set_assumptions()
 {
-    assert(solver->okay());
+    assert(okay());
     back_number_from_caller(origAssumptions);
     assumptions = back_number_from_caller_tmp;
     addClauseHelper(assumptions);
@@ -1187,7 +1187,7 @@ void Solver::set_assumptions()
                 assumptionsSet[lit.var()] = true;
             }
         } else {
-            if (solver->value(lit) == l_Undef) {
+            if (value(lit) == l_Undef) {
                 cout
                 << "ERROR: Lit " << lit
                 << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
@@ -1195,7 +1195,7 @@ void Solver::set_assumptions()
                 << " -- value should be l_Undef"
                 << endl;
             }
-            assert(solver->value(lit) != l_Undef);
+            assert(value(lit) != l_Undef);
         }
     }
 }
@@ -1302,7 +1302,7 @@ void Solver::extend_solution()
 {
     check_stats();
     const double myTime = cpuTime();
-    model = solver->back_number_solution(model);
+    model = back_number_solution(model);
 
     //Extend solution to stored solution in component handler
     if (conf.doCompHandler) {
@@ -1416,7 +1416,7 @@ lbool Solver::solve()
     handle_found_solution(status);
 
     end:
-    if (solver->sqlStats) {
+    if (sqlStats) {
         sqlStats->finishup(status);
     }
 
@@ -1507,7 +1507,7 @@ void Solver::handle_found_solution(const lbool status)
         //update_conflict_to_orig_assumptions();
 
         //Back-number the conflict
-        solver->map_inter_to_outer(conflict);
+        map_inter_to_outer(conflict);
     }
     checkDecisionVarCorrectness();
     check_implicit_stats();
@@ -1545,7 +1545,7 @@ lbool Solver::simplifyProblem()
 
     if (conf.doFindComps
         && getNumFreeVars() < conf.compVarLimit
-        && !solver->must_interrupt_asap()
+        && !must_interrupt_asap()
     ) {
         CompFinder findParts(this);
         if (!findParts.findComps()) {
@@ -1558,7 +1558,7 @@ lbool Solver::simplifyProblem()
         && solveStats.numSimplify >= conf.handlerFromSimpNum
         //Only every 2nd, since it can be costly to find parts
         && solveStats.numSimplify % 2 == 0
-        && !solver->must_interrupt_asap()
+        && !must_interrupt_asap()
     ) {
         if (!compHandler->handle())
             goto end;
@@ -1567,7 +1567,7 @@ lbool Solver::simplifyProblem()
     //SCC&VAR-REPL
     if (solveStats.numSimplify > 0
         && conf.doFindAndReplaceEqLits
-        && !solver->must_interrupt_asap()
+        && !must_interrupt_asap()
     ) {
         if (!sCCFinder->performSCC())
             goto end;
@@ -1580,7 +1580,7 @@ lbool Solver::simplifyProblem()
 
     //Cache clean before probing (for speed)
     if (conf.doCache
-        && !solver->must_interrupt_asap()
+        && !must_interrupt_asap()
     ) {
         if (!implCache.clean(this))
             goto end;
@@ -1591,7 +1591,7 @@ lbool Solver::simplifyProblem()
 
     //Treat implicits
     if (conf.doStrSubImplicit
-        && !solver->must_interrupt_asap()
+        && !must_interrupt_asap()
     ) {
         subsumeImplicit->subsume_implicit();
     }
@@ -3006,7 +3006,7 @@ void Solver::calculate_reachability()
     }
 
     //Go through each that is decision variable
-    for (size_t i = 0, end = solver->nVars()*2; i < end; i++) {
+    for (size_t i = 0, end = nVars()*2; i < end; i++) {
         const Lit lit = Lit::toLit(i);
 
         //Check if it's a good idea to look at the variable as a dominator
@@ -3056,7 +3056,7 @@ void Solver::freeUnusedWatches()
 {
     size_t wsLit = 0;
     for (watch_array::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
+        it = watches.begin(), end = watches.end()
         ; it != end
         ; ++it, wsLit++
     ) {
@@ -3070,7 +3070,7 @@ void Solver::freeUnusedWatches()
             ws.clear();
         }
     }
-    solver->watches.consolidate();
+    watches.consolidate();
 }
 
 bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
@@ -3264,6 +3264,6 @@ void Solver::ReachabilityStats::printShort(const Solver* solver) const
     << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
     << stats_line_percent(numLitsDependent, dominators)
 
-    << solver->conf.print_times(cpu_time)
+    << conf.print_times(cpu_time)
     << endl;
 }
