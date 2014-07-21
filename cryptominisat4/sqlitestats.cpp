@@ -9,6 +9,7 @@
 #include <time.h>
 #include "constants.h"
 #include "reducedb.h"
+#include "sql_tablestructure.h"
 
 using namespace CMSat;
 using std::cout;
@@ -111,19 +112,12 @@ void SQLiteStats::getID(const Solver* solver)
         numTries++;
 
         //Check if we have been in this loop for too long
-        if (numTries > 10) {
-            cerr
-            << "ERROR: Something is wrong while adding runID!" << endl
-            << " Exiting!"
-            << endl;
-
-            cerr
-            << "Maybe you didn't create the tables in the database?" << endl
-            << "You can fix this by executing: " << endl
-            << "$ sqlite -u root -p cmsat < cmsat_tablestructure.sql" << endl
-            ;
-
-            std::exit(-1);
+        if (numTries > 15) {
+            if (sqlite3_exec(db, ___cmsat_tablestructure_sql, NULL, NULL, NULL)) {
+                cerr << "ERROR: Couln't create table structure for SQLite"
+                << endl;
+                std::exit(-1);
+            }
         }
     }
 
