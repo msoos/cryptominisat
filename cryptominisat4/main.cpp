@@ -552,10 +552,6 @@ void Main::add_supported_options()
     ("prepstmtscatter", po::value(&conf.preparedDumpSizeScatter)->default_value(conf.preparedDumpSizeScatter)
         , "When dumping scatter data, dump by chunks of this size (depends on SQL server, default should be safe)")
     #endif
-    ("topnvars", po::value(&conf.dumpTopNVars)->default_value(conf.dumpTopNVars)
-        , "At every restart, dump the data about the top N variables. If set to 0, nothing is dumped")
-    ("dumptreevar", po::value(&conf.dump_tree_variance_stats)->default_value(conf.dump_tree_variance_stats)
-        , "Dump variance stats of the variables' decision and trail depths")
     ("sqluser", po::value(&conf.sqlUser)->default_value(conf.sqlUser)
         , "SQL user to connect with")
     ("sqlpass", po::value(&conf.sqlPass)->default_value(conf.sqlPass)
@@ -950,6 +946,7 @@ void Main::manually_parse_some_options()
 
     if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
+        conf.sqlite_filename = filesToRead[0] + ".sqlite";
         fileNamePresent = true;
     } else {
         fileNamePresent = false;

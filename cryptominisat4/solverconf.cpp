@@ -104,8 +104,6 @@ SolverConf::SolverConf() :
         //SQL
         , doSQL          (1)
         , whichSQL       (0)
-        , dumpTopNVars   (0)
-        , dump_tree_variance_stats(0)
         #ifdef STATS_NEEDED_EXTRA
         , dumpClauseDistribPer(0)
         , dumpClauseDistribMaxSize(200)

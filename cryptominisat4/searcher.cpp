@@ -1864,19 +1864,9 @@ void Searcher::printRestartSQL()
     PropStats thisPropStats = propStats - lastSQLPropStats;
     Stats thisStats = stats - lastSQLGlobalStats;
 
-    //Print variance
-    VariableVariance variableVarianceStat;
-    #ifdef STATS_NEEDED_EXTRA
-    if (conf.dump_tree_variance_stats) {
-        calcVariances(varData, variableVarianceStat.avgDecLevelVar, variableVarianceStat.avgTrailLevelVar);
-        calcVariances(varDataLT, variableVarianceStat.avgDecLevelVarLT, variableVarianceStat.avgTrailLevelVarLT);
-    }
-    #endif
-
     solver->sqlStats->restart(
         thisPropStats
         , thisStats
-        , variableVarianceStat
         , solver
         , this
     );
@@ -1904,66 +1894,6 @@ struct VarDumpOrder
 };
 
 #ifdef STATS_NEEDED_EXTRA
-vector<Var> Searcher::calcVarsToDump() const
-{
-    //How much to dump per criteria
-    const size_t numToDump = std::min(varData.size(), conf.dumpTopNVars);
-
-    //Collect what needs to be dumped here
-    set<Var> todump;
-
-    //Top N vars polarity set
-    vector<VarDumpOrder> order;
-    for(size_t i = 0; i < varData.size(); i++) {
-        if (varData[i].stats.posPolarSet + varData[i].stats.negPolarSet > 0) {
-            order.push_back(
-                VarDumpOrder(
-                    i
-                    , varData[i].stats.posPolarSet
-                        + varData[i].stats.negPolarSet
-                )
-            );
-        }
-    }
-    std::stable_sort(order.begin(), order.end());
-
-    //These vars need to be dumped according to above stat
-    for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {
-        todump.insert(order[i].var);
-    }
-
-    //Top N vars, number of times decided on
-    order.clear();
-    for(size_t i = 0; i < varData.size(); i++) {
-        if (varData[i].stats.posDecided + varData[i].stats.negDecided > 0) {
-            order.push_back(
-                VarDumpOrder(
-                    i
-                    , varData[i].stats.negDecided
-                        + varData[i].stats.posDecided
-                )
-            );
-        }
-    }
-    std::stable_sort(order.begin(), order.end());
-
-    //These vars need to be dumped according to above stat
-    for(size_t i = 0; i < std::min(numToDump, order.size()); i++) {
-        todump.insert(order[i].var);
-    }
-
-    vector<Var> toDumpVec;
-    for(set<Var>::const_iterator
-        it = todump.begin(), end = todump.end()
-        ; it != end
-        ; it++
-    ) {
-        toDumpVec.push_back(*it);
-    }
-
-    return toDumpVec;
-}
-
 void Searcher::printClauseDistribSQL()
 {
     solver->sqlStats->clauseSizeDistrib(
@@ -2149,16 +2079,6 @@ void Searcher::save_search_loop_stats()
     if (conf.doSQL) {
         printRestartSQL();
     }
-
-    #ifdef STATS_NEEDED_EXTRA
-    //Update varDataLT
-    if (conf.dump_tree_variance_stats) {
-        for(size_t i = 0; i < nVars(); i++) {
-            varDataLT[i].stats.addData(varData[i].stats);
-            varData[i].stats.reset();
-        }
-    }
-    #endif
     #endif
 }
 

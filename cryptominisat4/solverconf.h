@@ -186,8 +186,6 @@ class SolverConf
         //SQL
         int       doSQL;
         int       whichSQL;
-        size_t   dumpTopNVars; //Only dump information about the "top" N active variables
-        int       dump_tree_variance_stats;
         #ifdef STATS_NEEDED_EXTRA
         unsigned    dumpClauseDistribPer;
         unsigned    dumpClauseDistribMaxSize;

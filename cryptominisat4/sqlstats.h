@@ -24,7 +24,6 @@ public:
     virtual void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
-        , const VariableVariance& varVarStats
         , const Solver* solver
         , const Searcher* searcher
     ) = 0;

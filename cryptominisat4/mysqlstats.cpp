@@ -466,10 +466,6 @@ void MySQLStats::initRestartSTMT()
     //Var stats
     << ", `propagations`"
     << ", `decisions`"
-    << ", `avgDecLevelVarLT`"
-    << ", `avgTrailLevelVarLT`"
-    << ", `avgDecLevelVar`"
-    << ", `avgTrailLevelVar`"
     << ", `flipped`, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
     << ") values ";
@@ -599,11 +595,6 @@ void MySQLStats::initRestartSTMT()
     //Var stats
     bindTo(stmtRst, stmtRst.propagations);
     bindTo(stmtRst, stmtRst.decisions);
-
-    bindTo(stmtRst, stmtRst.varVarStats.avgDecLevelVarLT);
-    bindTo(stmtRst, stmtRst.varVarStats.avgTrailLevelVarLT);
-    bindTo(stmtRst, stmtRst.varVarStats.avgDecLevelVar);
-    bindTo(stmtRst, stmtRst.varVarStats.avgTrailLevelVar);
 
     bindTo(stmtRst, stmtRst.varFlipped);
     bindTo(stmtRst, stmtRst.varSetPos);
@@ -1110,7 +1101,6 @@ void MySQLStats::time_passed_min(
 void MySQLStats::restart(
     const PropStats& thisPropStats
     , const Searcher::Stats& thisStats
-    , const VariableVariance& varVarStats
     , const Solver* solver
     , const Searcher* search
 ) {
@@ -1208,7 +1198,6 @@ void MySQLStats::restart(
     //Var stats
     stmtRst.propagations    = thisPropStats.propagations;
     stmtRst.decisions       = thisStats.decisions;
-    stmtRst.varVarStats     = varVarStats;
 
     stmtRst.varFlipped      = thisPropStats.varFlipped;
     stmtRst.varSetPos       = thisPropStats.varSetPos;

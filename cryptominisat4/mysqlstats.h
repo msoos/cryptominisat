@@ -20,7 +20,6 @@ public:
     void restart(
         const PropStats& thisPropStats
         , const Searcher::Stats& thisStats
-        , const VariableVariance& varVarStats
         , const Solver* solver
         , const Searcher* searcher
     ) override;
@@ -306,7 +305,6 @@ private:
         //Var stats
         uint64_t propagations;
         uint64_t decisions;
-        VariableVariance varVarStats;
         uint64_t varFlipped;
         uint64_t varSetNeg;
         uint64_t varSetPos;

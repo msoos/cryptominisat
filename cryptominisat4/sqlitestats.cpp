@@ -322,7 +322,7 @@ void SQLiteStats::time_passed_min(
 void SQLiteStats::initRestartSTMT(
     uint64_t verbosity
 ) {
-    const size_t numElems = 76;
+    const size_t numElems = 72;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -367,10 +367,6 @@ void SQLiteStats::initRestartSTMT(
     //Var stats
     << ", `propagations`"
     << ", `decisions`"
-    << ", `avgDecLevelVarLT`"
-    << ", `avgTrailLevelVarLT`"
-    << ", `avgDecLevelVar`"
-    << ", `avgTrailLevelVar`"
     << ", `flipped`, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
     << ") values ";
@@ -395,7 +391,6 @@ void SQLiteStats::initRestartSTMT(
 void SQLiteStats::restart(
     const PropStats& thisPropStats
     , const Searcher::Stats& thisStats
-    , const VariableVariance& varVarStats
     , const Solver* solver
     , const Searcher* search
 ) {
@@ -495,10 +490,6 @@ void SQLiteStats::restart(
     //Var stats
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propagations);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.decisions);
-    sqlite3_bind_double(stmtRst, bindAt++, varVarStats.avgDecLevelVarLT);
-    sqlite3_bind_double(stmtRst, bindAt++, varVarStats.avgTrailLevelVarLT);
-    sqlite3_bind_double(stmtRst, bindAt++, varVarStats.avgDecLevelVar);
-    sqlite3_bind_double(stmtRst, bindAt++, varVarStats.avgTrailLevelVar);
 
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varFlipped);
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varSetPos);
