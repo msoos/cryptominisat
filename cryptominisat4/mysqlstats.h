@@ -217,7 +217,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[75+1]; //+1 == runID
+        MYSQL_BIND  bind[71+1]; //+1 == runID
         MYSQL_STMT  *stmt = NULL;
 
         //Position
