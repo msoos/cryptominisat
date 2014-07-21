@@ -227,7 +227,7 @@ void SQLiteStats::initTimePassedSTMT()
     ss << ";";
 
     //Prepare the statement
-    const int rc = sqlite3_prepare_v2(db, ss.str().c_str(), -1, &stmtTimePassed, NULL);
+    const int rc = sqlite3_prepare(db, ss.str().c_str(), -1, &stmtTimePassed, NULL);
     if (rc) {
         cerr << "ERROR  in sqlite_stmt_prepare(), INSERT failed"
         << endl
@@ -271,10 +271,14 @@ void SQLiteStats::time_passed(
         std::exit(-1);
     }
 
-    rc = sqlite3_clear_bindings(stmtTimePassed);
-    if (rc != SQLITE_OK) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
+    if (sqlite3_reset(stmtTimePassed)) {
+        cerr << "Error calling sqlite3_reset on stmtTimePassed" << endl;
+        std::exit(-1);
     }
+    /*if (sqlite3_clear_bindings(stmtTimePassed)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
+        std::exit(-1);
+    }*/
 }
 
 void SQLiteStats::time_passed_min(
@@ -294,7 +298,7 @@ void SQLiteStats::time_passed_min(
 
     int rc = sqlite3_step(stmtTimePassed);
     if (rc != SQLITE_DONE) {
-        cerr << "ERROR while executing time_passed prepared statement"
+        cerr << "ERROR while executing time_passed prepared statement (time_passed_min function)"
         << endl
         << "Error from sqlite: "
         << sqlite3_errmsg(db)
@@ -304,10 +308,14 @@ void SQLiteStats::time_passed_min(
         std::exit(-1);
     }
 
-    rc = sqlite3_clear_bindings(stmtTimePassed);
-    if (rc != SQLITE_OK) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
+    if (sqlite3_reset(stmtTimePassed)) {
+        cerr << "Error calling sqlite3_reset on stmtTimePassed" << endl;
+        std::exit(-1);
     }
+    /*if (sqlite3_clear_bindings(stmtTimePassed)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
+        std::exit(-1);
+    }*/
 }
 
 //Prepare statement for restart
@@ -511,9 +519,13 @@ void SQLiteStats::restart(
         std::exit(-1);
     }
 
-    rc = sqlite3_clear_bindings(stmtRst);
-    if (rc != SQLITE_OK) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
+    if (sqlite3_reset(stmtRst)) {
+        cerr << "Error calling sqlite3_reset on stmtRst" << endl;
+        std::exit(-1);
+    }
+    if (sqlite3_clear_bindings(stmtRst)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmtRst" << endl;
+        std::exit(-1);
     }
 }
 
@@ -643,9 +655,14 @@ void SQLiteStats::reduceDB(
         std::exit(-1);
     }
 
-    rc = sqlite3_clear_bindings(stmtReduceDB);
-    if (rc != SQLITE_OK) {
+    if (sqlite3_reset(stmtReduceDB)) {
+        cerr << "Error calling sqlite3_reset on stmtReduceDB" << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_clear_bindings(stmtReduceDB)) {
         cerr << "Error calling sqlite3_clear_bindings on stmtReduceDB" << endl;
+        std::exit(-1);
     }
 }
 
