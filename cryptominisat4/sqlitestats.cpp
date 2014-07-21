@@ -46,7 +46,7 @@ SQLiteStats::~SQLiteStats()
 
 bool SQLiteStats::setup(const Solver* solver)
 {
-    setup_ok = connectServer();
+    setup_ok = connectServer(solver->conf.sqlite_filename);
     if (!setup_ok) {
         return false;
     }
@@ -54,16 +54,16 @@ bool SQLiteStats::setup(const Solver* solver)
     getID(solver);
     add_tags(solver);
     addStartupData(solver);
-    initRestartSTMT(solver->getConf().verbosity);
-    initReduceDBSTMT(solver->getConf().verbosity);
+    initRestartSTMT();
+    initReduceDBSTMT();
     initTimePassedSTMT();
 
     return true;
 }
 
-bool SQLiteStats::connectServer()
+bool SQLiteStats::connectServer(const std::string& sqlite_filename)
 {
-    int rc = sqlite3_open("myfile", &db);
+    int rc = sqlite3_open(sqlite_filename.c_str(), &db);
     if(rc) {
         cerr << "Can't open sqlite database: " << sqlite3_errmsg(db) << endl;
         sqlite3_close(db);

@@ -186,6 +186,7 @@ class SolverConf
         //SQL
         int       doSQL;
         int       whichSQL;
+        std::string sqlite_filename;
         #ifdef STATS_NEEDED_EXTRA
         unsigned    dumpClauseDistribPer;
         unsigned    dumpClauseDistribMaxSize;
