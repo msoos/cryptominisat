@@ -193,7 +193,7 @@ void SCCFinder::Stats::printShort(Solver* solver) const
     <<  cpu_time << " s"
     << endl;
 
-    if (solver && solver->conf.doSQL) {
+    if (solver && solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "scc"
