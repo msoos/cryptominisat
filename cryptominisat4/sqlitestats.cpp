@@ -234,7 +234,6 @@ void SQLiteStats::initTimePassedSTMT()
     }
 }
 
-
 void SQLiteStats::time_passed(
     const Solver* solver
     , const string& name
