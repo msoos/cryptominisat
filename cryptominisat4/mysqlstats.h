@@ -74,7 +74,7 @@ private:
     void add_tags(const Solver* solver);
 
     void addStartupData(const Solver* solver);
-    void initRestartSTMT(uint64_t verbosity);
+    void initRestartSTMT();
     void initTimePassedSTMT();
     void initTimePassedMinSTMT();
     #ifdef STATS_NEEDED_EXTRA
@@ -174,7 +174,7 @@ private:
         CleaningStats clean;
     };
     StmtReduceDB stmtReduceDB;
-    void initReduceDBSTMT(uint64_t verbosity);
+    void initReduceDBSTMT();
 
     struct StmtTimePassed {
         StmtTimePassed() :

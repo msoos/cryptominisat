@@ -85,8 +85,8 @@ bool MySQLStats::setup(const Solver* solver)
     getID(solver);
     add_tags(solver);
     addStartupData(solver);
-    initRestartSTMT(solver->getConf().verbosity);
-    initReduceDBSTMT(solver->getConf().verbosity);
+    initRestartSTMT();
+    initReduceDBSTMT();
     initTimePassedSTMT();
     initTimePassedMinSTMT();
     #ifdef STATS_NEEDED_EXTRA
@@ -419,9 +419,8 @@ void MySQLStats::initTimePassedMinSTMT()
 }
 
 //Prepare statement for restart
-void MySQLStats::initRestartSTMT(
-    uint64_t verbosity
-) {
+void MySQLStats::initRestartSTMT()
+{
     const size_t numElems = sizeof(stmtRst.bind)/sizeof(MYSQL_BIND);
 
     std::stringstream ss;
@@ -496,12 +495,6 @@ void MySQLStats::initRestartSTMT(
         << "Query was: " << ss.str()
         << endl;
         std::exit(-1);
-    }
-
-    if (verbosity >= 6) {
-        cout
-        << "prepare INSERT successful"
-        << endl;
     }
 
     //Validate parameter count
@@ -630,9 +623,8 @@ void MySQLStats::initRestartSTMT(
 }
 
 //Prepare statement for restart
-void MySQLStats::initReduceDBSTMT(
-    uint64_t verbosity
-) {
+void MySQLStats::initReduceDBSTMT()
+{
     const size_t numElems = sizeof(stmtReduceDB.bind)/sizeof(MYSQL_BIND);
 
     std::stringstream ss;
