@@ -305,10 +305,10 @@ void SQLiteStats::time_passed_min(
         cerr << "Error calling sqlite3_reset on stmtTimePassed" << endl;
         std::exit(-1);
     }
-    /*if (sqlite3_clear_bindings(stmtTimePassed)) {
+    if (sqlite3_clear_bindings(stmtTimePassed)) {
         cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
         std::exit(-1);
-    }*/
+    }
 }
 
 //Prepare statement for restart
