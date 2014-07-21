@@ -313,9 +313,8 @@ void SQLiteStats::time_passed_min(
 }
 
 //Prepare statement for restart
-void SQLiteStats::initRestartSTMT(
-    uint64_t verbosity
-) {
+void SQLiteStats::initRestartSTMT()
+{
     const size_t numElems = 72;
 
     std::stringstream ss;
@@ -516,9 +515,8 @@ void SQLiteStats::restart(
 
 
 //Prepare statement for restart
-void SQLiteStats::initReduceDBSTMT(
-    uint64_t verbosity
-) {
+void SQLiteStats::initReduceDBSTMT()
+{
     const size_t numElems = 38;
 
     std::stringstream ss;

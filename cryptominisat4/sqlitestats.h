@@ -48,11 +48,11 @@ private:
     void add_tags(const Solver* solver);
 
     void addStartupData(const Solver* solver);
-    void initRestartSTMT(uint64_t verbosity);
+    void initRestartSTMT();
     void initTimePassedSTMT();
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
-    void initReduceDBSTMT(uint64_t verbosity);
+    void initReduceDBSTMT();
 
     sqlite3_stmt *stmtTimePassed = NULL;
     sqlite3_stmt *stmtReduceDB = NULL;
