@@ -106,7 +106,7 @@ bool BVA::bounded_var_addition()
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "bva"

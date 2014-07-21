@@ -154,7 +154,7 @@ bool Vivifier::vivify_tri_irred_cls()
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "vivif tri irred"
@@ -311,7 +311,7 @@ bool Vivifier::vivify_long_irred_cls()
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "vivif long irred"

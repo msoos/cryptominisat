@@ -719,7 +719,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "empty resolvent"
@@ -802,7 +802,7 @@ end:
         << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
         << "c  #T: " << time_used << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "bve"
@@ -883,7 +883,7 @@ bool Simplifier::fill_occur_and_print_stats()
     sanityCheckElimedVars();
     const double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "occur build"
@@ -1160,7 +1160,7 @@ void Simplifier::finishUp(
     //Update global stats
     const double time_used = cpuTime() - myTime;
     runStats.finalCleanupTime += time_used;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "occur cleanup"

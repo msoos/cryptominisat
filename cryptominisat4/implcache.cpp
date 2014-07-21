@@ -261,7 +261,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "clean cache"
@@ -397,7 +397,7 @@ end:
         runStats.printShort(solver);
     }
     globalStats += runStats;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "cache extractboth"

@@ -274,7 +274,7 @@ end:
         else
             runStats.printShort(solver);
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "vrep"

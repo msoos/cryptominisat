@@ -239,7 +239,7 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "subsume"
@@ -303,7 +303,7 @@ bool SubsumeStrengthen::performStrengthening()
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "strengthen"

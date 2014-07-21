@@ -865,7 +865,7 @@ void Solver::reArrangeClauses()
         << std::setprecision(2) << time_used  << " s"
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "rearrange claues"
@@ -1027,7 +1027,7 @@ void Solver::renumberVariables()
         << time_used
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "renumber"
@@ -1416,7 +1416,7 @@ lbool Solver::solve()
     handle_found_solution(status);
 
     end:
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         sqlStats->finishup(status);
     }
 

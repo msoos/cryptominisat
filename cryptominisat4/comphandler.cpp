@@ -748,7 +748,7 @@ void CompHandler::readdRemovedClauses()
         << solver->conf.print_times(time_used)
         << endl;
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "comp re-adding"

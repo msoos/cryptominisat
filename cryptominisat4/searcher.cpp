@@ -1080,7 +1080,7 @@ lbool Searcher::search()
 
 void Searcher::dump_search_sql(const double myTime)
 {
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "search"

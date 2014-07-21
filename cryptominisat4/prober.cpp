@@ -477,7 +477,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
         else
             runStats.printShort(solver);
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "probe"

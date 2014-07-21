@@ -280,7 +280,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     }
     cleaningStats += tmpStats;
 
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "dbclean"
@@ -483,7 +483,7 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
     CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
     solver->consolidateMem();
 
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);
     }
 

@@ -498,7 +498,7 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
         }
         cache_based_data.print();
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         std::stringstream ss;
         ss << "shorten"
         << (alsoStrengthen ? " and str" : "")
@@ -795,7 +795,7 @@ void Strengthener::StrImplicitData::print(
     << " w-visit: " << numWatchesLooked
     << endl;
 
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "implicit str"

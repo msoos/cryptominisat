@@ -126,7 +126,7 @@ bool XorFinder::findXors()
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "xorfind"
@@ -233,7 +233,7 @@ end:
     const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.extractTime += time_used;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "xorextract"

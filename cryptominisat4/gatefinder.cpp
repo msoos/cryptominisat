@@ -97,7 +97,7 @@ void GateFinder::find_or_gates_and_update_stats()
     const double time_remain = (double)numMaxGateFinder/(double)orig_numMaxGateFinder;
     runStats.findGateTime += time_used;
     runStats.find_gate_timeout += time_out;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "gate find"
@@ -172,7 +172,7 @@ bool GateFinder::shorten_with_all_or_gates()
     const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
     runStats.orBasedTime += time_used;
     runStats.or_based_timeout += time_out;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "gate shorten cl"
@@ -214,7 +214,7 @@ bool GateFinder::remove_clauses_with_all_or_gates()
     const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
     runStats.andBasedTime += time_used;
     runStats.and_based_timeout += time_out;
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "gate rem cl"
@@ -252,7 +252,7 @@ bool GateFinder::all_simplifications_with_gates()
 
         const double time_used = cpuTime() - myTime;
         runStats.varReplaceTime += time_used;
-        if (solver->conf.doSQL) {
+        if (solver->sqlStats) {
             solver->sqlStats->time_passed_min(
                 solver
                 , "gate eq-var"

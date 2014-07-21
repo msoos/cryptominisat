@@ -250,7 +250,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     if (solver->conf.verbosity >= 1) {
         runStats.printShort(solver);
     }
-    if (solver->conf.doSQL) {
+    if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
             , "subsume implicit"
