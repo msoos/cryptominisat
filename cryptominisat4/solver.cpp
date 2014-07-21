@@ -85,37 +85,7 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     , strengthener(NULL)
     , compHandler(NULL)
 {
-    if (conf.doSQL) {
-        #if defined(USE_MYSQL) or defined(USE_SQLITE3)
-        if (conf.doSQL == 1) {
-            #if defined(USE_MYSQL)
-            sqlStats = new MySQLStats();
-            #else
-            std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
-            << endl;
-            std::exit(-1);
-            #endif
-        }
-
-        if (conf.doSQL == 2) {
-            #if defined(USE_SQLITE3)
-            sqlStats = new SQLiteStats();
-            #else
-            std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
-            << endl;
-            std::exit(-1);
-            #endif
-        }
-        #else
-        std::cerr
-        << "ERROR: "
-        << "Cannot use SQL: no SQL library was found during compilation."
-        << endl;
-        std::exit(-1);
-        #endif
-    } else {
-        sqlStats = NULL;
-    }
+    parse_sql_option();
 
     if (conf.doProbe) {
         prober = new Prober(this);
@@ -153,6 +123,75 @@ Solver::~Solver()
     delete subsumeImplicit;
     delete datasync;
     delete reduceDB;
+}
+
+void Solver::parse_sql_option()
+{
+    if (conf.doSQL > 2) {
+        std::cerr << "ERROR: '--sql'  option must be given value 0..2"
+        << endl;
+        std::exit(-1);
+    }
+    if (conf.whichSQL > 3) {
+        std::cerr << "ERROR: '--wsql'  option must be given value 0..3"
+        << endl;
+        std::exit(-1);
+    }
+
+    sqlStats = NULL;
+    if (conf.doSQL) {
+        if (conf.whichSQL == 2) {
+            #if defined(USE_MYSQL)
+            sqlStats = new MySQLStats();
+            #else
+            if (conf.doSQL >= 2) {
+                std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
+                << endl;
+                std::exit(-1);
+            }
+            #endif
+        }
+
+        if (conf.whichSQL == 3) {
+            #if defined(USE_SQLITE3)
+            sqlStats = new SQLiteStats();
+            #else
+            if (conf.doSQL == 2) {
+                std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
+                << endl;
+                std::exit(-1);
+            }
+            #endif
+        }
+
+        if (conf.whichSQL == 0) {
+            #if defined(USE_MYSQL)
+            sqlStats = new MySQLStats();
+            #elif defined(USE_SQLITE3)
+            sqlStats = new SQLiteStats();
+            #else
+            if (conf.doSQL == 2) {
+                std::cerr << "Neither MySQL nor SQLite support was compiled in"
+                << ", cannot use either. Exiting." << endl;
+                std::exit(-1);
+            }
+            #endif
+        }
+
+        if (conf.whichSQL == 1) {
+            #if defined(USE_SQLITE3)
+            sqlStats = new SQLiteStats();
+            #elif defined(USE_MYSQL)
+            sqlStats = new MySQLStats();
+            #else
+            if (conf.doSQL == 2) {
+                std::cerr << "Neither MySQL nor SQLite support was compiled in"
+                << ", cannot use either. Exiting." << endl;
+                std::exit(-1);
+            }
+            #endif
+        }
+    }
 }
 
 void Solver::set_shared_data(SharedData* shared_data, uint32_t thread_num)

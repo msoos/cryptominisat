@@ -102,8 +102,9 @@ SolverConf::SolverConf() :
         , rewardShortenedClauseWithConfl(3)
 
         //SQL
-        , doSQL            (1)
-        , dumpTopNVars     (0)
+        , doSQL          (1)
+        , whichSQL       (0)
+        , dumpTopNVars   (0)
         , dump_tree_variance_stats(0)
         #ifdef STATS_NEEDED_EXTRA
         , dumpClauseDistribPer(0)

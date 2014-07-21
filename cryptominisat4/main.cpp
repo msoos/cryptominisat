@@ -535,11 +535,13 @@ void Main::add_supported_options()
 
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
-    ("sql", po::value(&conf.doSQL)->default_value(0)
-        , "Write to SQL. 0 = don't attempt to writ to DB, \
-1 = try to write to MySQL but continue if fails, \
-2 = try to write to SQLite but continue if fails, \
-3 = abort if cannot write to DB")
+    ("sql", po::value(&conf.doSQL)->default_value(conf.doSQL)
+        , "Write to SQL. 0 = don't attempt to writ to DB, 1 = try but continue if fails, 2 = abort if cannot write to DB")
+    ("wsql", po::value(&conf.whichSQL)->default_value(0)
+        , "0 = prefer MySQL \
+1 = prefer SQLite, \
+2 = only use MySQL, \
+3 = only use SQLite" )
     #ifdef STATS_NEEDED_EXTRA
     ("cldistribper", po::value(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
         , "Dump redundant clause size distribution every N conflicts. If set to 0, it is never dumped.")
