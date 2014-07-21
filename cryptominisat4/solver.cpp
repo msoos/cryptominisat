@@ -3264,6 +3264,6 @@ void Solver::ReachabilityStats::printShort(const Solver* solver) const
     << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
     << stats_line_percent(numLitsDependent, dominators)
 
-    << conf.print_times(cpu_time)
+    << solver->conf.print_times(cpu_time)
     << endl;
 }
