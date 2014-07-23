@@ -35,6 +35,7 @@ using namespace CMSat;
 std::ostream* drupf;
 
 SATSolver* solver;
+bool zero_exit_status = false;
 static void SIGINT_handler(int) {
     printf("\n"); printf("*** INTERRUPTED ***\n");
     solver->print_stats();

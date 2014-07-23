@@ -4,6 +4,5 @@ get_target_property(cryptominisat4_EXECUTABLE_PATH cryptominisat LOCATION)
 configure_file(lit.site.cfg.in lit.site.cfg @ONLY)
 
 # Make sure this test-suite runs when "test" is target
-if (NOT SIMPLE)
-    add_test(CNF ${PYTHON_EXECUTABLE} ${LIT_TOOL} ${LIT_ARGS} .)
-endif()
+add_test(CNF ${PYTHON_EXECUTABLE} ${LIT_TOOL} ${LIT_ARGS} .)
+

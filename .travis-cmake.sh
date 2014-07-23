@@ -61,6 +61,18 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
+    SQLITE)
+        sudo apt-get install libsqlite3-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
+
+    MYSQL)
+        sudo apt-get install mysqlclient-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
+
     *)
         echo "\"${STP_CONFIG}\" configuration not recognised"
         exit 1
