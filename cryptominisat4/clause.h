@@ -431,6 +431,37 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
     return os;
 }
 
+struct BinaryXor
+{
+    Var vars[2];
+    bool rhs;
+
+    BinaryXor(Var var1, Var var2, const bool _rhs) {
+        if (var1 > var2) {
+            std::swap(var1, var2);
+        }
+        vars[0] = var1;
+        vars[1] = var2;
+        rhs = _rhs;
+    }
+
+    bool operator<(const BinaryXor& other) const
+    {
+        if (vars[0] != other.vars[0]) {
+            return vars[0] < other.vars[0];
+        }
+
+        if (vars[1] != other.vars[1]) {
+            return vars[1] < other.vars[1];
+        }
+
+        if (rhs != other.rhs) {
+            return (int)rhs < (int)other.rhs;
+        }
+        return false;
+    }
+};
+
 } //end namespace
 
 #endif //CLAUSE_H

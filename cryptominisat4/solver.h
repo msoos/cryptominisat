@@ -143,7 +143,6 @@ class Solver : public Searcher
         ClauseCleaner *clauseCleaner;
         VarReplacer *varReplacer;
         SubsumeImplicit *subsumeImplicit;
-        SCCFinder *sCCFinder;
         DataSync *datasync = NULL;
         ReduceDB* reduceDB = NULL;
         vector<LitReachData> litReachable;
@@ -423,8 +422,7 @@ inline Var Solver::numActiveVars() const
     Var numActive = 0;
     for(Var var = 0; var < solver->nVars(); var++) {
         if (varData[var].is_decision
-            && (varData[var].removed == Removed::none
-                || varData[var].removed == Removed::queued_replacer)
+            && varData[var].removed == Removed::none
             && value(var) == l_Undef
         ) {
             numActive++;

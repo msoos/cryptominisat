@@ -186,9 +186,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
                 continue;
 
             //Update to its replaced version
-            if (solver->varData[lit.var()].removed == Removed::replaced
-                || solver->varData[lit.var()].removed == Removed::queued_replacer
-            ) {
+            if (solver->varData[lit.var()].removed == Removed::replaced) {
                 lit = solver->varReplacer->getLitReplacedWith(lit);
 
                 //This would be tautological (and incorrect), so skip
@@ -314,9 +312,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
                 ; it2 != end2
                 ; it2++
             ) {
-                if (solver->varData[it2->var()].removed != Removed::none
-                    && solver->varData[it2->var()].removed != Removed::queued_replacer
-                ) {
+                if (solver->varData[it2->var()].removed != Removed::none) {
                     //Var has been eliminated one way or another. Don't add this clause
                     OK = false;
                     break;
@@ -376,10 +372,10 @@ bool ImplCache::tryBoth(Solver* solver)
 
         //If value is set or eliminated, skip
         if (solver->value(var) != l_Undef
-            || (solver->varData[var].removed != Removed::none
-                && solver->varData[var].removed != Removed::queued_replacer)
-           )
+            || solver->varData[var].removed != Removed::none
+        ) {
             continue;
+        }
 
         //Try to do it
         tryVar(solver, var);
@@ -437,9 +433,7 @@ void ImplCache::tryVar(
         const Var var2 = it->getLit().var();
 
         //A variable that has been really eliminated, skip
-        if (solver->varData[var2].removed != Removed::none
-            && solver->varData[var2].removed != Removed::queued_replacer
-        ) {
+        if (solver->varData[var2].removed != Removed::none) {
             continue;
         }
 
@@ -483,9 +477,9 @@ void ImplCache::tryVar(
             continue;
 
         //If var has been removed, skip
-        if (solver->varData[var2].removed != Removed::none
-            && solver->varData[var2].removed != Removed::queued_replacer
-        ) continue;
+        if (solver->varData[var2].removed != Removed::none) {
+            continue;
+        }
 
         handleNewData(val, var, it->getLit());
     }

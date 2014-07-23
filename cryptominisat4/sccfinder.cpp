@@ -41,6 +41,7 @@ SCCFinder::SCCFinder(Solver* _solver) :
 
 bool SCCFinder::performSCC()
 {
+    assert(binxors.empty());
     runStats.clear();
     runStats.numCalls = 1;
     const double myTime = cpuTime();
@@ -63,12 +64,9 @@ bool SCCFinder::performSCC()
         }
     }
 
-    if (solver->ok)
-        solver->varReplacer->addLaterAddBinXor();
-
     //Update & print stats
     runStats.cpu_time = cpuTime() - myTime;
-    runStats.foundXorsNew = solver->varReplacer->getNewToReplaceVars() - oldNumReplace;
+    runStats.foundXorsNew = binxors.size();
     if (solver->conf.verbosity >= 1) {
         if (solver->conf.verbosity >= 3)
             runStats.print();
@@ -90,9 +88,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (solver->varData[vertexVar].removed == Removed::none
-        || solver->varData[vertexVar].removed == Removed::queued_replacer
-    ) {
+    if (solver->varData[vertexVar].removed == Removed::none) {
         Lit vertLit = Lit::toLit(vertex);
 
         vector<LitExtra>* transCache = NULL;
@@ -147,37 +143,29 @@ void SCCFinder::tarjan(const uint32_t vertex)
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
             for (uint32_t i = 1; i < tmp.size(); i++) {
-                if (!solver->ok) break;
-                Var vars[2];
-                vars[0] = Lit::toLit(tmp[0]).var();
-                vars[1] = Lit::toLit(tmp[i]).var();
-                const bool xor_is_true =
-                    Lit::toLit(tmp[0]).sign()
+                if (!solver->ok) {
+                    break;
+                }
+
+                bool rhs = Lit::toLit(tmp[0]).sign()
                     ^ Lit::toLit(tmp[i]).sign();
 
+                BinaryXor binxor(Lit::toLit(tmp[0]).var(), Lit::toLit(tmp[i]).var(), rhs);
+                binxors.insert(binxor);
+
                 //Both are UNDEF, so this is a proper binary XOR
-                if (solver->value(vars[0]) == l_Undef
-                    && solver->value(vars[1]) == l_Undef
+                if (solver->value(binxor.vars[0]) == l_Undef
+                    && solver->value(binxor.vars[1]) == l_Undef
                 ) {
                     runStats.foundXors++;
                     #ifdef VERBOSE_DEBUG
                     cout << "SCC says: "
-                    << vars[0] +1
+                    << binxor.vars[0] +1
                     << " XOR "
-                    << vars[1] +1
-                    << " = " << xor_is_true
+                    << binxor.vars[1] +1
+                    << " = " << binxor.xor_is_true
                     << endl;
                     #endif
-                    solver->varReplacer->replace(
-                        vars[0]
-                        , vars[1]
-                        , xor_is_true
-                        //Because otherwise queued varreplacer could be reducible
-                        //and during var-elim, we would remove one of the binary clauses
-                        //and then we would be in a giant mess: the equivalence is stored in replacer
-                        //but if its parent/child is set, the child/parent won't be set :S
-                        , true
-                    );
                 }
             }
         }

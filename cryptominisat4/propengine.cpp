@@ -91,10 +91,8 @@ void PropEngine::attachTriClause(
     assert(value(lit1.var()) == l_Undef);
     assert(value(lit2) == l_Undef || value(lit2) == l_False);
 
-    assert(varData[lit1.var()].removed == Removed::none
-            || varData[lit1.var()].removed == Removed::queued_replacer);
-    assert(varData[lit2.var()].removed == Removed::none
-            || varData[lit2.var()].removed == Removed::queued_replacer);
+    assert(varData[lit1.var()].removed == Removed::none);
+    assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
     //Order them
@@ -156,10 +154,8 @@ void PropEngine::attachBinClause(
         assert(value(lit2) == l_Undef || value(lit2) == l_False);
     }
 
-    assert(varData[lit1.var()].removed == Removed::none
-            || varData[lit1.var()].removed == Removed::queued_replacer);
-    assert(varData[lit2.var()].removed == Removed::none
-            || varData[lit2.var()].removed == Removed::queued_replacer);
+    assert(varData[lit1.var()].removed == Removed::none);
+    assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
     watches[lit1.toInt()].push(Watched(lit2, red));
@@ -184,8 +180,7 @@ void PropEngine::attachClause(
 
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].removed == Removed::none
-                || varData[c[i].var()].removed == Removed::queued_replacer);
+        assert(varData[c[i].var()].removed == Removed::none);
     }
     #endif //DEBUG_ATTACH
 

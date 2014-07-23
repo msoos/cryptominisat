@@ -33,7 +33,6 @@
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "searcher.h"
-#include "sccfinder.h"
 #include "simplifier.h"
 #include "prober.h"
 #include "vivifier.h"
@@ -53,6 +52,7 @@
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
+#include "sccfinder.h"
 
 using namespace CMSat;
 using std::cout;
@@ -78,7 +78,6 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     , clauseCleaner(NULL)
     , varReplacer(NULL)
     , subsumeImplicit(NULL)
-    , sCCFinder(NULL)
     , prober(NULL)
     , simplifier(NULL)
     , vivifier(NULL)
@@ -93,7 +92,6 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     if (conf.perform_occur_based_simp) {
         simplifier = new Simplifier(this);
     }
-    sCCFinder = new SCCFinder(this);
     vivifier = new Vivifier(this);
     strengthener = new Strengthener(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -115,7 +113,6 @@ Solver::~Solver()
     delete sqlStats;
     delete prober;
     delete simplifier;
-    delete sCCFinder;
     delete vivifier;
     delete strengthener;
     delete clauseCleaner;
@@ -396,9 +393,7 @@ Clause* Solver::addClauseInt(
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (varData[p.var()].removed != Removed::none
-                && varData[p.var()].removed != Removed::queued_replacer
-            ) {
+            if (varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: clause " << lits << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
@@ -410,8 +405,7 @@ Clause* Solver::addClauseInt(
 
             //Variables that have been eliminated cannot be added internally
             //as part of a clause. That's a bug
-            assert(varData[p.var()].removed == Removed::none
-                    || varData[p.var()].removed == Removed::queued_replacer);
+            assert(varData[p.var()].removed == Removed::none);
         }
     }
     ps.resize(ps.size() - (i - j));
@@ -1517,9 +1511,7 @@ void Solver::checkDecisionVarCorrectness() const
 {
     //Check for var deicisonness
     for(size_t var = 0; var < nVarsOuter(); var++) {
-        if (varData[var].removed != Removed::none
-            && varData[var].removed != Removed::queued_replacer
-        ) {
+        if (varData[var].removed != Removed::none) {
             assert(!varData[var].is_decision);
         }
     }
@@ -1569,12 +1561,8 @@ lbool Solver::simplifyProblem()
         && conf.doFindAndReplaceEqLits
         && !must_interrupt_asap()
     ) {
-        if (!sCCFinder->performSCC())
+        if (!varReplacer->replace_if_enough_is_found(floor((double)getNumFreeVars()*0.001))) {
             goto end;
-
-        if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {
-            if (!varReplacer->performReplace())
-                goto end;
         }
     }
 
@@ -1630,11 +1618,9 @@ lbool Solver::simplifyProblem()
 
     //SCC&VAR-REPL
     if (conf.doFindAndReplaceEqLits) {
-        if (!sCCFinder->performSCC())
+        if (!varReplacer->replace_if_enough_is_found()) {
             goto end;
-
-        if (!varReplacer->performReplace())
-            goto end;
+        }
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
         || cpuTime() > conf.maxTime
@@ -1687,12 +1673,8 @@ lbool Solver::simplifyProblem()
 
     //Search & replace 2-long XORs
     if (conf.doFindAndReplaceEqLits) {
-        if (!sCCFinder->performSCC())
+        if (!varReplacer->replace_if_enough_is_found(floor((double)getNumFreeVars()*0.001))) {
             goto end;
-
-        if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {
-            if (!varReplacer->performReplace())
-                goto end;
         }
     }
 
@@ -1910,11 +1892,11 @@ void Solver::printMinStats() const
         simplifier->getStats().printShort(this, nVars());
     }
     printStatsLine("c SCC time"
-        , sCCFinder->getStats().cpu_time
-        , stats_line_percent(sCCFinder->getStats().cpu_time, cpu_time)
+        , varReplacer->get_scc_finder()->getStats().cpu_time
+        , stats_line_percent(varReplacer->get_scc_finder()->getStats().cpu_time, cpu_time)
         , "% time"
     );
-    sCCFinder->getStats().printShort(NULL);
+    varReplacer->get_scc_finder()->getStats().printShort(NULL);
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->getStats().printShort(nVars());
@@ -2033,11 +2015,11 @@ void Solver::printFullStats() const
 
     //VarReplacer stats
     printStatsLine("c SCC time"
-        , sCCFinder->getStats().cpu_time
-        , stats_line_percent(sCCFinder->getStats().cpu_time, cpu_time)
+        , varReplacer->get_scc_finder()->getStats().cpu_time
+        , stats_line_percent(varReplacer->get_scc_finder()->getStats().cpu_time, cpu_time)
         , "% time"
     );
-    sCCFinder->getStats().print();
+    varReplacer->get_scc_finder()->getStats().print();
 
     varReplacer->getStats().print(nVars());
     varReplacer->print_some_stats(cpu_time);
@@ -2198,16 +2180,7 @@ void Solver::printMemStats() const
     }
 
     mem = varReplacer->mem_used();
-    printStatsLine("c Mem for varReplacer"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , stats_line_percent(mem, totalMem)
-        , "%"
-    );
-    account += mem;
-
-    mem = sCCFinder->mem_used();
-    printStatsLine("c Mem for SCC"
+    printStatsLine("c Mem for varReplacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, totalMem)
@@ -3081,9 +3054,7 @@ bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
 
         const lbool val = value(lit);
         if (val == l_Undef) {
-            assert(varData[lit.var()].removed == Removed::none
-                || varData[lit.var()].removed == Removed::queued_replacer
-            );
+            assert(varData[lit.var()].removed == Removed::none);
             enqueue(lit);
             ok = propagate().isNULL();
 

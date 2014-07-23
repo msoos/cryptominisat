@@ -25,7 +25,6 @@
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
-#include "sccfinder.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
 #include "propbyforgraph.h"
@@ -198,9 +197,7 @@ void Searcher::add_lit_to_learnt(
     , bool fromProber
 ) {
     const Var var = lit.var();
-    assert(varData[var].removed == Removed::none
-        || varData[var].removed == Removed::queued_replacer
-    );
+    assert(varData[var].removed == Removed::none);
 
     //If var is at level 0, don't do anything with it, just skip
     if (varData[var].level == 0)
@@ -927,8 +924,7 @@ void Searcher::hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel)
             //There is an ~ancestor V OTHER, ~ancestor V ~OTHER
             //So enqueue ~ancestor
             if (taut
-                && (solver->varData[ancestor.var()].removed == Removed::none
-                    || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
+                && solver->varData[ancestor.var()].removed == Removed::none
             ) {
                 to_enqueue_toplevel.push_back(~ancestor);
                 *drup << (~ancestor) << fin;
@@ -1101,9 +1097,7 @@ lbool Searcher::new_decision()
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
         Lit p = assumptions[decisionLevel()];
-        assert(varData[p.var()].removed == Removed::none
-            || varData[p.var()].removed == Removed::queued_replacer
-        );
+        assert(varData[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
             // Dummy decision level:
@@ -1987,9 +1981,7 @@ void Searcher::restore_order_heap()
         if (solver->varData[var].is_decision
             && value(var) == l_Undef
         ) {
-            assert(varData[var].removed == Removed::none
-                || varData[var].removed == Removed::queued_replacer
-            );
+            assert(varData[var].removed == Removed::none);
             insertVarOrder(var);
         }
     }
@@ -2055,18 +2047,9 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 
         solver->clauseCleaner->removeAndCleanAll();
 
-        //Find eq lits
-        if (!solver->sCCFinder->performSCC()) {
-            return l_False;
-        }
         lastCleanZeroDepthAssigns = trail.size();
-
-        //If enough new variables have been found to be replaced, replace them
-        if (solver->varReplacer->getNewToReplaceVars() > ((double)solver->getNumFreeVars()*0.001)) {
-            //Perform equivalent variable replacement
-            if (!solver->varReplacer->performReplace()) {
-                return l_False;
-            }
+        if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->getNumFreeVars()*0.001))) {
+            return l_False;
         }
     }
 
@@ -2215,8 +2198,7 @@ void Searcher::print_solution_varreplace_status() const
         }
 
         if (conf.verbosity >= 6
-            && (varData[var].removed == Removed::replaced
-                || varData[var].removed == Removed::queued_replacer)
+            && varData[var].removed == Removed::replaced
             && value(var) != l_Undef
         ) {
             cout
@@ -2411,9 +2393,7 @@ Lit Searcher::pickBranchLit()
     //No vars in heap: solution found
     if (next != lit_Undef) {
         assert(solver->varData[next.var()].is_decision);
-        assert(solver->varData[next.var()].removed == Removed::none
-            || solver->varData[next.var()].removed == Removed::queued_replacer
-        );
+        assert(solver->varData[next.var()].removed == Removed::none);
     }
     return next;
 }

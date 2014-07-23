@@ -38,18 +38,7 @@ namespace CMSat {
 using std::map;
 using std::vector;
 class Solver;
-
-class LaterAddBinXor
-{
-    public:
-        LaterAddBinXor(const Lit _lit1, const Lit _lit2) :
-            lit1(_lit1)
-            , lit2(_lit2)
-        {}
-
-        Lit lit1;
-        Lit lit2;
-};
+class SCCFinder;
 
 /**
 @brief Replaces variables with their anti/equivalents
@@ -63,14 +52,10 @@ class VarReplacer
         void new_vars(const size_t n);
         void saveVarMem();
         bool performReplace();
-        bool replace(
-            Var lit1
-            , Var lit2
-            , bool xor_is_true
-            , bool addLaterAsTwoBins
-        );
+        bool replace_if_enough_is_found(const size_t limit = 0);
         void print_equivalent_literals(std::ostream *os) const;
         void print_some_stats(const double global_cpu_time) const;
+        const SCCFinder* get_scc_finder() const;
 
         void extendModel();
         void extendModel(const Var var);
@@ -81,7 +66,6 @@ class VarReplacer
         Lit getLitReplacedWithOuter(Lit lit) const;
 
         vector<Var> get_vars_replacing(Var var) const;
-        bool addLaterAddBinXor();
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
@@ -119,6 +103,15 @@ class VarReplacer
 
     private:
         Solver* solver;
+        SCCFinder* scc_finder;
+
+        vector<Lit> ps_tmp;
+        bool add_xor_as_bins(const BinaryXor& bin_xor);
+        bool replace(
+            Var lit1
+            , Var lit2
+            , bool xor_is_true
+        );
 
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
@@ -229,7 +222,6 @@ class VarReplacer
         vector<Lit> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const Var var, const Lit lit);
-        vector<LaterAddBinXor> laterAddBinXor;
 
         //Mapping tables
         vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
@@ -281,6 +273,11 @@ inline size_t VarReplacer::getNumTrees() const
 inline const VarReplacer::Stats& VarReplacer::getStats() const
 {
     return globalStats;
+}
+
+inline const SCCFinder* VarReplacer::get_scc_finder() const
+{
+    return scc_finder;
 }
 
 } //end namespace

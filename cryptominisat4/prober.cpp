@@ -344,8 +344,7 @@ vector<Var> Prober::randomize_possible_choices()
     vector<Var> poss_choice;
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
-            && (solver->varData[i].removed == Removed::none
-                || solver->varData[i].removed == Removed::queued_replacer)
+            && solver->varData[i].removed == Removed::none
         ) {
             poss_choice.push_back(i);
         }
@@ -528,8 +527,7 @@ void Prober::updateCache(Lit thisLit, Lit lit, size_t numElemsSet)
         //enqueue ~ancestor at toplevel since both
         //~ancestor V OTHER, and ~ancestor V ~OTHER are technically in
         if (taut
-            && (solver->varData[ancestor.var()].removed == Removed::none
-                || solver->varData[ancestor.var()].removed == Removed::queued_replacer)
+            && solver->varData[ancestor.var()].removed == Removed::none
         ) {
             toEnqueue.push_back(~ancestor);
             if (solver->conf.verbosity >= 10)
@@ -788,9 +786,8 @@ size_t Prober::mem_used() const
 //     while(true) {
 //         Var var = solver->negPosDist[solver->mtrand.randInt(max)].var;
 //         if (solver->value(var) != l_Undef
-//             || (solver->varData[var].removed != Removed::none
-//                 && solver->varData[var].removed != Removed::queued_replacer)
-//             ) continue;
+//             || (solver->varData[var].removed != Removed::none)
+//         ) continue;
 //
 //         bool OK = true;
 //         for (uint32_t i = 0; i < toTry.size(); i++) {

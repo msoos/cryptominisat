@@ -27,6 +27,7 @@
 #include "solutionextender.h"
 #include "clauseallocator.h"
 #include "sqlstats.h"
+#include "sccfinder.h"
 #include <iostream>
 #include <iomanip>
 #include <set>
@@ -50,10 +51,13 @@ VarReplacer::VarReplacer(Solver* _solver) :
     , replacedVars(0)
     , lastReplacedVars(0)
 {
+    scc_finder = new SCCFinder(_solver);
+    ps_tmp.resize(2);
 }
 
 VarReplacer::~VarReplacer()
 {
+    delete scc_finder;
 }
 
 void VarReplacer::new_var(const Var orig_outer)
@@ -80,7 +84,6 @@ void VarReplacer::updateVars(
     const std::vector< uint32_t >& outerToInter
     , const std::vector< uint32_t >& interToOuter
 ) {
-    assert(laterAddBinXor.empty());
 
     /*updateArray(table, interToOuter);
     updateLitsMap(table, outerToInter);
@@ -112,14 +115,6 @@ void VarReplacer::update_vardata_and_activities(
     const Var orig
     , const Var replaced_with
 ) {
-     //Was queued for replacement, but it's the top of the tree, so
-    //it's normal again
-    if (orig == replaced_with
-        && solver->varData[replaced_with].removed == Removed::queued_replacer
-    ) {
-        solver->varData[replaced_with].removed = Removed::none;
-    }
-
     //Not replaced_with, or not replaceable, so skip
     if (orig == replaced_with
         || solver->varData[replaced_with].removed == Removed::decomposed
@@ -136,11 +131,7 @@ void VarReplacer::update_vardata_and_activities(
     //Okay, so unset decision, and set the other one decision
     assert(orig != replaced_with);
     solver->varData[orig].removed = Removed::replaced;
-    assert(
-        (solver->varData[replaced_with].removed == Removed::none
-            || solver->varData[replaced_with].removed == Removed::queued_replacer)
-        && "It MUST have been queued for varreplacement so top couldn't have been removed/decomposed/etc"
-    );
+    assert(solver->varData[replaced_with].removed == Removed::none);
     solver->unsetDecisionVar(orig);
     solver->setDecisionVar(replaced_with);
 
@@ -698,12 +689,9 @@ void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_v
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const Var sub_var_inter = solver->map_outer_to_inter(sub_var);
     if (solver->model[sub_var] != l_Undef) {
-        assert(solver->varData[sub_var_inter].removed == Removed::queued_replacer
-            || solver->varData[sub_var_inter].removed == Removed::replaced
-        );
+        assert(solver->varData[sub_var_inter].removed == Removed::replaced);
         assert(solver->model[sub_var] == l_Undef
             || solver->varData[sub_var_inter].level == 0
-            || solver->varData[sub_var_inter].removed == Removed::queued_replacer
         );
         assert(solver->model[sub_var] == to_set);
     } else {
@@ -757,10 +745,8 @@ void VarReplacer::replaceChecks(const Var var1, const Var var2) const
     assert(solver->value(var1) == l_Undef);
     assert(solver->value(var2) == l_Undef);
 
-    assert(solver->varData[var1].removed == Removed::none
-            || solver->varData[var1].removed == Removed::queued_replacer);
-    assert(solver->varData[var2].removed == Removed::none
-            || solver->varData[var2].removed == Removed::queued_replacer);
+    assert(solver->varData[var1].removed == Removed::none);
+    assert(solver->varData[var2].removed == Removed::none);
 }
 
 bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
@@ -831,7 +817,6 @@ bool VarReplacer::replace(
     Var var1
     , Var var2
     , const bool xor_is_true
-    , bool addLaterAsTwoBins
 )
 {
     #ifdef VERBOSE_DEBUG
@@ -863,10 +848,8 @@ bool VarReplacer::replace(
     << lit1 << ~lit2 << fin;
 
     //None should be removed, only maybe queued for replacement
-    assert(solver->varData[lit1.var()].removed == Removed::none
-            || solver->varData[lit1.var()].removed == Removed::queued_replacer);
-    assert(solver->varData[lit2.var()].removed == Removed::none
-            || solver->varData[lit2.var()].removed == Removed::queued_replacer);
+    assert(solver->varData[lit1.var()].removed == Removed::none);
+    assert(solver->varData[lit2.var()].removed == Removed::none);
 
     const lbool val1 = solver->value(lit1);
     const lbool val2 = solver->value(lit2);
@@ -884,12 +867,6 @@ bool VarReplacer::replace(
     }
 
     assert(val1 == l_Undef && val2 == l_Undef);
-
-    if (addLaterAsTwoBins)
-        laterAddBinXor.push_back(LaterAddBinXor(lit1, lit2^true));
-
-    solver->varData[lit1.var()].removed = Removed::queued_replacer;
-    solver->varData[lit2.var()].removed = Removed::queued_replacer;
 
     const Lit lit1_outer = solver->map_inter_to_outer(lit1);
     const Lit lit2_outer = solver->map_inter_to_outer(lit2);
@@ -944,10 +921,8 @@ void VarReplacer::checkUnsetSanity()
         const Lit repLit = getLitReplacedWith(Lit(i, false));
         const Var repVar = getVarReplacedWith(i);
 
-        if ((solver->varData[i].removed == Removed::none
-                || solver->varData[i].removed == Removed::queued_replacer)
-            && (solver->varData[repVar].removed == Removed::none
-                || solver->varData[repVar].removed == Removed::queued_replacer)
+        if (solver->varData[i].removed == Removed::none
+            && solver->varData[repVar].removed == Removed::none
             && solver->value(i) != solver->value(repLit)
         ) {
             cout
@@ -965,38 +940,57 @@ void VarReplacer::checkUnsetSanity()
     }
 }
 
-bool VarReplacer::addLaterAddBinXor()
+bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
 {
-    assert(solver->ok);
-
-    vector<Lit> ps(2);
-    for(vector<LaterAddBinXor>::const_iterator
-        it = laterAddBinXor.begin(), end = laterAddBinXor.end()
-        ; it != end
-        ; it++
-    ) {
-        ps[0] = it->lit1;
-        ps[1] = it->lit2;
-        solver->addClauseInt(ps);
-        if (!solver->ok)
-            return false;
-
-        ps[0] ^= true;
-        ps[1] ^= true;
-        solver->addClauseInt(ps);
-        if (!solver->ok)
-            return false;
+    ps_tmp[0] = Lit(bin_xor.vars[0], false);
+    ps_tmp[1] = Lit(bin_xor.vars[1], true ^ bin_xor.rhs);
+    solver->addClauseInt(ps_tmp);
+    if (!solver->ok) {
+        return false;
     }
-    laterAddBinXor.clear();
+
+    ps_tmp[0] = Lit(bin_xor.vars[0], true);
+    ps_tmp[1] = Lit(bin_xor.vars[1], false ^ bin_xor.rhs);
+    solver->addClauseInt(ps_tmp);
+    if (!solver->ok) {
+        return false;
+    }
 
     return true;
+}
+
+bool VarReplacer::replace_if_enough_is_found(const size_t limit)
+{
+    scc_finder->performSCC();
+    if (scc_finder->get_num_binxors_found() < limit) {
+        scc_finder->clear_binxors();
+        return solver->okay();
+    }
+
+    const set<BinaryXor>& xors_found = scc_finder->get_binxors();
+    for(BinaryXor bin_xor: xors_found) {
+        if (!add_xor_as_bins(bin_xor)) {
+            return false;
+        }
+
+        if (solver->value(bin_xor.vars[0]) == l_Undef
+            && solver->value(bin_xor.vars[1]) == l_Undef
+        ) {
+            replace(bin_xor.vars[0], bin_xor.vars[1], bin_xor.rhs);
+        }
+    }
+
+    const bool ret = performReplace();
+    scc_finder->clear_binxors();
+
+    return ret;
 }
 
 size_t VarReplacer::mem_used() const
 {
     size_t b = 0;
+    b += scc_finder->mem_used();
     b += delayedEnqueue.capacity()*sizeof(Lit);
-    b += laterAddBinXor.capacity()*sizeof(LaterAddBinXor);
     b += table.capacity()*sizeof(Lit);
     for(map<Var, vector<Var> >::const_iterator
         it = reverseTable.begin(), end = reverseTable.end()

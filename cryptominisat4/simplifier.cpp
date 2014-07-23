@@ -532,7 +532,6 @@ bool Simplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
 
         if (cl->getOccurLinked()
             && solver->varData[it2->var()].removed != Removed::none
-            && solver->varData[it2->var()].removed != Removed::queued_replacer
         ) {
             cout
             << "ERROR! Clause " << *cl

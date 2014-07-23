@@ -24,6 +24,7 @@
 
 #include "clause.h"
 #include <stack>
+#include <set>
 
 namespace CMSat {
 
@@ -33,6 +34,9 @@ class SCCFinder {
     public:
         SCCFinder(Solver* _solver);
         bool performSCC();
+        const std::set<BinaryXor>& get_binxors() const;
+        size_t get_num_binxors_found() const;
+        void clear_binxors();
 
         struct Stats
         {
@@ -95,10 +99,10 @@ class SCCFinder {
         size_t mem_used() const;
 
     private:
-
         void tarjan(const uint32_t vertex);
         void doit(const Lit lit, const uint32_t vertex);
 
+        //temporaries
         uint32_t globalIndex;
         vector<uint32_t> index;
         vector<uint32_t> lowlink;
@@ -107,6 +111,7 @@ class SCCFinder {
         vector<uint32_t> tmp;
 
         Solver* solver;
+        std::set<BinaryXor> binxors;
 
         //Stats
         Stats runStats;
@@ -126,6 +131,21 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
 inline const SCCFinder::Stats& SCCFinder::getStats() const
 {
     return globalStats;
+}
+
+inline const std::set<BinaryXor>& SCCFinder::get_binxors() const
+{
+    return binxors;
+}
+
+inline size_t SCCFinder::get_num_binxors_found() const
+{
+    return binxors.size();
+}
+
+inline void SCCFinder::clear_binxors()
+{
+    binxors.clear();
 }
 
 } //end namespaceC

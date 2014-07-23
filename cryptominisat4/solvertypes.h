@@ -75,7 +75,6 @@ enum class Removed : unsigned char {
     none
     , elimed
     , replaced
-    , queued_replacer //Only queued for removal. NOT actually removed
     , decomposed
 };
 
@@ -89,9 +88,6 @@ inline std::string removed_type_to_string(const Removed removed) {
 
         case Removed::replaced:
             return "variable replacement";
-
-        case Removed::queued_replacer:
-            return "queued for replacement (but not yet replaced)";
 
         case Removed::decomposed:
             return "decomposed into another component";
