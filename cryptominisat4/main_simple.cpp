@@ -97,7 +97,7 @@ void printUsage(char** argv)
 {
     printf("USAGE: %s [options] <input-file> \n\n  where input is plain DIMACS.\n\n", argv[0]);
     printf("OPTIONS:\n\n");
-    printf("  --verbosity     = [0...] Sets verbosity level. Anything higher\n");
+    printf("  --verb          = [0...] Sets verbosity level. Anything higher\n");
     printf("                           than 2 will give debug log\n");
     printf("  --drup          = {0,1}  Sets whether DRUP should be dumped to\n");
     printf("                           the console as per SAT COMPETITION'14 guidelines\n");
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
             if (drup > 0) {
                 drup_stuff(conf);
             }
-        }else if ((value = hasPrefix(argv[i], "--verbosity="))){
+        }else if ((value = hasPrefix(argv[i], "--verb="))){
             int verbosity = (int)strtol(value, NULL, 10);
             if (verbosity == 0 && errno == EINVAL){
                 printf("ERROR! illegal verbosity level %s\n", value);
@@ -146,6 +146,8 @@ int main(int argc, char** argv)
                 printf("ERROR! illegal threads %s\n", value);
                 exit(0);
             }
+        }else if (strcmp(argv[i], "--zero-exit-status") == 0){
+            zero_exit_status = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0){
             printUsage(argv);
             exit(0);
@@ -170,7 +172,9 @@ int main(int argc, char** argv)
     }
     solver->set_num_threads(num_threads);
 
-    printVersionInfo();
+    if (conf.verbosity >= 1) {
+        printVersionInfo();
+    }
     double cpu_time = cpuTime();
 
     solver = &S;
@@ -215,10 +219,14 @@ int main(int argc, char** argv)
     }
 
     double parse_time = cpuTime() - cpu_time;
-    printf("c  Parsing time:         %-12.2f s\n", parse_time);
+    if (conf.verbosity >= 1) {
+        printf("c  Parsing time: %-12.2f s\n", parse_time);
+    }
 
     lbool ret = S.solve();
-    S.print_stats();
+    if (conf.verbosity >= 1) {
+        S.print_stats();
+    }
     printf(ret == l_True ? "s SATISFIABLE\n" : "s UNSATISFIABLE\n");
     if (ret == l_True) {
 
@@ -231,5 +239,9 @@ int main(int argc, char** argv)
         cout << "0" << endl;
     }
 
-    exit(ret == l_True ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'SATSolver')
+    if (zero_exit_status)
+        return 0;
+    else {
+        return ret == l_True ? 10 : 20;
+    }
 }
