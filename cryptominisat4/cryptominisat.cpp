@@ -224,6 +224,7 @@ void SATSolver::set_num_threads(const unsigned num)
     data->cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->getConf();
+        conf.doSQL = 0;
         update_config(conf, i);
         data->solvers.push_back(new Solver(conf, data->inter));
     }
