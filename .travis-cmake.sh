@@ -80,6 +80,12 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
+    NOPYTHON)
+        sudo apt-get remove libpython2.7-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
+
     *)
         echo "\"${STP_CONFIG}\" configuration not recognised"
         exit 1
