@@ -61,14 +61,21 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-    SQLITE)
-        sudo apt-get install libsqlite3-dev
+    NOSQLITE)
+        sudo apt-get remove libsqlite3-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
 
-    MYSQL)
-        sudo apt-get install mysqlclient-dev
+    NOMYSQL)
+        sudo apt-get remove libmysqlclient-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
+
+    NOMYSQLNOSQLITE)
+        sudo apt-get remove libmysqlclient-dev
+        sudo apt-get remove libsqlite3-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
