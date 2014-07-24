@@ -81,7 +81,7 @@ case $CMS_CONFIG in
     ;;
 
     NOPYTHON)
-        sudo apt-get remove libpython2.7-dev
+        sudo apt-get remove python2.7-dev python-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
