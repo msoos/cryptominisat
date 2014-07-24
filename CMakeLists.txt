@@ -277,15 +277,15 @@ add_subdirectory(cryptominisat4 cmsat4-src)
 # -----------------------------------------------------------------------------
 find_package (PythonInterp 2.7)
 find_package (PythonLibs 2.7)
-if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY)
+if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIRS)
 #     message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
 #     message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")
 #     message(STATUS "PYTHON_INCLUDE_DIR:FILEPATH=${PYTHON_INCLUDE_DIR}")
 #     message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
-    message(STATUS "OK, found python interpreter and libs, building plugin")
+    message(STATUS "OK, found python interpreter, libs and header files -> building python plugin")
     add_subdirectory(python py-lib)
 else()
-    message(WARNING "Cannot find python interpreter and libs, not building python plugin")
+    message(WARNING "Cannot find python interpreter, libs and header files -> not building python plugin")
 endif()
 
 # -----------------------------------------------------------------------------
