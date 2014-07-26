@@ -139,10 +139,10 @@ class Solver : public Searcher
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         MTRand mtrand;
-        SQLStats* sqlStats;
-        ClauseCleaner *clauseCleaner;
-        VarReplacer *varReplacer;
-        SubsumeImplicit *subsumeImplicit;
+        SQLStats* sqlStats = NULL;
+        ClauseCleaner *clauseCleaner = NULL;
+        VarReplacer *varReplacer = NULL;
+        SubsumeImplicit *subsumeImplicit = NULL;
         DataSync *datasync = NULL;
         ReduceDB* reduceDB = NULL;
         vector<LitReachData> litReachable;
@@ -277,11 +277,11 @@ class Solver : public Searcher
 
         /////////////////////
         // Objects that help us accomplish the task
-        Prober              *prober;
-        Simplifier          *simplifier;
-        Vivifier            *vivifier;
-        Strengthener        *strengthener;
-        CompHandler         *compHandler;
+        Prober              *prober = NULL;
+        Simplifier          *simplifier = NULL;
+        Vivifier            *vivifier = NULL;
+        Strengthener        *strengthener = NULL;
+        CompHandler         *compHandler = NULL;
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
