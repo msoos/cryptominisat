@@ -416,6 +416,7 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
     return tmpCl;
 }
 
+//TODO this can be remove, get_num_free_vars() is MUCH cheaper to compute
 inline Var Solver::numActiveVars() const
 {
     Var numActive = 0;
@@ -427,6 +428,8 @@ inline Var Solver::numActiveVars() const
             numActive++;
         }
     }
+
+    assert(numActive == get_num_free_vars());
 
     return numActive;
 }
