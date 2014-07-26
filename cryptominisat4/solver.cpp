@@ -1401,7 +1401,7 @@ lbool Solver::solve()
         && nVars() > 0
         && conf.regularly_simplify_problem
     ) {
-        status = simplifyProblem();
+        status = simplify_problem();
     }
 
     if (status == l_Undef) {
@@ -1483,7 +1483,7 @@ lbool Solver::iterate_until_solved()
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         if (conf.regularly_simplify_problem) {
-            status = simplifyProblem();
+            status = simplify_problem();
         }
     }
 
@@ -1520,7 +1520,7 @@ void Solver::checkDecisionVarCorrectness() const
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
-lbool Solver::simplifyProblem()
+lbool Solver::simplify_problem()
 {
     assert(ok);
     testAllClauseAttach();
@@ -1531,7 +1531,7 @@ lbool Solver::simplifyProblem()
 
     if (conf.verbosity >= 6) {
         cout
-        << "c Solver::simplifyProblem() called"
+        << "c Solver::simplify_problem() called"
         << endl;
     }
 
@@ -1733,7 +1733,7 @@ lbool Solver::simplifyProblem()
 
 end:
     if (conf.verbosity >= 3)
-        cout << "c Searcher::simplifyProblem() finished" << endl;
+        cout << "c Searcher::simplify_problem() finished" << endl;
 
     testAllClauseAttach();
     checkNoWrongAttach();
