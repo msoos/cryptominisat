@@ -72,7 +72,7 @@ class ClauseAllocator {
         returning the thus created pointer. Used a LOT in propagation, thus this
         is very important to be fast (therefore, it is an inlined method)
         */
-        inline Clause* getPointer(const uint32_t offset) const
+        inline Clause* ptr(const uint32_t offset) const
         {
             return (Clause*)(dataStart + offset);
         }

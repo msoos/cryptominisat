@@ -65,7 +65,7 @@ class PropByForGraph
                     clause = NULL;
                     return;
                 }
-                clause = alloc.getPointer(orig.getClause());
+                clause = alloc.ptr(orig.getClause());
                 isize = clause->size();
                 type = 0;
             }

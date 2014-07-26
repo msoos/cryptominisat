@@ -326,7 +326,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         //cout << "Added. " << new_lits << endl;
         Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach, NULL, addDrup);
         if (cl) {
-            longIrredCls.push_back(clAllocator.getOffset(cl));
+            longIrredCls.push_back(cl_alloc.getOffset(cl));
         }
 
         if (!ok)
@@ -466,7 +466,7 @@ Clause* Solver::addClauseInt(
             return NULL;
 
         default:
-            Clause* c = clAllocator.Clause_new(ps, sumStats.conflStats.numConflicts);
+            Clause* c = cl_alloc.Clause_new(ps, sumStats.conflStats.numConflicts);
             if (red)
                 c->makeRed(stats.glue);
             c->stats = stats;
@@ -596,7 +596,7 @@ void Solver::detachClause(const Clause& cl, const bool removeDrup)
 
 void Solver::detachClause(const ClOffset offset, const bool removeDrup)
 {
-    Clause* cl = clAllocator.getPointer(offset);
+    Clause* cl = cl_alloc.ptr(offset);
     detachClause(*cl, removeDrup);
 }
 
@@ -771,7 +771,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     }
 
     if (cl != NULL) {
-        ClOffset offset = clAllocator.getOffset(cl);
+        ClOffset offset = cl_alloc.getOffset(cl);
         longIrredCls.push_back(offset);
     }
 
@@ -792,7 +792,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     Clause* cl = addClauseInt(ps, true, stats);
     if (cl != NULL) {
-        ClOffset offset = clAllocator.getOffset(cl);
+        ClOffset offset = cl_alloc.getOffset(cl);
         longRedCls.push_back(offset);
     }
 
@@ -801,7 +801,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
 void Solver::reArrangeClause(ClOffset offset)
 {
-    Clause& cl = *clAllocator.getPointer(offset);
+    Clause& cl = *cl_alloc.ptr(offset);
     assert(cl.size() > 3);
     if (cl.size() == 3) return;
 
@@ -909,13 +909,13 @@ void Solver::renumber_clauses(const vector<Var>& outerToInter)
 {
     //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < longIrredCls.size(); i++) {
-        Clause* cl = clAllocator.getPointer(longIrredCls[i]);
+        Clause* cl = cl_alloc.ptr(longIrredCls[i]);
         updateLitsMap(*cl, outerToInter);
         cl->reCalcAbstraction();
     }
 
     for(size_t i = 0; i < longRedCls.size(); i++) {
-        Clause* cl = clAllocator.getPointer(longRedCls[i]);
+        Clause* cl = cl_alloc.ptr(longRedCls[i]);
         updateLitsMap(*cl, outerToInter);
         cl->reCalcAbstraction();
     }
@@ -1627,7 +1627,7 @@ lbool Solver::simplify_problem()
     }
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.perform_occur_based_simp && !simplifier->simplify())
+    if (conf.perform_occur_based_simp && simplifier && !simplifier->simplify())
         goto end;
 
     //Treat implicits
@@ -1751,12 +1751,12 @@ end:
 void Solver::clear_clauses_stats()
 {
     for(ClOffset offs: longIrredCls) {
-        Clause* cl = clAllocator.getPointer(offs);
+        Clause* cl = cl_alloc.ptr(offs);
         cl->stats.clear(0);
     }
 
     for(ClOffset offs: longRedCls) {
-        Clause* cl = clAllocator.getPointer(offs);
+        Clause* cl = cl_alloc.ptr(offs);
         cl->stats.clear(conf.multiplier_perf_values_after_cl_clean);
     }
 }
@@ -1810,7 +1810,7 @@ void Solver::print_prop_confl_stats(
 void Solver::consolidate_mem()
 {
     const double myTime = cpuTime();
-    clAllocator.consolidate(this, true);
+    cl_alloc.consolidate(this, true);
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
         sqlStats->time_passed_min(
@@ -2207,7 +2207,7 @@ void Solver::print_clause_size_distrib()
         ; it != end
         ; it++
     ) {
-        Clause* cl = clAllocator.getPointer(*it);
+        Clause* cl = cl_alloc.ptr(*it);
         switch(cl->size()) {
             case 0:
             case 1:
@@ -2293,7 +2293,7 @@ void Solver::print_all_clauses() const
         ; it != end
         ; it++
     ) {
-        Clause* cl = clAllocator.getPointer(*it);
+        Clause* cl = cl_alloc.ptr(*it);
         cout
         << "Normal clause offs " << *it
         << " cl: " << *cl
@@ -2400,7 +2400,7 @@ bool Solver::verify_long_clauses(const vector<ClOffset>& cs) const
         ; it != end
         ; it++
     ) {
-        Clause& cl = *clAllocator.getPointer(*it);
+        Clause& cl = *cl_alloc.ptr(*it);
         for (uint32_t j = 0; j < cl.size(); j++)
             if (modelValue(cl[j]) == l_True)
                 goto next;
@@ -2457,7 +2457,7 @@ void Solver::test_all_clause_attached() const
 bool Solver::normClauseIsAttached(const ClOffset offset) const
 {
     bool attached = true;
-    const Clause& cl = *clAllocator.getPointer(offset);
+    const Clause& cl = *cl_alloc.ptr(offset);
     assert(cl.size() > 3);
 
     attached &= findWCl(watches[cl[0].toInt()], offset);
@@ -2481,7 +2481,7 @@ void Solver::find_all_attach() const
                 continue;
 
             //Get clause
-            Clause* cl = clAllocator.getPointer(w.getOffset());
+            Clause* cl = cl_alloc.ptr(w.getOffset());
             assert(!cl->getFreed());
 
             //Assert watch correctness
@@ -2520,7 +2520,7 @@ void Solver::find_all_attach(const vector<ClOffset>& cs) const
         ; it != end
         ; it++
     ) {
-        Clause& cl = *clAllocator.getPointer(*it);
+        Clause& cl = *cl_alloc.ptr(*it);
         bool ret = findWCl(watches[cl[0].toInt()], *it);
         if (!ret) {
             cout
@@ -2573,7 +2573,7 @@ void Solver::check_wrong_attach() const
         ; it != end
         ; it++
     ) {
-        const Clause& cl = *clAllocator.getPointer(*it);
+        const Clause& cl = *cl_alloc.ptr(*it);
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (i > 0)
                 assert(cl[i-1].var() != cl[i].var());
@@ -2743,7 +2743,7 @@ uint64_t Solver::count_lits(
         ; it != end
         ; it++
     ) {
-        const Clause& cl = *clAllocator.getPointer(*it);
+        const Clause& cl = *cl_alloc.ptr(*it);
         if (cl.freed()) {
             assert(allowFreed);
         } else {
@@ -2823,7 +2823,7 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
     ) {
         if (it->isClause()) {
             cout
-            << "Clause: " << *clAllocator.getPointer(it->getOffset());
+            << "Clause: " << *cl_alloc.ptr(it->getOffset());
         }
 
         if (it->isBinary()) {

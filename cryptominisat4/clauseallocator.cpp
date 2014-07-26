@@ -208,7 +208,7 @@ void ClauseAllocator::clauseFree(Clause* cl)
 
 void ClauseAllocator::clauseFree(ClOffset offset)
 {
-    Clause* cl = getPointer(offset);
+    Clause* cl = ptr(offset);
     clauseFree(cl);
 }
 
@@ -338,7 +338,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
-        Clause* cl = getPointer(offset);
+        Clause* cl = ptr(offset);
         assert(!cl->getFreed());
 
         //Put it in the right bucket

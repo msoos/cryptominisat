@@ -41,7 +41,7 @@ SubsumeStrengthen::SubsumeStrengthen(
 
 uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(ClOffset offset)
 {
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
     #ifdef VERBOSE_DEBUG
     cout << "subsume-ing with clause: " << cl << endl;
     #endif
@@ -97,7 +97,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         ; it != end
         ; it++
     ) {
-        Clause *tmp = solver->clAllocator.getPointer(*it);
+        Clause *tmp = solver->cl_alloc.ptr(*it);
         #ifdef VERBOSE_DEBUG
         cout << "-> subsume removing:" << *tmp << endl;
         #endif
@@ -130,7 +130,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     subs.clear();
     subsLits.clear();
     Sub1Ret ret;
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
 
     if (solver->conf.verbosity >= 6)
         cout << "strengthen_subsume_and_unlink_and_markirred-ing with clause:" << cl << endl;
@@ -148,7 +148,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
         ; j++
     ) {
         ClOffset offset2 = subs[j];
-        Clause& cl2 = *solver->clAllocator.getPointer(offset2);
+        Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
 
             if (solver->conf.verbosity >= 6)
@@ -215,7 +215,7 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
 
         const size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
         const ClOffset offset = simplifier->clauses[num];
-        Clause* cl = solver->clAllocator.getPointer(offset);
+        Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
         if (cl->getFreed())
@@ -279,7 +279,7 @@ bool SubsumeStrengthen::performStrengthening()
 
         size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
         ClOffset offset = simplifier->clauses[num];
-        Clause* cl = solver->clAllocator.getPointer(offset);
+        Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
         if (cl->getFreed())
@@ -353,7 +353,7 @@ void inline SubsumeStrengthen::fillSubs(
         }
 
         ClOffset offset2 = it->getOffset();
-        const Clause& cl2 = *solver->clAllocator.getPointer(offset2);
+        const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (cl.size() > cl2.size())
             continue;
@@ -423,7 +423,7 @@ void SubsumeStrengthen::findStrengthened(
 
 void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 {
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :" << cl;
     cout << " with lit: " << toRemoveLit << endl;
@@ -665,7 +665,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         }
 
         const ClOffset offset2 = it->getOffset();
-        const Clause& cl2 = *solver->clAllocator.getPointer(offset2);
+        const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (ps.size() > cl2.size() || cl2.getRemoved())
             continue;

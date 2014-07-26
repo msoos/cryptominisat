@@ -580,7 +580,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
         assert(!solver->drup->something_delayed());
 
-        Clause& c = *solver->clAllocator.getPointer(*i);
+        Clause& c = *solver->cl_alloc.ptr(*i);
         assert(c.size() > 3);
 
         bool changed = false;
@@ -598,7 +598,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            solver->clAllocator.clauseFree(*i);
+            solver->cl_alloc.clauseFree(*i);
             runStats.removedLongClauses++;
             if (!solver->ok) {
                 return false;

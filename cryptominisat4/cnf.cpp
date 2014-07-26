@@ -189,7 +189,7 @@ void CNF::updateVars(
 size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 {
     size_t mem = 0;
-    mem += clAllocator.mem_used();
+    mem += cl_alloc.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
     print_stats_line("c Mem for longclauses"
@@ -207,7 +207,7 @@ bool CNF::redundant(const Watched& ws) const
     return (   (ws.isBinary() && ws.red())
             || (ws.isTri()   && ws.red())
             || (ws.isClause()
-                && clAllocator.getPointer(ws.getOffset())->red()
+                && cl_alloc.ptr(ws.getOffset())->red()
                 )
     );
 }
@@ -219,7 +219,7 @@ bool CNF::redundant_or_removed(const Watched& ws) const
     }
 
    assert(ws.isClause());
-   const Clause* cl = clAllocator.getPointer(ws.getOffset());
+   const Clause* cl = cl_alloc.ptr(ws.getOffset());
    return cl->red() || cl->getRemoved();
 }
 
@@ -235,7 +235,7 @@ size_t CNF::cl_size(const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = clAllocator.getPointer(ws.getOffset());
+            const Clause* cl = cl_alloc.ptr(ws.getOffset());
             return cl->size();
             break;
         }
@@ -275,7 +275,7 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = clAllocator.getPointer(ws.getOffset());
+            const Clause* cl = cl_alloc.ptr(ws.getOffset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
                 if (i + 1 < cl->size())
@@ -297,8 +297,8 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
 
 bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
 {
-    Clause* cl1 = clAllocator.getPointer(x);
-    Clause* cl2 = clAllocator.getPointer(y);
+    Clause* cl1 = cl_alloc.ptr(x);
+    Clause* cl2 = cl_alloc.ptr(y);
     return (cl1->size() < cl2->size());
 }
 

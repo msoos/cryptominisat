@@ -46,7 +46,7 @@ void CalcDefPolars::add_vote(const Lit lit, const double value)
 void CalcDefPolars::tally_clause_votes(const vector<ClOffset>& cs)
 {
     for (const ClOffset offset: cs) {
-        const Clause& cl = *solver->clAllocator.getPointer(offset);
+        const Clause& cl = *solver->cl_alloc.ptr(offset);
 
         //Only count irred
         if (cl.red())

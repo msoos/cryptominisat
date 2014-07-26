@@ -396,7 +396,7 @@ void CompHandler::moveClausesLong(
         ; i != end
         ; i++
     ) {
-        Clause& cl = *solver->clAllocator.getPointer(*i);
+        Clause& cl = *solver->cl_alloc.ptr(*i);
 
         //Irred, different comp
         if (!cl.red()) {
@@ -422,7 +422,7 @@ void CompHandler::moveClausesLong(
             //In both comps, remove it
             if (thisComp && otherComp) {
                 solver->detachClause(cl);
-                solver->clAllocator.clauseFree(&cl);
+                solver->cl_alloc.clauseFree(&cl);
                 continue;
             }
 
@@ -457,7 +457,7 @@ void CompHandler::moveClausesLong(
 
         //Remove from here
         solver->detachClause(cl);
-        solver->clAllocator.clauseFree(&cl);
+        solver->cl_alloc.clauseFree(&cl);
     }
     cs.resize(cs.size() - (i-j));
 }

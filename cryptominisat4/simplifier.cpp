@@ -233,7 +233,7 @@ void Simplifier::unlinkClause(
     , bool allow_empty_watch
     , bool only_set_is_removed
 ) {
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
     if (solver->drup->enabled() && doDrup) {
        (*solver->drup) << del << cl << fin;
     }
@@ -262,7 +262,7 @@ void Simplifier::unlinkClause(
     }
 
     if (!only_set_is_removed) {
-        solver->clAllocator.clauseFree(&cl);
+        solver->cl_alloc.clauseFree(&cl);
     } else {
         cl_to_free_later.push_back(offset);
     }
@@ -274,7 +274,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
     assert(solver->ok);
 
     bool satisfied = false;
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
     (*solver->drup) << deldelay << cl << fin;
     #ifdef VERBOSE_DEBUG
     cout << "Clause to clean: " << cl << endl;
@@ -368,7 +368,7 @@ uint64_t Simplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) cons
         ; it !=  end
         ; it++
     ) {
-        Clause* cl = solver->clAllocator.getPointer(*it);
+        Clause* cl = solver->cl_alloc.ptr(*it);
         //*2 because of the overhead of allocation
         memUsage += cl->size()*sizeof(Watched)*2;
     }
@@ -426,7 +426,7 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
         ; it !=  end
         ; it++
     ) {
-        Clause* cl = solver->clAllocator.getPointer(*it);
+        Clause* cl = solver->cl_alloc.ptr(*it);
 
         //Sanity check that the value given as irred is correct
         assert(
@@ -503,7 +503,7 @@ bool Simplifier::addFromSolver(
     }
 
     if (!irred && alsoOccur) {
-        std::stable_sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->clAllocator));
+        std::stable_sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->cl_alloc));
     }
 
     LinkInData link_in_data = link_in_clauses(toAdd, irred, alsoOccur);
@@ -556,7 +556,7 @@ void Simplifier::addBackToSolver()
         ; it != end
         ; it++
     ) {
-        Clause* cl = solver->clAllocator.getPointer(*it);
+        Clause* cl = solver->cl_alloc.ptr(*it);
         if (cl->getFreed())
             continue;
 
@@ -573,7 +573,7 @@ void Simplifier::addBackToSolver()
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
-            solver->clAllocator.clauseFree(cl);
+            solver->cl_alloc.clauseFree(cl);
             continue;
         }
 
@@ -585,7 +585,7 @@ void Simplifier::addBackToSolver()
                 solver->longIrredCls.push_back(*it);
             }
         } else {
-            solver->clAllocator.clauseFree(cl);
+            solver->cl_alloc.clauseFree(cl);
         }
     }
 }
@@ -822,8 +822,8 @@ end:
 void Simplifier::free_clauses_to_free()
 {
     for(ClOffset off: cl_to_free_later) {
-        Clause* cl = solver->clAllocator.getPointer(off);
-        solver->clAllocator.clauseFree(cl);
+        Clause* cl = solver->cl_alloc.ptr(off);
+        solver->cl_alloc.clauseFree(cl);
     }
     cl_to_free_later.clear();
 }
@@ -842,7 +842,7 @@ void Simplifier::clean_occur_from_removed_clauses()
             }
 
             assert(ws.isClause());
-            Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
+            Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
             if (!cl->getRemoved()) {
                 w[j++] = w[i];
             }
@@ -858,7 +858,7 @@ void Simplifier::checkAllLinkedIn()
         ; it != end
         ; it++
     ) {
-        Clause& cl = *solver->clAllocator.getPointer(*it);
+        Clause& cl = *solver->cl_alloc.ptr(*it);
 
         assert(cl.red() || cl.getOccurLinked());
         if (cl.freed() || cl.red())
@@ -1190,7 +1190,7 @@ void Simplifier::sanityCheckElimedVars()
         ; it != end
         ; it++
     ) {
-        const Clause* cl = solver->clAllocator.getPointer(*it);
+        const Clause* cl = solver->cl_alloc.ptr(*it);
 
         //Already removed
         if (cl->getFreed())
@@ -1350,7 +1350,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
 
         if (watch.isClause()) {
             ClOffset offset = watch.getOffset();
-            Clause& cl = *solver->clAllocator.getPointer(offset);
+            Clause& cl = *solver->cl_alloc.ptr(offset);
             if (cl.getRemoved()) {
                 continue;
             }
@@ -1504,7 +1504,7 @@ bool Simplifier::find_gate(
         }
 
         if (w.isClause()) {
-            const Clause* cl = solver->clAllocator.getPointer(w.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(w.getOffset());
             assert(cl->size() > 3);
             if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
                 bool OK = true;
@@ -1617,7 +1617,7 @@ void Simplifier::mark_gate_parts(
         if (gate_lits_of_elim_cls.size() >= 3
             && w.isClause()
         ) {
-            const Clause* cl = solver->clAllocator.getPointer(w.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(w.getOffset());
             if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
                 bool found_it = true;
                 for(const Lit lit: *cl) {
@@ -1767,13 +1767,13 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             //Calculate new clause stats
             ClauseStats stats;
             if ((it->isBinary() || it->isTri()) && it2->isClause())
-                stats = solver->clAllocator.getPointer(it2->getOffset())->stats;
+                stats = solver->cl_alloc.ptr(it2->getOffset())->stats;
             else if ((it2->isBinary() || it2->isTri()) && it->isClause())
-                stats = solver->clAllocator.getPointer(it->getOffset())->stats;
+                stats = solver->cl_alloc.ptr(it->getOffset())->stats;
             else if (it->isClause() && it2->isClause())
                 stats = ClauseStats::combineStats(
-                    solver->clAllocator.getPointer(it->getOffset())->stats
-                    , solver->clAllocator.getPointer(it2->getOffset())->stats
+                    solver->cl_alloc.ptr(it->getOffset())->stats
+                    , solver->cl_alloc.ptr(it2->getOffset())->stats
             );
 
             resolvents.push_back(Resolvent(dummy, stats));
@@ -1816,8 +1816,8 @@ void Simplifier::printOccur(const Lit lit) const
         if (w.isClause()) {
             cout
             << "Clause--> "
-            << *solver->clAllocator.getPointer(w.getOffset())
-            << "(red: " << solver->clAllocator.getPointer(w.getOffset())->red()
+            << *solver->cl_alloc.ptr(w.getOffset())
+            << "(red: " << solver->cl_alloc.ptr(w.getOffset())->red()
             << ")"
             << endl;
         }
@@ -1936,7 +1936,7 @@ bool Simplifier::add_varelim_resolvent(
 
     if (newCl != NULL) {
         linkInClause(*newCl);
-        ClOffset offset = solver->clAllocator.getOffset(newCl);
+        ClOffset offset = solver->cl_alloc.getOffset(newCl);
         clauses.push_back(offset);
         runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
@@ -2141,7 +2141,7 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
     }
 
     if (ps.isClause()) {
-        Clause& cl = *solver->clAllocator.getPointer(ps.getOffset());
+        Clause& cl = *solver->cl_alloc.ptr(ps.getOffset());
         *limit_to_decrease -= (long)cl.size();
         for (const Lit lit : cl){
             if (lit != posLit) {
@@ -2182,7 +2182,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
     }
 
     if (qs.isClause()) {
-        Clause& cl = *solver->clAllocator.getPointer(qs.getOffset());
+        Clause& cl = *solver->cl_alloc.ptr(qs.getOffset());
         *limit_to_decrease -= (long)cl.size();
         for (const Lit lit: cl) {
             if (lit == ~posLit)
@@ -2288,12 +2288,12 @@ bool Simplifier::resolve_clauses(
 ) {
     //If clause has already been freed, skip
     if (ps.isClause()
-        && solver->clAllocator.getPointer(ps.getOffset())->freed()
+        && solver->cl_alloc.ptr(ps.getOffset())->freed()
     ) {
         return false;
     }
     if (qs.isClause()
-        && solver->clAllocator.getPointer(qs.getOffset())->freed()
+        && solver->cl_alloc.ptr(qs.getOffset())->freed()
     ) {
         return false;
     }
@@ -2425,7 +2425,7 @@ Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
                 break;
 
             case watch_clause_t: {
-                const Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
+                const Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
                 if (!cl->getRemoved()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
                     ret.longer++;
@@ -2560,7 +2560,7 @@ int Simplifier::checkEmptyResolventHelper(
         }
 
         if (ws.isClause()) {
-            const Clause* cl = solver->clAllocator.getPointer(ws.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
             if (cl->getRemoved()) {
                 continue;
             }
@@ -2814,7 +2814,7 @@ void Simplifier::freeXorMem()
 void Simplifier::linkInClause(Clause& cl)
 {
     assert(cl.size() > 3);
-    ClOffset offset = solver->clAllocator.getOffset(&cl);
+    ClOffset offset = solver->cl_alloc.getOffset(&cl);
     std::stable_sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];

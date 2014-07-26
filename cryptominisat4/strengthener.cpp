@@ -294,7 +294,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     , bool red
     , const bool alsoStrengthen
 ) {
-    Clause& cl = *solver->clAllocator.getPointer(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(cl.size() > 3);
 
     if (solver->conf.verbosity >= 10) {
@@ -376,8 +376,8 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
-        solver->clAllocator.clauseFree(offset);
-        offset = solver->clAllocator.getOffset(c2);
+        solver->cl_alloc.clauseFree(offset);
+        offset = solver->cl_alloc.getOffset(c2);
         return false;
     }
 
@@ -470,7 +470,7 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
         const bool remove = shorten_clause_with_cache_watch_stamp(offset, red, alsoStrengthen);
         if (remove) {
             solver->detachClause(offset);
-            solver->clAllocator.clauseFree(offset);
+            solver->cl_alloc.clauseFree(offset);
         } else {
             clauses[j++] = offset;
         }

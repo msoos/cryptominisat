@@ -17,15 +17,15 @@ struct MySorter
 
 struct SortRedClsGlue: public MySorter
 {
-    SortRedClsGlue(ClauseAllocator& _clAllocator) :
-        clAllocator(_clAllocator)
+    SortRedClsGlue(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
     {}
-    ClauseAllocator& clAllocator;
+    ClauseAllocator& cl_alloc;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
-        const Clause* x = clAllocator.getPointer(xOff);
-        const Clause* y = clAllocator.getPointer(yOff);
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
 
         const uint32_t xsize = x->size();
         const uint32_t ysize = y->size();
@@ -44,15 +44,15 @@ struct SortRedClsGlue: public MySorter
 
 struct SortRedClsSize: public MySorter
 {
-    SortRedClsSize(ClauseAllocator& _clAllocator) :
-        clAllocator(_clAllocator)
+    SortRedClsSize(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
     {}
-    ClauseAllocator& clAllocator;
+    ClauseAllocator& cl_alloc;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
-        const Clause* x = clAllocator.getPointer(xOff);
-        const Clause* y = clAllocator.getPointer(yOff);
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
 
         const uint32_t xsize = x->size();
         const uint32_t ysize = y->size();
@@ -70,15 +70,15 @@ struct SortRedClsSize: public MySorter
 };
 struct SortRedClsAct: public MySorter
 {
-    SortRedClsAct(ClauseAllocator& _clAllocator) :
-        clAllocator(_clAllocator)
+    SortRedClsAct(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
     {}
-    ClauseAllocator& clAllocator;
+    ClauseAllocator& cl_alloc;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
-        const Clause* x = clAllocator.getPointer(xOff);
-        const Clause* y = clAllocator.getPointer(yOff);
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
 
         const uint32_t xsize = x->size();
         const uint32_t ysize = y->size();
@@ -97,19 +97,19 @@ struct SortRedClsAct: public MySorter
 struct SortRedClsPropConfl: public MySorter
 {
     SortRedClsPropConfl(
-        ClauseAllocator& _clAllocator
+        ClauseAllocator& _cl_alloc
         , uint64_t _confl_multiplier
     ) :
-        clAllocator(_clAllocator)
+        cl_alloc(_cl_alloc)
         , confl_multiplier(_confl_multiplier)
     {}
-    ClauseAllocator& clAllocator;
+    ClauseAllocator& cl_alloc;
     uint64_t confl_multiplier;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
-        const Clause* x = clAllocator.getPointer(xOff);
-        const Clause* y = clAllocator.getPointer(yOff);
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
 
         const uint32_t xsize = x->size();
         const uint32_t ysize = y->size();
@@ -131,15 +131,15 @@ struct SortRedClsPropConfl: public MySorter
 };
 struct SortRedClsConflDepth : public MySorter
 {
-    SortRedClsConflDepth(ClauseAllocator& _clAllocator) :
-        clAllocator(_clAllocator)
+    SortRedClsConflDepth(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
     {}
-    ClauseAllocator& clAllocator;
+    ClauseAllocator& cl_alloc;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
-        const Clause* x = clAllocator.getPointer(xOff);
-        const Clause* y = clAllocator.getPointer(yOff);
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
 
         const uint32_t xsize = x->size();
         const uint32_t ysize = y->size();
@@ -177,32 +177,32 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
 {
     switch (clean_type) {
         case clean_glue_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->clAllocator));
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
             tmpStats.glueBasedClean = 1;
             break;
         }
 
         case clean_size_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->clAllocator));
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
             tmpStats.sizeBasedClean = 1;
             break;
         }
 
         case clean_sum_activity_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->clAllocator));
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             tmpStats.actBasedClean = 1;
             break;
         }
 
         case clean_sum_prop_confl_based : {
             uint64_t multiplier = solver->conf.clean_confl_multiplier;
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsPropConfl(solver->clAllocator, multiplier));
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsPropConfl(solver->cl_alloc, multiplier));
             tmpStats.propConflBasedClean = 1;
             break;
         }
 
         case clean_sum_confl_depth_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->clAllocator));
+            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
             tmpStats.propConflDepthBasedClean = 1;
             break;
         }
@@ -227,7 +227,7 @@ void ReduceDB::print_best_red_clauses_if_required() const
         ; i--
     ) {
         ClOffset offset = solver->longRedCls[i];
-        const Clause* cl = solver->clAllocator.getPointer(offset);
+        const Clause* cl = solver->cl_alloc.ptr(offset);
         cout
         << "c [best-red-cl] Red " << nbReduceDB
         << " No. " << at << " > "
@@ -303,7 +303,7 @@ void ReduceDB::lock_in_top_N_uncleaned()
         ; i--
     ) {
         const ClOffset offs = solver->longRedCls[i];
-        Clause& cl = *solver->clAllocator.getPointer(offs);
+        Clause& cl = *solver->cl_alloc.ptr(offs);
         if (!cl.stats.locked) {
             cl.stats.locked = true;
             locked++;
@@ -326,8 +326,8 @@ void ReduceDB::lock_most_UIP_used_clauses()
 
     std::function<bool (const ClOffset, const ClOffset)> uipsort
         = [&] (const ClOffset a, const ClOffset b) -> bool {
-            const Clause& a_cl = *solver->clAllocator.getPointer(a);
-            const Clause& b_cl = *solver->clAllocator.getPointer(b);
+            const Clause& a_cl = *solver->cl_alloc.ptr(a);
+            const Clause& b_cl = *solver->cl_alloc.ptr(b);
 
             return a_cl.stats.used_for_uip_creation > b_cl.stats.used_for_uip_creation;
     };
@@ -340,7 +340,7 @@ void ReduceDB::lock_most_UIP_used_clauses()
         ; i++
     ) {
         const ClOffset offs = solver->longRedCls[i];
-        Clause& cl = *solver->clAllocator.getPointer(offs);
+        Clause& cl = *solver->cl_alloc.ptr(offs);
         if (!cl.stats.locked) {
             cl.stats.locked = true;
             locked++;
@@ -379,7 +379,7 @@ void ReduceDB::real_clean_clause_db(
         ; i++
     ) {
         ClOffset offset = solver->longRedCls[i];
-        Clause* cl = solver->clAllocator.getPointer(offset);
+        Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 3);
 
         //Don't delete if not aged long enough or locked
@@ -399,13 +399,13 @@ void ReduceDB::real_clean_clause_db(
 
         //free clause
         *solver->drup << del << *cl << fin;
-        solver->clAllocator.clauseFree(offset);
+        solver->cl_alloc.clauseFree(offset);
     }
 
     //Count what is left
     for (; i < solver->longRedCls.size(); i++) {
         ClOffset offset = solver->longRedCls[i];
-        Clause* cl = solver->clAllocator.getPointer(offset);
+        Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Stats Update
         tmpStats.remain.incorporate(cl);
@@ -512,7 +512,7 @@ ClauseUsageStats ReduceDB::sumClauseData(
     ClauseUsageStats stats;
 
     for(ClOffset offset: toprint) {
-        Clause& cl = *solver->clAllocator.getPointer(offset);
+        Clause& cl = *solver->cl_alloc.ptr(offset);
         const uint32_t clause_size = cl.size();
 
         //We have stats on this clause

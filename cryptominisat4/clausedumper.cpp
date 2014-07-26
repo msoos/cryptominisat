@@ -247,7 +247,7 @@ void ClauseDumper::dump_clauses(
         ; it != end
         ; it++
     ) {
-        Clause* cl = solver->clAllocator.getPointer(*it);
+        Clause* cl = solver->cl_alloc.ptr(*it);
         if (cl->size() <= max_size)
             *outfile << sortLits(solver->clauseBackNumbered(*cl)) << " 0\n";
     }

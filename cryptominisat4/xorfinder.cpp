@@ -63,7 +63,7 @@ bool XorFinder::findXors()
         ; it++
     ) {
         ClOffset offset = *it;
-        Clause* cl = solver->clAllocator.getPointer(offset);
+        Clause* cl = solver->cl_alloc.ptr(offset);
         maxTimeFindXors -= 3;
 
         //Already freed
@@ -613,7 +613,7 @@ void XorFinder::findXorMatchExt(
 
         //Deal with clause
         const ClOffset offset = it->getOffset();
-        Clause& cl = *solver->clAllocator.getPointer(offset);
+        Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.freed())
             continue;
 
@@ -747,7 +747,7 @@ void XorFinder::findXorMatch(
 
         //Deal with clause
         const ClOffset offset = it->getOffset();
-        const Clause& cl = *solver->clAllocator.getPointer(offset);
+        const Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.freed())
             continue;
 
