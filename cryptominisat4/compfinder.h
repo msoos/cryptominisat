@@ -56,6 +56,8 @@ class CompFinder {
         void add_clause_to_component(const T& cl);
         template<class T>
         bool belong_to_same_component(const T& cl);
+        template<class T>
+        void fill_newset_and_tomerge(const T& cl);
 
         struct MySorter
         {
@@ -85,6 +87,7 @@ class CompFinder {
         uint64_t timeUsed;
         bool timedout;
 
+        vector<uint16_t>& seen;
         Solver* solver;
 };
 

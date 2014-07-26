@@ -48,6 +48,7 @@ using std::endl;
 CompFinder::CompFinder(Solver* _solver) :
     timeUsed(0)
     , timedout(false)
+    , seen(_solver->seen)
     , solver(_solver)
 {
 }
@@ -264,36 +265,37 @@ bool CompFinder::belong_to_same_component(const T& cl)
 }
 
 template<class T>
+void CompFinder::fill_newset_and_tomerge(const T& cl)
+{
+    timeUsed += cl.size()*2;
+
+    for (const Lit lit: cl) {
+        if (table[lit.var()] != std::numeric_limits<uint32_t>::max()
+        ) {
+            if (!seen[table[lit.var()]]) {
+                tomerge.push_back(table[lit.var()]);
+                seen[table[lit.var()]] = 1;
+            }
+        } else {
+            newSet.push_back(lit.var());
+        }
+    }
+}
+
+template<class T>
 void CompFinder::add_clause_to_component(const T& cl)
 {
     assert(cl.size() > 1);
     tomerge.clear();
     newSet.clear();
-    vector<uint16_t>& seen = solver->seen;
 
     if (belong_to_same_component(cl)) {
         return;
     }
 
-    //Where should each literal go?
-    timeUsed += cl.size()*2;
-    for (typename T::const_iterator
-        it = cl.begin(), end = cl.end()
-        ; it != end
-        ; it++
-    ) {
-        if (table[it->var()] != std::numeric_limits<uint32_t>::max()
-        ) {
-            if (!seen[table[it->var()]]) {
-                tomerge.push_back(table[it->var()]);
-                seen[table[it->var()]] = 1;
-            }
-        } else {
-            newSet.push_back(it->var());
-        }
-    }
+    fill_newset_and_tomerge(cl);
 
-    //no trees to merge, only merge the clause into one tree
+    //no sets to merge, only merge the clause into one tree
     if (tomerge.size() == 1) {
         const uint32_t into = tomerge[0];
         seen[into] = 0;
