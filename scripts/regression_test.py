@@ -184,6 +184,7 @@ class Tester:
         cmd += "--occsimp %s " % random.randint(0,1)
         cmd += "--occirredmaxmb %s " % random.randint(0,10)
         cmd += "--occredmaxmb %s " % random.randint(0,10)
+        cmd += "--skipresol %d " % random.choice([1,1,1,0])
         cmd += "--implsubsto %s " % random.choice([0,10,1000])
         cmd += "--sync %d " % random.choice([100,1000,6000,100000])
         if self.num_threads > 1 :
