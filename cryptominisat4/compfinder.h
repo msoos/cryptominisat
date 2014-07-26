@@ -41,7 +41,7 @@ class CompFinder {
 
     public:
         CompFinder(Solver* solver);
-        bool findComps();
+        bool find_components();
         bool getTimedOut() const;
 
         const map<uint32_t, vector<Var> >& getReverseTable() const; // comp->var
@@ -51,9 +51,9 @@ class CompFinder {
 
     private:
         void addToCompImplicits();
-        void addToCompClauses(const vector<ClOffset>& cs);
+        void add_clauses_to_component(const vector<ClOffset>& cs);
         template<class T>
-        void addToCompClause(const T& cl);
+        void add_clause_to_component(const T& cl);
 
         struct MySorter
         {

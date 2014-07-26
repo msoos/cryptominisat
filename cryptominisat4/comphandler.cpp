@@ -99,7 +99,7 @@ bool CompHandler::handle()
     assert(solver->okay());
     double myTime = cpuTime();
     compFinder = new CompFinder(solver);
-    if (!compFinder->findComps()) {
+    if (!compFinder->find_components()) {
         return false;
     }
     if (compFinder->getTimedOut()) {

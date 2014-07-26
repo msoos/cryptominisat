@@ -52,7 +52,7 @@ CompFinder::CompFinder(Solver* _solver) :
 {
 }
 
-bool CompFinder::findComps()
+bool CompFinder::find_components()
 {
     const double myTime = cpuTime();
 
@@ -73,7 +73,7 @@ bool CompFinder::findComps()
     //Add the clauses to the sets
     timeUsed = 0;
     timedout = false;
-    addToCompClauses(solver->longIrredCls);
+    add_clauses_to_component(solver->longIrredCls);
     addToCompImplicits();
 
     //We timed-out while searching, internal datas are wrong!
@@ -154,7 +154,7 @@ bool CompFinder::findComps()
     return true;
 }
 
-void CompFinder::addToCompClauses(const vector<ClOffset>& cs)
+void CompFinder::add_clauses_to_component(const vector<ClOffset>& cs)
 {
     for (ClOffset offset: cs) {
         if (timeUsed/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
@@ -163,7 +163,7 @@ void CompFinder::addToCompClauses(const vector<ClOffset>& cs)
         }
         timeUsed += 10;
         Clause* cl = solver->cl_alloc.ptr(offset);
-        addToCompClause(*cl);
+        add_clause_to_component(*cl);
     }
 }
 
@@ -238,14 +238,14 @@ void CompFinder::addToCompImplicits()
                 seen[it->var()] = 0;
             }
 
-            addToCompClause(lits);
+            add_clause_to_component(lits);
         }
 
     }
 }
 
 template<class T>
-void CompFinder::addToCompClause(const T& cl)
+void CompFinder::add_clause_to_component(const T& cl)
 {
     assert(cl.size() > 1);
     tomerge.clear();

@@ -1532,7 +1532,7 @@ lbool Solver::simplify_problem()
         && !must_interrupt_asap()
     ) {
         CompFinder findParts(this);
-        if (!findParts.findComps()) {
+        if (!findParts.find_components()) {
             goto end;
         }
     }
