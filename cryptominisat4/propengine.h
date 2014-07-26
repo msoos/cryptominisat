@@ -126,7 +126,7 @@ public:
     size_t trail_size() const {
         return trail.size();
     }
-    void cancelZeroLight();
+    void cancel_zero_light();
     bool propagate_occur();
     PropStats propStats;
     void enqueue(const Lit p, const PropBy from = PropBy());
@@ -393,7 +393,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     #endif
 }
 
-inline void PropEngine::cancelZeroLight()
+inline void PropEngine::cancel_zero_light()
 {
     assert((int)decisionLevel() > 0);
 

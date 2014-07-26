@@ -48,7 +48,7 @@ class CompleteDetachReatacher
     public:
         CompleteDetachReatacher(Solver* solver);
         bool reattachLongs(bool removeStatsFrist = false);
-        void detachNonBinsNonTris();
+        void detach_nonbins_nontris();
 
     private:
         void cleanAndAttachClauses(

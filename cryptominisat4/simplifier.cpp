@@ -374,7 +374,7 @@ uint64_t Simplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) cons
     }
 
     //Estimate malloc overhead
-    memUsage += solver->numActiveVars()*2*40;
+    memUsage += solver->num_active_vars()*2*40;
 
     return memUsage;
 }
@@ -909,7 +909,7 @@ bool Simplifier::simplify()
     solver->check_wrong_attach();
 
     //Clean the clauses before playing with them
-    solver->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->remove_and_clean_all();
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 10ULL*1000ULL*1000ULL
@@ -1151,7 +1151,7 @@ void Simplifier::finishUp(
     addBackToSolver();
     solver->propagate_occur();
     if (solver->ok) {
-        solver->clauseCleaner->removeAndCleanAll();
+        solver->clauseCleaner->remove_and_clean_all();
     }
 
     //Update global stats

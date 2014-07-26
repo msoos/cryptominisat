@@ -86,7 +86,7 @@ class Solver : public Searcher
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data, uint32_t thread_num);
-        lbool modelValue (const Lit p) const;  ///<Found model value for lit
+        lbool model_value (const Lit p) const;  ///<Found model value for lit
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
         void open_file_and_dump_irred_clauses(string fname) const;
@@ -108,15 +108,15 @@ class Solver : public Searcher
         void setConf(SolverConf conf);
         const vector<std::pair<string, string> >& get_tags() const;
         const BinTriStats& getBinTriStats() const;
-        size_t   getNumLongIrredCls() const;
-        size_t   getNumLongRedCls() const;
+        size_t   get_num_long_irred_cls() const;
+        size_t   get_num_long_red_cls() const;
         size_t get_num_vars_elimed() const;
         size_t get_num_vars_replaced() const;
-        Var numActiveVars() const;
+        Var num_active_vars() const;
         void print_mem_stats() const;
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
-        const SolveStats& getSolveStats() const;
+        const SolveStats& get_solve_stats() const;
         void add_in_partial_solving_stats();
 
 
@@ -370,7 +370,7 @@ inline const Searcher::Stats& Solver::get_stats() const
     return sumStats;
 }
 
-inline const Solver::SolveStats& Solver::getSolveStats() const
+inline const Solver::SolveStats& Solver::get_solve_stats() const
 {
     return solveStats;
 }
@@ -380,12 +380,12 @@ inline void Solver::add_sql_tag(const string& tagname, const string& tag)
     sql_tags.push_back(std::make_pair(tagname, tag));
 }
 
-inline size_t Solver::getNumLongIrredCls() const
+inline size_t Solver::get_num_long_irred_cls() const
 {
     return longIrredCls.size();
 }
 
-inline size_t Solver::getNumLongRedCls() const
+inline size_t Solver::get_num_long_red_cls() const
 {
     return longRedCls.size();
 }
@@ -417,7 +417,7 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
 }
 
 //TODO this can be remove, get_num_free_vars() is MUCH cheaper to compute
-inline Var Solver::numActiveVars() const
+inline Var Solver::num_active_vars() const
 {
     Var numActive = 0;
     for(Var var = 0; var < solver->nVars(); var++) {

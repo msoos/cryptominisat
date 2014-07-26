@@ -312,7 +312,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Detach long clauses
     CompleteDetachReatacher detachReattach(solver);
-    detachReattach.detachNonBinsNonTris();
+    detachReattach.detach_nonbins_nontris();
 
     //Make sure all non-freed clauses were accessible from solver
     const size_t origNumClauses =

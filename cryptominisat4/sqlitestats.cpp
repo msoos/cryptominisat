@@ -244,7 +244,7 @@ void SQLiteStats::time_passed(
 
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->getSolveStats().numSimplify);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts());
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
@@ -281,7 +281,7 @@ void SQLiteStats::time_passed_min(
 ) {
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->getSolveStats().numSimplify);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts());
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
@@ -391,7 +391,7 @@ void SQLiteStats::restart(
 
     int bindAt = 1;
     sqlite3_bind_int64(stmtRst, bindAt++, runID);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->getSolveStats().numSimplify);
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts());
     sqlite3_bind_double(stmtRst, bindAt++, cpuTime());
@@ -399,11 +399,11 @@ void SQLiteStats::restart(
 
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.irredBins);
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.irredTris);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->getNumLongIrredCls());
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_irred_cls());
 
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.redBins);
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.redTris);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->getNumLongRedCls());
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_red_cls());
 
     sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.irredLits);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.redLits);
@@ -571,7 +571,7 @@ void SQLiteStats::reduceDB(
 
      int bindAt = 1;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, runID);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->getSolveStats().numSimplify);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts());
     sqlite3_bind_double(stmtReduceDB, bindAt++, cpuTime());

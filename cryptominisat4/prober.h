@@ -257,7 +257,7 @@ class Prober {
 
     private:
         //Main
-        bool tryThis(const Lit lit, const bool first);
+        bool try_this(const Lit lit, const bool first);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
         void checkOTFRatio();
@@ -285,12 +285,12 @@ class Prober {
         vector<bool> propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         vector<Lit> toEnqueue;
         vector<Lit> tmp_lits;
-        void clearUpBeforeFirstSet();
+        void clear_up_before_first_set();
 
-        void updateCache(Lit thisLit, Lit lit, size_t numElemsSet);
-        void checkAndSetBothProp(Var var, bool first);
-        void addRestOfLitsToCache(Lit lit);
-        void handleFailedLit(Lit lit, Lit failed);
+        void update_cache(Lit thisLit, Lit lit, size_t numElemsSet);
+        void check_and_set_both_prop(Var var, bool first);
+        void add_rest_of_lits_to_cache(Lit lit);
+        void handle_failed_lit(Lit lit, Lit failed);
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN

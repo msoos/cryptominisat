@@ -969,7 +969,7 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
 void Solver::renumberVariables()
 {
     double myTime = cpuTime();
-    clauseCleaner->removeAndCleanAll();
+    clauseCleaner->remove_and_clean_all();
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<Var> outerToInter(nVarsOuter());
@@ -1190,20 +1190,20 @@ void Solver::check_model_for_assumptions() const
 {
     for(const Lit lit: origAssumptions) {
         assert(model.size() > lit.var());
-        if (modelValue(lit) == l_Undef) {
+        if (model_value(lit) == l_Undef) {
             cout
             << "ERROR, lit " << lit
             << " was in the assumptions, but it wasn't set at all!"
             << endl;
         }
         assert(model[lit.var()] != l_Undef);
-        if (modelValue(lit) != l_True) {
+        if (model_value(lit) != l_True) {
             cout
             << "ERROR, lit " << lit
             << " was in the assumptions, but it was set to its opposite value!"
             << endl;
         }
-        assert(modelValue(lit) == l_True);
+        assert(model_value(lit) == l_True);
     }
 }
 
@@ -1430,7 +1430,7 @@ lbool Solver::iterate_until_solved()
         }
 
         //This is crucial, since we need to attach() clauses to threads
-        clauseCleaner->removeAndCleanAll();
+        clauseCleaner->remove_and_clean_all();
 
         //Solve using threads
         const size_t origTrailSize = trail.size();
@@ -2342,8 +2342,8 @@ bool Solver::verify_implicit_clauses() const
 
         for (Watched w: ws) {
             if (w.isBinary()
-                && modelValue(lit) != l_True
-                && modelValue(w.lit2()) != l_True
+                && model_value(lit) != l_True
+                && model_value(w.lit2()) != l_True
             ) {
                 cout
                 << "bin clause: "
@@ -2360,9 +2360,9 @@ bool Solver::verify_implicit_clauses() const
             }
 
              if (w.isTri()
-                && modelValue(lit) != l_True
-                && modelValue(w.lit2()) != l_True
-                && modelValue(w.lit3()) != l_True
+                && model_value(lit) != l_True
+                && model_value(w.lit2()) != l_True
+                && model_value(w.lit3()) != l_True
             ) {
                 cout
                 << "tri clause: "
@@ -2402,7 +2402,7 @@ bool Solver::verify_long_clauses(const vector<ClOffset>& cs) const
     ) {
         Clause& cl = *cl_alloc.ptr(*it);
         for (uint32_t j = 0; j < cl.size(); j++)
-            if (modelValue(cl[j]) == l_True)
+            if (model_value(cl[j]) == l_True)
                 goto next;
 
         cout << "unsatisfied clause: " << cl << endl;
@@ -2434,7 +2434,7 @@ bool Solver::verify_model() const
     return verificationOK;
 }
 
-lbool Solver::modelValue (const Lit p) const
+lbool Solver::model_value (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
 }

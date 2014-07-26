@@ -133,28 +133,28 @@ uint64_t Prober::calc_numpropstodo()
     }
 
     //Account for cache being too small
-    const size_t numActiveVars = solver->numActiveVars();
-    if (numActiveVars < 50LL*1000LL) {
+    const size_t num_active_vars = solver->num_active_vars();
+    if (num_active_vars < 50LL*1000LL) {
         numPropsTodo *= 1.2;
     }
     if (solver->litStats.redLits + solver->litStats.irredLits  < 2LL*1000LL*1000LL) {
         numPropsTodo *= 1.2;
     }
-    if (numActiveVars > 600LL*1000LL) {
+    if (num_active_vars > 600LL*1000LL) {
         numPropsTodo *= 0.8;
     }
     if (solver->litStats.redLits + solver->litStats.irredLits > 20LL*1000LL*1000LL) {
         numPropsTodo *= 0.8;
     }
 
-    runStats.origNumFreeVars = numActiveVars;
+    runStats.origNumFreeVars = num_active_vars;
     if (solver->conf.verbosity >= 2) {
     cout
         << "c [probe] lits : "
         << std::setprecision(2) << (double)(solver->litStats.redLits + solver->litStats.irredLits)/(1000.0*1000.0)
         << "M"
         << " act vars: "
-        << std::setprecision(2) << (double)numActiveVars/1000.0 << "K"
+        << std::setprecision(2) << (double)num_active_vars/1000.0 << "K"
         << " BP+HP todo: "
         << std::setprecision(2) << (double)numPropsTodo/(1000.0*1000.0) << "M"
         << endl;
@@ -168,7 +168,7 @@ void Prober::clean_clauses_before_probe()
     if (solver->conf.verbosity >= 6) {
         cout << "c Cleaning clauses before probing." << endl;
     }
-    solver->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->remove_and_clean_all();
     if (solver->conf.verbosity >= 6) {
         cout << "c Cleaning clauses before probing finished." << endl;
     }
@@ -230,14 +230,14 @@ void Prober::clean_clauses_after_probe()
 
         advancedCleanup = true;
         CompleteDetachReatacher reattacher(solver);
-        reattacher.detachNonBinsNonTris();
+        reattacher.detach_nonbins_nontris();
         const bool ret = reattacher.reattachLongs();
         release_assert(ret == true);
     } else {
         if (solver->conf.verbosity >= 5)
             cout << "c Standard cleanup after probing" << endl;
 
-        solver->clauseCleaner->removeAndCleanAll();
+        solver->clauseCleaner->remove_and_clean_all();
     }
 
     if (solver->conf.verbosity  >= 1 &&
@@ -423,11 +423,11 @@ bool Prober::probe()
         runStats.numVarProbed++;
         extraTime += 20;
 
-        if (!tryThis(lit, true))
+        if (!try_this(lit, true))
             goto end;
 
         if (solver->value(lit) == l_Undef
-            && !tryThis((~lit), false)
+            && !try_this((~lit), false)
         ) {
             goto end;
         }
@@ -487,7 +487,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     }
 }
 
-void Prober::clearUpBeforeFirstSet()
+void Prober::clear_up_before_first_set()
 {
     extraTime += propagatedBitSet.size();
     for(size_t varset: propagatedBitSet) {
@@ -496,7 +496,7 @@ void Prober::clearUpBeforeFirstSet()
     propagatedBitSet.clear();
 }
 
-void Prober::updateCache(Lit thisLit, Lit lit, size_t numElemsSet)
+void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
 {
     //Update cache, if the trail was within limits (cacheUpdateCutoff)
     const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
@@ -541,7 +541,7 @@ void Prober::updateCache(Lit thisLit, Lit lit, size_t numElemsSet)
     }
 }
 
-void Prober::checkAndSetBothProp(Var var, bool first)
+void Prober::check_and_set_both_prop(Var var, bool first)
 {
     //If this is the first, set what is propagated
     if (first) {
@@ -570,7 +570,7 @@ void Prober::checkAndSetBothProp(Var var, bool first)
     }
 }
 
-void Prober::addRestOfLitsToCache(Lit lit)
+void Prober::add_rest_of_lits_to_cache(Lit lit)
 {
     tmp_lits.clear();
     for (int64_t c = solver->trail_size()-1
@@ -599,26 +599,26 @@ void Prober::addRestOfLitsToCache(Lit lit)
     }
 }
 
-void Prober::handleFailedLit(Lit lit, Lit failed)
+void Prober::handle_failed_lit(Lit lit, Lit failed)
 {
     if (solver->conf.verbosity >= 6) {
         cout << "c Failed on lit " << lit << endl;
     }
-    solver->cancelZeroLight();
+    solver->cancel_zero_light();
 
     //Update conflict stats
     runStats.numFailed++;
     runStats.conflStats.update(solver->lastConflictCausedBy);
     runStats.conflStats.numConflicts++;
-    runStats.addedBin += solver->hyperBinResAll();
-    std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+    runStats.addedBin += solver->hyper_bin_res_all();
+    std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
     runStats.removedRedBin += tmp.second;
 
     vector<Lit> lits;
     lits.push_back(~failed);
     solver->add_clause_int(lits, true);
-    clearUpBeforeFirstSet();
+    clear_up_before_first_set();
 }
 
 bool Prober::check_timeout_due_to_hyperbin()
@@ -636,10 +636,10 @@ bool Prober::check_timeout_due_to_hyperbin()
         }
 
         solver->conf.otfHyperbin = false;
-        solver->cancelZeroLight();
+        solver->cancel_zero_light();
 
-        runStats.addedBin += solver->hyperBinResAll();
-        std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+        runStats.addedBin += solver->hyper_bin_res_all();
+        std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
         runStats.removedIrredBin += tmp.first;
         runStats.removedRedBin += tmp.second;
 
@@ -658,11 +658,11 @@ bool Prober::check_timeout_due_to_hyperbin()
     return false;
 }
 
-bool Prober::tryThis(const Lit lit, const bool first)
+bool Prober::try_this(const Lit lit, const bool first)
 {
     //Clean state if this is the 1st of two
     if (first) {
-        clearUpBeforeFirstSet();
+        clear_up_before_first_set();
     }
     toEnqueue.clear();
     runStats.numProbed++;
@@ -723,7 +723,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     }
 
     if (failed != lit_Undef) {
-        handleFailedLit(lit, failed);
+        handle_failed_lit(lit, failed);
         return solver->ok;
     } else {
         if (solver->conf.verbosity >= 6)
@@ -741,22 +741,22 @@ bool Prober::tryThis(const Lit lit, const bool first)
         const Lit thisLit = solver->trail[c];
         const Var var = thisLit.var();
 
-        checkAndSetBothProp(var, first);
+        check_and_set_both_prop(var, first);
         visitedAlready[thisLit.toInt()] = 1;
         if (!solver->conf.otfHyperbin)
             continue;
-        updateCache(thisLit, lit, numElemsSet);
+        update_cache(thisLit, lit, numElemsSet);
     }
 
     if (!solver->conf.otfHyperbin
         && solver->conf.doCache
     ) {
-        addRestOfLitsToCache(lit);
+        add_rest_of_lits_to_cache(lit);
     }
 
-    solver->cancelZeroLight();
-    runStats.addedBin += solver->hyperBinResAll();
-    std::pair<size_t, size_t> tmp = solver->removeUselessBins();
+    solver->cancel_zero_light();
+    runStats.addedBin += solver->hyper_bin_res_all();
+    std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
     runStats.removedRedBin += tmp.second;
 
@@ -866,7 +866,7 @@ size_t Prober::mem_used() const
 //         //cout << "---" << endl;
 //         bool failed = !(solver->propagate().isNULL());
 //         if (failed) {
-//             solver->cancelZeroLight();
+//             solver->cancel_zero_light();
 //             if (!first) propagated.setZero();
 //             numFailed++;
 //             return true;
@@ -887,7 +887,7 @@ size_t Prober::mem_used() const
 //                 }
 //             }
 //         }
-//         solver->cancelZeroLight();
+//         solver->cancel_zero_light();
 //         if (!first && !last) propagated &= propagated2;
 //         propagated2.setZero();
 //         if (propagated.isZero()) return true;

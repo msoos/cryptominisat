@@ -959,8 +959,8 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
         #ifdef STATS_NEEDED
         propStats.propsUnit++;
         #endif
-        stats.hyperBinAdded += hyperBinResAll();
-        std::pair<size_t, size_t> tmp = removeUselessBins();
+        stats.hyperBinAdded += hyper_bin_res_all();
+        std::pair<size_t, size_t> tmp = remove_useless_bins();
         stats.transReduRemIrred += tmp.first;
         stats.transReduRemRed += tmp.second;
         solver->enqueue(~failed);
@@ -972,8 +972,8 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     vector<Lit> to_enqueue_toplevel;
     hyper_bin_update_cache(to_enqueue_toplevel);
 
-    stats.hyperBinAdded += hyperBinResAll();
-    std::pair<size_t, size_t> tmp = removeUselessBins();
+    stats.hyperBinAdded += hyper_bin_res_all();
+    std::pair<size_t, size_t> tmp = remove_useless_bins();
     stats.transReduRemIrred += tmp.first;
     stats.transReduRemRed += tmp.second;
 
@@ -1814,8 +1814,8 @@ struct MyPolarData
         << ")"
         << " values ("
         //Position
-        << "  " << solver->getSolveStats().runID
-        << ", " << solver->getSolveStats().numSimplify
+        << "  " << solver->get_solve_stats().runID
+        << ", " << solver->get_solve_stats().numSimplify
         //Data
         << ", " << i
         << ", " << polarData[i].pos
@@ -2024,7 +2024,7 @@ void Searcher::clean_clauses_if_needed()
         }
 
         lastCleanZeroDepthAssigns = trail.size();
-        solver->clauseCleaner->removeAndCleanAll();
+        solver->clauseCleaner->remove_and_clean_all();
     }
 }
 
@@ -2045,7 +2045,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
             << endl;
         }
 
-        solver->clauseCleaner->removeAndCleanAll();
+        solver->clauseCleaner->remove_and_clean_all();
 
         lastCleanZeroDepthAssigns = trail.size();
         if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->get_num_free_vars()*0.001))) {
@@ -2593,7 +2593,7 @@ uint64_t Searcher::sumRestarts() const
     return stats.numRestarts + solver->get_stats().numRestarts;
 }
 
-size_t Searcher::hyperBinResAll()
+size_t Searcher::hyper_bin_res_all()
 {
     size_t added = 0;
 
@@ -2628,7 +2628,7 @@ size_t Searcher::hyperBinResAll()
     return added;
 }
 
-std::pair<size_t, size_t> Searcher::removeUselessBins()
+std::pair<size_t, size_t> Searcher::remove_useless_bins()
 {
     size_t removedIrred = 0;
     size_t removedRed = 0;

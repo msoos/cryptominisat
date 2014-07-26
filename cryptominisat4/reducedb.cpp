@@ -242,7 +242,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 {
     //Clean the clause database before doing cleaning
     //varReplacer->performReplace();
-    solver->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->remove_and_clean_all();
 
     const double myTime = cpuTime();
     nbReduceDB++;
@@ -254,7 +254,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     //Complete detach&reattach of OK clauses will be *much* faster
     CompleteDetachReatacher detachReattach(solver);
-    detachReattach.detachNonBinsNonTris();
+    detachReattach.detach_nonbins_nontris();
 
     if (lock_clauses_in) {
         lock_most_UIP_used_clauses();

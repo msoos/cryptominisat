@@ -1014,7 +1014,7 @@ void MySQLStats::reduceDB(
     , const Solver* solver
 ) {
     //Position of solving
-    stmtReduceDB.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtReduceDB.numSimplify     = solver->get_solve_stats().numSimplify;
     stmtReduceDB.sumRestarts     = solver->sumRestarts();
     stmtReduceDB.sumConflicts    = solver->sumConflicts();
     stmtReduceDB.cpuTime         = cpuTime();
@@ -1051,7 +1051,7 @@ void MySQLStats::time_passed(
     , bool time_out
     , double percent_time_remain
 ) {
-    stmtTimePassed.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtTimePassed.numSimplify     = solver->get_solve_stats().numSimplify;
     stmtTimePassed.sumConflicts    = solver->sumConflicts();
     stmtTimePassed.cpuTime         = cpuTime();
     release_assert(name.size() < sizeof(stmtTimePassed.name)-1);
@@ -1078,7 +1078,7 @@ void MySQLStats::time_passed_min(
     , const string& name
     , double time_passed
 ) {
-    stmtTimePassedMin.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtTimePassedMin.numSimplify     = solver->get_solve_stats().numSimplify;
     stmtTimePassedMin.sumConflicts    = solver->sumConflicts();
     stmtTimePassedMin.cpuTime         = cpuTime();
     release_assert(name.size() < sizeof(stmtTimePassedMin.name)-1);
@@ -1108,7 +1108,7 @@ void MySQLStats::restart(
     const Solver::BinTriStats& binTri = solver->getBinTriStats();
 
     //Position of solving
-    stmtRst.numSimplify     = solver->getSolveStats().numSimplify;
+    stmtRst.numSimplify     = solver->get_solve_stats().numSimplify;
     stmtRst.sumRestarts     = search->sumRestarts();
     stmtRst.sumConflicts    = search->sumConflicts();
     stmtRst.cpuTime         = cpuTime();
@@ -1116,11 +1116,11 @@ void MySQLStats::restart(
     //Clause stats
     stmtRst.numIrredBins  = binTri.irredBins;
     stmtRst.numIrredTris  = binTri.irredTris;
-    stmtRst.numIrredLongs = solver->getNumLongIrredCls();
+    stmtRst.numIrredLongs = solver->get_num_long_irred_cls();
     stmtRst.numIrredLits  = solver->litStats.irredLits;
     stmtRst.numRedBins    = binTri.redBins;
     stmtRst.numRedTris    = binTri.redTris;
-    stmtRst.numRedLongs   = solver->getNumLongRedCls();
+    stmtRst.numRedLongs   = solver->get_num_long_red_cls();
     stmtRst.numRedLits    = solver->litStats.redLits;
 
     //Conflict stats

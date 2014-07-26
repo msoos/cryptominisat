@@ -294,7 +294,7 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
     solver->binTri.redTris -= remLTri/3;
 }
 
-void ClauseCleaner::removeAndCleanAll()
+void ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
     clean_implicit_clauses();

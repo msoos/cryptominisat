@@ -61,7 +61,7 @@ void SolutionExtender::extend()
 
     //First detach all long clauses
     CompleteDetachReatacher detachReattach(solver);
-    detachReattach.detachNonBinsNonTris();
+    detachReattach.detach_nonbins_nontris();
 
     //Make watches large enough to fit occur of all
     solver->watches.resize(nVarsOuter()*2);
@@ -135,7 +135,7 @@ void SolutionExtender::extend()
     solver->watches.resize(solver->nVars()*2);
 
     //Remove occur, go back to 0, and
-    detachReattach.detachNonBinsNonTris();
+    detachReattach.detach_nonbins_nontris();
     solver->cancelUntil(0);
     detachReattach.reattachLongs();
 }

@@ -366,7 +366,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
             break;
         }
     }
-    solver->cancelZeroLight();
+    solver->cancel_zero_light();
     assert(solver->ok);
 
     if (uselessLits.size() > 0 || (failed && done < lits.size())) {

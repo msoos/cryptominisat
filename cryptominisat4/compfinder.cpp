@@ -62,7 +62,7 @@ bool CompFinder::findComps()
     comp_no = 0;
     used_comp_no = 0;
 
-    solver->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->remove_and_clean_all();
 
     if (solver->conf.doFindAndReplaceEqLits
         && !solver->varReplacer->performReplace()

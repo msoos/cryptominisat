@@ -35,7 +35,7 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 /**
 @brief Completely detach all non-binary clauses
 */
-void CompleteDetachReatacher::detachNonBinsNonTris()
+void CompleteDetachReatacher::detach_nonbins_nontris()
 {
     ClausesStay stay;
 

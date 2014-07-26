@@ -189,7 +189,7 @@ bool VarReplacer::performReplace()
     cout << "c Number of redirected nodes:" << numRedir << endl;
     #endif //REPLACE_STATISTICS
 
-    solver->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->remove_and_clean_all();
     solver->test_all_clause_attached();
 
     //Printing stats

@@ -45,7 +45,7 @@ class ClauseCleaner
 
 
         void clean_implicit_clauses();
-        void removeAndCleanAll();
+        void remove_and_clean_all();
         bool satisfied(const Clause& c) const;
 
     private:
