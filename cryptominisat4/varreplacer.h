@@ -57,8 +57,8 @@ class VarReplacer
         void print_some_stats(const double global_cpu_time) const;
         const SCCFinder* get_scc_finder() const;
 
-        void extendModel();
-        void extendModel(const Var var);
+        void extend_model();
+        void extend_model(const Var var);
 
         Var getVarReplacedWith(const Var var) const;
         Var getVarReplacedWith(const Lit lit) const;

@@ -184,7 +184,7 @@ void ClauseCleaner::clean_implicit_clauses()
     #endif
 }
 
-void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
+void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 {
     assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
@@ -201,7 +201,7 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
             Clause* cl = solver->cl_alloc.ptr(cs[at+1]);
             __builtin_prefetch(cl);
         }
-        if (cleanClause(*s)) {
+        if (clean_clause(*s)) {
             solver->cl_alloc.clauseFree(*s);
         } else {
             *ss++ = *s;
@@ -210,11 +210,11 @@ void ClauseCleaner::cleanClauses(vector<ClOffset>& cs)
     cs.resize(cs.size() - (s-ss));
 
     #ifdef VERBOSE_DEBUG
-    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
+    cout << "clean_clauses(Clause) useful ?? Removed: " << s-ss << endl;
     #endif
 }
 
-inline bool ClauseCleaner::cleanClause(ClOffset offset)
+inline bool ClauseCleaner::clean_clause(ClOffset offset)
 {
     assert(!solver->drup->something_delayed());
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -298,8 +298,8 @@ void ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
     clean_implicit_clauses();
-    cleanClauses(solver->longIrredCls);
-    cleanClauses(solver->longRedCls);
+    clean_clauses(solver->longIrredCls);
+    clean_clauses(solver->longRedCls);
 
     #ifndef NDEBUG
     //Once we have cleaned the watchlists

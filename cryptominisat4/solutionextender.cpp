@@ -16,10 +16,10 @@ SolutionExtender::SolutionExtender(Solver* _solver, Simplifier* _simplifier) :
 void SolutionExtender::extend()
 {
     if (solver->varReplacer)
-        solver->varReplacer->extendModel();
+        solver->varReplacer->extend_model();
 
     if (simplifier)
-        simplifier->extendModel(this);
+        simplifier->extend_model(this);
 }
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const
@@ -62,7 +62,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
     assert(solver->model_value(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = l_True;
-    solver->varReplacer->extendModel(blockedOn.var());
+    solver->varReplacer->extend_model(blockedOn.var());
 
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout << "dummy now: " << solver->model_value(blockedOn) << endl;
@@ -92,6 +92,6 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
     assert(satisfied(lits));
 
-    solver->varReplacer->extendModel(blockedOn.var());
+    solver->varReplacer->extend_model(blockedOn.var());
 }
 

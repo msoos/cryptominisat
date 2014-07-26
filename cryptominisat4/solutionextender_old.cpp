@@ -75,7 +75,7 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding equivalent literals" << endl;
     }
-    solver->varReplacer->extendModel(this);
+    solver->varReplacer->extend_model(this);
 
     if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
@@ -110,7 +110,7 @@ void SolutionExtender::extend()
         cout << "c Adding blocked clauses" << endl;
     }
     if (solver->simplifier) {
-        solver->simplifier->extendModel(this);
+        solver->simplifier->extend_model(this);
     }
 
     //Copy&check model

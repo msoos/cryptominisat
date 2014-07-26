@@ -137,7 +137,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
             }
         }
 
-        if (cleanClause(cl)) {
+        if (clean_clause(cl)) {
             solver->attachClause(*cl);
             *j++ = *i;
         } else {
@@ -150,7 +150,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 /**
 @brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
 */
-bool CompleteDetachReatacher::cleanClause(Clause* cl)
+bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
     Clause& ps = *cl;
     (*solver->drup) << deldelay << ps << fin;

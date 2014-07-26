@@ -50,7 +50,7 @@ bool Vivifier::vivify(const bool alsoStrengthen)
     assert(solver->ok);
     numCalls++;
 
-    solver->clauseCleaner->cleanClauses(solver->longIrredCls);
+    solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
     if (alsoStrengthen
         && !vivify_long_irred_cls()

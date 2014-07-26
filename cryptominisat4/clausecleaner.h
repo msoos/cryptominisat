@@ -41,7 +41,7 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver* solver);
 
-        void cleanClauses(vector<ClOffset>& cs);
+        void clean_clauses(vector<ClOffset>& cs);
 
 
         void clean_implicit_clauses();
@@ -80,7 +80,7 @@ class ClauseCleaner
         );
 
         bool satisfied(const Watched& watched, Lit lit);
-        bool cleanClause(ClOffset c);
+        bool clean_clause(ClOffset c);
 
         Solver* solver;
 };

@@ -699,7 +699,7 @@ void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_v
     }
 }
 
-void VarReplacer::extendModel(const Var var)
+void VarReplacer::extend_model(const Var var)
 {
     assert(solver->model[var] != l_Undef);
     map<Var, vector<Var> >::const_iterator it
@@ -715,10 +715,10 @@ void VarReplacer::extendModel(const Var var)
     }
 }
 
-void VarReplacer::extendModel()
+void VarReplacer::extend_model()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "c VarReplacer::extendModel() called" << endl;
+    cout << "c VarReplacer::extend_model() called" << endl;
     #endif //VERBOSE_DEBUG
 
     assert(solver->model.size() == solver->nVarsOuter());

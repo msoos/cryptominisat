@@ -53,7 +53,7 @@ bool Strengthener::strengthen(const bool alsoStrengthen)
     assert(solver->ok);
     numCalls++;
 
-    solver->clauseCleaner->cleanClauses(solver->longIrredCls);
+    solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
     runStats.redCacheBased.clear();
     runStats.irredCacheBased.clear();

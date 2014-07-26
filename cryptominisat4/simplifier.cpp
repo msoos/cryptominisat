@@ -197,7 +197,7 @@ void Simplifier::dump_blocked_clauses(std::ostream* outfile) const
     }
 }
 
-void Simplifier::extendModel(SolutionExtender* extender)
+void Simplifier::extend_model(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
@@ -227,7 +227,7 @@ void Simplifier::extendModel(SolutionExtender* extender)
     }
 }
 
-void Simplifier::unlinkClause(
+void Simplifier::unlink_clause(
     const ClOffset offset
     , bool doDrup
     , bool allow_empty_watch
@@ -268,7 +268,7 @@ void Simplifier::unlinkClause(
     }
 }
 
-lbool Simplifier::cleanClause(ClOffset offset)
+lbool Simplifier::clean_clause(ClOffset offset)
 {
     assert(!solver->drup->something_delayed());
     assert(solver->ok);
@@ -310,7 +310,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
         cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
         (*solver->drup) << findelay;
-        unlinkClause(offset, false);
+        unlink_clause(offset, false);
         return l_True;
     }
 
@@ -332,7 +332,7 @@ lbool Simplifier::cleanClause(ClOffset offset)
 
     switch(cl.size()) {
         case 0:
-            unlinkClause(offset, false);
+            unlink_clause(offset, false);
             solver->ok = false;
             return l_False;
 
@@ -341,17 +341,17 @@ lbool Simplifier::cleanClause(ClOffset offset)
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            unlinkClause(offset, false);
+            unlink_clause(offset, false);
             return l_True;
 
         case 2:
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
-            unlinkClause(offset, false);
+            unlink_clause(offset, false);
             return l_True;
 
         case 3:
             solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
-            unlinkClause(offset, false);
+            unlink_clause(offset, false);
             return l_True;
 
         default:
@@ -446,7 +446,7 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
             linkedInLits += cl->size();
         } else {
             assert(cl->red());
-            cl->setOccurLinked(false);
+            cl->set_occur_linked(false);
             link_in_data.cl_not_linked++;
         }
 
@@ -487,7 +487,7 @@ bool Simplifier::decide_occur_limit(bool irred, uint64_t memUsage)
     return true;
 }
 
-bool Simplifier::addFromSolver(
+bool Simplifier::add_from_solver(
     vector<ClOffset>& toAdd
     , bool alsoOccur
     , bool irred
@@ -549,7 +549,7 @@ bool Simplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
     return notLinkedNeedFree;
 }
 
-void Simplifier::addBackToSolver()
+void Simplifier::add_back_to_solver()
 {
     for (vector<ClOffset>::const_iterator
         it = clauses.begin(), end = clauses.end()
@@ -577,7 +577,7 @@ void Simplifier::addBackToSolver()
             continue;
         }
 
-        if (completeCleanClause(*cl)) {
+        if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
                 solver->longRedCls.push_back(*it);
@@ -590,7 +590,7 @@ void Simplifier::addBackToSolver()
     }
 }
 
-bool Simplifier::completeCleanClause(Clause& cl)
+bool Simplifier::complete_clean_clause(Clause& cl)
 {
     assert(!solver->drup->something_delayed());
     assert(cl.size() > 3);
@@ -653,7 +653,7 @@ bool Simplifier::completeCleanClause(Clause& cl)
     return true;
 }
 
-void Simplifier::removeAllLongsFromWatches()
+void Simplifier::remove_all_longs_from_watches()
 {
     for (watch_array::iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -851,31 +851,10 @@ void Simplifier::clean_occur_from_removed_clauses()
     }
 }
 
-void Simplifier::checkAllLinkedIn()
-{
-    for(vector<ClOffset>::const_iterator
-        it = clauses.begin(), end = clauses.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause& cl = *solver->cl_alloc.ptr(*it);
-
-        assert(cl.red() || cl.getOccurLinked());
-        if (cl.freed() || cl.red())
-            continue;
-
-        for(size_t i = 0; i < cl.size(); i++) {
-            Lit lit = cl[i];
-            bool found = findWCl(solver->watches[lit.toInt()], *it);
-            assert(found);
-        }
-    }
-}
-
 bool Simplifier::fill_occur_and_print_stats()
 {
     double myTime = cpuTime();
-    removeAllLongsFromWatches();
+    remove_all_longs_from_watches();
     if (!fill_occur()) {
         return false;
     }
@@ -1005,7 +984,7 @@ bool Simplifier::fill_occur()
 {
     //Try to add irreducible to occur
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    bool ret = addFromSolver(solver->longIrredCls
+    bool ret = add_from_solver(solver->longIrredCls
         , true //try to add to occur list
         , true //it is irred
     );
@@ -1020,7 +999,7 @@ bool Simplifier::fill_occur()
 
     //Add redundant to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
-    addFromSolver(solver->longRedCls
+    add_from_solver(solver->longRedCls
         , true //try to add to occur list
         , false //irreduntant?
     );
@@ -1147,8 +1126,8 @@ void Simplifier::finishUp(
 
     //Add back clauses to solver
     solver->propagate_occur();
-    removeAllLongsFromWatches();
-    addBackToSolver();
+    remove_all_longs_from_watches();
+    add_back_to_solver();
     solver->propagate_occur();
     if (solver->ok) {
         solver->clauseCleaner->remove_and_clean_all();
@@ -1368,7 +1347,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
 
             //Remove -- only DRUP the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
-            unlinkClause(offset, cl.red(), true, true);
+            unlink_clause(offset, cl.red(), true, true);
         }
 
         if (watch.isBinary()) {
@@ -2821,18 +2800,18 @@ void Simplifier::linkInClause(Clause& cl)
         ws.push(Watched(offset, cl.abst));
     }
     assert(cl.abst == calcAbstraction(cl));
-    cl.setOccurLinked(true);
+    cl.set_occur_linked(true);
 }
 
 
-void Simplifier::printGateFinderStats() const
+void Simplifier::print_gatefinder_stats() const
 {
     if (gateFinder) {
         gateFinder->get_stats().print(solver->nVarsOuter());
     }
 }
 
-double Simplifier::Stats::totalTime() const
+double Simplifier::Stats::total_time() const
 {
     return linkInTime + blockTime
         + varElimTime + finalCleanupTime;
@@ -2932,8 +2911,8 @@ void Simplifier::Stats::print(const size_t nVars) const
 {
     cout << "c -------- Simplifier STATS ----------" << endl;
     print_stats_line("c time"
-        , totalTime()
-        , stats_line_percent(varElimTime, totalTime())
+        , total_time()
+        , stats_line_percent(varElimTime, total_time())
         , "% var-elim"
     );
 
@@ -2944,7 +2923,7 @@ void Simplifier::Stats::print(const size_t nVars) const
 
     print_stats_line("c called"
         ,  numCalls
-        , (double)totalTime()/(double)numCalls
+        , (double)total_time()/(double)numCalls
         , "s per call"
     );
 

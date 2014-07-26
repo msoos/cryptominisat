@@ -458,7 +458,7 @@ void BVA::remove_matching_clause(
 
         default:
             Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);
-            simplifier->unlinkClause(solver->cl_alloc.getOffset(cl_new));
+            simplifier->unlink_clause(solver->cl_alloc.getOffset(cl_new));
             break;
     }
 }

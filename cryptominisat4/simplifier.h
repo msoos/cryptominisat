@@ -101,12 +101,12 @@ public:
     bool unEliminate(const Var var);
     size_t mem_used() const;
     size_t memUsedXor() const;
-    void printGateFinderStats() const;
+    void print_gatefinder_stats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
-    void extendModel(SolutionExtender* extender);
+    void extend_model(SolutionExtender* extender);
 
     struct Stats
     {
@@ -114,7 +114,7 @@ public:
         void print_short(const Solver* solver, const bool print_var_elim = true) const;
         Stats& operator+=(const Stats& other);
         void clear();
-        double totalTime() const;
+        double total_time() const;
 
         uint64_t numCalls = 0;
 
@@ -168,7 +168,6 @@ private:
     //debug
     void checkElimedUnassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
-    void checkAllLinkedIn();
 
     void check_delete_gatefinder();
     bool fill_occur();
@@ -198,7 +197,7 @@ private:
     int64_t* limit_to_decrease;
 
     //Start-up
-    bool addFromSolver(
+    bool add_from_solver(
         vector<ClOffset>& toAdd
         , bool alsoOccur
         , bool irred
@@ -229,14 +228,14 @@ private:
 
     //Finish-up
     void remove_by_drup_recently_blocked_clauses(size_t origBlockedSize);
-    void addBackToSolver();
+    void add_back_to_solver();
     bool check_varelim_when_adding_back_cl(const Clause* cl) const;
-    void removeAllLongsFromWatches();
-    bool completeCleanClause(Clause& ps);
+    void remove_all_longs_from_watches();
+    bool complete_clean_clause(Clause& ps);
 
     //Clause update
-    lbool       cleanClause(ClOffset c);
-    void        unlinkClause(ClOffset cc, bool drup = true, bool allow_empty_watch = false, bool only_set_is_removed = false);
+    lbool       clean_clause(ClOffset c);
+    void        unlink_clause(ClOffset cc, bool drup = true, bool allow_empty_watch = false, bool only_set_is_removed = false);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 

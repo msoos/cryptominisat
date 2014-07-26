@@ -1877,8 +1877,8 @@ void Solver::print_min_stats() const
     //Simplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c Simplifier time"
-            , simplifier->get_stats().totalTime()
-            , stats_line_percent(simplifier->get_stats().totalTime() ,cpu_time)
+            , simplifier->get_stats().total_time()
+            , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
         simplifier->get_stats().print_short(this, nVars());
@@ -1979,8 +1979,8 @@ void Solver::print_all_stats() const
     //Simplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c Simplifier time"
-            , simplifier->get_stats().totalTime()
-            , stats_line_percent(simplifier->get_stats().totalTime(), cpu_time)
+            , simplifier->get_stats().total_time()
+            , stats_line_percent(simplifier->get_stats().total_time(), cpu_time)
             , "% time"
         );
 
@@ -1988,7 +1988,7 @@ void Solver::print_all_stats() const
     }
 
     if (simplifier && conf.doGateFind) {
-        simplifier->printGateFinderStats();
+        simplifier->print_gatefinder_stats();
     }
 
     //GateFinder stats
@@ -1997,8 +1997,8 @@ void Solver::print_all_stats() const
     /*
     //XOR stats
     print_stats_line("c XOR time"
-        , subsumer->getXorFinder()->get_stats().totalTime()
-        , subsumer->getXorFinder()->get_stats().totalTime()/cpu_time*100.0
+        , subsumer->getXorFinder()->get_stats().total_time()
+        , subsumer->getXorFinder()->get_stats().total_time()/cpu_time*100.0
         , "% time"
     );
     subsumer->getXorFinder()->get_stats().print(

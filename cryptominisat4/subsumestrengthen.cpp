@@ -114,7 +114,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         << *tmp << "(offset: " << *it << ")"
         << endl;*/
 
-        simplifier->unlinkClause(*it);
+        simplifier->unlink_clause(*it);
         ret.numSubsumed++;
 
         //If we are waaay over time, just exit
@@ -169,7 +169,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
             //Update stats
             cl.combineStats(cl2.stats);
 
-            simplifier->unlinkClause(offset2);
+            simplifier->unlink_clause(offset2);
             ret.sub++;
         } else { //Strengthen
             if (solver->conf.verbosity >= 6) {
@@ -442,7 +442,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
     else
         solver->litStats.irredLits--;
 
-    simplifier->cleanClause(offset);
+    simplifier->clean_clause(offset);
 }
 /**
 @brief Decides only using abstraction if clause A could subsume clause B

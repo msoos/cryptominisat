@@ -119,7 +119,7 @@ public:
             *this = tmp;
         }
 
-        double totalTime() const
+        double total_time() const
         {
             return findGateTime + orBasedTime + varReplaceTime
                 + andBasedTime + erTime;

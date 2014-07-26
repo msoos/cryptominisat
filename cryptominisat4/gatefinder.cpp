@@ -456,7 +456,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Free the old clause and allocate new one
         (*solver->drup) << deldelay << cl << fin;
-        simplifier->unlinkClause(offset, false, false, true);
+        simplifier->unlink_clause(offset, false, false, true);
         Clause* cl2 = solver->add_clause_int(lits, red, stats, false);
         (*solver->drup) << findelay;
         if (!solver->ok)
@@ -762,7 +762,7 @@ bool GateFinder::remove_clauses_using_and_gate(
 
     //Now that all is computed, remove those that need removal
     for(const ClOffset offset: clToUnlink) {
-        simplifier->unlinkClause(offset);
+        simplifier->unlink_clause(offset);
     }
     clToUnlink.clear();
 
@@ -1074,30 +1074,30 @@ void GateFinder::Stats::print(const size_t nVars) const
 {
     cout << "c -------- GATE FINDING ----------" << endl;
     print_stats_line("c time"
-        , totalTime()
+        , total_time()
     );
 
     print_stats_line("c find gate time"
         , findGateTime
-        , stats_line_percent(findGateTime, totalTime())
+        , stats_line_percent(findGateTime, total_time())
         , "% time"
     );
 
     print_stats_line("c gate-based cl-sh time"
         , orBasedTime
-        , stats_line_percent(orBasedTime, totalTime())
+        , stats_line_percent(orBasedTime, total_time())
         , "% time"
     );
 
     print_stats_line("c gate-based cl-rem time"
         , andBasedTime
-        , stats_line_percent(andBasedTime, totalTime())
+        , stats_line_percent(andBasedTime, total_time())
         , "% time"
     );
 
     print_stats_line("c gate-based varrep time"
         , varReplaceTime
-        , stats_line_percent(varReplaceTime, totalTime())
+        , stats_line_percent(varReplaceTime, total_time())
         , "% time"
     );
 

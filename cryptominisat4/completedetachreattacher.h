@@ -55,7 +55,7 @@ class CompleteDetachReatacher
             vector<ClOffset>& cs
             , bool removeStatsFrist
         );
-        bool cleanClause(Clause* cl);
+        bool clean_clause(Clause* cl);
 
         class ClausesStay {
             public:
