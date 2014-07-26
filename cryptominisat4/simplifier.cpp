@@ -150,10 +150,10 @@ void Simplifier::new_vars(size_t n)
     }
 }
 
-void Simplifier::saveVarMem()
+void Simplifier::save_on_var_memory()
 {
     if (gateFinder)
-        gateFinder->saveVarMem();
+        gateFinder->save_on_var_memory();
 }
 
 void Simplifier::print_blocked_clauses_reverse() const
@@ -1007,7 +1007,7 @@ bool Simplifier::fill_occur()
     return true;
 }
 
-bool Simplifier::unEliminate(Var var)
+bool Simplifier::uneliminate(Var var)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
@@ -1155,7 +1155,7 @@ void Simplifier::finishUp(
     }
 
     if (solver->ok) {
-        checkElimedUnassignedAndStats();
+        check_elimed_vars_are_unassignedAndStats();
     }
 }
 
@@ -2709,7 +2709,7 @@ std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
     return cost;
 }
 
-void Simplifier::checkElimedUnassigned() const
+void Simplifier::check_elimed_vars_are_unassigned() const
 {
     for (size_t i = 0; i < solver->nVarsOuter(); i++) {
         if (solver->varData[i].removed == Removed::elimed) {
@@ -2718,7 +2718,7 @@ void Simplifier::checkElimedUnassigned() const
     }
 }
 
-void Simplifier::checkElimedUnassignedAndStats() const
+void Simplifier::check_elimed_vars_are_unassignedAndStats() const
 {
     assert(solver->ok);
     int64_t checkNumElimed = 0;
@@ -2774,7 +2774,7 @@ size_t Simplifier::mem_used() const
     return b;
 }
 
-size_t Simplifier::memUsedXor() const
+size_t Simplifier::mem_used_xor() const
 {
     if (xorFinder)
         return xorFinder->mem_used();

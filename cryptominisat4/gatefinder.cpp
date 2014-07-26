@@ -1028,7 +1028,7 @@ void GateFinder::new_vars(size_t n)
     gateOccEq.resize(gateOccEq.size() + 2*n);
 }
 
-void GateFinder::saveVarMem()
+void GateFinder::save_on_var_memory()
 {
     gateOcc.resize(solver->nVars()*2);
     gateOcc.shrink_to_fit();

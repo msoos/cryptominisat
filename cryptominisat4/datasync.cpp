@@ -56,7 +56,7 @@ void DataSync::new_vars(size_t n)
     assert(solver->nVarsOutside()*2 == syncFinish.size());
 }
 
-void DataSync::saveVarMem()
+void DataSync::save_on_var_memory()
 {
 }
 

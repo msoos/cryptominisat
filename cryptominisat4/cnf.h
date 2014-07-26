@@ -20,7 +20,7 @@ class ClauseAllocator;
 class CNF
 {
 public:
-    void saveVarMem();
+    void save_on_var_memory();
     void updateVars(
         const vector<Var>& outerToInter
         , const vector<Var>& interToOuter

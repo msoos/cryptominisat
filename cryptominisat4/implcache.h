@@ -131,7 +131,7 @@ public:
     void print_statsSort(const Solver* solver) const;
     size_t mem_used() const;
     void makeAllRed();
-    void saveVarMems(uint32_t newNumVars)
+    void save_on_var_memorys(uint32_t newNumVars)
     {
         implCache.resize(newNumVars*2);
         implCache.shrink_to_fit();

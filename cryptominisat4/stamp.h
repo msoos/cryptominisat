@@ -57,7 +57,7 @@ public:
     );
     void update_dominators(const VarReplacer* replacer);
     void clearStamps();
-    void saveVarMem(const uint32_t newNumVars);
+    void save_on_var_memory(const uint32_t newNumVars);
 
     vector<Timestamp>   tstamp;
     void new_var()

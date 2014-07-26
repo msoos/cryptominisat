@@ -76,7 +76,7 @@ void VarReplacer::new_vars(const size_t n)
     }
 }
 
-void VarReplacer::saveVarMem()
+void VarReplacer::save_on_var_memory()
 {
 }
 

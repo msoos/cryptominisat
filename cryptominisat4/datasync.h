@@ -35,7 +35,7 @@ class DataSync
         void new_var(const bool bva);
         void new_vars(const size_t n);
         bool syncData();
-        void saveVarMem();
+        void save_on_var_memory();
         void rebuild_bva_map();
         void updateVars(
            const vector<uint32_t>& outerToInter

@@ -103,7 +103,7 @@ public:
 
     void new_var(const Var orig_outer);
     void new_vars(const size_t n);
-    void saveVarMem();
+    void save_on_var_memory();
     bool doAll();
 
     //Getter functions

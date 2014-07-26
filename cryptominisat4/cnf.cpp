@@ -136,7 +136,7 @@ void CNF::enlarge_minimal_datastructs(size_t n)
     seen2.resize(seen2.size() + 2*n,0);
 }
 
-void CNF::saveVarMem()
+void CNF::save_on_var_memory()
 {
     //never resize varData --> contains info about what is replaced/etc.
     //never resize assigns --> contains 0-level assigns
@@ -144,8 +144,8 @@ void CNF::saveVarMem()
 
     watches.resize(nVars()*2);
     watches.consolidate();
-    implCache.saveVarMems(nVars());
-    stamp.saveVarMem(nVars());
+    implCache.save_on_var_memorys(nVars());
+    stamp.save_on_var_memory(nVars());
 
     seen.resize(nVars()*2);
     seen.shrink_to_fit();

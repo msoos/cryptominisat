@@ -98,9 +98,9 @@ void Searcher::new_vars(size_t n)
     act_polar_backup.polarity.resize(act_polar_backup.polarity.size() + n, false);
 }
 
-void Searcher::saveVarMem()
+void Searcher::save_on_var_memory()
 {
-    PropEngine::saveVarMem();
+    PropEngine::save_on_var_memory();
     activities.resize(nVars());
     activities.shrink_to_fit();
     assumptionsSet.resize(nVars());

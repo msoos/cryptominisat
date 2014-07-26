@@ -68,7 +68,7 @@ void SolutionExtender::extend()
 
     //Sanity check
     if (solver->simplifier) {
-        solver->simplifier->checkElimedUnassignedAndStats();
+        solver->simplifier->check_elimed_vars_are_unassignedAndStats();
     }
 
     //Adding binary clauses representing equivalent literals

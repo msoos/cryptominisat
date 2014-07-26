@@ -290,7 +290,7 @@ class Solver : public Searcher
         //Renumberer
         void renumberVariables();
         void free_unused_watches();
-        void saveVarMem(uint32_t newNumVars);
+        void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
         size_t calculate_interToOuter_and_outerToInter(
             vector<Var>& outerToInter

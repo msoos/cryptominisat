@@ -97,10 +97,10 @@ public:
     bool simplify();
     void new_var(const Var orig_outer);
     void new_vars(const size_t n);
-    void saveVarMem();
-    bool unEliminate(const Var var);
+    void save_on_var_memory();
+    bool uneliminate(const Var var);
     size_t mem_used() const;
-    size_t memUsedXor() const;
+    size_t mem_used_xor() const;
     void print_gatefinder_stats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;
 
@@ -155,7 +155,7 @@ public:
 
     const Stats& get_stats() const;
     const SubsumeStrengthen* getSubsumeStrengthen() const;
-    void checkElimedUnassigned() const;
+    void check_elimed_vars_are_unassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
 
@@ -166,7 +166,7 @@ private:
     BVA* bva;
 
     //debug
-    void checkElimedUnassignedAndStats() const;
+    void check_elimed_vars_are_unassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
 
     void check_delete_gatefinder();

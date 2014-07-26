@@ -4,7 +4,7 @@
 
 using namespace CMSat;
 
-void Stamp::saveVarMem(const uint32_t newNumVars)
+void Stamp::save_on_var_memory(const uint32_t newNumVars)
 {
     tstamp.resize(newNumVars*2);
     tstamp.shrink_to_fit();

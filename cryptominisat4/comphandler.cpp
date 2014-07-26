@@ -65,7 +65,7 @@ void CompHandler::new_vars(size_t n)
     savedState.resize(savedState.size()+n, l_Undef);
 }
 
-void CompHandler::saveVarMem()
+void CompHandler::save_on_var_memory()
 {
 }
 

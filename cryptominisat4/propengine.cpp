@@ -74,9 +74,9 @@ void PropEngine::new_vars(size_t n)
     //trail... update x->whatever
 }
 
-void PropEngine::saveVarMem()
+void PropEngine::save_on_var_memory()
 {
-    CNF::saveVarMem();
+    CNF::save_on_var_memory();
 }
 
 

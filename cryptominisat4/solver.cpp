@@ -699,7 +699,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "Uneliminating var " << lit.var() + 1 << endl;
             #endif
-            if (!simplifier->unEliminate(lit.var()))
+            if (!simplifier->uneliminate(lit.var()))
                 return false;
         }
     }
@@ -1022,7 +1022,7 @@ void Solver::renumberVariables()
     }
 
     if (conf.doSaveMem) {
-        saveVarMem(numEffectiveVars);
+        save_on_var_memory(numEffectiveVars);
     }
 
     //NOTE order heap is now wrong, but that's OK, it will be restored from
@@ -1123,7 +1123,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
     //test_reflectivity_of_renumbering();
 }
 
-void Solver::saveVarMem(const uint32_t newNumVars)
+void Solver::save_on_var_memory(const uint32_t newNumVars)
 {
     //TODO should we resize assumptionsSet ??
 
@@ -1131,18 +1131,18 @@ void Solver::saveVarMem(const uint32_t newNumVars)
 
     const double myTime = cpuTime();
     minNumVars = newNumVars;
-    Searcher::saveVarMem();
+    Searcher::save_on_var_memory();
 
     litReachable.resize(nVars()*2);
     litReachable.shrink_to_fit();
-    varReplacer->saveVarMem();
+    varReplacer->save_on_var_memory();
     if (simplifier) {
-        simplifier->saveVarMem();
+        simplifier->save_on_var_memory();
     }
     if (conf.doCompHandler) {
-        compHandler->saveVarMem();
+        compHandler->save_on_var_memory();
     }
-    datasync->saveVarMem();
+    datasync->save_on_var_memory();
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
@@ -2161,7 +2161,7 @@ void Solver::print_mem_stats() const
         );
         account += mem;
 
-        mem = simplifier->memUsedXor();
+        mem = simplifier->mem_used_xor();
         print_stats_line("c Mem for xor-finder"
             , mem/(1024UL*1024UL)
             , "MB"
