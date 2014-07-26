@@ -54,7 +54,7 @@ CompFinder::CompFinder(Solver* _solver) :
 {
 }
 
-void CompFinder::time_out_print(const double myTime)
+void CompFinder::time_out_print(const double myTime) const
 {
     if (solver->conf.verbosity >= 2) {
         cout
@@ -98,7 +98,7 @@ void CompFinder::print_found_components() const
     }
 }
 
-bool CompFinder::reverse_table_is_correct()
+bool CompFinder::reverse_table_is_correct() const
 {
     for (map<uint32_t, vector<Var> >::const_iterator
         it = reverseTable.begin()
@@ -136,7 +136,13 @@ bool CompFinder::find_components()
     timedout = false;
     add_clauses_to_component(solver->longIrredCls);
     addToCompImplicits();
+    print_and_add_to_sql_result(myTime);
 
+    return solver->okay();
+}
+
+void CompFinder::print_and_add_to_sql_result(const double myTime) const
+{
     const double time_used = cpuTime() - myTime;
     const double time_remain = (double)bogoprops/(double)solver->conf.compFindLimitMega;
 
@@ -157,11 +163,9 @@ bool CompFinder::find_components()
             << solver->conf.print_times(time_used)
             << endl;
 
-            if (reverseTable.size() == 1) {
-                return solver->okay();
+            if (reverseTable.size() != 1) {
+                print_found_components();
             }
-
-            print_found_components();
         }
     }
 
@@ -174,8 +178,6 @@ bool CompFinder::find_components()
             , time_remain
         );
      }
-
-    return solver->okay();
 }
 
 void CompFinder::add_clauses_to_component(const vector<ClOffset>& cs)

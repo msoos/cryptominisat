@@ -60,9 +60,10 @@ class CompFinder {
         void fill_newset_and_tomerge(const T& cl);
         void merge_newset_into_single_component();
 
-        void time_out_print(const double myTime);
+        void time_out_print(const double myTime) const;
         void print_found_components() const;
-        bool reverse_table_is_correct();
+        bool reverse_table_is_correct() const;
+        void print_and_add_to_sql_result(const double myTime) const;
 
         struct MySorter
         {
