@@ -134,12 +134,6 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     solver->unsetDecisionVar(orig);
     solver->setDecisionVar(replaced_with);
-
-    //Update activities. Top receives activities of the ones below
-    //The activities of the others don't need to be updated -- they are not
-    //set to be decision vars anyway
-    solver->activities[replaced_with] += solver->activities[orig];
-    solver->order_heap.update(replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
