@@ -75,14 +75,6 @@ using std::endl;
 Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     Searcher(_conf, this, _needToInterrupt)
     , mtrand(_conf.origSeed)
-    , clauseCleaner(NULL)
-    , varReplacer(NULL)
-    , subsumeImplicit(NULL)
-    , prober(NULL)
-    , simplifier(NULL)
-    , vivifier(NULL)
-    , strengthener(NULL)
-    , compHandler(NULL)
 {
     parse_sql_option();
 
