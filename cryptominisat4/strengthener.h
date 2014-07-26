@@ -51,7 +51,7 @@ class Strengthener {
             }
 
             Stats& operator+=(const Stats& other);
-            void printShort(const Solver* solver) const;
+            void print_short(const Solver* solver) const;
             void print() const;
 
             struct CacheBased
@@ -72,7 +72,7 @@ class Strengthener {
                     *this = tmp;
                 }
 
-                void printShort(const string type, const Solver* solver) const;
+                void print_short(const string type, const Solver* solver) const;
                 void print() const
                 {
                     print_stats_line("c time"
@@ -126,7 +126,7 @@ class Strengthener {
             CacheBased redCacheBased;
         };
 
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
 
     private:
 
@@ -298,7 +298,7 @@ class Strengthener {
 
 };
 
-inline const Strengthener::Stats& Strengthener::getStats() const
+inline const Strengthener::Stats& Strengthener::get_stats() const
 {
     return globalStats;
 }

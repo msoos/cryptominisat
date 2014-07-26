@@ -70,7 +70,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver);
+            runStats.print_short(solver);
     }
     runStats.clear();
 
@@ -382,7 +382,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
         }
 
         //Make new clause
-        Clause *cl2 = solver->addClauseInt(lits, red);
+        Clause *cl2 = solver->add_clause_int(lits, red);
 
         //Print results
         if (solver->conf.verbosity >= 5) {
@@ -440,7 +440,7 @@ Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Vivifier::Stats::printShort(const Solver* solver) const
+void Vivifier::Stats::print_short(const Solver* solver) const
 {
     cout
     << "c [vivif] asymm (tri+long)"

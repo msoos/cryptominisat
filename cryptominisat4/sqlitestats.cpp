@@ -487,8 +487,8 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varSetPos);
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varSetNeg);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_free_vars());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->getNumVarsReplaced());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->getNumVarsElimed());
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_vars_replaced());
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_vars_elimed());
     sqlite3_bind_int64(stmtRst, bindAt++, search->getTrailSize());
 
     int rc = sqlite3_step(stmtRst);

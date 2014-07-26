@@ -80,7 +80,7 @@ void CleaningStats::print(const size_t nbReduceDB) const
     cout << "c ------ CLEANING STATS END ---------" << endl;
 }
 
-void CleaningStats::printShort(const Solver* solver) const
+void CleaningStats::print_short(const Solver* solver) const
 {
     //Pre-clean
     cout

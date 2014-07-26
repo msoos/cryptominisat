@@ -52,7 +52,7 @@ class DataSync
             uint32_t sentBinData = 0;
             uint32_t recvBinData = 0;
         };
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
 
     private:
         //functions
@@ -85,7 +85,7 @@ class DataSync
         vector<uint32_t> outer_to_without_bva_map;
 };
 
-inline const DataSync::Stats& DataSync::getStats() const
+inline const DataSync::Stats& DataSync::get_stats() const
 {
     return stats;
 }

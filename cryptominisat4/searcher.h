@@ -411,11 +411,11 @@ class Searcher : public HyperEngine
                 );
             }
 
-            void printShort() const
+            void print_short() const
             {
                 //Restarts stats
                 printCommon();
-                conflStats.printShort(cpu_time);
+                conflStats.print_short(cpu_time);
 
                 print_stats_line("c conf lits non-minim"
                     , litsRedNonMin
@@ -789,7 +789,7 @@ class Searcher : public HyperEngine
 
         uint64_t more_red_minim_limit_binary_actual;
         uint64_t more_red_minim_limit_cache_actual;
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
         size_t mem_used() const;
 
     private:
@@ -954,7 +954,7 @@ inline uint32_t Searcher::abstractLevel(const Var x) const
     return ((uint32_t)1) << (varData[x].level % 32);
 }
 
-inline const Searcher::Stats& Searcher::getStats() const
+inline const Searcher::Stats& Searcher::get_stats() const
 {
     return stats;
 }

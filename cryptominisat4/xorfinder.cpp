@@ -152,7 +152,7 @@ bool XorFinder::findXors()
     }
 
     if (solver->conf.verbosity >= 1) {
-        runStats.printShort();
+        runStats.print_short();
     }
 
     globalStats += runStats;
@@ -813,7 +813,7 @@ size_t XorFinder::mem_used() const
     return mem;
 }
 
-void XorFinder::Stats::printShort() const
+void XorFinder::Stats::print_short() const
 {
     cout
     << "c XOR finding "

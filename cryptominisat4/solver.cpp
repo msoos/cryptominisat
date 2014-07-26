@@ -324,7 +324,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             new_lits.push_back(lits[at] ^ xorwith);
         }
         //cout << "Added. " << new_lits << endl;
-        Clause* cl = addClauseInt(new_lits, false, ClauseStats(), attach, NULL, addDrup);
+        Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrup);
         if (cl) {
             longIrredCls.push_back(cl_alloc.getOffset(cl));
         }
@@ -355,7 +355,7 @@ This code is very specific in that it must NOT be called with varibles in
 when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
-Clause* Solver::addClauseInt(
+Clause* Solver::add_clause_int(
     const vector<Lit>& lits
     , const bool red
     , ClauseStats stats
@@ -368,7 +368,7 @@ Clause* Solver::addClauseInt(
     assert(decisionLevel() == 0);
     assert(!attach || qhead == trail.size());
     #ifdef VERBOSE_DEBUG
-    cout << "addClauseInt clause " << lits << endl;
+    cout << "add_clause_int clause " << lits << endl;
     #endif //VERBOSE_DEBUG
 
     //Make stats sane
@@ -403,7 +403,7 @@ Clause* Solver::addClauseInt(
     ps.resize(ps.size() - (i - j));
 
     #ifdef VERBOSE_DEBUG
-    cout << "addClauseInt final clause " << ps << endl;
+    cout << "add_clause_int final clause " << ps << endl;
     #endif
 
     //If caller required final set of lits, return it.
@@ -452,7 +452,7 @@ Clause* Solver::addClauseInt(
 
             return NULL;
         case 2:
-            attachBinClause(ps[0], ps[1], red);
+            attach_bin_clause(ps[0], ps[1], red);
             return NULL;
 
         case 3:
@@ -462,7 +462,7 @@ Clause* Solver::addClauseInt(
             << ps[2]
             << endl;*/
 
-            attachTriClause(ps[0], ps[1], ps[2], red);
+            attach_tri_clause(ps[0], ps[1], ps[2], red);
             return NULL;
 
         default:
@@ -508,7 +508,7 @@ void Solver::attachClause(
     PropEngine::attachClause(cl, checkAttach);
 }
 
-void Solver::attachTriClause(
+void Solver::attach_tri_clause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
@@ -528,10 +528,10 @@ void Solver::attachTriClause(
     }
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachTriClause(lit1, lit2, lit3, red);
+    PropEngine::attach_tri_clause(lit1, lit2, lit3, red);
 }
 
-void Solver::attachBinClause(
+void Solver::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
@@ -550,10 +550,10 @@ void Solver::attachBinClause(
     binTri.numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attachBinClause(lit1, lit2, red, checkUnassignedFirst);
+    PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);
 }
 
-void Solver::detachTriClause(
+void Solver::detach_tri_clause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
@@ -566,10 +566,10 @@ void Solver::detachTriClause(
         binTri.irredTris--;
     }
 
-    PropEngine::detachTriClause(lit1, lit2, lit3, red, allow_empty_watch);
+    PropEngine::detach_tri_clause(lit1, lit2, lit3, red, allow_empty_watch);
 }
 
-void Solver::detachBinClause(
+void Solver::detach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
@@ -581,7 +581,7 @@ void Solver::detachBinClause(
         binTri.irredBins--;
     }
 
-    PropEngine::detachBinClause(lit1, lit2, red, allow_empty_watch);
+    PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch);
 }
 
 void Solver::detachClause(const Clause& cl, const bool removeDrup)
@@ -591,7 +591,7 @@ void Solver::detachClause(const Clause& cl, const bool removeDrup)
     }
 
     assert(cl.size() > 3);
-    detachModifiedClause(cl[0], cl[1], cl.size(), &cl);
+    detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
 }
 
 void Solver::detachClause(const ClOffset offset, const bool removeDrup)
@@ -600,7 +600,7 @@ void Solver::detachClause(const ClOffset offset, const bool removeDrup)
     detachClause(*cl, removeDrup);
 }
 
-void Solver::detachModifiedClause(
+void Solver::detach_modified_clause(
     const Lit lit1
     , const Lit lit2
     , const uint32_t origSize
@@ -613,7 +613,7 @@ void Solver::detachModifiedClause(
         litStats.irredLits -= origSize;
 
     //Call heavy-lifter
-    PropEngine::detachModifiedClause(lit1, lit2, origSize, address);
+    PropEngine::detach_modified_clause(lit1, lit2, origSize, address);
 }
 
 bool Solver::addClauseHelper(vector<Lit>& ps)
@@ -649,7 +649,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Undo var replacement
     for (Lit& lit: ps) {
-        const Lit updated_lit = varReplacer->getLitReplacedWithOuter(lit);
+        const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
         if (conf.verbosity >= 12
             && lit != updated_lit
         ) {
@@ -687,7 +687,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Check renumberer
     for (const Lit lit: ps) {
-        const Lit updated_lit = varReplacer->getLitReplacedWith(lit);
+        const Lit updated_lit = varReplacer->get_lit_replaced_with(lit);
         assert(lit == updated_lit);
     }
 
@@ -706,7 +706,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Check
     for (Lit& lit: ps) {
-        const Lit updated_lit = varReplacer->getLitReplacedWith(lit);
+        const Lit updated_lit = varReplacer->get_lit_replaced_with(lit);
         assert(lit == updated_lit);
     }
 
@@ -745,7 +745,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     finalCl_tmp.clear();
     std::stable_sort(ps.begin(), ps.end());
-    Clause* cl = addClauseInt(
+    Clause* cl = add_clause_int(
         ps
         , false //irred
         , ClauseStats() //default stats
@@ -790,7 +790,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     if (!addClauseHelper(ps))
         return false;
 
-    Clause* cl = addClauseInt(ps, true, stats);
+    Clause* cl = add_clause_int(ps, true, stats);
     if (cl != NULL) {
         ClOffset offset = cl_alloc.getOffset(cl);
         longRedCls.push_back(offset);
@@ -1209,7 +1209,7 @@ void Solver::check_model_for_assumptions() const
 
 void Solver::check_recursive_minimization_effectiveness(const lbool status)
 {
-    const Searcher::Stats& stats = Searcher::getStats();
+    const Searcher::Stats& stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doRecursiveMinim
         && stats.recMinLitRem + stats.litsRedNonMin > 100000
@@ -1241,12 +1241,12 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
 
 void Solver::check_minimization_effectiveness(const lbool status)
 {
-    const Searcher::Stats& stats = Searcher::getStats();
+    const Searcher::Stats& stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doMinimRedMore
         && stats.moreMinimLitsStart > 100000
     ) {
-        const Searcher::Stats& stats = Searcher::getStats();
+        const Searcher::Stats& stats = Searcher::get_stats();
         double remPercent =
             (double)(stats.moreMinimLitsStart-stats.moreMinimLitsEnd)/
                 (double)(stats.moreMinimLitsStart)*100.0;
@@ -1453,7 +1453,7 @@ lbool Solver::iterate_until_solved()
         check_minimization_effectiveness(status);
 
         //Update stats
-        sumStats += Searcher::getStats();
+        sumStats += Searcher::get_stats();
         sumPropStats += propStats;
         propStats.clear();
         Searcher::resetStats();
@@ -1834,14 +1834,14 @@ void Solver::print_stats() const
     if (conf.verbStats >= 1) {
         print_all_stats();
     } else {
-        printMinStats();
+        print_min_stats();
     }
 }
 
-void Solver::printMinStats() const
+void Solver::print_min_stats() const
 {
     const double cpu_time = cpuTime();
-    sumStats.printShort();
+    sumStats.print_short();
     print_stats_line("c props/decision"
         , (double)propStats.propagations/(double)sumStats.decisions
     );
@@ -1867,44 +1867,44 @@ void Solver::printMinStats() const
     //Failed lit stats
     if (conf.doProbe) {
         print_stats_line("c probing time"
-            , prober->getStats().cpu_time
-            , stats_line_percent(prober->getStats().cpu_time, cpu_time)
+            , prober->get_stats().cpu_time
+            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
             , "% time"
         );
 
-        prober->getStats().printShort(this);
+        prober->get_stats().print_short(this);
     }
     //Simplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c Simplifier time"
-            , simplifier->getStats().totalTime()
-            , stats_line_percent(simplifier->getStats().totalTime() ,cpu_time)
+            , simplifier->get_stats().totalTime()
+            , stats_line_percent(simplifier->get_stats().totalTime() ,cpu_time)
             , "% time"
         );
-        simplifier->getStats().printShort(this, nVars());
+        simplifier->get_stats().print_short(this, nVars());
     }
     print_stats_line("c SCC time"
-        , varReplacer->get_scc_finder()->getStats().cpu_time
-        , stats_line_percent(varReplacer->get_scc_finder()->getStats().cpu_time, cpu_time)
+        , varReplacer->get_scc_finder()->get_stats().cpu_time
+        , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
     );
-    varReplacer->get_scc_finder()->getStats().printShort(NULL);
+    varReplacer->get_scc_finder()->get_stats().print_short(NULL);
     varReplacer->print_some_stats(cpu_time);
 
-    //varReplacer->getStats().printShort(nVars());
+    //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c asymm time"
-                    , vivifier->getStats().time_used
-                    , stats_line_percent(vivifier->getStats().time_used, cpu_time)
+                    , vivifier->get_stats().time_used
+                    , stats_line_percent(vivifier->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , strengthener->getStats().irredCacheBased.cpu_time
-                    , stats_line_percent(strengthener->getStats().irredCacheBased.cpu_time, cpu_time)
+                    , strengthener->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , strengthener->getStats().redCacheBased.cpu_time
-                    , stats_line_percent(strengthener->getStats().redCacheBased.cpu_time, cpu_time)
+                    , strengthener->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
@@ -1968,23 +1968,23 @@ void Solver::print_all_stats() const
     //Failed lit stats
     if (conf.doProbe) {
         print_stats_line("c probing time"
-            , prober->getStats().cpu_time
-            , stats_line_percent(prober->getStats().cpu_time, cpu_time)
+            , prober->get_stats().cpu_time
+            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
             , "% time"
         );
 
-        prober->getStats().print(nVars());
+        prober->get_stats().print(nVars());
     }
 
     //Simplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c Simplifier time"
-            , simplifier->getStats().totalTime()
-            , stats_line_percent(simplifier->getStats().totalTime(), cpu_time)
+            , simplifier->get_stats().totalTime()
+            , stats_line_percent(simplifier->get_stats().totalTime(), cpu_time)
             , "% time"
         );
 
-        simplifier->getStats().print(nVars());
+        simplifier->get_stats().print(nVars());
     }
 
     if (simplifier && conf.doGateFind) {
@@ -1997,43 +1997,43 @@ void Solver::print_all_stats() const
     /*
     //XOR stats
     print_stats_line("c XOR time"
-        , subsumer->getXorFinder()->getStats().totalTime()
-        , subsumer->getXorFinder()->getStats().totalTime()/cpu_time*100.0
+        , subsumer->getXorFinder()->get_stats().totalTime()
+        , subsumer->getXorFinder()->get_stats().totalTime()/cpu_time*100.0
         , "% time"
     );
-    subsumer->getXorFinder()->getStats().print(
+    subsumer->getXorFinder()->get_stats().print(
         subsumer->getXorFinder()->getNumCalls()
     );*/
 
     //VarReplacer stats
     print_stats_line("c SCC time"
-        , varReplacer->get_scc_finder()->getStats().cpu_time
-        , stats_line_percent(varReplacer->get_scc_finder()->getStats().cpu_time, cpu_time)
+        , varReplacer->get_scc_finder()->get_stats().cpu_time
+        , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
     );
-    varReplacer->get_scc_finder()->getStats().print();
+    varReplacer->get_scc_finder()->get_stats().print();
 
-    varReplacer->getStats().print(nVars());
+    varReplacer->get_stats().print(nVars());
     varReplacer->print_some_stats(cpu_time);
 
     //Vivifier-ASYMM stats
     print_stats_line("c vivif time"
-                    , vivifier->getStats().time_used
-                    , stats_line_percent(vivifier->getStats().time_used, cpu_time)
+                    , vivifier->get_stats().time_used
+                    , stats_line_percent(vivifier->get_stats().time_used, cpu_time)
                     , "% time");
     print_stats_line("c strength cache-irred time"
-                    , strengthener->getStats().irredCacheBased.cpu_time
-                    , stats_line_percent(strengthener->getStats().irredCacheBased.cpu_time, cpu_time)
+                    , strengthener->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time");
     print_stats_line("c strength cache-red time"
-                    , strengthener->getStats().redCacheBased.cpu_time
-                    , stats_line_percent(strengthener->getStats().redCacheBased.cpu_time, cpu_time)
+                    , strengthener->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
-    vivifier->getStats().print(nVars());
-    strengthener->getStats().print();
+    vivifier->get_stats().print(nVars());
+    strengthener->get_stats().print();
 
     if (conf.doStrSubImplicit) {
-        subsumeImplicit->getStats().print();
+        subsumeImplicit->get_stats().print();
     }
 
     if (conf.doCache) {
@@ -2246,7 +2246,7 @@ vector<Lit> Solver::get_zero_assigned_lits() const
             Lit lit(i, assigns[i] == l_False);
 
             //Update to higher-up
-            lit = varReplacer->getLitReplacedWith(lit);
+            lit = varReplacer->get_lit_replaced_with(lit);
             if (varData[lit.var()].is_bva == false) {
                 lits.push_back(map_inter_to_outer(lit));
             }
@@ -2258,11 +2258,11 @@ vector<Lit> Solver::get_zero_assigned_lits() const
                     continue;
 
                 Lit tmp_lit = Lit(var, false);
-                assert(varReplacer->getLitReplacedWith(tmp_lit).var() == lit.var());
-                if (lit != varReplacer->getLitReplacedWith(tmp_lit)) {
+                assert(varReplacer->get_lit_replaced_with(tmp_lit).var() == lit.var());
+                if (lit != varReplacer->get_lit_replaced_with(tmp_lit)) {
                     tmp_lit ^= true;
                 }
-                assert(lit == varReplacer->getLitReplacedWith(tmp_lit));
+                assert(lit == varReplacer->get_lit_replaced_with(tmp_lit));
 
                 lits.push_back(map_inter_to_outer(tmp_lit));
             }
@@ -2591,7 +2591,7 @@ size_t Solver::get_num_free_vars() const
     }
 
     if (conf.perform_occur_based_simp) {
-        freeVars -= simplifier->getStats().numVarsElimed;
+        freeVars -= simplifier->get_stats().numVarsElimed;
     }
     freeVars -= varReplacer->getNumReplacedVars();
 
@@ -2919,28 +2919,28 @@ void Solver::check_implicit_propagated() const
     }
 }
 
-size_t Solver::getNumVarsElimed() const
+size_t Solver::get_num_vars_elimed() const
 {
     if (conf.perform_occur_based_simp) {
-        return simplifier->getStats().numVarsElimed;
+        return simplifier->get_stats().numVarsElimed;
     } else {
         return 0;
     }
 }
 
-size_t Solver::getNumVarsReplaced() const
+size_t Solver::get_num_vars_replaced() const
 {
     return varReplacer->getNumReplacedVars();
 }
 
-Lit Solver::updateLitForDomin(Lit lit) const
+Lit Solver::update_lit_for_domin(Lit lit) const
 {
     //Nothing to update
     if (lit == lit_Undef)
         return lit;
 
     //Update to parent
-    lit = varReplacer->getLitReplacedWith(lit);
+    lit = varReplacer->get_lit_replaced_with(lit);
 
     //If parent is removed, then this dominator cannot be updated
     if (varData[lit.var()].removed != Removed::none)
@@ -2953,7 +2953,7 @@ void Solver::update_dominators()
 {
     for(Timestamp& tstamp: stamp.tstamp) {
         for(size_t i = 0; i < 2; i++) {
-            Lit newLit = updateLitForDomin(tstamp.dominator[i]);
+            Lit newLit = update_lit_for_domin(tstamp.dominator[i]);
             tstamp.dominator[i] = newLit;
             if (newLit == lit_Undef)
                 tstamp.numDom[i] = 0;
@@ -3038,7 +3038,7 @@ void Solver::free_unused_watches()
     watches.consolidate();
 }
 
-bool Solver::enqueueThese(const vector<Lit>& toEnqueue)
+bool Solver::enqueue_these(const vector<Lit>& toEnqueue)
 {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -3075,7 +3075,7 @@ void Solver::new_external_vars(size_t n)
 void Solver::add_in_partial_solving_stats()
 {
     Searcher::add_in_partial_solving_stats();
-    sumStats += Searcher::getStats();
+    sumStats += Searcher::get_stats();
     sumPropStats += propStats;
 }
 
@@ -3212,7 +3212,7 @@ void Solver::ReachabilityStats::print() const
     cout << "c ------- REACHABILITY STATS END -------" << endl;
 }
 
-void Solver::ReachabilityStats::printShort(const Solver* solver) const
+void Solver::ReachabilityStats::print_short(const Solver* solver) const
 {
     cout
     << "c [reach]"

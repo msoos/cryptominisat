@@ -220,7 +220,7 @@ class Prober {
                 cout << "c -------- PROBE STATS END ----------" << endl;
             }
 
-            void printShort(const Solver* solver) const;
+            void print_short(const Solver* solver) const;
 
             //Time
             double cpu_time;
@@ -252,7 +252,7 @@ class Prober {
             uint64_t bothSameAdded;
         };
 
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
         size_t mem_used() const;
 
     private:
@@ -321,7 +321,7 @@ class Prober {
 
 };
 
-inline const Prober::Stats& Prober::getStats() const
+inline const Prober::Stats& Prober::get_stats() const
 {
     return globalStats;
 }

@@ -50,7 +50,7 @@ class Vivifier {
             }
 
             Stats& operator+=(const Stats& other);
-            void printShort(const Solver* solver) const;
+            void print_short(const Solver* solver) const;
             void print(const size_t nVars) const;
 
             //Asymm
@@ -64,7 +64,7 @@ class Vivifier {
             uint64_t numCalled = 0;
         };
 
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
 
     private:
 
@@ -91,7 +91,7 @@ class Vivifier {
 
 };
 
-inline const Vivifier::Stats& Vivifier::getStats() const
+inline const Vivifier::Stats& Vivifier::get_stats() const
 {
     return globalStats;
 }

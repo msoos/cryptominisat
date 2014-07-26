@@ -1203,8 +1203,8 @@ void MySQLStats::restart(
     stmtRst.varSetPos       = thisPropStats.varSetPos;
     stmtRst.varSetNeg       = thisPropStats.varSetNeg;
     stmtRst.numFreeVars     = solver->get_num_free_vars();
-    stmtRst.numReplacedVars = solver->getNumVarsReplaced();
-    stmtRst.numVarsElimed   = solver->getNumVarsElimed();
+    stmtRst.numReplacedVars = solver->get_num_vars_replaced();
+    stmtRst.numVarsElimed   = solver->get_num_vars_elimed();
     stmtRst.trailSize       = search->getTrailSize();
 
     if (mysql_stmt_execute(stmtRst.stmt)) {

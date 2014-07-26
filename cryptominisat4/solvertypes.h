@@ -579,7 +579,7 @@ struct ConflStats
         }
     }
 
-    void printShort(double cpu_time) const
+    void print_short(double cpu_time) const
     {
         //Search stats
         print_stats_line("c conflicts", numConflicts
@@ -592,7 +592,7 @@ struct ConflStats
     {
         //Search stats
         cout << "c CONFLS stats" << endl;
-        printShort(cpu_time);
+        print_short(cpu_time);
 
         print_stats_line("c conflsBinIrred", conflsBinIrred
             , stats_line_percent(conflsBinIrred, numConflicts)

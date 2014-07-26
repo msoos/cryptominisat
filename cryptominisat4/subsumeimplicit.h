@@ -48,7 +48,7 @@ public:
             *this = Stats();
         }
         Stats operator+=(const Stats& other);
-        void printShort(const Solver* solver) const;
+        void print_short(const Solver* solver) const;
         void print() const;
 
         double time_used = 0.0;
@@ -60,7 +60,7 @@ public:
         uint64_t cacheTriRem = 0;
         uint64_t numWatchesLooked = 0;
     };
-    Stats getStats() const;
+    Stats get_stats() const;
 
 private:
     Solver* solver;

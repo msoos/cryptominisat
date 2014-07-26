@@ -110,8 +110,8 @@ class Solver : public Searcher
         const BinTriStats& getBinTriStats() const;
         size_t   getNumLongIrredCls() const;
         size_t   getNumLongRedCls() const;
-        size_t getNumVarsElimed() const;
-        size_t getNumVarsReplaced() const;
+        size_t get_num_vars_elimed() const;
+        size_t get_num_vars_replaced() const;
         Var numActiveVars() const;
         void print_mem_stats() const;
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
@@ -122,7 +122,7 @@ class Solver : public Searcher
 
         ///Return number of variables waiting to be replaced
         size_t getNewToReplaceVars() const;
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
         uint64_t getNextCleanLimit() const;
 
 
@@ -155,7 +155,7 @@ class Solver : public Searcher
         bool prop_at_head() const;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
-        bool enqueueThese(const vector<Lit>& toEnqueue);
+        bool enqueue_these(const vector<Lit>& toEnqueue);
 
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
@@ -174,26 +174,26 @@ class Solver : public Searcher
             const Clause& c
             , const bool checkAttach = true
         ) override;
-        void attachBinClause(
+        void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
             , const bool red
             , const bool checkUnassignedFirst = true
         ) override;
-        void attachTriClause(
+        void attach_tri_clause(
             const Lit lit1
             , const Lit lit2
             , const Lit lit3
             , const bool red
         ) override;
-        void detachTriClause(
+        void detach_tri_clause(
             Lit lit1
             , Lit lit2
             , Lit lit3
             , bool red
             , bool allow_empty_watch = false
         ) override;
-        void detachBinClause(
+        void detach_bin_clause(
             Lit lit1
             , Lit lit2
             , bool red
@@ -201,13 +201,13 @@ class Solver : public Searcher
         ) override;
         void detachClause(const Clause& c, const bool removeDrup = true);
         void detachClause(const ClOffset offset, const bool removeDrup = true);
-        void detachModifiedClause(
+        void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
             , const uint32_t origSize
             , const Clause* address
         ) override;
-        Clause* addClauseInt(
+        Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
             , const ClauseStats stats = ClauseStats()
@@ -241,7 +241,7 @@ class Solver : public Searcher
         {
             ReachabilityStats& operator+=(const ReachabilityStats& other);
             void print() const;
-            void printShort(const Solver* solver) const;
+            void print_short(const Solver* solver) const;
 
             double cpu_time = 0.0;
             size_t numLits = 0;
@@ -266,7 +266,7 @@ class Solver : public Searcher
         void checkDecisionVarCorrectness() const;
 
         //Stats printing
-        void printMinStats() const;
+        void print_min_stats() const;
         void print_all_stats() const;
 
         lbool simplify_problem();
@@ -327,7 +327,7 @@ class Solver : public Searcher
 
         //////////////////
         // Stamping
-        Lit updateLitForDomin(Lit lit) const;
+        Lit update_lit_for_domin(Lit lit) const;
         void update_dominators();
 
         /////////////////
@@ -366,7 +366,7 @@ inline uint64_t Solver::getNumLongClauses() const
     return longIrredCls.size() + longRedCls.size();
 }
 
-inline const Searcher::Stats& Solver::getStats() const
+inline const Searcher::Stats& Solver::get_stats() const
 {
     return sumStats;
 }

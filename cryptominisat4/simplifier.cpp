@@ -345,12 +345,12 @@ lbool Simplifier::cleanClause(ClOffset offset)
             return l_True;
 
         case 2:
-            solver->attachBinClause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red());
             unlinkClause(offset, false);
             return l_True;
 
         case 3:
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
+            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             unlinkClause(offset, false);
             return l_True;
 
@@ -639,11 +639,11 @@ bool Simplifier::completeCleanClause(Clause& cl)
             return false;
 
         case 2:
-            solver->attachBinClause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red());
             return false;
 
         case 3:
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
+            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return false;
 
         default:
@@ -997,7 +997,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver, solver->conf.doVarElim);
+            runStats.print_short(solver, solver->conf.doVarElim);
     }
 
     return solver->ok;
@@ -1404,7 +1404,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             //Remove
             *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
-            solver->detachBinClause(lits[0], lits[1], red, true);
+            solver->detach_bin_clause(lits[0], lits[1], red, true);
         }
 
         if (watch.isTri()) {
@@ -1437,7 +1437,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
             *limit_to_decrease -= (long)solver->watches[lits[2].toInt()].size();
-            solver->detachTriClause(lits[0], lits[1], lits[2], watch.red(), true);
+            solver->detach_tri_clause(lits[0], lits[1], lits[2], watch.red(), true);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
@@ -1923,7 +1923,7 @@ bool Simplifier::add_varelim_resolvent(
         << endl;
     }
 
-    newCl = solver->addClauseInt(
+    newCl = solver->add_clause_int(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
         , stats //Statistics for this new clause (usage, etc.)
@@ -2112,7 +2112,7 @@ end:
 
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = solver->addClauseInt(tmp, true);
+            Clause* tmpOK = solver->add_clause_int(tmp, true);
             runStats.numRedBinVarRemAdded++;
             release_assert(tmpOK == NULL);
             release_assert(solver->ok);
@@ -2830,7 +2830,7 @@ void Simplifier::linkInClause(Clause& cl)
 void Simplifier::printGateFinderStats() const
 {
     if (gateFinder) {
-        gateFinder->getStats().print(solver->nVarsOuter());
+        gateFinder->get_stats().print(solver->nVarsOuter());
     }
 }
 
@@ -2886,7 +2886,7 @@ Simplifier::Stats& Simplifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Simplifier::Stats::printShort(const Solver* solver, const bool print_var_elim) const
+void Simplifier::Stats::print_short(const Solver* solver, const bool print_var_elim) const
 {
 
     cout

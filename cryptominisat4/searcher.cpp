@@ -980,7 +980,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     //There are things to enqueue at top-level
     if (!to_enqueue_toplevel.empty()) {
         solver->cancelUntil(0);
-        bool ret = solver->enqueueThese(to_enqueue_toplevel);
+        bool ret = solver->enqueue_these(to_enqueue_toplevel);
         if (!ret) {
             return l_False;
         }
@@ -1361,9 +1361,9 @@ void Searcher::add_otf_subsume_implicit_clause()
             //Attach new binary/tertiary clause
             if (it->size == 2) {
                 solver->datasync->signalNewBinClause(it->lits);
-                solver->attachBinClause(it->lits[0], it->lits[1], true);
+                solver->attach_bin_clause(it->lits[0], it->lits[1], true);
             } else {
-                solver->attachTriClause(it->lits[0], it->lits[1], it->lits[2], true);
+                solver->attach_tri_clause(it->lits[0], it->lits[1], it->lits[2], true);
             }
         }
     }
@@ -1443,7 +1443,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             //Binary learnt
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
-            solver->attachBinClause(learnt_clause[0], learnt_clause[1], true);
+            solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true);
             if (do_otf_this_round && decisionLevel() == 1)
                 enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
             else
@@ -1458,7 +1458,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             //3-long learnt
             stats.learntTris++;
             std::stable_sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
-            solver->attachTriClause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
+            solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (do_otf_this_round && decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
@@ -2590,7 +2590,7 @@ uint64_t Searcher::sumConflicts() const
 
 uint64_t Searcher::sumRestarts() const
 {
-    return stats.numRestarts + solver->getStats().numRestarts;
+    return stats.numRestarts + solver->get_stats().numRestarts;
 }
 
 size_t Searcher::hyperBinResAll()
@@ -2620,7 +2620,7 @@ size_t Searcher::hyperBinResAll()
         }
 
         assert(val1 == l_Undef && val2 == l_Undef);
-        solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
+        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, false);
         added++;
     }
     solver->needToAddBinClause.clear();

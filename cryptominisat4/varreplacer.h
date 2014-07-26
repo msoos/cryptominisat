@@ -62,8 +62,8 @@ class VarReplacer
 
         Var getVarReplacedWith(const Var var) const;
         Var getVarReplacedWith(const Lit lit) const;
-        Lit getLitReplacedWith(Lit lit) const;
-        Lit getLitReplacedWithOuter(Lit lit) const;
+        Lit get_lit_replaced_with(Lit lit) const;
+        Lit get_lit_replaced_with_outer(Lit lit) const;
 
         vector<Var> get_vars_replacing(Var var) const;
         void updateVars(
@@ -85,7 +85,7 @@ class VarReplacer
 
             Stats& operator+=(const Stats& other);
             void print(const size_t nVars) const;
-            void printShort(const Solver* solver) const;
+            void print_short(const Solver* solver) const;
 
             uint64_t numCalls = 0;
             double cpu_time = 0;
@@ -97,7 +97,7 @@ class VarReplacer
             uint64_t removedLongClauses = 0;
             uint64_t removedLongLits = 0;
         };
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
         size_t mem_used() const;
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
 
@@ -270,7 +270,7 @@ inline size_t VarReplacer::getNumTrees() const
     return reverseTable.size();
 }
 
-inline const VarReplacer::Stats& VarReplacer::getStats() const
+inline const VarReplacer::Stats& VarReplacer::get_stats() const
 {
     return globalStats;
 }

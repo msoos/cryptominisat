@@ -167,7 +167,7 @@ public:
         }
 
         Stats& operator+=(const Stats& other);
-        void printShort() const;
+        void print_short() const;
         void print(const size_t numCalls) const;
 
         //Time
@@ -189,7 +189,7 @@ public:
         size_t zeroDepthAssigns = 0;
     };
 
-    const Stats& getStats() const;
+    const Stats& get_stats() const;
     size_t getNumCalls() const;
     virtual size_t mem_used() const;
 
@@ -385,7 +385,7 @@ inline bool FoundXors::bit(const uint32_t a, const uint32_t b) const
     return (((a)>>(b))&1);
 }
 
-inline const XorFinder::Stats& XorFinder::getStats() const
+inline const XorFinder::Stats& XorFinder::get_stats() const
 {
     return globalStats;
 }

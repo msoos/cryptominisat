@@ -111,7 +111,7 @@ public:
     struct Stats
     {
         void print(const size_t nVars) const;
-        void printShort(const Solver* solver, const bool print_var_elim = true) const;
+        void print_short(const Solver* solver, const bool print_var_elim = true) const;
         Stats& operator+=(const Stats& other);
         void clear();
         double totalTime() const;
@@ -153,7 +153,7 @@ public:
         uint64_t zeroDepthAssings = 0;
     };
 
-    const Stats& getStats() const;
+    const Stats& get_stats() const;
     const SubsumeStrengthen* getSubsumeStrengthen() const;
     void checkElimedUnassigned() const;
     bool getAnythingHasBeenBlocked() const;
@@ -425,7 +425,7 @@ private:
     Stats globalStats;
 };
 
-inline const Simplifier::Stats& Simplifier::getStats() const
+inline const Simplifier::Stats& Simplifier::get_stats() const
 {
     return globalStats;
 }

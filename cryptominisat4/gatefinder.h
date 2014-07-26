@@ -126,7 +126,7 @@ public:
         }
         Stats& operator+=(const Stats& other);
         void print(const size_t nVars) const;
-        void printShort(const Solver* solver) const;
+        void print_short(const Solver* solver) const;
 
         //Time
         double findGateTime = 0.0;
@@ -161,7 +161,7 @@ public:
         uint64_t numIrred = 0;
     };
 
-    const Stats& getStats() const;
+    const Stats& get_stats() const;
 
 private:
     //Setup
@@ -320,7 +320,7 @@ private:
     vector<Lit>& toClear;
 };
 
-inline const GateFinder::Stats& GateFinder::getStats() const
+inline const GateFinder::Stats& GateFinder::get_stats() const
 {
     return globalStats;
 }

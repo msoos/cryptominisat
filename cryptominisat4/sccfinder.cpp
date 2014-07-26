@@ -71,7 +71,7 @@ bool SCCFinder::performSCC()
         if (solver->conf.verbosity >= 3)
             runStats.print();
         else
-            runStats.printShort(solver);
+            runStats.print_short(solver);
     }
     globalStats += runStats;
     solver->binTri.numNewBinsSinceSCC = 0;
@@ -172,7 +172,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     }
 }
 
-void SCCFinder::Stats::printShort(Solver* solver) const
+void SCCFinder::Stats::print_short(Solver* solver) const
 {
     cout
     << "c [scc]"

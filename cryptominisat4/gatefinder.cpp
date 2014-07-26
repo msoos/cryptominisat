@@ -64,7 +64,7 @@ end:
             runStats.print(solver->nVars());
             printGateStats();
         } else {
-            runStats.printShort(solver);
+            runStats.print_short(solver);
         }
     }
     globalStats += runStats;
@@ -457,7 +457,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         //Free the old clause and allocate new one
         (*solver->drup) << deldelay << cl << fin;
         simplifier->unlinkClause(offset, false, false, true);
-        Clause* cl2 = solver->addClauseInt(lits, red, stats, false);
+        Clause* cl2 = solver->add_clause_int(lits, red, stats, false);
         (*solver->drup) << findelay;
         if (!solver->ok)
             return false;
@@ -799,9 +799,9 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
             runStats.clauseSizeRem += 3;
 
             tri_to_unlink.insert(TriToUnlink(ws.lit2(), ws.lit3(), ws.red()));
-            solver->detachTriClause(~(gate.lit2), other_ws.lit2(), other_ws.lit3(), other_ws.red());
+            solver->detach_tri_clause(~(gate.lit2), other_ws.lit2(), other_ws.lit3(), other_ws.red());
             vector<Lit> lits = {~(gate.eqLit), ws.lit2(), ws.lit3()};
-            solver->addClauseInt(
+            solver->add_clause_int(
                 lits
                 , ws.red() && other_ws.red()
                 , ClauseStats()
@@ -821,7 +821,7 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
     seen2Set.clear();
 
     for(const TriToUnlink tri: tri_to_unlink) {
-        solver->detachTriClause(~(gate.lit1), tri.lit2, tri.lit3, tri.red);
+        solver->detach_tri_clause(~(gate.lit1), tri.lit2, tri.lit3, tri.red);
     }
     tri_to_unlink.clear();
 
@@ -869,7 +869,7 @@ void GateFinder::treatAndGateClause(
     }
 
     //Create and link in new clause
-    Clause* clNew = solver->addClauseInt(lits, red, stats, false);
+    Clause* clNew = solver->add_clause_int(lits, red, stats, false);
     if (clNew != NULL) {
         simplifier->linkInClause(*clNew);
         ClOffset offsetNew = solver->cl_alloc.getOffset(clNew);
@@ -1134,7 +1134,7 @@ void GateFinder::Stats::print(const size_t nVars) const
     cout << "c -------- GATE FINDING END ----------" << endl;
 }
 
-void GateFinder::Stats::printShort(const Solver* solver) const
+void GateFinder::Stats::print_short(const Solver* solver) const
 {
     //Gate find
     cout << "c [gate] found"

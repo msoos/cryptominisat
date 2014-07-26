@@ -175,32 +175,32 @@ protected:
         const Clause& c
         , const bool checkAttach = true
     );
-    virtual void detachTriClause(
+    virtual void detach_tri_clause(
         Lit lit1
         , Lit lit2
         , Lit lit3
         , bool red
         , bool allow_empty_watch = false
     );
-    virtual void detachBinClause(
+    virtual void detach_bin_clause(
         Lit lit1
         , Lit lit2
         , bool red
         , bool allow_empty_watch = false
     );
-    virtual void attachBinClause(
+    virtual void attach_bin_clause(
         const Lit lit1
         , const Lit lit2
         , const bool red
         , const bool checkUnassignedFirst = true
     );
-    virtual void attachTriClause(
+    virtual void attach_tri_clause(
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
         , const bool red
     );
-    virtual void detachModifiedClause(
+    virtual void detach_modified_clause(
         const Lit lit1
         , const Lit lit2
         , const uint32_t origSize

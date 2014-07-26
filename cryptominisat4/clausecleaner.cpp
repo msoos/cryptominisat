@@ -235,7 +235,7 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
         }
 
         if (val == l_True) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
+            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
             (*solver->drup) << findelay;
             return true;
         }
@@ -250,12 +250,12 @@ inline bool ClauseCleaner::cleanClause(ClOffset offset)
     assert(cl.size() > 1);
     if (i != j) {
         if (cl.size() == 2) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            solver->attachBinClause(cl[0], cl[1], cl.red());
+            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red());
             return true;
         } else if (cl.size() == 3) {
-            solver->detachModifiedClause(origLit1, origLit2, origSize, &cl);
-            solver->attachTriClause(cl[0], cl[1], cl[2], cl.red());
+            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
+            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return true;
         } else {
             if (cl.red())
@@ -281,7 +281,7 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
     for(const BinaryClause& bincl: toAttach) {
         assert(solver->value(bincl.getLit1()) == l_Undef);
         assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attachBinClause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
+        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
     }
 
     assert(remNonLBin % 2 == 0);

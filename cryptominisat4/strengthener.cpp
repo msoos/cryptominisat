@@ -78,7 +78,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print();
         else
-            runStats.printShort(solver);
+            runStats.print_short(solver);
     }
     runStats.clear();
 
@@ -373,7 +373,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     cache_based_data.remLitBinTri += thisRemLitBinTri;
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
-    Clause* c2 = solver->addClauseInt(lits, cl.red(), cl.stats);
+    Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
         solver->cl_alloc.clauseFree(offset);
@@ -742,7 +742,7 @@ bool Strengthener::strengthenImplicit()
     }
 
     //Enqueue delayed values
-    if (!solver->enqueueThese(str_impl_data.toEnqueue))
+    if (!solver->enqueue_these(str_impl_data.toEnqueue))
         goto end;
 
     //Add delayed binary clauses
@@ -751,7 +751,7 @@ bool Strengthener::strengthenImplicit()
         lits.push_back(bin.getLit1());
         lits.push_back(bin.getLit2());
         timeAvailable -= 5;
-        solver->addClauseInt(lits, bin.isRed());
+        solver->add_clause_int(lits, bin.isRed());
         if (!solver->okay())
             goto end;
     }
@@ -813,10 +813,10 @@ Strengthener::Stats& Strengthener::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Strengthener::Stats::printShort(const Solver* solver) const
+void Strengthener::Stats::print_short(const Solver* solver) const
 {
-    irredCacheBased.printShort("irred", solver);
-    redCacheBased.printShort("red", solver);
+    irredCacheBased.print_short("irred", solver);
+    redCacheBased.print_short("red", solver);
 }
 
 void Strengthener::Stats::print() const
@@ -831,7 +831,7 @@ void Strengthener::Stats::print() const
 }
 
 
-void Strengthener::Stats::CacheBased::printShort(const string type, const Solver* solver) const
+void Strengthener::Stats::CacheBased::print_short(const string type, const Solver* solver) const
 {
     cout << "c [vivif] cache-based "
     << std::setw(5) << type

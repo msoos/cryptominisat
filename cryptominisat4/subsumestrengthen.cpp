@@ -702,7 +702,7 @@ void SubsumeStrengthen::finishedRun()
     globalstats += runStats;
 }
 
-void SubsumeStrengthen::Stats::printShort(const Solver* solver) const
+void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
 {
     cout << "c [subs] long"
     << " subBySub: " << subsumedBySub

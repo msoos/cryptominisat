@@ -92,10 +92,10 @@ class SCCFinder {
                 cout << "c ----- SCC STATS END --------" << endl;
             }
 
-            void printShort(Solver* solver) const;
+            void print_short(Solver* solver) const;
         };
 
-        const Stats& getStats() const;
+        const Stats& get_stats() const;
         size_t mem_used() const;
 
     private:
@@ -128,7 +128,7 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     }
 }
 
-inline const SCCFinder::Stats& SCCFinder::getStats() const
+inline const SCCFinder::Stats& SCCFinder::get_stats() const
 {
     return globalStats;
 }

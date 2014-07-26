@@ -341,7 +341,7 @@ bool BVA::bva_simplify_system()
             bva_tmp_lits.push_back(m_lit.lit2);
         }
         bva_tmp_lits.push_back(new_lit);
-        solver->addClauseInt(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
+        solver->add_clause_int(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
         touched.touch(bva_tmp_lits);
     }
 
@@ -442,7 +442,7 @@ void BVA::remove_matching_clause(
             //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
-            solver->detachBinClause(to_remove[0], to_remove[1], red);
+            solver->detach_bin_clause(to_remove[0], to_remove[1], red);
             break;
         }
 
@@ -452,7 +452,7 @@ void BVA::remove_matching_clause(
             //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
-            solver->detachTriClause(to_remove[0], to_remove[1], to_remove[2], red);
+            solver->detach_tri_clause(to_remove[0], to_remove[1], to_remove[2], red);
             break;
         }
 
@@ -511,7 +511,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
             break;
         }
 
@@ -520,7 +520,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
             lits[2] = cl.ws.lit3();
-            solver->addClauseInt(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
             break;
         }
 
@@ -534,7 +534,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                     lits[i] = orig_cl[i];
                 }
             }
-            Clause* newCl = solver->addClauseInt(lits, false, orig_cl.stats, false, &lits, true, new_lit);
+            Clause* newCl = solver->add_clause_int(lits, false, orig_cl.stats, false, &lits, true, new_lit);
             if (newCl != NULL) {
                 simplifier->linkInClause(*newCl);
                 ClOffset offset = solver->cl_alloc.getOffset(newCl);

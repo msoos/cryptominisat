@@ -203,7 +203,7 @@ void Stamp::update_dominators(const VarReplacer* replacer)
 {
     for(size_t l = 0; l < tstamp.size(); l++) {
         Lit lit = Lit::toLit(l);
-        lit = replacer->getLitReplacedWith(lit);
+        lit = replacer->get_lit_replaced_with(lit);
 
         //Variable probably eliminated, decomposed, etc. Skip.
         if (lit.toInt() >= tstamp.size())
@@ -215,7 +215,7 @@ void Stamp::update_dominators(const VarReplacer* replacer)
         for(size_t i2 = 0; i2 < 2; i2++) {
             Lit& dom = tstamp[l].dominator[i2];
             if (dom != lit_Undef) {
-                dom = replacer->getLitReplacedWith(dom);
+                dom = replacer->get_lit_replaced_with(dom);
             }
         }
     }

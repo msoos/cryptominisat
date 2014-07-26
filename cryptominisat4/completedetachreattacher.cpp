@@ -199,12 +199,12 @@ bool CompleteDetachReatacher::cleanClause(Clause* cl)
             return false;
 
         case 2: {
-            solver->attachBinClause(ps[0], ps[1], ps.red());
+            solver->attach_bin_clause(ps[0], ps[1], ps.red());
             return false;
         }
 
         case 3: {
-            solver->attachTriClause(ps[0], ps[1], ps[2], ps.red());
+            solver->attach_tri_clause(ps[0], ps[1], ps[2], ps.red());
             return false;
         }
 

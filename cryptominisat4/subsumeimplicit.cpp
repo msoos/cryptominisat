@@ -248,7 +248,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     runStats.time_used += time_used;
     runStats.time_out += time_out;
     if (solver->conf.verbosity >= 1) {
-        runStats.printShort(solver);
+        runStats.print_short(solver);
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -283,7 +283,7 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
     return *this;
 }
 
-void SubsumeImplicit::Stats::printShort(const Solver* solver) const
+void SubsumeImplicit::Stats::print_short(const Solver* solver) const
 {
     cout
     << "c [impl sub]"
@@ -321,7 +321,7 @@ void SubsumeImplicit::Stats::print() const
     cout << "c -------- IMPLICIT SUB STATS END --------" << endl;
 }
 
-SubsumeImplicit::Stats SubsumeImplicit::getStats() const
+SubsumeImplicit::Stats SubsumeImplicit::get_stats() const
 {
     return globalStats;
 }

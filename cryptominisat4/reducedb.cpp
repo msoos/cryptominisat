@@ -276,7 +276,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     if (solver->conf.verbosity >= 3)
         tmpStats.print(1);
     else if (solver->conf.verbosity >= 1) {
-        tmpStats.printShort(solver);
+        tmpStats.print_short(solver);
     }
     cleaningStats += tmpStats;
 

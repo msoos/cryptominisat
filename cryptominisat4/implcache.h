@@ -204,7 +204,7 @@ public:
         }
 
         TryBothStats& operator+=(const TryBothStats& other);
-        void printShort(Solver* solver) const;
+        void print_short(Solver* solver) const;
 
         uint64_t numCalls = 0;
         double cpu_time = 0;
@@ -216,7 +216,7 @@ public:
 
     TryBothStats runStats;
     TryBothStats globalStats;
-    const TryBothStats& getStats() const
+    const TryBothStats& get_stats() const
     {
         return globalStats;
     }

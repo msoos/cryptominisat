@@ -80,7 +80,7 @@ void PropEngine::saveVarMem()
 }
 
 
-void PropEngine::attachTriClause(
+void PropEngine::attach_tri_clause(
     Lit lit1
     , Lit lit2
     , Lit lit3
@@ -104,7 +104,7 @@ void PropEngine::attachTriClause(
     watches[lit3.toInt()].push(Watched(lit1, lit2, red));
 }
 
-void PropEngine::detachTriClause(
+void PropEngine::detach_tri_clause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
@@ -127,7 +127,7 @@ void PropEngine::detachTriClause(
     }
 }
 
-void PropEngine::detachBinClause(
+void PropEngine::detach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
@@ -141,7 +141,7 @@ void PropEngine::detachBinClause(
     }
 }
 
-void PropEngine::attachBinClause(
+void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
@@ -198,7 +198,7 @@ The first two literals might have chaned through modification, so they are
 passed along as arguments -- they are needed to find the correct place where
 the clause is
 */
-void PropEngine::detachModifiedClause(
+void PropEngine::detach_modified_clause(
     const Lit lit1
     , const Lit lit2
     , const uint32_t origSize
@@ -268,7 +268,7 @@ void PropEngine::lazy_hyper_bin_resolve(
 
     //Is it possible?
     if (OK) {
-        attachBinClause(other, c[0], true, false);
+        attach_bin_clause(other, c[0], true, false);
         #ifdef STATS_NEEDED
         propStats.longLHBR++;
         #endif
@@ -657,7 +657,7 @@ void PropEngine::lazy_hyper_bin_resolve(Lit lit1, Lit lit2)
 {
     Lit lit= varData[lit1.var()].reason.lit2();
 
-    attachBinClause(lit, lit2, true, false);
+    attach_bin_clause(lit, lit2, true, false);
     enqueue(lit2, PropBy(lit));
     #ifdef STATS_NEEDED
     propStats.triLHBR++;

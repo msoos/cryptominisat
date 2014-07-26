@@ -428,7 +428,7 @@ void SolutionExtender::replaceSet(Lit toSet)
 {
     //set forward equivalent
     if (solver->varReplacer->isReplaced(toSet)) {
-        toSet = solver->varReplacer->getLitReplacedWith(toSet);
+        toSet = solver->varReplacer->get_lit_replaced_with(toSet);
         enqueue(toSet);
     }
     replaceBackwardSet(toSet);
@@ -447,7 +447,7 @@ void SolutionExtender::replaceBackwardSet(const Lit toSet)
         for (size_t i = 0; i < toGoThrough.size(); i++) {
             //Get sign of replacement
             const Lit lit = Lit(toGoThrough[i], false);
-            Lit tmp = solver->varReplacer->getLitReplacedWith(lit);
+            Lit tmp = solver->varReplacer->get_lit_replaced_with(lit);
 
             //Set var
             enqueue(lit ^ tmp.sign() ^ toSet.sign());

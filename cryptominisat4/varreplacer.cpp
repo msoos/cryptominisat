@@ -242,7 +242,7 @@ bool VarReplacer::performReplace()
             assert(solver->value(lit) != l_Undef
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
         }
-        lit = getLitReplacedWith(lit);
+        lit = get_lit_replaced_with(lit);
         if (solver->assumptionsSet.size() > lit.var()) {
             solver->assumptionsSet[lit.var()] = true;
         }
@@ -263,7 +263,7 @@ end:
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver);
+            runStats.print_short(solver);
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -319,7 +319,7 @@ void VarReplacer::updateTri(
 
     //Update lit3
     if (getVarReplacedWith(lit3) != lit3.var()) {
-        lit3 = getLitReplacedWith(lit3);
+        lit3 = get_lit_replaced_with(lit3);
         i->setLit3(lit3);
         runStats.replacedLits++;
     }
@@ -528,14 +528,14 @@ bool VarReplacer::replaceImplicit()
             //Update main lit
             Lit lit1 = origLit1;
             if (getVarReplacedWith(lit1) != lit1.var()) {
-                lit1 = getLitReplacedWith(lit1);
+                lit1 = get_lit_replaced_with(lit1);
                 runStats.replacedLits++;
             }
 
             //Update lit2
             Lit lit2 = origLit2;
             if (getVarReplacedWith(lit2) != lit2.var()) {
-                lit2 = getLitReplacedWith(lit2);
+                lit2 = get_lit_replaced_with(lit2);
                 i->setLit2(lit2);
                 runStats.replacedLits++;
             }
@@ -555,7 +555,7 @@ bool VarReplacer::replaceImplicit()
         ; it != end
         ; it++
     ) {
-        solver->attachBinClause(it->getLit1(), it->getLit2(), it->isRed());
+        solver->attach_bin_clause(it->getLit1(), it->getLit2(), it->isRed());
     }
     delayedAttach.clear();
 
@@ -592,7 +592,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         for (Lit& l: c) {
             if (isReplaced(l)) {
                 changed = true;
-                l = getLitReplacedWith(l);
+                l = get_lit_replaced_with(l);
                 runStats.replacedLits++;
             }
         }
@@ -640,7 +640,7 @@ bool VarReplacer::handleUpdatedClause(
     c.shrink(i - j);
     c.setChanged();
 
-    solver->detachModifiedClause(origLit1, origLit2, origSize, &c);
+    solver->detach_modified_clause(origLit1, origLit2, origSize, &c);
 
     #ifdef VERBOSE_DEBUG
     cout << "clause after replacing: " << c << endl;
@@ -665,12 +665,12 @@ bool VarReplacer::handleUpdatedClause(
         runStats.removedLongLits += origSize;
         return true;
     case 2:
-        solver->attachBinClause(c[0], c[1], c.red());
+        solver->attach_bin_clause(c[0], c[1], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
     case 3:
-        solver->attachTriClause(c[0], c[1], c[2], c.red());
+        solver->attach_tri_clause(c[0], c[1], c[2], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
@@ -836,8 +836,8 @@ bool VarReplacer::replace(
     #endif
 
     //Move forward
-    const Lit lit1 = getLitReplacedWith(Lit(var1, false));
-    const Lit lit2 = getLitReplacedWith(Lit(var2, false)) ^ xor_is_true;
+    const Lit lit1 = get_lit_replaced_with(Lit(var1, false));
+    const Lit lit2 = get_lit_replaced_with(Lit(var2, false)) ^ xor_is_true;
 
     //Already inside?
     if (lit1.var() == lit2.var()) {
@@ -918,7 +918,7 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 void VarReplacer::checkUnsetSanity()
 {
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
-        const Lit repLit = getLitReplacedWith(Lit(i, false));
+        const Lit repLit = get_lit_replaced_with(Lit(i, false));
         const Var repVar = getVarReplacedWith(i);
 
         if (solver->varData[i].removed == Removed::none
@@ -929,9 +929,9 @@ void VarReplacer::checkUnsetSanity()
             << "Variable " << (i+1)
             << " has been set to " << solver->value(i)
             << " but it has been replaced with lit "
-            << getLitReplacedWith(Lit(i, false))
+            << get_lit_replaced_with(Lit(i, false))
             << " and that has been set to "
-            << solver->value(getLitReplacedWith(Lit(i, false)))
+            << solver->value(get_lit_replaced_with(Lit(i, false)))
             << endl;
 
             assert(solver->value(i) == solver->value(repLit));
@@ -944,14 +944,14 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
 {
     ps_tmp[0] = Lit(bin_xor.vars[0], false);
     ps_tmp[1] = Lit(bin_xor.vars[1], true ^ bin_xor.rhs);
-    solver->addClauseInt(ps_tmp);
+    solver->add_clause_int(ps_tmp);
     if (!solver->ok) {
         return false;
     }
 
     ps_tmp[0] = Lit(bin_xor.vars[0], true);
     ps_tmp[1] = Lit(bin_xor.vars[1], false ^ bin_xor.rhs);
-    solver->addClauseInt(ps_tmp);
+    solver->add_clause_int(ps_tmp);
     if (!solver->ok) {
         return false;
     }
@@ -1095,7 +1095,7 @@ void VarReplacer::Stats::print(const size_t nVars) const
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
 }
 
-void VarReplacer::Stats::printShort(const Solver* solver) const
+void VarReplacer::Stats::print_short(const Solver* solver) const
 {
     cout
     << "c [vrep]"
@@ -1123,14 +1123,14 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-Lit VarReplacer::getLitReplacedWith(Lit lit) const
+Lit VarReplacer::get_lit_replaced_with(Lit lit) const
 {
     lit = solver->map_inter_to_outer(lit);
-    Lit lit2 = getLitReplacedWithOuter(lit);
+    Lit lit2 = get_lit_replaced_with_outer(lit);
     return solver->map_outer_to_inter(lit2);
 }
 
-Lit VarReplacer::getLitReplacedWithOuter(Lit lit) const
+Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
 {
     Lit lit2 = table[lit.var()] ^ lit.sign();
     return lit2;

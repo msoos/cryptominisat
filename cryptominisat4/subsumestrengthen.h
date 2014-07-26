@@ -75,7 +75,7 @@ public:
     struct Stats
     {
         Stats& operator+=(const Stats& other);
-        void printShort(const Solver* solver) const;
+        void print_short(const Solver* solver) const;
         void print() const;
 
         uint64_t subsumedBySub = 0;
@@ -87,7 +87,7 @@ public:
     };
 
     void finishedRun();
-    const Stats& getStats() const;
+    const Stats& get_stats() const;
     const Stats& getRunStats() const;
 
     template<class T>
@@ -147,7 +147,7 @@ inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const
     return runStats;
 }
 
-inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getStats() const
+inline const SubsumeStrengthen::Stats& SubsumeStrengthen::get_stats() const
 {
     return globalstats;
 }

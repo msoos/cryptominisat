@@ -70,7 +70,7 @@ struct CleaningStats
     CleaningStats& operator+=(const CleaningStats& other);
 
     void print(const size_t nbReduceDB) const;
-    void printShort(const Solver* solver) const;
+    void print_short(const Solver* solver) const;
 
     double cpu_time = 0;
 

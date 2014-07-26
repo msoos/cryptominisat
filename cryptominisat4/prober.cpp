@@ -474,7 +474,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.printShort(solver);
+            runStats.print_short(solver);
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -617,7 +617,7 @@ void Prober::handleFailedLit(Lit lit, Lit failed)
 
     vector<Lit> lits;
     lits.push_back(~failed);
-    solver->addClauseInt(lits, true);
+    solver->add_clause_int(lits, true);
     clearUpBeforeFirstSet();
 }
 
@@ -764,7 +764,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
     assert(solver->ok);
     runStats.bothSameAdded += toEnqueue.size();
     extraTime += 3*toEnqueue.size();
-    return solver->enqueueThese(toEnqueue);
+    return solver->enqueue_these(toEnqueue);
 }
 
 size_t Prober::mem_used() const
@@ -906,7 +906,7 @@ size_t Prober::mem_used() const
 //     return solver->ok;
 // }
 
-void Prober::Stats::printShort(const Solver* solver) const
+void Prober::Stats::print_short(const Solver* solver) const
 {
     cout
     << "c [probe]"

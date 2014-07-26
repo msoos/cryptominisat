@@ -111,7 +111,7 @@ void DataSync::clear_set_binary_values()
     for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
         Lit lit1 = Lit::toLit(i);
         lit1 = solver->map_to_with_bva(lit1);
-        lit1 = solver->varReplacer->getLitReplacedWithOuter(lit1);
+        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
             sharedData->bins[i].clear();
@@ -157,7 +157,7 @@ bool DataSync::syncBinFromOthers()
 
         Lit lit1 = Lit::toLit(wsLit);
         lit1 = solver->map_to_with_bva(lit1);
-        lit1 = solver->varReplacer->getLitReplacedWithOuter(lit1);
+        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->varData[lit1.var()].removed != Removed::none
             || solver->value(lit1.var()) != l_Undef
@@ -185,7 +185,7 @@ bool DataSync::syncBinFromOthers(
     , uint32_t& finished
     , watch_subarray ws
 ) {
-    assert(solver->varReplacer->getLitReplacedWith(lit) == lit);
+    assert(solver->varReplacer->get_lit_replaced_with(lit) == lit);
     assert(solver->varData[lit.var()].removed == Removed::none);
 
     assert(toClear.empty());
@@ -201,7 +201,7 @@ bool DataSync::syncBinFromOthers(
     for (uint32_t i = finished; i < bins.size(); i++) {
         Lit otherLit = bins[i];
         otherLit = solver->map_to_with_bva(otherLit);
-        otherLit = solver->varReplacer->getLitReplacedWithOuter(otherLit);
+        otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
         if (solver->varData[otherLit.var()].removed != Removed::none
             || solver->value(otherLit) != l_Undef
@@ -215,7 +215,7 @@ bool DataSync::syncBinFromOthers(
             lits[1] = otherLit;
 
             //Don't add DRUP: it would add to the thread data, too
-            solver->addClauseInt(lits, true, ClauseStats(), true, NULL, false);
+            solver->add_clause_int(lits, true, ClauseStats(), true, NULL, false);
             if (!solver->ok) {
                 goto end;
             }
@@ -270,7 +270,7 @@ bool DataSync::shareUnitData()
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
         Lit thisLit = Lit(var, false);
         thisLit = solver->map_to_with_bva(thisLit);
-        thisLit = solver->varReplacer->getLitReplacedWithOuter(thisLit);
+        thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
         const lbool thisVal = solver->value(thisLit);
         const lbool otherVal = shared.value[var];

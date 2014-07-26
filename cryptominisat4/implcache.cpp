@@ -124,7 +124,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
                 if (implCache[litOrig.toInt()].lits.empty())
                     continue;
 
-                const Lit lit = solver->varReplacer->getLitReplacedWith(litOrig);
+                const Lit lit = solver->varReplacer->get_lit_replaced_with(litOrig);
 
                 //Updated literal must be normal, otherwise, biig problems e.g
                 //implCache is not even large enough, etc.
@@ -187,7 +187,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
 
             //Update to its replaced version
             if (solver->varData[lit.var()].removed == Removed::replaced) {
-                lit = solver->varReplacer->getLitReplacedWith(lit);
+                lit = solver->varReplacer->get_lit_replaced_with(lit);
 
                 //This would be tautological (and incorrect), so skip
                 if (lit.var() == vertLit.var())
@@ -245,7 +245,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
     }
 
     size_t origTrailDepth = solver->trail_size();
-    solver->enqueueThese(toEnqueue);
+    solver->enqueue_these(toEnqueue);
     if (setSomething) {
         *setSomething = (solver->trail_size() != origTrailDepth);
     }
@@ -343,7 +343,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
         tmp[0] = *it;
 
         //Add unit clause
-        solver->addClauseInt(tmp);
+        solver->add_clause_int(tmp);
 
         //Check if this caused UNSAT
         if  (!solver->ok)
@@ -390,7 +390,7 @@ end:
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     if (solver->conf.verbosity >= 1) {
-        runStats.printShort(solver);
+        runStats.print_short(solver);
     }
     globalStats += runStats;
     if (solver->sqlStats) {
@@ -665,7 +665,7 @@ ImplCache::TryBothStats& ImplCache::TryBothStats::operator+=(const TryBothStats&
     return *this;
 }
 
-void ImplCache::TryBothStats::printShort(Solver* solver) const
+void ImplCache::TryBothStats::print_short(Solver* solver) const
 {
     cout
     << "c [bcache] "
