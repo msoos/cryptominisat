@@ -71,19 +71,19 @@ class SCCFinder {
             void print() const
             {
                 cout << "c ----- SCC STATS --------" << endl;
-                printStatsLine("c time"
+                print_stats_line("c time"
                     , cpu_time
                     , cpu_time/(double)numCalls
                     , "per call"
                 );
 
-                printStatsLine("c called"
+                print_stats_line("c called"
                     , numCalls
                     , (double)foundXorsNew/(double)numCalls
                     , "new found per call"
                 );
 
-                printStatsLine("c found"
+                print_stats_line("c found"
                     , foundXorsNew
                     , stats_line_percent(foundXorsNew, foundXors)
                     , "% of all found"

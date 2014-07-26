@@ -127,8 +127,8 @@ inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 
 class ImplCache  {
 public:
-    void printStats(const Solver* solver) const;
-    void printStatsSort(const Solver* solver) const;
+    void print_stats(const Solver* solver) const;
+    void print_statsSort(const Solver* solver) const;
     size_t mem_used() const;
     void makeAllRed();
     void saveVarMems(uint32_t newNumVars)

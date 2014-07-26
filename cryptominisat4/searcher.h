@@ -213,7 +213,7 @@ class Searcher : public HyperEngine
         void     printRestartHeader() const;
         void     printRestartStats() const;
         void     printBaseStats() const;
-        void     printClauseStats() const;
+        void     print_clause_stats() const;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
         const Hist& getHistory() const;
@@ -394,19 +394,19 @@ class Searcher : public HyperEngine
 
             void printCommon() const
             {
-                printStatsLine("c restarts"
+                print_stats_line("c restarts"
                     , numRestarts
                     , (double)conflStats.numConflicts/(double)numRestarts
                     , "confls per restart"
 
                 );
-                printStatsLine("c time", cpu_time);
-                printStatsLine("c decisions", decisions
+                print_stats_line("c time", cpu_time);
+                print_stats_line("c decisions", decisions
                     , stats_line_percent(decisionsRand, decisions)
                     , "% random"
                 );
 
-                printStatsLine("c decisions/conflicts"
+                print_stats_line("c decisions/conflicts"
                     , (double)decisions/(double)conflStats.numConflicts
                 );
             }
@@ -417,13 +417,13 @@ class Searcher : public HyperEngine
                 printCommon();
                 conflStats.printShort(cpu_time);
 
-                printStatsLine("c conf lits non-minim"
+                print_stats_line("c conf lits non-minim"
                     , litsRedNonMin
                     , (double)litsRedNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
-                printStatsLine("c conf lits final"
+                print_stats_line("c conf lits final"
                     , (double)litsRedFinal/(double)conflStats.numConflicts
                 );
             }
@@ -437,136 +437,136 @@ class Searcher : public HyperEngine
                     == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
 
                 cout << "c LEARNT stats" << endl;
-                printStatsLine("c units learnt"
+                print_stats_line("c units learnt"
                     , learntUnits
                     , stats_line_percent(learntUnits, conflStats.numConflicts)
                     , "% of conflicts");
 
-                printStatsLine("c bins learnt"
+                print_stats_line("c bins learnt"
                     , learntBins
                     , stats_line_percent(learntBins, conflStats.numConflicts)
                     , "% of conflicts");
 
-                printStatsLine("c tris learnt"
+                print_stats_line("c tris learnt"
                     , learntTris
                     , stats_line_percent(learntTris, conflStats.numConflicts)
                     , "% of conflicts");
 
-                printStatsLine("c long learnt"
+                print_stats_line("c long learnt"
                     , learntLongs
                     , stats_line_percent(learntLongs, conflStats.numConflicts)
                     , "% of conflicts"
                 );
 
-                printStatsLine("c otf-subs"
+                print_stats_line("c otf-subs"
                     , otfSubsumed
                     , (double)otfSubsumed/(double)conflStats.numConflicts
                     , "/conflict"
                 );
 
-                printStatsLine("c otf-subs implicit"
+                print_stats_line("c otf-subs implicit"
                     , otfSubsumedImplicit
                     , stats_line_percent(otfSubsumedImplicit, otfSubsumed)
                     , "%"
                 );
 
-                printStatsLine("c otf-subs long"
+                print_stats_line("c otf-subs long"
                     , otfSubsumedLong
                     , stats_line_percent(otfSubsumedLong, otfSubsumed)
                     , "%"
                 );
 
-                printStatsLine("c otf-subs learnt"
+                print_stats_line("c otf-subs learnt"
                     , otfSubsumedRed
                     , stats_line_percent(otfSubsumedRed, otfSubsumed)
                     , "% otf subsumptions"
                 );
 
-                printStatsLine("c otf-subs lits gained"
+                print_stats_line("c otf-subs lits gained"
                     , otfSubsumedLitsGained
                     , (double)otfSubsumedLitsGained/(double)otfSubsumed
                     , "lits/otf subsume"
                 );
 
                 cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
-                printStatsLine("c advProp called"
+                print_stats_line("c advProp called"
                     , advancedPropCalled
                 );
-                printStatsLine("c hyper-bin add bin"
+                print_stats_line("c hyper-bin add bin"
                     , hyperBinAdded
                     , (double)hyperBinAdded/(double)advancedPropCalled
                     , "bin/call"
                 );
-                printStatsLine("c trans-red rem irred bin"
+                print_stats_line("c trans-red rem irred bin"
                     , transReduRemIrred
                     , (double)transReduRemIrred/(double)advancedPropCalled
                     , "bin/call"
                 );
-                printStatsLine("c trans-red rem red bin"
+                print_stats_line("c trans-red rem red bin"
                     , transReduRemRed
                     , (double)transReduRemRed/(double)advancedPropCalled
                     , "bin/call"
                 );
 
                 cout << "c CONFL LITS stats" << endl;
-                printStatsLine("c orig "
+                print_stats_line("c orig "
                     , litsRedNonMin
                     , (double)litsRedNonMin/(double)conflStats.numConflicts
                     , "lit/confl"
                 );
 
-                printStatsLine("c rec-min effective"
+                print_stats_line("c rec-min effective"
                     , recMinCl
                     , stats_line_percent(recMinCl, conflStats.numConflicts)
                     , "% attempt successful"
                 );
 
-                printStatsLine("c rec-min lits"
+                print_stats_line("c rec-min lits"
                     , recMinLitRem
                     , stats_line_percent(recMinLitRem, litsRedNonMin)
                     , "% less overall"
                 );
 
-                printStatsLine("c further-min call%"
+                print_stats_line("c further-min call%"
                     , stats_line_percent(furtherShrinkAttempt, conflStats.numConflicts)
                     , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
                     , "% attempt successful"
                 );
 
-                printStatsLine("c bintri-min lits"
+                print_stats_line("c bintri-min lits"
                     , binTriShrinkedClause
                     , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
                     , "% less overall"
                 );
 
-                printStatsLine("c cache-min lits"
+                print_stats_line("c cache-min lits"
                     , cacheShrinkedClause
                     , stats_line_percent(cacheShrinkedClause, litsRedNonMin)
                     , "% less overall"
                 );
 
-                printStatsLine("c stamp-min call%"
+                print_stats_line("c stamp-min call%"
                     , stats_line_percent(stampShrinkAttempt, conflStats.numConflicts)
                     , stats_line_percent(stampShrinkCl, stampShrinkAttempt)
                     , "% attempt successful"
                 );
 
-                printStatsLine("c stamp-min lits"
+                print_stats_line("c stamp-min lits"
                     , stampShrinkLit
                     , stats_line_percent(stampShrinkLit, litsRedNonMin)
                     , "% less overall"
                 );
 
-                printStatsLine("c final avg"
+                print_stats_line("c final avg"
                     , (double)litsRedFinal/(double)conflStats.numConflicts
                 );
 
                 //General stats
-                //printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
+                //print_stats_line("c Memory used", (double)mem_used / 1048576.0, " MB");
                 #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-                printStatsLine("c single-thread CPU time", cpu_time, " s");
+                print_stats_line("c single-thread CPU time", cpu_time, " s");
                 #else
-                printStatsLine("c all-threads sum CPU time", cpu_time, " s");
+                print_stats_line("c all-threads sum CPU time", cpu_time, " s");
                 #endif
             }
 

@@ -715,19 +715,19 @@ void SubsumeStrengthen::Stats::printShort(const Solver* solver) const
 void SubsumeStrengthen::Stats::print() const
 {
     cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
-    printStatsLine("c cl-subs"
+    print_stats_line("c cl-subs"
         , subsumedBySub + subsumedByStr
         , " Clauses"
     );
-    printStatsLine("c cl-str rem lit"
+    print_stats_line("c cl-str rem lit"
         , litsRemStrengthen
         , " Lits"
     );
-    printStatsLine("c cl-sub T"
+    print_stats_line("c cl-sub T"
         , subsumeTime
         , " s"
     );
-    printStatsLine("c cl-str T"
+    print_stats_line("c cl-str T"
         , strengthenTime
         , " s"
     );

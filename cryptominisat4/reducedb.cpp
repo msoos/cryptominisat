@@ -481,7 +481,7 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
     }
 
     CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
-    solver->consolidateMem();
+    solver->consolidate_mem();
 
     if (solver->sqlStats) {
         solver->sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);
@@ -544,10 +544,10 @@ ClauseUsageStats ReduceDB::sumClauseData(
 
     //Print more stats
     /*if (solver->conf.verbosity >= 4) {
-        solver->printPropConflStats("clause-len", perSizeStats);
+        solver->print_prop_confl_stats("clause-len", perSizeStats);
 
         if (red) {
-            solver->printPropConflStats("clause-glue", perGlueStats);
+            solver->print_prop_confl_stats("clause-glue", perGlueStats);
         }
     }*/
 

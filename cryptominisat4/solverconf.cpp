@@ -76,7 +76,7 @@ SolverConf::SolverConf() :
         , verbosity        (0)
         , doPrintGateDot   (false)
         , doPrintConflDot  (false)
-        , printFullStats   (false)
+        , print_all_stats   (false)
         , verbStats        (0)
         , doPrintLongestTrail(0)
         , doPrintBestRedClauses(0)

@@ -208,7 +208,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
             std::stable_sort(ws.begin(), ws.end(), WatchSorter());
         }
         /*cout << "---> Before" << endl;
-        printWatchlist(ws, lit);*/
+        print_watch_list(ws, lit);*/
 
         Watched* i = ws.begin();
         Watched* j = i;
@@ -299,23 +299,23 @@ void SubsumeImplicit::Stats::print() const
 {
     //Asymm
     cout << "c -------- IMPLICIT SUB STATS --------" << endl;
-    printStatsLine("c time"
+    print_stats_line("c time"
         , time_used
         , time_used/(double)numCalled
         , "per call"
     );
 
-    printStatsLine("c timed out"
+    print_stats_line("c timed out"
         , time_out
         , stats_line_percent(time_out, numCalled)
         , "% of calls"
     );
 
-    printStatsLine("c rem bins"
+    print_stats_line("c rem bins"
         , remBins
     );
 
-    printStatsLine("c rem tris"
+    print_stats_line("c rem tris"
         , remTris
     );
     cout << "c -------- IMPLICIT SUB STATS END --------" << endl;

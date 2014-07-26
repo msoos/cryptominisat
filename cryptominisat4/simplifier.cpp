@@ -492,7 +492,7 @@ bool Simplifier::addFromSolver(
     , bool alsoOccur
     , bool irred
 ) {
-    //solver->printWatchMemUsed();
+    //solver->print_watch_mem_used();
 
     if (alsoOccur) {
         uint64_t memUsage = calc_mem_usage_of_occur(toAdd);
@@ -892,7 +892,7 @@ bool Simplifier::fill_occur_and_print_stats()
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity >= 2) {
-        solver->printWatchMemUsed(memUsedTotal());
+        solver->print_watch_mem_used(memUsedTotal());
     }
 
     return true;
@@ -905,8 +905,8 @@ bool Simplifier::simplify()
     assert(toClear.empty());
 
     //Test & debug
-    solver->testAllClauseAttach();
-    solver->checkNoWrongAttach();
+    solver->test_all_clause_attached();
+    solver->check_wrong_attach();
     assert(solver->varReplacer->getNewToReplaceVars() == 0
             && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
@@ -931,7 +931,7 @@ bool Simplifier::simplify()
     }
 
     setLimits();
-    runStats.origNumFreeVars = solver->getNumFreeVars();
+    runStats.origNumFreeVars = solver->get_num_free_vars();
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
 
@@ -1171,10 +1171,10 @@ void Simplifier::finishUp(
 
     //Sanity checks
     if (solver->ok && somethingSet) {
-        solver->testAllClauseAttach();
-        solver->checkNoWrongAttach();
+        solver->test_all_clause_attached();
+        solver->check_wrong_attach();
         solver->check_stats();
-        solver->checkImplicitPropagated();
+        solver->check_implicit_propagated();
     }
 
     if (solver->ok) {
@@ -1273,7 +1273,7 @@ void Simplifier::setLimits()
         strengthening_time_limit *= 2;
     }
 
-    varelim_num_limit = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
+    varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
         varelim_num_limit = (double)varelim_num_limit * (globalStats.numCalls+0.5);
     }
@@ -2933,24 +2933,24 @@ void Simplifier::Stats::printShort(const Solver* solver, const bool print_var_el
 void Simplifier::Stats::print(const size_t nVars) const
 {
     cout << "c -------- Simplifier STATS ----------" << endl;
-    printStatsLine("c time"
+    print_stats_line("c time"
         , totalTime()
         , stats_line_percent(varElimTime, totalTime())
         , "% var-elim"
     );
 
-    printStatsLine("c timeouted"
+    print_stats_line("c timeouted"
         , stats_line_percent(varElimTimeOut, numCalls)
         , "% called"
     );
 
-    printStatsLine("c called"
+    print_stats_line("c called"
         ,  numCalls
         , (double)totalTime()/(double)numCalls
         , "s per call"
     );
 
-    printStatsLine("c v-elimed"
+    print_stats_line("c v-elimed"
         , numVarsElimed
         , stats_line_percent(numVarsElimed, nVars)
         , "% vars"
@@ -2962,49 +2962,49 @@ void Simplifier::Stats::print(const size_t nVars) const
     << " / " << origNumFreeVars
     << endl;
 
-    printStatsLine("c 0-depth assigns"
+    print_stats_line("c 0-depth assigns"
         , zeroDepthAssings
         , stats_line_percent(zeroDepthAssings, nVars)
         , "% vars"
     );
 
-    printStatsLine("c cl-new"
+    print_stats_line("c cl-new"
         , newClauses
     );
 
-    printStatsLine("c tried to elim"
+    print_stats_line("c tried to elim"
         , triedToElimVars
         , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
         , "% aggressively"
     );
 
-    printStatsLine("c elim-bin-lt-cl"
+    print_stats_line("c elim-bin-lt-cl"
         , binRedClRemThroughElim);
 
-    printStatsLine("c elim-tri-lt-cl"
+    print_stats_line("c elim-tri-lt-cl"
         , triRedClRemThroughElim);
 
-    printStatsLine("c elim-long-lt-cl"
+    print_stats_line("c elim-long-lt-cl"
         , longRedClRemThroughElim);
 
-    printStatsLine("c lt-bin added due to v-elim"
+    print_stats_line("c lt-bin added due to v-elim"
         , numRedBinVarRemAdded);
 
-    printStatsLine("c cl-elim-bin"
+    print_stats_line("c cl-elim-bin"
         , clauses_elimed_bin);
 
-    printStatsLine("c cl-elim-tri"
+    print_stats_line("c cl-elim-tri"
         , clauses_elimed_tri);
 
-    printStatsLine("c cl-elim-long"
+    print_stats_line("c cl-elim-long"
         , clauses_elimed_long);
 
-    printStatsLine("c cl-elim-avg-s",
+    print_stats_line("c cl-elim-avg-s",
         ((double)clauses_elimed_sumsize
         /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
     );
 
-    printStatsLine("c v-elim-sub"
+    print_stats_line("c v-elim-sub"
         , subsumedByVE
     );
 

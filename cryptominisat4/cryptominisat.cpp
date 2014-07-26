@@ -527,7 +527,7 @@ const char* SATSolver::get_version()
 
 void SATSolver::print_stats() const
 {
-    data->solvers[data->which_solved]->printStats();
+    data->solvers[data->which_solved]->print_stats();
 }
 
 void SATSolver::set_drup(std::ostream* os)

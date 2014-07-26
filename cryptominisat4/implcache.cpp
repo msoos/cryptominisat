@@ -61,20 +61,20 @@ size_t ImplCache::mem_used() const
     return numBytes;
 }
 
-void ImplCache::printStats(const Solver* solver) const
+void ImplCache::print_stats(const Solver* solver) const
 {
     cout
     << "c --------- Implication Cache Stats Start ----------"
     << endl;
 
-    printStatsSort(solver);
+    print_statsSort(solver);
 
     cout
     << "c --------- Implication Cache Stats End   ----------"
     << endl;
 }
 
-void ImplCache::printStatsSort(const Solver* solver) const
+void ImplCache::print_statsSort(const Solver* solver) const
 {
     size_t numHasElems = 0;
     size_t totalElems = 0;
@@ -90,13 +90,13 @@ void ImplCache::printStatsSort(const Solver* solver) const
         }
     }
 
-    printStatsLine(
+    print_stats_line(
         "c lits having cache"
         , stats_line_percent(numHasElems, activeLits)
         , "% of decision lits"
     );
 
-    printStatsLine(
+    print_stats_line(
         "c num elems in cache/lit"
         , stats_line_percent(totalElems, numHasElems)
         , "extralits"

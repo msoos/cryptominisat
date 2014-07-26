@@ -456,28 +456,28 @@ void Vivifier::Stats::print(const size_t nVars) const
 {
     //Asymm
     cout << "c -------- ASYMM STATS --------" << endl;
-    printStatsLine("c time"
+    print_stats_line("c time"
         , time_used
         , time_used/(double)numCalled
         , "per call"
     );
 
-    printStatsLine("c timed out"
+    print_stats_line("c timed out"
         , timeOut
         , stats_line_percent(timeOut, numCalled)
         , "% of calls"
     );
 
-    printStatsLine("c asymm/checked/potential"
+    print_stats_line("c asymm/checked/potential"
         , numClShorten
         , checkedClauses
         , potentialClauses
     );
 
-    printStatsLine("c lits-rem",
+    print_stats_line("c lits-rem",
         numLitsRem
     );
-    printStatsLine("c 0-depth-assigns",
+    print_stats_line("c 0-depth-assigns",
         zeroDepthAssigns
         , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"

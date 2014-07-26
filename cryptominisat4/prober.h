@@ -134,84 +134,84 @@ class Prober {
             void print(const size_t nVars) const
             {
                 cout << "c -------- PROBE STATS ----------" << endl;
-                printStatsLine("c probe time"
+                print_stats_line("c probe time"
                     , cpu_time
                     , (double)timeAllocated/(cpu_time*1000.0*1000.0)
                     , "(Mega BP+HP)/s"
                 );
 
-                printStatsLine("c called"
+                print_stats_line("c called"
                     , numCalls
                     , cpu_time/(double)numCalls
                     , "s/call"
                 );
 
-                printStatsLine("c unused Mega BP+HP"
+                print_stats_line("c unused Mega BP+HP"
                     , (double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))/(1000.0*1000.0)
                     , (cpu_time/(double)(propStats.bogoProps + propStats.otfHyperTime))*(double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))
                     , "est. secs"
                 );
 
-                printStatsLine("c 0-depth-assigns"
+                print_stats_line("c 0-depth-assigns"
                     , zeroDepthAssigns
                     , stats_line_percent(zeroDepthAssigns, nVars)
                     , "% vars");
 
-                printStatsLine("c bothsame"
+                print_stats_line("c bothsame"
                     , bothSameAdded
                     , stats_line_percent(bothSameAdded, numVisited)
                     , "% visited"
                 );
 
-                printStatsLine("c probed"
+                print_stats_line("c probed"
                     , numProbed
                     , (double)numProbed/cpu_time
                     , "probe/sec"
                 );
 
-                printStatsLine("c loop iters"
+                print_stats_line("c loop iters"
                     , numLoopIters
                     , stats_line_percent(numVarProbed, numLoopIters)
                     , "% var probed"
                 );
 
-                printStatsLine("c failed"
+                print_stats_line("c failed"
                     , numFailed
                     , stats_line_percent(numFailed, numProbed)
                     , "% of probes"
                 );
 
-                printStatsLine("c visited"
+                print_stats_line("c visited"
                     , (double)numVisited/(1000.0*1000.0)
                     , "M lits"
                     , stats_line_percent(numVisited, origNumFreeVars*2)
                     , "% of available lits"
                 );
 
-//                 printStatsLine("c probe failed"
+//                 print_stats_line("c probe failed"
 //                     , numFailed
 //                     , (double)numFailed/(double)nVars*100.0
 //                     , "% vars");
 
-                printStatsLine("c bin add"
+                print_stats_line("c bin add"
                     , addedBin
                     , stats_line_percent(addedBin, origNumBins)
                     , "% of bins"
                 );
 
-                printStatsLine("c irred bin rem"
+                print_stats_line("c irred bin rem"
                     , removedIrredBin
                     , stats_line_percent(removedIrredBin, origNumBins)
                     , "% of bins"
                 );
 
-                printStatsLine("c red bin rem"
+                print_stats_line("c red bin rem"
                     , removedRedBin
                     , stats_line_percent(removedRedBin, origNumBins)
                     , "% of bins"
                 );
 
-                printStatsLine("c time"
+                print_stats_line("c time"
                     , cpu_time
                     , "s");
 

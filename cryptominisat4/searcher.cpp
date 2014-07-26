@@ -1735,11 +1735,11 @@ void Searcher::printRestartHeader() const
 void Searcher::printRestartStats() const
 {
     printBaseStats();
-    if (conf.printFullStats) {
-        solver->printClauseStats();
+    if (conf.print_all_stats) {
+        solver->print_clause_stats();
         hist.print();
     } else {
-        solver->printClauseStats();
+        solver->print_clause_stats();
     }
 
     cout << endl;
@@ -1761,7 +1761,7 @@ void Searcher::printBaseStats() const
     }
 
     cout
-    << " " << std::setw(7) << solver->getNumFreeVars()
+    << " " << std::setw(7) << solver->get_num_free_vars()
     ;
 }
 
@@ -2018,7 +2018,7 @@ void Searcher::reduce_db_if_needed()
 void Searcher::clean_clauses_if_needed()
 {
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-    if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.005))  {
+    if (newZeroDepthAss > ((double)solver->get_num_free_vars()*0.005))  {
         if (conf.verbosity >= 2) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
         }
@@ -2032,7 +2032,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 {
     if (conf.doFindAndReplaceEqLits
             && (solver->binTri.numNewBinsSinceSCC
-                > ((double)solver->getNumFreeVars()*conf.sccFindPercent))
+                > ((double)solver->get_num_free_vars()*conf.sccFindPercent))
     ) {
         if (conf.verbosity >= 1) {
             cout
@@ -2041,14 +2041,14 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
             << solver->binTri.numNewBinsSinceSCC
             << " free vars %:"
             << std::fixed << std::setprecision(2) << std::setw(4)
-            << stats_line_percent(solver->binTri.numNewBinsSinceSCC, solver->getNumFreeVars())
+            << stats_line_percent(solver->binTri.numNewBinsSinceSCC, solver->get_num_free_vars())
             << endl;
         }
 
         solver->clauseCleaner->removeAndCleanAll();
 
         lastCleanZeroDepthAssigns = trail.size();
-        if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->getNumFreeVars()*0.001))) {
+        if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->get_num_free_vars()*0.001))) {
             return l_False;
         }
     }
@@ -2273,10 +2273,10 @@ void Searcher::print_iteration_solving_stats()
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         propStats.print(stats.cpu_time);
-        printStatsLine("c props/decision"
+        print_stats_line("c props/decision"
             , (double)propStats.propagations/(double)stats.decisions
         );
-        printStatsLine("c props/conflict"
+        print_stats_line("c props/conflict"
             , (double)propStats.propagations/(double)stats.conflStats.numConflicts
         );
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;

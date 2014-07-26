@@ -75,31 +75,31 @@ class Strengthener {
                 void printShort(const string type, const Solver* solver) const;
                 void print() const
                 {
-                    printStatsLine("c time"
+                    print_stats_line("c time"
                         , cpu_time
                         , cpu_time/(double)numCalled
                         , "s/call"
                     );
 
-                    printStatsLine("c shrinked/tried/total"
+                    print_stats_line("c shrinked/tried/total"
                         , shrinked
                         , triedCls
                         , totalCls
                     );
 
-                    printStatsLine("c subsumed/tried/total"
+                    print_stats_line("c subsumed/tried/total"
                         , numClSubsumed
                         , triedCls
                         , totalCls
                     );
 
-                    printStatsLine("c lits-rem"
+                    print_stats_line("c lits-rem"
                         , numLitsRem
                         , stats_line_percent(numLitsRem, totalLits)
                         , "% of lits tried"
                     );
 
-                    printStatsLine("c called "
+                    print_stats_line("c called "
                         , numCalled
                         , stats_line_percent(ranOutOfTime, numCalled)
                         , "% ran out of time"

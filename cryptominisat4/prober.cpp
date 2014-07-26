@@ -221,7 +221,7 @@ void Prober::clean_clauses_after_probe()
     bool advancedCleanup = false;
 
     //If more than 10% were set, detach&reattach. It's faster
-    if ((double)runStats.origNumFreeVars - (double)solver->getNumFreeVars()
+    if ((double)runStats.origNumFreeVars - (double)solver->get_num_free_vars()
             >  (double)runStats.origNumFreeVars/10.0
         && solver->getNumLongClauses() > 200000
     ) {
@@ -378,7 +378,7 @@ bool Prober::probe()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
-    solver->testAllClauseAttach();
+    solver->test_all_clause_attached();
 
     clean_clauses_before_probe();
     reset_stats_and_state();
@@ -450,7 +450,7 @@ end:
     check_if_must_disable_otf_hyperbin_and_tred(numPropsTodo);
     check_if_must_disable_cache_update();
 
-    solver->testAllClauseAttach();
+    solver->test_all_clause_attached();
     return solver->ok;
 }
 

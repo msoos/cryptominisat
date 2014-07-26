@@ -101,9 +101,9 @@ class Solver : public Searcher
         static const char* getVersionTag();
         static const char* getVersionSHA1();
         vector<Lit> get_zero_assigned_lits() const;
-        void     printStats() const;
-        void     printClauseStats() const;
-        size_t   getNumFreeVars() const;
+        void     print_stats() const;
+        void     print_clause_stats() const;
+        size_t   get_num_free_vars() const;
         const SolverConf& getConf() const;
         void setConf(SolverConf conf);
         const vector<std::pair<string, string> >& get_tags() const;
@@ -113,8 +113,8 @@ class Solver : public Searcher
         size_t getNumVarsElimed() const;
         size_t getNumVarsReplaced() const;
         Var numActiveVars() const;
-        void printMemStats() const;
-        uint64_t printWatchMemUsed(uint64_t totalMem) const;
+        void print_mem_stats() const;
+        uint64_t print_watch_mem_used(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
         const SolveStats& getSolveStats() const;
         void add_in_partial_solving_stats();
@@ -127,9 +127,9 @@ class Solver : public Searcher
 
 
         //Checks
-        void checkImplicitPropagated() const;
+        void check_implicit_propagated() const;
         void check_stats(const bool allowFreed = false) const;
-        uint64_t countLits(
+        uint64_t count_lits(
             const vector<ClOffset>& clause_array
             , bool allowFreed
         ) const;
@@ -150,8 +150,8 @@ class Solver : public Searcher
         Stats sumStats;
         PropStats sumPropStats;
 
-        void testAllClauseAttach() const;
-        void checkNoWrongAttach() const;
+        void test_all_clause_attached() const;
+        void check_wrong_attach() const;
         bool prop_at_head() const;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
@@ -218,7 +218,7 @@ class Solver : public Searcher
         );
         void clear_clauses_stats();
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
-        void consolidateMem();
+        void consolidate_mem();
 
     private:
         friend class Prober;
@@ -267,7 +267,7 @@ class Solver : public Searcher
 
         //Stats printing
         void printMinStats() const;
-        void printFullStats() const;
+        void print_all_stats() const;
 
         lbool simplify_problem();
         SolveStats solveStats;
@@ -290,7 +290,7 @@ class Solver : public Searcher
         /////////////////////////////
         //Renumberer
         void renumberVariables();
-        void freeUnusedWatches();
+        void free_unused_watches();
         void saveVarMem(uint32_t newNumVars);
         void unSaveVarMem();
         size_t calculate_interToOuter_and_outerToInter(
@@ -304,9 +304,9 @@ class Solver : public Searcher
 
         /////////////////////////////
         // SAT solution verification
-        bool verifyModel() const;
-        bool verifyImplicitClauses() const;
-        bool verifyClauses(const vector<ClOffset>& cs) const;
+        bool verify_model() const;
+        bool verify_implicit_clauses() const;
+        bool verify_long_clauses(const vector<ClOffset>& cs) const;
 
 
         /////////////////////
@@ -321,25 +321,25 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        void reArrangeClauses();
+        void rearrange_clauses_lits();
         void reArrangeClause(ClOffset offset);
-        void printAllClauses() const;
+        void print_all_clauses() const;
 
         //////////////////
         // Stamping
         Lit updateLitForDomin(Lit lit) const;
-        void updateDominators();
+        void update_dominators();
 
         /////////////////
         // Debug
 
         bool normClauseIsAttached(const ClOffset offset) const;
-        void findAllAttach() const;
-        void findAllAttach(const vector<ClOffset>& cs) const;
-        bool findClause(const ClOffset offset) const;
-        void printWatchlist(watch_subarray_const ws, const Lit lit) const;
-        void printClauseSizeDistrib();
-        void printPropConflStats(
+        void find_all_attach() const;
+        void find_all_attach(const vector<ClOffset>& cs) const;
+        bool find_clause(const ClOffset offset) const;
+        void print_watch_list(watch_subarray_const ws, const Lit lit) const;
+        void print_clause_size_distrib();
+        void print_prop_confl_stats(
             std::string name
             , const vector<ClauseUsageStats>& stats
         ) const;

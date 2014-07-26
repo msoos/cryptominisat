@@ -13,27 +13,27 @@ void CleaningStats::print(const size_t nbReduceDB) const
     cout << "c ------ CLEANING STATS ---------" << endl;
 
     //Types of clean
-    printStatsLine("c clean by glue"
+    print_stats_line("c clean by glue"
         , glueBasedClean
         , stats_line_percent(glueBasedClean, nbReduceDB)
         , "% cleans"
     );
-    printStatsLine("c clean by size"
+    print_stats_line("c clean by size"
         , sizeBasedClean
         , stats_line_percent(sizeBasedClean, nbReduceDB)
         , "% cleans"
     );
-    printStatsLine("c clean by prop&confl"
+    print_stats_line("c clean by prop&confl"
         , propConflBasedClean
         , stats_line_percent(propConflBasedClean,nbReduceDB)
         , "% cleans"
     );
-    printStatsLine("c clean by activities"
+    print_stats_line("c clean by activities"
         , actBasedClean
         , stats_line_percent(actBasedClean,nbReduceDB)
         , "% cleans"
     );
-    printStatsLine("c clean by prop&confl / avg. depth"
+    print_stats_line("c clean by prop&confl / avg. depth"
         , propConflDepthBasedClean
         , stats_line_percent(propConflDepthBasedClean,nbReduceDB)
         , "% cleans"
@@ -42,38 +42,38 @@ void CleaningStats::print(const size_t nbReduceDB) const
     //--- Actual clean --
 
     //-->CLEAN
-    printStatsLine("c cleaned cls"
+    print_stats_line("c cleaned cls"
         , removed.num
         , stats_line_percent(removed.num, origNumClauses)
         , "% long redundant clauses"
     );
-    printStatsLine("c cleaned lits"
+    print_stats_line("c cleaned lits"
         , removed.lits
         , stats_line_percent(removed.lits, origNumLits)
         , "% long red lits"
     );
-    printStatsLine("c cleaned cl avg size"
+    print_stats_line("c cleaned cl avg size"
         , (double)removed.lits/(double)removed.num
     );
-    printStatsLine("c cleaned avg glue"
+    print_stats_line("c cleaned avg glue"
         , (double)removed.glue/(double)removed.num
     );
 
     //--> REMAIN
-    printStatsLine("c remain cls"
+    print_stats_line("c remain cls"
         , remain.num
         , stats_line_percent(remain.num, origNumClauses)
         , "% long redundant clauses"
     );
-    printStatsLine("c remain lits"
+    print_stats_line("c remain lits"
         , remain.lits
         , stats_line_percent(remain.lits, origNumLits)
         , "% long red lits"
     );
-    printStatsLine("c remain cl avg size"
+    print_stats_line("c remain cl avg size"
         , (double)remain.lits/(double)remain.num
     );
-    printStatsLine("c remain avg glue"
+    print_stats_line("c remain avg glue"
         , (double)remain.glue/(double)remain.num
     );
 

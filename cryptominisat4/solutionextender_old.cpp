@@ -40,7 +40,7 @@ SolutionExtender::SolutionExtender(
     for (Var var = 0; var < nVarsOuter(); var++) {
         solver->model[var] = value(var);
     }
-    release_assert(solver->verifyModel());
+    release_assert(solver->verify_model());
 }
 
 /**
@@ -119,7 +119,7 @@ void SolutionExtender::extend()
         solver->model[var] = value(var);
     }
 
-    release_assert(solver->verifyModel());
+    release_assert(solver->verify_model());
 
     //free clauses
     for (vector<ClOffset>::iterator

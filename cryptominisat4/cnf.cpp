@@ -192,7 +192,7 @@ size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
     mem += clAllocator.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
-    printStatsLine("c Mem for longclauses"
+    print_stats_line("c Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, totalMem)

@@ -199,7 +199,7 @@ void Stamp::remove_from_stamps(const Var var)
     }
 }
 
-void Stamp::updateDominators(const VarReplacer* replacer)
+void Stamp::update_dominators(const VarReplacer* replacer)
 {
     for(size_t l = 0; l < tstamp.size(); l++) {
         Lit lit = Lit::toLit(l);

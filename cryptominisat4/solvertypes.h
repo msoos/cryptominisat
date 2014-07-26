@@ -208,7 +208,7 @@ inline void print_value_kilo_mega(const uint64_t value)
     }
 }
 
-template<class T, class T2> void printStatsLine(
+template<class T, class T2> void print_stats_line(
     string left
     , T value
     , T2 value2
@@ -223,7 +223,7 @@ template<class T, class T2> void printStatsLine(
     << endl;
 }
 
-inline void printStatsLine(
+inline void print_stats_line(
     string left
     , uint64_t value
     , uint64_t value2
@@ -238,7 +238,7 @@ inline void printStatsLine(
     << endl;
 }
 
-template<class T, class T2> void printStatsLine(
+template<class T, class T2> void print_stats_line(
     string left
     , T value
     , string extra1
@@ -255,7 +255,7 @@ template<class T, class T2> void printStatsLine(
     << endl;
 }
 
-template<class T> void printStatsLine(
+template<class T> void print_stats_line(
     string left
     , T value
     , string extra = ""
@@ -392,80 +392,80 @@ struct PropStats
     void print(const double cpu_time) const
     {
         cout << "c PROP stats" << endl;
-        printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
+        print_stats_line("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
             , (double)bogoProps/(cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        printStatsLine("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
+        print_stats_line("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
             , (double)otfHyperTime/(cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
-        printStatsLine("c Mprops", (double)propagations/(1000.0*1000.0)
+        print_stats_line("c Mprops", (double)propagations/(1000.0*1000.0)
             , (double)propagations/(cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
         #ifdef STATS_NEEDED
-        printStatsLine("c propsUnit", propsUnit
+        print_stats_line("c propsUnit", propsUnit
             , stats_line_percent(propsUnit, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsBinIrred", propsBinIrred
+        print_stats_line("c propsBinIrred", propsBinIrred
             , stats_line_percent(propsBinIrred, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsBinRed", propsBinRed
+        print_stats_line("c propsBinRed", propsBinRed
             , stats_line_percent(propsBinRed, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsTriIred", propsTriIrred
+        print_stats_line("c propsTriIred", propsTriIrred
             , stats_line_percent(propsTriIrred, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsTriRed", propsTriRed
+        print_stats_line("c propsTriRed", propsTriRed
             , stats_line_percent(propsTriRed, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsLongIrred", propsLongIrred
+        print_stats_line("c propsLongIrred", propsLongIrred
             , stats_line_percent(propsLongIrred, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c propsLongRed", propsLongRed
+        print_stats_line("c propsLongRed", propsLongRed
             , stats_line_percent(propsLongRed, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c LHBR", (triLHBR + longLHBR)
+        print_stats_line("c LHBR", (triLHBR + longLHBR)
             , stats_line_percent(triLHBR + longLHBR,
                 propsLongIrred + propsLongRed + propsTriIrred + propsTriRed)
             , "% of long propagations"
         );
 
-        printStatsLine("c LHBR only by 3-long", triLHBR
+        print_stats_line("c LHBR only by 3-long", triLHBR
             , stats_line_percent(triLHBR, triLHBR + longLHBR)
             , "% of LHBR"
         );
         #endif
 
-        printStatsLine("c varSetPos", varSetPos
+        print_stats_line("c varSetPos", varSetPos
             , stats_line_percent(varSetPos, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c varSetNeg", varSetNeg
+        print_stats_line("c varSetNeg", varSetNeg
             , stats_line_percent(varSetNeg, propagations)
             , "% of propagations"
         );
 
-        printStatsLine("c flipped", varFlipped
+        print_stats_line("c flipped", varFlipped
             , stats_line_percent(varFlipped, propagations)
             , "% of propagations"
         );
@@ -582,7 +582,7 @@ struct ConflStats
     void printShort(double cpu_time) const
     {
         //Search stats
-        printStatsLine("c conflicts", numConflicts
+        print_stats_line("c conflicts", numConflicts
             , (double)numConflicts/cpu_time
             , "/ sec"
         );
@@ -594,32 +594,32 @@ struct ConflStats
         cout << "c CONFLS stats" << endl;
         printShort(cpu_time);
 
-        printStatsLine("c conflsBinIrred", conflsBinIrred
+        print_stats_line("c conflsBinIrred", conflsBinIrred
             , stats_line_percent(conflsBinIrred, numConflicts)
             , "%"
         );
 
-        printStatsLine("c conflsBinRed", conflsBinRed
+        print_stats_line("c conflsBinRed", conflsBinRed
             , stats_line_percent(conflsBinRed, numConflicts)
             , "%"
         );
 
-        printStatsLine("c conflsTriIrred", conflsTriIrred
+        print_stats_line("c conflsTriIrred", conflsTriIrred
             , stats_line_percent(conflsTriIrred, numConflicts)
             , "%"
         );
 
-        printStatsLine("c conflsTriIrred", conflsTriRed
+        print_stats_line("c conflsTriIrred", conflsTriRed
             , stats_line_percent(conflsTriRed, numConflicts)
             , "%"
         );
 
-        printStatsLine("c conflsLongIrred" , conflsLongIrred
+        print_stats_line("c conflsLongIrred" , conflsLongIrred
             , stats_line_percent(conflsLongIrred, numConflicts)
             , "%"
         );
 
-        printStatsLine("c conflsLongRed", conflsLongRed
+        print_stats_line("c conflsLongRed", conflsLongRed
             , stats_line_percent(conflsLongRed, numConflicts)
             , "%"
         );

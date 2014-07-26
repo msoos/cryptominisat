@@ -1142,7 +1142,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
     mem += toPropRedBin.capacity()*sizeof(Lit);
     mem += currAncestors.capacity()*sizeof(Lit);
     mem += stamp.mem_used();
-    printStatsLine("c Mem for stamps"
+    print_stats_line("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, totalMem)

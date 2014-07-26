@@ -1073,59 +1073,59 @@ GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
 void GateFinder::Stats::print(const size_t nVars) const
 {
     cout << "c -------- GATE FINDING ----------" << endl;
-    printStatsLine("c time"
+    print_stats_line("c time"
         , totalTime()
     );
 
-    printStatsLine("c find gate time"
+    print_stats_line("c find gate time"
         , findGateTime
         , stats_line_percent(findGateTime, totalTime())
         , "% time"
     );
 
-    printStatsLine("c gate-based cl-sh time"
+    print_stats_line("c gate-based cl-sh time"
         , orBasedTime
         , stats_line_percent(orBasedTime, totalTime())
         , "% time"
     );
 
-    printStatsLine("c gate-based cl-rem time"
+    print_stats_line("c gate-based cl-rem time"
         , andBasedTime
         , stats_line_percent(andBasedTime, totalTime())
         , "% time"
     );
 
-    printStatsLine("c gate-based varrep time"
+    print_stats_line("c gate-based varrep time"
         , varReplaceTime
         , stats_line_percent(varReplaceTime, totalTime())
         , "% time"
     );
 
-    printStatsLine("c gatefinder cl-short"
+    print_stats_line("c gatefinder cl-short"
         , orGateUseful
         , stats_line_percent(orGateUseful, numLongCls)
         , "% long cls"
     );
 
-    printStatsLine("c gatefinder lits-rem"
+    print_stats_line("c gatefinder lits-rem"
         , litsRem
         , stats_line_percent(litsRem, numLongClsLits)
         , "% long cls lits"
     );
 
-    printStatsLine("c gatefinder cl-rem"
+    print_stats_line("c gatefinder cl-rem"
         , andGateUseful
         , stats_line_percent(andGateUseful, numLongCls)
         , "% long cls"
     );
 
-    printStatsLine("c gatefinder cl-rem's lits"
+    print_stats_line("c gatefinder cl-rem's lits"
         , clauseSizeRem
         , stats_line_percent(clauseSizeRem, numLongClsLits)
         , "% long cls lits"
     );
 
-    printStatsLine("c gatefinder var-rep"
+    print_stats_line("c gatefinder var-rep"
         , varReplaced
         , stats_line_percent(varReplaced, nVars)
         , "% vars"

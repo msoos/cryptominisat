@@ -208,8 +208,8 @@ protected:
     );
 
     // Debug & etc:
-    void     printAllClauses();
-    void     checkNoWrongAttach() const;
+    void     print_all_clauses();
+    void     check_wrong_attach() const;
     void     printWatchList(const Lit lit) const;
     bool     satisfied(const BinaryClause& bin);
     void     print_trail();

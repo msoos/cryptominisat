@@ -190,7 +190,7 @@ bool VarReplacer::performReplace()
     #endif //REPLACE_STATISTICS
 
     solver->clauseCleaner->removeAndCleanAll();
-    solver->testAllClauseAttach();
+    solver->test_all_clause_attached();
 
     //Printing stats
     if (solver->conf.verbosity >= 5)
@@ -209,7 +209,7 @@ bool VarReplacer::performReplace()
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
-    solver->testAllClauseAttach();
+    solver->test_all_clause_attached();
     assert(solver->prop_at_head());
 
     #ifdef DEBUG_IMPLICIT_STATS
@@ -252,7 +252,7 @@ end:
     assert(solver->prop_at_head() || !solver->ok);
 
     //Update stamp dominators
-    solver->stamp.updateDominators(this);
+    solver->stamp.update_dominators(this);
 
     //Update stats
     const double time_used = cpuTime() - myTime;
@@ -274,8 +274,8 @@ end:
     }
 
     if (solver->okay()) {
-        solver->testAllClauseAttach();
-        solver->checkNoWrongAttach();
+        solver->test_all_clause_attached();
+        solver->check_wrong_attach();
         #ifdef DEBUG_IMPLICIT_STATS
         solver->check_stats();
         #endif
@@ -1035,17 +1035,17 @@ void VarReplacer::print_equivalent_literals(std::ostream *os) const
 
 void VarReplacer::print_some_stats(const double global_cpu_time) const
 {
-    printStatsLine("c vrep replace time"
+    print_stats_line("c vrep replace time"
         , globalStats.cpu_time
         , stats_line_percent(globalStats.cpu_time, global_cpu_time)
         , "% time"
     );
 
-    printStatsLine("c vrep tree roots"
+    print_stats_line("c vrep tree roots"
         , getNumTrees()
     );
 
-    printStatsLine("c vrep trees' crown"
+    print_stats_line("c vrep trees' crown"
         , getNumReplacedVars()
         , (double)getNumReplacedVars()/(double)getNumTrees()
         , "leafs/tree"
@@ -1055,41 +1055,41 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
 void VarReplacer::Stats::print(const size_t nVars) const
 {
         cout << "c --------- VAR REPLACE STATS ----------" << endl;
-        printStatsLine("c time"
+        print_stats_line("c time"
             , cpu_time
             , cpu_time/(double)numCalls
             , "per call"
         );
 
-        printStatsLine("c trees' crown"
+        print_stats_line("c trees' crown"
             , actuallyReplacedVars
             , stats_line_percent(actuallyReplacedVars, nVars)
             , "% of vars"
         );
 
-        printStatsLine("c 0-depth assigns"
+        print_stats_line("c 0-depth assigns"
             , zeroDepthAssigns
             , stats_line_percent(zeroDepthAssigns, nVars)
             , "% vars"
         );
 
-        printStatsLine("c lits replaced"
+        print_stats_line("c lits replaced"
             , replacedLits
         );
 
-        printStatsLine("c bin cls removed"
+        print_stats_line("c bin cls removed"
             , removedBinClauses
         );
 
-        printStatsLine("c tri cls removed"
+        print_stats_line("c tri cls removed"
             , removedTriClauses
         );
 
-        printStatsLine("c long cls removed"
+        print_stats_line("c long cls removed"
             , removedLongClauses
         );
 
-        printStatsLine("c long lits removed"
+        print_stats_line("c long lits removed"
             , removedLongLits
         );
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;

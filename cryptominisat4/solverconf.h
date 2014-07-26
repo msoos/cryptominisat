@@ -158,7 +158,7 @@ class SolverConf
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
         int  doPrintGateDot; ///< Print DOT file of gates
         int  doPrintConflDot; ///< Print DOT file for each conflict
-        int  printFullStats;
+        int  print_all_stats;
         int  verbStats;
         unsigned  doPrintLongestTrail;
         int  doPrintBestRedClauses;

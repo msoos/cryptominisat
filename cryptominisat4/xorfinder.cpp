@@ -843,28 +843,28 @@ void XorFinder::Stats::printShort() const
 void XorFinder::Stats::print(const size_t numCalls) const
 {
     cout << "c --------- XOR STATS ----------" << endl;
-    printStatsLine("c num XOR found on avg"
+    print_stats_line("c num XOR found on avg"
         , (double)foundXors/(double)numCalls
         , "avg size"
     );
 
-    printStatsLine("c XOR avg size"
+    print_stats_line("c XOR avg size"
         , (double)sumSizeXors/(double)foundXors
     );
 
-    printStatsLine("c XOR 0-depth assings"
+    print_stats_line("c XOR 0-depth assings"
         , zeroDepthAssigns
     );
 
-    printStatsLine("c XOR unit found"
+    print_stats_line("c XOR unit found"
         , newUnits
     );
 
-    printStatsLine("c XOR bin found"
+    print_stats_line("c XOR bin found"
         , newBins
     );
 
-    printStatsLine("c XOR finding time"
+    print_stats_line("c XOR finding time"
         , findTime
         , (double)time_outs/(double)numCalls*100.0
         , "time-out"

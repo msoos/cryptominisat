@@ -55,7 +55,7 @@ public:
         , const vector<Var>& interToOuter2
         , vector<uint16_t>& seen
     );
-    void updateDominators(const VarReplacer* replacer);
+    void update_dominators(const VarReplacer* replacer);
     void clearStamps();
     void saveVarMem(const uint32_t newNumVars);
 
