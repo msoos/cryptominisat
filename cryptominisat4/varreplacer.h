@@ -51,7 +51,7 @@ class VarReplacer
         void new_var(const Var orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
-        bool performReplace();
+        bool perform_replace();
         bool replace_if_enough_is_found(const size_t limit = 0);
         void print_equivalent_literals(std::ostream *os) const;
         void print_some_stats(const double global_cpu_time) const;

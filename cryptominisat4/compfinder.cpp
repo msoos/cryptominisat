@@ -65,7 +65,7 @@ bool CompFinder::findComps()
     solver->clauseCleaner->remove_and_clean_all();
 
     if (solver->conf.doFindAndReplaceEqLits
-        && !solver->varReplacer->performReplace()
+        && !solver->varReplacer->perform_replace()
     ) {
         return false;
     }

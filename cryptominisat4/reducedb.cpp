@@ -251,7 +251,7 @@ void ReduceDB::print_best_red_clauses_if_required() const
 CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 {
     //Clean the clause database before doing cleaning
-    //varReplacer->performReplace();
+    //varReplacer->perform_replace();
     solver->clauseCleaner->remove_and_clean_all();
 
     const double myTime = cpuTime();

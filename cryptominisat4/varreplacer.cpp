@@ -168,7 +168,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
     return solver->ok;
 }
 
-bool VarReplacer::performReplace()
+bool VarReplacer::perform_replace()
 {
     assert(solver->ok);
     checkUnsetSanity();
@@ -980,7 +980,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit)
         }
     }
 
-    const bool ret = performReplace();
+    const bool ret = perform_replace();
     scc_finder->clear_binxors();
 
     return ret;
