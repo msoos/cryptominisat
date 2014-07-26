@@ -641,8 +641,6 @@ class Searcher : public HyperEngine
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         void add_in_partial_solving_stats();
 
-        friend class VarReplacer;
-
         //For connection with Solver
         void  resetStats();
 

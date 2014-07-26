@@ -3225,3 +3225,20 @@ void Solver::ReachabilityStats::print_short(const Solver* solver) const
     << solver->conf.print_times(cpu_time)
     << endl;
 }
+
+void Solver::update_assumptions_after_varreplace()
+{
+    //Update assumptions
+    for(Lit& lit: solver->assumptions) {
+        if (assumptionsSet.size() > lit.var()) {
+            assumptionsSet[lit.var()] = false;
+        } else {
+            assert(value(lit) != l_Undef
+                && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
+        }
+        lit = varReplacer->get_lit_replaced_with(lit);
+        if (assumptionsSet.size() > lit.var()) {
+            assumptionsSet[lit.var()] = true;
+        }
+    }
+}

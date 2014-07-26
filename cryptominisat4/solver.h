@@ -155,6 +155,7 @@ class Solver : public Searcher
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
         bool enqueue_these(const vector<Lit>& toEnqueue);
+        void update_assumptions_after_varreplace();
 
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
