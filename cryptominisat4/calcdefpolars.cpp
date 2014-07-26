@@ -23,6 +23,7 @@
 #include "assert.h"
 #include "time_mem.h"
 #include "solver.h"
+#include "sqlstats.h"
 #include "clauseallocator.h"
 
 using namespace CMSat;
@@ -136,14 +137,23 @@ const vector<unsigned char> CalcDefPolars::calculate()
     }
 
     //Print results
+    const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
         cout
         << "c [polar] default polars - "
         << " pos: " << std::setw(7) << pos_polars
         << " neg: " << std::setw(7) << neg_polars
         << " undec: " << std::setw(7) << undecided_polars
-        << solver->conf.print_times(cpuTime() - myTime)
+        << solver->conf.print_times(time_used)
         << std:: endl;
+    }
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "calcpolar"
+            , time_used
+        );
     }
 
     return ret_polar;
