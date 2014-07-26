@@ -81,12 +81,12 @@ bool CompFinder::find_components()
     if (timedout) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [comp] Timed out finding components, BP: "
+            << "c [comp] Timed out finding components "
+            << "BP: "
             << std::setprecision(2) << std::fixed
             << (double)timeUsed/(1000.0*1000.0)
-            << "M T: "
-            << std::setprecision(2) << std::fixed
-            << cpuTime() - myTime
+            << "M"
+            << solver->conf.print_times(cpuTime() - myTime)
             << endl;
         }
 
