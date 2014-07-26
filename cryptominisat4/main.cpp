@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include <unistd.h>
 
 #include "main.h"
+#include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
 #include "cryptominisat.h"
@@ -215,14 +216,14 @@ void Main::printResultFunc(
     }
 
     if (ret == l_True && (printResult || toFile)) {
-
-        if(!toFile) *os << "v ";
-        for (uint32_t var = 0; var < solver->nVars(); var++) {
-            if (solver->get_model()[var] != l_Undef)
-                *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
+        if (toFile) {
+            for (uint32_t var = 0; var < solver->nVars(); var++) {
+                if (solver->get_model()[var] != l_Undef)
+                    *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
+            }
+        } else {
+            print_model(os, solver);
         }
-
-        *os << "0" << endl;
     }
 }
 

@@ -28,6 +28,7 @@ using std::endl;
 
 #include <signal.h>
 #include "time_mem.h"
+#include "main_common.h"
 
 #include "cryptominisat.h"
 #include "dimacsparser.h"
@@ -230,14 +231,7 @@ int main(int argc, char** argv)
     }
     printf(ret == l_True ? "s SATISFIABLE\n" : "s UNSATISFIABLE\n");
     if (ret == l_True) {
-
-        cout << "v ";
-        for (uint32_t var = 0; var < solver->nVars(); var++) {
-            if (solver->get_model()[var] != l_Undef)
-                cout << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
-        }
-
-        cout << "0" << endl;
+        print_model(&std::cout, solver);
     }
 
     if (zero_exit_status)
