@@ -174,7 +174,6 @@ private:
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);
     vector<ClOffset> clauses;
-    bool subsumeWithBinaries();
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
