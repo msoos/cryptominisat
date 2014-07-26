@@ -741,7 +741,7 @@ bool Simplifier::can_eliminate_var(const Var var) const
     return true;
 }
 
-bool Simplifier::eliminateVars()
+bool Simplifier::eliminate_vars()
 {
     //Set-up
     double myTime = cpuTime();
@@ -778,7 +778,7 @@ bool Simplifier::eliminateVars()
             continue;
 
         //Try to eliminate
-        if (maybeEliminate(var)) {
+        if (maybe_eliminate(var)) {
             vars_elimed++;
             varelim_num_limit--;
         }
@@ -938,7 +938,7 @@ bool Simplifier::simplify()
     solver->clauseCleaner->clean_implicit_clauses();
     if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
         eliminate_empty_resolvent_vars();
-        if (!eliminateVars()
+        if (!eliminate_vars()
             || solver->must_interrupt_asap()
         )
             goto end;
@@ -2019,7 +2019,7 @@ void Simplifier::create_dummy_blocked_clause(const Lit lit)
     );
 }
 
-bool Simplifier::maybeEliminate(const Var var)
+bool Simplifier::maybe_eliminate(const Var var)
 {
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
