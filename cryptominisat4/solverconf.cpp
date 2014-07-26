@@ -127,7 +127,7 @@ SolverConf::SolverConf() :
         , var_elim_strategy  (elimstrategy_heuristic)
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.12)
-        , skip_some_bve_resolvents(false)
+        , skip_some_bve_resolvents(true)
 
         //Bounded variable addition
         , do_bva(true)
