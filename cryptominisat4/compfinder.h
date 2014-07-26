@@ -58,6 +58,7 @@ class CompFinder {
         bool belong_to_same_component(const T& cl);
         template<class T>
         void fill_newset_and_tomerge(const T& cl);
+        void merge_newset_into_single_component();
 
         struct MySorter
         {

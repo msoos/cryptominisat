@@ -282,6 +282,20 @@ void CompFinder::fill_newset_and_tomerge(const T& cl)
     }
 }
 
+void CompFinder::merge_newset_into_single_component()
+{
+    const uint32_t into = tomerge[0];
+    seen[into] = 0;
+    map<uint32_t, vector<Var> >::iterator intoReverse
+        = reverseTable.find(into);
+
+    //Put the new lits into this set
+    for (const Var v: newSet) {
+        intoReverse->second.push_back(v);
+        table[v] = into;
+    }
+}
+
 template<class T>
 void CompFinder::add_clause_to_component(const T& cl)
 {
@@ -297,16 +311,7 @@ void CompFinder::add_clause_to_component(const T& cl)
 
     //no sets to merge, only merge the clause into one tree
     if (tomerge.size() == 1) {
-        const uint32_t into = tomerge[0];
-        seen[into] = 0;
-        map<uint32_t, vector<Var> >::iterator intoReverse
-            = reverseTable.find(into);
-
-        //Put the new lits into this set
-        for (Var v: newSet) {
-            intoReverse->second.push_back(v);
-            table[v] = into;
-        }
+        merge_newset_into_single_component();
         return;
     }
 
