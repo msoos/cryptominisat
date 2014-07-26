@@ -73,8 +73,6 @@ class VarReplacer
 
         //Stats
         size_t getNumReplacedVars() const;
-        size_t getNumLastReplacedVars() const;
-        size_t getNewToReplaceVars() const;
         struct Stats
         {
             void clear()
@@ -238,16 +236,6 @@ class VarReplacer
 inline size_t VarReplacer::getNumReplacedVars() const
 {
     return replacedVars;
-}
-
-inline size_t VarReplacer::getNumLastReplacedVars() const
-{
-    return lastReplacedVars;
-}
-
-inline size_t VarReplacer::getNewToReplaceVars() const
-{
-    return replacedVars-lastReplacedVars;
 }
 
 inline bool VarReplacer::isReplaced(const Var var) const

@@ -907,8 +907,6 @@ bool Simplifier::simplify()
     //Test & debug
     solver->test_all_clause_attached();
     solver->check_wrong_attach();
-    assert(solver->varReplacer->getNewToReplaceVars() == 0
-            && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
     //Clean the clauses before playing with them
     solver->clauseCleaner->removeAndCleanAll();

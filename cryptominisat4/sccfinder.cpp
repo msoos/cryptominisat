@@ -45,7 +45,6 @@ bool SCCFinder::performSCC()
     runStats.clear();
     runStats.numCalls = 1;
     const double myTime = cpuTime();
-    size_t oldNumReplace = solver->varReplacer->getNewToReplaceVars();
 
     globalIndex = 0;
     index.clear();

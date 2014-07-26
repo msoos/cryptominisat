@@ -121,7 +121,6 @@ class Solver : public Searcher
 
 
         ///Return number of variables waiting to be replaced
-        size_t getNewToReplaceVars() const;
         const Stats& get_stats() const;
         uint64_t getNextCleanLimit() const;
 

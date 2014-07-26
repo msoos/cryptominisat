@@ -2790,11 +2790,6 @@ void Solver::check_stats(const bool allowFreed) const
     }
 }
 
-size_t Solver::getNewToReplaceVars() const
-{
-    return varReplacer->getNewToReplaceVars();
-}
-
 const char* Solver::getVersionSHA1()
 {
     #ifdef _MSC_VER
