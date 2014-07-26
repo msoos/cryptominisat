@@ -176,7 +176,7 @@ bool VarReplacer::perform_replace()
     #ifdef REPLACE_STATISTICS
     uint32_t numRedir = 0;
     for (uint32_t i = 0; i < table.size(); i++) {
-        if (getVarReplacedWith(i) != i)
+        if (get_var_replaced_with(i) != i)
             numRedir++;
     }
     cout << "c Number of trees:" << reverseTable.size() << endl;
@@ -300,7 +300,7 @@ void VarReplacer::updateTri(
     assert(solver->value(origLit3) == l_Undef);
 
     //Update lit3
-    if (getVarReplacedWith(lit3) != lit3.var()) {
+    if (get_var_replaced_with(lit3) != lit3.var()) {
         lit3 = get_lit_replaced_with(lit3);
         i->setLit3(lit3);
         runStats.replacedLits++;
@@ -509,14 +509,14 @@ bool VarReplacer::replaceImplicit()
 
             //Update main lit
             Lit lit1 = origLit1;
-            if (getVarReplacedWith(lit1) != lit1.var()) {
+            if (get_var_replaced_with(lit1) != lit1.var()) {
                 lit1 = get_lit_replaced_with(lit1);
                 runStats.replacedLits++;
             }
 
             //Update lit2
             Lit lit2 = origLit2;
-            if (getVarReplacedWith(lit2) != lit2.var()) {
+            if (get_var_replaced_with(lit2) != lit2.var()) {
                 lit2 = get_lit_replaced_with(lit2);
                 i->setLit2(lit2);
                 runStats.replacedLits++;
@@ -901,7 +901,7 @@ void VarReplacer::checkUnsetSanity()
 {
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         const Lit repLit = get_lit_replaced_with(Lit(i, false));
-        const Var repVar = getVarReplacedWith(i);
+        const Var repVar = get_var_replaced_with(i);
 
         if (solver->varData[i].removed == Removed::none
             && solver->varData[repVar].removed == Removed::none
@@ -1028,8 +1028,8 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
     );
 
     print_stats_line("c vrep trees' crown"
-        , getNumReplacedVars()
-        , (double)getNumReplacedVars()/(double)getNumTrees()
+        , get_num_replaced_vars()
+        , (double)get_num_replaced_vars()/(double)getNumTrees()
         , "leafs/tree"
     );
 }
@@ -1118,7 +1118,7 @@ Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
     return lit2;
 }
 
-Var VarReplacer::getVarReplacedWith(Var var) const
+Var VarReplacer::get_var_replaced_with(Var var) const
 {
     var = solver->map_inter_to_outer(var);
     Var var2 = table[var].var();

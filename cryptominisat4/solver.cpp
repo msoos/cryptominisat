@@ -390,7 +390,7 @@ Clause* Solver::add_clause_int(
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
                 << " var-updated lit: "
-                << varReplacer->getVarReplacedWith(p)
+                << varReplacer->get_var_replaced_with(p)
                 << ")"
                 << endl;
             }
@@ -2593,7 +2593,7 @@ size_t Solver::get_num_free_vars() const
     if (conf.perform_occur_based_simp) {
         freeVars -= simplifier->get_stats().numVarsElimed;
     }
-    freeVars -= varReplacer->getNumReplacedVars();
+    freeVars -= varReplacer->get_num_replaced_vars();
 
     return freeVars;
 }
@@ -2925,7 +2925,7 @@ size_t Solver::get_num_vars_elimed() const
 
 size_t Solver::get_num_vars_replaced() const
 {
-    return varReplacer->getNumReplacedVars();
+    return varReplacer->get_num_replaced_vars();
 }
 
 Lit Solver::update_lit_for_domin(Lit lit) const

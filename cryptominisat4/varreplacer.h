@@ -59,8 +59,8 @@ class VarReplacer
         void extend_model();
         void extend_model(const Var var);
 
-        Var getVarReplacedWith(const Var var) const;
-        Var getVarReplacedWith(const Lit lit) const;
+        Var get_var_replaced_with(const Var var) const;
+        Var get_var_replaced_with(const Lit lit) const;
         Lit get_lit_replaced_with(Lit lit) const;
         Lit get_lit_replaced_with_outer(Lit lit) const;
 
@@ -71,7 +71,7 @@ class VarReplacer
         );
 
         //Stats
-        size_t getNumReplacedVars() const;
+        size_t get_num_replaced_vars() const;
         struct Stats
         {
             void clear()
@@ -233,19 +233,19 @@ class VarReplacer
         Stats globalStats;
 };
 
-inline size_t VarReplacer::getNumReplacedVars() const
+inline size_t VarReplacer::get_num_replaced_vars() const
 {
     return replacedVars;
 }
 
 inline bool VarReplacer::isReplaced(const Var var) const
 {
-    return getVarReplacedWith(var) != var;
+    return get_var_replaced_with(var) != var;
 }
 
-inline Var VarReplacer::getVarReplacedWith(const Lit lit) const
+inline Var VarReplacer::get_var_replaced_with(const Lit lit) const
 {
-    return getVarReplacedWith(lit.var());
+    return get_var_replaced_with(lit.var());
 }
 
 inline bool VarReplacer::isReplaced(const Lit lit) const
