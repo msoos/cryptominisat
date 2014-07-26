@@ -60,6 +60,10 @@ class CompFinder {
         void fill_newset_and_tomerge(const T& cl);
         void merge_newset_into_single_component();
 
+        void time_out_print(const double myTime);
+        void print_found_components() const;
+        bool reverse_table_is_correct();
+
         struct MySorter
         {
             bool operator () (
@@ -85,7 +89,7 @@ class CompFinder {
         vector<uint32_t> tomerge;
 
         //Keep track of time
-        uint64_t timeUsed;
+        uint64_t bogoprops;
         bool timedout;
 
         vector<uint16_t>& seen;
