@@ -85,6 +85,7 @@ class Main
         SolverConf conf;
         bool needResultFile = false;
         bool zero_exit_status = false;
+        bool satcomp = false;
         std::string resultFilename;
 
         bool debugLib;

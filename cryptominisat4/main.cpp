@@ -274,6 +274,8 @@ void Main::add_supported_options()
         , "Put DRUP verification information into this file")
     ("drupexistscheck", po::value(&drupExistsCheck)->default_value(drupExistsCheck)
         , "Check if the drup file provided already exists")
+    ("satcomp", po::bool_switch(&satcomp)
+        , "Run with sat competition-tuned defaults")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -959,6 +961,11 @@ void Main::manually_parse_some_options()
 
     if (conf.verbosity >= 1) {
         cout << "c Outputting solution to console" << endl;
+    }
+
+    if (satcomp) {
+        conf.varElimRatioPerIter = 1.0;
+        conf.simplify_at_startup = true;
     }
 }
 
