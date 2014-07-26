@@ -54,6 +54,8 @@ class CompFinder {
         void add_clauses_to_component(const vector<ClOffset>& cs);
         template<class T>
         void add_clause_to_component(const T& cl);
+        template<class T>
+        bool belong_to_same_component(const T& cl);
 
         struct MySorter
         {

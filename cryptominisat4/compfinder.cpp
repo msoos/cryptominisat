@@ -245,33 +245,33 @@ void CompFinder::addToCompImplicits()
 }
 
 template<class T>
+bool CompFinder::belong_to_same_component(const T& cl)
+{
+    if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
+        timeUsed += cl.size()/2 + 1;
+        const uint32_t comp = table[cl[0].var()];
+
+        for (const Lit l: cl) {
+            if (table[l.var()] != comp) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+template<class T>
 void CompFinder::add_clause_to_component(const T& cl)
 {
     assert(cl.size() > 1);
     tomerge.clear();
     newSet.clear();
     vector<uint16_t>& seen = solver->seen;
-    timeUsed += cl.size()/2 + 1;
 
-    //Do they all belong to the same place?
-    bool allsame = false;
-    if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
-        uint32_t comp = table[cl[0].var()];
-        allsame = true;
-        for (typename T::const_iterator
-            it = cl.begin(), end = cl.end()
-            ; it != end
-            ; it++
-        ) {
-            if (table[it->var()] != comp) {
-                allsame = false;
-                break;
-            }
-        }
-    }
-
-    //They already all belong to the same comp, skip
-    if (allsame) {
+    if (belong_to_same_component(cl)) {
         return;
     }
 
