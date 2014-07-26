@@ -98,13 +98,16 @@ struct SortRedClsPropConfl: public MySorter
 {
     SortRedClsPropConfl(
         ClauseAllocator& _cl_alloc
-        , uint64_t _confl_multiplier
+        , double _confl_weight
+        , double _prop_weight
     ) :
         cl_alloc(_cl_alloc)
-        , confl_multiplier(_confl_multiplier)
+        , confl_weight(_confl_weight)
+        , prop_weight(_prop_weight)
     {}
     ClauseAllocator& cl_alloc;
-    uint64_t confl_multiplier;
+    double confl_weight;
+    double prop_weight;
 
     bool operator () (const ClOffset xOff, const ClOffset yOff) const override
     {
@@ -117,14 +120,16 @@ struct SortRedClsPropConfl: public MySorter
         //No clause should be less than 3-long: 2&3-long are not removed
         assert(xsize > 2 && ysize > 2);
 
-        const uint64_t x_useful = x->stats.numPropAndConfl(confl_multiplier);
-        const uint64_t y_useful = y->stats.numPropAndConfl(confl_multiplier);
-        if (x_useful != y_useful)
+        const double x_useful = x->stats.weighted_prop_and_confl(prop_weight, confl_weight);
+        const double y_useful = y->stats.weighted_prop_and_confl(prop_weight, confl_weight);
+        if (x_useful != y_useful) {
             return x_useful < y_useful;
+        }
 
         //Second tie: UIP usage
-        if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
+        if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation) {
             return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
+        }
 
         return x->size() > y->size();
     }
@@ -147,16 +152,16 @@ struct SortRedClsConflDepth : public MySorter
         //No clause should be less than 3-long: 2&3-long are not removed
         assert(xsize > 2 && ysize > 2);
 
-        if (x->stats.numPropAndConfl(1) == 0 && y->stats.numPropAndConfl(1) == 0)
+        if (x->stats.weighted_prop_and_confl(1.0, 1.0) == 0 && y->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
             return false;
 
-        if (x->stats.numPropAndConfl(1) == 0)
+        if (x->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
             return true;
-        if (y->stats.numPropAndConfl(1) == 0)
+        if (y->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
             return false;
 
-        const double x_useful = x->stats.confl_usefulness();
-        const double y_useful = y->stats.confl_usefulness();
+        const double x_useful = x->stats.calc_usefulness_depth();
+        const double y_useful = y->stats.calc_usefulness_depth();
         if (x_useful != y_useful)
             return x_useful < y_useful;
 
@@ -195,8 +200,13 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
         }
 
         case clean_sum_prop_confl_based : {
-            uint64_t multiplier = solver->conf.clean_confl_multiplier;
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsPropConfl(solver->cl_alloc, multiplier));
+            std::stable_sort(solver->longRedCls.begin()
+                , solver->longRedCls.end()
+                , SortRedClsPropConfl(solver->cl_alloc
+                    , solver->conf.clean_confl_multiplier
+                    , solver->conf.clean_prop_multiplier
+                )
+            );
             tmpStats.propConflBasedClean = 1;
             break;
         }

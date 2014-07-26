@@ -52,14 +52,14 @@ BOOST_AUTO_TEST_CASE(convert_to_string2)
     BOOST_CHECK_EQUAL( ss.str(), "1 -2 3");
 }
 
-BOOST_AUTO_TEST_CASE(numPropAndConfl)
+BOOST_AUTO_TEST_CASE(weighted_prop_and_confl)
 {
     Clause& cl = *allocate_space_for(3);
     cl.stats.propagations_made = 10;
     cl.stats.conflicts_made = 7;
 
-    BOOST_CHECK_EQUAL( cl.stats.numPropAndConfl(1), 17);
-    BOOST_CHECK_EQUAL( cl.stats.numPropAndConfl(2), 24);
+    BOOST_CHECK_EQUAL( cl.stats.weighted_prop_and_confl(1.0, 1.0), 17);
+    BOOST_CHECK_EQUAL( cl.stats.weighted_prop_and_confl(1.0, 2.0), 24);
 }
 
 BOOST_AUTO_TEST_CASE(clear)

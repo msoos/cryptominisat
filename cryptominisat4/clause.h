@@ -98,13 +98,15 @@ struct ClauseStats
         , locked(false)
     {}
 
-    uint64_t numPropAndConfl(const uint64_t confl_multiplier) const
-    {
-        return (uint64_t)propagations_made
-        + (uint64_t)conflicts_made*confl_multiplier;
+    double weighted_prop_and_confl(
+        const double prop_weight
+        , const double confl_weight
+    ) const {
+        return ((double)propagations_made)*prop_weight
+            + ((double)conflicts_made)*confl_weight;
     }
 
-    double confl_usefulness() const
+    double calc_usefulness_depth() const
     {
         double useful = 0;
         if (conflicts_made > 0) {
@@ -410,7 +412,7 @@ public:
         if (stats.visited_literals > 0) {
             cout
             << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats.numPropAndConfl(1)/(double)stats.visited_literals);
+            << (10.0*(double)stats.weighted_prop_and_confl(1.0, 1.0)/(double)stats.visited_literals);
         }
         #endif
         ;

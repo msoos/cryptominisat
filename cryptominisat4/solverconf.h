@@ -120,7 +120,8 @@ class SolverConf
 
         //Clause cleaning
         ClauseCleaningTypes clauseCleaningType;
-        unsigned clean_confl_multiplier;
+        double    clean_confl_multiplier;
+        double    clean_prop_multiplier;
         int       doPreClauseCleanPropAndConfl;
         unsigned  long long preClauseCleanLimit;
         unsigned  long long preCleanMinConflTime;
