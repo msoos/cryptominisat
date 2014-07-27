@@ -52,7 +52,7 @@ public:
     {
         size_t mem = 0;
         mem += PropEngine::mem_used();
-        mem += toPropNorm.mem_used();;
+        mem += toPropNorm.mem_used();
         mem += toPropBin.mem_used();
         mem += toPropRedBin.mem_used();
 
