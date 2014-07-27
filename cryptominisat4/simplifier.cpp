@@ -136,7 +136,7 @@ void Simplifier::new_var(const Var orig_outer)
 {
 }
 
-void Simplifier::new_vars(size_t n)
+void Simplifier::new_vars(size_t)
 {
 }
 
