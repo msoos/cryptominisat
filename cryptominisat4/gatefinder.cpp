@@ -76,6 +76,8 @@ end:
     gateOcc.shrink_to_fit();
     gateOccEq.clear();
     gateOccEq.shrink_to_fit();
+    orGates.clear();
+    orGates.shrink_to_fit();
 
     return solver->ok;
 }
