@@ -299,10 +299,11 @@ class Tester:
                 vlinefound = True
                 myvars = line.split(' ')
                 for var in myvars:
-                    if (var == 'v') : continue;
+                    var = var.strip()
+                    if var == "" or var == 'v': continue
                     if (int(var) == 0) : break;
-                    vvar = int(var)
-                    solution[abs(vvar)] = (vvar >= 0)
+                    intvar = int(var)
+                    solution[abs(intvar)] = (intvar >= 0)
         #print "Parsed values:", solution
 
         if (self.ignoreNoSolution == False and
