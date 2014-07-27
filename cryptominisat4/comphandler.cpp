@@ -69,6 +69,17 @@ void CompHandler::save_on_var_memory()
 {
 }
 
+size_t CompHandler::mem_used() const
+{
+    size_t mem = 0;
+    mem += savedState.capacity()*sizeof(lbool);
+    mem += useless.capacity()*sizeof(Var);
+    mem += smallsolver_to_bigsolver.capacity()*sizeof(Var);
+    mem += bigsolver_to_smallsolver.capacity()*sizeof(Var);
+
+    return mem;
+}
+
 void CompHandler::createRenumbering(const vector<Var>& vars)
 {
     smallsolver_to_bigsolver.resize(vars.size());

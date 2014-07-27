@@ -65,6 +65,7 @@ class CompHandler
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
         void dump_removed_clauses(std::ostream* outfile) const;
+        size_t mem_used() const;
 
     private:
         struct sort_pred {

@@ -2139,6 +2139,15 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
+    mem = compHandler->mem_used();
+    print_stats_line("c Mem for component handler"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , stats_line_percent(mem, rss_mem_used)
+        , "%"
+    );
+    account += mem;
+
     if (conf.perform_occur_based_simp) {
         mem = simplifier->mem_used();
         print_stats_line("c Mem for simplifier"
