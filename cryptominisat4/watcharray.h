@@ -131,8 +131,9 @@ struct watch_subarray_const
     typedef const Watched* const_iterator;
 };
 
-struct watch_array
+class watch_array
 {
+public:
     vector<vector<Watched TBB > > watches;
 
     watch_subarray operator[](size_t pos)
@@ -295,7 +296,8 @@ struct watch_array
     size_t mem_used_array() const
     {
         size_t mem = 0;
-        mem += watches.capacity()*sizeof(Watched);
+        mem += watches.capacity()*sizeof(vector<Watched>);
+        mem += sizeof(watch_array);
         return mem;
     }
 };

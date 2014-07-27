@@ -48,9 +48,15 @@ public:
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
 
-    virtual size_t mem_used() const
+    size_t mem_used() const
     {
-        size_t mem = PropEngine::mem_used();
+        size_t mem = 0;
+        mem += PropEngine::mem_used();
+        mem += toPropNorm.mem_used();;
+        mem += toPropBin.mem_used();
+        mem += toPropRedBin.mem_used();
+
+        mem += currAncestors.capacity()*sizeof(Lit);;
         return mem;
     }
 

@@ -2996,6 +2996,7 @@ size_t Searcher::mem_used() const
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
     mem += model.capacity()*sizeof(lbool);
+    mem += analyze_stack.mem_used();
 
     if (conf.verbosity >= 3) {
         cout

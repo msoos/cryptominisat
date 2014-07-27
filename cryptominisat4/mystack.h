@@ -41,6 +41,11 @@ public:
         return inter.capacity();
     }
 
+    size_t mem_used() const
+    {
+        return capacity()*sizeof(T);
+    }
+
 private:
     vector<T> inter;
 };

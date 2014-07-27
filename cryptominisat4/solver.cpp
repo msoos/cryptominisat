@@ -2129,19 +2129,6 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    mem = 0;
-    mem += seen.capacity()*sizeof(uint16_t);
-    mem += seen2.capacity()*sizeof(uint16_t);
-    mem += toClear.capacity()*sizeof(Lit);
-    mem += analyze_stack.capacity()*sizeof(Lit);
-    print_stats_line("c Mem for temporaries"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , stats_line_percent(mem, totalMem)
-        , "%"
-    );
-    account += mem;
-
     mem = CNF::get_renumber_mem();
     print_stats_line("c Mem for renumberer"
         , mem/(1024UL*1024UL)

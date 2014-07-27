@@ -146,6 +146,8 @@ void CNF::save_on_var_memory()
     watches.consolidate();
     implCache.save_on_var_memorys(nVars());
     stamp.save_on_var_memory(nVars());
+    longRedCls.shrink_to_fit();
+    longIrredCls.shrink_to_fit();
 
     seen.resize(nVars()*2);
     seen.shrink_to_fit();
@@ -333,6 +335,7 @@ size_t CNF::get_renumber_mem() const
     size_t mem = 0;
     mem += interToOuterMain.capacity()*sizeof(Var);
     mem += outerToInterMain.capacity()*sizeof(Var);
+    mem += outer_to_with_bva_map.capacity()*sizeof(Var);
     return mem;
 }
 
@@ -365,4 +368,23 @@ vector<Var> CNF::build_outer_to_without_bva_map() const
     }
 
     return ret;
+}
+
+size_t CNF::mem_used() const
+{
+    size_t mem = 0;
+    mem += sizeof(conf);
+    mem += assigns.capacity()*sizeof(lbool);
+    mem += varData.capacity()*sizeof(VarData);
+    #ifdef STATS_NEEDED
+    mem += varDataLT.capacity()*sizeof(VarData);
+    #endif
+    mem += longIrredCls.capacity()*sizeof(ClOffset);
+    mem += longRedCls.capacity()*sizeof(ClOffset);
+    mem += sizeof(binTri);
+    mem += seen.capacity()*sizeof(uint16_t);
+    mem += seen2.capacity()*sizeof(uint16_t);
+    mem += toClear.capacity()*sizeof(Lit);
+
+    return mem;
 }

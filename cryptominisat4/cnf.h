@@ -26,6 +26,7 @@ public:
         , const vector<Var>& interToOuter
     );
     size_t get_renumber_mem() const;
+    size_t mem_used() const;
 
     struct BinTriStats
     {

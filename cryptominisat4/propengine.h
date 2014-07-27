@@ -224,9 +224,10 @@ protected:
     );
     void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
 
-    virtual size_t mem_used() const
+    size_t mem_used() const
     {
         size_t mem = 0;
+        mem += CNF::mem_used();
         mem += trail.capacity()*sizeof(Lit);
         mem += trail_lim.capacity()*sizeof(uint32_t);
         mem += toClear.capacity()*sizeof(Lit);

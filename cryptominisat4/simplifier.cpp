@@ -2745,10 +2745,7 @@ size_t Simplifier::mem_used() const
     b += poss_gate_parts.capacity()*sizeof(char);
     b += negs_gate_parts.capacity()*sizeof(char);
     b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
-    b += seen.capacity()*sizeof(char);
-    b += seen2.capacity()*sizeof(char);
     b += dummy.capacity()*sizeof(char);
-    b += toClear.capacity()*sizeof(Lit);
     b += subsumeStrengthen->mem_used();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
