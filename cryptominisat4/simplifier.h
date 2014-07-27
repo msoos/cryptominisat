@@ -452,11 +452,6 @@ inline const SubsumeStrengthen* Simplifier::getSubsumeStrengthen() const
     return subsumeStrengthen;
 }
 
-/*inline const XorFinder* Simplifier::getXorFinder() const
-{
-    return xorFinder;
-}*/
-
 } //end namespace
 
 #endif //SIMPLIFIER_H
