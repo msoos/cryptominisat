@@ -244,7 +244,7 @@ bool CompHandler::solve_component(
     if (status == l_Undef) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c subcomponent returned l_Undef -- timeout or interrupt."
+            << "c [comp] subcomponent returned l_Undef -- timeout or interrupt."
             << endl;
         }
         readdRemovedClauses();
