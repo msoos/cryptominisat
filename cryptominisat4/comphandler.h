@@ -91,10 +91,16 @@ class CompHandler
             , const vector<Var>& vars
         );
         void check_local_vardata_sanity();
-        bool solve_component(
+        bool try_to_solve_component(
             const uint32_t comp_at
             , const uint32_t comp
             , const vector<Var>& vars
+            , const size_t num_comps
+        );
+        bool solve_component(
+            const uint32_t comp_at
+            , const uint32_t comp
+            , const vector<Var>& vars_orig
             , const size_t num_comps
         );
 

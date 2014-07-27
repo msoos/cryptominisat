@@ -154,7 +154,7 @@ bool CompHandler::handle()
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         const uint32_t comp = sizes[it].first;
         vector<Var>& vars = reverseTable[comp];
-        const bool cont = solve_component(it, comp, vars, num_comps);
+        const bool cont = try_to_solve_component(it, comp, vars, num_comps);
         if (!cont) {
             break;
         }
@@ -185,7 +185,7 @@ bool CompHandler::handle()
     return true;
 }
 
-bool CompHandler::solve_component(
+bool CompHandler::try_to_solve_component(
     const uint32_t comp_at
     , const uint32_t comp
     , const vector<Var>& vars_orig
@@ -206,6 +206,15 @@ bool CompHandler::solve_component(
     if (assumpsInsideComponent(vars_orig))
         return true;
 
+    return solve_component(comp_at, comp, vars_orig, num_comps);
+}
+
+bool CompHandler::solve_component(
+    const uint32_t comp_at
+    , const uint32_t comp
+    , const vector<Var>& vars_orig
+    , const size_t num_comps
+) {
     vector<Var> vars(vars_orig);
 
     //Sort and renumber
