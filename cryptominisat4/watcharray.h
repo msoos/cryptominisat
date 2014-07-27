@@ -163,9 +163,10 @@ public:
 
     size_t mem_used() const
     {
-        size_t mem = watches.capacity()*sizeof(vector<Watched TBB >);
+        double mem = watches.capacity()*sizeof(vector<Watched TBB >);
         for(size_t i = 0; i < watches.size(); i++) {
-            mem += watches[i].capacity()*sizeof(Watched);
+            //1.2 is overhead
+            mem += (double)watches[i].capacity()*(double)sizeof(Watched)*1.2;
         }
         return mem;
     }

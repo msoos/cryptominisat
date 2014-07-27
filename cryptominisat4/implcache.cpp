@@ -48,13 +48,14 @@ void ImplCache::makeAllRed()
 
 size_t ImplCache::mem_used() const
 {
-    size_t numBytes = 0;
+    double numBytes = 0;
     for(vector<TransCache>::const_iterator
         it = implCache.begin(), end = implCache.end()
         ; it != end
         ; it++
     ) {
-        numBytes += it->lits.capacity()*sizeof(LitExtra);
+        //1.2 is overhead
+        numBytes += (double)it->lits.capacity()*(double)sizeof(LitExtra)*1.2;
     }
     numBytes += implCache.capacity()*sizeof(vector<TransCache>);
 
