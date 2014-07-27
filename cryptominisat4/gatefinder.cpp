@@ -72,9 +72,9 @@ end:
     }
     globalStats += runStats;
 
-    gateOcc.resize(0);
+    gateOcc.clear();
     gateOcc.shrink_to_fit();
-    gateOccEq.resize(0);
+    gateOccEq.clear();
     gateOccEq.shrink_to_fit();
 
     return solver->ok;
