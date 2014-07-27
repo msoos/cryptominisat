@@ -279,7 +279,6 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> varElimOrder;
-    uint32_t    numIrredBins(const Lit lit) const;
     //void        addRedBinaries(const Var var);
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
     void        add_clause_to_blck(Lit lit, const vector<Lit>& lits);
@@ -356,8 +355,8 @@ private:
 
     //For empty resolvents
     enum class ResolvCount{count, set, unset};
-    bool checkEmptyResolvent(const Lit lit);
-    int checkEmptyResolventHelper(
+    bool check_empty_resolvent(const Lit lit);
+    int check_empty_resolvent_action(
         const Lit lit
         , ResolvCount action
         , int otherSize

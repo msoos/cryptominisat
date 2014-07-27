@@ -690,7 +690,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
             continue;
 
         const Lit lit = Lit(var, false);
-        if (!checkEmptyResolvent(lit))
+        if (!check_empty_resolvent(lit))
             continue;
 
         create_dummy_blocked_clause(lit);
@@ -1432,17 +1432,6 @@ void Simplifier::add_clause_to_blck(Lit lit, const vector<Lit>& lits)
     vector<Lit> lits_outer = lits;
     solver->map_inter_to_outer(lits_outer);
     blockedClauses.push_back(BlockedClause(lit, lits_outer));
-}
-
-uint32_t Simplifier::numIrredBins(const Lit lit) const
-{
-    uint32_t num = 0;
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    for (watch_subarray::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-        if (it->isBinary() && !it->red()) num++;
-    }
-
-    return num;
 }
 
 bool Simplifier::find_gate(
@@ -2417,13 +2406,13 @@ Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
     return ret;
 }
 
-bool Simplifier::checkEmptyResolvent(Lit lit)
+bool Simplifier::check_empty_resolvent(Lit lit)
 {
     //Take the smaller of the two
     if (solver->watches[(~lit).toInt()].size() < solver->watches[lit.toInt()].size())
         lit = ~lit;
 
-    int num_bits_set = checkEmptyResolventHelper(
+    int num_bits_set = check_empty_resolvent_action(
         lit
         , ResolvCount::set
         , 0
@@ -2434,7 +2423,7 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
     //Can only count if the POS was small enough
     //otherwise 'seen' cannot properly store the data
     if (num_bits_set < 16) {
-        num_resolvents = checkEmptyResolventHelper(
+        num_resolvents = check_empty_resolvent_action(
             ~lit
             , ResolvCount::count
             , num_bits_set
@@ -2442,7 +2431,7 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
     }
 
     //Clear the 'seen' array
-    checkEmptyResolventHelper(
+    check_empty_resolvent_action(
         lit
         , ResolvCount::unset
         , 0
@@ -2453,7 +2442,7 @@ bool Simplifier::checkEmptyResolvent(Lit lit)
 }
 
 
-int Simplifier::checkEmptyResolventHelper(
+int Simplifier::check_empty_resolvent_action(
     const Lit lit
     , const ResolvCount action
     , const int otherSize
