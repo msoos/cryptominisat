@@ -274,14 +274,18 @@ void CompHandler::check_local_vardata_sanity()
     //Checking that all variables that are not in the remaining comp have
     //correct 'removed' flags, and none have been assigned
 
+    size_t num_vars_removed_check = 0;
     for (Var var = 0; var < solver->nVars(); var++) {
         const Var outerVar = solver->map_inter_to_outer(var);
         if (savedState[outerVar] != l_Undef) {
             assert(solver->varData[var].is_decision == false);
             assert(solver->varData[var].removed == Removed::decomposed);
             assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
+            num_vars_removed_check++;
         }
     }
+
+    assert(num_vars_removed == num_vars_removed_check);
 }
 
 void CompHandler::check_solution_is_unassigned_in_main_solver(
@@ -323,7 +327,11 @@ void CompHandler::move_decision_level_zero_vars_here(
         assert(lit.var() < smallsolver_to_bigsolver.size());
         lit = Lit(smallsolver_to_bigsolver[lit.var()], lit.sign());
         assert(solver->value(lit) == l_Undef);
+
+        assert(solver->varData[lit.var()].removed == Removed::decomposed);
         solver->varData[lit.var()].removed = Removed::none;
+        num_vars_removed--;
+
         const Var outer = solver->map_inter_to_outer(lit.var());
         savedState[outer] = l_Undef;
         solver->enqueue(lit);
@@ -392,6 +400,7 @@ void CompHandler::moveVariablesBetweenSolvers(
         assert(solver->varData[var].is_decision);
         solver->unsetDecisionVar(var);
         solver->varData[var].removed = Removed::decomposed;
+        num_vars_removed++;
     }
 }
 
@@ -720,6 +729,7 @@ void CompHandler::readdRemovedClauses()
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
             solver->setDecisionVar(i);
+            num_vars_removed--;
         }
     }
 

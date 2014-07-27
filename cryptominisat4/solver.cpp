@@ -2596,6 +2596,10 @@ size_t Solver::get_num_free_vars() const
     }
     freeVars -= varReplacer->get_num_replaced_vars();
 
+    if (compHandler) {
+        freeVars -= compHandler->get_num_vars_removed();
+    }
+
     return freeVars;
 }
 

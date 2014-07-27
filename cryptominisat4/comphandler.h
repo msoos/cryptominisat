@@ -65,6 +65,7 @@ class CompHandler
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
         void dump_removed_clauses(std::ostream* outfile) const;
+        size_t get_num_vars_removed() const;
         size_t mem_used() const;
 
     private:
@@ -145,6 +146,7 @@ class CompHandler
         template<class T>
         void saveClause(const T& lits);
         RemovedClauses removedClauses;
+        size_t num_vars_removed = 0;
 
         //Clauses that have been moved to other comps
         //vector<ClOffset> clausesRemoved;
@@ -162,6 +164,11 @@ inline const vector<lbool>& CompHandler::getSavedState()
 inline const CompHandler::RemovedClauses& CompHandler::getRemovedClauses() const
 {
     return removedClauses;
+}
+
+inline size_t CompHandler::get_num_vars_removed() const
+{
+    return num_vars_removed;
 }
 
 } //end of namespace
