@@ -177,11 +177,11 @@ bool CompHandler::handle()
         << endl;
     }
 
-    //Filter out the variables that have been made non-decision
     check_local_vardata_sanity();
 
     delete compFinder;
     compFinder = NULL;
+
     return true;
 }
 
