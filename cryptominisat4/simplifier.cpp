@@ -134,12 +134,10 @@ void Simplifier::check_delete_gatefinder()
 
 void Simplifier::new_var(const Var orig_outer)
 {
-    check_delete_gatefinder();
 }
 
 void Simplifier::new_vars(size_t n)
 {
-    check_delete_gatefinder();
 }
 
 void Simplifier::save_on_var_memory()
@@ -880,6 +878,8 @@ bool Simplifier::simplify()
 {
     assert(solver->okay());
     assert(toClear.empty());
+
+    check_delete_gatefinder();
 
     //Test & debug
     solver->test_all_clause_attached();
