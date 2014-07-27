@@ -103,6 +103,7 @@ class CompHandler
             , const vector<Var>& vars_orig
             , const size_t num_comps
         );
+        vector<pair<uint32_t, uint32_t> > get_component_sizes() const;
 
         SolverConf configureNewSolver(
             const size_t numVars

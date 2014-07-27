@@ -105,6 +105,29 @@ bool CompHandler::assumpsInsideComponent(const vector<Var>& vars)
     return false;
 }
 
+vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
+{
+    vector<pair<uint32_t, uint32_t> > sizes;
+    map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
+
+    for (map<uint32_t, vector<Var> >::iterator
+        it = reverseTable.begin()
+        ; it != reverseTable.end()
+        ; it++
+    ) {
+        sizes.push_back(make_pair(
+            it->first //Comp number
+            , (uint32_t)it->second.size() //Size of the table
+        ));
+    }
+
+    //Sort according to smallest size first
+    std::stable_sort(sizes.begin(), sizes.end(), sort_pred());
+    assert(sizes.size() > 1);
+
+    return sizes;
+}
+
 bool CompHandler::handle()
 {
     assert(solver->okay());
@@ -131,23 +154,7 @@ bool CompHandler::handle()
 
     map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
     assert(num_comps == compFinder->getReverseTable().size());
-
-    //Get the sizes now
-    vector<pair<uint32_t, uint32_t> > sizes;
-    for (map<uint32_t, vector<Var> >::iterator
-        it = reverseTable.begin()
-        ; it != reverseTable.end()
-        ; it++
-    ) {
-        sizes.push_back(make_pair(
-            it->first //Comp number
-            , (uint32_t)it->second.size() //Size of the table
-        ));
-    }
-
-    //Sort according to smallest size first
-    std::stable_sort(sizes.begin(), sizes.end(), sort_pred());
-    assert(sizes.size() > 1);
+    vector<pair<uint32_t, uint32_t> > sizes = get_component_sizes();
 
     size_t num_comps_solved = 0;
     size_t vars_solved = 0;
