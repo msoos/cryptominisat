@@ -334,7 +334,7 @@ private:
             , tri(0)
             , longer(0)
             , lit(0)
-            , count(std::numeric_limits<uint32_t>::max()) //resolution count (if can be counted, otherwise MAX)
+            , count(std::numeric_limits<uint32_t>::max())
         {}
 
         uint32_t totalCls() const
@@ -346,7 +346,7 @@ private:
         uint32_t tri;
         uint32_t longer;
         uint32_t lit;
-        uint32_t count;
+        uint32_t count; //resolution count (if can be counted, otherwise MAX)
     };
     HeuristicData calc_data_for_heuristic(const Lit lit);
     std::pair<int, int> strategyCalcVarElimScore(const Var var);
