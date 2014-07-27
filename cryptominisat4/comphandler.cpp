@@ -172,17 +172,23 @@ bool CompHandler::handle()
     if (!solver->okay())
         return false;
 
-    //Coming back to the original instance now
+    const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity  >= 1) {
         cout
         << "c [comp] Coming back to original instance, solved "
         << num_comps_solved << " component(s), "
         << vars_solved << " vars"
-        << " T: "
-        << std::setprecision(2) << std::fixed
-        << cpuTime() - myTime
+        << solver->conf.print_times(time_used)
         << endl;
     }
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "comphandler"
+            , time_used
+        );
+     }
 
     check_local_vardata_sanity();
 
@@ -494,16 +500,177 @@ void CompHandler::moveClausesLong(
     cs.resize(cs.size() - (i-j));
 }
 
+void CompHandler::remove_bin_except_for_lit1(const Lit lit, const Lit lit2)
+{
+    removeWBin(solver->watches, lit2, lit, true);
+
+    //Update stats
+    solver->binTri.redBins--;
+}
+
+void CompHandler::move_binary_clause(
+    SATSolver* newSolver
+    , const uint32_t comp
+    ,  Watched *i
+    , const Lit lit
+) {
+    const Lit lit2 = i->lit2();
+
+    //Unless redundant, cannot be in 2 comps at once
+    assert((compFinder->getVarComp(lit.var()) == comp
+                && compFinder->getVarComp(lit2.var()) == comp
+           ) || i->red()
+    );
+
+    //If it's redundant and the lits are in different comps, remove it.
+    if (compFinder->getVarComp(lit.var()) != comp
+        || compFinder->getVarComp(lit2.var()) != comp
+    ) {
+        //Can only be redundant, otherwise it would be in the same
+        //component
+        assert(i->red());
+
+        //The way we go through this, it's definitely going to be
+        //lit2 that's in the other component
+        assert(compFinder->getVarComp(lit2.var()) != comp);
+
+        remove_bin_except_for_lit1(lit, lit2);
+        return;
+    }
+
+    //don't add the same clause twice
+    if (lit < lit2) {
+
+        //Add clause
+        tmp_lits = {upd_bigsolver_to_smallsolver(lit), upd_bigsolver_to_smallsolver(lit2)};
+        assert(compFinder->getVarComp(lit.var()) == comp);
+        assert(compFinder->getVarComp(lit2.var()) == comp);
+
+        //Add new clause
+        if (i->red()) {
+            //newSolver->addRedClause(tmp_lits);
+            numRemovedHalfRed++;
+        } else {
+            //Save backup
+            saveClause(vector<Lit>{lit, lit2});
+
+            newSolver->add_clause(tmp_lits);
+            numRemovedHalfIrred++;
+        }
+    } else {
+
+        //Just remove, already added above
+        if (i->red()) {
+            numRemovedHalfRed++;
+        } else {
+            numRemovedHalfIrred++;
+        }
+    }
+}
+
+void CompHandler::remove_tri_except_for_lit1(
+    const Lit lit
+    , const Lit lit2
+    , const Lit lit3
+) {
+    //Update stats
+    solver->binTri.redTris--;
+
+    //We need it sorted, because that's how we know what order
+    //it is in the Watched()
+    tmp_lits = {lit, lit2, lit3};
+    std::stable_sort(tmp_lits.begin(), tmp_lits.end());
+
+    //Remove only 2, the remaining gets removed by not copying it over
+    if (tmp_lits[0] != lit) {
+        removeWTri(solver->watches, tmp_lits[0], tmp_lits[1], tmp_lits[2], true);
+    }
+    if (tmp_lits[1] != lit) {
+        removeWTri(solver->watches, tmp_lits[1], tmp_lits[0], tmp_lits[2], true);
+    }
+    if (tmp_lits[2] != lit) {
+        removeWTri(solver->watches, tmp_lits[2], tmp_lits[0], tmp_lits[1], true);
+    }
+}
+
+void CompHandler::move_tri_clause(
+    SATSolver* newSolver
+    , const uint32_t comp
+    ,  Watched *i
+    , const Lit lit
+) {
+    const Lit lit2 = i->lit2();
+    const Lit lit3 = i->lit3();
+
+    //Unless redundant, cannot be in 2 comps at once
+    assert((compFinder->getVarComp(lit.var()) == comp
+                && compFinder->getVarComp(lit2.var()) == comp
+                && compFinder->getVarComp(lit3.var()) == comp
+           ) || i->red()
+    );
+
+    //If it's redundant and the lits are in different comps, remove it.
+    if (compFinder->getVarComp(lit.var()) != comp
+        || compFinder->getVarComp(lit2.var()) != comp
+        || compFinder->getVarComp(lit3.var()) != comp
+    ) {
+        assert(i->red());
+
+        //The way we go through this, it's definitely going to be
+        //either lit2 or lit3, not lit, that's in the other comp
+        assert(compFinder->getVarComp(lit2.var()) != comp
+            || compFinder->getVarComp(lit3.var()) != comp
+        );
+
+        remove_tri_except_for_lit1(lit, lit2, lit3);
+        return;
+    }
+
+    //don't add the same clause twice
+    if (lit < lit2
+        && lit2 < lit3
+    ) {
+
+        //Add clause
+        tmp_lits = {upd_bigsolver_to_smallsolver(lit)
+            , upd_bigsolver_to_smallsolver(lit2)
+            , upd_bigsolver_to_smallsolver(lit3)
+        };
+        assert(compFinder->getVarComp(lit.var()) == comp);
+        assert(compFinder->getVarComp(lit2.var()) == comp);
+        assert(compFinder->getVarComp(lit3.var()) == comp);
+
+        //Add new clause
+        if (i->red()) {
+            //newSolver->addRedClause(tmp_lits);
+            numRemovedThirdRed++;
+        } else {
+            //Save backup
+            saveClause(vector<Lit>{lit, lit2, lit3});
+
+            newSolver->add_clause(tmp_lits);
+            numRemovedThirdIrred++;
+        }
+    } else {
+
+        //Just remove, already added above
+        if (i->red()) {
+            numRemovedThirdRed++;
+        } else {
+            numRemovedThirdIrred++;
+        }
+    }
+}
+
 void CompHandler::moveClausesImplicit(
     SATSolver* newSolver
     , const uint32_t comp
     , const vector<Var>& vars
 ) {
-    vector<Lit> lits;
-    uint32_t numRemovedHalfIrred = 0;
-    uint32_t numRemovedHalfRed = 0;
-    uint32_t numRemovedThirdIrred = 0;
-    uint32_t numRemovedThirdRed = 0;
+    numRemovedHalfIrred = 0;
+    numRemovedHalfRed = 0;
+    numRemovedThirdIrred = 0;
+    numRemovedThirdRed = 0;
 
     for(const Var var: vars) {
     for(unsigned sign = 0; sign < 2; sign++) {
@@ -527,65 +694,7 @@ void CompHandler::moveClausesImplicit(
                     || compFinder->getVarComp(i->lit2().var()) == comp
                 )
             ) {
-                const Lit lit2 = i->lit2();
-
-                //Unless redundant, cannot be in 2 comps at once
-                assert((compFinder->getVarComp(lit.var()) == comp
-                            && compFinder->getVarComp(lit2.var()) == comp
-                       ) || i->red()
-                );
-
-                //If it's redundant and the lits are in different comps, remove it.
-                if (compFinder->getVarComp(lit.var()) != comp
-                    || compFinder->getVarComp(lit2.var()) != comp
-                ) {
-                    //Can only be redundant, otherwise it would be in the same
-                    //component
-                    assert(i->red());
-
-                    //The way we go through this, it's definitely going to be
-                    //lit2 that's in the other component
-                    assert(compFinder->getVarComp(lit2.var()) != comp);
-
-                    removeWBin(solver->watches, lit2, lit, true);
-
-                    //Update stats
-                    solver->binTri.redBins--;
-
-                    //Not copy, that's the other Watched removed
-                    continue;
-                }
-
-                //don't add the same clause twice
-                if (lit < lit2) {
-
-                    //Add clause
-                    lits = {upd_bigsolver_to_smallsolver(lit), upd_bigsolver_to_smallsolver(lit2)};
-                    assert(compFinder->getVarComp(lit.var()) == comp);
-                    assert(compFinder->getVarComp(lit2.var()) == comp);
-
-                    //Add new clause
-                    if (i->red()) {
-                        //newSolver->addRedClause(lits);
-                        numRemovedHalfRed++;
-                    } else {
-                        //Save backup
-                        saveClause(vector<Lit>{lit, lit2});
-
-                        newSolver->add_clause(lits);
-                        numRemovedHalfIrred++;
-                    }
-                } else {
-
-                    //Just remove, already added above
-                    if (i->red()) {
-                        numRemovedHalfRed++;
-                    } else {
-                        numRemovedHalfIrred++;
-                    }
-                }
-
-                //Yes, remove
+                move_binary_clause(newSolver, comp, i, lit);
                 continue;
             }
 
@@ -595,85 +704,7 @@ void CompHandler::moveClausesImplicit(
                     || compFinder->getVarComp(i->lit3().var()) == comp
                 )
             ) {
-                const Lit lit2 = i->lit2();
-                const Lit lit3 = i->lit3();
-
-                //Unless redundant, cannot be in 2 comps at once
-                assert((compFinder->getVarComp(lit.var()) == comp
-                            && compFinder->getVarComp(lit2.var()) == comp
-                            && compFinder->getVarComp(lit3.var()) == comp
-                       ) || i->red()
-                );
-
-                //If it's redundant and the lits are in different comps, remove it.
-                if (compFinder->getVarComp(lit.var()) != comp
-                    || compFinder->getVarComp(lit2.var()) != comp
-                    || compFinder->getVarComp(lit3.var()) != comp
-                ) {
-                    assert(i->red());
-
-                    //The way we go through this, it's definitely going to be
-                    //either lit2 or lit3, not lit, that's in the other comp
-                    assert(compFinder->getVarComp(lit2.var()) != comp
-                        || compFinder->getVarComp(lit3.var()) != comp
-                    );
-
-                    //Update stats
-                    solver->binTri.redTris--;
-
-                    //We need it sorted, because that's how we know what order
-                    //it is in the Watched()
-                    lits = {lit, lit2, lit3};
-                    std::stable_sort(lits.begin(), lits.end());
-
-                    //Remove only 2, the remaining gets removed by not copying it over
-                    if (lits[0] != lit) {
-                        removeWTri(solver->watches, lits[0], lits[1], lits[2], true);
-                    }
-                    if (lits[1] != lit) {
-                        removeWTri(solver->watches, lits[1], lits[0], lits[2], true);
-                    }
-                    if (lits[2] != lit) {
-                        removeWTri(solver->watches, lits[2], lits[0], lits[1], true);
-                    }
-
-                    //Not copying, that's the 3rd one
-                    continue;
-                }
-
-                //don't add the same clause twice
-                if (lit < lit2
-                    && lit2 < lit3
-                ) {
-
-                    //Add clause
-                    lits = {upd_bigsolver_to_smallsolver(lit), upd_bigsolver_to_smallsolver(lit2), upd_bigsolver_to_smallsolver(lit3)};
-                    assert(compFinder->getVarComp(lit.var()) == comp);
-                    assert(compFinder->getVarComp(lit2.var()) == comp);
-                    assert(compFinder->getVarComp(lit3.var()) == comp);
-
-                    //Add new clause
-                    if (i->red()) {
-                        //newSolver->addRedClause(lits);
-                        numRemovedThirdRed++;
-                    } else {
-                        //Save backup
-                        saveClause(vector<Lit>{lit, lit2, lit3});
-
-                        newSolver->add_clause(lits);
-                        numRemovedThirdIrred++;
-                    }
-                } else {
-
-                    //Just remove, already added above
-                    if (i->red()) {
-                        numRemovedThirdRed++;
-                    } else {
-                        numRemovedThirdIrred++;
-                    }
-                }
-
-                //Yes, remove
+                move_tri_clause(newSolver, comp, i, lit);
                 continue;
             }
 

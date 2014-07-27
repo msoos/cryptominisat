@@ -36,6 +36,7 @@ using std::pair;
 class SATSolver;
 class Solver;
 class CompFinder;
+class Watched;
 
 /**
 @brief Disconnected components are treated here
@@ -126,6 +127,24 @@ class CompHandler
             , SATSolver* newSolver
             , const uint32_t comp
         );
+        void move_binary_clause(
+            SATSolver* newSolver
+            , const uint32_t comp
+            ,  Watched *i
+            , const Lit lit
+        );
+        void move_tri_clause(
+            SATSolver* newSolver
+            , const uint32_t comp
+            ,  Watched *i
+            , const Lit lit
+        );
+        void remove_tri_except_for_lit1(
+            const Lit lit
+            , const Lit lit2
+            , const Lit lit3
+        );
+        void remove_bin_except_for_lit1(const Lit lit, const Lit lit2);
 
         Solver* solver;
         CompFinder* compFinder;
@@ -158,6 +177,12 @@ class CompHandler
         //Clauses that have been moved to other comps
         //vector<ClOffset> clausesRemoved;
         //vector<pair<Lit, Lit> > binClausesRemoved;
+
+        uint32_t numRemovedHalfIrred = 0;
+        uint32_t numRemovedHalfRed = 0;
+        uint32_t numRemovedThirdIrred = 0;
+        uint32_t numRemovedThirdRed = 0;
+        vector<Lit> tmp_lits;
 };
 
 /**
