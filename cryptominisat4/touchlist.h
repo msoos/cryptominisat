@@ -90,7 +90,9 @@ public:
 
     void shrink_to_fit()
     {
+        touched.clear();
         touched.shrink_to_fit();
+        touchedBitset.clear();
         touchedBitset.shrink_to_fit();
     }
 

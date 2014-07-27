@@ -142,8 +142,11 @@ void Simplifier::new_vars(size_t)
 
 void Simplifier::save_on_var_memory()
 {
+    clauses.clear();
     clauses.shrink_to_fit();
+
     cl_to_free_later.shrink_to_fit();
+
     touched.shrink_to_fit();
     resolvents.shrink_to_fit();
     poss_gate_parts.shrink_to_fit();
