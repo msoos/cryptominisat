@@ -573,9 +573,6 @@ void CompHandler::remove_tri_except_for_lit1(
     , const Lit lit2
     , const Lit lit3
 ) {
-    //Update stats
-    solver->binTri.redTris--;
-
     //We need it sorted, because that's how we know what order
     //it is in the Watched()
     tmp_lits = {lit, lit2, lit3};
@@ -591,6 +588,9 @@ void CompHandler::remove_tri_except_for_lit1(
     if (tmp_lits[2] != lit) {
         removeWTri(solver->watches, tmp_lits[2], tmp_lits[0], tmp_lits[1], true);
     }
+
+    //Update stats
+    solver->binTri.redTris--;
 }
 
 void CompHandler::move_tri_clause(
