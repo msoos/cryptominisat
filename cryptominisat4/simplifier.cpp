@@ -135,25 +135,22 @@ void Simplifier::check_delete_gatefinder()
 void Simplifier::new_var(const Var orig_outer)
 {
     check_delete_gatefinder();
-
-    if (solver->conf.doGateFind) {
-        gateFinder->new_var(orig_outer);
-    }
 }
 
 void Simplifier::new_vars(size_t n)
 {
     check_delete_gatefinder();
-
-    if (solver->conf.doGateFind) {
-        gateFinder->new_vars(n);
-    }
 }
 
 void Simplifier::save_on_var_memory()
 {
-    if (gateFinder)
-        gateFinder->save_on_var_memory();
+    clauses.shrink_to_fit();
+    cl_to_free_later.shrink_to_fit();
+    touched.shrink_to_fit();
+    resolvents.shrink_to_fit();
+    poss_gate_parts.shrink_to_fit();
+    negs_gate_parts.shrink_to_fit();
+    blockedClauses.shrink_to_fit();;
 }
 
 void Simplifier::print_blocked_clauses_reverse() const
@@ -871,7 +868,8 @@ bool Simplifier::fill_occur_and_print_stats()
 
     //Print memory usage after occur link-in
     if (solver->conf.verbosity >= 2) {
-        solver->print_watch_mem_used(memUsedTotal());
+        double vm_usage = 0;
+        solver->print_watch_mem_used(memUsedTotal(vm_usage));
     }
 
     return true;

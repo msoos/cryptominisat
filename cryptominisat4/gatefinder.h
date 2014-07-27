@@ -100,15 +100,7 @@ class GateFinder
 {
 public:
     GateFinder(Simplifier *subsumer, Solver *control);
-
-    void new_var(const Var orig_outer);
-    void new_vars(const size_t n);
-    void save_on_var_memory();
     bool doAll();
-
-    //Getter functions
-    void printGateStats() const;
-    void printDot(); ///<Print Graphviz DOT file describing the gates
 
     //Stats
     struct Stats
@@ -164,6 +156,9 @@ public:
     const Stats& get_stats() const;
 
 private:
+    void printGateStats() const;
+    void print_graphviz_dot();
+
     //Setup
     void clearIndexes();
     void link_in_gate(const OrGate& gate);
@@ -298,7 +293,7 @@ private:
     set<TriToUnlink> tri_to_unlink;
 
     //Graph
-    void printDot2(); ///<Print Graphviz DOT file describing the gates
+    void print_graphviz_dot2(); ///<Print Graphviz DOT file describing the gates
 
     //Stats
     Stats runStats;

@@ -88,6 +88,12 @@ public:
         return mem;
     }
 
+    void shrink_to_fit()
+    {
+        touched.shrink_to_fit();
+        touchedBitset.shrink_to_fit();
+    }
+
 private:
     vector<uint32_t> touched;
     vector<char> touchedBitset;

@@ -116,8 +116,10 @@ class Heap {
 
     size_t mem_used() const
     {
-        return heap.capacity()*sizeof(uint32_t)
-            + indices.capacity()*sizeof(uint32_t);
+        size_t mem = 0;
+        mem += heap.capacity()*sizeof(uint32_t);
+        mem += indices.capacity()*sizeof(uint32_t);
+        return mem;
     }
 
     bool empty() const {

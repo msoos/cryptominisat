@@ -23,9 +23,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "constants.h"
 #include "assert.h"
 
+#include <unistd.h>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <string>
+
 #if defined (_MSC_VER) || defined(CROSS_COMPILE)
 #include <ctime>
-
 static inline double cpuTime(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
@@ -74,40 +79,65 @@ static inline double realTime()
 
 #endif //CROSS_COMPILE
 
-
 #if defined(__linux__)
-#include <stdio.h>
-static inline int memReadStat(int field)
+// process_mem_usage(double &, double &) - takes two doubles by reference,
+// attempts to read the system-dependent data for a process' virtual memory
+// size and resident set size, and return the results in KB.
+//
+// On failure, returns 0.0, 0.0
+static inline uint64_t memUsedTotal(double& vm_usage)
 {
-    char    name[256];
-    pid_t pid = getpid();
-    sprintf(name, "/proc/%d/statm", pid);
-    FILE*   in = fopen(name, "rb");
-    if (in == NULL) return 0;
-    int     value;
+   //double& vm_usage, double& resident_set
+   using std::ios_base;
+   using std::ifstream;
+   using std::string;
 
-    int rvalue= 1;
-    for (; (field >= 0) && (rvalue == 1); field--)
-        rvalue = fscanf(in, "%d", &value);
+   vm_usage     = 0.0;
+   double resident_set = 0.0;
 
-    fclose(in);
-    return value;
-}
-static inline uint64_t memUsedTotal()
-{
-    return (uint64_t)memReadStat(0) * (uint64_t)getpagesize();
+   // 'file' stat seems to give the most reliable results
+   //
+   ifstream stat_stream("/proc/self/stat",ios_base::in);
+
+   // dummy vars for leading entries in stat that we don't care about
+   //
+   string pid, comm, state, ppid, pgrp, session, tty_nr;
+   string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+   string utime, stime, cutime, cstime, priority, nice;
+   string O, itrealvalue, starttime;
+
+   // the two fields we want
+   //
+   unsigned long vsize;
+   long rss;
+
+   stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+               >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+               >> utime >> stime >> cutime >> cstime >> priority >> nice
+               >> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
+
+   stat_stream.close();
+
+   long page_size_kb = sysconf(_SC_PAGE_SIZE); // in case x86-64 is configured to use 2MB pages
+   vm_usage     = vsize;
+   resident_set = rss * page_size_kb;
+
+   return resident_set;
 }
 #elif defined(__FreeBSD__)
 #include <sys/types.h>
-inline uint64_t memUsedTotal(void)
+inline uint64_t memUsedTotal(double& vm_usage)
 {
+    vm_usage = 0;
+
     struct rusage ru;
     getrusage(RUSAGE_SELF, &ru);
     return ru.ru_maxrss*1024;
 }
 #else //Windows
-static inline size_t memUsedTotal()
+static inline size_t memUsedTotal(double& vm_usage)
 {
+    vm_usage = 0;
     return 0;
 }
 #endif

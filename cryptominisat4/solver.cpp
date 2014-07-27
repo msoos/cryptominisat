@@ -2050,13 +2050,13 @@ void Solver::print_all_stats() const
     print_mem_stats();
 }
 
-uint64_t Solver::print_watch_mem_used(const uint64_t totalMem) const
+uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
 {
     size_t alloc = watches.mem_used_alloc();
     print_stats_line("c Mem for watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(alloc, totalMem)
+        , stats_line_percent(alloc, rss_mem_used)
         , "%"
     );
 
@@ -2064,7 +2064,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t totalMem) const
     print_stats_line("c Mem for watch array"
         , array/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(array, totalMem)
+        , stats_line_percent(array, rss_mem_used)
         , "%"
     );
 
@@ -2073,15 +2073,16 @@ uint64_t Solver::print_watch_mem_used(const uint64_t totalMem) const
 
 void Solver::print_mem_stats() const
 {
-    const uint64_t totalMem = memUsedTotal();
+    double vm_mem_used = 0;
+    const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
     print_stats_line("c Mem used"
-        , totalMem/(1024UL*1024UL)
+        , rss_mem_used/(1024UL*1024UL)
         , "MB"
     );
     uint64_t account = 0;
 
-    account += print_mem_used_longclauses(totalMem);
-    account += print_watch_mem_used(totalMem);
+    account += print_mem_used_longclauses(rss_mem_used);
+    account += print_watch_mem_used(rss_mem_used);
 
     size_t mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
@@ -2093,20 +2094,20 @@ void Solver::print_mem_stats() const
     print_stats_line("c Mem for vars"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
 
     );
     account += mem;
 
-    account += print_stamp_mem(totalMem);
+    account += print_stamp_mem(rss_mem_used);
 
     mem = implCache.mem_used();
     mem += litReachable.capacity()*sizeof(LitReachData);
     print_stats_line("c Mem for impl cache"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
@@ -2115,7 +2116,7 @@ void Solver::print_mem_stats() const
     print_stats_line("c Mem for history stats"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
@@ -2124,7 +2125,7 @@ void Solver::print_mem_stats() const
     print_stats_line("c Mem for search&solve"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
@@ -2133,7 +2134,7 @@ void Solver::print_mem_stats() const
     print_stats_line("c Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
@@ -2143,7 +2144,7 @@ void Solver::print_mem_stats() const
         print_stats_line("c Mem for simplifier"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, totalMem)
+            , stats_line_percent(mem, rss_mem_used)
             , "%"
         );
         account += mem;
@@ -2152,7 +2153,7 @@ void Solver::print_mem_stats() const
         print_stats_line("c Mem for xor-finder"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, totalMem)
+            , stats_line_percent(mem, rss_mem_used)
             , "%"
         );
         account += mem;
@@ -2162,7 +2163,7 @@ void Solver::print_mem_stats() const
     print_stats_line("c Mem for varReplacer&SCC"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
@@ -2172,14 +2173,18 @@ void Solver::print_mem_stats() const
         print_stats_line("c Mem for prober"
             , mem/(1024UL*1024UL)
             , "MB"
-            , stats_line_percent(mem, totalMem)
+            , stats_line_percent(mem, rss_mem_used)
             , "%"
         );
         account += mem;
     }
 
-    print_stats_line("c Accounted for mem"
-        , stats_line_percent(account, totalMem)
+    print_stats_line("c Accounted for mem (rss)"
+        , stats_line_percent(account, rss_mem_used)
+        , "%"
+    );
+    print_stats_line("c Accounted for mem (vm)"
+        , stats_line_percent(account, vm_mem_used)
         , "%"
     );
 }

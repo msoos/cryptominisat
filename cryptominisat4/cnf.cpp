@@ -379,8 +379,6 @@ size_t CNF::mem_used() const
     #ifdef STATS_NEEDED
     mem += varDataLT.capacity()*sizeof(VarData);
     #endif
-    mem += longIrredCls.capacity()*sizeof(ClOffset);
-    mem += longRedCls.capacity()*sizeof(ClOffset);
     mem += sizeof(binTri);
     mem += seen.capacity()*sizeof(uint16_t);
     mem += seen2.capacity()*sizeof(uint16_t);

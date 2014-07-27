@@ -46,6 +46,9 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
 
 bool GateFinder::doAll()
 {
+    gateOcc.resize(solver->nVars()*2);
+    gateOccEq.resize(solver->nVars()*2);
+
     runStats.clear();
     orGates.clear();
     clearIndexes();
@@ -55,7 +58,7 @@ bool GateFinder::doAll()
         goto end;
 
     if (solver->conf.doPrintGateDot)
-        printDot();
+        print_graphviz_dot();
 
 end:
     //Stats
@@ -68,6 +71,11 @@ end:
         }
     }
     globalStats += runStats;
+
+    gateOcc.resize(0);
+    gateOcc.shrink_to_fit();
+    gateOccEq.resize(0);
+    gateOccEq.shrink_to_fit();
 
     return solver->ok;
 }
@@ -943,7 +951,7 @@ bool GateFinder::findAndGateOtherCl_tri(
     return false;
 }
 
-void GateFinder::printDot2()
+void GateFinder::print_graphviz_dot2()
 {
     std::stringstream ss;
     ss << "Gates" << (numDotPrinted++) << ".dot";
@@ -1009,31 +1017,9 @@ void GateFinder::printDot2()
     cout << "c Printed gate structure to file " << filenename << endl;
 }
 
-void GateFinder::printDot()
+void GateFinder::print_graphviz_dot()
 {
-    printDot2();
-}
-
-void GateFinder::new_var(const Var)
-{
-    gateOcc.push_back(vector<uint32_t>());
-    gateOcc.push_back(vector<uint32_t>());
-    gateOccEq.push_back(vector<uint32_t>());
-    gateOccEq.push_back(vector<uint32_t>());
-}
-
-void GateFinder::new_vars(size_t n)
-{
-    gateOcc.resize(gateOcc.size() + 2*n);
-    gateOccEq.resize(gateOccEq.size() + 2*n);
-}
-
-void GateFinder::save_on_var_memory()
-{
-    gateOcc.resize(solver->nVars()*2);
-    gateOcc.shrink_to_fit();
-    gateOccEq.resize(solver->nVars()*2);
-    gateOccEq.shrink_to_fit();
+    print_graphviz_dot2();
 }
 
 GateFinder::Stats& GateFinder::Stats::operator+=(const Stats& other)
