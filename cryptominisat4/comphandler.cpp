@@ -219,12 +219,8 @@ bool CompHandler::solve_component(
 
     //Sort and renumber
     std::stable_sort(vars.begin(), vars.end());
-    /*for(Var var: vars) {
-        cout << "var in component: " << solver->map_inter_to_outer(var) + 1 << endl;
-    }*/
     createRenumbering(vars);
 
-    //Print what we are going to do
     if (solver->conf.verbosity >= 1 && num_comps < 20) {
         cout
         << "c [comp] Solving component " << comp_at
