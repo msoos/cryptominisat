@@ -219,6 +219,7 @@ class Solver : public Searcher
         void clear_clauses_stats();
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
         void consolidate_mem();
+        size_t mem_used() const;
 
     private:
         friend class Prober;

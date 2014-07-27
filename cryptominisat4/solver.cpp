@@ -2071,6 +2071,16 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     return alloc + array;
 }
 
+size_t Solver::mem_used() const
+{
+    size_t mem = 0;
+    mem += Searcher::mem_used();
+    mem += litReachable.capacity()*sizeof(Lit);
+    mem += origAssumptions.capacity()*sizeof(Lit);
+
+    return mem;
+}
+
 void Solver::print_mem_stats() const
 {
     double vm_mem_used = 0;
