@@ -16,6 +16,8 @@ import random
 import time
 import subprocess
 import resource
+import pprint
+pp = pprint.PrettyPrinter(depth=6)
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -51,8 +53,9 @@ class solverThread (threading.Thread):
     def setlimits(self):
         #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
         resource.setrlimit(resource.RLIMIT_CPU, (self.tosolve["timeout"], self.tosolve["timeout"]))
+        resource.setrlimit(resource.RLIMIT_DATA, (self.tosolve["memory"], self.tosolve["memory"]))
 
-    def getN(self, connection, n) :
+    def get_n_bytes_from_connection(self, connection, n) :
         got = 0
         fulldata = ""
         while got < n :
@@ -67,7 +70,7 @@ class solverThread (threading.Thread):
 
         return fulldata
 
-    def connectClient(self) :
+    def connect_client(self) :
         # Create a socket object
         sock = socket.socket()
 
@@ -84,15 +87,16 @@ class solverThread (threading.Thread):
         return sock
 
     def execute(self) :
-        toexec = "%s/%s %s/%s/%s" \
-        % (self.tosolve["basedir"], \
-        self.tosolve["solver"], \
-        self.tosolve["basedir"], \
-        self.tosolve["dir"], \
-        self.tosolve["filename"] \
+        toexec = "%s/%s %s/%s/%s" % ( \
+            self.tosolve["basedir"], \
+            self.tosolve["solver"], \
+
+            self.tosolve["basedir"], \
+            self.tosolve["cnf_files_dir"], \
+            self.tosolve["filename"] \
         )
 
-        outfile = open("/tmp/%s.out" % self.tosolve["filename"], "w")
+        outfile = open("/tmp/%s-%d.out" % self.tosolve["filename"], self.tosolve["unique_counter"], "w")
 
         #limit time
         tstart = time.time()
@@ -106,12 +110,13 @@ class solverThread (threading.Thread):
         print "solved '%s' in %f seconds by thread %s" % (self.tosolve["filename"], tend-tstart, self.name)
         #print "stdout:", consoleOutput, " stderr:", err
 
-    def put_server(self) :
-        toexec = "scp /tmp/%s.out %s:%s/%s/" \
-        % (self.tosolve["filename"], \
-        options.host, \
-        self.tosolve["basedir"], \
-        self.tosolve["solutionto"] \
+    def copy_solution_to_server(self) :
+        toexec = "scp /tmp/%s-%d.out %s:%s/%s/" % ( \
+            self.tosolve["filename"], \
+            self.tosolve["unique_counter"], \
+            options.host, \
+            self.tosolve["basedir"], \
+            self.tosolve["solutionto"] \
         )
         print "Executing '%s' to put the file to the right place" % toexec
 
@@ -128,14 +133,14 @@ class solverThread (threading.Thread):
 
         #as long as there is something to do
         while True :
-            sock = self.connectClient()
+            sock = self.connect_client()
 
             #ask for stuff to solve
             print "asking for stuff to solve..."
             sock.sendall("need    ".format("ascii"))
 
             #get stuff to solve
-            data = self.getN(sock, 4)
+            data = self.get_n_bytes_from_connection(sock, 4)
             assert len(data) == 4
             length = struct.unpack('i', data)[0]
             print "length of tosolve data: ", length
@@ -145,33 +150,30 @@ class solverThread (threading.Thread):
                 print "Client received that there is nothing more to solve, exiting"
                 return
 
-            data = self.getN(sock, length)
+            data = self.get_n_bytes_from_connection(sock, length)
             self.tosolve = pickle.loads(data)
-            #print "Have to solve ", tosolve
+            print "Have to solve ", pp.pprint(self.tosolve)
             sock.close()
 
             self.execute()
-            self.put_server()
+            self.copy_solution_to_server()
 
-            sock = self.connectClient()
+            sock = self.connect_client()
             tosend = "done" + struct.pack('i', len(self.tosolve["filename"])) + self.tosolve["filename"]
             sock.sendall(tosend)
             print "Sent that we finished", self.tosolve["filename"]
 
 # Create new threads
-thread1 = solverThread(1, "Thread-1")
-thread2 = solverThread(2, "Thread-2")
+threads = []
+for i in range(2) :
+    threads.append(solverThread(i, "Thread-%d" % i))
 
 # Start new Threads
-thread1.start()
-thread2.start()
-
-# Add threads to thread list
-threads = []
-threads.append(thread1)
-threads.append(thread2)
+for t in threads:
+    t.start()
 
 # Wait for all threads to complete
 for t in threads:
     t.join()
+
 print "Exiting Main Thread"
