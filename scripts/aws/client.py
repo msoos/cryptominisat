@@ -86,21 +86,29 @@ class solverThread (threading.Thread):
 
         return sock
 
-    def execute(self) :
-        toexec = "%s/%s %s/%s/%s" % ( \
-            self.tosolve["basedir"], \
-            self.tosolve["solver"], \
+    def get_output_filename(self):
+        return"/tmp/%s-%d.out" % (self.tosolve["filename"], self.tosolve["unique_counter"])
 
+    def solver_filename(self):
+        return "%s/%s" % (self.tosolve["basedir"], self.tosolve["solver"])
+
+    def execute(self) :
+        toexec = "%s %s/%s/%s" % ( \
+            self.solver_filename(), \
             self.tosolve["basedir"], \
             self.tosolve["cnf_files_dir"], \
             self.tosolve["filename"] \
         )
-
-        outfile = open("/tmp/%s-%d.out" % self.tosolve["filename"], self.tosolve["unique_counter"], "w")
+        outfile = open(self.get_output_filename(), "w")
 
         #limit time
         tstart = time.time()
-        print "%s executing '%s' with timeout %d" % (self.name, toexec, self.tosolve["timeout"])
+        print "%s executing '%s' with timeout %d and memout %d" % (\
+            self.name, \
+            toexec, \
+            self.tosolve["timeout"], \
+            self.tosolve["memory"] \
+        )
         p = subprocess.Popen(toexec.rsplit(), stderr=outfile, stdout=outfile, preexec_fn=self.setlimits)
         p.wait()
         outfile.close()
@@ -111,21 +119,23 @@ class solverThread (threading.Thread):
         #print "stdout:", consoleOutput, " stderr:", err
 
     def copy_solution_to_server(self) :
-        toexec = "scp /tmp/%s-%d.out %s:%s/%s/" % ( \
-            self.tosolve["filename"], \
-            self.tosolve["unique_counter"], \
+        toexec = "scp %s %s:%s/%s/" % ( \
+            self.get_output_filename(), \
             options.host, \
             self.tosolve["basedir"], \
             self.tosolve["solutionto"] \
         )
         print "Executing '%s' to put the file to the right place" % toexec
 
-        p = subprocess.Popen(toexec.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        consoleOutput, err = p.communicate()
-        print "stdout:", consoleOutput, " stderr:", err
+        process = subprocess.Popen(toexec.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        consoleOutput, err = process.communicate()
+        print "SCP stdout:", consoleOutput, " stderr:", err
+        if process.returncode != 0:
+            print "Error copying file\n"
+            exit(-1)
 
         #remove temporary solution file
-        os.unlink("/tmp/%s.out" % self.tosolve["filename"])
+        os.unlink("/tmp/%s-%d.out" % (self.tosolve["filename"], self.tosolve["unique_counter"],))
         return err == ""
 
     def run(self):
@@ -156,7 +166,9 @@ class solverThread (threading.Thread):
             sock.close()
 
             self.execute()
-            self.copy_solution_to_server()
+            err = self.copy_solution_to_server()
+            if err:
+                print "There was an error with copy:", err
 
             sock = self.connect_client()
             tosend = "done" + struct.pack('i', len(self.tosolve["filename"])) + self.tosolve["filename"]

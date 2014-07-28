@@ -45,7 +45,7 @@ parser.add_option("--basedir", "-b"
                     , help="base directory"
                     )
 parser.add_option("--memory", "-m"
-                    , default=1024, dest="timeout"
+                    , default=1024, dest="memory"
                     , help="Memory in MB for the process", type=int
                     )
 
@@ -75,14 +75,13 @@ class Server :
         #files to solve
         files_location = "%s/%s" % (options.basedir, options.cnf_files_dir)
         files_to_solve = os.listdir(files_location)
-        print files_to_solve
+        #print files_to_solve
         print "Solving files from '%s', number of files: %d" % (files_location, len(files_to_solve))
 
         self.solved = {}
         for f in files_to_solve :
             self.solved[f] = SolveState(State.unsent, 0.0)
 
-        self.sock = self.listen_to_connection()
         self.unique_counter = 0
 
     def listen_to_connection(self) :
@@ -99,11 +98,11 @@ class Server :
 
         return sock
 
-    def get_n_bytes(self, n) :
+    def get_n_bytes_from_connection(self, connection, n) :
         got = 0
         fulldata = ""
         while got < n :
-            data = self.connection.recv(n-got)
+            data = connection.recv(n-got)
             #print >>sys.stderr, 'received "%s"' % data
             if data :
                 fulldata += data
@@ -118,7 +117,7 @@ class Server :
     def handle_done(self, connection, data) :
         #client finished with something
         length = struct.unpack('i', data[4:])[0]
-        finishedwith = self.get_n_bytes(connection, length)
+        finishedwith = self.get_n_bytes_from_connection(connection, length)
         print "Client finished with ", finishedwith
         assert finishedwith in self.solved
         self.solved[finishedwith] = SolveState(State.finished, 0.0)
@@ -181,14 +180,14 @@ class Server :
             print >>sys.stderr, 'connection from', client_address
 
             #8: 4B for 'need'/'done' and 4B for integer of following struct size in case of "done'
-            data = self.get_n_bytes(connection, 8)
+            data = self.get_n_bytes_from_connection(connection, 8)
             assert len(data) == 8
 
             if data[:4] == "done" :
                 self.handle_done(connection, data)
 
             elif data[:4] == "need" :
-               self.handle_need()
+               self.handle_need(connection, data)
 
         finally:
             # Clean up the connection
@@ -196,6 +195,10 @@ class Server :
             connection.close()
 
     def handle_all_connections(self):
+        self.sock = self.listen_to_connection()
         while True:
             self.handle_one_connection()
 
+
+server = Server()
+server.handle_all_connections()
