@@ -2149,16 +2149,18 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    mem = compHandler->mem_used();
-    print_stats_line("c Mem for component handler"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , stats_line_percent(mem, rss_mem_used)
-        , "%"
-    );
-    account += mem;
+    if (compHandler) {
+        mem = compHandler->mem_used();
+        print_stats_line("c Mem for component handler"
+            , mem/(1024UL*1024UL)
+            , "MB"
+            , stats_line_percent(mem, rss_mem_used)
+            , "%"
+        );
+        account += mem;
+    }
 
-    if (conf.perform_occur_based_simp) {
+    if (simplifier) {
         mem = simplifier->mem_used();
         print_stats_line("c Mem for simplifier"
             , mem/(1024UL*1024UL)
@@ -2187,7 +2189,7 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    if (conf.doProbe) {
+    if (prober) {
         mem = prober->mem_used();
         print_stats_line("c Mem for prober"
             , mem/(1024UL*1024UL)
@@ -3294,9 +3296,20 @@ Var Solver::num_active_vars() const
         numActive++;
     }
     assert(removed_non_decision == 0);
-    assert(removed_elimed == simplifier->get_stats().numVarsElimed);
-    assert(removed_decomposed == compHandler->get_num_vars_removed());
+    if (simplifier) {
+        assert(removed_elimed == simplifier->get_stats().numVarsElimed);
+    } else {
+        assert(removed_elimed == 0);
+    }
+
+    if (compHandler) {
+        assert(removed_decomposed == compHandler->get_num_vars_removed());
+    } else {
+        assert(removed_decomposed == 0);
+    }
+
     assert(removed_set == ((decisionLevel() == 0) ? trail.size() : trail_lim[0]));
+
     assert(removed_replaced == varReplacer->get_num_replaced_vars());
     assert(numActive == get_num_free_vars());
 
