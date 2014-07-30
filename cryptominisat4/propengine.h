@@ -116,13 +116,9 @@ public:
     uint32_t nAssigns   () const;         ///<The current number of assigned literals.
 
     //Get state
-    uint32_t    getBinWatchSize(const bool alsoRed, const Lit lit) const;
     uint32_t    decisionLevel() const;      ///<Returns current decision level
-    vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses
-    uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
     bool        getStoredPolarity(const Var var);
-    void        resetClauseDataStats(size_t clause_num);
     size_t trail_size() const {
         return trail.size();
     }
@@ -405,14 +401,6 @@ inline void PropEngine::cancel_zero_light()
     qhead = trail_lim[0];
     trail.resize(trail_lim[0]);
     trail_lim.clear();
-}
-
-inline uint32_t PropEngine::getNumUnitaries() const
-{
-    if (decisionLevel() > 0)
-        return trail_lim[0];
-    else
-        return trail.size();
 }
 
 inline size_t PropEngine::getTrailSize() const

@@ -847,18 +847,6 @@ void PropEngine::printWatchList(const Lit lit) const
     }
 }
 
-vector<Lit> PropEngine::getUnitaries() const
-{
-    vector<Lit> unitaries;
-    if (decisionLevel() > 0) {
-        for (uint32_t i = 0; i != trail_lim[0]; i++) {
-            unitaries.push_back(trail[i]);
-        }
-    }
-
-    return unitaries;
-}
-
 void PropEngine::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
