@@ -228,8 +228,10 @@ bool VarReplacer::perform_replace()
         goto end;
     }
 
-     //While replacing the implicit clauses
-    //we cannot enqueue literals, so we do it now
+    //While replacing the clauses
+    //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
+    //* We cannot because we are going through a struct and we might change it
+    //* We shouldn't because then non-dominators would end up in the 'trail'
     if (!enqueueDelayedEnqueue()) {
         goto end;
     }
@@ -645,11 +647,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->ok = false;
         return true;
     case 1 :
-        solver->enqueue(c[0]);
-        #ifdef STATS_NEEDED
-        solver->propStats.propsUnit++;
-        #endif
-        solver->ok = (solver->propagate().isNULL());
+        delayedEnqueue.push_back(c[0]);
         runStats.removedLongLits += origSize;
         return true;
     case 2:
