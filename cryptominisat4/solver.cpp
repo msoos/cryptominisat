@@ -3270,7 +3270,7 @@ Var Solver::num_active_vars() const
     uint32_t removed_set = 0;
     uint32_t removed_elimed = 0;
     uint32_t removed_non_decision = 0;
-    for(Var var = 0; var < solver->nVars(); var++) {
+    for(Var var = 0; var < solver->nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
             assert(varData[var].removed == Removed::none);
             removed_set++;
