@@ -1997,8 +1997,11 @@ void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
         <<  solver->map_inter_to_outer(lit)
         << " finished " << endl;
     }
+    assert(solver->varData[var].removed == Removed::none);
     solver->varData[var].removed = Removed::elimed;
+
     runStats.numVarsElimed++;
+
     solver->unsetDecisionVar(var);
 }
 
