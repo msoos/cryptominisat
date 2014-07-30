@@ -136,7 +136,7 @@ void VarReplacer::update_vardata_and_activities(
     solver->setDecisionVar(replaced_with);
 }
 
-void VarReplacer::update_delayed_enqueue_to_replacer()
+void VarReplacer::update_delayed_enqueue_to_dominator()
 {
     for(Lit& lit: delayedEnqueue) {
         lit = get_lit_replaced_with(lit);
@@ -145,7 +145,7 @@ void VarReplacer::update_delayed_enqueue_to_replacer()
 
 bool VarReplacer::enqueueDelayedEnqueue()
 {
-    update_delayed_enqueue_to_replacer();
+    update_delayed_enqueue_to_dominator();
 
     for(const Lit lit: delayedEnqueue) {
         if (solver->value(lit) == l_Undef) {
