@@ -41,6 +41,10 @@ parser.add_option("--port", "-p"
                     , default=10000, dest="port"
                     , help="Port to use", type="int"
                     )
+parser.add_option("--threads", "-t"
+                    , default=4, dest="threads"
+                    , help="Number of threads to use", type="int"
+                    )
 
 (options, args) = parser.parse_args()
 
@@ -177,7 +181,7 @@ class solverThread (threading.Thread):
 
 # Create new threads
 threads = []
-for i in range(2) :
+for i in range(options.threads) :
     threads.append(solverThread(i, "Thread-%d" % i))
 
 # Start new Threads
