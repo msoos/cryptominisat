@@ -290,7 +290,7 @@ class Solver : public Searcher
 
         /////////////////////////////
         //Renumberer
-        void renumberVariables();
+        void renumber_variables();
         void free_unused_watches();
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();

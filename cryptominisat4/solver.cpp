@@ -966,7 +966,7 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
 }
 
 //Beware. Cannot be called while Searcher is running.
-void Solver::renumberVariables()
+void Solver::renumber_variables()
 {
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
@@ -1708,7 +1708,7 @@ lbool Solver::simplify_problem()
             }
         }
 
-        renumberVariables();
+        renumber_variables();
     }
 
     //Re-calculate reachability after re-numbering and new cache data
