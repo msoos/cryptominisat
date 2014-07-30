@@ -2604,7 +2604,7 @@ size_t Solver::get_num_free_vars() const
     }
 
     if (conf.perform_occur_based_simp) {
-        freeVars -= simplifier->get_stats().numVarsElimed;
+        freeVars -= simplifier->get_num_elimed_vars();
     }
     freeVars -= varReplacer->get_num_replaced_vars();
 
@@ -2934,7 +2934,7 @@ void Solver::check_implicit_propagated() const
 size_t Solver::get_num_vars_elimed() const
 {
     if (conf.perform_occur_based_simp) {
-        return simplifier->get_stats().numVarsElimed;
+        return simplifier->get_num_elimed_vars();
     } else {
         return 0;
     }
@@ -3297,7 +3297,7 @@ Var Solver::num_active_vars() const
     }
     assert(removed_non_decision == 0);
     if (simplifier) {
-        assert(removed_elimed == simplifier->get_stats().numVarsElimed);
+        assert(removed_elimed == simplifier->get_num_elimed_vars());
     } else {
         assert(removed_elimed == 0);
     }

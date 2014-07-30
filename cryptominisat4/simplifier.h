@@ -107,6 +107,10 @@ public:
     //UnElimination
     void print_blocked_clauses_reverse() const;
     void extend_model(SolutionExtender* extender);
+    uint32_t get_num_elimed_vars() const
+    {
+        return globalStats.numVarsElimed;
+    }
 
     struct Stats
     {
