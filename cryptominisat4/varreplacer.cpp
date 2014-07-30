@@ -136,19 +136,24 @@ void VarReplacer::update_vardata_and_activities(
     solver->setDecisionVar(replaced_with);
 }
 
+void VarReplacer::update_delayed_enqueue_to_replacer()
+{
+    for(Lit& lit: delayedEnqueue) {
+        lit = get_lit_replaced_with(lit);
+    }
+}
+
 bool VarReplacer::enqueueDelayedEnqueue()
 {
-    for(vector<Lit>::const_iterator
-        it = delayedEnqueue.begin(), end = delayedEnqueue.end()
-        ; it != end
-        ; it++
-    ) {
-        if (solver->value(*it) == l_Undef) {
-            solver->enqueue(*it);
+    update_delayed_enqueue_to_replacer();
+
+    for(const Lit lit: delayedEnqueue) {
+        if (solver->value(lit) == l_Undef) {
+            solver->enqueue(lit);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-        } else if (solver->value(*it) == l_False) {
+        } else if (solver->value(lit) == l_False) {
             solver->ok = false;
             break;
         }
@@ -215,16 +220,17 @@ bool VarReplacer::perform_replace()
         goto end;
     }
 
-    //While replacing the implicit clauses
-    //we cannot enqueue literals, so we do it now
-    if (!enqueueDelayedEnqueue())
-        goto end;
-
     //Replace longs
     if (!replace_set(solver->longIrredCls)) {
         goto end;
     }
     if (!replace_set(solver->longRedCls)) {
+        goto end;
+    }
+
+     //While replacing the implicit clauses
+    //we cannot enqueue literals, so we do it now
+    if (!enqueueDelayedEnqueue()) {
         goto end;
     }
 

@@ -103,6 +103,7 @@ class VarReplacer
         SCCFinder* scc_finder;
 
         vector<Lit> ps_tmp;
+        void update_delayed_enqueue_to_replacer();
         bool perform_replace();
         bool add_xor_as_bins(const BinaryXor& bin_xor);
         bool replace(
