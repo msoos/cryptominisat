@@ -3257,3 +3257,48 @@ void Solver::update_assumptions_after_varreplace()
         }
     }
 }
+
+//TODO later, this can be removed, get_num_free_vars() is MUCH cheaper to
+//compute but may have some bugs here-and-there
+Var Solver::num_active_vars() const
+{
+    Var numActive = 0;
+    uint32_t removed_decomposed = 0;
+    uint32_t removed_replaced = 0;
+    uint32_t removed_set = 0;
+    uint32_t removed_elimed = 0;
+    uint32_t removed_non_decision = 0;
+    for(Var var = 0; var < solver->nVars(); var++) {
+        if (value(var) != l_Undef) {
+            assert(varData[var].removed == Removed::none);
+            removed_set++;
+            continue;
+        }
+        switch(varData[var].removed) {
+            case Removed::decomposed :
+                removed_decomposed++;
+                continue;
+                break;
+            case Removed::elimed :
+                removed_elimed++;
+                continue;
+                break;
+            case Removed::replaced:
+                removed_replaced++;
+                continue;
+                break;
+        }
+        if (!varData[var].is_decision) {
+            removed_non_decision++;
+        }
+        numActive++;
+    }
+    assert(removed_non_decision == 0);
+    assert(removed_elimed == simplifier->get_stats().numVarsElimed);
+    assert(removed_decomposed == compHandler->get_num_vars_removed());
+    assert(removed_set == ((decisionLevel() == 0) ? trail.size() : trail_lim[0]));
+    assert(removed_replaced == varReplacer->get_num_replaced_vars());
+    assert(numActive == get_num_free_vars());
+
+    return numActive;
+}

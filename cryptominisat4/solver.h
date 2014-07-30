@@ -418,24 +418,6 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
     return tmpCl;
 }
 
-//TODO this can be remove, get_num_free_vars() is MUCH cheaper to compute
-inline Var Solver::num_active_vars() const
-{
-    Var numActive = 0;
-    for(Var var = 0; var < solver->nVars(); var++) {
-        if (varData[var].is_decision
-            && varData[var].removed == Removed::none
-            && value(var) == l_Undef
-        ) {
-            numActive++;
-        }
-    }
-
-    assert(numActive == get_num_free_vars());
-
-    return numActive;
-}
-
 inline lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions
 ) {
