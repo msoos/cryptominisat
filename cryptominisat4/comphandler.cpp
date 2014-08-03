@@ -416,7 +416,7 @@ void CompHandler::moveVariablesBetweenSolvers(
 
         assert(solver->varData[var].removed == Removed::none);
         assert(solver->varData[var].is_decision);
-        solver->unsetDecisionVar(var);
+        solver->unset_decision_var(var);
         solver->varData[var].removed = Removed::decomposed;
         num_vars_removed++;
     }
@@ -771,7 +771,7 @@ void CompHandler::readdRemovedClauses()
         VarData& dat = solver->varData[i];
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
-            solver->setDecisionVar(i);
+            solver->set_decision_var(i);
             num_vars_removed--;
         }
     }

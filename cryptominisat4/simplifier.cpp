@@ -1026,7 +1026,7 @@ bool Simplifier::uneliminate(Var var)
     //Uneliminate it in theory
     globalStats.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
-    solver->setDecisionVar(var);
+    solver->set_decision_var(var);
     if (solver->conf.doStamp) {
         solver->stamp.remove_from_stamps(var);
     }
@@ -2002,7 +2002,7 @@ void Simplifier::set_var_as_eliminated(const Var var, const Lit lit)
 
     runStats.numVarsElimed++;
 
-    solver->unsetDecisionVar(var);
+    solver->unset_decision_var(var);
 }
 
 void Simplifier::create_dummy_blocked_clause(const Lit lit)

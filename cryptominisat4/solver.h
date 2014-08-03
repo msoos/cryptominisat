@@ -152,8 +152,8 @@ class Solver : public Searcher
         void test_all_clause_attached() const;
         void check_wrong_attach() const;
         bool prop_at_head() const;
-        void setDecisionVar(const uint32_t var);
-        void unsetDecisionVar(const uint32_t var);
+        void set_decision_var(const uint32_t var);
+        void unset_decision_var(const uint32_t var);
         bool enqueue_these(const vector<Lit>& toEnqueue);
         void update_assumptions_after_varreplace();
 
@@ -347,7 +347,7 @@ class Solver : public Searcher
         void check_model_for_assumptions() const;
 };
 
-inline void Solver::setDecisionVar(const uint32_t var)
+inline void Solver::set_decision_var(const uint32_t var)
 {
     if (!varData[var].is_decision) {
         varData[var].is_decision = true;
@@ -355,7 +355,7 @@ inline void Solver::setDecisionVar(const uint32_t var)
     }
 }
 
-inline void Solver::unsetDecisionVar(const uint32_t var)
+inline void Solver::unset_decision_var(const uint32_t var)
 {
     if (varData[var].is_decision) {
         varData[var].is_decision = false;

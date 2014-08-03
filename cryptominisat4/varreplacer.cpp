@@ -132,8 +132,8 @@ void VarReplacer::update_vardata_and_activities(
     assert(orig != replaced_with);
     solver->varData[orig].removed = Removed::replaced;
     assert(solver->varData[replaced_with].removed == Removed::none);
-    solver->unsetDecisionVar(orig);
-    solver->setDecisionVar(replaced_with);
+    solver->unset_decision_var(orig);
+    solver->set_decision_var(replaced_with);
 }
 
 void VarReplacer::update_delayed_enqueue_to_dominator()
