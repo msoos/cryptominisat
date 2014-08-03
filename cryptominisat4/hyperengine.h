@@ -38,6 +38,7 @@ class HyperEngine : public PropEngine {
 public:
     HyperEngine(const SolverConf& _conf, bool* _needToInterrupt);
     size_t print_stamp_mem(size_t totalMem) const;
+    size_t mem_used() const;
 
     bool timedOutPropagateFull;
     Lit propagate_bfs(
@@ -49,18 +50,6 @@ public:
     );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
-
-    size_t mem_used() const
-    {
-        size_t mem = 0;
-        mem += PropEngine::mem_used();
-        mem += toPropNorm.mem_used();
-        mem += toPropBin.mem_used();
-        mem += toPropRedBin.mem_used();
-
-        mem += currAncestors.capacity()*sizeof(Lit);;
-        return mem;
-    }
 
     uint64_t stampingTime;
 

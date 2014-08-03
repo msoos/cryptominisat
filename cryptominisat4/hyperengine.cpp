@@ -1134,14 +1134,21 @@ PropResult HyperEngine::propTriHelperComplex(
     return PROP_SOMETHING;
 }
 
-size_t HyperEngine::print_stamp_mem(size_t totalMem) const
+size_t HyperEngine::mem_used() const
 {
     size_t mem = 0;
+    mem += PropEngine::mem_used();
     mem += toPropNorm.capacity()*sizeof(Lit);
     mem += toPropBin.capacity()*sizeof(Lit);
     mem += toPropRedBin.capacity()*sizeof(Lit);
     mem += currAncestors.capacity()*sizeof(Lit);
-    mem += stamp.mem_used();
+
+    return mem;
+}
+
+size_t HyperEngine::print_stamp_mem(size_t totalMem) const
+{
+    const size_t mem = stamp.mem_used();
     print_stats_line("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -1151,6 +1158,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
 
     return mem;
 }
+
 
 void HyperEngine::enqueue_with_acestor_info(
     const Lit p

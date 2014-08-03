@@ -2116,8 +2116,6 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    account += print_stamp_mem(rss_mem_used);
-
     mem = implCache.mem_used();
     mem += litReachable.capacity()*sizeof(LitReachData);
     print_stats_line("c Mem for impl cache"
@@ -2127,6 +2125,8 @@ void Solver::print_mem_stats() const
         , "%"
     );
     account += mem;
+
+    account += print_stamp_mem(rss_mem_used);
 
     mem = hist.mem_used();
     print_stats_line("c Mem for history stats"
