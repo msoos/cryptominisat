@@ -71,7 +71,6 @@ public:
     //If FALSE, state of CNF is UNSAT
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
-    vector<lbool> assigns;
     vector<VarData> varData;
     #ifdef STATS_NEEDED
     vector<VarData> varDataLT;
@@ -212,6 +211,9 @@ protected:
     }
 
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
+
+protected:
+    vector<lbool> assigns;
 
 private:
     bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
