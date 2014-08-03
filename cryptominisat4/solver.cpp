@@ -116,6 +116,7 @@ Solver::~Solver()
 
 void Solver::parse_sql_option()
 {
+    cout << "HERE" << endl;
     if (conf.doSQL > 2) {
         std::cerr << "ERROR: '--sql'  option must be given value 0..2"
         << endl;
@@ -1415,6 +1416,128 @@ lbool Solver::solve()
     return status;
 }
 
+void Solver::dump_memory_stats_to_sql()
+{
+    if (!sqlStats) {
+        return;
+    }
+
+    const double my_time = cpuTime();
+
+    sqlStats->mem_used(
+        this
+        , "solver"
+        , my_time
+        , mem_used()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "vardata"
+        , my_time
+        , mem_used_vardata()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "stamp"
+        , my_time
+        , Searcher::mem_used_stamp()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "cache"
+        , my_time
+        , implCache.mem_used()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "longclauses"
+        , my_time
+        , CNF::mem_used_longclauses()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "watch-alloc"
+        , my_time
+        , watches.mem_used_alloc()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "watch-array"
+        , my_time
+        , watches.mem_used_array()/(1024*1024)
+    );
+
+    sqlStats->mem_used(
+        this
+        , "renumber"
+        , my_time
+        , CNF::mem_used_renumberer()/(1024*1024)
+    );
+
+
+    if (compHandler) {
+        sqlStats->mem_used(
+            this
+            , "component"
+            , my_time
+            , compHandler->mem_used()/(1024*1024)
+        );
+    }
+
+    if (simplifier) {
+        sqlStats->mem_used(
+            this
+            , "simplifier"
+            , my_time
+            , simplifier->mem_used()/(1024*1024)
+        );
+
+        sqlStats->mem_used(
+            this
+            , "xor"
+            , my_time
+            , simplifier->mem_used_xor()/(1024*1024)
+        );
+    }
+
+    sqlStats->mem_used(
+        this
+        , "varreplacer"
+        , my_time
+        , varReplacer->mem_used()/(1024*1024)
+    );
+
+    if (prober) {
+        sqlStats->mem_used(
+            this
+            , "prober"
+            , my_time
+            , prober->mem_used()/(1024*1024)
+        );
+    }
+
+    double vm_mem_used = 0;
+    const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
+    sqlStats->mem_used(
+        this
+        , "rss"
+        , my_time
+        , rss_mem_used/(1024*1024)
+    );
+    sqlStats->mem_used(
+        this
+        , "vm"
+        , my_time
+        , vm_mem_used/(1024*1024)
+    );
+}
+
 lbool Solver::iterate_until_solved()
 {
     uint64_t backup_burst_len = conf.burst_search_len;
@@ -1434,6 +1557,7 @@ lbool Solver::iterate_until_solved()
         if (iteration_num >= 2) {
             conf.burst_search_len = backup_burst_len;
         }
+        dump_memory_stats_to_sql();
 
         //This is crucial, since we need to attach() clauses to threads
         clauseCleaner->remove_and_clean_all();
@@ -2082,7 +2206,20 @@ size_t Solver::mem_used() const
     size_t mem = 0;
     mem += Searcher::mem_used();
     mem += litReachable.capacity()*sizeof(Lit);
+    mem += assumptions.capacity()*sizeof(Lit);
     mem += origAssumptions.capacity()*sizeof(Lit);
+
+    return mem;
+}
+
+uint64_t Solver::mem_used_vardata() const
+{
+    uint64_t mem = 0;
+    mem += assigns.capacity()*sizeof(lbool);
+    mem += varData.capacity()*sizeof(VarData);
+    #ifdef STATS_NEEDED_EXTRA
+    mem += varDataLT.capacity()*sizeof(VarData::Stats);
+    #endif
 
     return mem;
 }
@@ -2101,13 +2238,8 @@ void Solver::print_mem_stats() const
     account += print_watch_mem_used(rss_mem_used);
 
     size_t mem = 0;
-    mem += assigns.capacity()*sizeof(lbool);
-    mem += varData.capacity()*sizeof(VarData);
-    #ifdef STATS_NEEDED_EXTRA
-    mem += varDataLT.capacity()*sizeof(VarData::Stats);
-    #endif
-    mem += assumptions.capacity()*sizeof(Lit);
-    print_stats_line("c Mem for vars"
+    mem += mem_used_vardata();
+    print_stats_line("c Mem for assings&vardata"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
@@ -2146,7 +2278,7 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    mem = CNF::get_renumber_mem();
+    mem = CNF::mem_used_renumberer();
     print_stats_line("c Mem for renumberer"
         , mem/(1024UL*1024UL)
         , "MB"

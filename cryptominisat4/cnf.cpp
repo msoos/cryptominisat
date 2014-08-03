@@ -188,12 +188,18 @@ void CNF::updateVars(
     updateArrayMapCopy(outerToInterMain, outerToInter);
 }
 
-size_t CNF::print_mem_used_longclauses(const size_t totalMem) const
+uint64_t CNF::mem_used_longclauses() const
 {
-    size_t mem = 0;
+    uint64_t mem = 0;
     mem += cl_alloc.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
     mem += longRedCls.capacity()*sizeof(ClOffset);
+    return mem;
+}
+
+uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
+{
+    uint64_t mem = mem_used_longclauses();
     print_stats_line("c Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -330,7 +336,7 @@ void CNF::remove_tri_but_lit1(
     }
 }
 
-size_t CNF::get_renumber_mem() const
+size_t CNF::mem_used_renumberer() const
 {
     size_t mem = 0;
     mem += interToOuterMain.capacity()*sizeof(Var);
@@ -374,11 +380,6 @@ size_t CNF::mem_used() const
 {
     size_t mem = 0;
     mem += sizeof(conf);
-    mem += assigns.capacity()*sizeof(lbool);
-    mem += varData.capacity()*sizeof(VarData);
-    #ifdef STATS_NEEDED
-    mem += varDataLT.capacity()*sizeof(VarData);
-    #endif
     mem += sizeof(binTri);
     mem += seen.capacity()*sizeof(uint16_t);
     mem += seen2.capacity()*sizeof(uint16_t);

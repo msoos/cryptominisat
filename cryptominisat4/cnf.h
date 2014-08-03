@@ -25,7 +25,7 @@ public:
         const vector<Var>& outerToInter
         , const vector<Var>& interToOuter
     );
-    size_t get_renumber_mem() const;
+    size_t mem_used_renumberer() const;
     size_t mem_used() const;
 
     struct BinTriStats
@@ -130,7 +130,8 @@ public:
     string watched_to_string(Lit otherLit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
 
-    size_t print_mem_used_longclauses(size_t totalMem) const;
+    uint64_t print_mem_used_longclauses(size_t totalMem) const;
+    uint64_t mem_used_longclauses() const;
     template<class Function>
     void for_each_lit(
         const OccurClause& cl

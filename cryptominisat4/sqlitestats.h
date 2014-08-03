@@ -37,6 +37,13 @@ public:
         , double time_passed
     ) override;
 
+    void mem_used(
+        const Solver* solver
+        , const string& name
+        , double given_time
+        , uint64_t mem_used_mb
+    ) override;
+
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;
 
@@ -50,11 +57,13 @@ private:
     void addStartupData(const Solver* solver);
     void initRestartSTMT();
     void initTimePassedSTMT();
+    void initMemUsedSTMT();
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
 
     sqlite3_stmt *stmtTimePassed = NULL;
+    sqlite3_stmt *stmtMemUsed = NULL;
     sqlite3_stmt *stmtReduceDB = NULL;
     sqlite3_stmt *stmtRst = NULL;
 

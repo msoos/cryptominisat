@@ -226,6 +226,8 @@ class Solver : public Searcher
         friend class ClauseDumper;
         lbool iterate_until_solved();
         void parse_sql_option();
+        void dump_memory_stats_to_sql();
+        uint64_t mem_used_vardata() const;
 
         vector<Lit> finalCl_tmp;
         void set_up_sql_writer();

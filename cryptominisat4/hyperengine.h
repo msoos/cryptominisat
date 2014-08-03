@@ -39,6 +39,7 @@ public:
     HyperEngine(const SolverConf& _conf, bool* _needToInterrupt);
     size_t print_stamp_mem(size_t totalMem) const;
     size_t mem_used() const;
+    size_t mem_used_stamp() const;
 
     bool timedOutPropagateFull;
     Lit propagate_bfs(

@@ -1146,9 +1146,14 @@ size_t HyperEngine::mem_used() const
     return mem;
 }
 
+size_t HyperEngine::mem_used_stamp() const
+{
+    return stamp.mem_used();
+}
+
 size_t HyperEngine::print_stamp_mem(size_t totalMem) const
 {
-    const size_t mem = stamp.mem_used();
+    const size_t mem = mem_used_stamp();
     print_stats_line("c Mem for stamps"
         , mem/(1024UL*1024UL)
         , "MB"

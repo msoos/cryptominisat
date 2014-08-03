@@ -51,6 +51,12 @@ MySQLStats::~MySQLStats()
         std::exit(-1);
     }
 
+    ret = mysql_stmt_close(stmtMemUsed.stmt);
+    if (ret) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     #ifdef STATS_NEEDED_EXTRA
     ret = mysql_stmt_close(stmtSizeGlueScatter.stmt);
     if (ret) {
@@ -89,6 +95,7 @@ bool MySQLStats::setup(const Solver* solver)
     initReduceDBSTMT();
     initTimePassedSTMT();
     initTimePassedMinSTMT();
+    initMemUsedSTMT();
     #ifdef STATS_NEEDED_EXTRA
     initVarSTMT(solver, stmtVarSingle, 1);
     initVarSTMT(solver, stmtVarBulk, solver->getConf().preparedDumpSizeVarData);
@@ -347,6 +354,74 @@ void MySQLStats::initTimePassedSTMT()
     if (mysql_stmt_bind_param(stmtTimePassed.stmt, stmtTimePassed.bind)) {
         cerr << "ERROR mysql_stmt_bind_param() failed" << endl
         << mysql_stmt_error(stmtTimePassed.stmt) << endl;
+        std::exit(-1);
+    }
+}
+
+void MySQLStats::initMemUsedSTMT()
+{
+    const size_t numElems = sizeof(stmtMemUsed.bind)/sizeof(MYSQL_BIND);
+
+    std::stringstream ss;
+    ss << "insert into `memused`"
+    << "("
+    //Position
+    << "  `runID`, `simplifications`, `conflicts`, `time`"
+
+    //Clause stats
+    << ", `name`, `MB`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Get memory for statement
+    stmtMemUsed.stmt = mysql_stmt_init(serverConn);
+    if (!stmtMemUsed.stmt) {
+        cout << "Error: mysql_stmt_init() out of memory" << endl;
+        std::exit(-1);
+    }
+
+    //Prepare the statement
+    if (mysql_stmt_prepare(stmtMemUsed.stmt, ss.str().c_str(), ss.str().length())) {
+        cerr << "ERROR  in mysql_stmt_prepare(), INSERT failed"
+        << endl
+        << mysql_stmt_error(stmtMemUsed.stmt)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+
+    //Validate parameter count
+    unsigned long param_count = mysql_stmt_param_count(stmtMemUsed.stmt);
+    if (param_count != numElems) {
+        cout
+        << "invalid parameter count returned by MySQL"
+        << endl;
+
+        std::exit(-1);
+    }
+
+    memset(stmtMemUsed.bind, 0, sizeof(stmtMemUsed.bind));
+
+
+    //Bind the local variables to the statement
+    bindAt =0;
+    bindTo(stmtMemUsed, runID);
+    bindTo(stmtMemUsed, stmtMemUsed.numSimplify);
+    bindTo(stmtMemUsed, stmtMemUsed.sumConflicts);
+    bindTo(stmtMemUsed, stmtMemUsed.cpuTime);
+    bindTo(stmtMemUsed, stmtMemUsed.name, &stmtMemUsed.name_len);
+    bindTo(stmtMemUsed, stmtMemUsed.mem_used_mb);
+    assert(bindAt == numElems);
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(stmtMemUsed.stmt, stmtMemUsed.bind)) {
+        cerr << "ERROR mysql_stmt_bind_param() failed" << endl
+        << mysql_stmt_error(stmtMemUsed.stmt) << endl;
         std::exit(-1);
     }
 }
@@ -1092,6 +1167,32 @@ void MySQLStats::time_passed_min(
         << endl
         << "Error from mysql: "
         << mysql_stmt_error(stmtTimePassedMin.stmt)
+        << endl;
+
+        std::exit(-1);
+    }
+}
+
+void MySQLStats::mem_used(
+    const Solver* solver
+    , const string& name
+    , double given_time
+    , uint64_t mem_used_mb
+) {
+    stmtMemUsed.numSimplify     = solver->get_solve_stats().numSimplify;
+    stmtMemUsed.sumConflicts    = solver->sumConflicts();
+    stmtMemUsed.cpuTime         = given_time;
+    release_assert(name.size() < sizeof(stmtMemUsed.name)-1);
+    strncpy(stmtMemUsed.name, name.c_str(), sizeof(stmtMemUsed.name));
+    stmtMemUsed.name[sizeof(stmtMemUsed.name)-1] = '\0';
+    stmtMemUsed.name_len = strlen(stmtMemUsed.name);
+    stmtMemUsed.mem_used_mb = mem_used_mb;
+
+    if (mysql_stmt_execute(stmtMemUsed.stmt)) {
+        cerr << "ERROR while executing clause DB cleaning MySQL prepared statement"
+        << endl
+        << "Error from mysql: "
+        << mysql_stmt_error(stmtMemUsed.stmt)
         << endl;
 
         std::exit(-1);

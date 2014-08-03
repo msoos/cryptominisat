@@ -42,6 +42,13 @@ public:
         , double time_passed
     ) = 0;
 
+     virtual void mem_used(
+        const Solver* solver
+        , const string& name
+        , const double given_time
+        , uint64_t mem_used_mb
+    ) = 0;
+
     #ifdef STATS_NEEDED_EXTRA
     virtual void clauseSizeDistrib(
         uint64_t sumConflicts

@@ -62,6 +62,13 @@ public:
         , double time_passed
     ) override;
 
+    void mem_used(
+        const Solver* solver
+        , const string& name
+        , double given_time
+        , uint64_t mem_used_mb
+    ) override;
+
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;
 
@@ -75,6 +82,7 @@ private:
     void addStartupData(const Solver* solver);
     void initRestartSTMT();
     void initTimePassedSTMT();
+    void initMemUsedSTMT();
     void initTimePassedMinSTMT();
     #ifdef STATS_NEEDED_EXTRA
     struct StmtClsDistrib {
@@ -193,6 +201,23 @@ private:
         double percent_time_remain;
     };
     StmtTimePassed stmtTimePassed;
+
+    struct StmtMemUsed {
+        StmtMemUsed() :
+            stmt(NULL)
+        {}
+
+        MYSQL_BIND  bind[1+5];
+        MYSQL_STMT  *stmt = NULL;
+
+        uint64_t numSimplify;
+        uint64_t sumConflicts;
+        double cpuTime;
+        char name[200];
+        unsigned long name_len;
+        uint64_t mem_used_mb;
+    };
+    StmtMemUsed stmtMemUsed;
 
     struct StmtTimePassedMin {
         StmtTimePassedMin() :

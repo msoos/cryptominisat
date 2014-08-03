@@ -41,6 +41,12 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmtMemUsed);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     //Close clonnection
     sqlite3_close(db);
 }
@@ -58,6 +64,7 @@ bool SQLiteStats::setup(const Solver* solver)
     initRestartSTMT();
     initReduceDBSTMT();
     initTimePassedSTMT();
+    initMemUsedSTMT();
 
     return true;
 }
@@ -199,6 +206,76 @@ void SQLiteStats::writeQuestionMarks(
             ss << "?";
     }
     ss << ")";
+}
+
+
+void SQLiteStats::initMemUsedSTMT()
+{
+    const size_t numElems = 6;
+
+    std::stringstream ss;
+    ss << "insert into `memused`"
+    << "("
+    //Position
+    << "  `runID`, `simplifications`, `conflicts`, `time`"
+
+    //Clause stats
+    << ", `name`, `MB`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    const int rc = sqlite3_prepare(db, ss.str().c_str(), -1, &stmtMemUsed, NULL);
+    if (rc) {
+        cerr << "ERROR  in sqlite_stmt_prepare(), INSERT failed"
+        << endl
+        << sqlite3_errmsg(db)
+        << " error code: " << rc
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::mem_used(
+    const Solver* solver
+    , const string& name
+    , double given_time
+    , uint64_t mem_used_mb
+) {
+    int bindAt = 1;
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, runID);
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts());
+    sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
+    sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, NULL);
+    sqlite3_bind_int(stmtMemUsed, bindAt++, mem_used_mb);
+
+    int rc = sqlite3_step(stmtMemUsed);
+    if (rc != SQLITE_DONE) {
+        cerr << "ERROR while executing mem_used prepared statement"
+        << endl
+        << "Error from sqlite: "
+        << sqlite3_errmsg(db)
+        << " error code: " << rc
+        << endl;
+
+        std::exit(-1);
+    }
+
+    if (sqlite3_reset(stmtMemUsed)) {
+        cerr << "Error calling sqlite3_reset on stmtMemUsed" << endl;
+        std::exit(-1);
+    }
+    /*if (sqlite3_clear_bindings(stmtMemUsed)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmtMemUsed" << endl;
+        std::exit(-1);
+    }*/
 }
 
 void SQLiteStats::initTimePassedSTMT()

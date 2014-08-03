@@ -140,6 +140,17 @@ CREATE TABLE `timepassed` (
 );
 create index `idx7` on `timepassed` (`runID`,`conflicts`);
 
+DROP TABLE IF EXISTS `memused`;
+CREATE TABLE `memused` (
+  `runID` bigint(20) NOT NULL,
+  `simplifications` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
+  `time` double NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `MB` int(20) NOT NULL
+);
+create index `idx7_2` on `memused` (`runID`,`conflicts`);
+
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
   `runID` bigint(20) NOT NULL,
