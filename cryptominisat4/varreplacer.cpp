@@ -963,6 +963,9 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit)
             && solver->value(bin_xor.vars[1]) == l_Undef
         ) {
             replace(bin_xor.vars[0], bin_xor.vars[1], bin_xor.rhs);
+            if (!solver->okay()) {
+                return false;
+            }
         }
     }
 
