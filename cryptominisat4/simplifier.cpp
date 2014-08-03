@@ -1014,8 +1014,8 @@ bool Simplifier::uneliminate(Var var)
     assert(solver->okay());
 
     //Check that it was really eliminated
+    //NOTE: it's already been made a decision var, as the variable has been re-added already
     assert(solver->varData[var].removed == Removed::elimed);
-    assert(!solver->varData[var].is_decision);
     assert(solver->value(var) == l_Undef);
 
     if (!blockedMapBuilt) {
@@ -1026,7 +1026,6 @@ bool Simplifier::uneliminate(Var var)
     //Uneliminate it in theory
     globalStats.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
-    solver->set_decision_var(var);
     if (solver->conf.doStamp) {
         solver->stamp.remove_from_stamps(var);
     }
