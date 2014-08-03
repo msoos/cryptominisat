@@ -687,12 +687,12 @@ bool Prober::try_this(const Lit lit, const bool first)
         //DFS is expensive, actually. So do BFS 50% of the time
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
             const StampType stampType = solver->mtrand.randInt(1) ? STAMP_IRRED : STAMP_RED;
-            failed = solver->propagateFullDFS(
+            failed = solver->propagate_dfs(
                 stampType
                 , timeout //early-abort timeout
             );
         } else {
-            failed = solver->propagateFullBFS(
+            failed = solver->propagate_bfs(
                 timeout //early-abort timeout
             );
         }

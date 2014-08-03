@@ -943,7 +943,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     must_continue = false;
     stats.advancedPropCalled++;
     solver->varData[trail.back().var()].depth = 0;
-    Lit failed = propagateFullBFS();
+    Lit failed = propagate_bfs();
     if (failed != lit_Undef) {
         *drup << ~failed << fin;
 
@@ -1269,7 +1269,7 @@ void Searcher::add_otf_subsume_long_clauses()
             //If none found, we have a propagating clause_t
 
             if (do_otf_this_round && decisionLevel() == 1) {
-                addHyperBin(cl[0], cl);
+                add_hyper_bin(cl[0], cl);
             } else {
                 enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
 
@@ -1326,9 +1326,9 @@ void Searcher::add_otf_subsume_implicit_clause()
             //If none found, we have a propagation
             if (do_otf_this_round && decisionLevel() == 1) {
                 if (it->size == 2) {
-                    enqueueComplex(it->lits[0], ~it->lits[1], true);
+                    enqueue_with_acestor_info(it->lits[0], ~it->lits[1], true);
                 } else {
-                    addHyperBin(it->lits[0], it->lits[1], it->lits[2]);
+                    add_hyper_bin(it->lits[0], it->lits[1], it->lits[2]);
                 }
             } else {
                 //Calculate reason
@@ -1448,7 +1448,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true);
             if (do_otf_this_round && decisionLevel() == 1)
-                enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
+                enqueue_with_acestor_info(learnt_clause[0], ~learnt_clause[1], true);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
 
@@ -1464,7 +1464,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
 
             if (do_otf_this_round && decisionLevel() == 1)
-                addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
+                add_hyper_bin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
             else
                 enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
@@ -1480,7 +1480,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             std::stable_sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
             if (do_otf_this_round && decisionLevel() == 1)
-                addHyperBin(learnt_clause[0], *cl);
+                add_hyper_bin(learnt_clause[0], *cl);
             else
                 enqueue(learnt_clause[0], PropBy(cl_alloc.getOffset(cl)));
 

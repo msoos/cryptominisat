@@ -30,7 +30,7 @@ HyperEngine::HyperEngine(const SolverConf& _conf, bool* _needToInterrupt) :
 {
 }
 
-Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
+Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 {
     timedOutPropagateFull = false;
     propStats.otfHyperPropCalled++;
@@ -81,7 +81,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
             if (!k->isBinary() || k->red())
                 continue;
 
-            ret = propBin(p, k, confl);
+            ret = prop_bin_with_ancestor_info(p, k, confl);
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
 
@@ -103,7 +103,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
             if (!k->isBinary() || !k->red())
                 continue;
 
-            ret = propBin(p, k, confl);
+            ret = prop_bin_with_ancestor_info(p, k, confl);
             if (ret == PROP_FAIL) {
                 return analyzeFail(confl);
             } else if (ret == PROP_SOMETHING) {
@@ -134,7 +134,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
 
             if (i->isTri()) {
                 *j++ = *i;
-                ret = propTriClauseComplex(i, p, confl);
+                ret = prop_tri_clause_with_acestor_info(i, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
@@ -145,7 +145,7 @@ Lit HyperEngine::propagateFullBFS(const uint64_t timeout)
             }
 
             if (i->isClause()) {
-                ret = propNormalClauseComplex(i, j, p, confl);
+                ret = prop_normal_cl_with_ancestor_info(i, j, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
@@ -196,10 +196,10 @@ Lit HyperEngine::prop_red_bin_dfs(
         if (!k->isBinary() || !k->red())
             continue;
 
-        PropResult ret = propBin(p, k, confl);
+        PropResult ret = prop_bin_with_ancestor_info(p, k, confl);
         switch(ret) {
             case PROP_FAIL:
-                closeAllTimestamps(stampType);
+                close_all_timestamps(stampType);
                 return analyzeFail(confl);
 
             case PROP_SOMETHING:
@@ -243,7 +243,7 @@ Lit HyperEngine::prop_red_bin_dfs(
     return lit_Undef;
 }
 
-Lit HyperEngine::prop_norm_bin_dfs(
+Lit HyperEngine::prop_irred_bin_dfs(
     StampType stampType
     , PropBy& confl
     , const Lit root
@@ -279,10 +279,10 @@ Lit HyperEngine::prop_norm_bin_dfs(
             continue;
         }
 
-        PropResult ret = propBin(p, k, confl);
+        PropResult ret = prop_bin_with_ancestor_info(p, k, confl);
         switch(ret) {
             case PROP_FAIL:
-                closeAllTimestamps(stampType);
+                close_all_timestamps(stampType);
                 return analyzeFail(confl);
 
             case PROP_SOMETHING:
@@ -327,7 +327,7 @@ Lit HyperEngine::prop_norm_bin_dfs(
     return lit_Undef;
 }
 
-Lit HyperEngine::prop_norm_cl_dfs(
+Lit HyperEngine::prop_larger_than_bin_cl_dfs(
     StampType stampType
     , PropBy& confl
     , Lit& root
@@ -350,7 +350,7 @@ Lit HyperEngine::prop_norm_cl_dfs(
 
         if (i->isTri()) {
             *j++ = *i;
-            ret = propTriClauseComplex(i, p, confl);
+            ret = prop_tri_clause_with_acestor_info(i, p, confl);
             if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                 i++;
                 break;
@@ -361,7 +361,7 @@ Lit HyperEngine::prop_norm_cl_dfs(
         }
 
         if (i->isClause()) {
-            ret = propNormalClauseComplex(i, j, p, confl);
+            ret = prop_normal_cl_with_ancestor_info(i, j, p, confl);
             if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                 i++;
                 break;
@@ -377,7 +377,7 @@ Lit HyperEngine::prop_norm_cl_dfs(
 
     switch(ret) {
         case PROP_FAIL:
-            closeAllTimestamps(stampType);
+            close_all_timestamps(stampType);
             return analyzeFail(confl);
 
         case PROP_SOMETHING:
@@ -423,14 +423,14 @@ bool HyperEngine::need_early_abort_dfs(
 ) {
     //Early-abort if too much time was used (from prober)
     if (propStats.otfHyperTime + propStats.bogoProps > timeout) {
-        closeAllTimestamps(stampType);
+        close_all_timestamps(stampType);
         timedOutPropagateFull = true;
         return true;
     }
     return false;
 }
 
-Lit HyperEngine::propagateFullDFS(
+Lit HyperEngine::propagate_dfs(
     const StampType stampType
     , const uint64_t timeout
 ) {
@@ -487,7 +487,7 @@ Lit HyperEngine::propagateFullDFS(
         //Propagate binary irred
         bool restart = false;
         while (!toPropBin.empty()) {
-            Lit ret = prop_norm_bin_dfs(stampType, confl, root, restart);
+            Lit ret = prop_irred_bin_dfs(stampType, confl, root, restart);
             if (ret != lit_Undef)
                 return ret;
             if (restart)
@@ -509,7 +509,7 @@ Lit HyperEngine::propagateFullDFS(
             continue;
 
         while (!toPropNorm.empty()) {
-            Lit ret = prop_norm_cl_dfs(stampType, confl, root, restart);
+            Lit ret = prop_larger_than_bin_cl_dfs(stampType, confl, root, restart);
             if (ret != lit_Undef)
                 return ret;
             if (restart)
@@ -530,7 +530,7 @@ Lit HyperEngine::propagateFullDFS(
 }
 
 
-void HyperEngine::closeAllTimestamps(const StampType stampType)
+void HyperEngine::close_all_timestamps(const StampType stampType)
 {
     while(!toPropBin.empty())
     {
@@ -550,14 +550,14 @@ void HyperEngine::closeAllTimestamps(const StampType stampType)
 
 
 //Add binary clause to deepest common ancestor
-void HyperEngine::addHyperBin(const Lit p)
+void HyperEngine::add_hyper_bin(const Lit p)
 {
     propStats.otfHyperTime += 2;
 
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
     if (currAncestors.size() > 1) {
-        deepestAncestor = deepestCommonAcestor();
+        deepestAncestor = deepest_common_ancestor();
 
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
@@ -580,7 +580,7 @@ void HyperEngine::addHyperBin(const Lit p)
         hyperBinNotAdded = true;
     }
 
-    enqueueComplex(p, deepestAncestor, true);
+    enqueue_with_acestor_info(p, deepestAncestor, true);
     varData[p.var()].reason.setHyperbin(true);
     varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
@@ -590,7 +590,7 @@ We can try both ways: either binary clause can be removed.
 Try to remove one, then the other
 Return which one is to be removed
 */
-Lit HyperEngine::removeWhich(
+Lit HyperEngine::remove_which_bin_due_to_trans_red(
     Lit conflict
     , Lit thisAncestor
     , bool thisStepRed
@@ -621,7 +621,7 @@ Lit HyperEngine::removeWhich(
 
 
     if ((ambivalent || !second_is_deeper) &&
-        isAncestorOf(
+        is_ancestor_of(
         conflict
         , thisAncestor
         , thisStepRed
@@ -640,7 +640,7 @@ Lit HyperEngine::removeWhich(
     thisStepRed = data.isRedStep();
     std::swap(lookingForAncestor, thisAncestor);
     if ((ambivalent || second_is_deeper) &&
-        isAncestorOf(
+        is_ancestor_of(
         conflict
         , thisAncestor
         , thisStepRed
@@ -667,7 +667,7 @@ hop backwards from thisAncestor until:
 1) we reach ancestor of 'conflict' -- at this point, we return TRUE
 2) we reach an invalid point. Either root, or an invalid hop. We return FALSE.
 */
-bool HyperEngine::isAncestorOf(
+bool HyperEngine::is_ancestor_of(
     const Lit conflict
     , Lit thisAncestor
     , const bool thisStepRed
@@ -676,7 +676,7 @@ bool HyperEngine::isAncestorOf(
 ) {
     propStats.otfHyperTime += 1;
     #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "isAncestorOf."
+    cout << "is_ancestor_of."
     << "conflict: " << conflict
     << " thisAncestor: " << thisAncestor
     << " thisStepRed: " << thisStepRed
@@ -758,7 +758,7 @@ bool HyperEngine::isAncestorOf(
     return false;
 }
 
-void HyperEngine::addHyperBin(const Lit lit1, const Lit lit2, const Lit lit3)
+void HyperEngine::add_hyper_bin(const Lit lit1, const Lit lit2, const Lit lit3)
 {
     assert(value(lit1.var()) == l_Undef);
 
@@ -782,10 +782,10 @@ void HyperEngine::addHyperBin(const Lit lit1, const Lit lit2, const Lit lit3)
     if (varData[lit3.var()].level != 0)
         currAncestors.push_back(~lit3);
 
-    addHyperBin(lit1);
+    add_hyper_bin(lit1);
 }
 
-void HyperEngine::addHyperBin(const Lit p, const Clause& cl)
+void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
 {
     assert(value(p.var()) == l_Undef);
 
@@ -809,7 +809,7 @@ void HyperEngine::addHyperBin(const Lit p, const Clause& cl)
         }
     }
 
-    addHyperBin(p);
+    add_hyper_bin(p);
 }
 
 //Analyze why did we fail at decision level 1
@@ -855,12 +855,12 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             break;
     }
 
-    Lit foundLit = deepestCommonAcestor();
+    Lit foundLit = deepest_common_ancestor();
 
     return foundLit;
 }
 
-Lit HyperEngine::deepestCommonAcestor()
+Lit HyperEngine::deepest_common_ancestor()
 {
     //Then, we go back on each ancestor recursively, and exit on the first one
     //that unifies ALL the previous ancestors. That is the lowest common ancestor
@@ -967,7 +967,7 @@ void HyperEngine::remove_bin_clause(Lit lit)
     }
 }
 
-PropResult HyperEngine::propBin(
+PropResult HyperEngine::prop_bin_with_ancestor_info(
     const Lit p
     , watch_subarray::const_iterator k
     , PropBy& confl
@@ -983,7 +983,7 @@ PropResult HyperEngine::propBin(
         #endif
 
         //Never propagated before
-        enqueueComplex(lit, p, k->red());
+        enqueue_with_acestor_info(lit, p, k->red());
         return PROP_SOMETHING;
 
     } else if (val == l_False) {
@@ -1009,7 +1009,7 @@ PropResult HyperEngine::propBin(
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Lit " << p << " also wants to propagate " << lit << endl;
         #endif
-        Lit remove = removeWhich(lit, p, k->red());
+        Lit remove = remove_which_bin_due_to_trans_red(lit, p, k->red());
 
         //Remove this one
         if (remove == p) {
@@ -1040,7 +1040,7 @@ PropResult HyperEngine::propBin(
 }
 
 
-PropResult HyperEngine::propNormalClauseComplex(
+PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
     , const Lit p
@@ -1077,12 +1077,12 @@ PropResult HyperEngine::propNormalClauseComplex(
         propStats.propsLongIrred++;
     #endif
 
-    addHyperBin(c[0], c);
+    add_hyper_bin(c[0], c);
 
     return PROP_SOMETHING;
 }
 
-PropResult HyperEngine::propTriClauseComplex(
+PropResult HyperEngine::prop_tri_clause_with_acestor_info(
     watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
@@ -1130,7 +1130,7 @@ PropResult HyperEngine::propTriHelperComplex(
     #endif
 
     //Not simple
-    addHyperBin(lit1, lit2, lit3);
+    add_hyper_bin(lit1, lit2, lit3);
     return PROP_SOMETHING;
 }
 
@@ -1152,7 +1152,7 @@ size_t HyperEngine::print_stamp_mem(size_t totalMem) const
     return mem;
 }
 
-void HyperEngine::enqueueComplex(
+void HyperEngine::enqueue_with_acestor_info(
     const Lit p
     , const Lit ancestor
     , const bool redStep
