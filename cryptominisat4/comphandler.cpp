@@ -763,7 +763,6 @@ void CompHandler::readdRemovedClauses()
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
             num_vars_removed--;
-            solver->new_var(false, outer);
         }
     }
 
