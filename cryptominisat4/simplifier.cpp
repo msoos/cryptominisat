@@ -1015,6 +1015,7 @@ bool Simplifier::uneliminate(Var var)
 
     //Check that it was really eliminated
     //NOTE: it's already been made a decision var, as the variable has been re-added already
+    solver->set_decision_var(var);
     assert(solver->varData[var].removed == Removed::elimed);
     assert(solver->value(var) == l_Undef);
 
