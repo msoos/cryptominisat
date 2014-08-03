@@ -661,6 +661,22 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         lit = updated_lit;
     }
 
+    //Undo comp handler
+    if (conf.doCompHandler) {
+        bool readd = false;
+        for (Lit lit: ps) {
+            lit = varReplacer->get_lit_replaced_with(lit);
+            if (varData[lit.var()].removed == Removed::decomposed) {
+                readd = true;
+                break;
+            }
+        }
+
+        if (readd) {
+            compHandler->readdRemovedClauses();
+        }
+    }
+
     for(Lit& lit: ps) {
         if (map_outer_to_inter(lit).var() >= nVars()) {
             new_var(false, lit.var());
@@ -708,15 +724,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     for (Lit& lit: ps) {
         const Lit updated_lit = varReplacer->get_lit_replaced_with(lit);
         assert(lit == updated_lit);
-    }
-
-    //Undo comp handler
-    if (conf.doCompHandler) {
-        for (const Lit lit: ps) {
-            if (varData[lit.var()].removed == Removed::decomposed) {
-                compHandler->readdRemovedClauses();
-            }
-        }
     }
 
     return true;

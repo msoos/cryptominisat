@@ -77,8 +77,11 @@ Searcher::~Searcher()
 void Searcher::new_var(const bool bva, const Var orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
+
+    //Activity heap
     activities.push_back(0);
-    insertVarOrder(nVars()-1);
+    solver->set_decision_var(nVars()-1);
+
     assumptionsSet.push_back(false);
 
     act_polar_backup.activity.push_back(0);

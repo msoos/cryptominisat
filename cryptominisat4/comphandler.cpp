@@ -293,12 +293,12 @@ void CompHandler::check_local_vardata_sanity()
     //correct 'removed' flags, and none have been assigned
 
     size_t num_vars_removed_check = 0;
-    for (Var var = 0; var < solver->nVars(); var++) {
-        const Var outerVar = solver->map_inter_to_outer(var);
+    for (Var outerVar = 0; outerVar < solver->nVarsOuter(); outerVar++) {
+        const Var interVar = solver->map_outer_to_inter(outerVar);
         if (savedState[outerVar] != l_Undef) {
-            assert(solver->varData[var].is_decision == false);
-            assert(solver->varData[var].removed == Removed::decomposed);
-            assert(solver->value(var) == l_Undef || solver->varData[var].level == 0);
+            assert(solver->varData[interVar].is_decision == false);
+            assert(solver->varData[interVar].removed == Removed::decomposed);
+            assert(solver->value(interVar) == l_Undef || solver->varData[interVar].level == 0);
             num_vars_removed_check++;
         }
     }
@@ -767,12 +767,13 @@ void CompHandler::readdRemovedClauses()
     double myTime = cpuTime();
 
     //Avoid recursion, clear 'removed' status
-    for(size_t i = 0; i < solver->nVarsOuter(); i++) {
-        VarData& dat = solver->varData[i];
+    for(size_t outer = 0; outer < solver->nVarsOuter(); outer++) {
+        const Var inter = solver->map_outer_to_inter(outer);
+        VarData& dat = solver->varData[inter];
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
-            solver->set_decision_var(i);
             num_vars_removed--;
+            solver->new_var(false, outer);
         }
     }
 
