@@ -11,6 +11,18 @@ that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
 provides the best of both words: ease of use and a powerful interface.
 
+Prerequisites
+-----
+
+You need to have the following installed in case you use Debian or Ubuntu -- for
+other distros, the packages should be similarly named::
+
+  $ sudo apt-get install build-essential cmake
+
+The following are not required but are useful::
+
+  $ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev, libsqlite3-dev
+
 Compiling and installing
 -----
 
