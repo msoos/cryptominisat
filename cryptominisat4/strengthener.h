@@ -169,11 +169,6 @@ class Strengthener {
         StrImplicitData str_impl_data;
         // end
 
-        ClOffset try_vivify_clause_and_return_new(
-            ClOffset offset
-            , const bool red
-            , const uint32_t queueByBy
-        );
         void strengthen_bin_with_bin(
             const Lit lit
             , Watched*& i
