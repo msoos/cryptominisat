@@ -21,7 +21,7 @@ other distros, the packages should be similarly named::
 
 The following are not required but are useful::
 
-  $ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev, libsqlite3-dev
+  $ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev libsqlite3-dev
 
 Compiling and installing
 -----
