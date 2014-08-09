@@ -17,7 +17,7 @@ set(cryptoms_lib_files
     clauseallocator.cpp
     sccfinder.cpp
     solverconf.cpp
-    vivifier.cpp
+    distiller.cpp
     strengthener.cpp
     calcdefpolars.cpp
     solutionextender.cpp

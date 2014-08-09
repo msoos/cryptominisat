@@ -46,7 +46,7 @@ class ClauseCleaner;
 class Prober;
 class Simplifier;
 class SCCFinder;
-class Vivifier;
+class Distiller;
 class Strengthener;
 class CalcDefPolars;
 class SolutionExtender;
@@ -282,7 +282,7 @@ class Solver : public Searcher
         // Objects that help us accomplish the task
         Prober              *prober = NULL;
         Simplifier          *simplifier = NULL;
-        Vivifier            *vivifier = NULL;
+        Distiller           *distiller = NULL;
         Strengthener        *strengthener = NULL;
         CompHandler         *compHandler = NULL;
 

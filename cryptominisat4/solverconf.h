@@ -249,16 +249,16 @@ class SolverConf
         int      simplify_at_startup;
         int      regularly_simplify_problem;
         int      perform_occur_based_simp;
-        int      doStrengthen;         ///<Perform self-subsuming resolution
+        int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
         unsigned maxOccurIrredMB;
         unsigned maxOccurRedMB;
         unsigned long long maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
 
-        //Vivification
-        int      doClausVivif;
-        unsigned long long max_props_vivif_long_irred_clsM;
+        //Distillation
+        int      do_distill_clauses;
+        unsigned long long max_props_distill_long_irred_clsM;
         long watch_cache_stamp_based_str_timeoutM;
 
         //Memory savings

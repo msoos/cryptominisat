@@ -32,7 +32,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define ASSYM_DEBUG
 //#define DEBUG_STAMPING
 
 #ifdef VERBOSE_DEBUG
@@ -833,7 +832,7 @@ void Strengthener::Stats::print() const
 
 void Strengthener::Stats::CacheBased::print_short(const string type, const Solver* solver) const
 {
-    cout << "c [vivif] cache-based "
+    cout << "c [distill] cache-based "
     << std::setw(5) << type
     << "-- "
     << " cl tried " << std::setw(8) << triedCls

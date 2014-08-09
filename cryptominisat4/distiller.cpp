@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "vivifier.h"
+#include "distiller.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -32,7 +32,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define ASSYM_DEBUG
 //#define DEBUG_STAMPING
 
 #ifdef VERBOSE_DEBUG
@@ -41,11 +40,11 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-Vivifier::Vivifier(Solver* _solver) :
+Distiller::Distiller(Solver* _solver) :
     solver(_solver)
 {}
 
-bool Vivifier::vivify(const bool alsoStrengthen)
+bool Distiller::distill(const bool alsoStrengthen)
 {
     assert(solver->ok);
     numCalls++;
@@ -53,13 +52,13 @@ bool Vivifier::vivify(const bool alsoStrengthen)
     solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
     if (alsoStrengthen
-        && !vivify_long_irred_cls()
+        && !distill_long_irred_cls()
     ) {
         goto end;
     }
 
     if (alsoStrengthen
-        && !vivify_tri_irred_cls()
+        && !distill_tri_irred_cls()
     ) {
         goto end;
     }
@@ -77,11 +76,11 @@ end:
     return solver->ok;
 }
 
-bool Vivifier::vivify_tri_irred_cls()
+bool Distiller::distill_tri_irred_cls()
 {
     if (solver->conf.verbosity >= 6) {
         cout
-        << "c Doing vivif for tri irred clauses"
+        << "c Doing distill for tri irred clauses"
         << endl;
     }
 
@@ -125,7 +124,7 @@ bool Vivifier::vivify_tri_irred_cls()
                 lits[0] = lit;
                 lits[1] = ws.lit2();
                 lits[2] = ws.lit3();
-                try_vivify_clause_and_return_new(
+                try_distill_clause_and_return_new(
                     CL_OFFSET_MAX
                     , ws.red()
                     , 2
@@ -147,7 +146,7 @@ bool Vivifier::vivify_tri_irred_cls()
     const double time_remain = 1.0 - (double)(diff_bogoprops + extraTime)/(double)maxNumProps;
     if (solver->conf.verbosity >= 3) {
         cout
-        << "c [vivif] tri irred"
+        << "c [distill] tri irred"
         << " shorten: " << runStats.numClShorten - origShorten
         << " lit-rem: " << runStats.numLitsRem - origLitRem
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
@@ -157,7 +156,7 @@ bool Vivifier::vivify_tri_irred_cls()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "vivif tri irred"
+            , "distill tri irred"
             , time_used
             , time_out
             , time_remain
@@ -191,7 +190,7 @@ struct ClauseSizeSorter
     }
 };
 
-bool Vivifier::vivify_long_irred_cls()
+bool Distiller::distill_long_irred_cls()
 {
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
@@ -204,7 +203,7 @@ bool Vivifier::vivify_long_irred_cls()
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
-    uint64_t maxNumProps = solver->conf.max_props_vivif_long_irred_clsM*1000LL*1000ULL;
+    uint64_t maxNumProps = solver->conf.max_props_distill_long_irred_clsM*1000LL*1000ULL;
     if (solver->litStats.irredLits + solver->litStats.redLits < 500000)
         maxNumProps *=2;
 
@@ -276,8 +275,8 @@ bool Vivifier::vivify_long_irred_cls()
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
 
-        //Try to vivify clause
-        ClOffset offset2 = try_vivify_clause_and_return_new(
+        //Try to distill clause
+        ClOffset offset2 = try_distill_clause_and_return_new(
             offset
             , cl.red()
             , queueByBy
@@ -304,7 +303,7 @@ bool Vivifier::vivify_long_irred_cls()
     const double time_used = cpuTime() - myTime;
     const double time_remain = (double)(solver->propStats.bogoProps-oldBogoProps + extraTime)/(double)maxNumProps;
     if (solver->conf.verbosity >= 2) {
-        cout << "c [vivif] longirred"
+        cout << "c [distill] longirred"
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
         << " cl-rem:" << runStats.numClShorten- origClShorten
         << " lits-rem:" << runStats.numLitsRem - origLitRem
@@ -314,7 +313,7 @@ bool Vivifier::vivify_long_irred_cls()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "vivif long irred"
+            , "distill long irred"
             , time_used
             , time_out
             , time_remain
@@ -328,7 +327,7 @@ bool Vivifier::vivify_long_irred_cls()
     return solver->ok;
 }
 
-ClOffset Vivifier::try_vivify_clause_and_return_new(
+ClOffset Distiller::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
     , const uint32_t queueByBy
@@ -336,7 +335,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
     #ifdef DRUP_DEBUG
     if (solver->conf.verbosity >= 6) {
         cout
-        << "Trying to vivify clause:";
+        << "Trying to distill clause:";
         for(size_t i = 0; i < lits.size(); i++) {
             cout << lits[i] << " ";
         }
@@ -426,7 +425,7 @@ ClOffset Vivifier::try_vivify_clause_and_return_new(
     }
 }
 
-Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
+Distiller::Stats& Distiller::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
@@ -440,10 +439,10 @@ Vivifier::Stats& Vivifier::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Vivifier::Stats::print_short(const Solver* solver) const
+void Distiller::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c [vivif] asymm (tri+long)"
+    << "c [distill] asymm (tri+long)"
     << " useful: "<< numClShorten
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
@@ -452,7 +451,7 @@ void Vivifier::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void Vivifier::Stats::print(const size_t nVars) const
+void Distiller::Stats::print(const size_t nVars) const
 {
     //Asymm
     cout << "c -------- ASYMM STATS --------" << endl;

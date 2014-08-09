@@ -1257,7 +1257,7 @@ void Simplifier::setLimits()
     }
     runStats.origNumMaxElimVars = varelim_num_limit;
 
-    if (!solver->conf.doStrengthen) {
+    if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
     }
 

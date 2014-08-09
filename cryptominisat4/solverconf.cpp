@@ -167,16 +167,16 @@ SolverConf::SolverConf() :
         , simplify_at_startup(false)
         , regularly_simplify_problem(true)
         , perform_occur_based_simp(true)
-        , doStrengthen       (true)
+        , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(4.0)
 
-        //Vivification
-        , doClausVivif(true)
-        , max_props_vivif_long_irred_clsM(20ULL)
+        //Distillation
+        , do_distill_clauses(true)
+        , max_props_distill_long_irred_clsM(20ULL)
         , watch_cache_stamp_based_str_timeoutM(400LL)
 
         //Memory savings

@@ -300,4 +300,4 @@ inline const Strengthener::Stats& Strengthener::get_stats() const
 
 } //end namespace
 
-#endif //CLAUSEVIVIFIER_H
+#endif //CLAUSEDistiller_H

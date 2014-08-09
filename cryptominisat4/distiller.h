@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef __VIVIFIER_H__
-#define __VIVIFIER_H__
+#ifndef __DISTILLER_H__
+#define __DISTILLER_H__
 
 #include <vector>
 #include "clause.h"
@@ -36,10 +36,10 @@ using std::vector;
 class Solver;
 class Clause;
 
-class Vivifier {
+class Distiller {
     public:
-        Vivifier(Solver* solver);
-        bool vivify(bool alsoStrengthen);
+        Distiller(Solver* solver);
+        bool distill(bool alsoStrengthen);
 
         struct Stats
         {
@@ -68,18 +68,18 @@ class Vivifier {
 
     private:
 
-        ClOffset try_vivify_clause_and_return_new(
+        ClOffset try_distill_clause_and_return_new(
             ClOffset offset
             , const bool red
             , const uint32_t queueByBy
         );
 
         //Actual algorithms used
-        bool vivify_long_irred_cls();
-        bool vivify_tri_irred_cls();
+        bool distill_long_irred_cls();
+        bool distill_tri_irred_cls();
         Solver* solver;
 
-        //For vivify
+        //For distill
         vector<Lit> lits;
         vector<Lit> uselessLits;
         uint64_t extraTime;
@@ -91,11 +91,11 @@ class Vivifier {
 
 };
 
-inline const Vivifier::Stats& Vivifier::get_stats() const
+inline const Distiller::Stats& Distiller::get_stats() const
 {
     return globalStats;
 }
 
 } //end namespace
 
-#endif //__VIVIFIER_H__
+#endif //__DISTILLER_H__

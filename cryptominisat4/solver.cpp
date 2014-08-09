@@ -35,7 +35,7 @@
 #include "searcher.h"
 #include "simplifier.h"
 #include "prober.h"
-#include "vivifier.h"
+#include "distiller.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
@@ -84,7 +84,7 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     if (conf.perform_occur_based_simp) {
         simplifier = new Simplifier(this);
     }
-    vivifier = new Vivifier(this);
+    distiller = new Distiller(this);
     strengthener = new Strengthener(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
@@ -105,7 +105,7 @@ Solver::~Solver()
     delete sqlStats;
     delete prober;
     delete simplifier;
-    delete vivifier;
+    delete distiller;
     delete strengthener;
     delete clauseCleaner;
     delete varReplacer;
@@ -1725,10 +1725,10 @@ lbool Solver::simplify_problem()
     }
 
     //Don't replace first -- the stamps won't work so well
-    if (conf.doClausVivif && !strengthener->strengthen(true)) {
+    if (conf.do_distill_clauses && !strengthener->strengthen(true)) {
         goto end;
     }
-    if (conf.doClausVivif && !vivifier->vivify(true)) {
+    if (conf.do_distill_clauses && !distiller->distill(true)) {
         goto end;
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1775,15 +1775,13 @@ lbool Solver::simplify_problem()
         return l_Undef;
     }
 
-    //Clean cache before vivif
+    //Clean cache before distill
     if (conf.doCache && !implCache.clean(this))
         goto end;
-
-    //Vivify clauses
-    if (conf.doClausVivif && !strengthener->strengthen(true)) {
+    if (conf.do_distill_clauses && !strengthener->strengthen(true)) {
         goto end;
     }
-    if (conf.doClausVivif && !vivifier->vivify(true)) {
+    if (conf.do_distill_clauses && !distiller->distill(true)) {
         goto end;
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -2023,8 +2021,8 @@ void Solver::print_min_stats() const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c asymm time"
-                    , vivifier->get_stats().time_used
-                    , stats_line_percent(vivifier->get_stats().time_used, cpu_time)
+                    , distiller->get_stats().time_used
+                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2146,10 +2144,10 @@ void Solver::print_all_stats() const
     varReplacer->get_stats().print(nVars());
     varReplacer->print_some_stats(cpu_time);
 
-    //Vivifier-ASYMM stats
-    print_stats_line("c vivif time"
-                    , vivifier->get_stats().time_used
-                    , stats_line_percent(vivifier->get_stats().time_used, cpu_time)
+    //Distiller-ASYMM stats
+    print_stats_line("c distill time"
+                    , distiller->get_stats().time_used
+                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
                     , "% time");
     print_stats_line("c strength cache-irred time"
                     , strengthener->get_stats().irredCacheBased.cpu_time
@@ -2159,7 +2157,7 @@ void Solver::print_all_stats() const
                     , strengthener->get_stats().redCacheBased.cpu_time
                     , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
-    vivifier->get_stats().print(nVars());
+    distiller->get_stats().print(nVars());
     strengthener->get_stats().print();
 
     if (conf.doStrSubImplicit) {
