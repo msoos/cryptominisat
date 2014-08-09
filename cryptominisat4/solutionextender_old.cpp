@@ -202,7 +202,7 @@ bool SolutionExtender::addClause(
         , 0 //the time it was created -- useless, ignoring
         , true //yes, this is extender, so don't care if it's <=3 in size
     );
-    ClOffset offset = solver->cl_alloc.getOffset(cl);
+    ClOffset offset = solver->cl_alloc.get_offset(cl);
     clausesToFree.push_back(offset);
     for (vector<Lit>::const_iterator
         it = tmpLits.begin(), end = tmpLits.end()
@@ -338,7 +338,7 @@ bool SolutionExtender::propagate()
             }
 
             if (it->isClause()) {
-                ClOffset offset = it->getOffset();
+                ClOffset offset = it->get_offset();
                 const Clause* cl = solver->cl_alloc.ptr(offset);
                 const Lit blockedOn = it->getBlockedLit();
                 const bool thisRet = propagateCl(cl, blockedOn);

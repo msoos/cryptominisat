@@ -297,7 +297,6 @@ void SubsumeImplicit::Stats::print_short(const Solver* solver) const
 
 void SubsumeImplicit::Stats::print() const
 {
-    //Asymm
     cout << "c -------- IMPLICIT SUB STATS --------" << endl;
     print_stats_line("c time"
         , time_used

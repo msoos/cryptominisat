@@ -63,7 +63,7 @@ class ClauseAllocator {
         );
         Clause* Clause_new(Clause& c);
 
-        ClOffset getOffset(const Clause* ptr) const;
+        ClOffset get_offset(const Clause* ptr) const;
 
         /**
         @brief Returns the pointer of a clause given its offset

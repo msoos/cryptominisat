@@ -174,7 +174,7 @@ void* ClauseAllocator::allocEnough(
 Calculates the stack frame and the position of the pointer in the stack, and
 rerturns a 32-bit value that is a concatenation of these two
 */
-ClOffset ClauseAllocator::getOffset(const Clause* ptr) const
+ClOffset ClauseAllocator::get_offset(const Clause* ptr) const
 {
     return ((BASE_DATA_TYPE*)ptr - dataStart);
 }

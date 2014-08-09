@@ -376,7 +376,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     if (c2 != NULL) {
         solver->detachClause(offset);
         solver->cl_alloc.clauseFree(offset);
-        offset = solver->cl_alloc.getOffset(c2);
+        offset = solver->cl_alloc.get_offset(c2);
         return false;
     }
 

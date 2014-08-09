@@ -215,7 +215,7 @@ bool CNF::redundant(const Watched& ws) const
     return (   (ws.isBinary() && ws.red())
             || (ws.isTri()   && ws.red())
             || (ws.isClause()
-                && cl_alloc.ptr(ws.getOffset())->red()
+                && cl_alloc.ptr(ws.get_offset())->red()
                 )
     );
 }
@@ -227,7 +227,7 @@ bool CNF::redundant_or_removed(const Watched& ws) const
     }
 
    assert(ws.isClause());
-   const Clause* cl = cl_alloc.ptr(ws.getOffset());
+   const Clause* cl = cl_alloc.ptr(ws.get_offset());
    return cl->red() || cl->getRemoved();
 }
 
@@ -243,7 +243,7 @@ size_t CNF::cl_size(const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = cl_alloc.ptr(ws.getOffset());
+            const Clause* cl = cl_alloc.ptr(ws.get_offset());
             return cl->size();
             break;
         }
@@ -283,7 +283,7 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
             break;
 
         case watch_clause_t: {
-            const Clause* cl = cl_alloc.ptr(ws.getOffset());
+            const Clause* cl = cl_alloc.ptr(ws.get_offset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
                 if (i + 1 < cl->size())

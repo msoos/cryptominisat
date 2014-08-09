@@ -612,7 +612,7 @@ void XorFinder::findXorMatchExt(
         assert(it->isClause() && "This algo has not been updated to deal with TRI, sorry");
 
         //Deal with clause
-        const ClOffset offset = it->getOffset();
+        const ClOffset offset = it->get_offset();
         Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.freed())
             continue;
@@ -746,7 +746,7 @@ void XorFinder::findXorMatch(
         }
 
         //Deal with clause
-        const ClOffset offset = it->getOffset();
+        const ClOffset offset = it->get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.freed())
             continue;

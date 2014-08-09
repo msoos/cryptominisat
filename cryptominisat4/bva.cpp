@@ -158,8 +158,8 @@ void BVA::remove_duplicates_from_m_cls()
                 }
                 case CMSat::watch_clause_t: {
                     *simplifier->limit_to_decrease -= 20;
-                    const Clause& cl_a = *solver->cl_alloc.ptr(a.ws.getOffset());
-                    const Clause& cl_b = *solver->cl_alloc.ptr(b.ws.getOffset());
+                    const Clause& cl_a = *solver->cl_alloc.ptr(a.ws.get_offset());
+                    const Clause& cl_b = *solver->cl_alloc.ptr(b.ws.get_offset());
                     if (cl_a.size() != cl_b.size()) {
                         return cl_a.size() < cl_b.size();
                     }
@@ -208,8 +208,8 @@ void BVA::remove_duplicates_from_m_cls()
 
             case CMSat::watch_clause_t: {
                 *simplifier->limit_to_decrease -= 10;
-                const Clause& cl1 = *solver->cl_alloc.ptr(prev.getOffset());
-                const Clause& cl2 = *solver->cl_alloc.ptr(next.getOffset());
+                const Clause& cl1 = *solver->cl_alloc.ptr(prev.get_offset());
+                const Clause& cl2 = *solver->cl_alloc.ptr(next.get_offset());
                 del = true;
                 if (cl1.size() != cl2.size()) {
                     break;
@@ -402,7 +402,7 @@ void BVA::fill_m_cls_lits_and_red()
                 break;
 
             case CMSat::watch_clause_t:
-                const Clause* cl_orig = solver->cl_alloc.ptr(cl.ws.getOffset());
+                const Clause* cl_orig = solver->cl_alloc.ptr(cl.ws.get_offset());
                 for(const Lit lit: *cl_orig) {
                     if (cl.lit != lit) {
                         tmp.push_back(lit);
@@ -458,7 +458,7 @@ void BVA::remove_matching_clause(
 
         default:
             Clause* cl_new = find_cl_for_bva(to_remove, cl_lits_and_red.red);
-            simplifier->unlink_clause(solver->cl_alloc.getOffset(cl_new));
+            simplifier->unlink_clause(solver->cl_alloc.get_offset(cl_new));
             break;
     }
 }
@@ -475,7 +475,7 @@ Clause* BVA::find_cl_for_bva(
         if (!w.isClause())
             continue;
 
-        cl = solver->cl_alloc.ptr(w.getOffset());
+        cl = solver->cl_alloc.ptr(w.get_offset());
         if (cl->red() != red
             || cl->size() != torem.size()
         ) {
@@ -525,7 +525,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
         }
 
         case CMSat::watch_clause_t: {
-            const Clause& orig_cl = *solver->cl_alloc.ptr(cl.ws.getOffset());
+            const Clause& orig_cl = *solver->cl_alloc.ptr(cl.ws.get_offset());
             lits.resize(orig_cl.size());
             for(size_t i = 0; i < orig_cl.size(); i++) {
                 if (orig_cl[i] == cl.lit) {
@@ -537,7 +537,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             Clause* newCl = solver->add_clause_int(lits, false, orig_cl.stats, false, &lits, true, new_lit);
             if (newCl != NULL) {
                 simplifier->linkInClause(*newCl);
-                ClOffset offset = solver->cl_alloc.getOffset(newCl);
+                ClOffset offset = solver->cl_alloc.get_offset(newCl);
                 simplifier->clauses.push_back(offset);
             }
             break;
@@ -783,7 +783,7 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
         }
 
         assert(w.isClause());
-        const Clause& cl = *solver->cl_alloc.ptr(w.getOffset());
+        const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
         num += !cl.red();
     }
 

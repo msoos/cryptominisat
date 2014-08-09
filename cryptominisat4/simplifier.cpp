@@ -840,7 +840,7 @@ void Simplifier::clean_occur_from_removed_clauses()
             }
 
             assert(ws.isClause());
-            Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
+            Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
             if (!cl->getRemoved()) {
                 w[j++] = w[i];
             }
@@ -1327,7 +1327,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
         bool red = false;
 
         if (watch.isClause()) {
-            ClOffset offset = watch.getOffset();
+            ClOffset offset = watch.get_offset();
             Clause& cl = *solver->cl_alloc.ptr(offset);
             if (cl.getRemoved()) {
                 continue;
@@ -1471,7 +1471,7 @@ bool Simplifier::find_gate(
         }
 
         if (w.isClause()) {
-            const Clause* cl = solver->cl_alloc.ptr(w.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
             assert(cl->size() > 3);
             if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
                 bool OK = true;
@@ -1584,7 +1584,7 @@ void Simplifier::mark_gate_parts(
         if (gate_lits_of_elim_cls.size() >= 3
             && w.isClause()
         ) {
-            const Clause* cl = solver->cl_alloc.ptr(w.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
             if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
                 bool found_it = true;
                 for(const Lit lit: *cl) {
@@ -1734,13 +1734,13 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             //Calculate new clause stats
             ClauseStats stats;
             if ((it->isBinary() || it->isTri()) && it2->isClause())
-                stats = solver->cl_alloc.ptr(it2->getOffset())->stats;
+                stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
             else if ((it2->isBinary() || it2->isTri()) && it->isClause())
-                stats = solver->cl_alloc.ptr(it->getOffset())->stats;
+                stats = solver->cl_alloc.ptr(it->get_offset())->stats;
             else if (it->isClause() && it2->isClause())
                 stats = ClauseStats::combineStats(
-                    solver->cl_alloc.ptr(it->getOffset())->stats
-                    , solver->cl_alloc.ptr(it2->getOffset())->stats
+                    solver->cl_alloc.ptr(it->get_offset())->stats
+                    , solver->cl_alloc.ptr(it2->get_offset())->stats
             );
 
             resolvents.push_back(Resolvent(dummy, stats));
@@ -1783,8 +1783,8 @@ void Simplifier::printOccur(const Lit lit) const
         if (w.isClause()) {
             cout
             << "Clause--> "
-            << *solver->cl_alloc.ptr(w.getOffset())
-            << "(red: " << solver->cl_alloc.ptr(w.getOffset())->red()
+            << *solver->cl_alloc.ptr(w.get_offset())
+            << "(red: " << solver->cl_alloc.ptr(w.get_offset())->red()
             << ")"
             << endl;
         }
@@ -1903,7 +1903,7 @@ bool Simplifier::add_varelim_resolvent(
 
     if (newCl != NULL) {
         linkInClause(*newCl);
-        ClOffset offset = solver->cl_alloc.getOffset(newCl);
+        ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
         runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
@@ -2111,7 +2111,7 @@ void Simplifier::add_pos_lits_to_dummy_and_seen(
     }
 
     if (ps.isClause()) {
-        Clause& cl = *solver->cl_alloc.ptr(ps.getOffset());
+        Clause& cl = *solver->cl_alloc.ptr(ps.get_offset());
         *limit_to_decrease -= (long)cl.size();
         for (const Lit lit : cl){
             if (lit != posLit) {
@@ -2152,7 +2152,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
     }
 
     if (qs.isClause()) {
-        Clause& cl = *solver->cl_alloc.ptr(qs.getOffset());
+        Clause& cl = *solver->cl_alloc.ptr(qs.get_offset());
         *limit_to_decrease -= (long)cl.size();
         for (const Lit lit: cl) {
             if (lit == ~posLit)
@@ -2258,12 +2258,12 @@ bool Simplifier::resolve_clauses(
 ) {
     //If clause has already been freed, skip
     if (ps.isClause()
-        && solver->cl_alloc.ptr(ps.getOffset())->freed()
+        && solver->cl_alloc.ptr(ps.get_offset())->freed()
     ) {
         return false;
     }
     if (qs.isClause()
-        && solver->cl_alloc.ptr(qs.getOffset())->freed()
+        && solver->cl_alloc.ptr(qs.get_offset())->freed()
     ) {
         return false;
     }
@@ -2395,7 +2395,7 @@ Simplifier::HeuristicData Simplifier::calc_data_for_heuristic(const Lit lit)
                 break;
 
             case watch_clause_t: {
-                const Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
+                const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
                 if (!cl->getRemoved()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
                     ret.longer++;
@@ -2530,7 +2530,7 @@ int Simplifier::check_empty_resolvent_action(
         }
 
         if (ws.isClause()) {
-            const Clause* cl = solver->cl_alloc.ptr(ws.getOffset());
+            const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
             if (cl->getRemoved()) {
                 continue;
             }
@@ -2781,7 +2781,7 @@ void Simplifier::freeXorMem()
 void Simplifier::linkInClause(Clause& cl)
 {
     assert(cl.size() > 3);
-    ClOffset offset = solver->cl_alloc.getOffset(&cl);
+    ClOffset offset = solver->cl_alloc.get_offset(&cl);
     std::stable_sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];

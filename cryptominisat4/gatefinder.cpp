@@ -477,7 +477,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             continue;
 
         simplifier->linkInClause(*cl2);
-        ClOffset offset2 = solver->cl_alloc.getOffset(cl2);
+        ClOffset offset2 = solver->cl_alloc.get_offset(cl2);
         simplifier->clauses.push_back(offset2);
 
         if (solver->conf.verbosity >= 6) {
@@ -520,7 +520,7 @@ cl_abst_type GateFinder::calc_sorted_occ_and_set_seen2(
         if (!ws.isClause())
             continue;
 
-        const ClOffset offset = ws.getOffset();
+        const ClOffset offset = ws.get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.red() && only_irred)
             continue;
@@ -642,7 +642,7 @@ ClOffset GateFinder::find_pair_for_and_gate_reduction(
     if (!ws.isClause())
         return CL_OFFSET_MAX;
 
-    const ClOffset this_cl_offs = ws.getOffset();
+    const ClOffset this_cl_offs = ws.get_offset();
     Clause& this_cl = *solver->cl_alloc.ptr(this_cl_offs);
     if ((ws.getAbst() | general_abst) != general_abst
         || (this_cl.red() && only_irred)
@@ -751,7 +751,7 @@ bool GateFinder::remove_clauses_using_and_gate(
         if (really_remove
            && other_cl_offs != CL_OFFSET_MAX
         ) {
-            const ClOffset this_cl_offs = ws.getOffset();
+            const ClOffset this_cl_offs = ws.get_offset();
             assert(other_cl_offs != this_cl_offs);
             clToUnlink.insert(other_cl_offs);
             clToUnlink.insert(this_cl_offs);
@@ -882,7 +882,7 @@ void GateFinder::treatAndGateClause(
     Clause* clNew = solver->add_clause_int(lits, red, stats, false);
     if (clNew != NULL) {
         simplifier->linkInClause(*clNew);
-        ClOffset offsetNew = solver->cl_alloc.getOffset(clNew);
+        ClOffset offsetNew = solver->cl_alloc.get_offset(clNew);
         simplifier->clauses.push_back(offsetNew);
     }
 }

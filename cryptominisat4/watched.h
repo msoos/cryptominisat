@@ -224,7 +224,7 @@ class Watched {
         /**
         @brief Get offset of a >3-long normal clause or of an xor clause (which may be 3-long)
         */
-        ClOffset getOffset() const
+        ClOffset get_offset() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());
@@ -306,7 +306,7 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 {
 
     if (ws.isClause()) {
-        os << "Clause offset " << ws.getOffset();
+        os << "Clause offset " << ws.get_offset();
     }
 
     if (ws.isBinary()) {

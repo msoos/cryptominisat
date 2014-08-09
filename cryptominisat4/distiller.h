@@ -53,7 +53,6 @@ class Distiller {
             void print_short(const Solver* solver) const;
             void print(const size_t nVars) const;
 
-            //Asymm
             double time_used = 0.0;
             uint64_t timeOut = 0;
             uint64_t zeroDepthAssigns = 0;

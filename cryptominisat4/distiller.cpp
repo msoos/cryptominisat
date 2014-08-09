@@ -195,7 +195,7 @@ bool Distiller::distill_long_irred_cls()
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
         cout
-        << "c Doing asymm branch for long irred clauses"
+        << "c Doing distillation branch for long irred clauses"
         << endl;
     }
 
@@ -241,7 +241,7 @@ bool Distiller::distill_long_irred_cls()
         ) {
             if (solver->conf.verbosity >= 3) {
                 cout
-                << "c Need to finish asymm -- ran out of prop (=allocated time)"
+                << "c Need to finish distillation -- ran out of prop (=allocated time)"
                 << endl;
             }
             runStats.timeOut++;
@@ -255,12 +255,12 @@ bool Distiller::distill_long_irred_cls()
         extraTime += 5;
 
         //If we already tried this clause, then move to next
-        if (cl.getAsymmed()) {
+        if (cl.getdistilled()) {
             *j++ = *i;
             continue;
         } else {
             //Otherwise, this clause has been tried for sure
-            cl.setAsymmed(true);
+            cl.set_distilled(true);
         }
 
         extraTime += cl.size();
@@ -288,7 +288,7 @@ bool Distiller::distill_long_irred_cls()
     }
     solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
 
-    //Didn't time out, so it went through the whole list. Reset asymm for all.
+    //Didn't time out, so it went through the whole list. Reset distill for all.
     if (!time_out) {
         for (vector<ClOffset>::const_iterator
             it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
@@ -296,7 +296,7 @@ bool Distiller::distill_long_irred_cls()
             ; it++
         ) {
             Clause* cl = solver->cl_alloc.ptr(*it);
-            cl->setAsymmed(false);
+            cl->set_distilled(false);
         }
     }
 
@@ -386,7 +386,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
         //Print results
         if (solver->conf.verbosity >= 5) {
             cout
-            << "c Asymm branch effective." << endl;
+            << "c Distillation branch effective." << endl;
             if (offset != CL_OFFSET_MAX) {
                 cout
                 << "c --> orig clause:" <<
@@ -413,10 +413,9 @@ ClOffset Distiller::try_distill_clause_and_return_new(
         runStats.numLitsRem += origSize - lits.size();
 
         if (cl2 != NULL) {
-            //The new clause has been asymm-tried
-            cl2->setAsymmed(true);
+            cl2->set_distilled(true);
 
-            return solver->cl_alloc.getOffset(cl2);
+            return solver->cl_alloc.get_offset(cl2);
         } else {
             return CL_OFFSET_MAX;
         }
@@ -442,7 +441,7 @@ Distiller::Stats& Distiller::Stats::operator+=(const Stats& other)
 void Distiller::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c [distill] asymm (tri+long)"
+    << "c [distill] tri+long"
     << " useful: "<< numClShorten
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
@@ -453,7 +452,6 @@ void Distiller::Stats::print_short(const Solver* solver) const
 
 void Distiller::Stats::print(const size_t nVars) const
 {
-    //Asymm
     cout << "c -------- DISTILL STATS --------" << endl;
     print_stats_line("c time"
         , time_used
@@ -467,7 +465,7 @@ void Distiller::Stats::print(const size_t nVars) const
         , "% of calls"
     );
 
-    print_stats_line("c asymm/checked/potential"
+    print_stats_line("c distill/checked/potential"
         , numClShorten
         , checkedClauses
         , potentialClauses

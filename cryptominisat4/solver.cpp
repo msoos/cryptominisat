@@ -327,7 +327,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         //cout << "Added. " << new_lits << endl;
         Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrup);
         if (cl) {
-            longIrredCls.push_back(cl_alloc.getOffset(cl));
+            longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
 
         if (!ok)
@@ -778,7 +778,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     }
 
     if (cl != NULL) {
-        ClOffset offset = cl_alloc.getOffset(cl);
+        ClOffset offset = cl_alloc.get_offset(cl);
         longIrredCls.push_back(offset);
     }
 
@@ -799,7 +799,7 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     Clause* cl = add_clause_int(ps, true, stats);
     if (cl != NULL) {
-        ClOffset offset = cl_alloc.getOffset(cl);
+        ClOffset offset = cl_alloc.get_offset(cl);
         longRedCls.push_back(offset);
     }
 
@@ -2020,7 +2020,7 @@ void Solver::print_min_stats() const
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->get_stats().print_short(nVars());
-    print_stats_line("c asymm time"
+    print_stats_line("c distill time"
                     , distiller->get_stats().time_used
                     , stats_line_percent(distiller->get_stats().time_used, cpu_time)
                     , "% time"
@@ -2468,7 +2468,7 @@ void Solver::print_all_clauses() const
             if (it2->isBinary()) {
                 cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
             } else if (it2->isClause()) {
-                cout << "Normal clause offs " << it2->getOffset() << endl;
+                cout << "Normal clause offs " << it2->get_offset() << endl;
             } else if (it2->isTri()) {
                 cout << "Tri clause:"
                 << lit << " , "
@@ -2631,7 +2631,7 @@ void Solver::find_all_attach() const
                 continue;
 
             //Get clause
-            Clause* cl = cl_alloc.ptr(w.getOffset());
+            Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->getFreed());
 
             //Assert watch correctness
@@ -2648,7 +2648,7 @@ void Solver::find_all_attach() const
             }
 
             //Clause in one of the lists
-            if (!find_clause(w.getOffset())) {
+            if (!find_clause(w.get_offset())) {
                 cout
                 << "ERROR! did not find clause " << *cl
                 << endl;
@@ -2972,7 +2972,7 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
     ) {
         if (it->isClause()) {
             cout
-            << "Clause: " << *cl_alloc.ptr(it->getOffset());
+            << "Clause: " << *cl_alloc.ptr(it->get_offset());
         }
 
         if (it->isBinary()) {

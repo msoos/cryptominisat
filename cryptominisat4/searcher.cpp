@@ -1482,7 +1482,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             if (do_otf_this_round && decisionLevel() == 1)
                 add_hyper_bin(learnt_clause[0], *cl);
             else
-                enqueue(learnt_clause[0], PropBy(cl_alloc.getOffset(cl)));
+                enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
 
             #ifdef STATS_NEEDED
             propStats.propsLongRed++;
@@ -1525,7 +1525,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (learnt_clause.size() > 3) {
             cl = cl_alloc.Clause_new(learnt_clause, Searcher::sumConflicts());
             cl->makeRed(glue);
-            ClOffset offset = cl_alloc.getOffset(cl);
+            ClOffset offset = cl_alloc.get_offset(cl);
             solver->longRedCls.push_back(offset);
             return cl;
         }

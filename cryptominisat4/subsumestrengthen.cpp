@@ -346,13 +346,13 @@ void inline SubsumeStrengthen::fillSubs(
         if (!it->isClause())
             continue;
 
-        if (it->getOffset() == offset
+        if (it->get_offset() == offset
             || !subsetAbst(abs, it->getAbst())
         ) {
             continue;
         }
 
-        ClOffset offset2 = it->getOffset();
+        ClOffset offset2 = it->get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (cl.size() > cl2.size())
@@ -361,7 +361,7 @@ void inline SubsumeStrengthen::fillSubs(
         *simplifier->limit_to_decrease -= (long)cl.size() + (long)cl2.size();
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
-            out_subsumed.push_back(it->getOffset());
+            out_subsumed.push_back(it->get_offset());
             out_lits.push_back(litSub);
 
             #ifdef VERBOSE_DEBUG
@@ -369,7 +369,7 @@ void inline SubsumeStrengthen::fillSubs(
             else cout << "strengthen_subsume_and_unlink_and_markirred-ed (lit: "
                 << litSub
                 << ") clause offset: "
-                << it->getOffset()
+                << it->get_offset()
                 << endl;
             #endif
         }
@@ -658,13 +658,13 @@ template<class T> void SubsumeStrengthen::find_subsumed(
 
         *simplifier->limit_to_decrease -= 15;
 
-        if (it->getOffset() == offset
+        if (it->get_offset() == offset
             || !subsetAbst(abs, it->getAbst())
         ) {
             continue;
         }
 
-        const ClOffset offset2 = it->getOffset();
+        const ClOffset offset2 = it->get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (ps.size() > cl2.size() || cl2.getRemoved())

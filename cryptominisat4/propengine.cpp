@@ -184,7 +184,7 @@ void PropEngine::attachClause(
     }
     #endif //DEBUG_ATTACH
 
-    const ClOffset offset = cl_alloc.getOffset(&c);
+    const ClOffset offset = cl_alloc.get_offset(&c);
 
     //blocked literal is the lit in the middle (c.size()/2). For no reason.
     watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
@@ -206,7 +206,7 @@ void PropEngine::detach_modified_clause(
 ) {
     assert(origSize > 3);
 
-    ClOffset offset = cl_alloc.getOffset(address);
+    ClOffset offset = cl_alloc.get_offset(address);
     removeWCl(watches[lit1.toInt()], offset);
     removeWCl(watches[lit2.toInt()], offset);
 }
@@ -383,7 +383,7 @@ PropResult PropEngine::propNormalClause(
 
     //Dereference pointer
     propStats.bogoProps += 4;
-    const ClOffset offset = i->getOffset();
+    const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
     PropResult ret = prop_normal_helper(c, offset, j, p);
@@ -432,7 +432,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         return true;
     }
     propStats.bogoProps += 4;
-    const ClOffset offset = i->getOffset();
+    const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
     #ifdef STATS_NEEDED
     c.stats.clause_looked_at++;
@@ -840,7 +840,7 @@ void PropEngine::printWatchList(const Lit lit) const
         } else if (it2->isTri()) {
             cout << "tri: " << lit << " , " << it2->lit2() << " , " <<  (it2->lit3()) << endl;
         } else if (it2->isClause()) {
-            cout << "cla:" << it2->getOffset() << endl;
+            cout << "cla:" << it2->get_offset() << endl;
         } else {
             assert(false);
         }
@@ -956,7 +956,7 @@ PropBy PropEngine::propagateBinFirst(
             //Pre-fetch long clause
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
-                    const ClOffset offset = i->getOffset();
+                    const ClOffset offset = i->get_offset();
                     __builtin_prefetch(cl_alloc.ptr(offset));
                 }
 
@@ -1079,7 +1079,7 @@ bool PropEngine::propagate_occur()
             ; it++
         ) {
             if (it->isClause()) {
-                if (!propagate_long_clause_occur(it->getOffset()))
+                if (!propagate_long_clause_occur(it->get_offset()))
                     return false;
             }
 

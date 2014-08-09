@@ -207,7 +207,7 @@ protected:
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    uint16_t isAsymmed:1;
+    uint16_t is_distilled:1;
     uint16_t occurLinked:1;
     uint32_t mySize;
 
@@ -237,7 +237,7 @@ public:
         mySize = ps.size();
         isRed = false;
         isRemoved = false;
-        isAsymmed = false;
+        is_distilled = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
@@ -375,14 +375,14 @@ public:
         stats = ClauseStats::combineStats(stats, other);
     }
 
-    void setAsymmed(bool asymmed)
+    void set_distilled(bool distilled)
     {
-        isAsymmed = asymmed;
+        is_distilled = distilled;
     }
 
-    bool getAsymmed() const
+    bool getdistilled() const
     {
-        return isAsymmed;
+        return is_distilled;
     }
 
     bool getOccurLinked() const

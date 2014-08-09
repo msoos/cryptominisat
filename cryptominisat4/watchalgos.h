@@ -36,14 +36,14 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
 static inline bool findWCl(watch_subarray_const ws, const ClOffset c)
 {
     watch_subarray_const::const_iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isClause() || i->getOffset() != c); i++);
+    for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
     return i != end;
 }
 
 static inline void removeWCl(watch_subarray ws, const ClOffset c)
 {
     watch_subarray::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isClause() || i->getOffset() != c); i++);
+    for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
     assert(i != end);
     watch_subarray::iterator j = i;
     i++;

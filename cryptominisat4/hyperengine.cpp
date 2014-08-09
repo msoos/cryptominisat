@@ -261,7 +261,7 @@ Lit HyperEngine::prop_irred_bin_dfs(
         //Pre-fetch long clause
         if (k->isClause()) {
             if (value(k->getBlockedLit()) != l_True) {
-                const ClOffset offset = k->getOffset();
+                const ClOffset offset = k->get_offset();
                 __builtin_prefetch(cl_alloc.ptr(offset));
             }
 
@@ -1054,7 +1054,7 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
 
     //Dereference pointer
     propStats.bogoProps += 4;
-    const ClOffset offset = i->getOffset();
+    const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
     PropResult ret = prop_normal_helper(c, offset, j, p);

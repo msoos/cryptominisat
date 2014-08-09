@@ -250,7 +250,7 @@ void CNF::for_each_lit(
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& clause = *cl_alloc.ptr(cl.ws.getOffset());
+            const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
             for(const Lit lit: clause) {
                 func(lit);
@@ -279,7 +279,7 @@ void CNF::for_each_lit_except_watched(
             break;
 
         case CMSat::watch_clause_t: {
-            const Clause& clause = *cl_alloc.ptr(cl.ws.getOffset());
+            const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
             for(const Lit lit: clause) {
                 if (lit != cl.lit) {
