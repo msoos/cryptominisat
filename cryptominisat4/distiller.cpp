@@ -454,7 +454,7 @@ void Distiller::Stats::print_short(const Solver* solver) const
 void Distiller::Stats::print(const size_t nVars) const
 {
     //Asymm
-    cout << "c -------- ASYMM STATS --------" << endl;
+    cout << "c -------- DISTILL STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , time_used/(double)numCalled
@@ -481,5 +481,5 @@ void Distiller::Stats::print(const size_t nVars) const
         , stats_line_percent(zeroDepthAssigns, nVars)
         , "% of vars"
     );
-    cout << "c -------- ASYMM STATS END --------" << endl;
+    cout << "c -------- DISTILL STATS END --------" << endl;
 }

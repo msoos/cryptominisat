@@ -2144,11 +2144,13 @@ void Solver::print_all_stats() const
     varReplacer->get_stats().print(nVars());
     varReplacer->print_some_stats(cpu_time);
 
-    //Distiller-ASYMM stats
+    //Distiller stats
     print_stats_line("c distill time"
                     , distiller->get_stats().time_used
                     , stats_line_percent(distiller->get_stats().time_used, cpu_time)
                     , "% time");
+    distiller->get_stats().print(nVars());
+
     print_stats_line("c strength cache-irred time"
                     , strengthener->get_stats().irredCacheBased.cpu_time
                     , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
@@ -2157,7 +2159,6 @@ void Solver::print_all_stats() const
                     , strengthener->get_stats().redCacheBased.cpu_time
                     , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
-    distiller->get_stats().print(nVars());
     strengthener->get_stats().print();
 
     if (conf.doStrSubImplicit) {
