@@ -39,23 +39,6 @@ class Solver;
 
 //#define DEBUG_REMOVE_USELESS_BIN
 
-/**
-@brief Responsible for doing failed var searching and related algorithms
-
-Performs in seach():
-1) Failed lit searching
-2) Searching for lits that have been propagated by both "var" and "~var"
-3) 2-long Xor clauses that have been found because when propagating "var" and
-   "~var", they have been produced by normal xor-clauses shortening to this xor
-   clause
-4) If var1 propagates var2 and ~var1 propagates ~var2, then var=var2, and this
-   is a 2-long XOR clause, this 2-long xor is added
-5) Hyper-binary resolution
-
-Perfoms in asymmBranch(): asymmetric branching, heuristically. Best paper
-on this is 'Vivifying Propositional Clausal Formulae', though we do it much
-more heuristically
-*/
 class Prober {
     public:
         Prober(Solver* _solver);
