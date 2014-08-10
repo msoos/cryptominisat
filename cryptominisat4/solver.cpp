@@ -1762,7 +1762,7 @@ lbool Solver::simplify_problem()
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
-        if (!strengthener->strengthenImplicit()) {
+        if (!strengthener->strengthen_implicit()) {
             goto end;
         }
 

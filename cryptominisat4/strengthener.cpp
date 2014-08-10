@@ -739,7 +739,7 @@ void Strengthener::strengthen_implicit_lit(const Lit lit)
     ws.shrink(i-j);
 }
 
-bool Strengthener::strengthenImplicit()
+bool Strengthener::strengthen_implicit()
 {
     str_impl_data.clear();
 

@@ -40,7 +40,7 @@ class Strengthener {
     public:
         Strengthener(Solver* solver);
         bool strengthen(bool alsoStrengthen);
-        bool strengthenImplicit();
+        bool strengthen_implicit();
 
         struct Stats
         {
