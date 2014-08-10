@@ -375,7 +375,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     return remove_or_shrink_clause(cl, offset);
 }
 
-bool Strengthener::remove_or_shrink_clause(Clause& cl, ClOffset offset)
+bool Strengthener::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
 {
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
