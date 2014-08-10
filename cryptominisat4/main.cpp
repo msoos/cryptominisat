@@ -966,6 +966,7 @@ void Main::manually_parse_some_options()
     if (satcomp) {
         conf.varElimRatioPerIter = 1.0;
         conf.simplify_at_startup = true;
+        conf.probe_bogoprops_timeoutM *= 2;
     }
 }
 
