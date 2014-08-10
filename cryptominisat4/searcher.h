@@ -32,6 +32,7 @@
 #include "time_mem.h"
 #include "avgcalc.h"
 #include "hyperengine.h"
+#include "MersenneTwister.h"
 
 namespace CMSat {
 
@@ -193,6 +194,7 @@ class Searcher : public HyperEngine
         uint64_t max_conflicts_geometric;
         uint64_t max_conflicts;
         uint64_t loop_num;
+        MTRand mtrand; ///< random number generator
 
 
         vector<lbool>  model;

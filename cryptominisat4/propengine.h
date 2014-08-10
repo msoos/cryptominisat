@@ -36,7 +36,6 @@
 #include "propby.h"
 #include "heap.h"
 #include "alg.h"
-#include "MersenneTwister.h"
 #include "clause.h"
 #include "boundedqueue.h"
 #include "cnf.h"

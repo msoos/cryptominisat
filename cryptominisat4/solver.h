@@ -137,7 +137,6 @@ class Solver : public Searcher
         bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
-        MTRand mtrand;
         SQLStats* sqlStats = NULL;
         ClauseCleaner *clauseCleaner = NULL;
         VarReplacer *varReplacer = NULL;
