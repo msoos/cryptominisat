@@ -20,7 +20,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Heap_h
 #define Heap_h
 
-#include "MersenneTwister.h"
 #include "constants.h"
 #include <assert.h>
 #include <algorithm>
@@ -98,7 +97,8 @@ class Heap {
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
-    uint32_t random_element(MTRand& rand) const
+    template<class T>
+    uint32_t random_element(T& rand) const
     {
         assert(!empty());
         size_t at = rand.randInt(heap.size()-2);
