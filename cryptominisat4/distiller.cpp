@@ -220,8 +220,10 @@ bool Distiller::distill_long_irred_cls()
     uint32_t queueByBy = 2;
     if (numCalls > 8
         && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
-        && (solver->longIrredCls.size() < 50000))
+        && (solver->longIrredCls.size() < 50000)
+    ) {
         queueByBy = 1;
+    }
 
     vector<ClOffset>::iterator i, j;
     i = j = solver->longIrredCls.begin();
