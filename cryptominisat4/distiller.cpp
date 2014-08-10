@@ -305,8 +305,8 @@ bool Distiller::distill_long_irred_cls()
     if (solver->conf.verbosity >= 2) {
         cout << "c [distill] longirred"
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
-        << " cl-rem:" << runStats.numClShorten- origClShorten
-        << " lits-rem:" << runStats.numLitsRem - origLitRem
+        << " cl-r:" << runStats.numClShorten- origClShorten
+        << " lit-r:" << runStats.numLitsRem - origLitRem
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
