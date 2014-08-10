@@ -33,6 +33,7 @@
 #include "avgcalc.h"
 #include "hyperengine.h"
 #include "MersenneTwister.h"
+#include "minisat_rnd.h"
 
 namespace CMSat {
 
@@ -183,7 +184,6 @@ class Searcher : public HyperEngine
             uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
         );
         void finish_up_solve(lbool status);
-        void print_solution_varreplace_status() const;
         void setup_restart_print();
         void reduce_db_if_needed();
         void clean_clauses_if_needed();
@@ -194,7 +194,7 @@ class Searcher : public HyperEngine
         uint64_t max_conflicts_geometric;
         uint64_t max_conflicts;
         uint64_t loop_num;
-        MTRand mtrand; ///< random number generator
+        MiniSatRnd mtrand; ///< random number generator
 
 
         vector<lbool>  model;
@@ -656,7 +656,6 @@ class Searcher : public HyperEngine
         /////////////////
         //Settings
         Solver*   solver;          ///< Thread control class
-        MTRand           mtrand;           ///< random number generator
 
         //Stats printing
         void printAgilityStats();
@@ -794,6 +793,7 @@ class Searcher : public HyperEngine
 
     private:
         bool do_otf_this_round;
+        void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;
         ////////////
