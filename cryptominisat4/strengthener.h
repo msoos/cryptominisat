@@ -169,6 +169,11 @@ class Strengthener {
         StrImplicitData str_impl_data;
         // end
 
+        bool remove_or_shrink_clause(Clause& cl, ClOffset offset);
+        void str_and_sub_cl_with_cache_for_all_lits(
+            bool alsoStrengthen
+            , Clause& cl
+        );
         void strengthen_bin_with_bin(
             const Lit lit
             , Watched*& i

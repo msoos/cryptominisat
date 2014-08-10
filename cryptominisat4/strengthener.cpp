@@ -288,6 +288,27 @@ void Strengthener::remove_lits_through_stamping_irred()
     }
 }
 
+void Strengthener::str_and_sub_cl_with_cache_for_all_lits(
+    bool alsoStrengthen
+    , Clause& cl
+) {
+    //Go through each literal and subsume/strengthen with it
+    for (const Lit
+        *lit = cl.begin(), *end = cl.end()
+        ; lit != end && !isSubsumed
+        ; lit++
+    ) {
+        if (alsoStrengthen) {
+            bool subsumed = str_and_sub_clause_with_cache(*lit);
+            if (subsumed)
+                break;
+        }
+
+        str_and_sub_using_watch(cl, *lit, alsoStrengthen);
+    }
+    assert(lits2.size() > 1);
+}
+
 bool Strengthener::shorten_clause_with_cache_watch_stamp(
     ClOffset& offset
     , bool red
@@ -315,22 +336,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
         lits2.push_back(lit);
     }
 
-    //Go through each literal and subsume/strengthen with it
-    for (const Lit
-        *lit = cl.begin(), *end = cl.end()
-        ; lit != end && !isSubsumed
-        ; lit++
-    ) {
-        if (alsoStrengthen) {
-            bool subsumed = str_and_sub_clause_with_cache(*lit);
-            if (subsumed)
-                break;
-        }
-
-        str_and_sub_using_watch(cl, *lit, alsoStrengthen);
-    }
-    assert(lits2.size() > 1);
-
+    str_and_sub_cl_with_cache_for_all_lits(alsoStrengthen, cl);
     try_subsuming_by_stamping(red);
 
     //Clear 'seen_subs'
@@ -366,6 +372,11 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
         return false;
     }
 
+    return remove_or_shrink_clause(cl, offset);
+}
+
+bool Strengthener::remove_or_shrink_clause(Clause& cl, ClOffset offset)
+{
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
     cache_based_data.remLitCache += thisRemLitCache;
