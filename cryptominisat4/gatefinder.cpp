@@ -291,12 +291,12 @@ size_t GateFinder::findEqOrGates()
 
         if (gate1.lit1 == gate2.lit1
             && gate1.lit2 == gate2.lit2
-            && gate1.eqLit.var() != gate2.eqLit.var()
+            && gate1.rhs.var() != gate2.rhs.var()
        ) {
             foundRep++;
-            tmp[0] = gate1.eqLit.unsign();
-            tmp[1] = gate2.eqLit.unsign();
-            const bool RHS = gate1.eqLit.sign() ^ gate2.eqLit.sign();
+            tmp[0] = gate1.rhs.unsign();
+            tmp[1] = gate2.rhs.unsign();
+            const bool RHS = gate1.rhs.sign() ^ gate2.rhs.sign();
             if (!solver->add_xor_clause_inter(tmp, RHS, false))
                 return foundRep;
         }
@@ -370,12 +370,12 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 
 
 void GateFinder::add_gate_if_not_already_inside(
-    const Lit eqLit
+    const Lit rhs
     , const Lit lit1
     , const Lit lit2
 ) {
-    OrGate gate(eqLit, lit1, lit2, false);
-    for (uint32_t at: gateOccEq[gate.eqLit.toInt()]) {
+    OrGate gate(rhs, lit1, lit2, false);
+    for (uint32_t at: gateOccEq[gate.rhs.toInt()]) {
         if (orGates[at] == gate)
             return;
     }
@@ -386,7 +386,7 @@ void GateFinder::link_in_gate(const OrGate& gate)
 {
     const size_t at = orGates.size();
     orGates.push_back(gate);
-    gateOccEq[gate.eqLit.toInt()].push_back(at);
+    gateOccEq[gate.rhs.toInt()].push_back(at);
     if (!gate.red) {
         for (Lit lit: std::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
             gateOcc[lit.toInt()].push_back(at);
@@ -418,20 +418,20 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         runStats.orGateUseful++;
 
-        //Go through clause, check if RHS (eqLit) is inside the clause
+        //Go through clause, check if RHS (rhs) is inside the clause
         //If it is, we have two possibilities:
         //1) a = b V c , clause: a V b V c V d
         //2) a = b V c , clause: -a V b V c V d
         //But we will simply ignore this. One of these clauses can be strengthened
         //the other subsumed. But let's ignore these, subsumption/strenghtening will take care of this
-        bool eqLitInside = false;
+        bool rhsInside = false;
         for (Lit lit: cl) {
-            if (gate.eqLit.var() == lit.var()) {
-                eqLitInside = true;
+            if (gate.rhs.var() == lit.var()) {
+                rhsInside = true;
                 break;
             }
         }
-        if (eqLitInside)
+        if (rhsInside)
             continue;
 
         if (solver->conf.verbosity >= 6) {
@@ -455,8 +455,8 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             if (!inGate)
                 lits.push_back(lit);
         }
-        if (!eqLitInside) {
-            lits.push_back(gate.eqLit);
+        if (!rhsInside) {
+            lits.push_back(gate.rhs);
             runStats.litsRem--;
         }
 
@@ -604,7 +604,7 @@ bool GateFinder::check_seen_and_gate_against_cl(
 
         //If some weird variable is inside, skip
         if (   lit.var() == gate.lit2.var()
-            || lit.var() == gate.eqLit.var()
+            || lit.var() == gate.rhs.var()
             //A lit is inside this clause isn't inside the others
             || !seen2[lit.toInt()]
         ) {
@@ -620,7 +620,7 @@ bool GateFinder::check_seen_and_gate_against_lit(
 ) {
     //If some weird variable is inside, skip
     if (   lit.var() == gate.lit2.var()
-        || lit.var() == gate.eqLit.var()
+        || lit.var() == gate.rhs.var()
         //A lit is inside this clause isn't inside the others
         || !seen2[lit.toInt()]
     ) {
@@ -810,7 +810,7 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
 
             tri_to_unlink.insert(TriToUnlink(ws.lit2(), ws.lit3(), ws.red()));
             solver->detach_tri_clause(~(gate.lit2), other_ws.lit2(), other_ws.lit3(), other_ws.red());
-            vector<Lit> lits = {~(gate.eqLit), ws.lit2(), ws.lit3()};
+            vector<Lit> lits = {~(gate.rhs), ws.lit2(), ws.lit3()};
             solver->add_clause_int(
                 lits
                 , ws.red() && other_ws.red()
@@ -861,12 +861,12 @@ void GateFinder::treatAndGateClause(
     for (const Lit lit: this_cl) {
         if (lit != ~(gate.lit1)) {
             lits.push_back(lit);
-            assert(lit.var() != gate.eqLit.var());
+            assert(lit.var() != gate.rhs.var());
             assert(lit.var() != gate.lit1.var());
             assert(lit.var() != gate.lit2.var());
         }
     }
-    lits.push_back(~(gate.eqLit));
+    lits.push_back(~(gate.rhs));
 
     //Calculate learnt & glue
     const Clause& other_cl = *solver->cl_alloc.ptr(other_cl_offset);

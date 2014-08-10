@@ -36,10 +36,10 @@ using std::set;
 
 class OrGate {
     public:
-        OrGate(const Lit& _eqLit, Lit _lit1, Lit _lit2, const bool _red) :
+        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2, const bool _red) :
             lit1(_lit1)
             , lit2(_lit2)
-            , eqLit(_eqLit)
+            , rhs(_rhs)
             , red(_red)
         {
             if (lit1 > lit2)
@@ -49,7 +49,7 @@ class OrGate {
         bool operator==(const OrGate& other) const
         {
             return
-                eqLit == other.eqLit
+                rhs == other.rhs
                 && lit1 == other.lit1
                 && lit2 == other.lit2
                 ;
@@ -64,7 +64,7 @@ class OrGate {
         Lit lit2;
 
         //RHS
-        Lit eqLit;
+        Lit rhs;
 
         //Data about gate
         bool red;
@@ -81,7 +81,7 @@ struct GateCompareForEq
         if (a.lit2 != b.lit2) {
             return (a.lit2 < b.lit2);
         }
-        return (a.eqLit < b.eqLit);
+        return (a.rhs < b.rhs);
     }
 };
 
@@ -90,7 +90,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
     os
     << " gate "
     << " lits: " << gate.lit1 << ", " << gate.lit2
-    << " eqLit: " << gate.eqLit
+    << " rhs: " << gate.rhs
     << " learnt " << gate.red
     ;
     return os;
@@ -162,7 +162,7 @@ private:
     //Setup
     void clearIndexes();
     void link_in_gate(const OrGate& gate);
-    void add_gate_if_not_already_inside(Lit eqLit, Lit lit1, Lit lit2);
+    void add_gate_if_not_already_inside(Lit rhs, Lit lit1, Lit lit2);
     void find_or_gates_in_sweep_mode(Lit lit);
 
     //High-level functions
@@ -173,7 +173,7 @@ private:
     void find_or_gates_and_update_stats();
     void find_or_gates();
     void findOrGate(
-        const Lit eqLit
+        const Lit rhs
         , const Lit lit1
         , const Lit lit2
     );
