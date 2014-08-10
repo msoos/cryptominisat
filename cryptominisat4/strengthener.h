@@ -174,6 +174,12 @@ class Strengthener {
             bool alsoStrengthen
             , Clause& cl
         );
+        void dump_stats_for_shorten_all_cl_with_cache_stamp(
+            bool red
+            , bool alsoStrengthen
+            , double myTime
+            , double orig_time_available
+        );
         void strengthen_bin_with_bin(
             const Lit lit
             , Watched*& i
@@ -277,7 +283,7 @@ class Strengthener {
             , const bool red
         ) const;
 
-        bool shorten_all_clauses_with_cache_watch_stamp(
+        bool shorten_all_cl_with_cache_watch_stamp(
             vector<ClOffset>& clauses
             , bool red
             , bool alsoStrengthen

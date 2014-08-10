@@ -57,17 +57,17 @@ bool Strengthener::strengthen(const bool alsoStrengthen)
     runStats.redCacheBased.clear();
     runStats.irredCacheBased.clear();
 
-    if (!shorten_all_clauses_with_cache_watch_stamp(solver->longIrredCls, false, false))
+    if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, false))
         goto end;
 
-    if (!shorten_all_clauses_with_cache_watch_stamp(solver->longRedCls, true, false))
+    if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, false))
         goto end;
 
     if (alsoStrengthen) {
-        if (!shorten_all_clauses_with_cache_watch_stamp(solver->longIrredCls, false, true))
+        if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, true))
             goto end;
 
-        if (!shorten_all_clauses_with_cache_watch_stamp(solver->longRedCls, true, true))
+        if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, true))
             goto end;
     }
 
@@ -436,7 +436,7 @@ uint64_t Strengthener::calc_time_available(
     return maxCountTime;
 }
 
-bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
+bool Strengthener::shorten_all_cl_with_cache_watch_stamp(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -490,6 +490,21 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
     solver->check_implicit_stats();
     #endif
 
+    dump_stats_for_shorten_all_cl_with_cache_stamp(red
+        , alsoStrengthen
+        , myTime
+        , orig_time_available
+    );
+
+    return solver->ok;
+}
+
+void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
+    bool red
+    , bool alsoStrengthen
+    , double myTime
+    , double orig_time_available
+) {
     //Set stats
     const double time_used = cpuTime() - myTime;
     const bool time_out = timeAvailable < 0;
@@ -523,8 +538,6 @@ bool Strengthener::shorten_all_clauses_with_cache_watch_stamp(
             , time_remain
         );
     }
-
-    return solver->ok;
 }
 
 void Strengthener::strengthen_bin_with_bin(
