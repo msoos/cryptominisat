@@ -115,7 +115,6 @@ Solver::~Solver()
 
 void Solver::parse_sql_option()
 {
-    cout << "HERE" << endl;
     if (conf.doSQL > 2) {
         std::cerr << "ERROR: '--sql'  option must be given value 0..2"
         << endl;
