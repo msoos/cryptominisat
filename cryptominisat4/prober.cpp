@@ -666,7 +666,7 @@ bool Prober::try_this(const Lit lit, const bool first)
     }
     toEnqueue.clear();
     runStats.numProbed++;
-    solver->newDecisionLevel();
+    solver->new_decision_level();
     solver->enqueue(lit);
     solver->varData[lit.var()].depth = 0;
     if (solver->conf.verbosity >= 6) {
@@ -858,7 +858,7 @@ size_t Prober::mem_used() const
 //     //cout << "//////////////////" << endl;
 //     for (uint32_t comb = 0; comb < (1U << vars.size()); comb++) {
 //         last = (comb == (1U << vars.size())-1);
-//         solver->newDecisionLevel();
+//         solver->new_decision_level();
 //         for (uint32_t i = 0; i < vars.size(); i++) {
 //             solver->enqueue(Lit(vars[i], comb&(0x1 << i)));
 //             //cout << "lit: " << Lit(vars[i], comb&(1U << i)) << endl;

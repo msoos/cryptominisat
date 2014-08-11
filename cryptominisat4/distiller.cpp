@@ -348,7 +348,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
     bool failed = false;
     uint32_t done = 0;
-    solver->newDecisionLevel();
+    solver->new_decision_level();
     for (; done < lits.size();) {
         uint32_t i2 = 0;
         for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {

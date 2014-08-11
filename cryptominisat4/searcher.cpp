@@ -1105,7 +1105,7 @@ lbool Searcher::new_decision()
 
         if (value(p) == l_True) {
             // Dummy decision level:
-            newDecisionLevel();
+            new_decision_level();
         } else if (value(p) == l_False) {
             analyzeFinal(~p, conflict);
             return l_False;
@@ -1138,7 +1138,7 @@ lbool Searcher::new_decision()
 
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
-    newDecisionLevel();
+    new_decision_level();
     enqueue(next);
 
     return l_Undef;

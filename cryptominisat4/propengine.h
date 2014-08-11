@@ -125,7 +125,7 @@ public:
     bool propagate_occur();
     PropStats propStats;
     void enqueue(const Lit p, const PropBy from = PropBy());
-    void newDecisionLevel();
+    void new_decision_level();
 
 protected:
     void new_var(const bool bva, const Var orig_outer) override;
@@ -293,7 +293,7 @@ private:
 ///////////////////////////////////////
 // Implementation of inline methods:
 
-inline void PropEngine::newDecisionLevel()
+inline void PropEngine::new_decision_level()
 {
     trail_lim.push_back(trail.size());
     #ifdef VERBOSE_DEBUG
