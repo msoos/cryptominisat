@@ -59,11 +59,11 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver, bool* _needToInterr
         )
 
         //variables
+        , mtrand(_conf.origSeed)
         , solver(_solver)
         , var_inc(_conf.var_inc_start)
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
-        , mtrand(_conf.origSeed)
 {
     more_red_minim_limit_binary_actual = _conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = _conf.more_red_minim_limit_cache;
