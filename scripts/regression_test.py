@@ -174,7 +174,7 @@ class Tester:
         cmd += "--occredmax %s " % random.randint(0,100)
         cmd += "--noextbinsubs %s " % random.randint(0,1)
         cmd += "--extscc %s " % random.randint(0,1)
-        cmd += "--vivif %s " % random.randint(0,1)
+        cmd += "--distill %s " % random.randint(0,1)
         cmd += "--sortwatched %s " % random.randint(0,1)
         cmd += "--recur %s " % random.randint(0,1)
         cmd += "--compsfrom %d " % random.randint(0,2)
