@@ -59,6 +59,7 @@ class SubsumeImplicit;
 class DataSync;
 class SharedData;
 class ReduceDB;
+class InTree;
 
 class LitReachData {
     public:
@@ -280,6 +281,7 @@ class Solver : public Searcher
         /////////////////////
         // Objects that help us accomplish the task
         Prober              *prober = NULL;
+        InTree              *intree = NULL;
         Simplifier          *simplifier = NULL;
         Distiller           *distiller = NULL;
         Strengthener        *strengthener = NULL;

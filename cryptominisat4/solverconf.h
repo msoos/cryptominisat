@@ -220,7 +220,9 @@ class SolverConf
 
         //Probing
         int      doProbe;
+        int      doIntreeProbe;
         unsigned long long   probe_bogoprops_timeoutM;
+        unsigned long long   intree_timeoutM;
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;

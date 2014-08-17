@@ -629,6 +629,7 @@ class Searcher : public HyperEngine
             assert(assumptionsSet.size() > var);
             return assumptionsSet[var];
         }
+        void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
 
     protected:
         void new_var(const bool bva, const Var orig_outer) override;
@@ -706,7 +707,6 @@ class Searcher : public HyperEngine
             Restart rest_type = restart_type_never;
         };
         SearchParams params;
-        void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         vector<Lit> learnt_clause;
         Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating

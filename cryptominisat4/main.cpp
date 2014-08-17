@@ -401,6 +401,10 @@ void Main::add_supported_options()
       , "Time in mega-bogoprops to perform probing")
     ("transred", po::value(&conf.doTransRed)->default_value(conf.doTransRed)
         , "Remove useless binary clauses (transitive reduction)")
+    ("intree", po::value(&conf.doIntreeProbe)->default_value(conf.doIntreeProbe)
+        , "Carry out intree-based probing")
+    ("intreemaxm", po::value(&conf.intree_timeoutM)->default_value(conf.intree_timeoutM)
+      , "Time in mega-bogoprops to perform intree probing")
     ;
 
     std::ostringstream ssERatio;

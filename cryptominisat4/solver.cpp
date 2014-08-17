@@ -53,6 +53,7 @@
 #include "reducedb.h"
 #include "clausedumper.h"
 #include "sccfinder.h"
+#include "intree.h"
 
 using namespace CMSat;
 using std::cout;
@@ -80,6 +81,7 @@ Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
     if (conf.doProbe) {
         prober = new Prober(this);
     }
+    intree = new InTree(this);
     if (conf.perform_occur_based_simp) {
         simplifier = new Simplifier(this);
     }
@@ -103,6 +105,7 @@ Solver::~Solver()
     delete compHandler;
     delete sqlStats;
     delete prober;
+    delete intree;
     delete simplifier;
     delete distiller;
     delete strengthener;
@@ -1712,6 +1715,10 @@ lbool Solver::simplify_problem()
 
     //PROBE
     update_dominators();
+    if (conf.doIntreeProbe && !intree->intree_probe()) {
+        goto end;
+    }
+
     if (conf.doProbe && !prober->probe()) {
         goto end;
     }
