@@ -1235,7 +1235,7 @@ void Simplifier::setLimits()
     }
 
     #ifdef BIT_MORE_VERBOSITY
-    cout << "c addedClauseLits: " << clause_lits_added_limit << endl;
+    cout << "c clause_lits_added: " << clause_lits_added << endl;
     #endif
     if (clause_lits_added < 10ULL*1000ULL*1000ULL) {
         norm_varelim_time_limit *= 2;
@@ -2675,7 +2675,7 @@ void Simplifier::order_vars_for_elim()
 
     //Print sorted listed list
     #ifdef VERBOSE_DEBUG_VARELIM
-    cout << "-----------" << endl;
+    /*cout << "-----------" << endl;
     for(size_t i = 0; i < varElimOrder.size(); i++) {
         cout
         << "varElimOrder[" << i << "]: "
@@ -2683,7 +2683,7 @@ void Simplifier::order_vars_for_elim()
         << " val: " << varElimComplexity[varElimOrder[i]].first
         << " , " << varElimComplexity[varElimOrder[i]].second
         << endl;
-    }
+    }*/
     #endif
 }
 

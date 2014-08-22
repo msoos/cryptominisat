@@ -202,6 +202,30 @@ class Watched {
             data2 = (lit2.toInt()<<1) | (data2&1);
         }
 
+        void mark_bin_cl()
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            data2 |= 2;
+        }
+
+        void unmark_bin_cl()
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            data2 &= 1;
+        }
+
+        bool bin_cl_marked() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            return data2&2;
+        }
+
         /**
         @brief Get example literal (blocked lit) of a normal >3-long clause
         */

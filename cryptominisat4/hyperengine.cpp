@@ -42,7 +42,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 
     //Assert startup: only 1 enqueued, uselessBin is empty
     assert(uselessBin.empty());
-    assert(decisionLevel() == 1);
+    //assert(decisionLevel() == 1);
 
     //The toplevel decision has to be set specifically
     //If we came here as part of a backtrack to decision level 1, then
@@ -1002,7 +1002,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         confl = PropBy(~p);
         return PROP_FAIL;
 
-    } else if (varData[lit.var()].level != 0) {
+    } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
         //Propaged already
         assert(val == l_True);
 
@@ -1174,7 +1174,11 @@ void HyperEngine::enqueue_with_acestor_info(
 
     assert(varData[ancestor.var()].level != 0);
 
-    varData[p.var()].depth = varData[ancestor.var()].depth + 1;
+    if (use_depth_trick) {
+        varData[p.var()].depth = varData[ancestor.var()].depth + 1;
+    } else {
+        varData[p.var()].depth = 0;
+    }
     #if defined(DEBUG_DEPTH) || defined(VERBOSE_DEBUG_FULLPROP)
     cout
     << "Enqueued "

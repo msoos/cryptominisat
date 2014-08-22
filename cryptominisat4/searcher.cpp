@@ -2595,7 +2595,7 @@ uint64_t Searcher::sumRestarts() const
     return stats.numRestarts + solver->get_stats().numRestarts;
 }
 
-size_t Searcher::hyper_bin_res_all()
+size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 {
     size_t added = 0;
 
@@ -2617,11 +2617,16 @@ size_t Searcher::hyper_bin_res_all()
         }
 
         //If binary is satisfied, skip
-        if (val1 == l_True || val2 == l_True) {
+        if (check_for_set_values
+            && (val1 == l_True || val2 == l_True)
+        ) {
             continue;
         }
 
-        assert(val1 == l_Undef && val2 == l_Undef);
+        if (check_for_set_values) {
+            assert(val1 == l_Undef && val2 == l_Undef);
+        }
+
         solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, false);
         added++;
     }
@@ -2630,12 +2635,12 @@ size_t Searcher::hyper_bin_res_all()
     return added;
 }
 
-std::pair<size_t, size_t> Searcher::remove_useless_bins()
+std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 {
     size_t removedIrred = 0;
     size_t removedRed = 0;
 
-    if (conf.doTransRed) {
+    if (conf.doTransRed || except_marked) {
         for(std::set<BinaryClause>::iterator
             it = uselessBin.begin()
             , end = uselessBin.end()
@@ -2643,11 +2648,26 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins()
             ; it++
         ) {
             propStats.otfHyperTime += 2;
-            //cout << "Removing binary clause: " << *it << endl;
+            if (solver->conf.verbosity >= 10) {
+                cout << "Removing binary clause: " << *it << endl;
+            }
             propStats.otfHyperTime += solver->watches[it->getLit1().toInt()].size()/2;
             propStats.otfHyperTime += solver->watches[it->getLit2().toInt()].size()/2;
-            removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
-            removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
+            bool removed;
+            if (except_marked) {
+                bool rem1 = removeWBin_except_marked(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
+                bool rem2 = removeWBin_except_marked(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
+                assert(rem1 == rem2);
+                removed = rem1;
+            } else {
+                removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
+                removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
+                removed = true;
+            }
+
+            if (!removed) {
+                continue;
+            }
 
             //Update stats
             if (it->isRed()) {

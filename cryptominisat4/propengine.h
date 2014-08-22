@@ -48,6 +48,7 @@ class SQLStats;
 
 //#define VERBOSE_DEBUG_FULLPROP
 //#define DEBUG_STAMPING
+//#define VERBOSE_DEBUG
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_FULLPROP

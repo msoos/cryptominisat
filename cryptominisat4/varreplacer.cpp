@@ -809,7 +809,7 @@ bool VarReplacer::replace(
     cout
     << "replace() called with var " <<  Lit(var1, false)
     << " and var " << Lit(var2, false)
-    << " with xorEqualFalse " << xorEqualFalse << endl;
+    << " with xor_is_true " << xor_is_true << endl;
     #endif
 
     replaceChecks(var1, var2);

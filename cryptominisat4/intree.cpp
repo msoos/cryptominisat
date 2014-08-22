@@ -3,6 +3,7 @@
 #include "varreplacer.h"
 #include "clausecleaner.h"
 #include "sqlstats.h"
+#include "watchalgos.h"
 
 using namespace CMSat;
 
@@ -59,6 +60,10 @@ bool InTree::intree_probe()
 {
     assert(solver->okay());
     queue.clear();
+    reset_reason_stack.clear();
+    solver->use_depth_trick = false;
+    solver->perform_transitive_reduction = false;
+    hyperbin_added = 0;
 
     if (!replace_until_fixedpoint())
     {
@@ -74,18 +79,20 @@ bool InTree::intree_probe()
 
     //Let's enqueue all ~root -s.
     for(Lit lit: roots) {
-        enqueue(~lit);
+        enqueue(~lit, lit_Undef, false);
     }
 
     //clear seen
-    for(Lit lit: queue) {
-        if (lit != lit_Undef) {
-            seen[lit.toInt()] = 0;
+    for(QueueElem elem: queue) {
+        if (elem.propagated != lit_Undef) {
+            seen[elem.propagated.toInt()] = 0;
         }
     }
     const size_t orig_num_free_vars = solver->get_num_free_vars();
 
-    bool ret = tree_look();
+    bool ok = tree_look();
+
+    unmark_all_bins();
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = (double)bogoprops_remain/(double)bogoprops_to_use;
@@ -94,6 +101,7 @@ bool InTree::intree_probe()
     cout << "c [intree] Set "
     << (orig_num_free_vars - solver->get_num_free_vars())
     << " vars"
+    << " hyper-added: " << hyperbin_added
     << solver->conf.print_times(time_used,  time_out, time_remain)
     << endl;
     if (solver->sqlStats) {
@@ -106,7 +114,20 @@ bool InTree::intree_probe()
         );
     }
 
-    return ret;
+    solver->use_depth_trick = true;
+    solver->perform_transitive_reduction = true;
+    return solver->okay();
+}
+
+void InTree::unmark_all_bins()
+{
+    for(watch_subarray wsub: solver->watches) {
+        for(Watched& w: wsub) {
+            if (w.isBinary()) {
+                w.unmark_bin_cl();
+            }
+        }
+    }
 }
 
 void InTree::randomize_roots()
@@ -131,28 +152,40 @@ bool InTree::tree_look()
 
     while(!queue.empty())
     {
-        if (solver->conf.verbosity >= 10) {
-            cout << "At queue point: " << queue.size() << endl;
-        }
-
         if (((int64_t)solver->propStats.bogoProps - orig_bogoprops) > bogoprops_remain) {
             break;
         }
 
-        const Lit l = queue.front();
+        const QueueElem elem = queue.front();
         queue.pop_front();
 
         if (solver->conf.verbosity >= 10) {
-            cout << "Dequeued: " << l << endl;
+            cout << "Dequeued [[" << elem << "]] dec lev:"
+            << solver->decisionLevel() << endl;
         }
 
-        if (l != lit_Undef) {
-            handle_lit_popped_from_queue(l);
+        if (elem.propagated != lit_Undef) {
+            handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
         } else {
             assert(solver->decisionLevel() > 0);
             solver->cancelUntil(solver->decisionLevel()-1);
+
             depth_failed.pop_back();
             assert(!depth_failed.empty());
+
+            if (reset_reason_stack.empty()) {
+                assert(solver->decisionLevel() == 0);
+            } else {
+                assert(!reset_reason_stack.empty());
+                ResetReason tmp = reset_reason_stack.back();
+                reset_reason_stack.pop_back();
+                if (tmp.var_reason_changed != var_Undef) {
+                    solver->varData[tmp.var_reason_changed].reason = tmp.orig_propby;
+                    if (solver->conf.verbosity >= 10) {
+                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to: " << tmp.orig_propby.lit2() << " red: " << (int)tmp.orig_propby.isRedStep() << endl;
+                    }
+                }
+            }
         }
 
         if (solver->decisionLevel() == 0) {
@@ -168,10 +201,13 @@ bool InTree::tree_look()
     return empty_failed_list();
 }
 
-void InTree::handle_lit_popped_from_queue(const Lit lit)
+void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)
 {
     solver->new_decision_level();
     depth_failed.push_back(depth_failed.back());
+    if (other_lit != lit_Undef) {
+        reset_reason_stack.push_back(ResetReason(var_Undef, PropBy()));
+    }
 
     if (solver->value(lit) == l_False
         || depth_failed.back() == 1
@@ -182,16 +218,37 @@ void InTree::handle_lit_popped_from_queue(const Lit lit)
             cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
         }
 
-    } else if (solver->value(lit) == l_Undef) {
+        return;
+    }
+
+    if (other_lit != lit_Undef) {
+        //update 'other_lit' 's ancestor to 'lit'
+        assert(solver->value(other_lit) == l_True);
+        reset_reason_stack.back() = ResetReason(other_lit.var(), solver->varData[other_lit.var()].reason);
+        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false);
+        if (solver->conf.verbosity >= 10) {
+            cout << "Set reason for VAR " << other_lit.var()+1 << " to: " << ~lit << " red: " << (int)red << endl;
+        }
+    }
+
+    if (solver->value(lit) == l_Undef) {
         solver->enqueue(lit);
+
         //Should do HHBR here
-        const bool ok = solver->propagate().isNULL();
-        if (!ok) {
+        int64_t timeout = std::numeric_limits<int64_t>::max();
+        Lit ret = solver->propagate_bfs(
+            timeout //early-abort timeout
+        );
+        //const bool ok = solver->propagate().isNULL();
+        if (ret != lit_Undef) {
             depth_failed.back() = 1;
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
                 cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
             }
+        } else {
+            hyperbin_added += solver->hyper_bin_res_all(false);
+            solver->remove_useless_bins(true);
         }
     }
 }
@@ -220,19 +277,29 @@ bool InTree::empty_failed_list()
     return true;
 }
 
-void InTree::enqueue(const Lit lit)
+
+// (lit V otherlit) exists -> (~otherlit, lit) in queue
+// Next: (~otherLit, lit2) exists -> (~lit2, ~otherLit) in queue
+// --> original ~otherlit got enqueued by lit2 = False (--> PropBy(lit2) ).
+
+void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
 {
-    queue.push_back(lit);
+    queue.push_back(QueueElem(lit, other_lit, red_cl));
     assert(!seen[lit.toInt()]);
     seen[lit.toInt()] = 1;
 
-    watch_subarray_const ws = solver->watches[lit.toInt()];
-    for(const Watched w: ws) {
+    watch_subarray ws = solver->watches[lit.toInt()];
+    for(Watched& w: ws) {
         if (w.isBinary()
             && seen[(~w.lit2()).toInt()] == 0
         ) {
-            enqueue(~w.lit2());
+            //Mark both
+            //w.mark_bin_cl();
+            //Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
+            //other_w.mark_bin_cl();
+
+            enqueue(~w.lit2(), lit, w.red());
         }
     }
-    queue.push_back(lit_Undef);
+    queue.push_back(QueueElem(lit_Undef, lit_Undef, false));
 }

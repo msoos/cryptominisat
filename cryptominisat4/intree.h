@@ -21,6 +21,7 @@
 
 #include "cloffset.h"
 #include "solvertypes.h"
+#include "propby.h"
 
 #include <vector>
 #include <deque>
@@ -37,14 +38,40 @@ public:
     InTree(Solver* _solver);
     bool intree_probe();
 
+    struct QueueElem
+    {
+        QueueElem(Lit _propagated, Lit _other_lit, bool _red) :
+            propagated(_propagated)
+            , other_lit(_other_lit)
+            , red(_red)
+        {}
+
+        Lit propagated;
+        Lit other_lit;
+        bool red;
+    };
+
+    struct ResetReason
+    {
+        ResetReason(Var _var_reason_changed, PropBy _orig_propby) :
+            var_reason_changed(_var_reason_changed)
+            , orig_propby(_orig_propby)
+        {}
+
+        Var var_reason_changed;
+        PropBy orig_propby;
+    };
+
 private:
+
+    void unmark_all_bins();
     void randomize_roots();
-    void handle_lit_popped_from_queue(const Lit lit);
+    void handle_lit_popped_from_queue(const Lit lit, const Lit propagating, const bool red);
     bool empty_failed_list();
     void fill_roots();
     bool watches_only_contains_nonbin(const Lit lit) const;
     bool replace_until_fixedpoint();
-    void enqueue(const Lit lit);
+    void enqueue(const Lit lit, const Lit other_lit, bool red_cl);
 
     void setup();
     void build_intree();
@@ -53,14 +80,29 @@ private:
 
     vector<Lit> roots;
     vector<Lit> failed;
-    deque<Lit> queue;
+    vector<ResetReason> reset_reason_stack;
+    deque<QueueElem> queue;
     vector<char> depth_failed;
     int64_t bogoprops_to_use;
     int64_t bogoprops_remain;
+    size_t hyperbin_added;
 
     Solver* solver;
     vector<uint16_t>& seen;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const InTree::QueueElem& elem)
+{
+    if (elem.propagated == lit_Undef) {
+        os << "NONE";
+    } else {
+        os << "prop:" << elem.propagated
+        << " other_lit:" << elem.other_lit
+        << " red: " << elem.red;
+    }
+
+    return os;
+}
 
 }
 

@@ -140,7 +140,7 @@ SolverConf::SolverConf() :
         , doProbe          (true)
         , doIntreeProbe    (true)
         , probe_bogoprops_timeoutM  (1900ULL)
-        , intree_timeoutM(200ULL)
+        , intree_timeoutM(900ULL)
         , doBothProp       (true)
         , doTransRed       (true)
         , doStamp          (true)

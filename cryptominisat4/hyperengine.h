@@ -41,6 +41,8 @@ public:
     size_t mem_used() const;
     size_t mem_used_stamp() const;
 
+    bool use_depth_trick = true;
+    bool perform_transitive_reduction = true;
     bool timedOutPropagateFull;
     Lit propagate_bfs(
         const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()

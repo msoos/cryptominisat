@@ -162,7 +162,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                     << binxor.vars[0] +1
                     << " XOR "
                     << binxor.vars[1] +1
-                    << " = " << binxor.xor_is_true
+                    << " = " << binxor.rhs
                     << endl;
                     #endif
                 }

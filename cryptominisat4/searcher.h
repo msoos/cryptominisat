@@ -622,8 +622,8 @@ class Searcher : public HyperEngine
             double cpu_time;
         };
 
-        size_t hyper_bin_res_all();
-        std::pair<size_t, size_t> remove_useless_bins();
+        size_t hyper_bin_res_all(const bool check_for_set_values = true);
+        std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
         bool var_inside_assumptions(const Var var) const
         {
             assert(assumptionsSet.size() > var);
