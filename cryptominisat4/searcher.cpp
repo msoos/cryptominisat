@@ -2543,9 +2543,7 @@ void Searcher::stamp_based_more_minim(vector<Lit>& cl)
     } else {
         //Re-add first lit
         cl.push_back(lit_Undef);
-        for(int i = ((int)cl.size())-1; i >= 1; i--) {
-            cl[i] = cl[i-1];
-        }
+        std::swap(cl[0], cl[cl.size()-1]);
         cl[0] = firstLit;
     }
 
