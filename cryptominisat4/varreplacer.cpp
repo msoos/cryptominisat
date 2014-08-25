@@ -672,15 +672,13 @@ void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_v
 {
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const Var sub_var_inter = solver->map_outer_to_inter(sub_var);
-    if (solver->model[sub_var] != l_Undef) {
-        assert(solver->varData[sub_var_inter].removed == Removed::replaced);
-        assert(solver->model[sub_var] == l_Undef
-            || solver->varData[sub_var_inter].level == 0
-        );
-        assert(solver->model[sub_var] == to_set);
-    } else {
-        solver->model[sub_var] = to_set;
+    assert(solver->varData[sub_var_inter].removed == Removed::replaced);
+    assert(solver->model[sub_var] == l_Undef);
+
+    if (solver->conf.verbosity >= 20) {
+        cout << "Varreplace-extend: setting outer " << sub_var+1 << " to " << to_set << " because of " << var+1 << endl;
     }
+    solver->model[sub_var] = to_set;
 }
 
 void VarReplacer::extend_model(const Var var)
