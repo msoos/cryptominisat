@@ -305,11 +305,13 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
     queue.push_back(QueueElem(lit, other_lit, red_cl));
     assert(!seen[lit.toInt()]);
     seen[lit.toInt()] = 1;
+    assert(solver->value(lit) == l_Undef);
 
     watch_subarray ws = solver->watches[lit.toInt()];
     for(Watched& w: ws) {
         if (w.isBinary()
             && seen[(~w.lit2()).toInt()] == 0
+            && solver->value(w.lit2()) == l_Undef
         ) {
             //Mark both
             //w.mark_bin_cl();
