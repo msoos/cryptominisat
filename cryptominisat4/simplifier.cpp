@@ -1027,6 +1027,7 @@ bool Simplifier::uneliminate(Var var)
     //Uneliminate it in theory
     globalStats.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
+    solver->set_decision_var(var);
     if (solver->conf.doStamp) {
         solver->stamp.remove_from_stamps(var);
     }

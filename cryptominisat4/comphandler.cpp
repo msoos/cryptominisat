@@ -348,6 +348,7 @@ void CompHandler::move_decision_level_zero_vars_here(
 
         assert(solver->varData[lit.var()].removed == Removed::decomposed);
         solver->varData[lit.var()].removed = Removed::none;
+        solver->set_decision_var(lit.var());
         num_vars_removed--;
 
         const Var outer = solver->map_inter_to_outer(lit.var());
