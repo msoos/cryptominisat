@@ -19,6 +19,8 @@ void print_model(std::ostream* os, CMSat::SATSolver* solver)
                 line_size = 2 + this_var_size;
             }
             *os << (value_is_positive? "" : "-") << var+1 << " ";
+        } else {
+            //*os << "(UNDEF " << var+1 << ") ";
         }
     }
 
