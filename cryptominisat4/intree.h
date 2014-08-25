@@ -85,7 +85,10 @@ private:
     vector<char> depth_failed;
     int64_t bogoprops_to_use;
     int64_t bogoprops_remain;
+
     size_t hyperbin_added;
+    size_t removedIrredBin;
+    size_t removedRedBin;
 
     Solver* solver;
     vector<uint16_t>& seen;

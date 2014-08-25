@@ -64,6 +64,8 @@ bool InTree::intree_probe()
     solver->use_depth_trick = false;
     solver->perform_transitive_reduction = false;
     hyperbin_added = 0;
+    removedIrredBin = 0;
+    removedRedBin = 0;
 
     if (!replace_until_fixedpoint())
     {
@@ -90,20 +92,24 @@ bool InTree::intree_probe()
     }
     const size_t orig_num_free_vars = solver->get_num_free_vars();
 
-    bool ok = tree_look();
-
+    tree_look();
     unmark_all_bins();
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = (double)bogoprops_remain/(double)bogoprops_to_use;
     const bool time_out = (bogoprops_remain < 0);
 
-    cout << "c [intree] Set "
-    << (orig_num_free_vars - solver->get_num_free_vars())
-    << " vars"
-    << " hyper-added: " << hyperbin_added
-    << solver->conf.print_times(time_used,  time_out, time_remain)
-    << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [intree] Set "
+        << (orig_num_free_vars - solver->get_num_free_vars())
+        << " vars"
+        << " hyper-added: " << hyperbin_added
+        << " trans-irred::" << removedIrredBin
+        << " trans-red::" << removedRedBin
+        << solver->conf.print_times(time_used,  time_out, time_remain)
+        << endl;
+    }
+
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -248,7 +254,9 @@ void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             }
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
-            solver->remove_useless_bins(true);
+            std::pair<size_t, size_t> tmp = solver->remove_useless_bins(true);
+            removedIrredBin += tmp.first;
+            removedRedBin += tmp.second;
         }
     }
 }
