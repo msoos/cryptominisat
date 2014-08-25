@@ -49,8 +49,13 @@ void InTree::fill_roots()
     for(uint32_t i = 0; i < solver->nVars()*2; i++)
     {
         Lit lit(i/2, i%2);
-        if (watches_only_contains_nonbin(lit))
-        {
+        if (solver->varData[lit.var()].removed != Removed::none
+            || solver->value(lit) != l_Undef
+        ) {
+            continue;
+        }
+
+        if (watches_only_contains_nonbin(lit)) {
             roots.push_back(lit);
         }
     }
