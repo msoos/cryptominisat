@@ -266,6 +266,8 @@ void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             removedIrredBin += tmp.first;
             removedRedBin += tmp.second;
         }
+        solver->uselessBin.clear();
+        solver->needToAddBinClause.clear();
     }
 }
 
