@@ -1303,12 +1303,9 @@ void Solver::extend_solution()
         compHandler->addSavedState(model);
     }
 
-    if (conf.perform_occur_based_simp
-        || conf.doFindAndReplaceEqLits
-    ) {
-        SolutionExtender extender(this, simplifier);
-        extender.extend();
-    }
+    SolutionExtender extender(this, simplifier);
+    extender.extend();
+
     model = map_back_to_without_bva(model);
     check_model_for_assumptions();
     if (sqlStats) {
