@@ -2004,7 +2004,7 @@ void Solver::print_min_stats() const
             , "% time"
         );
 
-        prober->get_stats().print_short(this);
+        prober->get_stats().print_short(this, 0, 0);
     }
     //Simplifier stats
     if (conf.perform_occur_based_simp) {

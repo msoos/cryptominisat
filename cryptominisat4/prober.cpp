@@ -474,7 +474,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.print_short(solver);
+            runStats.print_short(solver, time_out, time_remain);
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -906,7 +906,7 @@ size_t Prober::mem_used() const
 //     return solver->ok;
 // }
 
-void Prober::Stats::print_short(const Solver* solver) const
+void Prober::Stats::print_short(const Solver* solver, const bool time_out, const double time_remain) const
 {
     cout
     << "c [probe]"
@@ -941,6 +941,6 @@ void Prober::Stats::print_short(const Solver* solver) const
     << " HP: " << std::fixed << std::setprecision(1)
     << (double)(propStats.otfHyperTime)/1000000.0  << "M"
 
-    << solver->conf.print_times(cpu_time)
+    << solver->conf.print_times(cpu_time, time_out, time_remain)
     << endl;
 }

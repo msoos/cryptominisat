@@ -203,7 +203,7 @@ class Prober {
                 cout << "c -------- PROBE STATS END ----------" << endl;
             }
 
-            void print_short(const Solver* solver) const;
+            void print_short(const Solver* solver, const bool time_out, const double time_remain) const;
 
             //Time
             double cpu_time;
