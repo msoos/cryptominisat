@@ -699,9 +699,9 @@ void VarReplacer::extend_model(const Var var)
 
 void VarReplacer::extend_model()
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "c VarReplacer::extend_model() called" << endl;
-    #endif //VERBOSE_DEBUG
+    if (solver->conf.verbosity >= 20) {
+        cout << "c VarReplacer::extend_model() called" << endl;
+    }
 
     assert(solver->model.size() == solver->nVarsOuter());
     for (map<Var, vector<Var> >::const_iterator
