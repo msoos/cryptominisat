@@ -228,8 +228,8 @@ class VarReplacer
 
         //Stats
         void printReplaceStats() const;
-        uint64_t replacedVars; ///<Num vars replaced during var-replacement
-        uint64_t lastReplacedVars;
+        uint64_t replacedVars = 0; ///<Num vars replaced during var-replacement
+        uint64_t lastReplacedVars = 0;
         Stats runStats;
         Stats globalStats;
 };

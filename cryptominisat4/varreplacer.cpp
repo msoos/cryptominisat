@@ -48,8 +48,6 @@ using namespace CMSat;
 
 VarReplacer::VarReplacer(Solver* _solver) :
     solver(_solver)
-    , replacedVars(0)
-    , lastReplacedVars(0)
 {
     scc_finder = new SCCFinder(_solver);
     ps_tmp.resize(2);
