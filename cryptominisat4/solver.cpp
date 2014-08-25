@@ -1633,6 +1633,8 @@ void Solver::checkDecisionVarCorrectness() const
     for(size_t var = 0; var < nVarsOuter(); var++) {
         if (varData[var].removed != Removed::none) {
             assert(!varData[var].is_decision);
+        } else {
+            assert(varData[var].is_decision);
         }
     }
 }
