@@ -154,7 +154,7 @@ void InTree::randomize_roots()
     }
 }
 
-bool InTree::tree_look()
+void InTree::tree_look()
 {
     assert(failed.empty());
     depth_failed.clear();
@@ -201,7 +201,7 @@ bool InTree::tree_look()
 
         if (solver->decisionLevel() == 0) {
             if (!empty_failed_list()) {
-                return false;
+                return;
             }
         }
     }
@@ -209,7 +209,7 @@ bool InTree::tree_look()
     bogoprops_remain -= (int64_t)solver->propStats.bogoProps - orig_bogoprops;
 
     solver->cancelUntil<false>(0);
-    return empty_failed_list();
+    empty_failed_list();
 }
 
 void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)

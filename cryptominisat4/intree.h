@@ -76,7 +76,7 @@ private:
     void setup();
     void build_intree();
     void do_one();
-    bool tree_look();
+    void tree_look();
 
     vector<Lit> roots;
     vector<Lit> failed;
