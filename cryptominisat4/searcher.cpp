@@ -496,12 +496,12 @@ void Searcher::mimimize_learnt_clause_based_on_cache()
         //Binary&cache-based minim
         minimise_redundant_more(learnt_clause);
 
-        stats.moreMinimLitsEnd += learnt_clause.size();
-    }
+        //Stamp-based minimization -- cheap, so do it anyway
+        if (conf.doStamp) {
+            stamp_based_more_minim(learnt_clause);
+        }
 
-    //Stamp-based minimization -- cheap, so do it anyway
-    if (conf.doStamp) {
-        stamp_based_more_minim(learnt_clause);
+        stats.moreMinimLitsEnd += learnt_clause.size();
     }
 }
 
