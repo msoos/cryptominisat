@@ -314,9 +314,9 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
             && solver->value(w.lit2()) == l_Undef
         ) {
             //Mark both
-            //w.mark_bin_cl();
-            //Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
-            //other_w.mark_bin_cl();
+            w.mark_bin_cl();
+            Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
+            other_w.mark_bin_cl();
 
             enqueue(~w.lit2(), lit, w.red());
         }

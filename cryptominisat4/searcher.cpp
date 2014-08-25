@@ -2592,7 +2592,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     size_t removedIrred = 0;
     size_t removedRed = 0;
 
-    if (conf.doTransRed || except_marked) {
+    if (conf.doTransRed) {
         for(std::set<BinaryClause>::iterator
             it = uselessBin.begin()
             , end = uselessBin.end()
