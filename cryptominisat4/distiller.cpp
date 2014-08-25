@@ -367,7 +367,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
             break;
         }
     }
-    solver->cancel_zero_light();
+    solver->cancelUntil<false>(0);
     assert(solver->ok);
 
     if (uselessLits.size() > 0 || (failed && done < lits.size())) {

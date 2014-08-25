@@ -174,7 +174,7 @@ bool InTree::tree_look()
             handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
         } else {
             assert(solver->decisionLevel() > 0);
-            solver->cancelUntil(solver->decisionLevel()-1);
+            solver->cancelUntil<false>(solver->decisionLevel()-1);
 
             depth_failed.pop_back();
             assert(!depth_failed.empty());
@@ -203,7 +203,7 @@ bool InTree::tree_look()
 
     bogoprops_remain -= (int64_t)solver->propStats.bogoProps - orig_bogoprops;
 
-    solver->cancelUntil(0);
+    solver->cancelUntil<false>(0);
     return empty_failed_list();
 }
 

@@ -122,7 +122,6 @@ public:
     size_t trail_size() const {
         return trail.size();
     }
-    void cancel_zero_light();
     bool propagate_occur();
     PropStats propStats;
     void enqueue(const Lit p, const PropBy from = PropBy());
@@ -388,19 +387,6 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << endl;
     #endif
-}
-
-inline void PropEngine::cancel_zero_light()
-{
-    assert((int)decisionLevel() > 0);
-
-    for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[0]; sublevel--) {
-        Var var = trail[sublevel].var();
-        assigns[var] = l_Undef;
-    }
-    qhead = trail_lim[0];
-    trail.resize(trail_lim[0]);
-    trail_lim.clear();
 }
 
 inline size_t PropEngine::getTrailSize() const

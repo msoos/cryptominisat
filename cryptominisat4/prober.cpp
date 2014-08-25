@@ -604,7 +604,7 @@ void Prober::handle_failed_lit(Lit lit, Lit failed)
     if (solver->conf.verbosity >= 6) {
         cout << "c Failed on lit " << lit << endl;
     }
-    solver->cancel_zero_light();
+    solver->cancelUntil<false>(0);
 
     //Update conflict stats
     runStats.numFailed++;
@@ -636,7 +636,7 @@ bool Prober::check_timeout_due_to_hyperbin()
         }
 
         solver->conf.otfHyperbin = false;
-        solver->cancel_zero_light();
+        solver->cancelUntil<false>(0);
 
         runStats.addedBin += solver->hyper_bin_res_all();
         std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
@@ -754,7 +754,7 @@ bool Prober::try_this(const Lit lit, const bool first)
         add_rest_of_lits_to_cache(lit);
     }
 
-    solver->cancel_zero_light();
+    solver->cancelUntil<false>(0);
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
@@ -866,7 +866,7 @@ size_t Prober::mem_used() const
 //         //cout << "---" << endl;
 //         bool failed = !(solver->propagate().isNULL());
 //         if (failed) {
-//             solver->cancel_zero_light();
+//             solver->cancelUntil<false>(0);
 //             if (!first) propagated.setZero();
 //             numFailed++;
 //             return true;
@@ -887,7 +887,7 @@ size_t Prober::mem_used() const
 //                 }
 //             }
 //         }
-//         solver->cancel_zero_light();
+//         solver->cancelUntil<false>(0);
 //         if (!first && !last) propagated &= propagated2;
 //         propagated2.setZero();
 //         if (propagated.isZero()) return true;

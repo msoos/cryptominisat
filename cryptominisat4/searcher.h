@@ -969,6 +969,57 @@ inline void Searcher::add_in_partial_solving_stats()
     stats.cpu_time = cpuTime() - startTime;
 }
 
+/**
+@brief Revert to the state at given level
+*/
+template<bool also_insert_varorder>
+inline void Searcher::cancelUntil(uint32_t level)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Canceling until level " << level;
+    if (level > 0) cout << " sublevel: " << trail_lim[level];
+    cout << endl;
+    #endif
+
+    if (decisionLevel() > level) {
+
+        //Go through in reverse order, unassign & insert then
+        //back to the vars to be branched upon
+        for (int sublevel = trail.size()-1
+            ; sublevel >= (int)trail_lim[level]
+            ; sublevel--
+        ) {
+            #ifdef VERBOSE_DEBUG
+            cout
+            << "Canceling lit " << trail[sublevel]
+            << " sublevel: " << sublevel
+            << endl;
+            #endif
+
+            #ifdef ANIMATE3D
+            std:cerr << "u " << var << endl;
+            #endif
+
+            const Var var = trail[sublevel].var();
+            assert(value(var) != l_Undef);
+            assigns[var] = l_Undef;
+            if (also_insert_varorder) {
+                insertVarOrder(var);
+            }
+        }
+        qhead = trail_lim[level];
+        trail.resize(trail_lim[level]);
+        trail_lim.resize(level);
+    }
+
+    #ifdef VERBOSE_DEBUG
+    cout
+    << "Canceling finished. Now at level: " << decisionLevel()
+    << " sublevel: " << trail.size()-1
+    << endl;
+    #endif
+}
+
 } //end namespace
 
 #endif //__SEARCHER_H__
