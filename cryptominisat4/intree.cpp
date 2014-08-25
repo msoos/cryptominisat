@@ -67,7 +67,7 @@ bool InTree::intree_probe()
     queue.clear();
     reset_reason_stack.clear();
     solver->use_depth_trick = false;
-    solver->perform_transitive_reduction = false;
+    solver->perform_transitive_reduction = true;
     hyperbin_added = 0;
     removedIrredBin = 0;
     removedRedBin = 0;
