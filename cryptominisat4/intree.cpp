@@ -159,11 +159,14 @@ void InTree::tree_look()
     assert(failed.empty());
     depth_failed.clear();
     depth_failed.push_back(false);
-    int64_t orig_bogoprops = solver->propStats.bogoProps;
+    solver->propStats.clear();
 
     while(!queue.empty())
     {
-        if (((int64_t)solver->propStats.bogoProps - orig_bogoprops) > bogoprops_remain) {
+        if ((int64_t)solver->propStats.bogoProps
+            + (int64_t)solver->propStats.otfHyperTime
+            > bogoprops_remain
+        ) {
             break;
         }
 
@@ -206,7 +209,7 @@ void InTree::tree_look()
         }
     }
 
-    bogoprops_remain -= (int64_t)solver->propStats.bogoProps - orig_bogoprops;
+    bogoprops_remain -= (int64_t)solver->propStats.bogoProps + (int64_t)solver->propStats.otfHyperTime;
 
     solver->cancelUntil<false>(0);
     empty_failed_list();
