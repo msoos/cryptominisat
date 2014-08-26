@@ -64,9 +64,10 @@ public:
 
 private:
 
+    bool check_timeout_due_to_hyperbin();
     void unmark_all_bins();
     void randomize_roots();
-    void handle_lit_popped_from_queue(const Lit lit, const Lit propagating, const bool red);
+    bool handle_lit_popped_from_queue(const Lit lit, const Lit propagating, const bool red);
     bool empty_failed_list();
     void fill_roots();
     bool watches_only_contains_nonbin(const Lit lit) const;

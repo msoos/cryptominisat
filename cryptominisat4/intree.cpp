@@ -41,6 +41,25 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
     return true;
 }
 
+bool InTree::check_timeout_due_to_hyperbin()
+{
+    if (solver->timedOutPropagateFull
+        && !solver->drup->enabled()
+    ) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [probe] intra-propagation timout,"
+            << " turning off OTF hyper-bin&trans-red"
+            << endl;
+        }
+
+        solver->conf.otfHyperbin = false;
+        return true;
+    }
+
+    return false;
+}
+
 void InTree::fill_roots()
 {
     //l is root if no clause of form (l, l2).
@@ -161,11 +180,13 @@ void InTree::tree_look()
     depth_failed.push_back(false);
     solver->propStats.clear();
 
+    bool timeout = false;
     while(!queue.empty())
     {
         if ((int64_t)solver->propStats.bogoProps
             + (int64_t)solver->propStats.otfHyperTime
             > bogoprops_remain
+            || timeout
         ) {
             break;
         }
@@ -179,7 +200,7 @@ void InTree::tree_look()
         }
 
         if (elem.propagated != lit_Undef) {
-            handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
+            timeout = handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
         } else {
             assert(solver->decisionLevel() > 0);
             solver->cancelUntil<false>(solver->decisionLevel()-1);
@@ -215,13 +236,15 @@ void InTree::tree_look()
     empty_failed_list();
 }
 
-void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)
+bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)
 {
     solver->new_decision_level();
     depth_failed.push_back(depth_failed.back());
     if (other_lit != lit_Undef) {
         reset_reason_stack.push_back(ResetReason(var_Undef, PropBy()));
     }
+
+    bool timeout = false;
 
     if (solver->value(lit) == l_False
         || depth_failed.back() == 1
@@ -232,7 +255,7 @@ void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
         }
 
-        return;
+        return false;
     }
 
     if (other_lit != lit_Undef) {
@@ -249,12 +272,23 @@ void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         solver->enqueue(lit);
 
         //Should do HHBR here
-        int64_t timeout = std::numeric_limits<int64_t>::max();
-        Lit ret = solver->propagate_bfs(
-            timeout //early-abort timeout
-        );
-        //const bool ok = solver->propagate().isNULL();
-        if (ret != lit_Undef) {
+        bool ok;
+        if (solver->conf.otfHyperbin) {
+            const uint64_t max_hyper_time =
+                solver->propStats.otfHyperTime
+                + solver->propStats.bogoProps
+                + 1600ULL*1000ULL*1000ULL;
+
+            Lit ret = solver->propagate_bfs(
+                max_hyper_time //early-abort timeout
+            );
+            ok = (ret == lit_Undef);
+            timeout = check_timeout_due_to_hyperbin();
+        } else {
+            ok = solver->propagate().isNULL();
+        }
+
+        if (!ok && !timeout) {
             depth_failed.back() = 1;
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
@@ -269,6 +303,8 @@ void InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         solver->uselessBin.clear();
         solver->needToAddBinClause.clear();
     }
+
+    return timeout;
 }
 
 bool InTree::empty_failed_list()
