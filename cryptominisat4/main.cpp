@@ -1018,17 +1018,21 @@ void Main::dumpIfNeeded() const
 
     if (!redDumpFname.empty()) {
         solver->open_file_and_dump_red_clauses(redDumpFname);
-        cout << "Dumped redundant clauses" << endl;
+        if (conf.verbosity >= 1) {
+            cout << "c Dumped redundant clauses" << endl;
+        }
     }
 
     if (!irredDumpFname.empty()) {
         solver->open_file_and_dump_irred_clauses(irredDumpFname);
-        cout
-        << "c [solver] Dumped irredundant clauses to file "
-        << "'" << irredDumpFname << "'." << endl
-        << "c [solver] Note that these may NOT be in the original CNF, but"
-        << " *describe the same problem* with the *same variables*"
-        << endl;
+        if (conf.verbosity >= 1) {
+            cout
+            << "c [solver] Dumped irredundant clauses to file "
+            << "'" << irredDumpFname << "'." << endl
+            << "c [solver] Note that these may NOT be in the original CNF, but"
+            << " *describe the same problem* with the *same variables*"
+            << endl;
+        }
     }
 }
 
