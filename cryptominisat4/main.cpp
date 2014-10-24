@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <thread>
 
 #include "main.h"
 #include "main_common.h"
@@ -1032,6 +1033,23 @@ void Main::dumpIfNeeded() const
     }
 }
 
+void Main::check_num_threads_sanity(const unsigned thread_num) const
+{
+    const unsigned num_cores = std::thread::hardware_concurrency();
+    if (num_cores == 0) {
+        //Library doesn't know much, we can't do any checks.
+        return;
+    }
+
+    if (thread_num > num_cores) {
+        std::cerr
+        << "c WARNING: Number of threads requested is more than the number of"
+        << " cores reported by the system.\n"
+        << "c WARNING: This is not a good idea in general. It's best to set the"
+        << " number of threads to the number of real cores" << endl;
+    }
+}
+
 int Main::solve()
 {
     solver = new SATSolver(conf);
@@ -1039,6 +1057,7 @@ int Main::solve()
     if (drupf) {
         solver->set_drup(drupf);
     }
+    check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
 
     std::ofstream resultfile;

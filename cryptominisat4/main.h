@@ -59,6 +59,7 @@ class Main
         void parse_restart_type();
         void parse_polarity_type();
         void dumpIfNeeded() const;
+        void check_num_threads_sanity(const unsigned thread_num) const;
 
         po::positional_options_description p;
         po::variables_map vm;
