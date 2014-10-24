@@ -5,7 +5,9 @@ from os.path import basename
 import unittest
 
 import os
-print "our CWD is:", os.getcwd()
+import glob
+print "our CWD is:", os.getcwd(), "files here: ", glob.glob("*")
+
 
 import pycryptosat
 from pycryptosat import Solver
