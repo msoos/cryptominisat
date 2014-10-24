@@ -947,12 +947,6 @@ void Main::manually_parse_some_options()
     parse_restart_type();
     parse_var_elim_strategy();
 
-//     if (numThreads < 1)
-//         throw WrongParam("threads", "Num threads must be at least 1");
-//
-//     if (numThreads > 1)
-//         throw WrongParam("threads", "Currently, more than 1 thread is not supported. Sorry!");
-
     if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
         conf.sqlite_filename = filesToRead[0] + ".sqlite";
