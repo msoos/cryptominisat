@@ -15,5 +15,7 @@ add_custom_target(pytarget ALL DEPENDS ${OUTPUT}/timestamp)
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)")
 
 if (ENABLE_TESTING)
-    add_test (pytest ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test_pycryptosat.py")
+    add_test (NAME pytest
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+              COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test_pycryptosat.py")
 endif()
