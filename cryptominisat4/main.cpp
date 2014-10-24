@@ -218,9 +218,11 @@ void Main::printResultFunc(
     if (ret == l_True && (printResult || toFile)) {
         if (toFile) {
             for (uint32_t var = 0; var < solver->nVars(); var++) {
-                if (solver->get_model()[var] != l_Undef)
+                if (solver->get_model()[var] != l_Undef) {
                     *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
+				}
             }
+            *os << " 0" << endl;
         } else {
             print_model(os, solver);
         }
