@@ -7,6 +7,7 @@ import unittest
 import os
 import glob
 print "our CWD is:", os.getcwd(), "files here: ", glob.glob("*")
+print "our sys.path is", sys.path
 
 
 import pycryptosat
