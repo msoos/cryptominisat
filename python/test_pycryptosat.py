@@ -4,6 +4,9 @@ import random
 from os.path import basename
 import unittest
 
+import os
+print "our CWD is:", os.getcwd()
+
 import pycryptosat
 from pycryptosat import Solver
 
