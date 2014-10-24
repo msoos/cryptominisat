@@ -6,7 +6,7 @@ configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
-                   ARGS setup.py build_ext --inplace
+                   ARGS setup.py build_ext --inplace --rpath ../lib
                    DEPENDS libcryptominisat4
 )
 
