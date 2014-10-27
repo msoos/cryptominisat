@@ -203,6 +203,7 @@ class SolverConf
         int      doVarElim;          ///<Perform variable elimination
         unsigned varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
+        long long varelim_time_limitM;
         int      updateVarElimComplexityOTF;
         unsigned updateVarElimComplexityOTF_limitvars;
         int      updateVarElimComplexityOTF_limitavg;
@@ -216,6 +217,7 @@ class SolverConf
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
         long     bva_extra_lit_and_red_start;
+        long long bva_time_limitM;
 
         //Probing
         int      doProbe;
@@ -261,6 +263,7 @@ class SolverConf
         int      do_distill_clauses;
         unsigned long long max_props_distill_long_irred_clsM;
         long watch_cache_stamp_based_str_timeoutM;
+        long long distill_timeoutM;
 
         //Memory savings
         int       doRenumberVars;
@@ -279,6 +282,7 @@ class SolverConf
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
         long long  subsume_implicit_timeoutM;
+        long long  strengthen_implicit_timeavailableM;
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //Gates
@@ -287,11 +291,15 @@ class SolverConf
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
+        long long gatefinder_maxtime;
+        long long max_time_shorten_with_gatesM;
+        long long max_time_remove_cl_with_gatesM;
 
         //interrupting & dumping
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
+        double clean_after_perc_zero_depth_assigns;
 };
 
 } //end namespace

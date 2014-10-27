@@ -1937,7 +1937,7 @@ void Searcher::reduce_db_if_needed()
 void Searcher::clean_clauses_if_needed()
 {
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-    if (newZeroDepthAss > ((double)solver->get_num_free_vars()*0.005))  {
+    if (newZeroDepthAss > ((double)solver->get_num_free_vars()*solver->conf.clean_after_perc_zero_depth_assigns))  {
         if (conf.verbosity >= 2) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
         }

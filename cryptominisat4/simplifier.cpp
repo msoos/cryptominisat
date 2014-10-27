@@ -1221,7 +1221,7 @@ void Simplifier::setLimits()
     subsumption_time_limit     = 850LL*1000LL*1000LL;
     strengthening_time_limit   = 400LL*1000LL*1000LL;
 //     numMaxTriSub      = 600LL*1000LL*1000LL;
-    norm_varelim_time_limit    = 4ULL*1000LL*1000LL*1000LL;
+    norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM;
     empty_varelim_time_limit   = 200LL*1000LL*1000LL;
     aggressive_elim_time_limit = 300LL *1000LL*1000LL;
 

@@ -40,7 +40,7 @@ BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
 
 bool BVA::bounded_var_addition()
 {
-    bounded_var_elim_time_limit= 2ULL*400LL *1000LL*1000LL;
+    bounded_var_elim_time_limit= 2ULL*400LL *1000LL*solver->conf.bva_time_limitM;
     bva_verbosity = false;
 
     assert(solver->ok);

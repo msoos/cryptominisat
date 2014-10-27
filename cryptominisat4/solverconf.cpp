@@ -44,9 +44,9 @@ SolverConf::SolverConf() :
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
         , dont_remove_fresh_glue2(false)
-        , ratioRemoveClauses(0.5)
+        , ratioRemoveClauses(0.6)
         , numCleanBetweenSimplify(2)
-        , startClean(10000)
+        , startClean(8000)
         , increaseClean(1.1)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
@@ -93,7 +93,7 @@ SolverConf::SolverConf() :
 
         //Glues
         , updateGlues(true)
-        , shortTermHistorySize (100)
+        , shortTermHistorySize (90)
 
         //OTF
         , otfHyperbin      (true)
@@ -121,12 +121,13 @@ SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_cutoff_too_many_clauses(40)
         , do_empty_varelim (true)
+        , varelim_time_limitM(10)
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
         , var_elim_strategy  (elimstrategy_heuristic)
         , varElimCostEstimateStrategy(0)
-        , varElimRatioPerIter(0.12)
+        , varElimRatioPerIter(0.70)
         , skip_some_bve_resolvents(true)
 
         //Bounded variable addition
@@ -134,12 +135,13 @@ SolverConf::SolverConf() :
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
+        , bva_time_limitM(100)
 
         //Probing
         , doProbe          (true)
         , doIntreeProbe    (true)
-        , probe_bogoprops_timeoutM  (1000ULL)
-        , intree_timeoutM(900ULL)
+        , probe_bogoprops_timeoutM  (100ULL)
+        , intree_timeoutM(100ULL)
         , doBothProp       (true)
         , doTransRed       (true)
         , doStamp          (true)
@@ -157,7 +159,7 @@ SolverConf::SolverConf() :
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
-        , sccFindPercent        (0.02)
+        , sccFindPercent        (0.08)
 
         //Propagation & search
         , doLHBR           (false)
@@ -165,7 +167,7 @@ SolverConf::SolverConf() :
         , dominPickFreq    (400)
 
         //Simplifier
-        , simplify_at_startup(false)
+        , simplify_at_startup(true)
         , regularly_simplify_problem(true)
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
@@ -178,7 +180,8 @@ SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , max_props_distill_long_irred_clsM(20ULL)
-        , watch_cache_stamp_based_str_timeoutM(400LL)
+        , watch_cache_stamp_based_str_timeoutM(30LL)
+        , distill_timeoutM(120LL)
 
         //Memory savings
         , doRenumberVars   (true)
@@ -195,7 +198,8 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
-        , subsume_implicit_timeoutM(1900LL)
+        , subsume_implicit_timeoutM(400LL)
+        , strengthen_implicit_timeavailableM(200LL)
         , doCalcReach      (true)
 
         //Gates
@@ -204,11 +208,15 @@ SolverConf::SolverConf() :
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)
+        , gatefinder_maxtime(200)
+        , max_time_shorten_with_gatesM(200)
+        , max_time_remove_cl_with_gatesM(200)
 
         //Misc
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(6000)
+        , clean_after_perc_zero_depth_assigns(0.015)
 {
 }
 

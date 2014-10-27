@@ -87,7 +87,7 @@ bool Distiller::distill_tri_irred_cls()
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 2LL*1000LL*1000LL;
+    uint64_t maxNumProps = 2LL*1000LL*solver->conf.distill_timeoutM;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     size_t origTrailSize = solver->trail_size();
 
