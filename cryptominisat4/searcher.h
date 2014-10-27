@@ -793,7 +793,6 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
-        bool do_otf_this_round;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;

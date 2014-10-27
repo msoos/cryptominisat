@@ -998,26 +998,12 @@ lbool Searcher::search()
         }
 
         again:
-        if (do_otf_this_round
-            && decisionLevel() == 1
-        ) {
-            bool must_continue;
-            lbool ret = otf_hyper_prop_first_dec_level(must_continue);
-            if (ret != l_Undef) {
-                dump_search_sql(myTime);
-                return ret;
-            }
-            if (must_continue)
-                goto again;
-            confl = PropBy();
-        } else {
-            //Decision level is higher than 1, so must do normal propagation
-            confl = propagate(
-                #ifdef STATS_NEEDED
-                &hist.watchListSizeTraversed
-                #endif
-            );
-        }
+        //Decision level is higher than 1, so must do normal propagation
+        confl = propagate(
+            #ifdef STATS_NEEDED
+            &hist.watchListSizeTraversed
+            #endif
+        );
     }
 
     cancelUntil(0);
@@ -1220,16 +1206,11 @@ void Searcher::add_otf_subsume_long_clauses()
 
         if (at == 0) {
             //If none found, we have a propagating clause_t
+            enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
 
-            if (do_otf_this_round && decisionLevel() == 1) {
-                add_hyper_bin(cl[0], cl);
-            } else {
-                enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << cl[0] << fin;
-                }
+            //Drup
+            if (decisionLevel() == 0) {
+                *drup << cl[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1277,35 +1258,27 @@ void Searcher::add_otf_subsume_implicit_clause()
 
         if (at == 0) {
             //If none found, we have a propagation
-            if (do_otf_this_round && decisionLevel() == 1) {
+            //Calculate reason
+            PropBy by = PropBy();
+
+            //if decision level is non-zero, we have to be more careful
+            if (decisionLevel() != 0) {
                 if (it->size == 2) {
-                    enqueue_with_acestor_info(it->lits[0], ~it->lits[1], true);
+                    by = PropBy(it->lits[1]);
                 } else {
-                    add_hyper_bin(it->lits[0], it->lits[1], it->lits[2]);
+                    by = PropBy(it->lits[1], it->lits[2]);
                 }
-            } else {
-                //Calculate reason
-                PropBy by = PropBy();
+            }
 
-                //if decision level is non-zero, we have to be more careful
-                if (decisionLevel() != 0) {
-                    if (it->size == 2) {
-                        by = PropBy(it->lits[1]);
-                    } else {
-                        by = PropBy(it->lits[1], it->lits[2]);
-                    }
-                }
+            //Enqueue this literal, finally
+            enqueue(
+                it->lits[0]
+                , by
+            );
 
-                //Enqueue this literal, finally
-                enqueue(
-                    it->lits[0]
-                    , by
-                );
-
-                //Drup
-                if (decisionLevel() == 0) {
-                    *drup << it->lits[0] << fin;
-                }
+            //Drup
+            if (decisionLevel() == 0) {
+                *drup << it->lits[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1400,10 +1373,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true);
-            if (do_otf_this_round && decisionLevel() == 1)
-                enqueue_with_acestor_info(learnt_clause[0], ~learnt_clause[1], true);
-            else
-                enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
@@ -1415,11 +1385,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntTris++;
             std::stable_sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
-
-            if (do_otf_this_round && decisionLevel() == 1)
-                add_hyper_bin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
-            else
-                enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
+            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
             #ifdef STATS_NEEDED
             propStats.propsTriRed++;
@@ -1432,10 +1398,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntLongs++;
             std::stable_sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
-            if (do_otf_this_round && decisionLevel() == 1)
-                add_hyper_bin(learnt_clause[0], *cl);
-            else
-                enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
+            enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
 
             #ifdef STATS_NEEDED
             propStats.propsLongRed++;
@@ -2079,7 +2042,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
     num_search_called++;
-    do_otf_this_round = nVars() < 500ULL*1000ULL && binTri.irredBins + binTri.redBins < 1500ULL*1000ULL && conf.otfHyperbin;
 
     if (solver->conf.verbosity >= 6) {
         cout
