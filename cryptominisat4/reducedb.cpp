@@ -440,7 +440,7 @@ void ReduceDB::real_clean_clause_db(
 uint64_t ReduceDB::calc_how_many_to_remove()
 {
     //Calculate how many to remove
-    uint64_t origRemoveNum = (double)solver->longRedCls.size() *solver->conf.ratioRemoveClauses;
+    long long origRemoveNum = (double)solver->longRedCls.size() *solver->conf.ratioRemoveClauses;
 
     //If there is a ratio limit, and we are over it
     //then increase the removeNum accordingly
@@ -448,11 +448,14 @@ uint64_t ReduceDB::calc_how_many_to_remove()
         * (double)nbReduceDB
         * solver->conf.maxNumRedsRatio;
 
-    //To guard against infinity and undefined cast to integer
-    if (maxToHave > 1000.0*1000.0*1000.0) {
-        maxToHave = 1000.0*1000.0*1000.0;
+    //To guard against memout
+    if (maxToHave > 1000.0*1000.0) {
+        maxToHave = 1000.0*1000.0;
     }
-    uint64_t removeNum = std::max<long long>((long long)origRemoveNum, (long long)solver->longRedCls.size()-(long long)maxToHave);
+    uint64_t removeNum = std::max<long long>(
+        (long long)origRemoveNum
+        , (long long)solver->longRedCls.size()-(long long)maxToHave
+    );
 
     if (removeNum != origRemoveNum) {
         if (solver->conf.verbosity >= 2) {
