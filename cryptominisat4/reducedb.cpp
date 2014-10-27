@@ -181,25 +181,25 @@ ReduceDB::ReduceDB(Solver* _solver) :
 void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
 {
     switch (clean_type) {
-        case clean_glue_based : {
+		case ClauseCleaningTypes::clean_glue_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
             tmpStats.glueBasedClean = 1;
             break;
         }
 
-        case clean_size_based : {
+        case ClauseCleaningTypes::clean_size_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
             tmpStats.sizeBasedClean = 1;
             break;
         }
 
-        case clean_sum_activity_based : {
+        case ClauseCleaningTypes::clean_sum_activity_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             tmpStats.actBasedClean = 1;
             break;
         }
 
-        case clean_sum_prop_confl_based : {
+        case ClauseCleaningTypes::clean_sum_prop_confl_based : {
             std::stable_sort(solver->longRedCls.begin()
                 , solver->longRedCls.end()
                 , SortRedClsPropConfl(solver->cl_alloc
@@ -211,7 +211,7 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
             break;
         }
 
-        case clean_sum_confl_depth_based : {
+        case ClauseCleaningTypes::clean_sum_confl_depth_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
             tmpStats.propConflDepthBasedClean = 1;
             break;
