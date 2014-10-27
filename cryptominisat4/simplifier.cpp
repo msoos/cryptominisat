@@ -747,6 +747,7 @@ bool Simplifier::eliminate_vars()
     size_t wenThrough = 0;
     time_spent_on_calc_otf_update = 0;
     num_otf_update_until_now = 0;
+    int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
     limit_to_decrease = &norm_varelim_time_limit;
     cl_to_free_later.clear();
 
@@ -789,7 +790,7 @@ end:
     free_clauses_to_free();
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
-    const double time_remain = (double)*limit_to_decrease/(double)norm_varelim_time_limit;
+    const double time_remain = (double)*limit_to_decrease/(double)orig_norm_varelim_time_limit;
 
     if (solver->conf.verbosity >= 2) {
         cout
