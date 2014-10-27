@@ -272,7 +272,7 @@ class Solver : public Searcher
         void print_min_stats() const;
         void print_all_stats() const;
 
-        lbool simplify_problem();
+        lbool simplify_problem(const bool startup);
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);

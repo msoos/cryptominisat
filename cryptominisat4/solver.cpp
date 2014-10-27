@@ -1398,7 +1398,7 @@ lbool Solver::solve()
         && nVars() > 0
         && conf.regularly_simplify_problem
     ) {
-        status = simplify_problem();
+        status = simplify_problem(true);
     }
 
     if (status == l_Undef) {
@@ -1603,7 +1603,7 @@ lbool Solver::iterate_until_solved()
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         if (conf.regularly_simplify_problem) {
-            status = simplify_problem();
+            status = simplify_problem(false);
         }
     }
 
@@ -1642,7 +1642,7 @@ void Solver::checkDecisionVarCorrectness() const
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
-lbool Solver::simplify_problem()
+lbool Solver::simplify_problem(const bool startup)
 {
     assert(ok);
     test_all_clause_attached();
@@ -1658,6 +1658,8 @@ lbool Solver::simplify_problem()
     }
 
     if (conf.doFindComps
+        && false
+        && !startup
         && get_num_free_vars() < conf.compVarLimit
         && !must_interrupt_asap()
     ) {
@@ -1668,6 +1670,7 @@ lbool Solver::simplify_problem()
     }
 
     if (conf.doCompHandler
+        && !startup
         && get_num_free_vars() < conf.compVarLimit
         && solveStats.numSimplify >= conf.handlerFromSimpNum
         //Only every 2nd, since it can be costly to find parts
@@ -1714,11 +1717,17 @@ lbool Solver::simplify_problem()
 
     //PROBE
     update_dominators();
-    if (conf.doIntreeProbe && !intree->intree_probe()) {
+    if (conf.doIntreeProbe
+        && !startup
+        && !intree->intree_probe()
+    ) {
         goto end;
     }
 
-    if (conf.doProbe && !prober->probe()) {
+    if (conf.doProbe
+        && !startup
+        && !prober->probe()
+    ) {
         goto end;
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1729,10 +1738,16 @@ lbool Solver::simplify_problem()
     }
 
     //Don't replace first -- the stamps won't work so well
-    if (conf.do_distill_clauses && !strengthener->strengthen(true)) {
+    if (conf.do_distill_clauses
+        && !startup
+        && !strengthener->strengthen(true)
+    ) {
         goto end;
     }
-    if (conf.do_distill_clauses && !distiller->distill(true)) {
+    if (conf.do_distill_clauses
+        && !startup
+        && !distiller->distill(true)
+    ) {
         goto end;
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1761,8 +1776,12 @@ lbool Solver::simplify_problem()
     }
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.perform_occur_based_simp && simplifier && !simplifier->simplify())
+    if (conf.perform_occur_based_simp
+        && simplifier
+        && !simplifier->simplify(startup)
+    ) {
         goto end;
+    }
 
     //Treat implicits
     if (conf.doStrSubImplicit) {
@@ -1782,10 +1801,16 @@ lbool Solver::simplify_problem()
     //Clean cache before distill
     if (conf.doCache && !implCache.clean(this))
         goto end;
-    if (conf.do_distill_clauses && !strengthener->strengthen(true)) {
+    if (conf.do_distill_clauses
+        && !startup
+        && !strengthener->strengthen(true)
+    ) {
         goto end;
     }
-    if (conf.do_distill_clauses && !distiller->distill(true)) {
+    if (conf.do_distill_clauses
+        && !startup
+        && !distiller->distill(true)
+    ) {
         goto end;
     }
     if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1802,8 +1827,11 @@ lbool Solver::simplify_problem()
         }
     }
 
-    if (conf.doSortWatched)
+    if (conf.doSortWatched
+        && !startup
+    ) {
         sortWatched();
+    }
 
     //Delete and disable cache if too large
     if (conf.doCache) {

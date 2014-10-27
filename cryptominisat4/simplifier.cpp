@@ -878,7 +878,7 @@ bool Simplifier::fill_occur_and_print_stats()
 }
 
 
-bool Simplifier::simplify()
+bool Simplifier::simplify(const bool startup)
 {
     assert(solver->okay());
     assert(toClear.empty());
@@ -924,6 +924,7 @@ bool Simplifier::simplify()
 
     #ifdef USE_M4RI
     if (solver->conf.doFindXors
+        && !startup
         && xorFinder != NULL
         && !xorFinder->findXors()
     ) {
@@ -952,13 +953,20 @@ bool Simplifier::simplify()
         goto end;
     }
 
-    if (!bva->bounded_var_addition()
-        || solver->must_interrupt_asap()
+    if (!startup
+        && !bva->bounded_var_addition()
     ) {
         goto end;
     }
 
-    if (solver->conf.doCache && solver->conf.doGateFind) {
+    if (solver->must_interrupt_asap()) {
+        goto end;
+    }
+
+    if (solver->conf.doCache
+        && !startup
+        && solver->conf.doGateFind
+    ) {
         if (!gateFinder->doAll()
             || solver->must_interrupt_asap()
         ) {

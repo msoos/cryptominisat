@@ -94,7 +94,7 @@ public:
     ~Simplifier();
 
     //Called from main
-    bool simplify();
+    bool simplify(const bool startup);
     void new_var(const Var orig_outer);
     void new_vars(const size_t n);
     void save_on_var_memory();
