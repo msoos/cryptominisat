@@ -997,7 +997,6 @@ lbool Searcher::search()
             }
         }
 
-        again:
         //Decision level is higher than 1, so must do normal propagation
         confl = propagate(
             #ifdef STATS_NEEDED
