@@ -221,7 +221,7 @@ void Main::printResultFunc(
             for (uint32_t var = 0; var < solver->nVars(); var++) {
                 if (solver->get_model()[var] != l_Undef) {
                     *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
-				}
+                }
             }
             *os << " 0" << endl;
         } else {
