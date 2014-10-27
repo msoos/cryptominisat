@@ -124,7 +124,6 @@ class SolverConf
         double    clean_prop_multiplier;
         int       doPreClauseCleanPropAndConfl;
         unsigned  long long preClauseCleanLimit;
-        unsigned  long long preCleanMinConflTime;
         int       doClearStatEveryClauseCleaning;
         int       dont_remove_fresh_glue2;
         double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round

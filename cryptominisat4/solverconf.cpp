@@ -42,7 +42,6 @@ SolverConf::SolverConf() :
         , clean_prop_multiplier(1.0)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
-        , preCleanMinConflTime(10000)
         , doClearStatEveryClauseCleaning(true)
         , dont_remove_fresh_glue2(false)
         , ratioRemoveClauses(0.5)
