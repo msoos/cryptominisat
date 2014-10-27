@@ -22,6 +22,7 @@
 #include "clausecleaner.h"
 #include "clauseallocator.h"
 #include "solver.h"
+#include "solvertypesmini.h"
 
 using namespace CMSat;
 
@@ -222,8 +223,8 @@ inline bool ClauseCleaner::clean_clause(ClOffset offset)
     const uint32_t origSize = cl.size();
 
     (*solver->drup) << deldelay << cl << fin;
-    Lit origLit1 = cl[0];
-    Lit origLit2 = cl[1];
+    const Lit origLit1 = cl[0];
+    const Lit origLit2 = cl[1];
 
     Lit *i, *j, *end;
     uint32_t num = 0;
