@@ -181,7 +181,7 @@ ReduceDB::ReduceDB(Solver* _solver) :
 void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
 {
     switch (clean_type) {
-		case ClauseCleaningTypes::clean_glue_based : {
+        case ClauseCleaningTypes::clean_glue_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
             tmpStats.glueBasedClean = 1;
             break;
