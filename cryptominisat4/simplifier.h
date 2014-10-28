@@ -381,7 +381,7 @@ private:
         const Watched qs
         , const Lit posLit
     );
-    bool reverse_vivification_of_dummy(
+    bool reverse_distillation_of_dummy(
         const Watched ps
         , const Watched qs
         , const Lit posLit

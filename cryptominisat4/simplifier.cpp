@@ -2182,7 +2182,7 @@ bool Simplifier::add_neg_lits_to_dummy_and_seen(
     return false;
 }
 
-bool Simplifier::reverse_vivification_of_dummy(
+bool Simplifier::reverse_distillation_of_dummy(
     const Watched ps
     , const Watched qs
     , const Lit posLit
@@ -2285,7 +2285,7 @@ bool Simplifier::resolve_clauses(
     toClear = dummy;
 
     if (!tautological && aggressive) {
-        tautological = reverse_vivification_of_dummy(ps, qs, posLit);
+        tautological = reverse_distillation_of_dummy(ps, qs, posLit);
     }
 
     if (!tautological && aggressive
