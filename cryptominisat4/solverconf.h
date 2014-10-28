@@ -203,6 +203,7 @@ class SolverConf
         int      doVarElim;          ///<Perform variable elimination
         unsigned varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
+        long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         int      updateVarElimComplexityOTF;
         unsigned updateVarElimComplexityOTF_limitvars;
@@ -211,6 +212,11 @@ class SolverConf
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
         int      skip_some_bve_resolvents;
+
+        //Subs, str limits for simplifier
+        long long subsumption_time_limitM;
+        long long strengthening_time_limitM;
+        long long aggressive_elim_time_limitM;
 
         //BVA
         int      do_bva;

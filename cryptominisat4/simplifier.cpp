@@ -1228,12 +1228,11 @@ void Simplifier::sanityCheckElimedVars()
 
 void Simplifier::set_limits()
 {
-    subsumption_time_limit     = 850LL*1000LL*1000LL;
-    strengthening_time_limit   = 400LL*1000LL*1000LL;
-//     numMaxTriSub      = 600LL*1000LL*1000LL;
+    subsumption_time_limit     = 850LL*1000LL*solver->conf.subsumption_time_limitM;
+    strengthening_time_limit   = 400LL*1000LL*solver->conf.strengthening_time_limitM;;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM;
-    empty_varelim_time_limit   = 200LL*1000LL*1000LL;
-    aggressive_elim_time_limit = 300LL *1000LL*1000LL;
+    empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM;
+    aggressive_elim_time_limit = 300LL *1000LL*solver->conf.aggressive_elim_time_limitM;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();

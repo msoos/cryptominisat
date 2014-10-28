@@ -121,6 +121,7 @@ SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_cutoff_too_many_clauses(40)
         , do_empty_varelim (true)
+        , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(10)
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)
@@ -129,6 +130,11 @@ SolverConf::SolverConf() :
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.70)
         , skip_some_bve_resolvents(true)
+
+        //Subs, str limits for simplifier
+        , subsumption_time_limitM(300)
+        , strengthening_time_limitM(300)
+        , aggressive_elim_time_limitM(300)
 
         //Bounded variable addition
         , do_bva(true)
