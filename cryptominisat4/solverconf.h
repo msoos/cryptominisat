@@ -238,6 +238,7 @@ class SolverConf
         unsigned   maxCacheSizeMB;
         long long otf_hyper_time_limitM;
         double  otf_hyper_ratio_limit;
+        long long single_probe_time_limitM;
 
         //XORs
         int      doFindXors;

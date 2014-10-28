@@ -682,7 +682,7 @@ bool Prober::try_this(const Lit lit, const bool first)
         const uint64_t timeout =
             solver->propStats.otfHyperTime
             + solver->propStats.bogoProps
-            + 1600ULL*1000ULL*1000ULL;
+            + 1000ULL*1000ULL*solver->conf.single_probe_time_limitM;
 
         //DFS is expensive, actually. So do BFS 50% of the time
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
