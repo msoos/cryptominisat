@@ -195,7 +195,7 @@ public:
 
 private:
 
-    int64_t maxTimeFindXors;
+    int64_t xor_find_limit;
 
     //Find XORs
     void findXor(vector<Lit>& lits, cl_abst_type abst);
