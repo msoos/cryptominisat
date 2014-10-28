@@ -132,7 +132,7 @@ void Simplifier::check_delete_gatefinder()
     }
 }
 
-void Simplifier::new_var(const Var orig_outer)
+void Simplifier::new_var(const Var /*orig_outer*/)
 {
 }
 
