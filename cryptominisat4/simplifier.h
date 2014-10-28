@@ -168,6 +168,7 @@ private:
     SubsumeStrengthen* subsumeStrengthen;
     friend class BVA;
     BVA* bva;
+    bool startup = false;
 
     //debug
     void check_elimed_vars_are_unassignedAndStats() const;
@@ -227,7 +228,7 @@ private:
         , bool irred
         , bool alsoOccur
     );
-    void setLimits();
+    void set_limits();
 
     //Finish-up
     void remove_by_drup_recently_blocked_clauses(size_t origBlockedSize);

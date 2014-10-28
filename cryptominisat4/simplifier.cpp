@@ -878,8 +878,9 @@ bool Simplifier::fill_occur_and_print_stats()
 }
 
 
-bool Simplifier::simplify(const bool startup)
+bool Simplifier::simplify(const bool _startup)
 {
+    startup = _startup;
     assert(solver->okay());
     assert(toClear.empty());
 
@@ -909,7 +910,7 @@ bool Simplifier::simplify(const bool startup)
         return solver->okay();
     }
 
-    setLimits();
+    set_limits();
     runStats.origNumFreeVars = solver->get_num_free_vars();
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
@@ -1225,7 +1226,7 @@ void Simplifier::sanityCheckElimedVars()
     }
 }
 
-void Simplifier::setLimits()
+void Simplifier::set_limits()
 {
     subsumption_time_limit     = 850LL*1000LL*1000LL;
     strengthening_time_limit   = 400LL*1000LL*1000LL;
@@ -1648,7 +1649,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     }
 
     //Check if we should do aggressive check or not
-    bool aggressive = (aggressive_elim_time_limit > 0);
+    const bool aggressive = (aggressive_elim_time_limit > 0 && !startup);
     runStats.usedAggressiveCheckToELim += aggressive;
 
     //set-up
