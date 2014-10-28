@@ -236,6 +236,8 @@ class SolverConf
         int      doCache;
         unsigned   cacheUpdateCutoff;
         unsigned   maxCacheSizeMB;
+        long long otf_hyper_time_limitM;
+        double  otf_hyper_ratio_limit;
 
         //XORs
         int      doFindXors;

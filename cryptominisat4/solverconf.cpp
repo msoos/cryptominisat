@@ -154,6 +154,8 @@ SolverConf::SolverConf() :
         , doCache          (true)
         , cacheUpdateCutoff(2000)
         , maxCacheSizeMB   (2048)
+        , otf_hyper_time_limitM(340)
+        , otf_hyper_ratio_limit(0.5) //if higher(closer to 1), we allow for less hyper-bin addition, i.e. we are stricter
 
         //XOR
         , doFindXors       (true)
