@@ -118,7 +118,7 @@ bool InTree::intree_probe()
     }
 
     double myTime = cpuTime();
-    bogoprops_to_use = solver->conf.intree_timeoutM*1000ULL*1000ULL;
+    bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL;
     bogoprops_remain = bogoprops_to_use;
 
     fill_roots();

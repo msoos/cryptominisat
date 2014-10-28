@@ -146,8 +146,8 @@ SolverConf::SolverConf() :
         //Probing
         , doProbe          (true)
         , doIntreeProbe    (true)
-        , probe_bogoprops_timeoutM  (100ULL)
-        , intree_timeoutM(100ULL)
+        , probe_bogoprops_time_limitM  (100ULL)
+        , intree_time_limitM(100ULL)
         , doBothProp       (true)
         , doTransRed       (true)
         , doStamp          (true)
@@ -186,8 +186,8 @@ SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , max_props_distill_long_irred_clsM(20ULL)
-        , watch_cache_stamp_based_str_timeoutM(30LL)
-        , distill_timeoutM(120LL)
+        , watch_cache_stamp_based_str_time_limitM(30LL)
+        , distill_time_limitM(120LL)
 
         //Memory savings
         , doRenumberVars   (true)
@@ -204,7 +204,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
-        , subsume_implicit_timeoutM(400LL)
+        , subsume_implicit_time_limitM(400LL)
         , strengthen_implicit_timeavailableM(200LL)
         , doCalcReach      (true)
 

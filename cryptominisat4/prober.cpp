@@ -124,7 +124,7 @@ void Prober::reset_stats_and_state()
 
 uint64_t Prober::calc_numpropstodo()
 {
-    uint64_t numPropsTodo = solver->conf.probe_bogoprops_timeoutM*1000ULL*1000ULL;
+    uint64_t numPropsTodo = solver->conf.probe_bogoprops_time_limitM*1000ULL*1000ULL;
 
     //Bogoprops for hyper-bin is MUCH more precise, so if no propagateFull???
     //then mush less bogoProps will lead to the same amount of time

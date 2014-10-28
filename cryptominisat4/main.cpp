@@ -400,13 +400,13 @@ void Main::add_supported_options()
         , "Do propagations solely to propagate the same value twice")
     ("probe", po::value(&conf.doProbe)->default_value(conf.doProbe)
         , "Carry out probing")
-    ("probemaxm", po::value(&conf.probe_bogoprops_timeoutM)->default_value(conf.probe_bogoprops_timeoutM)
+    ("probemaxm", po::value(&conf.probe_bogoprops_time_limitM)->default_value(conf.probe_bogoprops_time_limitM)
       , "Time in mega-bogoprops to perform probing")
     ("transred", po::value(&conf.doTransRed)->default_value(conf.doTransRed)
         , "Remove useless binary clauses (transitive reduction)")
     ("intree", po::value(&conf.doIntreeProbe)->default_value(conf.doIntreeProbe)
         , "Carry out intree-based probing")
-    ("intreemaxm", po::value(&conf.intree_timeoutM)->default_value(conf.intree_timeoutM)
+    ("intreemaxm", po::value(&conf.intree_time_limitM)->default_value(conf.intree_time_limitM)
       , "Time in mega-bogoprops to perform intree probing")
     ;
 
@@ -619,9 +619,9 @@ void Main::add_supported_options()
         , "Regularly execute clause distillation")
     ("distillmaxm", po::value(&conf.max_props_distill_long_irred_clsM)->default_value(conf.max_props_distill_long_irred_clsM)
         , "Maximum number of Mega-bogoprops(~time) to spend on viviying long irred cls by enqueueing and propagating")
-    ("distillto", po::value(&conf.distill_timeoutM)->default_value(conf.distill_timeoutM)
+    ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
-    ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_timeoutM)->default_value(conf.watch_cache_stamp_based_str_timeoutM)
+    ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
         , "Maximum number of Mega-bogoprops(~time) to spend on viviying long irred cls through watches, cache and stamps")
     ("sortwatched", po::value(&conf.doSortWatched)->default_value(conf.doSortWatched)
         , "Sort watches according to size")
@@ -631,7 +631,7 @@ void Main::add_supported_options()
         , "Save memory by deallocating variable space after renumbering. Only works if renumbering is active.")
     ("implicitmanip", po::value(&conf.doStrSubImplicit)->default_value(conf.doStrSubImplicit)
         , "Subsume and strengthen implicit clauses with each other")
-    ("implsubsto", po::value(&conf.subsume_implicit_timeoutM)->default_value(conf.subsume_implicit_timeoutM)
+    ("implsubsto", po::value(&conf.subsume_implicit_time_limitM)->default_value(conf.subsume_implicit_time_limitM)
         , "Timeout (in bogoprop Millions) of implicit subsumption")
     ("implstrto", po::value(&conf.strengthen_implicit_timeavailableM)->default_value(conf.strengthen_implicit_timeavailableM)
         , "Timeout (in bogoprop Millions) of implicit strengthening")
@@ -987,7 +987,7 @@ void Main::manually_parse_some_options()
     if (satcomp) {
         conf.varElimRatioPerIter = 1.0;
         conf.simplify_at_startup = true;
-        conf.probe_bogoprops_timeoutM *= 2;
+        conf.probe_bogoprops_time_limitM *= 2;
     }
 }
 

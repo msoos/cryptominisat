@@ -129,7 +129,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doGateFind = 0;
             conf.more_red_minim_limit_cache = 400;
             conf.more_red_minim_limit_binary = 200;
-            conf.probe_bogoprops_timeoutM = 3500;
+            conf.probe_bogoprops_time_limitM = 3500;
             conf.restartType = CMSat::restart_type_agility;
             conf.ratioRemoveClauses = 0.6;
             break;
@@ -148,7 +148,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doGateFind = 0;
             conf.more_red_minim_limit_cache = 100;
             conf.more_red_minim_limit_binary = 100;
-            conf.probe_bogoprops_timeoutM = 4000;
+            conf.probe_bogoprops_time_limitM = 4000;
             conf.ratioRemoveClauses = 0.6;
             break;
         }

@@ -228,8 +228,8 @@ class SolverConf
         //Probing
         int      doProbe;
         int      doIntreeProbe;
-        unsigned long long   probe_bogoprops_timeoutM;
-        unsigned long long   intree_timeoutM;
+        unsigned long long   probe_bogoprops_time_limitM;
+        unsigned long long   intree_time_limitM;
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;
@@ -268,8 +268,8 @@ class SolverConf
         //Distillation
         int      do_distill_clauses;
         unsigned long long max_props_distill_long_irred_clsM;
-        long watch_cache_stamp_based_str_timeoutM;
-        long long distill_timeoutM;
+        long watch_cache_stamp_based_str_time_limitM;
+        long long distill_time_limitM;
 
         //Memory savings
         int       doRenumberVars;
@@ -287,7 +287,7 @@ class SolverConf
         int      doExtBinSubs;
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
-        long long  subsume_implicit_timeoutM;
+        long long  subsume_implicit_time_limitM;
         long long  strengthen_implicit_timeavailableM;
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
