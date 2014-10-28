@@ -203,7 +203,7 @@ bool Distiller::distill_long_irred_cls()
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
-    uint64_t maxNumProps = solver->conf.max_props_distill_long_irred_clsM*1000LL*1000ULL;
+    uint64_t maxNumProps = solver->conf.distill_long_irred_cls_time_limitM*1000LL*1000ULL;
     if (solver->litStats.irredLits + solver->litStats.redLits < 500000)
         maxNumProps *=2;
 

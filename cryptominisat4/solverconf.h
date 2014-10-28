@@ -267,7 +267,7 @@ class SolverConf
 
         //Distillation
         int      do_distill_clauses;
-        unsigned long long max_props_distill_long_irred_clsM;
+        unsigned long long distill_long_irred_cls_time_limitM;
         long watch_cache_stamp_based_str_time_limitM;
         long long distill_time_limitM;
 
@@ -280,7 +280,7 @@ class SolverConf
         int       doCompHandler;
         unsigned  handlerFromSimpNum;
         size_t    compVarLimit;
-        unsigned long long  compFindLimitMega;
+        unsigned long long  comp_find_time_limitM;
 
 
         //Misc Optimisations
@@ -288,7 +288,7 @@ class SolverConf
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
-        long long  strengthen_implicit_timeavailableM;
+        long long  strengthen_implicit_time_limitM;
         int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //Gates
@@ -297,9 +297,9 @@ class SolverConf
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
         int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
-        long long gatefinder_maxtime;
-        long long max_time_shorten_with_gatesM;
-        long long max_time_remove_cl_with_gatesM;
+        long long gatefinder_time_limitM;
+        long long shorten_with_gates_time_limitM;
+        long long remove_cl_with_gates_time_limitM;
 
         //interrupting & dumping
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped

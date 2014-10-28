@@ -90,7 +90,8 @@ class CompFinder {
         vector<uint32_t> tomerge;
 
         //Keep track of time
-        uint64_t bogoprops;
+        long long bogoprops_remain;
+        long long orig_bogoprops;
         bool timedout;
 
         vector<uint16_t>& seen;

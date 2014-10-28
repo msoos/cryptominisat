@@ -47,8 +47,7 @@ using std::endl;
 //#define PART_FINDING
 
 CompFinder::CompFinder(Solver* _solver) :
-    bogoprops(0)
-    , timedout(false)
+    timedout(false)
     , seen(_solver->seen)
     , solver(_solver)
 {
@@ -61,7 +60,7 @@ void CompFinder::time_out_print(const double myTime) const
         << "c [comp] Timed out finding components "
         << "BP: "
         << std::setprecision(2) << std::fixed
-        << (double)bogoprops/(1000.0*1000.0)
+        << (double)(orig_bogoprops-bogoprops_remain)/(1000.0*1000.0)
         << "M"
         << solver->conf.print_times(cpuTime() - myTime)
         << endl;
@@ -132,7 +131,8 @@ bool CompFinder::find_components()
     }
 
     //Add the clauses to the sets
-    bogoprops = 0;
+    bogoprops_remain = solver->conf.comp_find_time_limitM*1000ULL*1000ULL;
+    orig_bogoprops = bogoprops_remain;
     timedout = false;
     add_clauses_to_component(solver->longIrredCls);
     addToCompImplicits();
@@ -144,7 +144,7 @@ bool CompFinder::find_components()
 void CompFinder::print_and_add_to_sql_result(const double myTime) const
 {
     const double time_used = cpuTime() - myTime;
-    const double time_remain = (double)bogoprops/(double)solver->conf.compFindLimitMega;
+    const double time_remain = (double)bogoprops_remain/((double)orig_bogoprops);
 
     if (timedout) {
         time_out_print(myTime);
@@ -158,7 +158,7 @@ void CompFinder::print_and_add_to_sql_result(const double myTime) const
             << "c [comp] Found component(s): " <<  reverseTable.size()
             << " BP: "
             << std::setprecision(2) << std::fixed
-            << (double)bogoprops/(1000.0*1000.0)<< "M"
+            << (double)(orig_bogoprops-bogoprops_remain)/(1000.0*1000.0)<< "M"
             << " T-r: " << time_remain*100.0 << "%"
             << solver->conf.print_times(time_used)
             << endl;
@@ -183,11 +183,11 @@ void CompFinder::print_and_add_to_sql_result(const double myTime) const
 void CompFinder::add_clauses_to_component(const vector<ClOffset>& cs)
 {
     for (ClOffset offset: cs) {
-        if (bogoprops/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
+        if (bogoprops_remain <= 0) {
             timedout = true;
             break;
         }
-        bogoprops += 10;
+        bogoprops_remain -= 10;
         Clause* cl = solver->cl_alloc.ptr(offset);
         add_clause_to_component(*cl);
     }
@@ -199,12 +199,12 @@ void CompFinder::addToCompImplicits()
     vector<uint16_t>& seen = solver->seen;
 
     for (size_t var = 0; var < solver->nVars(); var++) {
-        if (bogoprops/(1000ULL*1000ULL) > solver->conf.compFindLimitMega) {
+        if (bogoprops_remain <= 0) {
             timedout = true;
             break;
         }
 
-        bogoprops += 2;
+        bogoprops_remain -= 2;
         Lit lit(var, false);
         lits.clear();
         lits.push_back(lit);
@@ -216,7 +216,7 @@ void CompFinder::addToCompImplicits()
             if (ws.empty())
                 continue;
 
-            bogoprops += ws.size() + 10;
+            bogoprops_remain -= ws.size() + 10;
             for(watch_subarray::const_iterator
                 it2 = ws.begin(), end2 = ws.end()
                 ; it2 != end2
@@ -274,7 +274,7 @@ template<class T>
 bool CompFinder::belong_to_same_component(const T& cl)
 {
     if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
-        bogoprops += cl.size()/2 + 1;
+        bogoprops_remain -= cl.size()/2 + 1;
         const uint32_t comp = table[cl[0].var()];
 
         for (const Lit l: cl) {
@@ -292,7 +292,7 @@ bool CompFinder::belong_to_same_component(const T& cl)
 template<class T>
 void CompFinder::fill_newset_and_tomerge(const T& cl)
 {
-    bogoprops += cl.size()*2;
+    bogoprops_remain -= cl.size()*2;
 
     for (const Lit lit: cl) {
         if (table[lit.var()] != std::numeric_limits<uint32_t>::max()
@@ -341,7 +341,7 @@ void CompFinder::add_clause_to_component(const T& cl)
     }
 
     //Expensive merging coming up
-    bogoprops += 20;
+    bogoprops_remain -= 20;
 
     //Delete tables to merge and put their elements into newSet
     for (const uint32_t merge: tomerge) {
@@ -349,12 +349,12 @@ void CompFinder::add_clause_to_component(const T& cl)
         seen[merge] = 0;
 
         //Find in reverseTable
-        bogoprops += reverseTable.size()*2;
+        bogoprops_remain -= reverseTable.size()*2;
         map<uint32_t, vector<Var> >::iterator it2 = reverseTable.find(merge);
         assert(it2 != reverseTable.end());
 
         //Add them all
-        bogoprops += it2->second.size();
+        bogoprops_remain -= it2->second.size();
         newSet.insert(
             newSet.end()
             , it2->second.begin()
@@ -362,7 +362,7 @@ void CompFinder::add_clause_to_component(const T& cl)
         );
 
         //Delete this comp
-        bogoprops += reverseTable.size();
+        bogoprops_remain -= reverseTable.size();
         reverseTable.erase(it2);
         used_comp_no--;
     }
@@ -372,7 +372,7 @@ void CompFinder::add_clause_to_component(const T& cl)
         return;
 
     //Mark all lits not belonging to seen components as belonging to comp_no
-    bogoprops += newSet.size();
+    bogoprops_remain -= newSet.size();
     for (const Var v: newSet) {
         table[v] = comp_no;
     }

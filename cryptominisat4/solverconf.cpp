@@ -185,7 +185,7 @@ SolverConf::SolverConf() :
 
         //Distillation
         , do_distill_clauses(true)
-        , max_props_distill_long_irred_clsM(20ULL)
+        , distill_long_irred_cls_time_limitM(20ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
 
@@ -198,14 +198,14 @@ SolverConf::SolverConf() :
         , doCompHandler    (true)
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
-        , compFindLimitMega (500)
+        , comp_find_time_limitM (500)
 
         //Misc optimisations
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(400LL)
-        , strengthen_implicit_timeavailableM(200LL)
+        , strengthen_implicit_time_limitM(200LL)
         , doCalcReach      (true)
 
         //Gates
@@ -214,9 +214,9 @@ SolverConf::SolverConf() :
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)
-        , gatefinder_maxtime(200)
-        , max_time_shorten_with_gatesM(200)
-        , max_time_remove_cl_with_gatesM(200)
+        , gatefinder_time_limitM(200)
+        , shorten_with_gates_time_limitM(200)
+        , remove_cl_with_gates_time_limitM(200)
 
         //Misc
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())

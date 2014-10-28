@@ -87,7 +87,7 @@ void GateFinder::find_or_gates_and_update_stats()
     assert(solver->ok);
 
     double myTime = cpuTime();
-    const int64_t orig_numMaxGateFinder = 100LL*1000LL*solver->conf.gatefinder_maxtime;
+    const int64_t orig_numMaxGateFinder = 100LL*1000LL*solver->conf.gatefinder_time_limitM;
     numMaxGateFinder = orig_numMaxGateFinder;
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
@@ -155,7 +155,7 @@ void GateFinder::clearIndexes()
 bool GateFinder::shorten_with_all_or_gates()
 {
     const double myTime = cpuTime();
-    const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*solver->conf.max_time_shorten_with_gatesM;
+    const int64_t orig_numMaxShortenWithGates = 100LL*1000LL*solver->conf.shorten_with_gates_time_limitM;
     numMaxShortenWithGates = orig_numMaxShortenWithGates;
     simplifier->limit_to_decrease = &numMaxShortenWithGates;
     runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
@@ -197,7 +197,7 @@ bool GateFinder::shorten_with_all_or_gates()
 
 bool GateFinder::remove_clauses_with_all_or_gates()
 {
-    const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*solver->conf.max_time_remove_cl_with_gatesM;
+    const int64_t orig_numMaxClRemWithGates = 100LL*1000LL*solver->conf.remove_cl_with_gates_time_limitM;
     numMaxClRemWithGates = orig_numMaxClRemWithGates;
     simplifier->limit_to_decrease = &numMaxClRemWithGates;
     const double myTime = cpuTime();

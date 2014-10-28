@@ -744,7 +744,7 @@ bool Strengthener::strengthen_implicit()
     str_impl_data.clear();
 
     const size_t origTrailSize = solver->trail_size();
-    timeAvailable = 1000LL*1000LL*solver->conf.strengthen_implicit_timeavailableM;
+    timeAvailable = 1000LL*1000LL*solver->conf.strengthen_implicit_time_limitM;
     const int64_t orig_time = timeAvailable;
     double myTime = cpuTime();
 
