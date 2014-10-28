@@ -161,6 +161,7 @@ SolverConf::SolverConf() :
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10LL*1000LL*1000LL)
+        , xor_finder_time_limitM(60)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)

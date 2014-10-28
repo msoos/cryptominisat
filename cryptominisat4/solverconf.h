@@ -243,6 +243,7 @@ class SolverConf
         int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
         unsigned long long  maxXORMatrix;
+        long long xor_finder_time_limitM;
 
         //Var-replacement
         int doFindAndReplaceEqLits;

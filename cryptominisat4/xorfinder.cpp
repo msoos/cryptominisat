@@ -45,7 +45,7 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
 
 bool XorFinder::findXors()
 {
-    const int64_t orig_max_time_find_xors = 200LL*1000LL*1000LL;
+    const int64_t orig_max_time_find_xors = 1000LL*1000LL*solver->conf.xor_finder_time_limitM;
     maxTimeFindXors = orig_max_time_find_xors;
     double myTime = cpuTime();
     numCalls++;
