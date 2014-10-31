@@ -54,7 +54,6 @@ class Main
         void check_options_correctness();
         void manually_parse_some_options();
         void parse_var_elim_strategy();
-        void parse_cleaning_type();
         void handle_drup_option();
         void parse_restart_type();
         void parse_polarity_type();

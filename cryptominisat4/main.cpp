@@ -322,18 +322,10 @@ void Main::add_supported_options()
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
-    ("ltclean", po::value(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
-        , "Remove at least this ratio of redundant clauses when doing redundant clause-cleaning")
-    ("clean", po::value(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
-        , "Metric to use to clean clauses: 'size', 'glue', 'activity'. 'prconf' for sum of propagations and conflicts, 'confdep' for (propagations+conflicts)/(depth at which they were caused)")
-    ("noremfreshgl2", po::value(&conf.dont_remove_fresh_glue2)->default_value(conf.dont_remove_fresh_glue2)
-        , "Don't remove glue 2 claues that are fresh")
     ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("lockuip", po::value(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
-    ("locktop", po::value(&conf.lock_topclean_per_dbclean)->default_value(conf.lock_topclean_per_dbclean)
-        , "How many clauses should be locked into DB per cleaning based on the best uncleaned clauses as per selected heuristic")
     ("perfmult", po::value(&conf.multiplier_perf_values_after_cl_clean)->default_value(conf.multiplier_perf_values_after_cl_clean, s_perf_multip.str())
         , "Multiply clause performance values by this number after every clause cleaning")
     ("clearstat", po::value(&conf.doClearStatEveryClauseCleaning)->default_value(conf.doClearStatEveryClauseCleaning)
@@ -855,33 +847,6 @@ void Main::handle_drup_option()
     }
 }
 
-void Main::parse_cleaning_type()
-{
-    if (typeclean == getNameOfCleanType(clean_glue_based)) {
-        conf.clauseCleaningType = clean_glue_based;
-
-    } else if (typeclean == getNameOfCleanType(clean_size_based)) {
-        conf.clauseCleaningType = clean_size_based;
-
-    } else if (typeclean == getNameOfCleanType(clean_sum_prop_confl_based)) {
-        conf.clauseCleaningType = clean_sum_prop_confl_based;
-
-    } else if (typeclean == getNameOfCleanType(clean_sum_confl_depth_based)) {
-        conf.clauseCleaningType = clean_sum_confl_depth_based;
-
-    } else if (typeclean == getNameOfCleanType(clean_sum_activity_based)) {
-        conf.clauseCleaningType = clean_sum_activity_based;
-
-    } else {
-        std::cerr
-        << "ERROR: Cannot parse option given to '--clean'. It's '"
-        << typeclean << "'" << " but that none of the possiblities listed."
-        << endl;
-
-        std::exit(-1);
-    }
-}
-
 void Main::parse_var_elim_strategy()
 {
     if (var_elim_strategy == getNameOfElimStrategy(elimstrategy_heuristic)) {
@@ -964,7 +929,6 @@ void Main::manually_parse_some_options()
         throw WrongParam("maxdump", "--dumpred <filename> must be activated if issuing --maxdump <size>");
     }
 
-    parse_cleaning_type();
     parse_restart_type();
     parse_var_elim_strategy();
 

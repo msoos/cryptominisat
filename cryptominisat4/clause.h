@@ -133,6 +133,7 @@ struct ClauseStats
     #endif
     uint32_t used_for_uip_creation; ///Number of times the claue was using during 1st UIP conflict generation
     bool locked;
+    bool marked_for_keep;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses

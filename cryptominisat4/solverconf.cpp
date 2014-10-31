@@ -37,14 +37,11 @@ SolverConf::SolverConf() :
         , do_calc_polarity_every_time(true)
 
         //Clause cleaning
-        , clauseCleaningType(clean_sum_prop_confl_based)
         , clean_confl_multiplier(0.2)
         , clean_prop_multiplier(1.0)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
-        , dont_remove_fresh_glue2(false)
-        , ratioRemoveClauses(0.6)
         , numCleanBetweenSimplify(2)
         , startClean(8000)
         , increaseClean(1.1)
@@ -52,7 +49,6 @@ SolverConf::SolverConf() :
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
         , lock_uip_per_dbclean(500)
-        , lock_topclean_per_dbclean(0)
         , multiplier_perf_values_after_cl_clean(0)
 
         //Restarting
@@ -228,6 +224,12 @@ SolverConf::SolverConf() :
         , sync_every_confl(6000)
         , clean_after_perc_zero_depth_assigns(0.015)
 {
+
+    ratio_keep_clauses[clean_glue_based] = 0.3;
+    ratio_keep_clauses[clean_size_based] = 0;
+    ratio_keep_clauses[clean_sum_prop_confl_based] = 0.1;
+    ratio_keep_clauses[clean_sum_confl_depth_based] = 0;
+    ratio_keep_clauses[clean_sum_activity_based] = 0;
 }
 
 

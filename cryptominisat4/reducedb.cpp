@@ -28,22 +28,14 @@
 
 using namespace CMSat;
 
-struct MySorter
-{
-    virtual ~MySorter()
-    {}
-
-    virtual bool operator()(const ClOffset, const ClOffset) const = 0;
-};
-
-struct SortRedClsGlue: public MySorter
+struct SortRedClsGlue
 {
     SortRedClsGlue(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const override
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -55,22 +47,22 @@ struct SortRedClsGlue: public MySorter
         assert(xsize > 2 && ysize > 2);
 
         //First tie: glue
-        if (x->stats.glue > y->stats.glue) return 1;
-        if (x->stats.glue < y->stats.glue) return 0;
+        if (x->stats.glue < y->stats.glue) return 1;
+        if (x->stats.glue > y->stats.glue) return 0;
 
         //Second tie: size
-        return xsize > ysize;
+        return xsize < ysize;
     }
 };
 
-struct SortRedClsSize: public MySorter
+struct SortRedClsSize
 {
     SortRedClsSize(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const override
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -82,21 +74,21 @@ struct SortRedClsSize: public MySorter
         assert(xsize > 2 && ysize > 2);
 
         //First tie: size
-        if (xsize > ysize) return 1;
-        if (xsize < ysize) return 0;
+        if (xsize < ysize) return 1;
+        if (xsize > ysize) return 0;
 
         //Second tie: glue
-        return x->stats.glue > y->stats.glue;
+        return x->stats.glue < y->stats.glue;
     }
 };
-struct SortRedClsAct: public MySorter
+struct SortRedClsAct
 {
     SortRedClsAct(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const override
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -108,14 +100,14 @@ struct SortRedClsAct: public MySorter
         assert(xsize > 2 && ysize > 2);
 
         //First tie: activity
-        if (x->stats.activity < y->stats.activity) return 1;
-        if (x->stats.activity > y->stats.activity) return 0;
+        if (x->stats.activity > y->stats.activity) return 1;
+        if (x->stats.activity < y->stats.activity) return 0;
 
         //Second tie: size
-        return xsize > ysize;
+        return xsize < ysize;
     }
 };
-struct SortRedClsPropConfl: public MySorter
+struct SortRedClsPropConfl
 {
     SortRedClsPropConfl(
         ClauseAllocator& _cl_alloc
@@ -130,7 +122,7 @@ struct SortRedClsPropConfl: public MySorter
     double confl_weight;
     double prop_weight;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const override
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -144,25 +136,25 @@ struct SortRedClsPropConfl: public MySorter
         const double x_useful = x->stats.weighted_prop_and_confl(prop_weight, confl_weight);
         const double y_useful = y->stats.weighted_prop_and_confl(prop_weight, confl_weight);
         if (x_useful != y_useful) {
-            return x_useful < y_useful;
+            return x_useful > y_useful;
         }
 
         //Second tie: UIP usage
         if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation) {
-            return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
+            return x->stats.used_for_uip_creation > y->stats.used_for_uip_creation;
         }
 
-        return x->size() > y->size();
+        return x->size() < y->size();
     }
 };
-struct SortRedClsConflDepth : public MySorter
+struct SortRedClsConflDepth
 {
     SortRedClsConflDepth(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const override
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -176,21 +168,21 @@ struct SortRedClsConflDepth : public MySorter
         if (x->stats.weighted_prop_and_confl(1.0, 1.0) == 0 && y->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
             return false;
 
-        if (x->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
-            return true;
         if (y->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
+            return true;
+        if (x->stats.weighted_prop_and_confl(1.0, 1.0) == 0)
             return false;
 
         const double x_useful = x->stats.calc_usefulness_depth();
         const double y_useful = y->stats.calc_usefulness_depth();
         if (x_useful != y_useful)
-            return x_useful < y_useful;
+            return x_useful > y_useful;
 
         //Second tie: UIP usage
         if (x->stats.used_for_uip_creation != y->stats.used_for_uip_creation)
-            return x->stats.used_for_uip_creation < y->stats.used_for_uip_creation;
+            return x->stats.used_for_uip_creation > y->stats.used_for_uip_creation;
 
-        return x->size() > y->size();
+        return x->size() < y->size();
     }
 };
 
@@ -199,24 +191,21 @@ ReduceDB::ReduceDB(Solver* _solver) :
 {
 }
 
-void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type)
+void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
 {
     switch (clean_type) {
         case ClauseCleaningTypes::clean_glue_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
-            tmpStats.glueBasedClean = 1;
             break;
         }
 
         case ClauseCleaningTypes::clean_size_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
-            tmpStats.sizeBasedClean = 1;
             break;
         }
 
         case ClauseCleaningTypes::clean_sum_activity_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
-            tmpStats.actBasedClean = 1;
             break;
         }
 
@@ -228,17 +217,16 @@ void ReduceDB::sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_t
                     , solver->conf.clean_prop_multiplier
                 )
             );
-            tmpStats.propConflBasedClean = 1;
             break;
         }
 
         case ClauseCleaningTypes::clean_sum_confl_depth_based : {
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
-            tmpStats.propConflDepthBasedClean = 1;
             break;
         }
 
         default: {
+            cout << "Unknown cleaning type: " << clean_type << endl;
             assert(false);
         }
     }
@@ -269,6 +257,14 @@ void ReduceDB::print_best_red_clauses_if_required() const
     }
 }
 
+void ReduceDB::unmark_keep_flags()
+{
+    for(ClOffset cl_off: solver->longRedCls) {
+        Clause* cl = solver->cl_alloc.ptr(cl_off);
+        cl->stats.marked_for_keep = false;
+    }
+}
+
 CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 {
     //Clean the clause database before doing cleaning
@@ -280,8 +276,8 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     CleaningStats tmpStats;
     tmpStats.origNumClauses = solver->longRedCls.size();
     tmpStats.origNumLits = solver->litStats.redLits;
-    uint64_t removeNum = calc_how_many_to_remove();
-    uint64_t sumConfl = solver->sumConflicts();
+
+    const uint64_t sumConfl = solver->sumConflicts();
 
     //Complete detach&reattach of OK clauses will be *much* faster
     CompleteDetachReatacher detachReattach(solver);
@@ -291,14 +287,15 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         lock_most_UIP_used_clauses();
     }
 
-    tmpStats.clauseCleaningType = solver->conf.clauseCleaningType;
-    sort_red_cls(tmpStats, solver->conf.clauseCleaningType);
-    print_best_red_clauses_if_required();
-    real_clean_clause_db(tmpStats, sumConfl, removeNum);
+    unmark_keep_flags();
 
-    if (lock_clauses_in) {
-        lock_in_top_N_uncleaned();
+    for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
+        const uint64_t keep_num = (double)solver->longRedCls.size()*solver->conf.ratio_keep_clauses[keep_type];
+        sort_red_cls(static_cast<ClauseCleaningTypes>(keep_type));
+        print_best_red_clauses_if_required();
+        mark_top_N_clauses(keep_num);
     }
+    real_clean_clause_db(tmpStats, sumConfl);
 
     //Reattach what's left
     detachReattach.reattachLongs();
@@ -323,30 +320,18 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     return tmpStats;
 }
 
-void ReduceDB::lock_in_top_N_uncleaned()
+void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
-    size_t locked = 0;
-    size_t skipped = 0;
-
-    long cutoff = (long)solver->longRedCls.size() - (long)solver->conf.lock_topclean_per_dbclean;
-    for(long i = (long)solver->longRedCls.size()-1
-        ; i >= 0 && i >= cutoff
-        ; i--
+    size_t marked = 0;
+    for(size_t i = 0
+        ; i < solver->longRedCls.size() && marked < keep_num
+        ; i++
     ) {
-        const ClOffset offs = solver->longRedCls[i];
-        Clause& cl = *solver->cl_alloc.ptr(offs);
-        if (!cl.stats.locked) {
-            cl.stats.locked = true;
-            locked++;
-        } else {
-            skipped++;
+        Clause* cl = solver->cl_alloc.ptr(solver->longRedCls[i]);
+        if (!cl->stats.marked_for_keep) {
+            marked++;
+            cl->stats.marked_for_keep = true;
         }
-    }
-
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [DBclean] TOP uncleaned"
-        << " locked: " << locked << " skipped: " << skipped << endl;
     }
 }
 
@@ -394,29 +379,23 @@ bool ReduceDB::red_cl_too_young(const Clause* cl)
             >= solver->sumConflicts();
 }
 
-bool ReduceDB::red_cl_introduced_since_last_reducedb(const Clause* cl)
-{
-    return cl->stats.introduced_at_conflict >= last_reducedb_num_conflicts;
-}
-
 void ReduceDB::real_clean_clause_db(
     CleaningStats& tmpStats
     , uint64_t sumConfl
-    , uint64_t removeNum
 ) {
     size_t i, j;
     for (i = j = 0
-        ; i < solver->longRedCls.size() && tmpStats.removed.num < removeNum
+        ; i < solver->longRedCls.size()
         ; i++
     ) {
         ClOffset offset = solver->longRedCls[i];
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 3);
 
-        //Don't delete if not aged long enough or locked
+        //Don't delete if not aged long enough, locked, or marked for keep
         if (red_cl_too_young(cl)
-             || (solver->conf.dont_remove_fresh_glue2 && cl->stats.glue == 2 && red_cl_introduced_since_last_reducedb(cl))
              || cl->stats.locked
+             || cl->stats.marked_for_keep
         ) {
             solver->longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
@@ -428,72 +407,10 @@ void ReduceDB::real_clean_clause_db(
         tmpStats.removed.incorporate(cl);
         tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
 
-        //free clause
         *solver->drup << del << *cl << fin;
         solver->cl_alloc.clauseFree(offset);
     }
-
-    //Count what is left
-    for (; i < solver->longRedCls.size(); i++) {
-        ClOffset offset = solver->longRedCls[i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-
-        //Stats Update
-        tmpStats.remain.incorporate(cl);
-        tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
-
-        if (cl->stats.introduced_at_conflict > sumConfl) {
-            cout
-            << "c DEBUG: solver->conflict introduction numbers are wrong."
-            << " according to CL, introduction: " << cl->stats.introduced_at_conflict
-            << " but we think max solver->confl: "  << sumConfl
-            << endl;
-        }
-        assert(cl->stats.introduced_at_conflict <= sumConfl);
-
-        solver->longRedCls[j++] = offset;
-    }
-
-    //Resize long redundant clause array
     solver->longRedCls.resize(solver->longRedCls.size() - (i - j));
-}
-
-uint64_t ReduceDB::calc_how_many_to_remove()
-{
-    //Calculate how many to remove
-    long long origRemoveNum = (double)solver->longRedCls.size() *solver->conf.ratioRemoveClauses;
-
-    //If there is a ratio limit, and we are over it
-    //then increase the removeNum accordingly
-    double maxToHave = (double)(solver->longIrredCls.size() + solver->binTri.irredTris + solver->nVars() + 300ULL)
-        * (double)nbReduceDB
-        * solver->conf.maxNumRedsRatio;
-
-    //To guard against memout
-    if (maxToHave > 1000.0*1000.0) {
-        maxToHave = 1000.0*1000.0;
-    }
-    uint64_t removeNum = std::max<long long>(
-        (long long)origRemoveNum
-        , (long long)solver->longRedCls.size()-(long long)maxToHave
-    );
-
-    if (removeNum != origRemoveNum) {
-        if (solver->conf.verbosity >= 2) {
-            cout
-            << "c [DBclean] Hard upper limit reached, removing more than normal: "
-            << origRemoveNum << " --> " << removeNum
-            << endl;
-        }
-    } else {
-        if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [DBclean] Hard long cls limit would be: " << maxToHave/1000 << "K"
-        << endl;
-        }
-    }
-
-    return removeNum;
 }
 
 void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)

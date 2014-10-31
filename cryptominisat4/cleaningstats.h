@@ -78,14 +78,6 @@ struct CleaningStats
     uint64_t origNumClauses = 0;
     uint64_t origNumLits = 0;
 
-    //Clean type
-    ClauseCleaningTypes clauseCleaningType = clean_none;
-    size_t glueBasedClean = 0;
-    size_t sizeBasedClean = 0;
-    size_t propConflBasedClean = 0;
-    size_t actBasedClean = 0;
-    size_t propConflDepthBasedClean = 0;
-
     //Clause Cleaning
     Data removed;
     Data remain;

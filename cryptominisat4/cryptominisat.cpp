@@ -118,10 +118,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 2: {
             conf.shortTermHistorySize = 80;
-            conf.clauseCleaningType = CMSat::clean_glue_based;
+            //conf.clauseCleaningType = CMSat::clean_glue_based;
             conf.restartType = CMSat::restart_type_glue;
             conf.increaseClean = 1.08;
-            conf.ratioRemoveClauses = 0.55;
+            //conf.ratioRemoveClauses = 0.55;
             break;
         }
         case 3: {
@@ -131,7 +131,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_binary = 200;
             conf.probe_bogoprops_time_limitM = 3500;
             conf.restartType = CMSat::restart_type_agility;
-            conf.ratioRemoveClauses = 0.6;
+            //conf.ratioRemoveClauses = 0.6;
             break;
         }
         case 4: {
@@ -139,9 +139,9 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.regularly_simplify_problem = 0;
             conf.varElimRatioPerIter = 1;
             conf.restartType = restart_type_geom;
-            conf.clauseCleaningType = CMSat::clean_sum_activity_based;
+//             conf.clauseCleaningType = CMSat::clean_sum_activity_based;
             conf.polarity_mode = CMSat::polarmode_neg;
-            conf.ratioRemoveClauses = 0.65;
+//             conf.ratioRemoveClauses = 0.65;
             break;
         }
         case 5: {
@@ -149,23 +149,23 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_cache = 100;
             conf.more_red_minim_limit_binary = 100;
             conf.probe_bogoprops_time_limitM = 4000;
-            conf.ratioRemoveClauses = 0.6;
+//             conf.ratioRemoveClauses = 0.6;
             break;
         }
         case 6: {
             conf.numCleanBetweenSimplify = 1;
             conf.skip_some_bve_resolvents = 1;
-            conf.ratioRemoveClauses = 0.7;
+//             conf.ratioRemoveClauses = 0.7;
             break;
         }
         case 7: {
-            conf.clauseCleaningType = CMSat::clean_sum_confl_depth_based;
-            conf.ratioRemoveClauses = 0.55;
+//             conf.clauseCleaningType = CMSat::clean_sum_confl_depth_based;
+//             conf.ratioRemoveClauses = 0.55;
             break;
         }
         case 8: {
             conf.polarity_mode = CMSat::polarmode_pos;
-            conf.ratioRemoveClauses = 0.6;
+//             conf.ratioRemoveClauses = 0.6;
             break;
         }
         case 9: {
@@ -174,15 +174,15 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_cache = 800;
             conf.more_red_minim_limit_binary = 400;
             conf.polarity_mode = CMSat::polarmode_neg;
-            conf.ratioRemoveClauses = 0.6;
+//             conf.ratioRemoveClauses = 0.6;
             break;
         }
         case 10: {
             conf.do_bva = 0;
             conf.doGateFind = 0;
             conf.restartType = CMSat::restart_type_agility;
-            conf.clauseCleaningType = CMSat::clean_glue_based;
-            conf.ratioRemoveClauses = 0.6;
+//             conf.clauseCleaningType = CMSat::clean_glue_based;
+//             conf.ratioRemoveClauses = 0.6;
             break;
         }
         case 11: {
@@ -190,12 +190,12 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.propBinFirst = 1;
             conf.doLHBR = 1;
             conf.increaseClean = 1.12;
-            conf.ratioRemoveClauses = 0.7;
+//             conf.ratioRemoveClauses = 0.7;
             break;
         }
         default: {
-            conf.clauseCleaningType = CMSat::clean_glue_based;
-            conf.ratioRemoveClauses = 0.7;
+//             conf.clauseCleaningType = CMSat::clean_glue_based;
+//             conf.ratioRemoveClauses = 0.7;
             break;
         }
     }

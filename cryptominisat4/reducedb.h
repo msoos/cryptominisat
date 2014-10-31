@@ -63,19 +63,17 @@ private:
 
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl);
-    bool red_cl_introduced_since_last_reducedb(const Clause* cl);
     void clear_clauses_stats(vector<ClOffset>& clauseset);
     CleaningStats reduceDB(bool lock_clauses_in);
     void lock_most_UIP_used_clauses();
-    void lock_in_top_N_uncleaned();
+    void unmark_keep_flags();
 
     void real_clean_clause_db(
         CleaningStats& tmpStats
         , uint64_t sumConflicts
-        , uint64_t removeNum
     );
-    uint64_t calc_how_many_to_remove();
-    void sort_red_cls(CleaningStats& tmpStats, ClauseCleaningTypes clean_type);
+    void sort_red_cls(ClauseCleaningTypes clean_type);
+    void mark_top_N_clauses(const uint64_t keep_num);
     void print_best_red_clauses_if_required() const;
     ClauseUsageStats sumClauseData(
         const vector<ClOffset>& toprint

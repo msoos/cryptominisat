@@ -18,12 +18,12 @@
 namespace CMSat {
 
 enum ClauseCleaningTypes {
-    clean_glue_based
-    , clean_size_based
-    , clean_sum_prop_confl_based
-    , clean_sum_confl_depth_based
-    , clean_sum_activity_based
-    , clean_none
+    clean_glue_based = 0
+    , clean_size_based = 1
+    , clean_sum_prop_confl_based = 2
+    , clean_sum_confl_depth_based = 3
+    , clean_sum_activity_based = 4
+    , clean_none = 5
 };
 
 enum PolarityMode {
@@ -119,14 +119,12 @@ class SolverConf
         int do_calc_polarity_every_time;
 
         //Clause cleaning
-        ClauseCleaningTypes clauseCleaningType;
         double    clean_confl_multiplier;
         double    clean_prop_multiplier;
         int       doPreClauseCleanPropAndConfl;
         unsigned  long long preClauseCleanLimit;
         int       doClearStatEveryClauseCleaning;
-        int       dont_remove_fresh_glue2;
-        double    ratioRemoveClauses; ///< Remove this ratio of clauses at every database reduction round
+        double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
         unsigned  numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         unsigned  startClean;
         double    increaseClean;
@@ -134,7 +132,6 @@ class SolverConf
         double    clauseDecayActivity;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
         size_t   lock_uip_per_dbclean;
-        size_t   lock_topclean_per_dbclean;
         double   multiplier_perf_values_after_cl_clean;
 
         //For restarting

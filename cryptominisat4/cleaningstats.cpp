@@ -12,35 +12,6 @@ void CleaningStats::print(const size_t nbReduceDB) const
 {
     cout << "c ------ CLEANING STATS ---------" << endl;
 
-    //Types of clean
-    print_stats_line("c clean by glue"
-        , glueBasedClean
-        , stats_line_percent(glueBasedClean, nbReduceDB)
-        , "% cleans"
-    );
-    print_stats_line("c clean by size"
-        , sizeBasedClean
-        , stats_line_percent(sizeBasedClean, nbReduceDB)
-        , "% cleans"
-    );
-    print_stats_line("c clean by prop&confl"
-        , propConflBasedClean
-        , stats_line_percent(propConflBasedClean,nbReduceDB)
-        , "% cleans"
-    );
-    print_stats_line("c clean by activities"
-        , actBasedClean
-        , stats_line_percent(actBasedClean,nbReduceDB)
-        , "% cleans"
-    );
-    print_stats_line("c clean by prop&confl / avg. depth"
-        , propConflDepthBasedClean
-        , stats_line_percent(propConflDepthBasedClean,nbReduceDB)
-        , "% cleans"
-    );
-
-    //--- Actual clean --
-
     //-->CLEAN
     print_stats_line("c cleaned cls"
         , removed.num
@@ -82,10 +53,8 @@ void CleaningStats::print(const size_t nbReduceDB) const
 
 void CleaningStats::print_short(const Solver* solver) const
 {
-    //Pre-clean
     cout
     << "c [DBclean]"
-    << " clean type is " << getNameOfCleanType(clauseCleaningType)
     << " rem " << removed.num
 
     << " avgGlue " << std::fixed << std::setprecision(2)
@@ -118,13 +87,6 @@ CleaningStats& CleaningStats::operator+=(const CleaningStats& other)
     //Before remove
     origNumClauses += other.origNumClauses;
     origNumLits += other.origNumLits;
-
-    //Type of clean
-    glueBasedClean += other.glueBasedClean;
-    sizeBasedClean += other.sizeBasedClean;
-    propConflBasedClean += other.propConflBasedClean;
-    actBasedClean += other.actBasedClean;
-    propConflDepthBasedClean += other.propConflDepthBasedClean;
 
     //Clause Cleaning data
     removed += other.removed;
