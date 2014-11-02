@@ -17,7 +17,8 @@ install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install -
 if (ENABLE_TESTING)
     add_test (NAME pytest
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-              COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test_pycryptosat.py")
+              COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test_pycryptosat.py"
+    )
 
     message(STATUS "Will run python test from ${CMAKE_CURRENT_BINARY_DIR} directory")
 endif()
