@@ -62,7 +62,7 @@ struct VariableVariance
 class Searcher : public HyperEngine
 {
     public:
-        Searcher(const SolverConf& _conf, Solver* solver, bool* _needToInterrupt);
+        Searcher(const SolverConf* _conf, Solver* solver, bool* _needToInterrupt);
         virtual ~Searcher();
 
         //History

@@ -47,13 +47,12 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const SolverConf& _conf, bool* _needToInterrupt
+    const SolverConf* _conf, bool* _needToInterrupt
 ) :
         CNF(_conf, _needToInterrupt)
-        // Stats
         , qhead(0)
-        , agility(_conf.agilityG, _conf.agilityLimit)
 {
+    agility.setup(conf.agilityG, conf.agilityLimit);
 }
 
 PropEngine::~PropEngine()

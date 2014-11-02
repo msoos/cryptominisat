@@ -19,7 +19,7 @@ namespace CMSat {
     class SATSolver
     {
     public:
-        SATSolver(SolverConf conf = SolverConf(), bool* interrupt_asap = NULL);
+        SATSolver(const SolverConf *conf = NULL, bool* interrupt_asap = NULL);
         ~SATSolver();
         void set_num_threads(unsigned n);
         unsigned nVars() const;

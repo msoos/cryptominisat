@@ -156,15 +156,18 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 class AgilityData
 {
     public:
-        AgilityData(
+        void setup(
             const double _agilityG
             , const double agilityLimit
-        ) :
-            agilityG(_agilityG)
-            , agility(agilityLimit)
-        {
+        ) {
+            agilityG = _agilityG;
+            agility = agilityLimit;
             assert(agilityG < 1 && agilityG > 0);
         }
+
+        AgilityData() :
+            agilityG(-1)
+        {}
 
         void update(const bool flipped)
         {
@@ -180,11 +183,12 @@ class AgilityData
 
         void reset(const double agilityLimit)
         {
+            assert(agilityG > 0);
             agility = agilityLimit;
         }
 
     private:
-        const double agilityG;
+        double agilityG;
         double agility;
 };
 

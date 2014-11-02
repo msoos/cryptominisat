@@ -43,10 +43,12 @@ public:
         uint64_t redLits = 0;
     };
 
-    CNF(const SolverConf& _conf, bool* _needToInterrupt) :
-        conf(_conf)
-        , minNumVars(0)
+    CNF(const SolverConf *_conf, bool* _needToInterrupt) :
+        minNumVars(0)
     {
+        if (_conf != NULL) {
+            conf = *_conf;
+        }
         drup = new Drup();
         if (_needToInterrupt != NULL) {
             needToInterrupt = _needToInterrupt;

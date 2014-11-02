@@ -24,7 +24,7 @@
 
 using namespace CMSat;
 
-HyperEngine::HyperEngine(const SolverConf& _conf, bool* _needToInterrupt) :
+HyperEngine::HyperEngine(const SolverConf *_conf, bool* _needToInterrupt) :
     PropEngine(_conf, _needToInterrupt)
     , stampingTime(0)
 {

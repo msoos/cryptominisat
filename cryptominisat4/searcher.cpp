@@ -52,21 +52,21 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Searcher::Searcher(const SolverConf& _conf, Solver* _solver, bool* _needToInterrupt) :
+Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterrupt) :
         HyperEngine(
             _conf
             , _needToInterrupt
         )
 
         //variables
-        , mtrand(_conf.origSeed)
         , solver(_solver)
-        , var_inc(_conf.var_inc_start)
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
+        , mtrand(0)
 {
-    more_red_minim_limit_binary_actual = _conf.more_red_minim_limit_binary;
-    more_red_minim_limit_cache_actual = _conf.more_red_minim_limit_cache;
+    var_inc = conf.var_inc_start;
+    more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
+    more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
 }

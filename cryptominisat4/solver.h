@@ -75,7 +75,7 @@ class LitReachData {
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf _conf = SolverConf(), bool* _needToInterrupt = NULL);
+        Solver(const SolverConf *_conf = NULL, bool* _needToInterrupt = NULL);
         ~Solver() override;
 
         void add_sql_tag(const string& tagname, const string& tag);

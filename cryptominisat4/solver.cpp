@@ -73,7 +73,7 @@ using std::endl;
 
 //#define DEBUG_TRI_SORTED_SANITY
 
-Solver::Solver(const SolverConf _conf, bool* _needToInterrupt) :
+Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     Searcher(_conf, this, _needToInterrupt)
 {
     parse_sql_option();

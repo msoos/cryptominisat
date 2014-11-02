@@ -93,7 +93,7 @@ struct DataForThread
     lbool* ret;
 };
 
-SATSolver::SATSolver(const SolverConf conf, bool* interrupt_asap)
+SATSolver::SATSolver(const SolverConf *conf, bool* interrupt_asap)
 {
     data = new CMSatPrivateData(interrupt_asap);
     data->solvers.push_back(new Solver(conf, data->inter));
@@ -226,7 +226,7 @@ void SATSolver::set_num_threads(const unsigned num)
         SolverConf conf = data->solvers[0]->getConf();
         conf.doSQL = 0;
         update_config(conf, i);
-        data->solvers.push_back(new Solver(conf, data->inter));
+        data->solvers.push_back(new Solver(&conf, data->inter));
     }
 
     //set shared data

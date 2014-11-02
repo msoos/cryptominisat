@@ -106,7 +106,7 @@ public:
     // Constructor/Destructor:
     //
     PropEngine(
-        const SolverConf& _conf
+        const SolverConf* _conf
         , bool* _needToInterrupt
     );
     ~PropEngine();
