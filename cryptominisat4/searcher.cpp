@@ -59,10 +59,10 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterr
         )
 
         //variables
+        , mtrand(0)
         , solver(_solver)
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
-        , mtrand(0)
 {
     var_inc = conf.var_inc_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
