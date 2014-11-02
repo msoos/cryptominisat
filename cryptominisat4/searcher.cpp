@@ -805,16 +805,55 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     out_conflict.clear();
     out_conflict.push_back(p);
 
-    if (decisionLevel() == 0)
+    if (decisionLevel() == 0) {
         return;
+    }
 
-    for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
+    seen[p.var()] = 1;
+
+    for (long i = trail.size() - 1; i >= trail_lim[0]; i--) {
         const Var x = trail[i].var();
-        if (varData[x].reason.isNULL()) {
-            assert(varData[x].level > 0);
-            out_conflict.push_back(~trail[i]);
+        if (seen[x]) {
+            const PropBy reason = varData[x].reason;
+            if (reason.isNULL()) {
+                assert(varData[x].level > 0);
+                out_conflict.push_back(~trail[i]);
+            } else {
+                switch(reason.getType()) {
+                    case PropByType::clause_t : {
+                        const Clause& cl = *cl_alloc.ptr(reason.getClause());
+                        for (const Lit lit: cl) {
+                            if (varData[lit.var()].level > 0) {
+                                seen[lit.var()] = 1;
+                            }
+                        }
+                        break;
+                    }
+                    case PropByType::tertiary_t: {
+                        const Lit lit = reason.lit3();
+                        if (varData[lit.var()].level > 0) {
+                            seen[lit.var()] = 1;
+                        }
+                        //NO break!
+                    }
+                    case PropByType::binary_t: {
+                        const Lit lit = reason.lit2();
+                        if (varData[lit.var()].level > 0) {
+                            seen[lit.var()] = 1;
+                        }
+                        break;
+                    }
+
+                    default:
+                        assert(false);
+                        break;
+                }
+            }
+            seen[x] = 0;
         }
     }
+
+    seen[p.var()] = 0;
 }
 
 void Searcher::handle_longest_decision_trail()
