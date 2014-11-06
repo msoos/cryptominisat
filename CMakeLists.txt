@@ -148,9 +148,15 @@ option(ENABLE_TESTING "Enable testing" OFF)
 # -----------------------------------------------------------------------------
 # Add GIT version
 # -----------------------------------------------------------------------------
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-git_get_exact_tag(GIT_TAG)
+find_program (GIT_FOUND git)
+if (GIT_FOUND)
+	include(GetGitRevisionDescription)
+	get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+	git_get_exact_tag(GIT_TAG)
+else()
+	set(GIT_SHA1 "GIT-NOTFOUND")
+	set(GIT_TAG "GIT-NOTFOUND")
+endif()
 
 set (boost_components "")
 if (ENABLE_TESTING)
