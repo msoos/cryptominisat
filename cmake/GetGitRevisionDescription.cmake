@@ -79,11 +79,11 @@ function(git_describe _var)
 	endif()
 	get_git_head_revision(refspec hash)
 	if(NOT GIT_FOUND)
-		set(${_var} ${CPACK_PACKAGE_VERSION} PARENT_SCOPE)
+		set(${_var} "${CPACK_PACKAGE_VERSION}-compiled-from-cmake" PARENT_SCOPE)
 		return()
 	endif()
 	if(NOT hash)
-		set(${_var} ${CPACK_PACKAGE_VERSION} PARENT_SCOPE)
+		set(${_var} "${CPACK_PACKAGE_VERSION}-compiled-from-cmake" PARENT_SCOPE)
 		return()
 	endif()
 
@@ -101,10 +101,10 @@ function(git_describe _var)
 		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 		RESULT_VARIABLE res
 		OUTPUT_VARIABLE out
-		ERROR_QUIET
+		#ERROR_QUIET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT res EQUAL 0)
-		set(out "${CPACK_PACKAGE_VERSION} (GIT not found)")
+		set(out "${CPACK_PACKAGE_VERSION} (approximate version number)")
 	endif()
 
 	set(${_var} "${out}" PARENT_SCOPE)
