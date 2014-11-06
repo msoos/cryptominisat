@@ -169,6 +169,7 @@ option(SIMPLE "Very simplistic executable -- no Boost needed" OFF)
 if(NOT Boost_FOUND)
     set(SIMPLE ON)
     set(ENABLE_TESTING OFF)
+    message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 endif()
 
 find_package (Threads REQUIRED)
