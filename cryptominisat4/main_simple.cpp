@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     }
     argc = j;
 
-    SATSolver S(conf);
+    SATSolver S(&conf);
     solver = &S;
     if (drupf) {
         solver->set_drup(drupf);
