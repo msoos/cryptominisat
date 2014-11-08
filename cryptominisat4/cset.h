@@ -1,6 +1,5 @@
 /*
  * Based on SatELite -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
- * SatELite comes with MIT licence
  * Part of CryptoMiniSat, enhanced by Mate Soos & collaborators
  *
  * Copyright (c) 2009-2014, Mate Soos. All rights reserved.
