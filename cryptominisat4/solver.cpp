@@ -3283,6 +3283,10 @@ bool Solver::add_clause_outer(const vector<Lit>& lits)
 
 bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
 {
+    if (!ok) {
+        return false;
+    }
+
     vector<Lit> lits(vars.size());
     for(size_t i = 0; i < vars.size(); i++) {
         lits[i] = Lit(vars[i], false);
