@@ -3273,6 +3273,9 @@ unsigned long Solver::get_sql_id() const
 
 bool Solver::add_clause_outer(const vector<Lit>& lits)
 {
+    if (!ok) {
+        return false;
+    }
     check_too_large_variable_number(lits);
     back_number_from_caller(lits);
     return addClause(back_number_from_caller_tmp);
