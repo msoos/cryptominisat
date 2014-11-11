@@ -42,7 +42,7 @@ set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
 # the location of GTest source code is probably error prone so using a copy in the
 # repository seems like the easiest thing to do. This also has the added benefit that
 # everyone uses the same version of GTest.
-set(GTEST_PREFIX ${CMAKE_SOURCE_DIR}/utils/gtest)
+set(GTEST_PREFIX ${CMAKE_PROJECT_DIR}/utils/gtest)
 add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 

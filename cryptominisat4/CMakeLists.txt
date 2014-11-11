@@ -103,7 +103,7 @@ cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
 # The cryptominisat4Config.cmake we generate in the build directory depends on
 # this.
 # -----------------------------------------------------------------------------
-set(HEADER_DEST "${CMAKE_BINARY_DIR}/include/cryptominisat4")
+set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat4")
 add_custom_target(CopyPublicHeaders ALL)
 get_target_property(cryptominisat4_public_headers libcryptominisat4 PUBLIC_HEADER)
 foreach(public_header ${cryptominisat4_public_headers})
