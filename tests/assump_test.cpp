@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(replace_false)
     BOOST_CHECK( ret == l_False);
     BOOST_CHECK_EQUAL( s.okay(), true);
 
-    BOOST_CHECK( s.get_conflict().size() == 2);
+    BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
     vector<Lit> tmp = s.get_conflict();
     std::stable_sort(tmp.begin(), tmp.end());
     BOOST_CHECK( tmp[0] == Lit(0, true) );
