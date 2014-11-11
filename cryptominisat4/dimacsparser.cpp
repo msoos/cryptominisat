@@ -137,6 +137,13 @@ void DimacsParser::readClause(StreamBuffer& in)
             solver->new_var();
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
+        if (*in != ' ') {
+            cout << "ERROR!"
+            << "--> At line " << lineNum+1 << endl
+            << "--> After each literal, there must be an empty space!"
+            << endl;
+            std::exit(-1);
+        }
     }
 }
 
