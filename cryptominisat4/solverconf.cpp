@@ -43,13 +43,13 @@ SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
-        , numCleanBetweenSimplify(2)
-        , startClean(8000)
-        , increaseClean(1.1)
+        , numCleanBetweenSimplify(4)
+        , startClean(9000)
+        , increaseClean(1.06)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
-        , lock_uip_per_dbclean(500)
+        , lock_uip_per_dbclean(100)
         , multiplier_perf_values_after_cl_clean(0)
 
         //Restarting
@@ -226,11 +226,11 @@ SolverConf::SolverConf() :
         , clean_after_perc_zero_depth_assigns(0.015)
 {
 
-    ratio_keep_clauses[clean_glue_based] = 0.3;
+    ratio_keep_clauses[clean_glue_based] = 0.25;
     ratio_keep_clauses[clean_size_based] = 0;
-    ratio_keep_clauses[clean_sum_prop_confl_based] = 0.1;
+    ratio_keep_clauses[clean_sum_prop_confl_based] = 0.13;
     ratio_keep_clauses[clean_sum_confl_depth_based] = 0;
-    ratio_keep_clauses[clean_sum_activity_based] = 0;
+    ratio_keep_clauses[clean_sum_activity_based] = 0.08;
 }
 
 
