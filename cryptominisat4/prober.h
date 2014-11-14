@@ -240,7 +240,7 @@ class Prober {
 
     private:
         //Main
-        bool try_this(const Lit lit, const bool first);
+        bool try_this(const Lit lit, const bool first, const uint64_t orig_num_props_to_do);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
         void checkOTFRatio();

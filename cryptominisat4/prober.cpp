@@ -423,11 +423,11 @@ bool Prober::probe()
         runStats.numVarProbed++;
         extraTime += 20;
 
-        if (!try_this(lit, true))
+        if (!try_this(lit, true, numPropsTodo))
             goto end;
 
         if (solver->value(lit) == l_Undef
-            && !try_this((~lit), false)
+            && !try_this((~lit), false, numPropsTodo)
         ) {
             goto end;
         }
@@ -658,7 +658,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     return false;
 }
 
-bool Prober::try_this(const Lit lit, const bool first)
+bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_props_to_do)
 {
     //Clean state if this is the 1st of two
     if (first) {
@@ -682,7 +682,7 @@ bool Prober::try_this(const Lit lit, const bool first)
         const uint64_t timeout =
             solver->propStats.otfHyperTime
             + solver->propStats.bogoProps
-            + 1000ULL*1000ULL*solver->conf.single_probe_time_limitM;
+            + (double)orig_num_props_to_do*solver->conf.single_probe_time_limit_perc;
 
         //DFS is expensive, actually. So do BFS 50% of the time
         if (solver->conf.doStamp && solver->mtrand.randInt(1) == 0) {
