@@ -62,16 +62,20 @@ private:
     uint64_t nextCleanLimitInc;
 
     size_t last_reducedb_num_conflicts = 0;
-    bool red_cl_too_young(const Clause* cl);
+    bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
+
+    bool cl_needs_removal(const Clause* cl) const;
+    void remove_cl_from_watchlists();
+    void remove_cl_from_array_and_count_stats(
+        CleaningStats& tmpStats
+        , uint64_t sumConflicts
+    );
+
     CleaningStats reduceDB(bool lock_clauses_in);
     void lock_most_UIP_used_clauses();
     void unmark_keep_flags();
 
-    void real_clean_clause_db(
-        CleaningStats& tmpStats
-        , uint64_t sumConflicts
-    );
     void sort_red_cls(ClauseCleaningTypes clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
     void print_best_red_clauses_if_required() const;

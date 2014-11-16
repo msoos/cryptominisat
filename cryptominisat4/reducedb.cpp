@@ -23,7 +23,6 @@
 #include "solver.h"
 #include "sqlstats.h"
 #include "clausecleaner.h"
-#include "completedetachreattacher.h"
 #include <functional>
 
 using namespace CMSat;
@@ -279,10 +278,6 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     const uint64_t sumConfl = solver->sumConflicts();
 
-    //Complete detach&reattach of OK clauses will be *much* faster
-    CompleteDetachReatacher detachReattach(solver);
-    detachReattach.detach_nonbins_nontris();
-
     if (lock_clauses_in) {
         lock_most_UIP_used_clauses();
     }
@@ -295,10 +290,8 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
     }
-    real_clean_clause_db(tmpStats, sumConfl);
-
-    //Reattach what's left
-    detachReattach.reattachLongs();
+    remove_cl_from_watchlists();
+    remove_cl_from_array_and_count_stats(tmpStats, sumConfl);
 
     tmpStats.cpu_time = cpuTime() - myTime;
     if (solver->conf.verbosity >= 3)
@@ -318,6 +311,31 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     last_reducedb_num_conflicts = solver->sumConflicts();
     return tmpStats;
+}
+
+void ReduceDB::remove_cl_from_watchlists()
+{
+    for(size_t at = 0; at < 2*solver->nVars(); at++) {
+        const Lit lit = Lit::toLit(at);
+
+        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = i;
+        for (watch_subarray::const_iterator end = ws.end(); i != end; i++) {
+            if (i->isBinary() || i->isTri()) {
+                *j++ = *i;
+                continue;
+            }
+
+            Clause* cl = solver->cl_alloc.ptr(i->get_offset());
+            if (cl->red() && cl_needs_removal(cl)) {
+                continue;
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink(i-j);
+    }
 }
 
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
@@ -373,13 +391,20 @@ void ReduceDB::lock_most_UIP_used_clauses()
     }
 }
 
-bool ReduceDB::red_cl_too_young(const Clause* cl)
+bool ReduceDB::red_cl_too_young(const Clause* cl) const
 {
     return cl->stats.introduced_at_conflict + solver->conf.min_time_in_db_before_eligible_for_cleaning
             >= solver->sumConflicts();
 }
 
-void ReduceDB::real_clean_clause_db(
+bool ReduceDB::cl_needs_removal(const Clause* cl) const
+{
+    return red_cl_too_young(cl)
+         || cl->stats.locked
+         || cl->stats.marked_for_keep;
+}
+
+void ReduceDB::remove_cl_from_array_and_count_stats(
     CleaningStats& tmpStats
     , uint64_t sumConfl
 ) {
@@ -393,10 +418,7 @@ void ReduceDB::real_clean_clause_db(
         assert(cl->size() > 3);
 
         //Don't delete if not aged long enough, locked, or marked for keep
-        if (red_cl_too_young(cl)
-             || cl->stats.locked
-             || cl->stats.marked_for_keep
-        ) {
+        if (cl_needs_removal(cl)) {
             solver->longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
             tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
