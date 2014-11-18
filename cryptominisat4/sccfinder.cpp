@@ -39,7 +39,7 @@ SCCFinder::SCCFinder(Solver* _solver) :
     , solver(_solver)
 {}
 
-bool SCCFinder::performSCC()
+bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 {
     assert(binxors.empty());
     runStats.clear();
@@ -75,11 +75,16 @@ bool SCCFinder::performSCC()
     globalStats += runStats;
     solver->binTri.numNewBinsSinceSCC = 0;
 
+    if (bogoprops_given) {
+        *bogoprops_given += runStats.bogoprops;
+    }
+
     return solver->ok;
 }
 
 void SCCFinder::tarjan(const uint32_t vertex)
 {
+    runStats.bogoprops += 1;
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
@@ -102,6 +107,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
         //Go through the watch
         watch_subarray_const ws = solver->watches[(~vertLit).toInt()];
+        runStats.bogoprops += ws.size()/4;
         for (watch_subarray_const::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
@@ -117,6 +123,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         }
 
         if (transCache) {
+            runStats.bogoprops += transCache->size()/4;
             for (vector<LitExtra>::iterator
                 it = transCache->begin(), end = transCache->end()
                 ; it != end
@@ -141,6 +148,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             tmp.push_back(vprime);
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
+            runStats.bogoprops += 3;
             for (uint32_t i = 1; i < tmp.size(); i++) {
                 if (!solver->ok) {
                     break;
@@ -176,8 +184,8 @@ void SCCFinder::Stats::print_short(Solver* solver) const
     cout
     << "c [scc]"
     << " new: " << foundXorsNew
-    << " T: " << std::fixed << std::setprecision(2)
-    <<  cpu_time << " s"
+    << " BP " << bogoprops/(1000*1000) << "M"
+    << solver->conf.print_times(cpu_time)
     << endl;
 
     if (solver && solver->sqlStats) {

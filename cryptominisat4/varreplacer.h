@@ -51,7 +51,7 @@ class VarReplacer
         void new_var(const Var orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
-        bool replace_if_enough_is_found(const size_t limit = 0);
+        bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = NULL);
         void print_equivalent_literals(std::ostream *os) const;
         void print_some_stats(const double global_cpu_time) const;
         const SCCFinder* get_scc_finder() const;
@@ -93,6 +93,7 @@ class VarReplacer
             uint64_t removedTriClauses = 0;
             uint64_t removedLongClauses = 0;
             uint64_t removedLongLits = 0;
+            uint64_t bogoprops = 0;
         };
         const Stats& get_stats() const;
         size_t mem_used() const;

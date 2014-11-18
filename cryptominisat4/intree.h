@@ -71,7 +71,7 @@ private:
     bool empty_failed_list();
     void fill_roots();
     bool watches_only_contains_nonbin(const Lit lit) const;
-    bool replace_until_fixedpoint();
+    bool replace_until_fixedpoint(bool& aborted);
     void enqueue(const Lit lit, const Lit other_lit, bool red_cl);
 
     void setup();

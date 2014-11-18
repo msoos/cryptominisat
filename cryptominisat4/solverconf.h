@@ -243,6 +243,7 @@ class SolverConf
         int      doIntreeProbe;
         unsigned long long   probe_bogoprops_time_limitM;
         unsigned long long   intree_time_limitM;
+        unsigned long long intree_scc_varreplace_time_limitM;
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
         int      doStamp;

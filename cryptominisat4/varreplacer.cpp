@@ -507,6 +507,7 @@ bool VarReplacer::replaceImplicit()
                 *j++ = *i;
                 continue;
             }
+            runStats.bogoprops += 1;
 
             const Lit origLit2 = i->lit2();
             assert(solver->value(origLit1) == l_Undef);
@@ -566,6 +567,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+        runStats.bogoprops += 3;
         assert(!solver->drup->something_delayed());
 
         Clause& c = *solver->cl_alloc.ptr(*i);
@@ -628,6 +630,7 @@ bool VarReplacer::handleUpdatedClause(
     c.shrink(i - j);
     c.setChanged();
 
+    runStats.bogoprops += 10;
     solver->detach_modified_clause(origLit1, origLit2, origSize, &c);
 
     #ifdef VERBOSE_DEBUG
@@ -640,6 +643,7 @@ bool VarReplacer::handleUpdatedClause(
     }
     (*solver->drup) << c << fin << findelay;
 
+    runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
         solver->ok = false;
@@ -941,9 +945,9 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     return true;
 }
 
-bool VarReplacer::replace_if_enough_is_found(const size_t limit)
+bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given)
 {
-    scc_finder->performSCC();
+    scc_finder->performSCC(bogoprops_given);
     if (scc_finder->get_num_binxors_found() < limit) {
         scc_finder->clear_binxors();
         return solver->okay();
@@ -966,6 +970,9 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit)
     }
 
     const bool ret = perform_replace();
+    if (bogoprops_given) {
+        *bogoprops_given += runStats.bogoprops;
+    }
     scc_finder->clear_binxors();
 
     return ret;
@@ -1077,6 +1084,10 @@ void VarReplacer::Stats::print(const size_t nVars) const
         print_stats_line("c long lits removed"
             , removedLongLits
         );
+
+         print_stats_line("c bogoprops"
+            , bogoprops
+        );
         cout << "c --------- VAR REPLACE STATS END ----------" << endl;
 }
 
@@ -1089,6 +1100,7 @@ void VarReplacer::Stats::print_short(const Solver* solver) const
     << " rem-bin-cls " << removedBinClauses
     << " rem-tri-cls " << removedTriClauses
     << " rem-long-cls " << removedLongClauses
+    << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time)
     << endl;
 }
@@ -1104,6 +1116,7 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
     removedTriClauses += other.removedTriClauses;
     removedLongClauses += other.removedLongClauses;
     removedLongLits += other.removedLongLits;
+    bogoprops += other.bogoprops;
 
     return *this;
 }

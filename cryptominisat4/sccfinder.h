@@ -33,30 +33,24 @@ class Solver;
 class SCCFinder {
     public:
         SCCFinder(Solver* _solver);
-        bool performSCC();
+        bool performSCC(uint64_t* bogoprops_given = NULL);
         const std::set<BinaryXor>& get_binxors() const;
         size_t get_num_binxors_found() const;
         void clear_binxors();
 
         struct Stats
         {
-            Stats() :
-                numCalls(0)
-                , cpu_time(0)
-                , foundXors(0)
-                , foundXorsNew(0)
-            {}
-
             void clear()
             {
                 Stats tmp;
                 *this = tmp;
             }
 
-            uint64_t numCalls;
-            double cpu_time;
-            uint64_t foundXors;
-            uint64_t foundXorsNew;
+            uint64_t numCalls = 0;
+            double cpu_time = 0.0;
+            uint64_t foundXors = 0;
+            uint64_t foundXorsNew = 0;
+            uint64_t bogoprops = 0;
 
             Stats& operator+=(const Stats& other)
             {
@@ -64,6 +58,7 @@ class SCCFinder {
                 cpu_time += other.cpu_time;
                 foundXors += other.foundXors;
                 foundXorsNew += other.foundXorsNew;
+                bogoprops += other.bogoprops;
 
                 return *this;
             }
@@ -86,6 +81,11 @@ class SCCFinder {
                 print_stats_line("c found"
                     , foundXorsNew
                     , stats_line_percent(foundXorsNew, foundXors)
+                    , "% of all found"
+                );
+
+                print_stats_line("c bogoprops"
+                    , bogoprops
                     , "% of all found"
                 );
 

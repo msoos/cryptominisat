@@ -33,18 +33,25 @@ InTree::InTree(Solver* _solver) :
     , seen(_solver->seen)
 {}
 
-bool InTree::replace_until_fixedpoint()
+bool InTree::replace_until_fixedpoint(bool& aborted)
 {
+    aborted = false;
+    uint64_t bogoprops = 0;
     uint32_t last_replace = std::numeric_limits<uint32_t>::max();
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace) {
         last_replace = this_replace;
         solver->clauseCleaner->remove_and_clean_all();
-        bool OK = solver->varReplacer->replace_if_enough_is_found();
+        bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
         if (!OK) {
             return false;
         }
         this_replace = solver->varReplacer->get_num_replaced_vars();
+
+        if (bogoprops > solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL) {
+            aborted = true;
+            return true;
+        }
     }
 
     return true;
@@ -112,9 +119,18 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
 
-    if (!replace_until_fixedpoint())
+    bool aborted = false;
+    if (!replace_until_fixedpoint(aborted))
     {
         return false;
+    }
+    if (aborted) {
+        if (solver->conf.verbosity >= 2) {
+            cout
+            << "c [intree] too expensive SCC + varreplace loop: aborting"
+            << endl;
+        }
+        return true;
     }
 
     double myTime = cpuTime();
