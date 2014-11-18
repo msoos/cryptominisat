@@ -61,6 +61,7 @@ SolverConf::SolverConf() :
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
         , local_glue_multiplier(0.80)
+        , shortTermHistorySize (50)
 
         //Clause minimisation
         , doRecursiveMinim (true)
@@ -91,7 +92,6 @@ SolverConf::SolverConf() :
 
         //Glues
         , updateGlues(true)
-        , shortTermHistorySize (90)
 
         //OTF
         , otfHyperbin      (true)

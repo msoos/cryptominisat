@@ -158,6 +158,7 @@ class SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
 
         //Clause minimisation
         int doRecursiveMinim;
@@ -188,7 +189,6 @@ class SolverConf
 
         //Glues
         int       updateGlues;
-        unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
 
         //OTF stuff
         int       otfHyperbin;
