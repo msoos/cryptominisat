@@ -158,6 +158,7 @@ class SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
 
         //Clause minimisation
@@ -250,7 +251,7 @@ class SolverConf
         int      doCache;
         unsigned   cacheUpdateCutoff;
         unsigned   maxCacheSizeMB;
-        long long otf_hyper_time_limitM;
+        unsigned long long otf_hyper_time_limitM;
         double  otf_hyper_ratio_limit;
         double single_probe_time_limit_perc;
 
