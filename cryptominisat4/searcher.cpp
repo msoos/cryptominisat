@@ -1151,7 +1151,7 @@ void Searcher::checkNeedRestart()
             }
 
             if (hist.glueHist.isvalid()
-                && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
+                && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
                 params.needToStopSearch = true;
             }
@@ -1160,7 +1160,7 @@ void Searcher::checkNeedRestart()
 
         case restart_type_glue_agility:
             if (hist.glueHist.isvalid()
-                && 0.95*hist.glueHist.avg() > hist.glueHistLT.avg()
+                && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
                 && agility.getAgility() < conf.agilityLimit
             ) {
                 params.numAgilityNeedRestart++;
