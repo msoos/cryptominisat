@@ -96,6 +96,7 @@ struct ClauseStats
         #endif
         , used_for_uip_creation(0)
         , locked(false)
+        , marked_for_keep(false)
     {}
 
     double weighted_prop_and_confl(
