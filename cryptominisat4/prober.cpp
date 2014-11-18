@@ -92,7 +92,7 @@ void Prober::checkOTFRatio()
     }
 
     if (solver->propStats.bogoProps+solver->propStats.otfHyperTime
-            > 1000LL*1000LL*solver->conf.otf_hyper_time_limitM
+            > 1000ULL*1000ULL*solver->conf.otf_hyper_time_limitM
         && ratio < solver->conf.otf_hyper_ratio_limit
         && solver->conf.otfHyperbin
         && !solver->drup->enabled()
