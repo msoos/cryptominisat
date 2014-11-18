@@ -35,7 +35,7 @@ SolverConf::SolverConf() :
         , random_var_freq(0)
         , polarity_mode(polarmode_automatic)
         , do_calc_polarity_first_time(true)
-        , do_calc_polarity_every_time(true)
+        , do_calc_polarity_every_time(false)
 
         //Clause cleaning
         , clean_confl_multiplier(0.2)
