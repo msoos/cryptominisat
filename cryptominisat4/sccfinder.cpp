@@ -184,9 +184,13 @@ void SCCFinder::Stats::print_short(Solver* solver) const
     cout
     << "c [scc]"
     << " new: " << foundXorsNew
-    << " BP " << bogoprops/(1000*1000) << "M"
-    << solver->conf.print_times(cpu_time)
-    << endl;
+    << " BP " << bogoprops/(1000*1000) << "M";
+    if (solver) {
+        cout << solver->conf.print_times(cpu_time);
+    } else {
+        cout << "  T: " << std::setprecision(2) << std::fixed << cpu_time;
+    }
+    cout << endl;
 
     if (solver && solver->sqlStats) {
         solver->sqlStats->time_passed_min(
