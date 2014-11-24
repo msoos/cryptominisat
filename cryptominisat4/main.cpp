@@ -223,7 +223,7 @@ void Main::printResultFunc(
                     *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
                 }
             }
-            *os << " 0" << endl;
+            *os << "0" << endl;
         } else {
             print_model(os, solver);
         }
