@@ -975,7 +975,13 @@ void Main::parseCommandLine()
         printVersionInfo();
         std::exit(0);
     }
-    manually_parse_some_options();
+
+    try {
+        manually_parse_some_options();
+    } catch(WrongParam& p) {
+        cerr << "ERROR: " << p.getMsg() << endl;
+        exit(-1);
+    }
 }
 
 void Main::printVersionInfo()
