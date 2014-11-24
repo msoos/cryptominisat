@@ -51,6 +51,27 @@ using std::cerr;
 using std::endl;
 using boost::lexical_cast;
 
+struct WrongParam
+{
+    WrongParam(string _param, string _msg) :
+        param(_param)
+        , msg(_msg)
+    {}
+
+    const string& getMsg() const
+    {
+        return msg;
+    }
+
+    const string& getParam() const
+    {
+        return param;
+    }
+
+    string param;
+    string msg;
+};
+
 bool fileExists(const std::string& filename)
 {
     struct stat buf;
@@ -229,27 +250,6 @@ void Main::printResultFunc(
         }
     }
 }
-
-struct WrongParam
-{
-    WrongParam(string _param, string _msg) :
-        param(_param)
-        , msg(_msg)
-    {}
-
-    const string& getMsg() const
-    {
-        return msg;
-    }
-
-    const string& getParam() const
-    {
-        return param;
-    }
-
-    string param;
-    string msg;
-};
 
 void Main::add_supported_options()
 {
