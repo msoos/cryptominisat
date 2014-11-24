@@ -921,7 +921,7 @@ void Main::manually_parse_some_options()
     parse_polarity_type();
 
     if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
+        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     //Conflict
