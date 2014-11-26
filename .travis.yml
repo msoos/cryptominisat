@@ -22,8 +22,8 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
 install:
-  - sudo apt-get remove g++ gcc
   - sudo apt-get install libboost-program-options-dev libboost-test-dev gcc-4.7 g++-4.7
+  - sudo apt-get remove g++-4.6 gcc-4.6
   - sudo apt-get install cmake
   - sudo pip install lit
 #
