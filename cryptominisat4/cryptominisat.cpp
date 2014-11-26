@@ -93,10 +93,10 @@ struct DataForThread
     lbool* ret;
 };
 
-SATSolver::SATSolver(const SolverConf *conf, bool* interrupt_asap)
+SATSolver::SATSolver(const SolverConf& conf, bool* interrupt_asap)
 {
     data = new CMSatPrivateData(interrupt_asap);
-    data->solvers.push_back(new Solver(conf, data->inter));
+    data->solvers.push_back(new Solver(&conf, data->inter));
 }
 
 SATSolver::~SATSolver()
