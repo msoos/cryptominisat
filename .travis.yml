@@ -25,6 +25,7 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
 install:
+  - sudo apt-get remove g++ gcc
   - sudo apt-get install libboost-program-options-dev libboost-test-dev gcc-4.7 g++-4.7
   - sudo apt-get install cmake
   - sudo pip install lit
@@ -34,7 +35,6 @@ install:
   - git submodule update
   - mkdir build && cd build
 script:
-#  - CC="gcc-4.7" CXX="g++-4.7" cmake -DENABLE_TESTING=ON ..
   - ../.travis-cmake.sh ../
   - make
   - ctest -V

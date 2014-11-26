@@ -6,8 +6,8 @@
 # that would create two ways of setting the same thing which doesn't seem like
 # a good idea.
 
-export CC="gcc-4.7"
-export CXX="g++-4.7"
+# export CC="gcc-4.7"
+# export CXX="g++-4.7"
 
 SOURCE_DIR="$1"
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
