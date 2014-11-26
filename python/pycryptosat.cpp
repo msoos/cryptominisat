@@ -72,7 +72,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     conf.verbosity = verbose;
     conf.maxConfl = confl_limit;
 
-    SATSolver *cmsat = new SATSolver(&conf);
+    SATSolver *cmsat = new SATSolver(conf);
     cmsat->set_num_threads(num_threads);
 
     return cmsat;
