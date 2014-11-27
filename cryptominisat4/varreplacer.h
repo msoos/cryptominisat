@@ -102,6 +102,17 @@ class VarReplacer
     private:
         Solver* solver;
         SCCFinder* scc_finder;
+        vector<Clause*> delayed_attach_or_free;
+
+        vector<Lit> fast_inter_replace_lookup;
+        void build_fast_inter_replace_lookup();
+        void destroy_fast_inter_replace_lookup();
+        Lit get_lit_replaced_with_fast(const Lit lit) const {
+            return fast_inter_replace_lookup[lit.var()] ^ lit.sign();
+        }
+        Var get_var_replaced_with_fast(const Var var) const {
+            return fast_inter_replace_lookup[var].var();
+        }
 
         vector<Lit> ps_tmp;
         void update_delayed_enqueue_to_dominator();
@@ -115,12 +126,15 @@ class VarReplacer
 
         bool isReplaced(const Var var) const;
         bool isReplaced(const Lit lit) const;
+        bool isReplaced_fast(const Var var) const;
+        bool isReplaced_fast(const Lit lit) const;
 
         size_t getNumTrees() const;
         void set_sub_var_during_solution_extension(Var var, Var sub_var);
         void checkUnsetSanity();
 
         bool replace_set(vector<ClOffset>& cs);
+        void attach_delayed_attach();
         void update_all_vardata_activities();
         void update_vardata_and_activities(
             const Var orig
@@ -246,6 +260,11 @@ inline bool VarReplacer::isReplaced(const Var var) const
     return get_var_replaced_with(var) != var;
 }
 
+inline bool VarReplacer::isReplaced_fast(const Var var) const
+{
+    return get_var_replaced_with_fast(var) != var;
+}
+
 inline Var VarReplacer::get_var_replaced_with(const Lit lit) const
 {
     return get_var_replaced_with(lit.var());
@@ -254,6 +273,11 @@ inline Var VarReplacer::get_var_replaced_with(const Lit lit) const
 inline bool VarReplacer::isReplaced(const Lit lit) const
 {
     return isReplaced(lit.var());
+}
+
+inline bool VarReplacer::isReplaced_fast(const Lit lit) const
+{
+    return isReplaced_fast(lit.var());
 }
 
 inline size_t VarReplacer::getNumTrees() const

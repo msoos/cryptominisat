@@ -428,6 +428,7 @@ void SolutionExtender::replaceSet(Lit toSet)
 {
     //set forward equivalent
     if (solver->varReplacer->isReplaced(toSet)) {
+        assert(false && "Cannot use isReplaced from outside of solver!!!!");
         toSet = solver->varReplacer->get_lit_replaced_with(toSet);
         enqueue(toSet);
     }

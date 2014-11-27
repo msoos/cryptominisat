@@ -165,6 +165,19 @@ bool VarReplacer::enqueueDelayedEnqueue()
     return solver->ok;
 }
 
+void VarReplacer::attach_delayed_attach()
+{
+    for(Clause* c: delayed_attach_or_free) {
+        if (c->size() <= 3) {
+            solver->cl_alloc.clauseFree(c);
+        } else {
+            c->unset_removed();
+            solver->attachClause(*c);
+        }
+    }
+    delayed_attach_or_free.clear();
+}
+
 void VarReplacer::update_all_vardata_activities()
 {
     Var var = 0;
@@ -207,6 +220,7 @@ bool VarReplacer::perform_replace()
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
     #endif
+    build_fast_inter_replace_lookup();
 
     //Replace implicits
     if (!replaceImplicit()) {
@@ -214,12 +228,17 @@ bool VarReplacer::perform_replace()
     }
 
     //Replace longs
+    assert(delayed_attach_or_free.empty());
     if (!replace_set(solver->longIrredCls)) {
+        delayed_attach_or_free.clear();
         goto end;
     }
     if (!replace_set(solver->longRedCls)) {
+        delayed_attach_or_free.clear();
         goto end;
     }
+    solver->clean_occur_from_removed_clauses();
+    attach_delayed_attach();
 
     //While replacing the clauses
     //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
@@ -232,6 +251,7 @@ bool VarReplacer::perform_replace()
     solver->update_assumptions_after_varreplace();
 
 end:
+    destroy_fast_inter_replace_lookup();
     assert(solver->prop_at_head() || !solver->ok);
 
     //Update stamp dominators
@@ -301,8 +321,8 @@ void VarReplacer::updateTri(
     assert(solver->value(origLit3) == l_Undef);
 
     //Update lit3
-    if (get_var_replaced_with(lit3) != lit3.var()) {
-        lit3 = get_lit_replaced_with(lit3);
+    if (get_lit_replaced_with_fast(lit3) != lit3) {
+        lit3 = get_lit_replaced_with_fast(lit3);
         i->setLit3(lit3);
         runStats.replacedLits++;
     }
@@ -511,15 +531,15 @@ bool VarReplacer::replaceImplicit()
 
             //Update main lit
             Lit lit1 = origLit1;
-            if (get_var_replaced_with(lit1) != lit1.var()) {
-                lit1 = get_lit_replaced_with(lit1);
+            if (get_lit_replaced_with_fast(lit1) != lit1) {
+                lit1 = get_lit_replaced_with_fast(lit1);
                 runStats.replacedLits++;
             }
 
             //Update lit2
             Lit lit2 = origLit2;
-            if (get_var_replaced_with(lit2) != lit2.var()) {
-                lit2 = get_lit_replaced_with(lit2);
+            if (get_lit_replaced_with_fast(lit2) != lit2) {
+                lit2 = get_lit_replaced_with_fast(lit2);
                 i->setLit2(lit2);
                 runStats.replacedLits++;
             }
@@ -571,15 +591,14 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         (*solver->drup) << deldelay << c << fin;
 
         for (Lit& l: c) {
-            if (isReplaced(l)) {
+            if (isReplaced_fast(l)) {
                 changed = true;
-                l = get_lit_replaced_with(l);
+                l = get_lit_replaced_with_fast(l);
                 runStats.replacedLits++;
             }
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            solver->cl_alloc.clauseFree(*i);
             runStats.removedLongClauses++;
             if (!solver->ok) {
                 return false;
@@ -621,9 +640,18 @@ bool VarReplacer::handleUpdatedClause(
     }
     c.shrink(i - j);
     c.setChanged();
+    if (satisfied) {
+        c.shrink(c.size());
+    }
 
     runStats.bogoprops += 10;
-    solver->detach_modified_clause(origLit1, origLit2, origSize, &c);
+    if (c.red()) {
+        solver->litStats.redLits -= origSize;
+    } else {
+        solver->litStats.irredLits -= origSize;
+    }
+    c.setRemoved();
+    delayed_attach_or_free.push_back(&c);
 
     #ifdef VERBOSE_DEBUG
     cout << "clause after replacing: " << c << endl;
@@ -655,7 +683,6 @@ bool VarReplacer::handleUpdatedClause(
         return true;
 
     default:
-        solver->attachClause(c);
         runStats.removedLongLits += origSize - c.size();
         return false;
     }
@@ -1111,6 +1138,21 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
     bogoprops += other.bogoprops;
 
     return *this;
+}
+
+void VarReplacer::build_fast_inter_replace_lookup()
+{
+    fast_inter_replace_lookup.clear();
+    fast_inter_replace_lookup.reserve(solver->nVars());
+    for(Var var = 0; var < solver->nVars(); var++) {
+        fast_inter_replace_lookup.push_back(get_lit_replaced_with(Lit(var, false)));
+    }
+}
+
+void VarReplacer::destroy_fast_inter_replace_lookup()
+{
+    vector<Lit> tmp;
+    fast_inter_replace_lookup.swap(tmp);
 }
 
 Lit VarReplacer::get_lit_replaced_with(Lit lit) const
