@@ -615,8 +615,9 @@ bool VarReplacer::handleUpdatedClause(
             satisfied = true;
             break;
         }
-        else if (solver->value(c[i]) != l_False && c[i] != p)
+        else if (solver->value(c[i]) != l_False && c[i] != p) {
             c[j++] = p = c[i];
+        }
     }
     c.shrink(i - j);
     c.setChanged();
