@@ -280,7 +280,7 @@ void VarReplacer::newBinClause(
     if (origLit1 < origLit2
         && origLit2 < origLit3
     ){
-        delayedAttach.push_back(BinaryClause(lit1, lit2, red));
+        delayed_attach_bin.push_back(BinaryClause(lit1, lit2, red));
         (*solver->drup) << lit1 << lit2 << fin;
     }
 }
@@ -483,7 +483,7 @@ bool VarReplacer::replaceImplicit()
 {
     impl_tmp_stats.clear();
     delayedEnqueue.clear();
-    delayedAttach.clear();
+    delayed_attach_bin.clear();
 
     size_t wsLit = 0;
     for (auto
@@ -534,14 +534,10 @@ bool VarReplacer::replaceImplicit()
         ws.shrink_(i-j);
     }
 
-    for(vector<BinaryClause>::const_iterator
-        it = delayedAttach.begin(), end = delayedAttach.end()
-        ; it != end
-        ; it++
-    ) {
-        solver->attach_bin_clause(it->getLit1(), it->getLit2(), it->isRed());
+    for(const BinaryClause& bincl : delayed_attach_bin) {
+        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
     }
-    delayedAttach.clear();
+    delayed_attach_bin.clear();
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
     cout << "c debug bin replacer start" << endl;

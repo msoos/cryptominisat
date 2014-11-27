@@ -145,7 +145,7 @@ class VarReplacer
         );
 
         //Temporary used in replaceImplicit
-        vector<BinaryClause> delayedAttach;
+        vector<BinaryClause> delayed_attach_bin;
         bool replaceImplicit();
         struct ImplicitTmpStats
         {
