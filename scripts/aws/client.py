@@ -17,6 +17,7 @@ import time
 import subprocess
 import resource
 import pprint
+import boto
 pp = pprint.PrettyPrinter(depth=6)
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -94,13 +95,12 @@ class solverThread (threading.Thread):
         return"/tmp/%s-%d.out" % (self.tosolve["filename"], self.tosolve["unique_counter"])
 
     def solver_filename(self):
-        return "%s/%s" % (self.tosolve["basedir"], self.tosolve["solver"])
+        return "%s" % (self.tosolve["solver"])
 
     def execute(self) :
         toexec = "%s %s/%s/%s" % ( \
             self.solver_filename(), \
-            self.tosolve["basedir"], \
-            self.tosolve["cnf_files_dir"], \
+            self.tosolve["cnfdir"], \
             self.tosolve["filename"] \
         )
         outfile = open(self.get_output_filename(), "w")
@@ -122,25 +122,32 @@ class solverThread (threading.Thread):
         print "solved '%s' in %f seconds by thread %s" % (self.tosolve["filename"], tend-tstart, self.name)
         #print "stdout:", consoleOutput, " stderr:", err
 
-    def copy_solution_to_server(self) :
-        toexec = "scp %s %s:%s/%s/" % ( \
-            self.get_output_filename(), \
-            options.host, \
-            self.tosolve["basedir"], \
-            self.tosolve["solutionto"] \
-        )
-        print "Executing '%s' to put the file to the right place" % toexec
+    def create_url(self, bucket, key):
+        if not bucket or not key:
+            return None
+        return 'https://%s.s3.amazonaws.com/%s' % (bucket, key)
 
-        process = subprocess.Popen(toexec.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        consoleOutput, err = process.communicate()
-        print "SCP stdout:", consoleOutput, " stderr:", err
-        if process.returncode != 0:
-            print "Error copying file\n"
-            exit(-1)
+    def copy_solution_to_s3(self) :
+        boto_bucket = boto_conn.get_bucket(self.tosolve["bucket"])
+        k = boto.s3.key.Key(boto_bucket)
+        k.key = self.tosolve["filename"]
+        k.set_contents_from_filename(self.get_output_filename())
+        print "Uploaded file"
 
-        #remove temporary solution file
-        os.unlink("/tmp/%s-%d.out" % (self.tosolve["filename"], self.tosolve["unique_counter"],))
-        return err == ""
+        k.make_public()
+        print "File public"
+
+
+        url = self.create_url(self.tosolve["solutionto"], self.tosolve["filename"])
+        print "URL: ", url, "All done."
+
+        os.unlink(self.get_output_filename())
+
+    def uptime(self):
+        with open('/proc/uptime', 'r') as f:
+            return float(f.readline().split()[0])
+
+        return None
 
     def run(self):
         print "Starting " + self.name
@@ -151,33 +158,36 @@ class solverThread (threading.Thread):
 
             #ask for stuff to solve
             print "asking for stuff to solve..."
-            sock.sendall("need    ".format("ascii"))
+            data = {}
+            data["uptime"] = self.uptime()
+            data["command"] = "need"
+            tosend = struct.pack('i', len(data)) + data
+            sock.sendall(data)
 
             #get stuff to solve
             data = self.get_n_bytes_from_connection(sock, 4)
-            assert len(data) == 4
             length = struct.unpack('i', data)[0]
-            print "length of tosolve data: ", length
+            data = self.get_n_bytes_from_connection(sock, length)
+            self.tosolve = pickle.loads(data)
 
-            #nothing more to solve?
-            if length == 0 :
+            if self.tosolve["command"] == "finish":
                 print "Client received that there is nothing more to solve, exiting"
                 return
 
-            data = self.get_n_bytes_from_connection(sock, length)
-            self.tosolve = pickle.loads(data)
+            assert self.tosolve["command"] == "solve"
+
             print "Have to solve ", pp.pprint(self.tosolve)
             sock.close()
 
             self.execute()
-            err = self.copy_solution_to_server()
-            if err:
-                print "There was an error with copy:", err
+            self.copy_solution_to_s3()
 
             sock = self.connect_client()
             tosend = "done" + struct.pack('i', len(self.tosolve["filename"])) + self.tosolve["filename"]
             sock.sendall(tosend)
             print "Sent that we finished", self.tosolve["filename"]
+
+boto_conn = boto.connect_s3(boto.config.aws_access_key_id, boto.config.aws_secret_access_key)
 
 # Create new threads
 threads = []
