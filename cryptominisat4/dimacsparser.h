@@ -46,7 +46,7 @@ class DimacsParser
         void parse_DIMACS_main(StreamBuffer& in);
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
-        int32_t parseInt(StreamBuffer& in, uint32_t& len);
+        int32_t parseInt(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in);
         void parse_and_add_clause(StreamBuffer& in);

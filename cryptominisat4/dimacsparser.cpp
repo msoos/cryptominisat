@@ -47,8 +47,11 @@ DimacsParser::DimacsParser(
 
 void DimacsParser::skipWhitespace(StreamBuffer& in)
 {
-    while ((*in >= 9 && *in <= 13 && *in != 10) || *in == 32)
+    char c = *in;
+    while ((c >= 9 && c <= 13 && c != 10) || c == 32) {
         ++in;
+        c = *in;
+    }
 }
 
 void DimacsParser::skipLine(StreamBuffer& in)
@@ -64,33 +67,34 @@ void DimacsParser::skipLine(StreamBuffer& in)
     }
 }
 
-int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
+int32_t DimacsParser::parseInt(StreamBuffer& in)
 {
-    lenParsed = 0;
     int32_t val = 0;
-    bool    neg = false;
+    int32_t mult = 1;
     skipWhitespace(in);
     if (*in == '-') {
-        neg = true;
+        mult = -1;
         ++in;
     } else if (*in == '+') {
         ++in;
     }
 
-    if (*in < '0' || *in > '9') {
+    char c = *in;
+    if (c < '0' || c > '9') {
         cout
-        << "PARSE ERROR! Unexpected char (dec: '" << (char)*in << ")"
+        << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
         << " At line " << lineNum
         << " we expected a number"
         << endl;
         std::exit(3);
     }
-    while (*in >= '0' && *in <= '9') {
-        lenParsed++;
-        val = val*10 + (*in - '0');
+
+    while (c >= '0' && c <= '9') {
+        val = val*10 + (c - '0');
         ++in;
+        c = *in;
     }
-    return neg ? -val : val;
+    return mult*val;
 }
 
 std::string DimacsParser::stringify(uint32_t x)
@@ -119,9 +123,8 @@ void DimacsParser::readClause(StreamBuffer& in)
 {
     int32_t parsed_lit;
     uint32_t var;
-    uint32_t len;
     for (;;) {
-        parsed_lit = parseInt(in, len);
+        parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (var >= (1ULL<<28)) {
@@ -160,11 +163,9 @@ bool DimacsParser::match(StreamBuffer& in, const char* str)
 
 void DimacsParser::printHeader(StreamBuffer& in)
 {
-    uint32_t len;
-
     if (match(in, "p cnf")) {
-        int vars    = parseInt(in, len);
-        int clauses = parseInt(in, len);
+        int vars    = parseInt(in);
+        int clauses = parseInt(in);
         if (verbosity >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
@@ -195,8 +196,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     vector<Lit> assumps;
     skipWhitespace(in);
     while(*in != ')') {
-        uint32_t len = 0;
-        int lit = parseInt(in, len);
+        int lit = parseInt(in);
         assumps.push_back(Lit(std::abs(lit)-1, lit < 0));
         skipWhitespace(in);
     }
@@ -263,8 +263,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         }
     } else if (debugLib && str == "Solver::new_vars(") {
         skipWhitespace(in);
-        uint32_t len = 0;
-        int n = parseInt(in, len);
+        int n = parseInt(in);
         solver->new_vars(n);
 
         if (verbosity >= 6) {
