@@ -226,18 +226,18 @@ bool VarReplacer::perform_replace()
     if (!replaceImplicit()) {
         goto end;
     }
+    solver->watches.clear_smudged();
 
     //Replace longs
     assert(delayed_attach_or_free.empty());
     if (!replace_set(solver->longIrredCls)) {
-        delayed_attach_or_free.clear();
         goto end;
     }
     if (!replace_set(solver->longRedCls)) {
-        delayed_attach_or_free.clear();
         goto end;
     }
-    solver->clean_occur_from_removed_clauses();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    solver->watches.clear_smudged();
     attach_delayed_attach();
 
     //While replacing the clauses
@@ -251,6 +251,7 @@ bool VarReplacer::perform_replace()
     solver->update_assumptions_after_varreplace();
 
 end:
+    delayed_attach_or_free.clear();
     destroy_fast_inter_replace_lookup();
     assert(solver->prop_at_head() || !solver->ok);
 
@@ -505,14 +506,17 @@ bool VarReplacer::replaceImplicit()
     delayedEnqueue.clear();
     delayed_attach_bin.clear();
 
-    size_t wsLit = 0;
-    for (auto
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        const Lit origLit1 = Lit::toLit(wsLit);
-        watch_subarray ws = *it;
+    for(size_t i = 0; i < solver->nVars()*2; i++) {
+        const Lit lit = Lit::toLit(i);
+        if (get_lit_replaced_with_fast(lit) != lit) {
+            solver->watches.smudge(lit);
+        }
+    }
+
+    for(size_t at = 0; at < solver->watches.get_smudged_list().size(); at++) {
+        const Lit origLit1 = solver->watches.get_smudged_list()[at];
+        //const Lit origLit1 = Lit::toLit(at);
+        watch_subarray ws = solver->watches[origLit1.toInt()];
 
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = i;
@@ -534,6 +538,10 @@ bool VarReplacer::replaceImplicit()
             if (get_lit_replaced_with_fast(lit1) != lit1) {
                 lit1 = get_lit_replaced_with_fast(lit1);
                 runStats.replacedLits++;
+                solver->watches.smudge(origLit2);
+                if (i->isTri()) {
+                    solver->watches.smudge(i->lit3());
+                }
             }
 
             //Update lit2
@@ -585,10 +593,10 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         assert(c.size() > 3);
 
         bool changed = false;
-        Lit origLit1 = c[0];
-        Lit origLit2 = c[1];
-
         (*solver->drup) << deldelay << c << fin;
+
+        const Lit origLit1 = c[0];
+        const Lit origLit2 = c[1];
 
         for (Lit& l: c) {
             if (isReplaced_fast(l)) {
@@ -613,6 +621,15 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
     assert(!solver->drup->something_delayed());
 
     return solver->ok;
+}
+
+Lit* my_lit_find(Clause& cl, const Lit lit)
+{
+    for(Lit* a = cl.begin(); a != cl.end(); a++) {
+        if (*a == lit)
+            return a;
+    }
+    return NULL;
 }
 
 /**
@@ -640,9 +657,6 @@ bool VarReplacer::handleUpdatedClause(
     }
     c.shrink(i - j);
     c.setChanged();
-    if (satisfied) {
-        c.shrink(c.size());
-    }
 
     runStats.bogoprops += 10;
     if (c.red()) {
@@ -659,6 +673,9 @@ bool VarReplacer::handleUpdatedClause(
 
     if (satisfied) {
         (*solver->drup) << findelay;
+        c.shrink(c.size()); //so we free() it
+        solver->watches.smudge(origLit1);
+        solver->watches.smudge(origLit2);
         return true;
     }
     (*solver->drup) << c << fin << findelay;
@@ -669,20 +686,50 @@ bool VarReplacer::handleUpdatedClause(
         solver->ok = false;
         return true;
     case 1 :
+        solver->watches.smudge(origLit1);
+        solver->watches.smudge(origLit2);
+
         delayedEnqueue.push_back(c[0]);
         runStats.removedLongLits += origSize;
         return true;
     case 2:
+        solver->watches.smudge(origLit1);
+        solver->watches.smudge(origLit2);
+
         solver->attach_bin_clause(c[0], c[1], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
     case 3:
+        solver->watches.smudge(origLit1);
+        solver->watches.smudge(origLit2);
+
         solver->attach_tri_clause(c[0], c[1], c[2], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
     default:
+        Lit* at = my_lit_find(c, origLit1);
+        if (at != NULL) {
+            std::swap(c[0], *at);
+        }
+        Lit* at2 = my_lit_find(c, origLit2);
+        if (at2 != NULL) {
+            std::swap(c[1], *at2);
+        }
+        if (at != NULL && at2 != NULL) {
+            c.unset_removed();
+            delayed_attach_or_free.pop_back();
+            if (c.red()) {
+                solver->litStats.redLits += c.size();
+            } else {
+                solver->litStats.irredLits += c.size();
+            }
+        } else {
+            solver->watches.smudge(origLit1);
+            solver->watches.smudge(origLit2);
+        }
+
         runStats.removedLongLits += origSize - c.size();
         return false;
     }

@@ -227,11 +227,7 @@ class VarReplacer
         );
         void updateStatsFromImplStats();
 
-        bool handleUpdatedClause(
-            Clause& c
-            , const Lit origLit1
-            , const Lit origLit2
-        );
+        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
 
          //While replacing the implicit clauses we cannot enqeue
         vector<Lit> delayedEnqueue;

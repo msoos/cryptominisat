@@ -158,6 +158,26 @@ class watch_array
 {
 public:
     vector<vector<Watched TBB > > watches;
+    vector<Lit> smudged_list;
+    vector<char> smudged;
+
+    void smudge(const Lit lit) {
+        if (!smudged[lit.toInt()]) {
+            smudged_list.push_back(lit);
+        }
+    }
+
+    const vector<Lit>& get_smudged_list() const {
+        return smudged_list;
+    }
+
+    void clear_smudged()
+    {
+        for(const Lit lit: smudged_list) {
+            smudged[lit.toInt()] = false;
+        }
+        smudged_list.clear();
+    }
 
     watch_subarray operator[](size_t pos)
     {
@@ -181,7 +201,9 @@ public:
 
     void resize(const size_t new_size)
     {
+        assert(smudged_list.empty());
         watches.resize(new_size);
+        smudged.resize(new_size, false);
     }
 
     size_t mem_used() const

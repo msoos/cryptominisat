@@ -223,6 +223,8 @@ public:
     }
     vector<Var> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
+    void clean_occur_from_removed_clauses_only_smudged();
+    void clear_one_occur_from_removed_clauses(watch_subarray w);
 
 protected:
     virtual void new_var(const bool bva, const Var orig_outer);
@@ -327,24 +329,36 @@ struct ClauseSizeSorter
 inline void CNF::clean_occur_from_removed_clauses()
 {
     for(watch_subarray w: watches) {
-        size_t i = 0;
-        size_t j = 0;
-        size_t end = w.size();
-        for(; i < end; i++) {
-            const Watched ws = w[i];
-            if (ws.isBinary() || ws.isTri()) {
-                w[j++] = w[i];
-                continue;
-            }
-
-            assert(ws.isClause());
-            Clause* cl = cl_alloc.ptr(ws.get_offset());
-            if (!cl->getRemoved()) {
-                w[j++] = w[i];
-            }
-        }
-        w.shrink(i-j);
+        clear_one_occur_from_removed_clauses(w);
     }
+}
+
+inline void CNF::clean_occur_from_removed_clauses_only_smudged()
+{
+    for(const Lit l: watches.get_smudged_list()) {
+        clear_one_occur_from_removed_clauses(watches[l.toInt()]);
+    }
+}
+
+inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
+{
+    size_t i = 0;
+    size_t j = 0;
+    size_t end = w.size();
+    for(; i < end; i++) {
+        const Watched ws = w[i];
+        if (ws.isBinary() || ws.isTri()) {
+            w[j++] = w[i];
+            continue;
+        }
+
+        assert(ws.isClause());
+        Clause* cl = cl_alloc.ptr(ws.get_offset());
+        if (!cl->getRemoved()) {
+            w[j++] = w[i];
+        }
+    }
+    w.shrink(i-j);
 }
 
 }
