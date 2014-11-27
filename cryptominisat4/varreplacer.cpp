@@ -165,6 +165,19 @@ bool VarReplacer::enqueueDelayedEnqueue()
     return solver->ok;
 }
 
+void VarReplacer::update_all_vardata_activities()
+{
+    Var var = 0;
+    for (vector<Lit>::const_iterator
+        it = table.begin(); it != table.end()
+        ; it++, var++
+    ) {
+        const Var orig = solver->map_outer_to_inter(var);
+        const Var repl = solver->map_outer_to_inter(it->var());
+        update_vardata_and_activities(orig, repl);
+    }
+}
+
 bool VarReplacer::perform_replace()
 {
     assert(solver->ok);
@@ -183,15 +196,7 @@ bool VarReplacer::perform_replace()
     if (solver->conf.verbosity >= 5)
         printReplaceStats();
 
-    Var var = 0;
-    for (vector<Lit>::const_iterator
-        it = table.begin(); it != table.end()
-        ; it++, var++
-    ) {
-        const Var orig = solver->map_outer_to_inter(var);
-        const Var repl = solver->map_outer_to_inter(it->var());
-        update_vardata_and_activities(orig, repl);
-    }
+    update_all_vardata_activities();
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;

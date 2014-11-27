@@ -121,6 +121,7 @@ class VarReplacer
         void checkUnsetSanity();
 
         bool replace_set(vector<ClOffset>& cs);
+        void update_all_vardata_activities();
         void update_vardata_and_activities(
             const Var orig
             , const Var replaced
