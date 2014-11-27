@@ -176,16 +176,6 @@ bool VarReplacer::perform_replace()
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
-    #ifdef REPLACE_STATISTICS
-    uint32_t numRedir = 0;
-    for (uint32_t i = 0; i < table.size(); i++) {
-        if (get_var_replaced_with(i) != i)
-            numRedir++;
-    }
-    cout << "c Number of trees:" << reverseTable.size() << endl;
-    cout << "c Number of redirected nodes:" << numRedir << endl;
-    #endif //REPLACE_STATISTICS
-
     solver->clauseCleaner->remove_and_clean_all();
     solver->test_all_clause_attached();
 
