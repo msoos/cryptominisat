@@ -295,7 +295,6 @@ private:
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const Var x);
     void        free_clauses_to_free();
-    void        clean_occur_from_removed_clauses();
     void        try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits);
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(Var var);

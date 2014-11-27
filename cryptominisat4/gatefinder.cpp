@@ -174,7 +174,7 @@ bool GateFinder::shorten_with_all_or_gates()
         if (!shortenWithOrGate(gate))
             break;
     }
-    simplifier->clean_occur_from_removed_clauses();
+    solver->clean_occur_from_removed_clauses();
     simplifier->free_clauses_to_free();
 
     const double time_used = cpuTime() - myTime;

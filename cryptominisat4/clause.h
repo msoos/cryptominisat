@@ -362,6 +362,11 @@ public:
         return isRemoved;
     }
 
+    void unset_removed()
+    {
+        isRemoved = false;
+    }
+
     void setFreed()
     {
         isFreed = true;

@@ -704,7 +704,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
     }
 
     if (!cl_to_free_later.empty()) {
-        clean_occur_from_removed_clauses();
+        solver->clean_occur_from_removed_clauses();
         free_clauses_to_free();
     }
     const double time_used = cpuTime() - myTime;
@@ -786,7 +786,7 @@ bool Simplifier::eliminate_vars()
     }
 
 end:
-    clean_occur_from_removed_clauses();
+    solver->clean_occur_from_removed_clauses();
     free_clauses_to_free();
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
@@ -825,29 +825,6 @@ void Simplifier::free_clauses_to_free()
         solver->cl_alloc.clauseFree(cl);
     }
     cl_to_free_later.clear();
-}
-
-void Simplifier::clean_occur_from_removed_clauses()
-{
-    for(watch_subarray w: solver->watches) {
-        size_t i = 0;
-        size_t j = 0;
-        size_t end = w.size();
-        for(; i < end; i++) {
-            const Watched ws = w[i];
-            if (ws.isBinary() || ws.isTri()) {
-                w[j++] = w[i];
-                continue;
-            }
-
-            assert(ws.isClause());
-            Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-            if (!cl->getRemoved()) {
-                w[j++] = w[i];
-            }
-        }
-        w.shrink(i-j);
-    }
 }
 
 bool Simplifier::fill_occur_and_print_stats()

@@ -222,6 +222,7 @@ public:
         return num_bva_vars;
     }
     vector<Var> build_outer_to_without_bva_map() const;
+    void clean_occur_from_removed_clauses();
 
 protected:
     virtual void new_var(const bool bva, const Var orig_outer);
@@ -322,6 +323,29 @@ struct ClauseSizeSorter
     bool operator () (const ClOffset x, const ClOffset y);
     const ClauseAllocator& cl_alloc;
 };
+
+inline void CNF::clean_occur_from_removed_clauses()
+{
+    for(watch_subarray w: watches) {
+        size_t i = 0;
+        size_t j = 0;
+        size_t end = w.size();
+        for(; i < end; i++) {
+            const Watched ws = w[i];
+            if (ws.isBinary() || ws.isTri()) {
+                w[j++] = w[i];
+                continue;
+            }
+
+            assert(ws.isClause());
+            Clause* cl = cl_alloc.ptr(ws.get_offset());
+            if (!cl->getRemoved()) {
+                w[j++] = w[i];
+            }
+        }
+        w.shrink(i-j);
+    }
+}
 
 }
 
