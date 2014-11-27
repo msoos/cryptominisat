@@ -550,7 +550,7 @@ bool VarReplacer::replaceImplicit()
 }
 
 /**
-@brief Replaces variables in normal clauses
+@brief Replaces variables in long clauses
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs)
 {
