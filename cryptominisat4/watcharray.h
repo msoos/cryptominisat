@@ -213,6 +213,8 @@ public:
             //1.2 is overhead
             mem += (double)watches[i].capacity()*(double)sizeof(Watched)*1.2;
         }
+        mem += smudged.capacity()*sizeof(char);
+        mem += smudged_list.capacity()*sizeof(Lit);
         return mem;
     }
 
