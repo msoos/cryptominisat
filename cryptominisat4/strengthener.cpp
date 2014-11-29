@@ -546,6 +546,45 @@ void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
     }
 }
 
+void Strengthener::CacheBasedData::clear()
+{
+    CacheBasedData tmp;
+    *this = tmp;
+}
+
+size_t Strengthener::CacheBasedData::get_cl_subsumed() const
+{
+    return subBinTri + subsumedStamp + subCache;
+}
+
+size_t Strengthener::CacheBasedData::get_lits_rem() const
+{
+    return remLitBinTri + remLitCache
+        + remLitTimeStampTotal + remLitTimeStampTotalInv;
+}
+
+void Strengthener::CacheBasedData::print() const
+{
+    cout
+    << "c [cl-str] stamp-based"
+    << " lit-rem: " << remLitTimeStampTotal
+    << " inv-lit-rem: " << remLitTimeStampTotalInv
+    << " stamp-cl-rem: " << subsumedStamp
+    << endl;
+
+    cout
+    << "c [cl-str] bintri-based"
+    << " lit-rem: " << remLitBinTri
+    << " cl-sub: " << subBinTri
+    << endl;
+
+    cout
+    << "c [cl-str] cache-based"
+    << " lit-rem: " << remLitCache
+    << " cl-sub: " << subCache
+    << endl;
+}
+
 void Strengthener::strengthen_bin_with_bin(
     const Lit lit
     , Watched*& i

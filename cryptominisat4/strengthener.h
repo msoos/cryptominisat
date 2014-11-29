@@ -203,45 +203,10 @@ class Strengthener {
             size_t remLitBinTri = 0;
             size_t subBinTri = 0;
             size_t subCache = 0;
-
-            void clear()
-            {
-                CacheBasedData tmp;
-                *this = tmp;
-            }
-
-            size_t get_cl_subsumed() const
-            {
-                return subBinTri + subsumedStamp + subCache;
-            }
-
-            size_t get_lits_rem() const
-            {
-                return remLitBinTri + remLitCache
-                    + remLitTimeStampTotal + remLitTimeStampTotalInv;
-            }
-
-            void print() const
-            {
-                cout
-                << "c [cl-str] stamp-based"
-                << " lit-rem: " << remLitTimeStampTotal
-                << " inv-lit-rem: " << remLitTimeStampTotalInv
-                << " stamp-cl-rem: " << subsumedStamp
-                << endl;
-
-                cout
-                << "c [cl-str] bintri-based"
-                << " lit-rem: " << remLitBinTri
-                << " cl-sub: " << subBinTri
-                << endl;
-
-                cout
-                << "c [cl-str] cache-based"
-                << " lit-rem: " << remLitCache
-                << " cl-sub: " << subCache
-                << endl;
-            }
+            void clear();
+            size_t get_cl_subsumed() const;
+            size_t get_lits_rem() const;
+            void print() const;
         };
         CacheBasedData cache_based_data;
         bool isSubsumed;
