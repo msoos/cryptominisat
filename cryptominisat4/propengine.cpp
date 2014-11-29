@@ -286,8 +286,11 @@ void PropEngine::update_glue(Clause& c)
         && c.stats.glue > 2
         && conf.updateGlues
     ) {
-        uint32_t newGlue = calcGlue(c);
-        c.stats.glue = std::min(c.stats.glue, newGlue);
+        const uint32_t new_glue = calc_glue_using_seen2(c);
+        c.stats.glue = std::min(c.stats.glue, new_glue);
+        if (new_glue < c.stats.glue) {
+            c.stats.ttl++;
+        }
     }
 }
 

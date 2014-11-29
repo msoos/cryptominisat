@@ -715,6 +715,7 @@ class Searcher : public HyperEngine
             , uint32_t &glue         //glue of the learnt clause
             , bool fromProber = false
         );
+        void update_clause_glue_from_analysis(Clause* cl);
         void minimize_learnt_clause();
         void mimimize_learnt_clause_based_on_cache();
         void print_fully_minimized_learnt_clause() const;

@@ -131,7 +131,8 @@ protected:
     void new_var(const bool bva, const Var orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
-    template<class T> uint32_t calcGlue(const T& ps); ///<Calculates the glue of a clause
+    template<class T> uint32_t calc_glue_using_seen2(const T& ps);
+    template<class T> uint32_t calc_glue_using_seen2_upper_bit(const T& ps);
 
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
@@ -402,15 +403,8 @@ inline bool PropEngine::satisfied(const BinaryClause& bin)
             || (value(bin.getLit2()) == l_True));
 }
 
-/**
-@brief Calculates the glue of a clause
-
-Used to calculate the Glue of a new clause, or to update the glue of an
-existing clause. Only used if the glue-based activity heuristic is enabled,
-i.e. if we are in GLUCOSE mode (not MiniSat mode)
-*/
 template<class T>
-uint32_t PropEngine::calcGlue(const T& ps)
+uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
 {
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;
@@ -426,6 +420,27 @@ uint32_t PropEngine::calcGlue(const T& ps)
     for(l = ps.begin(), end = ps.end(); l != end; l++) {
         uint32_t lev = varData[l->var()].level;
         seen2[lev] = 0;
+    }
+    return nbLevels;
+}
+
+template<class T>
+uint32_t PropEngine::calc_glue_using_seen2_upper_bit(const T& ps)
+{
+    uint32_t nbLevels = 0;
+    typename T::const_iterator l, end;
+
+    for(l = ps.begin(), end = ps.end(); l != end; l++) {
+        uint32_t lev = varData[l->var()].level;
+        if (!(seen2[lev] & 2)) {
+            nbLevels++;
+            seen2[lev] |= 2;
+        }
+    }
+
+    for(l = ps.begin(), end = ps.end(); l != end; l++) {
+        uint32_t lev = varData[l->var()].level;
+        seen2[lev] &= 1;
     }
     return nbLevels;
 }

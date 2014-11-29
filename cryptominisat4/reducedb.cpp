@@ -403,7 +403,8 @@ bool ReduceDB::cl_needs_removal(const Clause* cl) const
     return !red_cl_too_young(cl)
          && !cl->stats.locked
          && !cl->stats.marked_for_keep
-         && cl->stats.glue > 2;
+         && cl->stats.glue > 2
+         && cl->stats.ttl == 0;
 }
 
 void ReduceDB::remove_cl_from_array_and_count_stats(
@@ -420,6 +421,9 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         assert(cl->size() > 3);
 
         if (!cl_needs_removal(cl)) {
+            if (cl->stats.ttl > 0) {
+                //cl->stats.ttl--;
+            }
             solver->longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
             tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;

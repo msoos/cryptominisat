@@ -396,6 +396,26 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
     }
 }
 
+void Searcher::update_clause_glue_from_analysis(Clause* cl)
+{
+    assert(cl->red());
+    if (cl->stats.glue == 2) {
+        return;
+    }
+
+    unsigned glue = calc_glue_using_seen2_upper_bit(*cl);
+
+    if (glue <= cl->stats.glue) {
+        //tot_lbds = tot_lbds - c.lbd() + lbd;
+        //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
+
+        cl->stats.glue = glue;
+        if (glue <= 30) {
+            cl->stats.ttl++;
+        }
+    }
+}
+
 Clause* Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
@@ -440,6 +460,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl->stats.used_for_uip_creation++;
             if (cl->red() && !fromProber) {
                 bumpClauseAct(cl);
+                update_clause_glue_from_analysis(cl);
             }
 
             for (size_t j = 0; j < cl->size(); j++) {
@@ -486,7 +507,7 @@ void Searcher::mimimize_learnt_clause_based_on_cache()
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
-            || calcGlue(learnt_clause) < 0.65*hist.glueHistLT.avg()
+            || calc_glue_using_seen2(learnt_clause) < 0.65*hist.glueHistLT.avg()
             || learnt_clause.size() < 0.65*hist.conflSizeHistLT.avg()
             || learnt_clause.size() < 10
             )
@@ -667,7 +688,7 @@ Clause* Searcher::analyze_conflict(
     mimimize_learnt_clause_based_on_cache();
     print_fully_minimized_learnt_clause();
 
-    glue = calcGlue(learnt_clause);
+    glue = calc_glue_using_seen2(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (!fromProber && params.rest_type == restart_type_glue && conf.extra_bump_var_activities_based_on_glue) {
@@ -2706,7 +2727,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
         seen[learnt_clause[j].var()] = 0;    // ('seen[]' is now cleared)
 
     //Calculate glue
-    glue = calcGlue(learnt_clause);
+    glue = calc_glue_using_seen2(learnt_clause);
 
     return resolutions_str.str();
 }
