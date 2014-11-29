@@ -422,7 +422,9 @@ uint64_t Strengthener::calc_time_available(
         stats = &(globalStats.irredCacheBased);
     }
 
-    uint64_t maxCountTime = solver->conf.watch_cache_stamp_based_str_time_limitM*1000LL*1000LL;
+    uint64_t maxCountTime =
+        solver->conf.watch_cache_stamp_based_str_time_limitM*1000LL*1000LL
+        *solver->conf.global_timeout_multiplier;
     if (!alsoStrengthen) {
         maxCountTime *= 2;
     }
@@ -744,7 +746,9 @@ bool Strengthener::strengthen_implicit()
     str_impl_data.clear();
 
     const size_t origTrailSize = solver->trail_size();
-    timeAvailable = 1000LL*1000LL*solver->conf.strengthen_implicit_time_limitM;
+    timeAvailable =
+        solver->conf.strengthen_implicit_time_limitM*1000LL*1000LL
+        *solver->conf.global_timeout_multiplier;
     const int64_t orig_time = timeAvailable;
     double myTime = cpuTime();
 

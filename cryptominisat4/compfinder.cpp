@@ -131,7 +131,9 @@ bool CompFinder::find_components()
     }
 
     //Add the clauses to the sets
-    bogoprops_remain = solver->conf.comp_find_time_limitM*1000ULL*1000ULL;
+    bogoprops_remain =
+        solver->conf.comp_find_time_limitM*1000ULL*1000ULL
+        *solver->conf.global_timeout_multiplier;
     orig_bogoprops = bogoprops_remain;
     timedout = false;
     add_clauses_to_component(solver->longIrredCls);

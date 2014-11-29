@@ -35,6 +35,9 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
+    const uint64_t time_limit =
+        solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
+        *solver->conf.remove_cl_with_gates_time_limitM;
     aborted = false;
     uint64_t bogoprops = 0;
     uint32_t last_replace = std::numeric_limits<uint32_t>::max();
@@ -48,7 +51,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
         this_replace = solver->varReplacer->get_num_replaced_vars();
 
-        if (bogoprops > solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL) {
+        if (bogoprops > time_limit) {
             aborted = true;
             return true;
         }

@@ -183,7 +183,9 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 {
     assert(solver->okay());
     const double myTime = cpuTime();
-    const uint64_t orig_timeAvailable = solver->conf.subsume_implicit_time_limitM*1000LL*1000LL;
+    const uint64_t orig_timeAvailable =
+        1000LL*1000LL*solver->conf.subsume_implicit_time_limitM
+        *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
     const bool doStamp = solver->conf.doStamp;
     runStats.clear();

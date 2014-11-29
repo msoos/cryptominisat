@@ -1889,6 +1889,7 @@ end:
 
     test_all_clause_attached();
     check_wrong_attach();
+    conf.global_timeout_multiplier *= solver->conf.global_timeout_multiplier_multiplier;
 
     //TODO not so good....
     //The algorithms above probably have changed the propagation&usage data
