@@ -515,15 +515,7 @@ bool PropEngine::propNormalClauseAnyOrder(
             propStats.propsLongIrred++;
         #endif
         enqueue(c[0], PropBy(offset));
-
-        //Update glues?
-        if (c.red()
-            && c.stats.glue > 2
-            && conf.updateGlues
-        ) {
-            uint32_t newGlue = calcGlue(c);
-            c.stats.glue = std::min(c.stats.glue, newGlue);
-        }
+        update_glue(c);
     }
 
     return true;
