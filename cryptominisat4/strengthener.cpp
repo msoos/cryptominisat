@@ -524,6 +524,10 @@ void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
             cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
         }
         cache_based_data.print();
+
+        cout << "c [cl-str]"
+        << solver->conf.print_times(time_used, time_out, time_remain)
+        << endl;
     }
     if (solver->sqlStats) {
         std::stringstream ss;
