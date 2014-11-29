@@ -82,23 +82,6 @@ struct ResolutionTypes
 
 struct ClauseStats
 {
-    ClauseStats() :
-        glue(std::numeric_limits<uint32_t>::max())
-        , activity(0)
-        , introduced_at_conflict(std::numeric_limits<uint32_t>::max())
-        , propagations_made(0)
-        , conflicts_made(0)
-        , sum_of_branch_depth_conflict(0)
-        , sum_of_branch_depth_propagation(0)
-        #ifdef STATS_NEEDED
-        , visited_literals(0)
-        , clause_looked_at(0)
-        #endif
-        , used_for_uip_creation(0)
-        , locked(false)
-        , marked_for_keep(false)
-    {}
-
     double weighted_prop_and_confl(
         const double prop_weight
         , const double confl_weight
@@ -121,20 +104,21 @@ struct ClauseStats
     }
 
     //Stored data
-    uint32_t glue;    ///<Clause glue
-    double   activity;
-    uint64_t introduced_at_conflict; ///<At what conflict number the clause  was introduced
-    uint32_t propagations_made; ///<Number of times caused propagation
-    uint32_t conflicts_made; ///<Number of times caused conflict
-    uint64_t sum_of_branch_depth_conflict;
-    uint64_t sum_of_branch_depth_propagation;
+    uint32_t glue = std::numeric_limits<uint32_t>::max();
+    double   activity = 0.0;
+    uint64_t introduced_at_conflict = std::numeric_limits<uint32_t>::max(); ///<At what conflict number the clause  was introduced
+    uint32_t propagations_made = 0; ///<Number of times caused propagation
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint64_t sum_of_branch_depth_conflict = 0;
+    uint64_t sum_of_branch_depth_propagation = 0;
     #ifdef STATS_NEEDED
-    uint64_t visited_literals; ///<Number of literals visited
-    uint64_t clause_looked_at; ///<Number of times the clause has been deferenced during propagation
+    uint64_t visited_literals = 0; ///<Number of literals visited
+    uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
-    uint32_t used_for_uip_creation; ///Number of times the claue was using during 1st UIP conflict generation
-    bool locked;
-    bool marked_for_keep;
+    uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
+    bool locked = false;
+    bool marked_for_keep = false;
+    uint16_t ttl = 0;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
