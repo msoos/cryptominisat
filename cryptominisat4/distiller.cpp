@@ -89,7 +89,7 @@ bool Distiller::distill_tri_irred_cls()
     double myTime = cpuTime();
     uint64_t maxNumProps =
         2LL*1000LL*solver->conf.distill_time_limitM
-        *solver->conf.bva_time_limitM;
+        *solver->conf.global_timeout_multiplier;
     uint64_t oldBogoProps = solver->propStats.bogoProps;
     size_t origTrailSize = solver->trail_size();
 
@@ -207,7 +207,7 @@ bool Distiller::distill_long_irred_cls()
     //Time-limiting
     uint64_t maxNumProps =
         solver->conf.distill_long_irred_cls_time_limitM*1000LL*1000ULL
-        *solver->conf.bva_time_limitM;
+        *solver->conf.global_timeout_multiplier;
     if (solver->litStats.irredLits + solver->litStats.redLits < 500000)
         maxNumProps *=2;
 

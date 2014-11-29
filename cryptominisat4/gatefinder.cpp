@@ -89,7 +89,7 @@ void GateFinder::find_or_gates_and_update_stats()
     double myTime = cpuTime();
     const int64_t orig_numMaxGateFinder =
         solver->conf.gatefinder_time_limitM*100LL*1000LL
-        *solver->conf.bva_time_limitM;
+        *solver->conf.global_timeout_multiplier;
     numMaxGateFinder = orig_numMaxGateFinder;
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
