@@ -1360,7 +1360,7 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             lits[1] = watch.lit2();
             if (!watch.red()) {
                 add_clause_to_blck(lit, lits);
-                touched.touch(watch.lit2());
+                touched.touch(lits[1]);
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
@@ -1395,8 +1395,8 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
             lits[2] = watch.lit3();
             if (!watch.red()) {
                 add_clause_to_blck(lit, lits);
-                touched.touch(watch.lit2());
-                touched.touch(watch.lit3());
+                touched.touch(lits[1]);
+                touched.touch(lits[2]);
             } else {
                 //If redundant, delayed blocked-based DRUP deletion will not work
                 //so delete explicitly
