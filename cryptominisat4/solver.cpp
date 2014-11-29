@@ -458,12 +458,6 @@ Clause* Solver::add_clause_int(
             return NULL;
 
         case 3:
-            /*cout << "Attached tri clause: "
-            << ps[0] << ", "
-            << ps[1] << ", "
-            << ps[2]
-            << endl;*/
-
             attach_tri_clause(ps[0], ps[1], ps[2], red);
             return NULL;
 
