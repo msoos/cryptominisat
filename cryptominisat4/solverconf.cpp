@@ -48,7 +48,7 @@ SolverConf::SolverConf() :
         , increaseClean(1.06)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
-        , min_time_in_db_before_eligible_for_cleaning(10ULL*1000ULL)
+        , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
         , lock_uip_per_dbclean(100)
         , multiplier_perf_values_after_cl_clean(0)
 
@@ -144,8 +144,8 @@ SolverConf::SolverConf() :
         //Probing
         , doProbe          (true)
         , doIntreeProbe    (true)
-        , probe_bogoprops_time_limitM  (500ULL)
-        , intree_time_limitM(80ULL)
+        , probe_bogoprops_time_limitM  (800ULL)
+        , intree_time_limitM(400ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
