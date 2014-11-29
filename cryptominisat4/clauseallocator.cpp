@@ -130,7 +130,7 @@ void* ClauseAllocator::allocEnough(
 
         //Oops, not enough space anyway
         if (newMaxSize < size + needed) {
-            cout
+            std::cerr
             << "ERROR: memory manager can't handle the load"
             << " size: " << size
             << " needed: " << needed
@@ -148,7 +148,7 @@ void* ClauseAllocator::allocEnough(
 
         //Realloc failed?
         if (dataStart == NULL) {
-            cout
+            std::cerr
             << "ERROR: while reallocating clause space"
             << endl;
 
