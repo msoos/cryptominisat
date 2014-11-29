@@ -91,7 +91,8 @@ SolverConf::SolverConf() :
         , agilityViolationLimit     (20)
 
         //Glues
-        , updateGlues(true)
+        , update_glues_on_prop(false)
+        , update_glues_on_analyze(true)
 
         //OTF
         , otfHyperbin      (true)

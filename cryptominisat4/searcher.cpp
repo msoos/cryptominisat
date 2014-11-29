@@ -460,7 +460,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl->stats.used_for_uip_creation++;
             if (cl->red() && !fromProber) {
                 bumpClauseAct(cl);
-                update_clause_glue_from_analysis(cl);
+                if (conf.update_glues_on_analyze) {
+                    update_clause_glue_from_analysis(cl);
+                }
             }
 
             for (size_t j = 0; j < cl->size(); j++) {

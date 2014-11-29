@@ -526,8 +526,10 @@ void Main::add_supported_options()
 
     po::options_description propOptions("Propagation options");
     propOptions.add_options()
-    ("updateglue", po::value(&conf.updateGlues)->default_value(conf.updateGlues)
+    ("updateglueonprop", po::value(&conf.update_glues_on_prop)->default_value(conf.update_glues_on_prop)
         , "Update glues while propagating")
+    ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
+        , "Update glues while analyzing")
     ("lhbr", po::value(&conf.doLHBR)->default_value(conf.doLHBR)
         , "Perform lazy hyper-binary resolution while propagating")
     ("binpri", po::value(&conf.propBinFirst)->default_value(conf.propBinFirst)

@@ -189,7 +189,8 @@ class SolverConf
         unsigned  agilityViolationLimit;
 
         //Glues
-        int       updateGlues;
+        int       update_glues_on_prop;
+        int       update_glues_on_analyze;
 
         //OTF stuff
         int       otfHyperbin;
