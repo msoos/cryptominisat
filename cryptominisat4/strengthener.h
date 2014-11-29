@@ -196,23 +196,18 @@ class Strengthener {
         //Cache-based data
         struct CacheBasedData
         {
-            size_t remLitTimeStampTotal;
-            size_t remLitTimeStampTotalInv;
-            size_t subsumedStamp;
-            size_t remLitCache;
-            size_t remLitBinTri;
-            size_t subBinTri;
-            size_t subCache;
+            size_t remLitTimeStampTotal = 0;
+            size_t remLitTimeStampTotalInv = 0;
+            size_t subsumedStamp = 0;
+            size_t remLitCache = 0;
+            size_t remLitBinTri = 0;
+            size_t subBinTri = 0;
+            size_t subCache = 0;
 
             void clear()
             {
-                remLitTimeStampTotal = 0;
-                remLitTimeStampTotalInv = 0;
-                subsumedStamp = 0;
-                remLitCache = 0;
-                remLitBinTri = 0;
-                subBinTri = 0;
-                subCache = 0;
+                CacheBasedData tmp;
+                *this = tmp;
             }
 
             size_t get_cl_subsumed() const
