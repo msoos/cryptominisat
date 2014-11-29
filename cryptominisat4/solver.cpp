@@ -1878,9 +1878,9 @@ lbool Solver::simplify_problem(const bool startup)
     //addSymmBreakClauses();
 
 end:
-    if (conf.verbosity >= 3)
+    if (conf.verbosity >= 3) {
         cout << "c Searcher::simplify_problem() finished" << endl;
-
+    }
     test_all_clause_attached();
     check_wrong_attach();
     conf.global_timeout_multiplier *= solver->conf.global_timeout_multiplier_multiplier;
