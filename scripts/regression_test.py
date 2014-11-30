@@ -173,7 +173,7 @@ class Tester:
         cmd += "--gluehist %s " % random.randint(1,500)
         cmd += "--updateglue %s " % random.randint(0,1)
         cmd += "--otfhyper %s " % random.randint(0,1)
-        cmd += "--clean %s " % random.choice(["size", "glue", "activity", "prconf"])
+        #cmd += "--clean %s " % random.choice(["size", "glue", "activity", "prconf"])
         cmd += "--clearstat %s " % random.randint(0,1)
         cmd += "--startclean %s " % random.randint(100,16000)
         cmd += "--maxredratio %s " % random.randint(2,20)
