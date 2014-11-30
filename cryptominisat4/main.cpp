@@ -138,7 +138,7 @@ void Main::readInAFile(const string& filename)
     #endif
 
     if (in == NULL) {
-        cout
+        std::cerr
         << "ERROR! Could not open file '"
         << filename
         << "' for reading" << endl;
@@ -171,7 +171,7 @@ void Main::readInStandardInput()
     #endif
 
     if (in == NULL) {
-        cout << "ERROR! Could not open standard input for reading" << endl;
+        std::cerr << "ERROR! Could not open standard input for reading" << endl;
         std::exit(1);
     }
 
@@ -789,7 +789,7 @@ void Main::handle_drup_option()
         drupf = &std::cout;
     } else {
         if (drupExistsCheck && fileExists(drupfilname)) {
-            cout
+            std::cerr
             << "ERROR! File selected for DRUP output, '"
             << drupfilname
             << "' already exists. Please delete the file or pick another"
@@ -801,7 +801,7 @@ void Main::handle_drup_option()
         std::ofstream* drupfTmp = new std::ofstream;
         drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
         if (!*drupfTmp) {
-            cout
+            std::cerr
             << "ERROR: Could not open DRUP file "
             << drupfilname
             << " for writing"

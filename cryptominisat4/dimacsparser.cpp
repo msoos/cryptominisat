@@ -128,9 +128,9 @@ void DimacsParser::readClause(StreamBuffer& in)
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (var >= (1ULL<<28)) {
-            cout
-            << "ERROR! Variable requested is far too large: "
-            << var << endl
+            std::cerr
+            << "ERROR! "
+            << "Variable requested is far too large: " << var << endl
             << "--> At line " << lineNum+1
             << endl;
             std::exit(-1);
@@ -141,9 +141,10 @@ void DimacsParser::readClause(StreamBuffer& in)
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
         if (*in != ' ') {
-            cout << "ERROR!"
+            std::cerr
+            << "ERROR! "
+            << "After each literal, there must be an empty space!"
             << "--> At line " << lineNum+1 << endl
-            << "--> After each literal, there must be an empty space!"
             << endl;
             std::exit(-1);
         }
@@ -183,7 +184,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
             solver->new_vars(vars-solver->nVars());
         }
     } else {
-        cout
+        std::cerr
         << "PARSE ERROR! Unexpected char: '" << *in
         << "' in the header, at line " << lineNum+1
         << endl;
@@ -220,7 +221,7 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
     std::ofstream partFile;
     partFile.open(s.c_str());
     if (!partFile) {
-        cout << "ERROR: Cannot open part file '" << s << "'";
+        std::cerr << "ERROR: Cannot open part file '" << s << "'";
         std::exit(-1);
     }
 
@@ -332,7 +333,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             parse_and_add_xor_clause(in);
             break;
         case '\n':
-            cout
+            std::cerr
             << "c WARNING: Empty line at line number " << lineNum+1
             << " -- this is not part of the DIMACS specifications. Ignoring."
             << endl;

@@ -89,7 +89,7 @@ void ClauseDumper::dumpBinClauses(
     , const bool dumpIrred
 ) {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -135,7 +135,8 @@ void ClauseDumper::dumpTriClauses(
     , const bool alsoIrred
 ) {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr
+        << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -180,7 +181,7 @@ void ClauseDumper::dumpTriClauses(
 void ClauseDumper::dumpEquivalentLits()
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -197,7 +198,7 @@ void ClauseDumper::dumpEquivalentLits()
 void ClauseDumper::dumpUnitaryClauses()
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -218,7 +219,7 @@ void ClauseDumper::dumpUnitaryClauses()
 void ClauseDumper::dumpRedClauses(const uint32_t maxSize)
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -259,7 +260,7 @@ void ClauseDumper::dump_clauses(
     , size_t max_size
 ) {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -277,7 +278,7 @@ void ClauseDumper::dump_clauses(
 void ClauseDumper::dump_blocked_clauses()
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -289,7 +290,7 @@ void ClauseDumper::dump_blocked_clauses()
 void ClauseDumper::dump_component_clauses()
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
@@ -301,7 +302,7 @@ void ClauseDumper::dump_component_clauses()
 void ClauseDumper::dumpIrredClauses()
 {
     if (solver->conf.do_bva) {
-        cout << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
+        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 

@@ -1025,11 +1025,11 @@ void MySQLStats::clauseSizeDistrib(
     }
 
     if (mysql_stmt_execute(stmtClsDistribSize.stmt)) {
-        cout
+        std::cerr
         << "ERROR: while executing restart insertion MySQL prepared statement"
         << endl;
 
-        cout << "Error from mysql: "
+        std::cerr << "Error from mysql: "
         << mysql_stmt_error(stmtClsDistribSize.stmt)
         << endl;
 
@@ -1051,11 +1051,11 @@ void MySQLStats::clauseGlueDistrib(
     }
 
     if (mysql_stmt_execute(stmtClsDistribGlue.stmt)) {
-        cout
+        std::cerr
         << "ERROR: while executing restart insertion MySQL prepared statement"
         << endl;
 
-        cout << "Error from mysql: "
+        std::cerr << "Error from mysql: "
         << mysql_stmt_error(stmtClsDistribGlue.stmt)
         << endl;
 
@@ -1084,11 +1084,11 @@ void MySQLStats::clauseSizeGlueScatter(
 
             if (at == numInserts) {
                 if (mysql_stmt_execute(stmtSizeGlueScatter.stmt)) {
-                    cout
+                    std::cerr
                     << "ERROR: while executing restart insertion MySQL prepared statement"
                     << endl;
 
-                    cout << "Error from mysql: "
+                    std::cerr << "Error from mysql: "
                     << mysql_stmt_error(stmtSizeGlueScatter.stmt)
                     << endl;
 

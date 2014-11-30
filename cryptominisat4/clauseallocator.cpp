@@ -318,7 +318,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     const size_t origNumClauses =
         solver->longIrredCls.size() + solver->longRedCls.size();
     if (origNumClauses != offsets.size()) {
-        cout
+        std::cerr
         << "ERROR: Not all non-freed clauses are accessible from Solver"
         << endl
         << " This usually means that a clause was not freed, i.e. a mem leak"

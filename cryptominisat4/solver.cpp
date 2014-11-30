@@ -631,7 +631,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Check for too large variable number
     for (const Lit lit: ps) {
         if (lit.var() >= nVarsOuter()) {
-            cout
+            std::cerr
             << "ERROR: Variable " << lit.var() + 1
             << " inserted, but max var is "
             << nVarsOuter()
@@ -727,7 +727,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 bool Solver::addClause(const vector<Lit>& lits)
 {
     if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
-        cout
+        std::cerr
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
         << endl;
@@ -1166,7 +1166,7 @@ void Solver::set_assumptions()
     for(const Lit lit: assumptions) {
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()]) {
-                /*cout
+                /*std::cerr
                 << "ERROR, the assumptions have the same variable inside"
                 << " more than once!"
                 << endl;*/
@@ -1176,7 +1176,7 @@ void Solver::set_assumptions()
             }
         } else {
             if (value(lit) == l_Undef) {
-                cout
+                std::cerr
                 << "ERROR: Lit " << lit
                 << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
                 << " value: " << value(lit)
@@ -1193,14 +1193,14 @@ void Solver::check_model_for_assumptions() const
     for(const Lit lit: origAssumptions) {
         assert(model.size() > lit.var());
         if (model_value(lit) == l_Undef) {
-            cout
+            std::cerr
             << "ERROR, lit " << lit
             << " was in the assumptions, but it wasn't set at all!"
             << endl;
         }
         assert(model[lit.var()] != l_Undef);
         if (model_value(lit) != l_True) {
-            cout
+            std::cerr
             << "ERROR, lit " << lit
             << " was in the assumptions, but it was set to its opposite value!"
             << endl;
@@ -1321,7 +1321,7 @@ void Solver::set_up_sql_writer()
     bool ret = sqlStats->setup(this);
     if (!ret) {
         if (conf.doSQL == 2) {
-            cout
+            std::cerr
             << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
             std::exit(-1);
         }
@@ -2665,7 +2665,7 @@ void Solver::find_all_attach() const
             if ((*cl)[0] != lit
                 && (*cl)[1] != lit
             ) {
-                cout
+                std::cerr
                 << "ERROR! Clause " << (*cl)
                 << " not attached?"
                 << endl;
@@ -2676,7 +2676,7 @@ void Solver::find_all_attach() const
 
             //Clause in one of the lists
             if (!find_clause(w.get_offset())) {
-                cout
+                std::cerr
                 << "ERROR! did not find clause " << *cl
                 << endl;
 
@@ -2864,7 +2864,7 @@ void Solver::check_implicit_stats() const
     }
 
     if (thisNumIrredBins/2 != binTri.irredBins) {
-        cout
+        std::cerr
         << "ERROR:"
         << " thisNumIrredBins/2: " << thisNumIrredBins/2
         << " binTri.irredBins: " << binTri.irredBins
@@ -2875,7 +2875,7 @@ void Solver::check_implicit_stats() const
     assert(thisNumIrredBins/2 == binTri.irredBins);
 
     if (thisNumRedBins/2 != binTri.redBins) {
-        cout
+        std::cerr
         << "ERROR:"
         << " thisNumRedBins/2: " << thisNumRedBins/2
         << " binTri.redBins: " << binTri.redBins
@@ -2885,7 +2885,7 @@ void Solver::check_implicit_stats() const
     assert(thisNumRedBins/2 == binTri.redBins);
 
     if (thisNumIrredTris/3 != binTri.irredTris) {
-        cout
+        std::cerr
         << "ERROR:"
         << " thisNumIrredTris/3: " << thisNumIrredTris/3
         << " binTri.irredTris: " << binTri.irredTris
@@ -2895,7 +2895,7 @@ void Solver::check_implicit_stats() const
     assert(thisNumIrredTris/3 == binTri.irredTris);
 
     if (thisNumRedTris/3 != binTri.redTris) {
-        cout
+        std::cerr
         << "ERROR:"
         << " thisNumRedTris/3: " << thisNumRedTris/3
         << " binTri.redTris: " << binTri.redTris
@@ -2947,17 +2947,17 @@ void Solver::check_stats(const bool allowFreed) const
     const double myTime = cpuTime();
     uint64_t numLitsIrred = count_lits(longIrredCls, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
-        cout << "ERROR: " << endl;
-        cout << "->numLitsIrred: " << numLitsIrred << endl;
-        cout << "->litStats.irredLits: " << litStats.irredLits << endl;
+        std::cerr << "ERROR: " << endl
+        << "->numLitsIrred: " << numLitsIrred << endl
+        << "->litStats.irredLits: " << litStats.irredLits << endl;
     }
     assert(numLitsIrred == litStats.irredLits);
 
     uint64_t numLitsRed = count_lits(longRedCls, allowFreed);
     if (numLitsRed != litStats.redLits) {
-        cout << "ERROR: " << endl;
-        cout << "->numLitsRed: " << numLitsRed << endl;
-        cout << "->litStats.redLits: " << litStats.redLits << endl;
+        std::cerr << "ERROR: " << endl
+        << "->numLitsRed: " << numLitsRed << endl
+        << "->litStats.redLits: " << litStats.redLits << endl;
     }
     assert(numLitsRed == litStats.redLits);
 
@@ -3299,7 +3299,7 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
 {
     for (const Lit lit: lits) {
         if (lit.var() >= nVarsOutside()) {
-            cout
+            std::cerr
             << "ERROR: Variable " << lit.var() + 1
             << " inserted, but max var is "
             << nVarsOutside()

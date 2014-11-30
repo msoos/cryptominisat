@@ -531,7 +531,7 @@ bool Simplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
         if (cl->getOccurLinked()
             && solver->varData[it2->var()].removed != Removed::none
         ) {
-            cout
+            std::cerr
             << "ERROR! Clause " << *cl
             << " red: " << cl->red()
             << " contains lit " << *it2
@@ -1281,7 +1281,7 @@ void Simplifier::cleanBlockedClauses()
         if (solver->varData[blockedOn].removed == Removed::elimed
             && solver->value(blockedOn) != l_Undef
         ) {
-            cout
+            std::cerr
             << "ERROR: lit " << *i << " elimed,"
             << " value: " << solver->value(blockedOn)
             << endl;
@@ -2615,7 +2615,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
             break;
 
         default:
-            cout
+            std::cerr
             << "ERROR: Invalid var-elim cost estimation strategy"
             << endl;
             std::exit(-1);
@@ -2714,7 +2714,7 @@ void Simplifier::check_elimed_vars_are_unassignedAndStats() const
         }
     }
     if (globalStats.numVarsElimed != checkNumElimed) {
-        cout
+        std::cerr
         << "ERROR: globalStats.numVarsElimed is "<<
         globalStats.numVarsElimed
         << " but checkNumElimed is: " << checkNumElimed
