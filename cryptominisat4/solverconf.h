@@ -321,6 +321,7 @@ class SolverConf
         long long remove_cl_with_gates_time_limitM;
 
         //interrupting & dumping
+        double orig_global_timeout_multiplier;
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped

@@ -1360,6 +1360,7 @@ lbool Solver::solve()
     if (conf.verbosity >= 6) {
         cout << "c Solver::solve() called" << endl;
     }
+    conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
 
     set_up_sql_writer();
 
