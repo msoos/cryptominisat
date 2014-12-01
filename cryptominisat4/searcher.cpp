@@ -1580,22 +1580,6 @@ bool Searcher::handle_conflict(PropBy confl)
     return true;
 }
 
-void Searcher::genRandomVarActMultDiv()
-{
-    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
-    var_inc_multiplier = conf.var_inc_multiplier - tosubstract;
-    var_inc_divider = conf.var_inc_divider - tosubstract;
-
-    if (conf.verbosity >= 1) {
-        cout
-        << "c Using var act-multip " << var_inc_multiplier
-        << " instead of standard " << (conf.var_inc_multiplier)
-        << " and act-divider " << var_inc_divider
-        << " instead of standard " << (conf.var_inc_divider)
-        << endl;
-    }
-}
-
 void Searcher::resetStats()
 {
     startTime = cpuTime();
@@ -1983,9 +1967,6 @@ void Searcher::reduce_db_if_needed()
         }
         solver->reduceDB->reduce_db_and_update_reset_stats();
 
-        genRandomVarActMultDiv();
-
-
         //watch consolidate
         if (conf.verbosity >= 2)
             watches.print_stat();
@@ -2128,7 +2109,10 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     ) {
         calculate_and_set_polars();
     }
-    genRandomVarActMultDiv();
+
+    var_inc_multiplier = conf.var_inc_multiplier;
+    var_inc_divider = conf.var_inc_divider;
+
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
     for(loop_num = 0

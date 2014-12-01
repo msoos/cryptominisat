@@ -31,7 +31,6 @@ SolverConf::SolverConf() :
         var_inc_start(128)
         , var_inc_multiplier(11)
         , var_inc_divider(10)
-        , var_inc_variability(0)
         , random_var_freq(0)
         , polarity_mode(polarmode_automatic)
         , do_calc_polarity_first_time(true)

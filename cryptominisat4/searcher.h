@@ -785,7 +785,6 @@ class Searcher : public HyperEngine
         vector<uint32_t> activities;
         uint32_t var_inc;
         void              insertVarOrder(const Var x);  ///< Insert a variable in heap
-        void  genRandomVarActMultDiv();
 
 
         uint64_t more_red_minim_limit_binary_actual;

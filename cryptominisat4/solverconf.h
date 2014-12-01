@@ -128,7 +128,6 @@ class SolverConf
         unsigned  var_inc_start;
         unsigned  var_inc_multiplier;
         unsigned  var_inc_divider;
-        unsigned  var_inc_variability;
         double random_var_freq;
         PolarityMode polarity_mode;
         int do_calc_polarity_first_time;
