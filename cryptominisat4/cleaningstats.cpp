@@ -76,7 +76,7 @@ void CleaningStats::print_short(const Solver* solver) const
 {
     cout
     << "c [DBclean]"
-    << " rem " << removed.num
+    << " removed " << removed.num
 
     << " avgGlue " << std::fixed << std::setprecision(2)
     << ((double)removed.glue/(double)removed.num)
