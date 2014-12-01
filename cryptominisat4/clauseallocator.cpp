@@ -31,6 +31,8 @@
 #include "time_mem.h"
 #include "simplifier.h"
 #include "completedetachreattacher.h"
+#include "sqlstats.h"
+
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
@@ -224,7 +226,7 @@ void ClauseAllocator::consolidate(
     Solver* solver
     , const bool force
 ) {
-    //double myTime = cpuTime();
+    const double myTime = cpuTime();
 
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
@@ -280,12 +282,21 @@ void ClauseAllocator::consolidate(
         tmpDataStart += sz;
     }
 
-    if (solver->conf.verbosity >= 3) {
-        cout << "c consolidated memory. "
-        << " Num cls:" << newOrigClauseSizes.size()
-        << " old size:" << size
-        << " new size:" << newSize
+    const double time_used = cpuTime() - myTime;
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [mem] Consolidated memory ";
+        cout << " cls"; print_value_kilo_mega(newOrigClauseSizes.size());
+        cout << " old size"; print_value_kilo_mega(size);
+        cout << " new size"; print_value_kilo_mega(newSize);
+        cout << solver->conf.print_times(time_used)
         << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "consolidate"
+            , time_used
+        );
     }
 
     //Update offsets & pointers(?) now, when everything is in memory still
