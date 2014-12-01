@@ -403,14 +403,14 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         return;
     }
 
-    unsigned glue = calc_glue_using_seen2_upper_bit(*cl);
+    const unsigned new_glue = calc_glue_using_seen2_upper_bit(*cl);
 
-    if (glue <= cl->stats.glue) {
+    if (new_glue + 1 < cl->stats.glue) {
         //tot_lbds = tot_lbds - c.lbd() + lbd;
         //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
 
-        cl->stats.glue = glue;
-        if (glue <= 30) {
+        cl->stats.glue = new_glue;
+        if (new_glue <= 30) {
             cl->stats.ttl++;
         }
     }
