@@ -1389,8 +1389,9 @@ lbool Solver::solve()
     //If still unknown, simplify
     if (status == l_Undef
         && conf.simplify_at_startup
-        && nVars() > 0
+        && solveStats.numSimplify == 0
         && conf.regularly_simplify_problem
+        && nVars() > 0
     ) {
         status = simplify_problem(true);
     }
