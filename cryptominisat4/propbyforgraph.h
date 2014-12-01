@@ -65,7 +65,7 @@ class PropByForGraph
                     clause = NULL;
                     return;
                 }
-                clause = alloc.ptr(orig.getClause());
+                clause = alloc.ptr(orig.get_offset());
                 isize = clause->size();
                 type = 0;
             }

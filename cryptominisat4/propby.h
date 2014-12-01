@@ -155,7 +155,7 @@ class PropBy
             return Lit::toLit(data2);
         }
 
-        ClOffset getClause() const
+        ClOffset get_offset() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
@@ -193,7 +193,7 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
             break;
 
         case clause_t :
-            os << " clause, num= " << pb.getClause();
+            os << " clause, num= " << pb.get_offset();
             break;
 
         case null_clause_t :

@@ -65,7 +65,7 @@ private:
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 
-    bool cl_needs_removal(const Clause* cl) const;
+    bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
     void remove_cl_from_watchlists();
     void remove_cl_from_array_and_count_stats(
         CleaningStats& tmpStats

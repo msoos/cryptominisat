@@ -841,7 +841,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
         }
 
         case clause_t: {
-            const uint32_t offset = propBy.getClause();
+            const uint32_t offset = propBy.get_offset();
             const Clause& cl = *cl_alloc.ptr(offset);
             for(size_t i = 0; i < cl.size(); i++) {
                 if (varData[cl[i].var()].level != 0)

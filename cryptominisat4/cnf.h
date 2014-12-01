@@ -147,6 +147,8 @@ public:
         return needToInterrupt;
     }
 
+    bool clause_locked(const Clause& c, const ClOffset offset) const;
+
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
     size_t cl_size(const Watched& ws) const;
@@ -338,6 +340,13 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
     for(const Lit l: watches.get_smudged_list()) {
         clear_one_occur_from_removed_clauses(watches[l.toInt()]);
     }
+}
+
+inline bool CNF::clause_locked(const Clause& c, const ClOffset offset) const
+{
+    return value(c[0]) == l_True
+        && varData[c[0].var()].reason.isClause()
+        && varData[c[0].var()].reason.get_offset() == offset;
 }
 
 inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)

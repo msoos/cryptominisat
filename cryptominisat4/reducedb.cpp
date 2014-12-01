@@ -327,8 +327,9 @@ void ReduceDB::remove_cl_from_watchlists()
                 continue;
             }
 
-            Clause* cl = solver->cl_alloc.ptr(i->get_offset());
-            if (cl->red() && cl_needs_removal(cl)) {
+            ClOffset offset = i->get_offset();
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            if (cl->red() && cl_needs_removal(cl, offset)) {
                 continue;
             } else {
                 *j++ = *i;
@@ -397,14 +398,15 @@ bool ReduceDB::red_cl_too_young(const Clause* cl) const
             >= solver->sumConflicts();
 }
 
-bool ReduceDB::cl_needs_removal(const Clause* cl) const
+bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
     return !red_cl_too_young(cl)
          && !cl->stats.locked
          && !cl->stats.marked_for_keep
-         && cl->stats.glue > 2
-         && cl->stats.ttl == 0;
+         && cl->stats.glue > 3
+         && cl->stats.ttl == 0
+         && !solver->clause_locked(*cl, offset);
 }
 
 void ReduceDB::remove_cl_from_array_and_count_stats(
@@ -420,7 +422,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 3);
 
-        if (!cl_needs_removal(cl)) {
+        if (!cl_needs_removal(cl, offset)) {
             if (cl->stats.ttl > 0) {
                 //cl->stats.ttl--;
             }

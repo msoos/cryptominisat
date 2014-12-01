@@ -177,7 +177,7 @@ void Searcher::add_lit_to_learnt(
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
             ) {
-                Clause* cl = cl_alloc.ptr(varData[var].reason.getClause());
+                Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
                 if (cl->red()) {
                     lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
                 }
@@ -279,7 +279,7 @@ void Searcher::create_otf_subsuming_long_clause(
 
 void Searcher::check_otf_subsume(const PropBy confl)
 {
-    ClOffset offset = confl.getClause();
+    ClOffset offset = confl.get_offset();
     Clause& cl = *cl_alloc.ptr(offset);
 
     size_t num_lits_from_cl = 0;
@@ -313,7 +313,7 @@ void Searcher::normalClMinim()
 
         switch (type) {
             case clause_t:
-                cl = cl_alloc.ptr(reason.getClause());
+                cl = cl_alloc.ptr(reason.get_offset());
                 size = cl->size()-1;
                 break;
 
@@ -384,7 +384,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
         }
 
         case clause_t: {
-            Clause* cl = cl_alloc.ptr(confl.getClause());
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
             cout << "resolv (long): " << *cl << endl;
             break;
         }
@@ -449,7 +449,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case clause_t : {
-            cl = cl_alloc.ptr(confl.getClause());
+            cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
                 resolutions.redL++;
                 stats.resolvs.redL++;
@@ -728,7 +728,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         Clause* cl = NULL;
         switch (type) {
             case clause_t:
-                cl = cl_alloc.ptr(reason.getClause());
+                cl = cl_alloc.ptr(reason.get_offset());
                 size = cl->size()-1;
                 break;
 
@@ -844,7 +844,7 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
             } else {
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
-                        const Clause& cl = *cl_alloc.ptr(reason.getClause());
+                        const Clause& cl = *cl_alloc.ptr(reason.get_offset());
                         for (const Lit lit: cl) {
                             if (varData[lit.var()].level > 0) {
                                 seen[lit.var()] = 1;
