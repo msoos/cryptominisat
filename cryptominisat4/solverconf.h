@@ -274,7 +274,8 @@ class SolverConf
         unsigned  dominPickFreq;
 
         //Simplifier
-        int      simplify_at_startup;
+        int      simplify_at_startup; //simplify at 1st startup (only)
+        int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup
         int      regularly_simplify_problem;
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution

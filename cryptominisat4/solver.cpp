@@ -1393,7 +1393,7 @@ lbool Solver::solve()
     //If still unknown, simplify
     if (status == l_Undef
         && conf.simplify_at_startup
-        && solveStats.numSimplify == 0
+        && (solveStats.numSimplify == 0 || conf.simplify_at_every_startup)
         && conf.regularly_simplify_problem
         && nVars() > 0
     ) {

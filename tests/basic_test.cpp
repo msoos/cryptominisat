@@ -574,6 +574,7 @@ BOOST_AUTO_TEST_CASE(xor3)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
+    conf.simplify_at_every_startup = true;
     SATSolver s(conf);
 
     s.new_vars(3);

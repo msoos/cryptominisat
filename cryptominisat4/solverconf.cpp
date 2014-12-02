@@ -177,6 +177,7 @@ SolverConf::SolverConf() :
 
         //Simplifier
         , simplify_at_startup(true)
+        , simplify_at_every_startup(false)
         , regularly_simplify_problem(true)
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
