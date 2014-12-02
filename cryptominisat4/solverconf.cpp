@@ -224,7 +224,7 @@ SolverConf::SolverConf() :
         //Misc
         , orig_global_timeout_multiplier(1.0)
         , global_timeout_multiplier(1.0)
-        , global_timeout_multiplier_multiplier(1.3)
+        , global_timeout_multiplier_multiplier(1.4)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(6000)
