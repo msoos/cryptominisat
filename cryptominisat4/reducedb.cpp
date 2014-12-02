@@ -286,8 +286,14 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
     }
-    remove_cl_from_watchlists();
+    assert(delayed_clause_free.empty());
     remove_cl_from_array_and_count_stats(tmpStats, sumConfl);
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    solver->watches.clear_smudged();
+    for(ClOffset offset: delayed_clause_free) {
+        solver->cl_alloc.clauseFree(offset);
+    }
+    delayed_clause_free.clear();
 
     tmpStats.cpu_time = cpuTime() - myTime;
     if (solver->conf.verbosity >= 3)
@@ -429,11 +435,15 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         }
 
         //Stats Update
+        cl->setRemoved();
+        solver->watches.smudge((*cl)[0]);
+        solver->watches.smudge((*cl)[1]);
         tmpStats.removed.incorporate(cl);
         tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
+        solver->litStats.redLits -= cl->size();
 
         *solver->drup << del << *cl << fin;
-        solver->cl_alloc.clauseFree(offset);
+        delayed_clause_free.push_back(offset);
     }
     solver->longRedCls.resize(solver->longRedCls.size() - (i - j));
 }

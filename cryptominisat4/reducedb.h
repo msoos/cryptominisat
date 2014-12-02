@@ -56,6 +56,7 @@ private:
     uint64_t nbReduceDB = 0;
     uint64_t nextCleanLimit = 0;
     uint64_t nextCleanLimitInc;
+    vector<ClOffset> delayed_clause_free;
 
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
