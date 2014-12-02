@@ -1700,6 +1700,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Treat implicits
     if (conf.doStrSubImplicit
+        && !startup
         && !must_interrupt_asap()
     ) {
         subsumeImplicit->subsume_implicit();
@@ -1767,7 +1768,9 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     //Treat implicits
-    if (conf.doStrSubImplicit) {
+    if (conf.doStrSubImplicit
+        && !startup
+    ) {
         subsumeImplicit->subsume_implicit();
     }
 
@@ -1780,7 +1783,9 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     //Treat implicits
-    if (conf.doStrSubImplicit) {
+    if (conf.doStrSubImplicit
+        && !startup
+    ) {
         if (!strengthener->strengthen_implicit()) {
             goto end;
         }
