@@ -188,7 +188,7 @@ SolverConf::SolverConf() :
 
         //Distillation
         , do_distill_clauses(true)
-        , distill_long_irred_cls_time_limitM(20ULL)
+        , distill_long_irred_cls_time_limitM(10ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
 
