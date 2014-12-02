@@ -38,7 +38,8 @@ public:
     void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
     CleaningStats cleaningStats;
 
-    void reset_for_next_clean_limit();
+    void reset();
+    void reset_increment();
     void increment_for_next_reduce();
 
     uint64_t get_nbReduceDB() const
@@ -48,11 +49,6 @@ public:
     uint64_t get_nextCleanLimit() const
     {
         return nextCleanLimit;
-    }
-    uint64_t get_nextCleanLimitInc() const
-    {
-        assert(nextCleanLimitInc >= 1);
-        return nextCleanLimitInc;
     }
 
 private:

@@ -1029,13 +1029,13 @@ lbool Searcher::search()
 
     while (
         (!params.needToStopSearch
-            && sumConflicts() <= solver->getNextCleanLimit()
             && cpuTime() < conf.maxTime
             && !must_interrupt_asap()
         )
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
+            reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
             checkNeedRestart();
             print_restart_stat();
@@ -1966,6 +1966,7 @@ void Searcher::reduce_db_if_needed()
             << " Trail size: " << trail.size() << endl;
         }
         solver->reduceDB->reduce_db_and_update_reset_stats();
+        must_consolidate_mem = true;
 
         //watch consolidate
         if (conf.verbosity >= 2)
@@ -2135,13 +2136,16 @@ lbool Searcher::solve(const uint64_t _maxConfls)
             goto end;
         }
 
-        reduce_db_if_needed();
         clean_clauses_if_needed();
         status = perform_scc_and_varreplace_if_needed();
         if (status != l_Undef)
             goto end;
 
         save_search_loop_stats();
+        if (must_consolidate_mem) {
+            cl_alloc.consolidate(solver);
+            must_consolidate_mem = false;
+        }
     }
 
     end:

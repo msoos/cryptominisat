@@ -266,10 +266,6 @@ void ReduceDB::unmark_keep_flags()
 
 CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 {
-    //Clean the clause database before doing cleaning
-    //varReplacer->perform_replace();
-    solver->clauseCleaner->remove_and_clean_all();
-
     const double myTime = cpuTime();
     nbReduceDB++;
     CleaningStats tmpStats;
@@ -461,7 +457,6 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
     }
 
     CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
-    solver->consolidate_mem();
 
     if (solver->sqlStats) {
         solver->sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);
@@ -534,7 +529,12 @@ ClauseUsageStats ReduceDB::sumClauseData(
     return stats;
 }
 
-void ReduceDB::reset_for_next_clean_limit()
+void ReduceDB::reset_increment()
+{
+    nextCleanLimitInc = solver->conf.startClean;
+}
+
+void ReduceDB::reset()
 {
     if (solver->conf.startClean < 100) {
         cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;

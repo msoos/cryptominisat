@@ -1350,6 +1350,11 @@ void Solver::check_config_parameters() const
 
 lbool Solver::solve()
 {
+    if (solveStats.num_solve_calls == 0) {
+        reduceDB->reset();
+    }
+    reduceDB->reset_increment();
+
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
@@ -1378,7 +1383,6 @@ lbool Solver::solve()
     datasync->rebuild_bva_map();
 
     //Initialise
-    reduceDB->reset_for_next_clean_limit();
     if (!origAssumptions.empty()) {
         set_assumptions();
     } else {
@@ -1558,18 +1562,16 @@ lbool Solver::iterate_until_solved()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        long numConfls = reduceDB->get_nextCleanLimit() - sumStats.conflStats.numConflicts;
-        assert(conf.increaseClean >= 1 && "Clean increment factor between cleaning must be >=1");
-        for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
-            numConfls += (double)reduceDB->get_nextCleanLimitInc() * std::pow(conf.increaseClean, (int)i);
-        }
 
-        //Abide by maxConfl limit
-        numConfls = std::min<long>((long)numConfls, conf.maxConfl - (long)sumStats.conflStats.numConflicts);
-        if (numConfls <= 0) {
+        long num_conflicts_of_search = 50000.0*(double)iteration_num/2;
+        num_conflicts_of_search = std::min<long>(
+            num_conflicts_of_search
+            , (long)conf.maxConfl - (long)sumStats.conflStats.numConflicts
+        );
+        if (num_conflicts_of_search <= 0) {
             break;
         }
-        status = Searcher::solve(numConfls);
+        status = Searcher::solve(num_conflicts_of_search);
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1594,7 +1596,6 @@ lbool Solver::iterate_until_solved()
             break;
         }
 
-        reduceDB->reduce_db_and_update_reset_stats();
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
 
         if (conf.regularly_simplify_problem) {
