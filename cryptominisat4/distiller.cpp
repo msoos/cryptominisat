@@ -86,7 +86,7 @@ bool Distiller::distill_tri_irred_cls()
 
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
-    double myTime = cpuTime();
+    const double myTime = cpuTime();
     uint64_t maxNumProps =
         2LL*1000LL*solver->conf.distill_time_limitM
         *solver->conf.global_timeout_multiplier;
