@@ -80,7 +80,7 @@ void CNF::new_var(const bool bva, const Var orig_outer)
         swapVars(z);
     }
 
-    #ifdef MORE_DEBUG
+    #ifdef SLOW_DEBUG
     test_reflectivity_of_renumbering();
     #endif
 }
@@ -126,7 +126,7 @@ void CNF::new_vars(size_t n)
         outer_to_with_bva_map.push_back(nVarsOuter()-i-1);
     }
 
-    #ifdef MORE_DEBUG
+    #ifdef SLOW_DEBUG
     test_reflectivity_of_renumbering();
     #endif
 }

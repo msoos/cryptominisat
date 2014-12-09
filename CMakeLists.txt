@@ -138,9 +138,9 @@ else()
     add_definitions(-DBOOST_TEST_DYN_LINK)
 endif()
 
-option(MORE_DEBUG "Use more debug flags" OFF)
-IF(MORE_DEBUG)
-    add_definitions(-DMORE_DEBUG)
+option(SLOW_DEBUG "Use more debug flags" OFF)
+IF(SLOW_DEBUG)
+    add_definitions(-DSLOW_DEBUG)
 endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)

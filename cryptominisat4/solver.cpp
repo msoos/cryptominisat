@@ -665,11 +665,13 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     renumber_outer_to_inter_lits(ps);
 
+    #ifdef SLOW_DEBUG
     //Check renumberer
     for (const Lit lit: ps) {
         const Lit updated_lit = varReplacer->get_lit_replaced_with(lit);
         assert(lit == updated_lit);
     }
+    #endif
 
      //Undo comp handler
     if (conf.doCompHandler) {
@@ -845,17 +847,6 @@ void Solver::rearrange_clauses_lits()
         );
     }
 }
-
-#ifdef DEBUG_RENUMBER
-static void printArray(const vector<Var>& array, const std::string& str)
-{
-    cout << str << " : " << endl;
-    for(size_t i = 0; i < array.size(); i++) {
-        cout << str << "[" << i << "] : " << array[i] << endl;
-    }
-    cout << endl;
-}
-#endif
 
 void Solver::test_renumbering() const
 {
@@ -2638,7 +2629,7 @@ bool Solver::normClauseIsAttached(const ClOffset offset) const
 void Solver::find_all_attach() const
 {
 
-    #ifndef MORE_DEBUG
+    #ifndef SLOW_DEBUG
     return;
     #endif
 
@@ -2733,7 +2724,7 @@ bool Solver::find_clause(const ClOffset offset) const
 
 void Solver::check_wrong_attach() const
 {
-    #ifndef MORE_DEBUG
+    #ifndef SLOW_DEBUG
     return;
     #endif
 

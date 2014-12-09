@@ -914,7 +914,7 @@ inline void Searcher::bump_var_activitiy(Var var)
 {
     activities[var] += var_inc;
 
-    #ifdef MORE_DEBUG
+    #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
     if ( (activities[var]) > ((0x1U) << 24)
@@ -924,7 +924,7 @@ inline void Searcher::bump_var_activitiy(Var var)
         for (uint32_t& act : activities) {
             act >>= 14;
         }
-        #ifdef MORE_DEBUG
+        #ifdef SLOW_DEBUG
         rescaled = true;
         #endif
 
@@ -943,7 +943,7 @@ inline void Searcher::bump_var_activitiy(Var var)
         order_heap.decrease(var);
     }
 
-    #ifdef MORE_DEBUG
+    #ifdef SLOW_DEBUG
     if (rescaled) {
         assert(order_heap.heap_property());
     }
