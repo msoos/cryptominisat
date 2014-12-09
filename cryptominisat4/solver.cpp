@@ -701,11 +701,13 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
     }
 
+    #ifdef SLOW_DEBUG
     //Check
     for (Lit& lit: ps) {
         const Lit updated_lit = varReplacer->get_lit_replaced_with(lit);
         assert(lit == updated_lit);
     }
+    #endif
 
     return true;
 }
