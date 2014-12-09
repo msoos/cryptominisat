@@ -663,23 +663,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
     }
 
-    //External var number -> Internal var number
-    for (Lit& lit: ps) {
-        const Lit origLit = lit;
-
-        //Update variable numbering
-        assert(lit.var() < nVarsOuter());
-        lit = map_outer_to_inter(lit);
-
-        if (conf.verbosity >= 52) {
-            cout
-            << "var-renumber updating lit "
-            << origLit
-            << " to lit "
-            << lit
-            << endl;
-        }
-    }
+    renumber_outer_to_inter_lits(ps);
 
     //Check renumberer
     for (const Lit lit: ps) {

@@ -196,6 +196,7 @@ public:
     {
         updateLitsMap(lits, interToOuterMain);
     }
+    void renumber_outer_to_inter_lits(vector<Lit>& ps) const;
 
     uint32_t nVarsOutside() const
     {
@@ -368,6 +369,26 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
         }
     }
     w.shrink(i-j);
+}
+
+inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
+{
+    for (Lit& lit: ps) {
+        const Lit origLit = lit;
+
+        //Update variable numbering
+        assert(lit.var() < nVarsOuter());
+        lit = map_outer_to_inter(lit);
+
+        if (conf.verbosity >= 52) {
+            cout
+            << "var-renumber updating lit "
+            << origLit
+            << " to lit "
+            << lit
+            << endl;
+        }
+    }
 }
 
 }
