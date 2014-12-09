@@ -1160,8 +1160,9 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 void Solver::set_assumptions()
 {
     assert(okay());
-    back_number_from_caller(origAssumptions);
-    assumptions = back_number_from_caller_tmp;
+
+    back_number_from_outside_to_outer(origAssumptions);
+    assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(assumptions);
     for(const Lit lit: assumptions) {
         if (lit.var() < assumptionsSet.size()) {
@@ -3279,8 +3280,8 @@ bool Solver::add_clause_outer(const vector<Lit>& lits)
         return false;
     }
     check_too_large_variable_number(lits);
-    back_number_from_caller(lits);
-    return addClause(back_number_from_caller_tmp);
+    back_number_from_outside_to_outer(lits);
+    return addClause(back_number_from_outside_to_outer_tmp);
 }
 
 bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
@@ -3295,9 +3296,9 @@ bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
     }
     check_too_large_variable_number(lits);
 
-    back_number_from_caller(lits);
-    addClauseHelper(back_number_from_caller_tmp);
-    add_xor_clause_inter(back_number_from_caller_tmp, rhs, true, false);
+    back_number_from_outside_to_outer(lits);
+    addClauseHelper(back_number_from_outside_to_outer_tmp);
+    add_xor_clause_inter(back_number_from_outside_to_outer_tmp, rhs, true, false);
 
     return ok;
 }

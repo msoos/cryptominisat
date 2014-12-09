@@ -253,15 +253,15 @@ class Solver : public Searcher
         };
 
         lbool solve();
-        vector<Lit> back_number_from_caller_tmp;
+        vector<Lit> back_number_from_outside_to_outer_tmp;
         template<class T>
-        void back_number_from_caller(const vector<T>& lits)
+        void back_number_from_outside_to_outer(const vector<T>& lits)
         {
-            back_number_from_caller_tmp.clear();
+            back_number_from_outside_to_outer_tmp.clear();
             for (const T& lit: lits) {
                 assert(lit.var() < nVarsOutside());
-                back_number_from_caller_tmp.push_back(map_to_with_bva(lit));
-                assert(back_number_from_caller_tmp.back().var() < nVarsOuter());
+                back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
+                assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
             }
         }
         void check_switchoff_limits_newvar(size_t n = 1);
