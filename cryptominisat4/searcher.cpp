@@ -822,7 +822,7 @@ bool Searcher::subset(const vector<Lit>& A, const Clause& B)
     return ret;
 }
 
-void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
+void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict)
 {
     out_conflict.clear();
     out_conflict.push_back(p);
@@ -844,7 +844,9 @@ void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
-                        for (const Lit lit: cl) {
+                        assert(value(cl[0]) == l_True);
+                        for(uint32_t i = 1; i < cl.size(); i++) {
+                            const Lit lit = cl[i];
                             if (varData[lit.var()].level > 0) {
                                 seen[lit.var()] = 1;
                             }
@@ -1105,7 +1107,7 @@ lbool Searcher::new_decision()
             // Dummy decision level:
             new_decision_level();
         } else if (value(p) == l_False) {
-            analyzeFinal(~p, conflict);
+            analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;
         } else {
             assert(p.var() < nVars());

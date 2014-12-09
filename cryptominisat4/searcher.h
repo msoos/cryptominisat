@@ -748,7 +748,7 @@ class Searcher : public HyperEngine
         cl_abst_type tmp_learnt_clause_abst;
 
         void add_lit_to_learnt(Lit lit, bool fromProber);
-        void analyzeFinal(const Lit p, vector<Lit>& out_conflict);
+        void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
 
         //////////////
         // Conflict minimisation
