@@ -641,7 +641,7 @@ class Searcher : public HyperEngine
             , const vector<uint32_t>& interToOuter
         );
         void renumber_assumptions(const vector<Var>& outerToInter);
-        vector<char> assumptionsSet;
+        vector<char> assumptionsSet; //Needed so checking is fast -- we cannot eliminate / component-handle such vars
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         void add_in_partial_solving_stats();
 
