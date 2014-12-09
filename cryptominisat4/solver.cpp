@@ -640,7 +640,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             std::exit(-1);
         }
         assert(lit.var() < nVarsOuter()
-        && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
+        && "Clause inserted, but variable inside has not been declared with new_var() !");
     }
 
     //Undo var replacement
