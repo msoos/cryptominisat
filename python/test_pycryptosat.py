@@ -53,44 +53,6 @@ def check_solution(clauses, solution) :
 
     return True
 
-
-# -------------------------- utility functions ---------------------------
-
-#def read_cnf(path):
-    #clauses = []
-    #for line in open(path):
-        #parts = line.split()
-        #if not parts or parts[0] == 'c':
-            #continue
-        #if parts[0] == 'p':
-            #assert len(parts) == 4
-            #assert parts[1] == 'cnf'
-            #n_vars, n_clauses = [int(n) for n in parts[2:4]]
-            #continue
-        #if parts[0] == '%':
-            #break
-        #assert parts[-1] == '0'
-        #clauses.append([int(lit) for lit in parts[:-1]])
-    #assert len(clauses) == n_clauses
-    #return clauses, n_vars
-
-#def process_cnf_file(path):
-    #sys.stdout.write('%30s:  ' % basename(path))
-    #sys.stdout.flush()
-
-    #clauses, n_vars = read_cnf(path)
-    #sys.stdout.write('vars: %6d   cls: %6d   ' % (n_vars, len(clauses)))
-    #sys.stdout.flush()
-    #n_sol = 0
-    #for sol in itersolve(clauses):
-        #sys.stdout.write('.')
-        #sys.stdout.flush()
-        #assert check_solution(clauses, sol)
-        #n_sol += 1
-    #sys.stdout.write("%d\n" % n_sol)
-    #sys.stdout.flush()
-    #return n_sol
-
 # -------------------------- test clauses --------------------------------
 
 # p cnf 5 3
@@ -229,21 +191,35 @@ class TestSolve(unittest.TestCase):
             res, solution = self.solver.solve()
             self.assertTrue(res == None or check_solution(clauses1, solution))
 
+    def test_by_re_curse(self):
+        self.solver.add_clause([-1, -2, 3])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
+        self.solver.add_clause([-5, 1])
+        self.solver.add_clause([4, -3])
+        self.solver.add_clause([2, 3, 5])
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
 # ------------------------------------------------------------------------
 
-#def run():
-    #print("sys.prefix: %s" % sys.prefix)
-    #print("sys.version: %s" % sys.version)
-    #try:
-        #print("pycryptosat version: %r" % pycryptosat.__version__)
-    #except AttributeError:
-        #pass
-    #suite = unittest.TestSuite()
-    #suite.addTest(unittest.makeSuite(TestXor))
-    #suite.addTest(unittest.makeSuite(TestSolve))
+def run():
+    print("sys.prefix: %s" % sys.prefix)
+    print("sys.version: %s" % sys.version)
+    try:
+        print("pycryptosat version: %r" % pycryptosat.__version__)
+    except AttributeError:
+        pass
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TestXor))
+    suite.addTest(unittest.makeSuite(InitTester))
+    suite.addTest(unittest.makeSuite(TestSolve))
 
-    #runner = unittest.TextTestRunner()
-    #return runner.run(suite)
+    runner = unittest.TextTestRunner(verbosity = 2)
+    return runner.run(suite)
 
-if __name__ == '__main__':
-    unittest.main()
+run()
+
+#if __name__ == '__main__':
+    #unittest.main()
