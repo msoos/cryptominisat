@@ -143,7 +143,7 @@ void DimacsParser::readClause(StreamBuffer& in)
         if (*in != ' ') {
             std::cerr
             << "ERROR! "
-            << "After each literal, there must be an empty space!"
+            << "After each literal there must be an empty space!"
             << "--> At line " << lineNum+1 << endl
             << endl;
             std::exit(-1);
