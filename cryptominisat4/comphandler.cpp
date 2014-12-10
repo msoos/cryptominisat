@@ -58,11 +58,13 @@ void CompHandler::new_var(const Var orig_outer)
     if (orig_outer == std::numeric_limits<Var>::max()) {
         savedState.push_back(l_Undef);
     }
+    assert(savedState.size() == solver->nVarsOuter());
 }
 
 void CompHandler::new_vars(size_t n)
 {
     savedState.resize(savedState.size()+n, l_Undef);
+    assert(savedState.size() == solver->nVarsOuter());
 }
 
 void CompHandler::save_on_var_memory()
