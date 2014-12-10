@@ -160,7 +160,6 @@ endif()
 
 set (boost_components "")
 if (ENABLE_TESTING)
-    # we should set BOOST_TEST_LOG_LEVEL to 'all'
     set(boost_components ${boost_components} unit_test_framework)
 endif()
 set(boost_components ${boost_components} program_options)
@@ -310,11 +309,11 @@ add_custom_target(uninstall
 )
 
 if (ENABLE_TESTING)
-    add_test (basic_test tests/basic_test)
-    add_test (assump_test tests/assump_test)
-    add_test (readme_test tests/readme_test)
-    add_test (heap_test tests/heap_test)
-    add_test (clause_test tests/clause_test)
+    add_test (NAME basic_test COMMAND tests/basic_test --log_level=test_suite)
+    add_test (NAME assump_test COMMAND tests/assump_test --log_level=test_suite)
+    add_test (NAME readme_test COMMAND tests/readme_test --log_level=test_suite)
+    add_test (NAME heap_test COMMAND tests/heap_test --log_level=test_suite)
+    add_test (NAME clause_test COMMAND tests/clause_test --log_level=test_suite)
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
