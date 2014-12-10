@@ -160,6 +160,7 @@ endif()
 
 set (boost_components "")
 if (ENABLE_TESTING)
+    # we should set BOOST_TEST_LOG_LEVEL to 'all'
     set(boost_components ${boost_components} unit_test_framework)
 endif()
 set(boost_components ${boost_components} program_options)
