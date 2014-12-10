@@ -88,6 +88,7 @@ BOOST_AUTO_TEST_CASE(binclause_false)
     lbool ret = s.solve(&assumps);
     BOOST_CHECK_EQUAL( ret, l_False);
     BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+
     vector<Lit> tmp = s.get_conflict();
     std::stable_sort(tmp.begin(), tmp.end());
     BOOST_CHECK_EQUAL( tmp[0], Lit(0, false) );
@@ -110,28 +111,80 @@ BOOST_AUTO_TEST_CASE(replace_true)
     BOOST_CHECK_EQUAL( s.get_model()[1], l_False );
 }
 
-BOOST_AUTO_TEST_CASE_EXPECTED_FAILURES(replace_false, 2)
 BOOST_AUTO_TEST_CASE(replace_false)
 {
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)}); //a V -b
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)}); //-a V b
+    //a == b
 
     vector<Lit> assumps;
     assumps.push_back(Lit(0, false));
     assumps.push_back(Lit(1, true));
+    //a = 1, b = 0
 
     lbool ret = s.solve(&assumps);
     BOOST_CHECK( ret == l_False);
     BOOST_CHECK_EQUAL( s.okay(), true);
 
     BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+
     vector<Lit> tmp = s.get_conflict();
     std::stable_sort(tmp.begin(), tmp.end());
     BOOST_CHECK( tmp[0] == Lit(0, true) );
     BOOST_CHECK( tmp[1] == Lit(1, false) );
+}
+
+BOOST_AUTO_TEST_CASE(set_var_by_prop)
+{
+    SATSolver s;
+    s.new_var();
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)}); //a = 1
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)}); //-a V b
+    //-> b = 1
+
+    vector<Lit> assumps;
+    assumps.push_back(Lit(1, true));
+    //b = 0
+
+    lbool ret = s.solve(&assumps);
+    BOOST_CHECK( ret == l_False);
+    BOOST_CHECK_EQUAL( s.okay(), true);
+
+    BOOST_CHECK_EQUAL( s.get_conflict().size(), 1);
+
+    vector<Lit> tmp = s.get_conflict();
+    BOOST_CHECK_EQUAL( tmp[0], Lit(1, false) );
+}
+
+BOOST_AUTO_TEST_CASE(only_assump)
+{
+    SATSolver s;
+    s.new_var();
+    s.new_var();
+
+    vector<Lit> assumps;
+    assumps.push_back(Lit(1, true));
+    assumps.push_back(Lit(1, false));
+
+    lbool ret = s.solve(&assumps);
+    BOOST_CHECK_EQUAL( ret, l_False);
+    BOOST_CHECK_EQUAL( s.okay(), true);
+    BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+
+    vector<Lit> tmp = s.get_conflict();
+    std::stable_sort(tmp.begin(), tmp.end());
+    BOOST_CHECK_EQUAL( tmp[0] , Lit(1, false) );
+    BOOST_CHECK_EQUAL( tmp[1], Lit(1, true) );
+
+    ret = s.solve(NULL);
+    BOOST_CHECK_EQUAL( ret, l_True );
+
+    ret = s.solve(&assumps);
+    BOOST_CHECK_EQUAL( ret, l_False);
 }
 
 
