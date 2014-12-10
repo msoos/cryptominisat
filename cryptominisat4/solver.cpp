@@ -985,9 +985,9 @@ void Solver::renumber_variables()
 
     //Print results
     const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 3) {
+    if (conf.verbosity >= 2) {
         cout
-        << "c Reordered variables T: "
+        << "c [renumber] T: "
         << std::fixed << std::setw(5) << std::setprecision(2)
         << time_used
         << endl;
