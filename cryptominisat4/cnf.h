@@ -249,7 +249,7 @@ private:
     bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
     void enlarge_minimal_datastructs(size_t n = 1);
     void enlarge_nonminimial_datastructs(size_t n = 1);
-    void swapVars(const Var which);
+    void swapVars(const Var which, const int off_by = 0);
 
     bool needToInterrupt_is_foreign;
     vector<Var> outerToInterMain;

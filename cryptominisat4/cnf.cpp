@@ -45,6 +45,7 @@ void CNF::new_var(const bool bva, const Var orig_outer)
     }
 
     if (orig_outer == std::numeric_limits<Var>::max()) {
+        //completely new var
         enlarge_nonminimial_datastructs();
 
         Var minVar = nVars()-1;
@@ -66,6 +67,7 @@ void CNF::new_var(const bool bva, const Var orig_outer)
             outer_to_with_bva_map.push_back(nVarsOuter() - 1);
         }
     } else {
+        //Old var, re-inserted
         assert(orig_outer < nVarsOuter());
 
         const Var minVar = nVars()-1;
@@ -85,15 +87,13 @@ void CNF::new_var(const bool bva, const Var orig_outer)
     #endif
 }
 
-void CNF::new_vars(size_t n)
+void CNF::new_vars(const size_t n)
 {
     if (nVars() + n >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
         std::exit(-1);
     }
 
-    minNumVars += n;
-    enlarge_minimal_datastructs(n);
     if (conf.doCache) {
         implCache.new_vars(n);
     }
@@ -101,16 +101,16 @@ void CNF::new_vars(size_t n)
         stamp.new_vars(n);
     }
 
+    minNumVars += n;
+    enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
     interToOuterMain.reserve(interToOuterMain.size() + n);
     outerToInterMain.reserve(outerToInterMain.size() + n);
     outer_to_with_bva_map.reserve(outer_to_with_bva_map.size() + n);
     for(int i = n-1; i >= 0; i--) {
-        Var minVar = nVars()-i-1;
-        Var maxVar = nVarsOuter()-i-1;
-        //cout << "nVars(): " << nVars() << endl;
-        //cout << "N: " << n << " i: " << i << " minVar: " << minVar << " maxVar: " << maxVar << endl;
+        const Var minVar = nVars()-i-1;
+        const Var maxVar = nVarsOuter()-i-1;
 
         interToOuterMain.push_back(maxVar);
         const Var x = interToOuterMain[minVar];
@@ -121,7 +121,7 @@ void CNF::new_vars(size_t n)
         outerToInterMain[maxVar] = minVar;
         outerToInterMain[x] = maxVar;
 
-        swapVars(nVarsOuter()-i-1);
+        swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
         outer_to_with_bva_map.push_back(nVarsOuter()-i-1);
     }
@@ -131,13 +131,13 @@ void CNF::new_vars(size_t n)
     #endif
 }
 
-void CNF::swapVars(const Var which)
+void CNF::swapVars(const Var which, const int off_by)
 {
-    std::swap(assigns[nVars()-1], assigns[which]);
-    std::swap(varData[nVars()-1], varData[which]);
+    std::swap(assigns[nVars()-off_by-1], assigns[which]);
+    std::swap(varData[nVars()-off_by-1], varData[which]);
 
     #ifdef STATS_NEEDED
-    std::swap(varDataLT[nVars()-1], varDataLT[which]);
+    std::swap(varDataLT[nVars()-off_by-1], varDataLT[which]);
     #endif
 }
 
@@ -152,7 +152,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 
 void CNF::enlarge_minimal_datastructs(size_t n)
 {
-    watches.resize(nVars()*2);
+    watches.resize(watches.size() + 2*n);
     seen.resize(seen.size() + 2*n, 0);
     seen2.resize(seen2.size() + 2*n,0);
 }
