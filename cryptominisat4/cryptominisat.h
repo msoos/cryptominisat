@@ -42,7 +42,7 @@ namespace CMSat {
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
         void new_var();
         void new_vars(const size_t n);
-        lbool solve(std::vector<Lit>* assumptions = 0);
+        lbool solve(const std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
         void add_sql_tag(const std::string& tagname, const std::string& tag);

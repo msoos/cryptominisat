@@ -68,7 +68,7 @@ namespace CMSat {
 
 struct DataForThread
 {
-    explicit DataForThread(CMSatPrivateData* data, vector<Lit>* _assumptions = NULL) :
+    explicit DataForThread(CMSatPrivateData* data, const vector<Lit>* _assumptions = NULL) :
         solvers(data->solvers)
         , lits_to_add(&(data->cls_lits))
         , vars_to_add(data->vars_to_add)
@@ -87,7 +87,7 @@ struct DataForThread
     vector<Solver*>& solvers;
     vector<Lit> *lits_to_add;
     uint32_t vars_to_add;
-    vector<Lit> *assumptions;
+    const vector<Lit> *assumptions;
     mutex* update_mutex;
     int *which_solved;
     lbool* ret;
@@ -438,7 +438,7 @@ struct OneThreadSolve
     const size_t tid;
 };
 
-lbool SATSolver::solve(vector< Lit >* assumptions)
+lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
     if (data->log) {
         (*data->log) << "c Solver::solve( ";
