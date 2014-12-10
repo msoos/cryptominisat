@@ -626,7 +626,11 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
         bool var_inside_assumptions(const Var var) const
         {
-            assert(assumptionsSet.size() > var);
+            if (assumptionsSet.empty()) {
+                return false;
+            }
+
+            assert(var < assumptionsSet.size());
             return assumptionsSet[var];
         }
         template<bool also_insert_varorder = true>
@@ -640,9 +644,30 @@ class Searcher : public HyperEngine
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
+
+        struct AssumptionPair {
+            AssumptionPair(const Lit _inter, const Lit _outer):
+                lit_inter(_inter)
+                , lit_orig_outside(_outer)
+            {
+            }
+
+            Lit lit_inter;
+            Lit lit_orig_outside; //not outer, but outside(!)
+
+            bool operator<(const AssumptionPair& other) const
+            {
+                //Yes, we need reverse in terms of inverseness
+                return ~lit_inter < ~other.lit_inter;
+            }
+        };
         void renumber_assumptions(const vector<Var>& outerToInter);
+        void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
+        void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
         vector<char> assumptionsSet; //Needed so checking is fast -- we cannot eliminate / component-handle such vars
-        vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
+        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user.
+        void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
+
         void add_in_partial_solving_stats();
 
         //For connection with Solver

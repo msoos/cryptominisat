@@ -1104,8 +1104,6 @@ void Solver::new_var(const bool bva, const Var orig_outer)
 
 void Solver::save_on_var_memory(const uint32_t newNumVars)
 {
-    //TODO should we resize assumptionsSet ??
-
     //print_mem_stats();
 
     const double myTime = cpuTime();
@@ -1122,6 +1120,8 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
+    assumptionsSet.resize(nVars());
+    assumptionsSet.shrink_to_fit();
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
@@ -1138,52 +1138,50 @@ void Solver::set_assumptions()
 {
     assert(okay());
 
-    back_number_from_outside_to_outer(origAssumptions);
-    assumptions = back_number_from_outside_to_outer_tmp;
-    addClauseHelper(assumptions);
-    for(const Lit lit: assumptions) {
-        if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()]) {
-                /*std::cerr
-                << "ERROR, the assumptions have the same variable inside"
-                << " more than once!"
-                << endl;*/
-                //Yes, it can happen... due to variable replacement
-            } else {
-                assumptionsSet[lit.var()] = true;
-            }
-        } else {
-            if (value(lit) == l_Undef) {
-                std::cerr
-                << "ERROR: Lit " << lit
-                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
-                << " value: " << value(lit)
-                << " -- value should be l_Undef"
-                << endl;
-            }
-            assert(value(lit) != l_Undef);
-        }
+    conflict.clear();
+    assumptions.clear();
+    assumptionsSet.clear();
+    if (outside_assumptions.empty()) {
+        assumptionsSet.shrink_to_fit();
+        return;
     }
+
+    back_number_from_outside_to_outer(outside_assumptions);
+    vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
+    addClauseHelper(inter_assumptions);
+    assumptionsSet.resize(nVars(), false);
+
+    assert(inter_assumptions.size() == outside_assumptions.size());
+    for(size_t i = 0; i < inter_assumptions.size(); i++) {
+        const Lit inter_lit = inter_assumptions[i];
+        const Lit outside_lit = outside_assumptions[i];
+        assumptions.push_back(AssumptionPair(inter_lit, outside_lit));
+    }
+
+    fill_assumptions_set_from(assumptions);
 }
 
 void Solver::check_model_for_assumptions() const
 {
-    for(const Lit lit: origAssumptions) {
-        assert(model.size() > lit.var());
-        if (model_value(lit) == l_Undef) {
+    for(const AssumptionPair lit_pair: assumptions) {
+        const Lit outside_lit = lit_pair.lit_orig_outside;
+        assert(outside_lit.var() < model.size());
+
+        if (model_value(outside_lit) == l_Undef) {
             std::cerr
-            << "ERROR, lit " << lit
+            << "ERROR, lit " << outside_lit
             << " was in the assumptions, but it wasn't set at all!"
             << endl;
         }
-        assert(model[lit.var()] != l_Undef);
-        if (model_value(lit) != l_True) {
+        assert(model_value(outside_lit) != l_Undef);
+
+        if (model_value(outside_lit) != l_True) {
             std::cerr
-            << "ERROR, lit " << lit
+            << "ERROR, lit " << outside_lit
             << " was in the assumptions, but it was set to its opposite value!"
             << endl;
         }
-        assert(model_value(lit) == l_True);
+        assert(model_value(outside_lit) == l_True);
     }
 }
 
@@ -1268,7 +1266,7 @@ void Solver::extend_solution()
 {
     check_stats();
     const double myTime = cpuTime();
-    model = back_number_solution(model);
+    model = back_number_solution_from_inter_to_outer(model);
 
     //Extend solution to stored solution in component handler
     if (conf.doCompHandler) {
@@ -1350,6 +1348,7 @@ lbool Solver::solve()
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
     if (!ok) {
+        conflict.clear();
         status = l_False;
         if (conf.verbosity >= 6) {
             cout << "c Solver status l_Fase on startup of solve()" << endl;
@@ -1359,14 +1358,7 @@ lbool Solver::solve()
 
     //Clean up as a startup
     datasync->rebuild_bva_map();
-
-    //Initialise
-    if (!origAssumptions.empty()) {
-        set_assumptions();
-    } else {
-        std::fill(assumptionsSet.begin(), assumptionsSet.end(), false);
-        assumptions.clear();
-    }
+    set_assumptions();
 
     //If still unknown, simplify
     if (status == l_Undef
@@ -1591,11 +1583,14 @@ void Solver::handle_found_solution(const lbool status)
         extend_solution();
         cancelUntil(0);
     } else if (status == l_False) {
-        //TODO
-        //update_conflict_to_orig_assumptions();
+        cancelUntil(0);
 
-        //Back-number the conflict
-        map_inter_to_outer(conflict);
+        for(const Lit lit: conflict) {
+            if (value(lit) == l_Undef) {
+                assert(var_inside_assumptions(lit.var()));
+            }
+        }
+        update_assump_conflict_to_orig_outside(conflict);
     }
     checkDecisionVarCorrectness();
     check_implicit_stats();
@@ -2217,8 +2212,7 @@ size_t Solver::mem_used() const
     size_t mem = 0;
     mem += Searcher::mem_used();
     mem += litReachable.capacity()*sizeof(Lit);
-    mem += assumptions.capacity()*sizeof(Lit);
-    mem += origAssumptions.capacity()*sizeof(Lit);
+    mem += outside_assumptions.capacity()*sizeof(Lit);
 
     return mem;
 }
@@ -2599,6 +2593,11 @@ bool Solver::verify_model() const
 lbool Solver::model_value (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
+}
+
+lbool Solver::model_value (const Var p) const
+{
+    return model[p];
 }
 
 void Solver::test_all_clause_attached() const
@@ -3402,16 +3401,18 @@ void Solver::ReachabilityStats::print_short(const Solver* solver) const
 void Solver::update_assumptions_after_varreplace()
 {
     //Update assumptions
-    for(Lit& lit: solver->assumptions) {
-        if (assumptionsSet.size() > lit.var()) {
-            assumptionsSet[lit.var()] = false;
+    for(AssumptionPair& lit_pair: solver->assumptions) {
+        if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
+            assumptionsSet[lit_pair.lit_inter.var()] = false;
         } else {
-            assert(value(lit) != l_Undef
+            assert(value(lit_pair.lit_inter) != l_Undef
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
         }
-        lit = varReplacer->get_lit_replaced_with(lit);
-        if (assumptionsSet.size() > lit.var()) {
-            assumptionsSet[lit.var()] = true;
+
+        lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
+
+        if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
+            assumptionsSet[lit_pair.lit_inter.var()] = true;
         }
     }
 }

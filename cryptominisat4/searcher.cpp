@@ -83,8 +83,6 @@ void Searcher::new_var(const bool bva, const Var orig_outer)
     activities.push_back(0);
     solver->set_decision_var(nVars()-1);
 
-    assumptionsSet.push_back(false);
-
     act_polar_backup.activity.push_back(0);
     act_polar_backup.polarity.push_back(false);
 }
@@ -96,7 +94,6 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
     }
-    assumptionsSet.resize(assumptionsSet.size() + n, false);
 
     act_polar_backup.activity.resize(act_polar_backup.activity.size() + n, 0);
     act_polar_backup.polarity.resize(act_polar_backup.polarity.size() + n, false);
@@ -107,8 +104,6 @@ void Searcher::save_on_var_memory()
     PropEngine::save_on_var_memory();
     activities.resize(nVars());
     activities.shrink_to_fit();
-    assumptionsSet.resize(nVars());
-    assumptionsSet.shrink_to_fit();
 
     act_polar_backup.activity.resize(nVars());
     act_polar_backup.activity.shrink_to_fit();
@@ -125,27 +120,20 @@ void Searcher::updateVars(
         updateArray(act_polar_backup.polarity, interToOuter);
     }
     //activities are not updated, they are taken from backup, which is updated
+
     renumber_assumptions(outerToInter);
+
     assert(longest_dec_trail.empty());
 }
 
 void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
 {
-    for(const Lit lit: assumptions) {
-        if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = false;
-        } else {
-            assert(solver->value(lit) != l_Undef);
-        }
+    solver->unfill_assumptions_set_from(assumptions);
+    for(AssumptionPair& lit_pair: assumptions) {
+        assert(lit_pair.lit_inter.var() < outerToInter.size());
+        lit_pair.lit_inter = getUpdatedLit(lit_pair.lit_inter, outerToInter);
     }
-    updateLitsMap(assumptions, outerToInter);
-    for(const Lit lit: assumptions) {
-        if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = true;
-        } else {
-            assert(solver->value(lit) != l_Undef);
-        }
-    }
+    solver->fill_assumptions_set_from(assumptions);
 }
 
 void Searcher::add_lit_to_learnt(
@@ -876,8 +864,39 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
             seen[x] = 0;
         }
     }
-
     seen[p.var()] = 0;
+}
+
+void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
+{
+    if (assumptions.empty()) {
+        return;
+    }
+
+    std::sort(assumptions.begin(), assumptions.end());
+    std::sort(out_conflict.begin(), out_conflict.end());
+    assert(out_conflict.size() <= assumptions.size());
+    //They now are in the order where we can go through them linearly
+
+    /*cout << "out_conflict: " << out_conflict << endl;
+    cout << "assumptions: ";
+    for(AssumptionPair p: assumptions) {
+        cout << "inter: " << p.lit_inter << " , outer: " << p.lit_orig_outside << " , ";
+    }
+    cout << endl;*/
+
+    uint32_t at_assump = 0;
+    for(size_t i = 0; i < out_conflict.size(); i++) {
+        Lit& lit = out_conflict[i];
+        while(lit != ~assumptions[at_assump].lit_inter) {
+            at_assump++;
+            assert(at_assump < assumptions.size() && "final conflict contains literals that are not from the assumptions!");
+        }
+        assert(lit == ~assumptions[at_assump].lit_inter);
+
+        //Update to correct outside lit
+        lit = ~assumptions[at_assump].lit_orig_outside;
+    }
 }
 
 void Searcher::handle_longest_decision_trail()
@@ -1100,7 +1119,7 @@ lbool Searcher::new_decision()
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
-        Lit p = assumptions[decisionLevel()];
+        Lit p = assumptions[decisionLevel()].lit_inter;
         assert(varData[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
@@ -2983,6 +3002,8 @@ size_t Searcher::mem_used() const
     mem += conflict.capacity()*sizeof(Lit);
     mem += model.capacity()*sizeof(lbool);
     mem += analyze_stack.mem_used();
+    mem += assumptions.capacity()*sizeof(Lit);
+    mem += assumptionsSet.capacity()*sizeof(char);
 
     if (conf.verbosity >= 3) {
         cout
@@ -3077,5 +3098,48 @@ void Searcher::calculate_and_set_polars()
     assert(calc_polars.size() == nVars());
     for(size_t i = 0; i < calc_polars.size(); i++) {
         varData[i].polarity = calc_polars[i];
+    }
+}
+
+void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)
+{
+    if (fill_from.empty()) {
+        return;
+    }
+
+    for(const AssumptionPair lit_pair: assumptions) {
+        const Lit lit = lit_pair.lit_inter;
+        if (lit.var() < assumptionsSet.size()) {
+            if (assumptionsSet[lit.var()]) {
+                //Yes, it can happen... due to variable value replacement
+            } else {
+                assumptionsSet[lit.var()] = true;
+            }
+        } else {
+            if (value(lit) == l_Undef) {
+                std::cerr
+                << "ERROR: Lit " << lit
+                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
+                << " value: " << value(lit)
+                << " -- value should NOT be l_Undef"
+                << endl;
+            }
+            assert(value(lit) != l_Undef);
+        }
+    }
+}
+
+
+void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from)
+{
+    if (unfill_from.empty()) {
+        return;
+    }
+
+    for(const AssumptionPair lit_pair: unfill_from) {
+        const Lit lit = lit_pair.lit_inter;
+        if (lit.var() < assumptionsSet.size()) {
+            assumptionsSet[lit.var()] = false;
+        }
     }
 }
