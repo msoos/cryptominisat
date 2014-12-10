@@ -1275,7 +1275,7 @@ void Simplifier::cleanBlockedClauses()
     for (vector<BlockedClause>::iterator
         end = blockedClauses.end()
         ; i != end
-        ; i++, at++
+        ; i++
     ) {
         const Var blockedOn = solver->map_outer_to_inter(i->blockedOn.var());
         if (solver->varData[blockedOn].removed == Removed::elimed
@@ -1289,7 +1289,7 @@ void Simplifier::cleanBlockedClauses()
             std::exit(-1);
         }
 
-        if (blockedClauses[at].toRemove) {
+        if (i->toRemove) {
             blockedMapBuilt = false;
         } else {
             assert(solver->varData[blockedOn].removed == Removed::elimed);
@@ -1421,12 +1421,12 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
     return blockedClauses.size() - orig_blocked_cls_size;
 }
 
-void Simplifier::add_clause_to_blck(Lit lit, const vector<Lit>& lits)
+void Simplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
 {
-    lit = solver->map_inter_to_outer(lit);
+    const Lit lit_outer = solver->map_inter_to_outer(lit);
     vector<Lit> lits_outer = lits;
     solver->map_inter_to_outer(lits_outer);
-    blockedClauses.push_back(BlockedClause(lit, lits_outer));
+    blockedClauses.push_back(BlockedClause(lit_outer, lits_outer));
 }
 
 bool Simplifier::find_gate(
