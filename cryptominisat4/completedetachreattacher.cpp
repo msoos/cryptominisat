@@ -105,7 +105,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
-    assert(!solver->drup->something_delayed);
+    assert(!solver->drup->something_delayed());
 
     if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());
