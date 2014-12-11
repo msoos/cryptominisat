@@ -79,7 +79,7 @@ bool InTree::check_timeout_due_to_hyperbin()
     ) {
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [probe] intra-propagation timout,"
+            << "c [intree] intra-propagation timout,"
             << " turning off OTF hyper-bin&trans-red"
             << endl;
         }
