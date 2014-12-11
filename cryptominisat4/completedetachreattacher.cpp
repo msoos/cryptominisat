@@ -37,6 +37,7 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 */
 void CompleteDetachReatacher::detach_nonbins_nontris()
 {
+    assert(!solver->drup->something_delayed());
     ClausesStay stay;
 
     for (watch_array::iterator
@@ -104,11 +105,11 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
+    assert(!solver->drup->something_delayed);
 
     if (solver->ok) {
         solver->ok = (solver->propagate().isNULL());
     }
-    assert(!solver->drup->something_delayed());
 
     return solver->ok;
 }
@@ -122,10 +123,10 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
     vector<ClOffset>& cs
     , bool removeStatsFirst
 ) {
-    assert(!solver->drup->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+        assert(!solver->drup->something_delayed());
         Clause* cl = solver->cl_alloc.ptr(*i);
 
         //Handle stat removal if need be
