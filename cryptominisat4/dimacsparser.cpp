@@ -216,6 +216,16 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
 
     lbool ret = solver->solve(&assumps);
 
+    write_solution_to_debuglib_file(ret);
+    debugLibPart++;
+
+    if (verbosity >= 6) {
+        cout << "c Parsed Solver::solve()" << endl;
+    }
+}
+
+void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
+{
     //Open file for writing
     std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
     std::ofstream partFile;
@@ -237,7 +247,12 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
         }
         partFile << "0" << endl;
     } else if (ret == l_False) {
-        partFile << "s UNSAT" << endl;
+        partFile << "conflict ";
+        for (Lit lit: solver->get_conflict()) {
+            partFile << lit << " ";
+        }
+        partFile << endl
+        << "s UNSAT" << endl;
     } else if (ret == l_Undef) {
         cout << "c timeout, exiting" << endl;
         std::exit(15);
@@ -245,11 +260,6 @@ void DimacsParser::parseSolveComment(StreamBuffer& in)
         assert(false);
     }
     partFile.close();
-    debugLibPart++;
-
-    if (verbosity >= 6) {
-        cout << "c Parsed Solver::solve()" << endl;
-    }
 }
 
 void DimacsParser::parseComments(StreamBuffer& in, const std::string str)

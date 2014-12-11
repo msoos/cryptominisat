@@ -285,10 +285,16 @@ class Tester:
         satunsatfound = False
         vlinefound = False
         solution = {}
+        conflict = None
 
         #parse in solution
         for line in output_lines:
             #skip comment
+            if re.match('^conflict ', line) :
+                line = line.strip().split()[1:]
+                conflict = [int(elem) for elem in line]
+                continue
+
             if (re.match('^c ', line)):
                 continue;
 
@@ -350,7 +356,7 @@ class Tester:
             print "Error code 500"
             exit(500)
 
-        return (unsat, solution)
+        return unsat, solution, conflict
 
     def test_found_solution(self, solution, fname, debugLibPart=None):
         def check_regular_clause(line, solution):
@@ -449,7 +455,7 @@ class Tester:
 
         #extract output from the other solver
         print "Checking other solver output..."
-        (otherSolverUNSAT, otherSolverSolution) = self.parse_solution_from_output(consoleOutput2.split("\n"))
+        otherSolverUNSAT, otherSolverSolution, _ = self.parse_solution_from_output(consoleOutput2.split("\n"))
 
         #check if the other solver agrees with us
         return otherSolverUNSAT
@@ -537,6 +543,15 @@ class Tester:
         print "Assumptions: ", assumps
         return assumps
 
+    def check_assumps_inside_conflict(self, assumps, conflict) :
+        for lit in conflict:
+            if -1*lit not in assumps:
+                print "ERROR: Final conflict contains " , conflict , " but assumps is ", assumps
+                print "ERROR: lit ", lit , " is in conflict but its inverse is not is assumps!"
+                exit(-100)
+
+        print "OK, final conflict only contains elements from assumptions"
+
     def check_assumps_inside_solution(self, assumps, solution) :
         for lit in assumps:
             var = abs(lit)
@@ -571,7 +586,7 @@ class Tester:
             output_lines = text.splitlines()
             f.close()
 
-            (unsat, solution) = self.parse_solution_from_output(output_lines)
+            unsat, solution, conflict = self.parse_solution_from_output(output_lines)
             assumps = self.get_assumps(fname, debugLibPart)
             if unsat == False:
                 print "debugLib is SAT"
@@ -579,6 +594,8 @@ class Tester:
                 self.test_found_solution(solution, fname, debugLibPart)
             else:
                 print "debugLib is UNSAT"
+                assert conflict != None, "debugLibPart must create a conflict in case of UNSAT"
+                self.check_assumps_inside_conflict(assumps, conflict)
                 tmpfname = unique_fuzz_file("tempfile_for_extract_libpart")
                 self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
@@ -631,7 +648,7 @@ class Tester:
             self.check_debug_lib(checkAgainst)
 
         print "Checking console output..."
-        (unsat, solution) = self.parse_solution_from_output(consoleOutput.split("\n"))
+        unsat, solution, _ = self.parse_solution_from_output(consoleOutput.split("\n"))
         otherSolverUNSAT = True
 
         if not unsat :

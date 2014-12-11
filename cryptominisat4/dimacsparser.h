@@ -56,6 +56,7 @@ class DimacsParser
         void parseComments(StreamBuffer& in, const std::string str);
         std::string stringify(uint32_t x) const;
         void parseSolveComment(StreamBuffer& in);
+        void write_solution_to_debuglib_file(const lbool ret) const;
 
 
         SATSolver* solver;
