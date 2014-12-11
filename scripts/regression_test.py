@@ -639,7 +639,7 @@ class Tester:
                 print "Too much time to solve, aborted!"
                 return
             else:
-                print "Within time limit: %3ds" % (calendar.timegm(time.gmtime()) - currTime)
+                print "Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime)
 
         print "filename: %s" % fname
 
