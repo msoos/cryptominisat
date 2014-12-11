@@ -97,7 +97,7 @@ int32_t DimacsParser::parseInt(StreamBuffer& in)
     return mult*val;
 }
 
-std::string DimacsParser::stringify(uint32_t x)
+std::string DimacsParser::stringify(uint32_t x) const
 {
     std::ostringstream o;
     o << x;
