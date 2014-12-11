@@ -167,11 +167,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-
-            //Drup
-            if (i != j) {
-                (*solver->drup) << findelay;
-            }
+            (*solver->drup) << findelay;
             return false;
         }
         if (solver->value(*i) == l_Undef) {
