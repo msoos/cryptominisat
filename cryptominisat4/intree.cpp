@@ -74,6 +74,8 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 
 bool InTree::check_timeout_due_to_hyperbin()
 {
+    assert(!(solver->timedOutPropagateFull && solver->drup->enabled()));
+
     if (solver->timedOutPropagateFull
         && !solver->drup->enabled()
     ) {
