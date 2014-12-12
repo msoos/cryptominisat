@@ -42,7 +42,6 @@ SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
-        , numCleanBetweenSimplify(4)
         , startClean(9000)
         , increaseClean(1.06)
         , maxNumRedsRatio(10)

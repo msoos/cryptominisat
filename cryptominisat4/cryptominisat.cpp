@@ -153,7 +153,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 6: {
-            conf.numCleanBetweenSimplify = 1;
             conf.skip_some_bve_resolvents = 1;
 //             conf.ratioRemoveClauses = 0.7;
             break;
