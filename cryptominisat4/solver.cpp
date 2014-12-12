@@ -1619,6 +1619,7 @@ lbool Solver::simplify_problem(const bool startup)
     check_stats();
     #endif
     rearrange_clauses_lits();
+    burst_or_simplify_mode = true;
 
     if (conf.verbosity >= 6) {
         cout
@@ -1682,7 +1683,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //PROBE
@@ -1704,7 +1705,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //Don't replace first -- the stamps won't work so well
@@ -1724,7 +1725,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //SCC&VAR-REPL
@@ -1737,7 +1738,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //Treat implicits
@@ -1769,7 +1770,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //Clean cache before distill
@@ -1791,7 +1792,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     //Search & replace 2-long XORs
@@ -1828,7 +1829,7 @@ lbool Solver::simplify_problem(const bool startup)
         || cpuTime() > conf.maxTime
         || must_interrupt_asap()
     ) {
-        return l_Undef;
+        goto end;
     }
 
     if (conf.doRenumberVars) {
@@ -1871,6 +1872,7 @@ end:
     if (conf.doClearStatEveryClauseCleaning) {
         clear_clauses_stats();
     }
+    burst_or_simplify_mode = false;
 
     solveStats.numSimplify++;
 

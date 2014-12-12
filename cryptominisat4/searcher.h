@@ -910,7 +910,7 @@ class Searcher : public HyperEngine
 
 inline void Searcher::varDecayActivity()
 {
-    if (burst_mode) {
+    if (burst_or_simplify_mode) {
         return;
     }
 
@@ -918,7 +918,7 @@ inline void Searcher::varDecayActivity()
 }
 inline void Searcher::bump_var_activitiy(Var var)
 {
-    if (burst_mode) {
+    if (burst_or_simplify_mode) {
         return;
     }
 

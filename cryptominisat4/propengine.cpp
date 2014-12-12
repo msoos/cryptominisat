@@ -51,7 +51,7 @@ PropEngine::PropEngine(
 ) :
         CNF(_conf, _needToInterrupt)
         , qhead(0)
-        , burst_mode(false)
+        , burst_or_simplify_mode(false)
 {
     agility.setup(conf.agilityG, conf.agilityLimit);
 }

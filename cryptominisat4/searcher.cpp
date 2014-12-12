@@ -1658,7 +1658,7 @@ lbool Searcher::burst_search()
     conf.polarity_mode = polarmode_rnd;
 
     //Do burst
-    burst_mode = 1;
+    burst_or_simplify_mode = 1;
     params.clear();
     params.conflictsToDo = conf.burst_search_len;
     params.rest_type = restart_type_never;
@@ -1668,7 +1668,7 @@ lbool Searcher::burst_search()
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
-    burst_mode = 0;
+    burst_or_simplify_mode = 0;
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
