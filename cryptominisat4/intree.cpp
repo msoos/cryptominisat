@@ -314,10 +314,13 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         //Should do HHBR here
         bool ok;
         if (solver->conf.otfHyperbin) {
-            const uint64_t max_hyper_time =
+            uint64_t max_hyper_time = std::numeric_limits<uint64_t>::max();
+            if (!solver->drup->enabled()) {
+                max_hyper_time =
                 solver->propStats.otfHyperTime
                 + solver->propStats.bogoProps
                 + 1600ULL*1000ULL*1000ULL;
+            }
 
             Lit ret = solver->propagate_bfs(
                 max_hyper_time //early-abort timeout
