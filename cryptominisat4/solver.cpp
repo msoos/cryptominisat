@@ -1619,7 +1619,6 @@ lbool Solver::simplify_problem(const bool startup)
     check_stats();
     #endif
     rearrange_clauses_lits();
-    burst_or_simplify_mode = true;
 
     if (conf.verbosity >= 6) {
         cout
@@ -1872,7 +1871,6 @@ end:
     if (conf.doClearStatEveryClauseCleaning) {
         clear_clauses_stats();
     }
-    burst_or_simplify_mode = false;
 
     solveStats.numSimplify++;
 

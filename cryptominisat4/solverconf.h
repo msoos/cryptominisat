@@ -125,8 +125,9 @@ class SolverConf
         ) const;
 
         //Variable activities
-        double var_decay_start;
-        double var_decay_finish;
+        unsigned  var_inc_start;
+        unsigned  var_inc_multiplier;
+        unsigned  var_inc_divider;
         double random_var_freq;
         PolarityMode polarity_mode;
         int do_calc_polarity_first_time;

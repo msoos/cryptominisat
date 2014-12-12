@@ -64,8 +64,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterr
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
 {
-    var_decay = solver->conf.var_decay_start;
-    var_inc = 1.0;
+    var_inc = conf.var_inc_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
@@ -83,6 +82,9 @@ void Searcher::new_var(const bool bva, const Var orig_outer)
     //Activity heap
     activities.push_back(0);
     solver->set_decision_var(nVars()-1);
+
+    act_polar_backup.activity.push_back(0);
+    act_polar_backup.polarity.push_back(false);
 }
 
 void Searcher::new_vars(size_t n)
@@ -92,6 +94,9 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
     }
+
+    act_polar_backup.activity.resize(act_polar_backup.activity.size() + n, 0);
+    act_polar_backup.polarity.resize(act_polar_backup.polarity.size() + n, false);
 }
 
 void Searcher::save_on_var_memory()
@@ -99,13 +104,21 @@ void Searcher::save_on_var_memory()
     PropEngine::save_on_var_memory();
     activities.resize(nVars());
     activities.shrink_to_fit();
+
+    act_polar_backup.activity.resize(nVars());
+    act_polar_backup.activity.shrink_to_fit();
+    act_polar_backup.polarity.resize(nVars());
+    act_polar_backup.polarity.shrink_to_fit();
 }
 
 void Searcher::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    updateArray(activities, interToOuter);
+    if (act_polar_backup.saved) {
+        updateArray(act_polar_backup.activity, interToOuter);
+        updateArray(act_polar_backup.polarity, interToOuter);
+    }
     //activities are not updated, they are taken from backup, which is updated
 
     renumber_assumptions(outerToInter);
@@ -1043,14 +1056,6 @@ lbool Searcher::search()
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
-            if (((stats.conflStats.numConflicts & 0x1fff) == 0x1fff)
-                && var_decay < conf.var_decay_finish
-            ) {
-                var_decay += 0.01;
-                if (conf.verbosity >= 3) {
-                    cout << "c var_decay bumped, now " << std::setprecision(2) << var_decay << endl;
-                }
-            }
             reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
             checkNeedRestart();
@@ -1652,13 +1657,16 @@ lbool Searcher::burst_search()
     //Save old config
     const double backup_rand = conf.random_var_freq;
     const PolarityMode backup_polar_mode = conf.polarity_mode;
+    uint32_t backup_var_inc_divider = var_inc_divider;
+    uint32_t backup_var_inc_multiplier = var_inc_multiplier;
 
     //Set burst config
     conf.random_var_freq = 1;
     conf.polarity_mode = polarmode_rnd;
+    var_inc_divider = 1;
+    var_inc_multiplier = 1;
 
     //Do burst
-    burst_or_simplify_mode = 1;
     params.clear();
     params.conflictsToDo = conf.burst_search_len;
     params.rest_type = restart_type_never;
@@ -1668,7 +1676,8 @@ lbool Searcher::burst_search()
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
-    burst_or_simplify_mode = 0;
+    var_inc_divider = backup_var_inc_divider;
+    var_inc_multiplier = backup_var_inc_multiplier;
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
@@ -2106,6 +2115,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     resetStats();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0) {
+        restore_activities_and_polarities();
         restore_order_heap();
         setup_restart_print();
         status = burst_search();
@@ -2113,6 +2123,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
             goto end;
     }
 
+    restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
     if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
@@ -2120,6 +2131,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     ) {
         calculate_and_set_polars();
     }
+
+    var_inc_multiplier = conf.var_inc_multiplier;
+    var_inc_divider = conf.var_inc_divider;
 
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
@@ -2237,6 +2251,7 @@ void Searcher::finish_up_solve(const lbool status)
     #endif
 
     print_iteration_solving_stats();
+    backup_activities_and_polarities();
 }
 
 void Searcher::print_iteration_solving_stats()
@@ -2977,6 +2992,7 @@ PropBy Searcher::propagate(
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
+    mem += act_polar_backup.mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += activities.capacity()*sizeof(uint32_t);
@@ -3047,6 +3063,32 @@ size_t Searcher::mem_used() const
     }
 
     return mem;
+}
+
+void Searcher::backup_activities_and_polarities()
+{
+    act_polar_backup.activity.clear();
+    act_polar_backup.activity.resize(nVars(), 0);
+    act_polar_backup.polarity.clear();
+    act_polar_backup.polarity.resize(nVars(), false);
+    for (size_t i = 0; i < nVars(); i++) {
+        act_polar_backup.polarity[i] = varData[i].polarity;
+        act_polar_backup.activity[i] = activities[i];
+    }
+    act_polar_backup.var_inc = var_inc;
+    act_polar_backup.saved = true;
+}
+
+void Searcher::restore_activities_and_polarities()
+{
+    if (!act_polar_backup.saved)
+        return;
+
+    for(size_t i = 0; i < nVars(); i++) {
+        varData[i].polarity = act_polar_backup.polarity[i];
+        activities[i] = act_polar_backup.activity[i];
+    }
+    var_inc = act_polar_backup.var_inc;
 }
 
 void Searcher::calculate_and_set_polars()

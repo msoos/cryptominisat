@@ -807,10 +807,9 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        vector<double> activities;
-        double var_inc;
-        double var_decay;
-        void insertVarOrder(const Var x);  ///< Insert a variable in heap
+        vector<uint32_t> activities;
+        uint32_t var_inc;
+        void              insertVarOrder(const Var x);  ///< Insert a variable in heap
 
 
         uint64_t more_red_minim_limit_binary_actual;
@@ -834,6 +833,27 @@ class Searcher : public HyperEngine
         vector<Lit> longest_dec_trail;
         size_t last_confl_longest_dec_trail_printed = 0;
         void handle_longest_decision_trail();
+
+        struct ActPolarBackup
+        {
+            vector<uint32_t> activity;
+            vector<bool>     polarity;
+            uint32_t         var_inc;
+            bool             saved = false;
+
+            size_t mem_used() const
+            {
+                size_t mem = 0;
+                mem += activity.capacity()*sizeof(uint32_t);
+                mem += polarity.capacity();
+                mem += sizeof(ActPolarBackup);
+
+                return mem;
+            }
+        };
+        ActPolarBackup act_polar_backup;
+        void backup_activities_and_polarities();
+        void restore_activities_and_polarities();
         void calculate_and_set_polars();
         void restore_order_heap();
 
@@ -853,13 +873,13 @@ class Searcher : public HyperEngine
         ///Increase a variable with the current 'bump' value.
         void     bump_var_activitiy  (Var v);
         struct VarOrderLt { ///Order variables according to their activities
-            const vector<double>&  activities;
+            const vector<uint32_t>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
             {
                 return activities[x] > activities[y];
             }
 
-            VarOrderLt(const vector<double>& _activities) :
+            VarOrderLt(const vector<uint32_t>& _activities) :
                 activities(_activities)
             {}
         };
@@ -906,41 +926,40 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         Stats    stats;
+        uint32_t var_inc_multiplier;
+        uint32_t var_inc_divider;
 };
 
 inline void Searcher::varDecayActivity()
 {
-    if (burst_or_simplify_mode) {
-        return;
-    }
-
-    var_inc *= (1.0 / var_decay);
+    var_inc *= var_inc_multiplier;
+    var_inc /= var_inc_divider;
 }
 inline void Searcher::bump_var_activitiy(Var var)
 {
-    if (burst_or_simplify_mode) {
-        return;
-    }
+    activities[var] += var_inc;
 
     #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
-
-    activities[var] += var_inc;
-    if (activities[var] > 1e100) {
+    if ( (activities[var]) > ((0x1U) << 24)
+        || var_inc > ((0x1U) << 24)
+    ) {
         // Rescale:
-        for (size_t i = 0; i < nVars(); i++) {
-            activities[var] *= 1e-100;
+        for (uint32_t& act : activities) {
+            act >>= 14;
         }
         #ifdef SLOW_DEBUG
         rescaled = true;
         #endif
 
-        var_inc *= 1e-100;
+        //Reset var_inc
+        var_inc >>= 14;
+
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
-        if (var_inc < 1.0) {
-            var_inc = 1.0;
+        if (var_inc < conf.var_inc_start) {
+            var_inc = conf.var_inc_start;
         }
     }
 
