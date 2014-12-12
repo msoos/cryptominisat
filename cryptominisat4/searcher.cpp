@@ -2112,6 +2112,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         if (status != l_Undef)
             goto end;
     }
+    assert(burst_or_simplify_mode == false);
 
     restore_order_heap();
     params.rest_type = decide_restart_type();
