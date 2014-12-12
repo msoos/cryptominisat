@@ -357,11 +357,14 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue(lit);
+            *(solver->drup) << lit << fin;
             solver->ok = solver->propagate().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
+            *(solver->drup) << ~lit << fin;
+            *(solver->drup) << fin;
             solver->ok = false;
             return false;
         }
