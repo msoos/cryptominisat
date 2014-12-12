@@ -52,21 +52,6 @@ Prober::Prober(Solver* _solver):
 {
 }
 
-struct ActSorter
-{
-    ActSorter(const vector<uint32_t>& _activities) :
-        activities(_activities)
-    {}
-
-    const vector<uint32_t>& activities;
-
-    bool operator()(uint32_t var1, uint32_t var2) const
-    {
-        //Least active vars first
-        return (activities[var1] < activities[var2]);
-    }
-};
-
 uint64_t Prober::limit_used() const
 {
     return solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime + extraTimeCache;
