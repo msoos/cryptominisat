@@ -128,6 +128,7 @@ public:
     void new_decision_level();
 
 protected:
+    bool burst_mode;
     void new_var(const bool bva, const Var orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
@@ -381,7 +382,7 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     //Only update non-decision: this way, flipped decisions don't get saved
-    if (from != PropBy()) {
+    if (!burst_mode && from != PropBy()) {
         varData[v].polarity = !p.sign();
     }
 
