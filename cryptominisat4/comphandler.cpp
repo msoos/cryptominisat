@@ -230,6 +230,7 @@ bool CompHandler::solve_component(
     , const vector<Var>& vars_orig
     , const size_t num_comps
 ) {
+    assert(!solver->drup->enabled());
     vector<Var> vars(vars_orig);
 
     //Sort and renumber
