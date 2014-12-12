@@ -1270,7 +1270,6 @@ void Simplifier::cleanBlockedClauses()
     assert(solver->decisionLevel() == 0);
     vector<BlockedClause>::iterator i = blockedClauses.begin();
     vector<BlockedClause>::iterator j = blockedClauses.begin();
-    size_t at = 0;
 
     for (vector<BlockedClause>::iterator
         end = blockedClauses.end()
