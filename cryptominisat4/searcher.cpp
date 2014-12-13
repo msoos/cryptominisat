@@ -1827,7 +1827,7 @@ void Searcher::calcVariances(
 }
 #endif
 
-void Searcher::printRestartSQL()
+void Searcher::dump_restart_sql()
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
@@ -2033,7 +2033,7 @@ void Searcher::save_search_loop_stats()
 {
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
-        printRestartSQL();
+        dump_restart_sql();
     }
     #endif
 }
@@ -2225,7 +2225,7 @@ void Searcher::finish_up_solve(const lbool status)
 
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
-        printRestartSQL();
+        dump_restart_sql();
         //printVarStatsSQL();
 
         #ifdef STATS_NEEDED_EXTRA

@@ -878,7 +878,7 @@ class Searcher : public HyperEngine
         //SQL
         vector<Var> calcVarsToDump() const;
         #ifdef STATS_NEEDED
-        void printRestartSQL();
+        void dump_restart_sql();
         void printVarStatsSQL();
         void printClauseDistribSQL();
         PropStats lastSQLPropStats;
