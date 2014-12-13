@@ -1053,7 +1053,7 @@ lbool Searcher::search()
             }
             reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
-            checkNeedRestart();
+            check_need_restart();
             print_restart_stat();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
@@ -1158,7 +1158,7 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::checkNeedRestart()
+void Searcher::check_need_restart()
 {
     if (must_interrupt_asap())  {
         if (conf.verbosity >= 3)
