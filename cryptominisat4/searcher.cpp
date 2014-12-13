@@ -1051,7 +1051,6 @@ lbool Searcher::search()
 
     while (
         (!params.needToStopSearch
-            && cpuTime() < conf.maxTime
             && !must_interrupt_asap()
         )
             || !confl.isNULL() //always finish the last conflict
@@ -1169,6 +1168,13 @@ void Searcher::check_need_restart()
         if (conf.verbosity >= 3)
             cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
         params.needToStopSearch = true;
+    }
+
+    if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
+        //It's expensive to check time all the time
+        if (cpuTime() > conf.maxTime) {
+            params.needToStopSearch = true;
+        }
     }
 
     switch (params.rest_type) {
