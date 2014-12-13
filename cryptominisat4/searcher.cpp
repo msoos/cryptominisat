@@ -1033,6 +1033,7 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     last_decision_ended_in_conflict = false;
+    blocked_restart = false;
     PropBy confl;
 
     while (
@@ -1180,12 +1181,16 @@ void Searcher::check_need_restart()
 
         case restart_type_glue:
             if (conf.do_blocking_restart
+                && sumConflicts() > 10000
                 && hist.glueHist.isvalid()
                 && hist.trailDepthHistLonger.isvalid()
                 && decisionLevel() > 0
                 && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+                && !blocked_restart
             ) {
                 hist.glueHist.clear();
+                blocked_restart = true;
+                stats.blocked_restart++;
             }
 
             if (hist.glueHist.isvalid()

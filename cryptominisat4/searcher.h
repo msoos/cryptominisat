@@ -221,6 +221,7 @@ class Searcher : public HyperEngine
             Stats& operator+=(const Stats& other)
             {
                 numRestarts += other.numRestarts;
+                blocked_restart += other.blocked_restart;
 
                 //Decisions
                 decisions += other.decisions;
@@ -277,6 +278,7 @@ class Searcher : public HyperEngine
             Stats& operator-=(const Stats& other)
             {
                 numRestarts -= other.numRestarts;
+                blocked_restart -= other.blocked_restart;
 
                 //Decisions
                 decisions -= other.decisions;
@@ -342,6 +344,12 @@ class Searcher : public HyperEngine
                     , numRestarts
                     , (double)conflStats.numConflicts/(double)numRestarts
                     , "confls per restart"
+
+                );
+                print_stats_line("c blocked restarts"
+                    , blocked_restart
+                    , (double)blocked_restart/(double)numRestarts
+                    , "per normal restart"
 
                 );
                 print_stats_line("c time", cpu_time);
@@ -515,6 +523,7 @@ class Searcher : public HyperEngine
             }
 
             //Restart stats
+            uint64_t blocked_restart = 0;
             uint64_t numRestarts = 0;
 
             //Decisions
@@ -763,6 +772,7 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
+        bool blocked_restart = false;
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
