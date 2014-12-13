@@ -69,17 +69,11 @@ class Searcher : public HyperEngine
         struct Hist {
             //About the search
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
-            AvgCalc<uint32_t>   branchDepthHistLT;
-
             AvgCalc<uint32_t>   branchDepthDeltaHist;
-            AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
             bqueue<uint32_t>   trailDepthHist;
             bqueue<uint32_t>   trailDepthHistLonger;
-            AvgCalc<uint32_t>  trailDepthHistLT;
-
             AvgCalc<uint32_t>   trailDepthDeltaHist;
-            AvgCalc<uint32_t>   trailDepthDeltaHistLT;
 
             //About the confl generated
             bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
@@ -158,19 +152,15 @@ class Searcher : public HyperEngine
 
                 << " branchd"
                 << " " << std::right << branchDepthHist.avgPrint(1, 5)
-                << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
                 << " branchdd"
 
                 << " " << std::right << branchDepthDeltaHist.avgPrint(1, 4)
-                << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
 
                 << " traild"
                 << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
-                << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
 
                 << " traildd"
                 << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
-                << "/" << std::left << trailDepthDeltaHistLT.avgPrint(0, 5)
                 ;
 
                 cout << std::right;

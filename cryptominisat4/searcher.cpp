@@ -1380,13 +1380,10 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     assert(decisionLevel() > 0);
     hist.trailDepthHist.push(trail.size() - trail_lim[0]);
     hist.trailDepthHistLonger.push(trail.size() - trail_lim[0]);
-    hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
 
     hist.branchDepthHist.push(decisionLevel());
-    hist.branchDepthHistLT.push(decisionLevel());
 
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
-    hist.branchDepthDeltaHistLT.push(decisionLevel() - backtrack_level);
 
     hist.glueHist.push(glue);
     hist.glueHistLT.push(glue);
@@ -1401,7 +1398,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.numResolutionsHistLT.push(resolutions.sum());
 
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
-    hist.trailDepthDeltaHistLT.push(trail.size() - trail_lim[backtrack_level]);
 
     #ifdef STATS_NEEDED_EXTRA
     if (conf.doSQL && conf.dumpClauseDistribPer != 0) {
