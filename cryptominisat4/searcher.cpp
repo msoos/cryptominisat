@@ -1185,9 +1185,11 @@ void Searcher::check_need_restart()
                 && hist.trailDepthHistLonger.isvalid()
                 && decisionLevel() > 0
                 && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
-                && !blocked_restart
             ) {
                 hist.glueHist.clear();
+                if (!blocked_restart) {
+                    stats.blocked_restart_same++;
+                }
                 blocked_restart = true;
                 stats.blocked_restart++;
             }

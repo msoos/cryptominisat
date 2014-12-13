@@ -222,6 +222,7 @@ class Searcher : public HyperEngine
             {
                 numRestarts += other.numRestarts;
                 blocked_restart += other.blocked_restart;
+                blocked_restart_same += other.blocked_restart_same;
 
                 //Decisions
                 decisions += other.decisions;
@@ -279,6 +280,7 @@ class Searcher : public HyperEngine
             {
                 numRestarts -= other.numRestarts;
                 blocked_restart -= other.blocked_restart;
+                blocked_restart_same -= other.blocked_restart_same;
 
                 //Decisions
                 decisions -= other.decisions;
@@ -524,6 +526,7 @@ class Searcher : public HyperEngine
 
             //Restart stats
             uint64_t blocked_restart = 0;
+            uint64_t blocked_restart_same = 0;
             uint64_t numRestarts = 0;
 
             //Decisions
