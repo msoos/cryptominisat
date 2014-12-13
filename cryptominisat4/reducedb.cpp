@@ -282,6 +282,9 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
         const uint64_t keep_num = (double)solver->longRedCls.size()*solver->conf.ratio_keep_clauses[keep_type];
+        if (keep_num == 0) {
+            continue;
+        }
         sort_red_cls(static_cast<ClauseCleaningTypes>(keep_type));
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
