@@ -1802,12 +1802,6 @@ lbool Solver::simplify_problem(const bool startup)
         }
     }
 
-    if (conf.doSortWatched
-        && !startup
-    ) {
-        sortWatched();
-    }
-
     //Delete and disable cache if too large
     if (conf.doCache) {
         const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
