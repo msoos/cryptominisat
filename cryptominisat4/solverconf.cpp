@@ -207,7 +207,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
-        , subsume_implicit_time_limitM(10LL)
+        , subsume_implicit_time_limitM(30LL)
         , strengthen_implicit_time_limitM(50LL)
         , doCalcReach      (true)
 
