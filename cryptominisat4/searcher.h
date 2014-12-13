@@ -222,54 +222,6 @@ class Searcher : public HyperEngine
 
         struct Stats
         {
-            Stats() :
-                // Stats
-                numRestarts(0)
-
-                //Decisions
-                , decisions(0)
-                , decisionsAssump(0)
-                , decisionsRand(0)
-                , decisionFlippedPolar(0)
-
-                //Conflict generation
-                , litsRedNonMin(0)
-                , litsRedFinal(0)
-                , recMinCl(0)
-                , recMinLitRem(0)
-                , furtherShrinkAttempt(0)
-                , binTriShrinkedClause(0)
-                , cacheShrinkedClause(0)
-                , furtherShrinkedSuccess(0)
-                , stampShrinkAttempt(0)
-                , stampShrinkCl(0)
-                , stampShrinkLit(0)
-                , moreMinimLitsStart(0)
-                , moreMinimLitsEnd(0)
-                , recMinimCost(0)
-
-                //Red stats
-                , learntUnits(0)
-                , learntBins(0)
-                , learntTris(0)
-                , learntLongs(0)
-                , otfSubsumed(0)
-                , otfSubsumedImplicit(0)
-                , otfSubsumedLong(0)
-                , otfSubsumedRed(0)
-                , otfSubsumedLitsGained(0)
-
-                //Hyper-bin & transitive reduction
-                , advancedPropCalled(0)
-                , hyperBinAdded(0)
-                , transReduRemIrred(0)
-                , transReduRemRed(0)
-
-                //Time
-                , cpu_time(0)
-
-            {}
-
             void clear()
             {
                 Stats tmp;
@@ -572,45 +524,47 @@ class Searcher : public HyperEngine
                 #endif
             }
 
-            uint64_t  numRestarts;      ///<Num restarts
+            //Restart stats
+            uint64_t numRestarts = 0;
 
             //Decisions
-            uint64_t  decisions;        ///<Number of decisions made
-            uint64_t  decisionsAssump;
-            uint64_t  decisionsRand;    ///<Numer of random decisions made
-            uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
+            uint64_t  decisions = 0;
+            uint64_t  decisionsAssump = 0;
+            uint64_t  decisionsRand = 0;
+            uint64_t  decisionFlippedPolar = 0;
 
-            uint64_t litsRedNonMin;
-            uint64_t litsRedFinal;
-            uint64_t recMinCl;
-            uint64_t recMinLitRem;
-            uint64_t furtherShrinkAttempt;
-            uint64_t binTriShrinkedClause;
-            uint64_t cacheShrinkedClause;
-            uint64_t furtherShrinkedSuccess;
-            uint64_t stampShrinkAttempt;
-            uint64_t stampShrinkCl;
-            uint64_t stampShrinkLit;
-            uint64_t moreMinimLitsStart;
-            uint64_t moreMinimLitsEnd;
-            uint64_t recMinimCost;
+            //Clause shrinking
+            uint64_t litsRedNonMin = 0;
+            uint64_t litsRedFinal = 0;
+            uint64_t recMinCl = 0;
+            uint64_t recMinLitRem = 0;
+            uint64_t furtherShrinkAttempt = 0;
+            uint64_t binTriShrinkedClause = 0;
+            uint64_t cacheShrinkedClause = 0;
+            uint64_t furtherShrinkedSuccess = 0;
+            uint64_t stampShrinkAttempt = 0;
+            uint64_t stampShrinkCl = 0;
+            uint64_t stampShrinkLit = 0;
+            uint64_t moreMinimLitsStart = 0;
+            uint64_t moreMinimLitsEnd = 0;
+            uint64_t recMinimCost = 0;
 
-            //Red stats
-            uint64_t learntUnits;
-            uint64_t learntBins;
-            uint64_t learntTris;
-            uint64_t learntLongs;
-            uint64_t otfSubsumed;
-            uint64_t otfSubsumedImplicit;
-            uint64_t otfSubsumedLong;
-            uint64_t otfSubsumedRed;
-            uint64_t otfSubsumedLitsGained;
+            //Learnt clause stats
+            uint64_t learntUnits = 0;
+            uint64_t learntBins = 0;
+            uint64_t learntTris = 0;
+            uint64_t learntLongs = 0;
+            uint64_t otfSubsumed = 0;
+            uint64_t otfSubsumedImplicit = 0;
+            uint64_t otfSubsumedLong = 0;
+            uint64_t otfSubsumedRed = 0;
+            uint64_t otfSubsumedLitsGained = 0;
 
             //Hyper-bin & transitive reduction
-            uint64_t advancedPropCalled;
-            uint64_t hyperBinAdded;
-            uint64_t transReduRemIrred;
-            uint64_t transReduRemRed;
+            uint64_t advancedPropCalled = 0;
+            uint64_t hyperBinAdded = 0;
+            uint64_t transReduRemIrred = 0;
+            uint64_t transReduRemRed = 0;
 
             //Resolution Stats
             ResolutionTypes<uint64_t> resolvs;
@@ -619,7 +573,7 @@ class Searcher : public HyperEngine
             ConflStats conflStats;
 
             //Time
-            double cpu_time;
+            double cpu_time = 0.0;
         };
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
