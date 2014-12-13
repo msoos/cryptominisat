@@ -106,6 +106,8 @@ struct SortRedClsAct
         return xsize < ysize;
     }
 };
+
+#ifdef STATS_NEEDED
 struct SortRedClsPropConfl
 {
     SortRedClsPropConfl(
@@ -146,6 +148,7 @@ struct SortRedClsPropConfl
         return x->size() < y->size();
     }
 };
+
 struct SortRedClsConflDepth
 {
     SortRedClsConflDepth(ClauseAllocator& _cl_alloc) :
@@ -184,6 +187,7 @@ struct SortRedClsConflDepth
         return x->size() < y->size();
     }
 };
+#endif
 
 ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
@@ -208,6 +212,7 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
             break;
         }
 
+        #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_prop_confl_based : {
             std::stable_sort(solver->longRedCls.begin()
                 , solver->longRedCls.end()
@@ -223,6 +228,7 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
             std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
             break;
         }
+        #endif
 
         default: {
             cout << "Unknown cleaning type: " << clean_type << endl;
@@ -280,8 +286,15 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     unmark_keep_flags();
 
+    #ifdef STATS_NEEDED
     for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
+    #else
+    for(unsigned keep_type = 0; keep_type < 3; keep_type++) {
+    #endif
         const uint64_t keep_num = (double)solver->longRedCls.size()*solver->conf.ratio_keep_clauses[keep_type];
+        if (keep_num == 0) {
+            continue;
+        }
         sort_red_cls(static_cast<ClauseCleaningTypes>(keep_type));
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);

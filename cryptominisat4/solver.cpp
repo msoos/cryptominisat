@@ -1662,6 +1662,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Cache clean before probing (for speed)
     if (conf.doCache
+        && !startup
         && !must_interrupt_asap()
     ) {
         if (!implCache.clean(this))
@@ -1728,7 +1729,9 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     //SCC&VAR-REPL
-    if (conf.doFindAndReplaceEqLits) {
+    if (conf.doFindAndReplaceEqLits
+        && !startup
+    ) {
         if (!varReplacer->replace_if_enough_is_found()) {
             goto end;
         }
@@ -1742,7 +1745,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Treat implicits
     if (conf.doStrSubImplicit
-        && !startup
+        //&& !startup
     ) {
         subsumeImplicit->subsume_implicit();
     }
@@ -1799,12 +1802,6 @@ lbool Solver::simplify_problem(const bool startup)
         if (!varReplacer->replace_if_enough_is_found(floor((double)get_num_free_vars()*0.001))) {
             goto end;
         }
-    }
-
-    if (conf.doSortWatched
-        && !startup
-    ) {
-        sortWatched();
     }
 
     //Delete and disable cache if too large

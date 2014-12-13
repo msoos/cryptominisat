@@ -101,6 +101,7 @@ SolverConf::SolverConf() :
         //SQL
         , doSQL          (1)
         , whichSQL       (0)
+        , dump_individual_search_time(false)
         , sqlite_filename ("cryptominisat.sqlite")
         #ifdef STATS_NEEDED_EXTRA
         , dumpClauseDistribPer(0)
@@ -207,7 +208,7 @@ SolverConf::SolverConf() :
         , doExtBinSubs     (true)
         , doSortWatched    (true)
         , doStrSubImplicit (true)
-        , subsume_implicit_time_limitM(10LL)
+        , subsume_implicit_time_limitM(30LL)
         , strengthen_implicit_time_limitM(50LL)
         , doCalcReach      (true)
 
@@ -231,11 +232,14 @@ SolverConf::SolverConf() :
         , clean_after_perc_zero_depth_assigns(0.015)
 {
 
-    ratio_keep_clauses[clean_glue_based] = 0.25;
+    ratio_keep_clauses[clean_glue_based] = 0.3;
     ratio_keep_clauses[clean_size_based] = 0;
-    ratio_keep_clauses[clean_sum_prop_confl_based] = 0.5;
+    ratio_keep_clauses[clean_sum_activity_based] = 0.0;
+
+    #ifdef STATS_NEEDED
+    ratio_keep_clauses[clean_sum_prop_confl_based] = 0;
     ratio_keep_clauses[clean_sum_confl_depth_based] = 0;
-    ratio_keep_clauses[clean_sum_activity_based] = 0.05;
+    #endif
 }
 
 

@@ -1046,6 +1046,7 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     last_decision_ended_in_conflict = false;
+    blocked_restart = false;
     PropBy confl;
 
     while (
@@ -1058,7 +1059,6 @@ lbool Searcher::search()
         if (!confl.isNULL()) {
             reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
-            checkNeedRestart();
             print_restart_stat();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
@@ -1099,7 +1099,7 @@ lbool Searcher::search()
 
 void Searcher::dump_search_sql(const double myTime)
 {
-    if (solver->sqlStats) {
+    if (solver->sqlStats && conf.dump_individual_search_time) {
         solver->sqlStats->time_passed_min(
             solver
             , "search"
@@ -1163,7 +1163,7 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::checkNeedRestart()
+void Searcher::check_need_restart()
 {
     if (must_interrupt_asap())  {
         if (conf.verbosity >= 3)
@@ -1185,12 +1185,18 @@ void Searcher::checkNeedRestart()
 
         case restart_type_glue:
             if (conf.do_blocking_restart
+                && sumConflicts() > 10000
                 && hist.glueHist.isvalid()
                 && hist.trailDepthHistLonger.isvalid()
                 && decisionLevel() > 0
                 && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
             ) {
                 hist.glueHist.clear();
+                if (!blocked_restart) {
+                    stats.blocked_restart_same++;
+                }
+                blocked_restart = true;
+                stats.blocked_restart++;
             }
 
             if (hist.glueHist.isvalid()
@@ -1385,13 +1391,9 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     assert(decisionLevel() > 0);
     hist.trailDepthHist.push(trail.size() - trail_lim[0]);
     hist.trailDepthHistLonger.push(trail.size() - trail_lim[0]);
-    hist.trailDepthHistLT.push(trail.size() - trail_lim[0]);
 
     hist.branchDepthHist.push(decisionLevel());
-    hist.branchDepthHistLT.push(decisionLevel());
-
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
-    hist.branchDepthDeltaHistLT.push(decisionLevel() - backtrack_level);
 
     hist.glueHist.push(glue);
     hist.glueHistLT.push(glue);
@@ -1406,7 +1408,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.numResolutionsHistLT.push(resolutions.sum());
 
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
-    hist.trailDepthDeltaHistLT.push(trail.size() - trail_lim[backtrack_level]);
 
     #ifdef STATS_NEEDED_EXTRA
     if (conf.doSQL && conf.dumpClauseDistribPer != 0) {
@@ -1584,6 +1585,7 @@ bool Searcher::handle_conflict(PropBy confl)
     if (params.update) {
         update_history_stats(backtrack_level, glue);
     }
+    check_need_restart();
     cancelUntil(backtrack_level);
 
     add_otf_subsume_long_clauses();
@@ -1836,7 +1838,7 @@ void Searcher::calcVariances(
 }
 #endif
 
-void Searcher::printRestartSQL()
+void Searcher::dump_restart_sql()
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
@@ -2042,7 +2044,7 @@ void Searcher::save_search_loop_stats()
 {
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
-        printRestartSQL();
+        dump_restart_sql();
     }
     #endif
 }
@@ -2134,6 +2136,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
     var_inc_multiplier = conf.var_inc_multiplier;
     var_inc_divider = conf.var_inc_divider;
+    if (conf.doSortWatched) {
+        sortWatched();
+    }
 
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
@@ -2238,7 +2243,7 @@ void Searcher::finish_up_solve(const lbool status)
 
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
-        printRestartSQL();
+        dump_restart_sql();
         //printVarStatsSQL();
 
         #ifdef STATS_NEEDED_EXTRA
@@ -3142,4 +3147,49 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
             assumptionsSet[lit.var()] = false;
         }
     }
+}
+
+inline void Searcher::varDecayActivity()
+{
+    var_inc *= var_inc_multiplier;
+    var_inc /= var_inc_divider;
+}
+inline void Searcher::bump_var_activitiy(Var var)
+{
+    activities[var] += var_inc;
+
+    #ifdef SLOW_DEBUG
+    bool rescaled = false;
+    #endif
+    if ( (activities[var]) > ((0x1U) << 24)
+        || var_inc > ((0x1U) << 24)
+    ) {
+        // Rescale:
+        for (uint32_t& act : activities) {
+            act >>= 14;
+        }
+        #ifdef SLOW_DEBUG
+        rescaled = true;
+        #endif
+
+        //Reset var_inc
+        var_inc >>= 14;
+
+        //If var_inc is smaller than var_inc_start then this MUST be corrected
+        //otherwise the 'varDecayActivity' may not decay anything in fact
+        if (var_inc < conf.var_inc_start) {
+            var_inc = conf.var_inc_start;
+        }
+    }
+
+    // Update order_heap with respect to new activity:
+    if (order_heap.in_heap(var)) {
+        order_heap.decrease(var);
+    }
+
+    #ifdef SLOW_DEBUG
+    if (rescaled) {
+        assert(order_heap.heap_property());
+    }
+    #endif
 }

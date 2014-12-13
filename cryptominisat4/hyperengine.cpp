@@ -606,9 +606,12 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
 
     propStats.otfHyperTime += 1;
     bool second_is_deeper = false;
-    bool ambivalent = varData[thisAncestor.var()].depth == varData[lookingForAncestor.var()].depth;
-    if (varData[thisAncestor.var()].depth < varData[lookingForAncestor.var()].depth) {
-        second_is_deeper = true;
+    bool ambivalent = true;
+    if (use_depth_trick) {
+        ambivalent = varData[thisAncestor.var()].depth == varData[lookingForAncestor.var()].depth;
+        if (varData[thisAncestor.var()].depth < varData[lookingForAncestor.var()].depth) {
+            second_is_deeper = true;
+        }
     }
     #ifdef DEBUG_DEPTH
     cout
@@ -1068,9 +1071,8 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     }
 
     //Update stats
-    c.stats.propagations_made++;
-    c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
     #ifdef STATS_NEEDED
+    c.stats.propagations_made++;
     if (c.red())
         propStats.propsLongRed++;
     else

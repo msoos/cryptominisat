@@ -69,17 +69,11 @@ class Searcher : public HyperEngine
         struct Hist {
             //About the search
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
-            AvgCalc<uint32_t>   branchDepthHistLT;
-
             AvgCalc<uint32_t>   branchDepthDeltaHist;
-            AvgCalc<uint32_t>   branchDepthDeltaHistLT;
 
             bqueue<uint32_t>   trailDepthHist;
             bqueue<uint32_t>   trailDepthHistLonger;
-            AvgCalc<uint32_t>  trailDepthHistLT;
-
             AvgCalc<uint32_t>   trailDepthDeltaHist;
-            AvgCalc<uint32_t>   trailDepthDeltaHistLT;
 
             //About the confl generated
             bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
@@ -158,19 +152,15 @@ class Searcher : public HyperEngine
 
                 << " branchd"
                 << " " << std::right << branchDepthHist.avgPrint(1, 5)
-                << "/" << std::left  << branchDepthHistLT.avgPrint(1, 5)
                 << " branchdd"
 
                 << " " << std::right << branchDepthDeltaHist.avgPrint(1, 4)
-                << "/" << std::left << branchDepthDeltaHistLT.avgPrint(1, 4)
 
                 << " traild"
                 << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
-                << "/" << std::left << trailDepthHistLT.avgPrint(0, 7)
 
                 << " traildd"
                 << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
-                << "/" << std::left << trailDepthDeltaHistLT.avgPrint(0, 5)
                 ;
 
                 cout << std::right;
@@ -222,54 +212,6 @@ class Searcher : public HyperEngine
 
         struct Stats
         {
-            Stats() :
-                // Stats
-                numRestarts(0)
-
-                //Decisions
-                , decisions(0)
-                , decisionsAssump(0)
-                , decisionsRand(0)
-                , decisionFlippedPolar(0)
-
-                //Conflict generation
-                , litsRedNonMin(0)
-                , litsRedFinal(0)
-                , recMinCl(0)
-                , recMinLitRem(0)
-                , furtherShrinkAttempt(0)
-                , binTriShrinkedClause(0)
-                , cacheShrinkedClause(0)
-                , furtherShrinkedSuccess(0)
-                , stampShrinkAttempt(0)
-                , stampShrinkCl(0)
-                , stampShrinkLit(0)
-                , moreMinimLitsStart(0)
-                , moreMinimLitsEnd(0)
-                , recMinimCost(0)
-
-                //Red stats
-                , learntUnits(0)
-                , learntBins(0)
-                , learntTris(0)
-                , learntLongs(0)
-                , otfSubsumed(0)
-                , otfSubsumedImplicit(0)
-                , otfSubsumedLong(0)
-                , otfSubsumedRed(0)
-                , otfSubsumedLitsGained(0)
-
-                //Hyper-bin & transitive reduction
-                , advancedPropCalled(0)
-                , hyperBinAdded(0)
-                , transReduRemIrred(0)
-                , transReduRemRed(0)
-
-                //Time
-                , cpu_time(0)
-
-            {}
-
             void clear()
             {
                 Stats tmp;
@@ -279,6 +221,8 @@ class Searcher : public HyperEngine
             Stats& operator+=(const Stats& other)
             {
                 numRestarts += other.numRestarts;
+                blocked_restart += other.blocked_restart;
+                blocked_restart_same += other.blocked_restart_same;
 
                 //Decisions
                 decisions += other.decisions;
@@ -335,6 +279,8 @@ class Searcher : public HyperEngine
             Stats& operator-=(const Stats& other)
             {
                 numRestarts -= other.numRestarts;
+                blocked_restart -= other.blocked_restart;
+                blocked_restart_same -= other.blocked_restart_same;
 
                 //Decisions
                 decisions -= other.decisions;
@@ -400,6 +346,12 @@ class Searcher : public HyperEngine
                     , numRestarts
                     , (double)conflStats.numConflicts/(double)numRestarts
                     , "confls per restart"
+
+                );
+                print_stats_line("c blocked restarts"
+                    , blocked_restart
+                    , (double)blocked_restart/(double)numRestarts
+                    , "per normal restart"
 
                 );
                 print_stats_line("c time", cpu_time);
@@ -572,45 +524,49 @@ class Searcher : public HyperEngine
                 #endif
             }
 
-            uint64_t  numRestarts;      ///<Num restarts
+            //Restart stats
+            uint64_t blocked_restart = 0;
+            uint64_t blocked_restart_same = 0;
+            uint64_t numRestarts = 0;
 
             //Decisions
-            uint64_t  decisions;        ///<Number of decisions made
-            uint64_t  decisionsAssump;
-            uint64_t  decisionsRand;    ///<Numer of random decisions made
-            uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
+            uint64_t  decisions = 0;
+            uint64_t  decisionsAssump = 0;
+            uint64_t  decisionsRand = 0;
+            uint64_t  decisionFlippedPolar = 0;
 
-            uint64_t litsRedNonMin;
-            uint64_t litsRedFinal;
-            uint64_t recMinCl;
-            uint64_t recMinLitRem;
-            uint64_t furtherShrinkAttempt;
-            uint64_t binTriShrinkedClause;
-            uint64_t cacheShrinkedClause;
-            uint64_t furtherShrinkedSuccess;
-            uint64_t stampShrinkAttempt;
-            uint64_t stampShrinkCl;
-            uint64_t stampShrinkLit;
-            uint64_t moreMinimLitsStart;
-            uint64_t moreMinimLitsEnd;
-            uint64_t recMinimCost;
+            //Clause shrinking
+            uint64_t litsRedNonMin = 0;
+            uint64_t litsRedFinal = 0;
+            uint64_t recMinCl = 0;
+            uint64_t recMinLitRem = 0;
+            uint64_t furtherShrinkAttempt = 0;
+            uint64_t binTriShrinkedClause = 0;
+            uint64_t cacheShrinkedClause = 0;
+            uint64_t furtherShrinkedSuccess = 0;
+            uint64_t stampShrinkAttempt = 0;
+            uint64_t stampShrinkCl = 0;
+            uint64_t stampShrinkLit = 0;
+            uint64_t moreMinimLitsStart = 0;
+            uint64_t moreMinimLitsEnd = 0;
+            uint64_t recMinimCost = 0;
 
-            //Red stats
-            uint64_t learntUnits;
-            uint64_t learntBins;
-            uint64_t learntTris;
-            uint64_t learntLongs;
-            uint64_t otfSubsumed;
-            uint64_t otfSubsumedImplicit;
-            uint64_t otfSubsumedLong;
-            uint64_t otfSubsumedRed;
-            uint64_t otfSubsumedLitsGained;
+            //Learnt clause stats
+            uint64_t learntUnits = 0;
+            uint64_t learntBins = 0;
+            uint64_t learntTris = 0;
+            uint64_t learntLongs = 0;
+            uint64_t otfSubsumed = 0;
+            uint64_t otfSubsumedImplicit = 0;
+            uint64_t otfSubsumedLong = 0;
+            uint64_t otfSubsumedRed = 0;
+            uint64_t otfSubsumedLitsGained = 0;
 
             //Hyper-bin & transitive reduction
-            uint64_t advancedPropCalled;
-            uint64_t hyperBinAdded;
-            uint64_t transReduRemIrred;
-            uint64_t transReduRemRed;
+            uint64_t advancedPropCalled = 0;
+            uint64_t hyperBinAdded = 0;
+            uint64_t transReduRemIrred = 0;
+            uint64_t transReduRemRed = 0;
 
             //Resolution Stats
             ResolutionTypes<uint64_t> resolvs;
@@ -619,7 +575,7 @@ class Searcher : public HyperEngine
             ConflStats conflStats;
 
             //Time
-            double cpu_time;
+            double cpu_time = 0.0;
         };
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
@@ -702,7 +658,7 @@ class Searcher : public HyperEngine
         void  add_otf_subsume_implicit_clause();
         Clause* handle_last_confl_otf_subsumption(Clause* cl, const size_t glue);
         lbool new_decision();  // Handles the case when decision must be made
-        void  checkNeedRestart();     // Helper function to decide if we need to restart during search
+        void  check_need_restart();     // Helper function to decide if we need to restart during search
         Restart decide_restart_type() const;
         Lit   pickBranchLit();
         lbool otf_hyper_prop_first_dec_level(bool& must_continue);
@@ -818,6 +774,7 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
+        bool blocked_restart = false;
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
@@ -898,7 +855,7 @@ class Searcher : public HyperEngine
         //SQL
         vector<Var> calcVarsToDump() const;
         #ifdef STATS_NEEDED
-        void printRestartSQL();
+        void dump_restart_sql();
         void printVarStatsSQL();
         void printClauseDistribSQL();
         PropStats lastSQLPropStats;
@@ -929,51 +886,6 @@ class Searcher : public HyperEngine
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
 };
-
-inline void Searcher::varDecayActivity()
-{
-    var_inc *= var_inc_multiplier;
-    var_inc /= var_inc_divider;
-}
-inline void Searcher::bump_var_activitiy(Var var)
-{
-    activities[var] += var_inc;
-
-    #ifdef SLOW_DEBUG
-    bool rescaled = false;
-    #endif
-    if ( (activities[var]) > ((0x1U) << 24)
-        || var_inc > ((0x1U) << 24)
-    ) {
-        // Rescale:
-        for (uint32_t& act : activities) {
-            act >>= 14;
-        }
-        #ifdef SLOW_DEBUG
-        rescaled = true;
-        #endif
-
-        //Reset var_inc
-        var_inc >>= 14;
-
-        //If var_inc is smaller than var_inc_start then this MUST be corrected
-        //otherwise the 'varDecayActivity' may not decay anything in fact
-        if (var_inc < conf.var_inc_start) {
-            var_inc = conf.var_inc_start;
-        }
-    }
-
-    // Update order_heap with respect to new activity:
-    if (order_heap.in_heap(var)) {
-        order_heap.decrease(var);
-    }
-
-    #ifdef SLOW_DEBUG
-    if (rescaled) {
-        assert(order_heap.heap_property());
-    }
-    #endif
-}
 
 inline uint32_t Searcher::abstractLevel(const Var x) const
 {
