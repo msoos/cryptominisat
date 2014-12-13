@@ -1387,7 +1387,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.trailDepthHistLonger.push(trail.size() - trail_lim[0]);
 
     hist.branchDepthHist.push(decisionLevel());
-
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
 
     hist.glueHist.push(glue);

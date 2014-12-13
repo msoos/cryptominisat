@@ -1068,9 +1068,8 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     }
 
     //Update stats
-    c.stats.propagations_made++;
-    c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
     #ifdef STATS_NEEDED
+    c.stats.propagations_made++;
     if (c.red())
         propStats.propsLongRed++;
     else

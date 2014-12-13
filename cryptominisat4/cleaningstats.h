@@ -45,14 +45,16 @@ struct CleaningStats
             age += other.age;
 
             glue += other.glue;
-            numProp += other.numProp;
             numConfl += other.numConfl;
-            numLitVisited += other.numLitVisited;
-            numLookedAt += other.numLookedAt;
             used_for_uip_creation += other.used_for_uip_creation;
             resol += other.resol;
-
             act += other.act;
+
+            #ifdef STATS_NEEDED
+            numProp += other.numProp;
+            numLookedAt += other.numLookedAt;
+            numLitVisited += other.numLitVisited;
+            #endif
 
             return *this;
         }
@@ -62,13 +64,16 @@ struct CleaningStats
         uint64_t age = 0;
 
         uint64_t glue = 0;
-        uint64_t numProp = 0;
         uint64_t numConfl = 0;
-        uint64_t numLitVisited = 0;
-        uint64_t numLookedAt = 0;
         uint64_t used_for_uip_creation = 0;
         ResolutionTypes<uint64_t> resol;
         double   act = 0.0;
+
+        #ifdef STATS_NEEDED
+        uint64_t numProp = 0;
+        uint64_t numLitVisited = 0;
+        uint64_t numLookedAt = 0;
+        #endif
 
         void incorporate(const Clause* cl)
         {
@@ -77,11 +82,12 @@ struct CleaningStats
             glue += cl->stats.glue;
             act += cl->stats.activity;
             numConfl += cl->stats.conflicts_made;
+
             #ifdef STATS_NEEDED
             numLitVisited += cl->stats.visited_literals;
             numLookedAt += cl->stats.clause_looked_at;
-            #endif
             numProp += cl->stats.propagations_made;
+            #endif
             resol += cl->stats.resolutions;
             used_for_uip_creation += cl->stats.used_for_uip_creation;
         }

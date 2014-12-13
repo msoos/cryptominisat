@@ -400,9 +400,8 @@ PropResult PropEngine::propNormalClause(
     }
 
     //Update stats
-    c.stats.propagations_made++;
-    c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
     #ifdef STATS_NEEDED
+    c.stats.propagations_made++;
     if (c.red())
         propStats.propsLongRed++;
     else
@@ -510,9 +509,8 @@ bool PropEngine::propNormalClauseAnyOrder(
     } else {
 
         //Update stats
-        c.stats.propagations_made++;
-        c.stats.sum_of_branch_depth_propagation += decisionLevel() + 1;
         #ifdef STATS_NEEDED
+        c.stats.propagations_made++;
         if (c.red())
             propStats.propsLongRed++;
         else

@@ -36,9 +36,11 @@ namespace CMSat {
 enum ClauseCleaningTypes {
     clean_glue_based = 0
     , clean_size_based = 1
-    , clean_sum_prop_confl_based = 2
-    , clean_sum_confl_depth_based = 3
-    , clean_sum_activity_based = 4
+    , clean_sum_activity_based = 2
+    #ifdef STATS_NEEDED
+    , clean_sum_prop_confl_based = 3
+    , clean_sum_confl_depth_based = 4
+    #endif
     , clean_none = 5
 };
 
@@ -67,14 +69,16 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
         case clean_size_based:
             return "size";
 
+        case clean_sum_activity_based:
+            return "activity";
+
+        #ifdef STATS_NEEDED
         case clean_sum_prop_confl_based:
             return "prconf";
 
         case clean_sum_confl_depth_based:
             return "confdep";
-
-        case clean_sum_activity_based:
-            return "activity";
+        #endif
 
         default:
             std::exit(-1);
