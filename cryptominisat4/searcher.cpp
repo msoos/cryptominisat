@@ -1651,10 +1651,6 @@ lbool Searcher::burst_search()
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
     const size_t numBinsUntilNow = stats.learntBins;
-    #ifdef STATS_NEEDED
-    const size_t numTriLHBRUntilNow = propStats.triLHBR;
-    const size_t numLongLHBRUntilNow = propStats.longLHBR;
-    #endif
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1689,10 +1685,6 @@ lbool Searcher::burst_search()
         << conf.burst_search_len << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
-        #ifdef STATS_NEEDED
-        << " LHBR: "
-        << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
-        #endif
         << solver->conf.print_times(time_used)
         << endl;
     }

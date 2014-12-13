@@ -256,8 +256,6 @@ private:
         , const bool red
         #endif
     );
-    void lazy_hyper_bin_resolve(Lit lit1, Lit lit2);
-    bool can_do_lazy_hyper_bin(Lit lit1, Lit lit2, Lit lit3);
     void update_glue(Clause& c);
 
     PropResult propTriClause (
@@ -283,10 +281,6 @@ private:
         , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
-    );
-    void lazy_hyper_bin_resolve(
-        const Clause& c
-        , ClOffset offset
     );
 };
 

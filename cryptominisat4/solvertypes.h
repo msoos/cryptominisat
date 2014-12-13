@@ -304,10 +304,6 @@ struct PropStats
         , propsTriRed(0)
         , propsLongIrred(0)
         , propsLongRed(0)
-
-        //LHBR
-        , triLHBR(0)
-        , longLHBR(0)
         #endif
 
         //Var setsing
@@ -337,10 +333,6 @@ struct PropStats
         propsTriRed += other.propsTriRed;
         propsLongIrred += other.propsLongIrred;
         propsLongRed += other.propsLongRed;
-
-        //LHBR
-        triLHBR += other.triLHBR;
-        longLHBR += other.longLHBR;
         #endif
 
         //Var settings
@@ -365,10 +357,6 @@ struct PropStats
         propsTriRed -= other.propsTriRed;
         propsLongIrred -= other.propsLongIrred;
         propsLongRed -= other.propsLongRed;
-
-        //LHBR
-        triLHBR -= other.triLHBR;
-        longLHBR -= other.longLHBR;
         #endif
 
         //Var settings
@@ -446,17 +434,6 @@ struct PropStats
             , stats_line_percent(propsLongRed, propagations)
             , "% of propagations"
         );
-
-        print_stats_line("c LHBR", (triLHBR + longLHBR)
-            , stats_line_percent(triLHBR + longLHBR,
-                propsLongIrred + propsLongRed + propsTriIrred + propsTriRed)
-            , "% of long propagations"
-        );
-
-        print_stats_line("c LHBR only by 3-long", triLHBR
-            , stats_line_percent(triLHBR, triLHBR + longLHBR)
-            , "% of LHBR"
-        );
         #endif
 
         print_stats_line("c varSetPos", varSetPos
@@ -490,10 +467,6 @@ struct PropStats
     uint64_t propsTriRed;
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
-
-    //Lazy hyper-binary clause added
-    uint64_t triLHBR; //LHBR by 3-long clauses
-    uint64_t longLHBR; //LHBR by 3+-long clauses
     #endif
 
     //Var settings

@@ -526,8 +526,6 @@ void Main::add_supported_options()
         , "Update glues while propagating")
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
-    ("lhbr", po::value(&conf.doLHBR)->default_value(conf.doLHBR)
-        , "Perform lazy hyper-binary resolution while propagating")
     ("binpri", po::value(&conf.propBinFirst)->default_value(conf.propBinFirst)
         , "Propagated binary clauses strictly first")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
@@ -892,17 +890,6 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.doLHBR
-        && !conf.propBinFirst
-    ) {
-        cout
-        << "You must NOT set both LHBR and any-order propagation." << endl
-        << "LHBR needs binary clauses propagated first."
-        << endl;
-
-        std::exit(-1);
-    }
-
     if (conf.shortTermHistorySize <= 0) {
         cout
         << "You MUST give a short term history size (\"--gluehist\")" << endl

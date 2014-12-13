@@ -171,7 +171,6 @@ SolverConf::SolverConf() :
         , sccFindPercent        (0.08)
 
         //Propagation & search
-        , doLHBR           (false)
         , propBinFirst     (false)
         , dominPickFreq    (400)
 

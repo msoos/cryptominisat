@@ -273,7 +273,6 @@ class SolverConf
         double sccFindPercent;
 
         //Propagation & searching
-        int      doLHBR; ///<Do lazy hyper-binary resolution
         int      propBinFirst;
         unsigned  dominPickFreq;
 

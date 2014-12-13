@@ -1313,10 +1313,6 @@ void Solver::check_config_parameters() const
         std::cerr << "Maximum number conflicts set must be greater or equal to 0" << endl;
         exit(-1);
     }
-    if (conf.doLHBR && !conf.propBinFirst) {
-        std::cerr << "You must NOT set both LHBR and any-order propagation. LHBR needs binary clauses propagated first." << endl;
-        exit(-1);
-    }
 
     if (conf.shortTermHistorySize <= 0) {
         std::cerr << "You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;

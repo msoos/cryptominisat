@@ -248,38 +248,6 @@ inline bool PropEngine::propBinaryClause(
     return true;
 }
 
-
-void PropEngine::lazy_hyper_bin_resolve(
-    const Clause& c
-    , ClOffset offset
-) {
-    //Do lazy hyper-binary resolution if possible
-    const Lit other = varData[c[1].var()].reason.lit2();
-    bool OK = true;
-    for(uint32_t i = 2; i < c.size(); i++) {
-        if (varData[c[i].var()].reason.getType() != binary_t
-            || other != varData[c[i].var()].reason.lit2()
-        ) {
-            OK = false;
-            break;
-        }
-    }
-
-    //Is it possible?
-    if (OK) {
-        attach_bin_clause(other, c[0], true, false);
-        #ifdef STATS_NEEDED
-        propStats.longLHBR++;
-        #endif
-
-        *drup << other << c[0] << fin;
-        enqueue(c[0], PropBy(other));
-    } else {
-        //no, not possible, just enqueue as normal
-        enqueue(c[0], PropBy(offset));
-    }
-}
-
 void PropEngine::update_glue(Clause& c)
 {
     if (c.red()
@@ -413,14 +381,7 @@ inline PropResult PropEngine::propNormalClause(
         propStats.propsLongIrred++;
     #endif
 
-    if (conf.doLHBR
-        && varData[c[1].var()].reason.getType() == binary_t
-    ) {
-        lazy_hyper_bin_resolve(c, offset);
-    } else {
-        enqueue(c[0], PropBy(offset));
-    }
-
+    enqueue(c[0], PropBy(offset));
     update_glue(c);
 
     return PROP_SOMETHING;
@@ -651,29 +612,6 @@ inline bool PropEngine::propTriClauseAnyOrder(
     return true;
 }
 
-void PropEngine::lazy_hyper_bin_resolve(Lit lit1, Lit lit2)
-{
-    Lit lit= varData[lit1.var()].reason.lit2();
-
-    attach_bin_clause(lit, lit2, true, false);
-    enqueue(lit2, PropBy(lit));
-    #ifdef STATS_NEEDED
-    propStats.triLHBR++;
-    #endif
-    *drup << lit << lit2 << fin;
-}
-
-bool PropEngine::can_do_lazy_hyper_bin(Lit lit1, Lit lit2, Lit lit3)
-{
-    bool ret;
-    ret = varData[lit1.var()].reason.getType() == binary_t
-        && ((varData[lit3.var()].reason.getType() == binary_t
-        && varData[lit3.var()].reason.lit2() == varData[lit1.var()].reason.lit2())
-        || (varData[lit1.var()].reason.lit2().var() == lit3.var()));
-
-    return ret;
-}
-
 inline PropResult PropEngine::propTriHelperSimple(
     const Lit lit1
     , const Lit lit2
@@ -687,16 +625,7 @@ inline PropResult PropEngine::propTriHelperSimple(
         propStats.propsTriIrred++;
     #endif
 
-    //Check if we could do lazy hyper-binary resoution
-    if (conf.doLHBR
-        && can_do_lazy_hyper_bin(lit1, lit2, lit3)
-    ) {
-        lazy_hyper_bin_resolve(lit1, lit2);
-    } else {
-        //Lazy hyper-bin is not possibe
-        enqueue(lit2, PropBy(~lit1, lit3));
-    }
-
+    enqueue(lit2, PropBy(~lit1, lit3));
     return PROP_SOMETHING;
 }
 
