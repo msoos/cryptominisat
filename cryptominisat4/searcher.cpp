@@ -2124,6 +2124,10 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         calculate_and_set_polars();
     }
 
+    if (conf.doSortWatched) {
+        sortWatched();
+    }
+
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
     for(loop_num = 0
