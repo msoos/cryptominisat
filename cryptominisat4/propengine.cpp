@@ -320,10 +320,16 @@ PropResult PropEngine::prop_normal_helper(
     }
 
     // Look for new watch:
+    #ifdef STATS_NEEDED
     uint32_t numLitVisited = 0;
+    #endif
+
     for (Lit *k = c.begin() + 2, *end2 = c.end()
         ; k != end2
-        ; k++, numLitVisited++
+        ; k++
+        #ifdef STATS_NEEDED
+        , numLitVisited++
+        #endif
     ) {
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
@@ -371,7 +377,7 @@ PropResult PropEngine::handle_normal_prop_fail(
     return PROP_FAIL;
 }
 
-PropResult PropEngine::propNormalClause(
+inline PropResult PropEngine::propNormalClause(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
     , const Lit p
@@ -546,7 +552,7 @@ PropResult PropEngine::handle_prop_tri_fail(
     return PROP_FAIL;
 }
 
-PropResult PropEngine::propTriClause(
+inline PropResult PropEngine::propTriClause(
     watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
@@ -668,7 +674,7 @@ bool PropEngine::can_do_lazy_hyper_bin(Lit lit1, Lit lit2, Lit lit3)
     return ret;
 }
 
-PropResult PropEngine::propTriHelperSimple(
+inline PropResult PropEngine::propTriHelperSimple(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
