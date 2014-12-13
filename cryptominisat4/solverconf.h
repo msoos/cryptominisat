@@ -198,6 +198,7 @@ class SolverConf
         //SQL
         int       doSQL;
         int       whichSQL;
+        bool      dump_individual_search_time;
         std::string sqlite_filename;
         #ifdef STATS_NEEDED_EXTRA
         unsigned    dumpClauseDistribPer;

@@ -100,6 +100,7 @@ SolverConf::SolverConf() :
         //SQL
         , doSQL          (1)
         , whichSQL       (0)
+        , dump_individual_search_time(false)
         , sqlite_filename ("cryptominisat.sqlite")
         #ifdef STATS_NEEDED_EXTRA
         , dumpClauseDistribPer(0)

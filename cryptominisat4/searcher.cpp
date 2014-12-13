@@ -1094,7 +1094,7 @@ lbool Searcher::search()
 
 void Searcher::dump_search_sql(const double myTime)
 {
-    if (solver->sqlStats) {
+    if (solver->sqlStats && conf.dump_individual_search_time) {
         solver->sqlStats->time_passed_min(
             solver
             , "search"
