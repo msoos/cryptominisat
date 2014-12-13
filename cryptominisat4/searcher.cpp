@@ -1054,7 +1054,6 @@ lbool Searcher::search()
             }
             reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
-            check_need_restart();
             print_restart_stat();
             #ifdef STATS_NEEDED
             hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
@@ -1579,6 +1578,7 @@ bool Searcher::handle_conflict(PropBy confl)
     if (params.update) {
         update_history_stats(backtrack_level, glue);
     }
+    check_need_restart();
     cancelUntil(backtrack_level);
 
     add_otf_subsume_long_clauses();
