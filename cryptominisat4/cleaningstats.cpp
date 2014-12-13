@@ -76,8 +76,9 @@ void CleaningStats::print_short(const Solver* solver) const
 {
     cout
     << "c [DBclean]"
-    << " removed " << removed.num
+    << " remv'd "; print_value_kilo_mega(removed.num);
 
+    cout
     << " avgGlue " << std::fixed << std::setprecision(2)
     << ((double)removed.glue/(double)removed.num)
 
@@ -88,8 +89,9 @@ void CleaningStats::print_short(const Solver* solver) const
 
     cout
     << "c [DBclean]"
-    << " remain " << remain.num
+    << " remain "; print_value_kilo_mega(remain.num);
 
+    cout
     << " avgGlue " << std::fixed << std::setprecision(2)
     << ((double)remain.glue/(double)remain.num)
 
