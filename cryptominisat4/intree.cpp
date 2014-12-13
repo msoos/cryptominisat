@@ -135,6 +135,8 @@ bool InTree::intree_probe()
             << "c [intree] too expensive SCC + varreplace loop: aborting"
             << endl;
         }
+        solver->use_depth_trick = true;
+        solver->perform_transitive_reduction = true;
         return true;
     }
 
