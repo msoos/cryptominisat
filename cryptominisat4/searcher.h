@@ -865,54 +865,6 @@ class Searcher : public HyperEngine
         Stats    stats;
 };
 
-inline void Searcher::varDecayActivity()
-{
-    if (burst_or_simplify_mode) {
-        return;
-    }
-
-    var_inc *= (1.0 / var_decay);
-}
-inline void Searcher::bump_var_activitiy(Var var)
-{
-    if (burst_or_simplify_mode) {
-        return;
-    }
-
-    #ifdef SLOW_DEBUG
-    bool rescaled = false;
-    #endif
-
-    activities[var] += var_inc;
-    if (activities[var] > 1e100) {
-        // Rescale:
-        for (size_t i = 0; i < nVars(); i++) {
-            activities[var] *= 1e-100;
-        }
-        #ifdef SLOW_DEBUG
-        rescaled = true;
-        #endif
-
-        var_inc *= 1e-100;
-        //If var_inc is smaller than var_inc_start then this MUST be corrected
-        //otherwise the 'varDecayActivity' may not decay anything in fact
-        if (var_inc < 1.0) {
-            var_inc = 1.0;
-        }
-    }
-
-    // Update order_heap with respect to new activity:
-    if (order_heap.in_heap(var)) {
-        order_heap.decrease(var);
-    }
-
-    #ifdef SLOW_DEBUG
-    if (rescaled) {
-        assert(order_heap.heap_property());
-    }
-    #endif
-}
-
 inline uint32_t Searcher::abstractLevel(const Var x) const
 {
     return ((uint32_t)1) << (varData[x].level % 32);
