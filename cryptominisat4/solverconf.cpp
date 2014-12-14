@@ -65,6 +65,8 @@ SolverConf::SolverConf() :
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
         , doAlwaysFMinim   (false)
+        , max_glue_more_minim(6)
+        , max_size_more_minim(30)
         , more_red_minim_limit_cache(200)
         , more_red_minim_limit_binary(100)
         , extra_bump_var_activities_based_on_glue(true)

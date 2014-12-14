@@ -483,8 +483,10 @@ void Searcher::mimimize_learnt_clause_based_on_cache()
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
-            || (calc_glue_using_seen2(learnt_clause) < 0.45*hist.glueHistLT.avg()
-                && learnt_clause.size() < 0.45*hist.conflSizeHistLT.avg())
+            //|| (calc_glue_using_seen2(learnt_clause) < 0.45*hist.glueHistLT.avg()
+            //    && learnt_clause.size() < 0.45*hist.conflSizeHistLT.avg())
+            || (calc_glue_using_seen2(learnt_clause) < conf.max_glue_more_minim
+                && learnt_clause.size() < conf.max_size_more_minim)
             )
     ) {
         stats.moreMinimLitsStart += learnt_clause.size();

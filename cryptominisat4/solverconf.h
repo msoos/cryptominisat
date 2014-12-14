@@ -166,6 +166,8 @@ class SolverConf
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
+        unsigned max_glue_more_minim;
+        unsigned max_size_more_minim;
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         unsigned more_red_minim_limit_cache;
         unsigned more_red_minim_limit_binary;
