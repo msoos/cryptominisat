@@ -46,37 +46,49 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
 
 bool GateFinder::doAll()
 {
-    gateOccEq.resize(solver->nVars()*2);
-
     runStats.clear();
     orGates.clear();
-    clearIndexes();
 
+    solver->watches.clear_smudged();
     find_or_gates_and_update_stats();
     if (!all_simplifications_with_gates())
         goto end;
 
-    if (solver->conf.doPrintGateDot)
+    if (solver->conf.doPrintGateDot) {
         print_graphviz_dot();
+    }
 
 end:
-    //Stats
     if (solver->conf.verbosity >= 1) {
         if (solver->conf.verbosity >= 3) {
             runStats.print(solver->nVars());
-            printGateStats();
         } else {
             runStats.print_short(solver);
         }
     }
     globalStats += runStats;
+    clean_gates_from_occur();
 
-    gateOccEq.clear();
-    gateOccEq.shrink_to_fit();
     orGates.clear();
     orGates.shrink_to_fit();
 
     return solver->ok;
+}
+
+void GateFinder::clean_gates_from_occur()
+{
+    for(const Lit lit: solver->watches.get_smudged_list()) {
+        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = ws.begin();
+        for(watch_subarray::const_iterator end = ws.end(); i < end; i++) {
+            if (!i->isGate()) {
+                *j++ = *i;
+            }
+        }
+        ws.shrink(i-j);
+    }
+    solver->watches.clear_smudged();
 }
 
 void GateFinder::find_or_gates_and_update_stats()
@@ -115,29 +127,6 @@ void GateFinder::find_or_gates_and_update_stats()
             , time_remain
         );
     }
-}
-
-void GateFinder::printGateStats() const
-{
-    uint32_t gateOccEqNum = 0;
-    for (vector<vector<uint32_t> >::const_iterator
-        it = gateOccEq.begin(), end = gateOccEq.end()
-        ; it != end
-        ; it++
-    ) {
-        gateOccEqNum += it->size();
-    }
-
-    cout
-    << " gateOccEq num: " << gateOccEqNum
-    << " gates size: " << orGates.size() << endl;
-}
-
-void GateFinder::clearIndexes()
-{
-    //Clear gate statistics
-    for (size_t i = 0; i < gateOccEq.size(); i++)
-        gateOccEq[i].clear();
 }
 
 bool GateFinder::shorten_with_all_or_gates()
@@ -369,9 +358,12 @@ void GateFinder::add_gate_if_not_already_inside(
     , const Lit lit2
 ) {
     OrGate gate(rhs, lit1, lit2, false);
-    for (uint32_t at: gateOccEq[gate.rhs.toInt()]) {
-        if (orGates[at] == gate)
+    for (Watched ws: solver->watches[gate.rhs.toInt()]) {
+        if (ws.isGate()
+            && orGates[ws.get_gate_idx()] == gate
+        ) {
             return;
+        }
     }
     link_in_gate(gate);
 }
@@ -380,7 +372,8 @@ void GateFinder::link_in_gate(const OrGate& gate)
 {
     const size_t at = orGates.size();
     orGates.push_back(gate);
-    gateOccEq[gate.rhs.toInt()].push_back(at);
+    solver->watches[gate.rhs.toInt()].push(Watched(at));
+    solver->watches.smudge(gate.rhs);
 }
 
 bool GateFinder::shortenWithOrGate(const OrGate& gate)
@@ -867,8 +860,10 @@ void GateFinder::treatAndGateClause(
         cout << "-----------" << endl;
     }
 
-    //Create and link in new clause
+    //Create clause (but don't attach)
     Clause* clNew = solver->add_clause_int(lits, red, stats, false);
+
+    //Link in clause properly (not regular attach)
     if (clNew != NULL) {
         simplifier->linkInClause(*clNew);
         ClOffset offsetNew = solver->cl_alloc.get_offset(clNew);
@@ -955,7 +950,12 @@ void GateFinder::print_graphviz_dot2()
     for (const OrGate orGate: orGates) {
         index++;
         for (const Lit lit: orGate.getLits()) {
-            for (uint32_t at: gateOccEq[lit.toInt()]) {
+            for (Watched ws: solver->watches[lit.toInt()]) {
+                if (!ws.isGate()) {
+                    continue;
+                }
+                uint32_t at = ws.get_gate_idx();
+
                 //The same one, skip
                 if (at == index)
                     continue;

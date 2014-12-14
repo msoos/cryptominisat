@@ -341,6 +341,7 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
     for(const Lit l: watches.get_smudged_list()) {
         clear_one_occur_from_removed_clauses(watches[l.toInt()]);
     }
+    watches.clear_smudged();
 }
 
 inline bool CNF::clause_locked(const Clause& c, const ClOffset offset) const
@@ -357,12 +358,11 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
     size_t end = w.size();
     for(; i < end; i++) {
         const Watched ws = w[i];
-        if (ws.isBinary() || ws.isTri()) {
+        if (!ws.isClause()) {
             w[j++] = w[i];
             continue;
         }
 
-        assert(ws.isClause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
         if (!cl->getRemoved()) {
             w[j++] = w[i];

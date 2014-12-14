@@ -37,6 +37,7 @@ enum WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
     , watch_tertiary_t = 2
+    , watch_orgate_t = 3
 };
 
 /**
@@ -95,6 +96,15 @@ class Watched {
         {
         }
 
+        /**
+        @brief Constructor for an OR gate
+        */
+        Watched(const uint32_t or_gate_idx) :
+            data1(or_gate_idx)
+            , type(watch_orgate_t)
+        {
+        }
+
         void setNormOffset(const ClOffset offset)
         {
             #ifdef DEBUG_WATCHED
@@ -137,6 +147,19 @@ class Watched {
         bool isTri() const
         {
             return (type == watch_tertiary_t);
+        }
+
+        bool isGate() const
+        {
+            return (type == watch_orgate_t);
+        }
+
+        uint32_t get_gate_idx() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(type == watch_orgate_t);
+            #endif
+            return data1;
         }
 
         /**

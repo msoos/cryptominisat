@@ -174,7 +174,6 @@ private:
     void check_elimed_vars_are_unassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
 
-    void check_delete_gatefinder();
     bool fill_occur();
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);

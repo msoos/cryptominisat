@@ -237,7 +237,6 @@ bool VarReplacer::perform_replace()
         goto end;
     }
     solver->clean_occur_from_removed_clauses_only_smudged();
-    solver->watches.clear_smudged();
     attach_delayed_attach();
 
     //While replacing the clauses

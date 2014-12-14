@@ -2132,6 +2132,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
+        assert(watches.get_smudged_list().empty());
         assert(update_polarity_and_activity);
         print_search_loop_num();
 

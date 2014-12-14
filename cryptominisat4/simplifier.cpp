@@ -115,23 +115,6 @@ Simplifier::~Simplifier()
     delete gateFinder;
 }
 
-void Simplifier::check_delete_gatefinder()
-{
-    if (solver->conf.doGateFind
-        && solver->nVars() > 10ULL*1000ULL*1000ULL
-    ) {
-        if (solver->conf.verbosity >= 2) {
-            cout
-            << "c [simp] gate finder switched off due to"
-            << " excessive number of variables (we may run out of memory)"
-            << endl;
-        }
-        delete gateFinder;
-        gateFinder = NULL;
-        solver->conf.doGateFind = false;
-    }
-}
-
 void Simplifier::new_var(const Var /*orig_outer*/)
 {
 }
@@ -860,8 +843,6 @@ bool Simplifier::simplify(const bool _startup)
     startup = _startup;
     assert(solver->okay());
     assert(toClear.empty());
-
-    check_delete_gatefinder();
 
     //Test & debug
     solver->test_all_clause_attached();

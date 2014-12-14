@@ -156,11 +156,9 @@ public:
     const Stats& get_stats() const;
 
 private:
-    void printGateStats() const;
     void print_graphviz_dot();
 
     //Setup
-    void clearIndexes();
     void link_in_gate(const OrGate& gate);
     void add_gate_if_not_already_inside(Lit rhs, Lit lit1, Lit lit2);
     void find_or_gates_in_sweep_mode(Lit lit);
@@ -263,7 +261,7 @@ private:
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
-    vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list (a = b V c, so 'b' and 'c' are LHS)
+    void clean_gates_from_occur();
 
     //For temporaries
     vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
