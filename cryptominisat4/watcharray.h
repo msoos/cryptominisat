@@ -164,6 +164,7 @@ public:
     void smudge(const Lit lit) {
         if (!smudged[lit.toInt()]) {
             smudged_list.push_back(lit);
+            smudged[lit.toInt()] = true;
         }
     }
 
@@ -174,6 +175,7 @@ public:
     void clear_smudged()
     {
         for(const Lit lit: smudged_list) {
+            assert(smudged[lit.toInt()]);
             smudged[lit.toInt()] = false;
         }
         smudged_list.clear();
