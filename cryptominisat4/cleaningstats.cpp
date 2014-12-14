@@ -81,7 +81,7 @@ void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) 
         , (double)remain.glue/(double)remain.num
     );
 
-    cout << "c ------ CLEANING STATS END ---------" << endl;
+    cout << "c ------ REDUCEDB STATS END ---------" << endl;
 }
 
 void CleaningStats::print_short(const Solver* solver) const
