@@ -261,7 +261,6 @@ private:
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
-    void clean_gates_from_occur();
 
     //For temporaries
     vector<uint32_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared

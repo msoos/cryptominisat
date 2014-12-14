@@ -30,7 +30,7 @@ class Solver;
 class XorFinderAbst
 {
     public:
-        virtual bool findXors()
+        virtual bool do_all_with_xors()
         {
             return true;
         }

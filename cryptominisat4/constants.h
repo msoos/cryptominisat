@@ -68,6 +68,7 @@
 #define DEBUG_WATCHED
 #define DEBUG_ATTACH
 #define DEBUG_REPLACER
+#define DEBUG_MARKED_CLAUSE
 #endif
 
 #ifdef SLOW_DEBUG

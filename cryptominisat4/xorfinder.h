@@ -50,7 +50,6 @@ class Xor
             for (uint32_t i = 0; i < cl.size(); i++) {
                 vars.push_back(cl[i].var());
             }
-            std::stable_sort(vars.begin(), vars.end());
         }
 
         bool operator==(const Xor& other) const
@@ -151,7 +150,7 @@ class XorFinder: public XorFinderAbst
 public:
     XorFinder(Simplifier* subsumer, Solver* solver);
     virtual ~XorFinder() {}
-    virtual bool findXors();
+    virtual bool do_all_with_xors();
 
     struct Stats
     {
@@ -167,7 +166,7 @@ public:
         }
 
         Stats& operator+=(const Stats& other);
-        void print_short() const;
+        void print_short(const Solver* solver) const;
         void print(const size_t numCalls) const;
 
         //Time
@@ -234,7 +233,6 @@ private:
 
     //Major calculated data and indexes to this data
     vector<Xor> xors; ///<Recovered XORs
-    vector<vector<uint32_t> > xorOcc;
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<size_t> varToBlock; ///<variable-> block index map
 

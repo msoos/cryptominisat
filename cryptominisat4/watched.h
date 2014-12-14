@@ -37,7 +37,7 @@ enum WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
     , watch_tertiary_t = 2
-    , watch_orgate_t = 3
+    , watch_idx_t = 3
 };
 
 /**
@@ -101,7 +101,7 @@ class Watched {
         */
         Watched(const uint32_t or_gate_idx) :
             data1(or_gate_idx)
-            , type(watch_orgate_t)
+            , type(watch_idx_t)
         {
         }
 
@@ -149,15 +149,15 @@ class Watched {
             return (type == watch_tertiary_t);
         }
 
-        bool isGate() const
+        bool isIdx() const
         {
-            return (type == watch_orgate_t);
+            return (type == watch_idx_t);
         }
 
-        uint32_t get_gate_idx() const
+        uint32_t get_idx() const
         {
             #ifdef DEBUG_WATCHED
-            assert(type == watch_orgate_t);
+            assert(type == watch_idx_t);
             #endif
             return data1;
         }

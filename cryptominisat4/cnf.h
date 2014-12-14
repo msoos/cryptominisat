@@ -229,7 +229,9 @@ public:
     vector<Var> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
+    void clean_occur_from_idx_types_only_smudged();
     void clear_one_occur_from_removed_clauses(watch_subarray w);
+    bool no_marked_clauses() const;
 
 protected:
     virtual void new_var(const bool bva, const Var orig_outer);
@@ -288,6 +290,10 @@ void CNF::for_each_lit(
             }
             break;
         }
+
+        case watch_idx_t :
+            assert(false);
+            break;
     }
 }
 
@@ -342,6 +348,41 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
 {
     for(const Lit l: watches.get_smudged_list()) {
         clear_one_occur_from_removed_clauses(watches[l.toInt()]);
+    }
+    watches.clear_smudged();
+}
+
+inline bool CNF::no_marked_clauses() const
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        if (cl->stats.marked_clause) {
+            return false;
+        }
+    }
+
+    for(ClOffset offset: longRedCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        if (cl->stats.marked_clause) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+inline void CNF::clean_occur_from_idx_types_only_smudged()
+{
+    for(const Lit lit: watches.get_smudged_list()) {
+        watch_subarray ws = watches[lit.toInt()];
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = ws.begin();
+        for(watch_subarray::const_iterator end = ws.end(); i < end; i++) {
+            if (!i->isIdx()) {
+                *j++ = *i;
+            }
+        }
+        ws.shrink(i-j);
     }
     watches.clear_smudged();
 }

@@ -885,7 +885,7 @@ bool Simplifier::simplify(const bool _startup)
     if (solver->conf.doFindXors
         && !startup
         && xorFinder != NULL
-        && !xorFinder->findXors()
+        && !xorFinder->do_all_with_xors()
     ) {
         goto end;
     }

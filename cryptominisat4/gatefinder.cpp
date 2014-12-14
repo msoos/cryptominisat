@@ -59,6 +59,7 @@ bool GateFinder::doAll()
     }
 
 end:
+    solver->clean_occur_from_idx_types_only_smudged();
     if (solver->conf.verbosity >= 1) {
         if (solver->conf.verbosity >= 3) {
             runStats.print(solver->nVars());
@@ -67,28 +68,11 @@ end:
         }
     }
     globalStats += runStats;
-    clean_gates_from_occur();
 
     orGates.clear();
     orGates.shrink_to_fit();
 
     return solver->ok;
-}
-
-void GateFinder::clean_gates_from_occur()
-{
-    for(const Lit lit: solver->watches.get_smudged_list()) {
-        watch_subarray ws = solver->watches[lit.toInt()];
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = ws.begin();
-        for(watch_subarray::const_iterator end = ws.end(); i < end; i++) {
-            if (!i->isGate()) {
-                *j++ = *i;
-            }
-        }
-        ws.shrink(i-j);
-    }
-    solver->watches.clear_smudged();
 }
 
 void GateFinder::find_or_gates_and_update_stats()
@@ -359,8 +343,8 @@ void GateFinder::add_gate_if_not_already_inside(
 ) {
     OrGate gate(rhs, lit1, lit2, false);
     for (Watched ws: solver->watches[gate.rhs.toInt()]) {
-        if (ws.isGate()
-            && orGates[ws.get_gate_idx()] == gate
+        if (ws.isIdx()
+            && orGates[ws.get_idx()] == gate
         ) {
             return;
         }
@@ -951,10 +935,10 @@ void GateFinder::print_graphviz_dot2()
         index++;
         for (const Lit lit: orGate.getLits()) {
             for (Watched ws: solver->watches[lit.toInt()]) {
-                if (!ws.isGate()) {
+                if (!ws.isIdx()) {
                     continue;
                 }
-                uint32_t at = ws.get_gate_idx();
+                uint32_t at = ws.get_idx();
 
                 //The same one, skip
                 if (at == index)

@@ -116,23 +116,32 @@ void XorFinder::find_xors_based_on_short_clauses()
 
 void XorFinder::find_xors()
 {
+    double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM
         *solver->conf.global_timeout_multiplier;
 
     xor_find_time_limit = orig_xor_find_time_limit;
 
-    double myTime = cpuTime();
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
+
     find_xors_based_on_long_clauses();
     find_xors_based_on_short_clauses();
+
+    //Cleanup
     solver->unmark_all_irred_clauses();
     solver->unmark_all_red_clauses();
+    solver->clean_occur_from_idx_types_only_smudged();
 
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = (double)xor_find_time_limit/(double)orig_xor_find_time_limit;
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
+
+
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -155,13 +164,11 @@ void XorFinder::find_xors()
     }
 }
 
-bool XorFinder::findXors()
+bool XorFinder::do_all_with_xors()
 {
     numCalls++;
     runStats.clear();
     xors.clear();
-    xorOcc.clear();
-    xorOcc.resize(solver->nVars());
 
     find_xors();
     if (solver->conf.doEchelonizeXOR && xors.size() > 0) {
@@ -169,7 +176,7 @@ bool XorFinder::findXors()
     }
 
     if (solver->conf.verbosity >= 1) {
-        runStats.print_short();
+        runStats.print_short(solver);
     }
     globalStats += runStats;
 
@@ -529,20 +536,22 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 
     xor_find_time_limit -= 5;
     if (foundCls.foundAll()) {
+        std::stable_sort(lits.begin(), lits.end());
         Xor found_xor(lits, foundCls.getRHS());
-        assert(xorOcc.size() > lits[0].var());
 
         //Have we found this XOR clause already?
-        bool found = false;
-        for (const uint32_t idx: xorOcc[lits[0].var()]) {
-            if (xors[idx] == found_xor) {
-                found = true;
+        bool already_inside = false;
+        for (const Watched ws: solver->watches[lits[0].unsign().toInt()]) {
+            if (ws.isIdx()
+                && xors[ws.get_idx()] == found_xor
+            ) {
+                already_inside = true;
                 break;
             }
         }
 
         //If XOR clause is new, add it
-        if (!found) {
+        if (!already_inside) {
             add_found_xor(found_xor);
         }
     }
@@ -560,9 +569,9 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.vars.size();
     uint32_t thisXorIndex = xors.size()-1;
-    for (const Var var: found_xor.vars) {
-        xorOcc[var].push_back(thisXorIndex);
-    }
+    Lit attach_point = Lit(found_xor.vars[0], false);
+    solver->watches[attach_point.toInt()].push(Watched(thisXorIndex));
+    solver->watches.smudge(attach_point);
 }
 
 //TODO stamping
@@ -698,6 +707,10 @@ void XorFinder::findXorMatch(
         ; it != end
         ; it++
     ) {
+        if (it->isIdx()) {
+            continue;
+        }
+
         //Deal with binary
         if (it->isBinary()) {
             if (//Only once per binary
@@ -794,10 +807,6 @@ size_t XorFinder::mem_used() const
 {
     size_t mem = 0;
     mem += xors.capacity()*sizeof(Xor);
-    mem += xorOcc.capacity()*sizeof(vector<uint32_t>);
-    for(size_t i = 0; i < xorOcc.size(); i++) {
-        mem += xorOcc[i].capacity()*sizeof(uint32_t);
-    }
     mem += blocks.capacity()*sizeof(vector<Var>);
     for(size_t i = 0; i< blocks.size(); i++) {
         mem += blocks[i].capacity()*sizeof(Var);
@@ -815,30 +824,27 @@ size_t XorFinder::mem_used() const
     return mem;
 }
 
-void XorFinder::Stats::print_short() const
+void XorFinder::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c XOR finding "
-    << " Num XORs: " << std::setw(6) << foundXors
-    << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
+    << "c [xor] found " << std::setw(6) << foundXors
+    << " avg sz " << std::setw(4) << std::fixed << std::setprecision(1)
     << ((double)sumSizeXors/(double)foundXors)
-    << " T: "
-    << std::fixed << std::setprecision(2) << findTime
-    << " T-o: " << (time_outs ? "Y" : "N")
+    << solver->conf.print_times(findTime, time_outs)
     << endl;
 
     cout
-    << "c Cut XORs into " << numBlocks << " block(s)"
-    << " sum vars: " << numVarsInBlocks
-    << " T: " << std::fixed << std::setprecision(2) << blockCutTime
+    << "c [xor] cut into blocks " << numBlocks
+    << " vars in blcks " << numVarsInBlocks
+    << solver->conf.print_times(blockCutTime)
     << endl;
 
     cout
-    << "c Extracted XOR info."
-    << " Units: " << newUnits
-    << " Bins: " << newBins
-    << " 0-depth-assigns: " << zeroDepthAssigns
-    << " T: " << std::fixed << std::setprecision(2) << extractTime
+    << "c [xor] extr info "
+    << " unit " << newUnits
+    << " bin " << newBins
+    << " 0-depth-ass: " << zeroDepthAssigns
+    << solver->conf.print_times(extractTime)
     << endl;
 }
 

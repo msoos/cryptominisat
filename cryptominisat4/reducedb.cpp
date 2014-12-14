@@ -276,6 +276,10 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         lock_most_UIP_used_clauses();
     }
 
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
+
     #ifdef STATS_NEEDED
     for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
     #else
