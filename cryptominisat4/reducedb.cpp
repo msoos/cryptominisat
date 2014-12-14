@@ -305,7 +305,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     tmpStats.cpu_time = cpuTime() - myTime;
     if (solver->conf.verbosity >= 3)
-        tmpStats.print(1);
+        tmpStats.print();
     else if (solver->conf.verbosity >= 1) {
         tmpStats.print_short(solver);
     }

@@ -96,7 +96,7 @@ struct CleaningStats
     };
     CleaningStats& operator+=(const CleaningStats& other);
 
-    void print(const size_t nbReduceDB) const;
+    void print(const size_t nbReduceDB = 1, const double total_cpu_time = 0) const;
     void print_short(const Solver* solver) const;
 
     double cpu_time = 0;

@@ -36,11 +36,11 @@ class ReduceDB
 public:
     ReduceDB(Solver* solver);
     void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
-    CleaningStats cleaningStats;
 
     void reset();
     void reset_increment();
     void increment_for_next_reduce();
+    const CleaningStats& get_cleaning_stats() const;
 
     uint64_t get_nbReduceDB() const
     {
@@ -57,6 +57,7 @@ private:
     uint64_t nextCleanLimit = 0;
     uint64_t nextCleanLimitInc;
     vector<ClOffset> delayed_clause_free;
+    CleaningStats cleaningStats;
 
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
@@ -80,6 +81,11 @@ private:
         , bool red
     ) const;
 };
+
+inline const CleaningStats& ReduceDB::get_cleaning_stats() const
+{
+    return cleaningStats;
+}
 
 }
 

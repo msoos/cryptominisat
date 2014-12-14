@@ -29,9 +29,21 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-void CleaningStats::print(const size_t nbReduceDB) const
+void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) const
 {
     cout << "c ------ CLEANING STATS ---------" << endl;
+
+    if (total_cpu_time != 0.0) {
+        print_stats_line("c reduceDB time"
+            , cpu_time
+            , stats_line_percent(cpu_time, total_cpu_time)
+            , "% time"
+        );
+    } else {
+        print_stats_line("c reduceDB time"
+            , cpu_time
+        );
+    }
 
     //-->CLEAN
     print_stats_line("c cleaned cls"
