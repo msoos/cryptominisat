@@ -31,7 +31,7 @@ using std::endl;
 
 void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) const
 {
-    cout << "c ------ CLEANING STATS ---------" << endl;
+    cout << "c ------ REDUCEDB STATS ---------" << endl;
 
     if (total_cpu_time != 0.0) {
         print_stats_line("c reduceDB time"
