@@ -262,14 +262,6 @@ void ReduceDB::print_best_red_clauses_if_required() const
     }
 }
 
-void ReduceDB::unmark_keep_flags()
-{
-    for(ClOffset cl_off: solver->longRedCls) {
-        Clause* cl = solver->cl_alloc.ptr(cl_off);
-        cl->stats.marked_for_keep = false;
-    }
-}
-
 CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 {
     const double myTime = cpuTime();
@@ -283,8 +275,6 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     if (lock_clauses_in) {
         lock_most_UIP_used_clauses();
     }
-
-    unmark_keep_flags();
 
     #ifdef STATS_NEEDED
     for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
@@ -307,6 +297,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         solver->cl_alloc.clauseFree(offset);
     }
     delayed_clause_free.clear();
+    solver->unmark_all_red_clauses();
 
     tmpStats.cpu_time = cpuTime() - myTime;
     if (solver->conf.verbosity >= 3)
@@ -362,9 +353,9 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         ; i++
     ) {
         Clause* cl = solver->cl_alloc.ptr(solver->longRedCls[i]);
-        if (!cl->stats.marked_for_keep) {
+        if (!cl->stats.marked_clause) {
             marked++;
-            cl->stats.marked_for_keep = true;
+            cl->stats.marked_clause = true;
         }
     }
 }
@@ -418,7 +409,7 @@ bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
     assert(cl->red());
     return !red_cl_too_young(cl)
          && !cl->stats.locked
-         && !cl->stats.marked_for_keep
+         && !cl->stats.marked_clause
          && cl->stats.glue > 3
          && cl->stats.ttl == 0
          && !solver->clause_locked(*cl, offset);

@@ -43,28 +43,18 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     m4ri_build_all_codes();
 }
 
-bool XorFinder::findXors()
+void XorFinder::find_xors_based_on_long_clauses()
 {
-    const int64_t orig_xor_find_limit = 1000LL*1000LL*solver->conf.xor_finder_time_limitM;
-    xor_find_limit = orig_xor_find_limit;
-    double myTime = cpuTime();
-    numCalls++;
-    runStats.clear();
-    xors.clear();
-    xorOcc.clear();
-    xorOcc.resize(solver->nVars());
-    triedAlready.clear();
-
     vector<Lit> lits;
     for (vector<ClOffset>::iterator
         it = solver->longIrredCls.begin()
         , end = solver->longIrredCls.end()
-        ; it != end && xor_find_limit > 0
+        ; it != end && xor_find_time_limit > 0
         ; it++
     ) {
         ClOffset offset = *it;
         Clause* cl = solver->cl_alloc.ptr(offset);
-        xor_find_limit -= 3;
+        xor_find_time_limit -= 3;
 
         //Already freed
         if (cl->freed())
@@ -72,30 +62,32 @@ bool XorFinder::findXors()
 
         //Too large -> too expensive
         if ((long)cl->size() > solver->conf.maxXorToFind)
-            return solver->ok;
+            continue;
 
         //If not tried already, find an XOR with it
-        if (triedAlready.find(offset) == triedAlready.end()) {
-            triedAlready.insert(offset);
+        if (!cl->stats.marked_clause) {
+            cl->stats.marked_clause = true;
 
             lits.resize(cl->size());
-            for(size_t i = 0; i < cl->size(); i++) {
-                lits[i] = (*cl)[i];
-            }
+            std::copy(cl->begin(), cl->end(), lits.begin());
             findXor(lits, cl->abst);
         }
     }
+}
 
+void XorFinder::find_xors_based_on_short_clauses()
+{
+    vector<Lit> lits;
     size_t wsLit = 0;
     for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end && xor_find_limit > 0
+        ; it != end && xor_find_time_limit > 0
         ; ++it, wsLit++
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
 
-        xor_find_limit -= ws.size()*3;
+        xor_find_time_limit -= ws.size()*3;
         for (watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
@@ -120,9 +112,24 @@ bool XorFinder::findXors()
             findXor(lits, calcAbstraction(lits));
         }
     }
+}
 
-    const bool time_out = (xor_find_limit < 0);
-    const double time_remain = (double)xor_find_limit/(double)orig_xor_find_limit;
+void XorFinder::find_xors()
+{
+    const int64_t orig_xor_find_time_limit =
+        1000LL*1000LL*solver->conf.xor_finder_time_limitM
+        *solver->conf.global_timeout_multiplier;
+
+    xor_find_time_limit = orig_xor_find_time_limit;
+
+    double myTime = cpuTime();
+    find_xors_based_on_long_clauses();
+    find_xors_based_on_short_clauses();
+    solver->unmark_all_irred_clauses();
+    solver->unmark_all_red_clauses();
+
+    const bool time_out = (xor_find_time_limit < 0);
+    const double time_remain = (double)xor_find_time_limit/(double)orig_xor_find_time_limit;
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
@@ -146,7 +153,17 @@ bool XorFinder::findXors()
             cout << "c " << *it << endl;
         }
     }
+}
 
+bool XorFinder::findXors()
+{
+    numCalls++;
+    runStats.clear();
+    xors.clear();
+    xorOcc.clear();
+    xorOcc.resize(solver->nVars());
+
+    find_xors();
     if (solver->conf.doEchelonizeXOR && xors.size() > 0) {
         extractInfo();
     }
@@ -154,7 +171,6 @@ bool XorFinder::findXors()
     if (solver->conf.verbosity >= 1) {
         runStats.print_short();
     }
-
     globalStats += runStats;
 
     return solver->ok;
@@ -492,13 +508,9 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
     FoundXors foundCls(lits, abst, seen);
 
     //Try to match on all literals
-    for (vector<Lit>::const_iterator
-        l = lits.begin(), end = lits.end()
-        ; l != end
-        ; l++
-    ) {
-        findXorMatch(solver->watches[(*l).toInt()], *l, foundCls);
-        findXorMatch(solver->watches[(~(*l)).toInt()], ~(*l), foundCls);
+    for (const Lit lit: lits) {
+        findXorMatch(solver->watches[(lit).toInt()], lit, foundCls);
+        findXorMatch(solver->watches[(~lit).toInt()], ~lit, foundCls);
 
         //More expensive
         //findXorMatchExt(solver->watches[(*l).toInt()], *l, foundCls);
@@ -510,28 +522,20 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
             findXorMatch(solver->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
         }*/
 
-        xor_find_limit -= 5;
+        xor_find_time_limit -= 5;
         if (foundCls.foundAll())
             break;
     }
 
-    xor_find_limit -= 5;
+    xor_find_time_limit -= 5;
     if (foundCls.foundAll()) {
-        Xor thisXor(lits, foundCls.getRHS());
+        Xor found_xor(lits, foundCls.getRHS());
         assert(xorOcc.size() > lits[0].var());
-        #ifdef VERBOSE_DEBUG_XOR_FINDER
-        cout << "XOR found: " << lits << endl;
-        #endif
 
         //Have we found this XOR clause already?
-        const vector<uint32_t>& whereToFind = xorOcc[lits[0].var()];
         bool found = false;
-        for (vector<uint32_t>::const_iterator
-            it = whereToFind.begin(), end = whereToFind.end()
-            ; it != end
-            ; it++
-        ) {
-            if (xors[*it] == thisXor) {
+        for (const uint32_t idx: xorOcc[lits[0].var()]) {
+            if (xors[idx] == found_xor) {
                 found = true;
                 break;
             }
@@ -539,28 +543,25 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 
         //If XOR clause is new, add it
         if (!found) {
-            xor_find_limit -= 20;
-            xors.push_back(thisXor);
-            runStats.foundXors++;
-            runStats.sumSizeXors += lits.size();
-            uint32_t thisXorIndex = xors.size()-1;
-            for (vector<Lit>::const_iterator
-                l = lits.begin(), end = lits.end()
-                ; l != end
-                ; l++
-            ) {
-                xorOcc[l->var()].push_back(thisXorIndex);
-            }
+            add_found_xor(found_xor);
         }
     }
 
     //Clear 'seen'
-    for (vector<Lit>::const_iterator
-        l = lits.begin(), end = lits.end()
-        ; l != end
-        ; l++
-    ) {
-        seen[l->var()] = 0;
+    for (const Lit tmp_lit: lits) {
+        seen[tmp_lit.var()] = 0;
+    }
+}
+
+void XorFinder::add_found_xor(const Xor& found_xor)
+{
+    xor_find_time_limit -= 20;
+    xors.push_back(found_xor);
+    runStats.foundXors++;
+    runStats.sumSizeXors += found_xor.vars.size();
+    uint32_t thisXorIndex = xors.size()-1;
+    for (const Var var: found_xor.vars) {
+        xorOcc[var].push_back(thisXorIndex);
     }
 }
 
@@ -669,8 +670,9 @@ void XorFinder::findXorMatchExt(
         //If the size of this clause is the same of the base clause, then
         //there is no point in using this clause as a base for another XOR
         //because exactly the same things will be found.
-        if (cl.size() == foundCls.getSize())
-            triedAlready.insert(offset);
+        if (cl.size() == foundCls.getSize()) {
+            cl.stats.marked_clause = true;
+        }
 
         std::stable_sort(tmpClause.begin(), tmpClause.end());
         foundCls.add(tmpClause, varsMissing);
@@ -690,7 +692,7 @@ void XorFinder::findXorMatch(
     , const Lit lit
     , FoundXors& foundCls
 ) {
-    xor_find_limit -= occ.size();
+    xor_find_time_limit -= occ.size();
     for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
@@ -708,7 +710,7 @@ void XorFinder::findXorMatch(
                 tmpClause.push_back(it->lit2());
 
                 foundCls.add(tmpClause, varsMissing);
-                xor_find_limit-=5;
+                xor_find_time_limit-=5;
                 if (foundCls.foundAll())
                     break;
             }
@@ -736,7 +738,7 @@ void XorFinder::findXorMatch(
                     tmpClause.push_back(it->lit3());
 
                     foundCls.add(tmpClause, varsMissing);
-                    xor_find_limit-=5;
+                    xor_find_time_limit-=5;
                     if (foundCls.foundAll())
                         break;
                 }
@@ -747,7 +749,7 @@ void XorFinder::findXorMatch(
 
         //Deal with clause
         const ClOffset offset = it->get_offset();
-        const Clause& cl = *solver->cl_alloc.ptr(offset);
+        Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.freed())
             continue;
 
@@ -775,11 +777,12 @@ void XorFinder::findXorMatch(
         //If the size of this clause is the same of the base clause, then
         //there is no point in using this clause as a base for another XOR
         //because exactly the same things will be found.
-        if (cl.size() == foundCls.getSize())
-            triedAlready.insert(offset);
+        if (cl.size() == foundCls.getSize()) {
+            cl.stats.marked_clause = true;;
+        }
 
         foundCls.add(cl, varsMissing);
-        xor_find_limit-=5;
+        xor_find_time_limit-=5;
         if (foundCls.foundAll())
             break;
 
@@ -795,7 +798,6 @@ size_t XorFinder::mem_used() const
     for(size_t i = 0; i < xorOcc.size(); i++) {
         mem += xorOcc[i].capacity()*sizeof(uint32_t);
     }
-    mem += triedAlready.size()*sizeof(ClOffset); //TODO very much under-estimates
     mem += blocks.capacity()*sizeof(vector<Var>);
     for(size_t i = 0; i< blocks.size(); i++) {
         mem += blocks[i].capacity()*sizeof(Var);

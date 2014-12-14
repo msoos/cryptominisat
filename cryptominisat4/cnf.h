@@ -148,6 +148,8 @@ public:
     }
 
     bool clause_locked(const Clause& c, const ClOffset offset) const;
+    void unmark_all_irred_clauses();
+    void unmark_all_red_clauses();
 
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
@@ -369,6 +371,22 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
         }
     }
     w.shrink(i-j);
+}
+
+inline void CNF::unmark_all_irred_clauses()
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        cl->stats.marked_clause = false;
+    }
+}
+
+inline void CNF::unmark_all_red_clauses()
+{
+    for(ClOffset offset: longRedCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        cl->stats.marked_clause = false;
+    }
 }
 
 inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const

@@ -118,7 +118,7 @@ struct ClauseStats
     #endif
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
     bool locked = false;
-    bool marked_for_keep = false;
+    bool marked_clause = false;
     uint16_t ttl = 0;
 
     ///Number of resolutions it took to make the clause when it was

@@ -194,8 +194,12 @@ public:
     virtual size_t mem_used() const;
 
 private:
+    void add_found_xor(const Xor& found_xor);
+    void find_xors();
+    void find_xors_based_on_short_clauses();
+    void find_xors_based_on_long_clauses();
 
-    int64_t xor_find_limit;
+    int64_t xor_find_time_limit;
 
     //Find XORs
     void findXor(vector<Lit>& lits, cl_abst_type abst);
@@ -203,11 +207,10 @@ private:
     ///Normal finding of matching clause for XOR
     void findXorMatch(
         watch_subarray_const occ
-        , FoundXors& foundCls);
-
-    ///Finding of matching clause for XOR with the twist that cache can be used to replace lits
+        , FoundXors& foundCls
+    );
     void findXorMatch(
-        watch_subarray_const ws
+        watch_subarray_const occ
         , const Lit lit
         , FoundXors& foundCls
     );
@@ -232,7 +235,6 @@ private:
     //Major calculated data and indexes to this data
     vector<Xor> xors; ///<Recovered XORs
     vector<vector<uint32_t> > xorOcc;
-    std::set<ClOffset> triedAlready; ///<These clauses have been tried to be made into an XOR. No point in tryin again
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<size_t> varToBlock; ///<variable-> block index map
 

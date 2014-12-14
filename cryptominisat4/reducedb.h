@@ -71,7 +71,6 @@ private:
 
     CleaningStats reduceDB(bool lock_clauses_in);
     void lock_most_UIP_used_clauses();
-    void unmark_keep_flags();
 
     void sort_red_cls(ClauseCleaningTypes clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
