@@ -52,6 +52,7 @@ BOOST_AUTO_TEST_CASE(convert_to_string2)
     BOOST_CHECK_EQUAL( ss.str(), "1 -2 3");
 }
 
+#ifdef STATS_NEEDED
 BOOST_AUTO_TEST_CASE(weighted_prop_and_confl)
 {
     Clause& cl = *allocate_space_for(3);
@@ -72,5 +73,6 @@ BOOST_AUTO_TEST_CASE(clear)
     BOOST_CHECK_EQUAL( cl.stats.propagations_made, 0);
     BOOST_CHECK_EQUAL( cl.stats.conflicts_made, 0);
 }
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
