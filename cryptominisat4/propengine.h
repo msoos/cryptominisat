@@ -126,6 +126,7 @@ public:
     PropStats propStats;
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
+    bool update_polarity_and_activity = true;
 
 protected:
     void new_var(const bool bva, const Var orig_outer) override;
@@ -375,7 +376,9 @@ inline void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     //Only update non-decision: this way, flipped decisions don't get saved
-    if (from != PropBy()) {
+    if (update_polarity_and_activity
+        && from != PropBy()
+    ) {
         varData[v].polarity = !p.sign();
     }
 

@@ -791,26 +791,6 @@ class Searcher : public HyperEngine
         size_t last_confl_longest_dec_trail_printed = 0;
         void handle_longest_decision_trail();
 
-        struct ActPolarBackup
-        {
-            vector<uint32_t> activity;
-            vector<bool>     polarity;
-            uint32_t         var_inc;
-            bool             saved = false;
-
-            size_t mem_used() const
-            {
-                size_t mem = 0;
-                mem += activity.capacity()*sizeof(uint32_t);
-                mem += polarity.capacity();
-                mem += sizeof(ActPolarBackup);
-
-                return mem;
-            }
-        };
-        ActPolarBackup act_polar_backup;
-        void backup_activities_and_polarities();
-        void restore_activities_and_polarities();
         void calculate_and_set_polars();
         void restore_order_heap();
 

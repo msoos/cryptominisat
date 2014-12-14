@@ -82,9 +82,6 @@ void Searcher::new_var(const bool bva, const Var orig_outer)
     //Activity heap
     activities.push_back(0);
     solver->set_decision_var(nVars()-1);
-
-    act_polar_backup.activity.push_back(0);
-    act_polar_backup.polarity.push_back(false);
 }
 
 void Searcher::new_vars(size_t n)
@@ -94,9 +91,6 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
     }
-
-    act_polar_backup.activity.resize(act_polar_backup.activity.size() + n, 0);
-    act_polar_backup.polarity.resize(act_polar_backup.polarity.size() + n, false);
 }
 
 void Searcher::save_on_var_memory()
@@ -104,21 +98,13 @@ void Searcher::save_on_var_memory()
     PropEngine::save_on_var_memory();
     activities.resize(nVars());
     activities.shrink_to_fit();
-
-    act_polar_backup.activity.resize(nVars());
-    act_polar_backup.activity.shrink_to_fit();
-    act_polar_backup.polarity.resize(nVars());
-    act_polar_backup.polarity.shrink_to_fit();
 }
 
 void Searcher::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    if (act_polar_backup.saved) {
-        updateArray(act_polar_backup.activity, interToOuter);
-        updateArray(act_polar_backup.polarity, interToOuter);
-    }
+    updateArray(activities, interToOuter);
     //activities are not updated, they are taken from backup, which is updated
 
     renumber_assumptions(outerToInter);
@@ -1663,6 +1649,7 @@ lbool Searcher::burst_search()
     const PolarityMode backup_polar_mode = conf.polarity_mode;
     uint32_t backup_var_inc_divider = var_inc_divider;
     uint32_t backup_var_inc_multiplier = var_inc_multiplier;
+    update_polarity_and_activity = false;
 
     //Set burst config
     conf.random_var_freq = 1;
@@ -1682,6 +1669,7 @@ lbool Searcher::burst_search()
     conf.polarity_mode = backup_polar_mode;
     var_inc_divider = backup_var_inc_divider;
     var_inc_multiplier = backup_var_inc_multiplier;
+    update_polarity_and_activity = true;
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
@@ -2115,7 +2103,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     resetStats();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0) {
-        restore_activities_and_polarities();
         restore_order_heap();
         setup_restart_print();
         status = burst_search();
@@ -2123,7 +2110,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
             goto end;
     }
 
-    restore_activities_and_polarities();
     restore_order_heap();
     params.rest_type = decide_restart_type();
     if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
@@ -2146,6 +2132,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
+        assert(update_polarity_and_activity);
         print_search_loop_num();
 
         lastRestartConfl = sumConflicts();
@@ -2254,7 +2241,6 @@ void Searcher::finish_up_solve(const lbool status)
     #endif
 
     print_iteration_solving_stats();
-    backup_activities_and_polarities();
 }
 
 void Searcher::print_iteration_solving_stats()
@@ -2995,7 +2981,6 @@ PropBy Searcher::propagate(
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
-    mem += act_polar_backup.mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += activities.capacity()*sizeof(uint32_t);
@@ -3068,32 +3053,6 @@ size_t Searcher::mem_used() const
     return mem;
 }
 
-void Searcher::backup_activities_and_polarities()
-{
-    act_polar_backup.activity.clear();
-    act_polar_backup.activity.resize(nVars(), 0);
-    act_polar_backup.polarity.clear();
-    act_polar_backup.polarity.resize(nVars(), false);
-    for (size_t i = 0; i < nVars(); i++) {
-        act_polar_backup.polarity[i] = varData[i].polarity;
-        act_polar_backup.activity[i] = activities[i];
-    }
-    act_polar_backup.var_inc = var_inc;
-    act_polar_backup.saved = true;
-}
-
-void Searcher::restore_activities_and_polarities()
-{
-    if (!act_polar_backup.saved)
-        return;
-
-    for(size_t i = 0; i < nVars(); i++) {
-        varData[i].polarity = act_polar_backup.polarity[i];
-        activities[i] = act_polar_backup.activity[i];
-    }
-    var_inc = act_polar_backup.var_inc;
-}
-
 void Searcher::calculate_and_set_polars()
 {
     CalcDefPolars calculator(solver);
@@ -3149,11 +3108,20 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
 
 inline void Searcher::varDecayActivity()
 {
+    if (!update_polarity_and_activity) {
+        return;
+    }
+
     var_inc *= var_inc_multiplier;
     var_inc /= var_inc_divider;
 }
+
 inline void Searcher::bump_var_activitiy(Var var)
 {
+    if (!update_polarity_and_activity) {
+        return;
+    }
+
     activities[var] += var_inc;
 
     #ifdef SLOW_DEBUG

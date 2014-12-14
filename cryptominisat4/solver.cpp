@@ -1615,6 +1615,7 @@ lbool Solver::simplify_problem(const bool startup)
     check_stats();
     #endif
     rearrange_clauses_lits();
+    update_polarity_and_activity = false;
 
     if (conf.verbosity >= 6) {
         cout
@@ -1851,6 +1852,7 @@ lbool Solver::simplify_problem(const bool startup)
     //addSymmBreakClauses();
 
 end:
+    update_polarity_and_activity = true;
     if (conf.verbosity >= 3) {
         cout << "c Searcher::simplify_problem() finished" << endl;
     }
