@@ -263,7 +263,6 @@ private:
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates
-    vector<vector<uint32_t> > gateOcc; //LHS of every NON-LEARNT gate is in this occur list (a = b V c, so 'a' is LHS)
     vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list (a = b V c, so 'b' and 'c' are LHS)
 
     //For temporaries

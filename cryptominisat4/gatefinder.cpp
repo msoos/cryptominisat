@@ -46,7 +46,6 @@ GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
 
 bool GateFinder::doAll()
 {
-    gateOcc.resize(solver->nVars()*2);
     gateOccEq.resize(solver->nVars()*2);
 
     runStats.clear();
@@ -72,8 +71,6 @@ end:
     }
     globalStats += runStats;
 
-    gateOcc.clear();
-    gateOcc.shrink_to_fit();
     gateOccEq.clear();
     gateOccEq.shrink_to_fit();
     orGates.clear();
@@ -122,15 +119,6 @@ void GateFinder::find_or_gates_and_update_stats()
 
 void GateFinder::printGateStats() const
 {
-    uint32_t gateOccNum = 0;
-    for (vector<vector<uint32_t> >::const_iterator
-        it = gateOcc.begin(), end = gateOcc.end()
-        ; it != end
-        ; it++
-    ) {
-        gateOccNum += it->size();
-    }
-
     uint32_t gateOccEqNum = 0;
     for (vector<vector<uint32_t> >::const_iterator
         it = gateOccEq.begin(), end = gateOccEq.end()
@@ -140,7 +128,7 @@ void GateFinder::printGateStats() const
         gateOccEqNum += it->size();
     }
 
-    cout << "c gateOcc num: " << gateOccNum
+    cout
     << " gateOccEq num: " << gateOccEqNum
     << " gates size: " << orGates.size() << endl;
 }
@@ -148,8 +136,6 @@ void GateFinder::printGateStats() const
 void GateFinder::clearIndexes()
 {
     //Clear gate statistics
-    for (size_t i = 0; i < gateOcc.size(); i++)
-        gateOcc[i].clear();
     for (size_t i = 0; i < gateOccEq.size(); i++)
         gateOccEq[i].clear();
 }
@@ -395,11 +381,6 @@ void GateFinder::link_in_gate(const OrGate& gate)
     const size_t at = orGates.size();
     orGates.push_back(gate);
     gateOccEq[gate.rhs.toInt()].push_back(at);
-    if (!gate.red) {
-        for (Lit lit: std::array<Lit, 2>{{gate.lit1, gate.lit2}}) {
-            gateOcc[lit.toInt()].push_back(at);
-        }
-    }
 }
 
 bool GateFinder::shortenWithOrGate(const OrGate& gate)
