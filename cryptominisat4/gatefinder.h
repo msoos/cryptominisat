@@ -264,7 +264,7 @@ private:
     void clean_gates_from_occur();
 
     //For temporaries
-    vector<size_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
+    vector<uint32_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
     set<ClOffset> clToUnlink;
     struct TriToUnlink
     {
