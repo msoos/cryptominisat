@@ -1363,7 +1363,7 @@ lbool Solver::solve()
         && conf.regularly_simplify_problem
         && nVars() > 0
     ) {
-        status = simplify_problem(true);
+        status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
     if (status == l_Undef) {
