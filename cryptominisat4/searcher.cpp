@@ -2448,15 +2448,8 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
 void Searcher::minimise_redundant_more(vector<Lit>& cl)
 {
     stats.furtherShrinkAttempt++;
-
-    //Set all literals' seen[lit] = 1 in learnt clause
-    //We will 'clean' the learnt clause by setting these to 0
-    for (vector<Lit>::const_iterator
-        it = cl.begin(), end = cl.end()
-        ; it != end
-        ; it++
-    ) {
-        seen[it->toInt()] = 1;
+    for (const Lit lit: cl) {
+        seen[lit.toInt()] = 1;
     }
 
     if (conf.doCache) {
@@ -2476,11 +2469,11 @@ void Searcher::minimise_redundant_more(vector<Lit>& cl)
     //reorder the clause then
     seen[cl[0].toInt()] = 1;
     for (vector<Lit>::iterator end = cl.end(); i != end; i++) {
-        if (seen[i->toInt()])
+        if (seen[i->toInt()]) {
             *j++ = *i;
-        else
+        } else {
             changedClause = true;
-
+        }
         seen[i->toInt()] = 0;
     }
     stats.furtherShrinkedSuccess += changedClause;
