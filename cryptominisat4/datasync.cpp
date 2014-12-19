@@ -62,10 +62,7 @@ void DataSync::save_on_var_memory()
 
 void DataSync::rebuild_bva_map()
 {
-    if (!enabled())
-        return;
-
-    outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+    must_rebuild_bva_map = true;
 }
 
 void DataSync::updateVars(
@@ -87,6 +84,11 @@ bool DataSync::syncData()
 
     assert(sharedData != NULL);
     assert(solver->decisionLevel() == 0);
+
+    if (must_rebuild_bva_map) {
+        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+        must_rebuild_bva_map = false;
+    }
 
     bool ok;
     sharedData->unit_mutex.lock();
@@ -330,6 +332,11 @@ void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
 {
     if (!enabled()) {
         return;
+    }
+
+    if (must_rebuild_bva_map) {
+        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+        must_rebuild_bva_map = false;
     }
 
     if (solver->varData[lit1.var()].is_bva)

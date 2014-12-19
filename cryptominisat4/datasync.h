@@ -83,6 +83,7 @@ class DataSync
         vector<uint16_t>& seen;
         vector<Lit>& toClear;
         vector<uint32_t> outer_to_without_bva_map;
+        bool must_rebuild_bva_map = false;
 };
 
 inline const DataSync::Stats& DataSync::get_stats() const
