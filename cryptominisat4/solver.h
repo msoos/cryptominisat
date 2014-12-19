@@ -317,7 +317,7 @@ class Solver : public Searcher
         /////////////////////
         // Data
         size_t               zeroLevAssignsByCNF = 0;
-        size_t               zeroLevAssignsByThreads = 0;
+        size_t               zero_level_assigns_by_searcher = 0;
         void calculate_reachability();
 
         //Main up stats

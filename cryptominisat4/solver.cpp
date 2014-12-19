@@ -1529,13 +1529,7 @@ lbool Solver::iterate_until_solved()
         }
         dump_memory_stats_to_sql();
 
-        //This is crucial, since we need to attach() clauses to threads
-        clauseCleaner->remove_and_clean_all();
-
-        //Solve using threads
         const size_t origTrailSize = trail.size();
-        vector<lbool> statuses;
-
         long num_conflicts_of_search = 50000.0*(double)iteration_num/2;
         num_conflicts_of_search = std::min<long>(
             num_conflicts_of_search
@@ -1569,7 +1563,7 @@ lbool Solver::iterate_until_solved()
             break;
         }
 
-        zeroLevAssignsByThreads += trail.size() - origTrailSize;
+        zero_level_assigns_by_searcher += trail.size() - origTrailSize;
 
         if (conf.regularly_simplify_problem) {
             status = simplify_problem(false);
@@ -1995,8 +1989,8 @@ void Solver::print_min_stats() const
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by thrds"
-        , zeroLevAssignsByThreads
-        , stats_line_percent(zeroLevAssignsByThreads, nVars())
+        , zero_level_assigns_by_searcher
+        , stats_line_percent(zero_level_assigns_by_searcher, nVars())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
@@ -2089,9 +2083,9 @@ void Solver::print_all_stats() const
         , stats_line_percent(trail.size(), nVars())
         , "% vars"
     );
-    print_stats_line("c 0-depth assigns by thrds"
-        , zeroLevAssignsByThreads
-        , stats_line_percent(zeroLevAssignsByThreads, nVars())
+    print_stats_line("c 0-depth assigns by searcher"
+        , zero_level_assigns_by_searcher
+        , stats_line_percent(zero_level_assigns_by_searcher, nVars())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
