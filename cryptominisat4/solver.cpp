@@ -1036,7 +1036,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
 
     if (conf.perform_occur_based_simp
         && conf.doFindXors
-        && nVars() + n > 1ULL*1000ULL*1000ULL
+        && nVars() + n > 3ULL*1000ULL*1000ULL
     ) {
         conf.doFindXors = false;
         simplifier->freeXorMem();

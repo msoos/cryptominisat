@@ -229,12 +229,12 @@ private:
     bool extractInfo();
     void cutIntoBlocks(const vector<size_t>& xorsToUse);
     bool extractInfoFromBlock(const vector<Var>& block, const size_t blockNum);
-    vector<size_t> getXorsForBlock(const size_t blockNum);
+    vector<uint32_t> getXorsForBlock(const size_t blockNum);
 
     //Major calculated data and indexes to this data
     vector<Xor> xors; ///<Recovered XORs
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
-    vector<size_t> varToBlock; ///<variable-> block index map
+    vector<uint32_t> varToBlock; ///<variable-> block index map
 
     Simplifier* subsumer;
     Solver *solver;
@@ -249,8 +249,8 @@ private:
     vector<uint32_t> varsMissing;
 
     //Temporaries for putting xors into matrix, and extracting info from matrix
-    vector<size_t> outerToInterVarMap;
-    vector<size_t> interToOUterVarMap;
+    vector<uint32_t> outerToInterVarMap;
+    vector<uint32_t> interToOUterVarMap;
 
     //Other temporaries
     vector<uint16_t>& seen;

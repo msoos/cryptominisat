@@ -227,9 +227,9 @@ bool XorFinder::extractInfo()
     //These mappings will be needed for the matrixes, which will have far less
     //variables than solver->nVars()
     outerToInterVarMap.clear();
-    outerToInterVarMap.resize(solver->nVars(), std::numeric_limits<size_t>::max());
+    outerToInterVarMap.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
     interToOUterVarMap.clear();
-    interToOUterVarMap.resize(solver->nVars(), std::numeric_limits<size_t>::max());
+    interToOUterVarMap.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
 
     //Go through all blocks, and extract info
     i = 0;
@@ -291,7 +291,7 @@ bool XorFinder::extractInfoFromBlock(
     }
 
     //Get corresponding XORs
-    const vector<size_t> thisXors = getXorsForBlock(blockNum);
+    const vector<uint32_t> thisXors = getXorsForBlock(blockNum);
     assert(thisXors.size() > 1 && "We pre-filter the set such that *every* block contains at least 2 xors");
 
     //Set up matrix
@@ -306,7 +306,7 @@ bool XorFinder::extractInfoFromBlock(
 
     //Fill row-by-row
     size_t row = 0;
-    for(vector<size_t>::const_iterator
+    for(vector<uint32_t>::const_iterator
         it = thisXors.begin(), end2 = thisXors.end()
         ; it != end2
         ; it++, row++
@@ -388,9 +388,9 @@ bool XorFinder::extractInfoFromBlock(
     return solver->okay();
 }
 
-vector<size_t> XorFinder::getXorsForBlock(const size_t blockNum)
+vector<uint32_t> XorFinder::getXorsForBlock(const size_t blockNum)
 {
-    vector<size_t> xorsInThisBlock;
+    vector<uint32_t> xorsInThisBlock;
 
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& thisXor = xors[i];
@@ -412,7 +412,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 {
     //Clearing data we will fill below
     varToBlock.clear();
-    varToBlock.resize(solver->nVars(), std::numeric_limits<size_t>::max());
+    varToBlock.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
     blocks.clear();
 
     //Go through each XOR, and either make a new block for it
@@ -424,7 +424,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
         //Calc blocks for this XOR
         set<size_t> blocksBelongTo;
         for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
-            if (varToBlock[*it2] != std::numeric_limits<size_t>::max())
+            if (varToBlock[*it2] != std::numeric_limits<uint32_t>::max())
                 blocksBelongTo.insert(varToBlock[*it2]);
         }
 
@@ -447,7 +447,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 const size_t blockNum = *blocksBelongTo.begin();
                 vector<Var>& block = blocks[blockNum];
                 for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
-                    if (varToBlock[*it2] == std::numeric_limits<size_t>::max()) {
+                    if (varToBlock[*it2] == std::numeric_limits<uint32_t>::max()) {
                         block.push_back(*it2);
                         varToBlock[*it2] = blockNum;
                     }
@@ -480,7 +480,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                     ; it3 != end3
                     ; it3++
                 ) {
-                    if (varToBlock[*it3] == std::numeric_limits<size_t>::max()) {
+                    if (varToBlock[*it3] == std::numeric_limits<uint32_t>::max()) {
                         finalBlock.push_back(*it3);
                         varToBlock[*it3] = blockNum;
                     }
