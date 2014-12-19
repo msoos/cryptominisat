@@ -835,7 +835,7 @@ class Tester:
         #file with ::solve()
         file_len = self.file_len_no_comment(fname1)
         if num_solves_to_add > 0:
-            nextToAdd = random.randint(1,(file_len/num_solves_to_add)*2+1)
+            nextToAdd = random.randint(1,(file_len/num_solves_to_add)+1)
         else :
             nextToAdd = file_len + 1
 
@@ -856,7 +856,7 @@ class Tester:
                 assumps = self.generate_random_assumps(maxvar)
                 #assumps = " "
                 fout.write("c Solver::solve( %s )\n" % assumps)
-                nextToAdd = at + random.randint(1,(file_len/num_solves_to_add)*2+1)
+                nextToAdd = at + random.randint(1,(file_len/num_solves_to_add)+1)
 
             #calculate max variable
             maxvar = max(maxvar, self.get_max_var_from_clause(line))
