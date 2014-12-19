@@ -118,7 +118,6 @@ public:
         }
         Stats& operator+=(const Stats& other);
         void print(const size_t nVars) const;
-        void print_short(const Solver* solver) const;
 
         //Time
         double findGateTime = 0.0;

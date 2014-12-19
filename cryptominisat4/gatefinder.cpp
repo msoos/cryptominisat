@@ -63,8 +63,6 @@ end:
     if (solver->conf.verbosity >= 1) {
         if (solver->conf.verbosity >= 3) {
             runStats.print(solver->nVars());
-        } else {
-            runStats.print_short(solver);
         }
     }
     globalStats += runStats;
@@ -100,8 +98,8 @@ void GateFinder::find_or_gates_and_update_stats()
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = (double)numMaxGateFinder/(double)orig_numMaxGateFinder;
-    runStats.findGateTime += time_used;
-    runStats.find_gate_timeout += time_out;
+    runStats.findGateTime = time_used;
+    runStats.find_gate_timeout = time_out;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -111,13 +109,25 @@ void GateFinder::find_or_gates_and_update_stats()
             , time_remain
         );
     }
+
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [gate] found"
+        << " irred:" << runStats.numIrred
+        << " avg-s: " << std::fixed << std::setprecision(1)
+        << ((double)runStats.irredGatesSize/(double)runStats.numIrred)
+        << " red: " << runStats.numRed
+        /*<< " avg-s: " << std::fixed << std::setprecision(1)
+        << ((double)learntGatesSize/(double)numRed)*/
+        << solver->conf.print_times(time_used, time_out, time_remain)
+        << endl;
+    }
 }
 
 bool GateFinder::shorten_with_all_or_gates()
 {
     const double myTime = cpuTime();
     const int64_t orig_numMaxShortenWithGates =
-        solver->conf.shorten_with_gates_time_limitM*100LL*1000LL
+        solver->conf.shorten_with_gates_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
 
     numMaxShortenWithGates = orig_numMaxShortenWithGates;
@@ -144,8 +154,8 @@ bool GateFinder::shorten_with_all_or_gates()
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxShortenWithGates <= 0);
     const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
-    runStats.orBasedTime += time_used;
-    runStats.or_based_timeout += time_out;
+    runStats.orBasedTime = time_used;
+    runStats.or_based_timeout = time_out;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -156,13 +166,21 @@ bool GateFinder::shorten_with_all_or_gates()
         );
     }
 
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [gate] shorten"
+        << " cl: " << std::setw(5) << runStats.orGateUseful
+        << " l-rem: " << std::setw(6) << runStats.litsRem
+        << solver->conf.print_times(time_used, time_out, time_remain)
+        << endl;
+    }
+
     return solver->ok;
 }
 
 bool GateFinder::remove_clauses_with_all_or_gates()
 {
     const int64_t orig_numMaxClRemWithGates =
-        solver->conf.remove_cl_with_gates_time_limitM*100LL*1000LL
+        solver->conf.remove_cl_with_gates_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
 
     numMaxClRemWithGates = orig_numMaxClRemWithGates;
@@ -189,8 +207,8 @@ bool GateFinder::remove_clauses_with_all_or_gates()
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxClRemWithGates <= 0);
     const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
-    runStats.andBasedTime += time_used;
-    runStats.and_based_timeout += time_out;
+    runStats.andBasedTime = time_used;
+    runStats.and_based_timeout = time_out;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -199,6 +217,15 @@ bool GateFinder::remove_clauses_with_all_or_gates()
             , time_out
             , time_remain
         );
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [gate] rem"
+        << " cl: " << runStats.andGateUseful
+        << " avg s: " << std::setprecision(1)
+        << (double)runStats.clauseSizeRem/(double)runStats.andGateUseful
+        << solver->conf.print_times(time_used, time_out, time_remain)
+        << endl;
     }
 
     return solver->ok;
@@ -235,6 +262,13 @@ bool GateFinder::all_simplifications_with_gates()
                 , "gate eq-var"
                 , time_used
             );
+        }
+
+        if (solver->conf.verbosity >= 2) {
+            cout << "c [gate] eqlit"
+            << " v-rep: " << std::setw(3) << runStats.varReplaced
+            << solver->conf.print_times(time_used)
+            << endl;
         }
 
         if (!solver->ok)
@@ -1095,36 +1129,3 @@ void GateFinder::Stats::print(const size_t nVars) const
     cout << "c -------- GATE FINDING END ----------" << endl;
 }
 
-void GateFinder::Stats::print_short(const Solver* solver) const
-{
-    //Gate find
-    cout << "c [gate] found"
-    << " irred:" << numIrred
-    << " avg-s: " << std::fixed << std::setprecision(1)
-    << ((double)irredGatesSize/(double)numIrred)
-    << " red: " << numRed
-    /*<< " avg-s: " << std::fixed << std::setprecision(1)
-    << ((double)learntGatesSize/(double)numRed)*/
-    << solver->conf.print_times(findGateTime, find_gate_timeout)
-    << endl;
-
-    //gate-based shorten
-    cout << "c [gate] shorten"
-    << " cl: " << std::setw(5) << orGateUseful
-    << " l-rem: " << std::setw(6) << litsRem
-    << solver->conf.print_times(orBasedTime, or_based_timeout)
-    << endl;
-
-    //gate-based cl-rem
-    cout << "c [gate] rem"
-    << " cl: " << andGateUseful
-    << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
-    << solver->conf.print_times(andBasedTime, and_based_timeout)
-    << endl;
-
-    //var-replace
-    cout << "c [gate] eqlit"
-    << " v-rep: " << std::setw(3) << varReplaced
-    << solver->conf.print_times(varReplaceTime)
-    << endl;
-}
