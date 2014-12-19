@@ -657,6 +657,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         lit = updated_lit;
     }
 
+    //Map outer to inter, and add re-variable if need be
     for(Lit& lit: ps) {
         if (map_outer_to_inter(lit).var() >= nVars()) {
             new_var(false, lit.var());
