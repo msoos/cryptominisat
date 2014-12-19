@@ -357,6 +357,15 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         ; i++
     ) {
         Clause* cl = solver->cl_alloc.ptr(solver->longRedCls[i]);
+        if ( cl->stats.locked
+            || cl->stats.marked_clause
+            || cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq
+            || cl->stats.ttl > 0
+        ) {
+            //no need to mark, skip
+            continue;
+        }
+
         if (!cl->stats.marked_clause) {
             marked++;
             cl->stats.marked_clause = true;
@@ -414,7 +423,7 @@ bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
     return !red_cl_too_young(cl)
          && !cl->stats.locked
          && !cl->stats.marked_clause
-         && cl->stats.glue > 3
+         && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
          && cl->stats.ttl == 0
          && !solver->clause_locked(*cl, offset);
 }
