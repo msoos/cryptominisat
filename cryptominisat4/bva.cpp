@@ -181,7 +181,7 @@ void BVA::remove_duplicates_from_m_cls()
     };
 
     *simplifier->limit_to_decrease -= 2*(long)m_cls.size()*(long)std::sqrt(m_cls.size());
-    std::stable_sort(m_cls.begin(), m_cls.end(), mysort);
+    std::sort(m_cls.begin(), m_cls.end(), mysort);
     size_t i = 0;
     size_t j = 0;
     for(; i+1 < m_cls.size(); i++) {
@@ -449,7 +449,7 @@ void BVA::remove_matching_clause(
         }
 
         case 3: {
-            std::stable_sort(to_remove.begin(), to_remove.end());
+            std::sort(to_remove.begin(), to_remove.end());
             *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
             //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
             bool red = false;
@@ -668,7 +668,7 @@ BVA::lit_pair BVA::most_occuring_lit_in_potential(size_t& largest)
     lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
     if (potential.size() > 1) {
         *simplifier->limit_to_decrease -= (double)potential.size()*(double)std::log(potential.size())*0.2;
-        std::stable_sort(potential.begin(), potential.end());
+        std::sort(potential.begin(), potential.end());
     }
 
     lit_pair last_occur = lit_pair(lit_Undef, lit_Undef);

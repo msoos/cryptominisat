@@ -118,7 +118,7 @@ void ClauseDumper::dumpBinClauses(
                     tmpCl.clear();
                     tmpCl.push_back(solver->map_inter_to_outer(it2->lit2()));
                     tmpCl.push_back(solver->map_inter_to_outer(lit));
-                    std::stable_sort(tmpCl.begin(), tmpCl.end());
+                    std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
                     << tmpCl[0] << " "
@@ -164,7 +164,7 @@ void ClauseDumper::dumpTriClauses(
                     tmpCl.push_back(solver->map_inter_to_outer(it2->lit2()));
                     tmpCl.push_back(solver->map_inter_to_outer(it2->lit3()));
                     tmpCl.push_back(solver->map_inter_to_outer(lit));
-                    std::stable_sort(tmpCl.begin(), tmpCl.end());
+                    std::sort(tmpCl.begin(), tmpCl.end());
 
                     *outfile
                     << tmpCl[0] << " "

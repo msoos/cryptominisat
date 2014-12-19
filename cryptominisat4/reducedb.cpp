@@ -198,23 +198,23 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
 {
     switch (clean_type) {
         case ClauseCleaningTypes::clean_glue_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
+            std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
             break;
         }
 
         case ClauseCleaningTypes::clean_size_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
+            std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
             break;
         }
 
         case ClauseCleaningTypes::clean_sum_activity_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
+            std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             break;
         }
 
         #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_prop_confl_based : {
-            std::stable_sort(solver->longRedCls.begin()
+            std::sort(solver->longRedCls.begin()
                 , solver->longRedCls.end()
                 , SortRedClsPropConfl(solver->cl_alloc
                     , solver->conf.clean_confl_multiplier
@@ -225,7 +225,7 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
         }
 
         case ClauseCleaningTypes::clean_sum_confl_depth_based : {
-            std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
+            std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
             break;
         }
         #endif
@@ -385,7 +385,7 @@ void ReduceDB::lock_most_UIP_used_clauses()
 
             return a_cl.stats.used_for_uip_creation > b_cl.stats.used_for_uip_creation;
     };
-    std::stable_sort(solver->longRedCls.begin(), solver->longRedCls.end(), uipsort);
+    std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), uipsort);
 
     size_t locked = 0;
     size_t skipped = 0;

@@ -207,7 +207,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 
         if (ws.size() > 1) {
             timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
-            std::stable_sort(ws.begin(), ws.end(), WatchSorter());
+            std::sort(ws.begin(), ws.end(), WatchSorter());
         }
         /*cout << "---> Before" << endl;
         print_watch_list(ws, lit);*/

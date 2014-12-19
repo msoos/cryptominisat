@@ -1459,7 +1459,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 3:
             //3-long learnt
             stats.learntTris++;
-            std::stable_sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
+            std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
 
@@ -1472,7 +1472,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             //Long learnt
             cl->stats.resolutions = resolutions;
             stats.learntLongs++;
-            std::stable_sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
+            std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
             solver->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
 
@@ -1777,7 +1777,7 @@ struct MyPolarData
             , varData[i].flippedPolarity
         ));
     }
-    std::stable_sort(polarData.begin(), polarData.end());
+    std::sort(polarData.begin(), polarData.end());
 
     for(size_t i = 0; i < polarData.size(); i++) {
         solver->sqlFile

@@ -208,7 +208,7 @@ bool Solver::add_xor_clause_inter(
             lit ^= true;
         }
     }
-    std::stable_sort(ps.begin(), ps.end());
+    std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
@@ -378,7 +378,7 @@ Clause* Solver::add_clause_int(
 
     vector<Lit> ps = lits;
 
-    std::stable_sort(ps.begin(), ps.end());
+    std::sort(ps.begin(), ps.end());
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
@@ -731,7 +731,7 @@ bool Solver::addClause(const vector<Lit>& lits)
     }
 
     finalCl_tmp.clear();
-    std::stable_sort(ps.begin(), ps.end());
+    std::sort(ps.begin(), ps.end());
     Clause* cl = add_clause_int(
         ps
         , false //irred
@@ -798,7 +798,7 @@ void Solver::reArrangeClause(ClOffset offset)
     const Lit lit2 = cl[1];
     assert(lit1 != lit2);
 
-    std::stable_sort(cl.begin(), cl.end(), PolaritySorter(varData));
+    std::sort(cl.begin(), cl.end(), PolaritySorter(varData));
 
     uint8_t foundDatas = 0;
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2418,7 +2418,7 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     //Remove duplicates. Because of above replacing-mimicing algo
     //multipe occurrences of literals can be inside
     vector<Lit>::iterator it;
-    std::stable_sort(lits.begin(), lits.end());
+    std::sort(lits.begin(), lits.end());
     it = std::unique (lits.begin(), lits.end());
     lits.resize( std::distance(lits.begin(),it) );
 
@@ -2821,7 +2821,7 @@ void Solver::check_implicit_stats() const
                 lits[0] = lit;
                 lits[1] = it2->lit2();
                 lits[2] = it2->lit3();
-                std::stable_sort(lits, lits + 3);
+                std::sort(lits, lits + 3);
                 findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
                 findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
                 findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());

@@ -656,7 +656,7 @@ inline vector<Lit> sortLits(const vector<Lit>& lits)
 {
     vector<Lit> tmp(lits);
 
-    std::stable_sort(tmp.begin(), tmp.end());
+    std::sort(tmp.begin(), tmp.end());
     return tmp;
 }
 

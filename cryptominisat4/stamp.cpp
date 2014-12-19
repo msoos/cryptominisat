@@ -56,8 +56,8 @@ bool Stamp::stampBasedClRem(
     stampNorm = lits;
     stampInv = lits;
 
-    std::stable_sort(stampNorm.begin(), stampNorm.end(), sortNorm);
-    std::stable_sort(stampInv.begin(), stampInv.end(), sortInv);
+    std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
+    std::sort(stampInv.begin(), stampInv.end(), sortInv);
 
     assert(lits.size() > 0);
     vector<Lit>::const_iterator lpos = stampNorm.begin();
@@ -115,7 +115,7 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
     cout << "Ori clause: " << lits << endl;
     #endif
 
-    std::stable_sort(lits.begin(), lits.end(), sorter);
+    std::sort(lits.begin(), lits.end(), sorter);
 
     #ifdef DEBUG_STAMPING
     cout << "sorted clause: " << lits << endl;
@@ -164,7 +164,7 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
 
     size_t remLitTimeStampInv = 0;
     StampSorterInv sorterInv(tstamp, stampType, false);
-    std::stable_sort(lits.begin(), lits.end(), sorterInv);
+    std::sort(lits.begin(), lits.end(), sorterInv);
     assert(!lits.empty());
     lastLit = lits[0];
 

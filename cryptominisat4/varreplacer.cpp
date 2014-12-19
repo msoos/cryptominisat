@@ -640,7 +640,7 @@ bool VarReplacer::handleUpdatedClause(
     , const Lit origLit2
 ) {
     bool satisfied = false;
-    std::stable_sort(c.begin(), c.end());
+    std::sort(c.begin(), c.end());
     Lit p;
     uint32_t i, j;
     const uint32_t origSize = c.size();
@@ -1073,7 +1073,7 @@ void VarReplacer::print_equivalent_literals(std::ostream *os) const
         tmpCl.clear();
         tmpCl.push_back(~lit);
         tmpCl.push_back(Lit(var, false));
-        std::stable_sort(tmpCl.begin(), tmpCl.end());
+        std::sort(tmpCl.begin(), tmpCl.end());
 
         *os
         << tmpCl[0] << " "

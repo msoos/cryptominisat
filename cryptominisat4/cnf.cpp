@@ -343,7 +343,7 @@ void CNF::remove_tri_but_lit1(
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
-    std::stable_sort(lits, lits+3);
+    std::sort(lits, lits+3);
     timeAvailable -= watches[lits[0].toInt()].size();
     timeAvailable -= watches[lits[1].toInt()].size();
     timeAvailable -= watches[lits[2].toInt()].size();

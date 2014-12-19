@@ -536,7 +536,7 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 
     xor_find_time_limit -= 5;
     if (foundCls.foundAll()) {
-        std::stable_sort(lits.begin(), lits.end());
+        std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, foundCls.getRHS());
 
         //Have we found this XOR clause already?
@@ -683,7 +683,7 @@ void XorFinder::findXorMatchExt(
             cl.stats.marked_clause = true;
         }
 
-        std::stable_sort(tmpClause.begin(), tmpClause.end());
+        std::sort(tmpClause.begin(), tmpClause.end());
         foundCls.add(tmpClause, varsMissing);
 
         end:;

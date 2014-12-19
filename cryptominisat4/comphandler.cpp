@@ -124,7 +124,7 @@ vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
     }
 
     //Sort according to smallest size first
-    std::stable_sort(sizes.begin(), sizes.end(), sort_pred());
+    std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
 
     return sizes;
@@ -234,7 +234,7 @@ bool CompHandler::solve_component(
     vector<Var> vars(vars_orig);
 
     //Sort and renumber
-    std::stable_sort(vars.begin(), vars.end());
+    std::sort(vars.begin(), vars.end());
     createRenumbering(vars);
 
     if (solver->conf.verbosity >= 1 && num_comps < 20) {
@@ -570,7 +570,7 @@ void CompHandler::remove_tri_except_for_lit1(
     //We need it sorted, because that's how we know what order
     //it is in the Watched()
     tmp_lits = {lit, lit2, lit3};
-    std::stable_sort(tmp_lits.begin(), tmp_lits.end());
+    std::sort(tmp_lits.begin(), tmp_lits.end());
 
     //Remove only 2, the remaining gets removed by not copying it over
     if (tmp_lits[0] != lit) {
@@ -829,7 +829,7 @@ void CompHandler::dump_removed_clauses(std::ostream* outfile) const
         for(size_t i = at; i < at + size; i++) {
             tmp.push_back(removedClauses.lits[i]);
         }
-        std::stable_sort(tmp.begin(), tmp.end());
+        std::sort(tmp.begin(), tmp.end());
         *outfile << tmp << " 0" << endl;
 
         //Move 'at' along
