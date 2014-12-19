@@ -55,7 +55,6 @@ class DataSync
         const Stats& get_stats() const;
 
     private:
-        //functions
         void extend_bins_if_needed();
         Lit map_outside_without_bva(Lit lit) const;
         bool shareUnitData();
