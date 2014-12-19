@@ -202,7 +202,9 @@ public:
 
     uint32_t nVarsOutside() const
     {
+        #ifdef DEBUG_SLOW
         assert(outer_to_with_bva_map.size() == nVarsOuter() - num_bva_vars);
+        #endif
         return nVarsOuter() - num_bva_vars;
     }
 
