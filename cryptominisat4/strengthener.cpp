@@ -293,12 +293,16 @@ void Strengthener::str_and_sub_cl_with_cache_for_all_lits(
     , Clause& cl
 ) {
     //Go through each literal and subsume/strengthen with it
+    Lit *lit2 = cl.begin();
+    lit2++;
     for (const Lit
         *lit = cl.begin(), *end = cl.end()
         ; lit != end && !isSubsumed
-        ; lit++
+        ; lit++, lit2++
     ) {
-        solver->watches.prefetch(lit->toInt());
+        if (lit2 < end) {
+            solver->watches.prefetch(lit2->toInt());
+        }
 
         if (alsoStrengthen) {
             bool subsumed = str_and_sub_clause_with_cache(*lit);
