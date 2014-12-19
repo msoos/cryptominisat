@@ -1589,7 +1589,11 @@ void Solver::handle_found_solution(const lbool status)
         update_assump_conflict_to_orig_outside(conflict);
     }
     checkDecisionVarCorrectness();
+
+    //Too slow when running lots of small queries
+    #ifdef DEBUG_IMPLICIT_STATS
     check_implicit_stats();
+    #endif
 }
 
 void Solver::checkDecisionVarCorrectness() const
