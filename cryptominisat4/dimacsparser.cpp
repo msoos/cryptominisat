@@ -237,7 +237,7 @@ void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
 
     //Output to part file the result
     if (ret == l_True) {
-        partFile << "s SATISFIABLE" << endl;
+        partFile << "s SATISFIABLE\n";
         partFile << "v ";
         for (uint32_t i = 0; i != solver->nVars(); i++) {
             if (solver->get_model()[i] != l_Undef)
@@ -245,14 +245,14 @@ void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
                 << ((solver->get_model()[i]==l_True) ? "" : "-")
                 << (i+1) <<  " ";
         }
-        partFile << "0" << endl;
+        partFile << "0\n";
     } else if (ret == l_False) {
         partFile << "conflict ";
         for (Lit lit: solver->get_conflict()) {
             partFile << lit << " ";
         }
-        partFile << endl
-        << "s UNSAT" << endl;
+        partFile
+        << "\ns UNSAT\n";
     } else if (ret == l_Undef) {
         cout << "c timeout, exiting" << endl;
         std::exit(15);
