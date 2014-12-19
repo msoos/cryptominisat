@@ -2122,9 +2122,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
     var_inc_multiplier = conf.var_inc_multiplier;
     var_inc_divider = conf.var_inc_divider;
-    if (conf.doSortWatched) {
-        sortWatched();
-    }
 
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
@@ -2134,6 +2131,15 @@ lbool Searcher::solve(const uint64_t _maxConfls)
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
+        //Only sort after a while
+        //otherwise, we sort all the time for short queries
+        if (loop_num >= 3
+            && stats.conflStats.numConflicts > 4000
+            && conf.doSortWatched
+        ) {
+            sortWatched();
+        }
+
         assert(watches.get_smudged_list().empty());
         assert(update_polarity_and_activity);
         print_search_loop_num();
