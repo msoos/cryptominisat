@@ -298,6 +298,8 @@ void Strengthener::str_and_sub_cl_with_cache_for_all_lits(
         ; lit != end && !isSubsumed
         ; lit++
     ) {
+        solver->watches.prefetch(lit->toInt());
+
         if (alsoStrengthen) {
             bool subsumed = str_and_sub_clause_with_cache(*lit);
             if (subsumed)

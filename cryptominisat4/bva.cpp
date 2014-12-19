@@ -576,6 +576,7 @@ void BVA::fill_potential(const Lit lit)
         if (l_min == lit_Undef)
             continue;
 
+        solver->watches.prefetch(l_min.toInt());
         m_lits_this_cl = m_lits;
         *simplifier->limit_to_decrease -= m_lits_this_cl.size();
         for(const lit_pair lits: m_lits_this_cl) {
