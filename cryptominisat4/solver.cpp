@@ -1265,7 +1265,10 @@ void Solver::check_minimization_effectiveness(const lbool status)
 
 void Solver::extend_solution()
 {
+    #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
+    #endif
+
     const double myTime = cpuTime();
     model = back_number_solution_from_inter_to_outer(model);
 
