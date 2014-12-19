@@ -629,7 +629,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Check for too large variable number
-    for (const Lit lit: ps) {
+    for (Lit& lit: ps) {
         if (lit.var() >= nVarsOuter()) {
             std::cerr
             << "ERROR: Variable " << lit.var() + 1
@@ -641,10 +641,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
         assert(lit.var() < nVarsOuter()
         && "Clause inserted, but variable inside has not been declared with new_var() !");
-    }
 
-    //Undo var replacement
-    for (Lit& lit: ps) {
+        //Undo var replacement
         const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
         if (conf.verbosity >= 12
             && lit != updated_lit
@@ -655,10 +653,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             << endl;
         }
         lit = updated_lit;
-    }
 
-    //Map outer to inter, and add re-variable if need be
-    for(Lit& lit: ps) {
+        //Map outer to inter, and add re-variable if need be
         if (map_outer_to_inter(lit).var() >= nVars()) {
             new_var(false, lit.var());
         }
