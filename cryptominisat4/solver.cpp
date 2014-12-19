@@ -1355,6 +1355,9 @@ lbool Solver::solve()
     //Clean up as a startup
     datasync->rebuild_bva_map();
     set_assumptions();
+    if (simplifier && conf.doStamp) {
+        simplifier->clean_stamps_from_uneliminated_vars();
+    }
 
     //If still unknown, simplify
     if (status == l_Undef

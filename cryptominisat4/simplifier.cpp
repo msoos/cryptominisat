@@ -979,6 +979,28 @@ bool Simplifier::fill_occur()
     return true;
 }
 
+void Simplifier::clean_stamps_from_uneliminated_vars()
+{
+    if (uneliminated_vars_since_last_solve.empty()) {
+        return;
+    }
+
+    for(Var var: uneliminated_vars_since_last_solve) {
+        assert(solver->varData[var].removed == Removed::none);
+        seen[var] = true;
+    }
+    solver->stamp.remove_seen_from_stamp_dominators(seen, uneliminated_vars_since_last_solve);
+
+    for(Var var: uneliminated_vars_since_last_solve) {
+        seen[var] = false;
+    }
+    uneliminated_vars_since_last_solve.clear();
+    uneliminated_vars_since_last_solve.shrink_to_fit();
+}
+
+
+//This must NEVER be called during solve. Only JUST BEFORE Solver::solve() is called
+//otherwise, uneliminated_vars_since_last_solve will be wrong and stamp dominators will not be cleared
 bool Simplifier::uneliminate(Var var)
 {
     assert(solver->decisionLevel() == 0);
@@ -999,9 +1021,7 @@ bool Simplifier::uneliminate(Var var)
     globalStats.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
     solver->set_decision_var(var);
-    if (solver->conf.doStamp) {
-        solver->stamp.remove_from_stamps(var);
-    }
+    uneliminated_vars_since_last_solve.push_back(var);
 
     //Find if variable is really needed to be eliminated
     var = solver->map_inter_to_outer(var);

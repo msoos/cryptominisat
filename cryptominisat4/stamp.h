@@ -65,7 +65,7 @@ struct Timestamp
 class Stamp
 {
 public:
-    void remove_from_stamps(const Var var);
+    void remove_seen_from_stamp_dominators(const vector<uint16_t>& seen, const vector<Var>& toClear);
     bool stampBasedClRem(const vector<Lit>& lits) const;
     std::pair<size_t, size_t> stampBasedLitRem(
         vector<Lit>& lits

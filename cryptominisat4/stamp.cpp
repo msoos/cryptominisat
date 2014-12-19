@@ -204,16 +204,21 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
     return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
 
-void Stamp::remove_from_stamps(const Var var)
+void Stamp::remove_seen_from_stamp_dominators(const vector<uint16_t>& seen, const vector<Var>& toClear)
 {
     int types[] = {STAMP_IRRED, STAMP_RED};
-    for(int i = 0; i < 2; i++) {
-        tstamp[Lit(var, false).toInt()].dominator[types[i]] = lit_Undef;
-        tstamp[Lit(var, true).toInt()].dominator[types[i]] = lit_Undef;
+    for(const Var var: toClear) {
+        for(int i = 0; i < 2; i++) {
+            tstamp[Lit(var, false).toInt()].dominator[types[i]] = lit_Undef;
+            tstamp[Lit(var, true).toInt()].dominator[types[i]] = lit_Undef;
+        }
     }
+
     for(size_t i = 0; i < tstamp.size(); i++) {
         for(int i2 = 0; i2 < 2; i2++) {
-            if (tstamp[i].dominator[types[i2]].var() == var) {
+            if (tstamp[i].dominator[types[i2]].var() > seen.size()
+                || seen[tstamp[i].dominator[types[i2]].var()]
+            ) {
                 tstamp[i].dominator[types[i2]] = lit_Undef;
             }
         }
