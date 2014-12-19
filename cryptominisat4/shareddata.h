@@ -42,8 +42,16 @@ class SharedData
             Spec() {
                 data = new vector<Lit>;
             }
+            Spec(const Spec& other) {
+                assert(false);
+            }
+            Spec(Spec&& other) noexcept :
+                data(std::move(other.data))
+            {
+                other.data = NULL;
+            }
             ~Spec() {
-                delete data;
+                clear();
             }
             vector<Lit>* data;
 
