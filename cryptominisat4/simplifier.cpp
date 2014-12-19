@@ -188,7 +188,6 @@ void Simplifier::extend_model(SolutionExtender* extender)
         );
     }
 
-    cleanBlockedClauses();
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout << "Number of blocked clauses:" << blockedClauses.size() << endl;
     print_blocked_clauses_reverse();
@@ -200,6 +199,10 @@ void Simplifier::extend_model(SolutionExtender* extender)
         ; it != end
         ; it++
     ) {
+        if (it->toRemove) {
+            continue;
+        }
+
         if (it->dummy) {
             extender->dummyBlocked(it->blockedOn);
         } else {
