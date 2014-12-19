@@ -167,7 +167,6 @@ class Tester:
     def random_options(self) :
         cmd = " "
 
-        cmd += "--clbtwsimp %s " % random.randint(0,3)
         cmd += "--restart %s " % random.choice(["geom", "agility", "glue", "glueagility"])
         cmd += "--agilviollim %s " % random.randint(0,40)
         cmd += "--gluehist %s " % random.randint(1,500)
