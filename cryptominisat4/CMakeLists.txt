@@ -3,7 +3,7 @@ include_directories(
 )
 
 if(Boost_FOUND)
-    ${Boost_INCLUDE_DIRS}
+    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)

@@ -73,7 +73,7 @@ include_directories(
 )
 
 if(Boost_FOUND)
-    ${Boost_INCLUDE_DIRS}
+    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 add_executable(basic_test
