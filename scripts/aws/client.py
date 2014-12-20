@@ -239,17 +239,12 @@ class solverThread (threading.Thread):
             tosend = {}
             tosend["command"]  = "done"
             tosend["file_num"]  = self.indata["file_num"]
-            with open(self.get_stderr_fname(), 'r') as content_file:
-                content_stderr = content_file.read()
-
-            tosend["stderr"] = content_stderr
             tosend["returncode"] = returncode
 
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('q', len(tosend)) + tosend
             sock.sendall(tosend)
             print time.strftime("%c"), "Sent that we finished", self.indata["file_num"], "with retcode", returncode
-            print "stderr:", content_stderr
 
     def run(self):
         print "Starting Thread %d" % self.threadID
