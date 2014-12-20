@@ -184,8 +184,8 @@ class solverThread (threading.Thread):
         #k.make_public()
         #print "File public"
 
-        #os.unlink(self.get_stdout_fname())
-        #os.unlink(self.get_stderr_fname())
+        os.unlink(self.get_stdout_fname()+".gz")
+        os.unlink(self.get_stderr_fname()+".gz")
 
     def uptime(self):
         with open('/proc/uptime', 'r') as f:
