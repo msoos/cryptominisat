@@ -52,9 +52,6 @@ parser.add_option("--test"
                     )
 
 (options, args) = parser.parse_args()
-if options.test:
-    options.host = "localhost"
-    options.temp_space = "."
 
 if not options.host:
     parser.error('Host not given')
