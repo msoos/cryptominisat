@@ -70,8 +70,11 @@ endif()
 
 include_directories(
     ${PROJECT_SOURCE_DIR}
-    ${Boost_INCLUDE_DIRS}
 )
+
+if(Boost_FOUND)
+    ${Boost_INCLUDE_DIRS}
+endif()
 
 add_executable(basic_test
     basic_test.cpp
