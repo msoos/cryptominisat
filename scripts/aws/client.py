@@ -42,7 +42,7 @@ parser.add_option("--port", "-p"
                     )
 
 parser.add_option("--temp"
-                    , default="/tmp/", dest="temp_space"
+                    , default="/mnt/tmp/", dest="temp_space"
                     , help="Temporary space to use", type=str
                     )
 
