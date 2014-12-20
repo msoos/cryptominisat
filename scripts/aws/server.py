@@ -12,7 +12,6 @@ import pickle
 import time
 import pprint
 import traceback
-import glob
 from collections import namedtuple
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -50,8 +49,8 @@ parser.add_option("--memlimit", "-m"
                     )
 
 parser.add_option("--cnfdir"
-                    , default="/data/sat/satcomp14", dest="cnf_dir"
-                    , help="Base directory of executable and input", type=str
+                    , default="satcomp14", dest="cnf_dir_name", type=str
+                    , help="The list of CNF files to solve, with first line the directory"
                     )
 
 parser.add_option("--solver"
@@ -92,15 +91,15 @@ class Server :
         self.files_finished = []
         self.files = {}
 
-        for num, fname in zip(xrange(10000), os.listdir('%s' % options.cnf_dir)):
-            if os.path.isfile(os.path.join(options.cnf_dir, fname)) :
-                _,ext = os.path.splitext(fname)
-                if ext != ".cnf" and ext != ".cnf.gz" :
-                    continue
-
-                self.files[num] = ToSolve(num, fname)
-                self.files_available.append(num)
-                print "File added: ", fname
+        fnames = open(options.cnf_dir_name, "r")
+        options.cnf_dir = fnames.next().strip()
+        print "CNF dir really is:", options.cnf_dir
+        for num, fname in zip(xrange(10000), fnames):
+            fname = fname.strip()
+            self.files[num] = ToSolve(num, fname)
+            self.files_available.append(num)
+            print "File added: ", fname
+        fnames.close()
 
         self.files_running = {}
         print "Solving %d files" % len(self.files_available)
