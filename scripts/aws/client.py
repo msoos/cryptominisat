@@ -167,7 +167,7 @@ class solverThread (threading.Thread):
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
-        fname_with_stdout_ending = self.indata["cnf_filename"]+".stdout"
+        fname_with_stdout_ending = self.indata["cnf_filename"]+".stdout.gz"
         k.key = self.indata["s3_folder"]+"/"+ fname_with_stdout_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname()+".gz")
