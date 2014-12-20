@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# request micro spot instance:
-# ec2-request-spot-instance ami-3e6ffb0e -p 0.030 -g default -t t1.micro --user-data "myip"
-
 import random
 import os
 import ssl
@@ -13,6 +10,9 @@ import optparse
 import struct
 import pickle
 import time
+import pprint
+import traceback
+import glob
 from collections import namedtuple
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -33,66 +33,89 @@ parser.add_option("--port", "-p"
                     , default=10000, dest="port"
                     , help="Port to use", type="int"
                     )
-parser.add_option("--solver", "-s"
-                    , default="/home/soos/development/sat_solvers/cryptominisat/build/cryptominisat", dest="solver"
-                    , help="SAT solver to use"
-                    )
-parser.add_option("--cnfdir", "-c"
-                    , default="/home/soos/media/sat", dest="cnfdir"
-                    , help="base directory"
-                    )
-parser.add_option("--memory", "-m"
-                    , default=1024, dest="memory"
-                    , help="Memory in MB for the process", type=int
+
+parser.add_option("--tout", "-t"
+                    , default=30*60, dest="timeout_in_secs"
+                    , help="Timeout for the file in seconds", type=int
                     )
 
-parser.add_option("--bucket"
-                    , default="test", dest="bucket"
-                    , help="Put finished data into this S3 bucket"
+parser.add_option("--extratime"
+                    , default=60, dest="extra_time"
+                    , help="Timeout for the server to send us the results", type=int
                     )
-parser.add_option("--tout", "-t"
-                    , default=1000, dest="timeout"
-                    , help="Timeout for the solver in seconds", type=int
+
+parser.add_option("--memlimit", "-m"
+                    , default=1600, dest="mem_limit_in_mb"
+                    , help="Memory limit in MB", type=int
                     )
-parser.add_option("--etout"
-                    , default=50, dest="extratimeout"
-                    , help="Extra time to wait before slave reports that the problem has been solved"
+
+parser.add_option("--cnfdir"
+                    , default="/data/sat/satcomp14", dest="cnf_dir"
+                    , help="Base directory of executable and input", type=str
                     )
+
+parser.add_option("--solver"
+                    , default="/home/ubuntu/cryptominisat/build/cryptominisat", dest="solver"
+                    , help="Solver executable", type=str
+                    )
+
+parser.add_option("--s3bucket"
+                    , default="msoos-solve-results", dest="s3_bucket"
+                    , help="S3 Bucket to upload finished data", type=str
+                    )
+
+parser.add_option("--s3folder"
+                    , default="test", dest="s3_folder"
+                    , help="S3 folder to upload finished data", type=str
+                    )
+
+parser.add_option("--test"
+                    , default=False, dest="test", action="store_true"
+                    , help="only one CNF"
+                    )
+
 #parse options
 (options, args) = parser.parse_args()
 
-def enum(**enums):
-    return type('Enum', (), enums)
-State = enum(unsent=1, sent=2, finished=3)
-SolveState = namedtuple('SolveSate', ['state', 'time'])
+
+if options.test:
+    options.solver = '/home/soos/development/sat_solvers/cryptominisat/build/cryptominisat'
+
+class ToSolve:
+    def __init__(self, num, name) :
+        self.num = num
+        self.name = name
 
 class Server :
     def __init__(self) :
+        self.files_available = []
+        self.files_finished = []
+        self.files = {}
 
-        #files to solve
-        files_location = "%s" % options.cnfdif
-        files_to_solve = os.listdir(files_location)
-        #print files_to_solve
-        print "Solving files from '%s', number of files: %d" % (files_location, len(files_to_solve))
+        for num, fname in zip(xrange(10000), os.listdir('%s' % options.cnf_dir)):
+            if os.path.isfile(os.path.join(options.cnf_dir, fname)) :
+                _,ext = os.path.splitext(fname)
+                if ext != ".cnf" and ext != ".cnf.gz" :
+                    continue
 
-        self.solved = {}
-        for f in files_to_solve :
-            self.solved[f] = SolveState(State.unsent, 0.0)
+                self.files[num] = ToSolve(num, fname)
+                self.files_available.append(num)
+                print "File added: ", fname
 
-        self.unique_counter = 0
+        self.files_running = {}
+        print "Solving %d files" % len(self.files_available)
 
     def listen_to_connection(self) :
         # Create a TCP/IP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Bind the socket to the port
-        server_address = ('localhost', options.port)
+        server_address = ('0.0.0.0', options.port)
         print >>sys.stderr, 'starting up on %s port %s' % server_address
         sock.bind(server_address)
 
         #Listen for incoming connections
         sock.listen(1)
-
         return sock
 
     def get_n_bytes_from_connection(self, connection, n) :
@@ -105,91 +128,94 @@ class Server :
                 fulldata += data
                 got += len(data)
             else :
-                #print >>sys.stderr, 'no more data from', client_address, "ooops!"
                 print >>sys.stderr, 'no more data from client ooops!'
-                exit(-1)
+                raise Exception("wanted more data...")
 
         return fulldata
 
     def handle_done(self, connection, indata) :
-        finished_with = indata["finishedwith"]
-        #client finished with something
-        print "Client finished with ", finished_with
-        assert finished_with in self.solved
-        self.solved[finished_with] = SolveState(State.finished, 0.0)
+        file_num = indata["file_num"]
 
-    def expected_time_to_solve(self, fname) :
-        #TODO
-        return random.randInt(0,60*30)
+        print "Finished with file %s (num %d)" % (self.files[indata["file_num"]], indata["file_num"])
+        self.files_finished.append(indata["file_num"])
+        if file_num in self.files_running:
+            del self.files_running[file_num]
 
-    def find_something_to_solve(self, uptime_secs) :
-        remaining_secs = uptime_secs % (60*60)
+        print "Num files_available:", len(self.files_available)
+        print "Num files_finished:", len(self.files_finished)
 
-        potential = []
-        for a,b in self.solved.items() :
-            if b.state == State.unsent :
-                potential.append([a, self.expected_time_to_solve[a]])
-                break
+    def check_for_dead_files(self) :
+        this_time = time.time()
+        files_to_remove_from_files_running = []
+        for file_num, starttime in self.files_running.iteritems():
+            duration = this_time-starttime
+            #print "* death check. running:" , file_num, " duration: ", duration
+            if duration > options.timeout_in_secs + options.extra_time:
+                print "* dead file " , file_num, " duration: ", duration, " re-inserting"
+                files_to_remove_from_files_running.append(file_num)
+                self.files_available.append(file_num)
 
-        if len(potential) == 0:
+        for c in files_to_remove_from_files_running:
+            del self.files_running[c]
+
+    def find_something_to_solve(self) :
+        self.check_for_dead_files()
+        print "Num files_available pre-send:", len(self.files_available)
+
+        if len(self.files_available) == 0:
             return None
 
-        #find best that we can guarantee to solve
-        potential.sort(key=lambda x: x[1], reverse = True)
-        for elem in potential:
-            if elem[1] > remaining_secs*1.3:
-                return elem
+        file_num = self.files_available[0]
+        del self.files_available[0]
+        print "Num files_available post-send:", len(self.files_available)
 
-        #we cannot guarantee anything. Return largest.
-        return potential[0]
+        return file_num
 
-    #client needs something to solve
     def handle_need(self, connection, indata) :
-        tosolve = self.find_something_to_solve(indata.uptime)
+        #TODO don't ignore 'indata' for solving CNF instances, use it to opitimize for uptime
+        file_num = self.find_something_to_solve()
 
         #yay, everything finished!
-        if tosolve == None :
-            print "No more to solve sending termination"
-
-            #indicate that we are finished, it can close
+        if file_num == None :
             tosend = {}
             tosend["command"] = "finish"
-            data = pickle.dumps(tosend)
-            tosend = struct.pack('i', len(data)) + data
+            tosend = pickle.dumps(tosend)
+            tosend = struct.pack('q', len(tosend)) + tosend
+
+            print "No more to solve, sending termination to ", connection
             connection.sendall(tosend)
         else :
             #set timer that we have sent this to be solved
-            self.solved[tosolve] = SolveState(State.sent, time.clock())
+            self.files_running[file_num] = time.time()
+            filename = self.files[file_num].name
 
-            #send data for solving
             tosend = {}
-            tosend["cnfdir"] = options.cnfdir
-            tosend["solver"]  = options.solver
-            tosend["timeout"] = options.timeout
-            tosend["bucket"] = options.bucket
-            tosend["memory"] = options.memory*1024*1024 #bytes from MB
-            tosend["filename"] = tosolve
-            tosend["unique_counter"] = self.unique_counter
+            tosend["file_num"] = file_num
+            tosend["cnf_filename"] = filename
+            tosend["solver"] = options.solver
+            tosend["timeout_in_secs"] = options.timeout_in_secs
+            tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
+            tosend["s3_bucket"] = options.s3_bucket
+            tosend["s3_folder"] = options.s3_folder
+            tosend["cnf_dir"] = options.cnf_dir
             tosend["command"] = "solve"
-            self.unique_counter+=1
-            data = pickle.dumps(tosend)
+            tosend = pickle.dumps(tosend)
+            tosend = struct.pack('q', len(tosend)) + tosend
 
-            print "sending that file '%s' needs to be solved" % tosend["filename"]
-            tosend = struct.pack('i', len(data)) + data
+            print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
             connection.sendall(tosend)
 
     def handle_one_connection(self):
         # Wait for a connection
-        print >>sys.stderr, 'waiting for a connection...'
+        print >>sys.stderr, '--> waiting for a connection...\n\n'
         connection, client_address = self.sock.accept()
 
         try:
-            print >>sys.stderr, 'connection from', client_address
+            print  time.strftime("%c"), 'connection from ', client_address
 
             #8: 4B for 'need'/'done' and 4B for integer of following struct size in case of "done'
-            data = self.get_n_bytes_from_connection(connection, 4)
-            assert len(data) == 4
-            length = struct.unpack('i', data)[0]
+            data = self.get_n_bytes_from_connection(connection, 8)
+            length = struct.unpack('q', data)[0]
             data = self.get_n_bytes_from_connection(connection, length)
             data = pickle.loads(data)
 
@@ -199,16 +225,41 @@ class Server :
             elif data["command"] == "need" :
                self.handle_need(connection, data)
 
+            sys.stdout.flush()
+        except Exception as inst:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exc()
+
+            print "Exception type", type(inst), " dat: ", pprint.pprint(inst), " from ", client_address
+            connection.close()
+            return
+
         finally:
             # Clean up the connection
             print "Finished with client"
             connection.close()
+            return
 
     def handle_all_connections(self):
         self.sock = self.listen_to_connection()
         while True:
             self.handle_one_connection()
 
-
 server = Server()
 server.handle_all_connections()
+
+#c3.large
+#def call() :
+    #calling = """
+    #aws ec2 request-spot-instances \
+        #--dry-run \
+        #--spot-price "0.025"
+        #--instance-count 2
+        #--type "one-time"
+        #--launch-specification "{\"ImageId\":\"ami-AMI\",\"InstanceType\":"c3.large\",\"SubnetId\":\"subnet-SUBNET\", \"Monitoring\": {\"Enabled\": false},\"SecurityGroupIds\":\"launch-wizard-1\"}"
+        #--image-id XXX \
+        #--key-name mykey \
+        #--security-groups "launch-wizard-1" \
+        #--count XXX \
+        #--monitoring Enabled=false
+    #"""

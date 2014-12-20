@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# get user data
-# GET http://169.254.169.254/latest/user-data
-
 import os
 import ssl
 import socket
@@ -17,6 +14,7 @@ import time
 import subprocess
 import resource
 import pprint
+import traceback
 import boto
 pp = pprint.PrettyPrinter(depth=6)
 
@@ -35,30 +33,44 @@ parser.add_option("--verbose", "-v", action="store_true"
                     )
 
 parser.add_option("--host"
-                    , default=None, dest="host"
+                    , dest="host"
                     , help="Host to connect to as a client"
                     )
 parser.add_option("--port", "-p"
                     , default=10000, dest="port"
                     , help="Port to use", type="int"
                     )
-parser.add_option("--threads", "-t"
-                    , default=4, dest="threads"
-                    , help="Number of threads to use", type="int"
+
+parser.add_option("--temp"
+                    , default="/tmp/", dest="temp_space"
+                    , help="Temporary space to use", type=str
+                    )
+
+parser.add_option("--test"
+                    , default=False, dest="test", action="store_true"
+                    , help="only one CNF"
                     )
 
 (options, args) = parser.parse_args()
+if options.test:
+    options.host = "localhost"
+    options.temp_space = "."
+
+if not options.host:
+    parser.error('Host not given')
+
+
+exitapp = False
 
 class solverThread (threading.Thread):
-    def __init__(self, threadID, name):
+    def __init__(self, threadID):
         threading.Thread.__init__(self)
         self.threadID = threadID
-        self.name = name
 
     def setlimits(self):
-        #sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" % (os.getpid(), maxTime))
-        resource.setrlimit(resource.RLIMIT_CPU, (self.tosolve["timeout"], self.tosolve["timeout"]))
-        resource.setrlimit(resource.RLIMIT_DATA, (self.tosolve["memory"], self.tosolve["memory"]))
+        #sys.stdout.write("Setting resource limit in child (pid %d). Time %d s Mem %d MB\n" % (os.getpid(), self.indata["timeout_in_secs"], self.indata["mem_limit_in_mb"]))
+        resource.setrlimit(resource.RLIMIT_CPU, (self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
+        resource.setrlimit(resource.RLIMIT_DATA, (self.indata["mem_limit_in_mb"]*1024*1024, self.indata["mem_limit_in_mb"]*1024*1024))
 
     def get_n_bytes_from_connection(self, connection, n) :
         got = 0
@@ -71,7 +83,7 @@ class solverThread (threading.Thread):
                 got += len(data)
             else :
                 print >>sys.stderr, "no more data ooops!"
-                exit(-1)
+                raise Exception("wanted more data...")
 
         return fulldata
 
@@ -80,68 +92,103 @@ class solverThread (threading.Thread):
         sock = socket.socket()
 
         # Get local machine name
-        #host = socket.gethostname()
         if options.host == None :
             print "You must supply the host to connect to as a client"
             exit(-1)
-        host = options.host
-        print "Connecting to host %s ..." % host
 
-        sock.connect((host, options.port))
+        print "hostname:", options.host
+        host = socket.gethostbyname_ex(options.host)
+        print time.strftime("%c"), "Connecting to host" , host
+        sock.connect((host[2][0], options.port))
 
         return sock
 
-    def get_output_filename(self):
-        return"/tmp/%s-%d.out" % (self.tosolve["filename"], self.tosolve["unique_counter"])
+    def get_output_fname(self):
+        return "%s/%s" % ( \
+            options.temp_space, \
+            self.indata["cnf_filename"]
+        )
 
-    def solver_filename(self):
-        return "%s" % (self.tosolve["solver"])
+    def solver_fname(self):
+        return "%s" % (self.indata["solver"])
+
+    def get_stdout_fname(self):
+        return self.get_output_fname()+".stdout"
+
+    def get_stderr_fname(self):
+        return self.get_output_fname()+".stderr"
+
+    def get_toexec(self):
+        toexec = "%s %s/%s"  % \
+            (self.indata["solver"], \
+            self.indata["cnf_dir"], \
+            self.indata["cnf_filename"]
+        )
+
+        return toexec
 
     def execute(self) :
-        toexec = "%s %s/%s/%s" % ( \
-            self.solver_filename(), \
-            self.tosolve["cnfdir"], \
-            self.tosolve["filename"] \
-        )
-        outfile = open(self.get_output_filename(), "w")
+        toexec = self.get_toexec()
+        stdout_file = open(self.get_stdout_fname(), "w+")
+        stderr_file = open(self.get_stderr_fname(), "w+")
 
         #limit time
-        tstart = time.time()
-        print "%s executing '%s' with timeout %d and memout %d" % (\
-            self.name, \
+        limits_printed = "Thread %d executing '%s' with timeout %d s  and memout %d MB" % (\
+            self.threadID, \
             toexec, \
-            self.tosolve["timeout"], \
-            self.tosolve["memory"] \
+            self.indata["timeout_in_secs"], \
+            self.indata["mem_limit_in_mb"] \
         )
-        p = subprocess.Popen(toexec.rsplit(), stderr=outfile, stdout=outfile, preexec_fn=self.setlimits)
+        print limits_printed
+        stderr_file.write(limits_printed + "\n")
+        stderr_file.flush()
+        stdout_file.write(limits_printed + "\n")
+        stdout_file.flush()
+
+        tstart = time.time()
+        p = subprocess.Popen(toexec.rsplit(), stderr=stderr_file, stdout=stdout_file, preexec_fn=self.setlimits)
         p.wait()
-        outfile.close()
 
-        time.sleep(random.randint(10,50)/1000.0)
+        stderr_file.write("return code: %d\n" % p.returncode)
+        stdout_file.write("return code: %d\n" % p.returncode)
+        stderr_file.close()
+        stdout_file.close()
+
         tend = time.time()
-        print "solved '%s' in %f seconds by thread %s" % (self.tosolve["filename"], tend-tstart, self.name)
-        #print "stdout:", consoleOutput, " stderr:", err
+        print "Finished in %f seconds by thread %s" % (tend-tstart, self.threadID)
+        print "return code: ", p.returncode
+        return p.returncode, toexec
 
-    def create_url(self, bucket, key):
-        if not bucket or not key:
-            return None
-        return 'https://%s.s3.amazonaws.com/%s' % (bucket, key)
+    def create_url(self, bucket, folder, key):
+        return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
     def copy_solution_to_s3(self) :
-        boto_bucket = boto_conn.get_bucket(self.tosolve["bucket"])
+        os.system("gzip %s" % self.get_stdout_fname())
+        boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
-        k.key = self.tosolve["filename"]
-        k.set_contents_from_filename(self.get_output_filename())
-        print "Uploaded file"
 
-        k.make_public()
-        print "File public"
+        fname_with_stdout_ending = self.indata["cnf_filename"]+".stdout"
+        k.key = self.indata["s3_folder"]+"/"+ fname_with_stdout_ending
+        boto_bucket.delete_key(k)
+        k.set_contents_from_filename(self.get_stdout_fname()+".gz")
+        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"], fname_with_stdout_ending)
+        print "URL: ", url
 
+        os.system("gzip %s" % self.get_stderr_fname())
+        fname_with_stderr_ending = self.indata["cnf_filename"]+".stderr.gz"
+        k.key = self.indata["s3_folder"]+"/"+fname_with_stderr_ending
+        boto_bucket.delete_key(k)
+        k.set_contents_from_filename(self.get_stderr_fname()+".gz")
+        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"], fname_with_stderr_ending)
+        print "URL: ", url
 
-        url = self.create_url(self.tosolve["solutionto"], self.tosolve["filename"])
-        print "URL: ", url, "All done."
+        print "Uploaded stdout+stderr files"
 
-        os.unlink(self.get_output_filename())
+        #k.make_public()
+        #print "File public"
+
+        #os.unlink(self.get_stdout_fname())
+        #os.unlink(self.get_stderr_fname())
 
     def uptime(self):
         with open('/proc/uptime', 'r') as f:
@@ -149,57 +196,101 @@ class solverThread (threading.Thread):
 
         return None
 
-    def run(self):
-        print "Starting " + self.name
+    def ask_for_data_to_solve(self, sock):
+        print "asking for stuff to solve..."
+        tosend = {}
+        tosend["uptime"] = self.uptime()
+        tosend["command"] = "need"
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('q', len(tosend)) + tosend
+        sock.sendall(tosend)
 
-        #as long as there is something to do
-        while True :
-            sock = self.connect_client()
+        #get stuff to solve
+        data = self.get_n_bytes_from_connection(sock, 8)
+        length = struct.unpack('q', data)[0]
+        data = self.get_n_bytes_from_connection(sock, length)
+        self.indata = pickle.loads(data)
 
-            #ask for stuff to solve
-            print "asking for stuff to solve..."
-            data = {}
-            data["uptime"] = self.uptime()
-            data["command"] = "need"
-            tosend = struct.pack('i', len(data)) + data
-            sock.sendall(data)
+    def run_loop(self):
+        while not exitapp :
+            try:
+                sock = self.connect_client()
+            except Exception as inst:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                traceback.print_exc()
+                print "Problem, waiting and re-connecting"
+                time.sleep(3)
+                continue
 
-            #get stuff to solve
-            data = self.get_n_bytes_from_connection(sock, 4)
-            length = struct.unpack('i', data)[0]
-            data = self.get_n_bytes_from_connection(sock, length)
-            self.tosolve = pickle.loads(data)
-
-            if self.tosolve["command"] == "finish":
-                print "Client received that there is nothing more to solve, exiting"
-                return
-
-            assert self.tosolve["command"] == "solve"
-
-            print "Have to solve ", pp.pprint(self.tosolve)
+            self.ask_for_data_to_solve(sock)
             sock.close()
 
-            self.execute()
+            print "Got data from server ", pp.pprint(self.indata)
+            if self.indata["command"] == "finish":
+                print "Client received that there is nothing more to solve, exiting this thread"
+                return
+
+            assert self.indata["command"] == "solve"
+            returncode, executed = self.execute()
             self.copy_solution_to_s3()
 
             sock = self.connect_client()
-            tosend = "done" + struct.pack('i', len(self.tosolve["filename"])) + self.tosolve["filename"]
+
+            tosend = {}
+            tosend["command"]  = "done"
+            tosend["file_num"]  = self.indata["file_num"]
+            with open(self.get_stderr_fname(), 'r') as content_file:
+                content_stderr = content_file.read()
+
+            tosend["stderr"] = content_stderr
+            tosend["returncode"] = returncode
+
+            tosend = pickle.dumps(tosend)
+            tosend = struct.pack('q', len(tosend)) + tosend
             sock.sendall(tosend)
-            print "Sent that we finished", self.tosolve["filename"]
+            print time.strftime("%c"), "Sent that we finished", self.indata["file_num"], "with retcode", returncode
+            print "stderr:", content_stderr
 
-boto_conn = boto.connect_s3(boto.config.aws_access_key_id, boto.config.aws_secret_access_key)
+    def run(self):
+        print "Starting Thread %d" % self.threadID
 
-# Create new threads
-threads = []
-for i in range(options.threads) :
-    threads.append(solverThread(i, "Thread-%d" % i))
+        try:
+            self.run_loop()
+        except KeyboardInterrupt:
+            exitapp = True
+            raise
 
-# Start new Threads
-for t in threads:
-    t.start()
+boto_conn = boto.connect_s3()
 
-# Wait for all threads to complete
-for t in threads:
-    t.join()
+def num_cpus() :
+    num_cpu=0
+    cpuinfo = open("/proc/cpuinfo", "r")
+    for line in cpuinfo:
+        if "processor" in line:
+            num_cpu+=1
 
-print "Exiting Main Thread"
+    cpuinfo.close()
+    return num_cpu
+
+num_threads = num_cpus()
+print "Running with %d threads" % num_threads
+if options.test:
+    num_threads = 1
+
+ret = 0
+#ret = os.system('/home/ubuntu/build.sh')
+
+if ret == 0 :
+    threads = []
+    for i in range(num_threads) :
+        threads.append(solverThread(i))
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
+
+print "Exiting Main Thread, shutting down"
+toexec = "sudo shutdown -h now"
+#print os.system(toexec)
