@@ -212,7 +212,7 @@ class solverThread (threading.Thread):
         directory, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
             if not options.test:
-                os.system('cd /home/ubuntu/cryptominisat')
+                os.chdir('/home/ubuntu/cryptominisat')
             revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         else :
             revision = solvername
