@@ -276,6 +276,12 @@ def num_cpus() :
     cpuinfo.close()
     return num_cpu
 
+
+def shutdown() :
+    toexec = "sudo shutdown -h now"
+    if not options.test :
+        print os.system(toexec)
+
 num_threads = num_cpus()
 print "Running with %d threads" % num_threads
 if options.test:
@@ -284,6 +290,9 @@ if options.test:
 ret = 0
 if not options.test:
     ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh')
+    if ret != 0:
+        print "Error building cryptominisat, shutting down!"
+        shutdown()
 
 if ret == 0 :
     threads = []
@@ -297,5 +306,5 @@ if ret == 0 :
         t.join()
 
 print "Exiting Main Thread, shutting down"
-toexec = "sudo shutdown -h now"
-#print os.system(toexec)
+shutdown()
+
