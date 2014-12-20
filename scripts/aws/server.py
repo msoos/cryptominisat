@@ -65,7 +65,7 @@ parser.add_option("--s3bucket"
                     )
 
 parser.add_option("--s3folder"
-                    , default="test", dest="s3_folder"
+                    , default="results", dest="s3_folder"
                     , help="S3 folder to upload finished data", type=str
                     )
 
