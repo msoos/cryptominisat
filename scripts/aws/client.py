@@ -283,7 +283,7 @@ if options.test:
 
 ret = 0
 if not options.test:
-    ret = os.system('/home/ubuntu/build.sh')
+    ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh')
 
 if ret == 0 :
     threads = []
