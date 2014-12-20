@@ -163,7 +163,7 @@ class solverThread (threading.Thread):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
     def copy_solution_to_s3(self) :
-        os.system("gzip %s" % self.get_stdout_fname())
+        os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
@@ -174,7 +174,7 @@ class solverThread (threading.Thread):
         url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"], fname_with_stdout_ending)
         print "URL: ", url
 
-        os.system("gzip %s" % self.get_stderr_fname())
+        os.system("gzip -f %s" % self.get_stderr_fname())
         fname_with_stderr_ending = self.indata["cnf_filename"]+".stderr.gz"
         k.key = self.indata["s3_folder"]+"/"+fname_with_stderr_ending
         boto_bucket.delete_key(k)
