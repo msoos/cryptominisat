@@ -162,24 +162,24 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
-    def copy_solution_to_s3(self) :
+    def copy_solution_to_s3(self, s3_folder) :
         os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
         fname_with_stdout_ending = self.indata["cnf_filename"]+".stdout.gz"
-        k.key = self.indata["s3_folder"]+"/"+ fname_with_stdout_ending
+        k.key = self.indata["s3_folder"]+"-"+s3_folder+"/"+ fname_with_stdout_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"], fname_with_stdout_ending)
+        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"]+"-"+s3_folder, fname_with_stdout_ending)
         print "URL: ", url
 
         os.system("gzip -f %s" % self.get_stderr_fname())
         fname_with_stderr_ending = self.indata["cnf_filename"]+".stderr.gz"
-        k.key = self.indata["s3_folder"]+"/"+fname_with_stderr_ending
+        k.key = self.indata["s3_folder"]+"-"+s3_folder+"/"+fname_with_stderr_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"], fname_with_stderr_ending)
+        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"]+"-"+s3_folder, fname_with_stderr_ending)
         print "URL: ", url
 
         print "Uploaded stdout+stderr files"
@@ -211,6 +211,17 @@ class solverThread (threading.Thread):
         data = self.get_n_bytes_from_connection(sock, length)
         self.indata = pickle.loads(data)
 
+    def get_revision(self) :
+        directory, solvername = os.path.split(self.indata["solver"])
+        if solvername == "cryptominisat":
+            if not options.test:
+                os.system('cd /home/ubuntu/cryptominisat')
+            revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        else :
+            revision = solvername
+
+        return revision.strip()
+
     def run_loop(self):
         while not exitapp :
             try:
@@ -231,8 +242,9 @@ class solverThread (threading.Thread):
                 return
 
             assert self.indata["command"] == "solve"
+            s3_folder = self.get_revision()
             returncode, executed = self.execute()
-            self.copy_solution_to_s3()
+            self.copy_solution_to_s3(s3_folder)
 
             sock = self.connect_client()
 
