@@ -282,7 +282,8 @@ if options.test:
     num_threads = 1
 
 ret = 0
-#ret = os.system('/home/ubuntu/build.sh')
+if not options.test:
+    ret = os.system('/home/ubuntu/build.sh')
 
 if ret == 0 :
     threads = []
