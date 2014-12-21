@@ -291,11 +291,13 @@ def build_system():
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
-        ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1'  % (indata["revision"], num_threads))
-        built_system = True
-        if ret != 0:
-            print "Error building cryptominisat, shutting down!"
-            shutdown()
+        #only build if the solver is cryptominisat
+        if "cryptominisat" in indata["solver"] :
+            ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1'  % (indata["revision"], num_threads))
+            built_system = True
+            if ret != 0:
+                print "Error building cryptominisat, shutting down!"
+                shutdown()
 
 def num_cpus() :
     num_cpu=0

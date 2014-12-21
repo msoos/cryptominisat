@@ -187,6 +187,7 @@ class Server :
 
     def handle_build(self, connection, indata) :
         tosend = {}
+        tosend["solver"] = options.solver
         tosend["revision"] = options.git_rev
         tosend["noshutdown"] = options.noshutdown
         tosend = pickle.dumps(tosend)
