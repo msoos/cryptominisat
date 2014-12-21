@@ -83,8 +83,10 @@ parser.add_option("--noshutdown", "-n"
 (options, args) = parser.parse_args()
 
 def get_revision() :
+    pwd = os.getcwd()
     os.chdir('/home/ubuntu/cryptominisat')
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    os.chdir(pwd)
     return revision.strip()
 
 if not options.git_rev:
