@@ -320,7 +320,10 @@ print "Running with %d threads" % num_threads
 if options.test:
     num_threads = 1
 
-build_system()
+try:
+    build_system()
+except:
+    shutdown()
 
 threads = []
 for i in range(num_threads) :
