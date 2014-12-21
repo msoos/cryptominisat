@@ -12,7 +12,6 @@ import pickle
 import time
 import pprint
 import traceback
-from collections import namedtuple
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
