@@ -248,7 +248,7 @@ class solverThread (threading.Thread):
                 return
 
             assert self.indata["command"] == "solve"
-            s3_folder = self.get_revision()
+            s3_folder = self.get_revision()+self.indata["solver"]
             returncode, executed = self.execute()
             self.copy_solution_to_s3(s3_folder)
 
