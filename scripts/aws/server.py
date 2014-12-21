@@ -73,19 +73,11 @@ parser.add_option("--git"
                     , help="The GIT revision to use"
                     )
 
-parser.add_option("--test"
-                    , default=False, dest="test", action="store_true"
-                    , help="only one CNF"
-                    )
-
 #parse options
 (options, args) = parser.parse_args()
 
 if not options.git_rev:
     parser.error('GIT revision not given')
-
-if options.test:
-    options.solver = '/home/soos/development/sat_solvers/cryptominisat/build/cryptominisat'
 
 class ToSolve:
     def __init__(self, num, name) :
