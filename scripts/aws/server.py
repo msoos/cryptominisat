@@ -185,7 +185,7 @@ class Server :
         tosend = pickle.dumps(tosend)
         tosend = struct.pack('q', len(tosend)) + tosend
 
-        print "Sending git revision %s to %s" (options.git_rev, connection)
+        print "Sending git revision %s to %s" % (options.git_rev, connection)
         connection.sendall(tosend)
 
     def handle_need(self, connection, indata) :
