@@ -34,7 +34,7 @@ if [[ $rc != 0 ]] ; then
 fi
 echo "cmake-d"
 
-make -j8
+make -j$1
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit $rc
