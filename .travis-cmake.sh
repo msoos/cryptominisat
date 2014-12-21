@@ -15,10 +15,12 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
     NORMAL)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
     STATIC_BIN)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    -DSTATICCOMPILE:BOOL=ON \
                    ${SOURCE_DIR}
@@ -38,42 +40,49 @@ case $CMS_CONFIG in
     ;;
 
     MORE_DEBUG)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    -DMORE_DEBUG:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
-    NOSTATS)
+    STATS)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
-                   -DNOSTATS:BOOL=ON \
+                   -DSTATS:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
     NOZLIB)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    -DNOZLIB:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
     RELEASE)
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    -DCMAKE_BUILD_TYPE:STRING=Release \
                    ${SOURCE_DIR}
     ;;
 
     NOSQLITE)
+        sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libsqlite3-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
 
     NOMYSQL)
+        sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libmysqlclient-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
 
     NOMYSQLNOSQLITE)
+        sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libmysqlclient-dev
         sudo apt-get remove libsqlite3-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
@@ -81,6 +90,7 @@ case $CMS_CONFIG in
     ;;
 
     NOPYTHON)
+        sudo apt-get install libboost-program-options-dev
         sudo apt-get remove python2.7-dev python-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
