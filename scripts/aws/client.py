@@ -324,6 +324,7 @@ if options.test:
 try:
     build_system()
 except:
+    print "Error getting data for building system"
     shutdown()
 
 threads = []
