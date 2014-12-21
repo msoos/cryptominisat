@@ -81,6 +81,8 @@ parser.add_option("--test"
 #parse options
 (options, args) = parser.parse_args()
 
+if not options.git_rev:
+    parser.error('GIT revision not given')
 
 if options.test:
     options.solver = '/home/soos/development/sat_solvers/cryptominisat/build/cryptominisat'
