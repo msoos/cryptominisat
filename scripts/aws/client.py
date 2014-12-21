@@ -59,6 +59,59 @@ if not options.host:
 
 exitapp = False
 
+def uptime():
+    with open('/proc/uptime', 'r') as f:
+        return float(f.readline().split()[0])
+
+    return None
+
+def get_n_bytes_from_connection(connection, n) :
+    got = 0
+    fulldata = ""
+    while got < n :
+        data = connection.recv(n-got)
+        #print >>sys.stderr, 'received "%s"' % data
+        if data :
+            fulldata += data
+            got += len(data)
+        else :
+            print >>sys.stderr, "no more data ooops!"
+            raise Exception("wanted more data...")
+
+    return fulldata
+
+def connect_client(self) :
+    # Create a socket object
+    sock = socket.socket()
+
+    # Get local machine name
+    if options.host == None :
+        print "You must supply the host to connect to as a client"
+        exit(-1)
+
+    print "hostname:", options.host
+    host = socket.gethostbyname_ex(options.host)
+    print time.strftime("%c"), "Connecting to host" , host
+    sock.connect((host[2][0], options.port))
+
+    return sock
+
+def ask_for_data_to_solve(sock, command):
+    print "asking for stuff to solve..."
+    tosend = {}
+    tosend["uptime"] = uptime()
+    tosend["command"] = command
+    tosend = pickle.dumps(tosend)
+    tosend = struct.pack('q', len(tosend)) + tosend
+    sock.sendall(tosend)
+
+    #get stuff to solve
+    data = get_n_bytes_from_connection(sock, 8)
+    length = struct.unpack('q', data)[0]
+    data = get_n_bytes_from_connection(sock, length)
+    indata = pickle.loads(data)
+    return indata
+
 class solverThread (threading.Thread):
     def __init__(self, threadID):
         threading.Thread.__init__(self)
@@ -69,36 +122,7 @@ class solverThread (threading.Thread):
         resource.setrlimit(resource.RLIMIT_CPU, (self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
         resource.setrlimit(resource.RLIMIT_DATA, (self.indata["mem_limit_in_mb"]*1024*1024, self.indata["mem_limit_in_mb"]*1024*1024))
 
-    def get_n_bytes_from_connection(self, connection, n) :
-        got = 0
-        fulldata = ""
-        while got < n :
-            data = connection.recv(n-got)
-            #print >>sys.stderr, 'received "%s"' % data
-            if data :
-                fulldata += data
-                got += len(data)
-            else :
-                print >>sys.stderr, "no more data ooops!"
-                raise Exception("wanted more data...")
 
-        return fulldata
-
-    def connect_client(self) :
-        # Create a socket object
-        sock = socket.socket()
-
-        # Get local machine name
-        if options.host == None :
-            print "You must supply the host to connect to as a client"
-            exit(-1)
-
-        print "hostname:", options.host
-        host = socket.gethostbyname_ex(options.host)
-        print time.strftime("%c"), "Connecting to host" , host
-        sock.connect((host[2][0], options.port))
-
-        return sock
 
     def get_output_fname(self):
         return "%s/%s" % ( \
@@ -187,27 +211,6 @@ class solverThread (threading.Thread):
         os.unlink(self.get_stdout_fname()+".gz")
         os.unlink(self.get_stderr_fname()+".gz")
 
-    def uptime(self):
-        with open('/proc/uptime', 'r') as f:
-            return float(f.readline().split()[0])
-
-        return None
-
-    def ask_for_data_to_solve(self, sock):
-        print "asking for stuff to solve..."
-        tosend = {}
-        tosend["uptime"] = self.uptime()
-        tosend["command"] = "need"
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('q', len(tosend)) + tosend
-        sock.sendall(tosend)
-
-        #get stuff to solve
-        data = self.get_n_bytes_from_connection(sock, 8)
-        length = struct.unpack('q', data)[0]
-        data = self.get_n_bytes_from_connection(sock, length)
-        self.indata = pickle.loads(data)
-
     def get_revision(self) :
         directory, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
@@ -222,7 +225,7 @@ class solverThread (threading.Thread):
     def run_loop(self):
         while not exitapp :
             try:
-                sock = self.connect_client()
+                sock = connect_client()
             except Exception as inst:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exc()
@@ -230,7 +233,7 @@ class solverThread (threading.Thread):
                 time.sleep(3)
                 continue
 
-            self.ask_for_data_to_solve(sock)
+            self.indata = ask_for_data_to_solve(sock, "need")
             sock.close()
 
             print "Got data from server ", pp.pprint(self.indata)
@@ -243,7 +246,7 @@ class solverThread (threading.Thread):
             returncode, executed = self.execute()
             self.copy_solution_to_s3(s3_folder)
 
-            sock = self.connect_client()
+            sock = connect_client()
 
             tosend = {}
             tosend["command"]  = "done"
@@ -266,6 +269,27 @@ class solverThread (threading.Thread):
 
 boto_conn = boto.connect_s3()
 
+def build_system():
+    built_system = False
+    while not built_system :
+        try:
+            sock = connect_client()
+        except Exception as inst:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exc()
+            print "Problem, waiting and re-connecting"
+            time.sleep(3)
+            continue
+
+        indata = ask_for_data_to_solve(sock, "build")
+        sock.close()
+
+        ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1'  % (indata["revision"], num_threads))
+        built_system = True
+        if ret != 0:
+            print "Error building cryptominisat, shutting down!"
+            shutdown()
+
 def num_cpus() :
     num_cpu=0
     cpuinfo = open("/proc/cpuinfo", "r")
@@ -287,23 +311,17 @@ print "Running with %d threads" % num_threads
 if options.test:
     num_threads = 1
 
-ret = 0
-if not options.test:
-    ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s > /home/ubuntu/build.log 2>&1'  % num_threads)
-    if ret != 0:
-        print "Error building cryptominisat, shutting down!"
-        shutdown()
+build_system()
 
-if ret == 0 :
-    threads = []
-    for i in range(num_threads) :
-        threads.append(solverThread(i))
+threads = []
+for i in range(num_threads) :
+    threads.append(solverThread(i))
 
-    for t in threads:
-        t.start()
+for t in threads:
+    t.start()
 
-    for t in threads:
-        t.join()
+for t in threads:
+    t.join()
 
 print "Exiting Main Thread, shutting down"
 shutdown()

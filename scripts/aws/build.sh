@@ -13,6 +13,13 @@ if [[ $rc != 0 ]] ; then
 fi
 echo "pulled"
 
+git checkout $1
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit $rc
+fi
+echo "got revision $1"
+
 cd build
 rc=$?
 if [[ $rc != 0 ]] ; then
@@ -34,7 +41,7 @@ if [[ $rc != 0 ]] ; then
 fi
 echo "cmake-d"
 
-make -j$1
+make -j$2
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit $rc

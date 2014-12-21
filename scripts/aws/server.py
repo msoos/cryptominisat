@@ -68,6 +68,11 @@ parser.add_option("--s3folder"
                     , help="S3 folder to upload finished data", type=str
                     )
 
+parser.add_option("--git"
+                    , dest="git_rev", type=str
+                    , help="The GIT revision to use"
+                    )
+
 parser.add_option("--test"
                     , default=False, dest="test", action="store_true"
                     , help="only one CNF"
@@ -172,6 +177,15 @@ class Server :
 
         return file_num
 
+    def handle_build(self, connection, indata) :
+        tosend = {}
+        tosend["revision"] = options.git_rev
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('q', len(tosend)) + tosend
+
+        print "Sending git revision %s to %s" (options.git_rev, connection)
+        connection.sendall(tosend)
+
     def handle_need(self, connection, indata) :
         #TODO don't ignore 'indata' for solving CNF instances, use it to opitimize for uptime
         file_num = self.find_something_to_solve()
@@ -226,6 +240,9 @@ class Server :
 
             elif data["command"] == "need" :
                self.handle_need(connection, data)
+
+            elif data["command"] == "build" :
+               self.handle_build(connection, data)
 
             sys.stdout.flush()
         except Exception as inst:
