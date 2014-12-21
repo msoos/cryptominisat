@@ -309,7 +309,7 @@ def num_cpus() :
 def shutdown() :
     toexec = "sudo shutdown -h now"
     print "SHUTTING DOWN"
-    if not options.noshutdown or options.test :
+    if not options.noshutdown and not options.test :
         print os.system(toexec)
 
     exit(0)
