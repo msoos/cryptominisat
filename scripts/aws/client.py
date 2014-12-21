@@ -310,7 +310,7 @@ def shutdown() :
     toexec = "sudo shutdown -h now"
     print "SHUTTING DOWN"
     if not options.noshutdown and not options.test :
-        #print os.system(toexec)
+        print os.system(toexec)
         pass
 
     exit(0)
