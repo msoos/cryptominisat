@@ -80,7 +80,7 @@ def get_n_bytes_from_connection(connection, n) :
 
     return fulldata
 
-def connect_client(self) :
+def connect_client() :
     # Create a socket object
     sock = socket.socket()
 
