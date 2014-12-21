@@ -174,15 +174,15 @@ class solverThread (threading.Thread):
         tstart = time.time()
         p = subprocess.Popen(toexec.rsplit(), stderr=stderr_file, stdout=stdout_file, preexec_fn=self.setlimits)
         p.wait()
+        tend = time.time()
 
-        stderr_file.write("return code: %d\n" % p.returncode)
-        stdout_file.write("return code: %d\n" % p.returncode)
+        towrite = "Finished in %f seconds by thread %s\nreturn code: %d\n" % (tend-tstart, self.threadID, p.returncode)
+        stderr_file.write(towrite)
+        stdout_file.write(towrite)
         stderr_file.close()
         stdout_file.close()
+        print towrite.strip()
 
-        tend = time.time()
-        print "Finished in %f seconds by thread %s" % (tend-tstart, self.threadID)
-        print "return code: ", p.returncode
         return p.returncode, toexec
 
     def create_url(self, bucket, folder, key):
