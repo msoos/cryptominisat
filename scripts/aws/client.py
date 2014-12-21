@@ -33,7 +33,7 @@ parser.add_option("--verbose", "-v", action="store_true"
                     )
 
 parser.add_option("--host"
-                    , dest="host"
+                    , dest="host", default="172.30.0.208"
                     , help="Host to connect to as a client"
                     )
 parser.add_option("--port", "-p"
@@ -57,9 +57,6 @@ parser.add_option("--noshutdown", "-n"
                     )
 
 (options, args) = parser.parse_args()
-
-if not options.host:
-    parser.error('Host not given')
 
 
 exitapp = False
