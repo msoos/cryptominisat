@@ -177,7 +177,7 @@ class solverThread (threading.Thread):
         p.wait()
         tend = time.time()
 
-        towrite = "Finished in %f seconds by thread %s\nreturn code: %d\n" % (tend-tstart, self.threadID, p.returncode)
+        towrite = "Finished in %f seconds by thread %s return code: %d\n" % (tend-tstart, self.threadID, p.returncode)
         stderr_file.write(towrite)
         stdout_file.write(towrite)
         stderr_file.close()
