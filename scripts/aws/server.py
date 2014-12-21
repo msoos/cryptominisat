@@ -12,6 +12,7 @@ import pickle
 import time
 import pprint
 import traceback
+import subprocess
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -81,8 +82,14 @@ parser.add_option("--noshutdown", "-n"
 #parse options
 (options, args) = parser.parse_args()
 
+def get_revision() :
+    os.chdir('/home/ubuntu/cryptominisat')
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    return revision.strip()
+
 if not options.git_rev:
-    parser.error('GIT revision not given')
+    options.git_rev = get_revision()
+    print "Revsion not given, taking HEAD: %s" % options.git_rev
 
 class ToSolve:
     def __init__(self, num, name) :
