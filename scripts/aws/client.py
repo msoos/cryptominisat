@@ -142,8 +142,12 @@ class solverThread (threading.Thread):
         return self.get_output_fname()+".stderr"
 
     def get_toexec(self):
-        toexec = "%s %s/%s"  % \
+        extra_opts = ""
+        if "cryptominisat" in self.indata["solver"]:
+            extra_opts = " --printsol 0 "
+        toexec = "%s %s %s/%s"  % \
             (self.indata["solver"], \
+            extra_opts, \
             self.indata["cnf_dir"], \
             self.indata["cnf_filename"]
         )
