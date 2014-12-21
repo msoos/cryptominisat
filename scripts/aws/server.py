@@ -73,6 +73,12 @@ parser.add_option("--git"
                     , help="The GIT revision to use"
                     )
 
+parser.add_option("--noshutdown", "-n"
+                    , default=False, dest="noshutdown", action="store_true"
+                    , help="Do not shut down clients"
+                    )
+
+
 #parse options
 (options, args) = parser.parse_args()
 
@@ -174,6 +180,7 @@ class Server :
     def handle_build(self, connection, indata) :
         tosend = {}
         tosend["revision"] = options.git_rev
+        tosend["noshutdown"] = options.noshutdown
         tosend = pickle.dumps(tosend)
         tosend = struct.pack('q', len(tosend)) + tosend
 
@@ -187,6 +194,7 @@ class Server :
         #yay, everything finished!
         if file_num == None :
             tosend = {}
+            tosend["noshutdown"] = options.noshutdown
             tosend["command"] = "finish"
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('q', len(tosend)) + tosend
@@ -207,6 +215,7 @@ class Server :
             tosend["s3_bucket"] = options.s3_bucket
             tosend["s3_folder"] = options.s3_folder
             tosend["cnf_dir"] = options.cnf_dir
+            tosend["noshutdown"] = options.noshutdown
             tosend["command"] = "solve"
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('q', len(tosend)) + tosend

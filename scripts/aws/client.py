@@ -242,6 +242,7 @@ class solverThread (threading.Thread):
             sock.close()
 
             print "Got data from server ", pp.pprint(self.indata)
+            options.noshutdown |= self.indata["noshutdown"]
             if self.indata["command"] == "finish":
                 print "Client received that there is nothing more to solve, exiting this thread"
                 return
@@ -287,6 +288,7 @@ def build_system():
             continue
 
         indata = ask_for_data_to_solve(sock, "build")
+        options.noshutdown |= indata["noshutdown"]
         sock.close()
 
         ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1'  % (indata["revision"], num_threads))
