@@ -289,7 +289,7 @@ if options.test:
 
 ret = 0
 if not options.test:
-    ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh')
+    ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s' % num_threads)
     if ret != 0:
         print "Error building cryptominisat, shutting down!"
         shutdown()
