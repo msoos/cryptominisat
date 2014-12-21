@@ -142,6 +142,7 @@ class Server :
 
         print "Num files_available:", len(self.files_available)
         print "Num files_finished:", len(self.files_finished)
+        sys.stdout.flush()
 
     def check_for_dead_files(self) :
         this_time = time.time()
@@ -167,6 +168,7 @@ class Server :
         file_num = self.files_available[0]
         del self.files_available[0]
         print "Num files_available post-send:", len(self.files_available)
+        sys.stdout.flush()
 
         return file_num
 
@@ -202,6 +204,7 @@ class Server :
             tosend = struct.pack('q', len(tosend)) + tosend
 
             print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
+            sys.stdout.flush()
             connection.sendall(tosend)
 
     def handle_one_connection(self):
