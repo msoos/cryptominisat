@@ -51,6 +51,11 @@ parser.add_option("--test"
                     , help="only one CNF"
                     )
 
+parser.add_option("--noshutdown", "-n"
+                    , default=False, dest="noshutdown", action="store_true"
+                    , help="Do not shut down"
+                    )
+
 (options, args) = parser.parse_args()
 
 if not options.host:
@@ -303,8 +308,12 @@ def num_cpus() :
 
 def shutdown() :
     toexec = "sudo shutdown -h now"
-    if not options.test :
+    print "SHUTTING DOWN"
+    if not options.noshutdown or options.test :
         print os.system(toexec)
+
+    exit(0)
+
 
 num_threads = num_cpus()
 print "Running with %d threads" % num_threads
