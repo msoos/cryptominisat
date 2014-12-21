@@ -217,7 +217,7 @@ class solverThread (threading.Thread):
         os.unlink(self.get_stderr_fname()+".gz")
 
     def get_revision(self) :
-        directory, solvername = os.path.split(self.indata["solver"])
+        _, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
             if not options.test:
                 os.chdir('/home/ubuntu/cryptominisat')
