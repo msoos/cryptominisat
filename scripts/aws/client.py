@@ -118,6 +118,17 @@ class solverThread (threading.Thread):
     def __init__(self, threadID):
         threading.Thread.__init__(self)
         self.threadID = threadID
+        self.temp_space = self.create_temp_space()
+
+    def create_temp_space(self):
+        orig = options.temp_space
+        newdir = orig+"/thread-%s" % self.threadID
+        try:
+            os.mkdir(newdir)
+        except:
+            print "Directory %s already exists." % newdir
+
+        return newdir
 
     def setlimits(self):
         #sys.stdout.write("Setting resource limit in child (pid %d). Time %d s Mem %d MB\n" % (os.getpid(), self.indata["timeout_in_secs"], self.indata["mem_limit_in_mb"]))
@@ -128,7 +139,7 @@ class solverThread (threading.Thread):
 
     def get_output_fname(self):
         return "%s/%s" % ( \
-            options.temp_space, \
+            self.temp_space, \
             self.indata["cnf_filename"]
         )
 
