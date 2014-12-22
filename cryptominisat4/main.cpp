@@ -341,9 +341,9 @@ void Main::add_supported_options()
 
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vincmult", po::value(&conf.var_inc_multiplier)->default_value(conf.var_inc_multiplier)
-        , "variable activity increase multiplier")
-    ("vincdiv", po::value(&conf.var_inc_divider)->default_value(conf.var_inc_divider)
+    ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start)
+        , "variable activity increase divider (MUST be smaller than multiplier)")
+    ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max)
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")

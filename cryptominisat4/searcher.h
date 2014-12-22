@@ -761,8 +761,8 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        vector<uint32_t> activities;
-        uint32_t var_inc;
+        vector<double> activities;
+        double var_inc;
         void              insertVarOrder(const Var x);  ///< Insert a variable in heap
 
 
@@ -808,13 +808,13 @@ class Searcher : public HyperEngine
         ///Increase a variable with the current 'bump' value.
         void     bump_var_activitiy  (Var v);
         struct VarOrderLt { ///Order variables according to their activities
-            const vector<uint32_t>&  activities;
-            bool operator () (const uint32_t x, const uint32_t y) const
+            const vector<double>&  activities;
+            bool operator () (const Var x, const Var y) const
             {
                 return activities[x] > activities[y];
             }
 
-            VarOrderLt(const vector<uint32_t>& _activities) :
+            VarOrderLt(const vector<double>& _activities) :
                 activities(_activities)
             {}
         };
@@ -861,8 +861,7 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         Stats    stats;
-        uint32_t var_inc_multiplier;
-        uint32_t var_inc_divider;
+        double   var_decay;
 };
 
 inline uint32_t Searcher::abstractLevel(const Var x) const

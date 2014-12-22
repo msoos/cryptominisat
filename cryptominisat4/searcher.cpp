@@ -64,6 +64,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterr
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
 {
+    var_decay = conf.var_decay_start;
     var_inc = conf.var_inc_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
@@ -1060,6 +1061,12 @@ lbool Searcher::search()
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
+            if (((stats.conflStats.numConflicts & 0x1fff) == 0x1fff)
+                && var_decay < conf.var_decay_max
+            ) {
+                var_decay += 0.01;
+            }
+
             reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
             print_restart_stat();
@@ -1664,15 +1671,14 @@ lbool Searcher::burst_search()
     //Save old config
     const double backup_rand = conf.random_var_freq;
     const PolarityMode backup_polar_mode = conf.polarity_mode;
-    uint32_t backup_var_inc_divider = var_inc_divider;
-    uint32_t backup_var_inc_multiplier = var_inc_multiplier;
+    double backup_var_inc = var_inc;
+    double backup_var_decay = var_decay;
     update_polarity_and_activity = false;
 
     //Set burst config
     conf.random_var_freq = 1;
     conf.polarity_mode = polarmode_rnd;
-    var_inc_divider = 1;
-    var_inc_multiplier = 1;
+    var_decay = 1;
 
     //Do burst
     params.clear();
@@ -1684,8 +1690,8 @@ lbool Searcher::burst_search()
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
-    var_inc_divider = backup_var_inc_divider;
-    var_inc_multiplier = backup_var_inc_multiplier;
+    var_decay = backup_var_decay;
+    assert(var_inc == backup_var_inc);
     update_polarity_and_activity = true;
 
     //Print what has happened
@@ -2137,9 +2143,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     ) {
         calculate_and_set_polars();
     }
-
-    var_inc_multiplier = conf.var_inc_multiplier;
-    var_inc_divider = conf.var_inc_divider;
 
     setup_restart_print();
     max_conflicts_geometric = conf.restart_first;
@@ -3139,8 +3142,7 @@ inline void Searcher::varDecayActivity()
         return;
     }
 
-    var_inc *= var_inc_multiplier;
-    var_inc /= var_inc_divider;
+    var_inc *= (1.0 / var_decay);
 }
 
 inline void Searcher::bump_var_activitiy(Var var)
@@ -3154,19 +3156,17 @@ inline void Searcher::bump_var_activitiy(Var var)
     #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
-    if ( (activities[var]) > ((0x1U) << 24)
-        || var_inc > ((0x1U) << 24)
-    ) {
+    if (activities[var] > 1e100) {
         // Rescale:
-        for (uint32_t& act : activities) {
-            act >>= 14;
+        for (double& act : activities) {
+            act *= 1e-100;
         }
         #ifdef SLOW_DEBUG
         rescaled = true;
         #endif
 
         //Reset var_inc
-        var_inc >>= 14;
+        var_inc *= 1e-100;
 
         //If var_inc is smaller than var_inc_start then this MUST be corrected
         //otherwise the 'varDecayActivity' may not decay anything in fact
