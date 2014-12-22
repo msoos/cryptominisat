@@ -272,6 +272,8 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
             } else {
                 solver->litStats.irredLits -= i-j;
             }
+            assert(solver->value(cl[0]) == l_Undef);
+            assert(solver->value(cl[1]) == l_Undef);
         }
     }
 
