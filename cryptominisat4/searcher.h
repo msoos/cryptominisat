@@ -694,7 +694,6 @@ class Searcher : public HyperEngine
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &glue         //glue of the learnt clause
-            , bool fromProber = false
         );
         void update_clause_glue_from_analysis(Clause* cl);
         void minimize_learnt_clause();
@@ -704,7 +703,7 @@ class Searcher : public HyperEngine
         void bump_var_activities_based_on_last_decision_level(size_t glue);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(PropBy confl);
-        Clause* create_learnt_clause(PropBy confl, bool fromProber);
+        Clause* create_learnt_clause(PropBy confl);
         int pathC;
         ResolutionTypes<uint16_t> resolutions;
 
@@ -722,13 +721,12 @@ class Searcher : public HyperEngine
         Clause* add_literals_from_confl_to_learnt(
             const PropBy confl
             , const Lit p
-            , bool fromProber
         );
         void debug_print_resolving_clause(const PropBy confl) const;
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
 
-        void add_lit_to_learnt(Lit lit, bool fromProber);
+        void add_lit_to_learnt(Lit lit);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
 
         //////////////

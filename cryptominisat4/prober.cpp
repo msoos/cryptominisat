@@ -701,7 +701,6 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
                 confl
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
-                , true
             );
             if (solver->learnt_clause.empty()) {
                 solver->ok = false;

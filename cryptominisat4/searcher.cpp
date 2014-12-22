@@ -124,7 +124,6 @@ void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
 
 void Searcher::add_lit_to_learnt(
     const Lit lit
-    , bool fromProber
 ) {
     const Var var = lit.var();
     assert(varData[var].removed == Removed::none);
@@ -146,7 +145,7 @@ void Searcher::add_lit_to_learnt(
             pathC++;
 
             //Glucose 2.1
-            if (!fromProber
+            if (update_polarity_and_activity
                 && params.rest_type != restart_type_geom
                 && varData[var].reason != PropBy()
                 && varData[var].reason.getType() == clause_t
@@ -393,7 +392,6 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
 Clause* Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
-    , bool fromProber
 ) {
     debug_print_resolving_clause(confl);
 
@@ -402,13 +400,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case tertiary_t : {
             resolutions.tri++;
             stats.resolvs.tri++;
-            add_lit_to_learnt(confl.lit3(), fromProber);
+            add_lit_to_learnt(confl.lit3());
 
             if (p == lit_Undef) {
-                add_lit_to_learnt(failBinLit, fromProber);
+                add_lit_to_learnt(failBinLit);
             }
 
-            add_lit_to_learnt(confl.lit2(), fromProber);
+            add_lit_to_learnt(confl.lit2());
             break;
         }
 
@@ -416,9 +414,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             resolutions.bin++;
             stats.resolvs.bin++;
             if (p == lit_Undef) {
-                add_lit_to_learnt(failBinLit, fromProber);
+                add_lit_to_learnt(failBinLit);
             }
-            add_lit_to_learnt(confl.lit2(), fromProber);
+            add_lit_to_learnt(confl.lit2());
             break;
         }
 
@@ -432,7 +430,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 stats.resolvs.irredL++;
             }
             cl->stats.used_for_uip_creation++;
-            if (cl->red() && !fromProber) {
+            if (cl->red() && update_polarity_and_activity) {
                 bumpClauseAct(cl);
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
@@ -444,7 +442,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 if (p != lit_Undef && j == 0)
                     continue;
 
-                add_lit_to_learnt((*cl)[j], fromProber);
+                add_lit_to_learnt((*cl)[j]);
             }
             break;
         }
@@ -527,7 +525,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
     }
 }
 
-Clause* Searcher::create_learnt_clause(PropBy confl, bool fromProber)
+Clause* Searcher::create_learnt_clause(PropBy confl)
 {
     pathC = 0;
     int index = trail.size() - 1;
@@ -551,14 +549,14 @@ Clause* Searcher::create_learnt_clause(PropBy confl, bool fromProber)
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        last_resolved_long_cl = add_literals_from_confl_to_learnt(confl, p, fromProber);
+        last_resolved_long_cl = add_literals_from_confl_to_learnt(confl, p);
 
         // Select next implication to look at
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
 
-        if (!fromProber
+        if (update_polarity_and_activity
             && conf.doOTFSubsume
             //A long clause
             && last_resolved_long_cl != NULL
@@ -646,7 +644,6 @@ Clause* Searcher::analyze_conflict(
     PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
-    , bool fromProber
 ) {
     //Set up environment
     learnt_clause.clear();
@@ -659,7 +656,7 @@ Clause* Searcher::analyze_conflict(
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
-    Clause* last_resolved_long_cl = create_learnt_clause(confl, fromProber);
+    Clause* last_resolved_long_cl = create_learnt_clause(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
     mimimize_learnt_clause_based_on_cache();
@@ -668,7 +665,10 @@ Clause* Searcher::analyze_conflict(
     glue = calc_glue_using_seen2(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!fromProber && params.rest_type == restart_type_glue && conf.extra_bump_var_activities_based_on_glue) {
+    if (update_polarity_and_activity
+        && params.rest_type == restart_type_glue
+        && conf.extra_bump_var_activities_based_on_glue
+    ) {
         bump_var_activities_based_on_last_decision_level(glue);
     }
     lastDecisionLevel.clear();
@@ -1571,7 +1571,6 @@ bool Searcher::handle_conflict(PropBy confl)
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
-        , false
     );
     print_learnt_clause();
     *drup << learnt_clause << fin;
