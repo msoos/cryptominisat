@@ -35,16 +35,16 @@ THE SOFTWARE.
 namespace CMSat {
 
 typedef uint32_t Var;
-static const Var var_Undef(0xffffffffU >> 1);
+static const Var var_Undef(0xffffffffU >> 3);
 
 class Lit
 {
     uint32_t x;
     explicit Lit(uint32_t i) : x(i) { }
 public:
-    Lit() : x(2*var_Undef) {}   // (lit_Undef)
+    Lit() : x(var_Undef<<1) {}   // (lit_Undef)
     explicit Lit(Var var, bool is_inverted) :
-        x((2*var) | (uint32_t)is_inverted)
+        x((var<<1) | (uint32_t)is_inverted)
     {}
 
     const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.

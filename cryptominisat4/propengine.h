@@ -253,9 +253,7 @@ private:
         const Lit lit1
         , const Lit lit2
         , const Lit lit3
-        #ifdef STATS_NEEDED
         , const bool red
-        #endif
     );
     void update_glue(Clause& c);
 

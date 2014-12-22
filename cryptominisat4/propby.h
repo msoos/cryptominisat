@@ -37,7 +37,8 @@ enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 class PropBy
 {
     private:
-        uint32_t data1;
+        uint32_t red_step:1;
+        uint32_t data1:31;
         uint32_t type:2;
         //0: clause, NULL
         //1: clause, non-null
@@ -47,7 +48,8 @@ class PropBy
 
     public:
         PropBy() :
-            data1(0)
+            red_step(0)
+            , data1(0)
             , type(null_clause_t)
             , data2(0)
         {}
@@ -58,10 +60,10 @@ class PropBy
         {
         }
 
-        PropBy(const Lit lit, bool red) :
-            data1(lit.toInt())
+        PropBy(const Lit lit, const bool redStep) :
+            red_step(redStep)
+            , data1(lit.toInt())
             , type(binary_t)
-            , data2(red)
         {
         }
 
@@ -72,7 +74,8 @@ class PropBy
             , bool hyperBin //It's a hyper-binary clause
             , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
         ) :
-            data1(lit.toInt())
+            red_step(redStep)
+            , data1(lit.toInt())
             , type(binary_t)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
@@ -83,13 +86,13 @@ class PropBy
             if (lit == ~lit_Undef)
                 type = null_clause_t;
 
-            data2 = (uint32_t)redStep
-                | ((uint32_t)hyperBin) << 1
+            data2 = ((uint32_t)hyperBin) << 1
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
 
-        PropBy(const Lit lit1, const Lit lit2) :
-            data1(lit1.toInt())
+        PropBy(const Lit lit1, const Lit lit2, const bool redStep) :
+            red_step(redStep)
+            , data1(lit1.toInt())
             , type(tertiary_t)
             , data2(lit2.toInt())
         {
@@ -97,7 +100,7 @@ class PropBy
 
         bool isRedStep() const
         {
-            return data2 & 1U;
+            return red_step;
         }
 
         bool getHyperbin() const

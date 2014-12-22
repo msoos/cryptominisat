@@ -42,7 +42,7 @@ class SharedData
             Spec() {
                 data = new vector<Lit>;
             }
-            Spec(const Spec& other) {
+            Spec(const Spec&) {
                 assert(false);
             }
             Spec(Spec&& other) noexcept :

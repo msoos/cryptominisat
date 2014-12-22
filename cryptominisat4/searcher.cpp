@@ -158,6 +158,10 @@ void Searcher::add_lit_to_learnt(
                     && varData[var].reason.isRedStep()
                 ) {
                     lastDecisionLevel.push_back(std::make_pair(lit, 2));
+                } else if (varData[var].reason.getType() == tertiary_t
+                    && varData[var].reason.isRedStep()
+                ) {
+                    lastDecisionLevel.push_back(std::make_pair(lit, 3));
                 }
             }
         }
@@ -1359,7 +1363,7 @@ void Searcher::add_otf_subsume_implicit_clause()
                 if (it->size == 2) {
                     by = PropBy(it->lits[1], true);
                 } else {
-                    by = PropBy(it->lits[1], it->lits[2]);
+                    by = PropBy(it->lits[1], it->lits[2], true);
                 }
             }
 
@@ -1473,7 +1477,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntTris++;
             std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
+            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
 
             #ifdef STATS_NEEDED
             propStats.propsTriRed++;

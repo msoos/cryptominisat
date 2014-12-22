@@ -510,7 +510,7 @@ PropResult PropEngine::handle_prop_tri_fail(
         << i->lit2() << " , "
         << i->lit3() << endl;
     #endif //VERBOSE_DEBUG_FULLPROP
-    confl = PropBy(~lit1, i->lit3());
+    confl = PropBy(~lit1, i->lit3(), i->red());
 
     //Update stats
     if (i->red())
@@ -583,7 +583,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
             << i->lit2() << " , "
             << i->lit3() << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
-        confl = PropBy(~lit1, i->lit3());
+        confl = PropBy(~lit1, i->lit3(), i->red());
 
         //Update stats
         if (i->red())
@@ -600,9 +600,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
             lit1
             , lit2
             , lit3
-            #ifdef STATS_NEEDED
             , i->red()
-            #endif
         );
         return true;
     }
@@ -612,9 +610,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
             lit1
             , lit3
             , lit2
-            #ifdef STATS_NEEDED
             , i->red()
-            #endif
         );
         return true;
     }
@@ -635,7 +631,7 @@ inline PropResult PropEngine::propTriHelperSimple(
         propStats.propsTriIrred++;
     #endif
 
-    enqueue(lit2, PropBy(~lit1, lit3));
+    enqueue(lit2, PropBy(~lit1, lit3, red));
     return PROP_SOMETHING;
 }
 
@@ -643,9 +639,7 @@ inline void PropEngine::propTriHelperAnyOrder(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    #ifdef STATS_NEEDED
     , const bool red
-    #endif
 ) {
     #ifdef STATS_NEEDED
     if (red)
@@ -655,7 +649,7 @@ inline void PropEngine::propTriHelperAnyOrder(
     #endif
 
     //Lazy hyper-bin is not possibe
-    enqueue(lit2, PropBy(~lit1, lit3));
+    enqueue(lit2, PropBy(~lit1, lit3, red));
 }
 
 PropBy PropEngine::propagateAnyOrder()
