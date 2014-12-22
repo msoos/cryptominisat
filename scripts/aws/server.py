@@ -13,6 +13,7 @@ import time
 import pprint
 import traceback
 import subprocess
+import boto
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -294,3 +295,32 @@ server.handle_all_connections()
         #--count XXX \
         #--monitoring Enabled=false
     #"""
+
+exit(0)
+
+
+import boto.ec2
+conn = boto.ec2.connect_to_region("us-west-2")
+
+ami_id = "ami-61f9a951"
+vpc_id = "vpc-a19248c4"
+
+reservations = conn.get_all_reservations()
+num = 0
+instances = []
+for reservation in reservations:
+    for instance in reservation.instances :
+        if instance.instance_type != "t2.micro" :
+            instances.append([instance.instance_type, instance.placement])
+
+print "client instances running:", instances
+
+requests = conn.get_all_spot_instance_requests()
+print "Active requests:", requests
+for req in requests:
+    if ("%s" % req.status) != "<Status: instance-terminated-by-user>":
+        print "-> ", [req.price, req.status]
+
+
+
+
