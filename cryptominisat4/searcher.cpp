@@ -387,9 +387,16 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         //tot_lbds = tot_lbds - c.lbd() + lbd;
         //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
 
+        if (new_glue <= 6 && red_long_cls_is_reducedb(*cl)) {
+            num_red_cls_reducedb--;
+        }
         cl->stats.glue = new_glue;
+
         if (new_glue <= 30) {
-            cl->stats.ttl++;
+            if (red_long_cls_is_reducedb(*cl)) {
+                num_red_cls_reducedb--;
+            }
+            cl->stats.ttl = std::max<uint16_t>(cl->stats.ttl+1U, std::numeric_limits<uint16_t>::max());
         }
     }
 }
@@ -1969,12 +1976,12 @@ void Searcher::restore_order_heap()
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
-    if (sumConflicts() > solver->getNextCleanLimit()) {
+    if (num_red_cls_reducedb > 20000) {
         if (conf.verbosity >= 3) {
             cout
             << "c "
             << " cleaning"
-            << " getNextCleanLimit(): " << solver->getNextCleanLimit()
+            << " num_irred_cls_reducedb: " << num_red_cls_reducedb
             << " numConflicts : " << stats.conflStats.numConflicts
             << " SumConfl: " << sumConflicts()
             << " maxConfls:" << max_conflicts
@@ -1988,6 +1995,8 @@ void Searcher::reduce_db_if_needed()
             watches.print_stat();
 
         watches.consolidate();
+
+        num_red_cls_reducedb = count_num_red_cls_reducedb();
     }
 }
 
@@ -2107,6 +2116,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     }
 
     resetStats();
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0) {
         restore_order_heap();
@@ -2135,6 +2145,10 @@ lbool Searcher::solve(const uint64_t _maxConfls)
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
+        #ifdef SLOW_DEBUG
+        assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
+        #endif
+
         //Only sort after a while
         //otherwise, we sort all the time for short queries
         if (loop_num == 3
@@ -2169,6 +2183,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         if (must_consolidate_mem) {
             cl_alloc.consolidate(solver);
             must_consolidate_mem = false;
+
+            //TODO complete detach-reattacher cannot count num_red_cls_reducedb
+            num_red_cls_reducedb = count_num_red_cls_reducedb();
         }
     }
 
@@ -2232,7 +2249,7 @@ void Searcher::finish_up_solve(const lbool status)
     if (conf.verbosity >= 4) {
         cout << "c Searcher::solve() finished"
         << " status: " << status
-        << " solver->getNextCleanLimit(): " << solver->getNextCleanLimit()
+        << " num_red_cls_reducedb: " << num_red_cls_reducedb
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << max_conflicts

@@ -42,7 +42,7 @@ SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
-        , startClean(9000)
+        , startClean(20000)
         , increaseClean(1.06)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)

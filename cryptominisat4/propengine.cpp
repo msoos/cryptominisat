@@ -177,6 +177,10 @@ void PropEngine::attachClause(
         assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
     }
 
+    if (c.red() && red_long_cls_is_reducedb(c)) {
+        num_red_cls_reducedb++;
+    }
+
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
         assert(varData[c[i].var()].removed == Removed::none);
@@ -204,6 +208,9 @@ void PropEngine::detach_modified_clause(
     , const Clause* address
 ) {
     assert(origSize > 3);
+    if (address->red() && red_long_cls_is_reducedb(*address)) {
+        num_red_cls_reducedb--;
+    }
 
     ClOffset offset = cl_alloc.get_offset(address);
     removeWCl(watches[lit1.toInt()], offset);
@@ -255,10 +262,13 @@ void PropEngine::update_glue(Clause& c)
         && conf.update_glues_on_prop
     ) {
         const uint32_t new_glue = calc_glue_using_seen2(c);
-        c.stats.glue = std::min(c.stats.glue, new_glue);
         if (new_glue < c.stats.glue) {
-            c.stats.ttl++;
+            if (red_long_cls_is_reducedb(c)) {
+                num_red_cls_reducedb--;
+            }
+            c.stats.ttl = std::max<uint16_t>(c.stats.ttl+1U, std::numeric_limits<uint16_t>::max());
         }
+        c.stats.glue = std::min(c.stats.glue, new_glue);
     }
 }
 

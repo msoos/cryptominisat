@@ -102,6 +102,10 @@ public:
     ImplCache implCache;
     uint32_t minNumVars;
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
+    int64_t num_red_cls_reducedb = 0;
+    bool red_long_cls_is_reducedb(const Clause& cl) const;
+    int64_t count_num_red_cls_reducedb() const;
+
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
     BinTriStats binTri;
     LitStats litStats;
@@ -450,6 +454,24 @@ inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
             << endl;
         }
     }
+}
+
+inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
+{
+    assert(cl.red());
+    return cl.stats.glue > 6 && !cl.stats.locked && cl.stats.ttl == 0;
+}
+
+inline int64_t CNF::count_num_red_cls_reducedb() const
+{
+    int64_t num = 0;
+    for(ClOffset offset: longRedCls) {
+         Clause& cl = *cl_alloc.ptr(offset);
+         if (red_long_cls_is_reducedb(cl)) {
+             num++;
+         }
+    }
+    return num;
 }
 
 }

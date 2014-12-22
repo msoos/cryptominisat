@@ -171,6 +171,9 @@ void VarReplacer::attach_delayed_attach()
         if (c->size() <= 3) {
             solver->cl_alloc.clauseFree(c);
         } else {
+            if (c->red() && solver->red_long_cls_is_reducedb(*c)) {
+                solver->num_red_cls_reducedb--;
+            }
             c->unset_removed();
             solver->attachClause(*c);
         }
@@ -606,6 +609,9 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
+            if (c.red() && solver->red_long_cls_is_reducedb(c)) {
+                solver->num_red_cls_reducedb--;
+            }
             runStats.removedLongClauses++;
             if (!solver->ok) {
                 return false;

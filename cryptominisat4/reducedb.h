@@ -36,26 +36,16 @@ class ReduceDB
 public:
     ReduceDB(Solver* solver);
     void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
-
-    void reset();
-    void reset_increment();
-    void increment_for_next_reduce();
     const CleaningStats& get_cleaning_stats() const;
 
     uint64_t get_nbReduceDB() const
     {
         return nbReduceDB;
     }
-    uint64_t get_nextCleanLimit() const
-    {
-        return nextCleanLimit;
-    }
 
 private:
     Solver* solver;
     uint64_t nbReduceDB = 0;
-    uint64_t nextCleanLimit = 0;
-    uint64_t nextCleanLimitInc;
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 

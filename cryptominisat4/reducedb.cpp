@@ -279,13 +279,10 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
     #endif
+    int64_t num_to_reduce = solver->count_num_red_cls_reducedb();
 
-    #ifdef STATS_NEEDED
-    for(unsigned keep_type = 0; keep_type < 5; keep_type++) {
-    #else
     for(unsigned keep_type = 0; keep_type < 3; keep_type++) {
-    #endif
-        const uint64_t keep_num = (double)solver->longRedCls.size()*solver->conf.ratio_keep_clauses[keep_type];
+        const uint64_t keep_num = (double)num_to_reduce*solver->conf.ratio_keep_clauses[keep_type];
         if (keep_num == 0) {
             continue;
         }
@@ -299,6 +296,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     solver->watches.clear_smudged();
     for(ClOffset offset: delayed_clause_free) {
         solver->cl_alloc.clauseFree(offset);
+        solver->num_red_cls_reducedb--;
     }
     delayed_clause_free.clear();
     solver->unmark_all_red_clauses();
@@ -492,15 +490,6 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
     if (solver->conf.doClearStatEveryClauseCleaning) {
         solver->clear_clauses_stats();
     }
-
-    increment_for_next_reduce();
-}
-
-void ReduceDB::increment_for_next_reduce()
-{
-
-    nextCleanLimit += nextCleanLimitInc;
-    nextCleanLimitInc *= solver->conf.increaseClean;
 }
 
 ClauseUsageStats ReduceDB::sumClauseData(
@@ -554,20 +543,4 @@ ClauseUsageStats ReduceDB::sumClauseData(
     }*/
 
     return stats;
-}
-
-void ReduceDB::reset_increment()
-{
-    nextCleanLimitInc = solver->conf.startClean;
-}
-
-void ReduceDB::reset()
-{
-    if (solver->conf.startClean < 100) {
-        cout << "SolverConf::startclean must be at least 100. Option on command line is '--startclean'" << endl;
-        exit(-1);
-    }
-
-    nextCleanLimitInc = solver->conf.startClean;
-    nextCleanLimit = solver->sumConflicts() + nextCleanLimitInc;
 }

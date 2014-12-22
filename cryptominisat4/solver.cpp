@@ -1322,11 +1322,6 @@ void Solver::check_config_parameters() const
 
 lbool Solver::solve()
 {
-    if (solveStats.num_solve_calls == 0) {
-        reduceDB->reset();
-    }
-    reduceDB->reset_increment();
-
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
@@ -3289,11 +3284,6 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
 void Solver::bva_changed()
 {
     datasync->rebuild_bva_map();
-}
-
-uint64_t Solver::getNextCleanLimit() const
-{
-    return reduceDB->get_nextCleanLimit();
 }
 
 void Solver::open_file_and_dump_irred_clauses(string fname) const
