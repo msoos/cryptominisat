@@ -80,7 +80,7 @@ class ClauseCleaner
         );
 
         bool satisfied(const Watched& watched, Lit lit);
-        bool clean_clause(ClOffset c);
+        bool clean_clause(Clause& c);
 
         Solver* solver;
 };

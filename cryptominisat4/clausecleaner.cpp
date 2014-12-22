@@ -206,10 +206,12 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
     size_t at = 0;
     for (s = ss = cs.begin(), end = cs.end();  s != end; s++, at++) {
         if (at + 1 < cs.size()) {
-            Clause* cl = solver->cl_alloc.ptr(cs[at+1]);
-            __builtin_prefetch(cl);
+            Clause* pre_cl = solver->cl_alloc.ptr(cs[at+1]);
+            __builtin_prefetch(pre_cl);
         }
-        if (clean_clause(*s)) {
+
+        Clause& cl = *solver->cl_alloc.ptr(*s);
+        if (clean_clause(cl)) {
             solver->cl_alloc.clauseFree(*s);
         } else {
             *ss++ = *s;
@@ -222,10 +224,9 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
     #endif
 }
 
-inline bool ClauseCleaner::clean_clause(ClOffset offset)
+inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
     assert(!solver->drup->something_delayed());
-    Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(cl.size() > 3);
     const uint32_t origSize = cl.size();
 
