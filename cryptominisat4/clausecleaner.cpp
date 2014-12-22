@@ -267,10 +267,11 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
             solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return true;
         } else {
-            if (cl.red())
+            if (cl.red()) {
                 solver->litStats.redLits -= i-j;
-            else
+            } else {
                 solver->litStats.irredLits -= i-j;
+            }
         }
     }
 
