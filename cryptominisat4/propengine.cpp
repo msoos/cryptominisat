@@ -231,7 +231,7 @@ inline bool PropEngine::propBinaryClause(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue(i->lit2(), PropBy(~p));
+        enqueue(i->lit2(), PropBy(~p, i->red()));
     } else if (val == l_False) {
         //Update stats
         if (i->red())
@@ -239,7 +239,7 @@ inline bool PropEngine::propBinaryClause(
         else
             lastConflictCausedBy = ConflCausedBy::binirred;
 
-        confl = PropBy(~p);
+        confl = PropBy(~p, i->red());
         failBinLit = i->lit2();
         qhead = trail.size();
         return false;

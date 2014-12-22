@@ -58,9 +58,10 @@ class PropBy
         {
         }
 
-        PropBy(const Lit lit) :
+        PropBy(const Lit lit, bool red) :
             data1(lit.toInt())
             , type(binary_t)
+            , data2(red)
         {
         }
 

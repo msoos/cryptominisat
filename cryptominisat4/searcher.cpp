@@ -148,11 +148,16 @@ void Searcher::add_lit_to_learnt(
             if (update_polarity_and_activity
                 && params.rest_type != restart_type_geom
                 && varData[var].reason != PropBy()
-                && varData[var].reason.getType() == clause_t
             ) {
-                Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
-                if (cl->red()) {
-                    lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
+                if (varData[var].reason.getType() == clause_t) {
+                    Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
+                    if (cl->red()) {
+                        lastDecisionLevel.push_back(std::make_pair(lit, cl->stats.glue));
+                    }
+                } else if (varData[var].reason.getType() == binary_t
+                    && varData[var].reason.isRedStep()
+                ) {
+                    lastDecisionLevel.push_back(std::make_pair(lit, 2));
                 }
             }
         }
@@ -1345,7 +1350,7 @@ void Searcher::add_otf_subsume_implicit_clause()
             //if decision level is non-zero, we have to be more careful
             if (decisionLevel() != 0) {
                 if (it->size == 2) {
-                    by = PropBy(it->lits[1]);
+                    by = PropBy(it->lits[1], true);
                 } else {
                     by = PropBy(it->lits[1], it->lits[2]);
                 }
@@ -1449,7 +1454,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            enqueue(learnt_clause[0], PropBy(learnt_clause[1], true));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;

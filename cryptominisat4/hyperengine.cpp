@@ -1002,7 +1002,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             lastConflictCausedBy = ConflCausedBy::binirred;
 
         failBinLit = lit;
-        confl = PropBy(~p);
+        confl = PropBy(~p, k->red());
         return PROP_FAIL;
 
     } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
