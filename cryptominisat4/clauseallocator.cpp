@@ -282,6 +282,9 @@ void ClauseAllocator::consolidate(
         tmpDataStart += sz;
     }
 
+    //Update offsets & pointers(?) now, when everything is in memory still
+    updateAllOffsetsAndPointers(solver, newOffsets);
+
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
         cout << "c [mem] Consolidated memory ";
@@ -298,9 +301,6 @@ void ClauseAllocator::consolidate(
             , time_used
         );
     }
-
-    //Update offsets & pointers(?) now, when everything is in memory still
-    updateAllOffsetsAndPointers(solver, newOffsets);
 
     //Update sizes
     size = newSize;
