@@ -34,12 +34,12 @@ parser.add_option("--port", "-p"
                     )
 
 parser.add_option("--tout", "-t"
-                    , default=30*60, dest="timeout_in_secs"
+                    , default=6000, dest="timeout_in_secs"
                     , help="Timeout for the file in seconds", type=int
                     )
 
 parser.add_option("--extratime"
-                    , default=60, dest="extra_time"
+                    , default=7*60, dest="extra_time"
                     , help="Timeout for the server to send us the results", type=int
                     )
 
