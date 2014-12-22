@@ -660,6 +660,7 @@ PropBy PropEngine::propagateAnyOrder()
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[(~p).toInt()];
 
+        /*
         //propagate bin & tri
         for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
             if (i->isBinary()) {
@@ -676,7 +677,7 @@ PropBy PropEngine::propagateAnyOrder()
                 }
                 continue;
             }
-        }
+        }*/
 
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = ws.begin();
@@ -684,6 +685,25 @@ PropBy PropEngine::propagateAnyOrder()
         propStats.bogoProps += ws.size()/4 + 1;
 
         for (; i != end; i++) {
+            if (i->isBinary()) {
+                *j++ = *i;
+                if (!propBinaryClause(i, p, confl)) {
+                    i++;
+                    break;
+                }
+                continue;
+            }
+
+            //Propagate tri clause
+            if (i->isTri()) {
+                *j++ = *i;
+                if (!propTriClauseAnyOrder(i, p, confl)) {
+                    i++;
+                    break;
+                }
+                continue;
+            }
+
             //propagate normal clause
             if (i->isClause()) {
                 if (!propNormalClauseAnyOrder(i, j, p, confl)) {
@@ -691,9 +711,9 @@ PropBy PropEngine::propagateAnyOrder()
                     break;
                 }
                 continue;
-            } else {
+            }/* else {
                 *j++ = *i;
-            }
+            }*/
         }
         while (i != end) {
             *j++ = *i++;
