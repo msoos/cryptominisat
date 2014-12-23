@@ -223,7 +223,7 @@ SolverConf::SolverConf() :
         , doFindEqLitsWithGates(true)
         , gatefinder_time_limitM(200)
         , shorten_with_gates_time_limitM(200)
-        , remove_cl_with_gates_time_limitM(200)
+        , remove_cl_with_gates_time_limitM(100)
 
         //Misc
         , orig_global_timeout_multiplier(1.0)
