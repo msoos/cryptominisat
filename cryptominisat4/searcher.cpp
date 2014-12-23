@@ -392,7 +392,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         //tot_lbds = tot_lbds - c.lbd() + lbd;
         //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
 
-        if (new_glue <= 6 && red_long_cls_is_reducedb(*cl)) {
+        if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq && red_long_cls_is_reducedb(*cl)) {
             num_red_cls_reducedb--;
         }
         cl->stats.glue = new_glue;
@@ -1284,7 +1284,9 @@ void Searcher::add_otf_subsume_long_clauses()
     for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
         const ClOffset offset = otf_subsuming_long_cls[i];
         Clause& cl = *solver->cl_alloc.ptr(offset);
+        #ifdef STATS_NEEDED
         cl.stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
+        #endif
 
         //Find the l_Undef
         size_t at = std::numeric_limits<size_t>::max();
@@ -1572,7 +1574,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (cl->red() && cl->stats.glue > glue) {
         cl->stats.glue = glue;
     }
+    #ifdef STATS_NEEDED
     cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
+    #endif
 
     return cl;
 }
@@ -2954,6 +2958,7 @@ void Searcher::decayClauseAct()
 
 void Searcher::bumpClauseAct(Clause* cl)
 {
+    #ifdef STATS_NEEDED
     cl->stats.activity += clauseActivityIncrease;
     if (cl->stats.activity > 1e20 ) {
         // Rescale
@@ -2967,6 +2972,7 @@ void Searcher::bumpClauseAct(Clause* cl)
         clauseActivityIncrease *= 1e-20;
         clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
     }
+    #endif
 }
 
 PropBy Searcher::propagate(

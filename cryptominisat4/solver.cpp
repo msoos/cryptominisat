@@ -374,7 +374,9 @@ Clause* Solver::add_clause_int(
     #endif //VERBOSE_DEBUG
 
     //Make stats sane
+    #ifdef STATS_NEEDED
     stats.introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts(), stats.introduced_at_conflict);
+    #endif
 
     vector<Lit> ps = lits;
 

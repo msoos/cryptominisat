@@ -344,8 +344,10 @@ PropResult PropEngine::handle_normal_prop_fail(
     #endif //VERBOSE_DEBUG_FULLPROP
 
     //Update stats
+    #ifdef STATS_NEEDED
     c.stats.conflicts_made++;
     c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
+    #endif
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
@@ -473,8 +475,10 @@ bool PropEngine::propNormalClauseAnyOrder(
         #endif //VERBOSE_DEBUG_FULLPROP
 
         //Update stats
+        #ifdef STATS_NEEDED
         c.stats.conflicts_made++;
         c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
+        #endif
         if (c.red())
             lastConflictCausedBy = ConflCausedBy::longred;
         else

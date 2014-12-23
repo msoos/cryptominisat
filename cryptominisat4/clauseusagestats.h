@@ -58,8 +58,8 @@ struct ClauseUsageStats
     void addStat(const Clause& cl)
     {
         num++;
-        sumConfl += cl.stats.conflicts_made;
         #ifdef STATS_NEEDED
+        sumConfl += cl.stats.conflicts_made;
         sumProp += cl.stats.propagations_made;
         sumLitVisited += cl.stats.visited_literals;
         sumLookedAt += cl.stats.clause_looked_at;

@@ -80,10 +80,10 @@ struct CleaningStats
             num ++;
             lits += cl->size();
             glue += cl->stats.glue;
-            act += cl->stats.activity;
-            numConfl += cl->stats.conflicts_made;
 
             #ifdef STATS_NEEDED
+            act += cl->stats.activity;
+            numConfl += cl->stats.conflicts_made;
             numLitVisited += cl->stats.visited_literals;
             numLookedAt += cl->stats.clause_looked_at;
             numProp += cl->stats.propagations_made;

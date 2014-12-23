@@ -90,7 +90,6 @@ struct ClauseStats
         return ((double)propagations_made)*prop_weight
             + ((double)conflicts_made)*confl_weight;
     }
-    #endif
 
     double calc_usefulness_depth() const
     {
@@ -104,14 +103,15 @@ struct ClauseStats
         }
         return useful;
     }
+    #endif
 
     //Stored data
     uint32_t glue = std::numeric_limits<uint32_t>::max();
+    #ifdef STATS_NEEDED
     double   activity = 0.0;
     uint64_t introduced_at_conflict = std::numeric_limits<uint32_t>::max(); ///<At what conflict number the clause  was introduced
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
-    #ifdef STATS_NEEDED
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t visited_literals = 0; ///<Number of literals visited
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
@@ -127,10 +127,10 @@ struct ClauseStats
 
     void clear(const double multiplier)
     {
+        #ifdef STATS_NEEDED
         activity = 0;
         conflicts_made = (double)conflicts_made * multiplier;
         sum_of_branch_depth_conflict = (double)sum_of_branch_depth_conflict * multiplier;
-        #ifdef STATS_NEEDED
         propagations_made = (double)propagations_made * multiplier;
         visited_literals = 0;
         clause_looked_at = 0;
@@ -145,11 +145,11 @@ struct ClauseStats
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
+        #ifdef STATS_NEEDED
         ret.activity = std::max(first.activity, second.activity);
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
-        #ifdef STATS_NEEDED
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.visited_literals = first.visited_literals + second.visited_literals;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
@@ -165,9 +165,9 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 {
 
     os << "glue " << stats.glue << " ";
+    #ifdef STATS_NEEDED
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
     os << "numConfl " << stats.conflicts_made<< " ";
-    #ifdef STATS_NEEDED
     os << "numProp " << stats.propagations_made<< " ";
     os << "numLitVisit " << stats.visited_literals<< " ";
     os << "numLook " << stats.clause_looked_at<< " ";
@@ -216,7 +216,9 @@ public:
     {
         //assert(ps.size() > 2);
 
+        #ifdef STATS_NEEDED
         stats.introduced_at_conflict = _introduced_at_conflict;
+        #endif
         stats.glue = std::min<uint32_t>(stats.glue, ps.size());
         isFreed = false;
         mySize = ps.size();
@@ -392,9 +394,9 @@ public:
         if (red()) {
             cout << " glue : " << std::setw(4) << stats.glue;
         }
+        #ifdef STATS_NEEDED
         cout
         << " Confls: " << std::setw(10) << stats.conflicts_made
-        #ifdef STATS_NEEDED
         << " Props: " << std::setw(10) << stats.propagations_made
         << " Lit visited: " << std::setw(10)<< stats.visited_literals
         << " Looked at: " << std::setw(10)<< stats.clause_looked_at
@@ -404,8 +406,8 @@ public:
             << std::setw(6) << std::fixed << std::setprecision(4)
             << (10.0*(double)stats.weighted_prop_and_confl(1.0, 1.0)/(double)stats.visited_literals);
         }
-        #endif
         ;
+        #endif
         cout << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
         cout << endl;
     }

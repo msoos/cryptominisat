@@ -80,6 +80,8 @@ struct SortRedClsSize
         return x->stats.glue < y->stats.glue;
     }
 };
+
+#ifdef STATS_NEEDED
 struct SortRedClsAct
 {
     SortRedClsAct(ClauseAllocator& _cl_alloc) :
@@ -107,7 +109,6 @@ struct SortRedClsAct
     }
 };
 
-#ifdef STATS_NEEDED
 struct SortRedClsPropConfl
 {
     SortRedClsPropConfl(
@@ -207,12 +208,12 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
             break;
         }
 
+        #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_activity_based : {
             std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             break;
         }
 
-        #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_prop_confl_based : {
             std::sort(solver->longRedCls.begin()
                 , solver->longRedCls.end()
@@ -409,17 +410,22 @@ void ReduceDB::lock_most_UIP_used_clauses()
     }
 }
 
+#ifdef STATS_NEEDED
 bool ReduceDB::red_cl_too_young(const Clause* cl) const
 {
     return cl->stats.introduced_at_conflict + solver->conf.min_time_in_db_before_eligible_for_cleaning
             >= solver->sumConflicts();
 }
+#endif
 
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
-    return !red_cl_too_young(cl)
-         && !cl->stats.locked
+    return
+         !cl->stats.locked
+         #ifdef STATS_NEEDED
+         && !red_cl_too_young(cl)
+        #endif
          && !cl->stats.marked_clause
          && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
          && cl->stats.ttl == 0
@@ -445,7 +451,9 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
             }
             solver->longRedCls[j++] = offset;
             tmpStats.remain.incorporate(cl);
+            #ifdef STATS_NEEDED
             tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
+            #endif
             continue;
         }
 
@@ -454,7 +462,9 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         solver->watches.smudge((*cl)[0]);
         solver->watches.smudge((*cl)[1]);
         tmpStats.removed.incorporate(cl);
+        #ifdef STATS_NEEDED
         tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
+        #endif
         solver->litStats.redLits -= cl->size();
 
         *solver->drup << del << *cl << fin;
