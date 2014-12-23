@@ -394,7 +394,9 @@ void ReduceDB::lock_most_UIP_used_clauses()
     ) {
         const ClOffset offs = solver->longRedCls[i];
         Clause& cl = *solver->cl_alloc.ptr(offs);
-        if (!cl.stats.locked) {
+        if (!cl.stats.locked
+            && cl.stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
+        ) {
             cl.stats.locked = true;
             locked++;
             //std::cout << "Locked: " << cl << endl;
