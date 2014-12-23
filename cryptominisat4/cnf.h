@@ -459,7 +459,7 @@ inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
 inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
 {
     assert(cl.red());
-    return cl.stats.glue > 6 && !cl.stats.locked && cl.stats.ttl == 0;
+    return cl.stats.glue > conf.glue_must_keep_clause_if_below_or_eq && !cl.stats.locked && cl.stats.ttl == 0;
 }
 
 inline int64_t CNF::count_num_red_cls_reducedb() const
