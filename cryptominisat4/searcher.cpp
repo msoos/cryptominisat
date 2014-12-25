@@ -493,7 +493,7 @@ void Searcher::minimize_learnt_clause()
     stats.recMinLitRem += origSize - learnt_clause.size();
 }
 
-void Searcher::mimimize_learnt_clause_based_on_cache()
+void Searcher::mimimize_learnt_clause_more_maybe()
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
@@ -676,7 +676,7 @@ Clause* Searcher::analyze_conflict(
     Clause* last_resolved_long_cl = create_learnt_clause(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
-    mimimize_learnt_clause_based_on_cache();
+    mimimize_learnt_clause_more_maybe();
     print_fully_minimized_learnt_clause();
 
     glue = calc_glue_using_seen2(learnt_clause);
