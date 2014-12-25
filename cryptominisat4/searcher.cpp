@@ -386,7 +386,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         return;
     }
 
-    const unsigned new_glue = calc_glue_using_seen2_upper_bit(*cl);
+    const unsigned new_glue = calc_glue_using_seen2_upper_bit_no_zero_lev(*cl);
 
     if (new_glue + 1 < cl->stats.glue) {
         //tot_lbds = tot_lbds - c.lbd() + lbd;

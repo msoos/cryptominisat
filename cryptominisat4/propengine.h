@@ -133,7 +133,7 @@ protected:
     void new_vars(const size_t n) override;
     void save_on_var_memory();
     template<class T> uint32_t calc_glue_using_seen2(const T& ps);
-    template<class T> uint32_t calc_glue_using_seen2_upper_bit(const T& ps);
+    template<class T> uint32_t calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps);
 
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
@@ -420,13 +420,16 @@ uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
 }
 
 template<class T>
-uint32_t PropEngine::calc_glue_using_seen2_upper_bit(const T& ps)
+uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
 {
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;
 
     for(l = ps.begin(), end = ps.end(); l != end; l++) {
         uint32_t lev = varData[l->var()].level;
+        if (lev == 0) {
+            continue;
+        }
         if (!(seen2[lev] & 2)) {
             nbLevels++;
             seen2[lev] |= 2;
