@@ -3356,7 +3356,7 @@ void Solver::ReachabilityStats::print() const
     );
 
     print_stats_line("c avg num. dominated lits"
-        , (double)numLitsDependent/(double)dominators
+        , ratio_for_stat(numLitsDependent, dominators)
     );
 
     cout << "c ------- REACHABILITY STATS END -------" << endl;

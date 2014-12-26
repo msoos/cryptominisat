@@ -414,7 +414,7 @@ class Searcher : public HyperEngine
 
                 print_stats_line("c otf-subs"
                     , otfSubsumed
-                    , (double)otfSubsumed/(double)conflStats.numConflicts
+                    , ratio_for_stat(otfSubsumed, conflStats.numConflicts)
                     , "/conflict"
                 );
 
@@ -438,7 +438,7 @@ class Searcher : public HyperEngine
 
                 print_stats_line("c otf-subs lits gained"
                     , otfSubsumedLitsGained
-                    , (double)otfSubsumedLitsGained/(double)otfSubsumed
+                    , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
                     , "lits/otf subsume"
                 );
 
@@ -448,24 +448,24 @@ class Searcher : public HyperEngine
                 );
                 print_stats_line("c hyper-bin add bin"
                     , hyperBinAdded
-                    , (double)hyperBinAdded/(double)advancedPropCalled
+                    , ratio_for_stat(hyperBinAdded, advancedPropCalled)
                     , "bin/call"
                 );
                 print_stats_line("c trans-red rem irred bin"
                     , transReduRemIrred
-                    , (double)transReduRemIrred/(double)advancedPropCalled
+                    , ratio_for_stat(transReduRemIrred, advancedPropCalled)
                     , "bin/call"
                 );
                 print_stats_line("c trans-red rem red bin"
                     , transReduRemRed
-                    , (double)transReduRemRed/(double)advancedPropCalled
+                    , ratio_for_stat(transReduRemRed, advancedPropCalled)
                     , "bin/call"
                 );
 
                 cout << "c CONFL LITS stats" << endl;
                 print_stats_line("c orig "
                     , litsRedNonMin
-                    , (double)litsRedNonMin/(double)conflStats.numConflicts
+                    , ratio_for_stat(litsRedNonMin, conflStats.numConflicts)
                     , "lit/confl"
                 );
 
@@ -512,7 +512,7 @@ class Searcher : public HyperEngine
                 );
 
                 print_stats_line("c final avg"
-                    , (double)litsRedFinal/(double)conflStats.numConflicts
+                    , ratio_for_stat(litsRedFinal, conflStats.numConflicts)
                 );
 
                 //General stats
