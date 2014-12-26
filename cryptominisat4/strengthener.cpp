@@ -924,7 +924,7 @@ void Strengthener::Stats::CacheBased::print() const
 {
     print_stats_line("c time"
         , cpu_time
-        , numCalled ? cpu_time/(double)numCalled : 0
+        , ratio_for_stat(cpu_time, numCalled)
         , "s/call"
     );
 

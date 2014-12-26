@@ -192,6 +192,13 @@ class AgilityData
         double agility;
 };
 
+inline double ratio_for_stat(double a, double b)
+{
+    if (b == 0)
+        return 0;
+    return a/b;
+}
+
 inline double stats_line_percent(double num, double total)
 {
     if (total == 0) {
@@ -363,17 +370,17 @@ struct PropStats
     {
         cout << "c PROP stats" << endl;
         print_stats_line("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
-            , (double)bogoProps/(cpu_time*1000.0*1000.0)
+            , ratio_for_stat(bogoProps, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
         print_stats_line("c MHyper-props", (double)otfHyperTime/(1000.0*1000.0)
-            , (double)otfHyperTime/(cpu_time*1000.0*1000.0)
+            , ratio_for_stat(otfHyperTime, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
         print_stats_line("c Mprops", (double)propagations/(1000.0*1000.0)
-            , (double)propagations/(cpu_time*1000.0*1000.0)
+            , ratio_for_stat(propagations, cpu_time*1000.0*1000.0)
             , "/ sec"
         );
 
@@ -528,7 +535,7 @@ struct ConflStats
     {
         //Search stats
         print_stats_line("c conflicts", numConflicts
-            , (double)numConflicts/cpu_time
+            , ratio_for_stat(numConflicts, cpu_time)
             , "/ sec"
         );
     }

@@ -461,7 +461,7 @@ void Distiller::Stats::print(const size_t nVars) const
     cout << "c -------- DISTILL STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , numCalled ? time_used/(double)numCalled : 0
+        , ratio_for_stat(time_used, numCalled)
         , "per call"
     );
 

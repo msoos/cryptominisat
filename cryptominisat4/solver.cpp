@@ -2764,7 +2764,7 @@ void Solver::print_clause_stats() const
     print_value_kilo_mega(binTri.irredBins);
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
-    << (longIrredCls.size() ? ((double)litStats.irredLits/(double)(longIrredCls.size())) : 0) ;
+    << ratio_for_stat(litStats.irredLits, longIrredCls.size());
 
     //Redundant
     print_value_kilo_mega(longRedCls.size());
@@ -2772,8 +2772,7 @@ void Solver::print_clause_stats() const
     print_value_kilo_mega(binTri.redBins);
     cout
     << " " << std::setw(5) << std::fixed << std::setprecision(1)
-    << (longRedCls.size() ? ((double)litStats.redLits/(double)(longRedCls.size())): 0)
-    ;
+    << ratio_for_stat(litStats.redLits, longRedCls.size());
 }
 
 void Solver::check_implicit_stats() const

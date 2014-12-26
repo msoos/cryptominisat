@@ -47,33 +47,6 @@ class Prober {
 
         struct Stats
         {
-            Stats() :
-                //Time
-                cpu_time(0)
-                , timeAllocated(0)
-                , numCalls(0)
-
-                //Probe stats
-                , numFailed(0)
-                , numProbed(0)
-                , numLoopIters(0)
-                , numVarProbed(0)
-                , numVisited(0)
-                , zeroDepthAssigns(0)
-
-                //Bins
-                , addedBin(0)
-                , removedIrredBin(0)
-                , removedRedBin(0)
-
-                //Compare against
-                , origNumFreeVars(0)
-                , origNumBins(0)
-
-                //bothProp
-                , bothSameAdded(0)
-            {}
-
             void clear()
             {
                 Stats tmp;
@@ -119,19 +92,19 @@ class Prober {
                 cout << "c -------- PROBE STATS ----------" << endl;
                 print_stats_line("c probe time"
                     , cpu_time
-                    , (double)timeAllocated/(cpu_time*1000.0*1000.0)
+                    , ratio_for_stat(timeAllocated, cpu_time*1000.0*1000.0)
                     , "(Mega BP+HP)/s"
                 );
 
                 print_stats_line("c called"
                     , numCalls
-                    , numCalls ? cpu_time/(double)numCalls : 0
+                    , ratio_for_stat(cpu_time, numCalls)
                     , "s/call"
                 );
 
                 print_stats_line("c unused Mega BP+HP"
                     , (double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))/(1000.0*1000.0)
-                    , (cpu_time/(double)(propStats.bogoProps + propStats.otfHyperTime))*(double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))
+                    , ratio_for_stat(cpu_time, propStats.bogoProps + propStats.otfHyperTime)*(double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))
                     , "est. secs"
                 );
 
@@ -148,7 +121,7 @@ class Prober {
 
                 print_stats_line("c probed"
                     , numProbed
-                    , (double)numProbed/cpu_time
+                    , ratio_for_stat(numProbed, cpu_time)
                     , "probe/sec"
                 );
 
@@ -206,33 +179,33 @@ class Prober {
             void print_short(const Solver* solver, const bool time_out, const double time_remain) const;
 
             //Time
-            double cpu_time;
-            uint64_t timeAllocated;
-            uint64_t numCalls;
+            double cpu_time = 0;
+            uint64_t timeAllocated = 0;
+            uint64_t numCalls = 0;
 
             //Probe stats
-            uint64_t numFailed;
-            uint64_t numProbed;
-            uint64_t numLoopIters;
-            uint64_t numVarProbed;
-            uint64_t numVisited;
-            uint64_t zeroDepthAssigns;
+            uint64_t numFailed = 0;
+            uint64_t numProbed = 0;
+            uint64_t numLoopIters = 0;
+            uint64_t numVarProbed = 0;
+            uint64_t numVisited = 0;
+            uint64_t zeroDepthAssigns = 0;
 
             //Propagation stats
             PropStats propStats;
             ConflStats conflStats;
 
             //Binary clause
-            uint64_t addedBin;
-            uint64_t removedIrredBin;
-            uint64_t removedRedBin;
+            uint64_t addedBin = 0;
+            uint64_t removedIrredBin = 0;
+            uint64_t removedRedBin = 0;
 
             //Compare against
-            uint64_t origNumFreeVars;
-            uint64_t origNumBins;
+            uint64_t origNumFreeVars = 0;
+            uint64_t origNumBins = 0;
 
             //Bothprop
-            uint64_t bothSameAdded;
+            uint64_t bothSameAdded = 0;
         };
 
         const Stats& get_stats() const;
