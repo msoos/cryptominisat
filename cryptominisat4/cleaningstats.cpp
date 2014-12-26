@@ -57,10 +57,10 @@ void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) 
         , "% long red lits"
     );
     print_stats_line("c cleaned cl avg size"
-        , (double)removed.lits/(double)removed.num
+        , removed.num ? (double)removed.lits/(double)removed.num : 0
     );
     print_stats_line("c cleaned avg glue"
-        , (double)removed.glue/(double)removed.num
+        , removed.num ? (double)removed.glue/(double)removed.num : 0
     );
 
     //--> REMAIN
@@ -75,10 +75,10 @@ void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) 
         , "% long red lits"
     );
     print_stats_line("c remain cl avg size"
-        , (double)remain.lits/(double)remain.num
+        , remain.num ? (double)remain.lits/(double)remain.num : 0
     );
     print_stats_line("c remain avg glue"
-        , (double)remain.glue/(double)remain.num
+        , remain.num ? (double)remain.glue/(double)remain.num : 0
     );
 
     cout << "c ------ REDUCEDB STATS END ---------" << endl;

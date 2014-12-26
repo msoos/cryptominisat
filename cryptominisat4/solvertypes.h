@@ -291,28 +291,6 @@ struct AssignStats
 
 struct PropStats
 {
-    PropStats() :
-        propagations(0)
-        , bogoProps(0)
-        , otfHyperTime(0)
-        , otfHyperPropCalled(0)
-        #ifdef STATS_NEEDED
-        , propsUnit(0)
-        , propsBinIrred(0)
-        , propsBinRed(0)
-        , propsTriIrred(0)
-        , propsTriRed(0)
-        , propsLongIrred(0)
-        , propsLongRed(0)
-        #endif
-
-        //Var setsing
-        , varSetPos(0)
-        , varSetNeg(0)
-        , varFlipped(0)
-    {
-    }
-
     void clear()
     {
         PropStats tmp;
@@ -453,26 +431,26 @@ struct PropStats
 
     }
 
-    uint64_t propagations; ///<Number of propagations made
-    uint64_t bogoProps;    ///<An approximation of time
-    uint64_t otfHyperTime;
-    uint32_t otfHyperPropCalled;
+    uint64_t propagations = 0; ///<Number of propagations made
+    uint64_t bogoProps = 0;    ///<An approximation of time
+    uint64_t otfHyperTime = 0;
+    uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED
     //Stats for propagations
-    uint64_t propsUnit;
-    uint64_t propsBinIrred;
-    uint64_t propsBinRed;
-    uint64_t propsTriIrred;
-    uint64_t propsTriRed;
-    uint64_t propsLongIrred;
-    uint64_t propsLongRed;
+    uint64_t propsUnit = 0;
+    uint64_t propsBinIrred = 0;
+    uint64_t propsBinRed = 0;
+    uint64_t propsTriIrred = 0;
+    uint64_t propsTriRed = 0;
+    uint64_t propsLongIrred = 0;
+    uint64_t propsLongRed = 0;
     #endif
 
     //Var settings
-    uint64_t varSetPos;
-    uint64_t varSetNeg;
-    uint64_t varFlipped;
+    uint64_t varSetPos = 0;
+    uint64_t varSetNeg = 0;
+    uint64_t varFlipped = 0;
 };
 
 enum class ConflCausedBy {
@@ -486,16 +464,6 @@ enum class ConflCausedBy {
 
 struct ConflStats
 {
-    ConflStats() :
-        conflsBinIrred(0)
-        , conflsBinRed(0)
-        , conflsTriIrred(0)
-        , conflsTriRed(0)
-        , conflsLongIrred(0)
-        , conflsLongRed(0)
-        , numConflicts(0)
-    {}
-
     void clear()
     {
         ConflStats tmp;
@@ -622,15 +590,15 @@ struct ConflStats
         }
     }
 
-    uint64_t conflsBinIrred;
-    uint64_t conflsBinRed;
-    uint64_t conflsTriIrred;
-    uint64_t conflsTriRed;
-    uint64_t conflsLongIrred;
-    uint64_t conflsLongRed;
+    uint64_t conflsBinIrred = 0;
+    uint64_t conflsBinRed = 0;
+    uint64_t conflsTriIrred = 0;
+    uint64_t conflsTriRed = 0;
+    uint64_t conflsLongIrred = 0;
+    uint64_t conflsLongRed = 0;
 
     ///Number of conflicts
-    uint64_t  numConflicts;
+    uint64_t  numConflicts = 0;
 };
 
 inline void orderLits(
