@@ -212,7 +212,12 @@ public:
     ClauseStats stats;
 
     template<class V>
-    Clause(const V& ps, const uint32_t _introduced_at_conflict)
+    Clause(const V& ps
+        , const uint32_t
+        #ifdef STATS_NEEDED
+        _introduced_at_conflict
+        #endif
+        )
     {
         //assert(ps.size() > 2);
 
