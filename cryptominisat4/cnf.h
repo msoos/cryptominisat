@@ -331,6 +331,10 @@ void CNF::for_each_lit_except_watched(
             }
             break;
         }
+
+        case CMSat::watch_idx_t:
+            assert(false);
+            break;
     }
 }
 
