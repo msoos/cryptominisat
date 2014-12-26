@@ -838,8 +838,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     case PropByType::clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
                         assert(value(cl[0]) == l_True);
-                        for(uint32_t i = 1; i < cl.size(); i++) {
-                            const Lit lit = cl[i];
+                        for(const Lit lit: cl) {
                             if (varData[lit.var()].level > 0) {
                                 seen[lit.var()] = 1;
                             }
