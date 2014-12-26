@@ -3431,6 +3431,8 @@ Var Solver::num_active_vars() const
                 removed_replaced++;
                 continue;
                 break;
+            case Removed::none:
+                break;
         }
         if (!varData[var].is_decision) {
             removed_non_decision++;
