@@ -34,7 +34,6 @@ BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
     , simplifier(_simplifier)
     , seen(solver->seen)
     , seen2(solver->seen2)
-    , toClear(solver->toClear)
     , var_bva_order(VarBVAOrder(watch_irred_sizes))
 {}
 

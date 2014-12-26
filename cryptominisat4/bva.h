@@ -45,7 +45,6 @@ private:
     Simplifier* simplifier;
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
-    vector<Lit>& toClear;
 
     bool bva_verbosity = 0;
     size_t bva_worked;
