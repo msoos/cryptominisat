@@ -3138,19 +3138,15 @@ void Solver::calculate_reachability()
 
         const vector<LitExtra>& cache = implCache[lit.toInt()].lits;
         uint32_t cacheSize = cache.size();
-        for (vector<LitExtra>::const_iterator
-            it = cache.begin(), end = cache.end()
-            ; it != end
-            ; it++
-        ) {
-            assert(it->getLit() != lit);
-            assert(it->getLit() != ~lit);
+        for (const LitExtra litex: cache) {
+            assert(litex.getLit() != lit);
+            assert(litex.getLit() != ~lit);
 
-            if (litReachable[it->getLit().toInt()].lit == lit_Undef
-                || litReachable[it->getLit().toInt()].numInCache < cacheSize
+            if (litReachable[litex.getLit().toInt()].lit == lit_Undef
+                || litReachable[litex.getLit().toInt()].numInCache < cacheSize
             ) {
-                litReachable[it->getLit().toInt()].lit = ~lit;
-                litReachable[it->getLit().toInt()].numInCache = cacheSize;
+                litReachable[litex.getLit().toInt()].lit = ~lit;
+                litReachable[litex.getLit().toInt()].numInCache = cacheSize;
             }
         }
     }
