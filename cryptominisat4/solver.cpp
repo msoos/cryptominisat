@@ -349,6 +349,36 @@ unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
 }
 
 
+bool Solver::sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl)
+{
+    std::sort(ps.begin(), ps.end());
+    Lit p = lit_Undef;
+    uint32_t i, j;
+    for (i = j = 0; i != ps.size(); i++) {
+        if (value(ps[i]) == l_True || ps[i] == ~p)
+            return false;
+        else if (value(ps[i]) != l_False && ps[i] != p) {
+            ps[j++] = p = ps[i];
+
+            if (varData[p.var()].removed != Removed::none) {
+                cout << "ERROR: clause " << origCl << " contains literal "
+                << p << " whose variable has been removed (removal type: "
+                << removed_type_to_string(varData[p.var()].removed)
+                << " var-updated lit: "
+                << varReplacer->get_var_replaced_with(p)
+                << ")"
+                << endl;
+            }
+
+            //Variables that have been eliminated cannot be added internally
+            //as part of a clause. That's a bug
+            assert(varData[p.var()].removed == Removed::none);
+        }
+    }
+    ps.resize(ps.size() - (i - j));
+    return true;
+}
+
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally
 
@@ -379,32 +409,9 @@ Clause* Solver::add_clause_int(
     #endif
 
     vector<Lit> ps = lits;
-
-    std::sort(ps.begin(), ps.end());
-    Lit p = lit_Undef;
-    uint32_t i, j;
-    for (i = j = 0; i != ps.size(); i++) {
-        if (value(ps[i]) == l_True || ps[i] == ~p)
-            return NULL;
-        else if (value(ps[i]) != l_False && ps[i] != p) {
-            ps[j++] = p = ps[i];
-
-            if (varData[p.var()].removed != Removed::none) {
-                cout << "ERROR: clause " << lits << " contains literal "
-                << p << " whose variable has been removed (removal type: "
-                << removed_type_to_string(varData[p.var()].removed)
-                << " var-updated lit: "
-                << varReplacer->get_var_replaced_with(p)
-                << ")"
-                << endl;
-            }
-
-            //Variables that have been eliminated cannot be added internally
-            //as part of a clause. That's a bug
-            assert(varData[p.var()].removed == Removed::none);
-        }
+    if (!sort_and_clean_clause(ps, lits)) {
+        return NULL;
     }
-    ps.resize(ps.size() - (i - j));
 
     #ifdef VERBOSE_DEBUG
     cout << "add_clause_int final clause " << ps << endl;
