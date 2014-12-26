@@ -919,3 +919,37 @@ void Strengthener::Stats::CacheBased::print_short(const string type, const Solve
     << solver->conf.print_times(cpu_time, ranOutOfTime)
     << endl;
 }
+
+void Strengthener::Stats::CacheBased::print() const
+{
+    print_stats_line("c time"
+        , cpu_time
+        , numCalled ? cpu_time/(double)numCalled : 0
+        , "s/call"
+    );
+
+    print_stats_line("c shrinked/tried/total"
+        , shrinked
+        , triedCls
+        , totalCls
+    );
+
+    print_stats_line("c subsumed/tried/total"
+        , numClSubsumed
+        , triedCls
+        , totalCls
+    );
+
+    print_stats_line("c lits-rem"
+        , numLitsRem
+        , stats_line_percent(numLitsRem, totalLits)
+        , "% of lits tried"
+    );
+
+    print_stats_line("c called "
+        , numCalled
+        , stats_line_percent(ranOutOfTime, numCalled)
+        , "% ran out of time"
+    );
+
+}

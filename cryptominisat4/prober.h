@@ -125,7 +125,7 @@ class Prober {
 
                 print_stats_line("c called"
                     , numCalls
-                    , cpu_time/(double)numCalls
+                    , numCalls ? cpu_time/(double)numCalls : 0
                     , "s/call"
                 );
 

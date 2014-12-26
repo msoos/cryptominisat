@@ -73,38 +73,7 @@ class Strengthener {
                 }
 
                 void print_short(const string type, const Solver* solver) const;
-                void print() const
-                {
-                    print_stats_line("c time"
-                        , cpu_time
-                        , cpu_time/(double)numCalled
-                        , "s/call"
-                    );
-
-                    print_stats_line("c shrinked/tried/total"
-                        , shrinked
-                        , triedCls
-                        , totalCls
-                    );
-
-                    print_stats_line("c subsumed/tried/total"
-                        , numClSubsumed
-                        , triedCls
-                        , totalCls
-                    );
-
-                    print_stats_line("c lits-rem"
-                        , numLitsRem
-                        , stats_line_percent(numLitsRem, totalLits)
-                        , "% of lits tried"
-                    );
-
-                    print_stats_line("c called "
-                        , numCalled
-                        , stats_line_percent(ranOutOfTime, numCalled)
-                        , "% ran out of time"
-                    );
-                }
+                void print() const;
 
                 CacheBased& operator+=(const CacheBased& other)
                 {
