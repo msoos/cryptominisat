@@ -2956,8 +2956,11 @@ void Searcher::decayClauseAct()
     clauseActivityIncrease *= conf.clauseDecayActivity;
 }
 
-void Searcher::bumpClauseAct(Clause* cl)
-{
+void Searcher::bumpClauseAct(Clause*
+#ifdef STATS_NEEDED
+cl
+#endif
+) {
     #ifdef STATS_NEEDED
     cl->stats.activity += clauseActivityIncrease;
     if (cl->stats.activity > 1e20 ) {
