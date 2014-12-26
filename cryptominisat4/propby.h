@@ -55,8 +55,10 @@ class PropBy
         {}
 
         PropBy(ClOffset offset) :
-            data1(offset)
+            red_step(0)
+            , data1(offset)
             , type(clause_t)
+            , data2(0)
         {
         }
 
@@ -64,6 +66,7 @@ class PropBy
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
+            , data2(0)
         {
         }
 
@@ -77,6 +80,7 @@ class PropBy
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
+            , data2(0)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
             //then if we are at toplevel, .getAncestor()
@@ -175,8 +179,10 @@ class PropBy
         bool operator==(const PropBy other) const
         {
             return (type == other.type
+                    && red_step == other.red_step
                     && data1 == other.data1
-                    && data2 == other.data2);
+                    && data2 == other.data2
+                   );
         }
 
         bool operator!=(const PropBy other) const
