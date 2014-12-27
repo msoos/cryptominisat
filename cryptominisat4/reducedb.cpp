@@ -330,11 +330,13 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         ; i < solver->longRedCls.size() && marked < keep_num
         ; i++
     ) {
-        Clause* cl = solver->cl_alloc.ptr(solver->longRedCls[i]);
+        const ClOffset offset = solver->longRedCls[i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
         if ( cl->stats.locked
             || cl->stats.marked_clause
             || cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq
             || cl->stats.ttl > 0
+            || solver->clause_locked(*cl, offset)
         ) {
             //no need to mark, skip
             continue;
