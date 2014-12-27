@@ -777,6 +777,8 @@ class Searcher : public HyperEngine
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;
+        void reset_reason_levels_of_vars_to_zero();
+
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimise_redundant_more(vector<Lit>& cl);
