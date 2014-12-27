@@ -218,7 +218,7 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->getFreed())
+        if (cl->freed() || cl->getRemoved())
             continue;
 
         wenThrough++;
@@ -282,7 +282,7 @@ bool SubsumeStrengthen::performStrengthening()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->getFreed())
+        if (cl->freed() || cl->getRemoved())
             continue;
 
         ret += strengthen_subsume_and_unlink_and_markirred(offset);

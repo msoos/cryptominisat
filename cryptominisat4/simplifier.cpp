@@ -541,7 +541,7 @@ void Simplifier::add_back_to_solver()
         ; it++
     ) {
         Clause* cl = solver->cl_alloc.ptr(*it);
-        if (cl->getFreed())
+        if (cl->freed())
             continue;
 
         assert(!cl->getRemoved());
@@ -1163,7 +1163,7 @@ void Simplifier::sanityCheckElimedVars()
         const Clause* cl = solver->cl_alloc.ptr(*it);
 
         //Already removed
-        if (cl->getFreed())
+        if (cl->freed())
             continue;
 
         for (const Lit lit: *cl) {

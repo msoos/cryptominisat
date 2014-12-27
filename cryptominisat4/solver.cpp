@@ -2636,7 +2636,7 @@ void Solver::find_all_attach() const
 
             //Get clause
             Clause* cl = cl_alloc.ptr(w.get_offset());
-            assert(!cl->getFreed());
+            assert(!cl->freed());
 
             //Assert watch correctness
             if ((*cl)[0] != lit

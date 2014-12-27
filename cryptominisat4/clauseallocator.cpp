@@ -196,7 +196,7 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 */
 void ClauseAllocator::clauseFree(Clause* cl)
 {
-    assert(!cl->getFreed());
+    assert(!cl->freed());
 
     cl->setFreed();
     size_t bytes_freed = (sizeof(Clause) + cl->size()*sizeof(Lit));
@@ -350,7 +350,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
         Clause* cl = ptr(offset);
-        assert(!cl->getFreed());
+        assert(!cl->freed());
 
         //Put it in the right bucket
         if (cl->red()) {

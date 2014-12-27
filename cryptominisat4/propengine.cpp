@@ -1117,7 +1117,7 @@ bool PropEngine::propagate_binary_clause_occur(const Watched& ws)
 bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
 {
     const Clause& cl = *cl_alloc.ptr(offset);
-    assert(!cl.getFreed() && "Cannot be already removed in occur");
+    assert(!cl.freed() && "Cannot be already removed in occur");
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;

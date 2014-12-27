@@ -362,11 +362,6 @@ public:
         isFreed = true;
     }
 
-    bool getFreed() const
-    {
-        return isFreed;
-    }
-
     void combineStats(const ClauseStats& other)
     {
         stats = ClauseStats::combineStats(stats, other);
