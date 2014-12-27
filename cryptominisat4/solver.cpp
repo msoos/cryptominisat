@@ -29,6 +29,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <complex>
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -1529,7 +1530,7 @@ lbool Solver::iterate_until_solved()
         dump_memory_stats_to_sql();
 
         const size_t origTrailSize = trail.size();
-        long num_conflicts_of_search = 50000.0*(double)iteration_num/2;
+        long num_conflicts_of_search = 60ULL*1000ULL*std::sqrt((double)iteration_num);
         num_conflicts_of_search = std::min<long>(
             num_conflicts_of_search
             , (long)conf.maxConfl - (long)sumStats.conflStats.numConflicts
