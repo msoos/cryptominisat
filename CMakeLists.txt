@@ -68,8 +68,7 @@ if (SANITIZE)
     #add_cxx_flag("-fsanitize=undefined")
 
     #add_cxx_flag("-fsanitize=null")
-    #add_cxx_flag("-fsanitize=alignment")
-    #add_cxx_flag("-fsanitize=bounds")
+    add_cxx_flag("-fsanitize=alignment")
     #add_cxx_flag("-fno-sanitize-recover")
 
     add_cxx_flag("-fsanitize=return")
