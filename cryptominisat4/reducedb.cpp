@@ -323,32 +323,6 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     return tmpStats;
 }
 
-void ReduceDB::remove_cl_from_watchlists()
-{
-    for(size_t at = 0; at < 2*solver->nVars(); at++) {
-        const Lit lit = Lit::toLit(at);
-
-        watch_subarray ws = solver->watches[lit.toInt()];
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = i;
-        for (watch_subarray::const_iterator end = ws.end(); i != end; i++) {
-            if (i->isBinary() || i->isTri()) {
-                *j++ = *i;
-                continue;
-            }
-
-            ClOffset offset = i->get_offset();
-            Clause* cl = solver->cl_alloc.ptr(offset);
-            if (cl->red() && cl_needs_removal(cl, offset)) {
-                continue;
-            } else {
-                *j++ = *i;
-            }
-        }
-        ws.shrink(i-j);
-    }
-}
-
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
     size_t marked = 0;
