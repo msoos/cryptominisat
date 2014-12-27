@@ -301,6 +301,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     }
     delayed_clause_free.clear();
     solver->unmark_all_red_clauses();
+    solver->check_no_removed_or_freed_cl_in_watch();
 
     tmpStats.cpu_time = cpuTime() - myTime;
     if (solver->conf.verbosity >= 3)

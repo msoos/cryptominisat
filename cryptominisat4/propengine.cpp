@@ -414,6 +414,8 @@ bool PropEngine::propNormalClauseAnyOrder(
     propStats.bogoProps += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
+    assert(!c.getRemoved());
+    assert(!c.freed());
     #ifdef STATS_NEEDED
     c.stats.clause_looked_at++;
     c.stats.visited_literals++;

@@ -324,11 +324,13 @@ public:
 
     const Lit* begin() const
     {
+        assert(!getRemoved());
         return getData();
     }
 
     Lit* begin()
     {
+        assert(!getRemoved());
         return getData();
     }
 

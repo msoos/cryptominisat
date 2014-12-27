@@ -222,6 +222,12 @@ void Simplifier::unlink_clause(
        (*solver->drup) << del << cl << fin;
     }
 
+    if (!cl.red()) {
+        for (const Lit lit: cl) {
+            touched.touch(lit);
+        }
+    }
+
     if (!only_set_is_removed) {
         for (const Lit lit: cl) {
             if (!(allow_empty_watch && solver->watches[lit.toInt()].empty())) {
@@ -231,12 +237,6 @@ void Simplifier::unlink_clause(
         }
     } else {
         cl.setRemoved();
-    }
-
-    if (!cl.red()) {
-        for (const Lit lit: cl) {
-            touched.touch(lit);
-        }
     }
 
     if (cl.red()) {
@@ -1468,6 +1468,10 @@ bool Simplifier::find_gate(
 
         if (w.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            if (cl->getRemoved()) {
+                continue;
+            }
+
             assert(cl->size() > 3);
             if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
                 bool OK = true;
@@ -1506,9 +1510,7 @@ void Simplifier::mark_gate_in_poss_negs(
     Lit elim_lit
     , watch_subarray_const poss
     , watch_subarray_const negs
-)
-{
-    gate_found_elim = false;
+) {
     gate_lits_of_elim_cls.clear();
     find_gate(elim_lit, poss, negs);
     gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
@@ -1581,6 +1583,10 @@ void Simplifier::mark_gate_parts(
             && w.isClause()
         ) {
             const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            if (cl->getRemoved()) {
+                continue;
+            }
+
             if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
                 bool found_it = true;
                 for(const Lit lit: *cl) {
@@ -1658,8 +1664,9 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
         return 1000;
     }
 
+    gate_found_elim = false;
     if (solver->conf.skip_some_bve_resolvents) {
-        mark_gate_in_poss_negs(lit, poss, negs);
+        //mark_gate_in_poss_negs(lit, poss, negs);
     }
 
     // Count clauses/literals after elimination

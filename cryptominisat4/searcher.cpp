@@ -454,6 +454,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 }
             }
 
+            assert(!cl->getRemoved());
             for (size_t j = 0; j < cl->size(); j++) {
                 //Will be resolved away, skip
                 if (p != lit_Undef && j == 0)
@@ -572,6 +573,7 @@ Clause* Searcher::create_learnt_clause(PropBy confl)
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
+        assert(p != lit_Undef);
 
         if (update_polarity_and_activity
             && conf.doOTFSubsume
@@ -587,6 +589,7 @@ Clause* Searcher::create_learnt_clause(PropBy confl)
         }
 
         confl = varData[p.var()].reason;
+        assert(varData[p.var()].level > 0);
 
         //This clears out vars that haven't been added to learnt_clause,
         //but their 'seen' has been set
@@ -658,7 +661,7 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 }
 
 Clause* Searcher::analyze_conflict(
-    PropBy confl
+    const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
 ) {
@@ -1066,7 +1069,6 @@ lbool Searcher::search()
                 var_decay += 0.01;
             }
 
-            reduce_db_if_needed();
             stats.conflStats.update(lastConflictCausedBy);
             print_restart_stat();
             #ifdef STATS_NEEDED
@@ -1080,6 +1082,7 @@ lbool Searcher::search()
             }
         } else {
             assert(ok);
+            reduce_db_if_needed();
             last_decision_ended_in_conflict = false;
             const lbool ret = new_decision();
             if (ret != l_Undef) {
@@ -1580,7 +1583,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     return cl;
 }
 
-bool Searcher::handle_conflict(PropBy confl)
+bool Searcher::handle_conflict(const PropBy confl)
 {
     uint32_t backtrack_level;
     uint32_t glue;
@@ -2121,6 +2124,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     assert(qhead == trail.size());
     max_conflicts = _maxConfls;
     num_search_called++;
+    check_no_removed_or_freed_cl_in_watch();
 
     if (solver->conf.verbosity >= 6) {
         cout
@@ -2955,11 +2959,10 @@ void Searcher::decayClauseAct()
     clauseActivityIncrease *= conf.clauseDecayActivity;
 }
 
-void Searcher::bumpClauseAct(Clause*
-#ifdef STATS_NEEDED
-cl
-#endif
-) {
+void Searcher::bumpClauseAct(Clause* cl)
+{
+    assert(!cl->getRemoved());
+
     #ifdef STATS_NEEDED
     cl->stats.activity += clauseActivityIncrease;
     if (cl->stats.activity > 1e20 ) {

@@ -238,6 +238,7 @@ public:
     void clean_occur_from_idx_types_only_smudged();
     void clear_one_occur_from_removed_clauses(watch_subarray w);
     bool no_marked_clauses() const;
+    void check_no_removed_or_freed_cl_in_watch() const;
 
 protected:
     virtual void new_var(const bool bva, const Var orig_outer);
@@ -476,6 +477,22 @@ inline int64_t CNF::count_num_red_cls_reducedb() const
          }
     }
     return num;
+}
+
+inline void CNF::check_no_removed_or_freed_cl_in_watch() const
+{
+    for(const watch_subarray_const ws: watches) {
+        for(const Watched& w: ws) {
+            assert(!w.isIdx());
+            if (w.isBinary() || w.isTri()) {
+                continue;
+            }
+            assert(w.isClause());
+            Clause& cl = *cl_alloc.ptr(w.get_offset());
+            assert(!cl.getRemoved());
+            assert(!cl.freed());
+        }
+    }
 }
 
 }

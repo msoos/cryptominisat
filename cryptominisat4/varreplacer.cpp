@@ -592,6 +592,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         assert(!solver->drup->something_delayed());
 
         Clause& c = *solver->cl_alloc.ptr(*i);
+        assert(!c.getRemoved());
         assert(c.size() > 3);
 
         bool changed = false;
@@ -645,6 +646,7 @@ bool VarReplacer::handleUpdatedClause(
     , const Lit origLit1
     , const Lit origLit2
 ) {
+    assert(!c.getRemoved());
     bool satisfied = false;
     std::sort(c.begin(), c.end());
     Lit p;
@@ -669,7 +671,6 @@ bool VarReplacer::handleUpdatedClause(
     } else {
         solver->litStats.irredLits -= origSize;
     }
-    c.setRemoved();
     delayed_attach_or_free.push_back(&c);
 
     #ifdef VERBOSE_DEBUG
@@ -681,6 +682,7 @@ bool VarReplacer::handleUpdatedClause(
         c.shrink(c.size()); //so we free() it
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
+        c.setRemoved();
         return true;
     }
     (*solver->drup) << c << fin << findelay;
@@ -688,9 +690,11 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
+        c.setRemoved();
         solver->ok = false;
         return true;
     case 1 :
+        c.setRemoved();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
@@ -698,6 +702,7 @@ bool VarReplacer::handleUpdatedClause(
         runStats.removedLongLits += origSize;
         return true;
     case 2:
+        c.setRemoved();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
@@ -706,6 +711,7 @@ bool VarReplacer::handleUpdatedClause(
         return true;
 
     case 3:
+        c.setRemoved();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
@@ -723,7 +729,6 @@ bool VarReplacer::handleUpdatedClause(
             std::swap(c[1], *at2);
         }
         if (at != NULL && at2 != NULL) {
-            c.unset_removed();
             delayed_attach_or_free.pop_back();
             if (c.red()) {
                 solver->litStats.redLits += c.size();
@@ -731,6 +736,7 @@ bool VarReplacer::handleUpdatedClause(
                 solver->litStats.irredLits += c.size();
             }
         } else {
+            c.setRemoved();
             solver->watches.smudge(origLit1);
             solver->watches.smudge(origLit2);
         }

@@ -702,7 +702,7 @@ class Searcher : public HyperEngine
         size_t find_backtrack_level_of_learnt();
         void bump_var_activities_based_on_last_decision_level(size_t glue);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
-        void print_debug_resolution_data(PropBy confl);
+        void print_debug_resolution_data(const PropBy confl);
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
         ResolutionTypes<uint16_t> resolutions;
