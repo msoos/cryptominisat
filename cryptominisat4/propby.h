@@ -54,12 +54,16 @@ class PropBy
             , data2(0)
         {}
 
-        PropBy(ClOffset offset) :
+        PropBy(const ClOffset offset) :
             red_step(0)
             , data1(offset)
             , type(clause_t)
             , data2(0)
         {
+            //No roll-over
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(offset == get_offset());
+            #endif
         }
 
         PropBy(const Lit lit, const bool redStep) :
