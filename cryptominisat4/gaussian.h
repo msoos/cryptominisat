@@ -26,9 +26,11 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "solvertypes.h"
 #include "gaussianconfig.h"
+#include "propby.h"
 #include "packedmatrix.h"
 #include "bitarray.h"
 
@@ -42,6 +44,7 @@ using std::pair;
 using std::vector;
 
 class Clause;
+class Solver;
 
 class Gaussian
 {
@@ -65,10 +68,8 @@ public:
     //functions used throughout the Solver
     void canceling(const uint32_t sublevel);
 
-    friend class ClauseAllocator;
-
 protected:
-    Solver& solver;
+    Solver* solver;
 
     //Gauss high-level configuration
     const GaussConf& config;
