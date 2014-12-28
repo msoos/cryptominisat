@@ -829,7 +829,8 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
 
     seen[p.var()] = 1;
 
-    for (long i = trail.size() - 1; i >= trail_lim[0]; i--) {
+    assert(!trail_lim.empty());
+    for (int64_t i = (int64_t)trail.size() - 1; i >= (int64_t)trail_lim[0]; i--) {
         const Var x = trail[i].var();
         if (seen[x]) {
             const PropBy reason = varData[x].reason;
