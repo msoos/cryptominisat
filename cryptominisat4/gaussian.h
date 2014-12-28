@@ -1,23 +1,23 @@
-/***************************************************************************************[Solver.cc]
-Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-Copyright (c) 2007-2009, Niklas Sorensson
-Copyright (c) 2009-2012, Mate Soos
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**************************************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2014, Mate Soos. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation
+ * version 2.0 of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef GAUSSIAN_H
 #define GAUSSIAN_H
@@ -27,12 +27,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <string>
 #include <utility>
 
-#include "cmsat/constants.h"
-#include "cmsat/SolverTypes.h"
-#include "cmsat/Solver.h"
-#include "cmsat/GaussianConfig.h"
-#include "cmsat/PackedMatrix.h"
-#include "cmsat/BitArray.h"
+#include "solvertypes.h"
+#include "gaussianconfig.h"
+#include "packedmatrix.h"
+#include "bitarray.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
@@ -48,7 +46,7 @@ class Clause;
 class Gaussian
 {
 public:
-    Gaussian(Solver& solver, const GaussConf& config, const uint32_t matrix_no, const vector<XorClause*>& xorclauses);
+    Gaussian(Solver* solver, const GaussConf& config, const uint32_t matrix_no, const vector<XorClause*>& xorclauses);
     ~Gaussian();
 
     bool full_init();

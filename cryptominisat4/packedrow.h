@@ -27,14 +27,12 @@
 #include <vector>
 #include "constants.h"
 #include "solvertypes.h"
-#include "vec.h"
 #include <string.h>
 #include <iostream>
 #include <algorithm>
 #include <limits>
 
 namespace CMSat {
-using std::vector;
 
 class PackedMatrix;
 
