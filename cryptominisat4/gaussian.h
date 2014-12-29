@@ -134,7 +134,7 @@ protected:
 
     //conflict&propagation handling
     gaussian_ret handle_matrix_prop_and_confl(matrixset& m, uint32_t row, PropBy& confl);
-    void analyse_confl(const matrixset& m, const uint32_t row, int32_t& maxlevel, uint32_t& size, uint32_t& best_row) const; // analyse conflcit to find the best conflict. Gets & returns the best one in 'maxlevel', 'size' and 'best row' (these are all UINT_MAX when calling this function first, i.e. when there is no other possible conflict to compare to the new in 'row')
+    void analyse_confl(const matrixset& m, const uint32_t row, int32_t& maxlevel, uint32_t& size, uint32_t& best_row) const; // analyse conflcit to find the best conflict. Gets & returns the best one in 'maxlevel', 'size' and 'best row' (these are all std::numeric_limits<uint32_t>::max() when calling this function first, i.e. when there is no other possible conflict to compare to the new in 'row')
     gaussian_ret handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t maxlevel, const uint32_t best_row);
     gaussian_ret handle_matrix_prop(matrixset& m, const uint32_t row); // Handle matrix propagation at row 'row'
     vector<Lit> tmp_clause;

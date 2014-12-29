@@ -136,7 +136,7 @@ void Gaussian::init()
     matrix_sets.push_back(cur_matrixset);
     gauss_last_level = solver->trail.size();
     messed_matrix_vars_since_reversal = false;
-    badlevel = UINT_MAX;
+    badlevel = std::numeric_limits<uint32_t>::max();
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Gaussian init finished." << endl;
@@ -376,7 +376,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 
     messed_matrix_vars_since_reversal = false;
     gauss_last_level = solver->trail.size();
-    badlevel = UINT_MAX;
+    badlevel = std::numeric_limits<uint32_t>::max();
 
     propagatable_rows.clear();
     uint32_t last_row = eliminate(cur_matrixset);
@@ -386,10 +386,10 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 
     gaussian_ret ret;
     //There is no early abort, so this is unneeded
-    /*if (conflict_row != UINT_MAX) {
-        uint32_t maxlevel = UINT_MAX;
-        uint32_t size = UINT_MAX;
-        uint32_t best_row = UINT_MAX;
+    /*if (conflict_row != std::numeric_limits<uint32_t>::max()) {
+        uint32_t maxlevel = std::numeric_limits<uint32_t>::max();
+        uint32_t size = std::numeric_limits<uint32_t>::max();
+        uint32_t best_row = std::numeric_limits<uint32_t>::max();
         analyse_confl(cur_matrixset, conflict_row, maxlevel, size, best_row);
         ret = handle_matrix_confl(confl, cur_matrixset, size, maxlevel, best_row);
     } else {*/
@@ -600,7 +600,7 @@ uint32_t Gaussian::eliminate(matrixset& m)
 
 Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t maxlevel, const uint32_t best_row)
 {
-    assert(best_row != UINT_MAX);
+    assert(best_row != std::numeric_limits<uint32_t>::max());
 
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
     const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver->assigns, col_to_var_original);
@@ -665,7 +665,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         confl = solver->clauseAllocator.getOffset(conflPtr);
         Clause& cla = *conflPtr;
 
-        uint32_t maxsublevel_at = UINT_MAX;
+        uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
         for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver->level[cla[i].var()] == (int32_t)curr_dec_level) {
             uint32_t tmp = find_sublevel(cla[i].var());
             if (tmp >= maxsublevel) {
@@ -691,8 +691,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
 Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint32_t last_row, PropBy& confl)
 {
     int32_t maxlevel = std::numeric_limits<int32_t>::max();
-    uint32_t size = UINT_MAX;
-    uint32_t best_row = UINT_MAX;
+    uint32_t size = std::numeric_limits<uint32_t>::max();
+    uint32_t best_row = std::numeric_limits<uint32_t>::max();
 
     for (uint32_t row = last_row; row != m.num_rows; row++) {
         #ifdef DEBUG_GAUSS
@@ -821,7 +821,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& ma
         cout << "(" << matrix_no << ")Other found conflict just as good or better.";
         cout << "(" << matrix_no << ") || Old maxlevel:" << maxlevel << " new maxlevel:" << this_maxlevel;
         cout << "(" << matrix_no << ") || Old size:" << size << " new size:" << this_size << endl;
-        //assert(!(maxlevel != UINT_MAX && maxlevel != this_maxlevel)); //NOTE: only holds if gauss is executed at each level
+        //assert(!(maxlevel != std::numeric_limits<uint32_t>::max() && maxlevel != this_maxlevel)); //NOTE: only holds if gauss is executed at each level
         #endif
 
         return;
