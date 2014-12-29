@@ -62,7 +62,9 @@ endmacro()
 
 option(SANITIZE "Use Clang sanitizers. This will force using clang++ as the compiler" OFF)
 if (SANITIZE)
-    SET (CMAKE_CXX_COMPILER "clang++")
+    #SET (CMAKE_CXX_COMPILER "clang++")
+    SET (CMAKE_CXX_COMPILER "/home/soos/development/smt/souper/third_party/llvm/RelWithDebInfo/bin/clang++")
+
     #add_cxx_flag("-fsanitize=address")
     add_cxx_flag("-fsanitize=integer")
     #add_cxx_flag("-fsanitize=undefined")

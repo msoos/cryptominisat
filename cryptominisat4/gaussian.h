@@ -53,7 +53,7 @@ public:
     ~Gaussian();
 
     bool full_init();
-    llbool find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC);
+    llbool find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC);
 
     //statistics
     void print_stats() const;
@@ -108,7 +108,7 @@ protected:
     bool disabled; // Gauss is disabled
 
     //State of current elimnation
-    vec<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
+    vector<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
     vector<unsigned char> changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
@@ -137,7 +137,7 @@ protected:
     void analyse_confl(const matrixset& m, const uint32_t row, int32_t& maxlevel, uint32_t& size, uint32_t& best_row) const; // analyse conflcit to find the best conflict. Gets & returns the best one in 'maxlevel', 'size' and 'best row' (these are all UINT_MAX when calling this function first, i.e. when there is no other possible conflict to compare to the new in 'row')
     gaussian_ret handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t maxlevel, const uint32_t best_row);
     gaussian_ret handle_matrix_prop(matrixset& m, const uint32_t row); // Handle matrix propagation at row 'row'
-    vec<Lit> tmp_clause;
+    vector<Lit> tmp_clause;
 
     //propagation&conflict handling
     void cancel_until_sublevel(const uint32_t until_sublevel); // cancels until sublevel 'until_sublevel'. The var 'until_sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
@@ -156,8 +156,7 @@ private:
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
     bool nothing_to_propagate(matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
-    template<class T>
-    void print_matrix_row(const T& row) const; // Print matrix row 'row'
+    template<class T> void print_matrix_row(const T& row) const;
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
     void check_matrix_against_varset(PackedMatrix& matrix,const matrixset& m) const;
@@ -234,7 +233,7 @@ inline void Gaussian::set_disabled(const bool toset)
     disabled = toset;
 }
 
-//std::ostream& operator << (std::ostream& os, const vec<Lit>& v);
+//std::ostream& operator << (std::ostream& os, const vector<Lit>& v);
 
 }
 
