@@ -33,6 +33,7 @@
 #include "propby.h"
 #include "packedmatrix.h"
 #include "bitarray.h"
+#include "xorfinder.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
@@ -49,7 +50,7 @@ class Solver;
 class Gaussian
 {
 public:
-    Gaussian(Solver* solver, const GaussConf& config, const uint32_t matrix_no, const vector<XorClause*>& xorclauses);
+    Gaussian(Solver* solver, const GaussConf& config, const uint32_t matrix_no, const vector<Xor*>& xorclauses);
     ~Gaussian();
 
     bool full_init();
@@ -74,7 +75,7 @@ protected:
     //Gauss high-level configuration
     const GaussConf& config;
     const uint32_t matrix_no;
-    vector<XorClause*> xorclauses;
+    vector<Xor> xorclauses;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(PropBy& confl);
@@ -182,9 +183,10 @@ inline void Gaussian::canceling(const uint32_t sublevel)
 {
     if (disabled)
         return;
+
     uint32_t a = 0;
     for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        solver.clauseAllocator.clauseFree(clauses_toclear[i].first);
+        solver.cl_alloc.clauseFree(clauses_toclear[i].first);
         a++;
     }
     clauses_toclear.resize(clauses_toclear.size()-a);

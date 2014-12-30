@@ -27,6 +27,7 @@
 #include <algorithm>
 #include "clausecleaner.h"
 #include "varreplacer.h"
+#include "solver.h"
 //#include "cmsat/DataSync.h"
 
 //#define VERBOSE_DEBUG
@@ -48,7 +49,7 @@ Gaussian::Gaussian(
     Solver* _solver
     , const GaussConf& _config
     , const uint32_t _matrix_no
-    , const vector<XorClause*>& _xorclauses
+    , const vector<Xor*>& _xorclauses
 ) :
     solver(_solver)
     , config(_config)
@@ -67,7 +68,7 @@ Gaussian::Gaussian(
 Gaussian::~Gaussian()
 {
     for (uint32_t i = 0; i < clauses_toclear.size(); i++)
-        solver->clauseAllocator.clauseFree(clauses_toclear[i].first);
+        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -149,12 +150,12 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
 
     uint32_t num_xorclauses  = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        XorClause& c = *xorclauses[i];
+        Xor& c = *xorclauses[i];
         if (c.getRemoved()) continue;
         num_xorclauses++;
 
         for (uint32_t i2 = 0; i2 < c.size(); i2++) {
-            assert(solver->assigns[c[i2].var()].isUndef());
+            assert(solver->value(c[i2].var()) == l_Undef);
             var_to_col[c[i2].var()] = unassigned_col - 1;
         }
     }
@@ -242,7 +243,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
 
     uint32_t matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        const XorClause& c = *xorclauses[i];
+        const Xor& c = *xorclauses[i];
         if (c.getRemoved()) continue;
 
         origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);
@@ -255,7 +256,9 @@ void Gaussian::fill_matrix(matrixset& origMat)
 void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col)
 {
     #ifdef VERBOSE_DEBUG_MORE
-    cout << "(" << matrix_no << ")Updating matrix var " << var+1 << " (col " << col << ", m.last_one_in_col[col]: " << m.last_one_in_col[col] << ")" << endl;
+    cout << "(" << matrix_no << ")Updating matrix var " << var+1
+    << " (col " << col << ", m.last_one_in_col[col]: " << m.last_one_in_col[col] << ")"
+    << endl;
     cout << "m.num_rows:" << m.num_rows << endl;
     #endif
 
@@ -267,7 +270,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col
     PackedMatrix::iterator this_row = m.matrix.beginMatrix();
     uint32_t row_num = 0;
 
-    if (solver->assigns[var].getBool()) {
+    if (solver->value(var)) {
         for (uint32_t end = m.last_one_in_col[col];  row_num != end; ++this_row, row_num++) {
             if ((*this_row)[col]) {
                 changed_rows[row_num] = true;
@@ -316,7 +319,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     uint32_t last = 0;
     uint32_t col = 0;
     for (const Var *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
-        if (*it != unassigned_var && solver->assigns[*it].isDef()) {
+        if (*it != unassigned_var && solver->value(*it) != l_Undef) {
             update_matrix_col(m, *it, col);
             last++;
             #ifdef VERBOSE_DEBUG
@@ -661,8 +664,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         confl = PropBy(lit1);
         solver->failBinLit = lit2;
     } else {
-        Clause* conflPtr = (Clause*)solver->clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse);
-        confl = solver->clauseAllocator.getOffset(conflPtr);
+        Clause* conflPtr = (Clause*)solver->cl_alloc.Xor_new(tmp_clause, xorEqualFalse);
+        confl = solver->cl_alloc.getOffset(conflPtr);
         Clause& cla = *conflPtr;
 
         uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
@@ -872,7 +875,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             solver->cancelUntil(0);
             tmp_clause[0] = tmp_clause[0].unsign();
             tmp_clause[1] = tmp_clause[1].unsign();
-            XorClause* cl = solver->addXorClauseInt(tmp_clause, xorEqualFalse);
+            Xor* cl = solver->addXorInt(tmp_clause, xorEqualFalse);
             release_assert(cl == NULL);
             release_assert(solver->ok);
             return unit_propagation;
@@ -882,12 +885,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 solver->uncheckedEnqueue(tmp_clause[0]);
                 return unit_propagation;
             }
-            Clause& cla = *(Clause*)solver->clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse);
+            Clause& cla = *(Clause*)solver->cl_alloc.Xor_new(tmp_clause, xorEqualFalse);
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver->assigns[cla[0].var()].isUndef());
 
             clauses_toclear.push_back(std::make_pair(&cla, solver->trail.size()-1));
-            solver->uncheckedEnqueue(cla[0], solver->clauseAllocator.getOffset(&cla));
+            solver->uncheckedEnqueue(cla[0], solver->cl_alloc.getOffset(&cla));
             return propagation;
     }
 
@@ -918,7 +921,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
             useful_confl++;
             llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
             if (confl.isClause())
-                solver->clauseAllocator.clauseFree(solver->clauseAllocator.getPointer(confl.get_offset()));
+                solver->cl_alloc.clauseFree(solver->cl_alloc.getPointer(confl.get_offset()));
 
             if (ret != l_Nothing) return ret;
             return l_Continue;
