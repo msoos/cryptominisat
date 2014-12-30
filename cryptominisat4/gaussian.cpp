@@ -673,15 +673,18 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         Clause& cla = *conflPtr;
 
         uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
-        for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver->level[cla[i].var()] == (int32_t)curr_dec_level) {
-            uint32_t tmp = find_sublevel(cla[i].var());
-            if (tmp >= maxsublevel) {
-                maxsublevel = tmp;
-                maxsublevel_at = i;
+        for (uint32_t i = 0, size = cla.size(); i != size; i++)  {
+            if (solver->varData[cla[i].var()].level == curr_dec_level) {
+                uint32_t tmp = find_sublevel(cla[i].var());
+                if (tmp >= maxsublevel) {
+                    maxsublevel = tmp;
+                    maxsublevel_at = i;
+                }
             }
         }
         #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel << " (due to var:" << cla[maxsublevel_at].var()-1 << ")" << endl;
+        cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel
+        << " (due to var:" << cla[maxsublevel_at].var()-1 << ")" << endl;
         #endif
 
         Lit tmp(cla[maxsublevel_at]);
@@ -695,8 +698,11 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
     return conflict;
 }
 
-Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint32_t last_row, PropBy& confl)
-{
+Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
+    matrixset& m
+    , uint32_t last_row
+    , PropBy& confl
+) {
     int32_t maxlevel = std::numeric_limits<int32_t>::max();
     uint32_t size = std::numeric_limits<uint32_t>::max();
     uint32_t best_row = std::numeric_limits<uint32_t>::max();
@@ -754,7 +760,8 @@ uint32_t Gaussian::find_sublevel(const Var v) const
         if (solver->trail[i].var() == v) return i;
 
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Oooops! Var " << v+1 << " does not have a sublevel!! (so it must be undefined)" << endl;
+    cout << "(" << matrix_no << ")Oooops! Var " << v+1 << " does not have a sublevel!!"
+    << "(so it must be undefined)" << endl;
     #endif
 
     assert(false);
