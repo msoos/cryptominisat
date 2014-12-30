@@ -1108,17 +1108,26 @@ void Gaussian::print_last_one_in_cols(matrixset& m) const
 
 bool Gaussian::nothing_to_propagate(matrixset& m) const
 {
-    for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
+    for(PackedMatrix::iterator
+        r = m.matrix.beginMatrix(), end = m.matrix.endMatrix()
+        ; r != end
+        ; ++r
+    ) {
         if ((*r).popcnt_is_one()
-            && solver->assigns[m.col_to_var[(*r).scan(0)]].isUndef()) {
+            && solver->value(m.col_to_var[(*r).scan(0)]) == l_Undef
+        ) {
             #ifdef VERBOSE_DEBUG
             std::cout << "row " << (*r) << " is a propagation, but we didn't catch it" << std::endl;
             #endif
             return false;
         }
     }
-    for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
-        if ((*r).isZero() && (*r).is_true()) {
+    for(PackedMatrix::iterator
+        r = m.matrix.beginMatrix(), end = m.matrix.endMatrix()
+        ; r != end
+        ; ++r
+    ) {
+        if (r->isZero() && r->is_true()) {
             #ifdef VERBOSE_DEBUG
             std::cout << "row " << (*r) << " is a conflict, but we didn't catch it" << std::endl;
             #endif
@@ -1191,7 +1200,8 @@ void Gaussian::check_first_one_in_row(matrixset& m, const uint32_t j)
         if (j-1 > m.first_one_in_row[m.num_rows-1]) {
             until2 = m.num_rows;
             #ifdef VERBOSE_DEBUG
-            cout << "j-1 > m.first_one_in_row[m.num_rows-1]" << "j:" << j << " m.first_one_in_row[m.num_rows-1]:" << m.first_one_in_row[m.num_rows-1] << endl;
+            cout << "j-1 > m.first_one_in_row[m.num_rows-1]" << "j:" << j
+            << " m.first_one_in_row[m.num_rows-1]:" << m.first_one_in_row[m.num_rows-1] << endl;
             #endif
         }
         for (uint32_t i2 = 0; i2 != until2; i2++) {
@@ -1203,7 +1213,8 @@ void Gaussian::check_first_one_in_row(matrixset& m, const uint32_t j)
             cout << "num_cols:" << m.num_cols << endl;
             cout << "popcnt:" << m.matrix.getMatrixAt(i2).popcnt() << endl;
             cout << "popcnt_is_one():" << m.matrix.getMatrixAt(i2).popcnt_is_one() << endl;
-            cout << "popcnt_is_one("<< m.first_one_in_row[i2] <<"): " << m.matrix.getMatrixAt(i2).popcnt_is_one(m.first_one_in_row[i2]) << endl;
+            cout << "popcnt_is_one("<< m.first_one_in_row[i2] <<"): "
+            << m.matrix.getMatrixAt(i2).popcnt_is_one(m.first_one_in_row[i2]) << endl;
             #endif
 
             for (uint32_t i3 = 0; i3 < m.first_one_in_row[i2]; i3++) {
