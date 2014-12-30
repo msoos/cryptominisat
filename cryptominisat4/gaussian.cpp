@@ -111,7 +111,7 @@ bool Gaussian::full_init()
         case propagation:
             unit_truths += last_trail_size - solver->trail.size();
             do_again_gauss = true;
-            solver->ok = (solver->propagate<true>().isNULL());
+            solver->ok = (solver->propagate().isNULL());
             if (!solver->ok) return false;
             break;
         case nothing:
@@ -601,8 +601,12 @@ uint32_t Gaussian::eliminate(matrixset& m)
     return i;
 }
 
-Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t maxlevel, const uint32_t best_row)
-{
+Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
+    PropBy& confl
+    , const matrixset& m
+    , const uint32_t maxlevel
+    , const uint32_t best_row
+) {
     assert(best_row != std::numeric_limits<uint32_t>::max());
 
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
@@ -722,7 +726,11 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint
     gaussian_ret ret = nothing;
 
     uint32_t num_props = 0;
-    for (const uint32_t* prop_row = propagatable_rows.getData(), *end = prop_row + propagatable_rows.size(); prop_row != end; prop_row++ ) {
+    for (const uint32_t*
+        prop_row = propagatable_rows.getData(), *end = prop_row + propagatable_rows.size()
+        ; prop_row != end
+        ; prop_row++
+    ) {
         //this is a "000..1..0000000X" row. I.e. it indicates a propagation
         ret = handle_matrix_prop(m, *prop_row);
         num_props++;
@@ -759,11 +767,21 @@ void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
     cout << "(" << matrix_no << ")Canceling until sublevel " << until_sublevel << endl;
     #endif
 
-    for (vector<Gaussian*>::iterator gauss = solver->gauss_matrixes.begin(), end= solver->gauss_matrixes.end(); gauss != end; gauss++)
-        if (*gauss != this) (*gauss)->canceling(until_sublevel);
+    for (vector<Gaussian*>::iterator
+        gauss = solver->gauss_matrixes.begin(), end= solver->gauss_matrixes.end()
+        ; gauss != end
+        ; gauss++
+    )  {
+        if (*gauss != this) {
+            (*gauss)->canceling(until_sublevel);
+        }
+    }
 
-        for (int sublevel = solver->trail.size()-1; sublevel >= (int)until_sublevel; sublevel--) {
-        Var var  = solver->trail[sublevel].var();
+    for (int64_t sublevel = (int64_t)solver->trail.size()-1
+        ; sublevel >= (int64_t)until_sublevel
+        ; sublevel--
+    ) {
+        const Var var  = solver->trail[sublevel].var();
         #ifdef VERBOSE_DEBUG
         cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
         #endif
@@ -778,8 +796,13 @@ void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
     #endif
 }
 
-void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& maxlevel, uint32_t& size, uint32_t& best_row) const
-{
+void Gaussian::analyse_confl(
+    const matrixset& m
+    , const uint32_t row
+    , int32_t& maxlevel
+    , uint32_t& size
+    , uint32_t& best_row
+) const {
     assert(row < m.num_rows);
 
     //this is a "000...00000001" row. I.e. it indicates we are on the wrong branch
@@ -806,8 +829,8 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& ma
         const Var real_var = col_to_var_original[var];
         assert(real_var < solver->nVars());
 
-        if (solver->level[real_var] > this_maxlevel)
-            this_maxlevel = solver->level[real_var];
+        if (solver->varData[real_var].level > this_maxlevel)
+            this_maxlevel = solver->varData[real_var].level;
         var++;
         this_size++;
     }
@@ -869,7 +892,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             break;
         case 1:
             solver->cancelUntil(0);
-            solver->uncheckedEnqueue(tmp_clause[0]);
+            solver->enqueue(tmp_clause[0]);
             return unit_propagation;
         case 2: {
             solver->cancelUntil(0);
@@ -882,7 +905,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
         }
         default:
             if (solver->decisionLevel() == 0) {
-                solver->uncheckedEnqueue(tmp_clause[0]);
+                solver->enqueue(tmp_clause[0]);
                 return unit_propagation;
             }
             Clause& cla = *(Clause*)solver->cl_alloc.Xor_new(tmp_clause, xorEqualFalse);
@@ -890,7 +913,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             assert(solver->assigns[cla[0].var()].isUndef());
 
             clauses_toclear.push_back(std::make_pair(&cla, solver->trail.size()-1));
-            solver->uncheckedEnqueue(cla[0], solver->cl_alloc.getOffset(&cla));
+            solver->enqueue(cla[0], solver->cl_alloc.get_offset(&cla));
             return propagation;
     }
 
@@ -921,16 +944,19 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
             useful_confl++;
             llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
             if (confl.isClause())
-                solver->cl_alloc.clauseFree(solver->cl_alloc.getPointer(confl.get_offset()));
+                solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
 
             if (ret != l_Nothing) return ret;
             return l_Continue;
         }
+
         case unit_propagation:
             unit_truths++;
+            //NOTE no break
         case propagation:
             useful_prop++;
             return l_Continue;
+
         case unit_conflict: {
             unit_truths++;
             useful_confl++;
@@ -959,9 +985,10 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
             #ifdef VERBOSE_DEBUG
             std::cout << "(" << matrix_no << ") -> setting to correct value" << std::endl;
             #endif
-            solver->uncheckedEnqueue(lit);
+            solver->enqueue(lit);
             return l_Continue;
         }
+
         case nothing:
             break;
         }
