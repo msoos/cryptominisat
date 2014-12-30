@@ -28,6 +28,8 @@
 
 //#define DEBUG_MATRIX
 
+namespace CMSat {
+
 class PackedMatrix
 {
 public:
@@ -212,6 +214,8 @@ private:
     uint32_t numRows;
     uint32_t numCols;
 };
+
+} //end namespace
 
 #endif //PACKEDMATRIX_H
 
