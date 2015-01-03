@@ -724,6 +724,8 @@ PropBy PropEngine::propagateAnyOrder()
             }/* else {
                 *j++ = *i;
             }*/
+
+            assert(false);
         }
         while (i != end) {
             *j++ = *i++;
