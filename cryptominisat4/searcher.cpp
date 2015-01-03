@@ -401,7 +401,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             if (red_long_cls_is_reducedb(*cl)) {
                 num_red_cls_reducedb--;
             }
-            cl->stats.ttl = std::max<uint16_t>(cl->stats.ttl+1U, std::numeric_limits<uint16_t>::max());
+            cl->stats.ttl++;
         }
     }
 }
