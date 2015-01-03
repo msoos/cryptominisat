@@ -868,7 +868,7 @@ class Searcher : public HyperEngine
 
 inline uint32_t Searcher::abstractLevel(const Var x) const
 {
-    return ((uint32_t)1) << (varData[x].level % 32);
+    return ((uint32_t)1) << (varData[x].level & 31);
 }
 
 inline const Searcher::Stats& Searcher::get_stats() const
