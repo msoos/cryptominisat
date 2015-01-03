@@ -54,7 +54,7 @@ class PropBy
             , data2(0)
         {}
 
-        PropBy(const ClOffset offset) :
+        explicit PropBy(const ClOffset offset) :
             red_step(0)
             , data1(offset)
             , type(clause_t)
