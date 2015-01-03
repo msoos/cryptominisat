@@ -65,8 +65,9 @@ Gaussian::Gaussian(
 
 Gaussian::~Gaussian()
 {
-    for (uint32_t i = 0; i < clauses_toclear.size(); i++)
+    for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
         solver->cl_alloc.clauseFree(clauses_toclear[i].first);
+    }
 }
 
 inline void Gaussian::set_matrixset_to_cur()
