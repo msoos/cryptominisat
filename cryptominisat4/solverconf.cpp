@@ -175,7 +175,7 @@ SolverConf::SolverConf() :
 
         //Propagation & search
         , propBinFirst     (false)
-        , dominPickFreq    (400)
+        , dominPickFreq    (0)
 
         //Simplifier
         , simplify_at_startup(true)
