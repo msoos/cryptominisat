@@ -402,18 +402,16 @@ template<class T>
 uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
 {
     uint32_t nbLevels = 0;
-    typename T::const_iterator l, end;
-
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        uint32_t lev = varData[l->var()].level;
+    for(auto lit: ps) {
+        const uint32_t lev = varData[lit.var()].level;
         if (!seen2[lev]) {
             nbLevels++;
             seen2[lev] = 1;
         }
     }
 
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        uint32_t lev = varData[l->var()].level;
+    for(auto lit: ps) {
+        uint32_t lev = varData[lit.var()].level;
         seen2[lev] = 0;
     }
     return nbLevels;
