@@ -25,6 +25,8 @@
 #include <iomanip>
 #include "clause.h"
 #include <algorithm>
+#include <iterator>
+
 #include "clausecleaner.h"
 #include "varreplacer.h"
 #include "solver.h"
@@ -32,10 +34,6 @@
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
-
-#ifdef VERBOSE_DEBUG
-#include <iterator>
-#endif
 
 using namespace CMSat;
 using std::ostream;
