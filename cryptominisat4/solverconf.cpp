@@ -37,6 +37,7 @@ SolverConf::SolverConf() :
         , do_calc_polarity_every_time(false)
 
         //Clause cleaning
+        , max_temporary_learnt_clauses(20000)
         , protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn(30)
         , clean_confl_multiplier(0.2)
         , clean_prop_multiplier(1.0)

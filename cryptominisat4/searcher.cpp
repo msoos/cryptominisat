@@ -1993,7 +1993,7 @@ void Searcher::restore_order_heap()
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
-    if (num_red_cls_reducedb > 20000) {
+    if (num_red_cls_reducedb > conf.max_temporary_learnt_clauses) {
         if (conf.verbosity >= 3) {
             cout
             << "c "
