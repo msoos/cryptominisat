@@ -652,14 +652,13 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         confl = PropBy(lit1);
         solver->failBinLit = lit2;
     } else {
-        Clause* conflPtr = (Clause*)solver->cl_alloc.Xor_new(tmp_clause, xorEqualFalse);
-        confl = solver->cl_alloc.getOffset(conflPtr);
-        Clause& cla = *conflPtr;
+        Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause, 0);
+        confl = PropBy(solver->cl_alloc.get_offset(*cl));
 
         uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
-        for (uint32_t i = 0, size = cla.size(); i != size; i++)  {
-            if (solver->varData[cla[i].var()].level == curr_dec_level) {
-                uint32_t tmp = find_sublevel(cla[i].var());
+        for (uint32_t i = 0, size = cl->size(); i != size; i++)  {
+            if (solver->varData[(*cl)[i].var()].level == curr_dec_level) {
+                uint32_t tmp = find_sublevel((*cl)[i].var());
                 if (tmp >= maxsublevel) {
                     maxsublevel = tmp;
                     maxsublevel_at = i;
@@ -671,9 +670,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         << " (due to var:" << cla[maxsublevel_at].var()-1 << ")" << endl;
         #endif
 
-        Lit tmp(cla[maxsublevel_at]);
-        cla[maxsublevel_at] = cla[1];
-        cla[1] = tmp;
+        std::swap((*cl)[maxsublevel_at], (*cl)[1]);
     }
 
     cancel_until_sublevel(maxsublevel+1);
