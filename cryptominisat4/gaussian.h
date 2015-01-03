@@ -47,6 +47,31 @@ using std::vector;
 class Clause;
 class Solver;
 
+/// Hackish lbool that also supports l_Nothing and l_Continue
+class llbool
+{
+    char value;
+
+public:
+    llbool(): value(0) {};
+    llbool(lbool v) :
+            value(v.value) {};
+    llbool(char a) :
+            value(a) {}
+
+    inline bool operator!=(const llbool& v) const {
+        return (v.value != value);
+    }
+
+    inline bool operator==(const llbool& v) const {
+        return (v.value == value);
+    }
+
+    friend class lbool;
+};
+const llbool l_Nothing  = toLbool(2);
+const llbool l_Continue = toLbool(3);
+
 class Gaussian
 {
 public:
