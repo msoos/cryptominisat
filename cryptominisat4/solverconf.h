@@ -284,6 +284,7 @@ class SolverConf
         int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup
         int      regularly_simplify_problem;
         int      full_simplify_at_startup;
+        int      never_stop_search;
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;

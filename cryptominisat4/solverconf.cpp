@@ -182,6 +182,7 @@ SolverConf::SolverConf() :
         , simplify_at_every_startup(false)
         , regularly_simplify_problem(true)
         , full_simplify_at_startup(false)
+        , never_stop_search(false)
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)

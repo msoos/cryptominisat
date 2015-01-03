@@ -1531,6 +1531,9 @@ lbool Solver::iterate_until_solved()
 
         const size_t origTrailSize = trail.size();
         long num_conflicts_of_search = 60ULL*1000ULL*std::sqrt((double)iteration_num);
+        if (conf.never_stop_search) {
+            num_conflicts_of_search*=1000ULL;
+        }
         num_conflicts_of_search = std::min<long>(
             num_conflicts_of_search
             , (long)conf.maxConfl - (long)sumStats.conflStats.numConflicts
