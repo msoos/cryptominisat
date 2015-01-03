@@ -177,12 +177,14 @@ SolverConf::SolverConf() :
         , propBinFirst     (false)
         , dominPickFreq    (0)
 
-        //Simplifier
+        //Iterative Alo Scheduling
         , simplify_at_startup(true)
         , simplify_at_every_startup(false)
         , regularly_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
+
+        //Simplification
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)

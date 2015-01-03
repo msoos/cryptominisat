@@ -279,12 +279,14 @@ class SolverConf
         int      propBinFirst;
         unsigned  dominPickFreq;
 
-        //Simplifier
+        //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)
         int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup
         int      regularly_simplify_problem;
         int      full_simplify_at_startup;
         int      never_stop_search;
+
+        //Simplification
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
