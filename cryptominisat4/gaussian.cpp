@@ -959,7 +959,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
                 return l_False;
             }
 
-            Lit lit = confl.getOtherLit();
+            Lit lit = confl.lit2();
             solver->cancelUntil(0);
 
             #ifdef VERBOSE_DEBUG
