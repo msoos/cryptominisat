@@ -154,7 +154,8 @@ class Solver : public Searcher
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
         void unset_decision_var(const uint32_t var);
-        bool enqueue_these(const vector<Lit>& toEnqueue);
+        bool fully_enqueue_these(const vector<Lit>& toEnqueue);
+        bool fully_enqueue_this(const Lit lit);
         void update_assumptions_after_varreplace();
 
         uint64_t getNumLongClauses() const;

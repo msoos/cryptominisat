@@ -81,6 +81,61 @@ inline void Gaussian::set_matrixset_to_cur()
         matrix_sets[level] = cur_matrixset;
 }
 
+bool Gaussian::clean_one_xor(Xor& x)
+{
+    bool rhs = x.rhs;
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t size = x.vars.size(); i < size; i++) {
+        Var var = x.vars[i];
+        if (solver->value(i) != l_Undef) {
+            if (solver->value(i) == l_True) {
+                rhs ^= true;
+            }
+        } else {
+            x.vars[j++] = var;
+        }
+    }
+    x.vars.resize(x.vars.size()-(i-j));
+
+    switch(x.vars.size()) {
+        case 0:
+            solver->ok &= !x.rhs;
+            return false;
+
+        case 1: {
+            solver->fully_enqueue_this(Lit(x.vars[0], !x.rhs));
+            return false;
+        }
+        case 2: {
+            solver->add_xor_clause_inter(vars_to_lits(x.vars), x.rhs);
+            return false;
+        }
+        default: {
+            return true;
+            break;
+        }
+    }
+}
+
+bool Gaussian::clean_xor_clauses()
+{
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t size = xorclauses.size(); i < size; i++) {
+        Xor& x = xorclauses[i];
+        bool ret = clean_one_xor(x);
+        if (!solver->ok) {
+            return false;
+        }
+
+        if (ret) {
+            xorclauses[j++] = x;
+        }
+    }
+    return solver->ok;
+}
+
 bool Gaussian::full_init()
 {
     assert(solver->ok);
@@ -92,9 +147,14 @@ bool Gaussian::full_init()
 
     bool do_again_gauss = true;
     while (do_again_gauss) {
+        if (!clean_xor_clauses()) {
+            return false;
+        }
+        if (last_trail_size < solver->trail.size()) {
+            continue;
+        }
         do_again_gauss = false;
-        solver->clauseCleaner->cleanClauses(solver->xorclauses, ClauseCleaner::xorclauses);
-        if (!solver->ok) return false;
+
         init();
         PropBy confl;
         gaussian_ret g = gaussian(confl);

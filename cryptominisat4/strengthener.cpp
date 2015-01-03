@@ -818,7 +818,7 @@ bool Strengthener::strengthen_implicit()
     }
 
     //Enqueue delayed values
-    if (!solver->enqueue_these(str_impl_data.toEnqueue))
+    if (!solver->fully_enqueue_these(str_impl_data.toEnqueue))
         goto end;
 
     //Add delayed binary clauses

@@ -1026,7 +1026,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     //There are things to enqueue at top-level
     if (!to_enqueue_toplevel.empty()) {
         solver->cancelUntil(0);
-        bool ret = solver->enqueue_these(to_enqueue_toplevel);
+        bool ret = solver->fully_enqueue_these(to_enqueue_toplevel);
         if (!ret) {
             return l_False;
         }

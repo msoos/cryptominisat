@@ -153,6 +153,8 @@ protected:
     void update_last_one_in_col(matrixset& m);
 
 private:
+    bool clean_xor_clauses();
+    bool clean_one_xor(Xor& x);
 
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?

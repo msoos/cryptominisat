@@ -3187,28 +3187,34 @@ void Solver::free_unused_watches()
     watches.consolidate();
 }
 
-bool Solver::enqueue_these(const vector<Lit>& toEnqueue)
+bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
 {
     assert(ok);
     assert(decisionLevel() == 0);
     for(const Lit lit: toEnqueue) {
-
-        const lbool val = value(lit);
-        if (val == l_Undef) {
-            assert(varData[lit.var()].removed == Removed::none);
-            enqueue(lit);
-            ok = propagate().isNULL();
-
-            if (!ok) {
-                return false;
-            }
-        } else if (val == l_False) {
-            ok = false;
+        if (!fully_enqueue_this(lit)) {
             return false;
         }
     }
 
     return true;
+}
+
+bool Solver::fully_enqueue_this(const Lit lit)
+{
+    const lbool val = value(lit);
+    if (val == l_Undef) {
+        assert(varData[lit.var()].removed == Removed::none);
+        enqueue(lit);
+        ok = propagate().isNULL();
+
+        if (!ok) {
+            return false;
+        }
+    } else if (val == l_False) {
+        ok = false;
+        return false;
+    }
 }
 
 void Solver::new_external_var()

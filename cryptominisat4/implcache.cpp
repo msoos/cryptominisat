@@ -246,7 +246,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
     }
 
     size_t origTrailDepth = solver->trail_size();
-    solver->enqueue_these(toEnqueue);
+    solver->fully_enqueue_these(toEnqueue);
     if (setSomething) {
         *setSomething = (solver->trail_size() != origTrailDepth);
     }

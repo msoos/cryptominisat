@@ -753,7 +753,7 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
     assert(solver->ok);
     runStats.bothSameAdded += toEnqueue.size();
     extraTime += 3*toEnqueue.size();
-    return solver->enqueue_these(toEnqueue);
+    return solver->fully_enqueue_these(toEnqueue);
 }
 
 size_t Prober::mem_used() const
