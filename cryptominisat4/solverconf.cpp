@@ -51,7 +51,7 @@ SolverConf::SolverConf() :
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
         , lock_uip_per_dbclean(0)
         , multiplier_perf_values_after_cl_clean(0)
-        , glue_must_keep_clause_if_below_or_eq(6)
+        , glue_must_keep_clause_if_below_or_eq(5)
 
         //Restarting
         , restart_first(300)
