@@ -923,11 +923,14 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
     PropBy confl;
 
     disable_if_necessary();
-    if (should_check_gauss(solver->decisionLevel())) {
-        called++;
-        gaussian_ret g = gaussian(confl);
+    if (!should_check_gauss(solver->decisionLevel())) {
+        return l_Nothing;
+    }
 
-        switch (g) {
+    called++;
+    gaussian_ret g = gaussian(confl);
+
+    switch (g) {
         case conflict: {
             useful_confl++;
             llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
@@ -979,7 +982,6 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
 
         case nothing:
             break;
-        }
     }
 
     return l_Nothing;
