@@ -406,8 +406,8 @@ bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
          && !red_cl_too_young(cl)
         #endif
          && !cl->stats.marked_clause
-         && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
          && cl->stats.ttl == 0
+         && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
          && !solver->clause_locked(*cl, offset);
 }
 
