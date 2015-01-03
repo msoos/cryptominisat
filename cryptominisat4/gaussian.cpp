@@ -636,27 +636,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
     uint32_t maxsublevel = 0;
     if (tmp_clause.size() == 2) {
+        solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
         Lit lit1 = tmp_clause[0];
         Lit lit2 = tmp_clause[1];
 
-        solver->watches[(~lit1).toInt()].push(Watched(lit2, true));
-        solver->watches[(~lit2).toInt()].push(Watched(lit1, true));
-        solver->numBins++;
-        solver->learnts_literals += 2;
-        solver->dataSync->signalNewBinClause(lit1, lit2);
-
-        lit1 = ~lit1;
-        lit2 = ~lit2;
-        solver->watches[(~lit2).toInt()].push(Watched(lit1, true));
-        solver->watches[(~lit1).toInt()].push(Watched(lit2, true));
-        solver->numBins++;
-        solver->learnts_literals += 2;
-        solver->dataSync->signalNewBinClause(lit1, lit2);
-
-        lit1 = ~lit1;
-        lit2 = ~lit2;
-        uint32_t sublevel1 = find_sublevel(lit1.var());
-        uint32_t sublevel2 = find_sublevel(lit2.var());
+        const uint32_t sublevel1 = find_sublevel(lit1.var());
+        const uint32_t sublevel2 = find_sublevel(lit2.var());
         if (sublevel1 > sublevel2) {
             maxsublevel = sublevel1;
             std::swap(lit1, lit2);
