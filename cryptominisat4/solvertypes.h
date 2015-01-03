@@ -635,6 +635,14 @@ inline vector<Lit> sortLits(const vector<Lit>& lits)
     return tmp;
 }
 
+inline vector<Lit> vars_to_lits(const vector<Var>& vars)
+{
+    vector<Lit> ret;
+    for(Var var: vars) {
+        ret.push_back(Lit(var, false));
+    }
+    return ret;
+}
 
 } //end namespace
 
