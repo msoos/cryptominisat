@@ -53,7 +53,7 @@ public:
     Gaussian(Solver* solver, const GaussConf& config, const uint32_t matrix_no, const vector<Xor*>& xorclauses);
     ~Gaussian();
 
-    bool full_init();
+    bool init_until_fixedpoint();
     llbool find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC);
 
     //statistics

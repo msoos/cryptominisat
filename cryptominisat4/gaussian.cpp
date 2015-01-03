@@ -136,7 +136,7 @@ bool Gaussian::clean_xor_clauses()
     return solver->ok;
 }
 
-bool Gaussian::full_init()
+bool Gaussian::init_until_fixedpoint()
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
