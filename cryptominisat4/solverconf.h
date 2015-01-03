@@ -138,6 +138,7 @@ class SolverConf
         int do_calc_polarity_every_time;
 
         //Clause cleaning
+        unsigned protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn;
         double    clean_confl_multiplier;
         double    clean_prop_multiplier;
         int       doPreClauseCleanPropAndConfl;

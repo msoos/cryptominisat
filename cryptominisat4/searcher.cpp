@@ -397,7 +397,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         }
         cl->stats.glue = new_glue;
 
-        if (new_glue <= 30) {
+        if (new_glue <= conf.protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn) {
             if (red_long_cls_is_reducedb(*cl)) {
                 num_red_cls_reducedb--;
             }

@@ -262,7 +262,9 @@ void PropEngine::update_glue(Clause& c)
         && conf.update_glues_on_prop
     ) {
         const uint32_t new_glue = calc_glue_using_seen2(c);
-        if (new_glue < c.stats.glue) {
+        if (new_glue < c.stats.glue
+            && new_glue < conf.protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn
+        ) {
             if (red_long_cls_is_reducedb(c)) {
                 num_red_cls_reducedb--;
             }
