@@ -1469,7 +1469,7 @@ lbool Solver::iterate_until_solved()
         dump_memory_stats_to_sql();
 
         const size_t origTrailSize = trail.size();
-        long num_conflicts_of_search = 60ULL*1000ULL*std::sqrt((double)iteration_num);
+        long num_conflicts_of_search = 60ULL*1000ULL*(std::pow(1.2, (double)iteration_num));
         if (conf.never_stop_search) {
             num_conflicts_of_search*=1000ULL;
         }
