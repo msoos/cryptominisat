@@ -373,7 +373,7 @@ inline bool PropEngine::satisfied(const BinaryClause& bin)
             || (value(bin.getLit2()) == l_True));
 }
 
-template<class T>
+template<class T> inline
 uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
 {
     uint32_t nbLevels = 0;
@@ -392,7 +392,7 @@ uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
     return nbLevels;
 }
 
-template<class T>
+template<class T> inline
 uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
 {
     uint32_t nbLevels = 0;
