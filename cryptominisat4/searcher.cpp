@@ -1487,7 +1487,6 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 3:
             //3-long learnt
             stats.learntTris++;
-            std::sort((&learnt_clause[0])+1, (&learnt_clause[0])+3);
             solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
 
