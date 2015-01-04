@@ -379,7 +379,7 @@ uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
     uint32_t nbLevels = 0;
     for(auto lit: ps) {
         const uint32_t lev = varData[lit.var()].level;
-        if (!seen2[lev]) {
+        if (lev != 0 && !seen2[lev]) {
             nbLevels++;
             seen2[lev] = 1;
         }
