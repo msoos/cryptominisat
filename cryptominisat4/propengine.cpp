@@ -114,7 +114,7 @@ void PropEngine::detach_tri_clause(
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
-    std::sort(lits, lits+3);
+    orderLits(lits[0], lits[1], lits[2]);
     if (!(allow_empty_watch && watches[lits[0].toInt()].empty())) {
         removeWTri(watches, lits[0], lits[1], lits[2], red);
     }
