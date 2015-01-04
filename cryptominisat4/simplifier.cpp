@@ -405,12 +405,8 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
 ) {
     LinkInData link_in_data;
     uint64_t linkedInLits = 0;
-    for (vector<ClOffset>::const_iterator
-        it = toAdd.begin(), end = toAdd.end()
-        ; it !=  end
-        ; it++
-    ) {
-        Clause* cl = solver->cl_alloc.ptr(*it);
+    for (const ClOffset offs: toAdd) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
 
         //Sanity check that the value given as irred is correct
         assert(
@@ -434,7 +430,7 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
             link_in_data.cl_not_linked++;
         }
 
-        clauses.push_back(*it);
+        clauses.push_back(offs);
     }
     clause_lits_added += linkedInLits;
 
