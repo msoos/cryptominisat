@@ -38,7 +38,7 @@ struct SortRedClsGlue
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-        return x->stats.glue > y->stats.glue;
+        return x->stats.glue < y->stats.glue;
     }
 };
 
@@ -53,7 +53,7 @@ struct SortRedClsSize
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-        return x->size() > y->size();
+        return x->size() < y->size();
     }
 };
 
@@ -68,7 +68,7 @@ struct SortRedClsAct
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-        return x->stats.activity < y->stats.activity;
+        return x->stats.activity > y->stats.activity;
     }
 };
 
