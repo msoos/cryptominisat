@@ -324,13 +324,19 @@ public:
 
     const Lit* begin() const
     {
+        #ifdef SLOW_DEBUG
+        assert(!freed());
         assert(!getRemoved());
+        #endif
         return getData();
     }
 
     Lit* begin()
     {
+        #ifdef SLOW_DEBUG
+        assert(!freed());
         assert(!getRemoved());
+        #endif
         return getData();
     }
 
