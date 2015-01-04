@@ -411,7 +411,8 @@ bool PropEngine::propNormalClauseAnyOrder(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()) == l_True) {
+    const Lit blocker = i->getBlockedLit();
+    if (value(blocker) == l_True) {
         *j++ = *i;
         return true;
     }
@@ -420,8 +421,12 @@ bool PropEngine::propNormalClauseAnyOrder(
     }
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
+
+    #ifdef SLOW_DEBUG
     assert(!c.getRemoved());
     assert(!c.freed());
+    #endif
+
     #ifdef STATS_NEEDED
     c.stats.clause_looked_at++;
     c.stats.visited_literals++;
@@ -435,8 +440,9 @@ bool PropEngine::propNormalClauseAnyOrder(
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
-    if (value(c[0]) == l_True) {
-        *j = Watched(offset, c[0]);
+    const Lit first = c[0];
+    if (first != blocker && value(first) == l_True) {
+        *j = Watched(offset, first);
         j++;
         return true;
     }
@@ -471,8 +477,7 @@ bool PropEngine::propNormalClauseAnyOrder(
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    if (value(c[0]) == l_False) {
-
+    if (value(first) == l_False) {
         confl = PropBy(offset);
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from ";
