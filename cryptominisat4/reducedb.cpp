@@ -38,19 +38,7 @@ struct SortRedClsGlue
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-
-        const uint32_t xsize = x->size();
-        const uint32_t ysize = y->size();
-
-        //No clause should be less than 3-long: 2&3-long are not removed
-        assert(xsize > 2 && ysize > 2);
-
-        //First tie: glue
-        if (x->stats.glue < y->stats.glue) return 1;
-        if (x->stats.glue > y->stats.glue) return 0;
-
-        //Second tie: size
-        return xsize < ysize;
+        return x->stats.glue > y->stats.glue;
     }
 };
 
@@ -65,19 +53,7 @@ struct SortRedClsSize
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-
-        const uint32_t xsize = x->size();
-        const uint32_t ysize = y->size();
-
-        //No clause should be less than 3-long: 2&3-long are not removed
-        assert(xsize > 2 && ysize > 2);
-
-        //First tie: size
-        if (xsize < ysize) return 1;
-        if (xsize > ysize) return 0;
-
-        //Second tie: glue
-        return x->stats.glue < y->stats.glue;
+        return x->size() > y->size();
     }
 };
 
@@ -92,19 +68,7 @@ struct SortRedClsAct
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-
-        const uint32_t xsize = x->size();
-        const uint32_t ysize = y->size();
-
-        //No clause should be less than 3-long: 2&3-long are not removed
-        assert(xsize > 3 && ysize > 3);
-
-        //First tie: activity
-        if (x->stats.activity > y->stats.activity) return 1;
-        if (x->stats.activity < y->stats.activity) return 0;
-
-        //Second tie: size
-        return xsize < ysize;
+        return x->stats.activity < y->stats.activity;
     }
 };
 
