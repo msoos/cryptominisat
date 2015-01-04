@@ -2348,16 +2348,18 @@ Lit Searcher::pickBranchLit()
     Lit next = lit_Undef;
 
     // Random decision:
-    double rand = mtrand.randDblExc();
-    double frq = conf.random_var_freq;
-    if (rand < frq && !order_heap.empty()) {
-        const Var next_var = order_heap.random_element(mtrand);
+    if (conf.random_var_freq > 0) {
+        double rand = mtrand.randDblExc();
+        double frq = conf.random_var_freq;
+        if (rand < frq && !order_heap.empty()) {
+            const Var next_var = order_heap.random_element(mtrand);
 
-        if (value(next_var) == l_Undef
-            && solver->varData[next_var].is_decision
-        ) {
-            stats.decisionsRand++;
-            next = Lit(next_var, !pickPolarity(next_var));
+            if (value(next_var) == l_Undef
+                && solver->varData[next_var].is_decision
+            ) {
+                stats.decisionsRand++;
+                next = Lit(next_var, !pickPolarity(next_var));
+            }
         }
     }
 
