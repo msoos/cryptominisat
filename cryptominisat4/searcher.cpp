@@ -3232,7 +3232,7 @@ inline Lit Searcher::find_good_blocked_lit(const Clause& c) const
                 lowest_lev = varData[l.var()].level;
             }
         } else {
-            if (varData[l.var()].polarity ^ l.sign() == true) {
+            if ((varData[l.var()].polarity ^ l.sign()) == true) {
                 lit = l;
             }
         }
