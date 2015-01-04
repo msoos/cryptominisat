@@ -40,9 +40,13 @@ class SubsumeStrengthen
 public:
     SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
     size_t mem_used() const;
-    void backward_subsumption_with_all_clauses();
-    bool performStrengthening();
-    uint32_t subsume_and_unlink_and_markirred(ClOffset offset);
+
+    void backward_subsumption_long_with_long();
+    bool backward_strengthen_long_with_long();
+
+    //Called from simplifier at resolvent-adding of var-elim
+    uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
+
     //bool subsumeWithTris();
 
     struct Sub0Ret {
@@ -64,6 +68,7 @@ public:
         size_t str = 0;
     };
 
+    //Called from simplifier at resolvent-adding of var-elim
     template<class T>
     Sub0Ret subsume_and_unlink(
         const ClOffset offset

@@ -39,7 +39,7 @@ SubsumeStrengthen::SubsumeStrengthen(
 {
 }
 
-uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(ClOffset offset)
+uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(const ClOffset offset)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     #ifdef VERBOSE_DEBUG
@@ -92,29 +92,18 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     find_subsumed(offset, ps, abs, subs, removeImplicit);
 
     //Go through each clause that can be subsumed
-    for (vector<ClOffset>::const_iterator
-        it = subs.begin(), end = subs.end()
-        ; it != end
-        ; it++
-    ) {
-        Clause *tmp = solver->cl_alloc.ptr(*it);
+    for (const ClOffset offs: subs) {
+        Clause *tmp = solver->cl_alloc.ptr(offs);
+        ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
         #ifdef VERBOSE_DEBUG
         cout << "-> subsume removing:" << *tmp << endl;
         #endif
 
-        //Combine stats
-        ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
-
-        //At least one is irred. Indicate this to caller.
-        if (!tmp->red())
+        if (!tmp->red()) {
             ret.subsumedIrred = true;
+        }
 
-        /*cout
-        << "This " << ps << " (offset: " << offset << ") subsumed this: "
-        << *tmp << "(offset: " << *it << ")"
-        << endl;*/
-
-        simplifier->unlink_clause(*it);
+        simplifier->unlink_clause(offs, true, false, true);
         ret.numSubsumed++;
 
         //If we are waaay over time, just exit
@@ -131,6 +120,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     subsLits.clear();
     Sub1Ret ret;
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    assert(!cl.getRemoved());
 
     if (solver->conf.verbosity >= 6)
         cout << "strengthen_subsume_and_unlink_and_markirred-ing with clause:" << cl << endl;
@@ -169,7 +159,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
             //Update stats
             cl.combineStats(cl2.stats);
 
-            simplifier->unlink_clause(offset2);
+            simplifier->unlink_clause(offset2, true, false, true);
             ret.sub++;
         } else { //Strengthen
             if (solver->conf.verbosity >= 6) {
@@ -190,7 +180,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     return ret;
 }
 
-void SubsumeStrengthen::backward_subsumption_with_all_clauses()
+void SubsumeStrengthen::backward_subsumption_long_with_long()
 {
     //If clauses are empty, the system below segfaults
     if (simplifier->clauses.empty())
@@ -254,7 +244,7 @@ void SubsumeStrengthen::backward_subsumption_with_all_clauses()
     runStats.subsumeTime += cpuTime() - myTime;
 }
 
-bool SubsumeStrengthen::performStrengthening()
+bool SubsumeStrengthen::backward_strengthen_long_with_long()
 {
     assert(solver->ok);
 
@@ -354,9 +344,11 @@ void inline SubsumeStrengthen::fillSubs(
 
         ClOffset offset2 = it->get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-
-        if (cl.size() > cl2.size())
+        if (cl2.getRemoved()
+            || cl.size() > cl2.size())
+        {
             continue;
+        }
 
         *simplifier->limit_to_decrease -= (long)cl.size() + (long)cl2.size();
         litSub = subset1(cl, cl2);

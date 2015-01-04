@@ -170,6 +170,7 @@ private:
     friend class BVA;
     BVA* bva;
     bool startup = false;
+    bool backward_subsume();
 
     //debug
     void check_elimed_vars_are_unassignedAndStats() const;

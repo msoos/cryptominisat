@@ -237,6 +237,9 @@ void Simplifier::unlink_clause(
         }
     } else {
         cl.setRemoved();
+        for (const Lit lit: cl) {
+            solver->watches.smudge(lit);
+        }
     }
 
     if (cl.red()) {
@@ -662,7 +665,7 @@ void Simplifier::eliminate_empty_resolvent_vars()
     double myTime = cpuTime();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
     limit_to_decrease = &empty_varelim_time_limit;
-    cl_to_free_later.clear();
+    assert(cl_to_free_later.empty());
 
     size_t num = 0;
     for(size_t var = solver->mtrand.randInt(solver->nVars())
@@ -685,10 +688,8 @@ void Simplifier::eliminate_empty_resolvent_vars()
         var_elimed++;
     }
 
-    if (!cl_to_free_later.empty()) {
-        solver->clean_occur_from_removed_clauses();
-        free_clauses_to_free();
-    }
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = (double)*limit_to_decrease/(double)orig_empty_varelim_time_limit;
@@ -732,6 +733,7 @@ bool Simplifier::eliminate_vars()
     int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
     limit_to_decrease = &norm_varelim_time_limit;
     cl_to_free_later.clear();
+    assert(solver->watches.get_smudged_list().empty());
 
     order_vars_for_elim();
 
@@ -768,7 +770,7 @@ bool Simplifier::eliminate_vars()
     }
 
 end:
-    solver->clean_occur_from_removed_clauses();
+    solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
@@ -873,10 +875,7 @@ bool Simplifier::simplify(const bool _startup)
     const size_t origTrailSize = solver->trail_size();
 
     //subsumeStrengthen->subsumeWithTris();
-    subsumeStrengthen->backward_subsumption_with_all_clauses();
-    if (!subsumeStrengthen->performStrengthening()
-        || solver->must_interrupt_asap()
-    ) {
+    if (!backward_subsume()) {
         goto end;
     }
 
@@ -932,6 +931,10 @@ bool Simplifier::simplify(const bool _startup)
         }
     }
 
+    if (!backward_subsume()) {
+        goto end;
+    }
+
 end:
 
     remove_by_drup_recently_blocked_clauses(origBlockedSize);
@@ -946,6 +949,25 @@ end:
     }
 
     return solver->ok;
+}
+
+bool Simplifier::backward_subsume()
+{
+    assert(cl_to_free_later.empty());
+    assert(solver->watches.get_smudged_list().empty());
+    bool ret = true;
+
+    subsumeStrengthen->backward_subsumption_long_with_long();
+    if (!subsumeStrengthen->backward_strengthen_long_with_long()
+        || solver->must_interrupt_asap()
+    ) {
+        ret = false;
+    }
+
+    free_clauses_to_free();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+
+    return ret;
 }
 
 bool Simplifier::fill_occur()
