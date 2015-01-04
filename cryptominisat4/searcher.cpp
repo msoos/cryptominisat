@@ -1093,7 +1093,7 @@ lbool Searcher::search()
         }
 
         //Decision level is higher than 1, so must do normal propagation
-        confl = propagate(
+        confl = propagate<false>(
             #ifdef STATS_NEEDED
             &hist.watchListSizeTraversed
             #endif
@@ -2991,6 +2991,7 @@ void Searcher::bumpClauseAct(Clause* cl)
     #endif
 }
 
+template<bool update_bogoprops>
 PropBy Searcher::propagate(
     #ifdef STATS_NEEDED
     AvgCalc<size_t>* watchListSizeTraversed
@@ -3006,7 +3007,7 @@ PropBy Searcher::propagate(
             #endif
         );
     } else {
-        ret = propagateAnyOrder();
+        ret = propagateAnyOrder<update_bogoprops>();
     }
 
     //Drup -- If declevel 0 propagation, we have to add the unitaries
@@ -3029,6 +3030,16 @@ PropBy Searcher::propagate(
 
     return ret;
 }
+template PropBy Searcher::propagate<true>(
+    #ifdef STATS_NEEDED
+    AvgCalc<size_t>* watchListSizeTraversed
+    #endif
+);
+template PropBy Searcher::propagate<false>(
+    #ifdef STATS_NEEDED
+    AvgCalc<size_t>* watchListSizeTraversed
+    #endif
+);
 
 size_t Searcher::mem_used() const
 {

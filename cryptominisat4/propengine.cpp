@@ -402,6 +402,8 @@ inline PropResult PropEngine::propNormalClause(
 }
 
 
+template<bool update_bogoprops>
+inline
 bool PropEngine::propNormalClauseAnyOrder(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
@@ -413,7 +415,9 @@ bool PropEngine::propNormalClauseAnyOrder(
         *j++ = *i;
         return true;
     }
-    propStats.bogoProps += 4;
+    if (update_bogoprops) {
+        propStats.bogoProps += 4;
+    }
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
     assert(!c.getRemoved());
@@ -660,6 +664,7 @@ inline void PropEngine::propTriHelperAnyOrder(
     enqueue(lit2, PropBy(~lit1, lit3, red));
 }
 
+template<bool update_bogoprops>
 PropBy PropEngine::propagateAnyOrder()
 {
     PropBy confl;
@@ -694,7 +699,9 @@ PropBy PropEngine::propagateAnyOrder()
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = ws.begin();
         watch_subarray_const::const_iterator end = ws.end();
-        propStats.bogoProps += ws.size()/4 + 1;
+        if (update_bogoprops) {
+            propStats.bogoProps += ws.size()/4 + 1;
+        }
 
         for (; i != end; i++) {
             if (i->isBinary()) {
@@ -718,7 +725,7 @@ PropBy PropEngine::propagateAnyOrder()
 
             //propagate normal clause
             if (i->isClause()) {
-                if (!propNormalClauseAnyOrder(i, j, p, confl)) {
+                if (!propNormalClauseAnyOrder<update_bogoprops>(i, j, p, confl)) {
                     i++;
                     break;
                 }
@@ -743,6 +750,8 @@ PropBy PropEngine::propagateAnyOrder()
 
     return confl;
 }
+template PropBy PropEngine::propagateAnyOrder<true>();
+template PropBy PropEngine::propagateAnyOrder<false>();
 
 void PropEngine::sortWatched()
 {

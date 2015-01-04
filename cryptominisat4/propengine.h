@@ -145,6 +145,7 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
 
+    template<bool update_bogoprops>
     PropBy propagateAnyOrder();
     PropBy propagateBinFirst(
         #ifdef STATS_NEEDED
@@ -275,6 +276,7 @@ private:
         , const Lit p
         , PropBy& confl
     );
+    template<bool update_bogoprops>
     bool propNormalClauseAnyOrder(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
