@@ -33,8 +33,8 @@ void print_model(std::ostream* os, CMSat::SATSolver* solver)
     *os << "v ";
     size_t line_size = 2;
     for (uint32_t var = 0; var < solver->nVars(); var++) {
-        if (solver->get_model()[var] != CMSat::l_Undef) {
-            const bool value_is_positive = (solver->get_model()[var] == CMSat::l_True);
+        if (solver->get_model()[var] != l_Undef) {
+            const bool value_is_positive = (solver->get_model()[var] == l_True);
             const size_t this_var_size = std::ceil(std::log10(var+1)) + 1 + !value_is_positive;
             line_size += this_var_size;
             if (line_size > 80) {
