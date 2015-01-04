@@ -940,6 +940,20 @@ inline void Searcher::cancelUntil(uint32_t level)
     #endif
 }
 
+inline void Searcher::insertVarOrder(const Var x)
+{
+    if (!order_heap.in_heap(x)
+    ) {
+        #ifdef SLOW_DEUG
+        //All active varibles are decision variables
+        assert(varData[x].is_decision);
+        #endif
+
+        order_heap.insert(x);
+    }
+}
+
+
 } //end namespace
 
 #endif //__SEARCHER_H__

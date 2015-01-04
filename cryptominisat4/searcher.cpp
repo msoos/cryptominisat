@@ -543,7 +543,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
     }
 }
 
-Clause* Searcher::create_learnt_clause(PropBy confl)
+inline Clause* Searcher::create_learnt_clause(PropBy confl)
 {
     pathC = 0;
     int index = trail.size() - 1;
@@ -2569,15 +2569,6 @@ void Searcher::stamp_based_more_minim(vector<Lit>& cl)
 
     stats.stampShrinkCl += ((origSize - cl.size()) > 0);
     stats.stampShrinkLit += origSize - cl.size();
-}
-
-void Searcher::insertVarOrder(const Var x)
-{
-    if (!order_heap.in_heap(x)
-        && solver->varData[x].is_decision
-    ) {
-        order_heap.insert(x);
-    }
 }
 
 bool Searcher::VarFilter::operator()(uint32_t var) const
