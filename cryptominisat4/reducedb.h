@@ -49,6 +49,12 @@ private:
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
+    unsigned cl_locked;
+    unsigned cl_marked;
+    unsigned cl_ttl;
+    unsigned cl_glue;
+    unsigned cl_locked_solver;
+
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
