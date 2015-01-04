@@ -24,6 +24,7 @@
 
 #include "watched.h"
 #include "watcharray.h"
+#include "clauseallocator.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -33,7 +34,12 @@ using namespace CMSat;
 */
 struct WatchedSorter
 {
+    WatchedSorter(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+
     bool operator () (const Watched& x, const Watched& y);
+    const ClauseAllocator& cl_alloc;
 };
 
 inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
@@ -46,9 +52,12 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
     if (y.isTri()) return false;
     if (x.isTri()) return true;
 
-    //from now on, none is binary or tertiary
-    //don't bother sorting these
-    return false;
+    assert(x.isClause());
+    assert(y.isClause());
+    auto c_x = cl_alloc.ptr(x.get_offset());
+    auto c_y = cl_alloc.ptr(y.get_offset());
+    return (c_x->size() < c_y->size());
+    //return false;
 }
 
 //////////////////

@@ -750,7 +750,7 @@ void PropEngine::sortWatched()
     cout << "Sorting watchlists:" << endl;
     #endif
 
-    //double myTime = cpuTime();
+    const double myTime = cpuTime();
     for (watch_array::iterator
         i = watches.begin(), end = watches.end()
         ; i != end
@@ -761,7 +761,7 @@ void PropEngine::sortWatched()
             continue;
 
         #ifdef VERBOSE_DEBUG
-        cout << "Before sorting:" << endl;
+        cout << "Before sorting: ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) cout << "Binary,";
             if (ws[i2].isTri()) cout << "Tri,";
@@ -770,24 +770,25 @@ void PropEngine::sortWatched()
         cout << endl;
         #endif //VERBOSE_DEBUG
 
-        std::sort(ws.begin(), ws.end(), WatchedSorter());
+        std::sort(ws.begin(), ws.end(), WatchedSorter(cl_alloc));
 
         #ifdef VERBOSE_DEBUG
-        cout << "After sorting:" << endl;
+        cout << "After sorting : ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) cout << "Binary,";
             if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
         cout << endl;
+        cout << " -- " << endl;
         #endif //VERBOSE_DEBUG
     }
 
-    /*if (conf.verbosity >= 3) {
-        cout << "c watched "
-        << "sorting time: " << cpuTime() - myTime
+    if (conf.verbosity >= 3) {
+        cout << "c [sort] "
+        << conf.print_times(cpuTime()-myTime)
         << endl;
-    }*/
+    }
 }
 
 void PropEngine::printWatchList(const Lit lit) const
