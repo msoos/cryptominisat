@@ -207,9 +207,6 @@ Lit HyperEngine::prop_red_bin_dfs(
                 stampingTime++;
                 stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
 
-                //No need to set it. Old setting is either the same or better than lit_Undef
-                //timestamp[trail.back().toInt()].dominator[stampType] = lit_Undef;
-
                 //Root for literals propagated afterwards will be this literal
                 root = trail.back();
 
@@ -289,7 +286,6 @@ Lit HyperEngine::prop_irred_bin_dfs(
                 propStats.bogoProps += 8;
                 stampingTime++;
                 stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
-                stamp.tstamp[trail.back().toInt()].dominator[stampType] = root;
                 #ifdef DEBUG_STAMPING
                 cout
                 << "From " << p << " enqueued " << trail.back()
@@ -523,8 +519,6 @@ Lit HyperEngine::propagate_dfs(
         //Nothing more to propagate
         break;
     }
-
-    stamp.tstamp[trail.back().toInt()].numDom[stampType] = trail.size() - origTrailSize;
 
     return lit_Undef;
 }

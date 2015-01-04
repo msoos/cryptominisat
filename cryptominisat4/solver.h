@@ -329,11 +329,6 @@ class Solver : public Searcher
         bool addClauseHelper(vector<Lit>& ps);
         void print_all_clauses() const;
 
-        //////////////////
-        // Stamping
-        Lit update_lit_for_domin(Lit lit) const;
-        void update_dominators();
-
         /////////////////
         // Debug
 

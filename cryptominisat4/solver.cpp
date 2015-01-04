@@ -1630,7 +1630,6 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     //PROBE
-    update_dominators();
     if (conf.doIntreeProbe
         && !startup
         && !intree->intree_probe()
@@ -3022,34 +3021,6 @@ size_t Solver::get_num_vars_elimed() const
 size_t Solver::get_num_vars_replaced() const
 {
     return varReplacer->get_num_replaced_vars();
-}
-
-Lit Solver::update_lit_for_domin(Lit lit) const
-{
-    //Nothing to update
-    if (lit == lit_Undef)
-        return lit;
-
-    //Update to parent
-    lit = varReplacer->get_lit_replaced_with(lit);
-
-    //If parent is removed, then this dominator cannot be updated
-    if (varData[lit.var()].removed != Removed::none)
-        return lit_Undef;
-
-    return lit;
-}
-
-void Solver::update_dominators()
-{
-    for(Timestamp& tstamp: stamp.tstamp) {
-        for(size_t i = 0; i < 2; i++) {
-            Lit newLit = update_lit_for_domin(tstamp.dominator[i]);
-            tstamp.dominator[i] = newLit;
-            if (newLit == lit_Undef)
-                tstamp.numDom[i] = 0;
-        }
-    }
 }
 
 void Solver::calculate_reachability()

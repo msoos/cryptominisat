@@ -2390,10 +2390,7 @@ Lit Searcher::pickBranchLit()
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
         Lit lit2 = lit_Undef;
-        /*if (conf.doStamp) {
-            //Use timestamps
-            lit2 = stamp.tstamp[next.toInt()].dominator[STAMP_RED];
-        } else*/ if (conf.doCache) {
+        if (conf.doCache) {
             //Use cache
             lit2 = solver->litReachable[next.toInt()].lit;
         }

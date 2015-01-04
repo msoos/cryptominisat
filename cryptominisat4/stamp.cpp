@@ -29,22 +29,6 @@ void Stamp::save_on_var_memory(const uint32_t newNumVars)
 {
     tstamp.resize(newNumVars*2);
     tstamp.shrink_to_fit();
-
-    for(Timestamp& t: tstamp) {
-        Lit lit = t.dominator[STAMP_RED];
-        if (lit != lit_Undef
-            && lit.var() >= newNumVars
-        ) {
-            t.dominator[STAMP_RED] = lit_Undef;
-        }
-
-        lit = t.dominator[STAMP_IRRED];
-        if (lit != lit_Undef
-            && lit.var() >= newNumVars
-        ) {
-            t.dominator[STAMP_IRRED] = lit_Undef;
-        }
-    }
 }
 
 bool Stamp::stampBasedClRem(
@@ -91,15 +75,6 @@ void Stamp::updateVars(
     , const vector<Var>& interToOuter2
     , vector<uint16_t>& seen
 ) {
-    //Update both dominators
-    for(size_t i = 0; i < tstamp.size(); i++) {
-        for(size_t i2 = 0; i2 < 2; i2++) {
-            if (tstamp[i].dominator[i2] != lit_Undef)
-                tstamp[i].dominator[i2]
-                    = getUpdatedLit(tstamp[i].dominator[i2], outerToInter);
-        }
-    }
-
     //Update the stamp. Stamp can be very large, so update by swapping
     updateBySwap(tstamp, seen, interToOuter2);
 }
@@ -202,49 +177,6 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
 
 
     return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
-}
-
-void Stamp::remove_seen_from_stamp_dominators(const vector<uint16_t>& seen, const vector<Var>& toClear)
-{
-    int types[] = {STAMP_IRRED, STAMP_RED};
-    for(const Var var: toClear) {
-        for(int i = 0; i < 2; i++) {
-            tstamp[Lit(var, false).toInt()].dominator[types[i]] = lit_Undef;
-            tstamp[Lit(var, true).toInt()].dominator[types[i]] = lit_Undef;
-        }
-    }
-
-    for(size_t i = 0; i < tstamp.size(); i++) {
-        for(int i2 = 0; i2 < 2; i2++) {
-            if (tstamp[i].dominator[types[i2]].var() > seen.size()
-                || seen[tstamp[i].dominator[types[i2]].var()]
-            ) {
-                tstamp[i].dominator[types[i2]] = lit_Undef;
-            }
-        }
-    }
-}
-
-void Stamp::update_dominators(const VarReplacer* replacer)
-{
-    for(size_t l = 0; l < tstamp.size(); l++) {
-        Lit lit = Lit::toLit(l);
-        lit = replacer->get_lit_replaced_with(lit);
-
-        //Variable probably eliminated, decomposed, etc. Skip.
-        if (lit.toInt() >= tstamp.size())
-            continue;
-
-        //Update tstamp to that of the replaced var
-        tstamp[l] = tstamp[lit.toInt()];
-
-        for(size_t i2 = 0; i2 < 2; i2++) {
-            Lit& dom = tstamp[l].dominator[i2];
-            if (dom != lit_Undef) {
-                dom = replacer->get_lit_replaced_with(dom);
-            }
-        }
-    }
 }
 
 void Stamp::clearStamps()

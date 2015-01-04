@@ -257,9 +257,6 @@ end:
     destroy_fast_inter_replace_lookup();
     assert(solver->prop_at_head() || !solver->ok);
 
-    //Update stamp dominators
-    solver->stamp.update_dominators(this);
-
     //Update stats
     const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;

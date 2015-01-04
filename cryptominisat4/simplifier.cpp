@@ -1007,7 +1007,6 @@ void Simplifier::clean_stamps_from_uneliminated_vars()
         assert(solver->varData[var].removed == Removed::none);
         seen[var] = true;
     }
-    solver->stamp.remove_seen_from_stamp_dominators(seen, uneliminated_vars_since_last_solve);
 
     for(Var var: uneliminated_vars_since_last_solve) {
         seen[var] = false;

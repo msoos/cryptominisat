@@ -47,25 +47,15 @@ struct Timestamp
 
         end[STAMP_IRRED] = 0;
         end[STAMP_RED] = 0;
-
-        dominator[STAMP_IRRED] = lit_Undef;
-        dominator[STAMP_RED] = lit_Undef;
-
-        numDom[STAMP_IRRED] = 0;
-        numDom[STAMP_RED] = 0;
     }
 
     uint64_t start[2];
     uint64_t end[2];
-
-    Lit dominator[2];
-    uint32_t numDom[2];
 };
 
 class Stamp
 {
 public:
-    void remove_seen_from_stamp_dominators(const vector<uint16_t>& seen, const vector<Var>& toClear);
     bool stampBasedClRem(const vector<Lit>& lits) const;
     std::pair<size_t, size_t> stampBasedLitRem(
         vector<Lit>& lits
@@ -76,7 +66,6 @@ public:
         , const vector<Var>& interToOuter2
         , vector<uint16_t>& seen
     );
-    void update_dominators(const VarReplacer* replacer);
     void clearStamps();
     void save_on_var_memory(const uint32_t newNumVars);
 
