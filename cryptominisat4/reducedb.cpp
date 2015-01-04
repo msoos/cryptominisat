@@ -208,12 +208,12 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
             break;
         }
 
-        #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_activity_based : {
             std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             break;
         }
 
+        #ifdef STATS_NEEDED
         case ClauseCleaningTypes::clean_sum_prop_confl_based : {
             std::sort(solver->longRedCls.begin()
                 , solver->longRedCls.end()
