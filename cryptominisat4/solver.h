@@ -327,8 +327,6 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        void rearrange_clauses_lits();
-        void reArrangeClause(ClOffset offset);
         void print_all_clauses() const;
 
         //////////////////

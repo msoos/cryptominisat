@@ -66,34 +66,6 @@ enum PropResult {
     , PROP_TODO = 3
 };
 
-struct PolaritySorter
-{
-    PolaritySorter(const vector<VarData>& _varData) :
-        varData(_varData)
-    {}
-
-    bool operator()(const Lit lit1, const Lit lit2) {
-        const bool value1 = varData[lit1.var()].polarity ^ lit1.sign();
-        const bool value2 = varData[lit2.var()].polarity ^ lit2.sign();
-
-        //Strongly prefer TRUE value at the beginning
-        if (value1 == true && value2 == false)
-            return true;
-
-        if (value1 == false && value2 == true)
-            return false;
-
-        //Tie 2: last level
-        /*assert(pol1 == pol2);
-        if (pol1 == true) return varData[lit1.var()].level < varData[lit2.var()].level;
-        else return varData[lit1.var()].level > varData[lit2.var()].level;*/
-
-        return false;
-    }
-
-    const vector<VarData>& varData;
-};
-
 /**
 @brief The propagating and conflict generation class
 
@@ -129,6 +101,7 @@ public:
     bool update_polarity_and_activity = true;
 
 protected:
+    virtual Lit find_good_blocked_lit(const Clause& c) const  = 0;
     void new_var(const bool bva, const Var orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();

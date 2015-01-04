@@ -779,6 +779,8 @@ class Searcher : public HyperEngine
         void dump_search_sql(const double myTime);
         uint32_t num_search_called = 0;
         void reset_reason_levels_of_vars_to_zero();
+        void rearrange_clauses_watches();
+        Lit find_good_blocked_lit(const Clause& c) const override;
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution

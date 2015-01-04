@@ -796,67 +796,6 @@ bool Solver::addClause(const vector<Lit>& lits)
     return ok;
 }*/
 
-void Solver::reArrangeClause(ClOffset offset)
-{
-    Clause& cl = *cl_alloc.ptr(offset);
-    assert(cl.size() > 3);
-    if (cl.size() == 3) return;
-
-    //Change anything, but find the first two and assign them
-    //accordingly at the ClauseData
-    const Lit lit1 = cl[0];
-    const Lit lit2 = cl[1];
-    assert(lit1 != lit2);
-
-    std::sort(cl.begin(), cl.end(), PolaritySorter(varData));
-
-    uint8_t foundDatas = 0;
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        if (cl[i] == lit1) {
-            std::swap(cl[i], cl[0]);
-            foundDatas++;
-        }
-    }
-
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        if (cl[i] == lit2) {
-            std::swap(cl[i], cl[1]);
-            foundDatas++;
-        }
-    }
-    assert(foundDatas == 2);
-}
-
-void Solver::rearrange_clauses_lits()
-{
-    assert(decisionLevel() == 0);
-    assert(ok);
-    assert(qhead == trail.size());
-
-    double myTime = cpuTime();
-    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
-        reArrangeClause(longIrredCls[i]);
-    }
-    for (uint32_t i = 0; i < longRedCls.size(); i++) {
-        reArrangeClause(longRedCls[i]);
-    }
-
-    const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Rearrange lits in clauses "
-        << std::setprecision(2) << time_used  << " s"
-        << endl;
-    }
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            solver
-            , "rearrange claues"
-            , time_used
-        );
-    }
-}
-
 void Solver::test_renumbering() const
 {
     //Check if we renumbered the varibles in the order such as to make
@@ -1622,7 +1561,6 @@ lbool Solver::simplify_problem(const bool startup)
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
-    rearrange_clauses_lits();
     update_polarity_and_activity = false;
 
     if (conf.verbosity >= 6) {
@@ -1854,9 +1792,6 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Free unused watch memory
     free_unused_watches();
-
-    rearrange_clauses_lits();
-
     //addSymmBreakClauses();
 
 end:

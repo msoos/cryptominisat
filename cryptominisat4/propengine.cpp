@@ -189,9 +189,9 @@ void PropEngine::attachClause(
 
     const ClOffset offset = cl_alloc.get_offset(&c);
 
-    //blocked literal is the lit in the middle (c.size()/2). For no reason.
-    watches[c[0].toInt()].push(Watched(offset, c[c.size()/2]));
-    watches[c[1].toInt()].push(Watched(offset, c[c.size()/2]));
+    const Lit blocked_lit = find_good_blocked_lit(c);
+    watches[c[0].toInt()].push(Watched(offset, blocked_lit));
+    watches[c[1].toInt()].push(Watched(offset, blocked_lit));
 }
 
 /**
