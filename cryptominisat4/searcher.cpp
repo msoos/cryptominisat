@@ -2955,32 +2955,6 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     };
 }
 
-void Searcher::decayClauseAct()
-{
-    clauseActivityIncrease *= conf.clauseDecayActivity;
-}
-
-void Searcher::bumpClauseAct(Clause* cl)
-{
-    assert(!cl->getRemoved());
-
-    #ifdef STATS_NEEDED
-    cl->stats.activity += clauseActivityIncrease;
-    if (cl->stats.activity > 1e20 ) {
-        // Rescale
-        for(vector<ClOffset>::iterator
-            it = solver->longRedCls.begin(), end = solver->longRedCls.end()
-            ; it != end
-            ; it++
-        ) {
-            cl_alloc.ptr(*it)->stats.activity *= 1e-20;
-        }
-        clauseActivityIncrease *= 1e-20;
-        clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
-    }
-    #endif
-}
-
 template<bool update_bogoprops>
 PropBy Searcher::propagate(
     #ifdef STATS_NEEDED

@@ -81,7 +81,6 @@ struct SortRedClsSize
     }
 };
 
-#ifdef STATS_NEEDED
 struct SortRedClsAct
 {
     SortRedClsAct(ClauseAllocator& _cl_alloc) :
@@ -109,6 +108,7 @@ struct SortRedClsAct
     }
 };
 
+#ifdef STATS_NEEDED
 struct SortRedClsPropConfl
 {
     SortRedClsPropConfl(

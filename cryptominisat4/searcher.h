@@ -954,6 +954,27 @@ inline void Searcher::insertVarOrder(const Var x)
 }
 
 
+inline void Searcher::bumpClauseAct(Clause* cl)
+{
+    assert(!cl->getRemoved());
+
+    cl->stats.activity += clauseActivityIncrease;
+    if (cl->stats.activity > 1e20 ) {
+        // Rescale
+        for(ClOffset offs: longRedCls) {
+            cl_alloc.ptr(offs)->stats.activity *= 1e-20;
+        }
+        clauseActivityIncrease *= 1e-20;
+        clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
+    }
+}
+
+inline void Searcher::decayClauseAct()
+{
+    clauseActivityIncrease *= conf.clauseDecayActivity;
+}
+
+
 } //end namespace
 
 #endif //__SEARCHER_H__

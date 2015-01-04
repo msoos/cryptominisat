@@ -107,8 +107,8 @@ struct ClauseStats
 
     //Stored data
     uint32_t glue = std::numeric_limits<uint32_t>::max();
-    #ifdef STATS_NEEDED
     double   activity = 0.0;
+    #ifdef STATS_NEEDED
     uint64_t introduced_at_conflict = std::numeric_limits<uint32_t>::max(); ///<At what conflict number the clause  was introduced
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
@@ -127,8 +127,8 @@ struct ClauseStats
 
     void clear(const double multiplier)
     {
-        #ifdef STATS_NEEDED
         activity = 0;
+        #ifdef STATS_NEEDED
         conflicts_made = (double)conflicts_made * multiplier;
         sum_of_branch_depth_conflict = (double)sum_of_branch_depth_conflict * multiplier;
         propagations_made = (double)propagations_made * multiplier;
@@ -145,8 +145,8 @@ struct ClauseStats
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
-        #ifdef STATS_NEEDED
         ret.activity = std::max(first.activity, second.activity);
+        #ifdef STATS_NEEDED
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
