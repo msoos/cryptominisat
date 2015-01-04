@@ -252,8 +252,6 @@ protected:
     }
 
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
-
-protected:
     vector<lbool> assigns;
 
 private:
