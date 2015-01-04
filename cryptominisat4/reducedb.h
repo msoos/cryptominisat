@@ -49,6 +49,10 @@ private:
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
+    vector<ClOffset> never_cleaned;
+    void move_to_never_cleaned();
+    void move_from_never_cleaned();
+
     unsigned cl_locked;
     unsigned cl_marked;
     unsigned cl_ttl;

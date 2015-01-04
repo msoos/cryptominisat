@@ -97,7 +97,7 @@ struct SortRedClsAct
         const uint32_t ysize = y->size();
 
         //No clause should be less than 3-long: 2&3-long are not removed
-        assert(xsize > 2 && ysize > 2);
+        assert(xsize > 3 && ysize > 3);
 
         //First tie: activity
         if (x->stats.activity > y->stats.activity) return 1;
@@ -277,10 +277,8 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         lock_most_UIP_used_clauses();
     }
 
-    #ifdef DEBUG_MARKED_CLAUSE
-    assert(solver->no_marked_clauses());
-    #endif
-    int64_t num_to_reduce = solver->count_num_red_cls_reducedb();
+    move_to_never_cleaned();
+    int64_t num_to_reduce = solver->longRedCls.size();
 
     for(unsigned keep_type = 0; keep_type < 3; keep_type++) {
         const uint64_t keep_num = (double)num_to_reduce*solver->conf.ratio_keep_clauses[keep_type];
@@ -291,6 +289,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
     }
+    move_from_never_cleaned();
     assert(delayed_clause_free.empty());
     cl_locked = 0;
     cl_marked = 0;
@@ -335,6 +334,34 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
 
     last_reducedb_num_conflicts = solver->sumConflicts();
     return tmpStats;
+}
+
+void ReduceDB::move_to_never_cleaned()
+{
+    assert(never_cleaned.empty());
+
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t size = solver->longRedCls.size(); i < size; i++) {
+        const ClOffset offset = solver->longRedCls[i];
+        const Clause* cl = solver->cl_alloc.ptr(offset);
+        assert(!cl->stats.marked_clause);
+
+        if (!cl_needs_removal(cl, offset)) {
+            never_cleaned.push_back(solver->longRedCls[i]);
+        } else {
+            solver->longRedCls[j++] = solver->longRedCls[i];
+        }
+    }
+    solver->longRedCls.resize(j);
+}
+
+void ReduceDB::move_from_never_cleaned()
+{
+    for(ClOffset off: never_cleaned) {
+        solver->longRedCls.push_back(off);
+    }
+    never_cleaned.clear();
 }
 
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
