@@ -3153,6 +3153,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
         ok = false;
         return false;
     }
+    return true;
 }
 
 void Solver::new_external_var()
