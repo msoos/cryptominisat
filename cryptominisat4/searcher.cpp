@@ -2388,7 +2388,7 @@ Lit Searcher::pickBranchLit()
 
     //Try to update to dominator
     if (next != lit_Undef
-        && conf.dominPickFreq != 0
+        && conf.dominPickFreq > 0
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
         Lit lit2 = lit_Undef;
