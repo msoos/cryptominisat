@@ -2197,9 +2197,12 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         }
 
         clean_clauses_if_needed();
-        status = perform_scc_and_varreplace_if_needed();
-        if (status != l_Undef)
-            goto end;
+        if (!conf.never_stop_search) {
+            status = perform_scc_and_varreplace_if_needed();
+            if (status != l_Undef) {
+                goto end;
+            }
+        }
 
         save_search_loop_stats();
         if (must_consolidate_mem) {
