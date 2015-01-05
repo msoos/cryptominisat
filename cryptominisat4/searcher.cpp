@@ -1732,7 +1732,7 @@ void Searcher::printRestartHeader() const
     << endl;
 }
 
-void Searcher::printRestartStats() const
+void Searcher::print_restart_stat_line() const
 {
     printBaseStats();
     if (conf.print_all_stats) {
@@ -1959,7 +1959,7 @@ void Searcher::print_restart_stat()
             printRestartHeader();
             lastRestartPrintHeader = stats.conflStats.numConflicts;
         }
-        printRestartStats();
+        print_restart_stat_line();
         lastRestartPrint = stats.conflStats.numConflicts;
     }
 }
@@ -1970,7 +1970,7 @@ void Searcher::setup_restart_print()
     lastRestartPrint = stats.conflStats.numConflicts;
     lastRestartPrintHeader = stats.conflStats.numConflicts;
     if (conf.verbosity >= 1) {
-        printRestartStats();
+        print_restart_stat_line();
     }
 }
 

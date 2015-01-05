@@ -204,7 +204,7 @@ class Searcher : public HyperEngine
         void     print_restart_stat();
         void     print_iteration_solving_stats();
         void     printRestartHeader() const;
-        void     printRestartStats() const;
+        void     print_restart_stat_line() const;
         void     printBaseStats() const;
         void     print_clause_stats() const;
         uint64_t sumConflicts() const;
