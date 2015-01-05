@@ -1083,6 +1083,7 @@ lbool Searcher::search()
         } else {
             assert(ok);
             reduce_db_if_needed();
+            check_need_restart();
             last_decision_ended_in_conflict = false;
             const lbool ret = new_decision();
             if (ret != l_Undef) {
@@ -1208,7 +1209,7 @@ void Searcher::check_need_restart()
                 && hist.glueHist.isvalid()
                 && hist.trailDepthHistLonger.isvalid()
                 && decisionLevel() > 0
-                && (trail.size()-trail_lim.at(0)) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+                && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
             ) {
                 hist.glueHist.clear();
                 if (!blocked_restart) {
@@ -1410,8 +1411,8 @@ void Searcher::add_otf_subsume_implicit_clause()
 void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
     assert(decisionLevel() > 0);
-    hist.trailDepthHist.push(trail.size() - trail_lim[0]);
-    hist.trailDepthHistLonger.push(trail.size() - trail_lim[0]);
+    hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
+    hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
 
     hist.branchDepthHist.push(decisionLevel());
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
@@ -1605,7 +1606,6 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (params.update) {
         update_history_stats(backtrack_level, glue);
     }
-    check_need_restart();
     cancelUntil(backtrack_level);
 
     add_otf_subsume_long_clauses();
