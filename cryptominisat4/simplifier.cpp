@@ -2632,17 +2632,15 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
     int normCost;
     switch(solver->conf.varElimCostEstimateStrategy) {
         case 0:
-            normCost =  posTotalLonger*negTotalLonger
-                + pos.bin*negTotalLonger*2
-                + neg.bin*posTotalLonger*2
-                + pos.bin*neg.bin*3;
+            normCost =
+                  posTotalLonger + negTotalLonger + pos.bin + neg.bin;
             break;
 
         case 1:
             normCost =  posTotalLonger*negTotalLonger
                 + pos.bin*negTotalLonger*2
                 + neg.bin*posTotalLonger*2
-                + pos.bin*neg.bin*4;
+                + pos.bin*neg.bin*3;
             break;
 
         default:
