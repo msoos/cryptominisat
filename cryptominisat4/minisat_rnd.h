@@ -27,9 +27,14 @@ namespace CMSat {
 class MiniSatRnd
 {
 public:
+    MiniSatRnd () {}
     MiniSatRnd (const uint32_t _inter_seed) :
         inter_seed(_inter_seed)
-    {}
+    {
+        if (inter_seed == 0) {
+            inter_seed = 91648253;
+        }
+    }
 
     // Generate a random double
     inline double randDblExc()

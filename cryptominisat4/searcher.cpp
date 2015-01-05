@@ -59,7 +59,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterr
         )
 
         //variables
-        , mtrand(0)
         , solver(_solver)
         , order_heap(VarOrderLt(activities))
         , clauseActivityIncrease(1)
