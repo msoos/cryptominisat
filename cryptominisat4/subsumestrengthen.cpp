@@ -203,8 +203,8 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
             cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
         }
 
-        const size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
-        const ClOffset offset = simplifier->clauses[num];
+        const size_t at = solver->mtrand.randInt(simplifier->clauses.size()-1);
+        const ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
