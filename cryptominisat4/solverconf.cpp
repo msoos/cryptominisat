@@ -133,6 +133,7 @@ SolverConf::SolverConf() :
         , varElimCostEstimateStrategy(0)
         , varElimRatioPerIter(0.70)
         , skip_some_bve_resolvents(true)
+        , velim_resolvent_too_large(20)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)

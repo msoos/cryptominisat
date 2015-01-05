@@ -235,6 +235,7 @@ class SolverConf
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
         int      skip_some_bve_resolvents;
+        int velim_resolvent_too_large; //-1 == no limit
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
