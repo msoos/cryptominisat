@@ -606,15 +606,11 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     return last_resolved_long_cl;
 }
 
-void Searcher::bump_var_activities_based_on_last_decision_level(size_t glue)
+void Searcher::bump_var_activities_based_on_last_decision_level(const uint32_t glue)
 {
-    for (vector<pair<Lit, size_t> >::const_iterator
-        it = lastDecisionLevel.begin(), end = lastDecisionLevel.end()
-        ; it != end
-        ; it++
-    ) {
-        if (it->second < glue) {
-            bump_var_activitiy(it->first.var());
+    for (const auto dat :lastDecisionLevel) {
+        if (dat.second < glue) {
+            bump_var_activitiy(dat.first.var());
         }
     }
 }
