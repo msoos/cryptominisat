@@ -30,7 +30,7 @@ SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
         , var_decay_start(0.8)
-        , var_decay_max(0.99)
+        , var_decay_max(0.95)
         , random_var_freq(0)
         , polarity_mode(polarmode_automatic)
         , do_calc_polarity_first_time(true)
