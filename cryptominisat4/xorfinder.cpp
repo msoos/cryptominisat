@@ -40,6 +40,7 @@ XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
     , seen(_solver->seen)
     , seen2(_solver->seen2)
 {
+    //NOT THREAD SAFE BUG
     m4ri_build_all_codes();
 }
 
