@@ -966,7 +966,9 @@ inline void Searcher::bumpClauseAct(Clause* cl)
             cl_alloc.ptr(offs)->stats.activity *= 1e-20;
         }
         clauseActivityIncrease *= 1e-20;
-        clauseActivityIncrease = std::max(clauseActivityIncrease, 1.0);
+        if (clauseActivityIncrease == 0.0) {
+            clauseActivityIncrease = 1.0;
+        }
     }
 }
 
