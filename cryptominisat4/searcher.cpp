@@ -1038,6 +1038,24 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
     return l_Undef;
 }
 
+void Searcher::check_blocking_restart()
+{
+    if (conf.do_blocking_restart
+        && sumConflicts() > 10000
+        && hist.glueHist.isvalid()
+        && hist.trailDepthHistLonger.isvalid()
+        && decisionLevel() > 0
+        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+    ) {
+        hist.glueHist.clear();
+        if (!blocked_restart) {
+            stats.blocked_restart_same++;
+        }
+        blocked_restart = true;
+        stats.blocked_restart++;
+    }
+}
+
 lbool Searcher::search()
 {
     assert(ok);
@@ -1063,7 +1081,7 @@ lbool Searcher::search()
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
-            if (((stats.conflStats.numConflicts & 0x1fff) == 0x1fff)
+            if (((stats.conflStats.numConflicts % 5000) == 0)
                 && var_decay < conf.var_decay_max
             ) {
                 var_decay += 0.01;
@@ -1076,6 +1094,11 @@ lbool Searcher::search()
             #endif
             last_decision_ended_in_conflict = true;
             handle_longest_decision_trail();
+            if (params.update) {
+                hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
+                hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
+            }
+            check_blocking_restart();
             if (!handle_conflict(confl)) {
                 dump_search_sql(myTime);
                 return l_False;
@@ -1204,21 +1227,6 @@ void Searcher::check_need_restart()
             break;
 
         case restart_type_glue:
-            if (conf.do_blocking_restart
-                && sumConflicts() > 10000
-                && hist.glueHist.isvalid()
-                && hist.trailDepthHistLonger.isvalid()
-                && decisionLevel() > 0
-                && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
-            ) {
-                hist.glueHist.clear();
-                if (!blocked_restart) {
-                    stats.blocked_restart_same++;
-                }
-                blocked_restart = true;
-                stats.blocked_restart++;
-            }
-
             if (hist.glueHist.isvalid()
                 && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
@@ -1411,8 +1419,6 @@ void Searcher::add_otf_subsume_implicit_clause()
 void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
     assert(decisionLevel() > 0);
-    hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
-    hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
 
     hist.branchDepthHist.push(decisionLevel());
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);

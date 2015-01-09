@@ -774,6 +774,7 @@ class Searcher : public HyperEngine
 
     private:
         bool blocked_restart = false;
+        void check_blocking_restart();
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
