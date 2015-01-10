@@ -1907,46 +1907,6 @@ void Searcher::printClauseDistribSQL()
 }
 #endif
 
-Restart Searcher::decide_restart_type() const
-{
-    Restart rest_type = conf.restartType;
-    if (rest_type == restart_type_automatic) {
-        if (solver->sumPropStats.propagations == 0) {
-
-            //If no data yet, default to restart_type_glue
-            rest_type = restart_type_glue;
-        } else {
-            //Otherwise, choose according to % of pos/neg polarities
-            double total = solver->sumPropStats.varSetNeg + solver->sumPropStats.varSetPos;
-            double percent = ((double)solver->sumPropStats.varSetNeg)/total*100.0;
-            if (percent > 60.0
-                || percent < 40.0
-            ) {
-                rest_type = restart_type_glue;
-            } else {
-                rest_type = restart_type_geom;
-            }
-
-            if (conf.verbosity >= 1) {
-                cout
-                << "c percent of negative polarities set: "
-                << std::setprecision(2) << percent
-                << " % (this is used to choose restart type)"
-                << endl;
-            }
-        }
-
-        if (conf.verbosity >= 2) {
-            cout
-            << "c Chose restart type "
-            << restart_type_to_string(rest_type)
-            << endl;
-        }
-    }
-
-    return rest_type;
-}
-
 void Searcher::print_restart_stat()
 {
     //Print restart stat
@@ -2153,7 +2113,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     }
 
     restore_order_heap();
-    params.rest_type = decide_restart_type();
+    params.rest_type = conf.restartType;
     if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
         || conf.do_calc_polarity_every_time
     ) {

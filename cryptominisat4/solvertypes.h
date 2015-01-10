@@ -318,12 +318,12 @@ struct PropStats
         propsTriRed += other.propsTriRed;
         propsLongIrred += other.propsLongIrred;
         propsLongRed += other.propsLongRed;
-        #endif
 
         //Var settings
         varSetPos += other.varSetPos;
         varSetNeg += other.varSetNeg;
         varFlipped += other.varFlipped;
+        #endif
 
         return *this;
     }
@@ -342,12 +342,12 @@ struct PropStats
         propsTriRed -= other.propsTriRed;
         propsLongIrred -= other.propsLongIrred;
         propsLongRed -= other.propsLongRed;
-        #endif
 
         //Var settings
         varSetPos -= other.varSetPos;
         varSetNeg -= other.varSetNeg;
         varFlipped -= other.varFlipped;
+        #endif
 
         return *this;
     }
@@ -419,7 +419,6 @@ struct PropStats
             , stats_line_percent(propsLongRed, propagations)
             , "% of propagations"
         );
-        #endif
 
         print_stats_line("c varSetPos", varSetPos
             , stats_line_percent(varSetPos, propagations)
@@ -435,6 +434,7 @@ struct PropStats
             , stats_line_percent(varFlipped, propagations)
             , "% of propagations"
         );
+        #endif
 
     }
 
@@ -452,12 +452,12 @@ struct PropStats
     uint64_t propsTriRed = 0;
     uint64_t propsLongIrred = 0;
     uint64_t propsLongRed = 0;
-    #endif
 
     //Var settings
     uint64_t varSetPos = 0;
     uint64_t varSetNeg = 0;
     uint64_t varFlipped = 0;
+    #endif
 };
 
 enum class ConflCausedBy {

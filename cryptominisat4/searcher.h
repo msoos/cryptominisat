@@ -660,7 +660,6 @@ class Searcher : public HyperEngine
         Clause* handle_last_confl_otf_subsumption(Clause* cl, const size_t glue);
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
-        Restart decide_restart_type() const;
         Lit   pickBranchLit();
         lbool otf_hyper_prop_first_dec_level(bool& must_continue);
         void  hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel);

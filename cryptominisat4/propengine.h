@@ -96,6 +96,7 @@ public:
     }
     bool propagate_occur();
     PropStats propStats;
+    template<bool update_bogoprops = true>
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
     bool update_polarity_and_activity = true;
@@ -210,6 +211,7 @@ private:
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
 
+    template<bool update_bogoprops = true>
     bool propBinaryClause(
         watch_subarray_const::const_iterator i
         , const Lit p
@@ -223,6 +225,7 @@ private:
         , const Lit lit3
         , const bool red
     );
+    template<bool update_bogoprops = true>
     void propTriHelperAnyOrder(
         const Lit lit1
         , const Lit lit2
@@ -236,6 +239,7 @@ private:
         , const Lit p
         , PropBy& confl
     );
+    template<bool update_bogoprops = true>
     bool propTriClauseAnyOrder(
         watch_subarray_const::const_iterator i
         , const Lit lit1
@@ -278,86 +282,6 @@ inline uint32_t PropEngine::decisionLevel() const
 inline uint32_t PropEngine::nAssigns() const
 {
     return trail.size();
-}
-
-/**
-@brief Enqueues&sets a new fact that has been found
-
-Call this when a fact has been found. Sets the value, enqueues it for
-propagation, sets its level, sets why it was propagated, saves the polarity,
-and does some logging if logging is enabled
-
-@p p the fact to enqueue
-@p from Why was it propagated (binary clause, tertiary clause, normal clause)
-*/
-inline void PropEngine::enqueue(const Lit p, const PropBy from)
-{
-    #ifdef DEBUG_ENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    cout << "enqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << endl;
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    assert(trail.size() <= nVarsOuter());
-    assert(decisionLevel() == 0 || varData[p.var()].removed == Removed::none);
-    #endif
-
-    const Var v = p.var();
-    assert(value(v) == l_Undef);
-    if (!watches[(~p).toInt()].empty()) {
-        watches.prefetch((~p).toInt());
-    }
-
-    assigns[v] = boolToLBool(!p.sign());
-    #ifdef STATS_NEEDED_EXTRA
-    varData[v].stats.trailLevelHist.push(trail.size());
-    varData[v].stats.decLevelHist.push(decisionLevel());
-    #endif
-    varData[v].reason = from;
-    varData[v].level = decisionLevel();
-
-    trail.push_back(p);
-    propStats.propagations++;
-    propStats.bogoProps += 1;
-
-    if (p.sign()) {
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.negPolarSet++;
-        #endif
-        propStats.varSetNeg++;
-    } else {
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.posPolarSet++;
-        #endif
-        propStats.varSetPos++;
-    }
-
-    if (varData[v].polarity != !p.sign()) {
-        agility.update(true);
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.flippedPolarity++;
-        #endif
-        propStats.varFlipped++;
-    } else {
-        agility.update(false);
-    }
-
-    //Only update non-decision: this way, flipped decisions don't get saved
-    if (update_polarity_and_activity
-        && from != PropBy()
-    ) {
-        varData[v].polarity = !p.sign();
-    }
-
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
 }
 
 inline size_t PropEngine::getTrailSize() const

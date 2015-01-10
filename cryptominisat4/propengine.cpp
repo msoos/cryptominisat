@@ -224,6 +224,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
+template<bool update_bogoprops>
 inline bool PropEngine::propBinaryClause(
     watch_subarray_const::const_iterator i
     , const Lit p
@@ -238,7 +239,7 @@ inline bool PropEngine::propBinaryClause(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue(i->lit2(), PropBy(~p, i->red()));
+        enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
     } else if (val == l_False) {
         //Update stats
         if (i->red())
@@ -509,7 +510,7 @@ bool PropEngine::propNormalClauseAnyOrder(
         else
             propStats.propsLongIrred++;
         #endif
-        enqueue(c[0], PropBy(offset));
+        enqueue<update_bogoprops>(c[0], PropBy(offset));
         update_glue(c);
     }
 
@@ -574,6 +575,7 @@ inline PropResult PropEngine::propTriClause(
     return PROP_NOTHING;
 }
 
+template<bool update_bogoprops>
 inline bool PropEngine::propTriClauseAnyOrder(
     watch_subarray_const::const_iterator i
     , const Lit lit1
@@ -613,7 +615,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
         return false;
     }
     if (val2 == l_Undef && val3 == l_False) {
-        propTriHelperAnyOrder(
+        propTriHelperAnyOrder<update_bogoprops>(
             lit1
             , lit2
             , lit3
@@ -623,7 +625,7 @@ inline bool PropEngine::propTriClauseAnyOrder(
     }
 
     if (val3 == l_Undef && val2 == l_False) {
-        propTriHelperAnyOrder(
+        propTriHelperAnyOrder<update_bogoprops>(
             lit1
             , lit3
             , lit2
@@ -652,6 +654,7 @@ inline PropResult PropEngine::propTriHelperSimple(
     return PROP_SOMETHING;
 }
 
+template<bool update_bogoprops>
 inline void PropEngine::propTriHelperAnyOrder(
     const Lit lit1
     , const Lit lit2
@@ -666,7 +669,7 @@ inline void PropEngine::propTriHelperAnyOrder(
     #endif
 
     //Lazy hyper-bin is not possibe
-    enqueue(lit2, PropBy(~lit1, lit3, red));
+    enqueue<update_bogoprops>(lit2, PropBy(~lit1, lit3, red));
 }
 
 template<bool update_bogoprops>
@@ -711,7 +714,7 @@ PropBy PropEngine::propagateAnyOrder()
         for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
-                if (!propBinaryClause(i, p, confl)) {
+                if (!propBinaryClause<update_bogoprops>(i, p, confl)) {
                     i++;
                     break;
                 }
@@ -721,7 +724,7 @@ PropBy PropEngine::propagateAnyOrder()
             //Propagate tri clause
             if (i->isTri()) {
                 *j++ = *i;
-                if (!propTriClauseAnyOrder(i, p, confl)) {
+                if (!propTriClauseAnyOrder<update_bogoprops>(i, p, confl)) {
                     i++;
                     break;
                 }
@@ -1183,4 +1186,86 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
     #endif
 
     return true;
+}
+template<bool update_bogoprops>
+void PropEngine::enqueue(const Lit p, const PropBy from)
+{
+    #ifdef DEBUG_ENQUEUE_LEVEL0
+    #ifndef VERBOSE_DEBUG
+    if (decisionLevel() == 0)
+    #endif //VERBOSE_DEBUG
+    cout << "enqueue var " << p.var()+1
+    << " to val " << !p.sign()
+    << " level: " << decisionLevel()
+    << " sublevel: " << trail.size()
+    << " by: " << from << endl;
+    #endif //DEBUG_ENQUEUE_LEVEL0
+
+    #ifdef ENQUEUE_DEBUG
+    //assert(trail.size() <= nVarsOuter());
+    //assert(decisionLevel() == 0 || varData[p.var()].removed == Removed::none);
+    #endif
+
+    const Var v = p.var();
+    assert(value(v) == l_Undef);
+    if (!watches[(~p).toInt()].empty()) {
+        watches.prefetch((~p).toInt());
+    }
+
+    const bool sign = p.sign();
+    assigns[v] = boolToLBool(!sign);
+    #ifdef STATS_NEEDED_EXTRA
+    varData[v].stats.trailLevelHist.push(trail.size());
+    varData[v].stats.decLevelHist.push(decisionLevel());
+    #endif
+    varData[v].reason = from;
+    varData[v].level = decisionLevel();
+
+    trail.push_back(p);
+    propStats.propagations++;
+    if (update_bogoprops) {
+        propStats.bogoProps += 1;
+    }
+
+    if (sign) {
+        #ifdef STATS_NEEDED_EXTRA
+        varData[v].stats.negPolarSet++;
+        #endif
+
+        #ifdef STATS_NEEDED
+        propStats.varSetNeg++;
+        #endif
+    } else {
+        #ifdef STATS_NEEDED_EXTRA
+        varData[v].stats.posPolarSet++;
+        #endif
+
+        #ifdef STATS_NEEDED
+        propStats.varSetPos++;
+        #endif
+    }
+
+    if (varData[v].polarity != sign) {
+        agility.update(true);
+        #ifdef STATS_NEEDED_EXTRA
+        varData[v].stats.flippedPolarity++;
+        #endif
+
+        #ifdef STATS_NEEDED
+        propStats.varFlipped++;
+        #endif
+    } else {
+        agility.update(false);
+    }
+
+    //Only update non-decision: this way, flipped decisions don't get saved
+    if (update_polarity_and_activity
+        && from != PropBy()
+    ) {
+        varData[v].polarity = !sign;
+    }
+
+    #ifdef ANIMATE3D
+    std::cerr << "s " << v << " " << p.sign() << endl;
+    #endif
 }
