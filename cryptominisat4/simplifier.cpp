@@ -1340,8 +1340,8 @@ size_t Simplifier::rem_cls_from_watch_due_to_varelim(
         bool red = false;
 
         if (watch.isClause()) {
-            ClOffset offset = watch.get_offset();
-            Clause& cl = *solver->cl_alloc.ptr(offset);
+            const ClOffset offset = watch.get_offset();
+            const Clause& cl = *solver->cl_alloc.ptr(offset);
             if (cl.getRemoved()) {
                 continue;
             }
