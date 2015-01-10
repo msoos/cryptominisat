@@ -106,14 +106,14 @@ struct ClauseStats
     #endif
 
     ClauseStats() :
-        used_for_uip_creation(0)
+        glue(0x7fffff)
+        , used_for_uip_creation(0)
         , locked(false)
         , marked_clause(false)
         , ttl(0)
     {}
 
     //Stored data
-    uint32_t glue = std::numeric_limits<uint32_t>::max();
     double   activity = 0.0;
     #ifdef STATS_NEEDED
     uint64_t introduced_at_conflict = std::numeric_limits<uint32_t>::max(); ///<At what conflict number the clause  was introduced
@@ -123,10 +123,11 @@ struct ClauseStats
     uint64_t visited_literals = 0; ///<Number of literals visited
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
-    uint32_t used_for_uip_creation:20; ///Number of times the claue was using during 1st UIP conflict generation
+    uint32_t glue:23;
+    uint32_t used_for_uip_creation:6; ///Number of times the claue was using during 1st UIP conflict generation
     uint32_t locked:1;
     uint32_t marked_clause:1;
-    uint32_t ttl:4;
+    uint32_t ttl:1;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
