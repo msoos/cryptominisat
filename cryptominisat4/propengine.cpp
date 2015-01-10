@@ -1246,7 +1246,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     if (varData[v].polarity != sign) {
+        #ifdef UPDATE_AGILITY
         agility.update(true);
+        #endif
         #ifdef STATS_NEEDED_EXTRA
         varData[v].stats.flippedPolarity++;
         #endif
@@ -1255,7 +1257,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         propStats.varFlipped++;
         #endif
     } else {
+        #ifdef UPDATE_AGILITY
         agility.update(false);
+        #endif
     }
 
     //Only update non-decision: this way, flipped decisions don't get saved
