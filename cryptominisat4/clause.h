@@ -105,6 +105,13 @@ struct ClauseStats
     }
     #endif
 
+    ClauseStats() :
+        used_for_uip_creation(0)
+        , locked(false)
+        , marked_clause(false)
+        , ttl(0)
+    {}
+
     //Stored data
     uint32_t glue = std::numeric_limits<uint32_t>::max();
     double   activity = 0.0;
@@ -116,10 +123,10 @@ struct ClauseStats
     uint64_t visited_literals = 0; ///<Number of literals visited
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
-    uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
-    bool locked = false;
-    bool marked_clause = false;
-    uint16_t ttl = 0;
+    uint32_t used_for_uip_creation:20; ///Number of times the claue was using during 1st UIP conflict generation
+    uint32_t locked:1;
+    uint32_t marked_clause:1;
+    uint32_t ttl:4;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
@@ -189,12 +196,12 @@ class Clause
 {
 protected:
 
+    uint32_t mySize;
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
     uint16_t occurLinked:1;
-    uint32_t mySize;
 
 
     Lit* getData()
