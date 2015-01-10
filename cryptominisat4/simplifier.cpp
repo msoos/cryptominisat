@@ -236,10 +236,10 @@ void Simplifier::unlink_clause(
             }
         }
     } else {
-        cl.setRemoved();
         for (const Lit lit: cl) {
             solver->watches.smudge(lit);
         }
+        cl.setRemoved();
     }
 
     if (cl.red()) {
