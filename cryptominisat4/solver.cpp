@@ -3337,7 +3337,14 @@ Var Solver::num_active_vars() const
     uint32_t removed_non_decision = 0;
     for(Var var = 0; var < solver->nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
-            assert(varData[var].removed == Removed::none);
+            if (varData[var].removed != Removed::none)
+            {
+                cout << "ERROR: var " << var + 1 << " has removed: "
+                << removed_type_to_string(varData[var].removed)
+                << " but is set to " << value(var) << endl;
+                assert(varData[var].removed == Removed::none);
+                exit(-1);
+            }
             removed_set++;
             continue;
         }
