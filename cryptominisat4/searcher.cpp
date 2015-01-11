@@ -400,7 +400,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             if (red_long_cls_is_reducedb(*cl)) {
                 num_red_cls_reducedb--;
             }
-            cl->stats.ttl++;
+            cl->stats.ttl = 1;
         }
     }
 }

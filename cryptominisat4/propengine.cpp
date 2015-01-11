@@ -269,7 +269,7 @@ void PropEngine::update_glue(Clause& c)
             if (red_long_cls_is_reducedb(c)) {
                 num_red_cls_reducedb--;
             }
-            c.stats.ttl++;
+            c.stats.ttl = 1;
         }
         c.stats.glue = std::min(c.stats.glue, new_glue);
     }
