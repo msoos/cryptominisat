@@ -195,6 +195,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
         && (double)wenThrough < solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size()
     ) {
         *simplifier->limit_to_decrease -= 3;
+        wenThrough++;
 
         //Print status
         if (solver->conf.verbosity >= 5
@@ -211,7 +212,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
         if (cl->freed() || cl->getRemoved())
             continue;
 
-        wenThrough++;
+
         *simplifier->limit_to_decrease -= 20;
         subsumed += subsume_and_unlink_and_markirred(offset);
     }
