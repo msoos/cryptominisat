@@ -292,6 +292,13 @@ lbool Simplifier::clean_clause(ClOffset offset)
     }
     cl.shrink(i-j);
 
+    //Update lits stat
+    if (cl.red()) {
+        solver->litStats.redLits -= i-j;
+    } else {
+        solver->litStats.irredLits -= i-j;
+    }
+
     if (satisfied) {
         #ifdef VERBOSE_DEBUG
         cout << "Clause cleaning -- satisfied, removing" << endl;
@@ -300,12 +307,6 @@ lbool Simplifier::clean_clause(ClOffset offset)
         unlink_clause(offset, false);
         return l_True;
     }
-
-    //Update lits stat
-    if (cl.red())
-        solver->litStats.redLits -= i-j;
-    else
-        solver->litStats.irredLits -= i-j;
 
     if (solver->conf.verbosity >= 6) {
         cout << "-> Clause became after cleaning:" << cl << endl;
