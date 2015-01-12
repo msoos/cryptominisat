@@ -57,6 +57,10 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 
     for (uint32_t vertex = 0; vertex < solver->nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
+        const Var v = vertex>>1;
+        if (solver->value(v) != l_Undef) {
+            continue;
+        }
         if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
             tarjan(vertex);
             assert(stack.empty());
@@ -118,7 +122,9 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 continue;
 
             const Lit lit = it->lit2();
-
+            if (solver->value(lit) != l_Undef) {
+                continue;
+            }
             doit(lit, vertex);
         }
 
@@ -130,7 +136,12 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 ; it++
             ) {
                 Lit lit = it->getLit();
-                if (lit != ~vertLit) doit(lit, vertex);
+                if (solver->value(lit) != l_Undef) {
+                    continue;
+                }
+                if (lit != ~vertLit) {
+                    doit(lit, vertex);
+                }
             }
         }
 

@@ -232,6 +232,7 @@ public:
     {
         return num_bva_vars;
     }
+
     vector<Var> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();

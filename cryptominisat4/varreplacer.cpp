@@ -65,6 +65,22 @@ void VarReplacer::new_var(const Var orig_outer)
     }
 }
 
+void VarReplacer::check_no_replaced_var_set() const
+{
+    for(Var var = 0; var < solver->nVarsOuter(); var++) {
+        if (solver->value(var) != l_Undef) {
+            if (solver->varData[var].removed != Removed::none)
+            {
+                cout << "ERROR: var " << var + 1 << " has removed: "
+                << removed_type_to_string(solver->varData[var].removed)
+                << " but is set to " << solver->value(var) << endl;
+                assert(solver->varData[var].removed == Removed::none);
+                exit(-1);
+            }
+        }
+    }
+}
+
 void VarReplacer::new_vars(const size_t n)
 {
     size_t oldsize = table.size();
@@ -130,22 +146,15 @@ void VarReplacer::update_vardata_and_activities(
     assert(orig != replaced_with);
     solver->varData[orig].removed = Removed::replaced;
     assert(solver->varData[replaced_with].removed == Removed::none);
+
     solver->unset_decision_var(orig);
     solver->set_decision_var(replaced_with);
 }
 
-void VarReplacer::update_delayed_enqueue_to_dominator()
-{
-    for(Lit& lit: delayedEnqueue) {
-        lit = get_lit_replaced_with(lit);
-    }
-}
-
 bool VarReplacer::enqueueDelayedEnqueue()
 {
-    update_delayed_enqueue_to_dominator();
-
-    for(const Lit lit: delayedEnqueue) {
+    for(Lit lit: delayedEnqueue) {
+        lit = get_lit_replaced_with(lit);
         if (solver->value(lit) == l_Undef) {
             solver->enqueue(lit);
             #ifdef STATS_NEEDED
@@ -213,6 +222,7 @@ bool VarReplacer::perform_replace()
         printReplaceStats();
 
     update_all_vardata_activities();
+    check_no_replaced_var_set();
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
@@ -998,6 +1008,10 @@ void VarReplacer::checkUnsetSanity()
             std::exit(-1);
         }
     }
+
+    #ifdef SLOW_DEBUG
+    check_no_replaced_var_set();
+    #endif
 }
 
 bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
