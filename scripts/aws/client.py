@@ -156,6 +156,9 @@ class solverThread (threading.Thread):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
             extra_opts = " --printsol 0 "
+
+        extra_opts += " " + self.indata["extra_opts"] + " "
+
         toexec = "%s %s %s/%s"  % \
             (self.indata["solver"], \
             extra_opts, \

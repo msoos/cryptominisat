@@ -73,6 +73,11 @@ parser.add_option("--git"
                     , help="The GIT revision to use"
                     )
 
+parser.add_option("--opt"
+                    , dest="extra_opts", type=str
+                    , help="Extra options to give to solver"
+                    )
+
 parser.add_option("--noshutdown", "-n"
                     , default=False, dest="noshutdown", action="store_true"
                     , help="Do not shut down clients"
@@ -225,6 +230,7 @@ class Server :
             tosend["s3_folder"] = options.s3_folder
             tosend["cnf_dir"] = options.cnf_dir
             tosend["noshutdown"] = options.noshutdown
+            tosend["extra_opts"] = options.extra_opts
             tosend["command"] = "solve"
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('q', len(tosend)) + tosend
