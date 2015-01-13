@@ -3,7 +3,6 @@
 
 import random
 import os
-import ssl
 import socket
 import sys
 import optparse
