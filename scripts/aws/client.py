@@ -147,10 +147,10 @@ class solverThread (threading.Thread):
         return "%s" % (self.indata["solver"])
 
     def get_stdout_fname(self):
-        return self.get_output_fname()+".stdout"
+        return self.get_output_fname()+ "-" + self.indata["uniq_cnt"] + ".stdout"
 
     def get_stderr_fname(self):
-        return self.get_output_fname()+".stderr"
+        return self.get_output_fname()+ "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_toexec(self):
         extra_opts = ""
@@ -203,24 +203,25 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
-    def copy_solution_to_s3(self, s3_folder) :
+    def copy_solution_to_s3(self, s3_folder_ending) :
         os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
+        s3_folder = self.indata["s3_folder"]+"-"+s3_folder_ending
 
-        fname_with_stdout_ending = self.indata["cnf_filename"]+".stdout.gz"
-        k.key = self.indata["s3_folder"]+"-"+s3_folder+"/"+ fname_with_stdout_ending
+        fname_with_stdout_ending = self.indata["cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
+        k.key = s3_folder+"/"+ fname_with_stdout_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"]+"-"+s3_folder, fname_with_stdout_ending)
+        url = self.create_url(self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
         print "URL: ", url
 
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname_with_stderr_ending = self.indata["cnf_filename"]+".stderr.gz"
-        k.key = self.indata["s3_folder"]+"-"+s3_folder+"/"+fname_with_stderr_ending
+        fname_with_stderr_ending = self.indata["cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stderr.gz"
+        k.key = s3_folder+"/"+fname_with_stderr_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], self.indata["s3_folder"]+"-"+s3_folder, fname_with_stderr_ending)
+        url = self.create_url(self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
         print "URL: ", url
 
         print "Uploaded stdout+stderr files"
@@ -263,9 +264,9 @@ class solverThread (threading.Thread):
                 return
 
             assert self.indata["command"] == "solve"
-            s3_folder = self.get_revision()
+            s3_folder_ending = self.get_revision()
             returncode, executed = self.execute()
-            self.copy_solution_to_s3(s3_folder)
+            self.copy_solution_to_s3(s3_folder_ending)
 
             sock = connect_client()
 

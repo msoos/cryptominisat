@@ -121,6 +121,7 @@ class Server :
 
         self.files_running = {}
         print "Solving %d files" % len(self.files_available)
+        self.uniq_cnt = 0
 
     def listen_to_connection(self) :
         # Create a TCP/IP socket
@@ -231,6 +232,7 @@ class Server :
             tosend["cnf_dir"] = options.cnf_dir
             tosend["noshutdown"] = options.noshutdown
             tosend["extra_opts"] = options.extra_opts
+            tosend["uniq_cnt"] = str(self.uniq_cnt)
             tosend["command"] = "solve"
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('q', len(tosend)) + tosend
@@ -238,6 +240,7 @@ class Server :
             print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
             sys.stdout.flush()
             connection.sendall(tosend)
+            self.uniq_cnt+=1
 
     def handle_one_connection(self):
         # Wait for a connection
