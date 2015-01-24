@@ -268,16 +268,20 @@ class solverThread (threading.Thread):
             returncode, executed = self.execute()
             self.copy_solution_to_s3(s3_folder_ending)
 
+            print "Trying to send to server that we are done"
             fail_connect = 0
             while True:
                 if fail_connect > 5:
-                    print "Error connecting to server to send results. Shutting down"
+                    print "Too many errors connecting to server to send results. Shutting down"
                     shutdown()
 
                 try:
                     sock = connect_client()
                     break
                 except:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback.print_exc()
+                    print "Problem, waiting and re-connecting"
                     fail_connect+=1
 
             tosend = {}
