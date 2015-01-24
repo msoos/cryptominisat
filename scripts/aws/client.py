@@ -289,6 +289,7 @@ class solverThread (threading.Thread):
             tosend = struct.pack('q', len(tosend)) + tosend
             sock.sendall(tosend)
             print time.strftime("%c"), "Sent that we finished", self.indata["file_num"], "with retcode", returncode
+            sock.close()
 
     def run(self):
         print "Starting Thread %d" % self.threadID
