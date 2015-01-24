@@ -74,7 +74,7 @@ parser.add_option("--git"
                     )
 
 parser.add_option("--opt"
-                    , dest="extra_opts", type=str
+                    , dest="extra_opts", type=str, default=""
                     , help="Extra options to give to solver"
                     )
 
