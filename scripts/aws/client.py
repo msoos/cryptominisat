@@ -304,8 +304,11 @@ class solverThread (threading.Thread):
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
+
+            exitapp = True
             print "Unexpected error in thread"
-            exit(-1)
+            shutdown()
+            raise
 
 boto_conn = boto.connect_s3()
 
