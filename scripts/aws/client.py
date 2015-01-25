@@ -242,7 +242,7 @@ class solverThread (threading.Thread):
 
     def run_loop(self):
         while not exitapp :
-            time.sleep(random.randint(40)/10.0)
+            time.sleep(random.randint(0, 5)/10.0)
             try:
                 sock = connect_client()
             except Exception as inst:
@@ -280,7 +280,7 @@ class solverThread (threading.Thread):
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_exc()
                     print "Problem, waiting and re-connecting"
-                    time.sleep(1)
+                    time.sleep(random.randint(0,5)/10.0)
                     fail_connect+=1
 
             tosend = {}
