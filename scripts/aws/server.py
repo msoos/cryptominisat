@@ -98,6 +98,19 @@ if not options.git_rev:
     options.git_rev = get_revision()
     print "Revsion not given, taking HEAD: %s" % options.git_rev
 
+
+def get_n_bytes_from_connection(sock, MSGLEN) :
+    chunks = []
+    bytes_recd = 0
+    while bytes_recd < MSGLEN:
+        chunk = sock.recv(min(MSGLEN - bytes_recd, 2048))
+        if chunk == '':
+            raise RuntimeError("socket connection broken")
+        chunks.append(chunk)
+        bytes_recd = bytes_recd + len(chunk)
+
+    return ''.join(chunks)
+
 class ToSolve:
     def __init__(self, num, name) :
         self.num = num
@@ -135,21 +148,6 @@ class Server :
         #Listen for incoming connections
         sock.listen(1)
         return sock
-
-    def get_n_bytes_from_connection(self, connection, n) :
-        got = 0
-        fulldata = ""
-        while got < n :
-            data = connection.recv(n-got)
-            #print >>sys.stderr, 'received "%s"' % data
-            if data :
-                fulldata += data
-                got += len(data)
-            else :
-                print >>sys.stderr, 'no more data from client ooops!'
-                raise Exception("wanted more data...")
-
-        return fulldata
 
     def handle_done(self, connection, indata) :
         file_num = indata["file_num"]
@@ -250,9 +248,9 @@ class Server :
         try:
             print  time.strftime("%c"), 'connection from ', client_address
 
-            data = self.get_n_bytes_from_connection(connection, 8)
+            data = get_n_bytes_from_connection(connection, 8)
             length = struct.unpack('!q', data)[0]
-            data = self.get_n_bytes_from_connection(connection, length)
+            data = get_n_bytes_from_connection(connection, length)
             data = pickle.loads(data)
 
             if data["command"] == "done" :
