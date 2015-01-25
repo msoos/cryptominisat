@@ -304,6 +304,8 @@ class solverThread (threading.Thread):
             exitapp = True
             raise
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exc()
             print "Unexpected error in thread"
             exit(-1)
 
