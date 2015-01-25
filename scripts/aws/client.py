@@ -287,7 +287,7 @@ class solverThread (threading.Thread):
             tosend["returncode"] = returncode
 
             tosend = pickle.dumps(tosend)
-            tosend = struct.pack('q', len(tosend)) + tosend
+            tosend = struct.pack('!q', len(tosend)) + tosend
             sock.sendall(tosend)
             print time.strftime("%c"), "Sent that we finished", self.indata["file_num"], "with retcode", returncode
             sock.close()
