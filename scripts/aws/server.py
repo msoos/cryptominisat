@@ -146,7 +146,7 @@ class Server :
         sock.bind(server_address)
 
         #Listen for incoming connections
-        sock.listen(1)
+        sock.listen(128)
         return sock
 
     def handle_done(self, connection, indata) :
