@@ -67,20 +67,17 @@ def uptime():
 
     return None
 
-def get_n_bytes_from_connection(connection, n) :
-    got = 0
-    fulldata = ""
-    while got < n :
-        data = connection.recv(n-got)
-        #print >>sys.stderr, 'received "%s"' % data
-        if data :
-            fulldata += data
-            got += len(data)
-        else :
-            print >>sys.stderr, "no more data ooops!"
-            raise Exception("wanted more data...")
+def get_n_bytes_from_connection(sock, MSGLEN) :
+    chunks = []
+    bytes_recd = 0
+    while bytes_recd < MSGLEN:
+        chunk = sock.recv(min(MSGLEN - bytes_recd, 2048))
+        if chunk == '':
+            raise RuntimeError("socket connection broken")
+        chunks.append(chunk)
+        bytes_recd = bytes_recd + len(chunk)
 
-    return fulldata
+    return ''.join(chunks)
 
 def connect_client() :
     # Create a socket object
