@@ -197,7 +197,7 @@ class Server :
         tosend["revision"] = options.git_rev
         tosend["noshutdown"] = options.noshutdown
         tosend = pickle.dumps(tosend)
-        tosend = struct.pack('q', len(tosend)) + tosend
+        tosend = struct.pack('!q', len(tosend)) + tosend
 
         print "Sending git revision %s to %s" % (options.git_rev, connection)
         connection.sendall(tosend)
@@ -212,7 +212,7 @@ class Server :
             tosend["noshutdown"] = options.noshutdown
             tosend["command"] = "finish"
             tosend = pickle.dumps(tosend)
-            tosend = struct.pack('q', len(tosend)) + tosend
+            tosend = struct.pack('!q', len(tosend)) + tosend
 
             print "No more to solve, sending termination to ", connection
             connection.sendall(tosend)
@@ -235,7 +235,7 @@ class Server :
             tosend["uniq_cnt"] = str(self.uniq_cnt)
             tosend["command"] = "solve"
             tosend = pickle.dumps(tosend)
-            tosend = struct.pack('q', len(tosend)) + tosend
+            tosend = struct.pack('!q', len(tosend)) + tosend
 
             print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
             sys.stdout.flush()
@@ -252,7 +252,7 @@ class Server :
 
             #8: 4B for 'need'/'done' and 4B for integer of following struct size in case of "done'
             data = self.get_n_bytes_from_connection(connection, 8)
-            length = struct.unpack('q', data)[0]
+            length = struct.unpack('!q', data)[0]
             data = self.get_n_bytes_from_connection(connection, length)
             data = pickle.loads(data)
 

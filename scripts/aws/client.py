@@ -104,12 +104,12 @@ def ask_for_data_to_solve(sock, command):
     tosend["uptime"] = uptime()
     tosend["command"] = command
     tosend = pickle.dumps(tosend)
-    tosend = struct.pack('q', len(tosend)) + tosend
+    tosend = struct.pack('!q', len(tosend)) + tosend
     sock.sendall(tosend)
 
     #get stuff to solve
     data = get_n_bytes_from_connection(sock, 8)
-    length = struct.unpack('q', data)[0]
+    length = struct.unpack('!q', data)[0]
     data = get_n_bytes_from_connection(sock, length)
     indata = pickle.loads(data)
     return indata
