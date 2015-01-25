@@ -272,7 +272,6 @@ class solverThread (threading.Thread):
                 if fail_connect > 5:
                     print "Too many errors connecting to server to send results. Shutting down"
                     shutdown()
-
                 try:
                     sock = connect_client()
                     break
