@@ -303,6 +303,9 @@ class solverThread (threading.Thread):
         except KeyboardInterrupt:
             exitapp = True
             raise
+        except:
+            print "Unexpected error in thread"
+            exit(-1)
 
 boto_conn = boto.connect_s3()
 
