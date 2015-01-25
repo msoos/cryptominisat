@@ -250,7 +250,6 @@ class Server :
         try:
             print  time.strftime("%c"), 'connection from ', client_address
 
-            #8: 4B for 'need'/'done' and 4B for integer of following struct size in case of "done'
             data = self.get_n_bytes_from_connection(connection, 8)
             length = struct.unpack('!q', data)[0]
             data = self.get_n_bytes_from_connection(connection, length)
