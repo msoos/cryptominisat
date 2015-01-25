@@ -96,7 +96,6 @@ def connect_client() :
     return sock
 
 def ask_for_data_to_solve(sock, command):
-    time.sleep(random.randint(40)/10.0)
     print "asking for stuff to solve..."
     tosend = {}
     tosend["uptime"] = uptime()
@@ -243,6 +242,7 @@ class solverThread (threading.Thread):
 
     def run_loop(self):
         while not exitapp :
+            time.sleep(random.randint(40)/10.0)
             try:
                 sock = connect_client()
             except Exception as inst:
