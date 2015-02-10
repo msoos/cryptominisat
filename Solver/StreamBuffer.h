@@ -24,15 +24,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
-#endif // DISABLE_ZLIB
-
 class StreamBuffer
 {
-    #ifdef DISABLE_ZLIB
-    FILE *  in;
-    #else
     gzFile  in;
-    #endif // DISABLE_ZLIB
     char    buf[CHUNK_LIMIT];
     int     pos;
     int     size;
@@ -40,24 +34,12 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            #ifdef DISABLE_ZLIB
-            #ifdef VERBOSE_DEBUG
-            printf("buf = %08X\n", buf);
-            printf("sizeof(buf) = %u\n", sizeof(buf));
-            #endif //VERBOSE_DEBUG
-            size = fread(buf, 1, sizeof(buf), in);
-            #else
             size = gzread(in, buf, sizeof(buf));
-            #endif // DISABLE_ZLIB
         }
     }
 
 public:
-    #ifdef DISABLE_ZLIB
-    StreamBuffer(FILE * i) : in(i), pos(0), size(0) {
-    #else
     StreamBuffer(gzFile i) : in(i), pos(0), size(0) {
-    #endif // DISABLE_ZLIB
         assureLookahead();
     }
 
@@ -69,5 +51,34 @@ public:
         assureLookahead();
     }
 };
+#else
+class StreamBuffer
+{
+    FILE *  in;
+    char    buf[CHUNK_LIMIT];
+    int     pos;
+    int     size;
+
+    void assureLookahead() {
+        if (pos >= size) {
+            pos  = 0;
+            size = fread(buf, 1, sizeof(buf), in);
+        }
+    }
+
+public:
+    StreamBuffer(FILE * i) : in(i), pos(0), size(0) {
+        assureLookahead();
+    }
+
+    int  operator *  () {
+        return (pos >= size) ? EOF : buf[pos];
+    }
+    void operator ++ () {
+        pos++;
+        assureLookahead();
+    }
+};
+#endif
 
 #endif //STREAMBUFFER_H

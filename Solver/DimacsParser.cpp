@@ -440,5 +440,6 @@ void DimacsParser::parse_DIMACS(T input_stream)
 
 #ifndef DISABLE_ZLIB
 template void DimacsParser::parse_DIMACS(gzFile input_stream);
-#endif
+#else
 template void DimacsParser::parse_DIMACS(FILE* input_stream);
+#endif
