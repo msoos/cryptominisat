@@ -90,6 +90,10 @@ parser.add_option("--noshutdown", "-n"
 (options, args) = parser.parse_args()
 
 def get_revision() :
+    _, solvername = os.path.split(options.solver)
+    if solvername != "cryptominisat":
+        return solvername
+
     pwd = os.getcwd()
     os.chdir('/home/ubuntu/cryptominisat')
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
