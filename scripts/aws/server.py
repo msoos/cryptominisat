@@ -13,6 +13,8 @@ import pprint
 import traceback
 import subprocess
 import boto
+import Queue
+import threading
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
     def format_description(self, description):
@@ -116,8 +118,11 @@ class ToSolve:
         self.num = num
         self.name = name
 
-class Server :
+acc_queue = Queue.Queue()
+
+class Server (threading.Thread):
     def __init__(self) :
+        threading.Thread.__init__(self)
         self.files_available = []
         self.files_finished = []
         self.files = {}
@@ -135,19 +140,6 @@ class Server :
         self.files_running = {}
         print "Solving %d files" % len(self.files_available)
         self.uniq_cnt = 0
-
-    def listen_to_connection(self) :
-        # Create a TCP/IP socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Bind the socket to the port
-        server_address = ('0.0.0.0', options.port)
-        print >>sys.stderr, 'starting up on %s port %s' % server_address
-        sock.bind(server_address)
-
-        #Listen for incoming connections
-        sock.listen(128)
-        return sock
 
     def handle_done(self, connection, indata) :
         file_num = indata["file_num"]
@@ -240,50 +232,83 @@ class Server :
             connection.sendall(tosend)
             self.uniq_cnt+=1
 
-    def handle_one_connection(self):
-        # Wait for a connection
-        print >>sys.stderr, '--> waiting for a connection...\n\n'
-        connection, client_address = self.sock.accept()
-
+    def handle_one_client(self, conn, cli_addr) :
         try:
-            print  time.strftime("%c"), 'connection from ', client_address
+            print  time.strftime("%c"), 'connection from ', cli_addr
 
-            data = get_n_bytes_from_connection(connection, 8)
+            data = get_n_bytes_from_connection(conn, 8)
             length = struct.unpack('!q', data)[0]
-            data = get_n_bytes_from_connection(connection, length)
+            data = get_n_bytes_from_connection(conn, length)
             data = pickle.loads(data)
 
             if data["command"] == "done" :
-                self.handle_done(connection, data)
+                self.handle_done(conn, data)
 
             elif data["command"] == "need" :
-               self.handle_need(connection, data)
+               self.handle_need(conn, data)
 
             elif data["command"] == "build" :
-               self.handle_build(connection, data)
+               self.handle_build(conn, data)
 
             sys.stdout.flush()
         except Exception as inst:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
 
-            print "Exception type", type(inst), " dat: ", pprint.pprint(inst), " from ", client_address
-            connection.close()
-            return
+            print "Exception type", type(inst), " dat: ", pprint.pprint(inst), " from ", cli_addr
 
         finally:
             # Clean up the connection
             print "Finished with client"
-            connection.close()
-            return
+            conn.close()
 
-    def handle_all_connections(self):
+    def run(self):
+        global acc_queue
+        while True:
+            conn, cli_addr = acc_queue.get()
+            self.handle_one_client(conn, cli_addr)
+
+class Listener (threading.Thread):
+    def __init__(self) :
+        threading.Thread.__init__(self)
+        pass
+
+    def listen_to_connection(self) :
+        # Create a TCP/IP socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Bind the socket to the port
+        server_address = ('0.0.0.0', options.port)
+        print >>sys.stderr, 'starting up on %s port %s' % server_address
+        sock.bind(server_address)
+
+        #Listen for incoming connections
+        sock.listen(128)
+        return sock
+
+    def handle_one_connection(self):
+        global acc_queue
+
+        # Wait for a connection
+        print >>sys.stderr, '--> waiting for a connection...\n\n'
+        conn, client_addr = self.sock.accept()
+        acc_queue.put_nowait((conn, client_addr))
+
+    def run(self):
         self.sock = self.listen_to_connection()
         while True:
             self.handle_one_connection()
 
 server = Server()
-server.handle_all_connections()
+listener = Listener()
+listener.setDaemon(True)
+server.setDaemon(True)
+
+listener.start()
+server.start()
+
+while threading.active_count() > 0:
+    time.sleep(0.1)
 
 #c3.large
 #def call() :

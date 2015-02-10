@@ -374,10 +374,11 @@ for i in range(num_threads) :
     threads.append(solverThread(i))
 
 for t in threads:
+    t.setDaemon(True)
     t.start()
 
-for t in threads:
-    t.join()
+while threading.active_count() > 0:
+    time.sleep(0.1)
 
 print "Exiting Main Thread, shutting down"
 shutdown()
