@@ -118,9 +118,9 @@ inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
     return co;
 }
 
-#define l_True  (::CMSat::lbool((uint8_t)0)) // gcc does not do constant propagation if these are real constants.
-#define l_False (::CMSat::lbool((uint8_t)1))
-#define l_Undef (::CMSat::lbool((uint8_t)2))
+#define l_True  lbool((uint8_t)0) // gcc does not do constant propagation if these are real constants.
+#define l_False lbool((uint8_t)1)
+#define l_Undef lbool((uint8_t)2)
 
 class lbool {
     uint8_t value;
