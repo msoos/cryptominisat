@@ -41,14 +41,14 @@ public:
         solver(_solver)
     {}
 
-    void open_file_and_dump_red_clauses(const std::string redDumpFname);
-    void open_file_and_dump_irred_clauses(const std::string irredDumpFname);
+    void open_file_and_dump_red_clauses(const std::string& redDumpFname);
+    void open_file_and_dump_irred_clauses(const std::string& irredDumpFname);
 
 private:
     const Solver* solver;
     std::ostream* outfile;
 
-    void open_dump_file(std::string filename);
+    void open_dump_file(const std::string& filename);
     void dumpBinClauses(
         const bool dumpRed
         , const bool dumpIrred

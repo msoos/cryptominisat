@@ -53,7 +53,7 @@ class DimacsParser
         void parse_and_add_xor_clause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
-        void parseComments(StreamBuffer& in, const std::string str);
+        void parseComments(StreamBuffer& in, const std::string& str);
         std::string stringify(uint32_t x) const;
         void parseSolveComment(StreamBuffer& in);
         void write_solution_to_debuglib_file(const lbool ret) const;

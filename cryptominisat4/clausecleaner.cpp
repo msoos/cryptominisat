@@ -204,7 +204,7 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 
     vector<ClOffset>::iterator s, ss, end;
     size_t at = 0;
-    for (s = ss = cs.begin(), end = cs.end();  s != end; s++, at++) {
+    for (s = ss = cs.begin(), end = cs.end();  s != end; ++s, ++at) {
         if (at + 1 < cs.size()) {
             Clause* pre_cl = solver->cl_alloc.ptr(cs[at+1]);
             __builtin_prefetch(pre_cl);

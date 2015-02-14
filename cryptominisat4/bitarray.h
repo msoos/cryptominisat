@@ -72,10 +72,10 @@ public:
         assert(size == b.size);
         uint64_t* t1 = mp;
         uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; i++) {
+        for (uint64_t i = 0; i < size; ++i) {
             *t1 &= *t2;
-            t1++;
-            t2++;
+            ++t1;
+            ++t2;
         }
 
         return *this;
@@ -86,10 +86,10 @@ public:
         assert(size == b.size);
         uint64_t* t1 = mp;
         uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; i++) {
+        for (uint64_t i = 0; i < size; ++i) {
             *t1 &= ~(*t2);
-            t1++;
-            t2++;
+            ++t1;
+            ++t2;
         }
 
         return *this;
@@ -98,7 +98,7 @@ public:
     template<class T>
     BitArray& removeThese(const T& rem)
     {
-        for (size_t i = 0; i < rem.size(); i++) {
+        for (size_t i = 0; i < rem.size(); ++i) {
             clearBit(rem[i]);
         }
 

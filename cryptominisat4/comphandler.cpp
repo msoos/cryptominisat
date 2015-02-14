@@ -89,7 +89,7 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
 
     for(size_t i = 0, size = vars.size()
         ; i < size
-        ; i++
+        ; ++i
     ) {
         bigsolver_to_smallsolver[vars[i]] = i;
         smallsolver_to_bigsolver[i] = vars[i];
@@ -296,7 +296,7 @@ void CompHandler::check_local_vardata_sanity()
     //correct 'removed' flags, and none have been assigned
 
     size_t num_vars_removed_check = 0;
-    for (Var outerVar = 0; outerVar < solver->nVarsOuter(); outerVar++) {
+    for (Var outerVar = 0; outerVar < solver->nVarsOuter(); ++outerVar) {
         const Var interVar = solver->map_outer_to_inter(outerVar);
         if (savedState[outerVar] != l_Undef) {
             assert(!solver->varData[interVar].is_decision);
@@ -313,7 +313,7 @@ void CompHandler::check_solution_is_unassigned_in_main_solver(
     const SATSolver* newSolver
     , const vector<Var>& vars
 ) {
-    for (size_t i = 0; i < vars.size(); i++) {
+    for (size_t i = 0; i < vars.size(); ++i) {
         Var var = vars[i];
         if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
             assert(solver->value(var) == l_Undef);
@@ -327,7 +327,7 @@ void CompHandler::save_solution_to_savedstate(
     , const uint32_t comp
 ) {
     assert(savedState.size() == solver->nVarsOuter());
-    for (size_t i = 0; i < vars.size(); i++) {
+    for (size_t i = 0; i < vars.size(); ++i) {
         Var var = vars[i];
         Var outerVar = solver->map_inter_to_outer(var);
         if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
@@ -426,7 +426,7 @@ void CompHandler::moveClausesLong(
     vector<ClOffset>::iterator i, j, end;
     for (i = j = cs.begin(), end = cs.end()
         ; i != end
-        ; i++
+        ; ++i
     ) {
         Clause& cl = *solver->cl_alloc.ptr(*i);
 
@@ -443,7 +443,7 @@ void CompHandler::moveClausesLong(
             //Check which comp(s) it belongs to
             bool thisComp = false;
             bool otherComp = false;
-            for (Lit* l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
+            for (Lit* l = cl.begin(), *end2 = cl.end(); l != end2; ++l) {
                 if (compFinder->getVarComp(l->var()) == comp)
                     thisComp = true;
 
@@ -474,7 +474,7 @@ void CompHandler::moveClausesLong(
 
         //Create temporary space 'tmp' and copy to backup
         tmp.resize(cl.size());
-        for (size_t i2 = 0; i2 < cl.size(); i2++) {
+        for (size_t i2 = 0; i2 < cl.size(); ++i2) {
             tmp[i2] = upd_bigsolver_to_smallsolver(cl[i2]);
         }
 
@@ -669,7 +669,7 @@ void CompHandler::moveClausesImplicit(
     numRemovedThirdRed = 0;
 
     for(const Var var: vars) {
-    for(unsigned sign = 0; sign < 2; sign++) {
+    for(unsigned sign = 0; sign < 2; ++sign) {
         const Lit lit = Lit(var, sign);
         watch_subarray ws = solver->watches[lit.toInt()];
 
@@ -682,7 +682,7 @@ void CompHandler::moveClausesImplicit(
         Watched *j = i;
         for (Watched *end2 = ws.end()
             ; i != end2
-            ; i++
+            ; ++i
         ) {
             //At least one variable inside comp
             if (i->isBinary()
@@ -728,7 +728,7 @@ void CompHandler::addSavedState(vector<lbool>& solution)
     //manipulating "model" may not be good enough
     assert(savedState.size() == solver->nVarsOuter());
     assert(solution.size() == solver->nVarsOuter());
-    for (size_t var = 0; var < savedState.size(); var++) {
+    for (size_t var = 0; var < savedState.size(); ++var) {
         if (savedState[var] != l_Undef) {
             const Var interVar = solver->map_outer_to_inter(var);
             assert(solver->varData[interVar].removed == Removed::decomposed);
@@ -763,7 +763,7 @@ void CompHandler::readdRemovedClauses()
     double myTime = cpuTime();
 
     //Avoid recursion, clear 'removed' status
-    for(size_t outer = 0; outer < solver->nVarsOuter(); outer++) {
+    for(size_t outer = 0; outer < solver->nVarsOuter(); ++outer) {
         const Var inter = solver->map_outer_to_inter(outer);
         VarData& dat = solver->varData[inter];
         if (dat.removed == Removed::decomposed) {
@@ -784,7 +784,7 @@ void CompHandler::readdRemovedClauses()
 
         //addClause() needs *outer* literals, so just do that
         tmp.clear();
-        for(size_t i = at; i < at + sz; i++) {
+        for(size_t i = at; i < at + sz; ++i) {
             tmp.push_back(removedClauses.lits[i]);
         }
         if (solver->conf.verbosity >= 6) {
@@ -828,7 +828,7 @@ void CompHandler::dump_removed_clauses(std::ostream* outfile) const
     size_t at = 0;
     for (uint32_t size :removedClauses.sizes) {
         tmp.clear();
-        for(size_t i = at; i < at + size; i++) {
+        for(size_t i = at; i < at + size; ++i) {
             tmp.push_back(removedClauses.lits[i]);
         }
         std::sort(tmp.begin(), tmp.end());

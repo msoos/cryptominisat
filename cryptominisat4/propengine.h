@@ -322,8 +322,8 @@ uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;
 
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        uint32_t lev = varData[l->var()].level;
+    for(const Lit lit: ps) {
+        const uint32_t lev = varData[lit.var()].level;
         if (lev == 0) {
             continue;
         }
@@ -333,8 +333,8 @@ uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
         }
     }
 
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        uint32_t lev = varData[l->var()].level;
+    for(const Lit lit: ps) {
+        const uint32_t lev = varData[lit.var()].level;
         seen2[lev] &= 1;
     }
     return nbLevels;

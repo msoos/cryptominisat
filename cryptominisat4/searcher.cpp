@@ -2276,12 +2276,6 @@ void Searcher::print_iteration_solving_stats()
     }
 }
 
-inline int64_t abs64(int64_t a)
-{
-    if (a < 0) return -a;
-    return a;
-}
-
 bool Searcher::pickPolarity(const Var var)
 {
     switch(conf.polarity_mode) {

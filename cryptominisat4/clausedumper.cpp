@@ -27,7 +27,7 @@
 
 using namespace CMSat;
 
-void ClauseDumper::open_file_and_dump_red_clauses(const string redDumpFname)
+void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
 {
     open_dump_file(redDumpFname);
     try {
@@ -38,7 +38,7 @@ void ClauseDumper::open_file_and_dump_red_clauses(const string redDumpFname)
         } else {
             dumpRedClauses(solver->conf.maxDumpRedsSize);
         }
-    } catch (std::ifstream::failure e) {
+    } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
@@ -46,7 +46,7 @@ void ClauseDumper::open_file_and_dump_red_clauses(const string redDumpFname)
     }
 }
 
-void ClauseDumper::open_file_and_dump_irred_clauses(const string irredDumpFname)
+void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname)
 {
     open_dump_file(irredDumpFname);
 
@@ -58,7 +58,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string irredDumpFname)
         } else {
             dumpIrredClauses();
         }
-    } catch (std::ifstream::failure e) {
+    } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
@@ -66,7 +66,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string irredDumpFname)
     }
 }
 
-void ClauseDumper::open_dump_file(std::string filename)
+void ClauseDumper::open_dump_file(const std::string& filename)
 {
     std::ofstream* f =  new std::ofstream;
     f->open(filename.c_str());

@@ -84,13 +84,9 @@ bool fileExists(const std::string& filename)
 
 
 Main::Main(int _argc, char** _argv) :
-        debugLib(false)
-        , printResult (true)
-        , max_nr_of_solutions (1)
-        , fileNamePresent (false)
-        , argc(_argc)
-        , argv(_argv)
-        , drupf(NULL)
+    fileNamePresent (false)
+    , argc(_argc)
+    , argv(_argv)
 {
 }
 

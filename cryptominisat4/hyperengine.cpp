@@ -452,7 +452,6 @@ Lit HyperEngine::propagate_dfs(
     }
 
     //Set up stacks
-    const size_t origTrailSize = trail.size();
     toPropBin.clear();
     toPropRedBin.clear();
     toPropNorm.clear();

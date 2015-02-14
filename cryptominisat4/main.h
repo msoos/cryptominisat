@@ -64,7 +64,7 @@ class Main
         po::variables_map vm;
         po::options_description cmdline_options;
 
-        SATSolver* solver;
+        SATSolver* solver = NULL;
 
         //File reading
         void readInAFile(const string& filename);
@@ -88,13 +88,13 @@ class Main
         bool satcomp = false;
         std::string resultFilename;
 
-        bool debugLib;
-        int printResult;
+        bool debugLib = false;
+        int printResult = true;
         string commandLine;
-        unsigned num_threads;
+        unsigned num_threads = 1;
 
         //Multi-start solving
-        uint32_t max_nr_of_solutions;
+        uint32_t max_nr_of_solutions = 1;
 
         //Files to read & write
         bool fileNamePresent;
@@ -105,8 +105,8 @@ class Main
         char** argv;
 
         //Drup checker
-        std::ostream* drupf;
-        bool drupDebug;
+        std::ostream* drupf = NULL;
+        bool drupDebug = false;
 };
 
 #endif //MAIN_H

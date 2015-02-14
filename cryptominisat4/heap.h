@@ -115,6 +115,7 @@ class Heap {
 
         indices.resize(other.indices.size());
         std::copy(other.indices.begin(), other.indices.end(), indices.begin());
+        return *this;
     }
 
     size_t mem_used() const

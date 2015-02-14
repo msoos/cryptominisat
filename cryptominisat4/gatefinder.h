@@ -56,7 +56,7 @@ class OrGate {
         }
         std::array<Lit, 2> getLits() const
         {
-            return std::array<Lit, 2>{{lit1, lit2}};
+            return std::array<Lit, 2>{lit1, lit2};
         }
 
         //LHS

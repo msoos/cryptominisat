@@ -39,9 +39,10 @@ class SharedData
         {}
 
         struct Spec {
-            Spec() {
-                data = new vector<Lit>;
-            }
+            Spec() :
+                data(new vector<Lit>)
+            {}
+
             Spec(const Spec&) {
                 assert(false);
             }
@@ -53,7 +54,7 @@ class SharedData
             ~Spec() {
                 clear();
             }
-            vector<Lit>* data;
+            vector<Lit>* data = NULL;
 
             void clear()
             {

@@ -262,7 +262,7 @@ void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
     partFile.close();
 }
 
-void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
+void DimacsParser::parseComments(StreamBuffer& in, const std::string& str)
 {
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
