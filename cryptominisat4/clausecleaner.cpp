@@ -218,10 +218,6 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
         }
     }
     cs.resize(cs.size() - (s-ss));
-
-    #ifdef VERBOSE_DEBUG
-    cout << "clean_clauses(Clause) useful ?? Removed: " << s-ss << endl;
-    #endif
 }
 
 inline bool ClauseCleaner::clean_clause(Clause& cl)
