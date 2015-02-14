@@ -118,7 +118,7 @@ static inline bool findWTri(
     for (watch_subarray_const::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->isTri()
             && it->lit2() == lit2
@@ -143,7 +143,7 @@ static inline const Watched& findWatchedOfTri(
     for (watch_subarray_const::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->isTri()
             && it->lit2() == lit2

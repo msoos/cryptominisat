@@ -865,7 +865,7 @@ inline void PropEngine::updateWatch(
     for(watch_subarray::iterator
         it = ws.begin(), end = ws.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->isBinary()) {
             it->setLit2(
@@ -1057,7 +1057,7 @@ bool PropEngine::propagate_occur()
         for (watch_subarray::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             if (it->isClause()) {
                 if (!propagate_long_clause_occur(it->get_offset()))

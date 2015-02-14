@@ -200,7 +200,7 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
     for(const Lit
         *it = cl.begin(), *end = cl.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (seen2[it->toInt()]) {
             assert(newCl.size < 3);
@@ -1343,7 +1343,7 @@ void Searcher::add_otf_subsume_implicit_clause()
     for(vector<OTFClause>::iterator
         it = otf_subsuming_short_cls.begin(), end = otf_subsuming_short_cls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         assert(it->size > 1);
         //Find the l_Undef
@@ -1634,7 +1634,7 @@ void Searcher::resetStats()
     for(vector<VarData>::iterator
         it = varData.begin(), end = varData.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         it->stats.reset();
     }
@@ -2576,7 +2576,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
         it = solver->needToAddBinClause.begin()
         , end = solver->needToAddBinClause.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         lbool val1 = value(it->getLit1());
         lbool val2 = value(it->getLit2());
@@ -2618,7 +2618,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             it = uselessBin.begin()
             , end = uselessBin.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             propStats.otfHyperTime += 2;
             if (solver->conf.verbosity >= 10) {

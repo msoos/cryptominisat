@@ -105,7 +105,7 @@ void VarReplacer::updateVars(
     for(map<Var, vector<Var> >::iterator
         it = reverseTable.begin(), end = reverseTable.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         updateArrayMapCopy(it->second, outerToInter);
         newReverseTable[outerToInter.at(it->first)] = it->second;
@@ -118,7 +118,7 @@ void VarReplacer::printReplaceStats() const
     uint32_t i = 0;
     for (vector<Lit>::const_iterator
         it = table.begin(); it != table.end()
-        ; it++, i++
+        ; ++it, i++
     ) {
         if (it->var() == i) continue;
         cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
@@ -195,7 +195,7 @@ void VarReplacer::update_all_vardata_activities()
     Var var = 0;
     for (vector<Lit>::const_iterator
         it = table.begin(); it != table.end()
-        ; it++, var++
+        ; ++it, var++
     ) {
         const Var orig = solver->map_outer_to_inter(var);
         const Var repl = solver->map_outer_to_inter(it->var());
@@ -795,7 +795,7 @@ void VarReplacer::extend_model()
     for (map<Var, vector<Var> >::const_iterator
         it = reverseTable.begin() , end = reverseTable.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (solver->model[it->first] == l_Undef)
             continue;
@@ -1075,7 +1075,7 @@ size_t VarReplacer::mem_used() const
     for(map<Var, vector<Var> >::const_iterator
         it = reverseTable.begin(), end = reverseTable.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         b += it->second.capacity()*sizeof(Lit);
     }

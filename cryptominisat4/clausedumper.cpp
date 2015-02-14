@@ -267,7 +267,7 @@ void ClauseDumper::dump_clauses(
     for(vector<ClOffset>::const_iterator
         it = cls.begin(), end = cls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause* cl = solver->cl_alloc.ptr(*it);
         if (cl->size() <= max_size)

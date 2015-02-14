@@ -70,7 +70,7 @@ public:
         for(vector<uint32_t>::const_iterator
             it = touched.begin(), end = touched.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             touchedBitset[*it] = 0;
         }

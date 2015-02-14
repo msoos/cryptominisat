@@ -125,7 +125,7 @@ void SolutionExtender::extend()
     for (vector<ClOffset>::iterator
         it = clausesToFree.begin(), end = clausesToFree.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         solver->cl_alloc.clauseFree(*it);
     }
@@ -145,7 +145,7 @@ bool SolutionExtender::satisfiedNorm(const vector<Lit>& lits) const
     for (vector<Lit>::const_iterator
         it = lits.begin(), end = lits.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (value(*it) == l_True)
             return true;
@@ -158,7 +158,7 @@ bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) con
 {
     bool val = false;
     uint32_t undef = 0;
-    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++) {
+    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; ++it) {
         assert(it->unsign() == *it);
         if (value(it->var()) == l_True) val ^= true;
         if (value(it->var()) == l_Undef) undef++;
@@ -207,7 +207,7 @@ bool SolutionExtender::addClause(
     for (vector<Lit>::const_iterator
         it = tmpLits.begin(), end = tmpLits.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //Special used of blocked Lit -- for blocking, but not in the same
         //sense as the original
@@ -305,7 +305,7 @@ bool SolutionExtender::propagate()
         for(watch_subarray::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             if (it->isBinary() && !it->red()) {
                 bool thisret = propBinaryClause(it, p);
@@ -362,7 +362,7 @@ bool SolutionExtender::propagateCl(
     for (const Lit
         *it = cl->begin(), *end = cl->end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (value(*it) == l_True) return true;
         if (value(*it) == l_False) continue;

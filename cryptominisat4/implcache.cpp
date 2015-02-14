@@ -40,7 +40,7 @@ void ImplCache::makeAllRed()
     for(vector<TransCache>::iterator
         it = implCache.begin(), end = implCache.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         it->makeAllRed();
     }
@@ -52,7 +52,7 @@ size_t ImplCache::mem_used() const
     for(vector<TransCache>::const_iterator
         it = implCache.begin(), end = implCache.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //1.2 is overhead
         numBytes += (double)it->lits.capacity()*(double)sizeof(LitExtra)*1.2;
@@ -178,7 +178,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
         Lit vertLit = Lit::toLit(wsLit);
         vector<LitExtra>::iterator it = trans->lits.begin();
         vector<LitExtra>::iterator it2 = it;
-        for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; it++) {
+        for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; ++it) {
             Lit lit = it->getLit();
             assert(lit.var() != vertLit.var());
 
@@ -305,7 +305,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
         for(vector<std::pair<vector<Lit>, bool> > ::const_iterator
             it = delayedClausesToAddXor.begin(), end = delayedClausesToAddXor.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             bool OK = true;
             for(vector<Lit>::const_iterator
@@ -337,7 +337,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
     for(vector<Lit>::const_iterator
         it = delayedClausesToAddNorm.begin(), end = delayedClausesToAddNorm.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //Build unit clause
         vector<Lit> tmp(1);
@@ -429,7 +429,7 @@ void ImplCache::tryVar(
     for (vector<LitExtra>::const_iterator
         it = cache1.begin(), end = cache1.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         const Var var2 = it->getLit().var();
 
@@ -446,7 +446,7 @@ void ImplCache::tryVar(
     for (watch_subarray::const_iterator
         it = ws1.begin(), end = ws1.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (!it->isBinary())
             continue;
@@ -468,7 +468,7 @@ void ImplCache::tryVar(
     for (vector<LitExtra>::const_iterator
         it = cache2.begin(), end = cache2.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         assert(it->getLit().var() != var);
         const Var var2 = it->getLit().var();
@@ -487,7 +487,7 @@ void ImplCache::tryVar(
 
     //Try to see if we propagate the same or opposite from the other end
     //Using binary clauses
-    for (watch_subarray::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
+    for (watch_subarray::const_iterator it = ws2.begin(), end = ws2.end(); it != end; ++it) {
         if (!it->isBinary())
             continue;
 
@@ -503,12 +503,12 @@ void ImplCache::tryVar(
     }
 
     //Clear 'seen' and 'val'
-    for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
+    for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; ++it) {
         seen[it->getLit().var()] = false;
         val[it->getLit().var()] = false;
     }
 
-    for (watch_subarray::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
+    for (watch_subarray::const_iterator it = ws1.begin(), end = ws1.end(); it != end; ++it) {
         if (!it->isBinary())
             continue;
 

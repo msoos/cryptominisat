@@ -115,7 +115,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         for (watch_subarray_const::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             //Only binary clauses matter
             if (!it->isBinary())
@@ -133,7 +133,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             for (vector<LitExtra>::iterator
                 it = transCache->begin(), end = transCache->end()
                 ; it != end
-                ; it++
+                ; ++it
             ) {
                 Lit lit = it->getLit();
                 if (solver->value(lit) != l_Undef) {

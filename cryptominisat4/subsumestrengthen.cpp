@@ -332,7 +332,7 @@ void inline SubsumeStrengthen::fillSubs(
     for (watch_subarray_const::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (!it->isClause())
             continue;
@@ -598,7 +598,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     for (watch_subarray::const_iterator
         end = occ.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (removeImplicit) {
             if (it->isBinary()

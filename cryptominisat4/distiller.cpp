@@ -299,7 +299,7 @@ bool Distiller::distill_long_irred_cls()
         for (vector<ClOffset>::const_iterator
             it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             Clause* cl = solver->cl_alloc.ptr(*it);
             cl->set_distilled(false);

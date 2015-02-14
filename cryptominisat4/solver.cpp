@@ -873,7 +873,7 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     for(vector<Var>::const_iterator
         it = useless.begin(), end = useless.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         outerToInter[*it] = at;
         interToOuter[at] = *it;
@@ -2292,7 +2292,7 @@ void Solver::print_clause_size_distrib()
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause* cl = cl_alloc.ptr(*it);
         switch(cl->size()) {
@@ -2378,7 +2378,7 @@ void Solver::print_all_clauses() const
     for(vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause* cl = cl_alloc.ptr(*it);
         cout
@@ -2485,7 +2485,7 @@ bool Solver::verify_long_clauses(const vector<ClOffset>& cs) const
     for (vector<ClOffset>::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause& cl = *cl_alloc.ptr(*it);
         for (uint32_t j = 0; j < cl.size(); j++)
@@ -2540,7 +2540,7 @@ void Solver::test_all_clause_attached() const
     for (vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         assert(normClauseIsAttached(*it));
     }
@@ -2610,7 +2610,7 @@ void Solver::find_all_attach(const vector<ClOffset>& cs) const
     for(vector<ClOffset>::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause& cl = *cl_alloc.ptr(*it);
         bool ret = findWCl(watches[cl[0].toInt()], *it);
@@ -2663,7 +2663,7 @@ void Solver::check_wrong_attach() const
     for (vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         const Clause& cl = *cl_alloc.ptr(*it);
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2844,7 +2844,7 @@ uint64_t Solver::count_lits(
     for(vector<ClOffset>::const_iterator
         it = clause_array.begin(), end = clause_array.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         const Clause& cl = *cl_alloc.ptr(*it);
         if (cl.freed()) {
@@ -2917,7 +2917,7 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
     for (watch_subarray::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->isClause()) {
             cout

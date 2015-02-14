@@ -115,7 +115,7 @@ vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
     for (map<uint32_t, vector<Var> >::iterator
         it = reverseTable.begin()
         ; it != reverseTable.end()
-        ; it++
+        ; ++it
     ) {
         sizes.push_back(make_pair(
             it->first //Comp number
@@ -160,7 +160,7 @@ bool CompHandler::handle()
 
     size_t num_comps_solved = 0;
     size_t vars_solved = 0;
-    for (uint32_t it = 0; it < sizes.size()-1; it++) {
+    for (uint32_t it = 0; it < sizes.size()-1; ++it) {
         const uint32_t comp = sizes[it].first;
         vector<Var>& vars = reverseTable[comp];
         const bool cont = try_to_solve_component(it, comp, vars, num_comps);

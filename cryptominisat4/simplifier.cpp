@@ -142,7 +142,7 @@ void Simplifier::print_blocked_clauses_reverse() const
     for(vector<BlockedClause>::const_reverse_iterator
         it = blockedClauses.rbegin(), end = blockedClauses.rend()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->dummy) {
             cout
@@ -197,7 +197,7 @@ void Simplifier::extend_model(SolutionExtender* extender)
     for (vector<BlockedClause>::const_reverse_iterator
         it = blockedClauses.rbegin(), end = blockedClauses.rend()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->toRemove) {
             continue;
@@ -354,7 +354,7 @@ uint64_t Simplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) cons
     for (vector<ClOffset>::const_iterator
         it = toAdd.begin(), end = toAdd.end()
         ; it !=  end
-        ; it++
+        ; ++it
     ) {
         Clause* cl = solver->cl_alloc.ptr(*it);
         //*2 because of the overhead of allocation
@@ -538,7 +538,7 @@ void Simplifier::add_back_to_solver()
     for (vector<ClOffset>::const_iterator
         it = clauses.begin(), end = clauses.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         Clause* cl = solver->cl_alloc.ptr(*it);
         if (cl->freed())
@@ -1101,7 +1101,7 @@ void Simplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSize)
         for(vector<Lit>::const_iterator
             it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             (*solver->drup) << *it;
         }
@@ -1176,7 +1176,7 @@ void Simplifier::sanityCheckElimedVars()
     for (vector<ClOffset>::const_iterator
         it =  clauses.begin(), end = clauses.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         const Clause* cl = solver->cl_alloc.ptr(*it);
 
@@ -1699,7 +1699,7 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     for (watch_subarray::const_iterator
         it = poss.begin(), end = poss.end()
         ; it != end
-        ; it++, at_poss++
+        ; ++it, at_poss++
     ) {
         *limit_to_decrease -= 3;
         if (solver->redundant_or_removed(*it))
@@ -2328,7 +2328,7 @@ bool Simplifier::aggressiveCheck(
     for(watch_subarray::const_iterator it =
         ws.begin(), end = ws.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //Can't do much with clauses, too expensive
         if (it->isClause())
@@ -2765,7 +2765,7 @@ size_t Simplifier::mem_used() const
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         b += it->second.capacity()*sizeof(size_t);
     }
@@ -2773,7 +2773,7 @@ size_t Simplifier::mem_used() const
     for(vector<BlockedClause>::const_iterator
         it = blockedClauses.begin(), end = blockedClauses.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         b += it->lits.capacity()*sizeof(Lit);
     }

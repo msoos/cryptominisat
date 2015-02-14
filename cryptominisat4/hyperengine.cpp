@@ -797,7 +797,7 @@ void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
     for (Clause::const_iterator
         it = cl.begin(), end = cl.end()
         ; it != end
-        ; it++, i++
+        ; ++it, i++
     ) {
         if (*it != p) {
             assert(value(*it) == l_False);
@@ -871,7 +871,7 @@ Lit HyperEngine::deepest_common_ancestor()
         for (vector<Lit>::iterator
             it = currAncestors.begin(), end = currAncestors.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             propStats.otfHyperTime += 1;
 

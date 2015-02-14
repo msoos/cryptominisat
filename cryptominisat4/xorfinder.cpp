@@ -51,7 +51,7 @@ void XorFinder::find_xors_based_on_long_clauses()
         it = solver->longIrredCls.begin()
         , end = solver->longIrredCls.end()
         ; it != end && xor_find_time_limit > 0
-        ; it++
+        ; ++it
     ) {
         ClOffset offset = *it;
         Clause* cl = solver->cl_alloc.ptr(offset);
@@ -158,7 +158,7 @@ void XorFinder::find_xors()
         for(vector<Xor>::const_iterator
             it = xors.begin(), end = xors.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             cout << "c " << *it << endl;
         }
@@ -203,7 +203,7 @@ bool XorFinder::extractInfo()
     for(vector<Xor>::const_iterator
         it = xors.begin(), end = xors.end()
         ; it != end
-        ; it++, i++
+        ; ++it, i++
     ) {
         const Xor& thisXor = *it;
         bool makeItIn = false;
@@ -237,7 +237,7 @@ bool XorFinder::extractInfo()
     for(vector<vector<Var> >::const_iterator
         it = blocks.begin(), end = blocks.end()
         ; it != end
-        ; it++, i++
+        ; ++it, i++
     ) {
         //If block is already merged, skip
         if (it->empty())
@@ -310,7 +310,7 @@ bool XorFinder::extractInfoFromBlock(
     for(vector<uint32_t>::const_iterator
         it = thisXors.begin(), end2 = thisXors.end()
         ; it != end2
-        ; it++, row++
+        ; ++it, row++
     ) {
         const Xor& thisXor = xors[*it];
         assert(thisXor.vars.size() > 2 && "All XORs must be larger than 2-long");
@@ -400,7 +400,7 @@ vector<uint32_t> XorFinder::getXorsForBlock(const size_t blockNum)
         if (varToBlock[thisXor.vars[0]] == blockNum) {
             xorsInThisBlock.push_back(i);
 
-            for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+            for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; ++it) {
                 assert(varToBlock[*it] == blockNum && "if any vars are in this block, ALL block are in this block");
             }
         }
@@ -419,7 +419,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     //Go through each XOR, and either make a new block for it
     //or merge it into an existing block
     //or merge it into an existing block AND merge blocks it joins together
-    for(vector<size_t>::const_iterator it = xorsToUse.begin(), end = xorsToUse.end(); it != end; it++) {
+    for(vector<size_t>::const_iterator it = xorsToUse.begin(), end = xorsToUse.end(); it != end; ++it) {
         const Xor& thisXor = xors[*it];
 
         //Calc blocks for this XOR
@@ -494,7 +494,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     for(vector<vector<Var> >::const_iterator
         it = blocks.begin(), end = blocks.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //this set has been merged into another set. Skip
         if (it->empty())
@@ -585,7 +585,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     for (vector<LitExtra>::const_iterator
         it = lits.begin(), end = lits.end()
         ; it != end
-        ; it++
+        ; ++it
     )  {
         if (seen[it->getLit().var()]) {
             foundCls.add(lit, it->getLit());
@@ -603,7 +603,7 @@ void XorFinder::findXorMatchExt(
     for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         //Deal with binary
         if (it->isBinary()) {
@@ -706,7 +706,7 @@ void XorFinder::findXorMatch(
     for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         if (it->isIdx()) {
             continue;

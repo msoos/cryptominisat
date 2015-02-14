@@ -241,7 +241,7 @@ void MySQLStats::add_tags(const Solver* solver)
     for(vector<std::pair<string, string> >::const_iterator
         it = solver->get_sql_tags().begin(), end = solver->get_sql_tags().end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
 
         std::stringstream ss;

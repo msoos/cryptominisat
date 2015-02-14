@@ -184,7 +184,7 @@ void Stamp::clearStamps()
     for(vector<Timestamp>::iterator
         it = tstamp.begin(), end = tstamp.end()
         ; it != end
-        ; it++
+        ; ++it
     ) {
         *it = Timestamp();
     }

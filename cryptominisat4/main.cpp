@@ -198,7 +198,7 @@ void Main::parseInAllFiles()
     }
 
     for (vector<string>::const_iterator
-        it = filesToRead.begin(), end = filesToRead.end(); it != end; it++
+        it = filesToRead.begin(), end = filesToRead.end(); it != end; ++it
     ) {
         readInAFile(it->c_str());
     }

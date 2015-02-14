@@ -617,7 +617,7 @@ bool Prober::check_timeout_due_to_hyperbin()
         for(vector<uint32_t>::const_iterator
             it = propagatedBitSet.begin(), end = propagatedBitSet.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             propagated[*it] = false;
         }

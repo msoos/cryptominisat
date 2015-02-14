@@ -76,7 +76,7 @@ void CompFinder::print_found_components() const
     for(map<uint32_t, vector<Var> >::const_iterator
         it = reverseTable.begin(), end = reverseTable.end()
         ; it != end
-        ; it++, i++
+        ; ++it, i++
     ) {
         if (it->second.size() < print_limit || solver->conf.verbosity >= 3) {
             totalSmallSize += it->second.size();
@@ -102,7 +102,7 @@ bool CompFinder::reverse_table_is_correct() const
     for (map<uint32_t, vector<Var> >::const_iterator
         it = reverseTable.begin()
         ; it != reverseTable.end()
-        ; it++
+        ; ++it
     ) {
         for (size_t i2 = 0; i2 < it->second.size(); i2++) {
             assert(table[(it->second)[i2]] == it->first);
@@ -261,7 +261,7 @@ void CompFinder::addToCompImplicits()
             for(vector<Lit>::const_iterator
                 it = lits.begin(), end = lits.end()
                 ; it != end
-                ; it++
+                ; ++it
             ) {
                 seen[it->var()] = 0;
             }

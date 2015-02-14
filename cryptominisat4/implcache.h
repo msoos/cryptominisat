@@ -232,7 +232,7 @@ public:
         for(vector<TransCache>::iterator
             it = implCache.begin(), end = implCache.end()
             ; it != end
-            ; it++
+            ; ++it
         ) {
             it->lits.clear();
         }
