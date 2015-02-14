@@ -150,6 +150,8 @@ void* ClauseAllocator::allocEnough(
 
         //Realloc failed?
         if (dataStart == NULL) {
+            free(dataStart);
+
             std::cerr
             << "ERROR: while reallocating clause space"
             << endl;
