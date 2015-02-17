@@ -39,14 +39,11 @@ You have to use cmake to compile and install. I suggest::
 Once cryptominisat is installed, the binary is available under
 `/usr/local/bin/cryptominisat4`, the library shared library is available
 under `/usr/local/lib/libcryptominisat4.so` and the 3 header files are
-available under `/usr/local/include/cryptominisat4/`. We can now install the
-python bindings::
+available under `/usr/local/include/cryptominisat4/`. To use the python
+bindings, you must have python installed while compiling and after the
+compilation has finished, issue:
 
   $ sudo ldconfig
-  $ cd cryptominisat-version
-  $ cd python
-  $ make
-  $ sudo make install
 
 You can uninstall both by simply doing `sudo make uninstall` in their respective
 directories.
