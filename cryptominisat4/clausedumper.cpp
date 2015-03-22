@@ -70,7 +70,7 @@ void ClauseDumper::open_dump_file(const std::string& filename)
 {
     std::ofstream* f =  new std::ofstream;
     f->open(filename.c_str());
-    if (!outfile) {
+    if (!outfile->good()) {
         cout
         << "Cannot open file '"
         << filename
