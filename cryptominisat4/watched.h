@@ -196,14 +196,10 @@ class Watched {
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTri());
-            assert(toSet == false);
             assert(red());
             #endif
-            if (toSet) {
-                data2 |= 1U;
-            } else {
-                data2 &= (~(1U));
-            }
+            assert(toSet == false);
+            data2 &= (~(1U));
         }
 
         /**
