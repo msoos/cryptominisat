@@ -123,7 +123,7 @@ static inline uint64_t memUsedTotal(double& vm_usage)
 
    long page_size_kb = sysconf(_SC_PAGE_SIZE); // in case x86-64 is configured to use 2MB pages
    vm_usage     = vsize;
-   resident_set = rss * page_size_kb;
+   resident_set = (double)rss * (double)page_size_kb;
 
    return resident_set;
 }
