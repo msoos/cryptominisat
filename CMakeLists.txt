@@ -159,8 +159,7 @@ else()
 	set(GIT_TAG "${CPACK_PACKAGE_VERSION}-compiled-from-cmake")
 endif()
 
-option(SIMPLE "Very simplistic executable -- no Boost needed" OFF)
-
+option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 if (NOT ONLY_SIMPLE)
     set (boost_components "")
     if (ENABLE_TESTING)
@@ -340,7 +339,11 @@ set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
 set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
 
 # Export targets
-export(TARGETS libcryptominisat4 cryptominisat FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
+set(MY_TARGETS libcryptominisat4 cryptominisat_simple)
+if (NOT ONLY_SIMPLE)
+    set(MY_TARGETS ${MY_TARGETS} cryptominisat)
+endif()
+export(TARGETS ${MY_TARGETS} FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 
 # Create cryptominisat4Config file
 set(EXPORT_TYPE "Build-tree")
