@@ -93,10 +93,10 @@ struct DataForThread
     lbool* ret;
 };
 
-SATSolver::SATSolver(const SolverConf& conf, bool* interrupt_asap)
+SATSolver::SATSolver(void* config, bool* interrupt_asap)
 {
     data = new CMSatPrivateData(interrupt_asap);
-    data->solvers.push_back(new Solver(&conf, data->inter));
+    data->solvers.push_back(new Solver((SolverConf*) config, data->inter));
 }
 
 SATSolver::~SATSolver()
@@ -316,6 +316,16 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
     data->vars_to_add = 0;
 
     return ret;
+}
+
+void SATSolver::set_max_confl(int64_t max_confl)
+{
+  for (size_t i = 0; i < data->solvers.size(); ++i) {
+    Solver& s = *data->solvers[i];
+    if (max_confl >= 0) {
+      s.conf.maxConfl = max_confl;
+    }
+  }
 }
 
 bool SATSolver::add_clause(const vector< Lit >& lits)
@@ -569,11 +579,6 @@ std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 unsigned long SATSolver::get_sql_id() const
 {
     return data->solvers[0]->get_sql_id();
-}
-
-SolverConf SATSolver::get_conf() const
-{
-    return data->solvers[0]->getConf();
 }
 
 bool SATSolver::okay() const

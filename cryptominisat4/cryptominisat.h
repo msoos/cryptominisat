@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include <vector>
 #include <iostream>
 #include <utility>
-#include "cryptominisat4/solverconf.h"
 #include "cryptominisat4/solvertypesmini.h"
 
 namespace CMSat {
@@ -34,7 +33,7 @@ namespace CMSat {
     class SATSolver
     {
     public:
-        SATSolver(const SolverConf& conf = SolverConf(), bool* interrupt_asap = NULL);
+        SATSolver(void* config = NULL, bool* interrupt_asap = NULL);
         ~SATSolver();
         void set_num_threads(unsigned n);
         unsigned nVars() const;
@@ -49,8 +48,8 @@ namespace CMSat {
         unsigned long get_sql_id() const;
         bool okay() const;
         void log_to_file(std::string filename);
+        void set_max_confl(int64_t max_confl = -1);
 
-        SolverConf get_conf() const;
         static const char* get_version();
         static const char* get_version_sha1();
         void print_stats() const;

@@ -98,7 +98,6 @@ set_target_properties(libcryptominisat4 PROPERTIES
 )
 
 cmsat_add_public_header(libcryptominisat4 cryptominisat.h )
-cmsat_add_public_header(libcryptominisat4 solverconf.h )
 cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
