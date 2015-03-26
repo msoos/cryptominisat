@@ -49,6 +49,7 @@ namespace CMSat {
         bool okay() const;
         void log_to_file(std::string filename);
         void set_max_confl(int64_t max_confl = -1);
+        void set_verbosity(unsigned verbosity = 0);
 
         static const char* get_version();
         static const char* get_version_sha1();

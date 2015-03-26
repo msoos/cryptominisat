@@ -328,6 +328,14 @@ void SATSolver::set_max_confl(int64_t max_confl)
   }
 }
 
+void SATSolver::set_verbosity(unsigned verbosity)
+{
+  for (size_t i = 0; i < data->solvers.size(); ++i) {
+    Solver& s = *data->solvers[i];
+    s.conf.verbosity = verbosity;
+  }
+}
+
 bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     if (data->log) {

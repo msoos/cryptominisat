@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat4/solverconf.h"
 using namespace CMSat;
 #include <vector>
 using std::vector;
@@ -544,7 +545,7 @@ BOOST_AUTO_TEST_CASE(xor1)
     SolverConf conf;
     conf.simplify_at_startup = true;
     conf.full_simplify_at_startup = true;
-    SATSolver s(conf);
+    SATSolver s(&conf);
 
     s.new_vars(3);
     s.add_xor_clause(vector<Var>{0, 1}, false);
@@ -560,7 +561,7 @@ BOOST_AUTO_TEST_CASE(xor2)
     SolverConf conf;
     conf.simplify_at_startup = true;
     conf.full_simplify_at_startup = true;
-    SATSolver s(conf);
+    SATSolver s(&conf);
 
     s.new_vars(3);
     s.add_xor_clause(vector<Var>{0, 1}, false);
@@ -578,7 +579,7 @@ BOOST_AUTO_TEST_CASE(xor3)
     conf.simplify_at_startup = true;
     conf.simplify_at_every_startup = true;
     conf.full_simplify_at_startup = true;
-    SATSolver s(conf);
+    SATSolver s(&conf);
 
     s.new_vars(3);
     s.add_xor_clause(vector<Var>{0, 1}, false);

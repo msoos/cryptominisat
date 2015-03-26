@@ -68,11 +68,9 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    SolverConf conf;
-    conf.verbosity = verbose;
-    conf.maxConfl = confl_limit;
-
-    SATSolver *cmsat = new SATSolver(conf);
+    SATSolver *cmsat = new SATSolver;
+    cmsat->set_max_confl(confl_limit);
+    cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
 
     return cmsat;
