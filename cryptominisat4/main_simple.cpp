@@ -35,6 +35,7 @@ using std::endl;
 #include "time_mem.h"
 #include "main_common.h"
 
+#include "solverconf.h"
 #include "cryptominisat.h"
 #include "dimacsparser.h"
 using namespace CMSat;
@@ -168,7 +169,7 @@ int main(int argc, char** argv)
     }
     argc = j;
 
-    SATSolver S(conf);
+    SATSolver S(&conf);
     solver = &S;
     if (drupf) {
         solver->set_drup(drupf);

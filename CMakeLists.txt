@@ -161,7 +161,7 @@ endif()
 
 option(SIMPLE "Very simplistic executable -- no Boost needed" OFF)
 
-if (NOT SIMPLE)
+if (NOT ONLY_SIMPLE)
     set (boost_components "")
     if (ENABLE_TESTING)
         set(boost_components ${boost_components} unit_test_framework)
@@ -171,7 +171,7 @@ if (NOT SIMPLE)
 endif()
 
 if(NOT Boost_FOUND)
-    set(SIMPLE ON)
+    set(ONLY_SIMPLE ON)
     set(ENABLE_TESTING OFF)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 endif()

@@ -130,21 +130,24 @@ install(TARGETS libcryptominisat4
 )
 
 
-if (NOT SIMPLE)
+if (NOT ONLY_SIMPLE)
     add_executable(cryptominisat
         dimacsparser.cpp
         main.cpp
     )
-else()
-    add_executable(cryptominisat
-        dimacsparser.cpp
-        main_simple.cpp
-    )
 endif()
+add_executable(cryptominisat_simple
+    dimacsparser.cpp
+    main_simple.cpp
+)
 
 if (STATICCOMPILE)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 0)
+    if (NOT ONLY_SIMPLE)
+        set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 0)
+    endif()
+    set_target_properties(cryptominisat_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(cryptominisat_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
@@ -156,14 +159,29 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-set_target_properties(cryptominisat PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set_target_properties(cryptominisat PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-target_link_libraries(cryptominisat
+if (NOT ONLY_SIMPLE)
+    set_target_properties(cryptominisat PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+    set_target_properties(cryptominisat PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
+set_target_properties(cryptominisat_simple PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set_target_properties(cryptominisat_simple PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+if (NOT ONLY_SIMPLE)
+    target_link_libraries(cryptominisat
+        ${cryptoms_exec_link_libs}
+    )
+    install(TARGETS cryptominisat
+        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+        RUNTIME DESTINATION bin
+    )
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
+endif()
+
+target_link_libraries(cryptominisat_simple
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat
+install(TARGETS cryptominisat_simple
     EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
-
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat_simple")
