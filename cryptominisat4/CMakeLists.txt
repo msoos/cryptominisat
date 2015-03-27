@@ -74,27 +74,38 @@ if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
-if (Perftools_FOUND)
-    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${Perftools_TCMALLOC_LIBRARY})
-endif (Perftools_FOUND)
-
 if (TBB_FOUND)
     #set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES} ${TBB_MALLOC_PROXY_LIBRARY_NAMES})
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
 endif()
 
-if (STATICCOMPILE)
-    add_library(libcryptominisat4 STATIC ${cryptoms_lib_files})
-else (STATICCOMPILE)
-    add_library(libcryptominisat4 SHARED ${cryptoms_lib_files})
-endif (STATICCOMPILE)
+add_library(temp_lib OBJECT
+    ${cryptoms_lib_files}
+)
 
+list(APPEND cms_lib_objects $<TARGET_OBJECTS:temp_lib>)
+
+if (ALSO_BUILD_STATIC_LIB)
+    add_library(libcryptominisat4_static STATIC ${cms_lib_objects})
+    target_link_libraries(libcryptominisat4_static LINK_INTERFACE_LIBRARIES
+        ${cryptoms_lib_link_libs}
+    )
+    set_target_properties(libcryptominisat4_static PROPERTIES
+        OUTPUT_NAME cryptominisat4
+        PUBLIC_HEADER "${cryptominisat4_public_headers}"
+        VERSION ${CPACK_PACKAGE_VERSION}
+        SOVERSION ${CPACK_PACKAGE_VERSION}
+    )
+endif()
+add_library(libcryptominisat4 SHARED ${cms_lib_objects})
 target_link_libraries(libcryptominisat4
     ${cryptoms_lib_link_libs}
 )
 set_target_properties(libcryptominisat4 PROPERTIES
     OUTPUT_NAME cryptominisat4
     PUBLIC_HEADER "${cryptominisat4_public_headers}"
+    VERSION ${CPACK_PACKAGE_VERSION}
+    SOVERSION ${CPACK_PACKAGE_VERSION}
 )
 
 cmsat_add_public_header(libcryptominisat4 cryptominisat.h )
@@ -128,6 +139,14 @@ install(TARGETS libcryptominisat4
     ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
 )
+if (ALSO_BUILD_STATIC_LIB)
+    install(TARGETS libcryptominisat4_static
+        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
+    )
+endif()
 
 
 if (NOT ONLY_SIMPLE)

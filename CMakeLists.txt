@@ -94,6 +94,16 @@ if (SANITIZE)
     #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 endif()
 
+include(CheckCXXCompilerFlag)
+macro(add_cxx_flag_if_supported flagname)
+  check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
+
+  if(HAVE_FLAG_${flagname})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+  endif()
+endmacro()
+add_cxx_flag_if_supported("-fPIC")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
@@ -174,6 +184,9 @@ if(NOT Boost_FOUND)
     set(ENABLE_TESTING OFF)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 endif()
+
+option(ALSO_BUILD_STATIC_LIB "Also build the static library" ON)
+
 
 find_package (Threads REQUIRED)
 option(NOTBB "Try to use Threading Building Blocks of Intel" OFF)
@@ -337,11 +350,22 @@ endif()
 # -----------------------------------------------------------------------------
 set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
 set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
+set(CRYPTOMINISAT4_STATIC_DEPS
+    ${M4RI_LIBRARIES}
+    ${TBB_MALLOC_LIBRARY_NAMES}
+    # ${TBB_MALLOC_PROXY_LIBRARY_NAMES}
+    ${SQLITE3_LIBRARIES}
+    ${MYSQL_LIB}
+    m4ri
+)
 
 # Export targets
 set(MY_TARGETS libcryptominisat4 cryptominisat_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat)
+endif()
+if (ALSO_BUILD_STATIC_LIB)
+    set(MY_TARGETS ${MY_TARGETS} libcryptominisat4_static)
 endif()
 export(TARGETS ${MY_TARGETS} FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 
