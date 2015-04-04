@@ -101,7 +101,7 @@ We can also try to assume any variable values for a single solver run::
    >>> print sat
    False
    >>> print solution
-   (None,)
+   None
    >>> sat, solution = s.solve()
    >>> print sat
    True
