@@ -403,7 +403,7 @@ Solver_init(Solver *self, PyObject *args, PyObject *kwds)
     if (!self->cmsat) {
         return -1;
     }
-    return NULL;
+    return 0;
 }
 
 static PyMemberDef Solver_members[] = {
