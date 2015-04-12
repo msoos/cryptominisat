@@ -25,7 +25,7 @@
 #include "varreplacer.h"
 #include "simplifier.h"
 #include "clauseallocator.h"
-#include <m4ri/m4ri.h>
+#include <m4ri.h>
 #include <limits>
 #include "sqlstats.h"
 
