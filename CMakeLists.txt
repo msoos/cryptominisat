@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
 set(CPACK_PACKAGE_NAME "cryptominisat")
 set(CPACK_PACKAGE_VENDOR "www.msoos.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A general-purpose award-winning SAT solver")
-set(CPACK_PACKAGE_VERSION "4.2.0")
 set(CPACK_PACKAGE_VERSION_MAJOR "4")
 set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
