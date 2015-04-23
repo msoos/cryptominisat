@@ -10,7 +10,7 @@ that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
 provides the best of both words: ease of use and a powerful interface.
 
-[![Build Status](https://travis-ci.org/stp/stp.svg?branch=master)](https://travis-ci.org/stp/stp)
+[![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 
 Prerequisites
 -----
