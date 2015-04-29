@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***************************************************************/
 
+namespace CMSat {
 const char* get_git_version_sha1();
 const char* get_git_version_tag();
-
+}

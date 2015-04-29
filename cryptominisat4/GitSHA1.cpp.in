@@ -19,17 +19,15 @@
  * MA 02110-1301  USA
 */
 
-#define GIT_SHA1 "@GIT_SHA1@"
-#define GIT_TAG "@GIT_TAG@"
-static const char myversion_sha1[] = GIT_SHA1;
-static const char myversion_tag[] = GIT_TAG;
-
-const char* get_git_version_sha1()
+#include "GitSHA1.h"
+const char* CMSat::get_git_version_sha1()
 {
+    static const char myversion_sha1[] = "@GIT_SHA1@";
     return myversion_sha1;
 }
 
-const char* get_git_version_tag()
+const char* CMSat::get_git_version_tag()
 {
+    static const char myversion_tag[] = "@GIT_TAG@";
     return myversion_tag;
 }
