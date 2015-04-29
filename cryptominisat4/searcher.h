@@ -203,7 +203,7 @@ class Searcher : public HyperEngine
         uint64_t lastRestartPrintHeader;
         void     print_restart_stat();
         void     print_iteration_solving_stats();
-        void     printRestartHeader() const;
+        void     print_restart_header() const;
         void     print_restart_stat_line() const;
         void     printBaseStats() const;
         void     print_clause_stats() const;

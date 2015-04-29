@@ -1715,7 +1715,7 @@ lbool Searcher::burst_search()
     return status;
 }
 
-void Searcher::printRestartHeader() const
+void Searcher::print_restart_header() const
 {
     cout
     << "c"
@@ -1917,7 +1917,7 @@ void Searcher::print_restart_stat()
         if (lastRestartPrintHeader == 0
             ||(lastRestartPrintHeader + 20000) < stats.conflStats.numConflicts
         ) {
-            printRestartHeader();
+            print_restart_header();
             lastRestartPrintHeader = stats.conflStats.numConflicts;
         }
         print_restart_stat_line();
