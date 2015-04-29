@@ -83,6 +83,7 @@ SolverConf::SolverConf() :
         , doPrintLongestTrail(0)
         , doPrintBestRedClauses(0)
         , do_print_times(1)
+        , print_restart_line_every_n_confl(4000)
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())

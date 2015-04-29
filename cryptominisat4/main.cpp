@@ -596,6 +596,8 @@ void Main::add_supported_options()
         , "Print the best N irredundant longer-than-3 learnt clauses. Value '0' means not to print anything.")
     ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
+    ("restartprint", po::value(&conf.print_restart_line_every_n_confl)->default_value(conf.print_restart_line_every_n_confl)
+        , "Print restart status lines at least every N conflicts")
     ;
 
     po::options_description miscOptions("Misc options");

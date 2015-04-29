@@ -185,6 +185,7 @@ class SolverConf
         unsigned  doPrintLongestTrail;
         int  doPrintBestRedClauses;
         int do_print_times; ///Print times during verbose output
+        int print_restart_line_every_n_confl;
 
         //Limits
         double   maxTime;

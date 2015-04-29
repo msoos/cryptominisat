@@ -1911,7 +1911,8 @@ void Searcher::print_restart_stat()
 {
     //Print restart stat
     if (conf.verbosity >= 2
-        && ((lastRestartPrint + 2000) < stats.conflStats.numConflicts)
+        && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
+          < stats.conflStats.numConflicts)
     ) {
         //Print restart output header
         if (lastRestartPrintHeader == 0
