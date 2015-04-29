@@ -281,9 +281,9 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     solver->check_no_removed_or_freed_cl_in_watch();
 
     tmpStats.cpu_time = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 3)
+    if (solver->conf.verbosity >= 4)
         tmpStats.print();
-    else if (solver->conf.verbosity >= 1) {
+    else if (solver->conf.verbosity >= 3) {
         tmpStats.print_short(solver);
     }
     cleaningStats += tmpStats;
@@ -476,7 +476,7 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
     ClauseUsageStats sum_cl_usage_stats;
     sum_cl_usage_stats += irred_cl_usage_stats;
     sum_cl_usage_stats += red_cl_usage_stats;
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 4) {
         cout << "c irred";
         irred_cl_usage_stats.print();
 

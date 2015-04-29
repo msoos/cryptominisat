@@ -1965,12 +1965,10 @@ void Searcher::reduce_db_if_needed()
             << " Trail size: " << trail.size() << endl;
         }
         solver->reduceDB->reduce_db_and_update_reset_stats();
-        must_consolidate_mem = true;
-
-        //watch consolidate
-        if (conf.verbosity >= 2)
+        if (conf.verbosity >= 3) {
             watches.print_stat();
-
+        }
+        must_consolidate_mem = true;
         watches.consolidate();
 
         num_red_cls_reducedb = count_num_red_cls_reducedb();
