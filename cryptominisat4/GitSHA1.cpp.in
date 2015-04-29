@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "GitSHA1.h"
+#include "cryptominisat4/GitSHA1.h"
 const char* CMSat::get_git_version_sha1()
 {
     static const char myversion_sha1[] = "@GIT_SHA1@";

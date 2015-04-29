@@ -1,5 +1,5 @@
 include_directories(
-    ${PROJECT_SOURCE_DIR}/cryptominisat4
+    ${PROJECT_SOURCE_DIR}
 )
 
 if(Boost_FOUND)
