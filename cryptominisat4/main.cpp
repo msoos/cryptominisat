@@ -306,6 +306,9 @@ void Main::add_supported_options()
         , "Length of the long term trail size for blocking restart")
     ("blkrestmultip", po::value(&conf.blocking_restart_multip)->default_value(conf.blocking_restart_multip, s_blocking_multip.str())
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
+    ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
+        , "Lower bound on blocking restart -- don't block before this many concflicts")
+
     ;
 
     std::ostringstream s_perf_multip;

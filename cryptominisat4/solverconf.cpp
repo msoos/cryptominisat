@@ -63,6 +63,7 @@ SolverConf::SolverConf() :
         , blocking_restart_multip(1.4)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
+        , lower_bound_for_blocking_restart(10000)
 
         //Clause minimisation
         , doRecursiveMinim (true)

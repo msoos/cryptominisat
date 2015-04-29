@@ -1037,7 +1037,7 @@ lbool Searcher::otf_hyper_prop_first_dec_level(bool& must_continue)
 void Searcher::check_blocking_restart()
 {
     if (conf.do_blocking_restart
-        && sumConflicts() > 10000
+        && sumConflicts() > conf.lower_bound_for_blocking_restart
         && hist.glueHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
