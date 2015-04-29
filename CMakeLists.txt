@@ -159,15 +159,32 @@ option(ENABLE_TESTING "Enable testing" OFF)
 # -----------------------------------------------------------------------------
 # Add GIT version
 # -----------------------------------------------------------------------------
-find_program (GIT_FOUND git)
-if (GIT_FOUND)
-	include(GetGitRevisionDescription)
-	get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-	git_get_exact_tag(GIT_TAG)
+function(SetVersionNumber PREFIX VERSION_MAJOR VERSION_MINOR VERSION_PATCH)
+  set(${PREFIX}_VERSION_MAJOR ${VERSION_MAJOR} PARENT_SCOPE)
+  set(${PREFIX}_VERSION_MINOR ${VERSION_MINOR} PARENT_SCOPE)
+  set(${PREFIX}_VERSION_PATCH ${VERSION_PATCH} PARENT_SCOPE)
+  set(${PREFIX}_VERSION
+        "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+        PARENT_SCOPE)
+endfunction()
+
+find_program (GIT_EXECUTABLE git)
+if (GIT_EXECUTABLE)
+  include(GetGitRevisionDescription)
+  get_git_head_revision(GIT_REFSPEC GIT_SHA)
+  MESSAGE(STATUS "GIT hash found: ${GIT_SHA}")
 else()
-	set(GIT_SHA1 "GIT-notfound")
-	set(GIT_TAG "${CPACK_PACKAGE_VERSION}-compiled-from-cmake")
+  set(GIT_SHA "GIT-hash-notfound")
 endif()
+set(CMS_FULL_VERSION "4.1.99")
+
+string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
+SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
+SetVersionNumber("CPACK_PACKAGE" ${CMS_FULL_VERSION_LIST})
+MESSAGE(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
+MESSAGE(STATUS "PROJECT_VERSION_MAJOR: ${PROJECT_VERSION_MAJOR}")
+MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
+MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 if (NOT ONLY_SIMPLE)
@@ -401,104 +418,41 @@ install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
     "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
 
+
+# -----------------------------------------------------------------------------
+# CPack
+# -----------------------------------------------------------------------------
+
 set(CPACK_SOURCE_GENERATOR "TBZ2")
+string(TOLOWER "${CMAKE_PROJECT_NAME}" LOWERCASE_PROJECT_NAME)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
-  "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-set(CPACK_SOURCE_IGNORE_FILES
-  "/build/"
-  "/.git/"
-  "/scripts.*/"
-  "~$"
-  "/m4/"
-  "/cactusplots/"
-  "/debugbuild/"
-  "/gitstats/"
-  "/matrixes/"
-  "/man/"
-  "/config/"
-  "/utils/"
-  "/tests/"
-  "/desc/"
-  "/.kdev4/"
-  "/web/file_creator.py"
-  "/web/dat*"
-  "/web/dygraphs_backup/"
-  "/web/dygraphs-old/"
-  "/web/jquery/docs/"
-  "/web/jquery/examples/"
-  "/web/scriptaculous-js-1.9.0/test/"
-  ".gitignore$"
-  ".git$"
-  "tar.gz$"
-  "tar.bz2$"
-  ".kdev4$"
-  "copy.sh$"
-  ".travis.yml"
-  ".travis-cmake.sh"
-  ".csv$"
-  ".tmp$"
-  ".directory$"
-  "HOWTO-ANALYSIS"
-  "/web/dygraphs/auto_tests"
-    "/web/dygraphs/closure-todo.txt"
-    "/web/dygraphs/common"
-    "/web/dygraphs/compile-with-closure.sh"
-    "/web/dygraphs/dashed-canvas.js"
-    "/web/dygraphs/datahandler"
-    "/web/dygraphs/data.js"
-    "/web/dygraphs/docs"
-    "/web/dygraphs/dygraph-canvas.js"
-    "/web/dygraphs/dygraph-dev.js"
-    "/web/dygraphs/dygraph-exports.js"
-    "/web/dygraphs/dygraph-externs.js"
-    "/web/dygraphs/dygraph-gviz.js"
-    "/web/dygraphs/dygraph-interaction-model.js"
-    "/web/dygraphs/dygraph-internal.externs.js"
-    "/web/dygraphs/dygraph.js"
-    "/web/dygraphs/dygraph-layout.js"
-    "/web/dygraphs/dygraph-options.js"
-    "/web/dygraphs/dygraph-options-reference.js"
-    "/web/dygraphs/dygraph-plugin-base.js"
-    "/web/dygraphs/dygraph-plugin-install.js"
-    "/web/dygraphs/dygraph-tickers.js"
-    "/web/dygraphs/dygraph-types.js"
-    "/web/dygraphs/dygraph-utils.js"
-    "/web/dygraphs/excanvas.js"
-    "/web/dygraphs/experimental"
-    "/web/dygraphs/extras"
-    "/web/dygraphs/file-size-stats.sh"
-    "/web/dygraphs/gadget.xml"
-    "/web/dygraphs/gallery"
-    "/web/dygraphs/generate-combined.sh"
-    "/web/dygraphs/.dygraph-combined-clean.js"
-    "/web/dygraphs/generate-documentation.py"
-    "/web/dygraphs/generate-download.py"
-    "/web/dygraphs/generate-jar.sh"
-    "/web/dygraphs/generate-jsdoc.sh"
-    "/web/dygraphs/gviz-api.js"
-    "/web/dygraphs/gwt"
-    "/web/dygraphs/jsdoc-toolkit"
-    "/web/dygraphs/jshint"
-    "/web/dygraphs/jsTestDriver.conf"
-    "/web/dygraphs/LICENSE.txt"
-    "/web/dygraphs/lint.sh"
-    "/web/dygraphs/Makefile"
-    "/web/dygraphs/NOTES"
-    "/web/dygraphs/phantom-driver.js"
-    "/web/dygraphs/phantom-perf.js"
-    "/web/dygraphs/plugins"
-    "/web/dygraphs/push-to-web.sh"
-    "/web/dygraphs/README"
-    "/web/dygraphs/release.sh"
-    "/web/dygraphs/releases.json"
-    "/web/dygraphs/screenshot.png"
-    "/web/dygraphs/stacktrace.js"
-    "/web/dygraphs/tests"
-    "/web/dygraphs/test.sh"
-    "/web/dygraphs/thumbnail.png"
-    "/web/dygraphs/yuicompressor-2.4.2.jar"
-    ".gitmodules$"
+    "${LOWERCASE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-src")
+
+file(GLOB SourceIgnoreFiles "${CMAKE_SOURCE_DIR}/*")
+set(SourceKeepFiles
+  "${CMAKE_SOURCE_DIR}/cmake"
+  "${CMAKE_SOURCE_DIR}/cryptominisat4"
+  "${CMAKE_SOURCE_DIR}/python"
+  "${CMAKE_SOURCE_DIR}/tests"
+#   "${CMAKE_SOURCE_DIR}/web/*.php"
+#   "${CMAKE_SOURCE_DIR}/web/*.js"
+#   "${CMAKE_SOURCE_DIR}/web/*.css"
+#   "${CMAKE_SOURCE_DIR}/web/drawgraphs.js"
+#   "${CMAKE_SOURCE_DIR}/web/jquery/jquery.js"
+#   "${CMAKE_SOURCE_DIR}/web/dygraphs/dygraphs-combined.js"
+
+  "${CMAKE_SOURCE_DIR}/AUTHORS"
+  "${CMAKE_SOURCE_DIR}/CMakeLists.txt"
+  "${CMAKE_SOURCE_DIR}/LICENSE-LGPL"
+  "${CMAKE_SOURCE_DIR}/README.markdown"
+  "${CMAKE_SOURCE_DIR}/cryptominisat4Config.cmake.in"
+  "${CMAKE_SOURCE_DIR}/STPConfigVersion.cmake.in"
 )
+list(REMOVE_ITEM SourceIgnoreFiles ${SourceKeepFiles})
+# Escape any '.' characters
+string(REPLACE "." "\\\\." SourceIgnoreFiles "${SourceIgnoreFiles}")
+set(CPACK_SOURCE_IGNORE_FILES "${SourceIgnoreFiles}")
 include(CPack)
 
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
