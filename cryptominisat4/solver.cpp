@@ -1174,6 +1174,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
             (double)(search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd)/
                 (double)(search_stats.moreMinimLitsStart)*100.0;
 
+        //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
             conf.doMinimRedMore = false;
             if (conf.verbosity >= 2) {

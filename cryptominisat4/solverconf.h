@@ -175,6 +175,7 @@ class SolverConf
         unsigned max_size_more_minim;
         unsigned more_red_minim_limit_cache;
         unsigned more_red_minim_limit_binary;
+        unsigned max_num_lits_more_red_min;
         int extra_bump_var_activities_based_on_glue;
 
         //Verbosity

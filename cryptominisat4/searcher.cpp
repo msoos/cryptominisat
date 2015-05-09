@@ -2387,7 +2387,11 @@ Lit Searcher::pickBranchLit()
 void Searcher::cache_based_more_minim(vector<Lit>& cl)
 {
     int64_t limit = more_red_minim_limit_cache_actual;
-    for (const Lit lit: cl) {
+    const size_t first_n_lits_of_cl =
+        std::min<size_t>(conf.max_num_lits_more_red_min, cl.size());
+    for (size_t at_lit = 0; at_lit < first_n_lits_of_cl; at_lit++) {
+        Lit lit = cl[at_lit];
+
         //Timeout
         if (limit < 0)
             break;
@@ -2412,7 +2416,10 @@ void Searcher::cache_based_more_minim(vector<Lit>& cl)
 void Searcher::binary_based_more_minim(vector<Lit>& cl)
 {
     int64_t limit  = more_red_minim_limit_binary_actual;
-    for (const Lit lit: cl) {
+    const size_t first_n_lits_of_cl =
+        std::min<size_t>(conf.max_num_lits_more_red_min, cl.size());
+    for (size_t at_lit = 0; at_lit < first_n_lits_of_cl; at_lit++) {
+        Lit lit = cl[at_lit];
         //Already removed this literal
         if (seen[lit.toInt()] == 0)
             continue;

@@ -71,8 +71,9 @@ SolverConf::SolverConf() :
         , doAlwaysFMinim   (false)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
-        , more_red_minim_limit_cache(200)
-        , more_red_minim_limit_binary(100)
+        , more_red_minim_limit_cache(400)
+        , more_red_minim_limit_binary(200)
+        , max_num_lits_more_red_min(1)
         , extra_bump_var_activities_based_on_glue(true)
 
         //Verbosity
