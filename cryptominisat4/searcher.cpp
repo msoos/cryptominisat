@@ -822,6 +822,12 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
         return;
     }
 
+    //It's been set at level 0. The seen[] may not be large enough to do
+    //seen[p.var()] -- we might have mem-saved that
+    if (varData[p.var()].level == 0) {
+        return;
+    }
+
     seen[p.var()] = 1;
 
     assert(!trail_lim.empty());
