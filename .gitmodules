@@ -4,6 +4,6 @@
 [submodule "utils/gtest"]
 	path = utils/gtest
 	url = https://github.com/stp/googletest.git
-[submodule "tests/cnf-utils"]
-	path = tests/cnf-utils
+[submodule "utils/cnf-utils"]
+	path = utils/cnf-utils
 	url = https://github.com/msoos/cnf-utils.git

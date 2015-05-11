@@ -151,18 +151,17 @@ class Tester:
         self.check_for_unsat = False
         self.ignoreNoSolution = False
         self.fuzzers = [
-            ["../../sha1-sat/build/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["../../sha1-sat/build/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
-            , ["build/cnf-fuzz-biere"] \
+              ["../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
+            , ["../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"] \
             #, ["build/cnf-fuzz-nossum"] \
             #, ["build/largefuzzer"] \
-            , ["cnf-fuzz-brummayer.py"] \
-            , ["multipart.py", "special"] \
-            , ["build/sgen4 -unsat -n 50", "-s"] \
-            , ["cnf-fuzz-xor.py"] \
-            , ["build/sgen4 -sat -n 50", "-s"] \
+            , ["../build/tests/cnf-utils/cnf-fuzz-biere"] \
+            , ["../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"] \
+            , ["../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"] \
+            , ["../utils/cnf-utils/cnf-fuzz-brummayer.py"] \
+            , ["../utils/cnf-utils/multipart.py", "special"] \
+            , ["../utils/cnf-utils/cnf-fuzz-xor.py"] \
         ]
-        self.fuzzer_directory = "../../cnf-utils/"
 
     def random_options(self) :
         cmd = " "
@@ -707,10 +706,10 @@ class Tester:
 
     def call_from_fuzzer(self, fuzzer, file_name) :
         if (len(fuzzer) == 1) :
-            call = "{0}{1} > {2}".format(self.fuzzer_directory, fuzzer[0], file_name)
+            call = "{0} > {1}".format(fuzzer[0], file_name)
         elif(len(fuzzer) == 2) :
             seed = struct.unpack("<L", os.urandom(4))[0]
-            call = "{0}{1} {2} {3} > {4}".format(self.fuzzer_directory, fuzzer[0], fuzzer[1], seed, file_name)
+            call = "{0} {1} {2} > {3}".format(fuzzer[0], fuzzer[1], seed, file_name)
         elif(len(fuzzer) == 3) :
             seed = struct.unpack("<L", os.urandom(4))[0]
             hashbits = (random.getrandbits(20) % 79) + 1
@@ -870,7 +869,7 @@ class Tester:
     def fuzz_test(self) :
         while True:
             fuzzer = random.choice(self.fuzzers)
-            self.num_threads = random.choice([1, 2, 10])
+            self.num_threads = random.choice([1, 2, 40])
             file_name = unique_fuzz_file("fuzzTest");
             self.drup = self.num_threads == 1 and random.choice([True, False])
             fnameDrup = None

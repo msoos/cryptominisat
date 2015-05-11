@@ -68,6 +68,8 @@ endif()
 
 # -----------------------------------------------------------------------------
 
+add_subdirectory(${PROJECT_SOURCE_DIR}/utils/cnf-utils cnf-utils)
+
 include_directories(
     ${PROJECT_SOURCE_DIR}
 )
