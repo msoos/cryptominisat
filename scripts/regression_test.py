@@ -20,6 +20,7 @@
 from __future__ import with_statement  # Required in 2.5
 import subprocess
 import os
+import stat
 import fnmatch
 import gzip
 import re
@@ -131,7 +132,7 @@ def unique_fuzz_file(file_name_begin):
     while 1:
         file_name = file_name_begin + '_' + str(counter) + ".cnf"
         try:
-            fd = os.open(file_name, os.O_CREAT | os.O_EXCL)
+            fd = os.open(file_name, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
             os.fdopen(fd).close()
             return file_name
         except OSError:
