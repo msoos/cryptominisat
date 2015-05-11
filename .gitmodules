@@ -7,3 +7,9 @@
 [submodule "utils/cnf-utils"]
 	path = utils/cnf-utils
 	url = https://github.com/msoos/cnf-utils.git
+[submodule "utils/minisat"]
+	path = utils/minisat
+	url = https://github.com/niklasso/minisat.git
+[submodule "utils/sha1-sat"]
+	path = utils/sha1-sat
+	url = https://github.com/msoos/sha1-sat.git
