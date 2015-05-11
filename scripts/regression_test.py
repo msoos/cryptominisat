@@ -158,9 +158,9 @@ class Tester:
             , ["../build/tests/cnf-utils/cnf-fuzz-biere"] \
             , ["../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"] \
             , ["../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"] \
-            , ["../utils/cnf-utils/cnf-fuzz-brummayer.py"] \
+            , ["../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"] \
+            , ["../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"] \
             , ["../utils/cnf-utils/multipart.py", "special"] \
-            , ["../utils/cnf-utils/cnf-fuzz-xor.py"] \
         ]
 
     def random_options(self) :
@@ -710,15 +710,18 @@ class Tester:
                 None
 
     def call_from_fuzzer(self, fuzzer, file_name) :
-        if (len(fuzzer) == 1) :
-            call = "{0} > {1}".format(fuzzer[0], file_name)
-        elif(len(fuzzer) == 2) :
+        if len(fuzzer) == 1 :
+            seed = struct.unpack("<L", os.urandom(4))[0]
+            call = "{0} {1} > {2}".format(fuzzer[0], seed, file_name)
+        elif len(fuzzer) == 2 :
             seed = struct.unpack("<L", os.urandom(4))[0]
             call = "{0} {1} {2} > {3}".format(fuzzer[0], fuzzer[1], seed, file_name)
-        elif(len(fuzzer) == 3) :
+        elif len(fuzzer) == 3 :
             seed = struct.unpack("<L", os.urandom(4))[0]
             hashbits = (random.getrandbits(20) % 79) + 1
             call = "%s %s %d %s %d > %s" % (fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
+        else:
+            assert False, "Fuzzer must have at most 2 arguments"
 
         return call
 
