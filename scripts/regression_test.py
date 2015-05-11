@@ -86,6 +86,10 @@ parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     , default=False, action="store_true"
                     , help="Fuzz-test"
                     )
+parser.add_option("--fuzzlim", dest="fuzz_test_lim"
+                    , type=int
+                    , help="Number of fuzz tests to run"
+                    )
 
 #for regression testing
 parser.add_option("--regtest", dest="regression_test"
@@ -874,41 +878,40 @@ class Tester:
         fin.close()
 
 
-    def fuzz_test(self) :
-        while True:
-            fuzzer = random.choice(self.fuzzers)
-            self.num_threads = random.choice([1, 2, 4])
-            file_name = unique_fuzz_file("fuzzTest");
-            self.drup = self.num_threads == 1 and random.choice([True, False])
-            fnameDrup = None
-            if self.drup :
-                fnameDrup = unique_fuzz_file("fuzzTest");
+    def fuzz_test_one(self) :
+        fuzzer = random.choice(self.fuzzers)
+        self.num_threads = random.choice([1, 2, 4])
+        file_name = unique_fuzz_file("fuzzTest");
+        self.drup = self.num_threads == 1 and random.choice([True, False])
+        fnameDrup = None
+        if self.drup :
+            fnameDrup = unique_fuzz_file("fuzzTest");
 
-            #create the fuzz file
-            call, todel = self.create_fuzz(fuzzer, file_name)
-            print "calling ", fuzzer, " : ", call
-            out = commands.getstatusoutput(call)
+        #create the fuzz file
+        call, todel = self.create_fuzz(fuzzer, file_name)
+        print "calling ", fuzzer, " : ", call
+        out = commands.getstatusoutput(call)
 
-            if not self.drup :
-                self.needDebugLib = True
-                self.delete_debuglibpart_files()
-                file_name2 = unique_fuzz_file("fuzzTest");
-                self.intersperse_with_debuglib(file_name, file_name2)
-                os.unlink(file_name)
-            else:
-                self.needDebugLib = False
-                file_name2 = file_name
+        if not self.drup :
+            self.needDebugLib = True
+            self.delete_debuglibpart_files()
+            file_name2 = unique_fuzz_file("fuzzTest");
+            self.intersperse_with_debuglib(file_name, file_name2)
+            os.unlink(file_name)
+        else:
+            self.needDebugLib = False
+            file_name2 = file_name
 
-            self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
+        self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
 
-            #remove temporary filenames
-            os.unlink(file_name2)
-            for name in todel :
-                os.unlink(name)
-            if fnameDrup != None :
-                os.unlink(fnameDrup)
-            for i in glob.glob(u'fuzz*'):
-                os.unlink (i)
+        #remove temporary filenames
+        os.unlink(file_name2)
+        for name in todel :
+            os.unlink(name)
+        if fnameDrup != None :
+            os.unlink(fnameDrup)
+        for i in glob.glob(u'fuzz*'):
+            os.unlink (i)
 
     def delete_debuglibpart_files(self):
         dirList = os.listdir(".")
@@ -916,7 +919,7 @@ class Tester:
             if fnmatch.fnmatch(fname, 'debugLibPart*'):
                 os.unlink(fname)
 
-    def check_dir_cnfs(self) :
+    def check_dir_cnffuzz_tests(self) :
         self.ignoreNoSolution = True
         print "Checking already solved solutions"
 
@@ -954,7 +957,12 @@ if options.checkFile :
 if options.fuzz_test:
     tester.needDebugLib = False
     tester.check_for_unsat = True
-    tester.fuzz_test()
+    num = 0
+    while True:
+        tester.fuzz_test_one()
+        num += 1
+        if options.fuzz_test_lim != None and num >= options.fuzz_test_lim:
+            exit(0)
 
 if options.checkSol:
     tester.check_dir_cnfs()
