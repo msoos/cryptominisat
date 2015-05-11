@@ -27,6 +27,14 @@ install:
   - sudo apt-get install cmake
   - sudo pip install lit
 #
+#get lingeling
+  - git clone https://github.com/msoos/lingeling-ala
+  - cd lingeling-ala
+  - ./configure
+  - make
+  - sudo cp lingeling /usr/local/bin/
+  - cd ..
+#
 # Initialise our submodules
   - git submodule init
   - git submodule update

@@ -69,7 +69,6 @@ endif()
 # -----------------------------------------------------------------------------
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/utils/cnf-utils cnf-utils)
-add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
 
 include_directories(

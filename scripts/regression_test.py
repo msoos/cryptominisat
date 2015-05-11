@@ -437,11 +437,16 @@ class Tester:
         tmpfname = unique_fuzz_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname )
         #execute with the other solver
-        toexec = "../../lingeling-587f/lingeling -f %s" % tmpfname
+        toexec = "lingeling -f %s" % tmpfname
         print "Solving with other solver.."
         currTime = calendar.timegm(time.gmtime())
-        p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
+        try:
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
                              preexec_fn=setlimits)
+        except OSError:
+            print "ERROR: Probably you don't have lingeling installed!"
+            raise
+
         consoleOutput2 = p.communicate()[0]
         os.unlink(tmpfname)
 
@@ -746,7 +751,6 @@ class Tester:
 
             #construct multi-fuzzer call
             call = ""
-            call += self.fuzzer_directory
             call += fuzzer[0]
             call += " "
             for name in file_names_multi :
