@@ -96,6 +96,26 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
+    MYSQL)
+        sudo apt-get install libboost-program-options-dev
+        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password '
+        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password '
+        sudo apt-get install mysql-server
+        sudo apt-get install mysql-client
+        sudo apt-get install libmysqlclient-dev
+        echo "drop database cmsat; create database cmsat; use cmsat;
+        create user 'cmsat_solver'@'localhost' identified by '';
+        grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';
+        create user 'cmsat_presenter'@'localhost' identified by '';
+        grant select on cmsat.* to 'cmsat_presenter'@'localhost';" | mysql -u root
+        mysql -u root cmsat < ../cmsat_tablestructure.sql
+
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                    -DSTATS:BOOL=ON \
+                   ${SOURCE_DIR}
+        #TODO test that --sql 1 works!
+    ;;
+
     *)
         echo "\"${STP_CONFIG}\" configuration not recognised"
         exit 1
