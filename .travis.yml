@@ -35,6 +35,13 @@ install:
   - sudo cp lingeling /usr/local/bin/
   - cd ..
 #
+#get drat-trim
+  - git clone https://github.com/msoos/drat
+  - cd drat
+  - make
+  - sudo cp drat-trim /usr/local/bin/
+  - cd ..
+#
 # Initialise our submodules
   - git submodule init
   - git submodule update
