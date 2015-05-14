@@ -1,1 +1,1 @@
-../../cnf-utils/xor_to_cnf_class.py
+../utils/cnf-utils/xor_to_cnf_class.py
