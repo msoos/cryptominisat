@@ -935,7 +935,7 @@ class Tester:
 
                 # check now
                 self.check(fname=options.check_dir_cnfs_problems + "/" + fname,
-                   fnameSolution=fnameSol, needSolve=False)
+                           fnameSolution=fnameSol, needSolve=False)
 
     def regression_test(self):
         for fname in os.listdir(options.testDir):
@@ -956,7 +956,7 @@ if options.fuzz_test:
     while True:
         tester.fuzz_test_one()
         num += 1
-        if options.fuzz_test_lim != None and num >= options.fuzz_test_lim:
+        if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
             exit(0)
 
 if options.checkSol:
