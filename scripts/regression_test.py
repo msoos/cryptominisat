@@ -545,7 +545,6 @@ class Tester:
         cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
         if self.num_threads > 1:
             cmd += "--xor 0 "
-            cmd += "--sql 0 "
 
         # the most buggy ones, don't turn them off much, please
         if random.randint(0, 1) == 1:
