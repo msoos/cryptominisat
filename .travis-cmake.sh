@@ -91,7 +91,7 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-    NOPYTHON)
+    PYTHON)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove python2.7-dev python-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
