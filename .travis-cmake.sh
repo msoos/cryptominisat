@@ -131,8 +131,6 @@ esac
 make
 ctest -V
 sudo make install
-cd ../scripts/
-./regression_test.py -f --fuzzlim 30
 
 case $CMS_CONFIG in
     MYSQL)

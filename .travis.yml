@@ -50,4 +50,5 @@ install:
   - mkdir build && cd build
 script:
   - ../.travis-cmake.sh ../ build
-
+  - cd ../scripts/
+  - ./regression_test.py -f --fuzzlim 30
