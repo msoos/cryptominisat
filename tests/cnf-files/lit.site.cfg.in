@@ -6,8 +6,8 @@ config.cryptominisat_src_root = "@cryptominisat4_SOURCE_DIR@"
 config.cryptominisat_obj_root = "@cryptominisat4_BINARY_DIR@"
 config.python_executable = "@PYTHON_EXECUTABLE@"
 config.cryptominisat_executable = "@cryptominisat4_EXECUTABLE_PATH@"
-config.sqlite = "@SQLITE3_FOUND@"
-config.mysql = "@MYSQL_FOUND@"
+config.sqlite = "@USING_SQLITE@"
+config.mysql = "@USING_SQLITE@"
 config.simple = "@SIMPLE@"
 
 # Let the main config do the real work.
