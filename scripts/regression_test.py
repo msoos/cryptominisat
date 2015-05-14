@@ -40,12 +40,14 @@ import optparse
 import calendar
 import glob
 
+print "our CWD is:", os.getcwd(), "files here: ", glob.glob("*")
+sys.path.append(os.getcwd())
+print "our sys.path is", sys.path
+
 from xor_to_cnf_class import *
-import test_solution
 
 maxTime = 80
 maxTimeDiff = 20
-
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
