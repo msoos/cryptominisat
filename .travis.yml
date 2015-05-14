@@ -17,6 +17,7 @@ env:
   - CMS_CONFIG=NOMYSQLNOSQLITE
   - CMS_CONFIG=NOPYTHON
   - CMS_CONFIG=MYSQL
+  - CMS_CONFIG=SQLITE
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-sdk-team/ppa
   - sudo add-apt-repository -y ppa:george-edison55/gcc4.7-precise
@@ -48,9 +49,5 @@ install:
   - git submodule update
   - mkdir build && cd build
 script:
-  - ../.travis-cmake.sh ../
-  - make
-  - ctest -V
-  - sudo make install
-  - cd ../scripts/
-  - ./regression_test.py -f --fuzzlim 30
+  - ../.travis-cmake.sh ../ build
+

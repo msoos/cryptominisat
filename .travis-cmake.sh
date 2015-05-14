@@ -10,7 +10,9 @@
 # export CXX="g++-4.7"
 
 SOURCE_DIR="$1"
+THIS_DIR="$2"
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
+set -e
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
@@ -103,17 +105,22 @@ case $CMS_CONFIG in
         sudo apt-get install mysql-server
         sudo apt-get install mysql-client
         sudo apt-get install libmysqlclient-dev
-        echo "drop database cmsat; create database cmsat; use cmsat;
-        create user 'cmsat_solver'@'localhost' identified by '';
-        grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';
-        create user 'cmsat_presenter'@'localhost' identified by '';
-        grant select on cmsat.* to 'cmsat_presenter'@'localhost';" | mysql -u root
-        mysql -u root cmsat < ../cmsat_tablestructure.sql
+        cd $SOURCE_DIR
+        ./cmsat_mysql_setup.sh
+        cd $THIS_DIR
 
         eval cmake ${COMMON_CMAKE_ARGS} \
                     -DSTATS:BOOL=ON \
                    ${SOURCE_DIR}
-        #TODO test that --sql 1 works!
+    ;;
+
+     SQLITE)
+        sudo apt-get install libboost-program-options-dev
+        sudo apt-get install sqlite sqlite-dev
+
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                    -DSTATS:BOOL=ON \
+                   ${SOURCE_DIR}
     ;;
 
     *)
@@ -121,5 +128,22 @@ case $CMS_CONFIG in
         exit 1
 esac
 
-exit $?
+make
+ctest -V
+sudo make install
+cd ../scripts/
+./regression_test.py -f --fuzzlim 30
 
+case $CMS_CONFIG in
+    MYSQL)
+        echo "1 2 0" ./cryptominisat --sql 2 --wsql 2 --zero-exit-status
+    ;;
+
+     SQLITE)
+        echo "1 2 0" ./cryptominisat --sql 2 --wsql 3 --zero-exit-status
+    ;;
+
+    *)
+        echo "\"${STP_CONFIG}\" configuration not recognised"
+        exit 1
+esac
