@@ -116,7 +116,7 @@ case $CMS_CONFIG in
 
      SQLITE)
         sudo apt-get install libboost-program-options-dev
-        sudo apt-get install sqlite sqlite-dev
+        sudo apt-get install libsqlite3-dev
 
         eval cmake ${COMMON_CMAKE_ARGS} \
                     -DSTATS:BOOL=ON \
