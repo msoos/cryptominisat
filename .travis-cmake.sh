@@ -142,6 +142,8 @@ case $CMS_CONFIG in
     ;;
 
     *)
-        echo "\"${STP_CONFIG}\" configuration not recognised"
-        exit 1
+        echo "\"${STP_CONFIG}\" Needs no SQL testing, skipping this part"
+    ;;
 esac
+
+exit 0
