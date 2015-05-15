@@ -543,8 +543,6 @@ class Tester:
         cmd += "--skipresol %d " % random.choice([1, 1, 1, 0])
         cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
         cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
-        if self.num_threads > 1:
-            cmd += "--xor 0 "
 
         # the most buggy ones, don't turn them off much, please
         if random.randint(0, 1) == 1:
