@@ -234,7 +234,7 @@ class solution_parser:
                         final |= ~solution[abs(numlit)]
                     else:
                         final |= solution[numlit]
-                    if final == True:
+                    if final is True:
                         break
             if final is False:
                 print "Error: clause '%s' not satisfied." % line
@@ -564,7 +564,7 @@ class Tester:
     def execute(self, fname, newVar=False, needToLimitTime=False,
                 fnameDrup=None, extraOptions=""):
 
-        if os.path.isfile(options.solver) != True:
+        if os.path.isfile(options.solver) is not True:
             print "Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" % \
                 options.solver
             print "Error code 300"
@@ -718,9 +718,9 @@ class Tester:
                     break
         f.close()
 
-        assert solveline != None
+        assert solveline is not None
         ret = re.match("c.*Solver::solve\((.*)\)", solveline)
-        assert ret != None
+        assert ret is not None
         assumps = ret.group(1).strip().split()
         assumps = [int(x) for x in assumps]
 
@@ -926,7 +926,7 @@ class Tester:
         os.unlink(file_name2)
         for name in todel:
             os.unlink(name)
-        if fnameDrup != None:
+        if fnameDrup is not None:
             os.unlink(fnameDrup)
         for i in glob.glob(u'fuzz*'):
             os.unlink(i)
