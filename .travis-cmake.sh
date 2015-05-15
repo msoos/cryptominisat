@@ -114,7 +114,7 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-     SQLITE)
+    SQLITE)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
 
@@ -151,7 +151,7 @@ case $CMS_CONFIG in
         echo "1 2 0" ./cryptominisat --sql 2 --wsql 2 --zero-exit-status
     ;;
 
-     SQLITE)
+    SQLITE)
         echo "1 2 0" ./cryptominisat --sql 2 --wsql 3 --zero-exit-status
     ;;
 
