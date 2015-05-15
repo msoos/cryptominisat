@@ -501,6 +501,29 @@ class Tester:
     def __init__(self):
         self.check_for_unsat = False
         self.ignoreNoSolution = False
+        self.extra_options_if_supported = self.list_options_if_supported(
+            ["xor", "sql"])
+
+    def list_options_if_supported(self, tocheck):
+        ret = []
+        for elem in tocheck:
+            if self.option_supported(elem):
+                ret.append(elem)
+
+        return ret
+
+    def option_supported(self, option_name):
+        command = options.solver
+        command += " --help"
+        p = subprocess.Popen(
+            command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        consoleOutput, err = p.communicate()
+
+        for l in consoleOutput.split("\n"):
+            if option_name in l:
+                return True
+
+        return False
 
     def random_options(self):
         cmd = " "
@@ -551,8 +574,8 @@ class Tester:
                 "binpri", "stamp", "cache", "otfsubsume",
                 "renumber", "savemem", "moreminim", "gates", "bva",
                 "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
-            if self.num_threads == 1:
-                opts.append("xor")
+
+            opts.extend(self.extra_options_if_supported)
 
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
