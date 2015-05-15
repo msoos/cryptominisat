@@ -1,23 +1,23 @@
 #
 # CryptoMiniSat
 #
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-#The above copyright notice and this permission notice shall be included in
-#all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#THE SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 import sys
 import copy
@@ -35,20 +35,22 @@ print "our sys.path is", sys.path
 import pycryptosat
 from pycryptosat import Solver
 
-def check_clause(clause, solution) :
+
+def check_clause(clause, solution):
     for lit in clause:
         var = abs(lit)
         if lit < 0:
             inverted = True
-        else :
+        else:
             inverted = False
 
-        if solution[var] != inverted :
+        if solution[var] != inverted:
             return True
 
-def check_solution(clauses, solution) :
+
+def check_solution(clauses, solution):
     for clause in clauses:
-        if check_clause(clause, solution) == False :
+        if check_clause(clause, solution) is False:
             return False
 
     return True
@@ -74,76 +76,82 @@ clauses3 = [[-1, 2], [-1, -2], [1, -2]]
 
 # -------------------------- actual unit tests ---------------------------
 
-class TestXor(unittest.TestCase) :
-    def setUp(self) :
-        self.solver = Solver(threads = 2);
 
-    def test_wrong_args(self) :
+class TestXor(unittest.TestCase):
+
+    def setUp(self):
+        self.solver = Solver(threads=2)
+
+    def test_wrong_args(self):
         self.assertRaises(TypeError, self.solver.add_xor_clause, [1, 2])
         self.assertRaises(ValueError, self.solver.add_xor_clause, [1, 0], True)
-        self.assertRaises(ValueError, self.solver.add_xor_clause, [-1, 2], True)
+        self.assertRaises(
+            ValueError, self.solver.add_xor_clause, [-1, 2], True)
 
-    def test_binary(self) :
-        self.solver.add_xor_clause([1,2], False)
+    def test_binary(self):
+        self.solver.add_xor_clause([1, 2], False)
         res, solution = self.solver.solve([1])
         self.assertEqual(res, True)
         self.assertEqual(solution, (None, True, True))
 
-    def test_unit(self) :
+    def test_unit(self):
         self.solver.add_xor_clause([1], False)
         res, solution = self.solver.solve()
         self.assertEqual(res, True)
         self.assertEqual(solution, (None, False))
 
-    def test_unit2(self) :
+    def test_unit2(self):
         self.solver.add_xor_clause([1], True)
         res, solution = self.solver.solve()
         self.assertEqual(res, True)
         self.assertEqual(solution, (None, True))
 
-    def test_3_long(self) :
+    def test_3_long(self):
         self.solver.add_xor_clause([1, 2, 3], False)
         res, solution = self.solver.solve([1, 2])
         self.assertEqual(res, True)
-        #self.assertEqual(solution, (None, True, True, False))
+        # self.assertEqual(solution, (None, True, True, False))
 
-    def test_3_long2(self) :
+    def test_3_long2(self):
         self.solver.add_xor_clause([1, 2, 3], True)
         res, solution = self.solver.solve([1, -2])
         self.assertEqual(res, True)
         self.assertEqual(solution, (None, True, False, False))
 
-    def test_long(self) :
-        for l in range(10,30) :
+    def test_long(self):
+        for l in range(10, 30):
             self.setUp()
             toadd = []
             toassume = []
             solution_expected = [None]
-            for i in range(1,l) :
+            for i in range(1, l):
                 toadd.append(i)
                 solution_expected.append(False)
-                if i != l-1 :
-                    toassume.append(i*-1)
+                if i != l - 1:
+                    toassume.append(i * -1)
 
             self.solver.add_xor_clause(toadd, False)
             res, solution = self.solver.solve(toassume)
             self.assertEqual(res, True)
             self.assertEqual(solution, tuple(solution_expected))
 
+
 class InitTester(unittest.TestCase):
 
     def test_wrong_args_to_solver(self):
-        self.assertRaises(ValueError, Solver, threads = -1)
-        self.assertRaises(ValueError, Solver, threads = 0)
-        self.assertRaises(ValueError, Solver, verbose = -1)
-        self.assertRaises(ValueError, Solver, confl_limit = -1)
-        self.assertRaises(TypeError, Solver, threads = "fail")
-        self.assertRaises(TypeError, Solver, verbose = "fail")
-        self.assertRaises(TypeError, Solver, confl_limit = "fail")
+        self.assertRaises(ValueError, Solver, threads=-1)
+        self.assertRaises(ValueError, Solver, threads=0)
+        self.assertRaises(ValueError, Solver, verbose=-1)
+        self.assertRaises(ValueError, Solver, confl_limit=-1)
+        self.assertRaises(TypeError, Solver, threads="fail")
+        self.assertRaises(TypeError, Solver, verbose="fail")
+        self.assertRaises(TypeError, Solver, confl_limit="fail")
+
 
 class TestSolve(unittest.TestCase):
-    def setUp(self) :
-        self.solver = Solver(threads = 2)
+
+    def setUp(self):
+        self.solver = Solver(threads=2)
 
     def test_wrong_args(self):
         self.assertRaises(TypeError, self.solver.add_clause, 'A')
@@ -151,7 +159,8 @@ class TestSolve(unittest.TestCase):
         self.assertRaises(TypeError, self.solver.add_clause, 1.0)
         self.assertRaises(TypeError, self.solver.add_clause, object())
         self.assertRaises(TypeError, self.solver.add_clause, ['a'])
-        self.assertRaises(TypeError, self.solver.add_clause, [[1, 2], [3, None]])
+        self.assertRaises(
+            TypeError, self.solver.add_clause, [[1, 2], [3, None]])
         self.assertRaises(ValueError, self.solver.add_clause, [1, 0])
 
     def test_no_clauses(self):
@@ -167,7 +176,9 @@ class TestSolve(unittest.TestCase):
 
     def test_bad_iter(self):
         class Liar:
-            def __iter__(self): return None
+
+            def __iter__(self):
+                return None
         self.assertRaises(TypeError, self.solver.add_clause, Liar())
 
     def test_cnf2(self):
@@ -189,7 +200,7 @@ class TestSolve(unittest.TestCase):
                 self.solver.add_clause(cl)
 
             res, solution = self.solver.solve()
-            self.assertTrue(res == None or check_solution(clauses1, solution))
+            self.assertTrue(res is None or check_solution(clauses1, solution))
 
     def test_by_re_curse(self):
         self.solver.add_clause([-1, -2, 3])
@@ -204,6 +215,7 @@ class TestSolve(unittest.TestCase):
 
 # ------------------------------------------------------------------------
 
+
 def run():
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s" % sys.version)
@@ -216,10 +228,10 @@ def run():
     suite.addTest(unittest.makeSuite(InitTester))
     suite.addTest(unittest.makeSuite(TestSolve))
 
-    runner = unittest.TextTestRunner(verbosity = 2)
+    runner = unittest.TextTestRunner(verbosity=2)
     return runner.run(suite)
 
 run()
 
-#if __name__ == '__main__':
-    #unittest.main()
+# if __name__ == '__main__':
+    # unittest.main()
