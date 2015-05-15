@@ -123,9 +123,23 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
+    M4RI)
+        wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
+        tar xzvf m4ri-20140914.tar.gz
+        cd m4ri-20140914/
+        ./configure
+        make
+        sudo make install
+        cd ..
+
+        eval cmake ${COMMON_CMAKE_ARGS} \
+            ${SOURCE_DIR}
+    ;;
+
     *)
         echo "\"${STP_CONFIG}\" configuration not recognised"
         exit 1
+    ;;
 esac
 
 make
@@ -141,8 +155,12 @@ case $CMS_CONFIG in
         echo "1 2 0" ./cryptominisat --sql 2 --wsql 3 --zero-exit-status
     ;;
 
+    M4RI)
+        echo "1 2 0" ./cryptominisat --xor 1 --zero-exit-status
+    ;;
+
     *)
-        echo "\"${STP_CONFIG}\" Needs no SQL testing, skipping this part"
+        echo "\"${STP_CONFIG}\" Binary no extra testing (sql, xor, etc), skipping this part"
     ;;
 esac
 
