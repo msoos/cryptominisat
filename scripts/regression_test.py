@@ -157,7 +157,7 @@ class solution_parser:
                 continue
 
             if (re.match('^c ', line)):
-                continue;
+                continue
 
             # solution
             if (re.match('^s ', line)):
@@ -168,12 +168,12 @@ class solution_parser:
                 if 'UNSAT' in line:
                     unsat = True
                     satunsatfound = True
-                    continue;
+                    continue
 
                 if 'SAT' in line:
                     unsat = False
-                    satunsatfound = True;
-                    continue;
+                    satunsatfound = True
+                    continue
 
                 print "ERROR: line starts with 's' but no SAT/UNSAT on line"
                 exit(400)
@@ -187,7 +187,7 @@ class solution_parser:
                     if var == "" or var == 'v':
                         continue
                     if (int(var) == 0):
-                        break;
+                        break
                     intvar = int(var)
                     solution[abs(intvar)] = (intvar >= 0)
         # print "Parsed values:", solution
@@ -438,7 +438,7 @@ class create_fuzz:
             fixed = random.getrandbits(1) == 1
 
             for i in range(random.randrange(2, 4)):
-                file_name2 = create_fuzz.unique_fuzz_file("fuzzTest");
+                file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
                 file_names_multi.append(file_name2)
 
                 # chose a ranom fuzzer, not multipart
@@ -842,7 +842,7 @@ class Tester:
 
         if not unsat:
             solution_parser.test_found_solution(solution, checkAgainst)
-            return;
+            return
 
         # it's UNSAT and we should not check, so exit
         if self.check_for_unsat is False:
@@ -898,11 +898,11 @@ class Tester:
     def fuzz_test_one(self):
         fuzzer = random.choice(fuzzers)
         self.num_threads = random.choice([1, 2, 4])
-        file_name = create_fuzz.unique_fuzz_file("fuzzTest");
+        file_name = create_fuzz.unique_fuzz_file("fuzzTest")
         self.drup = self.num_threads == 1 and random.choice([True, False])
         fnameDrup = None
         if self.drup:
-            fnameDrup = create_fuzz.unique_fuzz_file("fuzzTest");
+            fnameDrup = create_fuzz.unique_fuzz_file("fuzzTest")
 
         # create the fuzz file
         cf = create_fuzz()
@@ -913,7 +913,7 @@ class Tester:
         if not self.drup:
             self.needDebugLib = True
             self.delete_debuglibpart_files()
-            file_name2 = create_fuzz.unique_fuzz_file("fuzzTest");
+            file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
             create_fuzz.intersperse_with_debuglib(file_name, file_name2)
             os.unlink(file_name)
         else:
