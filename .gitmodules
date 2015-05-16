@@ -10,3 +10,6 @@
 [submodule "utils/sha1-sat"]
 	path = utils/sha1-sat
 	url = https://github.com/msoos/sha1-sat.git
+[submodule "web/dygraphs"]
+	path = web/dygraphs
+	url = https://github.com/danvk/dygraphs
