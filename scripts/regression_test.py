@@ -49,6 +49,7 @@ from xor_to_cnf_class import *
 maxTime = 80
 maxTimeDiff = 20
 
+
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
     def format_description(self, description):
