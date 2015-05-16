@@ -148,15 +148,15 @@ sudo make install
 
 case $CMS_CONFIG in
     MYSQL)
-        echo "1 2 0" ./cryptominisat --sql 2 --wsql 2 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat --sql 2 --wsql 2 --zero-exit-status
     ;;
 
     SQLITE)
-        echo "1 2 0" ./cryptominisat --sql 2 --wsql 3 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat --sql 2 --wsql 3 --zero-exit-status
     ;;
 
     M4RI)
-        echo "1 2 0" ./cryptominisat --xor 1 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat --xor 1 --zero-exit-status
     ;;
 
     *)
