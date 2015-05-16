@@ -165,4 +165,15 @@ case $CMS_CONFIG in
     ;;
 esac
 
+cd ../scripts/
+
+case $CMS_CONFIG in
+    ONLY_SIMPLE)
+    ;;
+
+    *)
+        ./regression_test.py -f --fuzzlim 30
+    ;;
+esac
+
 exit 0
