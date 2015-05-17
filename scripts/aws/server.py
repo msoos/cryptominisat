@@ -60,9 +60,11 @@ parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name",
                   )
 
 parser.add_option("--solver",
-                  default="/home/ubuntu/cryptominisat/build/cryptominisat"
+                  default="/home/ubuntu/cryptominisat/build/cryptominisat",
+                  dest="solver",
+                  help="Solver executable"
                   "[default: %default]",
-                  dest="solver", help="Solver executable", type=str
+                  type=str
                   )
 
 parser.add_option("--s3bucket", default="msoos-solve-results",
