@@ -32,37 +32,48 @@ parser.add_option("--verbose", "-v", action="store_true",
                   )
 
 parser.add_option("--port", "-p", default=10000, dest="port",
-                  help="Port to use", type="int"
+                  help="Port to listen on. [default: %default]", type="int"
                   )
 
 parser.add_option("--tout", "-t", default=6000, dest="timeout_in_secs",
-                  help="Timeout for the file in seconds", type=int
+                  help="Timeout for the file in seconds"
+                  "[default: %default]",
+                  type=int
                   )
 
 parser.add_option("--extratime", default=7 * 60, dest="extra_time",
-                  help="Timeout for the server to send us the results", type=int
+                  help="Timeout for the server to send us the results"
+                  "[default: %default]",
+                  type=int
                   )
 
 parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb",
-                  help="Memory limit in MB", type=int
+                  help="Memory limit in MB"
+                  "[default: %default]",
+                  type=int
                   )
 
 parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name",
-                  type=str, help="The list of CNF files to solve, with first line the directory"
+                  type=str,
+                  help="The list of CNF files to solve, first line the dir"
+                  "[default: %default]",
                   )
 
 parser.add_option("--solver",
-                  default="/home/ubuntu/cryptominisat/build/cryptominisat",
+                  default="/home/ubuntu/cryptominisat/build/cryptominisat"
+                  "[default: %default]",
                   dest="solver", help="Solver executable", type=str
                   )
 
 parser.add_option("--s3bucket", default="msoos-solve-results",
-                  dest="s3_bucket", help="S3 Bucket to upload finished data",
+                  dest="s3_bucket", help="S3 Bucket to upload finished data"
+                  "[default: %default]",
                   type=str
                   )
 
 parser.add_option("--s3folder", default="results", dest="s3_folder",
-                  help="S3 folder name to upload data. Default: GIT revision",
+                  help="S3 folder name to upload data. Default: GIT revision"
+                  "[default: %default]",
                   type=str
                   )
 
@@ -71,7 +82,8 @@ parser.add_option("--git", dest="git_rev", type=str,
                   )
 
 parser.add_option("--opt", dest="extra_opts", type=str, default="",
-                  help="Extra options to give to solver. Default: None"
+                  help="Extra options to give to solver"
+                  "[default: %default]",
                   )
 
 parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
