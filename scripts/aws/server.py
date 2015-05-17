@@ -16,7 +16,9 @@ import boto
 import Queue
 import threading
 
+
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
+
     def format_description(self, description):
         if description:
             return description + "\n"
@@ -26,70 +28,61 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 usage = "usage: %prog"
 parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
 parser.add_option("--verbose", "-v", action="store_true"
-                    , default=False, dest="verbose"
-                    , help="Be more verbose"
-                    )
+                  , default=False, dest="verbose", help="Be more verbose"
+                  )
 
-parser.add_option("--port", "-p"
-                    , default=10000, dest="port"
-                    , help="Port to use", type="int"
-                    )
+parser.add_option("--port", "-p", default=10000, dest="port"
+                  , help="Port to use", type="int"
+                  )
 
-parser.add_option("--tout", "-t"
-                    , default=6000, dest="timeout_in_secs"
-                    , help="Timeout for the file in seconds", type=int
-                    )
+parser.add_option("--tout", "-t", default=6000, dest="timeout_in_secs"
+                  , help="Timeout for the file in seconds", type=int
+                  )
 
-parser.add_option("--extratime"
-                    , default=7*60, dest="extra_time"
-                    , help="Timeout for the server to send us the results", type=int
-                    )
+parser.add_option("--extratime", default=7 * 60, dest="extra_time"
+                  , help="Timeout for the server to send us the results", type=int
+                  )
 
-parser.add_option("--memlimit", "-m"
-                    , default=1600, dest="mem_limit_in_mb"
-                    , help="Memory limit in MB", type=int
-                    )
+parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb"
+                  , help="Memory limit in MB", type=int
+                  )
 
-parser.add_option("--cnfdir"
-                    , default="satcomp14", dest="cnf_dir_name", type=str
-                    , help="The list of CNF files to solve, with first line the directory"
-                    )
+parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name"
+                  , type=str, help="The list of CNF files to solve, with first line the directory"
+                  )
 
-parser.add_option("--solver"
-                    , default="/home/ubuntu/cryptominisat/build/cryptominisat", dest="solver"
-                    , help="Solver executable", type=str
-                    )
+parser.add_option("--solver",
+                  default="/home/ubuntu/cryptominisat/build/cryptominisat",
+                  dest="solver", help="Solver executable", type=str
+                  )
 
-parser.add_option("--s3bucket"
-                    , default="msoos-solve-results", dest="s3_bucket"
-                    , help="S3 Bucket to upload finished data", type=str
-                    )
+parser.add_option("--s3bucket", default="msoos-solve-results",
+                  dest="s3_bucket", help="S3 Bucket to upload finished data"
+                  , type=str
+                  )
 
-parser.add_option("--s3folder"
-                    , default="results", dest="s3_folder"
-                    , help="S3 folder base name to upload finished data", type=str
-                    )
+parser.add_option("--s3folder", default="results", dest="s3_folder",
+                  help="S3 folder base name to upload finished data", type=str
+                  )
 
-parser.add_option("--git"
-                    , dest="git_rev", type=str
-                    , help="The GIT revision to use"
-                    )
+parser.add_option("--git", dest="git_rev", type=str,
+                  help="The GIT revision to use"
+                  )
 
-parser.add_option("--opt"
-                    , dest="extra_opts", type=str, default=""
-                    , help="Extra options to give to solver"
-                    )
+parser.add_option("--opt", dest="extra_opts", type=str, default="",
+                  help="Extra options to give to solver"
+                  )
 
-parser.add_option("--noshutdown", "-n"
-                    , default=False, dest="noshutdown", action="store_true"
-                    , help="Do not shut down clients"
-                    )
+parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
+                  action="store_true", help="Do not shut down clients"
+                  )
 
 
-#parse options
+# parse options
 (options, args) = parser.parse_args()
 
-def get_revision() :
+
+def get_revision():
     _, solvername = os.path.split(options.solver)
     if solvername != "cryptominisat":
         return solvername
@@ -105,7 +98,7 @@ if not options.git_rev:
     print "Revsion not given, taking HEAD: %s" % options.git_rev
 
 
-def get_n_bytes_from_connection(sock, MSGLEN) :
+def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
     while bytes_recd < MSGLEN:
@@ -117,15 +110,19 @@ def get_n_bytes_from_connection(sock, MSGLEN) :
 
     return ''.join(chunks)
 
+
 class ToSolve:
-    def __init__(self, num, name) :
+
+    def __init__(self, num, name):
         self.num = num
         self.name = name
 
 acc_queue = Queue.Queue()
 
+
 class Server (threading.Thread):
-    def __init__(self) :
+
+    def __init__(self):
         threading.Thread.__init__(self)
         self.files_available = []
         self.files_finished = []
@@ -145,7 +142,7 @@ class Server (threading.Thread):
         print "Solving %d files" % len(self.files_available)
         self.uniq_cnt = 0
 
-    def handle_done(self, connection, indata) :
+    def handle_done(self, connection, indata):
         file_num = indata["file_num"]
 
         print "Finished with file %s (num %d)" % (self.files[indata["file_num"]], indata["file_num"])
@@ -157,21 +154,22 @@ class Server (threading.Thread):
         print "Num files_finished:", len(self.files_finished)
         sys.stdout.flush()
 
-    def check_for_dead_files(self) :
+    def check_for_dead_files(self):
         this_time = time.time()
         files_to_remove_from_files_running = []
         for file_num, starttime in self.files_running.iteritems():
-            duration = this_time-starttime
-            #print "* death check. running:" , file_num, " duration: ", duration
+            duration = this_time - starttime
+            # print "* death check. running:" , file_num, " duration: ",
+            # duration
             if duration > options.timeout_in_secs + options.extra_time:
-                print "* dead file " , file_num, " duration: ", duration, " re-inserting"
+                print "* dead file ", file_num, " duration: ", duration, " re-inserting"
                 files_to_remove_from_files_running.append(file_num)
                 self.files_available.append(file_num)
 
         for c in files_to_remove_from_files_running:
             del self.files_running[c]
 
-    def find_something_to_solve(self) :
+    def find_something_to_solve(self):
         self.check_for_dead_files()
         print "Num files_available pre-send:", len(self.files_available)
 
@@ -185,7 +183,7 @@ class Server (threading.Thread):
 
         return file_num
 
-    def handle_build(self, connection, indata) :
+    def handle_build(self, connection, indata):
         tosend = {}
         tosend["solver"] = options.solver
         tosend["revision"] = options.git_rev
@@ -196,12 +194,13 @@ class Server (threading.Thread):
         print "Sending git revision %s to %s" % (options.git_rev, connection)
         connection.sendall(tosend)
 
-    def handle_need(self, connection, indata) :
-        #TODO don't ignore 'indata' for solving CNF instances, use it to opitimize for uptime
+    def handle_need(self, connection, indata):
+        # TODO don't ignore 'indata' for solving CNF instances, use it to
+        # opitimize for uptime
         file_num = self.find_something_to_solve()
 
-        #yay, everything finished!
-        if file_num == None :
+        # yay, everything finished!
+        if file_num == None:
             tosend = {}
             tosend["noshutdown"] = options.noshutdown
             tosend["command"] = "finish"
@@ -210,8 +209,8 @@ class Server (threading.Thread):
 
             print "No more to solve, sending termination to ", connection
             connection.sendall(tosend)
-        else :
-            #set timer that we have sent this to be solved
+        else:
+            # set timer that we have sent this to be solved
             self.files_running[file_num] = time.time()
             filename = self.files[file_num].name
 
@@ -234,25 +233,25 @@ class Server (threading.Thread):
             print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
             sys.stdout.flush()
             connection.sendall(tosend)
-            self.uniq_cnt+=1
+            self.uniq_cnt += 1
 
-    def handle_one_client(self, conn, cli_addr) :
+    def handle_one_client(self, conn, cli_addr):
         try:
-            print  time.strftime("%c"), 'connection from ', cli_addr
+            print time.strftime("%c"), 'connection from ', cli_addr
 
             data = get_n_bytes_from_connection(conn, 8)
             length = struct.unpack('!q', data)[0]
             data = get_n_bytes_from_connection(conn, length)
             data = pickle.loads(data)
 
-            if data["command"] == "done" :
+            if data["command"] == "done":
                 self.handle_done(conn, data)
 
-            elif data["command"] == "need" :
-               self.handle_need(conn, data)
+            elif data["command"] == "need":
+                self.handle_need(conn, data)
 
-            elif data["command"] == "build" :
-               self.handle_build(conn, data)
+            elif data["command"] == "build":
+                self.handle_build(conn, data)
 
             sys.stdout.flush()
         except Exception as inst:
@@ -272,12 +271,14 @@ class Server (threading.Thread):
             conn, cli_addr = acc_queue.get()
             self.handle_one_client(conn, cli_addr)
 
+
 class Listener (threading.Thread):
-    def __init__(self) :
+
+    def __init__(self):
         threading.Thread.__init__(self)
         pass
 
-    def listen_to_connection(self) :
+    def listen_to_connection(self):
         # Create a TCP/IP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -286,7 +287,7 @@ class Listener (threading.Thread):
         print >>sys.stderr, 'starting up on %s port %s' % server_address
         sock.bind(server_address)
 
-        #Listen for incoming connections
+        # Listen for incoming connections
         sock.listen(128)
         return sock
 
@@ -314,10 +315,10 @@ server.start()
 while threading.active_count() > 0:
     time.sleep(0.1)
 
-#c3.large
-#def call() :
-    #calling = """
-    #aws ec2 request-spot-instances \
+# c3.large
+# def call() :
+    # calling = """
+    # aws ec2 request-spot-instances \
         #--dry-run \
         #--spot-price "0.025"
         #--instance-count 2
@@ -343,8 +344,8 @@ reservations = conn.get_all_reservations()
 num = 0
 instances = []
 for reservation in reservations:
-    for instance in reservation.instances :
-        if instance.instance_type != "t2.micro" :
+    for instance in reservation.instances:
+        if instance.instance_type != "t2.micro":
             instances.append([instance.instance_type, instance.placement])
 
 print "client instances running:", instances
@@ -354,7 +355,3 @@ print "Active requests:", requests
 for req in requests:
     if ("%s" % req.status) != "<Status: instance-terminated-by-user>":
         print "-> ", [req.price, req.status]
-
-
-
-

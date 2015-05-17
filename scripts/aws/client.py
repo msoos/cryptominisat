@@ -18,7 +18,9 @@ import traceback
 import boto
 pp = pprint.PrettyPrinter(depth=6)
 
+
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
+
     def format_description(self, description):
         if description:
             return description + "\n"
@@ -27,39 +29,34 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
 usage = "usage: %prog"
 parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
-parser.add_option("--verbose", "-v", action="store_true"
-                    , default=False, dest="verbose"
-                    , help="Be more verbose"
-                    )
+parser.add_option("--verbose", "-v", action="store_true", default=False,
+                  dest="verbose", help="Be more verbose"
+                  )
 
-parser.add_option("--host"
-                    , dest="host", default="172.30.0.208"
-                    , help="Host to connect to as a client"
-                    )
-parser.add_option("--port", "-p"
-                    , default=10000, dest="port"
-                    , help="Port to use", type="int"
-                    )
+parser.add_option("--host", dest="host", default="172.30.0.208",
+                  help="Host to connect to as a client"
+                  )
+parser.add_option("--port", "-p", default=10000, dest="port",
+                  help="Port to use", type="int"
+                  )
 
-parser.add_option("--temp"
-                    , default="/mnt/tmp/", dest="temp_space"
-                    , help="Temporary space to use", type=str
-                    )
+parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space",
+                  help="Temporary space to use", type=str
+                  )
 
-parser.add_option("--test"
-                    , default=False, dest="test", action="store_true"
-                    , help="only one CNF"
-                    )
+parser.add_option("--test", default=False, dest="test",
+                  action="store_true", help="only one CNF"
+                  )
 
-parser.add_option("--noshutdown", "-n"
-                    , default=False, dest="noshutdown", action="store_true"
-                    , help="Do not shut down"
-                    )
+parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
+                  action="store_true", help="Do not shut down"
+                  )
 
 (options, args) = parser.parse_args()
 
 
 exitapp = False
+
 
 def uptime():
     with open('/proc/uptime', 'r') as f:
@@ -67,7 +64,8 @@ def uptime():
 
     return None
 
-def get_n_bytes_from_connection(sock, MSGLEN) :
+
+def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
     while bytes_recd < MSGLEN:
@@ -79,21 +77,23 @@ def get_n_bytes_from_connection(sock, MSGLEN) :
 
     return ''.join(chunks)
 
-def connect_client() :
+
+def connect_client():
     # Create a socket object
     sock = socket.socket()
 
     # Get local machine name
-    if options.host == None :
+    if options.host == None:
         print "You must supply the host to connect to as a client"
         exit(-1)
 
     print "hostname:", options.host
     host = socket.gethostbyname_ex(options.host)
-    print time.strftime("%c"), "Connecting to host" , host
+    print time.strftime("%c"), "Connecting to host", host
     sock.connect((host[2][0], options.port))
 
     return sock
+
 
 def ask_for_data_to_solve(sock, command):
     print "asking for stuff to solve..."
@@ -104,14 +104,16 @@ def ask_for_data_to_solve(sock, command):
     tosend = struct.pack('!q', len(tosend)) + tosend
     sock.sendall(tosend)
 
-    #get stuff to solve
+    # get stuff to solve
     data = get_n_bytes_from_connection(sock, 8)
     length = struct.unpack('!q', data)[0]
     data = get_n_bytes_from_connection(sock, length)
     indata = pickle.loads(data)
     return indata
 
+
 class solverThread (threading.Thread):
+
     def __init__(self, threadID):
         threading.Thread.__init__(self)
         self.threadID = threadID
@@ -119,7 +121,7 @@ class solverThread (threading.Thread):
 
     def create_temp_space(self):
         orig = options.temp_space
-        newdir = orig+"/thread-%s" % self.threadID
+        newdir = orig + "/thread-%s" % self.threadID
         try:
             os.mkdir(newdir)
         except:
@@ -128,15 +130,17 @@ class solverThread (threading.Thread):
         return newdir
 
     def setlimits(self):
-        #sys.stdout.write("Setting resource limit in child (pid %d). Time %d s Mem %d MB\n" % (os.getpid(), self.indata["timeout_in_secs"], self.indata["mem_limit_in_mb"]))
-        resource.setrlimit(resource.RLIMIT_CPU, (self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
-        resource.setrlimit(resource.RLIMIT_DATA, (self.indata["mem_limit_in_mb"]*1024*1024, self.indata["mem_limit_in_mb"]*1024*1024))
-
-
+        # sys.stdout.write("Setting resource limit in child (pid %d). Time %d s
+        # Mem %d MB\n" % (os.getpid(), self.indata["timeout_in_secs"],
+        # self.indata["mem_limit_in_mb"]))
+        resource.setrlimit(resource.RLIMIT_CPU, (
+            self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
+        resource.setrlimit(resource.RLIMIT_DATA, (
+            self.indata["mem_limit_in_mb"] * 1024 * 1024, self.indata["mem_limit_in_mb"] * 1024 * 1024))
 
     def get_output_fname(self):
-        return "%s/%s" % ( \
-            self.temp_space, \
+        return "%s/%s" % (
+            self.temp_space,
             self.indata["cnf_filename"]
         )
 
@@ -144,10 +148,10 @@ class solverThread (threading.Thread):
         return "%s" % (self.indata["solver"])
 
     def get_stdout_fname(self):
-        return self.get_output_fname()+ "-" + self.indata["uniq_cnt"] + ".stdout"
+        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
 
     def get_stderr_fname(self):
-        return self.get_output_fname()+ "-" + self.indata["uniq_cnt"] + ".stderr"
+        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_toexec(self):
         extra_opts = ""
@@ -157,25 +161,25 @@ class solverThread (threading.Thread):
         extra_opts += " " + self.indata["extra_opts"] + " "
 
         toexec = "%s %s %s/%s"  % \
-            (self.indata["solver"], \
-            extra_opts, \
-            self.indata["cnf_dir"], \
-            self.indata["cnf_filename"]
-        )
+            (self.indata["solver"],
+             extra_opts,
+             self.indata["cnf_dir"],
+             self.indata["cnf_filename"]
+             )
 
         return toexec
 
-    def execute(self) :
+    def execute(self):
         toexec = self.get_toexec()
         stdout_file = open(self.get_stdout_fname(), "w+")
         stderr_file = open(self.get_stderr_fname(), "w+")
 
-        #limit time
-        limits_printed = "Thread %d executing '%s' with timeout %d s  and memout %d MB" % (\
-            self.threadID, \
-            toexec, \
-            self.indata["timeout_in_secs"], \
-            self.indata["mem_limit_in_mb"] \
+        # limit time
+        limits_printed = "Thread %d executing '%s' with timeout %d s  and memout %d MB" % (
+            self.threadID,
+            toexec,
+            self.indata["timeout_in_secs"],
+            self.indata["mem_limit_in_mb"]
         )
         print limits_printed
         stderr_file.write(limits_printed + "\n")
@@ -184,11 +188,13 @@ class solverThread (threading.Thread):
         stdout_file.flush()
 
         tstart = time.time()
-        p = subprocess.Popen(toexec.rsplit(), stderr=stderr_file, stdout=stdout_file, preexec_fn=self.setlimits)
+        p = subprocess.Popen(
+            toexec.rsplit(), stderr=stderr_file, stdout=stdout_file, preexec_fn=self.setlimits)
         p.wait()
         tend = time.time()
 
-        towrite = "Finished in %f seconds by thread %s return code: %d\n" % (tend-tstart, self.threadID, p.returncode)
+        towrite = "Finished in %f seconds by thread %s return code: %d\n" % (
+            tend - tstart, self.threadID, p.returncode)
         stderr_file.write(towrite)
         stdout_file.write(towrite)
         stderr_file.close()
@@ -200,49 +206,53 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
-    def copy_solution_to_s3(self, s3_folder_ending) :
+    def copy_solution_to_s3(self, s3_folder_ending):
         os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
-        s3_folder = self.indata["s3_folder"]+"-"+s3_folder_ending
+        s3_folder = self.indata["s3_folder"] + "-" + s3_folder_ending
 
-        fname_with_stdout_ending = self.indata["cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
-        k.key = s3_folder+"/"+ fname_with_stdout_ending
+        fname_with_stdout_ending = self.indata[
+            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
+        k.key = s3_folder + "/" + fname_with_stdout_ending
         boto_bucket.delete_key(k)
-        k.set_contents_from_filename(self.get_stdout_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
+        k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
+        url = self.create_url(
+            self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
         print "URL: ", url
 
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname_with_stderr_ending = self.indata["cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stderr.gz"
-        k.key = s3_folder+"/"+fname_with_stderr_ending
+        fname_with_stderr_ending = self.indata[
+            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stderr.gz"
+        k.key = s3_folder + "/" + fname_with_stderr_ending
         boto_bucket.delete_key(k)
-        k.set_contents_from_filename(self.get_stderr_fname()+".gz")
-        url = self.create_url(self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
+        k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
+        url = self.create_url(
+            self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
         print "URL: ", url
 
         print "Uploaded stdout+stderr files"
 
-        #k.make_public()
-        #print "File public"
+        # k.make_public()
+        # print "File public"
 
-        os.unlink(self.get_stdout_fname()+".gz")
-        os.unlink(self.get_stderr_fname()+".gz")
+        os.unlink(self.get_stdout_fname() + ".gz")
+        os.unlink(self.get_stderr_fname() + ".gz")
 
-    def get_revision(self) :
+    def get_revision(self):
         _, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
             if not options.test:
                 os.chdir('/home/ubuntu/cryptominisat')
             revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-        else :
+        else:
             revision = solvername
 
         return revision.strip()
 
     def run_loop(self):
-        while not exitapp :
-            time.sleep(random.randint(0, 5)/10.0)
+        while not exitapp:
+            time.sleep(random.randint(0, 5) / 10.0)
             try:
                 sock = connect_client()
             except Exception as inst:
@@ -279,12 +289,12 @@ class solverThread (threading.Thread):
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_exc()
                     print "Problem, waiting and re-connecting"
-                    time.sleep(random.randint(0,5)/10.0)
-                    fail_connect+=1
+                    time.sleep(random.randint(0, 5) / 10.0)
+                    fail_connect += 1
 
             tosend = {}
-            tosend["command"]  = "done"
-            tosend["file_num"]  = self.indata["file_num"]
+            tosend["command"] = "done"
+            tosend["file_num"] = self.indata["file_num"]
             tosend["returncode"] = returncode
 
             tosend = pickle.dumps(tosend)
@@ -312,9 +322,10 @@ class solverThread (threading.Thread):
 
 boto_conn = boto.connect_s3()
 
+
 def build_system():
     built_system = False
-    while not built_system :
+    while not built_system:
         try:
             sock = connect_client()
         except Exception as inst:
@@ -328,30 +339,32 @@ def build_system():
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
-        #only build if the solver is cryptominisat
-        if "cryptominisat" in indata["solver"] :
-            ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1'  % (indata["revision"], num_threads))
+        # only build if the solver is cryptominisat
+        if "cryptominisat" in indata["solver"]:
+            ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1' %
+                            (indata["revision"], num_threads))
             if ret != 0:
                 print "Error building cryptominisat, shutting down!"
                 shutdown()
 
         built_system = True
 
-def num_cpus() :
-    num_cpu=0
+
+def num_cpus():
+    num_cpu = 0
     cpuinfo = open("/proc/cpuinfo", "r")
     for line in cpuinfo:
         if "processor" in line:
-            num_cpu+=1
+            num_cpu += 1
 
     cpuinfo.close()
     return num_cpu
 
 
-def shutdown() :
+def shutdown():
     toexec = "sudo shutdown -h now"
     print "SHUTTING DOWN"
-    if not options.noshutdown and not options.test :
+    if not options.noshutdown and not options.test:
         print os.system(toexec)
         pass
 
@@ -370,7 +383,7 @@ except:
     shutdown()
 
 threads = []
-for i in range(num_threads) :
+for i in range(num_threads):
     threads.append(solverThread(i))
 
 for t in threads:
@@ -382,4 +395,3 @@ while threading.active_count() > 0:
 
 print "Exiting Main Thread, shutting down"
 shutdown()
-
