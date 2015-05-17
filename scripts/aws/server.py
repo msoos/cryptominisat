@@ -27,28 +27,28 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
 usage = "usage: %prog"
 parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
-parser.add_option("--verbose", "-v", action="store_true"
-                  , default=False, dest="verbose", help="Be more verbose"
+parser.add_option("--verbose", "-v", action="store_true",
+                  default=False, dest="verbose", help="Be more verbose"
                   )
 
-parser.add_option("--port", "-p", default=10000, dest="port"
-                  , help="Port to use", type="int"
+parser.add_option("--port", "-p", default=10000, dest="port",
+                  help="Port to use", type="int"
                   )
 
-parser.add_option("--tout", "-t", default=6000, dest="timeout_in_secs"
-                  , help="Timeout for the file in seconds", type=int
+parser.add_option("--tout", "-t", default=6000, dest="timeout_in_secs",
+                  help="Timeout for the file in seconds", type=int
                   )
 
-parser.add_option("--extratime", default=7 * 60, dest="extra_time"
-                  , help="Timeout for the server to send us the results", type=int
+parser.add_option("--extratime", default=7 * 60, dest="extra_time",
+                  help="Timeout for the server to send us the results", type=int
                   )
 
-parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb"
-                  , help="Memory limit in MB", type=int
+parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb",
+                  help="Memory limit in MB", type=int
                   )
 
-parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name"
-                  , type=str, help="The list of CNF files to solve, with first line the directory"
+parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name",
+                  type=str, help="The list of CNF files to solve, with first line the directory"
                   )
 
 parser.add_option("--solver",
@@ -57,8 +57,8 @@ parser.add_option("--solver",
                   )
 
 parser.add_option("--s3bucket", default="msoos-solve-results",
-                  dest="s3_bucket", help="S3 Bucket to upload finished data"
-                  , type=str
+                  dest="s3_bucket", help="S3 Bucket to upload finished data",
+                  type=str
                   )
 
 parser.add_option("--s3folder", default="results", dest="s3_folder",
@@ -230,7 +230,8 @@ class Server (threading.Thread):
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('!q', len(tosend)) + tosend
 
-            print "Sending file %s (num %d) to %s" % (filename, file_num, connection)
+            print "Sending file %s (num %d) to %s" % (filename,
+                                                      file_num, connection)
             sys.stdout.flush()
             connection.sendall(tosend)
             self.uniq_cnt += 1
