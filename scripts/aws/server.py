@@ -62,15 +62,16 @@ parser.add_option("--s3bucket", default="msoos-solve-results",
                   )
 
 parser.add_option("--s3folder", default="results", dest="s3_folder",
-                  help="S3 folder base name to upload finished data", type=str
+                  help="S3 folder name to upload data. Default: GIT revision",
+                  type=str
                   )
 
 parser.add_option("--git", dest="git_rev", type=str,
-                  help="The GIT revision to use"
+                  help="The GIT revision to use. Default: HEAD"
                   )
 
 parser.add_option("--opt", dest="extra_opts", type=str, default="",
-                  help="Extra options to give to solver"
+                  help="Extra options to give to solver. Default: None"
                   )
 
 parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
@@ -97,6 +98,8 @@ if not options.git_rev:
     options.git_rev = get_revision()
     print "Revsion not given, taking HEAD: %s" % options.git_rev
 
+if not options.s3_folder:
+    options.s3_folder = options.git_rev
 
 def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
