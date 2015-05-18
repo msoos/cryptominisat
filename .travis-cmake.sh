@@ -16,6 +16,24 @@ set -e
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
+    LATEX)
+        sudo apt-get install texlive-latex-base
+        cd desc/satcomp14
+        make
+        exit 0
+    ;;
+
+    AWS)
+        sudo apt-get install python-boto
+        cd scripts/aws
+        echo  `pwd`/../../tests/cnf-files > todo
+        find  `pwd`/../../tests/cnf-files/ -printf "%f\n" | grep ".cnf$" >> todo
+        ./server -t 10 --cnfdir todo &
+        ./client --host localhost --temp /tmp/
+        wait
+        exit 0
+    ;;
+
     NORMAL)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
@@ -98,7 +116,7 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-    MYSQL)
+    MYSQL|WEB)
         sudo apt-get install libboost-program-options-dev
         sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password '
         sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password '
@@ -148,7 +166,7 @@ ctest -V
 sudo make install
 
 case $CMS_CONFIG in
-    MYSQL)
+    MYSQL|WEB)
         echo "1 2 0" | ./cryptominisat --sql 2 --wsql 2 --zero-exit-status
     ;;
 
@@ -173,6 +191,28 @@ case $CMS_CONFIG in
 
     *)
         ./regression_test.py -f --fuzzlim 30
+    ;;
+esac
+
+cd ..
+
+
+case $CMS_CONFIG in
+    WEB)
+        sudo apt-get install nodejs-legacy
+        sudo apt-get install npm
+        cd web/dygraphs
+        npm install
+        npm install gulp
+        gulp dist
+        gulp test
+
+        cd ..
+        wget http://code.jquery.com/jquery-1.11.3.min.js
+    ;;
+
+    *)
+        echo "\"${STP_CONFIG}\" No web testing"
     ;;
 esac
 

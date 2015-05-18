@@ -19,6 +19,9 @@ env:
   - CMS_CONFIG=MYSQL
   - CMS_CONFIG=SQLITE
   - CMS_CONFIG=M4RI
+  - CMS_CONFIG=WEB
+  - CMS_CONFIG=LATEX
+  - CMS_CONFIG=AWS
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-sdk-team/ppa
   - sudo add-apt-repository -y ppa:george-edison55/gcc4.7-precise
