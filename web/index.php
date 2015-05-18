@@ -5,8 +5,8 @@
     <title>Cryptominisat 3 visualization</title>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
-    <script type="text/javascript" src="jquery/jquery.js"></script>
-    <script type="text/javascript" src="dygraphs/dygraph-combined.js"></script>
+    <script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="dygraphs/dist/dygraph-combined.js"></script>
     <script type="text/javascript" src="selectdata.js"></script>
     <script type="text/javascript" src="drawgraphs.js"></script>
 
