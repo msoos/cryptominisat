@@ -35,13 +35,16 @@ parser.add_option("--verbose", "-v", action="store_true", default=False,
 
 parser.add_option("--host", dest="host", default="172.30.0.208",
                   help="Host to connect to as a client"
+                  " [default: %default]",
                   )
 parser.add_option("--port", "-p", default=10000, dest="port",
-                  help="Port to use", type="int"
+                  type="int", help="Port to use"
+                  " [default: %default]",
                   )
 
-parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space",
-                  help="Temporary space to use", type=str
+parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space", type=str,
+                  help="Temporary space to use"
+                  " [default: %default]",
                   )
 
 parser.add_option("--test", default=False, dest="test",
