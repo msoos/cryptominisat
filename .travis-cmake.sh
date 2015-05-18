@@ -199,16 +199,10 @@ cd ..
 
 case $CMS_CONFIG in
     WEB)
+        cd web
         sudo apt-get install nodejs-legacy
         sudo apt-get install npm
-        cd web/dygraphs
-        npm install
-        npm install gulp
-        gulp dist
-        gulp test
-
-        cd ..
-        wget http://code.jquery.com/jquery-1.11.3.min.js
+        ./instal_web.sh
     ;;
 
     *)
