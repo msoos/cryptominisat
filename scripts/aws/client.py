@@ -66,10 +66,6 @@ parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space", type=str,
                   " [default: %default]",
                   )
 
-parser.add_option("--test", default=False, dest="test",
-                  action="store_true", help="only one CNF"
-                  )
-
 parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
                   action="store_true", help="Do not shut down"
                   )
@@ -285,8 +281,7 @@ class solverThread (threading.Thread):
     def get_revision(self):
         _, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
-            if not options.test:
-                os.chdir('%s/cryptominisat' % options.base_dir)
+            os.chdir('%s/cryptominisat' % options.base_dir)
             revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         else:
             revision = solvername
@@ -442,7 +437,7 @@ def shutdown(exitval = 0):
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     try_upload_log_with_aws_cli()
 
-    if not options.noshutdown and not options.test:
+    if not options.noshutdown:
         os.system(toexec)
         pass
 

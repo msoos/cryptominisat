@@ -383,6 +383,18 @@ class Listener (threading.Thread):
         while True:
             self.handle_one_connection()
 
+
+def shutdown(exitval = 0):
+    toexec = "sudo shutdown -h now"
+    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+    try_upload_log_with_aws_cli()
+
+    if not options.noshutdown:
+        os.system(toexec)
+        pass
+
+    exit(exitval)
+
 set_up_logging()
 
 failed = False
@@ -406,8 +418,7 @@ while threading.active_count() > 0 and not failed:
         if diff > limit:
             break
 
-try_upload_log_with_aws_cli()
-exit(0)
+shutdown()
 
 # c3.large
 # def call() :

@@ -23,18 +23,7 @@ case $CMS_CONFIG in
         exit 0
     ;;
 
-    AWS)
-        sudo apt-get install python-boto
-        cd scripts/aws
-        echo  `pwd`/../../tests/cnf-files > todo
-        find  `pwd`/../../tests/cnf-files/ -printf "%f\n" | grep ".cnf$" >> todo
-        ./server -t 10 --cnfdir todo &
-        ./client --host localhost --temp /tmp/
-        wait
-        exit 0
-    ;;
-
-    NORMAL)
+    NORMAL|AWS)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
@@ -183,19 +172,12 @@ case $CMS_CONFIG in
     ;;
 esac
 
-cd ../scripts/
-
-case $CMS_CONFIG in
-    ONLY_SIMPLE)
-    ;;
-
-    *)
-        ./regression_test.py -f --fuzzlim 30
-    ;;
-esac
-
-cd ..
-
+#do regression testing
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ]; then
+    cd ../scripts/
+    ./regression_test.py -f --fuzzlim 30
+    cd ..
+fi
 
 case $CMS_CONFIG in
     WEB)
@@ -205,8 +187,17 @@ case $CMS_CONFIG in
         ./instal_web.sh
     ;;
 
+    AWS)
+        sudo apt-get install python-boto
+        sudo apt-get install awscli
+        cd scripts/aws
+        ./local_test.sh
+        wait
+        exit 0
+    ;;
+
     *)
-        echo "\"${STP_CONFIG}\" No web testing"
+        echo "\"${STP_CONFIG}\" No further testing"
     ;;
 esac
 

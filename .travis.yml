@@ -54,3 +54,4 @@ install:
   - mkdir build && cd build
 script:
   - ../.travis-cmake.sh ../ build
+
