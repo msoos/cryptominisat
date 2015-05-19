@@ -19,10 +19,11 @@ import logging
 
 
 logfile_name = "python_server_log.txt"
+last_termination_sent = None
 
 
 def set_up_logging():
-    form = '[ %(asctime)-15s server %(message)s ]'
+    form = '[ %(asctime)-15s  %(levelname)s  %(message)s ]'
 
     logformatter = logging.Formatter(form)
 
@@ -38,6 +39,9 @@ def set_up_logging():
 
 
 def try_upload_log_with_aws_cli():
+    if options.noaws:
+        return
+
     try:
         fname = "server-log-" + time.strftime("%c") + ".txt"
         fname = fname.replace(' ', '-')
@@ -90,8 +94,12 @@ parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name",
                   "[default: %default]",
                   )
 
+parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
+                  help="The home dir of cryptominisat"
+                  )
+
 parser.add_option("--solver",
-                  default="/home/ubuntu/cryptominisat/build/cryptominisat",
+                  default="cryptominisat/build/cryptominisat",
                   dest="solver",
                   help="Solver executable"
                   "[default: %default]",
@@ -123,18 +131,22 @@ parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
                   action="store_true", help="Do not shut down clients"
                   )
 
+parser.add_option("--noaws", default=False, dest="noaws",
+                  action="store_true", help="Use AWS"
+                  )
+
 
 # parse options
 (options, args) = parser.parse_args()
 
 
 def get_revision():
-    _, solvername = os.path.split(options.solver)
+    _, solvername = os.path.split(options.base_dir + options.solver)
     if solvername != "cryptominisat":
         return solvername
 
     pwd = os.getcwd()
-    os.chdir('/home/ubuntu/cryptominisat')
+    os.chdir(options.base_dir + "cryptominisat")
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
     os.chdir(pwd)
     return revision.strip()
@@ -158,6 +170,9 @@ class ToSolve:
         self.num = num
         self.name = name
 
+    def __str__(self):
+        return "%s (num: %d)" % (self.name, self.num)
+
 acc_queue = Queue.Queue()
 
 
@@ -171,28 +186,38 @@ class Server (threading.Thread):
 
         fnames = open(options.cnf_dir_name, "r")
         options.cnf_dir = fnames.next().strip()
-        print "CNF dir really is:", options.cnf_dir
+        logging.info("CNF dir really is %s", options.cnf_dir)
         for num, fname in zip(xrange(10000), fnames):
             fname = fname.strip()
             self.files[num] = ToSolve(num, fname)
             self.files_available.append(num)
-            print "File added: ", fname
+            logging.info("File added: %s", fname)
         fnames.close()
 
         self.files_running = {}
-        print "Solving %d files" % len(self.files_available)
+        logging.info("Solving %d files", len(self.files_available))
         self.uniq_cnt = 0
+
+    def ready_to_shutdown(self):
+        if len(self.files_available) > 0:
+            return False
+
+        if len(self.files_finished) < len(self.files):
+            return False
+
+        return True
 
     def handle_done(self, connection, cli_addr, indata):
         file_num = indata["file_num"]
 
-        print "Finished with file %s (num %d)" % (self.files[indata["file_num"]], indata["file_num"])
+        logging.info("Finished with file %s (num %d)",
+                     self.files[indata["file_num"]], indata["file_num"])
         self.files_finished.append(indata["file_num"])
         if file_num in self.files_running:
             del self.files_running[file_num]
 
-        print "Num files_available:", len(self.files_available)
-        print "Num files_finished:", len(self.files_finished)
+        logging.info("Num files_available: %d Num files_finished %d",
+                     len(self.files_available), len(self.files_finished))
         sys.stdout.flush()
 
     def check_for_dead_files(self):
@@ -203,7 +228,8 @@ class Server (threading.Thread):
             # print "* death check. running:" , file_num, " duration: ",
             # duration
             if duration > options.timeout_in_secs + options.extra_time:
-                print "* dead file ", file_num, " duration: ", duration, " re-inserting"
+                logging.warn("* dead file %s duration: %d re-inserting",
+                             file_num, duration)
                 files_to_remove_from_files_running.append(file_num)
                 self.files_available.append(file_num)
 
@@ -212,21 +238,23 @@ class Server (threading.Thread):
 
     def find_something_to_solve(self):
         self.check_for_dead_files()
-        print "Num files_available pre-send:", len(self.files_available)
+        logging.info("Num files_available pre-send: %d",
+                     len(self.files_available))
 
         if len(self.files_available) == 0:
             return None
 
         file_num = self.files_available[0]
         del self.files_available[0]
-        print "Num files_available post-send:", len(self.files_available)
+        logging.info("Num files_available post-send: %d",
+                     len(self.files_available))
         sys.stdout.flush()
 
         return file_num
 
     def handle_build(self, connection, cli_addr, indata):
         tosend = {}
-        tosend["solver"] = options.solver
+        tosend["solver"] = options.base_dir + options.solver
         tosend["revision"] = options.git_rev
         tosend["noshutdown"] = options.noshutdown
         tosend = pickle.dumps(tosend)
@@ -252,6 +280,8 @@ class Server (threading.Thread):
             logging.warn("No more to solve, sending termination to %s",
                          cli_addr)
             connection.sendall(tosend)
+            global last_termination_sent
+            last_termination_sent = time.time()
         else:
             # set timer that we have sent this to be solved
             self.files_running[file_num] = time.time()
@@ -260,7 +290,7 @@ class Server (threading.Thread):
             tosend = {}
             tosend["file_num"] = file_num
             tosend["cnf_filename"] = filename
-            tosend["solver"] = options.solver
+            tosend["solver"] = options.base_dir + options.solver
             tosend["timeout_in_secs"] = options.timeout_in_secs
             tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
             tosend["s3_bucket"] = options.s3_bucket
@@ -273,8 +303,8 @@ class Server (threading.Thread):
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('!q', len(tosend)) + tosend
 
-            print "Sending file %s (num %d) to %s" % (filename,
-                                                      file_num, connection)
+            logging.info("Sending file %s (num %d) to %s",
+                         filename, file_num, cli_addr)
             sys.stdout.flush()
             connection.sendall(tosend)
             self.uniq_cnt += 1
@@ -308,7 +338,7 @@ class Server (threading.Thread):
 
         finally:
             # Clean up the connection
-            print "Finished with client"
+            logging.info("Finished with client %s", cli_addr)
             conn.close()
 
     def run(self):
@@ -330,7 +360,7 @@ class Listener (threading.Thread):
 
         # Bind the socket to the port
         server_address = ('0.0.0.0', options.port)
-        print >>sys.stderr, 'starting up on %s port %s' % server_address
+        logging.info('starting up on %s port %s', server_address, options.port)
         sock.bind(server_address)
 
         # Listen for incoming connections
@@ -341,20 +371,24 @@ class Listener (threading.Thread):
         global acc_queue
 
         # Wait for a connection
-        print >>sys.stderr, '--> waiting for a connection...\n\n'
+        logging.info('--> waiting for a connection...')
         conn, client_addr = self.sock.accept()
         acc_queue.put_nowait((conn, client_addr))
 
     def run(self):
-        self.sock = self.listen_to_connection()
+        try:
+            self.sock = self.listen_to_connection()
+        except:
+            failed = True
         while True:
             self.handle_one_connection()
 
 set_up_logging()
 
+failed = False
 if not options.git_rev:
     options.git_rev = get_revision()
-    print "Revsion not given, taking HEAD: %s" % options.git_rev
+    logging.info("Revision not given, taking HEAD: %s", options.git_rev)
 
 server = Server()
 listener = Listener()
@@ -364,8 +398,13 @@ server.setDaemon(True)
 listener.start()
 server.start()
 
-while threading.active_count() > 0:
-    time.sleep(0.1)
+while threading.active_count() > 0 and not failed:
+    time.sleep(0.5)
+    if last_termination_sent is not None and server.ready_to_shutdown():
+        diff = time.time() - last_termination_sent
+        limit = 2*(options.timeout_in_secs + options.extra_time)
+        if diff > limit:
+            break
 
 try_upload_log_with_aws_cli()
 exit(0)

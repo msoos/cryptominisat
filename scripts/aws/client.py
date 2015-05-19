@@ -74,6 +74,22 @@ parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
                   action="store_true", help="Do not shut down"
                   )
 
+parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
+                  help="The home dir of cryptominisat"
+                  " [default: %default]",
+                  )
+
+parser.add_option("--noaws", default=False, dest="noaws",
+                  action="store_true", help="Use AWS"
+                  )
+parser.add_option("--net", default="eth0", dest="network_device", type=str,
+                  help="The network device we will be using"
+                  " [default: %default]",
+                  )
+
+parser.add_option("--threads", dest="num_threads", type=int,
+                  help="Force using this many threads")
+
 (options, args) = parser.parse_args()
 
 
@@ -109,7 +125,7 @@ def connect_client(threadID):
         print "You must supply the host to connect to as a client"
         exit(-1)
 
-    logging.info("hostname: %s", options.host,
+    logging.info("Getting host by name %s", options.host,
                  extra={"threadid": threadID})
     host = socket.gethostbyname_ex(options.host)
     logging.info("Connecting to host %s", host,
@@ -142,9 +158,9 @@ class solverThread (threading.Thread):
     def __init__(self, threadID):
         threading.Thread.__init__(self)
         self.threadID = threadID
-        self.temp_space = self.create_temp_space()
         self.logextra = {'threadid': self.threadID}
-        logging.info("Starting thread", extra=self.logextra)
+        self.temp_space = self.create_temp_space()
+        logging.info("Initializing thread", extra=self.logextra)
 
     def create_temp_space(self):
         orig = options.temp_space
@@ -270,7 +286,7 @@ class solverThread (threading.Thread):
         _, solvername = os.path.split(self.indata["solver"])
         if solvername == "cryptominisat":
             if not options.test:
-                os.chdir('/home/ubuntu/cryptominisat')
+                os.chdir('%s/cryptominisat' % options.base_dir)
             revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         else:
             revision = solvername
@@ -284,8 +300,7 @@ class solverThread (threading.Thread):
                 sock = connect_client(self.threadID)
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                traceback.print_exc()
-                the_trace = traceback.format_exc()
+                the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
                 logging.warn("Problem trying to connect"
                              "waiting and re-connecting."
                              " Trace: %s", the_trace,
@@ -296,7 +311,8 @@ class solverThread (threading.Thread):
             self.indata = ask_for_data_to_solve(sock, "need", self.threadID)
             sock.close()
 
-            logging.info("Got data from server " + pp.pprint(self.indata),
+            logging.info("Got data from server %s",
+                         pprint.pformat(self.indata, indent=4).replace("\n", " || "),
                          extra=self.logextra)
             options.noshutdown |= self.indata["noshutdown"]
             if self.indata["command"] == "finish":
@@ -308,7 +324,8 @@ class solverThread (threading.Thread):
             assert self.indata["command"] == "solve"
             s3_folder_ending = self.get_revision()
             returncode, executed = self.execute()
-            self.copy_solution_to_s3(s3_folder_ending)
+            if not options.noaws:
+                self.copy_solution_to_s3(s3_folder_ending)
 
             logging.info("Trying to send to server that we are done",
                          extra=self.logextra)
@@ -318,14 +335,13 @@ class solverThread (threading.Thread):
                     logging.error("Too many errors connecting to server to"
                                   " send results. Shutting down",
                                   extra=self.logextra)
-                    shutdown()
+                    shutdown(-1)
                 try:
                     sock = connect_client(self.threadID)
                     break
                 except:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback.print_exc()
-                    the_trace = traceback.format_exc()
+                    the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
 
                     logging.warn("Problem, waiting and re-connecting."
                                  " Trace: %s", the_trace,
@@ -346,8 +362,7 @@ class solverThread (threading.Thread):
             sock.close()
 
     def run(self):
-        logging.info("Starting Thread %d", self.threadID,
-                     extra=self.logextra)
+        logging.info("Starting thread", extra=self.logextra)
 
         try:
             self.run_loop()
@@ -356,13 +371,12 @@ class solverThread (threading.Thread):
             raise
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_exc()
-            the_trace = traceback.format_exc()
+            the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
 
             exitapp = True
             logging.error("Unexpected error in thread: %s", the_trace,
                           extra=self.logextra)
-            shutdown()
+            shutdown(-1)
             raise
 
 
@@ -373,8 +387,7 @@ def build_system():
             sock = connect_client(-1)
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_exc()
-            the_trace = traceback.format_exc()
+            the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
             logging.warning("Problem, waiting and re-connecting. Error: %s",
                             the_trace,
                             extra={"threadid": -1})
@@ -387,13 +400,13 @@ def build_system():
 
         # only build if the solver is cryptominisat
         if "cryptominisat" in indata["solver"]:
-            ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1' %
-                            (indata["revision"], num_threads))
+            ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
+                            (options.base_dir, indata["revision"], num_threads, options.base_dir))
             if ret != 0:
                 logging.error("Error building cryptominisat, shutting down!",
                               extra={"threadid": -1}
                               )
-                shutdown()
+                shutdown(-1)
 
         built_system = True
 
@@ -410,8 +423,12 @@ def num_cpus():
 
 
 def try_upload_log_with_aws_cli():
+    if options.noaws:
+        return
+
     try:
-        fname = "log-" + time.strftime("%c") + get_ip_address("eth0") + ".txt"
+        fname = "log-" + time.strftime("%c") + "-"
+        fname += get_ip_address(options.network_device) + ".txt"
         fname = fname.replace(' ', '-')
         fname = fname.replace(':', '.')
         sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (fname, logfile_name)
@@ -420,7 +437,7 @@ def try_upload_log_with_aws_cli():
         pass
 
 
-def shutdown():
+def shutdown(exitval = 0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     try_upload_log_with_aws_cli()
@@ -429,13 +446,13 @@ def shutdown():
         os.system(toexec)
         pass
 
-    exit(0)
+    exit(exitval)
 
 
 def set_up_logging():
-    form = '[ %(asctime)-15s %(threadid)s'
-    form += get_ip_address('eth0')
-    form += "%(ip)s %(message)s ]"
+    form = '[ %(asctime)-15s thread %(threadid)s '
+    form += get_ip_address(options.network_device)
+    form += " %(levelname)s  %(message)s ]"
 
     logformatter = logging.Formatter(form)
 
@@ -451,21 +468,25 @@ def set_up_logging():
 
 
 def start_threads():
-    num_threads = num_cpus()
+    if options.num_threads is None:
+        num_threads = num_cpus()
+    else:
+        num_threads = options.num_threads
+
     logging.info("Running with %d threads", num_threads,
                  extra={"threadid": -1})
     if options.test:
         num_threads = 1
 
     try:
-        build_system()
+        if not options.noaws:
+            build_system()
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_exc()
-        the_trace = traceback.format_exc()
+        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Error getting data for building system: %d",
                       the_trace, extra={"threadid": -1})
-        shutdown()
+        shutdown(-1)
 
     threads = []
     for i in range(num_threads):
@@ -476,12 +497,17 @@ def start_threads():
         t.start()
 
 set_up_logging()
-boto_conn = boto.connect_s3()
+if not options.noaws:
+    boto_conn = boto.connect_s3()
 
 start_threads()
 
-while threading.active_count() > 0:
+while threading.active_count() > 1:
     time.sleep(0.1)
 
-print "Exiting Main Thread, shutting down"
+try:
+    logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
+except:
+    pass
+
 shutdown()
