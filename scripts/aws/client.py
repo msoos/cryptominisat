@@ -317,7 +317,8 @@ class solverThread (threading.Thread):
                 return
 
             assert self.indata["command"] == "solve"
-            s3_folder_ending = self.get_revision()
+            s3_folder_ending = "%s-%s" % (self.get_revision()[:6],
+                                          time.strftime("%Y-%m-%d"))
             returncode, executed = self.execute()
             if not options.noaws:
                 self.copy_solution_to_s3(s3_folder_ending)
