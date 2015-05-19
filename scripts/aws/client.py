@@ -98,25 +98,28 @@ def get_n_bytes_from_connection(sock, MSGLEN):
     return ''.join(chunks)
 
 
-def connect_client():
+def connect_client(threadID):
     # Create a socket object
     sock = socket.socket()
 
     # Get local machine name
-    if options.host == None:
+    if options.host is None:
         print "You must supply the host to connect to as a client"
         exit(-1)
 
-    print "hostname:", options.host
+    logging.info("hostname: %s", options.host,
+                 extra={"threadid": threadID})
     host = socket.gethostbyname_ex(options.host)
-    print time.strftime("%c"), "Connecting to host", host
+    logging.info("Connecting to host %s", host,
+                 extra={"threadid": threadID})
     sock.connect((host[2][0], options.port))
 
     return sock
 
 
-def ask_for_data_to_solve(sock, command):
-    print "asking for stuff to solve..."
+def ask_for_data_to_solve(sock, command, threadID):
+    logging.info("asking for stuff to solve...",
+                 extra={"threadid": threadID})
     tosend = {}
     tosend["uptime"] = uptime()
     tosend["command"] = command
@@ -276,7 +279,7 @@ class solverThread (threading.Thread):
         while not exitapp:
             time.sleep(random.randint(0, 5) / 10.0)
             try:
-                sock = connect_client()
+                sock = connect_client(self.threadID)
             except Exception as inst:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exc()
@@ -285,7 +288,7 @@ class solverThread (threading.Thread):
                 time.sleep(3)
                 continue
 
-            self.indata = ask_for_data_to_solve(sock, "need")
+            self.indata = ask_for_data_to_solve(sock, "need", self.threadID)
             sock.close()
 
             logging.info("Got data from server " + pp.pprint(self.indata),
@@ -312,7 +315,7 @@ class solverThread (threading.Thread):
                                   extra=self.logextra)
                     shutdown()
                 try:
-                    sock = connect_client()
+                    sock = connect_client(self.threadID)
                     break
                 except:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -358,7 +361,7 @@ def build_system():
     built_system = False
     while not built_system:
         try:
-            sock = connect_client()
+            sock = connect_client(-1)
         except Exception as inst:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
@@ -367,7 +370,7 @@ def build_system():
             time.sleep(3)
             continue
 
-        indata = ask_for_data_to_solve(sock, "build")
+        indata = ask_for_data_to_solve(sock, "build", -1)
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
@@ -397,10 +400,11 @@ def num_cpus():
 
 def shutdown():
     toexec = "sudo shutdown -h now"
-    print "SHUTTING DOWN"
+    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+    #TODO send log to S3
 
     if not options.noshutdown and not options.test:
-        print os.system(toexec)
+        os.system(toexec)
         pass
 
     exit(0)
@@ -434,7 +438,8 @@ def start_threads():
     try:
         build_system()
     except:
-        print "Error getting data for building system"
+        logging.error("Error getting data for building system",
+                      extra={"threadid": -1})
         shutdown()
 
     threads = []
