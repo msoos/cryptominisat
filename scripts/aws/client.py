@@ -280,10 +280,13 @@ class solverThread (threading.Thread):
             time.sleep(random.randint(0, 5) / 10.0)
             try:
                 sock = connect_client(self.threadID)
-            except Exception as inst:
+            except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exc()
-                logging.warn("Problem, waiting and re-connecting",
+                the_trace = traceback.format_exc()
+                logging.warn("Problem trying to connect"
+                             "waiting and re-connecting."
+                             " Trace: %s", the_trace,
                              extra=self.logextra)
                 time.sleep(3)
                 continue
@@ -320,7 +323,10 @@ class solverThread (threading.Thread):
                 except:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_exc()
-                    logging.warn("Problem, waiting and re-connecting",
+                    the_trace = traceback.format_exc()
+
+                    logging.warn("Problem, waiting and re-connecting."
+                                 " Trace: %s", the_trace,
                                  extra=self.logextra)
                     time.sleep(random.randint(0, 5) / 10.0)
                     fail_connect += 1
@@ -349,9 +355,10 @@ class solverThread (threading.Thread):
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
+            the_trace = traceback.format_exc()
 
             exitapp = True
-            logging.error("Unexpected error in thread",
+            logging.error("Unexpected error in thread: %s", the_trace,
                           extra=self.logextra)
             shutdown()
             raise
@@ -362,10 +369,12 @@ def build_system():
     while not built_system:
         try:
             sock = connect_client(-1)
-        except Exception as inst:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
-            logging.warning("Problem, waiting and re-connec430ting",
+            the_trace = traceback.format_exc()
+            logging.warning("Problem, waiting and re-connecting. Error: %s",
+                            the_trace,
                             extra={"threadid": -1})
             time.sleep(3)
             continue
@@ -401,7 +410,14 @@ def num_cpus():
 def shutdown():
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
-    #TODO send log to S3
+    try:
+        fname = "log-" + time.strftime("%c") + get_ip_address("eth0") + ".txt"
+        fname = fname.replace(' ', '-')
+        fname = fname.replace(':', '.')
+        sendlog = "aws s3 cp python_log.txt s3://msoos-logs/" + fname
+        os.system(sendlog)
+    except:
+        pass
 
     if not options.noshutdown and not options.test:
         os.system(toexec)
@@ -438,8 +454,11 @@ def start_threads():
     try:
         build_system()
     except:
-        logging.error("Error getting data for building system",
-                      extra={"threadid": -1})
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exc()
+        the_trace = traceback.format_exc()
+        logging.error("Error getting data for building system: %d",
+                      the_trace, extra={"threadid": -1})
         shutdown()
 
     threads = []
