@@ -16,6 +16,23 @@ import resource
 import pprint
 import traceback
 import boto
+import socket
+import fcntl
+import struct
+import logging
+import socket
+import fcntl
+import struct
+
+
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
+
 pp = pprint.PrettyPrinter(depth=6)
 
 
@@ -121,6 +138,8 @@ class solverThread (threading.Thread):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.temp_space = self.create_temp_space()
+        self.logextra = {'threadid': self.threadID}
+        logging.info("Starting thread", extra=self.logextra)
 
     def create_temp_space(self):
         orig = options.temp_space
@@ -128,7 +147,7 @@ class solverThread (threading.Thread):
         try:
             os.mkdir(newdir)
         except:
-            print "Directory %s already exists." % newdir
+            logging.info("Directory %s already exists.", newdir, extra=self.logextra)
 
         return newdir
 
@@ -163,12 +182,11 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
-        toexec = "%s %s %s/%s"  % \
-            (self.indata["solver"],
+        toexec = "%s %s %s/%s"  % (self.indata["solver"],
              extra_opts,
              self.indata["cnf_dir"],
              self.indata["cnf_filename"]
-             )
+        )
 
         return toexec
 
@@ -184,7 +202,7 @@ class solverThread (threading.Thread):
             self.indata["timeout_in_secs"],
             self.indata["mem_limit_in_mb"]
         )
-        print limits_printed
+        logging.info(limits_printed, extra=self.logextra)
         stderr_file.write(limits_printed + "\n")
         stderr_file.flush()
         stdout_file.write(limits_printed + "\n")
@@ -202,7 +220,7 @@ class solverThread (threading.Thread):
         stdout_file.write(towrite)
         stderr_file.close()
         stdout_file.close()
-        print towrite.strip()
+        logging.info(towrite.strip(), extra=self.logextra)
 
         return p.returncode, toexec
 
@@ -222,7 +240,7 @@ class solverThread (threading.Thread):
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
         url = self.create_url(
             self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
-        print "URL: ", url
+        logging.info("URL: " + url, extra=self.logextra)
 
         os.system("gzip -f %s" % self.get_stderr_fname())
         fname_with_stderr_ending = self.indata[
@@ -232,9 +250,9 @@ class solverThread (threading.Thread):
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
         url = self.create_url(
             self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
-        print "URL: ", url
+        logging.info("URL: " + url, extra=self.logextra)
 
-        print "Uploaded stdout+stderr files"
+        logging.info("Uploaded stdout+stderr files", extra=self.logextra)
 
         # k.make_public()
         # print "File public"
@@ -261,17 +279,21 @@ class solverThread (threading.Thread):
             except Exception as inst:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exc()
-                print "Problem, waiting and re-connecting"
+                logging.warn("Problem, waiting and re-connecting",
+                             extra=self.logextra)
                 time.sleep(3)
                 continue
 
             self.indata = ask_for_data_to_solve(sock, "need")
             sock.close()
 
-            print "Got data from server ", pp.pprint(self.indata)
+            logging.info("Got data from server " + pp.pprint(self.indata),
+                         extra=self.logextra)
             options.noshutdown |= self.indata["noshutdown"]
             if self.indata["command"] == "finish":
-                print "Client received that there is nothing more to solve, exiting this thread"
+                logging.warn("Client received that there is nothing more"
+                             " to solve, exiting this thread",
+                             extra=self.logextra)
                 return
 
             assert self.indata["command"] == "solve"
@@ -279,11 +301,14 @@ class solverThread (threading.Thread):
             returncode, executed = self.execute()
             self.copy_solution_to_s3(s3_folder_ending)
 
-            print "Trying to send to server that we are done"
+            logging.info("Trying to send to server that we are done",
+                         extra=self.logextra)
             fail_connect = 0
             while True:
                 if fail_connect > 5:
-                    print "Too many errors connecting to server to send results. Shutting down"
+                    logging.error("Too many errors connecting to server to"
+                                  " send results. Shutting down",
+                                  extra=self.logextra)
                     shutdown()
                 try:
                     sock = connect_client()
@@ -291,7 +316,8 @@ class solverThread (threading.Thread):
                 except:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_exc()
-                    print "Problem, waiting and re-connecting"
+                    logging.warn("Problem, waiting and re-connecting",
+                                 extra=self.logextra)
                     time.sleep(random.randint(0, 5) / 10.0)
                     fail_connect += 1
 
@@ -303,11 +329,13 @@ class solverThread (threading.Thread):
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('!q', len(tosend)) + tosend
             sock.sendall(tosend)
-            print time.strftime("%c"), "Sent that we finished", self.indata["file_num"], "with retcode", returncode
+            towrite = "Sent that we finished %s with retcode %d" % (
+                self.indata["file_num"], returncode)
             sock.close()
 
     def run(self):
-        print "Starting Thread %d" % self.threadID
+        logging.info("Starting Thread %d", self.threadID,
+                     extra=self.logextra)
 
         try:
             self.run_loop()
@@ -319,11 +347,10 @@ class solverThread (threading.Thread):
             traceback.print_exc()
 
             exitapp = True
-            print "Unexpected error in thread"
+            logging.error("Unexpected error in thread",
+                          extra=self.logextra)
             shutdown()
             raise
-
-boto_conn = boto.connect_s3()
 
 
 def build_system():
@@ -334,7 +361,8 @@ def build_system():
         except Exception as inst:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
-            print "Problem, waiting and re-connecting"
+            logging.warning("Problem, waiting and re-connec430ting",
+                          extra={"threadid": -1})
             time.sleep(3)
             continue
 
@@ -347,7 +375,9 @@ def build_system():
             ret = os.system('/home/ubuntu/cryptominisat/scripts/aws/build.sh %s %s > /home/ubuntu/build.log 2>&1' %
                             (indata["revision"], num_threads))
             if ret != 0:
-                print "Error building cryptominisat, shutting down!"
+                logging.error("Error building cryptominisat, shutting down!",
+                              extra={"threadid": -1}
+                              )
                 shutdown()
 
         built_system = True
@@ -367,6 +397,7 @@ def num_cpus():
 def shutdown():
     toexec = "sudo shutdown -h now"
     print "SHUTTING DOWN"
+
     if not options.noshutdown and not options.test:
         print os.system(toexec)
         pass
@@ -374,24 +405,49 @@ def shutdown():
     exit(0)
 
 
-num_threads = num_cpus()
-print "Running with %d threads" % num_threads
-if options.test:
-    num_threads = 1
+def set_up_logging():
+    form = '[ %(asctime)-15s %(threadid)s'
+    form += get_ip_address('eth0')
+    form += "%(ip)s %(message)s ]"
 
-try:
-    build_system()
-except:
-    print "Error getting data for building system"
-    shutdown()
+    logformatter = logging.Formatter(form)
 
-threads = []
-for i in range(num_threads):
-    threads.append(solverThread(i))
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logformatter)
+    logging.getLogger().addHandler(consoleHandler)
 
-for t in threads:
-    t.setDaemon(True)
-    t.start()
+    fileHandler = logging.FileHandler("python_log.txt")
+    fileHandler.setFormatter(logformatter)
+    logging.getLogger().addHandler(fileHandler)
+
+    logging.getLogger().setLevel(logging.INFO)
+
+
+def start_threads():
+    num_threads = num_cpus()
+    logging.info("Running with %d threads", num_threads,
+                 extra={"threadid": -1})
+    if options.test:
+        num_threads = 1
+
+    try:
+        build_system()
+    except:
+        print "Error getting data for building system"
+        shutdown()
+
+    threads = []
+    for i in range(num_threads):
+        threads.append(solverThread(i))
+
+    for t in threads:
+        t.setDaemon(True)
+        t.start()
+
+set_up_logging()
+boto_conn = boto.connect_s3()
+
+start_threads()
 
 while threading.active_count() > 0:
     time.sleep(0.1)
