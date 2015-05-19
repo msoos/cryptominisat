@@ -192,7 +192,6 @@ case $CMS_CONFIG in
         sudo apt-get install awscli
         cd scripts/aws
         ./local_test.sh
-        wait
         exit 0
     ;;
 
