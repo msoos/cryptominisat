@@ -147,7 +147,8 @@ class solverThread (threading.Thread):
         try:
             os.mkdir(newdir)
         except:
-            logging.info("Directory %s already exists.", newdir, extra=self.logextra)
+            logging.info("Directory %s already exists.", newdir,
+                         extra=self.logextra)
 
         return newdir
 
@@ -182,11 +183,10 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
-        toexec = "%s %s %s/%s"  % (self.indata["solver"],
-             extra_opts,
-             self.indata["cnf_dir"],
-             self.indata["cnf_filename"]
-        )
+        toexec = "%s %s %s/%s" % (self.indata["solver"],
+                                  extra_opts,
+                                  self.indata["cnf_dir"],
+                                  self.indata["cnf_filename"])
 
         return toexec
 
@@ -210,7 +210,8 @@ class solverThread (threading.Thread):
 
         tstart = time.time()
         p = subprocess.Popen(
-            toexec.rsplit(), stderr=stderr_file, stdout=stdout_file, preexec_fn=self.setlimits)
+            toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
+            preexec_fn=self.setlimits)
         p.wait()
         tend = time.time()
 
