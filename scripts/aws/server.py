@@ -15,6 +15,37 @@ import subprocess
 import boto
 import Queue
 import threading
+import logging
+
+
+logfile_name = "python_server_log.txt"
+
+
+def set_up_logging():
+    form = '[ %(asctime)-15s server %(message)s ]'
+
+    logformatter = logging.Formatter(form)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logformatter)
+    logging.getLogger().addHandler(consoleHandler)
+
+    fileHandler = logging.FileHandler(logfile_name)
+    fileHandler.setFormatter(logformatter)
+    logging.getLogger().addHandler(fileHandler)
+
+    logging.getLogger().setLevel(logging.INFO)
+
+
+def try_upload_log_with_aws_cli():
+    try:
+        fname = "server-log-" + time.strftime("%c") + ".txt"
+        fname = fname.replace(' ', '-')
+        fname = fname.replace(':', '.')
+        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (logfile_name, fname)
+        os.system(sendlog)
+    except:
+        pass
 
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -108,10 +139,6 @@ def get_revision():
     os.chdir(pwd)
     return revision.strip()
 
-if not options.git_rev:
-    options.git_rev = get_revision()
-    print "Revsion not given, taking HEAD: %s" % options.git_rev
-
 def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
@@ -156,7 +183,7 @@ class Server (threading.Thread):
         print "Solving %d files" % len(self.files_available)
         self.uniq_cnt = 0
 
-    def handle_done(self, connection, indata):
+    def handle_done(self, connection, cli_addr, indata):
         file_num = indata["file_num"]
 
         print "Finished with file %s (num %d)" % (self.files[indata["file_num"]], indata["file_num"])
@@ -197,7 +224,7 @@ class Server (threading.Thread):
 
         return file_num
 
-    def handle_build(self, connection, indata):
+    def handle_build(self, connection, cli_addr, indata):
         tosend = {}
         tosend["solver"] = options.solver
         tosend["revision"] = options.git_rev
@@ -205,10 +232,11 @@ class Server (threading.Thread):
         tosend = pickle.dumps(tosend)
         tosend = struct.pack('!q', len(tosend)) + tosend
 
-        print "Sending git revision %s to %s" % (options.git_rev, connection)
+        logging.info("Sending git revision %s to %s", options.git_rev,
+                     cli_addr)
         connection.sendall(tosend)
 
-    def handle_need(self, connection, indata):
+    def handle_need(self, connection, cli_addr, indata):
         # TODO don't ignore 'indata' for solving CNF instances, use it to
         # opitimize for uptime
         file_num = self.find_something_to_solve()
@@ -221,7 +249,8 @@ class Server (threading.Thread):
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('!q', len(tosend)) + tosend
 
-            print "No more to solve, sending termination to ", connection
+            logging.warn("No more to solve, sending termination to %s",
+                         cli_addr)
             connection.sendall(tosend)
         else:
             # set timer that we have sent this to be solved
@@ -252,7 +281,7 @@ class Server (threading.Thread):
 
     def handle_one_client(self, conn, cli_addr):
         try:
-            print time.strftime("%c"), 'connection from ', cli_addr
+            logging.info("connection from %s", cli_addr)
 
             data = get_n_bytes_from_connection(conn, 8)
             length = struct.unpack('!q', data)[0]
@@ -260,20 +289,22 @@ class Server (threading.Thread):
             data = pickle.loads(data)
 
             if data["command"] == "done":
-                self.handle_done(conn, data)
+                self.handle_done(conn, cli_addr, data)
 
             elif data["command"] == "need":
-                self.handle_need(conn, data)
+                self.handle_need(conn, cli_addr, data)
 
             elif data["command"] == "build":
-                self.handle_build(conn, data)
+                self.handle_build(conn, cli_addr, data)
 
             sys.stdout.flush()
-        except Exception as inst:
+        except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exc()
+            the_trace = traceback.format_exc()
 
-            print "Exception type", type(inst), " dat: ", pprint.pprint(inst), " from ", cli_addr
+            logging.error("Exception from %s, Trace: %s", cli_addr,
+                          the_trace)
 
         finally:
             # Clean up the connection
@@ -319,6 +350,12 @@ class Listener (threading.Thread):
         while True:
             self.handle_one_connection()
 
+set_up_logging()
+
+if not options.git_rev:
+    options.git_rev = get_revision()
+    print "Revsion not given, taking HEAD: %s" % options.git_rev
+
 server = Server()
 listener = Listener()
 listener.setDaemon(True)
@@ -329,6 +366,9 @@ server.start()
 
 while threading.active_count() > 0:
     time.sleep(0.1)
+
+try_upload_log_with_aws_cli()
+exit(0)
 
 # c3.large
 # def call() :
@@ -345,9 +385,6 @@ while threading.active_count() > 0:
         #--count XXX \
         #--monitoring Enabled=false
     #"""
-
-exit(0)
-
 
 import boto.ec2
 conn = boto.ec2.connect_to_region("us-west-2")

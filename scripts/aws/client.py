@@ -24,6 +24,8 @@ import socket
 import fcntl
 import struct
 
+logfile_name = "python_log.txt"
+
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -407,17 +409,21 @@ def num_cpus():
     return num_cpu
 
 
-def shutdown():
-    toexec = "sudo shutdown -h now"
-    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+def try_upload_log_with_aws_cli():
     try:
         fname = "log-" + time.strftime("%c") + get_ip_address("eth0") + ".txt"
         fname = fname.replace(' ', '-')
         fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp python_log.txt s3://msoos-logs/" + fname
+        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (fname, logfile_name)
         os.system(sendlog)
     except:
         pass
+
+
+def shutdown():
+    toexec = "sudo shutdown -h now"
+    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+    try_upload_log_with_aws_cli()
 
     if not options.noshutdown and not options.test:
         os.system(toexec)
@@ -437,7 +443,7 @@ def set_up_logging():
     consoleHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(consoleHandler)
 
-    fileHandler = logging.FileHandler("python_log.txt")
+    fileHandler = logging.FileHandler(logfile_name)
     fileHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(fileHandler)
 
