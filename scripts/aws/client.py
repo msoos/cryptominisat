@@ -406,6 +406,8 @@ def build_system():
             ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
                             (options.base_dir, indata["revision"],
                              options.num_threads, options.base_dir))
+            common_aws.try_upload_log_with_aws_cli("%s/build.log" % options.base_dir,
+                                                   "cli-build-%s" % get_ip_address("eth0"))
             if ret != 0:
                 logging.error("Error building cryptominisat, shutting down!",
                               extra={"threadid": -1}
