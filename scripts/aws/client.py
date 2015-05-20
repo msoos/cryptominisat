@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import ssl
 import socket
 import sys
 import optparse
@@ -20,9 +19,6 @@ import socket
 import fcntl
 import struct
 import logging
-import socket
-import fcntl
-import struct
 
 
 def get_ip_address(ifname):
