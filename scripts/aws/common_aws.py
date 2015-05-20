@@ -4,6 +4,7 @@
 import os
 import time
 import boto
+import traceback
 
 
 def try_upload_log_with_aws_cli(logfile_name, cli_or_server):
@@ -22,4 +23,6 @@ def try_upload_log_with_aws_cli(logfile_name, cli_or_server):
         k.set_contents_from_filename(logfile_name)
 
     except:
-        pass
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+        print "traceback for boto issue:", the_trace
