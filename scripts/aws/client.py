@@ -460,8 +460,6 @@ def start_threads():
 
     logging.info("Running with %d threads", num_threads,
                  extra={"threadid": -1})
-    if options.test:
-        num_threads = 1
 
     try:
         if not options.noaws:
