@@ -469,7 +469,7 @@ def start_threads():
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
-        logging.error("Error getting data for building system: %d",
+        logging.error("Error getting data for building system: %s",
                       the_trace, extra={"threadid": -1})
         shutdown(-1)
 
