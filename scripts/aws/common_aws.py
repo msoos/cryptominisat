@@ -5,6 +5,7 @@ import os
 import time
 import boto
 import traceback
+import sys
 
 
 def try_upload_log_with_aws_cli(logfile_name, cli_or_server):
