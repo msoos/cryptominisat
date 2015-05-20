@@ -93,6 +93,7 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 
 
 exitapp = False
+options.logfile_name = options.base_dir + options.logfile_name
 
 
 def uptime():
@@ -428,7 +429,7 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
-        common_aws.try_upload_log_with_aws_cli()
+        common_aws.try_upload_log_with_aws_cli(options.logfile_name)
 
     if not options.noshutdown:
         os.system(toexec)
