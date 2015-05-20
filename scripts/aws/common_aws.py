@@ -14,7 +14,7 @@ def try_upload_log_with_aws_cli(logfile_name, cli_or_server):
         boto_bucket = boto_conn.get_bucket("msoos-logs")
         k = boto.s3.key.Key(boto_bucket)
 
-        s3_folder = time.strftime("%c")
+        s3_folder = time.strftime("%d-%m-%Y")
         s3_folder = s3_folder.replace(' ', '-')
         s3_folder = s3_folder.replace(':', '.')
         s3_folder = s3_folder.replace(',', '.')
