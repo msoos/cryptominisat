@@ -402,7 +402,8 @@ def build_system():
         # only build if the solver is cryptominisat
         if "cryptominisat" in indata["solver"]:
             ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
-                            (options.base_dir, indata["revision"], num_threads, options.base_dir))
+                            (options.base_dir, indata["revision"],
+                             options.num_threads, options.base_dir))
             if ret != 0:
                 logging.error("Error building cryptominisat, shutting down!",
                               extra={"threadid": -1}
@@ -456,11 +457,9 @@ def set_up_logging():
 
 def start_threads():
     if options.num_threads is None:
-        num_threads = num_cpus()
-    else:
-        num_threads = options.num_threads
+        options.num_threads = num_cpus()
 
-    logging.info("Running with %d threads", num_threads,
+    logging.info("Running with %d threads", options.num_threads,
                  extra={"threadid": -1})
 
     try:
@@ -474,7 +473,7 @@ def start_threads():
         shutdown(-1)
 
     threads = []
-    for i in range(num_threads):
+    for i in range(options.num_threads):
         threads.append(solverThread(i))
 
     for t in threads:
