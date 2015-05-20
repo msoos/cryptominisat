@@ -18,7 +18,7 @@ set -e
 case $CMS_CONFIG in
     LATEX)
         sudo apt-get install texlive-latex-base
-        cd desc/satcomp14
+        cd ../desc/satcomp14
         make
         exit 0
     ;;
@@ -182,14 +182,17 @@ fi
 case $CMS_CONFIG in
     WEB)
         cd web
-        sudo apt-get install nodejs-legacy
-        sudo apt-get install npm
+        sudo apt-get install python-software-properties
+        sudo add-apt-repository ppa:chris-lea/node.js
+        sudo apt-get update
+        sudo apt-get install nodejs
         ./instal_web.sh
     ;;
 
     AWS)
         sudo apt-get install python-boto
-        sudo apt-get install awscli
+        sudo apt-get install -y python-pip
+        sudo pip install awscli
         cd scripts/aws
         ./local_test.sh
         exit 0
