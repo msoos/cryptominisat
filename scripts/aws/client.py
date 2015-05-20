@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 import os
 import socket
 import sys
@@ -422,7 +423,7 @@ def num_cpus():
     return num_cpu
 
 
-def shutdown(exitval = 0):
+def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:

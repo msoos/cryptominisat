@@ -264,7 +264,7 @@ class Server (threading.Thread):
         file_num = self.find_something_to_solve()
 
         # yay, everything finished!
-        if file_num == None:
+        if file_num is None:
             tosend = {}
             tosend["noshutdown"] = options.noshutdown
             tosend["command"] = "finish"
@@ -381,7 +381,7 @@ class Listener (threading.Thread):
             self.handle_one_connection()
 
 
-def shutdown(exitval = 0):
+def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
