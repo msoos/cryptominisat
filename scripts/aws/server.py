@@ -394,6 +394,8 @@ def shutdown(exitval=0):
     exit(exitval)
 
 set_up_logging()
+logging.info("Server called with parameters: %s",
+             pprint.pformat(options, indent=4).replace("\n", " || "))
 
 failed = False
 if not options.git_rev:

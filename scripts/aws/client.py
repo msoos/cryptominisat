@@ -482,6 +482,9 @@ def start_threads():
         t.start()
 
 set_up_logging()
+logging.info("Client called with parameters: %s",
+             pprint.pformat(options, indent=4).replace("\n", " || "),
+             extra={"threadid": -1})
 if not options.noaws:
     boto_conn = boto.connect_s3()
 
