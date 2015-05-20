@@ -372,7 +372,11 @@ class Listener (threading.Thread):
         try:
             self.sock = self.listen_to_connection()
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+            logging.error("Cannot listen on stocket! Traceback: %s", the_trace)
             failed = True
+            return
         while True:
             self.handle_one_connection()
 
