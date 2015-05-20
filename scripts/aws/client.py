@@ -384,6 +384,7 @@ class solverThread (threading.Thread):
 
 def build_system():
     built_system = False
+    logging.info("Building system", extra={"threadid": -1})
     while not built_system:
         try:
             sock = connect_client(-1)
