@@ -18,7 +18,6 @@ import threading
 import logging
 
 
-logfile_name = "python_server_log.txt"
 last_termination_sent = None
 
 
@@ -31,7 +30,7 @@ def set_up_logging():
     consoleHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(consoleHandler)
 
-    fileHandler = logging.FileHandler(logfile_name)
+    fileHandler = logging.FileHandler(options.logfile_name)
     fileHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(fileHandler)
 
@@ -46,7 +45,8 @@ def try_upload_log_with_aws_cli():
         fname = "server-log-" + time.strftime("%c") + ".txt"
         fname = fname.replace(' ', '-')
         fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (logfile_name, fname)
+        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (options.logfile_name,
+                                                       fname)
         os.system(sendlog)
     except:
         pass
@@ -134,6 +134,9 @@ parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
 parser.add_option("--noaws", default=False, dest="noaws",
                   action="store_true", help="Use AWS"
                   )
+
+parser.add_option("--logfile", dest="logfile_name", type=str,
+                  default="python_server_log.txt", help="Name of LOG file")
 
 
 # parse options

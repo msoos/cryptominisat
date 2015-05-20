@@ -24,8 +24,6 @@ import socket
 import fcntl
 import struct
 
-logfile_name = "python_log.txt"
-
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,6 +83,9 @@ parser.add_option("--net", default="eth0", dest="network_device", type=str,
 
 parser.add_option("--threads", dest="num_threads", type=int,
                   help="Force using this many threads")
+
+parser.add_option("--logfile", dest="logfile_name", type=str,
+                  default="python_log.txt", help="Name of LOG file")
 
 (options, args) = parser.parse_args()
 
@@ -427,7 +428,7 @@ def try_upload_log_with_aws_cli():
         fname += get_ip_address(options.network_device) + ".txt"
         fname = fname.replace(' ', '-')
         fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (fname, logfile_name)
+        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (fname, options.logfile_name)
         os.system(sendlog)
     except:
         pass
@@ -456,7 +457,7 @@ def set_up_logging():
     consoleHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(consoleHandler)
 
-    fileHandler = logging.FileHandler(logfile_name)
+    fileHandler = logging.FileHandler(options.logfile_name)
     fileHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(fileHandler)
 
