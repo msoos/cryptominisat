@@ -154,6 +154,7 @@ def get_revision():
     os.chdir(pwd)
     return revision.strip()
 
+
 def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
