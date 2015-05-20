@@ -425,7 +425,8 @@ def num_cpus():
 def shutdown(exitval = 0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
-    common_aws.try_upload_log_with_aws_cli()
+    if not options.noaws:
+        common_aws.try_upload_log_with_aws_cli()
 
     if not options.noshutdown:
         os.system(toexec)

@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 def try_upload_log_with_aws_cli():
-    if options.noaws:
-        return
-
     try:
         fname = "server-log-" + time.strftime("%c") + ".txt"
         fname = fname.replace(' ', '-')
