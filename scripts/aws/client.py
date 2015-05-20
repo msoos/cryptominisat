@@ -292,7 +292,7 @@ class solverThread (threading.Thread):
 
     def run_loop(self):
         while not exitapp:
-            time.sleep(random.randint(0, 5) / 10.0)
+            time.sleep(random.randint(0, 100) / 20.0)
             try:
                 sock = connect_client(self.threadID)
             except:

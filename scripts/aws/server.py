@@ -365,7 +365,6 @@ class Listener (threading.Thread):
         global acc_queue
 
         # Wait for a connection
-        logging.info('--> waiting for a connection...')
         conn, client_addr = self.sock.accept()
         acc_queue.put_nowait((conn, client_addr))
 
