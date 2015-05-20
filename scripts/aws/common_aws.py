@@ -3,15 +3,23 @@
 
 import os
 import time
+import boto
 
 
-def try_upload_log_with_aws_cli(logfile_name, systemtype):
+def try_upload_log_with_aws_cli(logfile_name, cli_or_server):
     try:
-        fname = systemtype + "-log-" + time.strftime("%c") + ".txt"
-        fname = fname.replace(' ', '-')
-        fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (logfile_name,
-                                                       fname)
-        os.system(sendlog)
+        boto_conn = boto.connect_s3()
+        boto_bucket = boto_conn.get_bucket("msoos-logs")
+        k = boto.s3.key.Key(boto_bucket)
+
+        s3_folder = time.strftime("%c")
+        s3_folder = s3_folder.replace(' ', '-')
+        s3_folder = s3_folder.replace(':', '.')
+        s3_folder = s3_folder.replace(',', '.')
+
+        k.key = s3_folder + "/" + cli_or_server
+        boto_bucket.delete_key(k)
+        k.set_contents_from_filename(logfile_name)
+
     except:
         pass
