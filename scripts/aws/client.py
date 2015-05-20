@@ -429,7 +429,7 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
-        common_aws.try_upload_log_with_aws_cli(options.logfile_name)
+        common_aws.try_upload_log_with_aws_cli(options.logfile_name, "cli")
 
     if not options.noshutdown:
         os.system(toexec)
