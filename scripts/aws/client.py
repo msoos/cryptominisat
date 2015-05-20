@@ -20,6 +20,11 @@ import fcntl
 import struct
 import logging
 
+#for importing in systems where "." is not in the PATH
+import glob
+sys.path.append(os.getcwd())
+import common_aws
+
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -417,25 +422,10 @@ def num_cpus():
     return num_cpu
 
 
-def try_upload_log_with_aws_cli():
-    if options.noaws:
-        return
-
-    try:
-        fname = "log-" + time.strftime("%c") + "-"
-        fname += get_ip_address(options.network_device) + ".txt"
-        fname = fname.replace(' ', '-')
-        fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (fname, options.logfile_name)
-        os.system(sendlog)
-    except:
-        pass
-
-
 def shutdown(exitval = 0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
-    try_upload_log_with_aws_cli()
+    common_aws.try_upload_log_with_aws_cli()
 
     if not options.noshutdown:
         os.system(toexec)

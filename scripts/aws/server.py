@@ -17,6 +17,11 @@ import Queue
 import threading
 import logging
 
+#for importing in systems where "." is not in the PATH
+import glob
+sys.path.append(os.getcwd())
+import common_aws
+
 
 last_termination_sent = None
 
@@ -35,21 +40,6 @@ def set_up_logging():
     logging.getLogger().addHandler(fileHandler)
 
     logging.getLogger().setLevel(logging.INFO)
-
-
-def try_upload_log_with_aws_cli():
-    if options.noaws:
-        return
-
-    try:
-        fname = "server-log-" + time.strftime("%c") + ".txt"
-        fname = fname.replace(' ', '-')
-        fname = fname.replace(':', '.')
-        sendlog = "aws s3 cp %s s3://msoos-logs/%s" % (options.logfile_name,
-                                                       fname)
-        os.system(sendlog)
-    except:
-        pass
 
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -391,7 +381,7 @@ class Listener (threading.Thread):
 def shutdown(exitval = 0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
-    try_upload_log_with_aws_cli()
+    common_aws.try_upload_log_with_aws_cli()
 
     if not options.noshutdown:
         os.system(toexec)
