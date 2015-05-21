@@ -1262,9 +1262,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         #endif
     }
 
-    //Only update non-decision: this way, flipped decisions don't get saved
+    //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
     if (update_polarity_and_activity
-        && from != PropBy()
+        //&& from != PropBy()
     ) {
         varData[v].polarity = !sign;
     }
