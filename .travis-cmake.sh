@@ -183,14 +183,14 @@ case $CMS_CONFIG in
     WEB)
         cd web
         sudo apt-get install python-software-properties
-        sudo add-apt-repository ppa:chris-lea/node.js
+        sudo add-apt-repository -y ppa:chris-lea/node.js
         sudo apt-get update
-        sudo apt-get install nodejs
+        sudo apt-get install -y nodejs
         ./instal_web.sh
     ;;
 
     AWS)
-        sudo apt-get install python-boto
+        sudo apt-get install -y python-boto
         sudo apt-get install -y python-pip
         sudo pip install awscli
         cd scripts/aws
