@@ -1273,3 +1273,6 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     std::cerr << "s " << v << " " << p.sign() << endl;
     #endif
 }
+
+template void PropEngine::enqueue<true>(const Lit p, const PropBy from);
+template void PropEngine::enqueue<false>(const Lit p, const PropBy from);
