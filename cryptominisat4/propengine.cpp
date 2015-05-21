@@ -1187,6 +1187,7 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
 
     return true;
 }
+
 template<bool update_bogoprops>
 void PropEngine::enqueue(const Lit p, const PropBy from)
 {
