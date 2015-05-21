@@ -186,7 +186,7 @@ case $CMS_CONFIG in
         sudo add-apt-repository -y ppa:chris-lea/node.js
         sudo apt-get update
         sudo apt-get install -y nodejs
-        ./instal_web.sh
+        ./install_web.sh
     ;;
 
     AWS)
