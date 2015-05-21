@@ -138,7 +138,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.simplify_at_startup = 1;
             conf.regularly_simplify_problem = 0;
             conf.varElimRatioPerIter = 1;
-            conf.restartType = restart_type_geom;
+            conf.restartType = restart_type_luby;
 //             conf.clauseCleaningType = CMSat::clean_sum_activity_based;
             conf.polarity_mode = CMSat::polarmode_neg;
 //             conf.ratioRemoveClauses = 0.65;
