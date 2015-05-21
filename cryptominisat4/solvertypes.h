@@ -55,6 +55,9 @@ inline std::string restart_type_to_string(const Restart type)
         case restart_type_geom:
             return "geometric";
 
+        case restart_type_luby:
+            return "luby";
+
         case restart_type_agility:
             return "agility-based";
 

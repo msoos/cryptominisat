@@ -55,6 +55,7 @@ enum Restart {
     restart_type_glue
     , restart_type_glue_agility
     , restart_type_geom
+    , restart_type_luby
     , restart_type_agility
     , restart_type_never
     , restart_type_automatic

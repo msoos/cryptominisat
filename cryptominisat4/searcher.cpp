@@ -1201,6 +1201,23 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
+double Searcher::luby(double y, int x)
+{
+    int size, seq;
+    for (size = 1, seq = 0
+        ; size < x + 1
+        ; seq++, size = 2 * size + 1
+    );
+
+    while (size - 1 != x) {
+        size = (size - 1) >> 1;
+        seq--;
+        x = x % size;
+    }
+
+    return pow(y, seq);
+}
+
 void Searcher::check_need_restart()
 {
     if (must_interrupt_asap())  {
@@ -1223,6 +1240,7 @@ void Searcher::check_need_restart()
             break;
 
         case restart_type_geom:
+        case restart_type_luby:
             if (params.conflictsDoneThisRestart > max_conflicts_geometric)
                 params.needToStopSearch = true;
 
@@ -2155,8 +2173,18 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         params.clear();
         params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
         status = search();
-        if (params.rest_type == restart_type_geom) {
-            max_conflicts_geometric *= conf.restart_inc;
+
+        switch (params.rest_type) {
+            case restart_type_geom:
+                max_conflicts_geometric *= conf.restart_inc;
+                break;
+
+            case restart_type_luby:
+                max_conflicts_geometric = luby(conf.restart_inc, loop_num);
+                break;
+
+            default:
+                break;
         }
 
         if (must_abort(status)) {

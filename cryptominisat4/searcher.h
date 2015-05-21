@@ -833,7 +833,7 @@ class Searcher : public HyperEngine
 
         //Other
         uint64_t lastRestartConfl;
-
+        double luby(double y, int x);
 
         //SQL
         vector<Var> calcVarsToDump() const;

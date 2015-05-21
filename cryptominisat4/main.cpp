@@ -861,6 +861,8 @@ void Main::parse_restart_type()
         string type = vm["restart"].as<string>();
         if (type == "geom")
             conf.restartType = restart_type_geom;
+        else if (type == "luby")
+            conf.restartType = restart_type_luby;
         else if (type == "glue")
             conf.restartType = restart_type_glue;
         else if (type == "agility")
