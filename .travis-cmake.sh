@@ -16,11 +16,11 @@ set -e
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
-    LATEX)
-        sudo apt-get install texlive-latex-base
-        cd ../desc/satcomp14
-        make
-        exit 0
+    SLOW_DEBUG)
+        sudo apt-get install libboost-program-options-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   -DSLOW_DEBUG:BOOL=ON \
+                   ${SOURCE_DIR}
     ;;
 
     NORMAL|AWS)
