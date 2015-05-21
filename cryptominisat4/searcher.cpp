@@ -2157,7 +2157,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
         //Only sort after a while
         //otherwise, we sort all the time for short queries
-        if ((loop_num & 0x3ff) == 0x020
+        if ((loop_num & 0x7ff) == 0x020
             && stats.conflStats.numConflicts > 4000
             && conf.doSortWatched
         ) {
