@@ -527,7 +527,7 @@ class Tester:
         return False
 
     def random_options(self):
-        cmd = " "
+        cmd = " --zero-exit-status "
 
         cmd += "--restart %s " % random.choice(
             ["geom", "agility", "glue", "glueagility"])
@@ -593,7 +593,10 @@ class Tester:
             exit(300)
 
         # construct command
-        command = options.solver
+        command = ""
+        if random.randint(0, 10) == 0:
+            command += "valgrind --leak-check=full  --error-exitcode=9 "
+        command += options.solver
         command += self.random_options()
         if self.needDebugLib:
             command += "--debuglib "
@@ -628,11 +631,12 @@ class Tester:
 
         # Get solver output
         consoleOutput, err = p.communicate()
+        return_code = p.returncode
         if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
-        return consoleOutput
+        return consoleOutput, return_code
 
     def check_unsat(self, fname):
         a = XorToCNF()
@@ -830,7 +834,7 @@ class Tester:
 
         # Do we need to solve the problem, or is it already solved?
         if needSolve:
-            consoleOutput = self.execute(
+            consoleOutput, return_code = self.execute(
                 fname, newVar, needToLimitTime, fnameDrup=fnameDrup, extraOptions=extraOptions)
         else:
             if not os.path.isfile(fnameSolution):
@@ -838,6 +842,7 @@ class Tester:
                 exit(-1)
             f = open(fnameSolution, "r")
             consoleOutput = f.read()
+            return_code = 0
             f.close()
             print "Read solution from file ", fnameSolution
 
@@ -858,6 +863,10 @@ class Tester:
             self.check_debug_lib(checkAgainst)
 
         print "Checking console output..."
+        if return_code != 0:
+            print "Return code is not 0, error!"
+            exit(-1)
+
         unsat, solution, _ = solution_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
         otherSolverUNSAT = True

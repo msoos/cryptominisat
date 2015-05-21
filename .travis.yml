@@ -30,7 +30,7 @@ before_install:
 install:
   - sudo apt-get install libboost-test-dev gcc-4.7 g++-4.7
   - sudo apt-get remove g++-4.6 gcc-4.6
-  - sudo apt-get install cmake
+  - sudo apt-get install cmake valgrind
   - sudo pip install lit
 #
 #get lingeling
