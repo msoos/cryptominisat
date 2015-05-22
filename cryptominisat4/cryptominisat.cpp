@@ -554,6 +554,9 @@ void SATSolver::set_drup(std::ostream* os)
     }
     DrupFile* drup = new DrupFile();
     drup->setFile(os);
+    if (data->solvers[0]->drup)
+        delete data->solvers[0]->drup;
+
     data->solvers[0]->drup = drup;
 }
 

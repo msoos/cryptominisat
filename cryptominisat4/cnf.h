@@ -81,7 +81,7 @@ public:
         }
     }
 
-    ~CNF()
+    virtual ~CNF()
     {
         delete drup;
         if (!needToInterrupt_is_foreign) {
