@@ -45,6 +45,7 @@ sys.path.append(os.getcwd())
 print "our sys.path is", sys.path
 
 from xor_to_cnf_class import *
+from debuglib import *
 
 maxTime = 80
 maxTimeDiff = 20
@@ -110,25 +111,6 @@ parser.add_option("-s", "--sol", dest="solutionFile", default=None, help="Agains
                   )
 
 (options, args) = parser.parse_args()
-
-
-def get_max_var_from_clause(line):
-    maxvar = 0
-    # strip leading 'x'
-    line2 = line.strip()
-    if len(line2) > 0 and line2[0] == 'x':
-        line2 = line2[1:]
-
-    for lit in line2.split():
-        num = 0
-        try:
-            num = int(lit)
-        except ValueError:
-            print "line '%s' contains a non-integer variable" % line2
-
-        maxvar = max(maxvar, abs(num))
-
-    return maxvar
 
 
 class solution_parser:
@@ -306,18 +288,6 @@ class solution_parser:
 class create_fuzz:
 
     @staticmethod
-    def file_len_no_comment(fname):
-        i = 0
-        with open(fname) as f:
-            for l in f:
-                # ignore comments and empty lines and header
-                if not l or l[0] == "c" or l[0] == "p":
-                    continue
-                i += 1
-
-        return i
-
-    @staticmethod
     def unique_fuzz_file(file_name_begin):
         counter = 1
         while 1:
@@ -331,86 +301,6 @@ class create_fuzz:
                 pass
 
             counter += 1
-
-    @staticmethod
-    def generate_random_assumps(maxvar):
-        assumps = ""
-        num = 0
-        varsInside = set()
-
-        # Half of the time, no assumptions at all
-        if random.randint(0, 1) == 1:
-            return assumps
-
-        # use a distribution so that few will be in assumps
-        while (num < maxvar and random.randint(0, 4) > 0):
-
-            # get a var that is not already inside the assumps
-            thisVar = random.randint(1, maxvar)
-            tries = 0
-            while (thisVar in varsInside):
-                thisVar = random.randint(1, maxvar)
-                tries += 1
-
-                # too many tries, don't waste time
-                if tries > 100:
-                    return assumps
-
-            varsInside.add(thisVar)
-
-            # random sign
-            num += 1
-            if random.randint(0, 1):
-                thisVar *= -1
-
-            assumps += "%d " % thisVar
-
-        return assumps
-
-    @staticmethod
-    def intersperse_with_debuglib(fname1, fname2):
-
-        # approx number of solve()-s to add
-        if random.randint(0, 1) == 1:
-            num_solves_to_add = random.randint(0, 3)
-        else:
-            num_solves_to_add = 0
-
-        # based on length and number of solve()-s to add, intersperse
-        # file with ::solve()
-        file_len = create_fuzz.file_len_no_comment(fname1)
-        if num_solves_to_add > 0:
-            nextToAdd = random.randint(1, (file_len / num_solves_to_add) + 1)
-        else:
-            nextToAdd = file_len + 1
-
-        fin = open(fname1, "r")
-        fout = open(fname2, "w")
-        at = 0
-        maxvar = 0
-        for line in fin:
-            line = line.strip()
-
-            # ignore comments (but write them out)
-            if not line or line[0] == "c" or line[0] == 'p':
-                fout.write(line + '\n')
-                continue
-
-            at += 1
-            if at >= nextToAdd:
-                assumps = create_fuzz.generate_random_assumps(maxvar)
-                # assumps = " "
-                fout.write("c Solver::solve( %s )\n" % assumps)
-                nextToAdd = at + \
-                    random.randint(1, (file_len / num_solves_to_add) + 1)
-
-            # calculate max variable
-            maxvar = max(maxvar, get_max_var_from_clause(line))
-
-            # copy line over
-            fout.write(line + '\n')
-        fout.close()
-        fin.close()
 
     def call_from_fuzzer(self, fuzzer, file_name):
         if len(fuzzer) == 1:
@@ -945,7 +835,11 @@ class Tester:
             self.needDebugLib = True
             self.delete_debuglibpart_files()
             file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
-            create_fuzz.intersperse_with_debuglib(file_name, file_name2)
+            seed_for_inters = random.randint(0, 1000)
+            intersperse(file_name, file_name2, seed_for_inters)
+            print "Interspersed: ./intersperse.py %s %s %d" % (file_name,
+                                                               file_name2,
+                                                               seed_for_inters)
             os.unlink(file_name)
         else:
             self.needDebugLib = False
