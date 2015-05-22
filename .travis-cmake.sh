@@ -175,7 +175,7 @@ esac
 #do regression testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ]; then
     cd ../scripts/
-    ./regression_test.py -f --fuzzlim 30
+    ./regression_test.py -f --novalgrind --fuzzlim 30
     cd ..
 fi
 

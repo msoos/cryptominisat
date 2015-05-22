@@ -109,6 +109,7 @@ parser.add_option("-c", "--check", dest="checkFile", default=None, help="Check t
                   )
 parser.add_option("-s", "--sol", dest="solutionFile", default=None, help="Against this solution"
                   )
+parser.add_option("--novalgrind", dest="novalgrind", default=False, action="store_true", help="No valgrind installed")
 
 (options, args) = parser.parse_args()
 
@@ -486,7 +487,7 @@ class Tester:
 
         # construct command
         command = ""
-        if random.randint(0, 10) == 0:
+        if not options.novalgrind and random.randint(0, 10) == 0:
             command += "valgrind --leak-check=full  --error-exitcode=9 "
         command += options.solver
         command += self.random_options()
