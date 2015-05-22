@@ -707,7 +707,7 @@ class Searcher : public HyperEngine
         int pathC;
         ResolutionTypes<uint16_t> resolutions;
 
-        vector<std::pair<Lit, uint32_t> > lastDecisionLevel; //for glue-based extra var activity bumping
+        vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 
         //OTF subsumption
         vector<ClOffset> otf_subsuming_long_cls;

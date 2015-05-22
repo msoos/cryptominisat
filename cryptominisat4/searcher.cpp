@@ -152,16 +152,16 @@ void Searcher::add_lit_to_learnt(
                 if (varData[var].reason.getType() == clause_t) {
                     Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
                     if (cl->red()) {
-                        lastDecisionLevel.push_back(std::make_pair(lit, (uint32_t)cl->stats.glue));
+                        implied_by_learnts.push_back(std::make_pair(lit, (uint32_t)cl->stats.glue));
                     }
                 } else if (varData[var].reason.getType() == binary_t
                     && varData[var].reason.isRedStep()
                 ) {
-                    lastDecisionLevel.push_back(std::make_pair(lit, 2));
+                    implied_by_learnts.push_back(std::make_pair(lit, 2));
                 } else if (varData[var].reason.getType() == tertiary_t
                     && varData[var].reason.isRedStep()
                 ) {
-                    lastDecisionLevel.push_back(std::make_pair(lit, 3));
+                    implied_by_learnts.push_back(std::make_pair(lit, 3));
                 }
             }
         }
@@ -608,7 +608,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
 
 void Searcher::bump_var_activities_based_on_last_decision_level(const uint32_t glue)
 {
-    for (const auto dat :lastDecisionLevel) {
+    for (const auto dat :implied_by_learnts) {
         if (dat.second < glue) {
             bump_var_activitiy(dat.first.var());
         }
@@ -663,7 +663,7 @@ Clause* Searcher::analyze_conflict(
     //Set up environment
     learnt_clause.clear();
     assert(toClear.empty());
-    lastDecisionLevel.clear();
+    implied_by_learnts.clear();
     otf_subsuming_short_cls.clear();
     otf_subsuming_long_cls.clear();
     tmp_learnt_clause_size = 0;
@@ -686,7 +686,7 @@ Clause* Searcher::analyze_conflict(
     ) {
         bump_var_activities_based_on_last_decision_level(glue);
     }
-    lastDecisionLevel.clear();
+    implied_by_learnts.clear();
 
     return otf_subsume_last_resolved_clause(last_resolved_long_cl);
 
