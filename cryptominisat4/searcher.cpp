@@ -609,7 +609,8 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
 void Searcher::bump_var_activities_based_on_last_decision_level(const uint32_t glue)
 {
     for (const auto dat :implied_by_learnts) {
-        if (dat.second < glue) {
+        const uint32_t v_glue = dat.second;
+        if (v_glue < glue) {
             bump_var_activitiy(dat.first.var());
         }
     }
