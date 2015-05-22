@@ -35,6 +35,7 @@ def set_up_logging():
     consoleHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(consoleHandler)
 
+    os.unlink(options.logfile_name)
     fileHandler = logging.FileHandler(options.logfile_name)
     fileHandler.setFormatter(logformatter)
     logging.getLogger().addHandler(fileHandler)
