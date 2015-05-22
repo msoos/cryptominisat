@@ -26,4 +26,4 @@ if len(sys.argv) != 4:
 
 
 debuglib.intersperse(sys.argv[1], sys.argv[2], sys.argv[3])
-print "OK, output in %s" % fname2
+print "OK, output in %s" % sys.argv[2]
