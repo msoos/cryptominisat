@@ -835,7 +835,7 @@ class Tester:
             self.needDebugLib = True
             self.delete_debuglibpart_files()
             file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
-            seed_for_inters = random.randint(0, 1000)
+            seed_for_inters = random.randint(0, 1000000)
             intersperse(file_name, file_name2, seed_for_inters)
             print "Interspersed: ./intersperse.py %s %s %d" % (file_name,
                                                                file_name2,
