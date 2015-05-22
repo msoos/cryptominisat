@@ -606,7 +606,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     return last_resolved_long_cl;
 }
 
-void Searcher::bump_var_activities_based_on_last_decision_level(const uint32_t glue)
+void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t glue)
 {
     for (const auto dat :implied_by_learnts) {
         const uint32_t v_glue = dat.second;
@@ -685,7 +685,7 @@ Clause* Searcher::analyze_conflict(
         && params.rest_type == restart_type_glue
         && conf.extra_bump_var_activities_based_on_glue
     ) {
-        bump_var_activities_based_on_last_decision_level(glue);
+        bump_var_activities_based_on_implied_by_learnts(glue);
     }
     implied_by_learnts.clear();
 

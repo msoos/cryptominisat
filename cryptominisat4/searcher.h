@@ -700,7 +700,7 @@ class Searcher : public HyperEngine
         void mimimize_learnt_clause_more_maybe();
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
-        void bump_var_activities_based_on_last_decision_level(const uint32_t glue);
+        void bump_var_activities_based_on_implied_by_learnts(const uint32_t glue);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(const PropBy confl);
         Clause* create_learnt_clause(PropBy confl);
