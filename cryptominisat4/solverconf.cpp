@@ -64,6 +64,8 @@ SolverConf::SolverConf() :
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
+        , more_otf_shrink_with_cache(false)
+        , more_otf_shrink_with_stamp(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)

@@ -510,7 +510,7 @@ void Searcher::mimimize_learnt_clause_more_maybe()
         minimise_redundant_more(learnt_clause);
 
         //Stamp-based minimization -- cheap, so do it anyway
-        if (conf.doStamp) {
+        if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
             stamp_based_more_minim(learnt_clause);
         }
 
@@ -2500,7 +2500,7 @@ void Searcher::minimise_redundant_more(vector<Lit>& cl)
         seen[lit.toInt()] = 1;
     }
 
-    if (conf.doCache) {
+    if (conf.doCache && conf.more_otf_shrink_with_cache) {
         cache_based_more_minim(cl);
     }
 
