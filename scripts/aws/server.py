@@ -64,7 +64,7 @@ parser.add_option("--port", "-p", default=10000, dest="port",
                   help="Port to listen on. [default: %default]", type="int"
                   )
 
-parser.add_option("--tout", "-t", default=6000, dest="timeout_in_secs",
+parser.add_option("--tout", "-t", default=3600, dest="timeout_in_secs",
                   help="Timeout for the file in seconds"
                   "[default: %default]",
                   type=int
