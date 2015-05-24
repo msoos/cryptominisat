@@ -244,6 +244,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     move_to_never_cleaned();
     int64_t num_to_reduce = solver->longRedCls.size();
 
+    //TODO maybe we chould count binary learnt clauses as well into the kept no. of clauses as other solvers do
     for(unsigned keep_type = 0; keep_type < 3; keep_type++) {
         const uint64_t keep_num = (double)num_to_reduce*solver->conf.ratio_keep_clauses[keep_type];
         if (keep_num == 0) {
