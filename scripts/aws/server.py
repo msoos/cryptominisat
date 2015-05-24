@@ -440,7 +440,7 @@ while threading.active_count() > 0 and not failed:
 
 shutdown()
 
-# c3.large
+# c4.large
 # def call() :
     # calling = """
     # aws ec2 request-spot-instances \
@@ -448,7 +448,7 @@ shutdown()
         #--spot-price "0.025"
         #--instance-count 2
         #--type "one-time"
-        #--launch-specification "{\"ImageId\":\"ami-AMI\",\"InstanceType\":"c3.large\",\"SubnetId\":\"subnet-SUBNET\", \"Monitoring\": {\"Enabled\": false},\"SecurityGroupIds\":\"launch-wizard-1\"}"
+        #--launch-specification "{\"ImageId\":\"ami-AMI\",\"InstanceType\":"c4.8xlarge\",\"SubnetId\":\"subnet-SUBNET\", \"Monitoring\": {\"Enabled\": false},\"SecurityGroupIds\":\"launch-wizard-1\"}"
         #--image-id XXX \
         #--key-name mykey \
         #--security-groups "launch-wizard-1" \
@@ -459,7 +459,7 @@ shutdown()
 import boto.ec2
 conn = boto.ec2.connect_to_region("us-west-2")
 
-ami_id = "ami-61f9a951"
+ami_id = "ami-71fbab41"
 vpc_id = "vpc-a19248c4"
 
 reservations = conn.get_all_reservations()
