@@ -2973,7 +2973,7 @@ PropBy Searcher::propagate(
     }
 
     //Drup -- If declevel 0 propagation, we have to add the unitaries
-    if (drup->enabled() && decisionLevel() == 0) {
+    if (decisionLevel() == 0 && drup->enabled()) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRUP
             if (conf.verbosity >= 6) {
