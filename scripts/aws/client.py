@@ -422,6 +422,7 @@ def shutdown(exitval=0):
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
         global s3_bucket
+        global s3_folder
         upload_log(s3_bucket,
                    s3_folder,
                    "%s/build.log" % options.base_dir,
