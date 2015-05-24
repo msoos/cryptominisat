@@ -37,6 +37,8 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
         else:
             return ""
 
+global s3_bucket
+global s3_folder
 s3_bucket = "msoos-no-bucket"
 s3_folder = "no_s3_folder"
 usage = "usage: %prog"
