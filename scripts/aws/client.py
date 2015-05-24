@@ -24,16 +24,7 @@ import logging
 #for importing in systems where "." is not in the PATH
 import glob
 sys.path.append(os.getcwd())
-import common_aws
-
-
-def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
-    )[20:24])
+from common_aws import *
 
 pp = pprint.PrettyPrinter(depth=6)
 
@@ -249,11 +240,11 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
-    def copy_solution_to_s3(self, s3_folder_ending):
+    def copy_solution_to_s3(self, s3_folder):
         os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
-        s3_folder = self.indata["s3_folder"] + "-" + s3_folder_ending
+        s3_folder = s3_folder
 
         fname_with_stdout_ending = self.indata[
             "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
@@ -282,15 +273,12 @@ class solverThread (threading.Thread):
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
 
-    def get_revision(self):
-        _, solvername = os.path.split(self.indata["solver"])
-        if solvername == "cryptominisat":
-            os.chdir('%s/cryptominisat' % options.base_dir)
-            revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-        else:
-            revision = solvername
-
-        return revision.strip()
+    def get_s3_folder(self):
+        return get_s3_folder(self.indata["s3_folder"],
+                             self.indata["git_rev"],
+                             self.indata["timeout_in_secs"],
+                             self.indata["mem_limit_in_mb"]
+                             )
 
     def run_loop(self):
         while not exitapp:
@@ -321,13 +309,10 @@ class solverThread (threading.Thread):
                 return
 
             assert self.indata["command"] == "solve"
-            s3_folder_ending = "%s-%s-tout-%d-mout-%d" \
-                % (self.get_revision()[:6], time.strftime("%d-%B-%Y"),
-                   self.indata["timeout_in_secs"],
-                   self.indata["mem_limit_in_mb"])
             returncode, executed = self.execute()
             if not options.noaws:
-                self.copy_solution_to_s3(s3_folder_ending)
+                s3_folder = self.get_s3_folder()
+                self.copy_solution_to_s3(s3_folder)
 
             logging.info("Trying to send to server that we are done",
                          extra=self.logextra)
@@ -404,10 +389,17 @@ def build_system():
         # only build if the solver is cryptominisat
         if "cryptominisat" in indata["solver"]:
             ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
-                            (options.base_dir, indata["revision"],
+                            (options.base_dir, indata["git_rev"],
                              options.num_threads, options.base_dir))
-            common_aws.try_upload_log_with_aws_cli("%s/build.log" % options.base_dir,
-                                                   "cli-build-%s" % get_ip_address("eth0"))
+            s3_folder = get_s3_folder(indata["s3_folder"],
+                                      indata["git_rev"],
+                                      indata["timeout_in_secs"],
+                                      indata["mem_limit_in_mb"]
+                                      )
+            upload_log(indata["s3_bucket"],
+                       s3_folder,
+                       "%s/build.log" % options.base_dir,
+                       "cli-build-%s.txt" % get_ip_address("eth0"))
             if ret != 0:
                 logging.error("Error building cryptominisat, shutting down!",
                               extra={"threadid": -1}
@@ -432,7 +424,7 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
-        common_aws.try_upload_log_with_aws_cli(options.logfile_name,
+        upload_log(options.logfile_name,
                                                "cli-" + get_ip_address("eth0"))
 
     if not options.noshutdown:

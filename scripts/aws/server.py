@@ -20,7 +20,7 @@ import logging
 #for importing in systems where "." is not in the PATH
 import glob
 sys.path.append(os.getcwd())
-import common_aws
+from common_aws import *
 
 
 last_termination_sent = None
@@ -137,6 +137,7 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 (options, args) = parser.parse_args()
 
 options.logfile_name = options.base_dir + options.logfile_name
+options.s3_folder += "-" + time.strftime("%d-%B-%Y")
 
 
 def get_revision():
@@ -255,7 +256,11 @@ class Server (threading.Thread):
     def handle_build(self, connection, cli_addr, indata):
         tosend = {}
         tosend["solver"] = options.base_dir + options.solver
-        tosend["revision"] = options.git_rev
+        tosend["git_rev"] = options.git_rev
+        tosend["s3_bucket"] = options.s3_bucket
+        tosend["s3_folder"] = options.s3_folder
+        tosend["timeout_in_secs"] = options.timeout_in_secs
+        tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
         tosend = pickle.dumps(tosend)
         tosend = struct.pack('!q', len(tosend)) + tosend
@@ -289,6 +294,7 @@ class Server (threading.Thread):
 
             tosend = {}
             tosend["file_num"] = file_num
+            tosend["git_rev"] = options.git_rev
             tosend["cnf_filename"] = filename
             tosend["solver"] = options.base_dir + options.solver
             tosend["timeout_in_secs"] = options.timeout_in_secs
@@ -391,7 +397,15 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     if not options.noaws:
-        common_aws.try_upload_log_with_aws_cli(options.logfile_name, "server")
+        s3_folder = get_s3_folder(options.s3_folder,
+                                  options.git_rev,
+                                  options.timeout_in_secs,
+                                  options.mem_limit_in_mb
+                                  )
+        upload_log(options.s3_bucket,
+                   s3_folder,
+                   options.logfile_name,
+                   "server-%s" % get_ip_address("eth0"))
 
     if not options.noshutdown:
         os.system(toexec)
