@@ -38,7 +38,7 @@ def upload_log(bucket, folder, logfile_name, fname):
         boto_bucket = boto_conn.get_bucket(bucket)
         k = boto.s3.key.Key(boto_bucket)
 
-        k.key = folder + "/" + fname
+        k.key = folder + "/" + "logs/" + fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(logfile_name)
 
