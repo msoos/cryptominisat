@@ -33,6 +33,7 @@ class SpotRequestor:
                 image_id = self.conf.get('ec2', 'ami_id'),
                 subnet_id = self.conf.get('ec2', 'subnet_id'),
                 instance_type = self.conf.get('ec2', 'type'),
+                instance_profile_name = self.conf.get('ec2', 'instance_profile_name'),
                 user_data = user_data,
                 security_group_ids = [self.conf.get('ec2', 'security_group')])
 
