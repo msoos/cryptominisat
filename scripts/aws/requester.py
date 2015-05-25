@@ -33,8 +33,9 @@ class SpotRequestor:
                 image_id = self.conf.get('ec2', 'ami_id'),
                 subnet_id = self.conf.get('ec2', 'subnet_id'),
                 instance_type = self.conf.get('ec2', 'type'),
-                instance_profile_name = self.conf.get('ec2', 'instance_profile_name'),
+                instance_profile_arn = self.conf.get('ec2', 'instance_profile_arn'),
                 user_data = user_data,
+                key_name = self.conf.get('ec2', 'key_name'),
                 security_group_ids = [self.conf.get('ec2', 'security_group')])
 
         print "Request created, got back: "
