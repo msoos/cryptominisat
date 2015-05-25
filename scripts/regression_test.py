@@ -88,6 +88,8 @@ parser.add_option("--verbose", "-v", action="store_true", default=False, dest="v
 # for fuzz-testing
 parser.add_option("-f", "--fuzz", dest="fuzz_test", default=False, action="store_true", help="Fuzz-test"
                   )
+parser.add_option("--seed", dest="fuzz_seed_start", help="Fuzz test start seed",type=int
+                  )
 parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int, help="Number of fuzz tests to run"
                   )
 
@@ -904,8 +906,17 @@ if options.fuzz_test:
     tester.needDebugLib = False
     tester.check_for_unsat = True
     num = 0
+    rnd_seed = options.fuzz_seed_start
+    if rnd_seed is None:
+        rnd_seed = random.randint(0, 1000*1000*100)
+
     while True:
+        toexec = "./regression_test.py -f --fuzzlim 1 --seed %d" % rnd_seed
+        print "To re-create fuzz-test below: %s" % toexec
+
+        random.seed(rnd_seed)
         tester.fuzz_test_one()
+        rnd_seed += 1
         num += 1
         if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
             exit(0)
