@@ -21,6 +21,7 @@ import logging
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
+import requester
 
 
 last_termination_sent = None
@@ -138,6 +139,7 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 
 options.logfile_name = options.base_dir + options.logfile_name
 options.s3_folder += "-" + time.strftime("%d-%B-%Y")
+options.s3_folder += "-mark-%d" % int(random.randint(0, 1000))
 
 
 def get_revision():
@@ -174,6 +176,7 @@ class ToSolve:
     def __str__(self):
         return "%s (num: %d)" % (self.name, self.num)
 
+global acc_queue
 acc_queue = Queue.Queue()
 
 
@@ -430,6 +433,11 @@ server.setDaemon(True)
 listener.start()
 server.start()
 
+#create spot instance requests
+spot_create = requester.SpotRequestor()
+spot_create.create_spots()
+
+
 while threading.active_count() > 0 and not failed:
     time.sleep(0.5)
     if last_termination_sent is not None and server.ready_to_shutdown():
@@ -439,41 +447,3 @@ while threading.active_count() > 0 and not failed:
             break
 
 shutdown()
-
-# c4.large
-# def call() :
-    # calling = """
-    # aws ec2 request-spot-instances \
-        #--dry-run \
-        #--spot-price "0.025"
-        #--instance-count 2
-        #--type "one-time"
-        #--launch-specification "{\"ImageId\":\"ami-AMI\",\"InstanceType\":"c4.8xlarge\",\"SubnetId\":\"subnet-SUBNET\", \"Monitoring\": {\"Enabled\": false},\"SecurityGroupIds\":\"launch-wizard-1\"}"
-        #--image-id XXX \
-        #--key-name mykey \
-        #--security-groups "launch-wizard-1" \
-        #--count XXX \
-        #--monitoring Enabled=false
-    #"""
-
-import boto.ec2
-conn = boto.ec2.connect_to_region("us-west-2")
-
-ami_id = "ami-71fbab41"
-vpc_id = "vpc-a19248c4"
-
-reservations = conn.get_all_reservations()
-num = 0
-instances = []
-for reservation in reservations:
-    for instance in reservation.instances:
-        if instance.instance_type != "t2.micro":
-            instances.append([instance.instance_type, instance.placement])
-
-print "client instances running:", instances
-
-requests = conn.get_all_spot_instance_requests()
-print "Active requests:", requests
-for req in requests:
-    if ("%s" % req.status) != "<Status: instance-terminated-by-user>":
-        print "-> ", [req.price, req.status]
