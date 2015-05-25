@@ -336,6 +336,7 @@ bool BVA::bva_simplify_system()
     const Var newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
+    //Binary clauses
     for(const lit_pair m_lit: m_lits) {
         bva_tmp_lits.clear();
         bva_tmp_lits.push_back(m_lit.lit1);
@@ -347,6 +348,7 @@ bool BVA::bva_simplify_system()
         touched.touch(bva_tmp_lits);
     }
 
+    //Longer clauses
     for(const OccurClause m_cl: m_cls) {
         bool ok = add_longer_clause(~new_lit, m_cl);
         if (!ok)
