@@ -670,7 +670,7 @@ bool VarReplacer::handleUpdatedClause(
         }
     }
     c.shrink(i - j);
-    c.setChanged();
+    c.setStrenghtened();
 
     runStats.bogoprops += 10;
     if (c.red()) {

@@ -426,6 +426,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 
     (*solver->drup) << deldelay << cl << fin;
     cl.strengthen(toRemoveLit);
+    cl.recalc_abst_if_needed();
     (*solver->drup) << cl << fin << findelay;
 
     runStats.litsRemStrengthen++;
@@ -658,7 +659,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         }
 
         const ClOffset offset2 = it->get_offset();
-        const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
+        Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (ps.size() > cl2.size() || cl2.getRemoved())
             continue;

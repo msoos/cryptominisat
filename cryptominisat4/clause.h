@@ -203,6 +203,7 @@ protected:
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
     uint16_t occurLinked:1;
+    uint16_t must_recalc_abst:1;
 
 
     Lit* getData()
@@ -238,12 +239,11 @@ public:
         isRed = false;
         isRemoved = false;
         is_distilled = false;
+        must_recalc_abst = true;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
         }
-
-        setChanged();
     }
 
     typedef Lit* iterator;
@@ -254,12 +254,7 @@ public:
         return mySize;
     }
 
-    void setChanged()
-    {
-        setStrenghtened();
-    }
-
-    void shrink (const uint32_t i)
+    void shrink(const uint32_t i)
     {
         assert(i <= size());
         mySize -= i;
@@ -288,11 +283,19 @@ public:
     void reCalcAbstraction()
     {
         abst = calcAbstraction(*this);
+        must_recalc_abst = false;
     }
 
     void setStrenghtened()
     {
-        abst = calcAbstraction(*this);
+        must_recalc_abst = true;
+    }
+
+    void recalc_abst_if_needed()
+    {
+        if (must_recalc_abst) {
+            reCalcAbstraction();
+        }
     }
 
     Lit& operator [] (const uint32_t i)
@@ -327,7 +330,7 @@ public:
     {
         mySize++;
         getData()[mySize-1] = p;
-        setChanged();
+        setStrenghtened();
     }
 
     const Lit* begin() const

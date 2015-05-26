@@ -139,7 +139,7 @@ void Searcher::add_lit_to_learnt(
         bump_var_activitiy(var);
         tmp_learnt_clause_size++;
         seen2[lit.toInt()] = 1;
-        tmp_learnt_clause_abst |= abst_var(lit.var());
+        //tmp_learnt_clause_abst |= abst_var(lit.var());
 
         if (varData[var].level == decisionLevel()) {
             pathC++;
@@ -563,7 +563,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             seen2[(~p).toInt()] = 0;
 
             //We MUST under-estimate
-            tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
+            //tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
         last_resolved_long_cl = add_literals_from_confl_to_learnt(confl, p);
@@ -581,7 +581,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             //Must subsume, so must be smaller
             && last_resolved_long_cl->size() > tmp_learnt_clause_size
             //Everything in learnt_cl_2 seems to be also in cl
-            && ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
+            //&& ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
             && pathC > 1
         ) {
             check_otf_subsume(confl);
@@ -668,7 +668,7 @@ Clause* Searcher::analyze_conflict(
     otf_subsuming_short_cls.clear();
     otf_subsuming_long_cls.clear();
     tmp_learnt_clause_size = 0;
-    tmp_learnt_clause_abst = 0;
+    //tmp_learnt_clause_abst = 0;
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
@@ -1357,7 +1357,7 @@ void Searcher::add_otf_subsume_long_clauses()
             assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
         }
         solver->attachClause(cl, false);
-        cl.reCalcAbstraction();
+        cl.setStrenghtened();
     }
     otf_subsuming_long_cls.clear();
 }
