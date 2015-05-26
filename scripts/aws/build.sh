@@ -4,11 +4,8 @@ set -e
 cd /home/ubuntu/cryptominisat
 echo "cd-d into cmsat"
 
-git checkout master
-echo "pulled"
-
-git pull
-echo "pulled"
+git fetch
+echo "fetched"
 
 git checkout $1
 echo "got revision $1"
