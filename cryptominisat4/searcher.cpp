@@ -1242,7 +1242,7 @@ void Searcher::check_need_restart()
 
         case restart_type_geom:
         case restart_type_luby:
-            if (params.conflictsDoneThisRestart > max_conflicts_geometric)
+            if (params.conflictsDoneThisRestart > max_conflicts_this_restart)
                 params.needToStopSearch = true;
 
             break;
@@ -2145,7 +2145,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     }
 
     setup_restart_print();
-    max_conflicts_geometric = conf.restart_first;
+    max_conflicts_this_restart = conf.restart_first;
     for(loop_num = 0
         ; !must_interrupt_asap()
           && stats.conflStats.numConflicts < max_conflicts
@@ -2177,11 +2177,11 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
         switch (params.rest_type) {
             case restart_type_geom:
-                max_conflicts_geometric *= conf.restart_inc;
+                max_conflicts_this_restart *= conf.restart_inc;
                 break;
 
             case restart_type_luby:
-                max_conflicts_geometric = luby(conf.restart_inc, loop_num);
+                max_conflicts_this_restart = luby(conf.restart_inc, loop_num);
                 break;
 
             default:

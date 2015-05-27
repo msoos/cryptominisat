@@ -181,7 +181,6 @@ class Searcher : public HyperEngine
         void save_search_loop_stats();
         bool must_abort(lbool status);
         void print_search_loop_num();
-        uint64_t max_conflicts_geometric;
         uint64_t max_conflicts;
         uint64_t loop_num;
         MiniSatRnd mtrand; ///< random number generator
@@ -772,6 +771,7 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
+        uint64_t max_conflicts_this_restart; // used by geom and luby restarts
         bool blocked_restart = false;
         void check_blocking_restart();
         bool must_consolidate_mem = false;
