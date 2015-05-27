@@ -56,7 +56,7 @@ SolverConf::SolverConf() :
         //Restarting
         , restart_first(300)
         , restart_inc(2)
-        , burst_search_len(0)
+        , burst_search_len(300)
         , restartType(restart_type_glue)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
