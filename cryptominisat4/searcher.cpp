@@ -1088,8 +1088,10 @@ lbool Searcher::search()
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
+            //TODO below is expensive
             if (((stats.conflStats.numConflicts % 5000) == 0)
                 && var_decay < conf.var_decay_max
+                && update_polarity_and_activity
             ) {
                 var_decay += 0.01;
             }
@@ -1713,7 +1715,6 @@ lbool Searcher::burst_search()
     //Set burst config
     conf.random_var_freq = 1;
     conf.polarity_mode = polarmode_rnd;
-    var_decay = 1;
 
     //Do burst
     params.clear();
@@ -1725,7 +1726,7 @@ lbool Searcher::burst_search()
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
-    var_decay = backup_var_decay;
+    assert(var_decay == backup_var_decay);
     assert(var_inc == backup_var_inc);
     update_polarity_and_activity = true;
 
