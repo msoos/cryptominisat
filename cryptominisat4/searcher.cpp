@@ -1697,11 +1697,6 @@ void Searcher::resetStats()
 lbool Searcher::burst_search()
 {
     const double myTime = cpuTime();
-    if (conf.verbosity >= 2) {
-        cout
-        << "c Doing burst search for " << conf.burst_search_len << " conflicts"
-        << endl;
-    }
     const size_t numUnitsUntilNow = stats.learntUnits;
     const size_t numBinsUntilNow = stats.learntBins;
 
