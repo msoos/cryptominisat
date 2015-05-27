@@ -725,23 +725,6 @@ class Searcher : public HyperEngine
         void add_lit_to_learnt(Lit lit);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
 
-        //////////////
-        // Conflict minimisation
-        bool litRedundant(Lit p, uint32_t abstract_levels);
-        void recursiveConfClauseMin();
-        void normalClMinim();
-        MyStack<Lit> analyze_stack;
-        //void            prune_removable(vector<Lit>& out_learnt);
-        //void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
-        //int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
-        //int             dfs_removable(Lit p, uint32_t abstract_level);
-        //void            mark_needed_removable(Lit p);
-        //int             res_removable();
-        uint32_t        abstractLevel(const Var x) const;
-        //vector<PropBy> trace_reasons; // clauses to resolve to give CC
-        //vector<Lit>     trace_lits_minim; // lits maybe used in minimization
-
-
         /////////////////
         //Graphical conflict generation
         void   create_graphviz_confl_graph     (PropBy conflPart);
@@ -768,7 +751,15 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
-        //For OTF subsumption
+        //////////////
+        // Conflict minimisation
+        bool litRedundant(Lit p, uint32_t abstract_levels);
+        void recursiveConfClauseMin();
+        void normalClMinim();
+        MyStack<Lit> analyze_stack;
+        uint32_t        abstractLevel(const Var x) const;
+
+        //For OTF subsumption during learning
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
 
