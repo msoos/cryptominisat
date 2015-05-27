@@ -578,6 +578,8 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             && conf.doOTFSubsume
             //A long clause
             && last_resolved_long_cl != NULL
+            //Good enough clause to try to minimize
+            && last_resolved_long_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue
             //Must subsume, so must be smaller
             && last_resolved_long_cl->size() > tmp_learnt_clause_size
         ) {
