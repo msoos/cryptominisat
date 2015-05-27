@@ -12,7 +12,6 @@ import time
 import pprint
 import traceback
 import subprocess
-import boto
 import Queue
 import threading
 import logging
