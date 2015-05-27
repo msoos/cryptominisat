@@ -1986,7 +1986,7 @@ void Searcher::reduce_db_if_needed()
             << " num_irred_cls_reducedb: " << num_red_cls_reducedb
             << " numConflicts : " << stats.conflStats.numConflicts
             << " SumConfl: " << sumConflicts()
-            << " maxConfls:" << max_confl_per_search_solve_call
+            << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
             << " Trail size: " << trail.size() << endl;
         }
         solver->reduceDB->reduce_db_and_update_reset_stats();
@@ -2273,7 +2273,7 @@ void Searcher::finish_up_solve(const lbool status)
         << " num_red_cls_reducedb: " << num_red_cls_reducedb
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
-        << " maxConfls:" << max_confl_per_search_solve_call
+        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
         << endl;
     }
 
