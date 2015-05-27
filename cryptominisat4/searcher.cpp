@@ -1986,7 +1986,7 @@ void Searcher::reduce_db_if_needed()
             << " num_irred_cls_reducedb: " << num_red_cls_reducedb
             << " numConflicts : " << stats.conflStats.numConflicts
             << " SumConfl: " << sumConflicts()
-            << " maxConfls:" << max_conflicts
+            << " maxConfls:" << max_confl_per_search_solve_call
             << " Trail size: " << trail.size() << endl;
         }
         solver->reduceDB->reduce_db_and_update_reset_stats();
@@ -2063,7 +2063,7 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
-    if (stats.conflStats.numConflicts >= max_conflicts) {
+    if (stats.conflStats.numConflicts >= max_confl_per_search_solve_call) {
         if (conf.verbosity >= 3) {
             cout
             << "c search over max conflicts"
@@ -2113,7 +2113,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
-    max_conflicts = _maxConfls;
+    max_confl_per_search_solve_call = _maxConfls;
     num_search_called++;
     check_no_removed_or_freed_cl_in_watch();
 
@@ -2148,7 +2148,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     max_conflicts_this_restart = conf.restart_first;
     for(loop_num = 0
         ; !must_interrupt_asap()
-          && stats.conflStats.numConflicts < max_conflicts
+          && stats.conflStats.numConflicts < max_confl_per_search_solve_call
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
@@ -2172,7 +2172,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
         lastRestartConfl = sumConflicts();
         params.clear();
-        params.conflictsToDo = max_conflicts-stats.conflStats.numConflicts;
+        params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search();
 
         switch (params.rest_type) {
@@ -2273,7 +2273,7 @@ void Searcher::finish_up_solve(const lbool status)
         << " num_red_cls_reducedb: " << num_red_cls_reducedb
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
-        << " maxConfls:" << max_conflicts
+        << " maxConfls:" << max_confl_per_search_solve_call
         << endl;
     }
 
