@@ -721,8 +721,6 @@ class Searcher : public HyperEngine
             , const Lit p
         );
         void debug_print_resolving_clause(const PropBy confl) const;
-        size_t tmp_learnt_clause_size;
-        cl_abst_type tmp_learnt_clause_abst;
 
         void add_lit_to_learnt(Lit lit);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
@@ -770,6 +768,10 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
 
     private:
+        //For OTF subsumption
+        size_t tmp_learnt_clause_size;
+        cl_abst_type tmp_learnt_clause_abst;
+
         uint64_t max_confl_per_search_solve_call;
         uint64_t max_conflicts_this_restart; // used by geom and luby restarts
         bool blocked_restart = false;
