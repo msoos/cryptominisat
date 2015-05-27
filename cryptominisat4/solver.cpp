@@ -836,13 +836,13 @@ void Solver::renumber_clauses(const vector<Var>& outerToInter)
     for(size_t i = 0; i < longIrredCls.size(); i++) {
         Clause* cl = cl_alloc.ptr(longIrredCls[i]);
         updateLitsMap(*cl, outerToInter);
-        cl->reCalcAbstraction();
+        cl->setStrenghtened();
     }
 
     for(size_t i = 0; i < longRedCls.size(); i++) {
         Clause* cl = cl_alloc.ptr(longRedCls[i]);
         updateLitsMap(*cl, outerToInter);
-        cl->reCalcAbstraction();
+        cl->setStrenghtened();
     }
 }
 

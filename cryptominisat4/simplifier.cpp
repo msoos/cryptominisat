@@ -291,6 +291,7 @@ lbool Simplifier::clean_clause(ClOffset offset)
         }
     }
     cl.shrink(i-j);
+    cl.recalc_abst_if_needed();
 
     //Update lits stat
     if (cl.red()) {
@@ -344,6 +345,7 @@ lbool Simplifier::clean_clause(ClOffset offset)
 
         default:
             cl.setStrenghtened();
+            cl.recalc_abst_if_needed();
             return l_Undef;
     }
 }
@@ -417,6 +419,8 @@ Simplifier::LinkInData Simplifier::link_in_clauses(
             (irred && !cl->red())
             || (!irred && cl->red())
         );
+        cl->recalc_abst_if_needed();
+        assert(cl->abst == calcAbstraction(*cl));
 
         if (alsoOccur
             //If irreduntant or (small enough AND link in limit not reached)
@@ -602,6 +606,7 @@ bool Simplifier::complete_clean_clause(Clause& cl)
         }
     }
     cl.shrink(i-j);
+    cl.recalc_abst_if_needed();
 
     //Drup
     if (i - j > 0) {
@@ -2804,6 +2809,8 @@ void Simplifier::linkInClause(Clause& cl)
 {
     assert(cl.size() > 3);
     ClOffset offset = solver->cl_alloc.get_offset(&cl);
+    cl.recalc_abst_if_needed();
+
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit.toInt()];
@@ -2811,7 +2818,6 @@ void Simplifier::linkInClause(Clause& cl)
 
         ws.push(Watched(offset, cl.abst));
     }
-    assert(cl.abst == calcAbstraction(cl));
     cl.set_occur_linked(true);
 }
 

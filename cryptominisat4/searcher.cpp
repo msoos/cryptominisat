@@ -580,11 +580,15 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             && last_resolved_long_cl != NULL
             //Must subsume, so must be smaller
             && last_resolved_long_cl->size() > tmp_learnt_clause_size
-            //Everything in learnt_cl_2 seems to be also in cl
-            && ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
-            && pathC > 1
         ) {
-            check_otf_subsume(confl);
+            last_resolved_long_cl->recalc_abst_if_needed();
+            //Everything in learnt_cl_2 seems to be also in cl
+            if (
+                ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
+                && pathC > 1
+            ) {
+                check_otf_subsume(confl);
+            }
         }
 
         confl = varData[p.var()].reason;
@@ -1357,7 +1361,7 @@ void Searcher::add_otf_subsume_long_clauses()
             assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
         }
         solver->attachClause(cl, false);
-        cl.reCalcAbstraction();
+        cl.setStrenghtened();
     }
     otf_subsuming_long_cls.clear();
 }
