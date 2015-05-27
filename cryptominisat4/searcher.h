@@ -408,24 +408,6 @@ class Searcher : public HyperEngine
 
         vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 
-        //OTF subsumption
-        vector<ClOffset> otf_subsuming_long_cls;
-        vector<OTFClause> otf_subsuming_short_cls;
-        void check_otf_subsume(PropBy confl);
-        void create_otf_subsuming_implicit_clause(const Clause& cl);
-        void create_otf_subsuming_long_clause(
-           Clause& cl
-            , ClOffset offset
-        );
-        Clause* add_literals_from_confl_to_learnt(
-            const PropBy confl
-            , const Lit p
-        );
-        void debug_print_resolving_clause(const PropBy confl) const;
-
-        void add_lit_to_learnt(Lit lit);
-        void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
-
         /////////////////
         //Graphical conflict generation
         void   create_graphviz_confl_graph     (PropBy conflPart);
@@ -460,18 +442,29 @@ class Searcher : public HyperEngine
         MyStack<Lit> analyze_stack;
         uint32_t        abstractLevel(const Var x) const;
 
-        //For OTF subsumption during learning
+        //OTF subsumption during learning
+        vector<ClOffset> otf_subsuming_long_cls;
+        vector<OTFClause> otf_subsuming_short_cls;
+        void check_otf_subsume(PropBy confl);
+        void create_otf_subsuming_implicit_clause(const Clause& cl);
+        void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);
+        Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p);
+        void debug_print_resolving_clause(const PropBy confl) const;
+        void add_lit_to_learnt(Lit lit);
+        void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
 
+        //Restarts
         uint64_t max_confl_per_search_solve_call;
         uint64_t max_conflicts_this_restart; // used by geom and luby restarts
         bool blocked_restart = false;
         void check_blocking_restart();
+        uint32_t num_search_called = 0;
+
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
-        uint32_t num_search_called = 0;
         void reset_reason_levels_of_vars_to_zero();
         void rearrange_clauses_watches();
         Lit find_good_blocked_lit(const Clause& c) const override;
