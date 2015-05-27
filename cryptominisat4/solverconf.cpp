@@ -106,7 +106,6 @@ SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (true)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
-        , doOTFGateShorten (true)
         , rewardShortenedClauseWithConfl(3)
 
         //SQL

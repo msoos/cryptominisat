@@ -209,7 +209,6 @@ class SolverConf
         int       otfHyperbin;
         int       doOTFSubsume;
         int       doOTFSubsumeOnlyAtOrBelowGlue;
-        int       doOTFGateShorten; ///<Shorten redundant clauses on the fly with gates
         int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
 
         //SQL
