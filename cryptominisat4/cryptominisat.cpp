@@ -118,9 +118,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 2: {
             conf.shortTermHistorySize = 80;
+            conf.never_stop_search = true;
             //conf.clauseCleaningType = CMSat::clean_glue_based;
-            conf.restartType = CMSat::restart_type_glue;
-            conf.increaseClean = 1.08;
+            //conf.restartType = CMSat::restart_type_glue;
+            //conf.increaseClean = 1.08;
             //conf.ratioRemoveClauses = 0.55;
             break;
         }
