@@ -377,6 +377,13 @@ def file_exists(fname):
     except IOError:
         return False
 
+
+def print_version():
+    command = options.solver + " --version"
+    p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    consoleOutput, err = p.communicate()
+    print "Version values:", consoleOutput.strip()
+
 fuzzers = [
     ["../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"],
     ["../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"],
@@ -896,6 +903,7 @@ class Tester:
             if fnmatch.fnmatch(fname, '*.cnf.gz'):
                 self.check(fname=options.testDir + fname, newVar=False)
 
+print_version()
 tester = Tester()
 
 if options.checkFile:
