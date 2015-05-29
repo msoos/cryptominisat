@@ -172,7 +172,6 @@ set(CMS_FULL_VERSION "4.1.99")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
-SetVersionNumber("CPACK_PACKAGE" ${CMS_FULL_VERSION_LIST})
 MESSAGE(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
 MESSAGE(STATUS "PROJECT_VERSION_MAJOR: ${PROJECT_VERSION_MAJOR}")
 MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
@@ -411,42 +410,4 @@ install(FILES
 install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
     "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
 )
-
-
-# -----------------------------------------------------------------------------
-# CPack
-# -----------------------------------------------------------------------------
-
-set(CPACK_SOURCE_GENERATOR "TBZ2")
-string(TOLOWER "${CMAKE_PROJECT_NAME}" LOWERCASE_PROJECT_NAME)
-set(CPACK_SOURCE_PACKAGE_FILE_NAME
-    "${LOWERCASE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-src")
-
-file(GLOB SourceIgnoreFiles "${CMAKE_SOURCE_DIR}/*")
-set(SourceKeepFiles
-  "${CMAKE_SOURCE_DIR}/cmake"
-  "${CMAKE_SOURCE_DIR}/cryptominisat4"
-  "${CMAKE_SOURCE_DIR}/python"
-  "${CMAKE_SOURCE_DIR}/tests"
-#   "${CMAKE_SOURCE_DIR}/web/*.php"
-#   "${CMAKE_SOURCE_DIR}/web/*.js"
-#   "${CMAKE_SOURCE_DIR}/web/*.css"
-#   "${CMAKE_SOURCE_DIR}/web/drawgraphs.js"
-#   "${CMAKE_SOURCE_DIR}/web/jquery/jquery.js"
-#   "${CMAKE_SOURCE_DIR}/web/dygraphs/dygraphs-combined.js"
-
-  "${CMAKE_SOURCE_DIR}/AUTHORS"
-  "${CMAKE_SOURCE_DIR}/CMakeLists.txt"
-  "${CMAKE_SOURCE_DIR}/LICENSE-LGPL"
-  "${CMAKE_SOURCE_DIR}/README.markdown"
-  "${CMAKE_SOURCE_DIR}/cryptominisat4Config.cmake.in"
-  "${CMAKE_SOURCE_DIR}/STPConfigVersion.cmake.in"
-)
-list(REMOVE_ITEM SourceIgnoreFiles ${SourceKeepFiles})
-# Escape any '.' characters
-string(REPLACE "." "\\\\." SourceIgnoreFiles "${SourceIgnoreFiles}")
-set(CPACK_SOURCE_IGNORE_FILES "${SourceIgnoreFiles}")
-include(CPack)
-
-add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
