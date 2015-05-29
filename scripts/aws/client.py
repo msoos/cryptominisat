@@ -299,50 +299,57 @@ class solverThread (threading.Thread):
                          pprint.pformat(self.indata, indent=4).replace("\n", " || "),
                          extra=self.logextra)
             options.noshutdown |= self.indata["noshutdown"]
+
+            # handle 'finish'
             if self.indata["command"] == "finish":
                 logging.warn("Client received that there is nothing more"
                              " to solve, exiting this thread",
                              extra=self.logextra)
                 return
 
+            # handle 'solve'
             assert self.indata["command"] == "solve"
             returncode, executed = self.execute()
             if not options.noaws:
                 self.copy_solution_to_s3()
 
-            logging.info("Trying to send to server that we are done",
-                         extra=self.logextra)
-            fail_connect = 0
-            while True:
-                if fail_connect > 5:
-                    logging.error("Too many errors connecting to server to"
-                                  " send results. Shutting down",
-                                  extra=self.logextra)
-                    shutdown(-1)
-                try:
-                    sock = connect_client(self.threadID)
-                    break
-                except:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+            self.send_back_that_we_solved(returncode)
 
-                    logging.warn("Problem, waiting and re-connecting."
-                                 " Trace: %s", the_trace,
-                                 extra=self.logextra)
-                    time.sleep(random.randint(0, 5) / 10.0)
-                    fail_connect += 1
+    def send_back_that_we_solved(self, returncode):
+        logging.info("Trying to send to server that we are done",
+                     extra=self.logextra)
+        fail_connect = 0
+        while True:
+            if fail_connect > 5:
+                logging.error("Too many errors connecting to server to"
+                              " send results. Shutting down",
+                              extra=self.logextra)
+                shutdown(-1)
+            try:
+                sock = connect_client(self.threadID)
+                break
+            except:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
 
-            tosend = {}
-            tosend["command"] = "done"
-            tosend["file_num"] = self.indata["file_num"]
-            tosend["returncode"] = returncode
+                logging.warn("Problem, waiting and re-connecting."
+                             " Trace: %s", the_trace,
+                             extra=self.logextra)
+                time.sleep(random.randint(0, 5) / 10.0)
+                fail_connect += 1
 
-            tosend = pickle.dumps(tosend)
-            tosend = struct.pack('!q', len(tosend)) + tosend
-            sock.sendall(tosend)
-            towrite = "Sent that we finished %s with retcode %d" % (
-                self.indata["file_num"], returncode)
-            sock.close()
+        tosend = {}
+        tosend["command"] = "done"
+        tosend["file_num"] = self.indata["file_num"]
+        tosend["returncode"] = returncode
+
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('!q', len(tosend)) + tosend
+        sock.sendall(tosend)
+        towrite = "Sent that we finished %s with retcode %d" % (
+            self.indata["file_num"], returncode)
+
+        sock.close()
 
     def run(self):
         logging.info("Starting thread", extra=self.logextra)
@@ -361,6 +368,29 @@ class solverThread (threading.Thread):
                           extra=self.logextra)
             shutdown(-1)
             raise
+
+
+def build_cryptominisat(indata):
+    ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
+                    (options.base_dir, indata["git_rev"],
+                     options.num_threads, options.base_dir))
+    global s3_folder
+    s3_folder = get_s3_folder(indata["s3_folder"],
+                              indata["git_rev"],
+                              indata["timeout_in_secs"],
+                              indata["mem_limit_in_mb"]
+                              )
+    global s3_bucket
+    s3_bucket = indata["s3_bucket"]
+    upload_log(s3_bucket,
+               s3_folder,
+               "%s/build.log" % options.base_dir,
+               "cli-build-%s.txt" % get_ip_address("eth0"))
+    if ret != 0:
+        logging.error("Error building cryptominisat, shutting down!",
+                      extra={"threadid": -1}
+                      )
+        shutdown(-1)
 
 
 def build_system():
@@ -382,28 +412,8 @@ def build_system():
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
-        # only build if the solver is cryptominisat
         if "cryptominisat" in indata["solver"]:
-            ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
-                            (options.base_dir, indata["git_rev"],
-                             options.num_threads, options.base_dir))
-            global s3_folder
-            s3_folder = get_s3_folder(indata["s3_folder"],
-                                      indata["git_rev"],
-                                      indata["timeout_in_secs"],
-                                      indata["mem_limit_in_mb"]
-                                      )
-            global s3_bucket
-            s3_bucket = indata["s3_bucket"]
-            upload_log(s3_bucket,
-                       s3_folder,
-                       "%s/build.log" % options.base_dir,
-                       "cli-build-%s.txt" % get_ip_address("eth0"))
-            if ret != 0:
-                logging.error("Error building cryptominisat, shutting down!",
-                              extra={"threadid": -1}
-                              )
-                shutdown(-1)
+            build_cryptominisat(indata)
 
         built_system = True
 
