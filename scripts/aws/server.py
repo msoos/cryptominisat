@@ -285,7 +285,7 @@ class Server (threading.Thread):
             tosend = pickle.dumps(tosend)
             tosend = struct.pack('!q', len(tosend)) + tosend
 
-            logging.warn("No more to solve, sending termination to %s",
+            logging.info("No more to solve, sending termination to %s",
                          cli_addr)
             connection.sendall(tosend)
             global last_termination_sent
