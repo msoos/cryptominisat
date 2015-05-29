@@ -183,9 +183,6 @@ class solverThread (threading.Thread):
             self.indata["cnf_filename"]
         )
 
-    def solver_fname(self):
-        return "%s" % (self.indata["solver"])
-
     def get_stdout_fname(self):
         return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
 
