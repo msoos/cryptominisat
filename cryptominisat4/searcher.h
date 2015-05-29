@@ -360,8 +360,6 @@ class Searcher : public HyperEngine
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
         Lit   pickBranchLit();
-        lbool otf_hyper_prop_first_dec_level(bool& must_continue);
-        void  hyper_bin_update_cache(vector<Lit>& to_enqueue_toplevel);
 
         ///////////////
         // Conflicting
