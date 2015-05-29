@@ -534,12 +534,17 @@ void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 
 const char* SATSolver::get_version_sha1()
 {
-    return Solver::getVersionSHA1();
+    return Solver::get_version_sha1();
 }
 
 const char* SATSolver::get_version()
 {
-    return Solver::getVersionTag();
+    return Solver::get_version_tag();
+}
+
+const char* SATSolver::get_compilation_env()
+{
+    return Solver::get_compilation_env();
 }
 
 void SATSolver::print_stats() const

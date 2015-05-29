@@ -55,6 +55,7 @@
 #include "clausedumper.h"
 #include "sccfinder.h"
 #include "intree.h"
+#include "GitSHA1.h"
 
 using namespace CMSat;
 using std::cout;
@@ -2894,24 +2895,20 @@ void Solver::check_stats(const bool allowFreed) const
     }
 }
 
-const char* Solver::getVersionSHA1()
+const char* Solver::get_version_sha1()
 {
-    #ifdef _MSC_VER
-    return "MSVC-compiled, without GIT";
-    #else
-    return get_git_version_sha1();
-    #endif
+    return ::get_version_sha1();
 }
 
-const char* Solver::getVersionTag()
+const char* Solver::get_version_tag()
 {
-    #ifdef _MSC_VER
-    return "MSVC-compiled, without GIT";
-    #else
-    return get_git_version_tag();
-    #endif
+    return ::get_version_tag();
 }
 
+const char* Solver::get_compilation_env()
+{
+    return ::get_compilation_env();
+}
 
 void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 {

@@ -53,6 +53,8 @@ namespace CMSat {
 
         static const char* get_version();
         static const char* get_version_sha1();
+        static const char* get_compilation_env();
+
         void print_stats() const;
         void set_drup(std::ostream* os);
         void interrupt_asap();

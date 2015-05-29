@@ -31,7 +31,6 @@
 #include "implcache.h"
 #include "propengine.h"
 #include "searcher.h"
-#include "GitSHA1.h"
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
 
@@ -100,8 +99,10 @@ class Solver : public Searcher
             uint64_t numSimplify = 0;
             uint32_t num_solve_calls = 0;
         };
-        static const char* getVersionTag();
-        static const char* getVersionSHA1();
+        static const char* get_version_tag();
+        static const char* get_version_sha1();
+        static const char* get_compilation_env();
+
         vector<Lit> get_zero_assigned_lits() const;
         void     print_stats() const;
         void     print_clause_stats() const;
