@@ -1055,7 +1055,7 @@ int Main::solve()
     if (conf.verbosity >= 1) {
         printVersionInfo();
         cout
-        << "c Executed with command line:"
+        << "c Executed with command line: "
         << commandLine
         << endl;
     }
