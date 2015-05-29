@@ -15,6 +15,7 @@ import subprocess
 import Queue
 import threading
 import logging
+import string
 
 #for importing in systems where "." is not in the PATH
 import glob
@@ -132,9 +133,13 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 # parse options
 (options, args) = parser.parse_args()
 
+
+def rnd_id():
+    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+
 options.logfile_name = options.base_dir + options.logfile_name
 options.s3_folder += "-" + time.strftime("%d-%B-%Y")
-options.s3_folder += "-mark-%d" % int(random.randint(0, 1000))
+options.s3_folder += "-mark-%s" % rnd_id()
 
 
 def get_revision():
