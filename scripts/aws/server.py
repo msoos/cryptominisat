@@ -31,10 +31,6 @@ def set_up_logging():
 
     logformatter = logging.Formatter(form)
 
-    consoleHandler = logging.StreamHandler()
-    consoleHandler.setFormatter(logformatter)
-    logging.getLogger().addHandler(consoleHandler)
-
     try:
         os.unlink(options.logfile_name)
     except:
