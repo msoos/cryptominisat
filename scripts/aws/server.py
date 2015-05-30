@@ -96,6 +96,14 @@ parser.add_option("--solver",
                   "[default: %default]",
                   type=str
                   )
+# other possibilities:
+#
+# lingeling/binary/lingeling  (it's ayv)
+# swdia5by/build/swdia5by
+## glueminisat/build/glueminisat (it's glueminisat-2.2.8-build120)
+
+# NOTE: it's a ubuntu 14.04 on AWS, with sqlite3 fully installed
+
 
 parser.add_option("--s3bucket", default="msoos-solve-results",
                   dest="s3_bucket", help="S3 Bucket to upload finished data"
