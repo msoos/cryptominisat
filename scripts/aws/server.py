@@ -143,7 +143,7 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 
 
 def rnd_id():
-    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
 options.logfile_name = options.base_dir + options.logfile_name
 options.s3_folder += "-" + time.strftime("%d-%B-%Y")
