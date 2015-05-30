@@ -2,6 +2,7 @@
 #define __FEATURES_FAST_H__
 
 #include <vector>
+#include <limits>
 using std::vector;
 
 namespace CMSat {
@@ -48,19 +49,33 @@ private:
     double eps = 0.00001;
     double vcg_var_mean = 0;
     double vcg_var_std = 0;
-    double vcg_var_min, vcg_var_max, vcg_var_spread;
+    double vcg_var_min = std::numeric_limits<double>().max();
+    double vcg_var_max = std::numeric_limits<double>().min();
+    double vcg_var_spread;
+
     double vcg_cls_mean = 0;
     double vcg_cls_std = 0;
-    double vcg_cls_min, vcg_cls_max, vcg_cls_spread;
+    double vcg_cls_min = std::numeric_limits<double>().max();
+    double vcg_cls_max = std::numeric_limits<double>().min();
+    double vcg_cls_spread;
+
     double pnr_var_mean = 0;
     double pnr_var_std = 0;
-    double pnr_var_min, pnr_var_max, pnr_var_spread;
+    double pnr_var_min = std::numeric_limits<double>().max();
+    double pnr_var_max = std::numeric_limits<double>().min();
+    double pnr_var_spread;
+
     double pnr_cls_mean = 0;
     double pnr_cls_std = 0;
-    double pnr_cls_min, pnr_cls_max, pnr_cls_spread;
+    double pnr_cls_min = std::numeric_limits<double>().max();
+    double pnr_cls_max = std::numeric_limits<double>().min();
+    double pnr_cls_spread;
+
     double horn_mean = 0;
     double horn_std = 0;
-    double horn_min, horn_max, horn_spread;
+    double horn_min = std::numeric_limits<double>().max();
+    double horn_max = std::numeric_limits<double>().min();
+    double horn_spread;
 };
 
 } //end namespace
