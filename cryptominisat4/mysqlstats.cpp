@@ -188,7 +188,7 @@ bool MySQLStats::tryIDInSQL(const Solver* solver)
     ss
     << "INSERT INTO solverRun (runID, version, time) values ("
     << runID
-    << ", \"" << Solver::getVersionSHA1() << "\""
+    << ", \"" << Solver::get_version_sha1() << "\""
     << ", " << time(NULL)
     << ");";
 
