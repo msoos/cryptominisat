@@ -3404,7 +3404,7 @@ void Solver::calculate_features() const
     FeatureExtract extract(this);
     extract.fill_vars_cls();
     extract.extract();
-    if (conf.verbosity >= 0) {
+    if (conf.verbosity >= 1) {
         extract.print_stats();
     }
 }
