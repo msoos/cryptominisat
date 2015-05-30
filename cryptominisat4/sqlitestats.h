@@ -70,7 +70,9 @@ public:
 
 private:
 
-    bool connectServer(const std::string& sqlite_filename);
+    bool connectServer(const std::string& sqlite_filename
+        , const int verbosity
+    );
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
     void add_tags(const Solver* solver);

@@ -74,7 +74,7 @@ SQLiteStats::~SQLiteStats()
 
 bool SQLiteStats::setup(const Solver* solver)
 {
-    setup_ok = connectServer(solver->conf.sqlite_filename);
+    setup_ok = connectServer(solver->conf.sqlite_filename, solver->conf.verbosity);
     if (!setup_ok) {
         return false;
     }
@@ -90,7 +90,9 @@ bool SQLiteStats::setup(const Solver* solver)
     return true;
 }
 
-bool SQLiteStats::connectServer(const std::string& sqlite_filename)
+bool SQLiteStats::connectServer(const std::string& sqlite_filename
+    , const int verbosity
+)
 {
     int rc = sqlite3_open(sqlite_filename.c_str(), &db);
     if(rc) {
@@ -102,6 +104,10 @@ bool SQLiteStats::connectServer(const std::string& sqlite_filename)
     if (sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL)) {
         cerr << "Problem setting pragma to SQLite DB" << endl;
         std::exit(-1);
+    }
+
+    if (verbosity >= 1) {
+        cout << "c writing to SQLite file: " << sqlite_filename << endl;
     }
 
     return true;
