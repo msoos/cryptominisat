@@ -55,6 +55,7 @@
 #include "clausedumper.h"
 #include "sccfinder.h"
 #include "intree.h"
+#include "features_fast.h"
 #include "GitSHA1.h"
 
 using namespace CMSat;
@@ -1811,6 +1812,11 @@ end:
         clear_clauses_stats();
     }
 
+    calculate_features();
+    if (conf.reconfigure_val != 0 && solveStats.numSimplify == 2) {
+        reconfigure(conf.reconfigure_val);
+    }
+
     solveStats.numSimplify++;
 
     if (!ok) {
@@ -1818,6 +1824,7 @@ end:
     } else {
         check_stats();
         check_implicit_propagated();
+
         return l_Undef;
     }
 }
@@ -2675,25 +2682,29 @@ void Solver::check_wrong_attach() const
     }
 }
 
-size_t Solver::get_num_free_vars() const
+size_t Solver::get_num_nonfree_vars() const
 {
-    uint32_t freeVars = nVarsOuter();
+    size_t nonfree = 0;
     if (decisionLevel() == 0) {
-        freeVars -= trail.size();
+        nonfree += trail.size();
     } else {
-        freeVars -= trail_lim[0];
+        nonfree += trail_lim[0];
     }
 
     if (conf.perform_occur_based_simp) {
-        freeVars -= simplifier->get_num_elimed_vars();
+        nonfree += simplifier->get_num_elimed_vars();
     }
-    freeVars -= varReplacer->get_num_replaced_vars();
+    nonfree += varReplacer->get_num_replaced_vars();
 
     if (compHandler) {
-        freeVars -= compHandler->get_num_vars_removed();
+        nonfree += compHandler->get_num_vars_removed();
     }
+    return nonfree;
+}
 
-    return freeVars;
+size_t Solver::get_num_free_vars() const
+{
+    return nVarsOuter() - get_num_nonfree_vars();
 }
 
 void Solver::print_clause_stats() const
@@ -3386,4 +3397,101 @@ Var Solver::num_active_vars() const
     assert(numActive == get_num_free_vars());
 
     return numActive;
+}
+
+void Solver::calculate_features() const
+{
+    FeatureExtract extract(this);
+    extract.fill_vars_cls();
+    extract.extract();
+    if (conf.verbosity >= 0) {
+        extract.print_stats();
+    }
+}
+
+void Solver::reconfigure(int val)
+{
+    switch (val) {
+        case 1: {
+            break;
+        }
+        case 2: {
+            //2) --presimp 1 --probemaxm 2000 --eratio 0.08 --gates 0 --viviflongmaxm 80
+            conf.probe_bogoprops_time_limitM = 2000;
+            conf.varElimRatioPerIter = 0.08;
+            conf.doGateFind = false;
+            conf.glue_must_keep_clause_if_below_or_eq = 3;
+            break;
+        }
+
+        case 3: {
+            //3) --probemaxm 2500 --eratio 0.25 --gates 0 --viviffastmaxm 800
+            conf.probe_bogoprops_time_limitM = 2500;
+            conf.varElimRatioPerIter = 0.25;
+            conf.doGateFind = 0;
+            conf.watch_cache_stamp_based_str_time_limitM = 800;
+            conf.shortTermHistorySize = 80;
+            hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
+            break;
+        }
+
+        case 4: {
+            //4) --presimp 1 --probemaxm 1100 --viviffastmaxm 200
+            conf.probe_bogoprops_time_limitM = 1100;
+            conf.watch_cache_stamp_based_str_time_limitM = 200;
+            conf.blocking_restart_trail_hist_length = 3000;
+            hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
+            conf.propBinFirst = 1;
+            break;
+        }
+
+        case 7: {
+            //7) --gates 0 --moreminimbin 50 --moreminimcache 100 --eratio 0.25 --probemaxm 1100
+            conf.restartType = CMSat::restart_type_geom;
+            break;
+        }
+
+        case 8: {
+            //8) --eratio 0.08 --probemaxm 1100 --gates 0
+            conf.varElimRatioPerIter = 0.08;
+            conf.probe_bogoprops_time_limitM = 1100;
+            conf.doGateFind = 0;
+            break;
+        }
+
+        case 11: {
+            conf.propBinFirst= 1;
+            break;
+        }
+
+        case 12: {
+            conf.ratio_keep_clauses[CMSat::clean_sum_activity_based] = 0.3;
+            conf.ratio_keep_clauses[CMSat::clean_size_based] = 0.2;
+            break;
+        }
+
+        case 13: {
+            conf.increaseClean = 1.5;
+            break;
+        }
+
+        case 14: {
+            conf.varElimRatioPerIter = 1;
+            conf.restartType = CMSat::restart_type_agility;
+            break;
+        }
+
+        default: {
+            cout << "ERROR: You must give a value for reconfigure between 1...10" << endl;
+            exit(-1);
+        }
+    }
+    cout << "[feat-reconf] reconfigured solver to config " << val << endl;
+
+    /*Note to self: change
+     * propBinFirst 0->1
+     * increaseClean 1.1 -> 1.3
+     * numCleanBetweenSimplify 2->4
+     * bva: 1->0
+    */
 }

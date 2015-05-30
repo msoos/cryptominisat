@@ -244,6 +244,7 @@ SolverConf::SolverConf() :
         , origSeed(0)
         , sync_every_confl(6000)
         , clean_after_perc_zero_depth_assigns(0.015)
+        , reconfigure_val(0)
 {
 
     ratio_keep_clauses[clean_glue_based] = 0;

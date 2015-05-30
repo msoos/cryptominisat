@@ -106,7 +106,8 @@ class Solver : public Searcher
         vector<Lit> get_zero_assigned_lits() const;
         void     print_stats() const;
         void     print_clause_stats() const;
-        size_t   get_num_free_vars() const;
+        size_t get_num_free_vars() const;
+        size_t get_num_nonfree_vars() const;
         const SolverConf& getConf() const;
         void setConf(SolverConf conf);
         const vector<std::pair<string, string> >& get_tags() const;
@@ -230,6 +231,8 @@ class Solver : public Searcher
         void parse_sql_option();
         void dump_memory_stats_to_sql();
         uint64_t mem_used_vardata() const;
+        void calculate_features() const;
+        void reconfigure(int val);
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl);

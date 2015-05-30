@@ -43,6 +43,7 @@ set(cryptoms_lib_files
     bva.cpp
     intree.cpp
     sql_tablestructure.cpp
+    features_fast.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
