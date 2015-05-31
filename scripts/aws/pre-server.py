@@ -6,7 +6,7 @@ import os
 
 todo = boto.utils.get_instance_userdata()
 if todo == "":
-    return
+    exit(0)
 
 command = "nohup /home/ubuntu/cryptominisat/scripts/aws/server.py %s &" % todo
 os.system(command)
