@@ -141,9 +141,9 @@ SolverConf::SolverConf() :
         , velim_resolvent_too_large(20)
 
         //Subs, str limits for simplifier
-        , subsumption_time_limitM(300)
-        , strengthening_time_limitM(300)
-        , aggressive_elim_time_limitM(300)
+        , subsumption_time_limitM(200)
+        , strengthening_time_limitM(200)
+        , aggressive_elim_time_limitM(200)
 
         //Bounded variable addition
         , do_bva(true)
@@ -237,7 +237,7 @@ SolverConf::SolverConf() :
         , remove_cl_with_gates_time_limitM(100)
 
         //Misc
-        , orig_global_timeout_multiplier(1.0)
+        , orig_global_timeout_multiplier(0.8)
         , global_timeout_multiplier(1.0)
         , global_timeout_multiplier_multiplier(1.2)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
