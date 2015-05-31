@@ -117,22 +117,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.shortTermHistorySize = 80;
-            conf.never_stop_search = true;
-            //conf.clauseCleaningType = CMSat::clean_glue_based;
-            //conf.restartType = CMSat::restart_type_glue;
-            //conf.increaseClean = 1.08;
-            //conf.ratioRemoveClauses = 0.55;
+            conf.max_temporary_learnt_clauses = 10000;
             break;
         }
         case 3: {
-            conf.doVarElim = 0;
-            conf.doGateFind = 0;
-            conf.more_red_minim_limit_cache = 400;
-            conf.more_red_minim_limit_binary = 200;
-            conf.probe_bogoprops_time_limitM = 3500;
-            conf.restartType = CMSat::restart_type_agility;
-            //conf.ratioRemoveClauses = 0.6;
+            conf.restartType = CMSat::restart_type_luby;
             break;
         }
         case 4: {
