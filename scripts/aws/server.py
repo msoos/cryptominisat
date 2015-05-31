@@ -441,7 +441,7 @@ server.setDaemon(True)
 listener.start()
 server.start()
 
-if not options.noaws and False:
+if not options.noaws:
     #create spot instance requests
     spot_create = requester.SpotRequestor()
     spot_create.create_spots()
