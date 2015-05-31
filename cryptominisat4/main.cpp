@@ -275,6 +275,9 @@ void Main::add_supported_options()
         , "Run with sat competition-tuned defaults")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
+    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
+        , "Reconfigure after some time to this solver conf"
+    )
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -333,6 +336,8 @@ void Main::add_supported_options()
         , "Clean increment cleaning by this factor for next cleaning")
     ("maxredratio", po::value(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
+    ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
+        , "Maximum number of temporary clauses of high glue")
     ;
 
     std::ostringstream s_random_var_freq;

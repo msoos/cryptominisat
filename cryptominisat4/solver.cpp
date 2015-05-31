@@ -3411,72 +3411,45 @@ void Solver::calculate_features() const
 
 void Solver::reconfigure(int val)
 {
+    assert(val > 0);
     switch (val) {
         case 1: {
+            conf.max_temporary_learnt_clauses = 30000;
             break;
         }
+
         case 2: {
-            //2) --presimp 1 --probemaxm 2000 --eratio 0.08 --gates 0 --viviflongmaxm 80
-            conf.probe_bogoprops_time_limitM = 2000;
-            conf.varElimRatioPerIter = 0.08;
-            conf.doGateFind = false;
-            conf.glue_must_keep_clause_if_below_or_eq = 3;
+            conf.glue_must_keep_clause_if_below_or_eq = 4;
             break;
         }
 
         case 3: {
-            //3) --probemaxm 2500 --eratio 0.25 --gates 0 --viviffastmaxm 800
-            conf.probe_bogoprops_time_limitM = 2500;
-            conf.varElimRatioPerIter = 0.25;
+            conf.varElimRatioPerIter = 0.35;
             conf.doGateFind = 0;
-            conf.watch_cache_stamp_based_str_time_limitM = 800;
+
             conf.shortTermHistorySize = 80;
             hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
             break;
         }
 
         case 4: {
-            //4) --presimp 1 --probemaxm 1100 --viviffastmaxm 200
-            conf.probe_bogoprops_time_limitM = 1100;
-            conf.watch_cache_stamp_based_str_time_limitM = 200;
-            conf.blocking_restart_trail_hist_length = 3000;
-            hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
-            conf.propBinFirst = 1;
+            conf.restartType = CMSat::restart_type_luby;
             break;
         }
 
-        case 7: {
-            //7) --gates 0 --moreminimbin 50 --moreminimcache 100 --eratio 0.25 --probemaxm 1100
-            conf.restartType = CMSat::restart_type_geom;
-            break;
-        }
-
-        case 8: {
-            //8) --eratio 0.08 --probemaxm 1100 --gates 0
-            conf.varElimRatioPerIter = 0.08;
-            conf.probe_bogoprops_time_limitM = 1100;
-            conf.doGateFind = 0;
-            break;
-        }
-
-        case 11: {
-            conf.propBinFirst= 1;
-            break;
-        }
-
-        case 12: {
+        case 5: {
             conf.ratio_keep_clauses[CMSat::clean_sum_activity_based] = 0.3;
             conf.ratio_keep_clauses[CMSat::clean_size_based] = 0.2;
             break;
         }
 
-        case 13: {
+        case 6: {
+            //TODO disable termporary clause db and use increaseClean
             conf.increaseClean = 1.5;
             break;
         }
 
-        case 14: {
-            conf.varElimRatioPerIter = 1;
+        case 7: {
             conf.restartType = CMSat::restart_type_agility;
             break;
         }
@@ -3486,7 +3459,7 @@ void Solver::reconfigure(int val)
             exit(-1);
         }
     }
-    cout << "[feat-reconf] reconfigured solver to config " << val << endl;
+    cout << "c [features] reconfigured solver to config " << val << endl;
 
     /*Note to self: change
      * propBinFirst 0->1
