@@ -3,10 +3,13 @@
 
 import boto
 import sys
+import ConfigParser
+import os
+import socket
+import pprint
 import boto.ec2
 from boto.ec2.connection import EC2Connection
-import ConfigParser, os, socket
-import pprint
+from common_aws import *
 
 
 class SpotRequestor:
@@ -34,7 +37,7 @@ class SpotRequestor:
                 subnet_id = self.conf.get('ec2', 'subnet_id'),
                 instance_type = self.conf.get('ec2', 'type'),
                 instance_profile_arn = self.conf.get('ec2', 'instance_profile_arn'),
-                user_data = user_data,
+                user_data = get_ip_address("eth0"),
                 key_name = self.conf.get('ec2', 'key_name'),
                 security_group_ids = [self.conf.get('ec2', 'security_group')])
 

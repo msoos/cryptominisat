@@ -20,6 +20,7 @@ import socket
 import fcntl
 import struct
 import logging
+import boto.utils
 
 #for importing in systems where "." is not in the PATH
 import glob
@@ -47,9 +48,9 @@ parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Be more verbose"
                   )
 
-parser.add_option("--host", dest="host", default="172.30.0.208",
+parser.add_option("--host", dest="host",
                   help="Host to connect to as a client"
-                  " [default: %default]",
+                  " [default: IP of eth0]",
                   )
 parser.add_option("--port", "-p", default=10000, dest="port",
                   type="int", help="Port to use"
@@ -89,6 +90,9 @@ parser.add_option("--logfile", dest="logfile_name", type=str,
 
 exitapp = False
 options.logfile_name = options.base_dir + options.logfile_name
+
+if options.host is None:
+    options.host = boto.utils.get_instance_userdata()
 
 
 def uptime():
