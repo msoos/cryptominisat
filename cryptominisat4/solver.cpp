@@ -3419,7 +3419,7 @@ void Solver::reconfigure(int val)
         }
 
         case 2: {
-            conf.glue_must_keep_clause_if_below_or_eq = 4;
+            conf.restartType = CMSat::restart_type_luby;
             break;
         }
 
@@ -3433,7 +3433,7 @@ void Solver::reconfigure(int val)
         }
 
         case 4: {
-            conf.restartType = CMSat::restart_type_luby;
+            conf.glue_must_keep_clause_if_below_or_eq = 4;
             break;
         }
 
