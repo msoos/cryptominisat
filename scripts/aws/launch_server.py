@@ -16,6 +16,6 @@ conn.run_instances(
         key_name='controlkey',
         instance_type='t1.micro',
         security_groups=['sg-507b3f35'],
-        instance_initiated_shutdown_behaviour = 'terminate',
+        instance_initiated_shutdown_behavior = 'terminate',
         instance_profile_arn = 'arn:aws:iam::907572138573:instance-profile/server',
         user_data=data)
