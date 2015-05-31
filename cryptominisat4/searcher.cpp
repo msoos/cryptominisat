@@ -2090,7 +2090,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
                 break;
 
             case restart_type_luby:
-                max_conflicts_this_restart = luby(conf.restart_inc, loop_num);
+                max_conflicts_this_restart = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
                 break;
 
             default:

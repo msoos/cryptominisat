@@ -3419,6 +3419,8 @@ void Solver::reconfigure(int val)
         }
 
         case 2: {
+            conf.restart_inc = 1.5;
+            conf.restart_first = 100;
             conf.restartType = CMSat::restart_type_luby;
             break;
         }
