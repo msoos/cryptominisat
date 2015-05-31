@@ -246,7 +246,11 @@ class solverThread (threading.Thread):
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
-        global s3_folder
+        s3_folder = get_s3_folder(self.indata["s3_folder"],
+                                  self.indata["git_rev"],
+                                  self.indata["timeout_in_secs"],
+                                  self.indata["mem_limit_in_mb"])
+
         fname_with_stdout_ending = self.indata[
             "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
         k.key = s3_folder + "/" + fname_with_stdout_ending
