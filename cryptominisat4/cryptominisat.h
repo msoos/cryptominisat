@@ -48,9 +48,13 @@ namespace CMSat {
         unsigned long get_sql_id() const;
         bool okay() const;
         void log_to_file(std::string filename);
+
+        //Setup
         void set_max_confl(int64_t max_confl = -1);
         void set_verbosity(unsigned verbosity = 0);
+        void set_default_polarity(bool polarity);
 
+        //Get info
         static const char* get_version();
         static const char* get_version_sha1();
         static const char* get_compilation_env();
