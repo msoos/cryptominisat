@@ -4,7 +4,7 @@
 import sys
 import boto.ec2
 
-if sys.argc > 1:
+if len(sys.argv) > 1:
     print "Launching with data: %s" % sys.argv[1]
 else:
     print "Launching without any parameters"
