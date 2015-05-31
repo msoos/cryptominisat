@@ -399,7 +399,8 @@ class Listener (threading.Thread):
             the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
             logging.error("Cannot listen on stocket! Traceback: %s", the_trace)
             failed = True
-            return
+            exit(1)
+            raise
         while True:
             self.handle_one_connection()
 
