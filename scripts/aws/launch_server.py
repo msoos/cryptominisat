@@ -4,8 +4,9 @@
 import sys
 import boto.ec2
 
+data = " ".join(sys.argv[1:])
 if len(sys.argv) > 1:
-    print "Launching with data: %s" % sys.argv[1]
+    print "Launching with data: '%s'" % data
 else:
     print "Launching without any parameters"
 
@@ -17,4 +18,4 @@ conn.run_instances(
         security_groups=['sg-507b3f35'],
         instance_initiated_shutdown_behaviour = 'terminate',
         instance_profile_arn = 'arn:aws:iam::907572138573:instance-profile/server',
-        user_data=sys.argv[1])
+        user_data=data)
