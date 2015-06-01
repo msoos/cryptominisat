@@ -442,7 +442,6 @@ class Tester:
         cmd += "--clearstat %s " % random.randint(0, 1)
         cmd += "--cacheformoreminim %d " % random.choice([0, 1, 1, 1, 1])
         cmd += "--stampformoreminim %d " % random.choice([0, 1, 1, 1, 1])
-        cmd += "--startclean %s " % random.randint(100, 16000)
         cmd += "--maxredratio %s " % random.randint(2, 20)
         cmd += "--dompickf %s " % random.randint(1, 20)
         cmd += "--alwaysmoremin %s " % random.randint(0, 1)
