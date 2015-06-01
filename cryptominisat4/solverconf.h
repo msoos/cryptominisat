@@ -140,6 +140,7 @@ class SolverConf
 
         //Clause cleaning
         unsigned  max_temporary_learnt_clauses;
+        unsigned  cur_max_temporary_learnt_clauses;
         unsigned protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn;
         double    clean_confl_multiplier;
         double    clean_prop_multiplier;
@@ -147,7 +148,6 @@ class SolverConf
         unsigned  long long preClauseCleanLimit;
         int       doClearStatEveryClauseCleaning;
         double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
-        unsigned  startClean;
         double    increaseClean;
         double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;

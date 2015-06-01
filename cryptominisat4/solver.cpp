@@ -3414,11 +3414,13 @@ void Solver::reconfigure(int val)
     assert(val > 0);
     switch (val) {
         case 1: {
-            conf.max_temporary_learnt_clauses = 30000;
+            conf.max_temporary_learnt_clauses = 20000;
+            num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
 
         case 2: {
+            //Luby
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = CMSat::restart_type_luby;
@@ -3426,11 +3428,13 @@ void Solver::reconfigure(int val)
         }
 
         case 3: {
-            conf.varElimRatioPerIter = 0.35;
-            conf.doGateFind = 0;
-
-            conf.shortTermHistorySize = 80;
-            hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
+            //Similar to old CMS except we look at learnt DB size insteead
+            //of conflicts to see if we need to clean.
+            conf.ratio_keep_clauses[CMSat::clean_glue_based] = 0.5;
+            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            conf.increaseClean = 1.06;
+            conf.max_temporary_learnt_clauses = 20000;
+            num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
 
