@@ -3444,8 +3444,7 @@ void Solver::reconfigure(int val)
         }
 
         case 5: {
-            conf.ratio_keep_clauses[CMSat::clean_sum_activity_based] = 0.3;
-            conf.ratio_keep_clauses[CMSat::clean_size_based] = 0.2;
+            conf.global_timeout_multiplier = 1.5;
             break;
         }
 
