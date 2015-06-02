@@ -166,7 +166,7 @@ class SolverConf
         double   blocking_restart_multip;
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
-        int lower_bound_for_blocking_restart;
+        unsigned lower_bound_for_blocking_restart;
         int more_otf_shrink_with_cache;
         int more_otf_shrink_with_stamp;
 
