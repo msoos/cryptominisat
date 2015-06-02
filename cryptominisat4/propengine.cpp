@@ -1215,10 +1215,6 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
-    #ifdef STATS_NEEDED_EXTRA
-    varData[v].stats.trailLevelHist.push(trail.size());
-    varData[v].stats.decLevelHist.push(decisionLevel());
-    #endif
     varData[v].reason = from;
     varData[v].level = decisionLevel();
 
@@ -1229,18 +1225,10 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     if (sign) {
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.negPolarSet++;
-        #endif
-
         #ifdef STATS_NEEDED
         propStats.varSetNeg++;
         #endif
     } else {
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.posPolarSet++;
-        #endif
-
         #ifdef STATS_NEEDED
         propStats.varSetPos++;
         #endif
@@ -1249,9 +1237,6 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     if (varData[v].polarity != sign) {
         #ifdef UPDATE_AGILITY
         agility.update(true);
-        #endif
-        #ifdef STATS_NEEDED_EXTRA
-        varData[v].stats.flippedPolarity++;
         #endif
 
         #ifdef STATS_NEEDED

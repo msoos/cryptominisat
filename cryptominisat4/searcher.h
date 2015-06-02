@@ -25,10 +25,6 @@
 #include "propengine.h"
 #include "solvertypes.h"
 
-#ifdef STATS_NEEDED_EXTRA
-#include <boost/multi_array.hpp>
-#endif
-
 #include "time_mem.h"
 #include "avgcalc.h"
 #include "hyperengine.h"
@@ -330,11 +326,6 @@ class Searcher : public HyperEngine
         void  resetStats();
 
         Hist hist;
-        #ifdef STATS_NEEDED_EXTRA
-        vector<uint32_t>    clauseSizeDistrib;
-        vector<uint32_t>    clauseGlueDistrib;
-        boost::multi_array<uint32_t, 2> sizeAndGlue;
-        #endif
 
         /////////////////
         //Settings

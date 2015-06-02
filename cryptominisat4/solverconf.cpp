@@ -114,13 +114,6 @@ EXPORT SolverConf::SolverConf() :
         , whichSQL       (0)
         , dump_individual_search_time(false)
         , sqlite_filename ("cryptominisat.sqlite")
-        #ifdef STATS_NEEDED_EXTRA
-        , dumpClauseDistribPer(0)
-        , dumpClauseDistribMaxSize(200)
-        , dumpClauseDistribMaxGlue(50)
-        , preparedDumpSizeScatter(100)
-        , preparedDumpSizeVarData(40)
-        #endif
         , sqlServer ("localhost")
         , sqlUser ("cmsat_solver")
         , sqlPass ("")

@@ -2162,9 +2162,6 @@ uint64_t Solver::mem_used_vardata() const
     uint64_t mem = 0;
     mem += assigns.capacity()*sizeof(lbool);
     mem += varData.capacity()*sizeof(VarData);
-    #ifdef STATS_NEEDED_EXTRA
-    mem += varDataLT.capacity()*sizeof(VarData::Stats);
-    #endif
 
     return mem;
 }

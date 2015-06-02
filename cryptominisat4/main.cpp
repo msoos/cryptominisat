@@ -566,16 +566,6 @@ void Main::add_supported_options()
 1 = prefer SQLite, \
 2 = only use MySQL, \
 3 = only use SQLite" )
-    #ifdef STATS_NEEDED_EXTRA
-    ("cldistribper", po::value(&conf.dumpClauseDistribPer)->default_value(conf.dumpClauseDistribPer)
-        , "Dump redundant clause size distribution every N conflicts. If set to 0, it is never dumped.")
-    ("cldistmaxsize", po::value(&conf.dumpClauseDistribMaxSize)->default_value(conf.dumpClauseDistribMaxSize)
-        , "Dumped redundant clause size maximum -- longer will be 'truncated' in the statistics output")
-    ("cldistmaxglue", po::value(&conf.dumpClauseDistribMaxGlue)->default_value(conf.dumpClauseDistribMaxGlue)
-        , "Dumped redundant clause glue maximum -- longer will be 'truncated' in the statistics output")
-    ("prepstmtscatter", po::value(&conf.preparedDumpSizeScatter)->default_value(conf.preparedDumpSizeScatter)
-        , "When dumping scatter data, dump by chunks of this size (depends on SQL server, default should be safe)")
-    #endif
     ("sqlitedb", po::value(&conf.sqlite_filename)
         , "Where to put the SQLite database")
     ("sqluser", po::value(&conf.sqlUser)->default_value(conf.sqlUser)

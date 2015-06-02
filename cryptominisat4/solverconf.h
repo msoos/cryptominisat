@@ -216,13 +216,6 @@ class SolverConf
         int       whichSQL;
         bool      dump_individual_search_time;
         std::string sqlite_filename;
-        #ifdef STATS_NEEDED_EXTRA
-        unsigned    dumpClauseDistribPer;
-        unsigned    dumpClauseDistribMaxSize;
-        unsigned    dumpClauseDistribMaxGlue;
-        unsigned    preparedDumpSizeScatter;
-        unsigned    preparedDumpSizeVarData;
-        #endif
         std::string    sqlServer;
         std::string    sqlUser;
         std::string    sqlPass;

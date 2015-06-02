@@ -27,10 +27,6 @@
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
 
-#ifdef STATS_NEEDED_EXTRA
-#include "boost/multi_array.hpp"
-#endif
-
 namespace CMSat {
 
 class Solver;
@@ -69,30 +65,6 @@ public:
         , const double given_time
         , uint64_t mem_used_mb
     ) = 0;
-
-    #ifdef STATS_NEEDED_EXTRA
-    virtual void clauseSizeDistrib(
-        uint64_t sumConflicts
-        , const vector<uint32_t>& sizes
-    ) = 0;
-
-    virtual void clauseGlueDistrib(
-        uint64_t sumConflicts
-        , const vector<uint32_t>& glues
-    ) = 0;
-
-    virtual void clauseSizeGlueScatter(
-        uint64_t sumConflicts
-        , boost::multi_array<uint32_t, 2>& sizeAndGlue
-    ) = 0;
-
-    virtual void varDataDump(
-        const Solver* solver
-        , const Searcher* search
-        , const vector<Var>& varsToDump
-        , const vector<VarData>& varData
-    ) = 0;
-    #endif
 
     virtual void reduceDB(
         const ClauseUsageStats& irredStats

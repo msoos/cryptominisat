@@ -1101,13 +1101,6 @@ lbool Searcher::new_decision()
 
         //Update stats
         stats.decisions++;
-        #ifdef STATS_NEEDED_EXTRA
-        if (next.sign()) {
-            varData[next.var()].stats.negDecided++;
-        } else {
-            varData[next.var()].stats.posDecided++;
-        }
-        #endif
     }
 
     // Increase decision level and enqueue 'next'
@@ -1373,30 +1366,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.numResolutionsHistLT.push(resolutions.sum());
 
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
-
-    #ifdef STATS_NEEDED_EXTRA
-    if (conf.doSQL && conf.dumpClauseDistribPer != 0) {
-        if (sumConflicts() % conf.dumpClauseDistribPer == 0) {
-            printClauseDistribSQL();
-
-            //Clear distributions
-            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
-            std::fill(clauseGlueDistrib.begin(), clauseGlueDistrib.end(), 0);
-            for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
-                for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
-                    sizeAndGlue[i][i2] = 0;
-                }
-            }
-        }
-
-        //Add this new clause to distributions
-        uint32_t truncSize = std::min<uint32_t>(learnt_clause.size(), conf.dumpClauseDistribMaxSize-1);
-        uint32_t truncGlue = std::min<uint32_t>(glue, conf.dumpClauseDistribMaxGlue-1);
-        clauseSizeDistrib[truncSize]++;
-        clauseGlueDistrib[truncGlue]++;
-        sizeAndGlue[truncSize][truncGlue]++;
-    }
-    #endif
 }
 
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
@@ -1763,31 +1732,6 @@ struct MyPolarData
 }*/
 
 #ifdef STATS_NEEDED
-#ifdef STATS_NEEDED_EXTRA
-void Searcher::calcVariances(
-    const vector<VarData>& data
-    , double& avgDecLevelVar
-    , double& avgTrailLevelVar
-) {
-    double sumVarDec = 0;
-    double sumVarTrail = 0;
-    size_t num = 0;
-    size_t maxDecLevel = 0;
-    for(size_t i = 0; i < nVars(); i++) {
-        const VarData val = data[i];
-        if (val.stats.posPolarSet || val.stats.negPolarSet) {
-            sumVarDec += sqrt(val.stats.decLevelHist.var());
-            sumVarTrail += sqrt(val.stats.decLevelHist.var());
-            maxDecLevel = std::max<size_t>(val.stats.decLevelHist.getMax(), maxDecLevel);
-            num++;
-        }
-    }
-
-    avgDecLevelVar = sumVarDec/(double)num;
-    avgTrailLevelVar = sumVarTrail/(double)num;
-}
-#endif
-
 void Searcher::dump_restart_sql()
 {
     //Propagation stats
