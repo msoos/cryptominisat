@@ -2016,7 +2016,7 @@ void Solver::print_all_stats() const
         , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
     );
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
-    reduceDB->get_cleaning_stats().print(reduceDB->get_nbReduceDB(), cpu_time);
+    reduceDB->get_cleaning_stats().print(cpu_time);
 
     print_stats_line("c reachability time"
         , reachStats.cpu_time

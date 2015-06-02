@@ -29,7 +29,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-void CleaningStats::print(const size_t nbReduceDB, const double total_cpu_time) const
+void CleaningStats::print(const double total_cpu_time) const
 {
     cout << "c ------ REDUCEDB STATS ---------" << endl;
 
