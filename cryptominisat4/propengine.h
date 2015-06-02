@@ -320,7 +320,6 @@ template<class T> inline
 uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
 {
     uint32_t nbLevels = 0;
-    typename T::const_iterator l, end;
 
     for(const Lit lit: ps) {
         const uint32_t lev = varData[lit.var()].level;

@@ -229,7 +229,6 @@ class Prober {
         vector<size_t> create_fast_random_lookup(const vector<Var>& poss_choice);
         Lit update_lit_for_dominator(
             Lit lit
-            , vector<Var>& poss_choice
             , const vector<size_t>& fast_rnd_lookup
         );
         void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);

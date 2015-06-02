@@ -292,7 +292,6 @@ void Prober::check_if_must_disable_cache_update()
 
 Lit Prober::update_lit_for_dominator(
     Lit lit
-    , vector<Var>& poss_choice
     , const vector<size_t>& fast_rnd_lookup
 ) {
     if (solver->conf.doCache) {
@@ -390,7 +389,7 @@ bool Prober::probe()
             continue;
         }
 
-        lit = update_lit_for_dominator(lit, poss_choice, fast_rnd_lookup);
+        lit = update_lit_for_dominator(lit, fast_rnd_lookup);
         runStats.numVarProbed++;
         extraTime += 20;
 
