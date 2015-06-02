@@ -113,14 +113,14 @@ void FeatureExtract::fill_vars_cls()
     trinary = solver->binTri.irredTris;
     myVars.resize(numVars);
 
-    auto func = [&](unsigned size, unsigned pos_vars, unsigned neg_vars) -> bool {
+    auto func = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> bool {
         if (pos_vars <= 1 ) {
             horn += 1;
             return true;
         }
         return false;
     };
-    auto func_each_lit = [&](Lit lit, unsigned size, unsigned pos_vars, unsigned neg_vars) -> void {
+    auto func_each_lit = [&](Lit lit, unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
         if (pos_vars <= 1 ) {
             myVars[lit.var()].horn++;
         }
