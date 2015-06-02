@@ -26,7 +26,9 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
-SolverConf::SolverConf() :
+#define EXPORT __attribute__ ((visibility("default")))
+
+EXPORT SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
         , var_decay_start(0.8)
