@@ -126,7 +126,9 @@ add_cxx_flag_if_supported("-Wstrict-aliasing")
 add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wheader-guard")
 add_cxx_flag_if_supported("-fvisibility=hidden")
-add_cxx_flag("-Wpointer-arith")
+add_cxx_flag_if_supported("-Wpointer-arith")
+add_cxx_flag_if_supported("-Wformat-nonliteral")
+add_cxx_flag_if_supported("-Winit-self")
 #add_cxx_flag_if_supported("-fno-exceptions")
 
 # -----------------------------------------------------------------------------
