@@ -3432,8 +3432,8 @@ void Solver::reconfigure(int val)
             //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[CMSat::clean_glue_based] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.increaseClean = 1.06;
-            conf.max_temporary_learnt_clauses = 20000;
+            conf.increaseClean = 1.01;
+            conf.max_temporary_learnt_clauses = 10000;
             num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
