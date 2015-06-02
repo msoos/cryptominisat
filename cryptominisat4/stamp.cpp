@@ -71,7 +71,7 @@ bool Stamp::stampBasedClRem(
 }
 
 void Stamp::updateVars(
-    const vector<Var>& outerToInter
+    const vector<Var>& /*outerToInter*/
     , const vector<Var>& interToOuter2
     , vector<uint16_t>& seen
 ) {

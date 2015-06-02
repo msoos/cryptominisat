@@ -95,8 +95,8 @@ void VarReplacer::save_on_var_memory()
 }
 
 void VarReplacer::updateVars(
-    const std::vector< uint32_t >& outerToInter
-    , const std::vector< uint32_t >& interToOuter
+    const std::vector< uint32_t >& /*outerToInter*/
+    , const std::vector< uint32_t >& /*interToOuter*/
 ) {
 
     /*updateArray(table, interToOuter);

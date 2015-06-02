@@ -292,7 +292,6 @@ void Prober::check_if_must_disable_cache_update()
 
 Lit Prober::update_lit_for_dominator(
     Lit lit
-    , const vector<size_t>& fast_rnd_lookup
 ) {
     if (solver->conf.doCache) {
         if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
@@ -334,16 +333,6 @@ vector<Var> Prober::randomize_possible_choices()
     return poss_choice;
 }
 
-vector<size_t> Prober::create_fast_random_lookup(const vector<Var>& poss_choice)
-{
-    vector<size_t> lookup(solver->nVars(), std::numeric_limits<size_t>::max());
-    for (size_t i = 0; i < poss_choice.size(); i++) {
-        lookup[poss_choice[i]] = i;
-    }
-
-    return lookup;
-}
-
 bool Prober::probe()
 {
     assert(solver->decisionLevel() == 0);
@@ -359,7 +348,6 @@ bool Prober::probe()
     numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
 
     vector<Var> poss_choice = randomize_possible_choices();
-    const vector<size_t> fast_rnd_lookup = create_fast_random_lookup(poss_choice);
 
     assert(solver->propStats.bogoProps == 0);
     assert(solver->propStats.otfHyperTime == 0);
@@ -389,7 +377,7 @@ bool Prober::probe()
             continue;
         }
 
-        lit = update_lit_for_dominator(lit, fast_rnd_lookup);
+        lit = update_lit_for_dominator(lit);
         runStats.numVarProbed++;
         extraTime += 20;
 
