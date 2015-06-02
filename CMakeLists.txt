@@ -132,6 +132,8 @@ add_cxx_flag_if_supported("-Wformat-nonliteral")
 add_cxx_flag_if_supported("-Winit-self")
 #add_cxx_flag_if_supported("-fno-exceptions")
 
+set(CMAKE_EXE_LINKER_FLAGS " -Wl,-O1 -Wl,--discard-all -Wl,--build-id=sha1")
+
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
@@ -139,7 +141,7 @@ option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
-    set(CMAKE_EXE_LINKER_FLAGS "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
+    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 
     set(NOMYSQL ON)
 else()
