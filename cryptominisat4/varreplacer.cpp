@@ -840,7 +840,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 bool VarReplacer::replace_vars_already_set(
     const Lit lit1
     , const lbool val1
-    , const Lit lit2
+    , const Lit /*lit2*/
     , const lbool val2
 ) {
     if (val1 != val2) {

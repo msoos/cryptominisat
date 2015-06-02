@@ -1115,7 +1115,10 @@ PropResult HyperEngine::propTriHelperComplex(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
-    , const bool red
+    , const bool
+    #ifdef STATS_NEEDED
+    red
+    #endif
 ) {
     #ifdef STATS_NEEDED
     if (red)
