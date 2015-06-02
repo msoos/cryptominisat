@@ -2624,8 +2624,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
 
 void Searcher::print_edges_for_graphviz_file(std::ofstream& file) const
 {
-    for (size_t i = 0; i < trail.size(); i++) {
-        const Lit lit = trail[i];
+    for (const Lit lit: trail) {
 
         //0-decision level means it's pretty useless to put into the impl. graph
         if (varData[lit.var()].level == 0) continue;

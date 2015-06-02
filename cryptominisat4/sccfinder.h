@@ -42,8 +42,8 @@ class SCCFinder {
         {
             void clear()
             {
-                Stats tmp;
-                *this = tmp;
+                Stats _tmp;
+                *this = _tmp;
             }
 
             uint64_t numCalls = 0;
