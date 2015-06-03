@@ -66,8 +66,6 @@ class Searcher : public HyperEngine
             //About the search
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
             AvgCalc<uint32_t>   branchDepthDeltaHist;
-
-            bqueue<uint32_t>   trailDepthHist;
             bqueue<uint32_t>   trailDepthHistLonger;
             AvgCalc<uint32_t>   trailDepthDeltaHist;
 
@@ -86,6 +84,7 @@ class Searcher : public HyperEngine
             AvgCalc<double, double>  agilityHistLT;
 
             #ifdef STATS_NEEDED
+            bqueue<uint32_t>   trailDepthHist;
             AvgCalc<bool>       conflictAfterConflict;
             AvgCalc<size_t>     watchListSizeTraversed;
             #endif
@@ -107,7 +106,6 @@ class Searcher : public HyperEngine
                 //About the search
                 branchDepthHist.clear();
                 branchDepthDeltaHist.clear();
-                trailDepthHist.clear();
                 trailDepthDeltaHist.clear();
 
                 //conflict generated
@@ -119,6 +117,7 @@ class Searcher : public HyperEngine
                 agilityHist.clear();
 
                 #ifdef STATS_NEEDED
+                trailDepthHist.clear();
                 conflictAfterConflict.clear();
                 watchListSizeTraversed.clear();
                 #endif
@@ -127,8 +126,10 @@ class Searcher : public HyperEngine
             void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
-                trailDepthHist.clearAndResize(shortTermHistorySize);
                 trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
+                #ifdef STATS_NEEDED
+                trailDepthHist.clearAndResize(shortTermHistorySize);
+                #endif
             }
 
             void print() const
@@ -152,8 +153,10 @@ class Searcher : public HyperEngine
 
                 << " " << std::right << branchDepthDeltaHist.avgPrint(1, 4)
 
+                #ifdef STATS_NEEDED
                 << " traild"
                 << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
+                #endif
 
                 << " traildd"
                 << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)

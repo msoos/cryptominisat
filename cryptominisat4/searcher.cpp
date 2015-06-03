@@ -1014,7 +1014,9 @@ lbool Searcher::search()
             last_decision_ended_in_conflict = true;
             handle_longest_decision_trail();
             if (params.update) {
+                #ifdef STATS_NEEDED
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
+                #endif
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
             }
             check_blocking_restart();
