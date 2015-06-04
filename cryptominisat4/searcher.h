@@ -142,10 +142,6 @@ class Searcher : public HyperEngine
                 #endif
                 << "/" << std::left << glueHistLT.avgPrint(1, 5)
 
-                << " agil"
-                << " " << std::right << agilityHist.avgPrint(3, 5)
-                << "/" << std::left<< agilityHistLT.avgPrint(3, 5)
-
                 << " confllen"
                 << " " << std::right << conflSizeHist.avgPrint(1, 5)
                 << "/" << std::left << conflSizeHistLT.avgPrint(1, 5)

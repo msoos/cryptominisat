@@ -93,7 +93,6 @@ CREATE TABLE `restart` (
   `trailDepthDeltaSD` float NOT NULL,
   `trailDepthDeltaMin` int(20) NOT NULL,
   `trailDepthDeltaMax` int(20) NOT NULL,
-  `agility` float NOT NULL,
   `propBinIrred` bigint(20) NOT NULL,
   `propBinRed` bigint(20) NOT NULL,
   `propTriIrred` bigint(20) NOT NULL,

@@ -442,7 +442,6 @@ void SQLiteStats::initRestartSTMT()
     << ", `branchDepthDelta`, `branchDepthDeltaSD`, `branchDepthDeltaMin`, `branchDepthDeltaMax`"
     << ", `trailDepth`, `trailDepthSD`, `trailDepthMin`, `trailDepthMax`"
     << ", `trailDepthDelta`, `trailDepthDeltaSD`, `trailDepthDeltaMin`,`trailDepthDeltaMax`"
-    << ", `agility`"
 
     //Propagations
     << ", `propBinIrred` , `propBinRed` "
@@ -550,9 +549,6 @@ void SQLiteStats::restart(
     sqlite3_bind_double(stmtRst, bindAt++, sqrt(searchHist.trailDepthDeltaHist.var()));
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthDeltaHist.getMin());
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthDeltaHist.getMax());
-
-    //TODO why not max, min ,etc?
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.agilityHist.avg());
 
     //Prop
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsBinIrred);

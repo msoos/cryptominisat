@@ -263,7 +263,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[71+1]; //+1 == runID
+        MYSQL_BIND  bind[70+1]; //+1 == runID
         MYSQL_STMT  *stmt = NULL;
 
         //Position
@@ -320,8 +320,6 @@ private:
         double trailDepthDeltaHistSD;
         uint64_t trailDepthDeltaHistMin;
         uint64_t trailDepthDeltaHistMax;
-
-        double agilityHist;
 
         //Prop
         uint64_t propsBinIrred;

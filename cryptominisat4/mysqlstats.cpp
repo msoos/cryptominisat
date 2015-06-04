@@ -498,7 +498,6 @@ void MySQLStats::initRestartSTMT()
     << ", `branchDepthDelta`, `branchDepthDeltaSD`, `branchDepthDeltaMin`, `branchDepthDeltaMax`"
     << ", `trailDepth`, `trailDepthSD`, `trailDepthMin`, `trailDepthMax`"
     << ", `trailDepthDelta`, `trailDepthDeltaSD`, `trailDepthDeltaMin`,`trailDepthDeltaMax`"
-    << ", `agility`"
 
     //Propagations
     << ", `propBinIrred` , `propBinRed` "
@@ -614,8 +613,6 @@ void MySQLStats::initRestartSTMT()
     bindTo(stmtRst, stmtRst.trailDepthDeltaHistSD);
     bindTo(stmtRst, stmtRst.trailDepthDeltaHistMin);
     bindTo(stmtRst, stmtRst.trailDepthDeltaHistMax);
-
-    bindTo(stmtRst, stmtRst.agilityHist);
 
     //Prop
     bindTo(stmtRst, stmtRst.propsBinIrred);
@@ -977,8 +974,6 @@ void MySQLStats::restart(
     stmtRst.trailDepthDeltaHistSD   = sqrt(searchHist.trailDepthDeltaHist.var());
     stmtRst.trailDepthDeltaHistMin  = searchHist.trailDepthDeltaHist.getMin();
     stmtRst.trailDepthDeltaHistMax  = searchHist.trailDepthDeltaHist.getMax();
-
-    stmtRst.agilityHist             = searchHist.agilityHist.avg();
 
     //Prop
     stmtRst.propsBinIrred    = thisPropStats.propsBinIrred;
