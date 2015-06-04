@@ -202,16 +202,6 @@ option(ALSO_BUILD_STATIC_LIB "Also build the static library" ON)
 
 
 find_package (Threads REQUIRED)
-option(NOTBB "Try to use Threading Building Blocks of Intel" OFF)
-if (NOT NOTBB)
-    find_package (TBB)
-    if (TBB_FOUND)
-        message(STATUS "OK, found Intel TBB")
-        add_definitions(-DUSE_TBB)
-    else()
-        message(STATUS "Did not find Intel Threading Buliding Blocks. Threads will be slower to allocate memory")
-    endif()
-endif()
 
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
@@ -366,8 +356,6 @@ endif()
 set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
 set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
 set(CRYPTOMINISAT4_STATIC_DEPS
-    ${TBB_MALLOC_LIBRARY_NAMES}
-    # ${TBB_MALLOC_PROXY_LIBRARY_NAMES}
     ${SQLITE3_LIBRARIES}
     ${MYSQL_LIB}
     m4ri
