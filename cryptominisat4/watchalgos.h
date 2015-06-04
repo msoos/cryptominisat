@@ -57,7 +57,6 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
     auto c_x = cl_alloc.ptr(x.get_offset());
     auto c_y = cl_alloc.ptr(y.get_offset());
     return (c_x->size() < c_y->size());
-    //return false;
 }
 
 //////////////////
