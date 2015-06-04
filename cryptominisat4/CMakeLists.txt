@@ -11,7 +11,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BIN
 
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-    COMMAND xxd -i ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql > ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND xxd -i cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
 )
 

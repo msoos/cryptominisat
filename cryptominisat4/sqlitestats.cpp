@@ -147,7 +147,7 @@ void SQLiteStats::getID(const Solver* solver)
 
         //Check if we have been in this loop for too long
         if (numTries > 15) {
-            if (sqlite3_exec(db, ___cmsat_tablestructure_sql, NULL, NULL, NULL)) {
+            if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
                 cerr << "ERROR: Couln't create table structure for SQLite"
                 << endl;
                 std::exit(-1);
