@@ -2213,18 +2213,24 @@ Lit Searcher::pickBranchLit()
     }
 
     // Activity based decision:
-    while (next == lit_Undef
-      || value(next.var()) != l_Undef
-      || !solver->varData[next.var()].is_decision
-    ) {
-        //There is no more to branch on. Satisfying assignment found.
-        if (order_heap.empty()) {
-            next = lit_Undef;
-            break;
+    if (next == lit_Undef) {
+        Var next_var = var_Undef;
+        while (next_var == var_Undef
+          || value(next_var) != l_Undef
+          || !solver->varData[next_var].is_decision
+        ) {
+            //There is no more to branch on. Satisfying assignment found.
+            if (order_heap.empty()) {
+                next_var = var_Undef;
+                break;
+            }
+
+            next_var = order_heap.remove_min();
         }
 
-        const Var next_var = order_heap.remove_min();
-        next = Lit(next_var, !pickPolarity(next_var));
+        if (next_var != var_Undef) {
+            next = Lit(next_var, !pickPolarity(next_var));
+        }
     }
 
     //Flip polaritiy if need be
