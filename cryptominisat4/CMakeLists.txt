@@ -8,6 +8,15 @@ endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 
+
+add_custom_command(
+    OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+    COMMAND xxd -i ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql > ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+    DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
+)
+
+add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
+
 set(cryptoms_lib_files
     cnf.cpp
     propengine.cpp
@@ -42,7 +51,7 @@ set(cryptoms_lib_files
     clausedumper.cpp
     bva.cpp
     intree.cpp
-    sql_tablestructure.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     features_fast.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
@@ -75,6 +84,7 @@ endif()
 add_library(temp_lib OBJECT
     ${cryptoms_lib_files}
 )
+add_dependencies(temp_lib tablestruct)
 
 list(APPEND cms_lib_objects $<TARGET_OBJECTS:temp_lib>)
 
