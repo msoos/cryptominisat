@@ -30,7 +30,7 @@ namespace CMSat {
 using namespace CMSat;
 
 /**
-@brief Orders the watchlists such that the order is binary, tertiary, normal, xor
+@brief Orders the watchlists such that the order is binary, tertiary, normal
 */
 struct WatchedSorter
 {
