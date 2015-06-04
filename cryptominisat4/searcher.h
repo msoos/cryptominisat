@@ -136,7 +136,10 @@ class Searcher : public HyperEngine
             {
                 cout
                 << " glue"
-                << " " << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
+                << " "
+                #ifdef STATS_NEEDED
+                << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
+                #endif
                 << "/" << std::left << glueHistLT.avgPrint(1, 5)
 
                 << " agil"

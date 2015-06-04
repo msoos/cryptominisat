@@ -36,34 +36,36 @@ using std::vector;
 template <class T, class T2 = uint64_t>
 class AvgCalc {
     T2      sum;
-    double  sumSqare;
     size_t  num;
-
-    //min, max
+    #ifdef STATS_NEEDED
+    double  sumSqare;
     T       min;
     T       max;
+    #endif
 
 public:
     AvgCalc(void) :
         sum(0)
-        , sumSqare(0)
         , num(0)
-
-
-        //min, max
+        #ifdef STATS_NEEDED
+        , sumSqare(0)
         , min(std::numeric_limits<T>::max())
         , max(std::numeric_limits<T>::min())
+        #endif
     {}
 
     void push(const T x) {
         sum += x;
-        sumSqare += (double)x*(double)x;
         num++;
 
+        #ifdef STATS_NEEDED
+        sumSqare += (double)x*(double)x;
         max = std::max(max, x);
         min = std::min(min, x);
+        #endif
     }
 
+    #ifdef STATS_NEEDED
     T getMin() const
     {
         return min;
@@ -73,15 +75,6 @@ public:
     {
         return max;
     }
-
-    double avg() const
-    {
-        if (num == 0)
-            return 0;
-
-        return (double)sum/(double)num;
-    }
-
     double var() const
     {
         if (num == 0)
@@ -93,6 +86,15 @@ public:
                 - 2.0*calcAvg*(double)sum
             ))/(double)num
              + calcAvg*calcAvg;
+    }
+    #endif
+
+    double avg() const
+    {
+        if (num == 0)
+            return 0;
+
+        return (double)sum/(double)num;
     }
 
     std::string avgPrint(size_t prec, size_t w) const
@@ -117,12 +119,13 @@ public:
     void addData(const AvgCalc& other)
     {
         sum += other.sum;
-        sumSqare += other.sumSqare;
         num += other.num;
 
-        //min, max
+        #ifdef STATS_NEEDED
+        sumSqare += other.sumSqare;
         min = std::min(min, other.min);
         max = std::max(max, other.max);
+        #endif
     }
 
     size_t num_data_elements() const

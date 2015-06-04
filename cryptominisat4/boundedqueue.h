@@ -45,7 +45,9 @@ class bqueue {
     size_t maxsize; //max number of history elements
     size_t queuesize; // Number of current elements (must be < maxsize !)
     T2  sumofqueue;
+    #ifdef STATS_NEEDED
     AvgCalc<T, T2> longTermAvg;
+    #endif
 
 public:
     bqueue(void) :
@@ -78,8 +80,9 @@ public:
 
         sumofqueue += x;
 
-        //Update avg
+        #ifdef STATS_NEEDED
         longTermAvg.push(x);
+        #endif
         elems[first] = x;
 
         first++;
@@ -96,10 +99,12 @@ public:
         return (double)sumofqueue/(double)queuesize;
     }
 
+    #ifdef STATS_NEEDED
     const AvgCalc<T,T2>& getLongtTerm() const
     {
         return longTermAvg;
     }
+    #endif
 
     std::string getAvgPrint(size_t prec, size_t w) const
     {
@@ -134,7 +139,9 @@ public:
         queuesize = 0;
         sumofqueue = 0;
 
+        #ifdef STATS_NEEDED
         longTermAvg.clear();
+        #endif
     }
 
     size_t get_size() const
