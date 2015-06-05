@@ -710,7 +710,7 @@ bool HyperEngine::is_ancestor_of(
     const size_t bottom = varData[lookingForAncestor.var()].depth;
 
     while(thisAncestor != lit_Undef
-        && bottom <= varData[thisAncestor.var()].depth
+        && (!use_depth_trick || bottom <= varData[thisAncestor.var()].depth)
     ) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
