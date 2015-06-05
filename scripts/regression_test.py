@@ -497,7 +497,7 @@ class Tester:
         # construct command
         command = ""
         if not options.novalgrind and random.randint(0, 10) == 0:
-            command += "valgrind --leak-check=full  --error-exitcode=9 "
+            command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
         command += self.random_options()
         if self.needDebugLib:
@@ -519,12 +519,13 @@ class Tester:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         # if need time limit, then limit
+        err_file = open("err_log.txt", "w")
         if (needToLimitTime):
             p = subprocess.Popen(
-                command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE, preexec_fn=setlimits)
+                command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
         else:
             p = subprocess.Popen(
-                command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+                command.rsplit(), stderr=err_file, stdout=subprocess.PIPE)
 
         # print time limit after child startup
         if options.verbose:
@@ -534,6 +535,16 @@ class Tester:
         # Get solver output
         consoleOutput, err = p.communicate()
         return_code = p.returncode
+        err_file.close()
+        with open("err_log.txt", "r") as err_file:
+            found_something = False
+            for line in err_file:
+                print "Error line while executing: ", line.strip()
+                found_something = True
+
+            if found_something:
+                exit(-1)
+
         if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
