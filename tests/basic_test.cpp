@@ -573,6 +573,25 @@ BOOST_AUTO_TEST_CASE(xor2)
     BOOST_CHECK_EQUAL( pairs.size(), 2);
 }
 
+BOOST_AUTO_TEST_CASE(abort_early)
+{
+    SATSolver s;
+    s.set_no_simplify();
+    s.set_no_equivalent_lit_replacement();
+
+    s.set_num_threads(2);
+    s.set_max_confl(0);
+    s.new_vars(2);
+
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+
+    lbool ret = s.solve();
+    BOOST_CHECK_EQUAL( ret, l_Undef);
+}
+
 BOOST_AUTO_TEST_CASE(xor3)
 {
     SolverConf conf;

@@ -53,6 +53,8 @@ namespace CMSat {
         void set_max_confl(int64_t max_confl = -1);
         void set_verbosity(unsigned verbosity = 0);
         void set_default_polarity(bool polarity);
+        void set_no_simplify();
+        void set_no_equivalent_lit_replacement();
 
         //Get info
         static const char* get_version();

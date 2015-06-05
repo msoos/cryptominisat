@@ -327,6 +327,25 @@ EXPORT void SATSolver::set_default_polarity(bool polarity)
     }
 }
 
+EXPORT void SATSolver::set_no_simplify()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.simplify_at_startup = false;
+        s.conf.simplify_at_every_startup = false;
+        s.conf.full_simplify_at_startup = false;
+        s.conf.perform_occur_based_simp = false;
+    }
+}
+
+EXPORT void SATSolver::set_no_equivalent_lit_replacement()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doFindAndReplaceEqLits = false;
+    }
+}
+
 EXPORT void SATSolver::set_verbosity(unsigned verbosity)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {
