@@ -185,6 +185,8 @@ EXPORT SolverConf::SolverConf() :
         , regularly_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
+        , num_conflicts_of_search(50ULL*1000ULL)
+        , num_conflicts_of_search_inc(1.4)
 
         //Simplification
         , perform_occur_based_simp(true)

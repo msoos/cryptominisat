@@ -287,6 +287,8 @@ class SolverConf
         int      regularly_simplify_problem;
         int      full_simplify_at_startup;
         int      never_stop_search;
+        uint64_t num_conflicts_of_search;
+        double   num_conflicts_of_search_inc;
 
         //Simplification
         int      perform_occur_based_simp;
