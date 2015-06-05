@@ -1,10 +1,8 @@
 #!/bin/sh
 
-grep "Total" *.out | awk '{print $5}' > solveTimes
-grep "Total" *out | awk '{print $1}' | sed 's/:c$//' | sort > solved
-# grep "Total" *out | awk '{if ($5 < 1000) {print $1}}' | sed 's/:c$//' > solvedAll
-ls *.gz.out > allFiles
-#grep "CPU time .*:" *out | awk '{ if ($5<5000) {print $1}}' | sed 's/:c$//' > solved
-grep "s UNSATISFIABLE" *out | sed 's/:s.*$//' | sort > solvedUNSAT
-grep "s SATISFIABLE" *out | sed 's/:s.*$//' | sort > solvedSAT
+zgrep "Total" *stdout.gz | awk '{print $5}' > solveTimes
+zgrep "s.*SATISFIABLE" *stdout.gz | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solved
+ls *stdout.gz | sed 's/gz.*/gz/' > allFiles
+zgrep "s UNSATISFIABLE" *stdout.gz | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedUNSAT
+zgrep "s SATISFIABLE" *stdout.gz   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT
 #grep "v-elim" * | awk 'BEGIN {litrem=0;clauserem=0;velim=0;time=0;} {litrem+=$4; clauserem+=$6; varelim+=$8; time+=$12} END {print "time:             " time; print "lits removed:     " litrem; print "clauses subsumed: " clauserem; print "vars elimed:      " varelim}' > varelimed
