@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
-cmake_policy(SET CMP0022 OLD)
+if (CMAKE_MAJOR_VERSION GREATER 2)
+    cmake_policy(SET CMP0022 OLD)
+endif()
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
