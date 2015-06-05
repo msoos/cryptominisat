@@ -76,7 +76,7 @@ struct DataForThread
         , assumptions(_assumptions)
         , update_mutex(new mutex)
         , which_solved(&(data->which_solved))
-        , ret(new lbool(l_True))
+        , ret(new lbool(l_Undef))
     {
     }
 
