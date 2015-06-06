@@ -503,51 +503,16 @@ ClauseUsageStats ReduceDB::sumClauseData(
     const vector<ClOffset>& toprint
     , const bool red
 ) const {
-    vector<ClauseUsageStats> perSizeStats;
-    vector<ClauseUsageStats> perGlueStats;
-
-    //Reset stats
     ClauseUsageStats stats;
 
     for(ClOffset offset: toprint) {
-        Clause& cl = *solver->cl_alloc.ptr(offset);
+        const Clause& cl = *solver->cl_alloc.ptr(offset);
         const uint32_t clause_size = cl.size();
-
-        //We have stats on this clause
-        if (cl.size() == 3)
-            continue;
-
         stats.addStat(cl);
-
-        //Update size statistics
-        if (perSizeStats.size() < cl.size() + 1U)
-            perSizeStats.resize(cl.size()+1);
-
-        perSizeStats[clause_size].addStat(cl);
-
-        //If redundant, sum up GLUE-based stats
-        if (red) {
-            const size_t glue = cl.stats.glue;
-            assert(glue != std::numeric_limits<uint32_t>::max());
-            if (perSizeStats.size() < glue + 1) {
-                perSizeStats.resize(glue + 1);
-            }
-
-            perSizeStats[glue].addStat(cl);
-        }
 
         if (solver->conf.verbosity >= 6)
             cl.print_extra_stats();
     }
-
-    //Print more stats
-    /*if (solver->conf.verbosity >= 4) {
-        solver->print_prop_confl_stats("clause-len", perSizeStats);
-
-        if (red) {
-            solver->print_prop_confl_stats("clause-glue", perGlueStats);
-        }
-    }*/
 
     return stats;
 }
