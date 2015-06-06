@@ -96,7 +96,7 @@ bool SQLiteStats::connectServer(const std::string& sqlite_filename
 {
     int rc = sqlite3_open(sqlite_filename.c_str(), &db);
     if(rc) {
-        cerr << "Can't open sqlite database: " << sqlite3_errmsg(db) << endl;
+        cout << "c Cannot open sqlite database: " << sqlite3_errmsg(db) << endl;
         sqlite3_close(db);
         return false;
     }

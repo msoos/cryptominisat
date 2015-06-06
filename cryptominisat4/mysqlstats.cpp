@@ -123,12 +123,12 @@ bool MySQLStats::connectServer(const Solver* solver)
         , NULL
         , 0)
     ) {
-        cerr
+        cout
         << "c ERROR while connecting to MySQL server:"
         << mysql_error(serverConn)
         << endl;
 
-        cerr
+        cout
         << "c If your MySQL server is running then you did not create the database" << endl
         << "c and/or didn't add the correct user. Read cmsat_mysql_setup.txt to fix this issue " << endl
         ;
