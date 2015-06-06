@@ -418,7 +418,7 @@ void SQLiteStats::time_passed_min(
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 72;
+    const size_t numElems = 71;
 
     std::stringstream ss;
     ss << "insert into `restart`"
