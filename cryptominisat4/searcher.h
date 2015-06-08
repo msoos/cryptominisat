@@ -674,7 +674,10 @@ inline bool Searcher::check_order_heap_sanity() const
             && value(i) == l_Undef)
         {
             if (!order_heap.in_heap(i)) {
-                cout << "ERROR var " << i+1 << " not in heap.";
+                cout << "ERROR var " << i+1 << " not in heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
                 return false;
             }
         }
