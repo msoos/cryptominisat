@@ -19,6 +19,7 @@
  * MA 02110-1301  USA
 */
 
+#include "constants.h"
 #include "cryptominisat.h"
 #include "solver.h"
 #include "drup.h"
@@ -30,7 +31,6 @@
 using std::thread;
 using std::mutex;
 
-#define EXPORT __attribute__ ((visibility("default")))
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
 
 using namespace CMSat;
@@ -94,13 +94,13 @@ struct DataForThread
     lbool* ret;
 };
 
-EXPORT SATSolver::SATSolver(void* config, bool* interrupt_asap)
+DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
 {
     data = new CMSatPrivateData(interrupt_asap);
     data->solvers.push_back(new Solver((SolverConf*) config, data->inter));
 }
 
-EXPORT SATSolver::~SATSolver()
+DLL_PUBLIC SATSolver::~SATSolver()
 {
     for(Solver* this_s: data->solvers) {
         delete this_s;
@@ -190,7 +190,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
     }
 }
 
-EXPORT void SATSolver::set_num_threads(const unsigned num)
+DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
 {
     if (num <= 0) {
         std::cerr << "ERROR: Number of threads must be at least 1" << endl;
@@ -309,7 +309,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
     return ret;
 }
 
-EXPORT void SATSolver::set_max_confl(int64_t max_confl)
+DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {
     Solver& s = *data->solvers[i];
@@ -319,7 +319,7 @@ EXPORT void SATSolver::set_max_confl(int64_t max_confl)
   }
 }
 
-EXPORT void SATSolver::set_default_polarity(bool polarity)
+DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
@@ -327,7 +327,7 @@ EXPORT void SATSolver::set_default_polarity(bool polarity)
     }
 }
 
-EXPORT void SATSolver::set_no_simplify()
+DLL_PUBLIC void SATSolver::set_no_simplify()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
@@ -338,7 +338,7 @@ EXPORT void SATSolver::set_no_simplify()
     }
 }
 
-EXPORT void SATSolver::set_no_equivalent_lit_replacement()
+DLL_PUBLIC void SATSolver::set_no_equivalent_lit_replacement()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
@@ -346,7 +346,7 @@ EXPORT void SATSolver::set_no_equivalent_lit_replacement()
     }
 }
 
-EXPORT void SATSolver::set_verbosity(unsigned verbosity)
+DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {
     Solver& s = *data->solvers[i];
@@ -354,7 +354,7 @@ EXPORT void SATSolver::set_verbosity(unsigned verbosity)
   }
 }
 
-EXPORT bool SATSolver::add_clause(const vector< Lit >& lits)
+DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     if (data->log) {
         (*data->log) << lits << " 0" << endl;
@@ -398,7 +398,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
     }
 }
 
-EXPORT bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
+DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
     if (data->log) {
        add_xor_clause_to_log(vars, rhs, data->log);
@@ -472,7 +472,7 @@ struct OneThreadSolve
     const size_t tid;
 };
 
-EXPORT lbool SATSolver::solve(const vector< Lit >* assumptions)
+DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
     if (data->log) {
         (*data->log) << "c Solver::solve( ";
@@ -509,23 +509,23 @@ EXPORT lbool SATSolver::solve(const vector< Lit >* assumptions)
     return real_ret;
 }
 
-EXPORT const vector< lbool >& SATSolver::get_model() const
+DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
 {
     return data->solvers[data->which_solved]->get_model();
 }
 
-EXPORT const std::vector<Lit>& SATSolver::get_conflict() const
+DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
 {
 
     return data->solvers[data->which_solved]->get_final_conflict();
 }
 
-EXPORT uint32_t SATSolver::nVars() const
+DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
     return data->solvers[0]->nVarsOutside() + data->vars_to_add;
 }
 
-EXPORT void SATSolver::new_var()
+DLL_PUBLIC void SATSolver::new_var()
 {
     if (data->log) {
         (*data->log) << "c Solver::new_var()" << endl;
@@ -533,7 +533,7 @@ EXPORT void SATSolver::new_var()
     data->vars_to_add += 1;
 }
 
-EXPORT void SATSolver::new_vars(const size_t n)
+DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 {
     if (data->log) {
         (*data->log) << "c Solver::new_vars( " << n << " )" << endl;
@@ -542,34 +542,34 @@ EXPORT void SATSolver::new_vars(const size_t n)
     data->vars_to_add += n;
 }
 
-EXPORT void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
+DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
     for(size_t i = 0; i < data->solvers.size(); i++) {
         data->solvers[i]->add_sql_tag(tagname, tag);
     }
 }
 
-EXPORT const char* SATSolver::get_version_sha1()
+DLL_PUBLIC const char* SATSolver::get_version_sha1()
 {
     return Solver::get_version_sha1();
 }
 
-EXPORT const char* SATSolver::get_version()
+DLL_PUBLIC const char* SATSolver::get_version()
 {
     return Solver::get_version_tag();
 }
 
-EXPORT const char* SATSolver::get_compilation_env()
+DLL_PUBLIC const char* SATSolver::get_compilation_env()
 {
     return Solver::get_compilation_env();
 }
 
-EXPORT void SATSolver::print_stats() const
+DLL_PUBLIC void SATSolver::print_stats() const
 {
     data->solvers[data->which_solved]->print_stats();
 }
 
-EXPORT void SATSolver::set_drup(std::ostream* os)
+DLL_PUBLIC void SATSolver::set_drup(std::ostream* os)
 {
     if (data->solvers.size() > 1) {
         std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
@@ -583,44 +583,44 @@ EXPORT void SATSolver::set_drup(std::ostream* os)
     data->solvers[0]->drup = drup;
 }
 
-EXPORT void SATSolver::interrupt_asap()
+DLL_PUBLIC void SATSolver::interrupt_asap()
 {
     for(Solver* solver: data->solvers) {
         solver->set_must_interrupt_asap();
     }
 }
 
-EXPORT void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
+DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);
 }
 
-void EXPORT SATSolver::open_file_and_dump_red_clauses(std::string fname) const
+void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) const
 {
     data->solvers[data->which_solved]->open_file_and_dump_red_clauses(fname);
 }
 
-void EXPORT SATSolver::add_in_partial_solving_stats()
+void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 {
     data->solvers[data->which_solved]->add_in_partial_solving_stats();
 }
 
-EXPORT std::vector<Lit> SATSolver::get_zero_assigned_lits() const
+DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 {
     return data->solvers[data->which_solved]->get_zero_assigned_lits();
 }
 
-EXPORT unsigned long SATSolver::get_sql_id() const
+DLL_PUBLIC unsigned long SATSolver::get_sql_id() const
 {
     return data->solvers[0]->get_sql_id();
 }
 
-EXPORT bool SATSolver::okay() const
+DLL_PUBLIC bool SATSolver::okay() const
 {
     return data->okay;
 }
 
-EXPORT void SATSolver::log_to_file(std::string filename)
+DLL_PUBLIC void SATSolver::log_to_file(std::string filename)
 {
     if (data->log) {
         std::cerr
@@ -641,7 +641,7 @@ EXPORT void SATSolver::log_to_file(std::string filename)
     }
 }
 
-EXPORT std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() const
+DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() const
 {
     return data->solvers[0]->get_all_binary_xors();
 }

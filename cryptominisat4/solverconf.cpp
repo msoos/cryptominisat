@@ -20,15 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "solverconf.h"
 #include <limits>
 #include <iomanip>
 #include <sstream>
 using namespace CMSat;
 
-#define EXPORT __attribute__ ((visibility("default")))
-
-EXPORT SolverConf::SolverConf() :
+DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
         , var_decay_start(0.8)
