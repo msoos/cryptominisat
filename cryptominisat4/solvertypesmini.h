@@ -23,7 +23,12 @@ THE SOFTWARE.
 #ifndef __SOLVERTYPESMINI_H__
 #define __SOLVERTYPESMINI_H__
 
-#include <cstdint>
+#if defined(_MSC_VER) || __cplusplus>=201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+    #include <cstdint>
+#else
+    #include <stdint.h>
+#endif
+
 #include <iostream>
 #include <vector>
 
