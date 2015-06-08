@@ -1273,6 +1273,11 @@ void Solver::check_config_parameters() const
 
 lbool Solver::solve()
 {
+    #ifdef SLOW_DEBUG
+    assert(solver->check_order_heap_sanity());
+    check_implicit_stats();
+    #endif
+
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
@@ -1565,6 +1570,10 @@ lbool Solver::simplify_problem(const bool startup)
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
+    #ifdef SLOW_DEBUG
+    assert(solver->check_order_heap_sanity());
+    #endif
+
     update_polarity_and_activity = false;
 
     if (conf.verbosity >= 6) {

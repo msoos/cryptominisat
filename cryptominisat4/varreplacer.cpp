@@ -1045,6 +1045,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
     }
 
     #ifdef SLOW_DEBUG
+    assert(solver->okay());
     assert(solver->check_order_heap_sanity());
     #endif
 
