@@ -12,6 +12,11 @@ provides the best of both words: ease of use and a powerful interface.
 
 [![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 
+<a href="https://scan.coverity.com/projects/507">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/507/badge.svg"/>
+</a>
+
 Prerequisites
 -----
 
