@@ -1813,9 +1813,16 @@ end:
         clear_clauses_stats();
     }
 
-    calculate_features();
-    if (conf.reconfigure_val != 0 && solveStats.numSimplify == 2) {
-        reconfigure(conf.reconfigure_val);
+    if (nVars() > 2
+        && (longIrredCls.size() > 1 ||
+            (binTri.irredBins + binTri.redBins
+             + binTri.irredTris + binTri.redTris) > 1
+            )
+    ) {
+        calculate_features();
+        if (conf.reconfigure_val != 0 && solveStats.numSimplify == 2) {
+            reconfigure(conf.reconfigure_val);
+        }
     }
 
     solveStats.numSimplify++;

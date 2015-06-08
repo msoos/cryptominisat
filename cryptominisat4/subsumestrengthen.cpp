@@ -288,9 +288,9 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
         << "c [str] sub: " << ret.sub
         << " str: " << ret.str
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-        << " (" << std::setprecision(1) << std::fixed
-        << (double)wenThrough/(double)simplifier->clauses.size()*100.0
-        << "%)"
+        << " ("
+        << stats_line_percent(wenThrough, simplifier->clauses.size())
+        << ") "
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }

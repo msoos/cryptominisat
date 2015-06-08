@@ -111,7 +111,7 @@ void FeatureExtract::fill_vars_cls()
     unary = solver->get_num_nonfree_vars();
     binary = solver->binTri.irredBins;
     trinary = solver->binTri.irredTris;
-    myVars.resize(numVars);
+    myVars.resize(solver->nVars());
 
     auto func = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> bool {
         if (pos_vars <= 1 ) {
@@ -140,27 +140,36 @@ void FeatureExtract::print_stats() const
     cout << "c [features] ";
     fprintf( stdout, "numVars: %d%s", numVars, sep );
     fprintf( stdout, "numClauses: %d%s", numClauses, sep );
-    fprintf( stdout, "(numVars/(1.0*numClauses): %.5f%s", (numVars / (1.0 * numClauses)), sep );
+    double tmp = numVars;
+    if (tmp > 0) {
+        tmp /= (1.0 * numClauses);
+    }
+    fprintf( stdout, "(numVars/(1.0*numClauses): %.5f%s", tmp, sep );
+
     fprintf( stdout, "vcg_var_mean: %.5f%s", vcg_var_mean, sep );
     fprintf( stdout, "vcg_var_std :%.5f%s", vcg_var_std, sep );
-    fprintf( stdout, "vcg_var_std: %.5f%s", vcg_var_min, sep );
+    fprintf( stdout, "vcg_var_min: %.5f%s", vcg_var_min, sep );
     fprintf( stdout, "vcg_var_max: %.5f%s", vcg_var_max, sep );
     fprintf( stdout, "vcg_var_spread: %.5f%s", vcg_var_spread, sep );
+
     fprintf( stdout, "vcg_cls_mean:%.5f%s", vcg_cls_mean, sep );
     fprintf( stdout, "vcg_cls_std: %.5f%s", vcg_cls_std, sep );
     fprintf( stdout, "vcg_cls_min: %.5f%s", vcg_cls_min, sep );
     fprintf( stdout, "vcg_cls_max: %.5f%s", vcg_cls_max, sep );
     fprintf( stdout, "vcg_cls_spread :%.5f%s", vcg_cls_spread, sep );
+
     fprintf( stdout, "pnr_var_mean: %.5f%s", pnr_var_mean, sep );
     fprintf( stdout, "pnr_var_std: %.5f%s", pnr_var_std, sep );
     fprintf( stdout, "pnr_var_min: %.5f%s", pnr_var_min, sep );
     fprintf( stdout, "pnr_var_max: %.5f%s", pnr_var_max, sep );
     fprintf( stdout, "pnr_var_spread: %.5f%s", pnr_var_spread, sep );
+
     fprintf( stdout, "pnr_cls_mean: %.5f%s", pnr_cls_mean, sep );
     fprintf( stdout, "pnr_cls_std: %.5f%s", pnr_cls_std, sep );
     fprintf( stdout, "pnr_cls_min: %.5f%s", pnr_cls_min, sep );
     fprintf( stdout, "pnr_cls_max: %.5f%s", pnr_cls_max, sep );
     fprintf( stdout, "pnr_cls_spread: %.5f%s", pnr_cls_spread, sep );
+
     fprintf( stdout, "unary: %.5f%s", unary, sep );
     fprintf( stdout, "binary: %.5f%s", binary, sep );
     fprintf( stdout, "trinary: %.5f%s", trinary, sep );
@@ -252,9 +261,15 @@ void FeatureExtract::extract()
         }
         horn_mean += _horn;
     }
-    vcg_var_mean /= 1.0 * numVars;
-    pnr_var_mean /= 1.0 * numVars;
-    horn_mean /= 1.0 * numVars;
+    if (vcg_var_mean > 0) {
+        vcg_var_mean /= 1.0 * numVars;
+    }
+    if (pnr_var_mean > 0) {
+        pnr_var_mean /= 1.0 * numVars;
+    }
+    if (horn_mean > 0) {
+        horn_mean /= 1.0 * numVars;
+    }
 
     vcg_var_spread = vcg_var_max - vcg_var_min;
     pnr_var_spread = pnr_var_max - pnr_var_min;
