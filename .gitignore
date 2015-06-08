@@ -1,7 +1,9 @@
 *.kdev4
 .directory
 scripts/fuzzTest*.cnf
-
+scripts2/
+scripts3/
+scripts4/
 desc/satcomp14/cmsv4.aux
 desc/satcomp14/cmsv4.bbl
 desc/satcomp14/cmsv4.blg
