@@ -22,9 +22,9 @@
 #ifndef PROPBY_H
 #define PROPBY_H
 
+#include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
-#include "constants.h"
 
 //#define DEBUG_PROPAGATEFROM
 

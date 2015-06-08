@@ -22,12 +22,13 @@
 #ifndef __CNF_H__
 #define __CNF_H__
 
+#include "constants.h"
+#include "vardata.h"
 #include "propby.h"
 #include "solverconf.h"
 #include "stamp.h"
 #include "solvertypes.h"
 #include "implcache.h"
-#include "vardata.h"
 #include "watcharray.h"
 #include "drup.h"
 #include "clauseallocator.h"
