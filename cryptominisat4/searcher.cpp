@@ -1987,6 +1987,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     lbool status = l_Undef;
     if (conf.burst_search_len > 0) {
         restore_order_heap();
+        assert(solver->check_order_heap_sanity());
         setup_restart_print();
         status = burst_search();
         if (status != l_Undef)
@@ -2003,6 +2004,7 @@ lbool Searcher::solve(const uint64_t _maxConfls)
 
     setup_restart_print();
     max_conflicts_this_restart = conf.restart_first;
+    assert(solver->check_order_heap_sanity());
     for(loop_num = 0
         ; !must_interrupt_asap()
           && stats.conflStats.numConflicts < max_confl_per_search_solve_call
@@ -2011,6 +2013,8 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     ) {
         #ifdef SLOW_DEBUG
         assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
+        assert(order_heap.heap_property());
+        assert(solver->check_order_heap_sanity());
         #endif
 
         //Only sort after a while

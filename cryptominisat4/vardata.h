@@ -22,6 +22,7 @@
 #ifndef __VARDATA_H__
 #define __VARDATA_H__
 
+#include "constants.h"
 #include "propby.h"
 #include "avgcalc.h"
 

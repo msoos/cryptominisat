@@ -289,6 +289,8 @@ class Searcher : public HyperEngine
         }
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
+        void move_activity_from_to(const Var from, const Var to);
+        bool check_order_heap_sanity() const;
 
     protected:
         void new_var(const bool bva, const Var orig_outer) override;
@@ -652,6 +654,33 @@ inline void Searcher::bumpClauseAct(Clause* cl)
 inline void Searcher::decayClauseAct()
 {
     clauseActivityIncrease *= conf.clauseDecayActivity;
+}
+
+inline void Searcher::move_activity_from_to(const Var from, const Var to)
+{
+    activities[to] += activities[from];
+    assert(order_heap.in_heap(to));
+    order_heap.update(to);
+
+    activities[from] = 0;
+    order_heap.update(from);
+}
+
+inline bool Searcher::check_order_heap_sanity() const
+{
+    for(size_t i = 0; i < nVars(); i++)
+    {
+        if (varData[i].removed == Removed::none
+            && value(i) == l_Undef)
+        {
+            if (!order_heap.in_heap(i)) {
+                cout << "ERROR var " << i+1 << " not in heap.";
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 
