@@ -80,14 +80,14 @@ void Searcher::new_var(const bool bva, const Var orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    //Activity heap
     activities.push_back(0);
-    solver->set_decision_var(nVars()-1);
+    insertVarOrder((int)nVars()-1);
 }
 
 void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
+
     activities.resize(activities.size() + n, 0);
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
