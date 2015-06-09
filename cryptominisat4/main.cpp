@@ -863,15 +863,15 @@ void Main::parse_restart_type()
     if (vm.count("restart")) {
         string type = vm["restart"].as<string>();
         if (type == "geom")
-            conf.restartType = Restart::restart_type_geom;
+            conf.restartType = Restart::geom;
         else if (type == "luby")
-            conf.restartType = Restart::restart_type_luby;
+            conf.restartType = Restart::luby;
         else if (type == "glue")
-            conf.restartType = Restart::restart_type_glue;
+            conf.restartType = Restart::glue;
         else if (type == "agility")
-            conf.restartType = Restart::restart_type_agility;
+            conf.restartType = Restart::agility;
         else if (type == "glueagility")
-            conf.restartType = Restart::restart_type_glue_agility;
+            conf.restartType = Restart::glue_agility;
         else throw WrongParam("restart", "unknown restart type");
     }
 }

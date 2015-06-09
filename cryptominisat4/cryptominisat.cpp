@@ -112,7 +112,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 {
     switch(thread_num) {
         case 1: {
-            conf.restartType = Restart::restart_type_glue;
+            conf.restartType = Restart::glue;
             conf.polarity_mode = PolarityMode::polarmode_neg;
             conf.varElimRatioPerIter = 1;
 
@@ -129,12 +129,12 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 3: {
-            conf.restartType = CMSat::Restart::restart_type_luby;
+            conf.restartType = CMSat::Restart::luby;
             break;
         }
         case 4: {
             conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::restart_type_geom;
+            conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             conf.inc_max_temp_red_cls = 1.01;
@@ -162,7 +162,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 8: {
-            conf.restartType = CMSat::Restart::restart_type_agility;
+            conf.restartType = CMSat::Restart::agility;
             break;
         }
         case 9: {

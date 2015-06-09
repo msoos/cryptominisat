@@ -147,7 +147,7 @@ void Searcher::add_lit_to_learnt(
 
             //Glucose 2.1
             if (update_polarity_and_activity
-                && params.rest_type != Restart::restart_type_geom
+                && params.rest_type != Restart::geom
                 && varData[var].reason != PropBy()
             ) {
                 if (varData[var].reason.getType() == clause_t) {
@@ -689,7 +689,7 @@ Clause* Searcher::analyze_conflict(
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (update_polarity_and_activity
-        && params.rest_type == Restart::restart_type_glue
+        && params.rest_type == Restart::glue
         && conf.extra_bump_var_activities_based_on_glue
     ) {
         bump_var_activities_based_on_implied_by_learnts(glue);
@@ -1147,18 +1147,18 @@ void Searcher::check_need_restart()
 
     switch (params.rest_type) {
 
-        case Restart::restart_type_never:
+        case Restart::never:
             //Just don't restart no matter what
             break;
 
-        case Restart::restart_type_geom:
-        case Restart::restart_type_luby:
+        case Restart::geom:
+        case Restart::luby:
             if (params.conflictsDoneThisRestart > max_conflicts_this_restart)
                 params.needToStopSearch = true;
 
             break;
 
-        case Restart::restart_type_glue:
+        case Restart::glue:
             if (hist.glueHist.isvalid()
                 && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
@@ -1167,7 +1167,7 @@ void Searcher::check_need_restart()
 
             break;
 
-        case Restart::restart_type_glue_agility:
+        case Restart::glue_agility:
             if (hist.glueHist.isvalid()
                 && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
                 && agility.getAgility() < conf.agilityLimit
@@ -1183,7 +1183,7 @@ void Searcher::check_need_restart()
 
             break;
 
-        case Restart::restart_type_agility:
+        case Restart::agility:
             if (agility.getAgility() < conf.agilityLimit) {
                 params.numAgilityNeedRestart++;
                 if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
@@ -1203,8 +1203,8 @@ void Searcher::check_need_restart()
     //If agility was used and it's too high, print it if need be
     if (conf.verbosity >= 4
         && params.needToStopSearch
-        && (conf.restartType == Restart::restart_type_agility
-            || conf.restartType == Restart::restart_type_glue_agility)
+        && (conf.restartType == Restart::agility
+            || conf.restartType == Restart::glue_agility)
     ) {
         cout << "c Agility was too low, restarting asap";
         printAgilityStats();
@@ -1595,7 +1595,7 @@ lbool Searcher::burst_search()
     //Do burst
     params.clear();
     params.conflictsToDo = conf.burst_search_len;
-    params.rest_type = Restart::restart_type_never;
+    params.rest_type = Restart::never;
     lbool status = search();
     longest_dec_trail.clear();
 
@@ -2040,11 +2040,11 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         status = search();
 
         switch (params.rest_type) {
-            case Restart::restart_type_geom:
+            case Restart::geom:
                 max_conflicts_this_restart *= conf.restart_inc;
                 break;
 
-            case Restart::restart_type_luby:
+            case Restart::luby:
                 max_conflicts_this_restart = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
                 break;
 

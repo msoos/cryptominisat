@@ -46,26 +46,23 @@ using std::string;
 inline std::string restart_type_to_string(const Restart type)
 {
     switch(type) {
-        case Restart::restart_type_glue:
+        case Restart::glue:
             return "glue-based";
 
-        case Restart::restart_type_glue_agility:
+        case Restart::glue_agility:
             return "glue&agility based";
 
-        case Restart::restart_type_geom:
+        case Restart::geom:
             return "geometric";
 
-        case Restart::restart_type_luby:
+        case Restart::luby:
             return "luby";
 
-        case Restart::restart_type_agility:
+        case Restart::agility:
             return "agility-based";
 
-        case Restart::restart_type_never:
+        case Restart::never:
             return "never restart";
-
-        case Restart::restart_type_automatic:
-            return "automatic";
     }
 
     assert(false && "oops, one of the restart types has no string name");
