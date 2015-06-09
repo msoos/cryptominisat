@@ -54,6 +54,7 @@ namespace CMSat {
         void set_verbosity(unsigned verbosity = 0);
         void set_default_polarity(bool polarity);
         void set_no_simplify();
+        void set_no_simplify_at_startup();
         void set_no_equivalent_lit_replacement();
 
         //Get info
