@@ -146,12 +146,11 @@ void VarReplacer::update_vardata_and_activities(
     assert(orig != replaced_with);
     solver->varData[orig].removed = Removed::replaced;
     assert(solver->varData[replaced_with].removed == Removed::none);
-
-    //NOTE: order is very important here. move activity inserts orig(!)
-    solver->set_decision_var(replaced_with);
     assert(solver->value(replaced_with) == l_Undef);
-    solver->move_activity_from_to(orig, replaced_with);
+
+    solver->set_decision_var(replaced_with);
     solver->unset_decision_var(orig);
+    solver->move_activity_from_to(orig, replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
