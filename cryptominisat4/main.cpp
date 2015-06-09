@@ -318,7 +318,7 @@ void Main::add_supported_options()
     s_perf_multip << std::setprecision(2) << conf.multiplier_perf_values_after_cl_clean;
 
     std::ostringstream s_incclean;
-    s_incclean << std::setprecision(2) << conf.increaseClean;
+    s_incclean << std::setprecision(2) << conf.inc_max_temp_red_cls;
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
@@ -330,7 +330,7 @@ void Main::add_supported_options()
         , "Multiply clause performance values by this number after every clause cleaning")
     ("clearstat", po::value(&conf.doClearStatEveryClauseCleaning)->default_value(conf.doClearStatEveryClauseCleaning)
         , "Clear clause statistics data of each clause after clause cleaning")
-    ("incclean", po::value(&conf.increaseClean)->default_value(conf.increaseClean, s_incclean.str())
+    ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())
         , "Clean increment cleaning by this factor for next cleaning")
     ("maxredratio", po::value(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")

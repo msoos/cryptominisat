@@ -144,7 +144,7 @@ class SolverConf
         unsigned  long long preClauseCleanLimit;
         int       doClearStatEveryClauseCleaning;
         double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
-        double    increaseClean;
+        double    inc_max_temp_red_cls;
         double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;
         unsigned  min_time_in_db_before_eligible_for_cleaning;

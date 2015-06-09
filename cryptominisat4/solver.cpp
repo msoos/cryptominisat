@@ -3446,7 +3446,7 @@ void Solver::reconfigure(int val)
             //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[CMSat::clean_glue_based] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.increaseClean = 1.01;
+            conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;
             num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
@@ -3463,8 +3463,8 @@ void Solver::reconfigure(int val)
         }
 
         case 6: {
-            //TODO disable termporary clause db and use increaseClean
-            conf.increaseClean = 1.5;
+            //TODO disable termporary clause db and use inc_max_temp_red_cls
+            conf.inc_max_temp_red_cls = 1.5;
             break;
         }
 
@@ -3482,7 +3482,7 @@ void Solver::reconfigure(int val)
 
     /*Note to self: change
      * propBinFirst 0->1
-     * increaseClean 1.1 -> 1.3
+     * inc_max_temp_red_cls 1.1 -> 1.3
      * numCleanBetweenSimplify 2->4
      * bva: 1->0
     */

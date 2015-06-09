@@ -178,7 +178,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 11: {
             conf.simplify_at_startup = 1;
             conf.propBinFirst = 1;
-            conf.increaseClean = 1.12;
+            conf.inc_max_temp_red_cls = 1.12;
 //             conf.ratioRemoveClauses = 0.7;
             break;
         }

@@ -1851,7 +1851,7 @@ void Searcher::reduce_db_if_needed()
         }
         must_consolidate_mem = true;
         watches.consolidate();
-        conf.cur_max_temp_red_cls *= conf.increaseClean;
+        conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
 
         num_red_cls_reducedb = count_num_red_cls_reducedb();
     }

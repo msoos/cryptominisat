@@ -45,7 +45,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , doClearStatEveryClauseCleaning(true)
-        , increaseClean(1.0)
+        , inc_max_temp_red_cls(1.0)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
