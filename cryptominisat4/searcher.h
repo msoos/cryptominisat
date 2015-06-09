@@ -661,14 +661,10 @@ inline void Searcher::decayClauseAct()
 inline void Searcher::move_activity_from_to(const Var from, const Var to)
 {
     activities[to] += activities[from];
-    if (order_heap.in_heap(from)) {
-        order_heap.update(to);
-    }
+    order_heap.update_if_inside(to);
 
     activities[from] = 0;
-    if (order_heap.in_heap(from)) {
-        order_heap.update(from);
-    }
+    order_heap.update_if_inside(from);
 }
 
 inline bool Searcher::check_order_heap_sanity() const

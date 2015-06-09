@@ -2003,7 +2003,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         }
 
         varElimComplexity[touchVar] = strategyCalcVarElimScore(touchVar);
-        varElimOrder.update(touchVar);
+        varElimOrder.update_if_inside(touchVar);
     }
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
