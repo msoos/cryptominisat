@@ -136,7 +136,7 @@ class SolverConf
 
         //Clause cleaning
         unsigned  max_temporary_learnt_clauses;
-        unsigned  cur_max_temporary_learnt_clauses;
+        unsigned  cur_max_temp_red_cls;
         unsigned protect_clause_if_imrpoved_glue_below_this_glue_for_one_turn;
         double    clean_confl_multiplier;
         double    clean_prop_multiplier;
