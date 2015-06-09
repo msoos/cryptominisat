@@ -59,7 +59,7 @@ install:
   - git submodule update
   - mkdir build && cd build
 script:
-  - ../.travis-cmake.sh ../ build
+  - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then ../.travis-cmake.sh ../ build ; fi
 
 
 addons:
