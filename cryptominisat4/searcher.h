@@ -79,10 +79,6 @@ class Searcher : public HyperEngine
             AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
             AvgCalc<uint32_t>   numResolutionsHistLT;
 
-            //lits, vars
-            AvgCalc<double, double>  agilityHist;
-            AvgCalc<double, double>  agilityHistLT;
-
             #ifdef STATS_NEEDED
             bqueue<uint32_t>   trailDepthHist;
             AvgCalc<bool>       conflictAfterConflict;
@@ -112,9 +108,6 @@ class Searcher : public HyperEngine
                 glueHist.clear();
                 conflSizeHist.clear();
                 numResolutionsHist.clear();
-
-                //lits, vars
-                agilityHist.clear();
 
                 #ifdef STATS_NEEDED
                 trailDepthHist.clear();

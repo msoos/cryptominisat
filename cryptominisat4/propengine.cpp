@@ -52,7 +52,6 @@ PropEngine::PropEngine(
         CNF(_conf, _needToInterrupt)
         , qhead(0)
 {
-    agility.setup(conf.agilityG, conf.agilityLimit);
 }
 
 PropEngine::~PropEngine()

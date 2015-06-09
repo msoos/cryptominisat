@@ -282,25 +282,13 @@ void Main::add_supported_options()
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
 
-    std::ostringstream ssAgilG;
-    ssAgilG << std::setprecision(7) << conf.agilityG;
-
-    std::ostringstream ssAgilL;
-    ssAgilL << std::setprecision(7) << conf.agilityLimit;
-
     std::ostringstream s_blocking_multip;
     s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
 
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
-    ("agilg", po::value(&conf.agilityG)->default_value(conf.agilityG, ssAgilG.str())
-        , "See paper by Armin Biere on agilities")
     ("restart", po::value<string>()
-        , "{geom, agility, glue, glueagility}  Restart strategy to follow.")
-    ("agillim", po::value(&conf.agilityLimit)->default_value(conf.agilityLimit, ssAgilL.str())
-        , "The agility below which the agility is considered too low")
-    ("agilviollim", po::value(&conf.agilityViolationLimit)->default_value(conf.agilityViolationLimit)
-        , "Number of agility limit violations over which to demand a restart")
+        , "{geom, glue, luby}  Restart strategy to follow.")
     ("gluehist", po::value(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ("blkrest", po::value(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
@@ -868,10 +856,6 @@ void Main::parse_restart_type()
             conf.restartType = Restart::luby;
         else if (type == "glue")
             conf.restartType = Restart::glue;
-        else if (type == "agility")
-            conf.restartType = Restart::agility;
-        else if (type == "glueagility")
-            conf.restartType = Restart::glue_agility;
         else throw WrongParam("restart", "unknown restart type");
     }
 }

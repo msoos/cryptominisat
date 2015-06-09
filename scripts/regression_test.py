@@ -431,7 +431,7 @@ class Tester:
 
         cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
         cmd += "--restart %s " % random.choice(
-            ["geom", "agility", "glue", "glueagility"])
+            ["geom", "glue", "luby"])
         cmd += "--agilviollim %s " % random.randint(0, 40)
         cmd += "--gluehist %s " % random.randint(1, 500)
         cmd += "--updateglueonprop %s " % random.randint(0, 1)

@@ -49,10 +49,8 @@ enum class PolarityMode {
 
 enum class Restart {
     glue
-    , glue_agility
     , geom
     , luby
-    , agility
     , never
 };
 
@@ -190,11 +188,6 @@ class SolverConf
         //Limits
         double   maxTime;
         long maxConfl;
-
-        //Agility
-        double    agilityG; ///See paper by Armin Biere on agilities
-        double    agilityLimit; ///The agility below which the agility is considered too low
-        unsigned  agilityViolationLimit;
 
         //Glues
         int       update_glues_on_prop;

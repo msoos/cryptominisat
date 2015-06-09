@@ -93,11 +93,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxTime          (std::numeric_limits<double>::max())
         , maxConfl         (std::numeric_limits<long>::max())
 
-        //Agilities
-        , agilityG                  (0.9999)
-        , agilityLimit              (0.03)
-        , agilityViolationLimit     (20)
-
         //Glues
         , update_glues_on_prop(false)
         , update_glues_on_analyze(true)

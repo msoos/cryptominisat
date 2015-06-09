@@ -162,10 +162,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 8: {
-            conf.restartType = CMSat::Restart::agility;
-            break;
-        }
-        case 9: {
             conf.propBinFirst = 1;
             break;
         }

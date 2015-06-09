@@ -187,7 +187,6 @@ protected:
     void     print_trail();
 
     //Var selection, activity, etc.
-    AgilityData agility;
     void sortWatched();
     void updateVars(
         const vector<uint32_t>& outerToInter
@@ -389,16 +388,6 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         #ifdef STATS_NEEDED
         propStats.varSetPos++;
         #endif
-    }
-
-    if (varData[v].polarity != sign) {
-        agility.update(true);
-
-        #ifdef STATS_NEEDED
-        propStats.varFlipped++;
-        #endif
-    } else {
-        agility.update(false);
     }
 
     //REVERSED: Only update non-decision: this way, flipped decisions don't get saved

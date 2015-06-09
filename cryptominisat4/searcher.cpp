@@ -981,7 +981,6 @@ lbool Searcher::search()
     //Stats reset & update
     if (params.update)
         stats.numRestarts++;
-    agility.reset(conf.agilityLimit);
     hist.clear();
 
     assert(solver->prop_at_head());
@@ -1167,48 +1166,9 @@ void Searcher::check_need_restart()
 
             break;
 
-        case Restart::glue_agility:
-            if (hist.glueHist.isvalid()
-                && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
-                && agility.getAgility() < conf.agilityLimit
-            ) {
-                params.numAgilityNeedRestart++;
-                if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
-                    params.needToStopSearch = true;
-                }
-            } else {
-                //Reset counter
-                params.numAgilityNeedRestart = 0;
-            }
-
-            break;
-
-        case Restart::agility:
-            if (agility.getAgility() < conf.agilityLimit) {
-                params.numAgilityNeedRestart++;
-                if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
-                    params.needToStopSearch = true;
-                }
-            } else {
-                //Reset counter
-                params.numAgilityNeedRestart = 0;
-            }
-
-            break;
         default:
             assert(false && "This should not happen, auto decision is make before this point");
             break;
-    }
-
-    //If agility was used and it's too high, print it if need be
-    if (conf.verbosity >= 4
-        && params.needToStopSearch
-        && (conf.restartType == Restart::agility
-            || conf.restartType == Restart::glue_agility)
-    ) {
-        cout << "c Agility was too low, restarting asap";
-        printAgilityStats();
-        cout << endl;
     }
 
     //Conflict limit reached?
@@ -1360,9 +1320,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 
     hist.conflSizeHist.push(learnt_clause.size());
     hist.conflSizeHistLT.push(learnt_clause.size());
-
-    hist.agilityHist.push(agility.getAgility());
-    hist.agilityHistLT.push(agility.getAgility());
 
     hist.numResolutionsHist.push(resolutions.sum());
     hist.numResolutionsHistLT.push(resolutions.sum());
@@ -2449,17 +2406,6 @@ void Searcher::printAgilityStats()
     << " -- "
     << " confl:" << std::setw(6) << params.conflictsDoneThisRestart
     << ", rest:" << std::setw(3) << stats.numRestarts
-    << ", ag:" << std::setw(4) << std::fixed << std::setprecision(2)
-    << agility.getAgility()
-
-    << ", agLim:" << std::setw(4) << std::fixed << std::setprecision(2)
-    << conf.agilityLimit
-
-    << ", agHist:" << std::setw(4) << std::fixed << std::setprecision(3)
-    << hist.agilityHist.avg()
-
-    /*<< ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
-    << agilityHist.avgLong()*/
     ;
 }
 

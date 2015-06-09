@@ -3468,11 +3468,6 @@ void Solver::reconfigure(int val)
             break;
         }
 
-        case 7: {
-            conf.restartType = CMSat::Restart::agility;
-            break;
-        }
-
         default: {
             cout << "ERROR: You must give a value for reconfigure between 1...10" << endl;
             exit(-1);

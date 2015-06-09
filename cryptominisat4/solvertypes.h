@@ -49,17 +49,11 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::glue:
             return "glue-based";
 
-        case Restart::glue_agility:
-            return "glue&agility based";
-
         case Restart::geom:
             return "geometric";
 
         case Restart::luby:
             return "luby";
-
-        case Restart::agility:
-            return "agility-based";
 
         case Restart::never:
             return "never restart";
@@ -152,45 +146,6 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
     << " red: " << std::boolalpha << val.isRed() << std::noboolalpha;
     return os;
 }
-
-class AgilityData
-{
-    public:
-        void setup(
-            const double _agilityG
-            , const double agilityLimit
-        ) {
-            agilityG = _agilityG;
-            agility = agilityLimit;
-            assert(agilityG < 1 && agilityG > 0);
-        }
-
-        AgilityData() :
-            agilityG(-1)
-        {}
-
-        void update(const bool flipped)
-        {
-            agility *= agilityG;
-            if (flipped)
-                agility += 1.0 - agilityG;
-        }
-
-        double getAgility() const
-        {
-            return agility;
-        }
-
-        void reset(const double agilityLimit)
-        {
-            assert(agilityG > 0);
-            agility = agilityLimit;
-        }
-
-    private:
-        double agilityG;
-        double agility;
-};
 
 inline double ratio_for_stat(double a, double b)
 {
