@@ -375,12 +375,12 @@ void BVA::update_touched_lits_in_bva()
         const Lit lit = Lit::toLit(lit_uint);
         if (var_bva_order.in_heap(lit.toInt())) {
             watch_irred_sizes[lit.toInt()] = calc_watch_irred_size(lit);
-            var_bva_order.update(lit.toInt());
+            var_bva_order.update_if_inside(lit.toInt());
         }
 
         if (var_bva_order.in_heap((~lit).toInt())) {
             watch_irred_sizes[(~lit).toInt()] = calc_watch_irred_size(~lit);
-            var_bva_order.update((~lit).toInt());
+            var_bva_order.update_if_inside((~lit).toInt());
         }
     }
     touched.clear();

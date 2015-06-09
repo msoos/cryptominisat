@@ -177,11 +177,9 @@ class Heap {
     }
 
     // Fool proof variant of insert/decrease/increase
-    void update (uint32_t n)
+    void update_if_inside(uint32_t n)
     {
-        if (!in_heap(n))
-            insert(n);
-        else {
+        if (in_heap(n)) {
             percolate_up(indices[n]);
             percolate_down(indices[n]);
         }

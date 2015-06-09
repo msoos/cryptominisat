@@ -146,11 +146,10 @@ void VarReplacer::update_vardata_and_activities(
     assert(orig != replaced_with);
     solver->varData[orig].removed = Removed::replaced;
     assert(solver->varData[replaced_with].removed == Removed::none);
-
-    solver->unset_decision_var(orig);
-    solver->set_decision_var(replaced_with);
-
     assert(solver->value(replaced_with) == l_Undef);
+
+    solver->set_decision_var(replaced_with);
+    solver->unset_decision_var(orig);
     solver->move_activity_from_to(orig, replaced_with);
 }
 
@@ -1043,11 +1042,6 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
         scc_finder->clear_binxors();
         return solver->okay();
     }
-
-    #ifdef SLOW_DEBUG
-    assert(solver->okay());
-    assert(solver->check_order_heap_sanity());
-    #endif
 
     const set<BinaryXor>& xors_found = scc_finder->get_binxors();
     for(BinaryXor bin_xor: xors_found) {

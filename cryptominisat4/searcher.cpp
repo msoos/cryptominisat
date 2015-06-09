@@ -1893,6 +1893,9 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
         if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->get_num_free_vars()*0.001))) {
             return l_False;
         }
+        #ifdef SLOW_DEBUG
+        assert(solver->check_order_heap_sanity());
+        #endif
     }
 
     return l_Undef;

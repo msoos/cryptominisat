@@ -503,7 +503,9 @@ class Searcher : public HyperEngine
                 activities(_activities)
             {}
         };
-        ///activity-ordered heap of decision variables
+
+        ///activity-ordered heap of decision variables.
+        ///NOT VALID WHILE SIMPLIFYING
         Heap<VarOrderLt> order_heap;
 
         //Clause activites
@@ -659,11 +661,10 @@ inline void Searcher::decayClauseAct()
 inline void Searcher::move_activity_from_to(const Var from, const Var to)
 {
     activities[to] += activities[from];
-    assert(order_heap.in_heap(to));
-    order_heap.update(to);
+    order_heap.update_if_inside(to);
 
     activities[from] = 0;
-    order_heap.update(from);
+    order_heap.update_if_inside(from);
 }
 
 inline bool Searcher::check_order_heap_sanity() const
