@@ -181,7 +181,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Iterative Alo Scheduling
         , simplify_at_startup(true)
         , simplify_at_every_startup(false)
-        , regularly_simplify_problem(true)
+        , do_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
         , num_conflicts_of_search(50ULL*1000ULL)

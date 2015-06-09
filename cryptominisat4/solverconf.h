@@ -280,7 +280,7 @@ class SolverConf
         //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)
         int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup
-        int      regularly_simplify_problem;
+        int      do_simplify_problem;
         int      full_simplify_at_startup;
         int      never_stop_search;
         uint64_t num_conflicts_of_search;

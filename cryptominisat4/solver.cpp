@@ -1314,7 +1314,7 @@ lbool Solver::solve()
     if (status == l_Undef
         && conf.simplify_at_startup
         && (solveStats.numSimplify == 0 || conf.simplify_at_every_startup)
-        && conf.regularly_simplify_problem
+        && conf.do_simplify_problem
         && nVars() > 0
     ) {
         status = simplify_problem(!conf.full_simplify_at_startup);
@@ -1516,7 +1516,7 @@ lbool Solver::iterate_until_solved()
 
         zero_level_assigns_by_searcher += trail.size() - origTrailSize;
 
-        if (conf.regularly_simplify_problem) {
+        if (conf.do_simplify_problem) {
             status = simplify_problem(false);
         }
     }

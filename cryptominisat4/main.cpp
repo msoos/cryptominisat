@@ -405,8 +405,8 @@ void Main::add_supported_options()
 
     po::options_description simplificationOptions("Simplification options");
     simplificationOptions.add_options()
-    ("schedsimp", po::value(&conf.regularly_simplify_problem)->default_value(conf.regularly_simplify_problem)
-        , "Perform regular simplification rounds")
+    ("schedsimp", po::value(&conf.do_simplify_problem)->default_value(conf.do_simplify_problem)
+        , "Perform simplification rounds. If 0, we never perform any.")
     ("presimp", po::value(&conf.simplify_at_startup)->default_value(conf.simplify_at_startup)
         , "Perform simplification at the very start")
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
