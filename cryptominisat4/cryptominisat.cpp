@@ -112,8 +112,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
 {
     switch(thread_num) {
         case 1: {
-            conf.restartType = restart_type_glue;
-            conf.polarity_mode = CMSat::polarmode_neg;
+            conf.restartType = Restart::restart_type_glue;
+            conf.polarity_mode = PolarityMode::polarmode_neg;
             conf.varElimRatioPerIter = 1;
 
             conf.inc_max_temp_red_cls = 1.01;
@@ -129,13 +129,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 3: {
-            conf.restartType = CMSat::restart_type_luby;
+            conf.restartType = CMSat::Restart::restart_type_luby;
             break;
         }
         case 4: {
             conf.varElimRatioPerIter = 1;
-            conf.restartType = restart_type_geom;
-            conf.polarity_mode = CMSat::polarmode_neg;
+            conf.restartType = Restart::restart_type_geom;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
             conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;
@@ -150,7 +150,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 6: {
-            conf.polarity_mode = CMSat::polarmode_pos;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             break;
         }
         case 7: {
@@ -158,11 +158,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doGateFind = 0;
             conf.more_red_minim_limit_cache = 800;
             conf.more_red_minim_limit_binary = 400;
-            conf.polarity_mode = CMSat::polarmode_neg;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             break;
         }
         case 8: {
-            conf.restartType = CMSat::restart_type_agility;
+            conf.restartType = CMSat::Restart::restart_type_agility;
             break;
         }
         case 9: {
@@ -308,7 +308,7 @@ DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.polarity_mode = polarity ? CMSat::polarmode_pos : CMSat::polarmode_neg;
+        s.conf.polarity_mode = polarity ? PolarityMode::polarmode_pos : PolarityMode::polarmode_neg;
     }
 }
 

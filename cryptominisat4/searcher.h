@@ -378,7 +378,7 @@ class Searcher : public HyperEngine
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
             uint64_t numAgilityNeedRestart;
-            Restart rest_type = restart_type_never;
+            Restart rest_type = Restart::restart_type_never;
         };
         SearchParams params;
         vector<Lit> learnt_clause;

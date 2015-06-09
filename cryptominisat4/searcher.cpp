@@ -147,7 +147,7 @@ void Searcher::add_lit_to_learnt(
 
             //Glucose 2.1
             if (update_polarity_and_activity
-                && params.rest_type != restart_type_geom
+                && params.rest_type != Restart::restart_type_geom
                 && varData[var].reason != PropBy()
             ) {
                 if (varData[var].reason.getType() == clause_t) {
@@ -689,7 +689,7 @@ Clause* Searcher::analyze_conflict(
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (update_polarity_and_activity
-        && params.rest_type == restart_type_glue
+        && params.rest_type == Restart::restart_type_glue
         && conf.extra_bump_var_activities_based_on_glue
     ) {
         bump_var_activities_based_on_implied_by_learnts(glue);
@@ -1147,18 +1147,18 @@ void Searcher::check_need_restart()
 
     switch (params.rest_type) {
 
-        case restart_type_never:
+        case Restart::restart_type_never:
             //Just don't restart no matter what
             break;
 
-        case restart_type_geom:
-        case restart_type_luby:
+        case Restart::restart_type_geom:
+        case Restart::restart_type_luby:
             if (params.conflictsDoneThisRestart > max_conflicts_this_restart)
                 params.needToStopSearch = true;
 
             break;
 
-        case restart_type_glue:
+        case Restart::restart_type_glue:
             if (hist.glueHist.isvalid()
                 && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
             ) {
@@ -1167,7 +1167,7 @@ void Searcher::check_need_restart()
 
             break;
 
-        case restart_type_glue_agility:
+        case Restart::restart_type_glue_agility:
             if (hist.glueHist.isvalid()
                 && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
                 && agility.getAgility() < conf.agilityLimit
@@ -1183,7 +1183,7 @@ void Searcher::check_need_restart()
 
             break;
 
-        case restart_type_agility:
+        case Restart::restart_type_agility:
             if (agility.getAgility() < conf.agilityLimit) {
                 params.numAgilityNeedRestart++;
                 if (params.numAgilityNeedRestart > conf.agilityViolationLimit) {
@@ -1203,8 +1203,8 @@ void Searcher::check_need_restart()
     //If agility was used and it's too high, print it if need be
     if (conf.verbosity >= 4
         && params.needToStopSearch
-        && (conf.restartType == restart_type_agility
-            || conf.restartType == restart_type_glue_agility)
+        && (conf.restartType == Restart::restart_type_agility
+            || conf.restartType == Restart::restart_type_glue_agility)
     ) {
         cout << "c Agility was too low, restarting asap";
         printAgilityStats();
@@ -1590,12 +1590,12 @@ lbool Searcher::burst_search()
 
     //Set burst config
     conf.random_var_freq = 1;
-    conf.polarity_mode = polarmode_rnd;
+    conf.polarity_mode = PolarityMode::polarmode_rnd;
 
     //Do burst
     params.clear();
     params.conflictsToDo = conf.burst_search_len;
-    params.rest_type = restart_type_never;
+    params.rest_type = Restart::restart_type_never;
     lbool status = search();
     longest_dec_trail.clear();
 
@@ -2040,11 +2040,11 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         status = search();
 
         switch (params.rest_type) {
-            case restart_type_geom:
+            case Restart::restart_type_geom:
                 max_conflicts_this_restart *= conf.restart_inc;
                 break;
 
-            case restart_type_luby:
+            case Restart::restart_type_luby:
                 max_conflicts_this_restart = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
                 break;
 
@@ -2177,16 +2177,16 @@ void Searcher::print_iteration_solving_stats()
 bool Searcher::pickPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
-        case polarmode_neg:
+        case PolarityMode::polarmode_neg:
             return false;
 
-        case polarmode_pos:
+        case PolarityMode::polarmode_pos:
             return true;
 
-        case polarmode_rnd:
+        case PolarityMode::polarmode_rnd:
             return mtrand.randInt(1);
 
-        case polarmode_automatic:
+        case PolarityMode::polarmode_automatic:
             return getStoredPolarity(var);
         default:
             assert(false);

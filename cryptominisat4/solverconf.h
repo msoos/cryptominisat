@@ -40,14 +40,14 @@ enum ClauseCleaningTypes {
     , clean_none = 5
 };
 
-enum PolarityMode {
+enum class PolarityMode {
     polarmode_pos
     , polarmode_neg
     , polarmode_rnd
     , polarmode_automatic
 };
 
-enum Restart {
+enum class Restart {
     restart_type_glue
     , restart_type_glue_agility
     , restart_type_geom
@@ -85,7 +85,7 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
     return "";
 }
 
-enum ElimStrategy {
+enum class ElimStrategy {
     elimstrategy_heuristic
     , elimstrategy_calculate_exactly
 };
@@ -94,10 +94,10 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
 {
     switch(strategy)
     {
-        case elimstrategy_heuristic:
+        case ElimStrategy::elimstrategy_heuristic:
             return "heuristic";
 
-        case elimstrategy_calculate_exactly:
+        case ElimStrategy::elimstrategy_calculate_exactly:
             return "calculate";
 
         default:

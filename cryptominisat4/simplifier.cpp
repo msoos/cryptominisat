@@ -2717,7 +2717,7 @@ void Simplifier::order_vars_for_elim()
 std::pair<int, int> Simplifier::strategyCalcVarElimScore(const Var var)
 {
     std::pair<int, int> cost;
-    if (solver->conf.var_elim_strategy == elimstrategy_heuristic) {
+    if (solver->conf.var_elim_strategy == ElimStrategy::elimstrategy_heuristic) {
         cost = heuristicCalcVarElimScore(var);
     } else {
         int ret = test_elim_and_fill_resolvents(var);

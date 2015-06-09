@@ -844,10 +844,10 @@ void Main::handle_drup_option()
 
 void Main::parse_var_elim_strategy()
 {
-    if (var_elim_strategy == getNameOfElimStrategy(elimstrategy_heuristic)) {
-        conf.var_elim_strategy = elimstrategy_heuristic;
-    } else if (var_elim_strategy == getNameOfElimStrategy(elimstrategy_calculate_exactly)) {
-        conf.var_elim_strategy = elimstrategy_calculate_exactly;
+    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::elimstrategy_heuristic)) {
+        conf.var_elim_strategy = ElimStrategy::elimstrategy_heuristic;
+    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::elimstrategy_calculate_exactly)) {
+        conf.var_elim_strategy = ElimStrategy::elimstrategy_calculate_exactly;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"
@@ -863,15 +863,15 @@ void Main::parse_restart_type()
     if (vm.count("restart")) {
         string type = vm["restart"].as<string>();
         if (type == "geom")
-            conf.restartType = restart_type_geom;
+            conf.restartType = Restart::restart_type_geom;
         else if (type == "luby")
-            conf.restartType = restart_type_luby;
+            conf.restartType = Restart::restart_type_luby;
         else if (type == "glue")
-            conf.restartType = restart_type_glue;
+            conf.restartType = Restart::restart_type_glue;
         else if (type == "agility")
-            conf.restartType = restart_type_agility;
+            conf.restartType = Restart::restart_type_agility;
         else if (type == "glueagility")
-            conf.restartType = restart_type_glue_agility;
+            conf.restartType = Restart::restart_type_glue_agility;
         else throw WrongParam("restart", "unknown restart type");
     }
 }
@@ -881,10 +881,10 @@ void Main::parse_polarity_type()
     if (vm.count("polar")) {
         string mode = vm["polar"].as<string>();
 
-        if (mode == "true") conf.polarity_mode = polarmode_pos;
-        else if (mode == "false") conf.polarity_mode = polarmode_neg;
-        else if (mode == "rnd") conf.polarity_mode = polarmode_rnd;
-        else if (mode == "auto") conf.polarity_mode = polarmode_automatic;
+        if (mode == "true") conf.polarity_mode = PolarityMode::polarmode_pos;
+        else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
+        else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
+        else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
         else throw WrongParam(mode, "unknown polarity-mode");
     }
 }

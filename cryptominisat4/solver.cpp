@@ -3437,7 +3437,7 @@ void Solver::reconfigure(int val)
             //Luby
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
-            conf.restartType = CMSat::restart_type_luby;
+            conf.restartType = CMSat::Restart::restart_type_luby;
             break;
         }
 
@@ -3469,7 +3469,7 @@ void Solver::reconfigure(int val)
         }
 
         case 7: {
-            conf.restartType = CMSat::restart_type_agility;
+            conf.restartType = CMSat::Restart::restart_type_agility;
             break;
         }
 
