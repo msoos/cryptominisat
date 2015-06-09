@@ -844,10 +844,10 @@ void Main::handle_drup_option()
 
 void Main::parse_var_elim_strategy()
 {
-    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::elimstrategy_heuristic)) {
-        conf.var_elim_strategy = ElimStrategy::elimstrategy_heuristic;
-    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::elimstrategy_calculate_exactly)) {
-        conf.var_elim_strategy = ElimStrategy::elimstrategy_calculate_exactly;
+    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
+        conf.var_elim_strategy = ElimStrategy::heuristic;
+    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
+        conf.var_elim_strategy = ElimStrategy::calculate_exactly;
     } else {
         std::cerr
         << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"

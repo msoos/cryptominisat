@@ -85,18 +85,18 @@ inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
 }
 
 enum class ElimStrategy {
-    elimstrategy_heuristic
-    , elimstrategy_calculate_exactly
+    heuristic
+    , calculate_exactly
 };
 
 inline std::string getNameOfElimStrategy(ElimStrategy strategy)
 {
     switch(strategy)
     {
-        case ElimStrategy::elimstrategy_heuristic:
+        case ElimStrategy::heuristic:
             return "heuristic";
 
-        case ElimStrategy::elimstrategy_calculate_exactly:
+        case ElimStrategy::calculate_exactly:
             return "calculate";
 
         default:
