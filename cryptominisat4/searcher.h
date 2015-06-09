@@ -503,7 +503,9 @@ class Searcher : public HyperEngine
                 activities(_activities)
             {}
         };
-        ///activity-ordered heap of decision variables
+
+        ///activity-ordered heap of decision variables.
+        ///NOT VALID WHILE SIMPLIFYING
         Heap<VarOrderLt> order_heap;
 
         //Clause activites

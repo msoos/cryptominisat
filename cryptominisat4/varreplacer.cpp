@@ -1044,10 +1044,6 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
         return solver->okay();
     }
 
-    #ifdef SLOW_DEBUG
-    assert(solver->check_order_heap_sanity());
-    #endif
-
     const set<BinaryXor>& xors_found = scc_finder->get_binxors();
     for(BinaryXor bin_xor: xors_found) {
         if (!add_xor_as_bins(bin_xor)) {
