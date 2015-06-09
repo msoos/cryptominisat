@@ -202,5 +202,3 @@ case $CMS_CONFIG in
         echo "\"${STP_CONFIG}\" No further testing"
     ;;
 esac
-
-exit 0
