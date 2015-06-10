@@ -3,30 +3,48 @@ compiler:
   - gcc
   - clang
 env:
-  matrix:
-      # These are used by .travis-cmake.sh to set a configuration
-      - CMS_CONFIG=NORMAL
-      #  - CMS_CONFIG=STATIC_BIN
-      - CMS_CONFIG=ONLY_SIMPLE
-      #  - CMS_CONFIG=ONLY_SIMPLE_STATIC
-      - CMS_CONFIG=MORE_DEBUG
-      - CMS_CONFIG=STATS
-      - CMS_CONFIG=NOZLIB
-      - CMS_CONFIG=RELEASE
-      - CMS_CONFIG=NOSQLITE
-      - CMS_CONFIG=NOMYSQL
-      - CMS_CONFIG=NOMYSQLNOSQLITE
-      - CMS_CONFIG=PYTHON
-      - CMS_CONFIG=MYSQL
-      - CMS_CONFIG=SQLITE
-      - CMS_CONFIG=M4RI
-      - CMS_CONFIG=WEB
-      - CMS_CONFIG=SLOW_DEBUG
-      - CMS_CONFIG=AWS
   global:
-      # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-      #   via the "travis encrypt" command using the project repo's public key
-      - secure: "SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I="
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I="
+
+  matrix:
+    # These are used by .travis-cmake.sh to set a configuration
+    - CMS_CONFIG=NORMAL
+    #  - CMS_CONFIG=STATIC_BIN
+    - CMS_CONFIG=ONLY_SIMPLE
+    #  - CMS_CONFIG=ONLY_SIMPLE_STATIC
+    - CMS_CONFIG=MORE_DEBUG
+    - CMS_CONFIG=STATS
+    - CMS_CONFIG=NOZLIB
+    - CMS_CONFIG=RELEASE
+    - CMS_CONFIG=NOSQLITE
+    - CMS_CONFIG=NOMYSQL
+    - CMS_CONFIG=NOMYSQLNOSQLITE
+    - CMS_CONFIG=PYTHON
+    - CMS_CONFIG=MYSQL
+    - CMS_CONFIG=SQLITE
+    - CMS_CONFIG=M4RI
+    - CMS_CONFIG=WEB
+    - CMS_CONFIG=SLOW_DEBUG
+    - CMS_CONFIG=AWS
+
+#matrix:
+  #exclude:
+    #- compiler: clang
+      #env: COVERITY_SCAN_BRANCH_PATTERN=coverity_scan
+    #- compiler: gcc
+      #env: COVERITY_SCAN_BRANCH_PATTERN=coverity_scan
+
+addons:
+  coverity_scan:
+    project:
+      name: "msoos/cryptominisat"
+      description: "Advanced SAT solver"
+    notification_email: soos.mate@gmail.com
+    build_command_prepend: "mkdir build; cd build; cmake .."
+    build_command:   "make"
+    branch_pattern: coverity_scan
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-sdk-team/ppa
@@ -59,15 +77,5 @@ install:
   - git submodule update
   - mkdir build && cd build
 script:
-  - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then ../.travis-cmake.sh ../ build ; fi
+  - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ]; then ../.travis-cmake.sh ../ build ; fi
 
-
-addons:
-  coverity_scan:
-    project:
-      name: "msoos/cryptominisat"
-      description: "Advanced SAT solver"
-    notification_email: soos.mate@gmail.com
-    build_command_prepend: "mkdir build; cd build; cmake .."
-    build_command:   "make"
-    branch_pattern: coverity_scan
