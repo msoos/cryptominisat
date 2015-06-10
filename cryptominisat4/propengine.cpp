@@ -359,7 +359,7 @@ PropResult PropEngine::handle_normal_prop_fail(
     return PROP_FAIL;
 }
 
-inline PropResult PropEngine::propNormalClause(
+inline PropResult PropEngine::prop_long_cl_strict_order(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
     , const Lit p
@@ -950,7 +950,7 @@ PropBy PropEngine::propagateBinFirst(
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                ret = propNormalClause(i, j, p, confl);
+                ret = prop_long_cl_strict_order(i, j, p, confl);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;

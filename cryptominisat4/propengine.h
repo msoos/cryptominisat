@@ -246,7 +246,7 @@ private:
     );
 
     ///Propagate >3-long clause
-    PropResult propNormalClause(
+    PropResult prop_long_cl_strict_order(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
         , const Lit p
