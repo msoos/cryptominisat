@@ -150,7 +150,7 @@ void VarReplacer::update_vardata_and_activities(
 
     solver->set_decision_var(replaced_with);
     solver->unset_decision_var(orig);
-    solver->move_activity_from_to(orig, replaced_with);
+    //solver->move_activity_from_to(orig, replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
