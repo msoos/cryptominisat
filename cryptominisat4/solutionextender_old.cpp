@@ -244,7 +244,7 @@ inline bool SolutionExtender::prop_bin_cl(
     return true;
 }
 
-inline bool SolutionExtender::propTriClause(
+inline bool SolutionExtender::prop_tri_cl_strict_order(
     watch_subarray_const::const_iterator i
     , const Lit p
 ) {
@@ -323,7 +323,7 @@ bool SolutionExtender::propagate()
 
             //Propagate tri clause
             if (it->isTri() && !it->red()) {
-                bool thisret = propTriClause(it, p);
+                bool thisret = prop_tri_cl_strict_order(it, p);
                 ret &= thisret;
                 if (!thisret) {
                     cout

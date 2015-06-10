@@ -540,7 +540,7 @@ PropResult PropEngine::handle_prop_tri_fail(
     return PROP_FAIL;
 }
 
-inline PropResult PropEngine::propTriClause(
+inline PropResult PropEngine::prop_tri_cl_strict_order(
     watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
@@ -937,7 +937,7 @@ PropBy PropEngine::propagateBinFirst(
             if (i->isTri()) {
                 *j++ = *i;
                 //Propagate tri clause
-                ret = propTriClause(i, p, confl);
+                ret = prop_tri_cl_strict_order(i, p, confl);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;
