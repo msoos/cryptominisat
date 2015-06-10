@@ -120,8 +120,8 @@ protected:
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
 
     template<bool update_bogoprops>
-    PropBy propagateAnyOrder();
-    PropBy propagateBinFirst(
+    PropBy propagate_any_order();
+    PropBy propagate_strict_order(
         #ifdef STATS_NEEDED
         AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif

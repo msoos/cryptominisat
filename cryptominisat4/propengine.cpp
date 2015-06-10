@@ -672,7 +672,7 @@ inline void PropEngine::propTriHelperAnyOrder(
 }
 
 template<bool update_bogoprops>
-PropBy PropEngine::propagateAnyOrder()
+PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
 
@@ -726,13 +726,13 @@ PropBy PropEngine::propagateAnyOrder()
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagateAnyOrder) ended." << endl;
+    cout << "Propagation (propagate_any_order) ended." << endl;
     #endif
 
     return confl;
 }
-template PropBy PropEngine::propagateAnyOrder<true>();
-template PropBy PropEngine::propagateAnyOrder<false>();
+template PropBy PropEngine::propagate_any_order<true>();
+template PropBy PropEngine::propagate_any_order<false>();
 
 void PropEngine::sortWatched()
 {
@@ -870,7 +870,7 @@ inline void PropEngine::updateWatch(
     }
 }
 
-PropBy PropEngine::propagateBinFirst(
+PropBy PropEngine::propagate_strict_order(
     #ifdef STATS_NEEDED
     AvgCalc<size_t>* watchListSizeTraversed
     #endif
@@ -976,7 +976,7 @@ PropBy PropEngine::propagateBinFirst(
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagateBinFirst) ended." << endl;
+    cout << "Propagation (propagate_strict_order) ended." << endl;
     #endif
 
     return confl;

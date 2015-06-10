@@ -108,7 +108,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     assert(!solver->drup->something_delayed());
 
     if (solver->ok) {
-        solver->ok = (solver->propagate().isNULL());
+        solver->ok = (solver->propagate<true>().isNULL());
     }
 
     return solver->ok;

@@ -297,7 +297,7 @@ bool DataSync::shareUnitData()
             }
 
             solver->enqueue(litToEnqueue);
-            solver->ok = solver->propagate().isNULL();
+            solver->ok = solver->propagate<false>().isNULL();
             if (!solver->ok)
                 return false;
 

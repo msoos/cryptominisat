@@ -366,7 +366,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
         }
         done += i2;
         extraTime += 5;
-        failed = (!solver->propagate().isNULL());
+        failed = (!solver->propagate<true>().isNULL());
         if (failed) {
             break;
         }

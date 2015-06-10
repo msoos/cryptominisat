@@ -2769,13 +2769,13 @@ PropBy Searcher::propagate(
 
     PropBy ret;
     if (conf.propBinFirst) {
-        ret = propagateBinFirst(
+        ret = propagate_strict_order(
             #ifdef STATS_NEEDED
             watchListSizeTraversed
             #endif
         );
     } else {
-        ret = propagateAnyOrder<update_bogoprops>();
+        ret = propagate_any_order<update_bogoprops>();
     }
 
     //Drup -- If declevel 0 propagation, we have to add the unitaries

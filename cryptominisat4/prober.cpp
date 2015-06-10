@@ -663,7 +663,7 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
     } else {
         //No hyper-bin so we use regular propagate and regular analyze
 
-        PropBy confl = solver->propagate();
+        PropBy confl = solver->propagate<true>();
         if (!confl.isNULL()) {
             uint32_t  glue;
             uint32_t  backtrack_level;

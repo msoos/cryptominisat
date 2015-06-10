@@ -172,7 +172,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
     if (!solver->ok)
         return false;
 
-    solver->ok = solver->propagate().isNULL();
+    solver->ok = solver->propagate<false>().isNULL();
     return solver->ok;
 }
 
@@ -877,7 +877,7 @@ bool VarReplacer::handleOneSet(
         solver->propStats.propsUnit++;
         #endif
 
-        solver->ok = (solver->propagate().isNULL());
+        solver->ok = (solver->propagate<false>().isNULL());
     }
     return solver->ok;
 }

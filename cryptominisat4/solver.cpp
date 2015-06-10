@@ -461,7 +461,7 @@ Clause* Solver::add_clause_int(
             propStats.propsUnit++;
             #endif
             if (attach) {
-                ok = (propagate().isNULL());
+                ok = (propagate<true>().isNULL());
             }
 
             return NULL;
@@ -3146,7 +3146,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
     if (val == l_Undef) {
         assert(varData[lit.var()].removed == Removed::none);
         enqueue(lit);
-        ok = propagate().isNULL();
+        ok = propagate<true>().isNULL();
 
         if (!ok) {
             return false;
