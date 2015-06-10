@@ -43,7 +43,7 @@ git checkout remotes/origin/aws_better
 git checkout -b aws_better
 
 cd /home/ubuntu/cryptominisat
-/home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &
+# /home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &
 
 DATA="%s"
 """ % data
