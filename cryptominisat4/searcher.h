@@ -328,9 +328,6 @@ class Searcher : public HyperEngine
         //Settings
         Solver*   solver;          ///< Thread control class
 
-        //Stats printing
-        void printAgilityStats();
-
         /////////////////
         // Searching
         /// Search for a given number of conflicts.
@@ -363,14 +360,12 @@ class Searcher : public HyperEngine
                 update = true;
                 needToStopSearch = false;
                 conflictsDoneThisRestart = 0;
-                numAgilityNeedRestart = 0;
             }
 
             bool needToStopSearch;
             bool update;
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
-            uint64_t numAgilityNeedRestart;
             Restart rest_type = Restart::never;
         };
         SearchParams params;

@@ -2400,15 +2400,6 @@ bool Searcher::VarFilter::operator()(uint32_t var) const
     return (cc->value(var) == l_Undef && solver->varData[var].is_decision);
 }
 
-void Searcher::printAgilityStats()
-{
-    cout
-    << " -- "
-    << " confl:" << std::setw(6) << params.conflictsDoneThisRestart
-    << ", rest:" << std::setw(3) << stats.numRestarts
-    ;
-}
-
 uint64_t Searcher::sumConflicts() const
 {
     return solver->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
