@@ -211,7 +211,7 @@ private:
     bool propagate_long_clause_occur(const ClOffset offset);
 
     template<bool update_bogoprops = true>
-    bool propBinaryClause(
+    bool prop_bin_cl(
         watch_subarray_const::const_iterator i
         , const Lit p
         , PropBy& confl
@@ -239,7 +239,7 @@ private:
         , PropBy& confl
     );
     template<bool update_bogoprops = true>
-    bool propTriClauseAnyOrder(
+    bool prop_tri_cl_any_order(
         watch_subarray_const::const_iterator i
         , const Lit lit1
         , PropBy& confl
@@ -253,7 +253,7 @@ private:
         , PropBy& confl
     );
     template<bool update_bogoprops>
-    bool propNormalClauseAnyOrder(
+    bool prop_long_cl_any_order(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
         , const Lit p

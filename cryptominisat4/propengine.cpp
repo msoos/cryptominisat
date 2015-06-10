@@ -224,7 +224,7 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 template<bool update_bogoprops>
-inline bool PropEngine::propBinaryClause(
+inline bool PropEngine::prop_bin_cl(
     watch_subarray_const::const_iterator i
     , const Lit p
     , PropBy& confl
@@ -404,7 +404,7 @@ inline PropResult PropEngine::propNormalClause(
 
 template<bool update_bogoprops>
 inline
-bool PropEngine::propNormalClauseAnyOrder(
+bool PropEngine::prop_long_cl_any_order(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
     , const Lit p
@@ -575,7 +575,7 @@ inline PropResult PropEngine::propTriClause(
 }
 
 template<bool update_bogoprops>
-inline bool PropEngine::propTriClauseAnyOrder(
+inline bool PropEngine::prop_tri_cl_any_order(
     watch_subarray_const::const_iterator i
     , const Lit lit1
     , PropBy& confl
@@ -693,7 +693,7 @@ PropBy PropEngine::propagateAnyOrder()
         for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
-                if (!propBinaryClause<update_bogoprops>(i, p, confl)) {
+                if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
                     i++;
                     break;
                 }
@@ -703,7 +703,7 @@ PropBy PropEngine::propagateAnyOrder()
             //Propagate tri clause
             if (i->isTri()) {
                 *j++ = *i;
-                if (!propTriClauseAnyOrder<update_bogoprops>(i, p, confl)) {
+                if (!prop_tri_cl_any_order<update_bogoprops>(i, p, confl)) {
                     i++;
                     break;
                 }
@@ -711,7 +711,7 @@ PropBy PropEngine::propagateAnyOrder()
             }
 
             //propagate normal clause
-            if (!propNormalClauseAnyOrder<update_bogoprops>(i, j, p, confl)) {
+            if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl)) {
                 i++;
                 break;
             }
@@ -900,7 +900,7 @@ PropBy PropEngine::propagateBinFirst(
 
             //Propagate binary clause
             if (i->isBinary()) {
-                if (!propBinaryClause(i, p, confl)) {
+                if (!prop_bin_cl(i, p, confl)) {
                     break;
                 }
 
@@ -995,7 +995,7 @@ PropBy PropEngine::propagateIrredBin()
                 continue;
 
             //Propagate, if conflict, exit
-            if (!propBinaryClause(k, p, confl))
+            if (!prop_bin_cl(k, p, confl))
                 return confl;
         }
     }

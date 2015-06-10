@@ -223,7 +223,7 @@ bool SolutionExtender::addClause(
     return true;
 }
 
-inline bool SolutionExtender::propBinaryClause(
+inline bool SolutionExtender::prop_bin_cl(
     watch_subarray_const::const_iterator i
     , const Lit p
 ) {
@@ -308,7 +308,7 @@ bool SolutionExtender::propagate()
             ; ++it
         ) {
             if (it->isBinary() && !it->red()) {
-                bool thisret = propBinaryClause(it, p);
+                bool thisret = prop_bin_cl(it, p);
                 ret &= thisret;
                 if (!thisret) {
                     cout
