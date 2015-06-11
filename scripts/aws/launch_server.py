@@ -45,6 +45,7 @@ sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 20 https://githu
 cd cryptominisat
 sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
 sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
+sudo -H -u ubuntu bash -c 'git branch --set-upstream-to=origin/aws_better aws_better'
 
 # Get credentials
 cd /home/ubuntu
