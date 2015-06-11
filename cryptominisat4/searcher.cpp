@@ -312,7 +312,6 @@ void Searcher::normalClMinim()
             default:
                 release_assert(false);
                 std::exit(-1);
-                break;
         }
 
         for (size_t k = 0; k < size; k++) {
@@ -337,7 +336,6 @@ void Searcher::normalClMinim()
                 case null_clause_t:
                     release_assert(false);
                     std::exit(-1);
-                    break;
             }
 
             if (!seen[p.var()] && varData[p.var()].level > 0) {

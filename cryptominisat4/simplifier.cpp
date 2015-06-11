@@ -638,8 +638,6 @@ bool Simplifier::complete_clean_clause(Clause& cl)
         default:
             return true;
     }
-
-    return true;
 }
 
 void Simplifier::remove_all_longs_from_watches()
@@ -2654,7 +2652,6 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
             << "ERROR: Invalid var-elim cost estimation strategy"
             << endl;
             std::exit(-1);
-            break;
     }
 
 
