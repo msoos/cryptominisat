@@ -57,7 +57,7 @@ parser.add_option("--port", "-p", default=10000, dest="port",
                   " [default: %default]",
                   )
 
-parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space", type=str,
+parser.add_option("--temp", default="/tmp/", dest="temp_space", type=str,
                   help="Temporary space to use"
                   " [default: %default]",
                   )
