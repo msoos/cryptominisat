@@ -35,7 +35,6 @@ cloud_init = """#!/bin/bash
 apt-get update
 apt-get -y install git python-boto awscli
 
-su ubuntu
 cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'

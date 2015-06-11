@@ -30,9 +30,6 @@ class SpotRequestor:
         apt-get -y install cmake make g++ libboost-all-dev
         apt-get -y install libsqlite3-dev awscli
 
-        su ubuntu
-        cd /home/ubuntu/
-
         # Get CMS
         cd /home/ubuntu/
         sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
