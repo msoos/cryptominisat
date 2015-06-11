@@ -27,10 +27,12 @@ class SpotRequestor:
         user_data = """#!/bin/bash
         set -e
 
-        apt-get update
-        apt-get -y install git python-boto
-        apt-get -y install cmake make g++ libboost-all-dev
-        apt-get -y install libsqlite3-dev awscli
+        yum update
+        yum -y install git python-boto
+        yum -y install gcc gcc-c++
+        yum -y install python
+        yum -y install cmake boost-devel
+        yum -y install sqlite-devel
 
         # Get CMS
         cd /home/ubuntu/
