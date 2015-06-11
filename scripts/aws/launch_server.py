@@ -37,7 +37,7 @@ apt-get -y install git python-boto awscli
 
 cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
-sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
+sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptominisat.git'
 
 # Temporary hack for aws_better branch
 cd cryptominisat
