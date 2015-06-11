@@ -21,7 +21,7 @@ class SpotRequestor:
             print 'Unable to create EC2 ec2conn'
             sys.exit(0)
 
-        user_data = self.__get_user_data()
+        self.user_data = self.__get_user_data()
 
     def __get_user_data(self):
         user_data = """#!/bin/bash
