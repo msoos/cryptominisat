@@ -196,7 +196,7 @@ class Server (threading.Thread):
         self.files_finished = []
         self.files = {}
 
-        os.system("aws s3 cp s3://msoos-solve-data/solvers/%s ." % options.cnf_dir)
+        os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_dir)
         fnames = open(options.cnf_dir, "r")
         logging.info("CNF dir is %s", options.cnf_dir)
         for num, fname in zip(xrange(10000), fnames):
