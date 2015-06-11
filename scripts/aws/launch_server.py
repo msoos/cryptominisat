@@ -37,13 +37,16 @@ apt-get -y install git python-boto awscli
 
 su ubuntu
 cd /home/ubuntu
-ssh-keyscan github.com >> ~/.ssh/known_hosts
-git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git
-git checkout remotes/origin/aws_better
-git checkout -b aws_better
+sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
+sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
+
+#temporary hack for aws_better branch
+cd cryptominisat
+sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
+sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
 
 cd /home/ubuntu/cryptominisat
-# /home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &
+sudo -H -u ubuntu bash -c '# /home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
 
 DATA="%s"
 """ % data

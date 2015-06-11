@@ -21,7 +21,7 @@ class SpotRequestor:
             print 'Unable to create EC2 ec2conn'
             sys.exit(0)
 
-        user_data = self.__setup_user_data()
+        user_data = self.__get_user_data()
 
     def __get_user_data(self):
         user_data = """#!/bin/bash
@@ -33,21 +33,25 @@ class SpotRequestor:
         su ubuntu
         cd /home/ubuntu/
 
-        wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
-        tar xzvf m4ri-20140914.tar.gz
+        # Get M4RI
+        sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/m4ri-20140914.tar.gz . --region us-west-2'
+        sudo -H -u ubuntu bash -c 'tar xzvf m4ri-20140914.tar.gz'
         cd m4ri-20140914/
-        ./configure
-        make -j2
-        sudo make install
+        sudo -H -u ubuntu bash -c './configure'
+        sudo -H -u ubuntu bash -c 'make -j2'
+        make install
 
+        # Get CMS
         cd /home/ubuntu/
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
-        git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git
-        git checkout remotes/origin/aws_better
-        git checkout -b aws_better
+        sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
+        sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
+
+        # temporary hack for aws_better
+        sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
+        sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
 
         cd /home/ubuntu/cryptominisat
-        /home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1 &
+        sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1 &'
 
         DATA="%s"
         """ % get_ip_address("eth0")
