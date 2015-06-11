@@ -94,7 +94,7 @@ options.logfile_name = options.base_dir + options.logfile_name
 if options.host is None:
     for line in boto.utils.get_instance_userdata().split("\n"):
         if "DATA" in line:
-            options.host = line[5:].strip().strip('"')
+            options.host = line.split("=")[1].strip().strip('"')
 
     print "HOST has beeen set to %s" % options.host
 
