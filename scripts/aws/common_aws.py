@@ -51,6 +51,6 @@ def upload_log(bucket, folder, logfile_name, fname):
 def get_s3_folder(folder, rev, timeout, memout):
     print "folder: ", folder, "rev: ", rev, " tout: ", timeout, "memout ", memout
     return folder + "-%s-tout-%d-mout-%d" \
-        % (rev[:6],
+        % (rev[:9],
            timeout,
            memout)
