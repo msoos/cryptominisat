@@ -213,7 +213,7 @@ int main(int argc, char** argv)
         #endif
 
         if (in == NULL) {
-            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
+            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
             std::exit(1);
         }
         DimacsParser parser(solver, false, conf.verbosity);
