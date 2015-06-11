@@ -50,7 +50,7 @@ sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --reg
 
 # Start server
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c '# /home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
+sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
 
 DATA="%s"
 """ % data
