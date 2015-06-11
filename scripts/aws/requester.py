@@ -42,6 +42,10 @@ class SpotRequestor:
         sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
         sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
 
+        # Get credentials
+        sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
+
+        # Start client
         cd /home/ubuntu/cryptominisat
         sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1 &'
 

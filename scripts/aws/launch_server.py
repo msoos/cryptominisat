@@ -40,11 +40,16 @@ cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
 
-#temporary hack for aws_better branch
+# Temporary hack for aws_better branch
 cd cryptominisat
 sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
 sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
 
+# Get credentials
+cd /home/ubuntu
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
+
+# Start server
 cd /home/ubuntu/cryptominisat
 sudo -H -u ubuntu bash -c '# /home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
 
@@ -61,7 +66,7 @@ conn.run_instances(
         #instance_type='t2.micro',
         instance_type='t1.micro',
         instance_profile_arn = 'arn:aws:iam::907572138573:instance-profile/server',
-        user_data=cloud_init, # base64.encodestring(cloud_init),
+        user_data=cloud_init,
         key_name='controlkey',
         security_group_ids=['sg-507b3f35'],
         instance_initiated_shutdown_behavior = 'terminate')
