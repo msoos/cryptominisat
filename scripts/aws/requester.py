@@ -33,14 +33,6 @@ class SpotRequestor:
         su ubuntu
         cd /home/ubuntu/
 
-        # Get M4RI
-        sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/m4ri-20140914.tar.gz . --region us-west-2'
-        sudo -H -u ubuntu bash -c 'tar xzvf m4ri-20140914.tar.gz'
-        cd m4ri-20140914/
-        sudo -H -u ubuntu bash -c './configure'
-        sudo -H -u ubuntu bash -c 'make -j2'
-        make install
-
         # Get CMS
         cd /home/ubuntu/
         sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
