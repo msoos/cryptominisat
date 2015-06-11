@@ -96,6 +96,8 @@ if options.host is None:
         if "DATA" in line:
             options.host = line[5:].strip().strip('"')
 
+    print "HOST has beeen set to %s" % options.host
+
 
 def uptime():
     with open('/proc/uptime', 'r') as f:
