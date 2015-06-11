@@ -25,6 +25,8 @@ class SpotRequestor:
 
     def __get_user_data(self):
         user_data = """#!/bin/bash
+        set -e
+
         apt-get update
         apt-get -y install git python-boto
         apt-get -y install cmake make g++ libboost-all-dev

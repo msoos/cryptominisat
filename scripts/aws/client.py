@@ -202,10 +202,12 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
-        toexec = "%s %s %s/%s" % (self.indata["solver"],
-                                  extra_opts,
-                                  self.indata["cnf_dir"],
-                                  self.indata["cnf_filename"])
+        os.sysem("aws s3 cp s3://msoos-solve-data/%s/%s /tmp/" % (
+            self.indata["cnf_dir"], self.indata["cnf_filename"]))
+
+        toexec = "%s %s /tmp/%s" % (self.indata["solver"],
+            extra_opts,
+            self.indata["cnf_filename"])
 
         return toexec
 
@@ -241,6 +243,7 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
         logging.info(towrite.strip(), extra=self.logextra)
+        os.system("rm  /tmp/%s" % self.indata["cnf_filename"])
 
         return p.returncode, toexec
 
