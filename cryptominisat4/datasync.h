@@ -76,7 +76,6 @@ class DataSync
         //Other systems
         Solver* solver;
         SharedData* sharedData;
-        uint32_t thread_num;
 
         //misc
         vector<uint16_t>& seen;

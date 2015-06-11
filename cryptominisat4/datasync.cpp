@@ -30,7 +30,6 @@ using namespace CMSat;
 DataSync::DataSync(Solver* _solver, SharedData* _sharedData, uint32_t _thread_num) :
     solver(_solver)
     , sharedData(_sharedData)
-    , thread_num(_thread_num)
     , seen(solver->seen)
     , toClear(solver->toClear)
 {}
