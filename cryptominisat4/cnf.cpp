@@ -257,22 +257,18 @@ size_t CNF::cl_size(const Watched& ws) const
     switch(ws.getType()) {
         case watch_binary_t:
             return 2;
-            break;
 
         case CMSat::watch_tertiary_t:
             return 3;
-            break;
 
         case watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             return cl->size();
-            break;
         }
 
         default:
             assert(false);
             return 0;
-            break;
     }
 }
 
