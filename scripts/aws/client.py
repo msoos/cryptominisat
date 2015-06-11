@@ -204,7 +204,7 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
-        os.sysem("aws s3 cp s3://msoos-solve-data/%s/%s /tmp/" % (
+        os.system("aws s3 cp s3://msoos-solve-data/%s/%s /tmp/" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"]))
 
         toexec = "%s %s /tmp/%s" % (self.indata["solver"],
