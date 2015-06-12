@@ -4,7 +4,13 @@
 import boto.utils
 import os
 
-todo = boto.utils.get_instance_userdata()
+user_data = boto.utils.get_instance_userdata()
+
+todo = ""
+for line in user_data.split("\n"):
+    if "DATA" in line:
+        todo = line[5:].strip().strip('"')
+
 if todo == "":
     exit(0)
 

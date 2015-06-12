@@ -57,7 +57,7 @@ parser.add_option("--port", "-p", default=10000, dest="port",
                   " [default: %default]",
                   )
 
-parser.add_option("--temp", default="/mnt/tmp/", dest="temp_space", type=str,
+parser.add_option("--temp", default="/tmp/", dest="temp_space", type=str,
                   help="Temporary space to use"
                   " [default: %default]",
                   )
@@ -92,7 +92,11 @@ exitapp = False
 options.logfile_name = options.base_dir + options.logfile_name
 
 if options.host is None:
-    options.host = boto.utils.get_instance_userdata()
+    for line in boto.utils.get_instance_userdata().split("\n"):
+        if "DATA" in line:
+            options.host = line.split("=")[1].strip().strip('"')
+
+    print "HOST has beeen set to %s" % options.host
 
 
 def uptime():
@@ -200,10 +204,13 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
+        os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
+            self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
+
         toexec = "%s %s %s/%s" % (self.indata["solver"],
-                                  extra_opts,
-                                  self.indata["cnf_dir"],
-                                  self.indata["cnf_filename"])
+            extra_opts,
+            self.temp_space,
+            self.indata["cnf_filename"])
 
         return toexec
 
@@ -239,6 +246,7 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
         logging.info(towrite.strip(), extra=self.logextra)
+        os.system("rm  %s/%s" % (self.temp_space, self.indata["cnf_filename"]))
 
         return p.returncode, toexec
 
@@ -442,7 +450,7 @@ def shutdown(exitval=0):
         global s3_folder
         upload_log(s3_bucket,
                    s3_folder,
-                   "%s/build.log" % options.base_dir,
+                   options.logfile_name,
                    "cli-%s.txt" % get_ip_address("eth0"))
 
     if not options.noshutdown:

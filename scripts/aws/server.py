@@ -79,7 +79,7 @@ parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb",
                   type=int
                   )
 
-parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir_name",
+parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir",
                   type=str,
                   help="The list of CNF files to solve, first line the dir"
                   "[default: %default]",
@@ -196,9 +196,9 @@ class Server (threading.Thread):
         self.files_finished = []
         self.files = {}
 
-        fnames = open(options.cnf_dir_name, "r")
-        options.cnf_dir = fnames.next().strip()
-        logging.info("CNF dir really is %s", options.cnf_dir)
+        os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_dir)
+        fnames = open(options.cnf_dir, "r")
+        logging.info("CNF dir is %s", options.cnf_dir)
         for num, fname in zip(xrange(10000), fnames):
             fname = fname.strip()
             self.files[num] = ToSolve(num, fname)
