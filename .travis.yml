@@ -27,7 +27,7 @@ env:
     - CMS_CONFIG=M4RI
     - CMS_CONFIG=WEB
     - CMS_CONFIG=SLOW_DEBUG
-    - CMS_CONFIG=AWS
+    # - CMS_CONFIG=AWS
 
 #matrix:
   #exclude:
