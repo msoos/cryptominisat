@@ -153,7 +153,8 @@ void Searcher::add_lit_to_learnt(
                 if (varData[var].reason.getType() == clause_t) {
                     Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
                     if (cl->red()) {
-                        implied_by_learnts.push_back(std::make_pair(lit, (uint32_t)cl->stats.glue));
+                        const uint32_t glue = cl->stats.glue;
+                        implied_by_learnts.push_back(std::make_pair(lit, glue));
                     }
                 } else if (varData[var].reason.getType() == binary_t
                     && varData[var].reason.isRedStep()
