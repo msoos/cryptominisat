@@ -46,6 +46,9 @@ sudo -H -u ubuntu bash -c 'git branch --set-upstream-to=origin/aws_better aws_be
 # Get credentials
 sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
 
+#bulid solvers
+sudo -H -u ubuntu bash -c 'build_swdia5by.sh >> /home/ubuntu/build.log"
+
 # Start client
 cd /home/ubuntu/cryptominisat
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1 &'

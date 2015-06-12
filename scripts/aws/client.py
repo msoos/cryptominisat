@@ -384,7 +384,7 @@ class solverThread (threading.Thread):
 
 
 def build_cryptominisat(indata):
-    ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s > %s/build.log 2>&1' %
+    ret = os.system('%s/cryptominisat/scripts/aws/build.sh %s %s >> %s/build.log 2>&1' %
                     (options.base_dir, indata["git_rev"],
                      options.num_threads, options.base_dir))
     global s3_folder
