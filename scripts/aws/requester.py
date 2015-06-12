@@ -37,12 +37,6 @@ cd /home/ubuntu/
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
 
-# temporary hack for aws_better
-cd /home/ubuntu/cryptominisat/
-sudo -H -u ubuntu bash -c 'git checkout remotes/origin/aws_better'
-sudo -H -u ubuntu bash -c 'git checkout -b aws_better'
-sudo -H -u ubuntu bash -c 'git branch --set-upstream-to=origin/aws_better aws_better'
-
 # Get credentials
 sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
 
