@@ -28,6 +28,7 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#include <cstdlib>
 using std::thread;
 using std::mutex;
 
@@ -52,8 +53,14 @@ namespace CMSat {
             delete log; //this will also close the file
             delete shared_data;
         }
-        CMSatPrivateData(CMSatPrivateData& other); //copy should fail
-        CMSatPrivateData(const CMSatPrivateData& other); //copy should fail
+        CMSatPrivateData(CMSatPrivateData& other) //copy should fail
+        {
+            std::exit(-1);
+        }
+        CMSatPrivateData(const CMSatPrivateData& other) //copy should fail
+        {
+            std::exit(-1);
+        }
 
         vector<Solver*> solvers;
         SharedData *shared_data;
