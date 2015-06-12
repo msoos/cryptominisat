@@ -599,6 +599,14 @@ inline vector<Lit> vars_to_lits(const vector<Var>& vars)
     return ret;
 }
 
+inline double calc_percentage(const double a, const double b)
+{
+    if (b != 0)
+        return a/b;
+
+    return 0;
+}
+
 } //end namespace
 
 #endif //SOLVERTYPES_H

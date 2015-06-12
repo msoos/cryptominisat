@@ -244,7 +244,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (timeAvailable <= 0);
-    const double time_remain = (double)timeAvailable/(double)orig_timeAvailable;
+    const double time_remain = calc_percentage(timeAvailable, orig_timeAvailable);
     runStats.numCalled++;
     runStats.time_used += time_used;
     runStats.time_out += time_out;

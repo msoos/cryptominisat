@@ -516,7 +516,7 @@ void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
     //Set stats
     const double time_used = cpuTime() - myTime;
     const bool time_out = timeAvailable < 0;
-    const double time_remain = (double)timeAvailable/(double)orig_time_available;
+    const double time_remain = calc_percentage(timeAvailable, orig_time_available);
     tmpStats.numClSubsumed += cache_based_data.get_cl_subsumed();
     tmpStats.numLitsRem += cache_based_data.get_lits_rem();
     tmpStats.cpu_time = time_used;
@@ -858,7 +858,7 @@ void Strengthener::StrImplicitData::print(
     , Solver* solver
 ) const {
     bool time_out = timeAvailable <= 0;
-    const double time_remain = (double)timeAvailable/(double)orig_time;
+    const double time_remain = calc_percentage(timeAvailable, orig_time);
 
     cout
     << "c [implicit] str"
