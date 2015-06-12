@@ -40,7 +40,7 @@ sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://githu
 # Get credentials
 sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
 
-#bulid solvers
+# build solvers
 sudo -H -u ubuntu bash -c 'build_swdia5by.sh >> /home/ubuntu/build.log'
 
 # Start client
