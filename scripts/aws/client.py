@@ -450,7 +450,7 @@ def shutdown(exitval=0):
         global s3_folder
         upload_log(s3_bucket,
                    s3_folder,
-                   "%s/build.log" % options.base_dir,
+                   options.logfile_name,
                    "cli-%s.txt" % get_ip_address("eth0"))
 
     if not options.noshutdown:
