@@ -2705,10 +2705,13 @@ size_t Solver::get_num_nonfree_vars() const
         nonfree += trail_lim[0];
     }
 
-    if (conf.perform_occur_based_simp) {
-        nonfree += simplifier->get_num_elimed_vars();
+    if (simplifier) {
+        if (conf.perform_occur_based_simp) {
+            nonfree += simplifier->get_num_elimed_vars();
+        }
     }
     nonfree += varReplacer->get_num_replaced_vars();
+
 
     if (compHandler) {
         nonfree += compHandler->get_num_vars_removed();
