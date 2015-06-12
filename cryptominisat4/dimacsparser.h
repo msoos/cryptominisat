@@ -66,7 +66,8 @@ class DimacsParser
         //Stat
         size_t lineNum;
 
-        uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
+        //Printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
+        uint32_t debugLibPart = 1;
 
         //Reduce temp overhead
         vector<Lit> lits;
