@@ -41,11 +41,11 @@ sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://githu
 sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
 
 # build solvers
-sudo -H -u ubuntu bash -c 'build_swdia5by.sh >> /home/ubuntu/build.log'
+sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_swdia5by.sh >> /home/ubuntu/build.log'
 
 # Start client
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1 &'
+sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1' &
 
 DATA="%s"
 """ % get_ip_address("eth0")
