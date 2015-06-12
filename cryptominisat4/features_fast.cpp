@@ -293,7 +293,7 @@ void FeatureExtract::extract()
     } else {
         vcg_cls_std = 0;
     }
-    if ( pnr_cls_std > eps && vcg_cls_mean > eps ) {
+    if ( pnr_cls_std > eps && pnr_cls_mean > eps ) {
         pnr_cls_std = sqrt(pnr_cls_std / (1.0 * numClauses)) / pnr_cls_mean;
     } else {
         pnr_cls_std = 0;
