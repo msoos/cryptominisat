@@ -46,7 +46,7 @@ public:
 
 private:
     const Solver* solver;
-    std::ostream* outfile;
+    std::ostream* outfile = NULL;
 
     void open_dump_file(const std::string& filename);
     void dumpBinClauses(
