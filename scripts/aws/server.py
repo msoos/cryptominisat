@@ -98,9 +98,7 @@ parser.add_option("--solver",
                   )
 # other possibilities:
 #
-# lingeling/binary/lingeling  (it's ayv)
-# SWDiA5BY/build/swdia5by
-## glueminisat/build/glueminisat (it's glueminisat-2.2.8-build120)
+# SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
 
 # NOTE: it's a ubuntu 14.04 on AWS, with sqlite3 fully installed
 
