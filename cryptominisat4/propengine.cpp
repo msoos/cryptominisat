@@ -1182,9 +1182,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
 
     const Var v = p.var();
     assert(value(v) == l_Undef);
-    /*if (!watches[(~p).toInt()].empty()) {
+    if (!watches[(~p).toInt()].empty()) {
         watches.prefetch((~p).toInt());
-    }*/
+    }
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
