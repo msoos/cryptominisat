@@ -91,7 +91,7 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
     if (val > std::numeric_limits<int>::max()/2
         || val < std::numeric_limits<int>::min()/2
     ) {
-        PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", var);
+        PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
         return 0;
     }
 
