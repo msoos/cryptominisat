@@ -109,7 +109,7 @@ class Solver : public Searcher
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
         const SolverConf& getConf() const;
-        void setConf(SolverConf conf);
+        void setConf(const SolverConf& conf);
         const vector<std::pair<string, string> >& get_tags() const;
         const BinTriStats& getBinTriStats() const;
         size_t   get_num_long_irred_cls() const;
@@ -512,7 +512,7 @@ inline const vector<Lit>& Solver::get_final_conflict() const
     return conflict;
 }
 
-inline void Solver::setConf(const SolverConf _conf)
+inline void Solver::setConf(const SolverConf& _conf)
 {
     conf = _conf;
 }
