@@ -28,6 +28,14 @@ case $CMS_CONFIG in
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
+
+    COVERAGE)
+        sudo apt-get install libboost-program-options-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                    -DCOVERAGE:BOOL=ON \
+                   ${SOURCE_DIR}
+    ;;
+
     STATIC_BIN)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
@@ -150,9 +158,11 @@ case $CMS_CONFIG in
     ;;
 esac
 
-make
-ctest -V
-sudo make install
+if [ "$CMS_CONFIG" != "AWS" ]; then
+    make
+    ctest -V
+    sudo make install
+fi
 
 case $CMS_CONFIG in
     MYSQL|WEB)
@@ -173,7 +183,7 @@ case $CMS_CONFIG in
 esac
 
 #do regression testing
-if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ]; then
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "PYTHON" ]; then
     cd ../scripts/
     ./regression_test.py -f --novalgrind --fuzzlim 30
     cd ..
@@ -202,3 +212,10 @@ case $CMS_CONFIG in
         echo "\"${STP_CONFIG}\" No further testing"
     ;;
 esac
+
+if [ "$CMS_CONFIG" -eq "COVERAGE" ]; then
+  lcov --directory ../scripts/ --capture --output-file coverage.info # capture coverage info
+  lcov --remove coverage.info 'scripts/*' 'tests/*' '/usr/*' --output-file coverage.info # filter out system and test code
+  lcov --list coverage.info # debug before upload
+  coveralls-lcov --repo-token $COVERTOKEN coverage.info # uploads to coveralls
+fi

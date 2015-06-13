@@ -49,6 +49,11 @@ else()
     add_definitions(-DNDEBUG)
 endif()
 
+option(COVERAGE "Build with coverage check" OFF)
+if (COVERAGE)
+    add_cxx_flag("--coverage")
+endif()
+
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
