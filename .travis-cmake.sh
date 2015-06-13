@@ -215,8 +215,13 @@ case $CMS_CONFIG in
 esac
 
 if [ "$CMS_CONFIG" = "COVERAGE" ]; then
-  lcov --directory scripts/ --capture --output-file coverage.info # capture coverage info
-  lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info # filter out system and test code
-  lcov --list coverage.info # debug before upload
+  # capture coverage info
+  lcov --directory build/cmsat4-src/CMakeFiles/temp_lib.dir --capture --output-file coverage.info
+
+  # filter out system and test code
+  lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
+
+  # debug before upload
+  lcov --list coverage.info
   coveralls-lcov --repo-token $COVERTOKEN coverage.info # uploads to coveralls
 fi
