@@ -186,8 +186,9 @@ esac
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "PYTHON" ]; then
     cd ../scripts/
     ./regression_test.py -f --novalgrind --fuzzlim 30
-    cd ..
 fi
+
+cd ..
 
 case $CMS_CONFIG in
     WEB)
