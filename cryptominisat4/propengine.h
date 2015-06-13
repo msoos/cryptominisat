@@ -344,64 +344,6 @@ inline bool PropEngine::getStoredPolarity(const Var var)
     return varData[var].polarity;
 }
 
-template<bool update_bogoprops>
-void PropEngine::enqueue(const Lit p, const PropBy from)
-{
-    #ifdef DEBUG_ENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    cout << "enqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << endl;
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    //assert(trail.size() <= nVarsOuter());
-    //assert(decisionLevel() == 0 || varData[p.var()].removed == Removed::none);
-    #endif
-
-    const Var v = p.var();
-    assert(value(v) == l_Undef);
-    if (!watches[(~p).toInt()].empty()) {
-        watches.prefetch((~p).toInt());
-    }
-
-    const bool sign = p.sign();
-    assigns[v] = boolToLBool(!sign);
-    varData[v].reason = from;
-    varData[v].level = decisionLevel();
-
-    trail.push_back(p);
-    propStats.propagations++;
-    if (update_bogoprops) {
-        propStats.bogoProps += 1;
-    }
-
-    if (sign) {
-        #ifdef STATS_NEEDED
-        propStats.varSetNeg++;
-        #endif
-    } else {
-        #ifdef STATS_NEEDED
-        propStats.varSetPos++;
-        #endif
-    }
-
-    //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
-    if (update_polarity_and_activity
-        //&& from != PropBy()
-    ) {
-        varData[v].polarity = !sign;
-    }
-
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
-}
-
 } //end namespace
 
 #endif //__PROPENGINE_H__
