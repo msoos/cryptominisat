@@ -17,7 +17,7 @@ provides the best of both words: ease of use and a powerful interface.
        src="https://scan.coverity.com/projects/507/badge.svg"/>
 </a>
 
-[![Coverage Status](https://coveralls.io/repos/msoos/cryptominisat/badge.svg)](https://coveralls.io/r/msoos/cryptominisat)
+[![Coverage Status](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
 
 Prerequisites
 -----
