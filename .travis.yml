@@ -88,4 +88,4 @@ install:
   - mkdir build && cd build
 
 script:
-  - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ]; then ../.travis-cmake.sh ../ build ; fi
+  - if [ "$COVERITY_SCAN" != "1" ]; then ../.travis-cmake.sh ../ build ; fi
