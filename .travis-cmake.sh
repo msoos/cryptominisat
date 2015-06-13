@@ -216,7 +216,7 @@ esac
 
 if [ "$CMS_CONFIG" = "COVERAGE" ]; then
   lcov --directory scripts/ --capture --output-file coverage.info # capture coverage info
-  lcov --remove coverage.info 'scripts/*' 'tests/*' '/usr/*' --output-file coverage.info # filter out system and test code
+  lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info # filter out system and test code
   lcov --list coverage.info # debug before upload
   coveralls-lcov --repo-token $COVERTOKEN coverage.info # uploads to coveralls
 fi
