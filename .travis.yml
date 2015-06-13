@@ -30,6 +30,15 @@ env:
     # - CMS_CONFIG=STATIC_BIN
     # - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
+matrix:
+    # Covertiy scan should only run once
+    - os: linux
+        compiler: gcc
+        env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
+
+allow_failures:
+    # Covertiy scan might fail
+    - env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
 
 addons:
   coverity_scan:
