@@ -45,7 +45,6 @@ set(cryptoms_lib_files
     comphandler.cpp
     hyperengine.cpp
     subsumeimplicit.cpp
-    cryptominisat.cpp
     cleaningstats.cpp
     datasync.cpp
     reducedb.cpp
@@ -82,34 +81,55 @@ if (TBB_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
 endif()
 
-add_library(temp_lib OBJECT
+add_library(temp_lib_norm OBJECT
     ${cryptoms_lib_files}
+    cryptominisat.cpp
 )
-add_dependencies(temp_lib tablestruct)
 
-list(APPEND cms_lib_objects $<TARGET_OBJECTS:temp_lib>)
+add_library(temp_lib_ipasir OBJECT
+    ${cryptoms_lib_files}
+    cryptominisat.cpp
+)
+
+add_dependencies(temp_lib_norm tablestruct)
+add_dependencies(temp_lib_ipasir tablestruct)
+
+list(APPEND cms_lib_objects_norm $<TARGET_OBJECTS:temp_lib_norm>)
+list(APPEND cms_lib_objects_ipasir $<TARGET_OBJECTS:temp_lib_ipasir>)
 
 if (ALSO_BUILD_STATIC_LIB)
-    add_library(libcryptominisat4_static STATIC ${cms_lib_objects})
+    add_library(libcryptominisat4_static STATIC ${cms_lib_objects_norm})
     target_link_libraries(libcryptominisat4_static LINK_INTERFACE_LIBRARIES
         ${cryptoms_lib_link_libs}
     )
     set_target_properties(libcryptominisat4_static PROPERTIES
         OUTPUT_NAME cryptominisat4
         PUBLIC_HEADER "${cryptominisat4_public_headers}"
-        VERSION ${CPACK_PACKAGE_VERSION}
-        SOVERSION ${CPACK_PACKAGE_VERSION}
+        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
 endif()
-add_library(libcryptominisat4 SHARED ${cms_lib_objects})
+
+add_library(libcryptominisat4 SHARED ${cms_lib_objects_norm})
 target_link_libraries(libcryptominisat4
     LINK_PUBLIC ${cryptoms_lib_link_libs}
 )
 set_target_properties(libcryptominisat4 PROPERTIES
     OUTPUT_NAME cryptominisat4
     PUBLIC_HEADER "${cryptominisat4_public_headers}"
-    VERSION ${CPACK_PACKAGE_VERSION}
-    SOVERSION ${CPACK_PACKAGE_VERSION}
+    VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+)
+
+add_library(libcryptominisat4ipasir SHARED ${cms_lib_objects_ipasir})
+target_link_libraries(libcryptominisat4ipasir
+    LINK_PUBLIC ${cryptoms_lib_link_libs}
+)
+set_target_properties(libcryptominisat4ipasir PROPERTIES
+    OUTPUT_NAME cryptominisat4ipasir
+    PUBLIC_HEADER "${cryptominisat4_public_headers}"
+    VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
 cmsat_add_public_header(libcryptominisat4 cryptominisat.h )
