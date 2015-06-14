@@ -16,6 +16,14 @@ cd build
 rm -rf cm* CM* cmsat4-src Make*
 cmake -DM4RI_ROOT_DIR=$M4RI ..
 make VERBOSE=1
-cp cryptominisat ../solver
-ldd solver
-./solver --version
+cd ..
+
+ldd build/cryptominisat
+./build/cryptominisat --version
+
+SOLVER="`pwd`/build/cryptominisat"
+cat <<EOF > solver
+#!/bin/bash
+${SOLVER} --threads \$2 \$1
+EOF
+chmod +x solver
