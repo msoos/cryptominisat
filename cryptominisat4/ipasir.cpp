@@ -7,6 +7,7 @@
 #include <vector>
 #include <complex>
 #include <assert.h>
+#include "constants.h"
 
 using std::vector;
 using namespace CMSat;
@@ -26,7 +27,9 @@ struct MySolver {
     SATSolver* solver;
 };
 
-const char * ipasir_signature ()
+extern "C" {
+
+DLL_PUBLIC const char * ipasir_signature ()
 {
     return SATSolver::get_version();
 }
@@ -39,7 +42,7 @@ const char * ipasir_signature ()
  * Required state: N/A
  * State after: INPUT
  */
-void * ipasir_init ()
+DLL_PUBLIC void * ipasir_init ()
 {
     MySolver *s = new MySolver;
     return (void*)s;
@@ -53,7 +56,7 @@ void * ipasir_init ()
  * Required state: INPUT or SAT or UNSAT
  * State after: undefined
  */
-void ipasir_release (void * solver)
+DLL_PUBLIC void ipasir_release (void * solver)
 {
     MySolver* s = (MySolver*)solver;
     delete s;
@@ -74,7 +77,7 @@ void ipasir_release (void * solver)
  * negation overflow).  This applies to all the literal
  * arguments in API functions.
  */
-void ipasir_add (void * solver, int lit_or_zero)
+DLL_PUBLIC void ipasir_add (void * solver, int lit_or_zero)
 {
     MySolver* s = (MySolver*)solver;
 
@@ -95,7 +98,7 @@ void ipasir_add (void * solver, int lit_or_zero)
  * Required state: INPUT or SAT or UNSAT
  * State after: INPUT
  */
-void ipasir_assume (void * solver, int lit)
+DLL_PUBLIC void ipasir_assume (void * solver, int lit)
 {
     MySolver* s = (MySolver*)solver;
     Lit lit_cms(std::abs(lit)-1, lit < 0);
@@ -112,7 +115,7 @@ void ipasir_assume (void * solver, int lit)
  * Required state: INPUT or SAT or UNSAT
  * State after: INPUT or SAT or UNSAT
  */
-int ipasir_solve (void * solver)
+DLL_PUBLIC int ipasir_solve (void * solver)
 {
     MySolver* s = (MySolver*)solver;
     lbool ret = s->solver->solve(&(s->assumptions));
@@ -140,7 +143,7 @@ int ipasir_solve (void * solver)
  * Required state: SAT
  * State after: SAT
  */
-int ipasir_val (void * solver, int lit)
+DLL_PUBLIC int ipasir_val (void * solver, int lit)
 {
     MySolver* s = (MySolver*)solver;
 
@@ -161,7 +164,7 @@ int ipasir_val (void * solver, int lit)
  * Required state: UNSAT
  * State after: UNSAT
  */
-int ipasir_failed (void * solver, int lit)
+DLL_PUBLIC int ipasir_failed (void * solver, int lit)
 {
     MySolver* s = (MySolver*)solver;
     const vector<Lit>& confl = s->solver->get_conflict();
@@ -188,8 +191,10 @@ int ipasir_failed (void * solver, int lit)
  * Required state: INPUT or SAT or UNSAT
  * State after: INPUT or SAT or UNSAT
  */
-void ipasir_set_terminate (void * solver, void * state, int (*terminate)(void * state))
+DLL_PUBLIC void ipasir_set_terminate (void * solver, void * state, int (*terminate)(void * state))
 {
     //this is complicated.
+}
+
 }
 
