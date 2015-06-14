@@ -88,7 +88,7 @@ add_library(temp_lib_norm OBJECT
 
 add_library(temp_lib_ipasir OBJECT
     ${cryptoms_lib_files}
-    cryptominisat.cpp
+    ipasir.cpp
 )
 
 add_dependencies(temp_lib_norm tablestruct)
