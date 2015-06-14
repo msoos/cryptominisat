@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits>
 #include <new>
 #include <utility>
+#include <string.h>
 #include "constants.h"
 
 #include "XAlloc.h"
@@ -73,7 +74,13 @@ public:
 
     void shrink_to_fit()
     {
-        return;
+        T* _data2 = (T*)malloc(sz*sizeof(T));
+        if (!_data2) {
+            throw OutOfMemoryException();
+        }
+        memcpy(_data2, _data, sz*sizeof(T));
+        _data = _data2;
+        cap = sz;
     }
 
    void swap(vec& other)
