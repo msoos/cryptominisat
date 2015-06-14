@@ -38,7 +38,7 @@ pdfproducer = {PdfLaTex}}
 \pagestyle{empty}
 
 \section{Introduction}
-This paper presents the conflict-driven clause-learning SAT solver CryptoMiniSat v4.4 (\emph{CMS4.4}) as submitted to SAT Race 15.. CMS4.4 aims to be a modern SAT solver that allows for multi-threaded in-processing techniques while still retaining a strong CDCL component. In this description only the features relative to CMS4.4, the previous year's submission, are explained. Please refer to the previous years' description for details. In general, CMS4.4 is a in-processing SAT solver that usues optimized datastructures and finely-tuned timeouts to have good control over both memory and time usage of simplification steps.
+This paper presents the conflict-driven clause-learning SAT solver CryptoMiniSat v4.4 (\emph{CMS4.4}) as submitted to SAT Race 15. CMS4.4 aims to be a modern, open-source SAT solver that allows for multi-threaded in-processing techniques while still retaining a strong CDCL component. In this description only the features relative to CMS4.4, the previous year's submission, are explained. Please refer to the previous years' description for details. In general, CMS4.4 is a in-processing SAT solver that usues optimized datastructures and finely-tuned timeouts to have good control over both memory and time usage of simplification steps.
 
 \subsection{Using watchlists as occurrence lists}
 As per lingeling \cite{lingeling}, CMS4.4 now uses the watchlist to store occurrence lists (when they are needed) and related occurrence information such as data related to looking for XOR clauses or gates. This significantly reduces the memory overhead and, due to cache locality, increases speed.
@@ -48,6 +48,9 @@ Over the years, many lines of code has been added to CMS that in the end didn't 
 
 \subsection{Integration of ideas from SWDiA5BY A26}
 Some of the ideas from SWDiA5BY A26\cite{swdia} have been included into CMS. In particular, the clause cleaning system employed and the switching restart have both made their way into CMS. Further, SWDiA5BY A26 was used as a test-bed against CMS to clean up the codebase from unwated and unneeded elements.
+
+\subsection{Incremental solving}
+Incremental solving for a in-processing solver is not trivial and many bugs have been found in fuzzing the incremental solving interface. The fuzzer developed for this purpose contains more than 1000 lines of python and allows for testing both the incremental and the DRAT~\cite{drat} interface of the solver.
 
 \section*{Acknowledgements}
 The author would like to thank in no particular order Chanseok Oh, Martin Maurer, Martin Albrecht, Vegard Nossum, Valentin Mayer-Eichberger, George Katsirelos, Marijn Heule, Vijay Ganesh, Trevor Hansen and Robert Aston for their help.
