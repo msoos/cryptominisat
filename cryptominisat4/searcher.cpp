@@ -109,8 +109,6 @@ void Searcher::updateVars(
     //activities are not updated, they are taken from backup, which is updated
 
     renumber_assumptions(outerToInter);
-
-    assert(longest_dec_trail.empty());
 }
 
 void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
@@ -915,45 +913,6 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     }
 }
 
-void Searcher::handle_longest_decision_trail()
-{
-    if (conf.doPrintLongestTrail == 0)
-        return;
-
-    //This comparision is NOT perfect, but it's fast. See below for exceptions
-    if (decisionLevel() > longest_dec_trail.size()) {
-        longest_dec_trail.clear();
-        for(size_t i = 0; i < trail_lim.size(); i++) {
-
-            //Avoid to print dummy decision levels' stuff
-            if (trail_lim.size() > i+1
-                && trail_lim[i+1] == trail_lim[i]
-            ) {
-                continue;
-            }
-
-            //Just in case there are some dummy decision levels, etc.
-            if (trail.size() > i+1) {
-                longest_dec_trail.push_back(trail[i+1]);
-            }
-        }
-    }
-
-    size_t diff = sumConflicts() - last_confl_longest_dec_trail_printed;
-    if (diff >= conf.doPrintLongestTrail) {
-        cout
-        << "c [long-dec-trail] ";
-
-        for(Lit lit: longest_dec_trail) {
-            cout
-            << solver->map_inter_to_outer(lit) << " ";
-        }
-        cout << endl;
-
-        last_confl_longest_dec_trail_printed = sumConflicts();
-    }
-}
-
 void Searcher::check_blocking_restart()
 {
     if (conf.do_blocking_restart
@@ -1010,7 +969,6 @@ lbool Searcher::search()
             hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
             #endif
             last_decision_ended_in_conflict = true;
-            handle_longest_decision_trail();
             if (params.update) {
                 #ifdef STATS_NEEDED
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
@@ -1553,7 +1511,6 @@ lbool Searcher::burst_search()
     params.conflictsToDo = conf.burst_search_len;
     params.rest_type = Restart::never;
     lbool status = search();
-    longest_dec_trail.clear();
 
     //Restore config
     conf.random_var_freq = backup_rand;

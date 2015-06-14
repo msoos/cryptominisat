@@ -457,11 +457,6 @@ class Searcher : public HyperEngine
         void   cache_based_more_minim(vector<Lit>& cl);
         void   stamp_based_more_minim(vector<Lit>& cl);
 
-        //For printint longest decision trail
-        vector<Lit> longest_dec_trail;
-        size_t last_confl_longest_dec_trail_printed = 0;
-        void handle_longest_decision_trail();
-
         void calculate_and_set_polars();
         void restore_order_heap();
 

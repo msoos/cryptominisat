@@ -84,7 +84,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doPrintConflDot  (false)
         , print_all_stats   (false)
         , verbStats        (0)
-        , doPrintLongestTrail(0)
         , doPrintBestRedClauses(0)
         , do_print_times(1)
         , print_restart_line_every_n_confl(7000)

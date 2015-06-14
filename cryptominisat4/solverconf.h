@@ -172,7 +172,6 @@ class SolverConf
         int  doPrintConflDot; ///< Print DOT file for each conflict
         int  print_all_stats;
         int  verbStats;
-        unsigned  doPrintLongestTrail;
         int  doPrintBestRedClauses;
         int do_print_times; ///Print times during verbose output
         int print_restart_line_every_n_confl;
