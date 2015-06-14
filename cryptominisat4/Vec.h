@@ -79,6 +79,7 @@ public:
             throw OutOfMemoryException();
         }
         memcpy(_data2, _data, sz*sizeof(T));
+        free(_data);
         _data = _data2;
         cap = sz;
     }
