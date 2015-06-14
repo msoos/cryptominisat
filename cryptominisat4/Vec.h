@@ -163,14 +163,12 @@ template<class T, class _Size>
 void vec<T,_Size>::growTo(Size size) {
     if (sz >= size) return;
     capacity(size);
-    for (Size i = sz; i < size; i++) new (&_data[i]) T();
     sz = size; }
 
 
 template<class T, class _Size>
 void vec<T,_Size>::clear(bool dealloc) {
     if (_data != NULL){
-        for (Size i = 0; i < sz; i++) _data[i].~T();
         sz = 0;
         if (dealloc) free(_data), _data = NULL, cap = 0; } }
 
