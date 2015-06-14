@@ -46,7 +46,11 @@ class SharedData
             Spec(const Spec&) {
                 assert(false);
             }
-            Spec(Spec&& other) noexcept :
+            Spec(Spec&& other)
+            #ifndef _MSC_VER
+            noexcept
+            #endif
+            :
                 data(std::move(other.data))
             {
                 other.data = NULL;
