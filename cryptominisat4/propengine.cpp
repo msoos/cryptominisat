@@ -510,7 +510,9 @@ bool PropEngine::prop_long_cl_any_order(
             propStats.propsLongIrred++;
         #endif
         enqueue<update_bogoprops>(c[0], PropBy(offset));
-        update_glue(c);
+        if (!update_bogoprops) {
+            update_glue(c);
+        }
     }
 
     return true;
