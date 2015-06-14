@@ -119,16 +119,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
 {
     switch(thread_num) {
         case 1: {
-            conf.restartType = Restart::glue;
-            conf.polarity_mode = PolarityMode::polarmode_neg;
+            conf.restartType = Restart::geom;
             conf.varElimRatioPerIter = 1;
-
-            conf.inc_max_temp_red_cls = 1.01;
-            conf.max_temporary_learnt_clauses = 10000;
-
-            conf.ratio_keep_clauses[clean_glue_based] = 0.5;
-            conf.ratio_keep_clauses[clean_size_based] = 0;
-            conf.ratio_keep_clauses[clean_sum_activity_based] = 0;
             break;
         }
         case 2: {
