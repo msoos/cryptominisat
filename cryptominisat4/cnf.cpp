@@ -105,9 +105,13 @@ void CNF::new_vars(const size_t n)
     enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
-    interToOuterMain.reserve(interToOuterMain.size() + n);
-    outerToInterMain.reserve(outerToInterMain.size() + n);
-    outer_to_with_bva_map.reserve(outer_to_with_bva_map.size() + n);
+    uint64_t f = interToOuterMain.size() + n;
+    f += f % 4096;
+    interToOuterMain.reserve(f);
+    outerToInterMain.reserve(f);
+    uint64_t g = outer_to_with_bva_map.size() + n;
+    g += g % 4096;
+    outer_to_with_bva_map.reserve(g);
     for(int i = n-1; i >= 0; i--) {
         const Var minVar = nVars()-i-1;
         const Var maxVar = nVarsOuter()-i-1;
