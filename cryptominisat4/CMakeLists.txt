@@ -108,6 +108,17 @@ if (ALSO_BUILD_STATIC_LIB)
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
+
+    add_library(libcryptominisat4_ipasir_static STATIC ${cms_lib_objects_ipasir})
+    target_link_libraries(libcryptominisat4_ipasir_static LINK_INTERFACE_LIBRARIES
+        ${cryptoms_lib_link_libs}
+    )
+    set_target_properties(libcryptominisat4_ipasir_static PROPERTIES
+        OUTPUT_NAME cryptominisat4ipasir
+        PUBLIC_HEADER "${cryptominisat4_public_headers}"
+        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    )
 endif()
 
 add_library(libcryptominisat4 SHARED ${cms_lib_objects_norm})
