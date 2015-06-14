@@ -269,10 +269,11 @@ endif()
 
 #M4RI
 option(NOM4RI "Don't use m4ri" OFF)
+option(M4RI_ROOT_DIR "m4ri default search dir")
 if (NOT NOM4RI)
     find_package(M4RI)
     IF (M4RI_FOUND)
-        MESSAGE(STATUS "OK, Found M4RI!")
+        MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
         add_definitions( -DUSE_M4RI )
     ELSE (M4RI_FOUND)
         MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
