@@ -166,7 +166,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
-        , sccFindPercent        (0.08)
+        , sccFindPercent        (0.04)
 
         //Propagation & search
         , propBinFirst     (false)
