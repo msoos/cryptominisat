@@ -60,7 +60,7 @@ conn.run_instances(
         image_id = 'ami-17471c27', # Unbuntu 14.04 US-west (Oregon)
         subnet_id = "subnet-88ab16ed",
         #instance_type='t2.micro',
-        instance_type='t1.micro',
+        instance_type='t2.micro',
         instance_profile_arn = 'arn:aws:iam::907572138573:instance-profile/server',
         user_data=cloud_init,
         key_name='controlkey',
