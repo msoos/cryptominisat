@@ -269,7 +269,6 @@ endif()
 
 #M4RI
 option(NOM4RI "Don't use m4ri" OFF)
-option(M4RI_ROOT_DIR "m4ri default search dir")
 if (NOT NOM4RI)
     find_package(M4RI)
     IF (M4RI_FOUND)
