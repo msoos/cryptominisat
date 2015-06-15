@@ -90,6 +90,7 @@ private:
     size_t hyperbin_added;
     size_t removedIrredBin;
     size_t removedRedBin;
+    size_t numCalls = 0;
 
     Solver* solver;
     vector<uint16_t>& seen;
