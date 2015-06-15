@@ -132,6 +132,9 @@ add_cxx_flag_if_supported("-Winit-self")
 add_cxx_flag_if_supported("-Wunreachable-code")
 add_cxx_flag("-fPIC")
 #add_cxx_flag_if_supported("-fno-exceptions")
+add_cxx_flag_if_supported("-fno-stack-protector")
+add_definitions(-D_FORTIFY_SOURCE=0)
+
 
 option(COVERAGE "Build with coverage check" OFF)
 if (COVERAGE)
