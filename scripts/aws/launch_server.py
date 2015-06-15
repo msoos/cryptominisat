@@ -57,7 +57,7 @@ conn.run_instances(
         min_count = 1,
         max_count = 1,
         #image_id = 'ami-4b69577b',
-        image_id = 'ami-17471c27', # Unbuntu 14.04 US-west (Oregon)
+        image_id = 'ami-a9e2da99', # Unbuntu 14.04 US-west (Oregon)
         subnet_id = "subnet-88ab16ed",
         #instance_type='t2.micro',
         instance_type='t2.micro',
