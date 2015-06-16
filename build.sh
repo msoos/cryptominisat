@@ -18,9 +18,6 @@ cmake -DM4RI_ROOT_DIR=$M4RI ..
 make -j4 VERBOSE=1
 cd ..
 
-ldd build/cryptominisat
-./build/cryptominisat --version
-
 SOLVER="`pwd`/build/cryptominisat"
 cat <<EOF > solver
 #!/bin/bash

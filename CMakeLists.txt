@@ -313,35 +313,6 @@ set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 
 add_subdirectory(cryptominisat4 cmsat4-src)
 
-# -----------------------------------------------------------------------------
-# Look for python
-# -----------------------------------------------------------------------------
-find_package (PythonInterp 2.7)
-find_package (PythonLibs 2.7)
-if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIRS)
-#     message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
-#     message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")
-#     message(STATUS "PYTHON_INCLUDE_DIR:FILEPATH=${PYTHON_INCLUDE_DIR}")
-#     message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
-    message(STATUS "OK, found python interpreter, libs and header files -> building python plugin")
-    add_subdirectory(python py-lib)
-else()
-    message(WARNING "Cannot find python interpreter, libs and header files -> not building python plugin")
-endif()
-
-# -----------------------------------------------------------------------------
-# Add uninstall target for makefiles
-# -----------------------------------------------------------------------------
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-    IMMEDIATE @ONLY
-)
-
-add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-)
-
 if (ENABLE_TESTING)
     add_test (NAME basic_test COMMAND tests/basic_test --log_level=test_suite)
     add_test (NAME assump_test COMMAND tests/assump_test --log_level=test_suite)
@@ -356,58 +327,4 @@ if (ENABLE_TESTING)
 else()
     message(WARNING "Testing is disabled")
 endif()
-
-# -----------------------------------------------------------------------------
-# Export our targets so that other CMake based projects can interface with
-# the build of cryptominisat4 in the build-tree
-# -----------------------------------------------------------------------------
-set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
-set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
-set(CRYPTOMINISAT4_STATIC_DEPS
-    ${SQLITE3_LIBRARIES}
-    ${MYSQL_LIB}
-    m4ri
-)
-
-# Export targets
-set(MY_TARGETS libcryptominisat4 cryptominisat_simple)
-if (NOT ONLY_SIMPLE)
-    set(MY_TARGETS ${MY_TARGETS} cryptominisat)
-endif()
-if (ALSO_BUILD_STATIC_LIB)
-    set(MY_TARGETS ${MY_TARGETS} libcryptominisat4_static)
-endif()
-export(TARGETS ${MY_TARGETS} FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
-
-# Create cryptominisat4Config file
-set(EXPORT_TYPE "Build-tree")
-set(CONF_INCLUDE_DIRS "${PROJECT_BINARY_DIR}/include")
-configure_file(cryptominisat4Config.cmake.in
-    "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
-)
-
-if(WIN32 AND NOT CYGWIN)
-  set(DEF_INSTALL_CMAKE_DIR CMake)
-else()
-  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat4)
-endif()
-set(CRYPTOMINISAT4_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-    "Installation directory for cryptominisat4 CMake files")
-
-# Create cryptominisat4Config file
-set(EXPORT_TYPE "installed")
-set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(cryptominisat4Config.cmake.in
-   "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
-)
-
-install(FILES
-    "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}"
-    DESTINATION "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
-)
-
-# Install the export set for use with the install-tree
-install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
-    "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
-)
 
