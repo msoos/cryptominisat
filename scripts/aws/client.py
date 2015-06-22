@@ -267,29 +267,27 @@ class solverThread (threading.Thread):
                                   self.indata["timeout_in_secs"],
                                   self.indata["mem_limit_in_mb"])
 
-        fname_with_stdout_ending = self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
-        k.key = s3_folder + "/" + fname_with_stdout_ending
+        s3_folder_and_fname = s3_folder + "/" + self.indata[
+            "cnf_filename"] + "-" + self.indata["uniq_cnt"]
+
+        #stdout
+        k.key = s3_folder_and_fname + ".stdout.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
 
+        #stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname_with_stderr_ending = self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stderr.gz"
-        k.key = s3_folder + "/" + fname_with_stderr_ending
+        k.key = s3_folder_and_fname + ".stderr.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
 
+        #perf
         os.system("gzip -f %s" % self.get_perf_fname())
-        k.key = s3_folder + "/" + self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".perf.gz"
+        k.key = s3_folder_and_fname + ".perf.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_perf_fname() + ".gz")
 
         logging.info("Uploaded stdout+stderr+perf files", extra=self.logextra)
-
-        # k.make_public()
-        # print "File public"
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
