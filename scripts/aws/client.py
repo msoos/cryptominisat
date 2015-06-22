@@ -197,6 +197,9 @@ class solverThread (threading.Thread):
     def get_stderr_fname(self):
         return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
+    def get_perf_fname(self):
+        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
+
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
@@ -207,7 +210,8 @@ class solverThread (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
 
-        toexec = "%s %s %s/%s" % (self.indata["solver"],
+        toexec = "perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
+            self.indata["solver"],
             extra_opts,
             self.temp_space,
             self.indata["cnf_filename"])
@@ -268,9 +272,6 @@ class solverThread (threading.Thread):
         k.key = s3_folder + "/" + fname_with_stdout_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
-        url = self.create_url(
-            self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
-        logging.info("URL: " + url, extra=self.logextra)
 
         os.system("gzip -f %s" % self.get_stderr_fname())
         fname_with_stderr_ending = self.indata[
@@ -278,11 +279,14 @@ class solverThread (threading.Thread):
         k.key = s3_folder + "/" + fname_with_stderr_ending
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
-        url = self.create_url(
-            self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
-        logging.info("URL: " + url, extra=self.logextra)
 
-        logging.info("Uploaded stdout+stderr files", extra=self.logextra)
+        os.system("gzip -f %s" % self.get_perf_fname())
+        k.key = s3_folder + "/" + self.indata[
+            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".perf.gz"
+        boto_bucket.delete_key(k)
+        k.set_contents_from_filename(self.get_perf_fname() + ".gz")
+
+        logging.info("Uploaded stdout+stderr+perf files", extra=self.logextra)
 
         # k.make_public()
         # print "File public"
