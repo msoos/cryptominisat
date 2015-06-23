@@ -211,7 +211,7 @@ class solverThread (threading.Thread):
             self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
 
         os.system("touch %s" % self.get_perf_fname())
-        toexec = "perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
+        toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
             self.indata["solver"],
             extra_opts,
             self.temp_space,
