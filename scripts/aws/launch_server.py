@@ -20,6 +20,16 @@ def get_answer():
         sys.stdout.write("Please respond with 'yes' or 'no'\n")
         exit(0)
 
+
+def push():
+    print "First we push, oherwise we'll forget..."
+    ret = os.system("git push")
+    if ret != 0:
+        print "Oops, couldn't push, exiting before executing"
+
+    print ""
+
+push()
 data = " ".join(sys.argv[1:])
 
 if ("--git" not in data) and ("--solver" not in data):
@@ -31,12 +41,6 @@ if len(sys.argv) > 1:
 else:
     print "you must give at least one parameter, probably --s3folder"
     exit(-1)
-
-print "First we push, oherwise we'll forget..."
-ret = os.system("git push")
-if ret != 0:
-    print "Oops, couldn't push, exiting before executing"
-
 
 sys.stdout.write("Is this OK? [y/n]? ")
 if not get_answer():
