@@ -210,6 +210,7 @@ class solverThread (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
 
+        os.system("touch %s" % self.get_perf_fname())
         toexec = "perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
             self.indata["solver"],
             extra_opts,
