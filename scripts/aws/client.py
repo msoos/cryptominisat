@@ -292,6 +292,7 @@ class solverThread (threading.Thread):
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
+        os.unlink(self.get_perf_fname() + ".gz")
 
     def run_loop(self):
         while not exitapp:
