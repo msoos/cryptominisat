@@ -3,6 +3,8 @@
 
 import sys
 import boto.ec2
+import os
+import subprocess
 
 
 def get_answer():
@@ -19,10 +21,22 @@ def get_answer():
         exit(0)
 
 data = " ".join(sys.argv[1:])
+
+if ("--git" not in data) and ("--solver" not in data):
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    data += " --git %s" % revision
+
 if len(sys.argv) > 1:
     print "Launching with data: %s" % data
 else:
-    print "Launching without any parameters"
+    print "you must give at least one parameter, probably --s3folder"
+    exit(-1)
+
+print "First we push, oherwise we'll forget..."
+ret = os.system("git push")
+if ret != 0:
+    print "Oops, couldn't push, exiting before executing"
+
 
 sys.stdout.write("Is this OK? [y/n]? ")
 if not get_answer():
