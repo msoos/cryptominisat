@@ -177,27 +177,10 @@ void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
             break;
         }
 
-        #ifdef STATS_NEEDED
-        case ClauseCleaningTypes::clean_sum_prop_confl_based : {
-            std::sort(solver->longRedCls.begin()
-                , solver->longRedCls.end()
-                , SortRedClsPropConfl(solver->cl_alloc
-                    , solver->conf.clean_confl_multiplier
-                    , solver->conf.clean_prop_multiplier
-                )
-            );
-            break;
-        }
-
-        case ClauseCleaningTypes::clean_sum_confl_depth_based : {
-            std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsConflDepth(solver->cl_alloc));
-            break;
-        }
-        #endif
-
         default: {
-            cout << "Unknown cleaning type: " << clean_type << endl;
+            cout << "Unknown cleaning type: " << clean_to_int(clean_type) << endl;
             assert(false);
+            exit(-1);
         }
     }
 }
