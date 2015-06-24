@@ -29,23 +29,23 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum class ClauseCleaningTypes {
-    clean_glue_based = 0
-    , clean_size_based = 1
-    , clean_sum_activity_based = 2
+enum class ClauseClean {
+    glue = 0
+    , size = 1
+    , activity = 2
 };
 
-inline unsigned clean_to_int(ClauseCleaningTypes t)
+inline unsigned clean_to_int(ClauseClean t)
 {
     switch(t)
     {
-        case ClauseCleaningTypes::clean_glue_based:
+        case ClauseClean::glue:
             return 0;
 
-        case ClauseCleaningTypes::clean_size_based:
+        case ClauseClean::size:
             return 1;
 
-        case ClauseCleaningTypes::clean_sum_activity_based:
+        case ClauseClean::activity:
             return 2;
     }
 
@@ -66,16 +66,16 @@ enum class Restart {
     , never
 };
 
-inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
+inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
 {
     switch(clauseCleaningType) {
-        case ClauseCleaningTypes::clean_glue_based :
+        case ClauseClean::glue :
             return "glue";
 
-        case ClauseCleaningTypes::clean_size_based:
+        case ClauseClean::size:
             return "size";
 
-        case ClauseCleaningTypes::clean_sum_activity_based:
+        case ClauseClean::activity:
             return "activity";
 
         default:

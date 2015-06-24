@@ -3447,7 +3447,7 @@ void Solver::reconfigure(int val)
         case 3: {
             //Similar to old CMS except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.ratio_keep_clauses[clean_to_int(CMSat::ClauseCleaningTypes::clean_glue_based)] = 0.5;
+            conf.ratio_keep_clauses[clean_to_int(CMSat::ClauseClean::glue)] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;

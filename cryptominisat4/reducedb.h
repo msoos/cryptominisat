@@ -72,7 +72,7 @@ private:
     CleaningStats reduceDB(bool lock_clauses_in);
     void lock_most_UIP_used_clauses();
 
-    void sort_red_cls(ClauseCleaningTypes clean_type);
+    void sort_red_cls(ClauseClean clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
     void print_best_red_clauses_if_required() const;
     ClauseUsageStats sumClauseData(

@@ -159,20 +159,20 @@ ReduceDB::ReduceDB(Solver* _solver) :
 {
 }
 
-void ReduceDB::sort_red_cls(ClauseCleaningTypes clean_type)
+void ReduceDB::sort_red_cls(ClauseClean clean_type)
 {
     switch (clean_type) {
-        case ClauseCleaningTypes::clean_glue_based : {
+        case ClauseClean::glue : {
             std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsGlue(solver->cl_alloc));
             break;
         }
 
-        case ClauseCleaningTypes::clean_size_based : {
+        case ClauseClean::size : {
             std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsSize(solver->cl_alloc));
             break;
         }
 
-        case ClauseCleaningTypes::clean_sum_activity_based : {
+        case ClauseClean::activity : {
             std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), SortRedClsAct(solver->cl_alloc));
             break;
         }
@@ -233,7 +233,7 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
         if (keep_num == 0) {
             continue;
         }
-        sort_red_cls(static_cast<ClauseCleaningTypes>(keep_type));
+        sort_red_cls(static_cast<ClauseClean>(keep_type));
         print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
     }

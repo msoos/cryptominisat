@@ -236,9 +236,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , reconfigure_val(0)
 {
 
-    ratio_keep_clauses[clean_to_int(ClauseCleaningTypes::clean_glue_based)] = 0;
-    ratio_keep_clauses[clean_to_int(ClauseCleaningTypes::clean_size_based)] = 0;
-    ratio_keep_clauses[clean_to_int(ClauseCleaningTypes::clean_sum_activity_based)] = 0.5;
+    ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+    ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+    ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
 }
 
 
