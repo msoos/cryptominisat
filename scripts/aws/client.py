@@ -210,9 +210,9 @@ class solverThread (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
 
-        os.system("touch %s" % self.get_perf_fname())
-        toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
-            self.indata["solver"],
+        # os.system("touch %s" % self.get_perf_fname())
+        # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
+        toexec = "%s %s %s/%s" % (self.indata["solver"],
             extra_opts,
             self.temp_space,
             self.indata["cnf_filename"])
@@ -259,7 +259,6 @@ class solverThread (threading.Thread):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
     def copy_solution_to_s3(self):
-        os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
@@ -272,6 +271,7 @@ class solverThread (threading.Thread):
             "cnf_filename"] + "-" + self.indata["uniq_cnt"]
 
         #stdout
+        os.system("gzip -f %s" % self.get_stdout_fname())
         k.key = s3_folder_and_fname + ".stdout.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
@@ -283,16 +283,16 @@ class solverThread (threading.Thread):
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
 
         #perf
-        os.system("gzip -f %s" % self.get_perf_fname())
-        k.key = s3_folder_and_fname + ".perf.gz"
-        boto_bucket.delete_key(k)
-        k.set_contents_from_filename(self.get_perf_fname() + ".gz")
+        #os.system("gzip -f %s" % self.get_perf_fname())
+        #k.key = s3_folder_and_fname + ".perf.gz"
+        #boto_bucket.delete_key(k)
+        #k.set_contents_from_filename(self.get_perf_fname() + ".gz")
 
         logging.info("Uploaded stdout+stderr+perf files", extra=self.logextra)
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
-        os.unlink(self.get_perf_fname() + ".gz")
+        #os.unlink(self.get_perf_fname() + ".gz")
 
     def run_loop(self):
         while not exitapp:
