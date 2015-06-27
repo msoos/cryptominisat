@@ -14,7 +14,7 @@ M4RI="${M4RI}m4ri-20140914"
 mkdir -p build
 cd build
 rm -rf cm* CM* cmsat4-src Make*
-cmake -DM4RI_ROOT_DIR=$M4RI ..
+cmake -DENABLE_ASSERTIONS=OFF -DM4RI_ROOT_DIR=$M4RI ..
 make -j4 VERBOSE=1
 cd ..
 
