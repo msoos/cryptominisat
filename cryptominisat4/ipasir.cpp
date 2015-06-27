@@ -87,7 +87,7 @@ DLL_PUBLIC void ipasir_add (void * solver, int lit_or_zero)
     } else {
         Lit lit(std::abs(lit_or_zero)-1, lit_or_zero < 0);
         if (lit.var() >= s->solver->nVars()) {
-            const uint32_t toadd = lit.var() - s->solver->nVars();
+            const uint32_t toadd = lit.var() - s->solver->nVars() + 1;
             s->solver->new_vars(toadd);
         }
         s->clause.push_back(lit);
