@@ -3,6 +3,8 @@
 
 import sys
 import boto.ec2
+import os
+import subprocess
 
 
 def get_answer():
@@ -18,11 +20,27 @@ def get_answer():
         sys.stdout.write("Please respond with 'yes' or 'no'\n")
         exit(0)
 
+
+def push():
+    print "First we push, oherwise we'll forget..."
+    ret = os.system("git push")
+    if ret != 0:
+        print "Oops, couldn't push, exiting before executing"
+
+    print ""
+
+push()
 data = " ".join(sys.argv[1:])
+
+if ("--git" not in data) and ("--solver" not in data):
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    data += " --git %s" % revision
+
 if len(sys.argv) > 1:
     print "Launching with data: %s" % data
 else:
-    print "Launching without any parameters"
+    print "you must give at least one parameter, probably --s3folder"
+    exit(-1)
 
 sys.stdout.write("Is this OK? [y/n]? ")
 if not get_answer():
@@ -57,10 +75,10 @@ conn.run_instances(
         min_count = 1,
         max_count = 1,
         #image_id = 'ami-4b69577b',
-        image_id = 'ami-17471c27', # Unbuntu 14.04 US-west (Oregon)
+        image_id = 'ami-a9e2da99', # Unbuntu 14.04 US-west (Oregon)
         subnet_id = "subnet-88ab16ed",
         #instance_type='t2.micro',
-        instance_type='t1.micro',
+        instance_type='t2.micro',
         instance_profile_arn = 'arn:aws:iam::907572138573:instance-profile/server',
         user_data=cloud_init,
         key_name='controlkey',

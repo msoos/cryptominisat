@@ -166,7 +166,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
-        , sccFindPercent        (0.08)
+        , sccFindPercent        (0.04)
 
         //Propagation & search
         , propBinFirst     (false)
@@ -231,19 +231,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , global_timeout_multiplier_multiplier(1.2)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
-        , sync_every_confl(6000)
+        , sync_every_confl(20000)
         , clean_after_perc_zero_depth_assigns(0.015)
         , reconfigure_val(0)
 {
 
-    ratio_keep_clauses[clean_glue_based] = 0;
-    ratio_keep_clauses[clean_size_based] = 0;
-    ratio_keep_clauses[clean_sum_activity_based] = 0.5;
-
-    #ifdef STATS_NEEDED
-    ratio_keep_clauses[clean_sum_prop_confl_based] = 0;
-    ratio_keep_clauses[clean_sum_confl_depth_based] = 0;
-    #endif
+    ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+    ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+    ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
 }
 
 

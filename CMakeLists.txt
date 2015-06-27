@@ -97,8 +97,8 @@ macro(add_cxx_flag_if_supported flagname)
 endmacro()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -mtune=native")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -g0 -DNDEBUG -mtune=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 
 include(CheckCXXCompilerFlag)
@@ -132,6 +132,9 @@ add_cxx_flag_if_supported("-Winit-self")
 add_cxx_flag_if_supported("-Wunreachable-code")
 add_cxx_flag("-fPIC")
 #add_cxx_flag_if_supported("-fno-exceptions")
+add_cxx_flag_if_supported("-fno-stack-protector")
+add_definitions(-D_FORTIFY_SOURCE=0)
+
 
 option(COVERAGE "Build with coverage check" OFF)
 if (COVERAGE)

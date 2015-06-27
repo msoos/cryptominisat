@@ -25,6 +25,7 @@ THE SOFTWARE.
 #define __WATCHARRAY_H__
 
 #include "watched.h"
+#include "Vec.h"
 #include <vector>
 
 namespace CMSat {
@@ -33,11 +34,11 @@ using std::vector;
 
 struct watch_subarray
 {
-    explicit watch_subarray(vector<Watched>& _array) :
+    explicit watch_subarray(vec<Watched>& _array) :
         array(_array)
     {}
 
-    vector<Watched>& array;
+    vec<Watched>& array;
     Watched& operator[](const size_t at)
     {
         return array[at];
@@ -45,7 +46,7 @@ struct watch_subarray
 
     Watched& at(const size_t at)
     {
-        return array.at(at);
+        return array[at];
     }
 
     void clear()
@@ -95,7 +96,7 @@ struct watch_subarray
 
     void push(const Watched& watched)
     {
-        array.push_back(watched);
+        array.push(watched);
     }
 
     typedef Watched* iterator;
@@ -104,11 +105,11 @@ struct watch_subarray
 
 struct watch_subarray_const
 {
-    explicit watch_subarray_const(const vector<Watched  >& _array) :
+    explicit watch_subarray_const(const vec<Watched  >& _array) :
         array(_array)
     {}
 
-    const vector<Watched  >& array;
+    const vec<Watched  >& array;
 
     watch_subarray_const(const watch_subarray& other) :
         array(other.array)
@@ -121,7 +122,7 @@ struct watch_subarray_const
 
     const Watched& at(const size_t pos) const
     {
-        return array.at(pos);
+        return array[pos];
     }
 
     size_t size() const
@@ -150,7 +151,7 @@ struct watch_subarray_const
 class watch_array
 {
 public:
-    vector<vector<Watched  > > watches;
+    vector<vec<Watched> > watches;
     vector<Lit> smudged_list;
     vector<char> smudged;
 
@@ -203,7 +204,7 @@ public:
 
     size_t mem_used() const
     {
-        double mem = watches.capacity()*sizeof(vector<Watched  >);
+        double mem = watches.capacity()*sizeof(vec<Watched>);
         for(size_t i = 0; i < watches.size(); i++) {
             //1.2 is overhead
             mem += (double)watches[i].capacity()*(double)sizeof(Watched)*1.2;
@@ -225,8 +226,8 @@ public:
 
     struct iterator
     {
-        vector<vector<Watched  > >::iterator it;
-        explicit iterator(vector<vector<Watched  > >::iterator _it) :
+        vector<vec<Watched> >::iterator it;
+        explicit iterator(vector<vec<Watched> >::iterator _it) :
             it(_it)
         {}
 
@@ -256,8 +257,8 @@ public:
 
     struct const_iterator
     {
-        vector<vector<Watched  > >::const_iterator it;
-        explicit const_iterator(vector<vector<Watched  > >::const_iterator _it) :
+        vector<vec<Watched  > >::const_iterator it;
+        explicit const_iterator(vector<vec<Watched  > >::const_iterator _it) :
             it(_it)
         {}
 

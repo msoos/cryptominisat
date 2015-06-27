@@ -197,6 +197,9 @@ class solverThread (threading.Thread):
     def get_stderr_fname(self):
         return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
+    def get_perf_fname(self):
+        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
+
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
@@ -207,6 +210,8 @@ class solverThread (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
 
+        # os.system("touch %s" % self.get_perf_fname())
+        # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
         toexec = "%s %s %s/%s" % (self.indata["solver"],
             extra_opts,
             self.temp_space,
@@ -254,7 +259,6 @@ class solverThread (threading.Thread):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
     def copy_solution_to_s3(self):
-        os.system("gzip -f %s" % self.get_stdout_fname())
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
@@ -263,32 +267,32 @@ class solverThread (threading.Thread):
                                   self.indata["timeout_in_secs"],
                                   self.indata["mem_limit_in_mb"])
 
-        fname_with_stdout_ending = self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stdout.gz"
-        k.key = s3_folder + "/" + fname_with_stdout_ending
+        s3_folder_and_fname = s3_folder + "/" + self.indata[
+            "cnf_filename"] + "-" + self.indata["uniq_cnt"]
+
+        #stdout
+        os.system("gzip -f %s" % self.get_stdout_fname())
+        k.key = s3_folder_and_fname + ".stdout.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
-        url = self.create_url(
-            self.indata["s3_bucket"], s3_folder, fname_with_stdout_ending)
-        logging.info("URL: " + url, extra=self.logextra)
 
+        #stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname_with_stderr_ending = self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"] + ".stderr.gz"
-        k.key = s3_folder + "/" + fname_with_stderr_ending
+        k.key = s3_folder_and_fname + ".stderr.gz"
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
-        url = self.create_url(
-            self.indata["s3_bucket"], s3_folder, fname_with_stderr_ending)
-        logging.info("URL: " + url, extra=self.logextra)
 
-        logging.info("Uploaded stdout+stderr files", extra=self.logextra)
+        #perf
+        #os.system("gzip -f %s" % self.get_perf_fname())
+        #k.key = s3_folder_and_fname + ".perf.gz"
+        #boto_bucket.delete_key(k)
+        #k.set_contents_from_filename(self.get_perf_fname() + ".gz")
 
-        # k.make_public()
-        # print "File public"
+        logging.info("Uploaded stdout+stderr+perf files", extra=self.logextra)
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
+        #os.unlink(self.get_perf_fname() + ".gz")
 
     def run_loop(self):
         while not exitapp:
