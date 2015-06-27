@@ -135,6 +135,7 @@ DLL_PUBLIC int ipasir_solve (void * solver)
         return 0;
     }
     assert(false);
+    exit(-1);
 }
 
 /**
