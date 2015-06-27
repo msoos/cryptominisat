@@ -125,6 +125,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
+            conf.doGateFind = false;
             conf.varElimRatioPerIter = 1;
             conf.never_stop_search = true;
             break;
@@ -150,6 +151,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 5: {
             conf.doVarElim = false;
             conf.glue_must_keep_clause_if_below_or_eq= 3;
+            conf.num_conflicts_of_search_inc = 1.2;
             break;
         }
         case 6: {
@@ -164,6 +166,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 8: {
+            conf.doIntreeProbe = false;
             conf.propBinFirst = 1;
             break;
         }
@@ -174,12 +177,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 10: {
+            conf.doGateFind = false;
             conf.restartType = Restart::luby;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             conf.var_elim_strategy = ElimStrategy::calculate_exactly;
             break;
         }
         case 11: {
+            conf.num_conflicts_of_search_inc = 1.3;
             conf.propBinFirst = 1;
             conf.restartType = Restart::luby;
             conf.random_var_freq = 0.01;
@@ -190,6 +195,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.max_num_lits_more_red_min = 5;
         }
         case 13: {
+            conf.doIntreeProbe = false;
             conf.glue_must_keep_clause_if_below_or_eq= 4;
             break;
         }
@@ -200,15 +206,18 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 15: {
+            conf.doGateFind = false;
             conf.glue_must_keep_clause_if_below_or_eq= 6;
             break;
         }
         case 16: {
+            conf.simplify_at_startup = false;
             conf.var_decay_max = 0.96;
             conf.random_var_freq = 0.01;
             break;
         }
         case 17: {
+            conf.num_conflicts_of_search_inc = 1.5;
             conf.var_decay_max = 0.94;
             conf.random_var_freq = 0.02;
             break;
