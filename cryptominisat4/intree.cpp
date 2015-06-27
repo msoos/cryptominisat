@@ -35,11 +35,12 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
-    const uint64_t time_limit =
+    uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier
-        *0.3
-        ;
+        *0.5;
+    time_limit = (double)time_limit * std::pow((double)(numCalls+1), 0.3);
+
     aborted = false;
     uint64_t bogoprops = 0;
     uint32_t last_replace = std::numeric_limits<uint32_t>::max();
@@ -125,6 +126,7 @@ bool InTree::intree_probe()
     hyperbin_added = 0;
     removedIrredBin = 0;
     removedRedBin = 0;
+    numCalls++;
 
     bool aborted = false;
     if (!replace_until_fixedpoint(aborted))
@@ -143,7 +145,10 @@ bool InTree::intree_probe()
     }
 
     double myTime = cpuTime();
-    bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL;
+    bogoprops_to_use =
+        solver->conf.intree_time_limitM*1000ULL*1000ULL
+        *solver->conf.global_timeout_multiplier;
+    bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
     bogoprops_remain = bogoprops_to_use;
 
     fill_roots();

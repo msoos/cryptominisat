@@ -139,9 +139,9 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;
 
-            conf.ratio_keep_clauses[clean_glue_based] = 0;
-            conf.ratio_keep_clauses[clean_size_based] = 0;
-            conf.ratio_keep_clauses[clean_sum_activity_based] = 0.5;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 5: {

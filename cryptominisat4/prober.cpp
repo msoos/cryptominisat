@@ -187,7 +187,7 @@ uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numProps
 
     numPropsTodo = (double)numPropsTodo * numPropsMultiplier;
     const size_t numPropsTodoAftPerf = numPropsTodo;
-    numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.2);
+    numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.3);
 
     if (solver->conf.verbosity >=2 ) {
         cout

@@ -29,16 +29,28 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum ClauseCleaningTypes {
-    clean_glue_based = 0
-    , clean_size_based = 1
-    , clean_sum_activity_based = 2
-    #ifdef STATS_NEEDED
-    , clean_sum_prop_confl_based = 3
-    , clean_sum_confl_depth_based = 4
-    #endif
-    , clean_none = 5
+enum class ClauseClean {
+    glue = 0
+    , size = 1
+    , activity = 2
 };
+
+inline unsigned clean_to_int(ClauseClean t)
+{
+    switch(t)
+    {
+        case ClauseClean::glue:
+            return 0;
+
+        case ClauseClean::size:
+            return 1;
+
+        case ClauseClean::activity:
+            return 2;
+    }
+
+    exit(-1);
+}
 
 enum class PolarityMode {
     polarmode_pos
@@ -54,25 +66,17 @@ enum class Restart {
     , never
 };
 
-inline std::string getNameOfCleanType(ClauseCleaningTypes clauseCleaningType)
+inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
 {
     switch(clauseCleaningType) {
-        case clean_glue_based :
+        case ClauseClean::glue :
             return "glue";
 
-        case clean_size_based:
+        case ClauseClean::size:
             return "size";
 
-        case clean_sum_activity_based:
+        case ClauseClean::activity:
             return "activity";
-
-        #ifdef STATS_NEEDED
-        case clean_sum_prop_confl_based:
-            return "prconf";
-
-        case clean_sum_confl_depth_based:
-            return "confdep";
-        #endif
 
         default:
             std::exit(-1);

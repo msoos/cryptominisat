@@ -1130,10 +1130,11 @@ void Searcher::check_need_restart()
 
     //Conflict limit reached?
     if (params.conflictsDoneThisRestart > params.conflictsToDo) {
-        if (conf.verbosity >= 3)
+        if (conf.verbosity >= 3) {
             cout
             << "c Over limit of conflicts for this restart"
             << " -- restarting as soon as possible!" << endl;
+        }
         params.needToStopSearch = true;
     }
 }
