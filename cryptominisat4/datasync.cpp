@@ -138,7 +138,7 @@ bool DataSync::shareBinData()
     syncBinToOthers();
     size_t mem = sharedData->calc_memory_use_bins();
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 3) {
         cout
         << "c [sync] got bins " << (stats.recvBinData - oldRecvBinData)
         << " sent bins " << (stats.sentBinData - oldSentBinData)
@@ -312,7 +312,7 @@ bool DataSync::shareUnitData()
         }
     }
 
-    if (solver->conf.verbosity >= 2
+    if (solver->conf.verbosity >= 3
         //&& (thisGotUnitData > 0 || thisSentUnitData > 0)
     ) {
         cout

@@ -117,6 +117,7 @@ DLL_PUBLIC SATSolver::~SATSolver()
 
 void update_config(SolverConf& conf, unsigned thread_num)
 {
+    thread_num = thread_num % 20;
     switch(thread_num) {
         case 1: {
             conf.restartType = Restart::geom;
@@ -124,10 +125,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.max_temporary_learnt_clauses = 10000;
+            conf.doGateFind = false;
+            conf.varElimRatioPerIter = 1;
+            conf.never_stop_search = true;
             break;
         }
         case 3: {
+            conf.max_temporary_learnt_clauses = 10000;
             conf.restartType = CMSat::Restart::luby;
             break;
         }
@@ -146,6 +150,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 5: {
             conf.doVarElim = false;
+            conf.glue_must_keep_clause_if_below_or_eq= 3;
+            conf.num_conflicts_of_search_inc = 1.2;
             break;
         }
         case 6: {
@@ -155,14 +161,73 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 7: {
             conf.do_bva = 0;
             conf.doGateFind = 0;
-            conf.more_red_minim_limit_cache = 800;
-            conf.more_red_minim_limit_binary = 400;
+            conf.doCache = false;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             break;
         }
         case 8: {
+            conf.doIntreeProbe = false;
             conf.propBinFirst = 1;
             break;
+        }
+        case 9: {
+            conf.varElimRatioPerIter = 0.1;
+            conf.restartType = Restart::geom;
+            conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+            break;
+        }
+        case 10: {
+            conf.doGateFind = false;
+            conf.restartType = Restart::luby;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+            conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+            break;
+        }
+        case 11: {
+            conf.num_conflicts_of_search_inc = 1.3;
+            conf.propBinFirst = 1;
+            conf.restartType = Restart::luby;
+            conf.random_var_freq = 0.01;
+            break;
+        }
+        case 12: {
+            conf.shortTermHistorySize = 100;
+            conf.max_num_lits_more_red_min = 5;
+        }
+        case 13: {
+            conf.doIntreeProbe = false;
+            conf.glue_must_keep_clause_if_below_or_eq= 4;
+            break;
+        }
+        case 14: {
+            conf.do_bva = 0;
+            conf.doGateFind = 0;
+            conf.glue_must_keep_clause_if_below_or_eq= 3;
+            break;
+        }
+        case 15: {
+            conf.doGateFind = false;
+            conf.glue_must_keep_clause_if_below_or_eq= 6;
+            break;
+        }
+        case 16: {
+            conf.simplify_at_startup = false;
+            conf.var_decay_max = 0.96;
+            conf.random_var_freq = 0.01;
+            break;
+        }
+        case 17: {
+            conf.num_conflicts_of_search_inc = 1.5;
+            conf.var_decay_max = 0.94;
+            conf.random_var_freq = 0.02;
+            break;
+        }
+        case 18: {
+            conf.clauseDecayActivity = 1.0/0.996;
+            break;
+        }
+        case 19: {
+            conf.max_temporary_learnt_clauses = 30000;
         }
         default: {
             break;
