@@ -448,7 +448,6 @@ class Searcher : public HyperEngine
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
-        void reset_reason_levels_of_vars_to_zero();
         void rearrange_clauses_watches();
         Lit find_good_blocked_lit(const Clause& c) const override;
 

@@ -1876,14 +1876,6 @@ void Searcher::print_search_loop_num()
     }
 }
 
-void Searcher::reset_reason_levels_of_vars_to_zero()
-{
-    assert(decisionLevel() == 0);
-    for(VarData& dat: varData) {
-        dat.level = 0;
-    }
-}
-
 lbool Searcher::solve(
     const uint64_t _maxConfls
     , const unsigned upper_level_iteration_num
@@ -1899,8 +1891,6 @@ lbool Searcher::solve(
         << "c Searcher::solve() called"
         << endl;
     }
-
-    reset_reason_levels_of_vars_to_zero();
 
     resetStats();
     lbool status = l_Undef;
