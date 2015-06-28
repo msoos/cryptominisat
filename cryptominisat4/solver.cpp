@@ -1839,6 +1839,7 @@ end:
         check_stats();
         check_implicit_propagated();
         restore_order_heap();
+        num_red_cls_reducedb = count_num_red_cls_reducedb();
 
         return l_Undef;
     }
