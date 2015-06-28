@@ -1879,10 +1879,8 @@ void Searcher::print_search_loop_num()
 void Searcher::reset_reason_levels_of_vars_to_zero()
 {
     assert(decisionLevel() == 0);
-    for(Lit lit : trail) {
-        if (varData[lit.var()].removed == Removed::none) {
-            varData[lit.var()].level = 0;
-        }
+    for(VarData& dat: varData) {
+        dat.level = 0;
     }
 }
 
