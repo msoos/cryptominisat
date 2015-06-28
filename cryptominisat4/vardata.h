@@ -33,7 +33,7 @@ using namespace CMSat;
 struct VarData
 {
     VarData() :
-        level(std::numeric_limits< uint32_t >::max())
+        level(0)
         , reason(PropBy())
         , removed(Removed::none)
         , polarity(false)

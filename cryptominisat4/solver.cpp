@@ -1839,9 +1839,18 @@ end:
         check_stats();
         check_implicit_propagated();
         restore_order_heap();
+        reset_reason_levels_of_vars_to_zero();
         num_red_cls_reducedb = count_num_red_cls_reducedb();
 
         return l_Undef;
+    }
+}
+
+void Solver::reset_reason_levels_of_vars_to_zero()
+{
+    assert(decisionLevel() == 0);
+    for(VarData& dat: varData) {
+        dat.level = 0;
     }
 }
 
