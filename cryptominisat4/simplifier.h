@@ -103,7 +103,6 @@ public:
     size_t mem_used_xor() const;
     void print_gatefinder_stats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;
-    void clean_stamps_from_uneliminated_vars();
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
@@ -176,7 +175,6 @@ private:
     void check_elimed_vars_are_unassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
 
-    vector<Var> uneliminated_vars_since_last_solve; //since last solving, these variables have been uneliminated
     bool fill_occur();
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);
