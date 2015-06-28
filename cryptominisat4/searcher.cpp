@@ -1907,7 +1907,6 @@ lbool Searcher::solve(
     if (conf.burst_search_len > 0
         && upper_level_iteration_num > 0
     ) {
-        restore_order_heap();
         assert(solver->check_order_heap_sanity());
         setup_restart_print();
         status = burst_search();
@@ -1915,7 +1914,6 @@ lbool Searcher::solve(
             goto end;
     }
 
-    restore_order_heap();
     params.rest_type = conf.restartType;
     if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
         || conf.do_calc_polarity_every_time
