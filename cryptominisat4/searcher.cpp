@@ -1878,8 +1878,9 @@ void Searcher::print_search_loop_num()
 
 void Searcher::reset_reason_levels_of_vars_to_zero()
 {
-    for(Var i = 0; i < nVars(); i++) {
-        varData[i].level = 0;
+    assert(decisionLevel() == 0);
+    for(VarData& dat: varData) {
+        dat.level = 0;
     }
 }
 
@@ -1902,7 +1903,6 @@ lbool Searcher::solve(
     reset_reason_levels_of_vars_to_zero();
 
     resetStats();
-    num_red_cls_reducedb = count_num_red_cls_reducedb();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0
         && upper_level_iteration_num > 0
