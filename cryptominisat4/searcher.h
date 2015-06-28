@@ -162,7 +162,8 @@ class Searcher : public HyperEngine
         // Solving
         //
         lbool solve(
-            uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
+            uint64_t maxConfls
+            , const unsigned upper_level_iteration_num
         );
         void finish_up_solve(lbool status);
         void setup_restart_print();

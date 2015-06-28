@@ -1486,7 +1486,7 @@ lbool Solver::iterate_until_solved()
         if (num_conflicts_of_search <= 0) {
             break;
         }
-        status = Searcher::solve(num_conflicts_of_search);
+        status = Searcher::solve(num_conflicts_of_search, iteration_num);
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
