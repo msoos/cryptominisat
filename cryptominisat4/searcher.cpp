@@ -1878,8 +1878,11 @@ void Searcher::print_search_loop_num()
 
 void Searcher::reset_reason_levels_of_vars_to_zero()
 {
-    for(Var i = 0; i < nVars(); i++) {
-        varData[i].level = 0;
+    assert(decisionLevel() == 0);
+    for(Lit lit : trail) {
+        if (varData[lit.var()].removed == Removed::none) {
+            varData[lit.var()].level = 0;
+        }
     }
 }
 
