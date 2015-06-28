@@ -1838,6 +1838,7 @@ end:
     } else {
         check_stats();
         check_implicit_propagated();
+        restore_order_heap();
 
         return l_Undef;
     }

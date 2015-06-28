@@ -414,6 +414,7 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_cache_actual;
         const Stats& get_stats() const;
         size_t mem_used() const;
+        void restore_order_heap();
 
     private:
         //////////////
@@ -459,7 +460,6 @@ class Searcher : public HyperEngine
         void   stamp_based_more_minim(vector<Lit>& cl);
 
         void calculate_and_set_polars();
-        void restore_order_heap();
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
@@ -667,6 +667,7 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
+    assert(order_heap.heap_property());
 
     return true;
 }
