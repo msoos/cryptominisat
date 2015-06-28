@@ -1883,8 +1883,10 @@ void Searcher::reset_reason_levels_of_vars_to_zero()
     }
 }
 
-lbool Searcher::solve(const uint64_t _maxConfls)
-{
+lbool Searcher::solve(
+    const uint64_t _maxConfls
+    , const unsigned upper_level_iteration_num
+) {
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _maxConfls;
@@ -1902,7 +1904,9 @@ lbool Searcher::solve(const uint64_t _maxConfls)
     resetStats();
     num_red_cls_reducedb = count_num_red_cls_reducedb();
     lbool status = l_Undef;
-    if (conf.burst_search_len > 0) {
+    if (conf.burst_search_len > 0
+        && upper_level_iteration_num > 0
+    ) {
         restore_order_heap();
         assert(solver->check_order_heap_sanity());
         setup_restart_print();
