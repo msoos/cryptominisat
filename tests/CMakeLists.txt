@@ -142,3 +142,11 @@ target_link_libraries(clause_test
     ${Boost_LIBRARIES}
     libcryptominisat4
 )
+
+add_executable(library_speed_test
+    library_speed_test.cpp
+)
+
+target_link_libraries(library_speed_test
+    libcryptominisat4
+)
