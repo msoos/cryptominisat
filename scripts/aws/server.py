@@ -423,7 +423,7 @@ def shutdown(exitval=0):
 
     exit(exitval)
 
-set_up_logging().
+set_up_logging()
 logging.info("Server called with parameters: %s",
              pprint.pformat(options, indent=4).replace("\n", " || "))
 
