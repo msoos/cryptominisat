@@ -114,7 +114,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
-        , varelim_cutoff_too_many_clauses(40)
+        , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(50)
