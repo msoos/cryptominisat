@@ -598,10 +598,11 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 
 DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
-    for(size_t i = 0; i < data->solvers.size(); i++) {
-        data->solvers[i]->add_sql_tag(tagname, tag);
+    for(Solver* solver: data->solvers) {
+        solver->add_sql_tag(tagname, tag);
     }
 }
+
 
 DLL_PUBLIC const char* SATSolver::get_version_sha1()
 {
