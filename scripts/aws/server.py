@@ -21,7 +21,7 @@ import string
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
-import requester
+import spotrequester
 
 
 last_termination_sent = None
@@ -423,7 +423,7 @@ def shutdown(exitval=0):
 
     exit(exitval)
 
-set_up_logging()
+set_up_logging().
 logging.info("Server called with parameters: %s",
              pprint.pformat(options, indent=4).replace("\n", " || "))
 
@@ -442,7 +442,7 @@ server.start()
 
 if not options.noaws:
     #create spot instance requests
-    spot_create = requester.SpotRequestor()
+    spot_create = spotrequester.SpotRequester()
     spot_create.create_spots()
 
 

@@ -12,7 +12,7 @@ from boto.ec2.connection import EC2Connection
 from common_aws import *
 
 
-class SpotRequestor:
+class SpotRequester:
     def __init__(self):
         self.conf = ConfigParser.ConfigParser()
         self.conf.read('ec2-spot-instance.cfg')
