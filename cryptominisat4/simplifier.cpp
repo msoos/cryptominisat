@@ -1730,7 +1730,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             //Early-abort or over time
             if (after_clauses > before_clauses
                 //Too long resolvent
-                || (solver->conf.velim_resolvent_too_large != -1 && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
+                || (solver->conf.velim_resolvent_too_large != -1
+                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
                 //Over-time
                 || *limit_to_decrease < -10LL*1000LL
 
