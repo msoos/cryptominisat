@@ -84,8 +84,8 @@ DATA="%s"
 
     def create_spots_if_needed(self):
         # Valid values: open | active | closed | cancelled | failed
-        run_wait_spots = self.conn.get_all_spot_instance_requests(filters={'state': 'open'})
-        run_wait_spots.extend(self.conn.get_all_spot_instance_requests(filters={'state': 'active'}))
+        run_wait_spots = self.ec2conn.get_all_spot_instance_requests(filters={'state': 'open'})
+        run_wait_spots.extend(self.ec2conn.get_all_spot_instance_requests(filters={'state': 'active'}))
 
         for spot in run_wait_spots:
             if spot.id in self.our_ids:
