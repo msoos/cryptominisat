@@ -72,22 +72,13 @@ public:
             conf = *_conf;
         }
         drup = new Drup();
-        if (_needToInterrupt != NULL) {
-            needToInterrupt = _needToInterrupt;
-            needToInterrupt_is_foreign = true;
-        } else {
-            needToInterrupt = new bool;
-            *needToInterrupt = false;
-            needToInterrupt_is_foreign = false;
-        }
+        assert(_needToInterrupt != NULL);
+        needToInterrupt = _needToInterrupt;
     }
 
     virtual ~CNF()
     {
         delete drup;
-        if (!needToInterrupt_is_foreign) {
-            delete needToInterrupt;
-        }
     }
 
     ClauseAllocator cl_alloc;
@@ -262,7 +253,6 @@ private:
     void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const Var which, const int off_by = 0);
 
-    bool needToInterrupt_is_foreign;
     vector<Var> outerToInterMain;
     vector<Var> interToOuterMain;
     size_t num_bva_vars = 0;

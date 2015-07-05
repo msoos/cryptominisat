@@ -40,10 +40,10 @@ static const bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
-        explicit CMSatPrivateData(bool* _interrupt_asap) {
+        explicit CMSatPrivateData(bool* _must_interrupt) {
             cls = 0;
             vars_to_add = 0;
-            inter = _interrupt_asap;
+            must_interrupt = _must_interrupt;
             which_solved = 0;
             shared_data = NULL;
             okay = true;
@@ -65,7 +65,8 @@ namespace CMSat {
         vector<Solver*> solvers;
         SharedData *shared_data;
         int which_solved;
-        bool* inter;
+        bool* must_interrupt;
+        bool must_interrupt_needs_free;
         unsigned cls;
         unsigned vars_to_add;
         vector<Lit> cls_lits;
@@ -103,14 +104,24 @@ struct DataForThread
 
 DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
 {
-    data = new CMSatPrivateData(interrupt_asap);
-    data->solvers.push_back(new Solver((SolverConf*) config, data->inter));
+    if (interrupt_asap == NULL) {
+        data = new CMSatPrivateData(new bool);
+        data->must_interrupt_needs_free = true;
+    } else {
+        data = new CMSatPrivateData(interrupt_asap);
+        data->must_interrupt_needs_free = false;
+    }
+
+    data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
 }
 
 DLL_PUBLIC SATSolver::~SATSolver()
 {
     for(Solver* this_s: data->solvers) {
         delete this_s;
+    }
+    if (data->must_interrupt_needs_free) {
+        delete data->must_interrupt;
     }
     delete data;
 }
@@ -260,7 +271,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
         SolverConf conf = data->solvers[0]->getConf();
         conf.doSQL = 0;
         update_config(conf, i);
-        data->solvers.push_back(new Solver(&conf, data->inter));
+        data->solvers.push_back(new Solver(&conf, data->must_interrupt));
     }
 
     //set shared data
@@ -510,13 +521,8 @@ struct OneThreadSolve
             data_for_thread.update_mutex->lock();
             *data_for_thread.which_solved = tid;
             *data_for_thread.ret = ret;
-            for(size_t i = 0; i < data_for_thread.solvers.size(); i++) {
-                if (i == tid) {
-                    continue;
-                }
-
-                data_for_thread.solvers[i]->set_must_interrupt_asap();
-            }
+            //will interrupt all of them
+            data_for_thread.solvers[0]->set_must_interrupt_asap();
             data_for_thread.update_mutex->unlock();
         }
         data_for_thread.solvers[tid]->unset_must_interrupt_asap();
@@ -528,6 +534,9 @@ struct OneThreadSolve
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
+    //Reset the interrupt signal if it was set
+    *(data->must_interrupt) = false;
+
     if (data->log) {
         (*data->log) << "c Solver::solve( ";
         if (assumptions) {
@@ -640,9 +649,7 @@ DLL_PUBLIC void SATSolver::set_drup(std::ostream* os)
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
-    for(Solver* solver: data->solvers) {
-        solver->set_must_interrupt_asap();
-    }
+    *(data->must_interrupt) = true;
 }
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
