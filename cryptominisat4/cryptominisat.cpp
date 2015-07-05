@@ -53,11 +53,11 @@ namespace CMSat {
             delete log; //this will also close the file
             delete shared_data;
         }
-        CMSatPrivateData(CMSatPrivateData& other) //copy should fail
+        CMSatPrivateData(CMSatPrivateData&) //copy should fail
         {
             std::exit(-1);
         }
-        CMSatPrivateData(const CMSatPrivateData& other) //copy should fail
+        CMSatPrivateData(const CMSatPrivateData&) //copy should fail
         {
             std::exit(-1);
         }
