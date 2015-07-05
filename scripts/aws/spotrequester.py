@@ -92,6 +92,10 @@ DATA="%s"
                 logging.info("ID %s is either waiting or running, not requesting a new one" % spot.id)
                 return
 
+        if len(self.our_ids) > 4:
+            logging.error("Something really wrong has happened, we have reqested 4 spots aready! Not requesting more.")
+            return
+
         self.create_spots()
 
     def create_spots(self):
