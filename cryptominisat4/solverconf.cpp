@@ -216,7 +216,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doCalcReach      (true)
 
         //Gates
-        , doGateFind       (true)
+        , doGateFind       (false)
         , maxGateBasedClReduceSize(20)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
