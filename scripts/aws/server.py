@@ -403,6 +403,25 @@ class Listener (threading.Thread):
             self.handle_one_connection()
 
 
+class SpotManager (threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.spot_creator = spotrequester.SpotRequester()
+
+    def run(self):
+        while True:
+            try:
+                if (not failed) and (not server.ready_to_shutdown()):
+                    self.spot_creator.create_spots_if_needed()
+            except:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+                logging.error("Cannot create spots! Traceback: %s", the_trace)
+
+            time.sleep(60)
+
+
 def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
@@ -434,17 +453,15 @@ if not options.git_rev:
 
 server = Server()
 listener = Listener()
+spotmanager = SpotManager()
 listener.setDaemon(True)
 server.setDaemon(True)
+spotmanager.setDaemon(True)
 
 listener.start()
 server.start()
-
-if not options.noaws:
-    #create spot instance requests
-    spot_create = spotrequester.SpotRequester()
-    spot_create.create_spots()
-
+time.sleep(20)
+spotmanager.start()
 
 while threading.active_count() > 0 and not failed:
     time.sleep(0.5)
