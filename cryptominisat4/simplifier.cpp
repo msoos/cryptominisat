@@ -1513,8 +1513,11 @@ void Simplifier::mark_gate_in_poss_negs(
     , watch_subarray_const negs
 ) {
     gate_lits_of_elim_cls.clear();
+
+    //Either of the two is OK
     find_gate(elim_lit, poss, negs);
-    gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+    bool gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+
     if (!gate_lits_of_elim_cls.empty()
         && solver->conf.verbosity >= 10
     ) {

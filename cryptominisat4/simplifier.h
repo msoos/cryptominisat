@@ -329,7 +329,6 @@ private:
     vector<char> poss_gate_parts;
     vector<char> negs_gate_parts;
     bool gate_found_elim;
-    bool gate_found_elim_pos;
 
     struct HeuristicData
     {
