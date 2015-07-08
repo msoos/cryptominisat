@@ -1745,6 +1745,11 @@ void Searcher::restore_order_heap()
     assert(order_heap.heap_property());
 }
 
+void Searcher::reset_temp_cl_num()
+{
+    conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+}
+
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning

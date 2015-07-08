@@ -3440,6 +3440,7 @@ void Solver::reconfigure(int val)
     switch (val) {
         case 1: {
             conf.max_temporary_learnt_clauses = 20000;
+            reset_temp_cl_num();
             num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
@@ -3459,6 +3460,7 @@ void Solver::reconfigure(int val)
             conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;
+            reset_temp_cl_num();
             num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
