@@ -1826,9 +1826,11 @@ end:
              + binTri.irredTris + binTri.redTris) > 1
             )
     ) {
-        calculate_features();
-        if (conf.reconfigure_val != 0 && solveStats.numSimplify == 2) {
-            reconfigure(conf.reconfigure_val);
+        if (solveStats.numSimplify == 2) {
+            calculate_features();
+            if (conf.reconfigure_val != 0) {
+                reconfigure(conf.reconfigure_val);
+            }
         }
     }
 
