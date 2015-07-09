@@ -3462,8 +3462,7 @@ void Solver::reconfigure(int val)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(CMSat::ClauseClean::glue)] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.inc_max_temp_red_cls = 1.01;
-            conf.max_temporary_learnt_clauses = 10000;
+            conf.inc_max_temp_red_cls = 1.03;
             reset_temp_cl_num();
             break;
         }
