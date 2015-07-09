@@ -17,8 +17,7 @@ void FeatureExtract::for_one_clause(
     , const Lit lit
     ,  Function func
     ,  Function2 func_each_lit
-) const
-{
+) const {
     unsigned neg_vars = 0;
     unsigned pos_vars = 0;
     unsigned size = 0;
@@ -135,7 +134,7 @@ void FeatureExtract::fill_vars_cls()
 
 void FeatureExtract::print_stats() const
 {
-    const char* sep = " ";
+    const char* sep = ", ";
 
     cout << "c [features] ";
     fprintf( stdout, "numVars: %d%s", numVars, sep );
@@ -144,41 +143,41 @@ void FeatureExtract::print_stats() const
     if (tmp > 0) {
         tmp /= (1.0 * numClauses);
     }
-    fprintf( stdout, "(numVars/(1.0*numClauses): %.5f%s", tmp, sep );
+    fprintf( stdout, "(numVars/(1.0*numClauses) %.5f%s", tmp, sep );
 
-    fprintf( stdout, "vcg_var_mean: %.5f%s", vcg_var_mean, sep );
-    fprintf( stdout, "vcg_var_std :%.5f%s", vcg_var_std, sep );
-    fprintf( stdout, "vcg_var_min: %.5f%s", vcg_var_min, sep );
-    fprintf( stdout, "vcg_var_max: %.5f%s", vcg_var_max, sep );
-    fprintf( stdout, "vcg_var_spread: %.5f%s", vcg_var_spread, sep );
+    fprintf( stdout, "vcg_var_mean %.5f%s", vcg_var_mean, sep );
+    fprintf( stdout, "vcg_var_std %.5f%s", vcg_var_std, sep );
+    fprintf( stdout, "vcg_var_min %.5f%s", vcg_var_min, sep );
+    fprintf( stdout, "vcg_var_max %.5f%s", vcg_var_max, sep );
+    fprintf( stdout, "vcg_var_spread %.5f%s", vcg_var_spread, sep );
 
-    fprintf( stdout, "vcg_cls_mean:%.5f%s", vcg_cls_mean, sep );
-    fprintf( stdout, "vcg_cls_std: %.5f%s", vcg_cls_std, sep );
-    fprintf( stdout, "vcg_cls_min: %.5f%s", vcg_cls_min, sep );
-    fprintf( stdout, "vcg_cls_max: %.5f%s", vcg_cls_max, sep );
-    fprintf( stdout, "vcg_cls_spread :%.5f%s", vcg_cls_spread, sep );
+    fprintf( stdout, "vcg_cls_mean %.5f%s", vcg_cls_mean, sep );
+    fprintf( stdout, "vcg_cls_std %.5f%s", vcg_cls_std, sep );
+    fprintf( stdout, "vcg_cls_min %.5f%s", vcg_cls_min, sep );
+    fprintf( stdout, "vcg_cls_max %.5f%s", vcg_cls_max, sep );
+    fprintf( stdout, "vcg_cls_spread %.5f%s", vcg_cls_spread, sep );
 
-    fprintf( stdout, "pnr_var_mean: %.5f%s", pnr_var_mean, sep );
-    fprintf( stdout, "pnr_var_std: %.5f%s", pnr_var_std, sep );
-    fprintf( stdout, "pnr_var_min: %.5f%s", pnr_var_min, sep );
-    fprintf( stdout, "pnr_var_max: %.5f%s", pnr_var_max, sep );
-    fprintf( stdout, "pnr_var_spread: %.5f%s", pnr_var_spread, sep );
+    fprintf( stdout, "pnr_var_mean %.5f%s", pnr_var_mean, sep );
+    fprintf( stdout, "pnr_var_std %.5f%s", pnr_var_std, sep );
+    fprintf( stdout, "pnr_var_min %.5f%s", pnr_var_min, sep );
+    fprintf( stdout, "pnr_var_max %.5f%s", pnr_var_max, sep );
+    fprintf( stdout, "pnr_var_spread %.5f%s", pnr_var_spread, sep );
 
-    fprintf( stdout, "pnr_cls_mean: %.5f%s", pnr_cls_mean, sep );
-    fprintf( stdout, "pnr_cls_std: %.5f%s", pnr_cls_std, sep );
-    fprintf( stdout, "pnr_cls_min: %.5f%s", pnr_cls_min, sep );
-    fprintf( stdout, "pnr_cls_max: %.5f%s", pnr_cls_max, sep );
-    fprintf( stdout, "pnr_cls_spread: %.5f%s", pnr_cls_spread, sep );
+    fprintf( stdout, "pnr_cls_mean %.5f%s", pnr_cls_mean, sep );
+    fprintf( stdout, "pnr_cls_std %.5f%s", pnr_cls_std, sep );
+    fprintf( stdout, "pnr_cls_min %.5f%s", pnr_cls_min, sep );
+    fprintf( stdout, "pnr_cls_max %.5f%s", pnr_cls_max, sep );
+    fprintf( stdout, "pnr_cls_spread %.5f%s", pnr_cls_spread, sep );
 
-    fprintf( stdout, "unary: %.5f%s", unary, sep );
-    fprintf( stdout, "binary: %.5f%s", binary, sep );
-    fprintf( stdout, "trinary: %.5f%s", trinary, sep );
-    fprintf( stdout, "horn_mean: %.5f%s", horn_mean, sep );
-    fprintf( stdout, "horn_std: %.5f%s", horn_std, sep );
-    fprintf( stdout, "horn_min: %.5f%s", horn_min, sep );
-    fprintf( stdout, "horn_max: %.5f%s", horn_max, sep );
-    fprintf( stdout, "horn_spread: %.5f%s", horn_spread, sep );
-    fprintf( stdout, "horn: %.5f", horn );
+    fprintf( stdout, "unary %.5f%s", unary, sep );
+    fprintf( stdout, "binary %.5f%s", binary, sep );
+    fprintf( stdout, "trinary %.5f%s", trinary, sep );
+    fprintf( stdout, "horn_mean %.5f%s", horn_mean, sep );
+    fprintf( stdout, "horn_std %.5f%s", horn_std, sep );
+    fprintf( stdout, "horn_min %.5f%s", horn_min, sep );
+    fprintf( stdout, "horn_max %.5f%s", horn_max, sep );
+    fprintf( stdout, "horn_spread %.5f%s", horn_spread, sep );
+    fprintf( stdout, "horn %.5f", horn );
     fprintf( stdout, "\n");
 }
 
@@ -192,8 +191,8 @@ void FeatureExtract::extract()
         }
     }
 
-    auto empty_func = [](const Lit, unsigned, unsigned, unsigned) -> void {};
-    auto func = [&](unsigned size, unsigned pos_vars, unsigned) -> void {
+    auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
+    auto func = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
         if (size == 0 ) {
             return;
         }
@@ -275,7 +274,7 @@ void FeatureExtract::extract()
     pnr_var_spread = pnr_var_max - pnr_var_min;
     horn_spread = horn_max - horn_min;
 
-    auto func2 = [&](unsigned size, unsigned pos_vars, unsigned) -> void {
+    auto func2 = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
         if ( size == 0 ) {
             return;
         }
@@ -332,7 +331,7 @@ void FeatureExtract::extract()
     }
 
     if (solver->conf.verbosity >= 2) {
-        cout << "c [features] extract T: "
+        cout << "c [features] extracted"
         << solver->conf.print_times(cpuTime() - start_time)
         << endl;
     }

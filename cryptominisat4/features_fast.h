@@ -30,11 +30,9 @@ private:
     template<class Function, class Function2>
     void for_all_clauses(Function func,  Function2 func_each_lit) const;
     struct VARIABLE {
-        int numPos;
-        int size;
-        int horn;
-
-        VARIABLE() : numPos(0), size(0), horn(0) {}
+        int numPos = 0;
+        int size = 0;
+        int horn = 0;
     };
 
     vector<VARIABLE> myVars;
