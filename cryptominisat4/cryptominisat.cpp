@@ -136,12 +136,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.doGateFind = false;
+            conf.max_num_lits_more_red_min = 10;
             conf.varElimRatioPerIter = 1;
             conf.never_stop_search = true;
             break;
         }
         case 3: {
+            conf.doGateFind = true;
+            conf.blocking_restart_multip = 1.6;
             conf.max_temporary_learnt_clauses = 10000;
             conf.restartType = CMSat::Restart::luby;
             break;
@@ -160,6 +162,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
+            conf.max_num_lits_more_red_min = 2;
             conf.doVarElim = false;
             conf.glue_must_keep_clause_if_below_or_eq= 3;
             conf.num_conflicts_of_search_inc = 1.2;
@@ -177,6 +180,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 8: {
+            conf.subsumption_time_limitM = 500;
+            conf.blocking_restart_multip = 1.2;
             conf.doIntreeProbe = false;
             conf.propBinFirst = 1;
             break;
@@ -188,6 +193,9 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 10: {
+            conf.more_red_minim_limit_cache = 100;
+            conf.more_red_minim_limit_binary = 300;
+            conf.max_num_lits_more_red_min = 5;
             conf.doGateFind = false;
             conf.restartType = Restart::luby;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -202,10 +210,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
+            conf.max_num_lits_more_red_min = 2;
             conf.shortTermHistorySize = 100;
-            conf.max_num_lits_more_red_min = 5;
         }
         case 13: {
+            conf.subsumption_time_limitM = 100;
             conf.doIntreeProbe = false;
             conf.glue_must_keep_clause_if_below_or_eq= 4;
             break;

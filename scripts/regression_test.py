@@ -429,6 +429,8 @@ class Tester:
     def random_options(self):
         cmd = " --zero-exit-status "
 
+        if random.choice([True, False]):
+            cmd += " --reconf %d " % random.randint(0, 6)
         cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
         cmd += "--restart %s " % random.choice(
             ["geom", "glue", "luby"])

@@ -1477,7 +1477,7 @@ lbool Solver::iterate_until_solved()
         long num_conflicts_of_search = conf.num_conflicts_of_search
             *(std::pow(conf.num_conflicts_of_search_inc, (double)iteration_num));
         if (conf.never_stop_search) {
-            num_conflicts_of_search*=1000ULL;
+            num_conflicts_of_search = 500ULL*1000ULL*1000ULL;
         }
         num_conflicts_of_search = std::min<long>(
             num_conflicts_of_search
@@ -3440,9 +3440,8 @@ void Solver::reconfigure(int val)
     assert(val > 0);
     switch (val) {
         case 1: {
-            conf.max_temporary_learnt_clauses = 20000;
+            conf.max_temporary_learnt_clauses = 30000;
             reset_temp_cl_num();
-            num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
 
@@ -3457,28 +3456,34 @@ void Solver::reconfigure(int val)
         case 3: {
             //Similar to old CMS except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(CMSat::ClauseClean::glue)] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.01;
             conf.max_temporary_learnt_clauses = 10000;
             reset_temp_cl_num();
-            num_red_cls_reducedb = count_num_red_cls_reducedb();
             break;
         }
 
         case 4: {
+            //Different glue limit
             conf.glue_must_keep_clause_if_below_or_eq = 4;
+            conf.max_num_lits_more_red_min = 3;
+            conf.max_glue_more_minim = 4;
             break;
         }
 
         case 5: {
-            conf.global_timeout_multiplier = 1.5;
+            //Lots of simplifying
+            conf.global_timeout_multiplier = 2;
+            conf.num_conflicts_of_search_inc = 1.25;
             break;
         }
 
         case 6: {
-            //TODO disable termporary clause db and use inc_max_temp_red_cls
-            conf.inc_max_temp_red_cls = 1.5;
+            //No more simplifying
+            conf.never_stop_search = true;
             break;
         }
 

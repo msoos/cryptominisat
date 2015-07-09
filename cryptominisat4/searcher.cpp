@@ -1748,6 +1748,7 @@ void Searcher::restore_order_heap()
 void Searcher::reset_temp_cl_num()
 {
     conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
 void Searcher::reduce_db_if_needed()
