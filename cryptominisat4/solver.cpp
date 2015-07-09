@@ -1649,6 +1649,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     if (conf.doProbe
         && !startup
+        && nVars() > 0
         && !prober->probe()
     ) {
         goto end;
