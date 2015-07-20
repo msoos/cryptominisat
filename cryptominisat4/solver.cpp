@@ -3460,7 +3460,7 @@ void Solver::reconfigure(int val)
             //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(CMSat::ClauseClean::glue)] = 0.5;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.03;
             reset_temp_cl_num();
