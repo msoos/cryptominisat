@@ -30,7 +30,7 @@ pdfproducer = {PdfLaTex}}
 \usepackage{graphicx,epsfig,xcolor}
 
 \begin{document}
-\title{CryptoMiniSat v4.4}
+\title{The CryptoMiniSat-4.4 set of solvers at SAT Race 2015}
 \author{Mate Soos}
 
 \maketitle
@@ -52,8 +52,11 @@ Some of the ideas from SWDiA5BY A26\cite{swdia} have been included into CMS. In 
 \subsection{Incremental solving}
 Incremental solving for a in-processing solver is not trivial and many bugs have been found in fuzzing the incremental solving interface. The fuzzer developed for this purpose contains more than 1000 lines of python and allows for testing both the incremental and the DRAT~\cite{drat} interface of the solver.
 
+\subsection{Versions}
+Two versions of the solver were submitted to the race. The version "4.4" has been tuned to use a specific set of constants using a cluster and machine learning methods. The second version, "4.4-auto" runs for approx 100K conflicts and then based on static data extracted from the simplified CNF chooses one of 7 solving strategies. Both variants have been tuned on past competitions' problem instances.
+
 \section*{Acknowledgements}
-The author would like to thank in no particular order Chanseok Oh, Martin Maurer, Martin Albrecht, Vegard Nossum, Valentin Mayer-Eichberger, George Katsirelos, Marijn Heule, Vijay Ganesh, Trevor Hansen and Robert Aston for their help.
+The author would like to thank Marius Lindauer for his help in tuning the solver using the SpySMAC suite and the Postdam university computing cluster.
 
 \bibliographystyle{splncs}
 \bibliography{sigproc}
