@@ -143,7 +143,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 3: {
             conf.doGateFind = true;
-            conf.blocking_restart_multip = 1.6;
             conf.max_temporary_learnt_clauses = 10000;
             conf.restartType = CMSat::Restart::luby;
             break;
