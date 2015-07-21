@@ -259,6 +259,9 @@ class solverThread (threading.Thread):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
     def copy_solution_to_s3(self):
+        exists = boto_conn.lookup(self.indata["s3_bucket"])
+        if not exists:
+            boto_conn.create_bucket(self.indata["s3_bucket"])
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
