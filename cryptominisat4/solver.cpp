@@ -3490,6 +3490,19 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 7: {
+            conf.varElimRatioPerIter = 1;
+            conf.restartType = Restart::geom;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+
+            conf.inc_max_temp_red_cls = 1.02;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
+            reset_temp_cl_num();
+            break;
+        }
+
         default: {
             cout << "ERROR: You must give a value for reconfigure between 1...10" << endl;
             exit(-1);
