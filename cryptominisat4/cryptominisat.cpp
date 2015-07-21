@@ -187,9 +187,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 9: {
-            conf.varElimRatioPerIter = 0.1;
-            conf.restartType = Restart::geom;
-            conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
+            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            conf.inc_max_temp_red_cls = 1.03;
             break;
         }
         case 10: {
