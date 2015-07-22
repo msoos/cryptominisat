@@ -143,10 +143,12 @@ target_link_libraries(clause_test
     libcryptominisat4
 )
 
-add_executable(library_speed_test
-    library_speed_test.cpp
-)
+if (NOT SLOW_DEBUG)
+    add_executable(library_speed_test
+        library_speed_test.cpp
+    )
 
-target_link_libraries(library_speed_test
-    libcryptominisat4
-)
+    target_link_libraries(library_speed_test
+        libcryptominisat4
+    )
+endif()
