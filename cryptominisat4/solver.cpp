@@ -3503,6 +3503,12 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 8: {
+            conf.glue_must_keep_clause_if_below_or_eq = 7;
+            conf.var_decay_max = 0.98; //more 'fast' in adjusting activities
+            break;
+        }
+
         default: {
             cout << "ERROR: You must give a value for reconfigure between 1...10" << endl;
             exit(-1);
