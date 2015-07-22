@@ -3509,8 +3509,19 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 9: {
+            conf.propBinFirst= true;
+            break;
+        }
+
+        case 10: {
+            conf.more_red_minim_limit_cache = 1200;
+            conf.more_red_minim_limit_binary = 600;
+            conf.max_num_lits_more_red_min = 20;
+        }
+
         default: {
-            cout << "ERROR: You must give a value for reconfigure between 1...10" << endl;
+            cout << "ERROR: You must give a value for reconfigure that is lower" << endl;
             exit(-1);
         }
     }
