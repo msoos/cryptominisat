@@ -32,13 +32,12 @@ def parse_features_line(line):
     # print dat
     return dat
 
-def nobody_could_solve_it(recotnf_score):
-    nobody_could_solve_it = True
+def nobody_could_solve_it(reconf_score):
     for r_s_elem in reconf_score:
         if r_s_elem[1] != 0:
-            nobody_could_solve_it = False
+            return False
 
-    return nobody_could_solve_it
+    return True
 
 def all_above_fixed_score(reconf_score, score_limit):
     for x in reconf_score:
@@ -70,8 +69,9 @@ def print_features_and_scores(fname, features, reconfs_scores):
             r_s[1] = r_s[0]
             r_s[0] = tmp
 
-    if all_above_fixed_score(r_s):
-        return -1
+    if all_above_fixed_score(r_s, 4500):
+        print "All above score:", r_s
+        return -2
 
     final_array = [0.0]*9
     val = 1.0
@@ -99,6 +99,7 @@ def parse_file(fname):
     fname_clean =  ntpath.split(fname_clean)[1]
     reconf = 0
 
+    satisfiable = None
     features = None
     score = 0
     for line in f:
@@ -117,6 +118,15 @@ def parse_file(fname):
             reconf = line.split("to config")[1].strip()
             reconf = int(reconf)
 
+        if "s SATIS" in line:
+            satisfiable = True
+
+        if "s UNSATIS" in line:
+            satisfiable = False
+
+
+    #if satisfiable == True:
+    #    score = 0
 
     return fname_clean, reconf, features, score
 
