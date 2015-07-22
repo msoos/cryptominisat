@@ -53,11 +53,11 @@ def print_features_and_scores(fname, features, reconfs_scores):
     if debug_print: print r_s
 
     if nobody_could_solve_it(r_s):
-        print "Nobody could solve it"
+        print "%s Nobody could solve it" % fname
         return -1
 
     if all_above_fixed_score(r_s, 4500):
-        print "All above score:", r_s
+        print "%s All above score" % (fname)
         return -2
 
     #special case for 7, it's to bad to be used generally
@@ -68,6 +68,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
             tmp = r_s[1]
             r_s[1] = r_s[0]
             r_s[0] = tmp
+            print " --> swapping 1st and 2nd: ", r_s
 
     #calculate final array
     final_array = [0.0]*9
