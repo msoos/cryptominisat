@@ -66,7 +66,7 @@ namespace CMSat {
         SharedData *shared_data;
         int which_solved;
         bool* must_interrupt;
-        bool must_interrupt_needs_free;
+        bool must_interrupt_needs_free = false;
         unsigned cls;
         unsigned vars_to_add;
         vector<Lit> cls_lits;
@@ -109,7 +109,6 @@ DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
         data->must_interrupt_needs_free = true;
     } else {
         data = new CMSatPrivateData(interrupt_asap);
-        data->must_interrupt_needs_free = false;
     }
 
     data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
