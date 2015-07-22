@@ -47,18 +47,18 @@ def all_above_fixed_score(reconf_score, score_limit):
     return True
 
 def print_features_and_scores(fname, features, reconfs_scores):
-    string = "%s " % (fname)
-    for name, val in features.items():
-        string += "%s " % val
-
-
     r_s = sorted(reconfs_scores, key=lambda x: x[1])[::-1]
     best_reconf = r_s[0][0]
     best_reconf_score = r_s[0][1]
     if debug_print: print r_s
 
     if nobody_could_solve_it(r_s):
+        print "Nobody could solve it"
         return -1
+
+    if all_above_fixed_score(r_s, 4500):
+        print "All above score:", r_s
+        return -2
 
     #special case for 7, it's to bad to be used generally
     if best_reconf == 7:
@@ -69,10 +69,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
             r_s[1] = r_s[0]
             r_s[0] = tmp
 
-    if all_above_fixed_score(r_s, 4500):
-        print "All above score:", r_s
-        return -2
-
+    #calculate final array
     final_array = [0.0]*9
     val = 1.0
     for conf_score,i in zip(r_s, xrange(100)):
@@ -83,7 +80,10 @@ def print_features_and_scores(fname, features, reconfs_scores):
             val = 0.0
 
 
-
+    #print final string
+    string = "%s " % (fname)
+    for name, val in features.items():
+        string += "%s " % val
 
     string += " || "
     for elem in final_array:
