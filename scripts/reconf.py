@@ -54,11 +54,11 @@ def print_features_and_scores(fname, features, reconfs_scores):
 
     if nobody_could_solve_it(r_s):
         print "%s Nobody could solve it" % fname
-        return -1
+        return -1, False
 
     if all_above_fixed_score(r_s, 4500):
         print "%s All above score" % (fname)
-        return -2
+        return -2, False
 
     #special case for 7, it's to bad to be used generally
     if best_reconf == 7:
@@ -91,7 +91,8 @@ def print_features_and_scores(fname, features, reconfs_scores):
         string += "%.3f " % elem
 
     print string
-    return best_reconf
+    only_this_could_solve_it = r_s[1][1] == 0
+    return best_reconf, only_this_could_solve_it
 
 def parse_file(fname):
     f = gzip.open(fname, 'rb')
@@ -158,15 +159,25 @@ if debug_print: print "all files:", all_files
 print ""
 
 best_reconf = {}
+only_this = {}
 for fname in all_files:
     #print "fname:", fname
     if all_files_features[fname] is not None:
-        best = print_features_and_scores(fname, all_files_features[fname], all_files_scores[fname])
+        best, only_this_could_solve_it = print_features_and_scores(fname, all_files_features[fname], all_files_scores[fname])
+
         if best not in best_reconf:
             best_reconf[best] = 1
         else:
             best_reconf[best] = best_reconf[best] + 1
 
+
+        if only_this_could_solve_it:
+            if best not in only_this:
+                only_this[best] = 1
+            else:
+                only_this[best] = only_this[best] + 1
+
         if debug_print: print ""
 
-print best_reconf
+print "best reconfs: ", best_reconf
+print "uniquely solved by: ", only_this
