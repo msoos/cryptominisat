@@ -32,6 +32,7 @@ def parse_features_line(line):
     # print dat
     return dat
 
+
 def nobody_could_solve_it(reconf_score):
     for r_s_elem in reconf_score:
         if r_s_elem[1] != 0:
@@ -39,12 +40,14 @@ def nobody_could_solve_it(reconf_score):
 
     return True
 
+
 def all_above_fixed_score(reconf_score, score_limit):
     for x in reconf_score:
         if x[1] < score_limit:
             return False
 
     return True
+
 
 def print_features_and_scores(fname, features, reconfs_scores):
     r_s = sorted(reconfs_scores, key=lambda x: x[1])[::-1]
@@ -80,7 +83,6 @@ def print_features_and_scores(fname, features, reconfs_scores):
         if val < 0.0 or conf_score[1] == 0:
             val = 0.0
 
-
     #print final string
     string = "%s " % (fname)
     for name, val in features.items():
@@ -93,6 +95,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
     print string
     only_this_could_solve_it = r_s[1][1] == 0
     return best_reconf, only_this_could_solve_it
+
 
 def parse_file(fname):
     f = gzip.open(fname, 'rb')
@@ -126,7 +129,6 @@ def parse_file(fname):
         if "s UNSATIS" in line:
             satisfiable = False
 
-
     #if satisfiable == True:
     #    score = 0
 
@@ -154,8 +156,9 @@ for x in sys.argv[1:]:
     sys.stdout.write(".")
     sys.stdout.flush()
 
-if debug_print: print "END--------"
-if debug_print: print "all files:", all_files
+if debug_print:
+    print "END--------"
+    print "all files:", all_files
 print ""
 
 best_reconf = {}
@@ -169,7 +172,6 @@ for fname in all_files:
             best_reconf[best] = 1
         else:
             best_reconf[best] = best_reconf[best] + 1
-
 
         if only_this_could_solve_it:
             if best not in only_this:
