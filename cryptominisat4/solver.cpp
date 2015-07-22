@@ -3521,6 +3521,49 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 11: {
+            conf.more_otf_shrink_with_cache = 0;
+            conf.max_temporary_learnt_clauses = 29633;
+            conf.burst_search_len = 1114;
+            conf.probe_bogoprops_time_limitM = 309;
+            conf.strengthen_implicit_time_limitM = 145;
+            conf.blocking_restart_multip = 0.10120348330944741;
+            conf.do_blocking_restart = 1;
+            conf.shortTermHistorySize = 84;
+            conf.max_num_lits_more_red_min = 8;
+            conf.varElimCostEstimateStrategy = 0;
+            conf.doOTFSubsume = 1;
+            conf.do_calc_polarity_first_time = 1;
+            conf.doFindXors = 0;
+            conf.varElimRatioPerIter = 0.836063764936515;
+            conf.update_glues_on_analyze = 0;
+            conf.varelim_time_limitM = 134;
+            conf.bva_limit_per_call = 410437;
+            conf.subsume_implicit_time_limitM = 154;
+            conf.bva_time_limitM = 166;
+            conf.distill_time_limitM = 1;
+            conf.cacheUpdateCutoff = 2669;
+            conf.num_conflicts_of_search = 21671;
+            conf.inc_max_temp_red_cls = 1.029816784872561;
+            conf.doCompHandler = 1;
+            conf.do_calc_polarity_every_time = 1;
+            conf.distill_long_irred_cls_time_limitM = 1;
+            conf.random_var_freq = 0.004446797134521431;
+            conf.intree_time_limitM = 1652;
+            conf.bva_also_twolit_diff = 0;
+            conf.blocking_restart_trail_hist_length = 1;
+            conf.update_glues_on_prop = 1;
+            conf.dominPickFreq = 503;
+            conf.sccFindPercent = 0.0174091218619471;
+            conf.do_empty_varelim = 1;
+            conf.updateVarElimComplexityOTF = 1;
+            conf.more_otf_shrink_with_stamp = 0;
+            conf.watch_cache_stamp_based_str_time_limitM = 37;
+            conf.var_decay_max = 0.9565818549080972;
+            reset_temp_cl_num();
+            break;
+        }
+
         default: {
             cout << "ERROR: You must give a value for reconfigure that is lower" << endl;
             exit(-1);

@@ -116,6 +116,14 @@ class Searcher : public HyperEngine
                 #endif
             }
 
+            void reset_glue_hist_size(size_t shortTermHistorySize)
+            {
+                glueHist.clearAndResize(shortTermHistorySize);
+                #ifdef STATS_NEEDED
+                trailDepthHist.clearAndResize(shortTermHistorySize);
+                #endif
+            }
+
             void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
             {
                 glueHist.clearAndResize(shortTermHistorySize);

@@ -940,6 +940,7 @@ lbool Searcher::search()
     if (params.update)
         stats.numRestarts++;
     hist.clear();
+    hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
     assert(solver->prop_at_head());
 
