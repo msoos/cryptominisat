@@ -3518,6 +3518,7 @@ void Solver::reconfigure(int val)
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
+            break;
         }
 
         default: {
