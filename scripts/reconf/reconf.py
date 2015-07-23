@@ -83,25 +83,22 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print "%s All above score" % (fname)
         return -2, False
 
-    #special case for 7, it's to bad to be used generally
-    if best_reconf == 7:
-        diff = best_reconf_score-r_s[1][1]
-        print "DIFF: %s" % diff
-        if diff < 1200:
-            tmp = r_s[1]
-            r_s[1] = r_s[0]
-            r_s[0] = tmp
-            print " --> swapping 1st and 2nd: ", r_s
-
     #calculate final array
     final_array = [0.0]*12
     val = 1.0
+    best_score = r_s[0][1]
     for conf_score, i in zip(r_s, xrange(100)):
-        if conf_score[1] > 0:
-            final_array[conf_score[0]] = val
-        val -= 0.3
+        diff = abs(conf_score[1]-best_score)
+        best_score = conf_score[1]
+        val -= float(diff)/2000.0
+        if diff > 0:
+            val -= 0.1
+
         if val < 0.0 or conf_score[1] == 0:
             val = 0.0
+
+        if conf_score[1] > 0:
+            final_array[conf_score[0]] = val
 
     #print final string
     string = ""
@@ -112,8 +109,11 @@ def print_features_and_scores(fname, features, reconfs_scores):
     string += "||"
     if not options.plusminus:
         string += "%.3f" % final_array[options.reconf]
+        string += "||"
+        for a in final_array:
+            string += "%.1f " % a
     else:
-        if final_array[options.reconf] > 0.5:
+        if abs(final_array[options.reconf]-0.5) < 0.05:
             string += "+"
         else:
             string += "-"
