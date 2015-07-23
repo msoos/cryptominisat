@@ -57,6 +57,7 @@
 #include "intree.h"
 #include "features_fast.h"
 #include "GitSHA1.h"
+#include"features_to_reconf.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1827,7 +1828,10 @@ end:
             )
     ) {
         if (solveStats.numSimplify == 2) {
-            calculate_features();
+            Features feat = calculate_features();
+            if (conf.reconfigure_val == 100) {
+                conf.reconfigure_val = get_reconf_from_features(feat);
+            }
             if (conf.reconfigure_val != 0) {
                 reconfigure(conf.reconfigure_val);
             }
@@ -3427,14 +3431,16 @@ Var Solver::num_active_vars() const
     return numActive;
 }
 
-void Solver::calculate_features() const
+Features Solver::calculate_features() const
 {
     FeatureExtract extract(this);
     extract.fill_vars_cls();
-    extract.extract();
+    Features feat = extract.extract();
     if (conf.verbosity >= 1) {
         extract.print_stats();
     }
+
+    return feat;
 }
 
 void Solver::reconfigure(int val)
