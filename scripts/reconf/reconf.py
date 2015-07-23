@@ -90,9 +90,9 @@ def print_features_and_scores(fname, features, reconfs_scores):
     for conf_score, i in zip(r_s, xrange(100)):
         diff = abs(conf_score[1]-best_score)
         best_score = conf_score[1]
-        val -= float(diff)/2000.0
+        val -= float(diff)/3000.0
         if diff > 0:
-            val -= 0.1
+            val -= 0.05
 
         if val < 0.0 or conf_score[1] == 0:
             val = 0.0
