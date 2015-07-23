@@ -94,7 +94,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
             print " --> swapping 1st and 2nd: ", r_s
 
     #calculate final array
-    final_array = [0.0]*9
+    final_array = [0.0]*12
     val = 1.0
     for conf_score, i in zip(r_s, xrange(100)):
         if conf_score[1] > 0:
