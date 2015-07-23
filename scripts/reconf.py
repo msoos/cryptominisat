@@ -14,6 +14,10 @@ parser.add_option("-f", "--file",
 parser.add_option("-r", "--reconf",
                   dest="reconf", type=int,
                   help="print final values to this file")
+parser.add_option("-p", "--plusminus",
+                  dest="plusminus", default=False,
+                  action="store_true",
+                  help="print final element as +/-")
 
 
 (options, args) = parser.parse_args()
@@ -104,7 +108,13 @@ def print_features_and_scores(fname, features, reconfs_scores):
         string += "%s," % val
 
     string += "||"
-    string += "%.3f" % final_array[options.reconf]
+    if not options.plusminus:
+        string += "%.3f" % final_array[options.reconf]
+    else:
+        if final_array[options.reconf] > 0.5:
+            string += "+"
+        else:
+            string += "-"
 
     print fname, string
     if outf:
