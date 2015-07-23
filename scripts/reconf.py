@@ -47,7 +47,9 @@ def parse_features_line(line):
         # print name, " -- ", elem
         name = ""
 
-    # print dat
+#    for name, val in dat.items():
+#        print "%s:\t\tcontinious" % name
+
     return dat
 
 
@@ -212,3 +214,4 @@ for fname in all_files:
 
 print "best reconfs: ", best_reconf
 print "uniquely solved by: ", only_this
+
