@@ -6,8 +6,22 @@ import gzip
 import re
 import ntpath
 
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-f", "--file",
+                  dest="outfname", type=str,
+                  help="print final values to this file")
+parser.add_option("-r", "--reconf",
+                  dest="reconf", type=int,
+                  help="print final values to this file")
 
-debug_print = True
+
+(options, args) = parser.parse_args()
+# print "args:", args
+
+if options.reconf is None:
+    print "You must give --reconf"
+    exit(-1)
 
 
 def parse_features_line(line):
@@ -53,7 +67,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
     r_s = sorted(reconfs_scores, key=lambda x: x[1])[::-1]
     best_reconf = r_s[0][0]
     best_reconf_score = r_s[0][1]
-    if debug_print: print r_s
+    print r_s
 
     if nobody_could_solve_it(r_s):
         print "%s Nobody could solve it" % fname
@@ -66,7 +80,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
     #special case for 7, it's to bad to be used generally
     if best_reconf == 7:
         diff = best_reconf_score-r_s[1][1]
-        if debug_print: print "DIFF: %s" % diff
+        print "DIFF: %s" % diff
         if diff < 1200:
             tmp = r_s[1]
             r_s[1] = r_s[0]
@@ -76,7 +90,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
     #calculate final array
     final_array = [0.0]*9
     val = 1.0
-    for conf_score,i in zip(r_s, xrange(100)):
+    for conf_score, i in zip(r_s, xrange(100)):
         if conf_score[1] > 0:
             final_array[conf_score[0]] = val
         val -= 0.3
@@ -84,15 +98,17 @@ def print_features_and_scores(fname, features, reconfs_scores):
             val = 0.0
 
     #print final string
-    string = "%s " % (fname)
+    string = ""
+    #string += "%s," % (fname)
     for name, val in features.items():
-        string += "%s " % val
+        string += "%s," % val
 
-    string += " || "
-    for elem in final_array:
-        string += "%.3f " % elem
+    string += "||"
+    string += "%.3f" % final_array[options.reconf]
 
-    print string
+    print fname, string
+    if outf:
+        outf.write(string.replace("||", "") + "\n")
     only_this_could_solve_it = r_s[1][1] == 0
     return best_reconf, only_this_could_solve_it
 
@@ -101,7 +117,7 @@ def parse_file(fname):
     f = gzip.open(fname, 'rb')
     #print "fname orig:", fname
     fname_clean = re.sub("cnf.gz-.*", "cnf.gz", fname)
-    fname_clean =  ntpath.split(fname_clean)[1]
+    fname_clean = ntpath.split(fname_clean)[1]
     reconf = 0
 
     satisfiable = None
@@ -137,8 +153,8 @@ def parse_file(fname):
 all_files = set()
 all_files_scores = {}
 all_files_features = {}
-for x in sys.argv[1:]:
-    if debug_print: print "# parsing infile:", x
+for x in args:
+    print "# parsing infile:", x
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
@@ -153,13 +169,16 @@ for x in sys.argv[1:]:
 
     #print "fname:", fname
     all_files_scores[fname].append([reconf, score])
+
     sys.stdout.write(".")
     sys.stdout.flush()
 
-if debug_print:
-    print "END--------"
-    print "all files:", all_files
+print "END--------"
+print "all files:", all_files
 print ""
+outf = None
+if options.outfname:
+    outf = open(options.outfname, "w")
 
 best_reconf = {}
 only_this = {}
@@ -179,7 +198,7 @@ for fname in all_files:
             else:
                 only_this[best] = only_this[best] + 1
 
-        if debug_print: print ""
+        print ""
 
 print "best reconfs: ", best_reconf
 print "uniquely solved by: ", only_this
