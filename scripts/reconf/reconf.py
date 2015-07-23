@@ -18,10 +18,16 @@ parser.add_option("-p", "--plusminus",
                   dest="plusminus", default=False,
                   action="store_true",
                   help="print final element as +/-")
-
+parser.add_option("-n", "--num",
+                  dest="num", type=int,
+                  help="Number of reconfs")
 
 (options, args) = parser.parse_args()
 # print "args:", args
+
+if options.num is None:
+    print "ERROR: You must give the number of reconfs"
+    exit(-1)
 
 if options.reconf is None:
     print "You must give --reconf"
@@ -84,7 +90,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         return -2, False
 
     #calculate final array
-    final_array = [0.0]*12
+    final_array = [0.0]*options.num
     val = 1.0
     best_score = r_s[0][1]
     for conf_score, i in zip(r_s, xrange(100)):

@@ -6,6 +6,18 @@ import gzip
 import re
 import ntpath
 
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-n", "--num",
+                  dest="num", type=int,
+                  help="Number of reconfs")
+
+(options, args) = parser.parse_args()
+
+if options.num is None:
+    print "ERROR: You must give the number of reconfs"
+    exit(-1)
+
 print """
 #ifndef _FEATURES_TO_RECONF_H_
 #define _FEATURES_TO_RECONF_H_
@@ -15,7 +27,7 @@ print """
 namespace CMSat {
 """
 
-for i in range(12):
+for i in range(options.num):
     print "int get_score%d(const Features& feat);" %i
 
 print """
@@ -26,7 +38,7 @@ int get_reconf_from_features(const Features& feat)
 \tdouble score;
 """
 
-for i in range(12):
+for i in range(options.num):
     print """
 \tget_score%d(feat);
 \tif (best_score < score) {
@@ -70,6 +82,7 @@ int get_score%d(const Features& feat)
             num_conds = int(dat["conds"])
             rule_class = dat["class"]
             cond_no = 0
+            confidence = float(dat["confidence"]);
             continue
 
         if "entries" in dat:
@@ -81,9 +94,12 @@ int get_score%d(const Features& feat)
         if "default" in dat:
             default = dat["default"]
             if default == "+":
-                print "\tdouble output = %.2f;\n" %(1.0)
+                print "\tdouble default_val = %.2f;\n" %(1.0)
             else:
-                print "\tdouble output = %.2f;\n" %(0.0)
+                print "\tdouble default_val = %.2f;\n" %(0.0)
+
+            print "\tdouble total_plus = 0.0;"
+            print "\tdouble total_neg = 0.0;"
             continue
 
         #process rules
@@ -102,11 +118,10 @@ int get_score%d(const Features& feat)
             print string
 
             string = ""
-            string += "\t\toutput = "
             if rule_class == "+":
-                string += "1.0;"
+                string += "\t\ttotal_plus += %.3f;" % confidence
             else:
-                string += "0.0;"
+                string += "\t\ttotal_neg += %.3f;" % confidence
 
             print string
             print "\t}"
@@ -119,13 +134,16 @@ int get_score%d(const Features& feat)
     assert num_rules == rule_no
     print "\t// default is:", default
     print """
-\treturn output;
+\tif (total_plus == 0.0 && total_neg == 0.0) {
+\t\treturn default_val;
+\t}
+\treturn total_plus - total_neg;
 }
 """
 
 
 
-for i in range(12):
+for i in range(options.num):
     read_one_rule(i)
 
 print """
