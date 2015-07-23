@@ -139,11 +139,7 @@ void FeatureExtract::print_stats() const
     cout << "c [features] ";
     fprintf( stdout, "numVars: %d%s", feat.numVars, sep );
     fprintf( stdout, "numClauses: %d%s", feat.numClauses, sep );
-    double tmp = feat.numVars;
-    if (tmp > 0) {
-        tmp /= (1.0 * feat.numClauses);
-    }
-    fprintf( stdout, "(numVars/(1.0*numClauses) %.5f%s", tmp, sep );
+    fprintf( stdout, "(numVars/(1.0*numClauses) %.5f%s", feat.var_cl_ratio, sep );
 
     fprintf( stdout, "vcg_var_mean %.5f%s", feat.vcg_var_mean, sep );
     fprintf( stdout, "vcg_var_std %.5f%s", feat.vcg_var_std, sep );
@@ -312,13 +308,13 @@ Features FeatureExtract::extract()
         double _horn = myVars[vv].horn / (1.0 * feat.numClauses);
         feat.horn_std += (feat.horn_mean - _horn) * (feat.horn_mean - _horn);
     }
-    if ( feat.vcg_var_std > eps && feat.vcg_var_mean > eps ) {
+    if ( feat.vcg_var_std > feat.eps && feat.vcg_var_mean > feat.eps ) {
         feat.vcg_var_std = sqrt(feat.vcg_var_std / (1.0 * feat.numVars)) / feat.vcg_var_mean;
     } else {
-        vcg_var_std = 0;
+        feat.vcg_var_std = 0;
     }
 
-    if ( feat.pnr_var_std > eps && feat.pnr_var_mean > feat.eps ) {
+    if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps ) {
         feat.pnr_var_std = sqrt(feat.pnr_var_std / (1.0 * feat.numVars)) / feat.pnr_var_mean;
     } else {
         feat.pnr_var_std = 0;
@@ -327,7 +323,7 @@ Features FeatureExtract::extract()
     if ( feat.horn_std / (1.0 * feat.numVars) > feat.eps && feat.horn_mean > feat.eps ) {
         feat.horn_std = sqrt(feat.horn_std / (1.0 * feat.numVars)) / feat.horn_mean;
     } else {
-        horn_std = 0;
+        feat.horn_std = 0;
     }
 
     if (solver->conf.verbosity >= 2) {
@@ -335,6 +331,12 @@ Features FeatureExtract::extract()
         << solver->conf.print_times(cpuTime() - start_time)
         << endl;
     }
+
+    double tmp = feat.numVars;
+    if (tmp > 0) {
+        tmp /= (1.0 * feat.numClauses);
+    }
+    feat.var_cl_ratio = tmp;
 
     return feat;
 }

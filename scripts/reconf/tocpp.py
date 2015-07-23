@@ -10,26 +10,33 @@ print """
 #ifndef _FEATURES_TO_RECONF_H_
 #define _FEATURES_TO_RECONF_H_
 
-namespace CMSat {
+#include "features.h"
 
-int features_to_reconf(const Feature& feat)
+namespace CMSat {
+"""
+
+for i in range(12):
+    print "int get_score%d(const Features& feat);" %i
+
+print """
+int get_reconf_from_features(const Features& feat)
 {
-    double best_score = 0.0;
-    int best_val = 0;
-    double score;
+\tdouble best_score = 0.0;
+\tint best_val = 0;
+\tdouble score;
 """
 
 for i in range(12):
     print """
-    get_score%d(feat);
-    if (best_score < score) {
-        best_score = score;
-        best_val = %d;
-    }
-    """ % (i, i)
+\tget_score%d(feat);
+\tif (best_score < score) {
+\t\tbest_score = score;
+\t\tbest_val = %d;
+\t}
+""" % (i, i)
 
 print """
-    return best_val;
+\treturn best_val;
 }
 
 """
@@ -81,17 +88,17 @@ int get_score%d(const Features& feat)
 
         #process rules
         if cond_no == 0:
-            string = "\tif "
+            string = "\tif ("
         else:
             string +=" &&\n\t\t"
 
         # print "dat:", dat
-        string +="(%s %s %s)" % (dat["att"], dat["result"], dat["cut"])
+        string +="(feat.%s %s %.5f)" % (dat["att"], dat["result"], float(dat["cut"]))
         cond_no+= 1
 
         #end rules
         if cond_no == num_conds:
-            string +="\n\t{"
+            string +=")\n\t{"
             print string
 
             string = ""
@@ -112,9 +119,9 @@ int get_score%d(const Features& feat)
     assert num_rules == rule_no
     print "\t// default is:", default
     print """
-    \treturn output;
-    }
-    """
+\treturn output;
+}
+"""
 
 
 

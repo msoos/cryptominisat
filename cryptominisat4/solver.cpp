@@ -57,7 +57,7 @@
 #include "intree.h"
 #include "features_fast.h"
 #include "GitSHA1.h"
-#include"features_to_reconf.h"
+#include "features_to_reconf.h"
 
 using namespace CMSat;
 using std::cout;
