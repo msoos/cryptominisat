@@ -351,7 +351,7 @@ if (ENABLE_TESTING)
     add_test (NAME readme_test COMMAND tests/readme_test --log_level=test_suite)
     add_test (NAME heap_test COMMAND tests/heap_test --log_level=test_suite)
     add_test (NAME clause_test COMMAND tests/clause_test --log_level=test_suite)
-    if (NOT STATS)
+    if (NOT STATS AND NOT SLOW_DEBUG)
         add_test (NAME library_speed_test COMMAND tests/library_speed_test --log_level=test_suite)
     endif()
 
