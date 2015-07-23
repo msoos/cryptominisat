@@ -3472,7 +3472,6 @@ void Solver::reconfigure(int val)
             conf.glue_must_keep_clause_if_below_or_eq = 4;
             conf.max_num_lits_more_red_min = 3;
             conf.max_glue_more_minim = 4;
-            conf.var_decay_max = 0.92; //more 'slow' in adjusting activities
             reset_temp_cl_num();
             break;
         }
