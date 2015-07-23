@@ -113,7 +113,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         for a in final_array:
             string += "%.1f " % a
     else:
-        if abs(final_array[options.reconf]-0.5) < 0.05:
+        if final_array[options.reconf] >= 0.45:
             string += "+"
         else:
             string += "-"
