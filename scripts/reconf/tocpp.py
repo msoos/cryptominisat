@@ -31,7 +31,7 @@ namespace CMSat {
 """
 
 for i in range(options.num):
-    print "double get_score%d(const Features& feat);" %i
+    print "double get_score%d(const Features& feat, const int verb);" %i
 
 print """
 int get_reconf_from_features(const Features& feat, const int verb)
@@ -43,7 +43,7 @@ int get_reconf_from_features(const Features& feat, const int verb)
 
 for i in range(options.num):
     print """
-\tscore = get_score%d(feat);
+\tscore = get_score%d(feat, verb);
 \tif (verb >= 2)
 \t\tcout << "c Score for reconf %d is " << score << endl;
 \tif (best_score < score) {
@@ -69,7 +69,7 @@ def read_one_rule(rule_num) :
     string = ""
 
     print """
-double get_score%d(const Features& feat)
+double get_score%d(const Features& feat, const int verb)
 {""" % rule_num
     for line in f:
         if "id=" in line:
@@ -143,6 +143,9 @@ double get_score%d(const Features& feat)
     print """
 \tif (total_plus == 0.0 && total_neg == 0.0) {
 \t\treturn default_val;
+\t}
+\tif (verb >= 2) {
+\t\t//cout << "c plus: " << total_plus << " , neg: " << total_neg << endl;
 \t}
 \treturn total_plus - total_neg;
 }
