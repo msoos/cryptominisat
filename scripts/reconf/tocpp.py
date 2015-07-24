@@ -23,6 +23,9 @@ print """
 #define _FEATURES_TO_RECONF_H_
 
 #include "features.h"
+#include <iostream>
+using std::cout;
+using std::endl;
 
 namespace CMSat {
 """
@@ -31,7 +34,7 @@ for i in range(options.num):
     print "int get_score%d(const Features& feat);" %i
 
 print """
-int get_reconf_from_features(const Features& feat)
+int get_reconf_from_features(const Features& feat, const int verb)
 {
 \tdouble best_score = 0.0;
 \tint best_val = 0;
@@ -40,14 +43,18 @@ int get_reconf_from_features(const Features& feat)
 
 for i in range(options.num):
     print """
-\tget_score%d(feat);
+\tscore = get_score%d(feat);
+\tif (verb >= 2)
+\t\tcout << "c Score for reconf %d is " << score << endl;
 \tif (best_score < score) {
 \t\tbest_score = score;
 \t\tbest_val = %d;
 \t}
-""" % (i, i)
+""" % (i, i, i)
 
 print """
+\tif (verb >= 2)
+\t\tcout << "c Winning reconf is " << best_val << endl;
 \treturn best_val;
 }
 

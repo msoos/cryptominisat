@@ -1830,7 +1830,7 @@ end:
         if (solveStats.numSimplify == 2) {
             Features feat = calculate_features();
             if (conf.reconfigure_val == 100) {
-                conf.reconfigure_val = get_reconf_from_features(feat);
+                conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
             }
             if (conf.reconfigure_val != 0) {
                 reconfigure(conf.reconfigure_val);
