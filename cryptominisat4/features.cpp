@@ -45,14 +45,14 @@ void Features::print_stats() const
     fprintf( stdout, "horn_min %.5f%s", horn_min, sep );
     fprintf( stdout, "horn_max %.5f%s", horn_max, sep );
     fprintf( stdout, "horn_spread %.5f%s", horn_spread, sep );
-    fprintf( stdout, "horn %.5f", horn );
+    fprintf( stdout, "horn %.5f%s", horn );
 
-    fprintf( stdout, "lt_confl_size %.5f", lt_confl_size, sep);
-    fprintf( stdout, "lt_confl_glue %.5f", lt_confl_glue, sep);
-    fprintf( stdout, "lt_num_resolutions %.5f", lt_num_resolutions, sep);
-    fprintf( stdout, "trail_depth_delta_hist %.5f", trail_depth_delta_hist, sep);
-    fprintf( stdout, "branch_depth_hist %.5f", branch_depth_hist, sep);
-    fprintf( stdout, "branch_depth_delta_hist %.5f", branch_depth_delta_hist, sep);
+    fprintf( stdout, "lt_confl_size %.5f%s", lt_confl_size, sep);
+    fprintf( stdout, "lt_confl_glue %.5f%s", lt_confl_glue, sep);
+    fprintf( stdout, "lt_num_resolutions %.5f%s", lt_num_resolutions, sep);
+    fprintf( stdout, "trail_depth_delta_hist %.5f%s", trail_depth_delta_hist, sep);
+    fprintf( stdout, "branch_depth_hist %.5f%s", branch_depth_hist, sep);
+    fprintf( stdout, "branch_depth_delta_hist %.5f", branch_depth_delta_hist);
 
     fprintf( stdout, "\n");
 }
