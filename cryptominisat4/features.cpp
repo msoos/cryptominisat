@@ -45,7 +45,7 @@ void Features::print_stats() const
     fprintf( stdout, "horn_min %.5f%s", horn_min, sep );
     fprintf( stdout, "horn_max %.5f%s", horn_max, sep );
     fprintf( stdout, "horn_spread %.5f%s", horn_spread, sep );
-    fprintf( stdout, "horn %.5f%s", horn );
+    fprintf( stdout, "horn %.5f%s", horn, sep);
 
     fprintf( stdout, "lt_confl_size %.5f%s", lt_confl_size, sep);
     fprintf( stdout, "lt_confl_glue %.5f%s", lt_confl_glue, sep);
