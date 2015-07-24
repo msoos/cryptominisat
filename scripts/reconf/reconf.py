@@ -25,6 +25,15 @@ parser.add_option("-n", "--num",
 (options, args) = parser.parse_args()
 # print "args:", args
 
+order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean", "vcg_var_std",
+         "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean",
+         "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread",
+         "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max",
+         "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min",
+         "pnr_cls_max", "pnr_cls_spread", "unary", "binary", "trinary",
+         "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
+         "horn"]
+
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
     exit(-1)
@@ -108,9 +117,11 @@ def print_features_and_scores(fname, features, reconfs_scores):
 
     #print final string
     string = ""
-    #string += "%s," % (fname)
-    for name, val in features.items():
-        string += "%s," % val
+
+    #for name, val in features.items():
+    string += "%s," % fname
+    for name in order:
+        string += "%s," % features[name]
 
     string += "||"
     if not options.plusminus:
