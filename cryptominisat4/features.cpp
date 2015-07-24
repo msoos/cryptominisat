@@ -9,9 +9,10 @@ void Features::print_stats() const
     const char* sep = ", ";
 
     fprintf( stdout, "c [features] ");
-    fprintf( stdout, "numVars: %d%s", numVars, sep );
-    fprintf( stdout, "numClauses: %d%s", numClauses, sep );
-    fprintf( stdout, "(numVars/(1.0*numClauses) %.5f%s", var_cl_ratio, sep );
+    fprintf( stdout, "numVars %d%s", numVars, sep );
+    fprintf( stdout, "numClauses %d%s", numClauses, sep );
+    //was: (numVars/(1.0*numClauses)
+    fprintf( stdout, "var_cl_ratio %.5f%s", var_cl_ratio, sep );
 
     fprintf( stdout, "vcg_var_mean %.5f%s", vcg_var_mean, sep );
     fprintf( stdout, "vcg_var_std %.5f%s", vcg_var_std, sep );
