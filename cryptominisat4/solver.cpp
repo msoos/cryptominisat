@@ -3436,8 +3436,15 @@ Features Solver::calculate_features() const
     FeatureExtract extract(this);
     extract.fill_vars_cls();
     Features feat = extract.extract();
+    feat.lt_confl_size = hist.conflSizeHistLT.avg();
+    feat.lt_confl_glue = hist.glueHistLT.avg();
+    feat.lt_num_resolutions = hist.numResolutionsHistLT.avg();
+    feat.trail_depth_delta_hist = hist.trailDepthDeltaHist.avg();
+    feat.branch_depth_hist = hist.branchDepthHist.avg();
+    feat.branch_depth_delta_hist = hist.branchDepthDeltaHist.avg();
+
     if (conf.verbosity >= 1) {
-        extract.print_stats();
+        feat.print_stats();
     }
 
     return feat;

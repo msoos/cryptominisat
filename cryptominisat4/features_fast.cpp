@@ -132,51 +132,6 @@ void FeatureExtract::fill_vars_cls()
     for_all_clauses(func, func_each_lit);
 }
 
-void FeatureExtract::print_stats() const
-{
-    const char* sep = ", ";
-
-    cout << "c [features] ";
-    fprintf( stdout, "numVars: %d%s", feat.numVars, sep );
-    fprintf( stdout, "numClauses: %d%s", feat.numClauses, sep );
-    fprintf( stdout, "(numVars/(1.0*numClauses) %.5f%s", feat.var_cl_ratio, sep );
-
-    fprintf( stdout, "vcg_var_mean %.5f%s", feat.vcg_var_mean, sep );
-    fprintf( stdout, "vcg_var_std %.5f%s", feat.vcg_var_std, sep );
-    fprintf( stdout, "vcg_var_min %.5f%s", feat.vcg_var_min, sep );
-    fprintf( stdout, "vcg_var_max %.5f%s", feat.vcg_var_max, sep );
-    fprintf( stdout, "vcg_var_spread %.5f%s", feat.vcg_var_spread, sep );
-
-    fprintf( stdout, "vcg_cls_mean %.5f%s", feat.vcg_cls_mean, sep );
-    fprintf( stdout, "vcg_cls_std %.5f%s", feat.vcg_cls_std, sep );
-    fprintf( stdout, "vcg_cls_min %.5f%s", feat.vcg_cls_min, sep );
-    fprintf( stdout, "vcg_cls_max %.5f%s", feat.vcg_cls_max, sep );
-    fprintf( stdout, "vcg_cls_spread %.5f%s", feat.vcg_cls_spread, sep );
-
-    fprintf( stdout, "pnr_var_mean %.5f%s", feat.pnr_var_mean, sep );
-    fprintf( stdout, "pnr_var_std %.5f%s", feat.pnr_var_std, sep );
-    fprintf( stdout, "pnr_var_min %.5f%s", feat.pnr_var_min, sep );
-    fprintf( stdout, "pnr_var_max %.5f%s", feat.pnr_var_max, sep );
-    fprintf( stdout, "pnr_var_spread %.5f%s", feat.pnr_var_spread, sep );
-
-    fprintf( stdout, "pnr_cls_mean %.5f%s", feat.pnr_cls_mean, sep );
-    fprintf( stdout, "pnr_cls_std %.5f%s", feat.pnr_cls_std, sep );
-    fprintf( stdout, "pnr_cls_min %.5f%s", feat.pnr_cls_min, sep );
-    fprintf( stdout, "pnr_cls_max %.5f%s", feat.pnr_cls_max, sep );
-    fprintf( stdout, "pnr_cls_spread %.5f%s", feat.pnr_cls_spread, sep );
-
-    fprintf( stdout, "unary %.5f%s", feat.unary, sep );
-    fprintf( stdout, "binary %.5f%s", feat.binary, sep );
-    fprintf( stdout, "trinary %.5f%s", feat.trinary, sep );
-    fprintf( stdout, "horn_mean %.5f%s", feat.horn_mean, sep );
-    fprintf( stdout, "horn_std %.5f%s", feat.horn_std, sep );
-    fprintf( stdout, "horn_min %.5f%s", feat.horn_min, sep );
-    fprintf( stdout, "horn_max %.5f%s", feat.horn_max, sep );
-    fprintf( stdout, "horn_spread %.5f%s", feat.horn_spread, sep );
-    fprintf( stdout, "horn %.5f", feat.horn );
-    fprintf( stdout, "\n");
-}
-
 Features FeatureExtract::extract()
 {
     double start_time = cpuTime();
