@@ -31,7 +31,7 @@ namespace CMSat {
 """
 
 for i in range(options.num):
-    print "int get_score%d(const Features& feat);" %i
+    print "double get_score%d(const Features& feat);" %i
 
 print """
 int get_reconf_from_features(const Features& feat, const int verb)
@@ -69,7 +69,7 @@ def read_one_rule(rule_num) :
     string = ""
 
     print """
-int get_score%d(const Features& feat)
+double get_score%d(const Features& feat)
 {""" % rule_num
     for line in f:
         if "id=" in line:
