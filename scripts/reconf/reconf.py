@@ -13,7 +13,7 @@ parser.add_option("-f", "--file",
                   help="print final values to this file")
 parser.add_option("-r", "--reconf",
                   dest="reconf", type=int,
-                  help="print final values to this file")
+                  help="the target reconf to calculate +/ for")
 parser.add_option("-p", "--plusminus",
                   dest="plusminus", default=False,
                   action="store_true",
@@ -32,7 +32,9 @@ order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean", "vcg_var_std",
          "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min",
          "pnr_cls_max", "pnr_cls_spread", "unary", "binary", "trinary",
          "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
-         "horn"]
+         "horn", "lt_confl_size", "lt_confl_glue", "lt_num_resolutions",
+         "trail_depth_delta_hist", "branch_depth_hist",
+         "branch_depth_delta_hist"]
 
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
@@ -187,10 +189,13 @@ for x in args:
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
-            print "ERROR different features extracted for fname", fname
+            print "different features extracted for fname", fname
             print "orig:", all_files_features[fname]
             print "new: ", features
-        assert all_files_features[fname] == features
+            print "Keeping the longer one!"
+
+        if features is not None and len(all_files_features[fname]) < len(features):
+            all_files_features[fname] = features
     else:
         all_files.add(fname)
         all_files_features[fname] = features
