@@ -128,6 +128,12 @@ DLL_PUBLIC SATSolver::~SATSolver()
 void update_config(SolverConf& conf, unsigned thread_num)
 {
     thread_num = thread_num % 20;
+
+    //Don't accidentally reconfigure everything to a specific value!
+    if (thread_num > 0) {
+        conf.reconfigure_val = 0;
+    }
+
     switch(thread_num) {
         case 1: {
             conf.restartType = Restart::geom;
