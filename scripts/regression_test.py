@@ -430,7 +430,7 @@ class Tester:
         cmd = " --zero-exit-status "
 
         if random.choice([True, False]):
-            cmd += " --reconf %d " % random.randint(0, 6)
+            cmd += " --reconf %d " % random.randint(0, 12)
         cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
         cmd += "--restart %s " % random.choice(
             ["geom", "glue", "luby"])
@@ -470,9 +470,6 @@ class Tester:
         cmd += "--skipresol %d " % random.choice([1, 1, 1, 0])
         cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
         cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
-
-        if random.randint(0, 1) == 1:
-            cmd += "--reconf %d " % random.randint(0, 12)
 
         # the most buggy ones, don't turn them off much, please
         if random.randint(0, 1) == 1:
