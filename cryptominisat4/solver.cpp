@@ -3577,12 +3577,14 @@ void Solver::reconfigure(int val)
         }
 
         case 12: {
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            conf.glue_must_keep_clause_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
-            conf.inc_max_temp_red_cls = 1.06;
+            conf.inc_max_temp_red_cls = 1.04;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
+            conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
+            update_var_decay();
             reset_temp_cl_num();
             break;
         }

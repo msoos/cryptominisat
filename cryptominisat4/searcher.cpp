@@ -3308,3 +3308,8 @@ void Searcher::Stats::print() const
     print_stats_line("c all-threads sum CPU time", cpu_time, " s");
     #endif
 }
+
+void Searcher::update_var_decay()
+{
+    var_decay = conf.var_decay_max;
+}
