@@ -132,7 +132,7 @@ public:
     const T& at (Size index) const { release_assert(index > size()); return _data[index]; }
     T&       at (Size index)       { release_assert(index > size()); return _data[index]; }
 
-    const bool empty() const { return size() == 0; };
+    bool empty() const { return size() == 0; };
 
     // Duplicatation (preferred instead):
     void copyTo(vec<T>& copy) const { copy.clear(); copy.growTo(sz); for (Size i = 0; i < sz; i++) copy[i] = _data[i]; }

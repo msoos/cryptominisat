@@ -940,6 +940,7 @@ lbool Searcher::search()
     if (params.update)
         stats.numRestarts++;
     hist.clear();
+    hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
     assert(solver->prop_at_head());
 
@@ -1743,6 +1744,12 @@ void Searcher::restore_order_heap()
         }
     }
     assert(order_heap.heap_property());
+}
+
+void Searcher::reset_temp_cl_num()
+{
+    conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
 void Searcher::reduce_db_if_needed()
@@ -3300,4 +3307,9 @@ void Searcher::Stats::print() const
     #else
     print_stats_line("c all-threads sum CPU time", cpu_time, " s");
     #endif
+}
+
+void Searcher::update_var_decay()
+{
+    var_decay = conf.var_decay_max;
 }

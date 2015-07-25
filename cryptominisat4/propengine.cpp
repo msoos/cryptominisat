@@ -686,7 +686,7 @@ PropBy PropEngine::propagate_any_order()
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[(~p).toInt()];
         watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = ws.begin();
+        watch_subarray::iterator j = i;
         watch_subarray_const::const_iterator end = ws.end();
         if (update_bogoprops) {
             propStats.bogoProps += ws.size()/4 + 1;

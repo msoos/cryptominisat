@@ -21,48 +21,44 @@ THE SOFTWARE.
 ***********************************************/
 
 #include <cryptominisat4/cryptominisat.h>
+#include "cryptominisat4/time_mem.h"
 #include <assert.h>
 #include <vector>
+#include <iostream>
+
+using std::cout;
+using std::endl;
 using std::vector;
 using namespace CMSat;
 
 int main()
 {
-    SATSolver solver;
-    vector<Lit> clause;
+    SATSolver s;
+    s.set_no_simplify();
 
-    //We need 3 variables
-    solver.new_var();
-    solver.new_var();
-    solver.new_var();
+    const size_t num = 100*1000ULL;
 
-    //adds "1 0"
-    clause.push_back(Lit(0, false));
-    solver.add_clause(clause);
+    s.new_vars(num);
+    vector<Lit> lits(3);
+    for(size_t i = 2; i < num; i++) {
+        if (i % 100 != 0)
+            continue;
 
-    //adds "-2 0"
-    clause.clear();
-    clause.push_back(Lit(1, true));
-    solver.add_clause(clause);
+        lits[0] = Lit(i-2, false);
+        lits[1] = Lit(i-1, false);
+        lits[2] = Lit(i, true);
+        s.add_clause(lits);
+    }
+    cout << "Adding of clauses finished" << endl;
 
-    //adds "-1 2 3 0"
-    clause.clear();
-    clause.push_back(Lit(0, true));
-    clause.push_back(Lit(1, false));
-    clause.push_back(Lit(2, false));
-    solver.add_clause(clause);
-
-    lbool ret = solver.solve();
-    assert(ret == l_True);
-    assert(solver.get_model()[0] == l_True);
-    assert(solver.get_model()[1] == l_False);
-    assert(solver.get_model()[2] == l_True);
-    std::cout
-    << "Solution is: "
-    << solver.get_model()[0]
-    << ", " << solver.get_model()[1]
-    << ", " << solver.get_model()[2]
-    << std::endl;
-
-    return 0;
+    s.solve();
+    double start = cpuTime();
+    vector<Lit> assumptions(1);
+    for(size_t i = 0; i < 600; i++) {
+        assumptions[0] = Lit(i, false);
+        s.solve(&assumptions);
+    }
+    double end = cpuTime();
+    cout << "T: " << (end-start) << endl;
+    assert(end-start < 15);
 }

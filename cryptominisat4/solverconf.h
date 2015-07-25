@@ -326,7 +326,8 @@ class SolverConf
         unsigned origSeed;
         unsigned long long sync_every_confl;
         double clean_after_perc_zero_depth_assigns;
-        int reconfigure_val;
+        unsigned reconfigure_val;
+        unsigned reconfigure_at;
 };
 
 } //end namespace

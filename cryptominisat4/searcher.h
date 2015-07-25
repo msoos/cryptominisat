@@ -116,6 +116,14 @@ class Searcher : public HyperEngine
                 #endif
             }
 
+            void reset_glue_hist_size(size_t shortTermHistorySize)
+            {
+                glueHist.clearAndResize(shortTermHistorySize);
+                #ifdef STATS_NEEDED
+                trailDepthHist.clearAndResize(shortTermHistorySize);
+                #endif
+            }
+
             void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
@@ -290,6 +298,7 @@ class Searcher : public HyperEngine
         void new_var(const bool bva, const Var orig_outer) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
+        void reset_temp_cl_num();
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
@@ -311,6 +320,7 @@ class Searcher : public HyperEngine
                 return ~lit_inter < ~other.lit_inter;
             }
         };
+        void update_var_decay();
         void renumber_assumptions(const vector<Var>& outerToInter);
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);

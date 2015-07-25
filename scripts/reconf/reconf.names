@@ -1,0 +1,37 @@
+reconf.                     | the target attribute
+
+name:          label.
+numVars:       continuous.
+numClauses:     continuous.
+var_cl_ratio:       continuous.
+vcg_var_mean:       continuous.
+vcg_var_std:       continuous.
+vcg_var_min:      continuous.
+vcg_var_max:        continuous.
+vcg_var_spread:     continuous.
+vcg_cls_mean:       continuous.
+vcg_cls_std:      continuous.
+vcg_cls_min:        continuous.
+vcg_cls_max:        continuous.
+vcg_cls_spread:       continuous.
+pnr_var_mean:     continuous.
+pnr_var_std:        continuous.
+pnr_var_min:        continuous.
+pnr_var_max:       continuous.
+pnr_var_spread:       continuous.
+pnr_cls_mean:       continuous.
+pnr_cls_std:        continuous.
+pnr_cls_min:       continuous.
+pnr_cls_max:      continuous.
+pnr_cls_spread:     continuous.
+unary:      continuous.
+binary:     continuous.
+trinary:       continuous.
+horn_mean:        continuous.
+horn_std:       continuous.
+horn_min:       continuous.
+horn_max:       continuous.
+horn_spread:       continuous.
+horn:       continuous.
+
+reconf:                 +,-.

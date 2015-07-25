@@ -1,0 +1,92 @@
+language: cpp
+compiler:
+  - gcc
+  # -clang
+
+os:
+  - linux
+  - osx
+
+env:
+  global:
+    - secure: SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I=
+    - secure: Li/MNE3bRwQFZ6iVIH+TTzUe/+HN4r5v+ZadIv6hPtanZbOt8FPqvb1WEnokfLGXbE5n0ZmNV9zjVSto51zKDjMby0hZhGCRgCEc0RBXg73aDfqwpQ8sVjY6DQ/3ESLUOPeZv1f87XfApstcQgSqbRi8yD+eIbdrUy15iMRF7Mw=
+  matrix:
+    - CMS_CONFIG=NORMAL
+    - CMS_CONFIG=ONLY_SIMPLE
+    - CMS_CONFIG=MORE_DEBUG
+    - CMS_CONFIG=STATS
+    - CMS_CONFIG=NOZLIB
+    - CMS_CONFIG=RELEASE
+    - CMS_CONFIG=NOSQLITE
+    - CMS_CONFIG=NOMYSQL
+    - CMS_CONFIG=NOMYSQLNOSQLITE
+    - CMS_CONFIG=PYTHON
+    - CMS_CONFIG=MYSQL
+    - CMS_CONFIG=SQLITE
+    - CMS_CONFIG=M4RI
+    - CMS_CONFIG=WEB
+    - CMS_CONFIG=COVERAGE
+    - CMS_CONFIG=SLOW_DEBUG
+    # - CMS_CONFIG=STATIC_BIN
+    # - CMS_CONFIG=ONLY_SIMPLE_STATIC
+
+matrix:
+  include:
+    # Covertiy scan should only run once
+    - os: linux
+      compiler: gcc
+      env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
+
+  allow_failures:
+    # Covertiy scan might fail
+    - env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
+
+addons:
+  coverity_scan:
+    project:
+      name: "msoos/cryptominisat"
+      description: "Advanced SAT solver"
+    notification_email: soos.mate@gmail.com
+    build_command_prepend: "cmake .."
+    build_command: "make"
+    branch_pattern: coverity_scan
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-sdk-team/ppa
+  - sudo add-apt-repository -y ppa:george-edison55/gcc4.7-precise
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+
+install:
+  - sudo apt-get install libboost-test-dev gcc-4.7 g++-4.7
+  - sudo apt-get remove g++-4.6 gcc-4.6
+  - sudo apt-get install cmake valgrind
+  - sudo pip install lit
+#coveralls
+  - sudo pip install cpp-coveralls
+  - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
+  - tar xf lcov_1.11.orig.tar.gz
+  - sudo make -C lcov-1.11/ install
+  - gem install coveralls-lcov
+#lingeling
+  - git clone https://github.com/msoos/lingeling-ala
+  - cd lingeling-ala
+  - ./configure
+  - make
+  - sudo cp lingeling /usr/local/bin/
+  - cd ..
+#drat
+  - git clone https://github.com/msoos/drat
+  - cd drat
+  - make
+  - sudo cp drat-trim /usr/local/bin/
+  - cd ..
+#submodules
+  - git submodule init
+  - git submodule update
+#bulid dir
+  - mkdir build && cd build
+
+script:
+  - if [ "$COVERITY_SCAN" != "1" ]; then ../.travis-cmake.sh ../ build ; fi

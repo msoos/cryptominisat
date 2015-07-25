@@ -86,7 +86,7 @@ Simplifier::Simplifier(Solver* _solver):
     , seen(solver->seen)
     , seen2(solver->seen2)
     , toClear(solver->toClear)
-    , varElimOrder(VarOrderLt(varElimComplexity))
+    , velim_order(VarOrderLt(varElimComplexity))
     , xorFinder(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
@@ -742,13 +742,13 @@ bool Simplifier::eliminate_vars()
     order_vars_for_elim();
 
     //Go through the ordered list of variables to eliminate
-    while(!varElimOrder.empty()
+    while(!velim_order.empty()
         && *limit_to_decrease > 0
         && varelim_num_limit > 0
         && !solver->must_interrupt_asap()
     ) {
         assert(limit_to_decrease == &norm_varelim_time_limit);
-        Var var = varElimOrder.remove_min();
+        Var var = velim_order.remove_min();
 
         //Stats
         *limit_to_decrease -= 20;
@@ -1513,8 +1513,11 @@ void Simplifier::mark_gate_in_poss_negs(
     , watch_subarray_const negs
 ) {
     gate_lits_of_elim_cls.clear();
+
+    //Either of the two is OK
     find_gate(elim_lit, poss, negs);
-    gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+    bool gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+
     if (!gate_lits_of_elim_cls.empty()
         && solver->conf.verbosity >= 10
     ) {
@@ -1659,8 +1662,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
     }
 
     //Too expensive to check, it's futile
-    if (pos.totalCls() >= solver->conf.varelim_cutoff_too_many_clauses
-        && neg.totalCls() >= solver->conf.varelim_cutoff_too_many_clauses
+    if ((neg.totalCls() * pos.totalCls())
+        >= solver->conf.varelim_cutoff_too_many_clauses
     ) {
         return 1000;
     }
@@ -1730,7 +1733,8 @@ int Simplifier::test_elim_and_fill_resolvents(const Var var)
             //Early-abort or over time
             if (after_clauses > before_clauses
                 //Too long resolvent
-                || (solver->conf.velim_resolvent_too_large != -1 && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
+                || (solver->conf.velim_resolvent_too_large != -1
+                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
                 //Over-time
                 || *limit_to_decrease < -10LL*1000LL
 
@@ -1973,7 +1977,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
         if (touchVar == var
-            || !varElimOrder.in_heap(touchVar)
+            || !velim_order.in_heap(touchVar)
             || solver->value(touchVar) != l_Undef
             || solver->varData[touchVar].removed != Removed::none
         ) {
@@ -1981,7 +1985,7 @@ void Simplifier::update_varelim_complexity_heap(const Var var)
         }
 
         varElimComplexity[touchVar] = strategyCalcVarElimScore(touchVar);
-        varElimOrder.update_if_inside(touchVar);
+        velim_order.update_if_inside(touchVar);
     }
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
@@ -2654,7 +2658,7 @@ pair<int, int> Simplifier::heuristicCalcVarElimScore(const Var var)
 
 void Simplifier::order_vars_for_elim()
 {
-    varElimOrder.clear();
+    velim_order.clear();
     varElimComplexity.clear();
     varElimComplexity.resize(
         solver->nVars()
@@ -2671,21 +2675,21 @@ void Simplifier::order_vars_for_elim()
             continue;
 
         *limit_to_decrease -= 50;
-        assert(!varElimOrder.in_heap(var));
+        assert(!velim_order.in_heap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);
-        varElimOrder.insert(var);
+        velim_order.insert(var);
     }
-    assert(varElimOrder.heap_property());
+    assert(velim_order.heap_property());
 
     //Print sorted listed list
     #ifdef VERBOSE_DEBUG_VARELIM
     /*cout << "-----------" << endl;
-    for(size_t i = 0; i < varElimOrder.size(); i++) {
+    for(size_t i = 0; i < velim_order.size(); i++) {
         cout
-        << "varElimOrder[" << i << "]: "
-        << " var: " << varElimOrder[i]+1
-        << " val: " << varElimComplexity[varElimOrder[i]].first
-        << " , " << varElimComplexity[varElimOrder[i]].second
+        << "velim_order[" << i << "]: "
+        << " var: " << velim_order[i]+1
+        << " val: " << varElimComplexity[velim_order[i]].first
+        << " , " << varElimComplexity[velim_order[i]].second
         << endl;
     }*/
     #endif
@@ -2760,7 +2764,7 @@ size_t Simplifier::mem_used() const
         b += it->lits.capacity()*sizeof(Lit);
     }
     b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>)); //TODO under-counting
-    b += varElimOrder.mem_used();
+    b += velim_order.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += touched.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
