@@ -940,6 +940,7 @@ lbool Searcher::search()
     if (params.update)
         stats.numRestarts++;
     hist.clear();
+    hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
     assert(solver->prop_at_head());
 
@@ -1745,6 +1746,12 @@ void Searcher::restore_order_heap()
     assert(order_heap.heap_property());
 }
 
+void Searcher::reset_temp_cl_num()
+{
+    conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
+}
+
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
@@ -1876,15 +1883,10 @@ void Searcher::print_search_loop_num()
     }
 }
 
-void Searcher::reset_reason_levels_of_vars_to_zero()
-{
-    for(Var i = 0; i < nVars(); i++) {
-        varData[i].level = 0;
-    }
-}
-
-lbool Searcher::solve(const uint64_t _maxConfls)
-{
+lbool Searcher::solve(
+    const uint64_t _maxConfls
+    , const unsigned upper_level_iteration_num
+) {
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _maxConfls;
@@ -1897,13 +1899,11 @@ lbool Searcher::solve(const uint64_t _maxConfls)
         << endl;
     }
 
-    reset_reason_levels_of_vars_to_zero();
-
     resetStats();
-    num_red_cls_reducedb = count_num_red_cls_reducedb();
     lbool status = l_Undef;
-    if (conf.burst_search_len > 0) {
-        restore_order_heap();
+    if (conf.burst_search_len > 0
+        && upper_level_iteration_num > 0
+    ) {
         assert(solver->check_order_heap_sanity());
         setup_restart_print();
         status = burst_search();
@@ -1911,7 +1911,6 @@ lbool Searcher::solve(const uint64_t _maxConfls)
             goto end;
     }
 
-    restore_order_heap();
     params.rest_type = conf.restartType;
     if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
         || conf.do_calc_polarity_every_time
@@ -3308,4 +3307,9 @@ void Searcher::Stats::print() const
     #else
     print_stats_line("c all-threads sum CPU time", cpu_time, " s");
     #endif
+}
+
+void Searcher::update_var_decay()
+{
+    var_decay = conf.var_decay_max;
 }

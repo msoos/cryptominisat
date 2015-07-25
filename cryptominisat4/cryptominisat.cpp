@@ -40,10 +40,10 @@ static const bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
-        explicit CMSatPrivateData(bool* _interrupt_asap) {
+        explicit CMSatPrivateData(bool* _must_interrupt) {
             cls = 0;
             vars_to_add = 0;
-            inter = _interrupt_asap;
+            must_interrupt = _must_interrupt;
             which_solved = 0;
             shared_data = NULL;
             okay = true;
@@ -53,11 +53,11 @@ namespace CMSat {
             delete log; //this will also close the file
             delete shared_data;
         }
-        CMSatPrivateData(CMSatPrivateData& other) //copy should fail
+        CMSatPrivateData(CMSatPrivateData&) //copy should fail
         {
             std::exit(-1);
         }
-        CMSatPrivateData(const CMSatPrivateData& other) //copy should fail
+        CMSatPrivateData(const CMSatPrivateData&) //copy should fail
         {
             std::exit(-1);
         }
@@ -65,7 +65,8 @@ namespace CMSat {
         vector<Solver*> solvers;
         SharedData *shared_data;
         int which_solved;
-        bool* inter;
+        bool* must_interrupt;
+        bool must_interrupt_needs_free = false;
         unsigned cls;
         unsigned vars_to_add;
         vector<Lit> cls_lits;
@@ -103,8 +104,14 @@ struct DataForThread
 
 DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
 {
-    data = new CMSatPrivateData(interrupt_asap);
-    data->solvers.push_back(new Solver((SolverConf*) config, data->inter));
+    if (interrupt_asap == NULL) {
+        data = new CMSatPrivateData(new bool);
+        data->must_interrupt_needs_free = true;
+    } else {
+        data = new CMSatPrivateData(interrupt_asap);
+    }
+
+    data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
 }
 
 DLL_PUBLIC SATSolver::~SATSolver()
@@ -112,12 +119,21 @@ DLL_PUBLIC SATSolver::~SATSolver()
     for(Solver* this_s: data->solvers) {
         delete this_s;
     }
+    if (data->must_interrupt_needs_free) {
+        delete data->must_interrupt;
+    }
     delete data;
 }
 
 void update_config(SolverConf& conf, unsigned thread_num)
 {
     thread_num = thread_num % 20;
+
+    //Don't accidentally reconfigure everything to a specific value!
+    if (thread_num > 0) {
+        conf.reconfigure_val = 0;
+    }
+
     switch(thread_num) {
         case 1: {
             conf.restartType = Restart::geom;
@@ -125,12 +141,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.doGateFind = false;
+            conf.max_num_lits_more_red_min = 10;
             conf.varElimRatioPerIter = 1;
             conf.never_stop_search = true;
             break;
         }
         case 3: {
+            conf.doGateFind = true;
             conf.max_temporary_learnt_clauses = 10000;
             conf.restartType = CMSat::Restart::luby;
             break;
@@ -149,6 +166,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
+            conf.max_num_lits_more_red_min = 2;
             conf.doVarElim = false;
             conf.glue_must_keep_clause_if_below_or_eq= 3;
             conf.num_conflicts_of_search_inc = 1.2;
@@ -166,17 +184,24 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 8: {
+            conf.subsumption_time_limitM = 500;
+            conf.blocking_restart_multip = 1.2;
             conf.doIntreeProbe = false;
             conf.propBinFirst = 1;
             break;
         }
         case 9: {
-            conf.varElimRatioPerIter = 0.1;
-            conf.restartType = Restart::geom;
-            conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
+            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            conf.inc_max_temp_red_cls = 1.03;
             break;
         }
         case 10: {
+            conf.more_red_minim_limit_cache = 100;
+            conf.more_red_minim_limit_binary = 300;
+            conf.max_num_lits_more_red_min = 5;
             conf.doGateFind = false;
             conf.restartType = Restart::luby;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -191,10 +216,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
+            conf.max_num_lits_more_red_min = 2;
             conf.shortTermHistorySize = 100;
-            conf.max_num_lits_more_red_min = 5;
         }
         case 13: {
+            conf.subsumption_time_limitM = 100;
             conf.doIntreeProbe = false;
             conf.glue_must_keep_clause_if_below_or_eq= 4;
             break;
@@ -260,7 +286,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
         SolverConf conf = data->solvers[0]->getConf();
         conf.doSQL = 0;
         update_config(conf, i);
-        data->solvers.push_back(new Solver(&conf, data->inter));
+        data->solvers.push_back(new Solver(&conf, data->must_interrupt));
     }
 
     //set shared data
@@ -510,13 +536,8 @@ struct OneThreadSolve
             data_for_thread.update_mutex->lock();
             *data_for_thread.which_solved = tid;
             *data_for_thread.ret = ret;
-            for(size_t i = 0; i < data_for_thread.solvers.size(); i++) {
-                if (i == tid) {
-                    continue;
-                }
-
-                data_for_thread.solvers[i]->set_must_interrupt_asap();
-            }
+            //will interrupt all of them
+            data_for_thread.solvers[0]->set_must_interrupt_asap();
             data_for_thread.update_mutex->unlock();
         }
         data_for_thread.solvers[tid]->unset_must_interrupt_asap();
@@ -528,6 +549,9 @@ struct OneThreadSolve
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
+    //Reset the interrupt signal if it was set
+    *(data->must_interrupt) = false;
+
     if (data->log) {
         (*data->log) << "c Solver::solve( ";
         if (assumptions) {
@@ -598,10 +622,11 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 
 DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
 {
-    for(size_t i = 0; i < data->solvers.size(); i++) {
-        data->solvers[i]->add_sql_tag(tagname, tag);
+    for(Solver* solver: data->solvers) {
+        solver->add_sql_tag(tagname, tag);
     }
 }
+
 
 DLL_PUBLIC const char* SATSolver::get_version_sha1()
 {
@@ -639,9 +664,7 @@ DLL_PUBLIC void SATSolver::set_drup(std::ostream* os)
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
-    for(Solver* solver: data->solvers) {
-        solver->set_must_interrupt_asap();
-    }
+    *(data->must_interrupt) = true;
 }
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const

@@ -26,6 +26,8 @@
 #include "sqlstats.h"
 #include "watchalgos.h"
 
+#include <cmath>
+
 using namespace CMSat;
 
 InTree::InTree(Solver* _solver) :

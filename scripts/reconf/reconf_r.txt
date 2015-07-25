@@ -1,0 +1,14 @@
+crx <- read.table(file="outs/out0", sep=",")
+crx <- crx[ sample( nrow( crx ) ), ]
+X <- crx[,1:32]
+y <- crx[,33]
+trainX <- X[1:160,]
+trainy <- y[1:160]
+#trainX <- X[1:120,]
+#trainy <- y[1:120]
+#testX <- X[121:160,]
+#testy <- y[121:160]
+library(C50)
+model <-  C50::C5.0( trainX, trainy, trials=2 )
+summary(model)
+write(capture.output(summary(model)), "model.txt")
