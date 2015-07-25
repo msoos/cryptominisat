@@ -327,6 +327,7 @@ class SolverConf
         unsigned long long sync_every_confl;
         double clean_after_perc_zero_depth_assigns;
         unsigned reconfigure_val;
+        unsigned reconfigure_at;
 };
 
 } //end namespace

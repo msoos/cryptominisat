@@ -276,7 +276,9 @@ void Main::add_supported_options()
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver conf"
+        , "Reconfigure after some time to this solver conf")
+    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
+        , "Reconfigure after this many simplifications"
     )
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")

@@ -431,6 +431,8 @@ class Tester:
 
         if random.choice([True, False]):
             cmd += " --reconf %d " % random.randint(0, 12)
+            cmd += " --reconfat %d " % random.randint(0, 2)
+
         cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
         cmd += "--restart %s " % random.choice(
             ["geom", "glue", "luby"])

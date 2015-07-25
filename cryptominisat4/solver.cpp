@@ -1827,7 +1827,7 @@ end:
              + binTri.irredTris + binTri.redTris) > 1
             )
     ) {
-        if (solveStats.numSimplify == 2) {
+        if (solveStats.numSimplify == conf.reconfigure_at) {
             Features feat = calculate_features();
             if (conf.reconfigure_val == 100) {
                 conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
