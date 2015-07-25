@@ -103,7 +103,6 @@ public:
     size_t mem_used_xor() const;
     void print_gatefinder_stats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;
-    void clean_stamps_from_uneliminated_vars();
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
@@ -176,7 +175,6 @@ private:
     void check_elimed_vars_are_unassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
 
-    vector<Var> uneliminated_vars_since_last_solve; //since last solving, these variables have been uneliminated
     bool fill_occur();
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);
@@ -285,7 +283,7 @@ private:
         {}
     };
     void        order_vars_for_elim();
-    Heap<VarOrderLt> varElimOrder;
+    Heap<VarOrderLt> velim_order;
     //void        addRedBinaries(const Var var);
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
@@ -331,7 +329,6 @@ private:
     vector<char> poss_gate_parts;
     vector<char> negs_gate_parts;
     bool gate_found_elim;
-    bool gate_found_elim_pos;
 
     struct HeuristicData
     {

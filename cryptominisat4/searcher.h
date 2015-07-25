@@ -116,6 +116,14 @@ class Searcher : public HyperEngine
                 #endif
             }
 
+            void reset_glue_hist_size(size_t shortTermHistorySize)
+            {
+                glueHist.clearAndResize(shortTermHistorySize);
+                #ifdef STATS_NEEDED
+                trailDepthHist.clearAndResize(shortTermHistorySize);
+                #endif
+            }
+
             void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
             {
                 glueHist.clearAndResize(shortTermHistorySize);
@@ -162,7 +170,8 @@ class Searcher : public HyperEngine
         // Solving
         //
         lbool solve(
-            uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
+            uint64_t maxConfls
+            , const unsigned upper_level_iteration_num
         );
         void finish_up_solve(lbool status);
         void setup_restart_print();
@@ -289,6 +298,7 @@ class Searcher : public HyperEngine
         void new_var(const bool bva, const Var orig_outer) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
+        void reset_temp_cl_num();
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
@@ -310,6 +320,7 @@ class Searcher : public HyperEngine
                 return ~lit_inter < ~other.lit_inter;
             }
         };
+        void update_var_decay();
         void renumber_assumptions(const vector<Var>& outerToInter);
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
@@ -413,6 +424,7 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_cache_actual;
         const Stats& get_stats() const;
         size_t mem_used() const;
+        void restore_order_heap();
 
     private:
         //////////////
@@ -446,7 +458,6 @@ class Searcher : public HyperEngine
         bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
-        void reset_reason_levels_of_vars_to_zero();
         void rearrange_clauses_watches();
         Lit find_good_blocked_lit(const Clause& c) const override;
 
@@ -458,7 +469,6 @@ class Searcher : public HyperEngine
         void   stamp_based_more_minim(vector<Lit>& cl);
 
         void calculate_and_set_polars();
-        void restore_order_heap();
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
@@ -666,6 +676,7 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
+    assert(order_heap.heap_property());
 
     return true;
 }

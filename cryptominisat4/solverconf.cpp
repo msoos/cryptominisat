@@ -114,7 +114,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-elim
         , doVarElim        (true)
-        , varelim_cutoff_too_many_clauses(40)
+        , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(50)
@@ -216,7 +216,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doCalcReach      (true)
 
         //Gates
-        , doGateFind       (true)
+        , doGateFind       (false)
         , maxGateBasedClReduceSize(20)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
@@ -234,6 +234,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sync_every_confl(20000)
         , clean_after_perc_zero_depth_assigns(0.015)
         , reconfigure_val(0)
+        , reconfigure_at(2)
 {
 
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

@@ -209,9 +209,6 @@ if(NOT Boost_FOUND)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 endif()
 
-option(ALSO_BUILD_STATIC_LIB "Also build the static library" ON)
-
-
 find_package (Threads REQUIRED)
 
 option(STATS "Don't use statistics at all" OFF)
@@ -351,6 +348,9 @@ if (ENABLE_TESTING)
     add_test (NAME readme_test COMMAND tests/readme_test --log_level=test_suite)
     add_test (NAME heap_test COMMAND tests/heap_test --log_level=test_suite)
     add_test (NAME clause_test COMMAND tests/clause_test --log_level=test_suite)
+    if (NOT STATS AND NOT SLOW_DEBUG)
+        add_test (NAME library_speed_test COMMAND tests/library_speed_test --log_level=test_suite)
+    endif()
 
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
@@ -376,9 +376,6 @@ set(CRYPTOMINISAT4_STATIC_DEPS
 set(MY_TARGETS libcryptominisat4 cryptominisat_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat)
-endif()
-if (ALSO_BUILD_STATIC_LIB)
-    set(MY_TARGETS ${MY_TARGETS} libcryptominisat4_static)
 endif()
 export(TARGETS ${MY_TARGETS} FILE "${PROJECT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 

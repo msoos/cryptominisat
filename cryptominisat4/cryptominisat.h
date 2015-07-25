@@ -44,10 +44,12 @@ namespace CMSat {
         lbool solve(const std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
-        void add_sql_tag(const std::string& tagname, const std::string& tag);
-        unsigned long get_sql_id() const;
         bool okay() const;
         void log_to_file(std::string filename);
+
+        //SQL
+        void add_sql_tag(const std::string& tagname, const std::string& tag);
+        unsigned long get_sql_id() const;
 
         //Setup
         void set_max_confl(int64_t max_confl = -1);

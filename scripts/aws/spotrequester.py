@@ -10,9 +10,10 @@ import pprint
 import boto.ec2
 from boto.ec2.connection import EC2Connection
 from common_aws import *
+import logging
 
 
-class SpotRequestor:
+class SpotRequester:
     def __init__(self):
         self.conf = ConfigParser.ConfigParser()
         self.conf.read('ec2-spot-instance.cfg')
@@ -22,6 +23,7 @@ class SpotRequestor:
             sys.exit(0)
 
         self.user_data = self.__get_user_data()
+        self.our_ids = []
 
     def __get_user_data(self):
         user_data = """#!/bin/bash
@@ -66,8 +68,8 @@ DATA="%s"
                 return ec2conn
         return None
 
-    def __provision_instance(self):
-        self.reqs = self.ec2conn.request_spot_instances(price = self.conf.get('ec2', 'max_bid'),
+    def __provision_instances(self):
+        reqs = self.ec2conn.request_spot_instances(price = self.conf.get('ec2', 'max_bid'),
                 count = int(self.conf.get('ec2', 'count')),
                 image_id = self.conf.get('ec2', 'ami_id'),
                 subnet_id = self.conf.get('ec2', 'subnet_id'),
@@ -77,42 +79,30 @@ DATA="%s"
                 key_name = self.conf.get('ec2', 'key_name'),
                 security_group_ids = [self.conf.get('ec2', 'security_group')])
 
-        print "Request created, got back: "
-        pprint.pprint(self.reqs)
+        logging.info("Request created, got back IDs %s" % [r.id for r in reqs])
+        return reqs
 
-    def __get_spot_price(self):
-        price_history = self.ec2conn.get_spot_price_history(instance_type = self.conf.get('ec2', 'type'),
-                                                            product_description = 'Linux/UNIX')
+    def create_spots_if_needed(self):
+        # Valid values: open | active | closed | cancelled | failed
+        run_wait_spots = self.ec2conn.get_all_spot_instance_requests(filters={'state': 'open'})
+        run_wait_spots.extend(self.ec2conn.get_all_spot_instance_requests(filters={'state': 'active'}))
 
-        pprint.pprint(self.conf.get('ec2', 'type'))
-        pprint.pprint(price_history)
+        for spot in run_wait_spots:
+            if spot.id in self.our_ids:
+                logging.info("ID %s is either waiting or running, not requesting a new one" % spot.id)
+                return
+
+        if len(self.our_ids) > 4:
+            logging.error("Something really wrong has happened, we have reqested 4 spots aready! Not requesting more.")
+            return
+
+        self.create_spots()
 
     def create_spots(self):
-        spot_price = self.__get_spot_price()
-        print 'Spot price is ' + str(spot_price)
-        self.__provision_instance()
+        reqs = self.__provision_instances()
 
-        for req in self.reqs:
-            print 'req state: %s req ID (if launched): %s' %(req.state, req.instance_id)
+        for req in reqs:
+            logging.info('New req state: %s ID: %s' % (req.state, req.id))
+            self.our_ids.append(req.id)
 
-class OLD:
-    def __init__(self):
-        self.conn = boto.ec2.connect_to_region(self.conf.get("ec2", "region"))
-
-    def get_reservations(self):
-        reservations = self.conn.get_all_reservations()
-        num = 0
-        instances = []
-        for reservation in reservations:
-            for instance in reservation.instances:
-                if instance.instance_type != "t2.micro":
-                    instances.append([instance.instance_type, instance.placement])
-
-        print "ec2conn instances running:", instances
-
-    def get_spot_requests(self):
-        requests = self.conn.get_all_spot_instance_requests()
-        print "Active requests:", requests
-        for req in requests:
-            if ("%s" % req.status) != "<Status: instance-terminated-by-user>":
-                print "-> ", [req.price, req.status]
+        return self.our_ids
