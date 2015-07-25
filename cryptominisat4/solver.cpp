@@ -3577,6 +3577,7 @@ void Solver::reconfigure(int val)
         }
 
         case 12: {
+            conf.do_bva = false;
             conf.glue_must_keep_clause_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
             conf.inc_max_temp_red_cls = 1.04;
