@@ -84,6 +84,11 @@ bool Distiller::distill_tri_irred_cls()
         << endl;
     }
 
+    //solver->watches.size()-1 would overflow
+    if (solver->watches.size() == 0) {
+        return solver->ok;
+    }
+
     uint64_t origShorten = runStats.numClShorten;
     uint64_t origLitRem = runStats.numLitsRem;
     const double myTime = cpuTime();
