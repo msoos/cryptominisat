@@ -26,6 +26,9 @@ parser.add_option("--divisor",
 parser.add_option("--ignorethresh",
                   dest="ignore_threshold", type=int, default=4500.0,
                   help="If all solved above this score, ignore")
+parser.add_option("--maxscore",
+                  dest="maxscore", type=int, default=5000.0,
+                  help="Scores go down from here")
 
 (options, args) = parser.parse_args()
 # print "args:", args
@@ -167,7 +170,7 @@ def parse_file(fname):
             time_used = line.strip().split(":")[1].strip()
             score = int(round(float(time_used)))
             #score -= score % 1000
-            score = 5000-score
+            score = options.maxscore-score
 
         if "reconfigured" in line:
             reconf = line.split("to config")[1].strip()
