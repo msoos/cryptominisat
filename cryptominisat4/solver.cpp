@@ -684,7 +684,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
      //Undo comp handler
-    if (conf.doCompHandler) {
+    if (compHandler) {
         bool readd = false;
         for (Lit lit: ps) {
             if (varData[lit.var()].removed == Removed::decomposed) {
@@ -1019,7 +1019,7 @@ void Solver::new_vars(size_t n)
         simplifier->new_vars(n);
     }
 
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->new_vars(n);
     }
     datasync->new_vars(n);
@@ -1040,7 +1040,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
         simplifier->new_var(orig_outer);
     }
 
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->new_var(orig_outer);
     }
     if (orig_outer == std::numeric_limits<Var>::max()) {
@@ -1065,7 +1065,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     if (simplifier) {
         simplifier->save_on_var_memory();
     }
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
@@ -1221,7 +1221,7 @@ void Solver::extend_solution()
     model = back_number_solution_from_inter_to_outer(model);
 
     //Extend solution to stored solution in component handler
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->addSavedState(model);
     }
 
@@ -3557,7 +3557,6 @@ void Solver::reconfigure(int val)
             conf.cacheUpdateCutoff = 2669;
             conf.num_conflicts_of_search = 21671;
             conf.inc_max_temp_red_cls = 1.029816784872561;
-            conf.doCompHandler = 1;
             conf.do_calc_polarity_every_time = 1;
             conf.distill_long_irred_cls_time_limitM = 1;
             conf.random_var_freq = 0.004446797134521431;
