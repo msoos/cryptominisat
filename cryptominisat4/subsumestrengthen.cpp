@@ -26,6 +26,7 @@
 #include "clauseallocator.h"
 #include "sqlstats.h"
 #include "solver.h"
+#include "solvertypes.h"
 #include <array>
 
 using namespace CMSat;
@@ -282,7 +283,7 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
-    const double time_remain = calc_percentage(simplifier->limit_to_decrease, orig_limit);
+    const double time_remain = calc_percentage(*simplifier->limit_to_decrease, orig_limit);
 
     if (solver->conf.verbosity >= 2) {
         cout
