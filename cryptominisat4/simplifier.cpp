@@ -868,6 +868,7 @@ bool Simplifier::simplify(const bool _startup)
     runStats.clear();
     runStats.numCalls++;
     clauses.clear();
+    set_limits(); //to calculate strengthening_time_limit
     limit_to_decrease = &strengthening_time_limit;
     if (!fill_occur_and_print_stats()) {
         return solver->okay();
