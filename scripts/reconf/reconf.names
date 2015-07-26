@@ -33,11 +33,11 @@ horn_min:       continuous.
 horn_max:       continuous.
 horn_spread:       continuous.
 horn:       continuous.
-lt_confl_size        continuous.
-lt_confl_glue        continuous.
-lt_num_resolutions        continuous.
-trail_depth_delta_hist        continuous.
-branch_depth_hist        continuous.
-branch_depth_delta_hist        continuous.
+lt_confl_size:        continuous.
+lt_confl_glue:        continuous.
+lt_num_resolutions:        continuous.
+trail_depth_delta_hist:        continuous.
+branch_depth_hist:        continuous.
+branch_depth_delta_hist:        continuous.
 
 reconf:                 +,-.

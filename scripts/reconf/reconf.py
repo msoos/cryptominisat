@@ -11,13 +11,6 @@ parser = OptionParser()
 parser.add_option("-f", "--file",
                   dest="outfname", type=str,
                   help="print final values to this file")
-parser.add_option("-r", "--reconf",
-                  dest="reconf", type=int,
-                  help="the target reconf to calculate +/ for")
-parser.add_option("-p", "--plusminus",
-                  dest="plusminus", default=False,
-                  action="store_true",
-                  help="print final element as +/-")
 parser.add_option("-n", "--num",
                   dest="num", type=int,
                   help="Number of reconfs")
@@ -39,11 +32,6 @@ order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean", "vcg_var_std",
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
     exit(-1)
-
-if options.reconf is None:
-    print "You must give --reconf"
-    exit(-1)
-
 
 def parse_features_line(line):
     line = re.sub("c.*features. ", "", line)
@@ -125,21 +113,24 @@ def print_features_and_scores(fname, features, reconfs_scores):
     for name in order:
         string += "%s," % features[name]
 
-    string += "||"
-    if not options.plusminus:
-        string += "%.3f" % final_array[options.reconf]
-        string += "||"
+    if True:
+        string2 = str(string)
+        string2 += "||"
         for a in final_array:
-            string += "%.1f " % a
-    else:
-        if final_array[options.reconf] >= 0.45:
+            string2 += "%.1f " % a
+
+        print string2
+
+    origstring = str(string)
+    for i in range(options.num):
+        string = str(origstring)
+        if final_array[i] >= 0.45:
             string += "+"
         else:
             string += "-"
 
-    print fname, string
-    if outf:
-        outf.write(string.replace("||", "") + "\n")
+        outf[i].write(string + "\n")
+
     only_this_could_solve_it = r_s[1][1] == 0
     return best_reconf, only_this_could_solve_it
 
@@ -210,9 +201,9 @@ for x in args:
 print "END--------"
 print "all files:", all_files
 print ""
-outf = None
-if options.outfname:
-    outf = open(options.outfname, "w")
+outf = []
+for i in range(options.num):
+    outf.append(open(options.outfname + str(i) + ".data", "w"))
 
 best_reconf = {}
 only_this = {}
@@ -237,3 +228,5 @@ for fname in all_files:
 print "best reconfs: ", best_reconf
 print "uniquely solved by: ", only_this
 
+for i in range(options.num):
+    outf[i].close()
