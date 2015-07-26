@@ -2215,7 +2215,7 @@ bool Simplifier::reverse_distillation_of_dummy(
 
         //Use cache
         const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-        aggressive_elim_time_limit -= cache.size()/3;
+        aggressive_elim_time_limit -= (int64_t)cache.size()/3;
         for(const LitExtra litextra: cache) {
             //If redundant, that doesn't help
             if (!litextra.getOnlyIrredBin())
@@ -2252,7 +2252,7 @@ bool Simplifier::subsume_dummy_through_stamping(
     //pendency
 
     if (!ps.isBinary() && !qs.isBinary()) {
-        aggressive_elim_time_limit -= toClear.size()*5;
+        aggressive_elim_time_limit -= (int64_t)toClear.size()*5;
         if (solver->stamp.stampBasedClRem(toClear)) {
             return true;
         }
@@ -2311,7 +2311,7 @@ bool Simplifier::aggressiveCheck(
     , bool& retval
 ) {
     watch_subarray_const ws = solver->watches[lit.toInt()];
-    aggressive_elim_time_limit -= ws.size()/3 + 2;
+    aggressive_elim_time_limit -= (int64_t)ws.size()/3 + 2;
     for(watch_subarray::const_iterator it =
         ws.begin(), end = ws.end()
         ; it != end
