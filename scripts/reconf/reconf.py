@@ -14,20 +14,32 @@ parser.add_option("-f", "--file",
 parser.add_option("-n", "--num",
                   dest="num", type=int,
                   help="Number of reconfs")
+parser.add_option("--dropdown",
+                  dest="dropdown", type=int, default=0.05,
+                  help="From traget 1.0 this is subtracted no matter what")
+parser.add_option("--cutoff",
+                  dest="cutoff", type=int, default=0.45,
+                  help="At least this much or higher is needed for +")
+parser.add_option("--divisor",
+                  dest="divisor", type=int, default=3000.0,
+                  help="Time difference is divided by this much and subtracted")
+parser.add_option("--ignorethresh",
+                  dest="ignore_threshold", type=int, default=4500.0,
+                  help="If all solved above this score, ignore")
 
 (options, args) = parser.parse_args()
 # print "args:", args
 
-order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean", "vcg_var_std",
-         "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean",
-         "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread",
-         "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max",
-         "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min",
-         "pnr_cls_max", "pnr_cls_spread", "unary", "binary", "trinary",
-         "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
-         "horn", "lt_confl_size", "lt_confl_glue", "lt_num_resolutions",
-         "trail_depth_delta_hist", "branch_depth_hist",
-         "branch_depth_delta_hist"]
+order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
+         "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread",
+         "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max",
+         "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min",
+         "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std",
+         "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread",
+         "unary", "binary", "trinary", "horn_mean", "horn_std", "horn_min",
+         "horn_max", "horn_spread", "horn", "lt_confl_size",
+         "lt_confl_glue", "lt_num_resolutions", "trail_depth_delta_hist",
+         "branch_depth_hist", "branch_depth_delta_hist"]
 
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
@@ -84,7 +96,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print "%s Nobody could solve it" % fname
         return -1, False
 
-    if all_above_fixed_score(r_s, 4500):
+    if all_above_fixed_score(r_s, options.ignore_threshold):
         print "%s All above score" % (fname)
         return -2, False
 
@@ -95,9 +107,9 @@ def print_features_and_scores(fname, features, reconfs_scores):
     for conf_score, i in zip(r_s, xrange(100)):
         diff = abs(conf_score[1]-best_score)
         best_score = conf_score[1]
-        val -= float(diff)/3000.0
+        val -= float(diff)/options.divisor
         if diff > 0:
-            val -= 0.05
+            val -= options.dropdown
 
         if val < 0.0 or conf_score[1] == 0:
             val = 0.0
@@ -124,7 +136,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
     origstring = str(string)
     for i in range(options.num):
         string = str(origstring)
-        if final_array[i] >= 0.45:
+        if final_array[i] >= options.cutoff:
             string += "+"
         else:
             string += "-"
