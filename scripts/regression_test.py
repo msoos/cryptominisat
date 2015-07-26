@@ -543,7 +543,10 @@ class Tester:
             found_something = False
             for line in err_file:
                 print "Error line while executing: ", line.strip()
-                found_something = True
+                if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line:
+                    pass
+                else:
+                    found_something = True
 
             if found_something:
                 exit(-1)
