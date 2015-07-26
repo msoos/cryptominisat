@@ -44,9 +44,18 @@ order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
          "lt_confl_glue", "lt_num_resolutions", "trail_depth_delta_hist",
          "branch_depth_hist", "branch_depth_delta_hist"]
 
+f = open("reconf.names", "w")
+f.write("reconf.                     | the target attribute\n\n")
+f.write("name:                     label.\n")
+for o in order:
+    f.write("%s:                     continuous.\n" % o)
+f.write("\nreconf:                 +,-.\n")
+f.close()
+
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
     exit(-1)
+
 
 def parse_features_line(line):
     line = re.sub("c.*features. ", "", line)
