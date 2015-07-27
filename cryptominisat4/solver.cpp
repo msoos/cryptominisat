@@ -3608,7 +3608,7 @@ void Solver::reconfigure(int val)
         }
 
         case 13: {
-            conf.global_timeout_multiplier = 4;
+            conf.global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
