@@ -153,7 +153,7 @@ bool GateFinder::shorten_with_all_or_gates()
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxShortenWithGates <= 0);
-    const double time_remain = (double)numMaxShortenWithGates/(double)orig_numMaxShortenWithGates;
+    const double time_remain = calc_percentage(numMaxShortenWithGates, orig_numMaxShortenWithGates);
     runStats.orBasedTime = time_used;
     runStats.or_based_timeout = time_out;
     if (solver->sqlStats) {
