@@ -3443,6 +3443,24 @@ Features Solver::calculate_features() const
     feat.branch_depth_hist = hist.branchDepthHist.avg();
     feat.branch_depth_delta_hist = hist.branchDepthDeltaHist.avg();
 
+    feat.lt_confl_size_min = hist.conflSizeHistLT.getMax();
+    feat.lt_confl_size_max = hist.conflSizeHistLT.getMax();
+    feat.lt_confl_glue_min = hist.glueHistLT.getMin();
+    feat.lt_confl_glue_max = hist.glueHistLT.getMax();
+    feat.branch_depth_hist_min = hist.branchDepthHist.getMin();
+    feat.branch_depth_hist_max = hist.branchDepthHist.getMax();
+    feat.trail_depth_delta_hist_min = hist.trailDepthDeltaHist.getMin();
+    feat.trail_depth_delta_hist_max = hist.trailDepthDeltaHist.getMax();
+    feat.lt_num_resolutions_min = hist.numResolutionsHistLT.getMin();
+    feat.lt_num_resolutions_max = hist.numResolutionsHistLT.getMax();
+
+    feat.props_per_confl = (double)sumStats.conflStats.numConflicts/(double)sumPropStats.propagations;
+    feat.num_restarts = sumStats.numRestarts;
+    feat.decisions = sumStats.decisions;
+    feat.blocked_restart = sumStats.blocked_restart;
+    feat.learntBins = sumStats.learntBins;
+    feat.learntTris = sumStats.learntTris;
+
     if (conf.verbosity >= 1) {
         feat.print_stats();
     }
