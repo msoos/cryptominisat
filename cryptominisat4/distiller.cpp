@@ -150,7 +150,7 @@ bool Distiller::distill_tri_irred_cls()
     int64_t diff_bogoprops = (int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps;
     const bool time_out =  diff_bogoprops + extraTime > maxNumProps;
     const double time_used = cpuTime() - myTime;
-    const double time_remain = 1.0 - (double)(diff_bogoprops + extraTime)/(double)maxNumProps;
+    const double time_remain = 1.0 - calc_percentage(diff_bogoprops + extraTime, maxNumProps);
     if (solver->conf.verbosity >= 3) {
         cout
         << "c [distill] tri irred"
@@ -312,7 +312,7 @@ bool Distiller::distill_long_irred_cls()
     }
 
     const double time_used = cpuTime() - myTime;
-    const double time_remain = (double)(solver->propStats.bogoProps-oldBogoProps + extraTime)/(double)maxNumProps;
+    const double time_remain = calc_percentage(solver->propStats.bogoProps-oldBogoProps + extraTime, maxNumProps);
     if (solver->conf.verbosity >= 2) {
         cout << "c [distill] longirred"
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()

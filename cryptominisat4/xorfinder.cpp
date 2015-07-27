@@ -137,7 +137,7 @@ void XorFinder::find_xors()
     solver->clean_occur_from_idx_types_only_smudged();
 
     const bool time_out = (xor_find_time_limit < 0);
-    const double time_remain = (double)xor_find_time_limit/(double)orig_xor_find_time_limit;
+    const double time_remain = calc_percentage(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());

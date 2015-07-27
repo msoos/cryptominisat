@@ -420,7 +420,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     const double time_used = cpuTime() - myTime;
     const bool time_out = (limit_used() > numPropsTodo);
-    const double time_remain = calc_percentage(numPropsTodo-limit_used(), numPropsTodo);
+    const double time_remain = calc_percentage((int64_t)numPropsTodo-(int64_t)limit_used(), numPropsTodo);
     runStats.cpu_time = time_used;
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;

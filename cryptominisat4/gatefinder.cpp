@@ -97,7 +97,7 @@ void GateFinder::find_or_gates_and_update_stats()
     }
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxGateFinder <= 0);
-    const double time_remain = (double)numMaxGateFinder/(double)orig_numMaxGateFinder;
+    const double time_remain = calc_percentage(numMaxGateFinder, orig_numMaxGateFinder);
     runStats.findGateTime = time_used;
     runStats.find_gate_timeout = time_out;
     if (solver->sqlStats) {
