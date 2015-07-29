@@ -24,14 +24,24 @@ parser.add_option("--divisor",
                   dest="divisor", type=int, default=3000.0,
                   help="Time difference is divided by this much and subtracted")
 parser.add_option("--ignorethresh",
-                  dest="ignore_threshold", type=int, default=4500.0,
+                  dest="ignore_threshold", type=int, default=4000.0,
                   help="If all solved above this score, ignore")
 parser.add_option("--maxscore",
                   dest="maxscore", type=int, default=5000.0,
                   help="Scores go down from here")
+parser.add_option("--ignore", "-i",
+                  dest="ignore", type=str,
+                  help="Ignore these reconfs")
 
 (options, args) = parser.parse_args()
 # print "args:", args
+
+ignore = {}
+if options.ignore:
+    for r in options.ignore.split(","):
+        r = r.strip()
+        r = int(r)
+        ignore[r] = True
 
 order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
          "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread",
@@ -42,7 +52,14 @@ order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
          "unary", "binary", "trinary", "horn_mean", "horn_std", "horn_min",
          "horn_max", "horn_spread", "horn", "lt_confl_size",
          "lt_confl_glue", "lt_num_resolutions", "trail_depth_delta_hist",
-         "branch_depth_hist", "branch_depth_delta_hist"]
+         "branch_depth_hist", "branch_depth_delta_hist",
+         "lt_confl_size_min", "lt_confl_size_max", "lt_confl_glue_min",
+         "lt_confl_glue_max", "branch_depth_hist_min",
+         "branch_depth_hist_max", "trail_depth_delta_hist_min",
+         "trail_depth_delta_hist_max", "lt_num_resolutions_min",
+         "lt_num_resolutions_max", "props_per_confl",
+         "num_restarts", "decisions", "blocked_restart",
+         "learntBins", "learntTris"]
 
 f = open("reconf.names", "w")
 f.write("reconf.                     | the target attribute\n\n")
@@ -112,6 +129,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print "%s All above score" % (fname)
         return -2, False
 
+    print "Printing features for %s" % fname
     #calculate final array
     final_array = [0.0]*options.num
     val = 1.0
@@ -135,8 +153,12 @@ def print_features_and_scores(fname, features, reconfs_scores):
     #for name, val in features.items():
     string += "%s," % fname
     for name in order:
+        if name not in features:
+            sys.stderr.write("Yeah, reconf doesn't work as before, oops %s\n" %  fname)
+            return best_reconf, False
         string += "%s," % features[name]
 
+    #print to console
     if True:
         string2 = str(string)
         string2 += "||"
@@ -145,6 +167,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
 
         print string2
 
+    #print to files
     origstring = str(string)
     for i in range(options.num):
         string = str(origstring)
@@ -194,13 +217,16 @@ def parse_file(fname):
     #if satisfiable == True:
     #    score = 0
 
+    if reconf in ignore:
+        score = 0
+
     return fname_clean, reconf, features, score
 
 all_files = set()
 all_files_scores = {}
 all_files_features = {}
 for x in args:
-    print "# parsing infile:", x
+    # print "# parsing infile:", x
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
