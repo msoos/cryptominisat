@@ -3454,7 +3454,7 @@ Features Solver::calculate_features() const
     feat.lt_num_resolutions_min = hist.numResolutionsHistLT.getMin();
     feat.lt_num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
-    feat.props_per_confl = (double)sumStats.conflStats.numConflicts/(double)sumPropStats.propagations;
+    feat.props_per_confl = calc_percentage(sumStats.conflStats.numConflicts, sumPropStats.propagations);
     feat.num_restarts = sumStats.numRestarts;
     feat.decisions = sumStats.decisions;
     feat.blocked_restart = sumStats.blocked_restart;
