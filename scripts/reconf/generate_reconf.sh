@@ -10,7 +10,7 @@ rm -f outs/*
 for i in $(seq 0 $NUM_MIN_ONE); do
     echo "reconf with $i"
     cp reconf.names outs/out${i}.names
-    c5.0 -f outs/out${i} -r > outs/out${i}.c50.out
+    c5.0 -u 20 -f outs/out${i} -r > outs/out${i}.c50.out
 done
 ./tocpp.py -i 5,0,8,11,9,10 -n $NUM > ../../cryptominisat4/features_to_reconf.cpp
 read -r -p "Upload to AWS? [y/N] " response
