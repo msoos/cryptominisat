@@ -15,16 +15,16 @@ parser.add_option("-n", "--num",
                   dest="num", type=int,
                   help="Number of reconfs")
 parser.add_option("--dropdown",
-                  dest="dropdown", type=int, default=0.05,
+                  dest="dropdown", type=float, default=0.05,
                   help="From traget 1.0 this is subtracted no matter what")
 parser.add_option("--cutoff",
-                  dest="cutoff", type=int, default=0.45,
+                  dest="cutoff", type=float, default=0.45,
                   help="At least this much or higher is needed for +")
 parser.add_option("--divisor",
-                  dest="divisor", type=int, default=3000.0,
+                  dest="divisor", type=float, default=3000.0,
                   help="Time difference is divided by this much and subtracted")
 parser.add_option("--ignorethresh",
-                  dest="ignore_threshold", type=int, default=4000.0,
+                  dest="ignore_threshold", type=float, default=4000.0,
                   help="If all solved above this score, ignore")
 parser.add_option("--maxscore",
                   dest="maxscore", type=int, default=5000.0,
