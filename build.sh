@@ -24,6 +24,11 @@ ldd build/cryptominisat
 SOLVER="`pwd`/build/cryptominisat"
 cat <<EOF > solver
 #!/bin/bash
-${SOLVER} --threads \$2 \$1
+TH=\$2
+if [ \$TH -eq 32 ]
+then
+    TH=16
+fi
+${SOLVER} --threads \$TH \$1
 EOF
 chmod +x solver

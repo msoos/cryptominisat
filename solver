@@ -1,7 +1,0 @@
-#!/bin/bash
-TH=$2
-if [ "$2" = "64" ]
-then
-    TH="32"
-fi
-/home/soos/development/sat_solvers/satrace15/mt/cryptominisat-mt/build/cryptominisat --threads $TH $1
