@@ -136,61 +136,31 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
     switch(thread_num) {
         case 1: {
-            conf.restartType = Restart::geom;
-            conf.varElimRatioPerIter = 1;
-            break;
-        }
-        case 2: {
-            conf.max_num_lits_more_red_min = 10;
-            conf.varElimRatioPerIter = 1;
-            conf.never_stop_search = true;
-            break;
-        }
-        case 3: {
-            conf.doGateFind = true;
-            conf.max_temporary_learnt_clauses = 10000;
-            conf.restartType = CMSat::Restart::luby;
-            break;
-        }
-        case 4: {
+            //Minisat-like
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.inc_max_temp_red_cls = 1.01;
-            conf.max_temporary_learnt_clauses = 10000;
-
+            conf.inc_max_temp_red_cls = 1.02;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
-        case 5: {
-            conf.max_num_lits_more_red_min = 2;
-            conf.doVarElim = false;
-            conf.glue_must_keep_clause_if_below_or_eq= 3;
-            conf.num_conflicts_of_search_inc = 1.2;
+        case 2: {
+            conf.never_stop_search = true;
             break;
         }
-        case 6: {
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
+        case 3: {
+            //Luby
+            conf.restart_inc = 1.5;
+            conf.restart_first = 100;
+            conf.restartType = CMSat::Restart::luby;
             break;
         }
-        case 7: {
-            conf.do_bva = 0;
-            conf.doGateFind = 0;
-            conf.doCache = false;
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            break;
-        }
-        case 8: {
-            conf.subsumption_time_limitM = 500;
-            conf.blocking_restart_multip = 1.2;
-            conf.doIntreeProbe = false;
-            conf.propBinFirst = 1;
-            break;
-        }
-        case 9: {
+        case 4: {
+            //Similar to old CMS except we look at learnt DB size insteead
+            //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
@@ -198,63 +168,76 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.inc_max_temp_red_cls = 1.03;
             break;
         }
+        case 5: {
+            conf.max_temporary_learnt_clauses = 30000;
+            break;
+        }
+        case 6: {
+            conf.do_bva = false;
+            conf.glue_must_keep_clause_if_below_or_eq = 2;
+            conf.varElimRatioPerIter = 1;
+            conf.inc_max_temp_red_cls = 1.04;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
+            conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
+            break;
+        }
+
+        case 7: {
+            conf.global_timeout_multiplier = 5;
+            conf.num_conflicts_of_search_inc = 1.15;
+            conf.more_red_minim_limit_cache = 1200;
+            conf.more_red_minim_limit_binary = 600;
+            conf.max_num_lits_more_red_min = 20;
+            conf.max_temporary_learnt_clauses = 10000;
+            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
+            break;
+        }
+        case 8: {
+            //Different glue limit
+            conf.glue_must_keep_clause_if_below_or_eq = 4;
+            conf.max_num_lits_more_red_min = 3;
+            conf.max_glue_more_minim = 4;
+            break;
+        }
+        case 9: {
+            //Different glue limit
+            conf.glue_must_keep_clause_if_below_or_eq = 7;
+            break;
+        }
         case 10: {
-            conf.more_red_minim_limit_cache = 100;
-            conf.more_red_minim_limit_binary = 300;
-            conf.max_num_lits_more_red_min = 5;
-            conf.doGateFind = false;
-            conf.restartType = Restart::luby;
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            conf.var_elim_strategy = ElimStrategy::calculate_exactly;
+            conf.max_temporary_learnt_clauses = 40000;
+            conf.var_decay_max = 0.80;
             break;
         }
         case 11: {
-            conf.num_conflicts_of_search_inc = 1.3;
-            conf.propBinFirst = 1;
-            conf.restartType = Restart::luby;
-            conf.random_var_freq = 0.01;
+            conf.glue_must_keep_clause_if_below_or_eq = 3;
+            conf.var_decay_max = 0.97;
             break;
         }
         case 12: {
-            conf.max_num_lits_more_red_min = 2;
-            conf.shortTermHistorySize = 100;
+            conf.var_decay_max = 0.998;
+            break;
         }
         case 13: {
-            conf.subsumption_time_limitM = 100;
-            conf.doIntreeProbe = false;
-            conf.glue_must_keep_clause_if_below_or_eq= 4;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             break;
         }
         case 14: {
-            conf.do_bva = 0;
-            conf.doGateFind = 0;
-            conf.glue_must_keep_clause_if_below_or_eq= 3;
-            break;
+            conf.varElimRatioPerIter = 1;
+            conf.restartType = Restart::geom;
+
+            conf.inc_max_temp_red_cls = 1.01;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
         }
         case 15: {
-            conf.doGateFind = false;
-            conf.glue_must_keep_clause_if_below_or_eq= 6;
+            conf.inc_max_temp_red_cls = 1.001;
             break;
         }
-        case 16: {
-            conf.simplify_at_startup = false;
-            conf.var_decay_max = 0.96;
-            conf.random_var_freq = 0.01;
-            break;
-        }
-        case 17: {
-            conf.num_conflicts_of_search_inc = 1.5;
-            conf.var_decay_max = 0.94;
-            conf.random_var_freq = 0.02;
-            break;
-        }
-        case 18: {
-            conf.clauseDecayActivity = 1.0/0.996;
-            break;
-        }
-        case 19: {
-            conf.max_temporary_learnt_clauses = 30000;
-        }
+
         default: {
             break;
         }
