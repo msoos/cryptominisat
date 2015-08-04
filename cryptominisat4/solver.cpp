@@ -684,7 +684,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
      //Undo comp handler
-    if (conf.doCompHandler) {
+    if (compHandler) {
         bool readd = false;
         for (Lit lit: ps) {
             if (varData[lit.var()].removed == Removed::decomposed) {
@@ -1019,7 +1019,7 @@ void Solver::new_vars(size_t n)
         simplifier->new_vars(n);
     }
 
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->new_vars(n);
     }
     datasync->new_vars(n);
@@ -1040,7 +1040,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
         simplifier->new_var(orig_outer);
     }
 
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->new_var(orig_outer);
     }
     if (orig_outer == std::numeric_limits<Var>::max()) {
@@ -1065,7 +1065,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     if (simplifier) {
         simplifier->save_on_var_memory();
     }
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
@@ -1221,7 +1221,7 @@ void Solver::extend_solution()
     model = back_number_solution_from_inter_to_outer(model);
 
     //Extend solution to stored solution in component handler
-    if (conf.doCompHandler) {
+    if (compHandler) {
         compHandler->addSavedState(model);
     }
 
@@ -3443,6 +3443,24 @@ Features Solver::calculate_features() const
     feat.branch_depth_hist = hist.branchDepthHist.avg();
     feat.branch_depth_delta_hist = hist.branchDepthDeltaHist.avg();
 
+    feat.lt_confl_size_min = hist.conflSizeHistLT.getMax();
+    feat.lt_confl_size_max = hist.conflSizeHistLT.getMax();
+    feat.lt_confl_glue_min = hist.glueHistLT.getMin();
+    feat.lt_confl_glue_max = hist.glueHistLT.getMax();
+    feat.branch_depth_hist_min = hist.branchDepthHist.getMin();
+    feat.branch_depth_hist_max = hist.branchDepthHist.getMax();
+    feat.trail_depth_delta_hist_min = hist.trailDepthDeltaHist.getMin();
+    feat.trail_depth_delta_hist_max = hist.trailDepthDeltaHist.getMax();
+    feat.lt_num_resolutions_min = hist.numResolutionsHistLT.getMin();
+    feat.lt_num_resolutions_max = hist.numResolutionsHistLT.getMax();
+
+    feat.props_per_confl = calc_percentage(sumStats.conflStats.numConflicts, sumPropStats.propagations);
+    feat.num_restarts = sumStats.numRestarts;
+    feat.decisions = sumStats.decisions;
+    feat.blocked_restart = sumStats.blocked_restart;
+    feat.learntBins = sumStats.learntBins;
+    feat.learntTris = sumStats.learntTris;
+
     if (conf.verbosity >= 1) {
         feat.print_stats();
     }
@@ -3557,7 +3575,6 @@ void Solver::reconfigure(int val)
             conf.cacheUpdateCutoff = 2669;
             conf.num_conflicts_of_search = 21671;
             conf.inc_max_temp_red_cls = 1.029816784872561;
-            conf.doCompHandler = 1;
             conf.do_calc_polarity_every_time = 1;
             conf.distill_long_irred_cls_time_limitM = 1;
             conf.random_var_freq = 0.004446797134521431;
@@ -3587,6 +3604,17 @@ void Solver::reconfigure(int val)
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             update_var_decay();
             reset_temp_cl_num();
+            break;
+        }
+
+        case 13: {
+            conf.global_timeout_multiplier = 5;
+            conf.num_conflicts_of_search_inc = 1.15;
+            conf.more_red_minim_limit_cache = 1200;
+            conf.more_red_minim_limit_binary = 600;
+            conf.max_num_lits_more_red_min = 20;
+            conf.max_temporary_learnt_clauses = 10000;
+            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             break;
         }
 

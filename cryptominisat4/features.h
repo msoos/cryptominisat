@@ -54,6 +54,24 @@ struct Features
     double trail_depth_delta_hist = 0.0;
     double branch_depth_hist = 0.0;
     double branch_depth_delta_hist = 0.0;
+
+    double lt_confl_size_min = 0.0;
+    double lt_confl_size_max = 0.0;
+    double lt_confl_glue_min = 0.0;
+    double lt_confl_glue_max = 0.0;
+    double branch_depth_hist_min = 0.0;
+    double branch_depth_hist_max = 0.0;
+    double trail_depth_delta_hist_min = 0.0;
+    double trail_depth_delta_hist_max = 0.0;
+    double lt_num_resolutions_min = 0.0;
+    double lt_num_resolutions_max = 0.0;
+
+    double props_per_confl = 0.0;
+    double num_restarts = 0.0;
+    double decisions = 0.0;
+    double blocked_restart = 0.0;
+    double learntBins = 0;
+    double learntTris = 0;
 };
 
 }

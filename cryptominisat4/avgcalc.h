@@ -33,12 +33,16 @@
 namespace CMSat {
 using std::vector;
 
+#define AVGCALC_NEED_MIN_MAX
+
 template <class T, class T2 = uint64_t>
 class AvgCalc {
     T2      sum;
     size_t  num;
     #ifdef STATS_NEEDED
     double  sumSqare;
+    #endif
+    #ifdef AVGCALC_NEED_MIN_MAX
     T       min;
     T       max;
     #endif
@@ -49,6 +53,8 @@ public:
         , num(0)
         #ifdef STATS_NEEDED
         , sumSqare(0)
+        #endif
+        #ifdef AVGCALC_NEED_MIN_MAX
         , min(std::numeric_limits<T>::max())
         , max(std::numeric_limits<T>::min())
         #endif
@@ -60,12 +66,14 @@ public:
 
         #ifdef STATS_NEEDED
         sumSqare += (double)x*(double)x;
+        #endif
+        #ifdef AVGCALC_NEED_MIN_MAX
         max = std::max(max, x);
         min = std::min(min, x);
         #endif
     }
 
-    #ifdef STATS_NEEDED
+    #ifdef AVGCALC_NEED_MIN_MAX
     T getMin() const
     {
         return min;
@@ -75,6 +83,8 @@ public:
     {
         return max;
     }
+    #endif
+    #ifdef STATS_NEEDED
     double var() const
     {
         if (num == 0)
@@ -123,6 +133,8 @@ public:
 
         #ifdef STATS_NEEDED
         sumSqare += other.sumSqare;
+        #endif
+        #ifdef AVGCALC_NEED_MIN_MAX
         min = std::min(min, other.min);
         max = std::max(max, other.max);
         #endif

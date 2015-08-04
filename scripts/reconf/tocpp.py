@@ -11,8 +11,18 @@ parser = OptionParser()
 parser.add_option("-n", "--num",
                   dest="num", type=int,
                   help="Number of reconfs")
+parser.add_option("--ignore", "-i",
+                  dest="ignore", type=str,
+                  help="Ignore these reconfs")
 
 (options, args) = parser.parse_args()
+
+ignore = {}
+if options.ignore:
+    for r in options.ignore.split(","):
+        r = r.strip()
+        r = int(r)
+        ignore[r] = True
 
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
@@ -31,7 +41,8 @@ namespace CMSat {
 """
 
 for i in range(options.num):
-    print "double get_score%d(const Features& feat, const int verb);" %i
+    if i not in ignore:
+        print "double get_score%d(const Features& feat, const int verb);" %i
 
 print """
 int get_reconf_from_features(const Features& feat, const int verb)
@@ -42,6 +53,9 @@ int get_reconf_from_features(const Features& feat, const int verb)
 """
 
 for i in range(options.num):
+    if i in ignore:
+        continue
+
     print """
 \tscore = get_score%d(feat, verb);
 \tif (verb >= 2)
@@ -60,8 +74,10 @@ print """
 
 """
 
-def read_one_rule(rule_num) :
-    f = open("outs/out%d.rules" % rule_num)
+
+def read_one_reconf(reconf_num):
+    sys.stderr.write("Parsing reconf num %d\n" % reconf_num)
+    f = open("outs/out%d.rules" % reconf_num)
     num_conds = 0
     cond_no = 0
     num_rules = 0
@@ -70,7 +86,7 @@ def read_one_rule(rule_num) :
 
     print """
 double get_score%d(const Features& feat, const int verb)
-{""" % rule_num
+{""" % reconf_num
     for line in f:
         if "id=" in line:
             continue
@@ -89,7 +105,7 @@ double get_score%d(const Features& feat, const int verb)
             num_conds = int(dat["conds"])
             rule_class = dat["class"]
             cond_no = 0
-            confidence = float(dat["confidence"]);
+            confidence = float(dat["confidence"])
             continue
 
         if "entries" in dat:
@@ -101,9 +117,9 @@ double get_score%d(const Features& feat, const int verb)
         if "default" in dat:
             default = dat["default"]
             if default == "+":
-                print "\tdouble default_val = %.2f;\n" %(1.0)
+                print "\tdouble default_val = %.2f;\n" % (1.0)
             else:
-                print "\tdouble default_val = %.2f;\n" %(0.0)
+                print "\tdouble default_val = %.2f;\n" % (0.0)
 
             print "\tdouble total_plus = 0.0;"
             print "\tdouble total_neg = 0.0;"
@@ -113,15 +129,16 @@ double get_score%d(const Features& feat, const int verb)
         if cond_no == 0:
             string = "\tif ("
         else:
-            string +=" &&\n\t\t"
+            string += " &&\n\t\t"
 
         # print "dat:", dat
-        string +="(feat.%s %s %.5f)" % (dat["att"], dat["result"], float(dat["cut"]))
-        cond_no+= 1
+        string += "(feat.%s %s %.5f)" % (dat["att"], dat["result"],
+                                         float(dat["cut"]))
+        cond_no += 1
 
         #end rules
         if cond_no == num_conds:
-            string +=")\n\t{"
+            string += ")\n\t{"
             print string
 
             string = ""
@@ -138,6 +155,7 @@ double get_score%d(const Features& feat, const int verb)
 
     print "\t// num_rules:", num_rules
     print "\t// rule_no:", rule_no
+    sys.stderr.write("num rules: %s rule_no: %s\n" % (num_rules, rule_no))
     assert num_rules == rule_no
     print "\t// default is:", default
     print """
@@ -152,9 +170,9 @@ double get_score%d(const Features& feat, const int verb)
 """
 
 
-
 for i in range(options.num):
-    read_one_rule(i)
+    if i not in ignore:
+        read_one_reconf(i)
 
 print """
 } //end namespace

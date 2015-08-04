@@ -11,35 +11,66 @@ parser = OptionParser()
 parser.add_option("-f", "--file",
                   dest="outfname", type=str,
                   help="print final values to this file")
-parser.add_option("-r", "--reconf",
-                  dest="reconf", type=int,
-                  help="print final values to this file")
-parser.add_option("-p", "--plusminus",
-                  dest="plusminus", default=False,
-                  action="store_true",
-                  help="print final element as +/-")
 parser.add_option("-n", "--num",
                   dest="num", type=int,
                   help="Number of reconfs")
+parser.add_option("--dropdown",
+                  dest="dropdown", type=float, default=0.05,
+                  help="From traget 1.0 this is subtracted no matter what")
+parser.add_option("--cutoff",
+                  dest="cutoff", type=float, default=0.45,
+                  help="At least this much or higher is needed for +")
+parser.add_option("--divisor",
+                  dest="divisor", type=float, default=3000.0,
+                  help="Time difference is divided by this much and subtracted")
+parser.add_option("--ignorethresh",
+                  dest="ignore_threshold", type=float, default=4000.0,
+                  help="If all solved above this score, ignore")
+parser.add_option("--maxscore",
+                  dest="maxscore", type=int, default=5000.0,
+                  help="Scores go down from here")
+parser.add_option("--ignore", "-i",
+                  dest="ignore", type=str,
+                  help="Ignore these reconfs")
 
 (options, args) = parser.parse_args()
 # print "args:", args
 
-order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean", "vcg_var_std",
-         "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean",
-         "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread",
-         "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max",
-         "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min",
-         "pnr_cls_max", "pnr_cls_spread", "unary", "binary", "trinary",
-         "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
-         "horn"]
+ignore = {}
+if options.ignore:
+    for r in options.ignore.split(","):
+        r = r.strip()
+        r = int(r)
+        ignore[r] = True
+
+order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
+         "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread",
+         "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max",
+         "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min",
+         "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std",
+         "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread",
+         "unary", "binary", "trinary", "horn_mean", "horn_std", "horn_min",
+         "horn_max", "horn_spread", "horn", "lt_confl_size",
+         "lt_confl_glue", "lt_num_resolutions", "trail_depth_delta_hist",
+         "branch_depth_hist", "branch_depth_delta_hist",
+         "lt_confl_size_min", "lt_confl_size_max", "lt_confl_glue_min",
+         "lt_confl_glue_max", "branch_depth_hist_min",
+         "branch_depth_hist_max", "trail_depth_delta_hist_min",
+         "trail_depth_delta_hist_max", "lt_num_resolutions_min",
+         "lt_num_resolutions_max", "props_per_confl",
+         "num_restarts", "decisions", "blocked_restart",
+         "learntBins", "learntTris"]
+
+f = open("reconf.names", "w")
+f.write("reconf.                     | the target attribute\n\n")
+f.write("name:                     label.\n")
+for o in order:
+    f.write("%s:                     continuous.\n" % o)
+f.write("\nreconf:                 +,-.\n")
+f.close()
 
 if options.num is None:
     print "ERROR: You must give the number of reconfs"
-    exit(-1)
-
-if options.reconf is None:
-    print "You must give --reconf"
     exit(-1)
 
 
@@ -94,10 +125,11 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print "%s Nobody could solve it" % fname
         return -1, False
 
-    if all_above_fixed_score(r_s, 4500):
+    if all_above_fixed_score(r_s, options.ignore_threshold):
         print "%s All above score" % (fname)
         return -2, False
 
+    print "Printing features for %s" % fname
     #calculate final array
     final_array = [0.0]*options.num
     val = 1.0
@@ -105,9 +137,9 @@ def print_features_and_scores(fname, features, reconfs_scores):
     for conf_score, i in zip(r_s, xrange(100)):
         diff = abs(conf_score[1]-best_score)
         best_score = conf_score[1]
-        val -= float(diff)/3000.0
+        val -= float(diff)/options.divisor
         if diff > 0:
-            val -= 0.05
+            val -= options.dropdown
 
         if val < 0.0 or conf_score[1] == 0:
             val = 0.0
@@ -121,23 +153,31 @@ def print_features_and_scores(fname, features, reconfs_scores):
     #for name, val in features.items():
     string += "%s," % fname
     for name in order:
+        if name not in features:
+            sys.stderr.write("Yeah, reconf doesn't work as before, oops %s\n" %  fname)
+            return best_reconf, False
         string += "%s," % features[name]
 
-    string += "||"
-    if not options.plusminus:
-        string += "%.3f" % final_array[options.reconf]
-        string += "||"
+    #print to console
+    if True:
+        string2 = str(string)
+        string2 += "||"
         for a in final_array:
-            string += "%.1f " % a
-    else:
-        if final_array[options.reconf] >= 0.45:
+            string2 += "%.1f " % a
+
+        print string2
+
+    #print to files
+    origstring = str(string)
+    for i in range(options.num):
+        string = str(origstring)
+        if final_array[i] >= options.cutoff:
             string += "+"
         else:
             string += "-"
 
-    print fname, string
-    if outf:
-        outf.write(string.replace("||", "") + "\n")
+        outf[i].write(string + "\n")
+
     only_this_could_solve_it = r_s[1][1] == 0
     return best_reconf, only_this_could_solve_it
 
@@ -162,7 +202,7 @@ def parse_file(fname):
             time_used = line.strip().split(":")[1].strip()
             score = int(round(float(time_used)))
             #score -= score % 1000
-            score = 5000-score
+            score = options.maxscore-score
 
         if "reconfigured" in line:
             reconf = line.split("to config")[1].strip()
@@ -177,20 +217,26 @@ def parse_file(fname):
     #if satisfiable == True:
     #    score = 0
 
+    if reconf in ignore:
+        score = 0
+
     return fname_clean, reconf, features, score
 
 all_files = set()
 all_files_scores = {}
 all_files_features = {}
 for x in args:
-    print "# parsing infile:", x
+    # print "# parsing infile:", x
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
-            print "ERROR different features extracted for fname", fname
+            print "different features extracted for fname", fname
             print "orig:", all_files_features[fname]
             print "new: ", features
-        assert all_files_features[fname] == features
+            print "Keeping the longer one!"
+
+        if features is not None and len(all_files_features[fname]) < len(features):
+            all_files_features[fname] = features
     else:
         all_files.add(fname)
         all_files_features[fname] = features
@@ -205,9 +251,9 @@ for x in args:
 print "END--------"
 print "all files:", all_files
 print ""
-outf = None
-if options.outfname:
-    outf = open(options.outfname, "w")
+outf = []
+for i in range(options.num):
+    outf.append(open(options.outfname + str(i) + ".data", "w"))
 
 best_reconf = {}
 only_this = {}
@@ -232,3 +278,5 @@ for fname in all_files:
 print "best reconfs: ", best_reconf
 print "uniquely solved by: ", only_this
 
+for i in range(options.num):
+    outf[i].close()

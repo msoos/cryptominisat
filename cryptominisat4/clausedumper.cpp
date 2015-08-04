@@ -294,7 +294,7 @@ void ClauseDumper::dump_component_clauses()
         exit(-1);
     }
 
-    if (solver->conf.doCompHandler) {
+    if (solver->compHandler) {
         solver->compHandler->dump_removed_clauses(outfile);
     }
 }
