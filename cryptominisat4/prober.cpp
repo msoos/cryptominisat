@@ -241,10 +241,9 @@ void Prober::clean_clauses_after_probe()
 
 void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo)
 {
-    const double ratioUsedTime =
-        (solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime)
-        /(double)numPropsTodo
-    ;
+    const double ratioUsedTime = calc_percentage(
+        solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime
+        , numPropsTodo);
     if (solver->conf.otfHyperbin
         //Visited less than half
         && (double)runStats.numVisited/(double)(runStats.origNumFreeVars*2) < 0.4
@@ -259,11 +258,11 @@ void Prober::check_if_must_disable_cache_update()
 {
     //If time wasted on cache updating (extraTime) is large, stop cache
     //updation
-    double timeOnCache = (double)extraTimeCache
-            /(double)(solver->propStats.bogoProps
-               + solver->propStats.otfHyperTime
-               + extraTime + extraTimeCache
-             ) * 100.0;
+    double timeOnCache = calc_percentage(extraTimeCache
+        , solver->propStats.bogoProps
+            + solver->propStats.otfHyperTime
+            + extraTime + extraTimeCache
+    ) * 100.0;
 
 
     //More than 50% of the time is spent updating the cache... that's a lot
@@ -421,7 +420,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     const double time_used = cpuTime() - myTime;
     const bool time_out = (limit_used() > numPropsTodo);
-    const double time_remain = ((double)numPropsTodo-(double)limit_used())/numPropsTodo;
+    const double time_remain = calc_percentage((int64_t)numPropsTodo-(int64_t)limit_used(), numPropsTodo);
     runStats.cpu_time = time_used;
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;

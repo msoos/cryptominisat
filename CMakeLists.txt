@@ -141,7 +141,9 @@ if (COVERAGE)
     add_cxx_flag("--coverage")
 endif()
 
-set(CMAKE_EXE_LINKER_FLAGS " -Wl,-O1 -Wl,--discard-all -Wl,--build-id=sha1")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_EXE_LINKER_FLAGS " -Wl,-O1 -Wl,--discard-all -Wl,--build-id=sha1")
+endif()
 
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)

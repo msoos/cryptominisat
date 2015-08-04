@@ -30,8 +30,8 @@ pdfproducer = {PdfLaTex}}
 \usepackage{graphicx,epsfig,xcolor}
 
 \begin{document}
-\title{The CryptoMiniSat-4.4 set of solvers at SAT Race 2015}
-\author{Mate Soos}
+\title{The CryptoMiniSat-4.4 set of solvers at the SAT Race 2015}
+\author{Mate Soos, Marius Lindauer}
 
 \maketitle
 \thispagestyle{empty}
@@ -52,11 +52,10 @@ Some of the ideas from SWDiA5BY A26\cite{swdia} have been included into CMS. In 
 \subsection{Incremental solving}
 Incremental solving for a in-processing solver is not trivial and many bugs have been found in fuzzing the incremental solving interface. The fuzzer developed for this purpose contains more than 1000 lines of python and allows for testing both the incremental and the DRAT~\cite{drat} interface of the solver.
 
-\subsection{Versions}
-Two versions of the solver were submitted to the race. The version "4.4" has been tuned to use a specific set of constants using a cluster and machine learning methods. The second version, "4.4-auto" runs for approx 100K conflicts and then based on static data extracted from the simplified CNF chooses one of 7 solving strategies. Both variants have been tuned on past competitions' problem instances.
+\subsection{Auto-tuning}
+The version 'autotune' reconfigures itself after about 160K conflicts. The configuration picked is one of 13 different setups that vary many different parameters of the solving such as learnt clause removal strategy, restart strategy, and in-processing strategies. CMS4.4 was run on all SAT Comp'09 + 11 + 13 problems with all configurations, extracting relevant information from the all problems after they have been solved and simplified for 160K conflicts. The information extracted and the top 5 best configurations were then given to a machine learning algorithm (C5.0\cite{Quinlan:1993:CPM:152181}) which built a decision tree from this data. This decision tree was then translated into C++ and compiled into the CMS4.4 source code.
 
-\section*{Acknowledgements}
-The author would like to thank Marius Lindauer for his help in tuning the solver using the SpySMAC suite and the Postdam university computing cluster.
+This work was carried out by the first author through a script for Amazon Web Services for reliably running any setup ($>1500$ lines of python), a script for extracting and sanitizing the parameters ($>500$ lines of python), and a script for translating the rule-based output of C5 into C++.
 
 \bibliographystyle{splncs}
 \bibliography{sigproc}

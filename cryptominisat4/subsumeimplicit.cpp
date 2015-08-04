@@ -189,6 +189,11 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     const bool doStamp = solver->conf.doStamp;
     runStats.clear();
 
+    //For randomization, we must have at least 1
+    if (solver->watches.size() == 0) {
+        return;
+    }
+
     //Randomize starting point
     const size_t rnd_start = solver->mtrand.randInt(solver->watches.size()-1);
     size_t numDone = 0;

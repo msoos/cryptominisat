@@ -88,7 +88,7 @@ void XorFinder::find_xors_based_on_short_clauses()
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
 
-        xor_find_time_limit -= ws.size()*3;
+        xor_find_time_limit -= (int64_t)ws.size()*3;
         for (watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
             ; it2 != end2
@@ -137,7 +137,7 @@ void XorFinder::find_xors()
     solver->clean_occur_from_idx_types_only_smudged();
 
     const bool time_out = (xor_find_time_limit < 0);
-    const double time_remain = (double)xor_find_time_limit/(double)orig_xor_find_time_limit;
+    const double time_remain = calc_percentage(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
@@ -702,7 +702,7 @@ void XorFinder::findXorMatch(
     , const Lit lit
     , FoundXors& foundCls
 ) {
-    xor_find_time_limit -= occ.size();
+    xor_find_time_limit -= (int64_t)occ.size();
     for (watch_subarray::const_iterator
         it = occ.begin(), end = occ.end()
         ; it != end
