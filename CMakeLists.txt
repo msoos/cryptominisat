@@ -47,6 +47,8 @@ if (ENABLE_ASSERTIONS)
 else()
     # Note this definition doesn't appear in the cache variables.
     add_definitions(-DNDEBUG)
+    add_cxx_flag_if_supported("-fno-stack-protector")
+    add_definitions(-D_FORTIFY_SOURCE=0)
 endif()
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
@@ -132,8 +134,6 @@ add_cxx_flag_if_supported("-Winit-self")
 add_cxx_flag_if_supported("-Wunreachable-code")
 add_cxx_flag("-fPIC")
 #add_cxx_flag_if_supported("-fno-exceptions")
-add_cxx_flag_if_supported("-fno-stack-protector")
-add_definitions(-D_FORTIFY_SOURCE=0)
 
 
 option(COVERAGE "Build with coverage check" OFF)
