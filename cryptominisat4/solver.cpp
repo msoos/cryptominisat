@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 #include <complex>
+#include <locale>
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -1558,6 +1559,132 @@ void Solver::checkDecisionVarCorrectness() const
     }
 }
 
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+        s.erase(s.begin(),
+                std::find_if(s.begin(), s.end(),
+                             std::not1(std::ptr_fun<int, int>(std::isspace))));
+        return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(),
+                             std::not1(std::ptr_fun<int, int>(std::isspace))).base(),
+                s.end());
+        return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+        return ltrim(rtrim(s));
+}
+
+bool Solver::execute_inprocess_strategy(
+    const char* strategy
+    , const bool startup
+) {
+    //std::string input = "abc,def,ghi";
+    std::istringstream ss(strategy);
+    std::string token;
+
+    while(std::getline(ss, token, ',')) {
+        if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+            || cpuTime() > conf.maxTime
+            || must_interrupt_asap()
+            || nVars() == 0
+        ) {
+            return ok;
+        }
+
+        trim(token);
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+        cout << "c --> Executing strategy token: " << token << '\n';
+        if (token == "find-comps") {
+            if (get_num_free_vars() < conf.compVarLimit) {
+                CompFinder findParts(this);
+                if (!findParts.find_components()) {
+                    return ok;
+                }
+            }
+        } else if (token == "handle-comps") {
+            if (get_num_free_vars() < conf.compVarLimit
+                && solveStats.numSimplify >= conf.handlerFromSimpNum
+                //Only every 2nd, since it can be costly to find parts
+                && solveStats.numSimplify % 2 == 0 //TODO
+            ) {
+                if (!compHandler->handle())
+                    return ok;
+            }
+        }  else if (token == "scc-vrepl") {
+            if (conf.doFindAndReplaceEqLits) {
+                if (!varReplacer->replace_if_enough_is_found(
+                    floor((double)get_num_free_vars()*0.001))
+                ) {
+                    return ok;
+                }
+            }
+        } else if (token == "cache-clean") {
+            if (conf.doCache) {
+                if (!implCache.clean(this))
+                    return ok;
+            }
+        } else if (token == "cache-tryboth") {
+            if (conf.doCache) {
+                if (!implCache.tryBoth(this))
+                        return ok;
+            }
+        } else if (token == "sub-impl") {
+            if (conf.doStrSubImplicit) {
+                subsumeImplicit->subsume_implicit();
+            }
+        } else if (token == "intree-probe") {
+            if (conf.doIntreeProbe
+                && !intree->intree_probe()
+            ) {
+                return ok;
+            }
+        } else if (token == "probe") {
+            if (conf.doProbe
+                && !prober->probe()
+            ) {
+                return ok;
+            }
+        } else if (token == "str-cls") {
+            if (conf.do_distill_clauses
+                && !strengthener->strengthen(true)
+            ) {
+                return ok;
+            }
+        } else if (token == "distill-cls") {
+            if (conf.do_distill_clauses
+                && !distiller->distill(true)
+            ) {
+                return ok;
+            }
+        }  else if (token == "simplify") {
+            //Var-elim, gates, subsumption, strengthening
+            if (conf.perform_occur_based_simp
+                && simplifier
+                && !simplifier->simplify(startup)
+            ) {
+                return ok;
+            }
+        } else if (token == "str-impl") {
+            if (conf.doStrSubImplicit) {
+                if (!strengthener->strengthen_implicit()) {
+                    return ok;
+                }
+            }
+        } else {
+            cout << "ERROR: strategy " << token << " not recognised!" << endl;
+            exit(-1);
+        }
+    }
+
+    return ok;
+}
+
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
@@ -1580,182 +1707,20 @@ lbool Solver::simplify_problem(const bool startup)
         << endl;
     }
 
-    if (conf.doFindComps
-        && false
-        && !startup
-        && get_num_free_vars() < conf.compVarLimit
-        && !must_interrupt_asap()
-    ) {
-        CompFinder findParts(this);
-        if (!findParts.find_components()) {
-            goto end;
-        }
-    }
-
-    if (conf.doCompHandler
-        && !startup
-        && get_num_free_vars() < conf.compVarLimit
-        && solveStats.numSimplify >= conf.handlerFromSimpNum
-        //Only every 2nd, since it can be costly to find parts
-        && solveStats.numSimplify % 2 == 0
-        && !must_interrupt_asap()
-    ) {
-        if (!compHandler->handle())
-            goto end;
-    }
-
-    //SCC&VAR-REPL
-    if (solveStats.numSimplify > 0
-        && conf.doFindAndReplaceEqLits
-        && !must_interrupt_asap()
-    ) {
-        if (!varReplacer->replace_if_enough_is_found(floor((double)get_num_free_vars()*0.001))) {
-            goto end;
-        }
-    }
-
-    //Cache clean before probing (for speed)
-    if (conf.doCache
-        && !startup
-        && !must_interrupt_asap()
-    ) {
-        if (!implCache.clean(this))
-            goto end;
-
-        if (!implCache.tryBoth(this))
-            goto end;
-    }
-
-    //Treat implicits
-    if (conf.doStrSubImplicit
-        && !startup
-        && !must_interrupt_asap()
-    ) {
-        subsumeImplicit->subsume_implicit();
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //PROBE
-    if (conf.doIntreeProbe
-        && !startup
-        && !intree->intree_probe()
-    ) {
-        goto end;
-    }
-
-    if (conf.doProbe
-        && !startup
-        && nVars() > 0
-        && !prober->probe()
-    ) {
-        goto end;
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //Don't replace first -- the stamps won't work so well
-    if (conf.do_distill_clauses
-        && !startup
-        && !strengthener->strengthen(true)
-    ) {
-        goto end;
-    }
-    if (conf.do_distill_clauses
-        && !startup
-        && !distiller->distill(true)
-    ) {
-        goto end;
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //SCC&VAR-REPL
-    if (conf.doFindAndReplaceEqLits
-        && !startup
-    ) {
-        if (!varReplacer->replace_if_enough_is_found()) {
-            goto end;
-        }
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //Treat implicits
-    if (conf.doStrSubImplicit
-        //&& !startup
-    ) {
-        subsumeImplicit->subsume_implicit();
-    }
-
-    //Var-elim, gates, subsumption, strengthening
-    if (conf.perform_occur_based_simp
-        && simplifier
-        && !simplifier->simplify(startup)
-    ) {
-        goto end;
-    }
-
-    //Treat implicits
-    if (conf.doStrSubImplicit
-        && !startup
-    ) {
-        if (!strengthener->strengthen_implicit()) {
-            goto end;
-        }
-
-        subsumeImplicit->subsume_implicit();
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //Clean cache before distill
-    if (conf.doCache && !implCache.clean(this))
-        goto end;
-    if (conf.do_distill_clauses
-        && !startup
-        && !strengthener->strengthen(true)
-    ) {
-        goto end;
-    }
-    if (conf.do_distill_clauses
-        && !startup
-        && !distiller->distill(true)
-    ) {
-        goto end;
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    //Search & replace 2-long XORs
-    if (conf.doFindAndReplaceEqLits) {
-        if (!varReplacer->replace_if_enough_is_found(floor((double)get_num_free_vars()*0.001))) {
-            goto end;
-        }
+    if (startup) {
+        execute_inprocess_strategy(
+        "sub-impl, simplify, scc-vrepl"
+        , startup
+        );
+    } else {
+        execute_inprocess_strategy(
+        "handle-comps,"
+        "scc-vrepl, cache-clean, cache-tryboth,"
+        "sub-impl, intree-probe, probe,"
+        "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
+        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl"
+        , startup
+        );
     }
 
     //Delete and disable cache if too large
