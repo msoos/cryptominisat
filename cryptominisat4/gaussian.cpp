@@ -272,7 +272,8 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
 
     #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ")col_to_var:";
-    std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(), std::ostream_iterator<uint32_t>(cout, ","));
+    std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(),
+              std::ostream_iterator<uint32_t>(cout, ","));
     cout << endl;
     #endif
 
@@ -419,8 +420,12 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
 inline void Gaussian::update_last_one_in_col(matrixset& m)
 {
-    for (uint16_t* i = &m.last_one_in_col[0]+m.last_one_in_col.size()-1, *end = &m.last_one_in_col[0]-1; i != end && *i >= m.num_rows; i--)
+    for (uint16_t* i = &m.last_one_in_col[0]+m.last_one_in_col.size()-1, *end = &m.last_one_in_col[0]-1
+        ; i != end && *i >= m.num_rows
+        ; i--
+    ) {
         *i = m.num_rows;
+    }
 }
 
 Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
