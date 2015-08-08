@@ -308,11 +308,13 @@ void Main::add_supported_options()
     s_perf_multip << std::setprecision(2) << conf.multiplier_perf_values_after_cl_clean;
 
     std::ostringstream s_incclean;
-    s_incclean << std::setprecision(2) << conf.inc_max_temp_red_cls;
+
+    std::ostringstream s_clean_confl_multiplier;
+    s_clean_confl_multiplier << std::setprecision(2) << conf.clean_confl_multiplier;
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
-    ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier)
+    ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier, s_clean_confl_multiplier.str())
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("lockuip", po::value(&conf.lock_uip_per_dbclean)->default_value(conf.lock_uip_per_dbclean)
         , "How many clauses should be locked into DB per cleaning based on UIP usage")
@@ -331,11 +333,17 @@ void Main::add_supported_options()
     std::ostringstream s_random_var_freq;
     s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
 
+    std::ostringstream s_var_decay_start;
+    s_var_decay_start << std::setprecision(5) << conf.var_decay_start;
+
+    std::ostringstream s_var_decay_max;
+    s_var_decay_max << std::setprecision(5) << conf.var_decay_max;
+
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start)
+    ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start, s_var_decay_start.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max)
+    ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max, s_var_decay_max.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
