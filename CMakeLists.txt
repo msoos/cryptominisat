@@ -41,16 +41,6 @@ endforeach()
 
 PROJECT(cryptominisat4)
 
-option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
-if (ENABLE_ASSERTIONS)
-    # NDEBUG was already removed.
-else()
-    # Note this definition doesn't appear in the cache variables.
-    add_definitions(-DNDEBUG)
-    add_cxx_flag_if_supported("-fno-stack-protector")
-    add_definitions(-D_FORTIFY_SOURCE=0)
-endif()
-
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
@@ -97,6 +87,16 @@ macro(add_cxx_flag_if_supported flagname)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
   endif()
 endmacro()
+
+option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
+if (ENABLE_ASSERTIONS)
+    # NDEBUG was already removed.
+else()
+    # Note this definition doesn't appear in the cache variables.
+    add_definitions(-DNDEBUG)
+    add_cxx_flag_if_supported("-fno-stack-protector")
+    add_definitions(-D_FORTIFY_SOURCE=0)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -mtune=native")
