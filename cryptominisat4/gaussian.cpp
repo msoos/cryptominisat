@@ -201,8 +201,10 @@ void Gaussian::init()
     #endif
 }
 
-uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origMat)
-{
+uint32_t Gaussian::select_columnorder(
+    vector<uint16_t>& var_to_col
+    , matrixset& origMat
+) {
     var_to_col.resize(solver->nVars(), unassigned_col);
 
     uint32_t num_xorclauses  = 0;
@@ -354,8 +356,12 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col
 
     #ifdef DEBUG_GAUSS
     bool c = false;
-    for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = r + m.matrix.getSize(); r != end; ++r)
+    for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = r + m.matrix.getSize()
+        ; r != end
+        ; ++r)
+    {
         c |= (*r)[col];
+    }
     assert(!c);
     #endif
 
