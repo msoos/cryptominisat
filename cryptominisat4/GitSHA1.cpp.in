@@ -37,6 +37,7 @@ const char* get_compilation_env()
     static const char compilation_env[] =
     "CMAKE_CXX_COMPILER = @CMAKE_CXX_COMPILER@ | "
     "CMAKE_CXX_FLAGS = @CMAKE_CXX_FLAGS@ | "
+    "COMPILE_DEFINES = @COMPILE_DEFINES@ | "
     "STATICCOMPILE = @STATICCOMPILE@ | "
     "ONLY_SIMPLE = @ONLY_SIMPLE@ | "
     "Boost_FOUND = @Boost_FOUND@ | "
