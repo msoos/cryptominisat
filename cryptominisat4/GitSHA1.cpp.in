@@ -28,7 +28,7 @@ const char* get_version_sha1()
 
 const char* get_version_tag()
 {
-    static const char myversion_tag[] = "@GIT_TAG@";
+    static const char myversion_tag[] = "@PROJECT_VERSION@";
     return myversion_tag;
 }
 
