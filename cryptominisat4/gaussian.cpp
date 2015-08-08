@@ -1031,7 +1031,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
             useful_confl++;
             if (confl.isNULL()) {
                 #ifdef VERBOSE_DEBUG
-                std::cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << endl;
+                cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << endl;
                 #endif
                 solver->ok = false;
                 return l_False;
@@ -1041,18 +1041,18 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
             solver->cancelUntil(0);
 
             #ifdef VERBOSE_DEBUG
-            std::cout << "(" << matrix_no << ")one-length conflict" << endl;
+            cout << "(" << matrix_no << ")one-length conflict" << endl;
             #endif
             if (solver->value(lit) != l_Undef) {
                 assert(solver->value(lit) == l_False);
                 #ifdef VERBOSE_DEBUG
-                std::cout << "(" << matrix_no << ") -> UNSAT" << endl;
+                cout << "(" << matrix_no << ") -> UNSAT" << endl;
                 #endif
                 solver->ok = false;
                 return l_False;
             }
             #ifdef VERBOSE_DEBUG
-            std::cout << "(" << matrix_no << ") -> setting to correct value" << endl;
+            cout << "(" << matrix_no << ") -> setting to correct value" << endl;
             #endif
             solver->enqueue(lit);
             return l_Continue;
@@ -1115,12 +1115,14 @@ void Gaussian::print_stats() const
 {
     if (called > 0) {
         cout.setf(std::ios::fixed);
-        std::cout << " Gauss(" << matrix_no << ") useful";
-        cout << " prop: " << std::setprecision(2) << std::setw(5) << ((double)useful_prop/(double)called)*100.0 << "% ";
-        cout << " confl: " << std::setprecision(2) << std::setw(5) << ((double)useful_confl/(double)called)*100.0 << "% ";
-        if (disabled) std::cout << "disabled";
+        cout << " Gauss(" << matrix_no << ") useful";
+        cout << " prop: " << std::setprecision(2) << std::setw(5)
+        << ((double)useful_prop/(double)called)*100.0 << "% ";
+        cout << " confl: " << std::setprecision(2) << std::setw(5)
+        << ((double)useful_confl/(double)called)*100.0 << "% ";
+        if (disabled) cout << "disabled";
     } else
-        std::cout << " Gauss(" << matrix_no << ") not called.";
+        cout << " Gauss(" << matrix_no << ") not called.";
 }
 
 void Gaussian::print_matrix_stats() const
@@ -1178,7 +1180,7 @@ bool Gaussian::nothing_to_propagate(matrixset& m) const
             && solver->value(m.col_to_var[(*r).scan(0)]) == l_Undef
         ) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "row " << (*r) << " is a propagation, but we didn't catch it" << endl;
+            cout << "row " << (*r) << " is a propagation, but we didn't catch it" << endl;
             #endif
             return false;
         }
@@ -1190,7 +1192,7 @@ bool Gaussian::nothing_to_propagate(matrixset& m) const
     ) {
         if (r->isZero() && r->is_true()) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "row " << (*r) << " is a conflict, but we didn't catch it" << endl;
+            cout << "row " << (*r) << " is a conflict, but we didn't catch it" << endl;
             #endif
             return false;
         }
