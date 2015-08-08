@@ -58,6 +58,10 @@ class Xor
         }
 
         vector<Var> vars;
+        size_t size() const
+        {
+            return vars.size();
+        }
         bool rhs;
 };
 
