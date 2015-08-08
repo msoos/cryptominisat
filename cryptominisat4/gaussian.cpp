@@ -26,6 +26,7 @@
 #include "clause.h"
 #include <algorithm>
 #include <iterator>
+#include <limits>
 
 #include "clausecleaner.h"
 #include "varreplacer.h"
