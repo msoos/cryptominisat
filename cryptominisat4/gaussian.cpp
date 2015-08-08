@@ -242,8 +242,9 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
 
     Heap<Solver::VarOrderLt> order_heap(solver->order_heap);
     uint32_t iterReduceIt = 0;
-    while ((config.orderCols && !order_heap.empty()) || (!config.orderCols && iterReduceIt < vars.size()))
-    {
+    while ((config.orderCols && !order_heap.empty())
+        || (!config.orderCols && iterReduceIt < vars.size())
+    ) {
         Var v;
         if (config.orderCols) v = order_heap.removeMin();
         else v = vars[iterReduceIt++];
@@ -333,7 +334,10 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col
     uint32_t row_num = 0;
 
     if (solver->value(var)) {
-        for (uint32_t end = m.last_one_in_col[col];  row_num != end; ++this_row, row_num++) {
+        for (uint32_t end = m.last_one_in_col[col]
+            ; row_num != end
+            ; ++this_row, row_num++
+        ) {
             if ((*this_row)[col]) {
                 changed_rows[row_num] = true;
                 (*this_row).invert_is_true();
@@ -341,7 +345,10 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col
             }
         }
     } else {
-        for (uint32_t end = m.last_one_in_col[col];  row_num != end; ++this_row, row_num++) {
+        for (uint32_t end = m.last_one_in_col[col]
+            ; row_num != end
+            ; ++this_row, row_num++
+        ) {
             if ((*this_row)[col]) {
                 changed_rows[row_num] = true;
                 (*this_row).clearBit(col);
