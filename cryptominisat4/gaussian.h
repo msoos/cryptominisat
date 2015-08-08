@@ -141,17 +141,17 @@ protected:
         uint32_t level;
     };
     vector<ClauseToClear> clauses_toclear;
-    bool disabled; // Gauss is disabled
+    bool disabled = false; // Gauss is disabled
 
     //State of current elimnation
     vector<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
     vector<unsigned char> changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
-    uint32_t useful_prop; //how many times Gauss gave propagation as a result
-    uint32_t useful_confl; //how many times Gauss gave conflict as a result
-    uint32_t called; //how many times called the Gauss
-    uint32_t unit_truths; //how many unitary (i.e. decisionLevel 0) truths have been found
+    uint32_t useful_prop = 0; //how many times Gauss gave propagation as a result
+    uint32_t useful_confl = 0; //how many times Gauss gave conflict as a result
+    uint32_t called = 0; //how many times called the Gauss
+    uint32_t unit_truths = 0; //how many unitary (i.e. decisionLevel 0) truths have been found
 
     //gauss init functions
     void init(); // Initalise gauss state

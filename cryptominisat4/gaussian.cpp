@@ -56,11 +56,6 @@ Gaussian::Gaussian(
     , xorclauses(_xorclauses)
     , messed_matrix_vars_since_reversal(true)
     , gauss_last_level(0)
-    , disabled(false)
-    , useful_prop(0)
-    , useful_confl(0)
-    , called(0)
-    , unit_truths(0)
 {
 }
 
