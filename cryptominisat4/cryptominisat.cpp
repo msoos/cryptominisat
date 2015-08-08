@@ -148,17 +148,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.never_stop_search = true;
-            break;
-        }
-        case 3: {
-            //Luby
-            conf.restart_inc = 1.5;
-            conf.restart_first = 100;
-            conf.restartType = CMSat::Restart::luby;
-            break;
-        }
-        case 4: {
             //Similar to old CMS except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
@@ -166,6 +155,15 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.03;
+            break;
+        }
+        case 3: {
+            conf.max_temporary_learnt_clauses = 40000;
+            conf.var_decay_max = 0.80;
+            break;
+        }
+        case 4: {
+            conf.never_stop_search = true;
             break;
         }
         case 5: {
@@ -207,8 +205,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 10: {
-            conf.max_temporary_learnt_clauses = 40000;
-            conf.var_decay_max = 0.80;
+            //Luby
+            conf.restart_inc = 1.5;
+            conf.restart_first = 100;
+            conf.restartType = CMSat::Restart::luby;
             break;
         }
         case 11: {
