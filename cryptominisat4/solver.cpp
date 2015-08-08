@@ -1599,7 +1599,9 @@ bool Solver::execute_inprocess_strategy(
 
         trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        cout << "c --> Executing strategy token: " << token << '\n';
+        if (conf.verbosity >= 2) {
+            cout << "c --> Executing strategy token: " << token << '\n';
+        }
         if (token == "find-comps") {
             if (get_num_free_vars() < conf.compVarLimit) {
                 CompFinder findParts(this);
