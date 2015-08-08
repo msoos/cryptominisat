@@ -101,6 +101,7 @@ protected:
     const GaussConf& config;
     const uint32_t matrix_no;
     vector<Xor> xorclauses;
+    vector<Xor> new_xorclauses;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(PropBy& confl);

@@ -972,12 +972,13 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 solver->enqueue(tmp_clause[0]);
                 return unit_propagation;
             }
-            Clause& cla = *(Clause*)solver->cl_alloc.Xor_new(tmp_clause, xorEqualFalse);
+            new_xorclauses.push_back(Xor(tmp_clause, xorEqualFalse));
+            Xor &cla = new_xorclauses.back();
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
-            assert(solver->assigns[cla[0].var()].isUndef());
+            assert(solver->value(cla[0]) == l_Undef);
 
-            clauses_toclear.push_back(ClauseToClear(&cla, solver->trail.size()-1));
-            solver->enqueue(cla[0], solver->cl_alloc.get_offset(&cla));
+            //clauses_toclear.push_back(ClauseToClear(&cla, solver->trail.size()-1));
+            solver->enqueue(cla[0], PropBy(new_xorclauses.size()-1), true);
             return propagation;
     }
 

@@ -3210,6 +3210,13 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
         }
         release_assert(lit.var() < nVarsOutside()
         && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
+
+        if (lit.var() >= 1<<28) {
+            std::cerr << "ERROR: Variable number " << lit.var()
+            << "too large. PropBy is limiting us, sorry" << endl;
+            assert(false);
+            std:exit(-1);
+        }
     }
 }
 
