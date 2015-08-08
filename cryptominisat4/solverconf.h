@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include <string>
 #include <cstdlib>
+#include <assert.h>
 
 using std::string;
 
@@ -80,8 +81,8 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
             return "activity";
 
         default:
+            assert(false && "Unknown clause cleaning type?");
             std::exit(-1);
-            //assert(false && "Unknown clause cleaning type?");
     };
 }
 
@@ -100,6 +101,10 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
         case ElimStrategy::calculate_exactly:
             return "calculate";
     }
+
+    assert(false && "Unknown elimination strategy type");
+    std::exit(-1);
+    return "";
 }
 
 class SolverConf
