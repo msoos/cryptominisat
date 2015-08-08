@@ -121,6 +121,8 @@ bool Gaussian::clean_one_xor(Xor& x)
 
 bool Gaussian::clean_xor_clauses()
 {
+    assert(solver->ok);
+
     size_t i = 0;
     size_t j = 0;
     for(size_t size = xorclauses.size(); i < size; i++) {
