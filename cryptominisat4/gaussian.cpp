@@ -146,10 +146,10 @@ bool Gaussian::init_until_fixedpoint()
 
     if (!should_init()) return true;
     reset_stats();
-    uint32_t last_trail_size = solver->trail.size();
 
     bool do_again_gauss = true;
     while (do_again_gauss) {
+        uint32_t last_trail_size = solver->trail.size();
         if (!clean_xor_clauses()) {
             return false;
         }
