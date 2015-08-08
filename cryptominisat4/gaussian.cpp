@@ -246,7 +246,7 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
         || (!config.orderCols && iterReduceIt < vars.size())
     ) {
         Var v;
-        if (config.orderCols) v = order_heap.removeMin();
+        if (config.orderCols) v = order_heap.remove_min();
         else v = vars[iterReduceIt++];
         if (var_to_col[v] == 1) {
             #ifdef DEBUG_GAUSS
