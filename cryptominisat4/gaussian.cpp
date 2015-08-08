@@ -1011,8 +1011,9 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
         case conflict: {
             useful_confl++;
             llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
-            if (confl.isClause())
+            if (confl.isClause()) {
                 solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
+            }
 
             if (ret != l_Nothing) return ret;
             return l_Continue;
