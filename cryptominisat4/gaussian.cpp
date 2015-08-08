@@ -963,7 +963,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver->assigns[cla[0].var()].isUndef());
 
-            clauses_toclear.push_back(std::make_pair(&cla, solver->trail.size()-1));
+            clauses_toclear.push_back(ClauseToClear(&cla, solver->trail.size()-1));
             solver->enqueue(cla[0], solver->cl_alloc.get_offset(&cla));
             return propagation;
     }

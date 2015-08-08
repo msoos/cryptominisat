@@ -130,7 +130,17 @@ protected:
     //Varibales to keep Gauss state
     bool messed_matrix_vars_since_reversal;
     int gauss_last_level;
-    vector<pair<Clause*, uint32_t> > clauses_toclear;
+    struct ClauseToClear
+    {
+        ClauseToClear(Clause* _ptr, uint32_t _level) :
+            ptr(_ptr)
+            , level(_level)
+        {}
+
+        Clause* ptr;
+        uint32_t level;
+    };
+    vector<ClauseToClear> clauses_toclear;
     bool disabled; // Gauss is disabled
 
     //State of current elimnation
