@@ -1581,7 +1581,7 @@ static inline std::string &trim(std::string &s) {
 }
 
 bool Solver::execute_inprocess_strategy(
-    const char* strategy
+    const string& strategy
     , const bool startup
 ) {
     //std::string input = "abc,def,ghi";
@@ -1711,17 +1711,13 @@ lbool Solver::simplify_problem(const bool startup)
 
     if (startup) {
         execute_inprocess_strategy(
-        "sub-impl, simplify, scc-vrepl"
-        , startup
+            conf.simplify_at_startup_sequence
+            , startup
         );
     } else {
         execute_inprocess_strategy(
-        "handle-comps,"
-        "scc-vrepl, cache-clean, cache-tryboth,"
-        "sub-impl, intree-probe, probe,"
-        "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
-        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl"
-        , startup
+            conf.simplify_nonstartup_sequence
+            , startup
         );
     }
 
