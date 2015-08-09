@@ -185,7 +185,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         "scc-vrepl, cache-clean, cache-tryboth,"
         "sub-impl, intree-probe, probe,"
         "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
-        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl")
+        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
+        "check-cache-size, renumber"
+        )
 
         //Simplification
         , perform_occur_based_simp(true)

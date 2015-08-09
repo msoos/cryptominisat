@@ -1593,6 +1593,7 @@ bool Solver::execute_inprocess_strategy(
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
+            || !ok
         ) {
             return ok;
         }
@@ -1605,9 +1606,7 @@ bool Solver::execute_inprocess_strategy(
         if (token == "find-comps") {
             if (get_num_free_vars() < conf.compVarLimit) {
                 CompFinder findParts(this);
-                if (!findParts.find_components()) {
-                    return ok;
-                }
+                findParts.find_components();
             }
         } else if (token == "handle-comps") {
             if (get_num_free_vars() < conf.compVarLimit
@@ -1615,72 +1614,90 @@ bool Solver::execute_inprocess_strategy(
                 //Only every 2nd, since it can be costly to find parts
                 && solveStats.numSimplify % 2 == 0 //TODO
             ) {
-                if (!compHandler->handle())
-                    return ok;
+                compHandler->handle();
             }
         }  else if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
-                if (!varReplacer->replace_if_enough_is_found(
-                    floor((double)get_num_free_vars()*0.001))
-                ) {
-                    return ok;
-                }
+                varReplacer->replace_if_enough_is_found(
+                    floor((double)get_num_free_vars()*0.001));
             }
         } else if (token == "cache-clean") {
             if (conf.doCache) {
-                if (!implCache.clean(this))
-                    return ok;
+                implCache.clean(this);
             }
         } else if (token == "cache-tryboth") {
             if (conf.doCache) {
-                if (!implCache.tryBoth(this))
-                        return ok;
+                implCache.tryBoth(this);
             }
         } else if (token == "sub-impl") {
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
             }
         } else if (token == "intree-probe") {
-            if (conf.doIntreeProbe
-                && !intree->intree_probe()
-            ) {
-                return ok;
+            if (conf.doIntreeProbe) {
+                intree->intree_probe();
             }
         } else if (token == "probe") {
-            if (conf.doProbe
-                && !prober->probe()
-            ) {
-                return ok;
-            }
+            if (conf.doProbe)
+                prober->probe();
         } else if (token == "str-cls") {
-            if (conf.do_distill_clauses
-                && !strengthener->strengthen(true)
-            ) {
-                return ok;
+            if (conf.do_distill_clauses) {
+                strengthener->strengthen(true);
             }
         } else if (token == "distill-cls") {
-            if (conf.do_distill_clauses
-                && !distiller->distill(true)
-            ) {
-                return ok;
+            if (conf.do_distill_clauses) {
+                distiller->distill(true);
             }
         }  else if (token == "simplify") {
             //Var-elim, gates, subsumption, strengthening
             if (conf.perform_occur_based_simp
                 && simplifier
-                && !simplifier->simplify(startup)
             ) {
-                return ok;
+                simplifier->simplify(startup);
             }
         } else if (token == "str-impl") {
             if (conf.doStrSubImplicit) {
-                if (!strengthener->strengthen_implicit()) {
-                    return ok;
+                strengthener->strengthen_implicit();
+            }
+        } else if (token == "check-cache-size") {
+            //Delete and disable cache if too large
+            if (conf.doCache) {
+                const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
+                if (memUsedMB > conf.maxCacheSizeMB) {
+                    if (conf.verbosity >= 2) {
+                        cout
+                        << "c Turning off cache, memory used, "
+                        << memUsedMB/(1024UL*1024UL) << " MB"
+                        << " is over limit of " << conf.maxCacheSizeMB  << " MB"
+                        << endl;
+                    }
+                    implCache.free();
+                    vector<LitReachData> tmp;
+                    litReachable.swap(tmp);
+                    conf.doCache = false;
                 }
+            }
+        } else if (token == "renumber") {
+            if (conf.doRenumberVars) {
+                //Clean cache before renumber -- very important, otherwise
+                //we will be left with lits inside the cache that are out-of-bounds
+                if (conf.doCache) {
+                    bool setSomething = true;
+                    while(setSomething) {
+                        if (!implCache.clean(this, &setSomething))
+                            return false;
+                    }
+                }
+
+                renumber_variables();
             }
         } else {
             cout << "ERROR: strategy " << token << " not recognised!" << endl;
             exit(-1);
+        }
+
+        if (!ok) {
+            return ok;
         }
     }
 
@@ -1721,54 +1738,17 @@ lbool Solver::simplify_problem(const bool startup)
         );
     }
 
-    //Delete and disable cache if too large
-    if (conf.doCache) {
-        const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
-        if (memUsedMB > conf.maxCacheSizeMB) {
-            if (conf.verbosity >= 2) {
-                cout
-                << "c Turning off cache, memory used, "
-                << memUsedMB/(1024UL*1024UL) << " MB"
-                << " is over limit of " << conf.maxCacheSizeMB  << " MB"
-                << endl;
-            }
-            implCache.free();
-            vector<LitReachData> tmp;
-            litReachable.swap(tmp);
-            conf.doCache = false;
-        }
-    }
-    if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
-        || cpuTime() > conf.maxTime
-        || must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    if (conf.doRenumberVars) {
-        //Clean cache before renumber -- very important, otherwise
-        //we will be left with lits inside the cache that are out-of-bounds
-        if (conf.doCache) {
-            bool setSomething = true;
-            while(setSomething) {
-                if (!implCache.clean(this, &setSomething))
-                    goto end;
-            }
-        }
-
-        renumber_variables();
-    }
-
-    //Re-calculate reachability after re-numbering and new cache data
-    if (conf.doCache) {
-        calculate_reachability();
-    }
-
     //Free unused watch memory
     free_unused_watches();
     //addSymmBreakClauses();
 
 end:
+    //Re-calculate reachability after re-numbering and new cache data
+    //This may actually affect correctness/code sanity, so we must do it!
+    if (conf.doCache) {
+        calculate_reachability();
+    }
+
     update_polarity_and_activity = true;
     if (conf.verbosity >= 3) {
         cout << "c Searcher::simplify_problem() finished" << endl;
