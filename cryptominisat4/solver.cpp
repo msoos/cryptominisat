@@ -3575,7 +3575,10 @@ void Solver::reconfigure(int val)
             exit(-1);
         }
     }
-    cout << "c [features] reconfigured solver to config " << val << endl;
+
+    if (conf.verbosity >= 2) {
+        cout << "c [features] reconfigured solver to config " << val << endl;
+    }
 
     /*Note to self: change
      * propBinFirst 0->1
