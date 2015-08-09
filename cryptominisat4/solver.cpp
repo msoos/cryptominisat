@@ -1609,7 +1609,9 @@ bool Solver::execute_inprocess_strategy(
                 findParts.find_components();
             }
         } else if (token == "handle-comps") {
-            if (get_num_free_vars() < conf.compVarLimit
+            if (compHandler
+                && conf.doCompHandler
+                && get_num_free_vars() < conf.compVarLimit
                 && solveStats.numSimplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
                 && solveStats.numSimplify % 2 == 0 //TODO
