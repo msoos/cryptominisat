@@ -78,37 +78,36 @@ void XorFinder::find_xors_based_on_long_clauses()
 
 void XorFinder::find_xors_based_on_short_clauses()
 {
+    assert(solver->ok);
+
     vector<Lit> lits;
-    size_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end && xor_find_time_limit > 0
-        ; ++it, wsLit++
-    ) {
+    for (size_t wsLit = 0, end = 2*solver->nVars(); wsLit < end; wsLit++) {
         const Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
+        assert(solver->watches.size() > wsLit);
+        watch_subarray_const ws = solver->watches[lit.toInt()];
 
         xor_find_time_limit -= (int64_t)ws.size()*3;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
+        for (size_t i = 0, size = solver->watches[lit.toInt()].size()
+            ; i < size
+            ; i++
         ) {
+            const Watched& w = ws[i];
+
             //Only care about tertiaries
-            if (!it2->isTri())
+            if (!w.isTri())
                 continue;
 
             //Only bother about each tri-clause once
-            if (lit > it2->lit2()
-                || it2->lit2() > it2->lit3()
+            if (lit > w.lit2()
+                || w.lit2() > w.lit3()
             ) {
                 continue;
             }
 
             lits.resize(3);
             lits[0] = lit;
-            lits[1] = it2->lit2();
-            lits[2] = it2->lit3();
+            lits[1] = w.lit2();
+            lits[2] = w.lit3();
 
             findXor(lits, calcAbstraction(lits));
         }
