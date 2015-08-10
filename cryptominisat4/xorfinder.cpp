@@ -87,6 +87,8 @@ void XorFinder::find_xors_based_on_short_clauses()
         watch_subarray_const ws = solver->watches[lit.toInt()];
 
         xor_find_time_limit -= (int64_t)ws.size()*3;
+
+        //cannot use iterators because findXor may update the watchlist
         for (size_t i = 0, size = solver->watches[lit.toInt()].size()
             ; i < size
             ; i++
