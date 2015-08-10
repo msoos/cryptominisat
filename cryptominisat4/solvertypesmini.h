@@ -35,7 +35,7 @@ THE SOFTWARE.
 namespace CMSat {
 
 typedef uint32_t Var;
-static const Var var_Undef(0xffffffffU >> 3);
+static const Var var_Undef(0xffffffffU >> 4);
 
 class Lit
 {
