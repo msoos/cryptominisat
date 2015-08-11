@@ -485,31 +485,56 @@ class Tester:
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
 
+            def create_random_schedule(string_list):
+                opts = string_list.split(",")
+                opts = [a.strip(" ") for a in opts]
+                opts = list(set(opts))
+                print "available schedule options:", opts
+
+                sched = []
+                for i in range(random.randint(0, 20)):
+                    sched.append(random.choice(opts))
+
+                return sched
+
+        cmd += self.add_schedule_options(create_random_schedule)
+        cmd += self.add_occ_schedule_options(create_random_schedule)
+
+        return cmd
+
+    def add_schedule_options(self, create_random_schedule):
+        cmd = ""
+
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
         sched_opts += "sub-impl, intree-probe, probe,"
         sched_opts += "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
         sched_opts += "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
         sched_opts += "check-cache-size, renumber"
-        sched_opts = sched_opts.split(",")
-        sched_opts = [a.strip(" ") for a in sched_opts]
-        sched_opts = list(set(sched_opts))
-        print "available schedule options:", sched_opts
 
-        def one_sched():
-            sched = []
-            for i in range(random.randint(0, 20)):
-                sched.append(random.choice(sched_opts))
-
-            return sched
-
-        sched = ",".join(one_sched())
+        sched = ",".join(create_random_schedule(sched_opts))
         if sched != "":
             cmd += "--schedule %s " % sched
 
-        sched = ",".join(one_sched())
+        sched = ",".join(create_random_schedule(sched_opts))
         if sched != "":
             cmd += "--preschedule %s " % sched
+
+        return cmd
+
+    def add_occ_schedule_options(self, create_random_schedule):
+        cmd = ""
+
+        sched_opts = "backw-subsume, xor, prop,"
+        sched_opts += "clean-implicit, bve, prop,"
+        sched_opts += "bva, gates, backw-subsume"
+        sched = ",".join(create_random_schedule(sched_opts))
+        if sched != "":
+            cmd += "--occschedule %s " % sched
+
+        sched = ",".join(create_random_schedule(sched_opts))
+        if sched != "":
+            cmd += "--occpreschedule %s " % sched
 
         return cmd
 

@@ -409,10 +409,18 @@ void Main::add_supported_options()
         , "Perform simplification at the very start")
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
         , "Never stop the search() process in class Solver")
+
     ("schedule", po::value(&conf.simplify_nonstartup_sequence)->default_value(conf.simplify_nonstartup_sequence, string())
         , "Schedule for simplification during run")
     ("preschedule", po::value(&conf.simplify_at_startup_sequence)->default_value(conf.simplify_at_startup_sequence, string())
         , "Schedule for simplification at startup")
+
+    ("occschedule", po::value(&conf.occsimp_schedule_nonstartup)->default_value(conf.occsimp_schedule_nonstartup, string())
+        , "Schedule for simplification during run")
+    ("occpreschedule", po::value(&conf.occsimp_schedule_startup)->default_value(conf.occsimp_schedule_startup, string())
+        , "Schedule for simplification at startup")
+
+
     ("confbtwsimp", po::value(&conf.num_conflicts_of_search)->default_value(conf.num_conflicts_of_search)
         , "Start first simplification after this many conflicts")
     ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc)
@@ -695,6 +703,9 @@ void Main::check_options_correctness()
             cout << cmdline_options << endl;
             cout << "Default schedule for simplifier: " << conf.simplify_nonstartup_sequence << endl;
             cout << "Default schedule for simplifier at startup: " << conf.simplify_at_startup_sequence << endl;
+
+            cout << "Default schedule for occur simplifier: " << conf.occsimp_schedule_nonstartup<< endl;
+            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_startup << endl;
             std::exit(0);
         }
 
