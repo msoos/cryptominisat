@@ -1693,6 +1693,8 @@ bool Solver::execute_inprocess_strategy(
 
                 renumber_variables();
             }
+        } else if (token == "") {
+            //Nothing, just an empty comma, ignore
         } else {
             cout << "ERROR: strategy " << token << " not recognised!" << endl;
             exit(-1);
