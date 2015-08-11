@@ -497,8 +497,8 @@ class Tester:
 
                 return sched
 
-        cmd += self.add_schedule_options(create_random_schedule)
-        cmd += self.add_occ_schedule_options(create_random_schedule)
+            cmd += self.add_schedule_options(create_random_schedule)
+            cmd += self.add_occ_schedule_options(create_random_schedule)
 
         return cmd
 
