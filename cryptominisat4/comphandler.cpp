@@ -138,9 +138,13 @@ bool CompHandler::handle()
     delete compFinder;
     compFinder = new CompFinder(solver);
     if (!compFinder->find_components()) {
+        delete compFinder;
+        compFinder = NULL;
         return false;
     }
     if (compFinder->getTimedOut()) {
+        delete compFinder;
+        compFinder = NULL;
         return solver->okay();
     }
 
@@ -153,7 +157,10 @@ bool CompHandler::handle()
             << "c [comp] Only one component, not handling it separately"
             << endl;
         }
-        return true;
+
+        delete compFinder;
+        compFinder = NULL;
+        return solver->ok;
     }
 
     map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
@@ -174,7 +181,10 @@ bool CompHandler::handle()
     }
 
     if (!solver->okay()) {
-        return false;
+        delete compFinder;
+        compFinder = NULL;
+
+        return solver->ok;
     }
 
     const double time_used = cpuTime() - myTime;
@@ -199,8 +209,7 @@ bool CompHandler::handle()
 
     delete compFinder;
     compFinder = NULL;
-
-    return true;
+    return solver->ok;
 }
 
 bool CompHandler::try_to_solve_component(
