@@ -173,8 +173,9 @@ bool CompHandler::handle()
         vars_solved += vars.size();
     }
 
-    if (!solver->okay())
+    if (!solver->okay()) {
         return false;
+    }
 
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity  >= 1) {
