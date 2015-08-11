@@ -475,11 +475,10 @@ class Tester:
 
         # the most buggy ones, don't turn them off much, please
         if random.randint(0, 1) == 1:
-            opts = [
-                "scc", "varelim", "comps", "strengthen", "probe", "intree",
-                "binpri", "stamp", "cache", "otfsubsume",
-                "renumber", "savemem", "moreminim", "gates", "bva",
-                "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
+            opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
+                    "binpri", "stamp", "cache", "otfsubsume",
+                    "renumber", "savemem", "moreminim", "gates", "bva",
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
             opts.extend(self.extra_options_if_supported)
 
