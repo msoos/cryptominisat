@@ -32,7 +32,7 @@
 using namespace CMSat;
 
 SubsumeStrengthen::SubsumeStrengthen(
-    Simplifier* _simplifier
+    OccSimplifier* _simplifier
     , Solver* _solver
 ) :
     simplifier(_simplifier)
@@ -772,7 +772,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
 //     }
 // };
 
-// bool Simplifier::subsumeWithTris()
+// bool OccSimplifier::subsumeWithTris()
 // {
 //     vector<Lit> lits;
 //     size_t strSucceed = 0;

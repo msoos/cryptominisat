@@ -85,13 +85,13 @@ struct BlockedClause {
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 */
-class Simplifier
+class OccSimplifier
 {
 public:
 
     //Construct-destruct
-    Simplifier(Solver* solver);
-    ~Simplifier();
+    OccSimplifier(Solver* solver);
+    ~OccSimplifier();
 
     //Called from main
     bool simplify(const bool startup);
@@ -425,12 +425,12 @@ private:
     Stats globalStats;
 };
 
-inline const Simplifier::Stats& Simplifier::get_stats() const
+inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
 {
     return globalStats;
 }
 
-inline bool Simplifier::getAnythingHasBeenBlocked() const
+inline bool OccSimplifier::getAnythingHasBeenBlocked() const
 {
     return anythingHasBeenBlocked;
 }
@@ -442,7 +442,7 @@ inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
     return os;
 }
 
-inline bool Simplifier::subsetReverse(const Clause& B) const
+inline bool OccSimplifier::subsetReverse(const Clause& B) const
 {
     for (uint32_t i = 0; i != B.size(); i++) {
         if (!seen[B[i].toInt()])
@@ -451,7 +451,7 @@ inline bool Simplifier::subsetReverse(const Clause& B) const
     return true;
 }
 
-inline const SubsumeStrengthen* Simplifier::getSubsumeStrengthen() const
+inline const SubsumeStrengthen* OccSimplifier::getSubsumeStrengthen() const
 {
     return subsumeStrengthen;
 }

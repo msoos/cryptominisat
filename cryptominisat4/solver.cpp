@@ -88,7 +88,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     }
     intree = new InTree(this);
     if (conf.perform_occur_based_simp) {
-        simplifier = new Simplifier(this);
+        simplifier = new OccSimplifier(this);
     }
     distiller = new Distiller(this);
     strengthener = new Strengthener(this);
@@ -481,7 +481,7 @@ Clause* Solver::add_clause_int(
                 c->makeRed(stats.glue);
             c->stats = stats;
 
-            //In class 'Simplifier' we don't need to attach normall
+            //In class 'OccSimplifier' we don't need to attach normall
             if (attach) {
                 attachClause(*c);
             } else {
@@ -1934,9 +1934,9 @@ void Solver::print_min_stats() const
 
         prober->get_stats().print_short(this, 0, 0);
     }
-    //Simplifier stats
+    //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
-        print_stats_line("c Simplifier time"
+        print_stats_line("c OccSimplifier time"
             , simplifier->get_stats().total_time()
             , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
             , "% time"
@@ -2030,9 +2030,9 @@ void Solver::print_all_stats() const
         prober->get_stats().print(nVars());
     }
 
-    //Simplifier stats
+    //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
-        print_stats_line("c Simplifier time"
+        print_stats_line("c OccSimplifier time"
             , simplifier->get_stats().total_time()
             , stats_line_percent(simplifier->get_stats().total_time(), cpu_time)
             , "% time"

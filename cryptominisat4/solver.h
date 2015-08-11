@@ -44,7 +44,7 @@ using std::string;
 class VarReplacer;
 class ClauseCleaner;
 class Prober;
-class Simplifier;
+class OccSimplifier;
 class SCCFinder;
 class Distiller;
 class Strengthener;
@@ -291,7 +291,7 @@ class Solver : public Searcher
         // Objects that help us accomplish the task
         Prober              *prober = NULL;
         InTree              *intree = NULL;
-        Simplifier          *simplifier = NULL;
+        OccSimplifier          *simplifier = NULL;
         Distiller           *distiller = NULL;
         Strengthener        *strengthener = NULL;
         CompHandler         *compHandler = NULL;

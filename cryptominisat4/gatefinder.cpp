@@ -33,7 +33,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-GateFinder::GateFinder(Simplifier *_simplifier, Solver *_solver) :
+GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
     numDotPrinted(0)
     , simplifier(_simplifier)
     , solver(_solver)

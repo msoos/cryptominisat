@@ -31,7 +31,7 @@
 namespace CMSat {
 
 class Solver;
-class Simplifier;
+class OccSimplifier;
 using std::set;
 
 class OrGate {
@@ -99,7 +99,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 class GateFinder
 {
 public:
-    GateFinder(Simplifier *subsumer, Solver *control);
+    GateFinder(OccSimplifier *subsumer, Solver *control);
     bool doAll();
 
     //Stats
@@ -303,7 +303,7 @@ private:
     uint64_t numDotPrinted;
 
     //Main data
-    Simplifier *simplifier;
+    OccSimplifier *simplifier;
     Solver *solver;
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;

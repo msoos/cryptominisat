@@ -32,17 +32,17 @@ using std::vector;
 namespace CMSat {
 
 class Solver;
-class Simplifier;
+class OccSimplifier;
 
 class BVA
 {
 public:
-    BVA(Solver* _solver, Simplifier* _simplifier);
+    BVA(Solver* _solver, OccSimplifier* _simplifier);
     bool bounded_var_addition();
 
 private:
     Solver* solver;
-    Simplifier* simplifier;
+    OccSimplifier* simplifier;
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
 

@@ -30,7 +30,7 @@
 
 using namespace CMSat;
 
-BVA::BVA(Solver* _solver, Simplifier* _simplifier) :
+BVA::BVA(Solver* _solver, OccSimplifier* _simplifier) :
     solver(_solver)
     , simplifier(_simplifier)
     , seen(solver->seen)

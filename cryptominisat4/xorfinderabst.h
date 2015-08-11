@@ -24,7 +24,7 @@
 
 namespace CMSat {
 
-class Simplifier;
+class OccSimplifier;
 class Solver;
 
 class XorFinderAbst

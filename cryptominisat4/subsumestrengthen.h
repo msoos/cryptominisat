@@ -31,14 +31,14 @@ using std::vector;
 
 namespace CMSat {
 
-class Simplifier;
+class OccSimplifier;
 class GateFinder;
 class Solver;
 
 class SubsumeStrengthen
 {
 public:
-    SubsumeStrengthen(Simplifier* simplifier, Solver* solver);
+    SubsumeStrengthen(OccSimplifier* simplifier, Solver* solver);
     size_t mem_used() const;
 
     void backward_subsumption_long_with_long();
@@ -108,7 +108,7 @@ private:
     Stats globalstats;
     Stats runStats;
 
-    Simplifier* simplifier;
+    OccSimplifier* simplifier;
     Solver* solver;
 
     void remove_literal(ClOffset c, const Lit toRemoveLit);

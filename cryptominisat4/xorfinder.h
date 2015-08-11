@@ -39,7 +39,7 @@ using std::set;
 //#define VERBOSE_DEBUG_XOR_FINDER
 
 class Solver;
-class Simplifier;
+class OccSimplifier;
 
 class Xor
 {
@@ -160,7 +160,7 @@ class FoundXors
 class XorFinder: public XorFinderAbst
 {
 public:
-    XorFinder(Simplifier* subsumer, Solver* solver);
+    XorFinder(OccSimplifier* subsumer, Solver* solver);
     virtual ~XorFinder() {}
     virtual bool do_all_with_xors();
 
@@ -248,7 +248,7 @@ private:
     vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<uint32_t> varToBlock; ///<variable-> block index map
 
-    Simplifier* subsumer;
+    OccSimplifier* subsumer;
     Solver *solver;
 
     //Stats

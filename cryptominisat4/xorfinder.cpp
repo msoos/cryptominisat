@@ -33,7 +33,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-XorFinder::XorFinder(Simplifier* _subsumer, Solver* _solver) :
+XorFinder::XorFinder(OccSimplifier* _subsumer, Solver* _solver) :
     subsumer(_subsumer)
     , solver(_solver)
     , numCalls(0)

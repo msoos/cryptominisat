@@ -33,19 +33,19 @@ namespace CMSat {
 #endif
 
 class Solver;
-class Simplifier;
+class OccSimplifier;
 
 class SolutionExtender
 {
     public:
-        SolutionExtender(Solver* _solver, Simplifier* simplifier);
+        SolutionExtender(Solver* _solver, OccSimplifier* simplifier);
         void extend();
         void addClause(const vector<Lit>& lits, const Lit blockedOn);
         void dummyBlocked(const Lit blockedOn);
 
     private:
         Solver* solver;
-        Simplifier* simplifier;
+        OccSimplifier* simplifier;
 
         bool satisfied(const vector<Lit>& lits) const;
         bool contains_lit(
