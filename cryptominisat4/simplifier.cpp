@@ -842,6 +842,86 @@ bool Simplifier::fill_occur_and_print_stats()
     return true;
 }
 
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+        s.erase(s.begin(),
+                std::find_if(s.begin(), s.end(),
+                             std::not1(std::ptr_fun<int, int>(std::isspace))));
+        return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(),
+                             std::not1(std::ptr_fun<int, int>(std::isspace))).base(),
+                s.end());
+        return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+        return ltrim(rtrim(s));
+}
+
+bool Simplifier::execute_simplifier_sched(const string& strategy)
+{
+    std::istringstream ss(strategy);
+    std::string token;
+
+    while(std::getline(ss, token, ',')) {
+        if (cpuTime() > solver->conf.maxTime
+            || solver->must_interrupt_asap()
+            || solver->nVars() == 0
+            || !solver->ok
+        ) {
+            return solver->ok;
+        }
+
+        trim(token);
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+        if (solver->conf.verbosity >= 2) {
+            cout << "c --> Executing OCC strategy token: " << token << '\n';
+        }
+        if (token == "backw-subsume") {
+            backward_subsume();
+        } else if (token == "xor") {
+            #ifdef USE_M4RI
+            if (solver->conf.doFindXors
+                && xorFinder != NULL
+            ) {
+                xorFinder->do_all_with_xors();
+            }
+            #endif
+        } else if (token == "prop") {
+            solver->propagate_occur();
+        } else if (token == "clean-implicit") {
+            solver->clauseCleaner->clean_implicit_clauses();
+        } else if (token == "bve") {
+            if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+                eliminate_empty_resolvent_vars();
+                eliminate_vars();
+            }
+        }
+        else if (token == "bva") {
+            bva->bounded_var_addition();
+        } else if (token == "gates") {
+            if (solver->conf.doCache
+                && solver->conf.doGateFind
+            ) {
+                gateFinder->doAll();
+            }
+        }
+        else if (token == "") {
+            //nothing, ignore empty token
+        } else {
+             cout << "ERROR: occur strategy " << token << " not recognised!" << endl;
+            exit(-1);
+        }
+    }
+
+    return solver->ok;
+}
+
 
 bool Simplifier::simplify(const bool _startup)
 {
@@ -880,64 +960,10 @@ bool Simplifier::simplify(const bool _startup)
     const size_t origTrailSize = solver->trail_size();
 
     //subsumeStrengthen->subsumeWithTris();
-    if (!backward_subsume()) {
-        goto end;
-    }
-
-    #ifdef USE_M4RI
-    if (solver->conf.doFindXors
-        && !startup
-        && xorFinder != NULL
-        && !xorFinder->do_all_with_xors()
-    ) {
-        goto end;
-    }
-    #endif
-
-    if (!solver->propagate_occur()
-        || solver->must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    solver->clauseCleaner->clean_implicit_clauses();
-    if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
-        eliminate_empty_resolvent_vars();
-        if (!eliminate_vars()
-            || solver->must_interrupt_asap()
-        )
-            goto end;
-    }
-
-    if (!solver->propagate_occur()
-        || solver->must_interrupt_asap()
-    ) {
-        goto end;
-    }
-
-    if (!startup
-        && !bva->bounded_var_addition()
-    ) {
-        goto end;
-    }
-
-    if (solver->must_interrupt_asap()) {
-        goto end;
-    }
-
-    if (solver->conf.doCache
-        && !startup
-        && solver->conf.doGateFind
-    ) {
-        if (!gateFinder->doAll()
-            || solver->must_interrupt_asap()
-        ) {
-            goto end;
-        }
-    }
-
-    if (!backward_subsume()) {
-        goto end;
+    if (startup) {
+        execute_simplifier_sched(solver->conf.occ_schedule_startup);
+    } else {
+        execute_simplifier_sched(solver->conf.occ_schedule_nonstartup);
     }
 
 end:

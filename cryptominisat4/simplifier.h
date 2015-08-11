@@ -170,6 +170,7 @@ private:
     BVA* bva;
     bool startup = false;
     bool backward_subsume();
+    bool execute_simplifier_sched(const string& strategy);
 
     //debug
     void check_elimed_vars_are_unassignedAndStats() const;

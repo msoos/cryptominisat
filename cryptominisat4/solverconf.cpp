@@ -189,7 +189,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         "check-cache-size, renumber"
         )
 
-        //Simplification
+        //Occur based simplification
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)
@@ -197,6 +197,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(4.0)
+        , occ_schedule_nonstartup("backw-subsume, xor, prop,"
+        "clean-implicit, bve, prop,"
+        "bva, gates, backw-subsume")
+        , occ_schedule_startup("backw-subsume, prop,"
+        "clean-implicit, bve, prop,"
+        "backw-subsume")
 
         //Distillation
         , do_distill_clauses(true)
