@@ -23,7 +23,7 @@
 #include "time_mem.h"
 #include "solver.h"
 #include "varreplacer.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "clauseallocator.h"
 #include <m4ri/m4ri.h>
 #include <limits>

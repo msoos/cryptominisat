@@ -29,7 +29,7 @@
 #include "solver.h"
 #include "searcher.h"
 #include "time_mem.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "completedetachreattacher.h"
 #include "sqlstats.h"
 

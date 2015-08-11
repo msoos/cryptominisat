@@ -34,7 +34,7 @@
 #include <functional>
 
 
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "clause.h"
 #include "solver.h"
 #include "clausecleaner.h"

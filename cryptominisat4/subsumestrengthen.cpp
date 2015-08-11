@@ -20,7 +20,7 @@
 */
 
 #include "subsumestrengthen.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "solver.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"

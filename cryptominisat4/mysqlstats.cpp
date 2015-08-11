@@ -25,7 +25,7 @@
 #include "time_mem.h"
 #include <sstream>
 #include "varreplacer.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include <string>
 #include <time.h>
 #include "constants.h"

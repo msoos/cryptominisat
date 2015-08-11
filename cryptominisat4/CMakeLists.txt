@@ -25,7 +25,7 @@ set(cryptoms_lib_files
     clausecleaner.cpp
     clauseusagestats.cpp
     prober.cpp
-    simplifier.cpp
+    occsimplifier.cpp
     subsumestrengthen.cpp
     clauseallocator.cpp
     sccfinder.cpp

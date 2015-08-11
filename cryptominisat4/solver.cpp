@@ -35,7 +35,7 @@
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "searcher.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "prober.h"
 #include "distiller.h"
 #include "clausecleaner.h"

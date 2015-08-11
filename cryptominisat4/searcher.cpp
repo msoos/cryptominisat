@@ -20,7 +20,7 @@
 */
 
 #include "searcher.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "calcdefpolars.h"
 #include "time_mem.h"
 #include "solver.h"

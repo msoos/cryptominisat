@@ -22,7 +22,7 @@
 #include "solutionextender.h"
 #include "solver.h"
 #include "varreplacer.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 
 //#define VERBOSE_DEBUG_SOLUTIONEXTENDER
 

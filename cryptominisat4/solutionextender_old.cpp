@@ -21,7 +21,7 @@
 
 #include "solutionextender.h"
 #include "varreplacer.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "solver.h"
 #include "completedetachreattacher.h"
 using namespace CMSat;

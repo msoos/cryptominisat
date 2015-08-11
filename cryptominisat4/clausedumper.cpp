@@ -21,7 +21,7 @@
 
 #include "clausedumper.h"
 #include "solver.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "varreplacer.h"
 #include "comphandler.h"
 

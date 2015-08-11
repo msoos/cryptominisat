@@ -22,7 +22,7 @@
 #include "gatefinder.h"
 #include "time_mem.h"
 #include "solver.h"
-#include "simplifier.h"
+#include "occsimplifier.h"
 #include "subsumestrengthen.h"
 #include "clauseallocator.h"
 #include <array>
