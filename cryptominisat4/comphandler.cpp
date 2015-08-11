@@ -134,6 +134,8 @@ bool CompHandler::handle()
 {
     assert(solver->okay());
     double myTime = cpuTime();
+
+    delete compFinder;
     compFinder = new CompFinder(solver);
     if (!compFinder->find_components()) {
         return false;
