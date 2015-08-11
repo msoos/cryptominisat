@@ -197,10 +197,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(4.0)
-        , occ_schedule_nonstartup("backw-subsume, xor, prop,"
+        , occsimp_schedule_nonstartup("backw-subsume, xor, prop,"
         "clean-implicit, bve, prop,"
         "bva, gates, backw-subsume")
-        , occ_schedule_startup("backw-subsume, prop,"
+        , occsimp_schedule_startup("backw-subsume, prop,"
         "clean-implicit, bve, prop,"
         "backw-subsume")
 

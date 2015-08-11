@@ -289,8 +289,8 @@ class SolverConf
         unsigned maxOccurRedMB;
         unsigned long long maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
-        string   occ_schedule_startup;
-        string   occ_schedule_nonstartup;
+        string   occsimp_schedule_startup;
+        string   occsimp_schedule_nonstartup;
 
         //Distillation
         int      do_distill_clauses;

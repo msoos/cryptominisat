@@ -961,9 +961,9 @@ bool OccSimplifier::simplify(const bool _startup)
 
     //subsumeStrengthen->subsumeWithTris();
     if (startup) {
-        execute_simplifier_sched(solver->conf.occ_schedule_startup);
+        execute_simplifier_sched(solver->conf.occsimp_schedule_startup);
     } else {
-        execute_simplifier_sched(solver->conf.occ_schedule_nonstartup);
+        execute_simplifier_sched(solver->conf.occsimp_schedule_nonstartup);
     }
 
 end:
