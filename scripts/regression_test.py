@@ -490,7 +490,8 @@ class Tester:
                 opts = string_list.split(",")
                 opts = [a.strip(" ") for a in opts]
                 opts = list(set(opts))
-                print "available schedule options:", opts
+                if options.verbose:
+                    print "available schedule options:", opts
 
                 sched = []
                 for i in range(int(random.gammavariate(8, 1))):
