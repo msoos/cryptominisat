@@ -1667,7 +1667,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
 
     //Heuristic calculation took too much time
     if (*limit_to_decrease < 0) {
-        return 1000;
+        return std::numeric_limits<int>::max();
     }
 
     //Check if we should do aggressive check or not
@@ -1692,7 +1692,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
     if ((neg.totalCls() * pos.totalCls())
         >= solver->conf.varelim_cutoff_too_many_clauses
     ) {
-        return 1000;
+        return std::numeric_limits<int>::max();
     }
 
     gate_found_elim = false;
@@ -1766,7 +1766,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
                 || *limit_to_decrease < -10LL*1000LL
 
             ) {
-                return 1000;
+                return std::numeric_limits<int>::max();
             }
 
             //Calculate new clause stats
@@ -2057,7 +2057,7 @@ bool OccSimplifier::maybe_eliminate(const Var var)
     runStats.testedToElimVars++;
 
     //Heuristic says no, or we ran out of time
-    if (test_elim_and_fill_resolvents(var) == 1000
+    if (test_elim_and_fill_resolvents(var) == std::numeric_limits<int>::max()
         || *limit_to_decrease < 0
     ) {
         return false;
