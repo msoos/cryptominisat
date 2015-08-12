@@ -478,7 +478,8 @@ class Tester:
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "binpri", "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp",
+                    "elimcoststrategy"]
 
             opts.extend(self.extra_options_if_supported)
 
