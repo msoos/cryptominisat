@@ -489,7 +489,6 @@ ClauseUsageStats ReduceDB::sumClauseData(
 
     for(ClOffset offset: toprint) {
         const Clause& cl = *solver->cl_alloc.ptr(offset);
-        const uint32_t clause_size = cl.size();
         stats.addStat(cl);
 
         if (solver->conf.verbosity >= 6)
