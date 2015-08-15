@@ -307,7 +307,6 @@ void Searcher::normalClMinim()
                 size = 2;
                 break;
 
-            case null_clause_t:
             default:
                 release_assert(false);
                 std::exit(-1);
@@ -332,7 +331,7 @@ void Searcher::normalClMinim()
                     }
                     break;
 
-                case null_clause_t:
+                default:
                     release_assert(false);
                     std::exit(-1);
             }
