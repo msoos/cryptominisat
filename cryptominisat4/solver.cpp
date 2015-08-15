@@ -3370,30 +3370,31 @@ Features Solver::calculate_features() const
     FeatureExtract extract(this);
     extract.fill_vars_cls();
     Features feat = extract.extract();
-    feat.lt_confl_size = hist.conflSizeHistLT.avg();
-    feat.lt_confl_glue = hist.glueHistLT.avg();
-    feat.lt_num_resolutions = hist.numResolutionsHistLT.avg();
-    feat.trail_depth_delta_hist = hist.trailDepthDeltaHist.avg();
-    feat.branch_depth_hist = hist.branchDepthHist.avg();
-    feat.branch_depth_delta_hist = hist.branchDepthDeltaHist.avg();
+    feat.avg_confl_size = hist.conflSizeHistLT.avg();
+    feat.avg_confl_glue = hist.glueHistLT.avg();
+    feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();
+    feat.avg_trail_depth_delta = hist.trailDepthDeltaHist.avg();
+    feat.avg_branch_depth = hist.branchDepthHist.avg();
+    feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    feat.lt_confl_size_min = hist.conflSizeHistLT.getMax();
-    feat.lt_confl_size_max = hist.conflSizeHistLT.getMax();
-    feat.lt_confl_glue_min = hist.glueHistLT.getMin();
-    feat.lt_confl_glue_max = hist.glueHistLT.getMax();
-    feat.branch_depth_hist_min = hist.branchDepthHist.getMin();
-    feat.branch_depth_hist_max = hist.branchDepthHist.getMax();
-    feat.trail_depth_delta_hist_min = hist.trailDepthDeltaHist.getMin();
-    feat.trail_depth_delta_hist_max = hist.trailDepthDeltaHist.getMax();
-    feat.lt_num_resolutions_min = hist.numResolutionsHistLT.getMin();
-    feat.lt_num_resolutions_max = hist.numResolutionsHistLT.getMax();
+    feat.confl_size_min = hist.conflSizeHistLT.getMax();
+    feat.confl_size_max = hist.conflSizeHistLT.getMax();
+    feat.confl_glue_min = hist.glueHistLT.getMin();
+    feat.confl_glue_max = hist.glueHistLT.getMax();
+    feat.branch_depth_min = hist.branchDepthHist.getMin();
+    feat.branch_depth_max = hist.branchDepthHist.getMax();
+    feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
+    feat.trail_depth_delta_max = hist.trailDepthDeltaHist.getMax();
+    feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
+    feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
-    feat.props_per_confl = calc_percentage(sumStats.conflStats.numConflicts, sumPropStats.propagations);
-    feat.num_restarts = sumStats.numRestarts;
-    feat.decisions = sumStats.decisions;
-    feat.blocked_restart = sumStats.blocked_restart;
-    feat.learntBins = sumStats.learntBins;
-    feat.learntTris = sumStats.learntTris;
+    feat.props_per_confl = (double)sumStats.conflStats.numConflicts / (double)sumPropStats.propagations;
+    feat.confl_per_restart = (double)sumStats.conflStats.numConflicts / (double)sumStats.numRestarts;
+    feat.decisions_per_conflict = (double)sumStats.decisions / (double)sumStats.conflStats.numConflicts;
+    feat.learnt_bins_per_confl = (double)sumStats.learntBins / (double)sumStats.conflStats.numConflicts;
+    feat.learnt_tris_per_confl = (double)sumStats.learntTris / (double)sumStats.conflStats.numConflicts;
+
+    //feat.num_gates_found_last =
 
     if (conf.verbosity >= 1) {
         feat.print_stats();

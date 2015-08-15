@@ -48,30 +48,29 @@ void Features::print_stats() const
     fprintf( stdout, "horn_spread %.5f%s", horn_spread, sep );
     fprintf( stdout, "horn %.5f%s", horn, sep);
 
-    fprintf( stdout, "lt_confl_size %.5f%s", lt_confl_size, sep);
-    fprintf( stdout, "lt_confl_glue %.5f%s", lt_confl_glue, sep);
-    fprintf( stdout, "lt_num_resolutions %.5f%s", lt_num_resolutions, sep);
-    fprintf( stdout, "trail_depth_delta_hist %.5f%s", trail_depth_delta_hist, sep);
-    fprintf( stdout, "branch_depth_hist %.5f%s", branch_depth_hist, sep);
-    fprintf( stdout, "branch_depth_delta_hist %.5f%s", branch_depth_delta_hist, sep);
+    fprintf( stdout, "avg_confl_size %.5f%s", avg_confl_size, sep);
+    fprintf( stdout, "avg_confl_glue %.5f%s", avg_confl_glue, sep);
+    fprintf( stdout, "avg_num_resolutions %.5f%s", avg_num_resolutions, sep);
+    fprintf( stdout, "avg_trail_depth_delta %.5f%s", avg_trail_depth_delta, sep);
+    fprintf( stdout, "avg_branch_depth %.5f%s", avg_branch_depth, sep);
+    fprintf( stdout, "avg_branch_depth_delta %.5f%s", avg_branch_depth_delta, sep);
 
-    fprintf( stdout, "lt_confl_size_min %.5f%s", lt_confl_size_min, sep);
-    fprintf( stdout, "lt_confl_size_max %.5f%s", lt_confl_size_max, sep);
-    fprintf( stdout, "lt_confl_glue_min %.5f%s", lt_confl_glue_min, sep);
-    fprintf( stdout, "lt_confl_glue_max %.5f%s", lt_confl_glue_max, sep);
-    fprintf( stdout, "branch_depth_hist_min %.5f%s", branch_depth_hist_min, sep);
-    fprintf( stdout, "branch_depth_hist_max %.5f%s", branch_depth_hist_max, sep);
-    fprintf( stdout, "trail_depth_delta_hist_min %.5f%s", trail_depth_delta_hist_min, sep);
-    fprintf( stdout, "trail_depth_delta_hist_max %.5f%s", trail_depth_delta_hist_max, sep);
-    fprintf( stdout, "lt_num_resolutions_min %.5f%s", lt_num_resolutions_min, sep);
-    fprintf( stdout, "lt_num_resolutions_max %.5f%s", lt_num_resolutions_max, sep);
+    fprintf( stdout, "confl_size_min %.5f%s", confl_size_min, sep);
+    fprintf( stdout, "confl_size_max %.5f%s", confl_size_max, sep);
+    fprintf( stdout, "confl_glue_min %.5f%s", confl_glue_min, sep);
+    fprintf( stdout, "confl_glue_max %.5f%s", confl_glue_max, sep);
+    fprintf( stdout, "branch_depth_min %.5f%s", branch_depth_min, sep);
+    fprintf( stdout, "branch_depth_max %.5f%s", branch_depth_max, sep);
+    fprintf( stdout, "trail_depth_delta_min %.5f%s", trail_depth_delta_min, sep);
+    fprintf( stdout, "trail_depth_delta_max %.5f%s", trail_depth_delta_max, sep);
+    fprintf( stdout, "num_resolutions_min %.5f%s", num_resolutions_min, sep);
+    fprintf( stdout, "num_resolutions_max %.5f%s", num_resolutions_max, sep);
 
     fprintf( stdout, "props_per_confl %.5f%s", props_per_confl, sep);
-    fprintf( stdout, "num_restarts %.5f%s", num_restarts, sep);
-    fprintf( stdout, "decisions %.5f%s", decisions, sep);
-    fprintf( stdout, "blocked_restart %.5f%s", blocked_restart, sep);
-    fprintf( stdout, "learntBins %.5f%s", learntBins, sep);
-    fprintf( stdout, "learntTris %.5f", learntTris);
+    fprintf( stdout, "confl_per_restart %.5f%s", confl_per_restart, sep);
+    fprintf( stdout, "decisions_per_conflict %.5f%s", decisions_per_conflict, sep);
+    fprintf( stdout, "learnt_bins_per_confl %.8f%s", learnt_bins_per_confl, sep);
+    fprintf( stdout, "learnt_tris_per_confl %.8f", learnt_tris_per_confl);
 
     fprintf( stdout, "\n");
 }
