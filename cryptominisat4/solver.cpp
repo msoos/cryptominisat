@@ -1726,7 +1726,6 @@ lbool Solver::simplify_problem(const bool startup)
     free_unused_watches();
     //addSymmBreakClauses();
 
-end:
     //Re-calculate reachability after re-numbering and new cache data
     //This may actually affect correctness/code sanity, so we must do it!
     if (conf.doCache) {
