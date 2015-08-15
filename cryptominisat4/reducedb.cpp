@@ -430,10 +430,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
                 cl->stats.ttl = 0;
             }
             solver->longRedCls[j++] = offset;
-            tmpStats.remain.incorporate(cl);
-            #ifdef STATS_NEEDED
-            tmpStats.remain.age += sumConfl - cl->stats.introduced_at_conflict;
-            #endif
+            tmpStats.remain.incorporate(cl, sumConfl);
             continue;
         }
 
@@ -441,10 +438,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         cl->setRemoved();
         solver->watches.smudge((*cl)[0]);
         solver->watches.smudge((*cl)[1]);
-        tmpStats.removed.incorporate(cl);
-        #ifdef STATS_NEEDED
-        tmpStats.removed.age += sumConfl - cl->stats.introduced_at_conflict;
-        #endif
+        tmpStats.removed.incorporate(cl, sumConfl);
         solver->litStats.redLits -= cl->size();
 
         *solver->drup << del << *cl << fin;

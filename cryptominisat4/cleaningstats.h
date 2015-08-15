@@ -75,8 +75,11 @@ struct CleaningStats
         uint64_t numLookedAt = 0;
         #endif
 
-        void incorporate(const Clause* cl)
-        {
+        void incorporate(const Clause* cl, size_t 
+            #ifdef STATS_NEEDED
+            sumConfl
+            #endif
+        ) {
             num ++;
             lits += cl->size();
             glue += cl->stats.glue;
@@ -87,6 +90,7 @@ struct CleaningStats
             numLitVisited += cl->stats.visited_literals;
             numLookedAt += cl->stats.clause_looked_at;
             numProp += cl->stats.propagations_made;
+            age += sumConfl - cl->stats.introduced_at_conflict;
             #endif
             resol += cl->stats.resolutions;
             used_for_uip_creation += cl->stats.used_for_uip_creation;
