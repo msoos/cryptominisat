@@ -3178,7 +3178,7 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
             std::cerr << "ERROR: Variable number " << lit.var()
             << "too large. PropBy is limiting us, sorry" << endl;
             assert(false);
-            std:exit(-1);
+            std::exit(-1);
         }
     }
 }
