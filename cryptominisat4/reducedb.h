@@ -77,7 +77,6 @@ private:
     void print_best_red_clauses_if_required() const;
     ClauseUsageStats sumClauseData(
         const vector<ClOffset>& toprint
-        , bool red
     ) const;
 };
 

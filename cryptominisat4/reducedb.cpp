@@ -455,8 +455,8 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
 
 void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
 {
-    ClauseUsageStats irred_cl_usage_stats = sumClauseData(solver->longIrredCls, false);
-    ClauseUsageStats red_cl_usage_stats = sumClauseData(solver->longRedCls, true);
+    ClauseUsageStats irred_cl_usage_stats = sumClauseData(solver->longIrredCls);
+    ClauseUsageStats red_cl_usage_stats = sumClauseData(solver->longRedCls);
     ClauseUsageStats sum_cl_usage_stats;
     sum_cl_usage_stats += irred_cl_usage_stats;
     sum_cl_usage_stats += red_cl_usage_stats;
@@ -484,7 +484,6 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
 
 ClauseUsageStats ReduceDB::sumClauseData(
     const vector<ClOffset>& toprint
-    , const bool red
 ) const {
     ClauseUsageStats stats;
 
