@@ -30,7 +30,7 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData, uint32_t thread_num);
+        DataSync(Solver* solver, SharedData* sharedData);
         bool enabled();
         void new_var(const bool bva);
         void new_vars(const size_t n);

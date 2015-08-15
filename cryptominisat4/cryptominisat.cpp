@@ -282,7 +282,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
             conf.doFindXors = 0;
         }
         data->solvers[i]->setConf(conf);
-        data->solvers[i]->set_shared_data((SharedData*)data->shared_data, i);
+        data->solvers[i]->set_shared_data((SharedData*)data->shared_data);
     }
 }
 

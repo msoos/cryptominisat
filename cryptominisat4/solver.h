@@ -86,7 +86,7 @@ class Solver : public Searcher
         bool add_xor_clause_outer(const vector<Var>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
-        void  set_shared_data(SharedData* shared_data, uint32_t thread_num);
+        void  set_shared_data(SharedData* shared_data);
         lbool model_value (const Lit p) const;  ///<Found model value for lit
         lbool model_value (const Var p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;

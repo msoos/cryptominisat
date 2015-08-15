@@ -101,7 +101,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
-    datasync = new DataSync(this, NULL, 0);
+    datasync = new DataSync(this, NULL);
     Searcher::solver = this;
     reduceDB = new ReduceDB(this);
 }
@@ -191,10 +191,10 @@ void Solver::parse_sql_option()
     }
 }
 
-void Solver::set_shared_data(SharedData* shared_data, uint32_t thread_num)
+void Solver::set_shared_data(SharedData* shared_data)
 {
     delete datasync;
-    datasync = new DataSync(this, shared_data, thread_num);
+    datasync = new DataSync(this, shared_data);
 }
 
 bool Solver::add_xor_clause_inter(
