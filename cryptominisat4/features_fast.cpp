@@ -107,7 +107,6 @@ void FeatureExtract::fill_vars_cls()
 {
     feat.numVars = solver->nVars();
     feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins + solver->binTri.irredTris;
-    feat.unary = solver->get_num_nonfree_vars();
     feat.binary = solver->binTri.irredBins;
     feat.trinary = solver->binTri.irredTris;
     myVars.resize(solver->nVars());
@@ -171,7 +170,6 @@ Features FeatureExtract::extract()
     feat.vcg_cls_mean /= 1.0 * feat.numClauses;
     feat.pnr_cls_mean /= 1.0 * feat.numClauses;
     feat.horn /= 1.0 * feat.numClauses;
-    feat.unary /= 1.0 * feat.numClauses;
     feat.binary /= 1.0 * feat.numClauses;
     feat.trinary /= 1.0 * feat.numClauses;
 

@@ -32,7 +32,6 @@ struct Features
 
     int numVars;
     int numClauses;
-    double unary = 0;
     double binary = 0;
     double trinary = 0;
     double horn = 0;

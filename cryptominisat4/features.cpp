@@ -38,7 +38,6 @@ void Features::print_stats() const
     fprintf( stdout, "pnr_cls_max %.5f%s", pnr_cls_max, sep );
     fprintf( stdout, "pnr_cls_spread %.5f%s", pnr_cls_spread, sep );
 
-    fprintf( stdout, "unary %.5f%s", unary, sep );
     fprintf( stdout, "binary %.5f%s", binary, sep );
     fprintf( stdout, "trinary %.5f%s", trinary, sep );
     fprintf( stdout, "horn_mean %.5f%s", horn_mean, sep );
