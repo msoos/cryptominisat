@@ -99,7 +99,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 class GateFinder
 {
 public:
-    GateFinder(OccSimplifier *subsumer, Solver *control);
+    GateFinder(OccSimplifier *simplifier, Solver *control);
     bool doAll();
 
     //Stats
